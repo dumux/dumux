@@ -17,31 +17,33 @@
  * \file
  * \brief Base class for all problems which use the box scheme
  */
-#ifndef DUMUX_2P_BOX_PROBLEM_HH
-#define DUMUX_2P_BOX_PROBLEM_HH
+#ifndef DUMUX_2P_PROBLEM_HH
+#define DUMUX_2P_PROBLEM_HH
 
-#include <dumux/boxmodels/boxscheme/boxproblem.hh>
+#include <dumux/boxmodels/common/boxproblem.hh>
 #include <dumux/material/fluidsystems/2p_system.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup TwoPProblems
- * \brief  Base class for all problems which use the two-phase box model
+ * \brief Base class for all problems which use the two-phase box model
  *
  * \todo Please doc me more!
  */
-template<class TypeTag, class Implementation>
-class TwoPBoxProblem : public BoxProblem<TypeTag, Implementation>
+template<class TypeTag>
+class TwoPProblem : public BoxProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag, Implementation> ParentType;
+    typedef BoxProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::Grid                         Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GridView::Grid Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))       FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
     enum {
@@ -49,12 +51,14 @@ class TwoPBoxProblem : public BoxProblem<TypeTag, Implementation>
         dimWorld = Grid::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    TwoPBoxProblem(const GridView &gridView, bool verbose = true)
-        : ParentType(gridView),
-        gravity_(0)
+    TwoPProblem(TimeManager &timeManager, 
+                const GridView &gridView, 
+                bool verbose = true)
+        : ParentType(timeManager, gridView),
+          gravity_(0)
     {
         newSpatialParams_ = true;
         spatialParameters_ = new SpatialParameters(gridView);
@@ -64,8 +68,11 @@ public:
             gravity_[dim-1]  = -9.81;
     }
 
-    TwoPBoxProblem(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
-        : ParentType(gridView), spatialParameters_(&spatialParameters),
+    TwoPProblem(TimeManager &timeManager, 
+                const GridView &gridView,
+                SpatialParameters &spatialParameters, 
+                bool verbose = true)
+        : ParentType(timeManager, gridView), spatialParameters_(&spatialParameters),
         gravity_(0)
     {
         newSpatialParams_ = false;
@@ -74,12 +81,10 @@ public:
             gravity_[dim-1]  = -9.81;
     }
 
-    virtual ~TwoPBoxProblem()
+    virtual ~TwoPProblem()
     {
         if (newSpatialParams_)
-        {
-        delete spatialParameters_;
-        }
+            delete spatialParameters_;
     }
 
     /*!
@@ -127,7 +132,7 @@ private:
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
 
-    GlobalPosition  gravity_;
+    GlobalPosition gravity_;
 
     // fluids and material properties
     SpatialParameters*  spatialParameters_;

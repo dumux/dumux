@@ -1,4 +1,4 @@
-// $Id: 2pfluxdata.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2pfluxvars.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -41,17 +41,17 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class TwoPFluxData
+class TwoPFluxVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
 
-    typedef typename GridView::ctype                     CoordScalar;
+    typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                      VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
     enum {
         dim = GridView::dimension,
@@ -59,23 +59,23 @@ class TwoPFluxData
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld>  Vector;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    typedef typename FVElementGeometry::SubControlVolume             SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+    typedef typename FVElementGeometry::SubControlVolume SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
 public:
-    TwoPFluxData(const Problem &problem,
+    TwoPFluxVars(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &elemGeom,
                  int faceIdx,
-                 const VertexDataArray &elemDat)
+                 const ElementSecondaryVars &elemDat)
         : fvElemGeom_(elemGeom)
     {
         scvfIdx_ = faceIdx;
@@ -131,7 +131,7 @@ public:
 
 protected:
     const FVElementGeometry &fvElemGeom_;
-    int                      scvfIdx_;
+    int scvfIdx_;
 
     // gradients
     Vector potentialGrad_[numPhases];
@@ -156,7 +156,7 @@ protected:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const VertexDataArray &elemDat)
+                             const ElementSecondaryVars &elemDat)
     {
         // calculate gradients
         Vector tmp(0.0);
@@ -196,7 +196,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const VertexDataArray &elemDat)
+                              const ElementSecondaryVars &elemDat)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         // multiply the pressure potential with the intrinsic

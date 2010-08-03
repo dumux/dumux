@@ -34,25 +34,22 @@ namespace Dumux
 // forward declarations
 ////////////////////////////////
 template<class TypeTag>
-class TwoPBoxModel;
+class TwoPModel;
 
 template<class TypeTag>
-class TwoPBoxJacobian;
+class TwoPLocalResidual;
 
 template<class TypeTag>
 class TwoPNewtonController;
 
-template <class TypeTag, class Implementation>
-class TwoPBoxProblem;
+template <class TypeTag>
+class TwoPProblem;
 
 template <class TypeTag>
-class TwoPVertexData;
+class TwoPSecondaryVars;
 
 template <class TypeTag>
-class TwoPElementData;
-
-template <class TypeTag>
-class TwoPFluxData;
+class TwoPFluxVars;
 
 template<class TypeTag>
 class FluidSystem2P;
@@ -78,7 +75,7 @@ struct TwoPCommonIndices
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam PVOffset    The first index in a primary variable vector.
+ * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int formulation = TwoPCommonIndices::pwSn, int PVOffset = 0>
 struct TwoPIndices : public TwoPCommonIndices
@@ -100,7 +97,7 @@ struct TwoPIndices : public TwoPCommonIndices
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam PVOffset    The first index in a primary variable vector.
+ * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
 struct TwoPIndices<TwoPCommonIndices::pnSw, PVOffset>
@@ -137,7 +134,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(BoxTwoP, INHERITS_FROM(BoxScheme));
+NEW_TYPE_TAG(BoxTwoP, INHERITS_FROM(BoxModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -170,23 +167,20 @@ SET_INT_PROP(BoxTwoP,
 
 //! Use the 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(BoxTwoP,
-              LocalJacobian,
-              TwoPBoxJacobian<TypeTag>);
+              LocalResidual,
+              TwoPLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoP, Model, TwoPBoxModel<TypeTag>);
+SET_TYPE_PROP(BoxTwoP, Model, TwoPModel<TypeTag>);
 
 //! the default newton controller for two-phase problems
 SET_TYPE_PROP(BoxTwoP, NewtonController, TwoPNewtonController<TypeTag>);
 
-//! the VertexData property
-SET_TYPE_PROP(BoxTwoP, VertexData, TwoPVertexData<TypeTag>);
+//! the SecondaryVars property
+SET_TYPE_PROP(BoxTwoP, SecondaryVars, TwoPSecondaryVars<TypeTag>);
 
-//! the ElementData property
-SET_TYPE_PROP(BoxTwoP, ElementData, TwoPElementData<TypeTag>);
-
-//! the FluxData property
-SET_TYPE_PROP(BoxTwoP, FluxData, TwoPFluxData<TypeTag>);
+//! the FluxVars property
+SET_TYPE_PROP(BoxTwoP, FluxVars, TwoPFluxVars<TypeTag>);
 
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(BoxTwoP, MobilityUpwindAlpha,  1.0);
@@ -204,7 +198,7 @@ SET_PROP(BoxTwoP, TwoPIndices)
 SET_PROP(BoxTwoP, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))  SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
 public:
     typedef typename SpatialParameters::MaterialLaw type;
@@ -217,7 +211,7 @@ public:
 SET_PROP(BoxTwoP, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))  MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;

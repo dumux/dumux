@@ -29,7 +29,7 @@
 #include <dumux/material/components/simplednapl.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include <dumux/boxmodels/2p/2pboxmodel.hh>
+#include <dumux/boxmodels/2p/2pmodel.hh>
 
 #include "lensspatialparameters.hh"
 
@@ -66,9 +66,9 @@ SET_PROP(LensProblem, LocalFEMSpace)
 
 public:
 #if CUBES
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for cubes
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
 #else
-    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for simplices
+    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 #endif
 };
 #endif
@@ -135,21 +135,20 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  * 50\,000\;s\f$ is reached. A good choice for the initial time step size
  * is \f$t_{\text{inital}} = 1\,000\;s\f$.
  *
- * To run the simulation execute  the following line in shell:
+ * To run the simulation execute the following line in shell:
  * <tt>./test_2p 50000 1000</tt>
  */
 template <class TypeTag >
-class LensProblem  : public TwoPBoxProblem<TypeTag,
-                                           LensProblem<TypeTag> >
+class LensProblem  : public TwoPProblem<TypeTag>
 {
-    typedef LensProblem<TypeTag>   ThisType;
-    typedef TwoPBoxProblem<TypeTag, ThisType> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef LensProblem<TypeTag> ThisType;
+    typedef TwoPProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))  FluidSystem;
-    typedef TwoPFluidState<TypeTag>                             FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef TwoPFluidState<TypeTag> FluidState;
 
     enum {
         numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
@@ -174,25 +173,27 @@ class LensProblem  : public TwoPBoxProblem<TypeTag,
         dimWorld    = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
-    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename GridView::template Codim<0>::Entity        Element;
-    typedef typename GridView::template Codim<dim>::Entity      Vertex;
-    typedef typename GridView::Intersection                     Intersection;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    LensProblem(const GridView &gridView,
+    LensProblem(TimeManager &timeManager, 
+                const GridView &gridView,
                 const GlobalPosition &lensLowerLeft,
                 const GlobalPosition &lensUpperRight)
-        : ParentType(gridView)
+        : ParentType(timeManager, gridView)
     {
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
     }
@@ -217,7 +218,7 @@ public:
      */
     Scalar temperature(const Element           &element,
                        const FVElementGeometry &fvElemGeom,
-                       int                      scvIdx) const
+                       int scvIdx) const
     {
         return 273.15 + 10; // -> 10°C
     };
@@ -233,12 +234,12 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypeVector         &values,
+    void boundaryTypes(BoundaryTypes         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
                        const Intersection         &is,
-                       int                         scvIdx,
-                       int                         boundaryFaceIdx) const
+                       int scvIdx,
+                       int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -263,8 +264,8 @@ public:
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const Intersection         &is,
-                   int                         scvIdx,
-                   int                         boundaryFaceIdx) const
+                   int scvIdx,
+                   int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -307,8 +308,8 @@ public:
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const Intersection         &is,
-                 int                         scvIdx,
-                 int                         boundaryFaceIdx) const
+                 int scvIdx,
+                 int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -350,7 +351,7 @@ public:
     void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
-                 int                      scvIdx) const
+                 int scvIdx) const
     {
         // no DNAPL, some random pressure
         values[pwIdx] = 0.0;

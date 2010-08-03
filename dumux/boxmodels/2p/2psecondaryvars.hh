@@ -1,4 +1,4 @@
-// $Id: 2pvertexdata.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 2psecondaryvars.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -19,8 +19,8 @@
  *
  * \brief Quantities required by the twophase box model defined on a vertex.
  */
-#ifndef DUMUX_2P_VERTEX_DATA_HH
-#define DUMUX_2P_VERTEX_DATA_HH
+#ifndef DUMUX_2P_SECONDARY_VARS_HH
+#define DUMUX_2P_SECONDARY_VARS_HH
 
 #include "2pproperties.hh"
 
@@ -33,16 +33,16 @@ namespace Dumux
  *        finite volume in the two-phase model.
  */
 template <class TypeTag>
-class TwoPVertexData
+class TwoPSecondaryVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
     // this is a bit hacky: the Vertex data might not be identical to
     // the implementation.
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData))   Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
 
     enum {
         numEq         = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
@@ -66,55 +66,57 @@ class TwoPVertexData
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
+
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container                     ReferenceElements;
+    typedef typename RefElemProp::Container ReferenceElements;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))        FluidSystem;
-    typedef TwoPFluidState<TypeTag>                                   FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))        MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams))  MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef TwoPFluidState<TypeTag> FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename SolutionTypes::PrimaryVarVector  PrimaryVarVector;
-    typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &sol,
+    void update(const PrimaryVarVector  &priVars,
+                const Problem           &problem,
                 const Element           &element,
                 const FVElementGeometry &elemGeom,
-                int                      vertIdx,
-                const Problem           &problem,
+                int                      scvIdx,
                 bool                     isOldSol)
     {
-        asImp().updateTemperature_(sol,
+        primaryVars_ = priVars;
+
+        asImp().updateTemperature_(priVars,
                                    element,
                                    elemGeom,
-                                   vertIdx,
+                                   scvIdx,
                                    problem);
 
         // material law parameters
         const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, vertIdx);
+            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
 
         Scalar p[numPhases];
         Scalar Sn;
         if (int(formulation) == pwSn) {
-            Sn = sol[saturationIdx];
-            p[wPhaseIdx] = sol[pressureIdx];
+            Sn = priVars[saturationIdx];
+            p[wPhaseIdx] = priVars[pressureIdx];
             p[nPhaseIdx] =
                 p[wPhaseIdx] +
                 MaterialLaw::pC(materialParams, 1 - Sn);
         }
         else if (int(formulation) == pnSw) {
-            Sn = 1 - sol[saturationIdx];
-            p[nPhaseIdx] = sol[pressureIdx];
+            Sn = 1 - priVars[saturationIdx];
+            p[nPhaseIdx] = priVars[pressureIdx];
             p[wPhaseIdx] =
                 p[nPhaseIdx] -
                 MaterialLaw::pC(materialParams, 1 - Sn);
@@ -140,17 +142,29 @@ public:
         // porosity
         porosity_ = problem.spatialParameters().porosity(element,
                                                          elemGeom,
-                                                         vertIdx);
+                                                         scvIdx);
     }
 
-    void updateTemperature_(const PrimaryVarVector  &sol,
+    void updateTemperature_(const PrimaryVarVector  &priVars,
                             const Element           &element,
                             const FVElementGeometry &elemGeom,
-                            int                      vertIdx,
+                            int scvIdx,
                             const Problem           &problem)
     {
-        temperature_ = problem.temperature(element, elemGeom, vertIdx);
+        temperature_ = problem.temperature(element, elemGeom, scvIdx);
     }
+
+    /*!
+     * \brief Return the vector of primary variables
+     */
+    const PrimaryVarVector &primaryVars() const
+    { return primaryVars_; }
+
+    /*!
+     * \brief Sets the evaluation point used in the by the local jacobian.
+     */
+    void setEvalPoint(const Implementation *ep)
+    { }
 
     /*!
      * \brief Returns the phase state for the control-volume.
@@ -209,6 +223,7 @@ public:
     { return porosity_; }
 
 protected:
+    PrimaryVarVector primaryVars_;
     FluidState fluidState_;
     Scalar porosity_;
     Scalar temperature_;

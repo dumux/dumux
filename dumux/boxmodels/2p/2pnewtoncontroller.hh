@@ -38,16 +38,16 @@ namespace Dumux {
 template <class TypeTag>
 class TwoPNewtonController : public NewtonController<TypeTag>
 {
-    typedef TwoPNewtonController<TypeTag>  ThisType;
-    typedef NewtonController<TypeTag>      ParentType;
+    typedef TwoPNewtonController<TypeTag> ThisType;
+    typedef NewtonController<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector SolutionVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
     enum {

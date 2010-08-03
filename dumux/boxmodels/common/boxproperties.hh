@@ -117,6 +117,9 @@ class BoxElementBoundaryTypes;
 template<typename TypeTag>
 class BoxElementSecondaryVars;
 
+template<typename TypeTag>
+class BoxLocalJacobian;
+
 namespace PDELab {
 template<typename TypeTag>
 class BoxLocalOperator;
@@ -233,6 +236,8 @@ public:
 SET_PROP(BoxModel, DofMapper)
 { typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) type; };
 
+//! The local jacobian operator for the box scheme
+SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
 
 /*!
  * \brief The type of a solution for the whole grid at a fixed time.
