@@ -79,7 +79,6 @@ namespace Dumux {
  * specified by setting the <tt>Formulation</tt> property to either <tt>TwoPNIIndices::pWsN</tt> or <tt>TwoPIndices::pNsW</tt>. By
  * default, the model uses \f$p_w\f$, \f$S_n\f$ and \f$T\f$.
  */
-
 template<class TypeTag>
 class TwoPNIModel: public TwoPModel<TypeTag>
 {

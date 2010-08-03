@@ -75,8 +75,6 @@ public:
           timeManager_(&timeManager),
           resultWriter_(asImp_().name())
     {
-        wasRestarted_ = false;
-
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
         const VertexIterator vEndIt = gridView.template end<dim>();
@@ -181,8 +179,7 @@ public:
      */
     bool doSerialize() const
     {
-        return !restarted() &&
-            timeManager().timeStepIndex() > 0 &&
+        return timeManager().timeStepIndex() > 0 &&
             (timeManager().timeStepIndex() % 10 == 0);
     }
 
@@ -203,6 +200,15 @@ public:
     void postProcess()
     { }
 
+    /*!
+     * \brief Called when the end of an simulation episode is reached.
+     */
+    void episodeEnd()
+    {
+        std::cerr << "The end of an episode is reached, but the problem "
+                  << "does not override the episodeEnd() method. "
+                  << "Doing nothing!\n";
+    };
     // \}
 
     /*!
@@ -292,13 +298,6 @@ public:
     // \{
 
     /*!
-     * \brief Returns true, if the current state of the problem was
-     *        loaded from a restart file.
-     */
-    bool restarted() const
-    { return wasRestarted_; }
-
-    /*!
      * \brief This method writes the complete state of the simulation
      *        to the harddisk.
      *
@@ -363,8 +362,6 @@ public:
     {
         resultWriter_.deserialize(res);
         model().deserialize(res);
-        
-        wasRestarted_ = true;
     };
 
     // \}
@@ -417,8 +414,6 @@ private:
     NewtonController newtonCtl_;
 
     VtkMultiWriter resultWriter_;
-
-    bool wasRestarted_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.

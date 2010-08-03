@@ -226,19 +226,19 @@ public:
      *         and get minimum and maximum values of primary variables
      *
      */
-    void calculateMass(const SolutionVector &sol, Dune::FieldVector<
-            Scalar, 2> &massGas, Dune::FieldVector<Scalar, 2> &massLiquid)
+    void calculateMass(Dune::FieldVector<Scalar, 2> &massGas,
+                       Dune::FieldVector<Scalar, 2> &massLiquid)
     {
+        const SolutionVector &sol = this->curSol();
+
         massGas = 0;
         massLiquid = 0;
 
-        ElementIterator elemIt =
-                this->gridView().template begin<0> ();
-        ElementIterator endit = this->gridView().template end<0> ();
+        ElementIterator elemIt = this->gridView_().template begin<0> ();
+        ElementIterator endit = this->gridView_().template end<0> ();
 
         FVElementGeometry fvElemGeom;
         SecondaryVars secVars;
-        ElementBoundaryTypes elemBcTypes;
 
         Scalar minSat = 1e100;
         Scalar maxSat = -1e100;
@@ -255,9 +255,7 @@ public:
             if (elemIt->partitionType() != Dune::InteriorEntity)
                 continue;
             
-            fvElemGeom.update(this->gridView_()(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
-
+            fvElemGeom.update(this->gridView_(), *elemIt);
             // Loop over element vertices
             for (int i = 0; i < fvElemGeom.numVertices; ++i)
             {
@@ -270,7 +268,7 @@ public:
                                false);
 
                 const FluidState &fs = secVars.fluidState();
-                Scalar vol = this->fvElemGeom_().subContVol[i].volume;
+                Scalar vol = fvElemGeom.subContVol[i].volume;
 
                 Scalar satN = fs.saturation(gPhaseIdx);
                 Scalar xAW = fs.massFrac(lPhaseIdx, gCompIdx);
@@ -396,7 +394,6 @@ public:
 
         FVElementGeometry fvElemGeom;
         SecondaryVars secVars;
-        ElementBoundaryTypes elemBcTypes;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
@@ -404,9 +401,7 @@ public:
         {
             int idx = this->problem_().elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
-
             fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
 
             int numVerts = elemIt->template count<dim> ();
             for (int i = 0; i < numVerts; ++i)

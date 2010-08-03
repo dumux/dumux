@@ -20,6 +20,8 @@
 #ifndef DUMUX_TIME_MANAGER_HH
 #define DUMUX_TIME_MANAGER_HH
 
+#include <dumux/common/propertysystem.hh>
+
 #include <boost/format.hpp>
 
 #include <dune/common/timer.hh>
@@ -29,6 +31,11 @@
 
 namespace Dumux
 {
+namespace Properties
+{
+NEW_PROP_TAG(Scalar);
+NEW_PROP_TAG(Problem);
+}
 /*!
  * \addtogroup SimControl Simulation Supervision
  */
@@ -241,13 +248,21 @@ public:
      *        simulated time.
      */
     Scalar episodeLength() const
-    { return std::min(episodeLength_,  endTime_ - episodeStartTime_); }
+    { return episodeLength_; }
 
     /*!
-     * \brief Returns true if the current episode is over.
+     * \brief Returns true if the current episode is finished at the
+     *        current time.
      */
     bool episodeIsOver() const
-    { return time() >= episodeStartTime_ + (1 - 1e-14)*episodeLength(); }
+    { return time() >= episodeStartTime_ + episodeLength(); }
+
+    /*!
+     * \brief Returns true if the current episode will be finished
+     *        after the current time step.
+     */
+    bool episodeWillBeOver() const
+    { return time() + timeStepSize() >= episodeStartTime_ + episodeLength(); }
 
 
     /*!
@@ -308,6 +323,9 @@ public:
 
             if (problem_->doSerialize())
                 problem_->serialize();
+
+            if (episodeIsOver())
+                problem_->episodeEnd();
             
             // notify the problem that the timestep is done and ask it
             // for a suggestion for the next timestep size

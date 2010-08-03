@@ -90,7 +90,6 @@ class TwoPModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
@@ -108,13 +107,15 @@ public:
      *         and get minimum and maximum values of primary variables
      *
      */
-    void calculateMass(const SolutionVector &sol, Dune::FieldVector<Scalar, 2> &mass)
+    void calculateMass(Dune::FieldVector<Scalar, 2> &mass)
     {
+        const SolutionVector &sol = this->curSol();
+
         mass = 0;
 
         ElementIterator elementIt =
-                this->model().gridView().template begin<0> ();
-        ElementIterator endit = this->model().gridView().template end<0> ();
+            this->gridView_().template begin<0> ();
+        ElementIterator endit = this->gridView_().template end<0> ();
 
         ElementSecondaryVars elemDat;
 
@@ -129,15 +130,12 @@ public:
 
         FVElementGeometry fvElemGeom;
         SecondaryVars secVars;
-        ElementBoundaryTypes elemBcTypes;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
-            int idx = this->problem_.model().elementMapper().map(*elemIt);
             fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
 
             int numLocalVerts = elementIt->template count<dim> ();
             for (int i = 0; i < numLocalVerts; ++i)
@@ -174,16 +172,16 @@ public:
             }
         }
 
-        mass = this->gridView_.comm().sum(mass);
+        mass = this->gridView_().comm().sum(mass);
 
-        Scalar minS = this->gridView_.comm().min(minSat);
-        Scalar maxS = this->gridView_.comm().max(maxSat);
-        Scalar minPr = this->gridView_.comm().min(minP);
-        Scalar maxPr = this->gridView_.comm().max(maxP);
-        Scalar minT = this->gridView_.comm().min(minTe);
-        Scalar maxT = this->gridView_.comm().max(maxTe);
+        Scalar minS = this->gridView_().comm().min(minSat);
+        Scalar maxS = this->gridView_().comm().max(maxSat);
+        Scalar minPr = this->gridView_().comm().min(minP);
+        Scalar maxPr = this->gridView_().comm().max(maxP);
+        Scalar minT = this->gridView_().comm().min(minTe);
+        Scalar maxT = this->gridView_().comm().max(maxTe);
 
-        if (this->problem_.gridView().comm().rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
+        if (this->gridView_().comm().rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
         {
             // print minimum and maximum values
             std::cout << "nonwetting phase saturation: min = " << minS
@@ -227,7 +225,6 @@ public:
 
         FVElementGeometry fvElemGeom;
         SecondaryVars secVars;
-        ElementBoundaryTypes elemBcTypes;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
@@ -237,7 +234,6 @@ public:
             (*rank)[idx] = this->gridView_().comm().rank();
 
             fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
 
             int numVerts = elemIt->template count<dim> ();
             for (int i = 0; i < numVerts; ++i)
@@ -274,24 +270,6 @@ public:
         writer.addVertexData(mobN, "mobN");
         writer.addVertexData(Te, "temperature");
         writer.addCellData(rank, "process rank");
-    }
-
-    /*!
-     * \brief Calculate the flux of the nonwetting phase across a given
-     * layer for the current timestep
-     */
-    void calculateFluxAcrossLayer(Dune::FieldVector<Scalar, 2> &flux, int coord, Scalar coordVal)
-    {
-        this->localJacobian().calculateFluxAcrossLayer(this->curSol(), flux, coord, coordVal);
-    }
-    
-    /*!
-     * \brief Calculate the phase masses in the system for the current
-     *        timestep.
-     */
-    void calculateMass(Dune::FieldVector<Scalar, 2> &mass)
-    {
-        this->localJacobian().calculateMass(this->curSol(), mass);
     }
 };
 }
