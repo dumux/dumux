@@ -598,7 +598,8 @@ void FVMPFAOPressure2P<TypeTag>::storeInteractionVolumeInfo()
             }
 
             //store pointer 1
-            interactionVolumes_[globalVertIdx1234].setSubVolumeElement(eIt, 0);
+            ElementPointer ePtr(*eIt);
+            interactionVolumes_[globalVertIdx1234].setSubVolumeElement(ePtr, 0);
             interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt12->indexInInside(), 0, 0);
             interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt14->indexInInside(), 0, 1);
 

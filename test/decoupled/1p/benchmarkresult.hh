@@ -132,7 +132,7 @@ struct BenchmarkResult
 
             // cell center in reference element
             const Dune::FieldVector<ct,dim>&
-                local = Dune::ReferenceElements<ct,dim>::general(gt).position(0,0);
+                local = Dune::GenericReferenceElements<ct,dim>::general(gt).position(0,0);
 
             // get global coordinate of cell center
             Dune::FieldVector<ct,dim> global = geometry.global(local);
@@ -360,7 +360,7 @@ struct ResultEvaluation
 
             Dune::GeometryType geomType = geometry.type();
 
-            const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+            const Dune::FieldVector<Scalar,dim>& local = Dune::GenericReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
             Dune::FieldVector<Scalar,dim> global = geometry.global(local);
 
             Scalar volume = geometry.volume();
@@ -537,11 +537,11 @@ struct ResultEvaluation
 
             Dune::GeometryType geomType = geometry.type();
 
-            const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+            const Dune::FieldVector<Scalar,dim>& local = Dune::GenericReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
             Dune::FieldVector<Scalar,dim> global = geometry.global(local);
 
             Scalar volume = geometry.integrationElement(local)
-                    *Dune::ReferenceElements<Scalar,dim>::general(geomType).volume();
+                    *Dune::GenericReferenceElements<Scalar,dim>::general(geomType).volume();
 
             int eIdx = elementMapper.map(element);
 
@@ -572,7 +572,7 @@ struct ResultEvaluation
                 i++;
 
                 // center in face's reference element
-                const Dune::FieldVector<Scalar,dim-1>& faceLocalNm1 = Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
+                const Dune::FieldVector<Scalar,dim-1>& faceLocalNm1 = Dune::GenericReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
 
                 // center of face in global coordinates
                 Dune::FieldVector<Scalar,dim> faceGlobal = is->geometry().global(faceLocalNm1);

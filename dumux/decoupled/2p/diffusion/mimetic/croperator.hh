@@ -31,7 +31,6 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
-#include<dune/grid/common/referenceelements.hh>
 
 #include<dune/istl/bvector.hh>
 #include<dune/istl/operators.hh>
@@ -111,7 +110,6 @@ class CROperatorAssembler
     typedef typename Grid::template Codim<0>::Entity Entity;
     typedef typename GridView::template Codim<0>::Iterator Iterator;
     typedef typename GridView::IndexSet IS;
-    typedef typename Grid::template Codim<0>::HierarchicIterator HierarchicIterator;
     typedef typename Grid::template Codim<0>::EntityPointer EEntityPointer;
     typedef Dune::FieldMatrix<Scalar,1,1> BlockType;
     typedef Dune::BCRSMatrix<BlockType> MatrixType;
@@ -158,8 +156,8 @@ public:
         for (Iterator it = gridView_.template begin<0>(); it != eendit; ++it)
         {
             Dune::GeometryType gt = it->geometry().type();
-            const typename Dune::ReferenceElementContainer<Scalar,dim>::value_type&
-                refelem = Dune::ReferenceElements<Scalar,dim>::general(gt);
+            const typename Dune::GenericReferenceElementContainer<Scalar,dim>::value_type&
+                refelem = Dune::GenericReferenceElements<Scalar,dim>::general(gt);
 
             // faces, c=1
             for (int i = 0; i < refelem.size(1); i++)
@@ -193,8 +191,8 @@ public:
         for (Iterator it = gridView_.template begin<0>(); it!=eendit; ++it)
         {
             Dune::GeometryType gt = it->geometry().type();
-            const typename Dune::ReferenceElementContainer<Scalar,dim>::value_type&
-                refelem = Dune::ReferenceElements<Scalar,dim>::general(gt);
+            const typename Dune::GenericReferenceElementContainer<Scalar,dim>::value_type&
+                refelem = Dune::GenericReferenceElements<Scalar,dim>::general(gt);
             //           std::cout << "ELEM " << GeometryName(gt) << std::endl;
 
             // faces, c=1

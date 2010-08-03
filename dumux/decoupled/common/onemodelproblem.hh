@@ -57,8 +57,7 @@ class OneModelProblem
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    enum Episode {}; // the type of an episode of the simulation
-    typedef Dumux::TimeManager<Episode>      TimeManager;
+    typedef Dumux::TimeManager<TypeTag>      TimeManager;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
@@ -95,7 +94,7 @@ public:
         : gridView_(gridView),
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
-          timeManager_(0.0, verbose),
+          timeManager_(verbose),
           variables_(gridView),
           dt_(0),
           resultWriter_(asImp_()->name())
@@ -360,12 +359,10 @@ public:
      */
     void serialize()
     {
-        typedef Dumux::Restart<GridView> Restarter;
+        typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.serializeBegin(gridView(),
-                           asImp_()->name(),
-                           timeManager_.time());
+        res.serializeBegin(*asImp_());
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
         timeManager_.serialize(res);
@@ -383,7 +380,7 @@ public:
      */
     void deserialize(double t)
     {
-        typedef Dumux::Restart<GridView> Restarter;
+        typedef Dumux::Restart Restarter;
 
         Restarter res;
         res.deserializeBegin(gridView(),

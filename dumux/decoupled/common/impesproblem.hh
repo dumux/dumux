@@ -13,7 +13,6 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
 #ifndef DUMUX_IMPESPROBLEM_HH
 #define DUMUX_IMPESPROBLEM_HH
 
@@ -55,9 +54,7 @@ class IMPESProblem
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
-    enum Episode {}; // the type of an episode of the simulation
-    typedef Dumux::TimeManager<Episode>      TimeManager;
+    typedef Dumux::TimeManager<TypeTag>  TimeManager;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
@@ -96,13 +93,10 @@ public:
         : gridView_(gridView),
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
-          timeManager_(0.0, verbose),
+          timeManager_(verbose),
           variables_(gridView),
-          dt_(0),
-          resultWriter_(asImp_()->name())
+          dt_(0)
     {
-        wasRestarted_ = false;
-
 //        // calculate the bounding box of the grid view
 //        VertexIterator vIt = gridView.template begin<dim>();
 //        const VertexIterator vEndIt = gridView.template end<dim>();
@@ -132,23 +126,6 @@ public:
     // \{
 
     /*!
-     * \brief Start the simulation procedure.
-     *
-     * This method is usually called by the main() function and simply
-     * uses Dumux::TimeManager::runSimulation() to do the actual
-     * work.
-     */
-    bool simulate(Scalar dtInitial, Scalar tEnd)
-    {
-        // set the initial time step and the time where the simulation ends
-        timeManager_.setEndTime(tEnd);
-        timeManager_.setTimeStepSize(dtInitial);
-        timeManager_.runSimulation(*asImp_());
-        return true;
-    };
-
-
-    /*!
      * \brief Called by the Dumux::TimeManager in order to
      *        initialize the problem.
      */
@@ -156,15 +133,12 @@ public:
     {
         // set the initial condition of the model
         model().initial();
-
-        // write the inital solution to disk
-        writeCurrentResult_();
     }
 
     /*!
      * \brief Called by the time manager before the time integration.
      */
-    void timeStepBegin()
+    void preProcess()
     {}
 
     /*!
@@ -206,10 +180,8 @@ public:
      * This is used to do some janitorial tasks like writing the
      * current solution to disk.
      */
-    void timeStepEnd()
+    void postProcess()
     {
-        asImp_()->writeCurrentResult_();
-        wasRestarted_ = false;
     };
 
     /*!
@@ -240,11 +212,11 @@ public:
      * steps. This file is intented to be overwritten by the
      * implementation.
      */
-    bool shouldWriteRestartFile() const
+    bool doSerialize() const
     {
-        return !restarted() &&
-            timeManager().stepNum() > 0 &&
-            (timeManager().stepNum() % 5 == 0);
+        return 
+            timeManager().timeStepIndex() > 0 &&
+            (timeManager().timeStepIndex() % 5 == 0);
     }
 
     /*!
@@ -255,8 +227,8 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
-    bool shouldWriteOutputFile() const
-    { return !restarted(); }
+    bool doOutput() const
+    { return true; }
 
     // \}
 
@@ -367,19 +339,6 @@ public:
     // \{
 
     /*!
-     * \brief Returns true, if the current state of the problem was
-     *        loaded from a restart file.
-     */
-    bool restarted() const
-    { return wasRestarted_; }
-
-    void restarted(bool setRestarted)
-    {
-        wasRestarted_ = setRestarted;
-        return ;
-    }
-
-    /*!
      * \brief This method writes the complete state of the problem
      *        to the harddisk.
      *
@@ -390,12 +349,10 @@ public:
      */
     void serialize()
     {
-        typedef Dumux::Restart<GridView> Restarter;
+        typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.serializeBegin(gridView(),
-                           asImp_()->name(),
-                           timeManager_.time());
+        res.serializeBegin(*asImp_());
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
         timeManager_.serialize(res);
@@ -413,12 +370,10 @@ public:
      */
     void deserialize(double t)
     {
-        typedef Dumux::Restart<GridView> Restarter;
+        typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.deserializeBegin(gridView(),
-                             asImp_()->name(),
-                             t);
+        res.deserializeBegin(*asImp_(), t);
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager_.deserialize(res);
@@ -426,9 +381,19 @@ public:
         model().deserialize(res);
 
         res.deserializeEnd();
-
-        wasRestarted_ = true;
     };
+
+    //! Write the fields current solution into an VTK output file.
+    void writeOutput()
+    {
+        if (gridView().comm().rank() == 0)
+            std::cout << "Writing result file for current time step\n";
+        
+        resultWriter_.beginTimestep(timeManager_.time() + timeManager_.timeStepSize(),
+                                    gridView());
+        model().addOutputVtkFields(resultWriter_);
+        resultWriter_.endTimestep();
+    }
 
     // \}
 
@@ -440,26 +405,6 @@ protected:
     //! \copydoc asImp_()
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
-
-    //! Write the fields current solution into an VTK output file.
-    void writeCurrentResult_()
-    {
-        // write the current result to disk
-        if (asImp_()->shouldWriteOutputFile()) {
-            if (gridView().comm().rank() == 0)
-                std::cout << "Writing result file for current time step\n";
-
-            resultWriter_.beginTimestep(timeManager_.time(),
-                                        gridView());
-
-            model().addOutputVtkFields(resultWriter_);
-            resultWriter_.endTimestep();
-        }
-
-        // write restart file if necessary
-        if (asImp_()->shouldWriteRestartFile())
-            serialize();
-    }
 
     VtkMultiWriter& resultWriter()
     {
@@ -491,8 +436,6 @@ private:
     IMPESModel* model_;
 
     VtkMultiWriter  resultWriter_;
-
-    bool wasRestarted_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.
