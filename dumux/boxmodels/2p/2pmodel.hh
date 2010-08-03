@@ -108,7 +108,7 @@ public:
      *         and get minimum and maximum values of primary variables
      *
      */
-    void calculateMass(const SolutionVector &curSol, Dune::FieldVector<Scalar, 2> &mass)
+    void calculateMass(const SolutionVector &sol, Dune::FieldVector<Scalar, 2> &mass)
     {
         mass = 0;
 
@@ -286,7 +286,7 @@ public:
      */
     void calculateFluxAcrossLayer(Dune::FieldVector<Scalar, 2> &flux, int coord, Scalar coordVal)
     {
-        this->localJacobian().calculateFluxAcrossLayer(this->curSolFunction(), flux, coord, coordVal);
+        this->localJacobian().calculateFluxAcrossLayer(this->curSol(), flux, coord, coordVal);
     }
     
     /*!
@@ -295,7 +295,7 @@ public:
      */
     void calculateMass(Dune::FieldVector<Scalar, 2> &mass)
     {
-        this->localJacobian().calculateMass(this->curSolFunction(), mass);
+        this->localJacobian().calculateMass(this->curSol(), mass);
     }
 };
 }
