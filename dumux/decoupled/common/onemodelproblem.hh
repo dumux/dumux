@@ -99,8 +99,6 @@ public:
           dt_(0),
           resultWriter_(asImp_()->name())
     {
-        wasRestarted_ = false;
-
 //        // calculate the bounding box of the grid view
 //        VertexIterator vIt = gridView.template begin<dim>();
 //        const VertexIterator vEndIt = gridView.template end<dim>();
@@ -132,6 +130,7 @@ public:
      * uses Dumux::TimeManager::runSimulation() to do the actual
      * work.
      */
+/*
     bool simulate(Scalar dtInitial, Scalar tEnd)
     {
         // set the initial time step and the time where the simulation ends
@@ -140,6 +139,7 @@ public:
         timeManager_.runSimulation(*asImp_());
         return true;
     };
+*/
 
 
     /*!
@@ -150,16 +150,14 @@ public:
     {
         // set the initial condition of the model
         model().initial();
-
-        // write the inital solution to disk
-        writeCurrentResult_();
     }
 
     /*!
-     * \brief Called by the time manager before the time integration.
+     * \brief Called by Dumux::TimeManager just before the time
+     *        integration.
      */
-    void timeStepBegin()
-    {}
+    void preProcess()
+    { };
 
     /*!
      * \brief Called by Dumux::TimeManager in order to do a time
@@ -193,18 +191,11 @@ public:
     }
 
     /*!
-     * \brief Called by Dumux::TimeManager whenever a solution for a
-     *        timestep has been computed and the simulation time has
-     *        been updated.
-     *
-     * This is used to do some janitorial tasks like writing the
-     * current solution to disk.
+     * \brief Called by Dumux::TimeManager just before the time
+     *        integration.
      */
-    void timeStepEnd()
-    {
-        asImp_()->writeCurrentResult_();
-        wasRestarted_ = false;
-    };
+    void postProcess()
+    { };
 
     /*!
      * \brief Returns the current time step size [seconds].
@@ -234,11 +225,11 @@ public:
      * steps. This file is intented to be overwritten by the
      * implementation.
      */
-    bool shouldWriteRestartFile() const
+    bool doSerialize() const
     {
-        return !restarted() &&
-            timeManager().timeStepNum() > 0 &&
-            (timeManager().timeStepNum() % 5 == 0);
+        return 
+            timeManager().timeStepIndex() > 0 &&
+            (timeManager().timeStepIndex() % 5 == 0);
     }
 
     /*!
@@ -249,9 +240,30 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
-    bool shouldWriteOutputFile() const
-    { return !restarted(); }
+    bool doOutput() const
+    { return true; }
 
+    //! Write the fields current solution into an VTK output file.
+    void writeOutput()
+    {
+        if (gridView().comm().rank() == 0)
+            std::cout << "Writing result file for current time step\n";
+        
+        resultWriter_.beginTimestep(timeManager_.time(), gridView());
+        model().addOutputVtkFields(resultWriter_);
+        resultWriter_.endTimestep();
+    }
+
+    /*!
+     * \brief Called when the end of an simulation episode is reached.
+     */
+    void episodeEnd()
+    {
+        std::cerr << "The end of an episode is reached, but the problem "
+                  << "does not override the episodeEnd() method. "
+                  << "Doing nothing!\n";
+    };
+    
     // \}
 
     /*!
@@ -336,19 +348,6 @@ public:
     // \{
 
     /*!
-     * \brief Returns true, if the current state of the problem was
-     *        loaded from a restart file.
-     */
-    bool restarted() const
-    { return wasRestarted_; }
-
-    void restarted(bool setRestarted)
-    {
-        wasRestarted_ = setRestarted;
-        return ;
-    }
-
-    /*!
      * \brief This method writes the complete state of the problem
      *        to the harddisk.
      *
@@ -393,8 +392,6 @@ public:
         model().deserialize(res);
 
         res.deserializeEnd();
-
-        wasRestarted_ = true;
     };
 
     // \}
@@ -407,25 +404,6 @@ protected:
     //! \copydoc asImp_()
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
-
-    //! Write the fields current solution into an VTK output file.
-    void writeCurrentResult_()
-    {
-        // write the current result to disk
-        if (asImp_()->shouldWriteOutputFile()) {
-            if (gridView().comm().rank() == 0)
-                std::cout << "Writing result file for current time step\n";
-
-            resultWriter_.beginTimestep(timeManager_.time(),
-                                        gridView());
-            model().addOutputVtkFields(resultWriter_);
-            resultWriter_.endTimestep();
-        }
-
-        // write restart file if necessary
-        if (asImp_()->shouldWriteRestartFile())
-            serialize();
-    }
 
     VtkMultiWriter& resultWriter()
     {
@@ -455,8 +433,6 @@ private:
     Model* model_;
 
     VtkMultiWriter  resultWriter_;
-
-    bool wasRestarted_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.

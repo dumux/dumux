@@ -181,8 +181,7 @@ public:
      * current solution to disk.
      */
     void postProcess()
-    {
-    };
+    { };
 
     /*!
      * \brief Returns the current time step size [seconds].
@@ -229,6 +228,16 @@ public:
      */
     bool doOutput() const
     { return true; }
+
+    /*!
+     * \brief Called when the end of an simulation episode is reached.
+     */
+    void episodeEnd()
+    {
+        std::cerr << "The end of an episode is reached, but the problem "
+                  << "does not override the episodeEnd() method. "
+                  << "Doing nothing!\n";
+    };
 
     // \}
 

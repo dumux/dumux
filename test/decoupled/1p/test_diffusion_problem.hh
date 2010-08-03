@@ -200,10 +200,8 @@ public:
         return "test_diffusion";
     }
 
-    bool shouldWriteRestartFile() const
-    {
-        return false;
-    }
+    bool doSerialize() const
+    { return false; }
 
     /*!
     * \brief Returns the temperature within the domain.
