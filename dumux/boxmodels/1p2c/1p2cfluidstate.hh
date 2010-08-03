@@ -36,10 +36,10 @@ template <class TypeTag>
 class OnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
                                              OnePTwoCFluidState<TypeTag> >
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
 

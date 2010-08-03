@@ -1,4 +1,4 @@
-// $Id: 1p2cboxjacobian.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 1p2clocalresidual.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -18,13 +18,13 @@
 #ifndef DUMUX_ONEP_TWOC_BOX_JACOBIAN_HH
 #define DUMUX_ONEP_TWOC_BOX_JACOBIAN_HH
 
-#include <dumux/boxmodels/boxscheme/boxscheme.hh>
+#include <dumux/boxmodels/common/boxmodel.hh>
 
 #include <dumux/boxmodels/1p2c/1p2cproperties.hh>
 
-#include <dumux/boxmodels/1p2c/1p2cvertexdata.hh>
-#include <dumux/boxmodels/1p2c/1p2celementdata.hh>
-#include <dumux/boxmodels/1p2c/1p2cfluxdata.hh>
+#include <dumux/boxmodels/1p2c/1p2csecondaryvars.hh>
+
+#include <dumux/boxmodels/1p2c/1p2cfluxvars.hh>
 
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -37,11 +37,11 @@ namespace Dumux
  *        two-component model in the BOX scheme.
  */
 template<class TypeTag>
-class OnePTwoCBoxJacobian : public BoxJacobian<TypeTag>
+class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
 {
 protected:
-    typedef OnePTwoCBoxJacobian<TypeTag> ThisType;
-    typedef BoxJacobian<TypeTag> ParentType;
+    typedef OnePTwoCLocalResidual<TypeTag> ThisType;
+    typedef BoxLocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
@@ -68,28 +68,23 @@ protected:
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector PrimaryVarVector;
-    typedef typename SolutionTypes::SolutionVector SolutionVector;
-    typedef typename SolutionTypes::SolutionOnElement SolutionOnElement;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementData)) ElementData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxData)) FluxData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
 
-    typedef std::vector<VertexData> VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
     static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
 
 public:
-    OnePTwoCBoxJacobian(Problem &problem)
-    : ParentType(problem)
-    {
-    };
-
     /*!
      * \brief Evaluate the amount all conservation quantites
      *        (e.g. phase mass) within a finite volume.
@@ -101,8 +96,8 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_ : this->curElemDat_;
-        const VertexData &vertDat = elemDat[scvIdx];
+        const ElementSecondaryVars &elemDat = usePrevSol ? this->prevSecVars_() : this->curSecVars_();
+        const SecondaryVars &vertDat = elemDat[scvIdx];
 
         // storage term of continuity equation
         result[konti] = 0;
@@ -117,17 +112,17 @@ public:
      */
     void computeFlux(PrimaryVarVector &flux, int faceId) const
     {
-        FluxData vars(this->problem_,
-                this->curElement_(),
-                this->curElementGeom_,
-                faceId,
-                this->curElemDat_);
+        FluxVars vars(this->problem_(),
+                      this->elem_(),
+                      this->fvElemGeom_(),
+                      faceId,
+                      this->curSecVars_());
         flux = 0;
 
         // data attached to upstream and the downstream vertices
         // of the current phase
-        const VertexData &up = this->curElemDat_[vars.upstreamIdx];
-        const VertexData &dn = this->curElemDat_[vars.downstreamIdx];
+        const SecondaryVars &up = this->curSecVars_(vars.upstreamIdx);
+        const SecondaryVars &dn = this->curSecVars_(vars.downstreamIdx);
 
         flux[konti] = vars.vDarcyNormal / vars.viscosityAtIP;
 
@@ -162,61 +157,10 @@ public:
      */
     void computeSource(PrimaryVarVector &q, int localVertexIdx)
     {
-        this->problem_.source(q,
-                this->curElement_(),
-                this->curElementGeom_,
-                localVertexIdx);
-    }
-
-    /*!
-     * \brief Add the mass fraction of air in water to VTK output of
-     *        the current timestep.
-     */
-    template <class MultiWriter>
-    void addOutputVtkFields(MultiWriter &writer, const SolutionVector &globalSol)
-    {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-
-        // create the required scalar fields
-        unsigned numVertices = this->gridView_.size(dim);
-
-        ScalarField *pressure = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *molefraction = writer.template createField<Scalar, 1>(numVertices);
-
-        unsigned numElements = this->gridView_.size(0);
-        ScalarField *rank = writer.template createField<Scalar, 1>(numElements);
-
-        SolutionOnElement tmpSol;
-        VertexDataArray elemDat;
-
-        ElementIterator elementIt = this->gridView_.template begin<0>();
-        const ElementIterator &endit = this->gridView_.template end<0>();
-        for (; elementIt != endit; ++elementIt)
-        {
-            int idx = this->problem_.model().elementMapper().map(*elementIt);
-            (*rank)[idx] = this->gridView_.comm().rank();
-
-            int numLocalVerts = elementIt->template count<dim>();
-            tmpSol.resize(numLocalVerts);
-
-            setCurrentElement(*elementIt);
-            this->restrictToElement(tmpSol, globalSol);
-            updateElementData_(elemDat, tmpSol, false);
-
-            for (int i = 0; i < numLocalVerts; ++i)
-            {
-                int globalIdx = this->problem_.model().vertexMapper().map(*elementIt, i, dim);
-
-                (*pressure)[globalIdx] = elemDat[i].pressure;
-                (*molefraction)[globalIdx] = elemDat[i].molefraction;
-
-            };
-        }
-
-        writer.addVertexData(pressure, "pressure");
-        writer.addVertexData(molefraction, "molefraction");
-        writer.addCellData(rank, "process rank");
-
+        this->problem_().source(q,
+                                this->elem_(),
+                                this->fvElemGeom_(),
+                                localVertexIdx);
     }
 };
 

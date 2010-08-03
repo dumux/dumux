@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P2C_PROPERTIES_HH
 #define DUMUX_1P2C_PROPERTIES_HH
 
-#include<dumux/boxmodels/boxscheme/boxproperties.hh>
+#include<dumux/boxmodels/common/boxproperties.hh>
 
 namespace Dumux
 {
@@ -36,16 +36,13 @@ template<class TypeTag>
 class OnePTwoCBoxModel;
 
 template<class TypeTag>
-class OnePTwoCBoxJacobian;
+class OnePTwoCLocalResidual;
 
 template <class TypeTag>
-class OnePTwoCVertexData;
+class OnePTwoCSecondaryVars;
 
 template <class TypeTag>
-class OnePTwoCElementData;
-
-template <class TypeTag>
-class OnePTwoCFluxData;
+class OnePTwoCFluxVars;
 
 /*!
  * \brief The indices for the isothermal single-phase, two-component model.
@@ -65,7 +62,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the isothermal single-phase, two-component problems
-NEW_TYPE_TAG(BoxOnePTwoC, INHERITS_FROM(BoxScheme));
+NEW_TYPE_TAG(BoxOnePTwoC, INHERITS_FROM(BoxModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -89,20 +86,20 @@ SET_INT_PROP(BoxOnePTwoC, NumComponents, 2); //!< The number of components in th
 
 //! Use the 1p2c local jacobian operator for the 1p2c model
 SET_TYPE_PROP(BoxOnePTwoC,
-              LocalJacobian,
-              OnePTwoCBoxJacobian<TypeTag>);
+              LocalResidual,
+              OnePTwoCLocalResidual<TypeTag>);
 
 //! the Model property
 SET_TYPE_PROP(BoxOnePTwoC, Model, OnePTwoCBoxModel<TypeTag>);
 
-//! the VertexData property
-SET_TYPE_PROP(BoxOnePTwoC, VertexData, OnePTwoCVertexData<TypeTag>);
+//! the SecondaryVars property
+SET_TYPE_PROP(BoxOnePTwoC, SecondaryVars, OnePTwoCSecondaryVars<TypeTag>);
 
-//! the ElementData property
-SET_TYPE_PROP(BoxOnePTwoC, ElementData, OnePTwoCElementData<TypeTag>);
 
-//! the FluxData property
-SET_TYPE_PROP(BoxOnePTwoC, FluxData, OnePTwoCFluxData<TypeTag>);
+
+
+//! the FluxVars property
+SET_TYPE_PROP(BoxOnePTwoC, FluxVars, OnePTwoCFluxVars<TypeTag>);
 
 //! the default upwind factor. Default 1.0, i.e. fully upwind...
 SET_SCALAR_PROP(BoxOnePTwoC, UpwindAlpha, 1.0);

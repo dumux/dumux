@@ -17,7 +17,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief  Definition of a problem, where the distribution of a therapeutic agent
+ * \brief Definition of a problem, where the distribution of a therapeutic agent
  * within pulmonary tissue is described
  * \author Karin Erbertseder, Bernd Flemisch
  */
@@ -29,7 +29,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/isfluid_trail_system.hh>
-#include <dumux/boxmodels/1p2c/1p2cboxmodel.hh>
+#include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
 #include "tissue_tumor_spatialparameters.hh"
 
@@ -54,7 +54,6 @@ SET_PROP(TissueTumorProblem, Grid)
 #endif
 };
 
-#ifdef HAVE_DUNE_PDELAB
 SET_PROP(TissueTumorProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -62,11 +61,9 @@ SET_PROP(TissueTumorProblem, LocalFEMSpace)
     enum{dim = GridView::dimension};
 
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for cubes
-//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for simplices
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
+//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
-#endif
-
 
 // Set the problem property
 SET_PROP(TissueTumorProblem, Problem)
@@ -92,7 +89,7 @@ SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
 
 
 /**
- * \brief  Definition of a problem, where the distribution of a therapeutic agent
+ * \brief Definition of a problem, where the distribution of a therapeutic agent
  *         within pulmonary tissue is described
  *
  * The model domain is 22 mm long in x-direction and in y-direction with a discretization length of 0.1
@@ -117,13 +114,13 @@ SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
  */
 
 template <class TypeTag = TTAG(TissueTumorProblem) >
-class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag, TissueTumorProblem<TypeTag> >
+class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
 {
-    typedef TissueTumorProblem<TypeTag>           ThisType;
-    typedef OnePTwoCBoxProblem<TypeTag, ThisType> ParentType;
+    typedef TissueTumorProblem<TypeTag> ThisType;
+    typedef OnePTwoCBoxProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
@@ -137,22 +134,23 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag, TissueTumorProblem
         transport        = Indices::transport,
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
-    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename GridView::template Codim<0>::Entity        Element;
-    typedef typename GridView::template Codim<dim>::Entity      Vertex;
-    typedef typename GridView::Intersection                     Intersection;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    TissueTumorProblem(const GridView &gridView)
-        : ParentType(gridView)
+    TissueTumorProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
     }
 
@@ -176,7 +174,7 @@ public:
      */
     Scalar temperature(const Element           &element,
                        const FVElementGeometry &fvElemGeom,
-                       int                      scvIdx) const
+                       int scvIdx) const
     {
         return 273.15 + 36; // in [K]
     };
@@ -192,12 +190,12 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypeVector         &values,
+    void boundaryTypes(BoundaryTypes         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
                        const Intersection         &is,
-                       int                         scvIdx,
-                       int                         boundaryFaceIdx) const
+                       int scvIdx,
+                       int boundaryFaceIdx) const
     {
         values.setAllDirichlet();
     }
@@ -212,8 +210,8 @@ public:
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const Intersection         &is,
-                   int                         scvIdx,
-                   int                         boundaryFaceIdx) const
+                   int scvIdx,
+                   int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -233,8 +231,8 @@ public:
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const Intersection         &is,
-                 int                         scvIdx,
-                 int                         boundaryFaceIdx) const
+                 int scvIdx,
+                 int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -270,7 +268,7 @@ public:
     void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
-                int                      scvIdx) const
+                int scvIdx) const
     {
          const GlobalPosition &globalPos
                     = element.geometry().corner(scvIdx);
@@ -290,7 +288,7 @@ public:
     void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
-                 int                      scvIdx) const
+                 int scvIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);

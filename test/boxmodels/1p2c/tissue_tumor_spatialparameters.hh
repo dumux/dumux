@@ -32,29 +32,29 @@ namespace Dumux
 template<class TypeTag>
 class TissueTumorSpatialParameters : public BoxSpatialParameters<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag>                   ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid))     Grid;
+    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-    typedef typename Grid::ctype                            CoordScalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
     };
 
-    typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
+    typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector        SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxData))   FluxData;
-    typedef std::vector<VertexData>                           VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity             Element;
+    typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
     //typedef LinearMaterial<Scalar> EffMaterialLaw;
@@ -87,13 +87,13 @@ public:
     /*!
      * \brief Define the intrinsic permeability \f$[m^2]\f$.
      *
-     * \param element       The current finite element
-     * \param fvElemGeom    The current finite volume geometry of the element
-     * \param scvfIdx       The index sub-control volume face where the
+     * \param element The current finite element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvfIdx The index sub-control volume face where the
      */
     const Scalar intrinsicPermeability(const Element           &element,
                                        const FVElementGeometry &fvElemGeom,
-                                       int                      scvIdx) const
+                                       int scvIdx) const
     {
         const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
         if (isTumor_(pos))
@@ -105,13 +105,13 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$.
      *
-     * \param element     The finite element
-     * \param fvElemGeom  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
+     * \param element The finite element
+     * \param fvElemGeom The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
      */
     double porosity(const Element           &element,
                     const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
+                    int scvIdx) const
     {
         const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
         if (isTumor_(pos))
@@ -123,13 +123,13 @@ public:
     /*!
      * \brief Define the tortuosity \f$[?]\f$.
      *
-     * \param element     The finite element
-     * \param fvElemGeom  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
+     * \param element The finite element
+     * \param fvElemGeom The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
      */
     double tortuosity(const Element           &element,
                     const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
+                    int scvIdx) const
     {
         const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
         if (isTumor_(pos))
@@ -141,13 +141,13 @@ public:
     /*!
      * \brief Define the dispersivity \f$[?]\f$.
      *
-     * \param element     The finite element
-     * \param fvElemGeom  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
+     * \param element The finite element
+     * \param fvElemGeom The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
      */
     double dispersivity(const Element           &element,
                     const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
+                    int scvIdx) const
     {
         return 0;
     }

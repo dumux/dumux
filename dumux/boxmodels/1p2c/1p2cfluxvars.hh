@@ -1,4 +1,4 @@
-// $Id: 1p2cfluxdata.hh 3838 2010-07-15 08:31:53Z bernd $
+// $Id: 1p2cfluxvars.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -41,16 +41,16 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class OnePTwoCFluxData
+class OnePTwoCFluxVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                      VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
     enum {
         dim = GridView::dimension,
@@ -58,24 +58,24 @@ class OnePTwoCFluxData
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume             SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+    typedef typename FVElementGeometry::SubControlVolume SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
 
 public:
-    OnePTwoCFluxData(const Problem &problem,
+    OnePTwoCFluxVars(const Problem &problem,
                      const Element &element,
                      const FVElementGeometry &elemGeom,
                      int faceIdx,
-                     const VertexDataArray &elemDat)
+                     const ElementSecondaryVars &elemDat)
         : fvElemGeom(elemGeom)
     {
         face = &fvElemGeom.subContVolFace[faceIdx];
@@ -101,7 +101,7 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const VertexDataArray &elemDat)
+                             const ElementSecondaryVars &elemDat)
     {
         GlobalPosition tmp;
         if (!problem.spatialParameters().useTwoPointGradient(element, face->i, face->j)) {
@@ -166,7 +166,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const VertexDataArray &elemDat)
+                              const ElementSecondaryVars &elemDat)
     {
         Tensor K;
         problem.spatialParameters().meanK(K,
@@ -190,10 +190,10 @@ private:
 
     void calculateDiffCoeffPM_(const Problem &problem,
                                const Element &element,
-                               const VertexDataArray &elemDat)
+                               const ElementSecondaryVars &elemDat)
     {
-        const VertexData &vDat_i = elemDat[face->i];
-        const VertexData &vDat_j = elemDat[face->j];
+        const SecondaryVars &vDat_i = elemDat[face->i];
+        const SecondaryVars &vDat_j = elemDat[face->j];
 
         // Diffusion coefficient in the porous medium
         diffCoeffPM
@@ -203,10 +203,10 @@ private:
 
     void calculateDispersionTensor_(const Problem &problem,
             const Element &element,
-            const VertexDataArray &elemDat)
+            const ElementSecondaryVars &elemDat)
     {
-        const VertexData &vDat_i = elemDat[face->i];
-        const VertexData &vDat_j = elemDat[face->j];
+        const SecondaryVars &vDat_i = elemDat[face->i];
+        const SecondaryVars &vDat_j = elemDat[face->j];
 
         //calculate dispersivity at the interface: [0]: alphaL = longitudinal disp. [m], [1] alphaT = transverse disp. [m]
         Dune::FieldVector<Scalar, 2> dispersivity(0);

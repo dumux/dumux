@@ -1,4 +1,4 @@
-// $Id: 1p2cvertexdata.hh 3838 2010-07-15 08:31:53Z bernd $
+// $Id: 1p2csecondaryvars.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -21,8 +21,8 @@
  * \brief Quantities required by the single-phase, two-component box
  *        model defined on a vertex.
  */
-#ifndef DUMUX_1P2C_VERTEX_DATA_HH
-#define DUMUX_1P2C_VERTEX_DATA_HH
+#ifndef DUMUX_1P2C_SECONDARY_VARS_HH
+#define DUMUX_1P2C_SECONDARY_VARS_HH
 
 #include "1p2cfluidstate.hh"
 
@@ -34,12 +34,13 @@ namespace Dumux
  *        finite volume in the single-phase, two-component model.
  */
 template <class TypeTag>
-class OnePTwoCVertexData
+class OnePTwoCSecondaryVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))  Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
     typedef OnePTwoCFluidState<TypeTag> FluidState;
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -56,35 +57,37 @@ class OnePTwoCVertexData
         transport = Indices::transport
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
+
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container                     ReferenceElements;
+    typedef typename RefElemProp::Container ReferenceElements;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef typename SolutionTypes::PrimaryVarVector  PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &sol,
+    void update(const PrimaryVarVector  &priVars,
+                const Problem           &problem,
                 const Element           &element,
                 const FVElementGeometry &elemGeom,
-                int                      vertIdx,
-                const Problem           &problem,
+                int                      scvIdx,
                 bool                     isOldSol)
     {
-        porosity = problem.spatialParameters().porosity(element, elemGeom, vertIdx);
-        tortuosity = problem.spatialParameters().tortuosity(element, elemGeom, vertIdx);
-        dispersivity = problem.spatialParameters().dispersivity(element, elemGeom, vertIdx);
+        primaryVars_ = priVars;
 
-        Scalar temperature = problem.temperature(element, elemGeom, vertIdx);
-        fluidState_.update(sol, temperature);
+        porosity = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
+        tortuosity = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
+        dispersivity = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
+
+        Scalar temperature = problem.temperature(element, elemGeom, scvIdx);
+        fluidState_.update(priVars, temperature);
         pressure = fluidState_.phasePressure(konti);
         molefraction = fluidState_.moleFrac(konti, transport);
 
@@ -93,6 +96,18 @@ public:
         viscosity = FluidSystem::phaseViscosity(konti, temperature, pressure, fluidState_);
         diffCoeff = FluidSystem::diffCoeff(konti, transport, konti, temperature, pressure, fluidState_);
     }
+
+    /*!
+     * \brief Sets the evaluation point used in the by the local jacobian.
+     */
+    void setEvalPoint(const Implementation *ep)
+    { }
+
+    /*!
+     * \brief Return the vector of primary variables
+     */
+    const PrimaryVarVector &primaryVars() const
+    { return primaryVars_; }
 
     Scalar porosity;
     Scalar density;
@@ -105,6 +120,8 @@ public:
     Scalar molarDensity;
     FluidState fluidState_;
 
+protected:
+    PrimaryVarVector primaryVars_;
 };
 
 }

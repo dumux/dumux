@@ -19,27 +19,29 @@
  * \brief Base class for all problems which use the single-phase,
  *        two-component box model
  */
-#ifndef DUMUX_1P2C_BOX_PROBLEM_HH
-#define DUMUX_1P2C_BOX_PROBLEM_HH
+#ifndef DUMUX_1P2C_PROBLEM_HH
+#define DUMUX_1P2C_PROBLEM_HH
 
-#include <dumux/boxmodels/boxscheme/boxproblem.hh>
+#include <dumux/boxmodels/common/boxproblem.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup OnePTwoCProblems
- * \brief  Base class for all problems which use the single-phase, two-component box model
+ * \brief Base class for all problems which use the single-phase, two-component box model
  *
  * \todo Please doc me more!
  */
-template<class TypeTag, class Implementation>
-class OnePTwoCBoxProblem : public BoxProblem<TypeTag, Implementation>
+template<class TypeTag>
+class OnePTwoCBoxProblem : public BoxProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag, Implementation> ParentType;
+    typedef BoxProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::Grid                         Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GridView::Grid Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
@@ -49,11 +51,11 @@ class OnePTwoCBoxProblem : public BoxProblem<TypeTag, Implementation>
         dimWorld = Grid::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    OnePTwoCBoxProblem(const GridView &gridView)
-        : ParentType(gridView),
+    OnePTwoCBoxProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView),
           gravity_(0),
           spatialParams_(gridView)
     {
@@ -106,7 +108,7 @@ private:
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
 
-    GlobalPosition  gravity_;
+    GlobalPosition gravity_;
 
     // soil properties
     SpatialParameters spatialParams_;

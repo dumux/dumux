@@ -53,7 +53,6 @@ SET_PROP(OnePTestProblem, Grid) { typedef Dune::UGGrid<3> type; };
 SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<3>);
 #endif
 
-#ifdef HAVE_DUNE_PDELAB
 SET_PROP(OnePTestProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -64,7 +63,6 @@ public:
     typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
 //    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
-#endif
 
 SET_PROP(OnePTestProblem, NewtonLinearSolverVerbosity)
 {public:
