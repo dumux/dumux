@@ -1,4 +1,4 @@
-// $Id: 1pboxjacobian.hh 3738 2010-06-15 14:01:09Z lauser $
+// $Id: 1plocalresidual.hh 3738 2010-06-15 14:01:09Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2007 by Peter Bastian                                     *
  *   Institute of Parallel and Distributed System                            *
@@ -22,11 +22,11 @@
 #ifndef DUMUX_1P_BOX_JACOBIAN_HH
 #define DUMUX_1P_BOX_JACOBIAN_HH
 
-#include <dumux/boxmodels/boxscheme/boxjacobian.hh>
+#include <dumux/boxmodels/common/boxlocalresidual.hh>
 
-#include "1pvertexdata.hh"
-#include "1pelementdata.hh"
-#include "1pfluxdata.hh"
+#include "1psecondaryvars.hh"
+
+#include "1pfluxvars.hh"
 
 namespace Dumux
 {
@@ -36,22 +36,22 @@ namespace Dumux
  *        using the one-phase box model.
  */
 template<class TypeTag>
-class OnePBoxJacobian : public BoxJacobian<TypeTag>
+class OnePLocalResidual : public BoxLocalResidual<TypeTag>
 {
-    typedef OnePBoxJacobian<TypeTag>         ThisType;
-    typedef BoxJacobian<TypeTag>   ParentType;
+    typedef OnePLocalResidual<TypeTag> ThisType;
+    typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))   Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))  GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))    Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
-    typedef typename GridView::template Codim<0>::Entity   Element;
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector        SolutionVector;
-    typedef typename SolutionTypes::SolutionOnElement       SolutionOnElement;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
 
@@ -63,17 +63,15 @@ class OnePBoxJacobian : public BoxJacobian<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData))   VertexData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxData))     FluxData;
-    typedef std::vector<VertexData> VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    OnePBoxJacobian(Problem &problem)
-        : ParentType(problem)
-    {};
+    
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -90,11 +88,11 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
-        const VertexData  &vertDat = elemDat[scvIdx];
+        const ElementSecondaryVars &elemVars = usePrevSol ? this->prevSecVars_()  : this->curSecVars_();
+        const SecondaryVars  &secVars = elemVars[scvIdx];
 
         // partial time derivative of the wetting phase mass
-        result[pressureIdx] =  vertDat.density * vertDat.porosity;
+        result[pressureIdx] =  secVars.density * secVars.porosity;
     }
 
 
@@ -104,11 +102,11 @@ public:
      */
     void computeFlux(PrimaryVarVector &flux, int faceId) const
     {
-        FluxData vars(this->problem_,
-                      this->curElement_(),
-                      this->curElementGeom_,
+        FluxVars vars(this->problem_(),
+                      this->elem_(),
+                      this->fvElemGeom_(),
                       faceId,
-                      this->curElemDat_);
+                      this->curSecVars_());
 
         flux[pressureIdx] = vars.densityAtIP * vars.vDarcyNormal / vars.viscosityAtIP;
     }
@@ -118,10 +116,10 @@ public:
      */
     void computeSource(PrimaryVarVector &q, int localVertexIdx)
     {
-        this->problem_.source(q,
-                              this->curElement_(),
-                              this->curElementGeom_,
-                              localVertexIdx);
+        this->problem_().source(q,
+                                this->elem_(),
+                                this->fvElemGeom_(),
+                                localVertexIdx);
     }
 
     /*!
@@ -131,46 +129,6 @@ public:
     template <class PrimaryVarVector>
     Scalar temperature(const PrimaryVarVector &sol)
     { return this->problem_.temperature(); /* constant temperature */ }
-
-    /*!
-     * \brief All relevant primary and secondary of a given
-     *        solution to an ouput writer.
-     */
-    template <class MultiWriter>
-    void addOutputVtkFields(MultiWriter &writer, const SolutionVector &globalSol)
-    {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-
-        // create the required scalar fields
-        unsigned numVertices = this->gridView_.size(dim);
-        ScalarField *p = writer.template createField<Scalar, 1>(numVertices);
-
-        unsigned numElements = this->gridView_.size(0);
-        ScalarField *rank = writer.template createField<Scalar, 1>(numElements);
-
-        SolutionOnElement tmpSol;
-        ElementIterator elementIt = this->gridView_.template begin<0>();
-        const ElementIterator &endit = this->gridView_.template end<0>();;
-        for (; elementIt != endit; ++elementIt)
-        {
-            int idx = this->problem_.model().elementMapper().map(*elementIt);
-            (*rank)[idx] = this->gridView_.comm().rank();
-
-            setCurrentElement(*elementIt);
-            this->restrictToElement(tmpSol, globalSol);
-            this->setCurrentSolution(tmpSol);
-
-            int numVerts = elementIt->template count<dim>();
-            for (int i = 0; i < numVerts; ++i)
-            {
-                int globalIdx = this->problem_.model().vertexMapper().map(*elementIt, i, dim);
-                (*p)[globalIdx] = this->curElemDat_[i].pressure;
-            };
-        }
-
-        writer.addVertexData(p, "p");
-        writer.addCellData(rank, "process rank");
-    }
 
 private:
     ThisType &asImp_()

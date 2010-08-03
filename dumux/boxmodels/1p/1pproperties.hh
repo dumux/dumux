@@ -22,7 +22,7 @@
 #ifndef DUMUX_1P_PROPERTIES_DATA_HH
 #define DUMUX_1P_PROPERTIES_DATA_HH
 
-#include <dumux/boxmodels/boxscheme/boxproperties.hh>
+#include <dumux/boxmodels/common/boxproperties.hh>
 
 namespace Dumux
 {
@@ -37,16 +37,13 @@ template<class TypeTag>
 class OnePBoxModel;
 
 template<class TypeTag>
-class OnePBoxJacobian;
+class OnePLocalResidual;
 
 template <class TypeTag>
-class OnePVertexData;
+class OnePSecondaryVars;
 
 template <class TypeTag>
-class OnePElementData;
-
-template <class TypeTag>
-class OnePFluxData;
+class OnePFluxVars;
 
 /*!
  * \brief Indices for the single phase model.
@@ -66,7 +63,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the isothermal single phase problems
-NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxScheme));
+NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -85,22 +82,19 @@ NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the p
 SET_INT_PROP(BoxOneP, NumEq, 1);
 SET_INT_PROP(BoxOneP, NumPhases, 1);
 
-//! Use the 2p local jacobian operator for the 2p model
+//! The local residual function
 SET_TYPE_PROP(BoxOneP,
-              LocalJacobian,
-              OnePBoxJacobian<TypeTag>);
+              LocalResidual,
+              OnePLocalResidual<TypeTag>);
 
 //! the Model property
 SET_TYPE_PROP(BoxOneP, Model, OnePBoxModel<TypeTag>);
 
-//! the VertexData property
-SET_TYPE_PROP(BoxOneP, VertexData, OnePVertexData<TypeTag>);
+//! the SecondaryVars property
+SET_TYPE_PROP(BoxOneP, SecondaryVars, OnePSecondaryVars<TypeTag>);
 
-//! the ElementData property
-SET_TYPE_PROP(BoxOneP, ElementData, OnePElementData<TypeTag>);
-
-//! the FluxData property
-SET_TYPE_PROP(BoxOneP, FluxData, OnePFluxData<TypeTag>);
+//! the FluxVars property
+SET_TYPE_PROP(BoxOneP, FluxVars, OnePFluxVars<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);

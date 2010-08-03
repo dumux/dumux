@@ -1,4 +1,4 @@
-// $Id: 1pvertexdata.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 1psecondaryvars.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008 by Onur Dogan                                        *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -19,8 +19,8 @@
  *
  * \brief Quantities required by the single-phase box model defined on a vertex.
  */
-#ifndef DUMUX_1P_VERTEX_DATA_HH
-#define DUMUX_1P_VERTEX_DATA_HH
+#ifndef DUMUX_1P_SECONDARY_VARS_HH
+#define DUMUX_1P_SECONDARY_VARS_HH
 
 #include "1pproperties.hh"
 
@@ -33,14 +33,15 @@ namespace Dumux
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class OnePVertexData
+class OnePSecondaryVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
+    
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum {
@@ -49,44 +50,61 @@ class OnePVertexData
     };
 
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container                     ReferenceElements;
+    typedef typename RefElemProp::Container ReferenceElements;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector            PrimaryVarVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices))  Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid))        Fluid;
 
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
+
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &sol,
+    void update(const PrimaryVarVector  &priVars,
+                const Problem           &problem,
                 const Element           &element,
                 const FVElementGeometry &elemGeom,
-                int                      vertIdx,
-                const Problem           &problem,
+                int                      scvIdx,
                 bool                     isOldSol)
     {
+        primaryVars_ = priVars;
+
         typedef Indices I;
 
-        Scalar temperature = problem.temperature(element, elemGeom, vertIdx);
-        pressure = sol[I::pressureIdx];
+        Scalar temperature = problem.temperature(element, elemGeom, scvIdx);
+        pressure = priVars[I::pressureIdx];
         density = Fluid::density(temperature, pressure);
         viscosity = Fluid::viscosity(temperature, pressure);
 
         // porosity
         porosity = problem.spatialParameters().porosity(element,
-                                                         elemGeom,
-                                                         vertIdx);
+                                                        elemGeom,
+                                                        scvIdx);
     };
+
+    /*!
+     * \brief Sets the evaluation point used in the by the local jacobian.
+     */
+    void setEvalPoint(const Implementation *ep)
+    { }
+
+    /*!
+     * \brief Return the vector of primary variables
+     */
+    const PrimaryVarVector &primaryVars() const
+    { return primaryVars_; }
 
     Scalar pressure;
     Scalar density;
     Scalar viscosity;
     Scalar porosity;
+
+protected:
+    PrimaryVarVector primaryVars_;
 };
 
 }

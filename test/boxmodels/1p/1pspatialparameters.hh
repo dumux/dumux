@@ -48,21 +48,21 @@ public:
      * \brief Apply the intrinsic permeability tensor to a pressure
      *        potential gradient.
      *
-     * \param element       The current finite element
-     * \param fvElemGeom    The current finite volume geometry of the element
-     * \param scvIdx       The index sub-control volume face where the
+     * \param element The current finite element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
     Scalar intrinsicPermeability(const Element           &element,
                                  const FVElementGeometry &fvElemGeom,
-                                 int                      scvIdx) const
+                                 int scvIdx) const
     {
         return 1e-10;
     }
 
     Scalar porosity(const Element           &element,
                     const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
+                    int scvIdx) const
     {
         return 0.4;
     }

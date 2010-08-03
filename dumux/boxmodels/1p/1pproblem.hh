@@ -19,28 +19,30 @@
  * \brief Base class for all problems which use the single-phase box
  *        model
  */
-#ifndef DUMUX_1P_BOX_PROBLEM_HH
-#define DUMUX_1P_BOX_PROBLEM_HH
+#ifndef DUMUX_1P_PROBLEM_HH
+#define DUMUX_1P_PROBLEM_HH
 
-#include <dumux/boxmodels/boxscheme/boxproblem.hh>
+#include <dumux/boxmodels/common/boxproblem.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup OnePProblems
- * \brief  Base class for all problems which use the single-phase box model
+ * \brief Base class for all problems which use the single-phase box model
  *
  * \todo Please doc me more!
  */
-template<class TypeTag, class Implementation>
-class OnePBoxProblem : public BoxProblem<TypeTag, Implementation>
+template<class TypeTag>
+class OnePBoxProblem : public BoxProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag, Implementation> ParentType;
+    typedef BoxProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::Grid                         Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-
+    typedef typename GridView::Grid Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
@@ -49,11 +51,11 @@ class OnePBoxProblem : public BoxProblem<TypeTag, Implementation>
         dimWorld = Grid::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    OnePBoxProblem(const GridView &gridView)
-        : ParentType(gridView),
+    OnePBoxProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView),
           gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
@@ -107,7 +109,7 @@ private:
 
     SpatialParameters* spatialParameters_;
 
-    GlobalPosition  gravity_;
+    GlobalPosition gravity_;
 };
 
 }
