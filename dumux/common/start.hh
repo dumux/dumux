@@ -53,11 +53,11 @@ int startFromDGF(int argc, char **argv)
     try {
 #endif
 
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Scalar))  Scalar;
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid))    Grid;
+        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Scalar)) Scalar;
+        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid)) Grid;
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
-        typedef Dune::GridPtr<Grid>                                   GridPointer;
+        typedef Dune::GridPtr<Grid> GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);

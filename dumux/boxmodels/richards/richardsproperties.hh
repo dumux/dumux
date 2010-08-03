@@ -18,32 +18,29 @@
  *
  * \brief Contains the properties for the Richards BOX model.
  */
-#ifndef DUMUX_RICHARDS_PROPERTIES_DATA_HH
-#define DUMUX_RICHARDS_PROPERTIES_DATA_HH
+#ifndef DUMUX_RICHARDS_PROPERTIES_HH
+#define DUMUX_RICHARDS_PROPERTIES_HH
 
 namespace Dumux
 {
 /*!
- * \addtogroup RichardsBoxModel
+ * \addtogroup RichardsModel
  */
 // \{
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
 template<class TypeTag>
-class RichardsBoxModel;
+class RichardsModel;
 
 template<class TypeTag>
-class RichardsBoxJacobian;
+class RichardsLocalResidual;
 
 template <class TypeTag>
-class RichardsVertexData;
+class RichardsSecondaryVars;
 
 template <class TypeTag>
-class RichardsElementData;
-
-template <class TypeTag>
-class RichardsFluxData;
+class RichardsFluxVars;
 
 /*!
  * \brief Indices for the single phase model.
@@ -65,7 +62,7 @@ namespace Properties {
 
 //! The type tag for problems discretized using the isothermal
 //! richards model
-NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxScheme));
+NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -88,20 +85,20 @@ SET_INT_PROP(BoxRichards, NumPhases, 2);
 
 //! Use the 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(BoxRichards,
-              LocalJacobian,
-              RichardsBoxJacobian<TypeTag>);
+              LocalResidual,
+              RichardsLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxRichards, Model, RichardsBoxModel<TypeTag>);
+SET_TYPE_PROP(BoxRichards, Model, RichardsModel<TypeTag>);
 
-//! the VertexData property
-SET_TYPE_PROP(BoxRichards, VertexData, RichardsVertexData<TypeTag>);
+//! the SecondaryVars property
+SET_TYPE_PROP(BoxRichards, SecondaryVars, RichardsSecondaryVars<TypeTag>);
 
-//! the ElementData property
-SET_TYPE_PROP(BoxRichards, ElementData, RichardsElementData<TypeTag>);
 
-//! the FluxData property
-SET_TYPE_PROP(BoxRichards, FluxData, RichardsFluxData<TypeTag>);
+
+
+//! the FluxVars property
+SET_TYPE_PROP(BoxRichards, FluxVars, RichardsFluxVars<TypeTag>);
 
 //! the weight of the upwind vertex for the mobility
 SET_SCALAR_PROP(BoxRichards,
@@ -118,7 +115,7 @@ SET_TYPE_PROP(BoxRichards, RichardsIndices, Dumux::RichardsIndices);
 SET_PROP(BoxRichards, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))  SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
 public:
     typedef typename SpatialParameters::MaterialLaw type;
@@ -131,7 +128,7 @@ public:
 SET_PROP(BoxRichards, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))  MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;

@@ -33,12 +33,14 @@ void usage(const char *progname)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(RichardsLensProblem)             TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
+        typedef TTAG(RichardsLensProblem) TypeTag;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
-        typedef Dune::GridPtr<Grid>                             GridPointer;
+        typedef Dune::GridPtr<Grid> GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -81,11 +83,14 @@ int main(int argc, char** argv)
         lowerLeftLens[1] = 2.0;
         upperRightLens[0] = 4.0;
         upperRightLens[1] = 3.0;
-        // instantiate and run the concrete problem
-        Problem problem(gridPtr->leafView(), lowerLeftLens, upperRightLens);
-        if (!problem.simulate(dt, tEnd))
-            return 2;
 
+        // instantiate and run the concrete problem
+        TimeManager timeManager;
+        Problem problem(timeManager, gridPtr->leafView(), lowerLeftLens, upperRightLens);
+        timeManager.init(problem, 0, dt, tEnd, !restart);
+        if (restart)
+            problem.restart(restartTime);
+        timeManager.run();
         return 0;
     }
     catch (Dune::Exception &e) {

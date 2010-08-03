@@ -26,7 +26,7 @@
 
 /**
  * @file
- * @brief  Class for defining spatial parameters
+ * @brief Class for defining spatial parameters
  * @author Bernd Flemisch, Klaus Mosthaf, Markus Wolff
  */
 
@@ -94,14 +94,14 @@ public:
      * \brief Apply the intrinsic permeability tensor to a pressure
      *        potential gradient.
      *
-     * \param element       The current finite element
-     * \param fvElemGeom    The current finite volume geometry of the element
-     * \param scvIdx       The index sub-control volume face where the
+     * \param element The current finite element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
     Scalar intrinsicPermeability(const Element           &element,
                                  const FVElementGeometry &fvElemGeom,
-                                 int                      scvIdx) const
+                                 int scvIdx) const
     {
         const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
         if (isInLens_(globalPos))
@@ -111,13 +111,13 @@ public:
 
     Scalar porosity(const Element           &element,
                     const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
+                    int scvIdx) const
     { return 0.4; }
 
     // return the brooks-corey context depending on the position
     const MaterialLawParams& materialLawParams(const Element           &element,
                                                 const FVElementGeometry &fvElemGeom,
-                                                int                      scvIdx) const
+                                                int scvIdx) const
     {
         const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
 

@@ -1,4 +1,4 @@
-// $Id: richardsfluxdata.hh 3840 2010-07-15 10:14:15Z bernd $
+// $Id: richardsfluxvars.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -29,42 +29,42 @@ namespace Dumux
 {
 
 /*!
- * \ingroup RichardsBoxModel
+ * \ingroup RichardsModel
  * \brief This template class contains the data which is required to
  *        calculate the flux of fluid over a face of a finite volume.
  */
 template <class TypeTag>
-class RichardsFluxData
+class RichardsFluxVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                      VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume             SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+    typedef typename FVElementGeometry::SubControlVolume SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
 
 public:
-    RichardsFluxData(const Problem &problem,
+    RichardsFluxVars(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &elemGeom,
                  int faceIdx,
-                 const VertexDataArray &elemDat)
+                 const ElementSecondaryVars &elemDat)
         : fvElemGeom(elemGeom)
     {
         face = &fvElemGeom.subContVolFace[faceIdx];
@@ -85,7 +85,7 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const VertexDataArray &elemDat)
+                             const ElementSecondaryVars &elemDat)
     {
         // calculate gradients
         GlobalPosition tmp(0.0);
@@ -116,7 +116,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const VertexDataArray &elemDat)
+                              const ElementSecondaryVars &elemDat)
     {
         // calculate the permeability tensor. TODO: this should be
         // more flexible

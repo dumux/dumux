@@ -20,7 +20,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/boxmodels/richards/richardsboxmodel.hh>
+#include <dumux/boxmodels/richards/richardsmodel.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
@@ -56,8 +56,8 @@ SET_PROP(RichardsLensProblem, LocalFEMSpace)
     enum{dim = GridView::dimension};
 
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for cubes
-//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for simplices
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
+//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
 #endif
 
@@ -88,7 +88,7 @@ SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
 
 /*!
  * \ingroup RichardsBoxProblems
- * \brief  Base class for defining an instance of a Richard`s problem, where water is infiltrating into an initially unsaturated zone.
+ * \brief Base class for defining an instance of a Richard`s problem, where water is infiltrating into an initially unsaturated zone.
  *
  * The domain is box shaped. Left and right boundaries are Dirichlet boundaries with fixed water pressure (fixed Saturation Sw = 0),
  * bottom boundary is closed (Neumann 0 boundary), the top boundary (Neumann 0 boundary) is also closed except for infiltration section,
@@ -100,12 +100,11 @@ SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
  * where start simulation time = 1 second, end simulation time = 10000 seconds
  */
 template <class TypeTag = TTAG(RichardsLensProblem) >
-class RichardsLensProblem : public RichardsBoxProblem<TypeTag,
-                                                      RichardsLensProblem<TypeTag> >
+class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
 {
-    typedef RichardsLensProblem<TypeTag>   ThisType;
-    typedef RichardsBoxProblem<TypeTag, ThisType> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef RichardsLensProblem<TypeTag> ThisType;
+    typedef RichardsBoxProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
@@ -119,25 +118,27 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag,
         dimWorld    = GridView::dimensionworld,
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
-    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename GridView::template Codim<0>::Entity        Element;
-    typedef typename GridView::template Codim<dim>::Entity      Vertex;
-    typedef typename GridView::Intersection                     Intersection;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    RichardsLensProblem(const GridView &gridView,
+    RichardsLensProblem(TimeManager &timeManager,
+                        const GridView &gridView,
                         const GlobalPosition &lensLowerLeft,
                         const GlobalPosition &lensUpperRight)
-        : ParentType(gridView)
+        : ParentType(timeManager, gridView)
     {
         lensLowerLeft_=lensLowerLeft;
         lensUpperRight_=lensUpperRight;
@@ -164,7 +165,7 @@ public:
      */
     Scalar temperature(const Element           &element,
                        const FVElementGeometry &fvElemGeom,
-                       int                      scvIdx) const
+                       int scvIdx) const
     {
         return 283.15; // -> 10°C
     };
@@ -190,12 +191,12 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypeVector         &values,
+    void boundaryTypes(BoundaryTypes         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
                        const Intersection         &is,
-                       int                         scvIdx,
-                       int                         boundaryFaceIdx) const
+                       int scvIdx,
+                       int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -216,8 +217,8 @@ public:
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const Intersection         &is,
-                   int                         scvIdx,
-                   int                         boundaryFaceIdx) const
+                   int scvIdx,
+                   int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -247,8 +248,8 @@ public:
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const Intersection         &is,
-                 int                         scvIdx,
-                 int                         boundaryFaceIdx) const
+                 int scvIdx,
+                 int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -276,7 +277,7 @@ public:
     void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
-                int                      scvIdx) const
+                int scvIdx) const
     {
         values = Scalar(0.0);
     }
@@ -290,7 +291,7 @@ public:
     void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
-                 int                      scvIdx) const
+                 int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 

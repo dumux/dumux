@@ -1,4 +1,4 @@
-// $Id: richardsboxproblem.hh 3840 2010-07-15 10:14:15Z bernd $
+// $Id: richardsproblem.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -17,41 +17,41 @@
  * \file
  * \brief Base class for all problems which use the box scheme
  */
-#ifndef DUMUX_RICHARDS_BOX_PROBLEM_HH
-#define DUMUX_RICHARDS_BOX_PROBLEM_HH
+#ifndef DUMUX_RICHARDS_PROBLEM_HH
+#define DUMUX_RICHARDS_PROBLEM_HH
 
-#include <dumux/boxmodels/boxscheme/boxproblem.hh>
+#include <dumux/boxmodels/common/boxproblem.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup RichardsProblems
- * \brief  Base class for all problems which use the two-phase box model
+ * \brief Base class for all problems which use the two-phase box model
  *
  * \todo Please doc me more!
  */
-template<class TypeTag, class Implementation>
-class RichardsBoxProblem : public BoxProblem<TypeTag, Implementation>
+template<class TypeTag>
+class RichardsBoxProblem : public BoxProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag, Implementation> ParentType;
-
+    typedef BoxProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::Grid                         Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
     enum {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    RichardsBoxProblem(const GridView &gridView)
-        : ParentType(gridView),
+    RichardsBoxProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView),
           gravity_(0), spatialParams_(gridView)
     {
         gravity_ = 0;
@@ -112,7 +112,7 @@ private:
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
 
-    GlobalPosition  gravity_;
+    GlobalPosition gravity_;
 
     // material properties
     SpatialParameters spatialParams_;
