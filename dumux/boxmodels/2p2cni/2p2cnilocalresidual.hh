@@ -1,4 +1,4 @@
-// $Id: 2p2cniboxjacobian.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 2p2cnilocalresidual.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
@@ -26,33 +26,33 @@
 #ifndef DUMUX_NEW_2P2CNI_BOX_JACOBIAN_HH
 #define DUMUX_NEW_2P2CNI_BOX_JACOBIAN_HH
 
-#include <dumux/boxmodels/2p2c/2p2cboxjacobian.hh>
+#include <dumux/boxmodels/2p2c/2p2clocalresidual.hh>
 
-#include <dumux/boxmodels/2p2cni/2p2cnielementdata.hh>
-#include <dumux/boxmodels/2p2cni/2p2cnivertexdata.hh>
-#include <dumux/boxmodels/2p2cni/2p2cnifluxdata.hh>
+
+#include <dumux/boxmodels/2p2cni/2p2cnisecondaryvars.hh>
+#include <dumux/boxmodels/2p2cni/2p2cnifluxvars.hh>
 
 #include <dumux/boxmodels/2p2cni/2p2cniproperties.hh>
 
 namespace Dumux
 {
 /*!
- * \ingroup TwoPTwoCNIBoxModel
+ * \ingroup TwoPTwoCNIModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase two-component box model.
  */
 template<class TypeTag>
-class TwoPTwoCNIBoxJacobian : public TwoPTwoCBoxJacobian<TypeTag>
+class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
 {
-    typedef TwoPTwoCNIBoxJacobian<TypeTag>  ThisType;
-    typedef TwoPTwoCBoxJacobian<TypeTag>    ParentType;
+    typedef TwoPTwoCNILocalResidual<TypeTag> ThisType;
+    typedef TwoPTwoCLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))   Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))  GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))    Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
@@ -68,21 +68,16 @@ class TwoPTwoCNIBoxJacobian : public TwoPTwoCBoxJacobian<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData))   VertexData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxData))     FluxData;
-    typedef std::vector<VertexData> VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     static const Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:
-    TwoPTwoCNIBoxJacobian(Problem &problem)
-        : ParentType(problem)
-    {
-    };
-
     /*!
      * \brief Evaluate the amount all conservation quantites
      *        (e.g. phase mass) within a sub-control volume.
@@ -100,8 +95,8 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
-        const VertexData  &vertDat = elemDat[scvIdx];
+        const ElementSecondaryVars &elemDat = usePrevSol ? this->prevSecVars_()  : this->curSecVars_();
+        const SecondaryVars  &vertDat = elemDat[scvIdx];
 
         // compute the energy storage
         result[temperatureIdx] =
@@ -127,7 +122,7 @@ public:
      * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVarVector &flux,
-                              const FluxData &fluxData) const
+                              const FluxVars &fluxData) const
     {
         // advective mass flux
         ParentType::computeAdvectiveFlux(flux, fluxData);
@@ -136,8 +131,8 @@ public:
         flux[temperatureIdx] = 0;
         for (int phase = 0; phase < numPhases; ++phase) {
             // vertex data of the upstream and the downstream vertices
-            const VertexData &up = this->curElemDat_[fluxData.upstreamIdx(phase)];
-            const VertexData &dn = this->curElemDat_[fluxData.downstreamIdx(phase)];
+            const SecondaryVars &up = this->curSecVars_(fluxData.upstreamIdx(phase));
+            const SecondaryVars &dn = this->curSecVars_(fluxData.downstreamIdx(phase));
 
             flux[temperatureIdx] +=
                 fluxData.KmvpNormal(phase) * (
@@ -158,7 +153,7 @@ public:
      *        the face of a sub-control volume.
      */
     void computeDiffusiveFlux(PrimaryVarVector &flux,
-                              const FluxData &fluxData) const
+                              const FluxVars &fluxData) const
     {
         // diffusive mass flux
         ParentType::computeDiffusiveFlux(flux, fluxData);
@@ -167,8 +162,6 @@ public:
         flux[temperatureIdx] +=
             fluxData.normalMatrixHeatFlux();
     }
-
-
 };
 
 }

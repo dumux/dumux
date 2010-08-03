@@ -1,4 +1,4 @@
-// $Id: 2p2cnivertexdata.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2cnisecondaryvars.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                                  *
  *   Copyright (C) 2008-2010 by Andreas Lauser                               *
@@ -22,26 +22,26 @@
  *        finite volume in the non-isothermal two-phase, two-component
  *        model.
  */
-#ifndef DUMUX_2P2CNI_VERTEX_DATA_HH
-#define DUMUX_2P2CNI_VERTEX_DATA_HH
+#ifndef DUMUX_2P2CNI_SECONDARY_VARS_HH
+#define DUMUX_2P2CNI_SECONDARY_VARS_HH
 
-#include <dumux/boxmodels/2p2c/2p2cvertexdata.hh>
+#include <dumux/boxmodels/2p2c/2p2csecondaryvars.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup TwoPTwoCNIBoxModel
+ * \ingroup TwoPTwoCNIModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the non-isothermal two-phase, two-component
  *        model.
  */
 template <class TypeTag>
-class TwoPTwoCNIVertexData : public TwoPTwoCVertexData<TypeTag>
+class TwoPTwoCNISecondaryVars : public TwoPTwoCSecondaryVars<TypeTag>
 {
-    typedef TwoPTwoCVertexData<TypeTag> ParentType;
+    typedef TwoPTwoCSecondaryVars<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -53,35 +53,35 @@ class TwoPTwoCNIVertexData : public TwoPTwoCVertexData<TypeTag>
         dimWorld      = GridView::dimensionworld,
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))     FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
     enum { temperatureIdx = Indices::temperatureIdx };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))                SolutionTypes;
+
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements))::Container ReferenceElements;
 
-    typedef typename SolutionTypes::PrimaryVarVector  PrimaryVarVector;
-    typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &sol,
-                const Element           &element,
+    void update(const PrimaryVarVector &sol,
+                const Problem &problem,
+                const Element &element,
                 const FVElementGeometry &elemGeom,
-                int                      vertIdx,
-                Problem                 &problem,
-                bool                     isOldSol)
+                int vertIdx,
+                bool isOldSol)
     {
         // vertex update data for the mass balance
         ParentType::update(sol,
+                           problem,
                            element,
                            elemGeom,
                            vertIdx,
-                           problem,
                            isOldSol);
 
         // the internal energies and the enthalpies
@@ -111,7 +111,7 @@ public:
     void updateTemperature_(const PrimaryVarVector  &sol,
                             const Element           &element,
                             const FVElementGeometry &elemGeom,
-                            int                      scvIdx,
+                            int scvIdx,
                             const Problem           &problem)
     {
         // retrieve temperature from solution vector

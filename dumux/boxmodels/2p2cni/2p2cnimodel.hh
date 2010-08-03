@@ -1,4 +1,4 @@
-// $Id: 2p2cniboxmodel.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 2p2cnimodel.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
@@ -21,14 +21,14 @@
  *
  * \brief Adaption of the BOX scheme to the non-isothermal two-phase two-component flow model.
  */
-#ifndef DUMUX_NEW_2P2CNI_BOX_MODEL_HH
-#define DUMUX_NEW_2P2CNI_BOX_MODEL_HH
+#ifndef DUMUX_NEW_2P2CNI_MODEL_HH
+#define DUMUX_NEW_2P2CNI_MODEL_HH
 
-#include <dumux/boxmodels/2p2c/2p2cboxmodel.hh>
+#include <dumux/boxmodels/2p2c/2p2cmodel.hh>
 
-#include "2p2cniboxjacobian.hh"
+#include "2p2cnilocalresidual.hh"
 #include "2p2cniproperties.hh"
-#include "2p2cniboxproblem.hh"
+#include "2p2cniproblem.hh"
 
 namespace Dumux {
 /*!
@@ -38,11 +38,11 @@ namespace Dumux {
 
 /*!
  * \ingroup BoxModels
- * \defgroup TwoPTwoCNIBoxModel Non-isothermal two-phase two-component box model
+ * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component box model
  */
 
 /*!
- * \ingroup TwoPTwoCNIBoxModel
+ * \ingroup TwoPTwoCNIModel
  * \brief Adaption of the BOX scheme to the non-isothermal two-phase two-component flow model.
  *
  * This model implements a non-isothermal two-phase flow of two compressible and partly miscible fluids
@@ -100,19 +100,8 @@ namespace Dumux {
  * </ul>
  */
 template<class TypeTag>
-class TwoPTwoCNIBoxModel
-    : public TwoPTwoCBoxModelBase<TypeTag, TwoPTwoCNIBoxModel<TypeTag> >
+class TwoPTwoCNIModel : public TwoPTwoCModel<TypeTag>
 {
-    typedef TwoPTwoCNIBoxModel<TypeTag>                           ThisType;
-    typedef TwoPTwoCBoxModelBase<TypeTag, ThisType>               ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))       Problem;
-
-public:
-    TwoPTwoCNIBoxModel(Problem &prob)
-        : ParentType(prob)
-    {
-    }
 };
 
 }

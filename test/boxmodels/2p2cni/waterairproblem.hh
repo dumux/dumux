@@ -27,7 +27,7 @@
 
 #include <dumux/material/fluidsystems/h2o_n2_system.hh>
 
-#include <dumux/boxmodels/2p2cni/2p2cniboxmodel.hh>
+#include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
 
 #include "waterairspatialparameters.hh"
 
@@ -61,8 +61,8 @@ SET_PROP(WaterAirProblem, LocalFEMSpace)
     enum{dim = GridView::dimension};
 
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for cubes
-//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for simplices
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
+//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
 #endif
 
@@ -110,7 +110,7 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, true);
  * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
  * a geothermal temperature gradient of 0.03 K/m are applied.
  *
- * This problem uses the \ref TwoPTwoCNIBoxModel.
+ * This problem uses the \ref TwoPTwoCNIModel.
  *
  * This problem should typically be simulated for 300000 s.
  * A good choice for the initial time step size is 1000 s.
@@ -119,15 +119,15 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, true);
  * <tt>./test_2p2cni ./grids/test_2p2cni.dgf 300000 1000</tt>
  *  */
 template <class TypeTag = TTAG(WaterAirProblem) >
-class WaterAirProblem : public TwoPTwoCNIBoxProblem<TypeTag, WaterAirProblem<TypeTag> >
+class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
-    typedef typename GridView::Grid                           Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GridView::Grid Grid;
 
-    typedef WaterAirProblem<TypeTag>                ThisType;
-    typedef TwoPTwoCNIBoxProblem<TypeTag, ThisType> ParentType;
+    typedef WaterAirProblem<TypeTag> ThisType;
+    typedef TwoPTwoCNIProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
@@ -151,23 +151,24 @@ class WaterAirProblem : public TwoPTwoCNIBoxProblem<TypeTag, WaterAirProblem<Typ
         dimWorld    = GridView::dimensionworld,
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
-    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename GridView::template Codim<0>::Entity        Element;
-    typedef typename GridView::template Codim<dim>::Entity      Vertex;
-    typedef typename GridView::Intersection                     Intersection;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    WaterAirProblem(const GridView &gridView)
-        : ParentType(gridView)
+    WaterAirProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         FluidSystem::init();
     }
@@ -193,7 +194,7 @@ public:
      */
     Scalar temperature(const Element           &element,
                        const FVElementGeometry &fvElemGeom,
-                       int                      scvIdx) const
+                       int scvIdx) const
     {
         return 273.15 + 10; // -> 10°C
     };
@@ -210,12 +211,12 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypeVector         &values,
+    void boundaryTypes(BoundaryTypes         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
                        const Intersection         &is,
-                       int                         scvIdx,
-                       int                         boundaryFaceIdx) const
+                       int scvIdx,
+                       int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos  = element.geometry().corner(scvIdx);
 
@@ -239,8 +240,8 @@ public:
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const Intersection         &is,
-                   int                         scvIdx,
-                   int                         boundaryFaceIdx) const
+                   int scvIdx,
+                   int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -262,8 +263,8 @@ public:
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const Intersection         &is,
-                 int                         scvIdx,
-                 int                         boundaryFaceIdx) const
+                 int scvIdx,
+                 int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values = 0;
@@ -295,7 +296,7 @@ public:
     void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
-                int                      scvIdx) const
+                int scvIdx) const
     {
            values = Scalar(0.0);
     }
@@ -309,7 +310,7 @@ public:
     void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
-                 int                      scvIdx) const
+                 int scvIdx) const
     {
            const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 

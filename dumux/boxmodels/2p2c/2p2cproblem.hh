@@ -33,7 +33,7 @@ namespace Dumux
  * \todo Please doc me more!
  */
 template<class TypeTag>
-class TwoPTwoCBoxProblem : public BoxProblem<TypeTag>
+class TwoPTwoCProblem : public BoxProblem<TypeTag>
 {
     typedef BoxProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
@@ -54,7 +54,7 @@ class TwoPTwoCBoxProblem : public BoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    TwoPTwoCBoxProblem(TimeManager &timeManager, const GridView &gridView)
+    TwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView),
           gravity_(0),
           spatialParams_(gridView)

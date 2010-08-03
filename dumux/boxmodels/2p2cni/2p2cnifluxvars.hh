@@ -1,4 +1,4 @@
-// $Id: 2p2cnifluxdata.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2cnifluxvars.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
@@ -34,7 +34,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPTwoCNIBoxModel
+ * \ingroup TwoPTwoCNIModel
  * \brief This template class contains the data which is required to
  *        calculate all fluxes (mass of components and energy) over a face of a finite
  *        volume for the non-isothermal two-phase, two-component model.
@@ -43,18 +43,18 @@ namespace Dumux
  * the integration point, etc.
  */
 template <class TypeTag>
-class TwoPTwoCNIFluxData : public TwoPTwoCFluxData<TypeTag>
+class TwoPTwoCNIFluxVars : public TwoPTwoCFluxVars<TypeTag>
 {
-    typedef TwoPTwoCFluxData<TypeTag>                       ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef TwoPTwoCFluxVars<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
 
-    typedef typename GridView::ctype                     CoordScalar;
+    typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                      VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
     enum {
         dim           = GridView::dimension,
@@ -64,17 +64,17 @@ class TwoPTwoCNIFluxData : public TwoPTwoCFluxData<TypeTag>
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume             SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+    typedef typename FVElementGeometry::SubControlVolume SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld>  Vector;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
 
 public:
-    TwoPTwoCNIFluxData(const Problem &problem,
+    TwoPTwoCNIFluxVars(const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,
                        int scvfIdx,
-                       const VertexDataArray &elemDat)
+                       const ElementSecondaryVars &elemDat)
         : ParentType(problem, element, elemGeom, scvfIdx, elemDat)
     {
         // calculate temperature gradient using finite element

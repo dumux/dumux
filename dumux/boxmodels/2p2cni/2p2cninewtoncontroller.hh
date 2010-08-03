@@ -28,7 +28,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPTwoCNIBoxModel
+ * \ingroup TwoPTwoCNIModel
  * \brief A 2p2cni specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
@@ -38,14 +38,14 @@ namespace Dumux {
 template <class TypeTag>
 class TwoPTwoCNINewtonController : public NewtonController<TypeTag >
 {
-    typedef NewtonController<TypeTag>        ParentType;
+    typedef NewtonController<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+
     typedef typename SolutionTypes::SolutionFunction SolutionFunction;
 
 public:

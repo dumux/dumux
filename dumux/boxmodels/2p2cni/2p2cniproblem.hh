@@ -1,4 +1,4 @@
-// $Id: 2p2cniboxproblem.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2cniproblem.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -19,31 +19,32 @@
  * \brief Base class for all problems which use the non-isothermal two-phase,
  *        two-component box model
  */
-#ifndef DUMUX_2P2CNI_BOX_PROBLEM_HH
-#define DUMUX_2P2CNI_BOX_PROBLEM_HH
+#ifndef DUMUX_2P2CNI_PROBLEM_HH
+#define DUMUX_2P2CNI_PROBLEM_HH
 
-#include <dumux/boxmodels/2p2c/2p2cboxproblem.hh>
+#include <dumux/boxmodels/2p2c/2p2cproblem.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCNIProblems
- * \brief  Base class for all problems which use the non-isothermal
+ * \brief Base class for all problems which use the non-isothermal
  *         two-phase, two-component box model.
  *
  * \todo Please doc me more!
  */
-template<class TypeTag, class Implementation>
-class TwoPTwoCNIBoxProblem : public TwoPTwoCBoxProblem<TypeTag, Implementation>
+template<class TypeTag>
+class TwoPTwoCNIProblem : public TwoPTwoCProblem<TypeTag>
 {
-    typedef TwoPTwoCBoxProblem<TypeTag, Implementation> ParentType;
+    typedef TwoPTwoCProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 public:
-    TwoPTwoCNIBoxProblem(const GridView &gridView)
-        : ParentType(gridView)
+    TwoPTwoCNIProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
     }
 

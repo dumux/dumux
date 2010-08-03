@@ -108,10 +108,10 @@ SET_INT_PROP(InjectionProblem, NewtonLinearSolverVerbosity, 0);
  * This problem uses the \ref TwoPTwoCBoxModel.
  */
 template <class TypeTag = TTAG(InjectionProblem) >
-class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag>
+class InjectionProblem : public TwoPTwoCProblem<TypeTag>
 {
     typedef InjectionProblem<TypeTag> ThisType;
-    typedef TwoPTwoCBoxProblem<TypeTag> ParentType;
+    typedef TwoPTwoCProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

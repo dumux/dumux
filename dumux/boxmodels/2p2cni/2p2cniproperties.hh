@@ -24,33 +24,30 @@
 
 #include <dumux/boxmodels/2p2c/2p2cproperties.hh>
 
-#include "2p2cnivertexdata.hh"
-#include "2p2cnielementdata.hh"
-#include "2p2cnifluxdata.hh"
+#include "2p2cnisecondaryvars.hh"
+
+#include "2p2cnifluxvars.hh"
 
 namespace Dumux
 {
 /*!
- * \addtogroup TwoPTwoCNIBoxModel
+ * \addtogroup TwoPTwoCNIModel
  */
 // \{
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
 template<class TypeTag>
-class TwoPTwoCNIBoxModel;
+class TwoPTwoCNIModel;
 
 template<class TypeTag>
-class TwoPTwoCNIBoxJacobian;
+class TwoPTwoCNILocalResidual;
 
 template <class TypeTag>
-class TwoPTwoCNIVertexData;
+class TwoPTwoCNISecondaryVars;
 
 template <class TypeTag>
-class TwoPTwoCNIElementData;
-
-template <class TypeTag>
-class TwoPTwoCNIFluxData;
+class TwoPTwoCNIFluxVars;
 
 /*!
  * \brief Enumerations for the non-isothermal 2-phase 2-component model
@@ -90,20 +87,20 @@ SET_INT_PROP(BoxTwoPTwoCNI, NumEq,         3); //!< set the number of equations 
 
 //! Use the 2p2cni local jacobian operator for the 2p2cni model
 SET_TYPE_PROP(BoxTwoPTwoCNI,
-              LocalJacobian,
-              TwoPTwoCNIBoxJacobian<TypeTag>);
+              LocalResidual,
+              TwoPTwoCNILocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPTwoCNI, Model, TwoPTwoCNIBoxModel<TypeTag>);
+SET_TYPE_PROP(BoxTwoPTwoCNI, Model, TwoPTwoCNIModel<TypeTag>);
 
-//! the VertexData property
-SET_TYPE_PROP(BoxTwoPTwoCNI, VertexData, TwoPTwoCNIVertexData<TypeTag>);
+//! the SecondaryVars property
+SET_TYPE_PROP(BoxTwoPTwoCNI, SecondaryVars, TwoPTwoCNISecondaryVars<TypeTag>);
 
-//! the ElementData property
-SET_TYPE_PROP(BoxTwoPTwoCNI, ElementData, TwoPTwoCNIElementData<TypeTag>);
 
-//! the FluxData property
-SET_TYPE_PROP(BoxTwoPTwoCNI, FluxData, TwoPTwoCNIFluxData<TypeTag>);
+
+
+//! the FluxVars property
+SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVars, TwoPTwoCNIFluxVars<TypeTag>);
 
 //! The indices required by the non-isothermal 2p2c model
 SET_PROP(BoxTwoPTwoCNI, TwoPTwoCIndices)
