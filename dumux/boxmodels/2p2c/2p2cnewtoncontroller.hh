@@ -30,7 +30,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup TwoPTwoCBoxModel
+ * \ingroup TwoPTwoCModel
  * \brief A 2p2c specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
@@ -40,15 +40,15 @@ namespace Dumux {
 template <class TypeTag>
 class TwoPTwoCNewtonController : public NewtonController<TypeTag>
 {
-    typedef NewtonController<TypeTag>        ParentType;
+    typedef NewtonController<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector SolutionVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
@@ -70,7 +70,7 @@ public:
     void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
     {
         // call the method of the base class
-        ParentType::model().localJacobian().updateStaticData(u, uOld);
+        this->method().model().updateStaticData(u, uOld);
         ParentType::newtonEndStep(u, uOld);
     }
 
@@ -93,7 +93,7 @@ public:
     //! be acurate enough
     bool newtonConverged()
     {
-        if (ParentType::model().switched())
+        if (this->method().model().switched())
             return false;
 
         return ParentType::newtonConverged();
@@ -104,14 +104,14 @@ private:
     {
        Scalar lambda = 1.0;
        Scalar globDef;
-       SolutionVector tmp(this->model(), 0.0);
-       Scalar oldGlobDef = this->model().globalResidual(uOld, tmp);
+       SolutionVector tmp(this->method().model(), 0.0);
+       Scalar oldGlobDef = this->method().model().globalResidual(tmp);
 
        int n = 0;
        while (true) {
            u *= -lambda;
            u += uOld;
-           globDef = this->model().globalResidual(u, tmp);
+           globDef = this->method().model().globalResidual(tmp);
 
            if (globDef < oldGlobDef || lambda <= 1.0/8) {
                this->endIterMsg() << ", defect " << oldGlobDef << "->"  << globDef << "@lambda=2^-" << n;
@@ -127,7 +127,7 @@ private:
            ++n;
        }
     };
-
+    
 };
 }
 

@@ -28,7 +28,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/boxmodels/2p2c/2p2cboxmodel.hh>
+#include <dumux/boxmodels/2p2c/2p2cmodel.hh>
 
 #include <dumux/material/fluidsystems/h2o_n2_system.hh>
 
@@ -138,6 +138,7 @@ class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
@@ -149,8 +150,8 @@ class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    InjectionProblem(const GridView &gridView)
-        : ParentType(gridView)
+    InjectionProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         // initialize the tables of the fluid system
         FluidSystem::init();

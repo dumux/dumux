@@ -20,15 +20,15 @@
  * \brief Defines the properties required for the 2p2c BOX model.
  */
 
-#ifndef DUMUX_2P2CTRAITS_HH
-#define DUMUX_2P2CTRAITS_HH
+#ifndef DUMUX_2P2C_PROPERTIES_HH
+#define DUMUX_2P2C_PROPERTIES_HH
 
-#include <dumux/boxmodels/boxscheme/boxproperties.hh>
+#include <dumux/boxmodels/common/boxproperties.hh>
 
 namespace Dumux
 {
 /*!
- * \addtogroup TwoPTwoCBoxModel
+ * \addtogroup TwoPTwoCModel
  */
 // \{
 namespace Properties
@@ -38,7 +38,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the isothermal single phase problems
-NEW_TYPE_TAG(BoxTwoPTwoC, INHERITS_FROM(BoxScheme));
+NEW_TYPE_TAG(BoxTwoPTwoC, INHERITS_FROM(BoxModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -65,19 +65,16 @@ namespace Dumux {
 // forward declarations
 ////////////////////////////////
 template<class TypeTag>
-class TwoPTwoCBoxModel;
+class TwoPTwoCModel;
 
 template<class TypeTag>
-class TwoPTwoCBoxJacobian;
+class TwoPTwoCLocalResidual;
 
 template <class TypeTag>
-class TwoPTwoCVertexData;
+class TwoPTwoCSecondaryVars;
 
 template <class TypeTag>
-class TwoPTwoCElementData;
-
-template <class TypeTag>
-class TwoPTwoCFluxData;
+class TwoPTwoCFluxVars;
 
 template <class TypeTag>
 class TwoPTwoCNewtonController;
@@ -96,7 +93,7 @@ struct TwoPTwoCFormulation
 /*!
  * \brief The indices for the isothermal TwoPTwoC model.
  *
- * \tparam PVOffset    The first index in a primary variable vector.
+ * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag,
           int formulation = TwoPTwoCFormulation::plSg,
@@ -135,7 +132,7 @@ public:
  * \brief The indices for the isothermal TwoPTwoC model in the pg-Sl
  *        formulation.
  *
- * \tparam PVOffset    The first index in a primary variable vector.
+ * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset>
 class TwoPTwoCIndices<TypeTag, TwoPTwoCFormulation::pgSl, PVOffset>
@@ -225,7 +222,7 @@ SET_INT_PROP(BoxTwoPTwoC,
 SET_PROP(BoxTwoPTwoC, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))  SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
 public:
     typedef typename SpatialParameters::MaterialLaw type;
@@ -238,7 +235,7 @@ public:
 SET_PROP(BoxTwoPTwoC, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))  MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;
@@ -246,23 +243,20 @@ public:
 
 //! Use the 2p2c local jacobian operator for the 2p2c model
 SET_TYPE_PROP(BoxTwoPTwoC,
-              LocalJacobian,
-              TwoPTwoCBoxJacobian<TypeTag>);
+              LocalResidual,
+              TwoPTwoCLocalResidual<TypeTag>);
 
 //! Use the 2p2c specific newton controller for the 2p2c model
 SET_TYPE_PROP(BoxTwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPTwoC, Model, TwoPTwoCBoxModel<TypeTag>);
+SET_TYPE_PROP(BoxTwoPTwoC, Model, TwoPTwoCModel<TypeTag>);
 
-//! the VertexData property
-SET_TYPE_PROP(BoxTwoPTwoC, VertexData, TwoPTwoCVertexData<TypeTag>);
+//! the SecondaryVars property
+SET_TYPE_PROP(BoxTwoPTwoC, SecondaryVars, TwoPTwoCSecondaryVars<TypeTag>);
 
-//! the ElementData property
-SET_TYPE_PROP(BoxTwoPTwoC, ElementData, TwoPTwoCElementData<TypeTag>);
-
-//! the FluxData property
-SET_TYPE_PROP(BoxTwoPTwoC, FluxData, TwoPTwoCFluxData<TypeTag>);
+//! the FluxVars property
+SET_TYPE_PROP(BoxTwoPTwoC, FluxVars, TwoPTwoCFluxVars<TypeTag>);
 
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(BoxTwoPTwoC, MobilityUpwindAlpha, 1.0);

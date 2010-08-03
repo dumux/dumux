@@ -142,12 +142,19 @@ public:
             int numLocalVerts = elementIt->template count<dim> ();
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                const SecondaryVars &vdat = elemDat[i];
-                Scalar vol = this->curElementGeom_.subContVol[i].volume;
+                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                secVars.update(sol[globalIdx], 
+                               this->problem_(),
+                               *elemIt,
+                               fvElemGeom, 
+                               i,
+                               false);
 
-                Scalar satN = vdat.saturation(nPhaseIdx);
-                Scalar pW = vdat.pressure(wPhaseIdx);
-                Scalar T = vdat.temperature();
+                Scalar vol = fvElemGeom.subContVol[i].volume;
+
+                Scalar satN = secVars.saturation(nPhaseIdx);
+                Scalar pW = secVars.pressure(wPhaseIdx);
+                Scalar T = secVars.temperature();
 
                 // get minimum and maximum values of primary variables
                 minSat = std::min(minSat, satN);
@@ -159,11 +166,11 @@ public:
                 maxTe = std::max(maxTe, T);
 #endif
 
-                mass[nPhaseIdx] += vdat.porosity() * vdat.saturation(nPhaseIdx)
-                        * vdat.density(nPhaseIdx) * vol;
+                mass[nPhaseIdx] += secVars.porosity() * secVars.saturation(nPhaseIdx)
+                        * secVars.density(nPhaseIdx) * vol;
 
-                mass[wPhaseIdx] += vdat.porosity() * vdat.saturation(wPhaseIdx)
-                        * vdat.density(wPhaseIdx) * vol;
+                mass[wPhaseIdx] += secVars.porosity() * secVars.saturation(wPhaseIdx)
+                        * secVars.density(wPhaseIdx) * vol;
             }
         }
 

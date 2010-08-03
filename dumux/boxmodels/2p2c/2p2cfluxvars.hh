@@ -1,4 +1,4 @@
-// $Id: 2p2cfluxdata.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2cfluxvars.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -18,7 +18,7 @@
 /*!
  * \file
  *
- * \ingroup TwoPTwoCBoxModel
+ * \ingroup TwoPTwoCModel
  * \brief This file contains the data which is required to calculate
  *        all fluxes of components over a face of a finite volume.
  *
@@ -43,17 +43,17 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class TwoPTwoCFluxData
+class TwoPTwoCFluxVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
 
-    typedef typename GridView::ctype                     CoordScalar;
+    typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                      VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
     enum {
         dim = GridView::dimension,
@@ -63,10 +63,10 @@ class TwoPTwoCFluxData
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    typedef typename FVElementGeometry::SubControlVolume             SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+    typedef typename FVElementGeometry::SubControlVolume SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld>  Vector;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
@@ -79,11 +79,11 @@ class TwoPTwoCFluxData
     };
 
 public:
-    TwoPTwoCFluxData(const Problem &problem,
+    TwoPTwoCFluxVars(const Problem &problem,
                      const Element &element,
                      const FVElementGeometry &elemGeom,
                      int faceIdx,
-                     const VertexDataArray &elemDat)
+                     const ElementSecondaryVars &elemDat)
         : fvElemGeom_(elemGeom)
     {
         scvfIdx_ = faceIdx;
@@ -104,7 +104,7 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const VertexDataArray &elemDat)
+                             const ElementSecondaryVars &elemDat)
     {
         // calculate gradients
         Vector tmp(0.0);
@@ -176,7 +176,7 @@ private:
         }
     }
 
-    Scalar rhoFactor_(int phaseIdx, int scvIdx, const VertexDataArray &vDat)
+    Scalar rhoFactor_(int phaseIdx, int scvIdx, const ElementSecondaryVars &vDat)
     {
         static const Scalar eps = 1e-2;
         const Scalar sat = vDat[scvIdx].density(phaseIdx);
@@ -193,7 +193,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const VertexDataArray &elemDat)
+                              const ElementSecondaryVars &elemDat)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         // multiply the pressure potential with the intrinsic
@@ -228,10 +228,10 @@ private:
 
     void calculateDiffCoeffPM_(const Problem &problem,
                                const Element &element,
-                               const VertexDataArray &elemDat)
+                               const ElementSecondaryVars &elemDat)
     {
-        const VertexData &vDat_i = elemDat[face().i];
-        const VertexData &vDat_j = elemDat[face().j];
+        const SecondaryVars &vDat_i = elemDat[face().i];
+        const SecondaryVars &vDat_j = elemDat[face().j];
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -329,7 +329,7 @@ public:
 
 protected:
     const FVElementGeometry &fvElemGeom_;
-    int                      scvfIdx_;
+    int scvfIdx_;
 
     // gradients
     Vector potentialGrad_[numPhases];

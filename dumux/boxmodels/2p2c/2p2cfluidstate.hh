@@ -39,16 +39,16 @@ class TwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
                                              TwoPTwoCFluidState<TypeTag> >
 {
     typedef TwoPTwoCFluidState<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-    typedef typename MaterialLaw::Params                       MaterialLawParams;
+    typedef typename MaterialLaw::Params MaterialLawParams;
 
     enum {
         lPhaseIdx = Indices::lPhaseIdx,

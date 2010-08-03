@@ -1,4 +1,4 @@
-// $Id: 2p2cvertexdata.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2csecondaryvars.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008,2009 by Klaus Mosthaf,                               *
  *                              Andreas Lauser,                              *
@@ -18,14 +18,14 @@
 /*!
  * \file
  *
- * \ingroup TwoPTwoCBoxModel
+ * \ingroup TwoPTwoCModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */
-#ifndef DUMUX_2P2C_VERTEX_DATA_HH
-#define DUMUX_2P2C_VERTEX_DATA_HH
+#ifndef DUMUX_2P2C_SECONDARY_VARS_HH
+#define DUMUX_2P2C_SECONDARY_VARS_HH
 
-#include <dumux/boxmodels/boxscheme/boxscheme.hh>
+#include <dumux/boxmodels/common/boxmodel.hh>
 #include <dumux/common/math.hh>
 
 #include <dune/common/collectivecommunication.hh>
@@ -42,16 +42,16 @@ namespace Dumux
  *        finite volume in the two-phase, two-component model.
  */
 template <class TypeTag>
-class TwoPTwoCVertexData
+class TwoPTwoCSecondaryVars
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
     // this is a bit hacky: the vertex data might not be identical to
     // the implementation.
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData))   Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
 
     enum {
         numEq         = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
@@ -64,9 +64,9 @@ class TwoPTwoCVertexData
         dimWorld      = GridView::dimensionworld,
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))           Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))   Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     enum {
         lCompIdx  = Indices::lCompIdx,
@@ -76,27 +76,29 @@ class TwoPTwoCVertexData
         gPhaseIdx  = Indices::gPhaseIdx
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))        SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector               PrimaryVarVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))     FluidSystem;
-    typedef TwoPTwoCFluidState<TypeTag>                            FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))       MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef TwoPTwoCFluidState<TypeTag> FluidState;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &sol,
+    void update(const PrimaryVarVector  &priVars,
+                const Problem           &problem,
                 const Element           &element,
                 const FVElementGeometry &elemGeom,
                 int                      scvIdx,
-                const Problem           &problem,
                 bool                     isOldSol)
     {
-        asImp().updateTemperature_(sol,
+        primaryVars_ = priVars;
+
+        asImp().updateTemperature_(priVars,
                                    element,
                                    elemGeom,
                                    scvIdx,
@@ -106,11 +108,11 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
 
-        int globalVertIdx = problem.model().dofEntityMapper().map(element, scvIdx, dim);
-        int phasePresence = problem.model().localJacobian().phasePresence(globalVertIdx, isOldSol);
+        int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
+        int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
 
         // calculate phase state
-        fluidState_.update(sol, materialParams, temperature(), phasePresence);
+        fluidState_.update(priVars, materialParams, temperature(), phasePresence);
         Valgrind::CheckDefined(fluidState_);
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -153,14 +155,26 @@ public:
         Valgrind::CheckDefined(porosity_);
    }
 
-    void updateTemperature_(const PrimaryVarVector  &sol,
+    void updateTemperature_(const PrimaryVarVector  &priVars,
                             const Element           &element,
                             const FVElementGeometry &elemGeom,
-                            int                      scvIdx,
+                            int scvIdx,
                             const Problem           &problem)
     {
         temperature_ = problem.temperature(element, elemGeom, scvIdx);
     }
+
+    /*!
+     * \brief Return the vector of primary variables
+     */
+    const PrimaryVarVector &primaryVars() const
+    { return primaryVars_; }
+
+    /*!
+     * \brief Sets the evaluation point used in the by the local jacobian.
+     */
+    void setEvalPoint(const Implementation *ep)
+    { }
 
     /*!
      * \brief Returns the phase state for the control-volume.
@@ -235,6 +249,7 @@ public:
 
 
 protected:
+    PrimaryVarVector primaryVars_;
     Scalar temperature_;     //!< Temperature within the control volume
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
