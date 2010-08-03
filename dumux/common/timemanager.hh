@@ -1,4 +1,4 @@
-// $Id: timemanager.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -25,11 +25,14 @@
 #include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 
+#include <dumux/io/restart.hh>
+
 namespace Dumux
 {
 /*!
  * \addtogroup SimControl Simulation Supervision
  */
+
 /*!
  * \ingroup SimControl
  * \brief Simplify the handling of time dependent problems.
@@ -50,16 +53,15 @@ namespace Dumux
  * \todo Change the time manager to the property system (?)
  * \todo Remove the episode identifier stuff
  */
-template <class EpisodeIdentiferT>
+template <class TypeTag>
 class TimeManager
 {
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 public:
-    typedef EpisodeIdentiferT EpisodeIdentifer;
 
-    TimeManager(double endTime = 1e100,
-                bool verbose = true)
+    TimeManager(bool verbose = true)
     {
-        wasRestarted_ = false;
         verbose_ =
             verbose &&
             Dune::MPIHelper::getCollectiveCommunication().rank() == 0;
@@ -68,16 +70,45 @@ public:
         episodeStartTime_ = 0;
 
         time_ = 0.0;
-        endTime_ = endTime;
-        wasRestarted_ = false;
+        endTime_ = -1e100;
 
-        stepSize_ = 1.0;
-        stepNum_ = 0;
+        timeStepSize_ = 1.0;
+        timeStepIdx_ = 0;
         finished_ = false;
 
-        wasRestarted_ = false;
-
         episodeLength_ = 1e100;
+
+        if (verbose_)
+            std::cout <<
+                "Welcome aboard DuMuX airlines. Please fasten your seatbelts! Emergency exits are near the time integration.\n";
+    }
+
+    /*!
+     * \brief Initialize the model and problem and write the initial
+     *        condition to disk.
+     */
+    void init(Problem &problem, 
+              Scalar tStart,
+              Scalar dtInitial,
+              Scalar tEnd,
+              bool writeInitialSol = true)
+    {
+        std::cout << "Initializing '" << problem_->name() << "'\n";
+
+        problem_ = &problem;
+        time_ = tStart;
+        timeStepSize_ = dtInitial;
+        endTime_ = tEnd;
+
+        // initialize the problem
+        problem_->init();
+        
+        // initialize the problem
+        if (writeInitialSol) {
+            time_ -= timeStepSize_;
+            problem_->writeOutput();
+            time_ += timeStepSize_;
+        }
     }
 
     /*!
@@ -86,41 +117,34 @@ public:
      */
 
     /*!
-     * \brief Set the current simulated time, don't change the
-     * current time step number.
+     * \brief Set the current simulated time, don't change the current
+     *        time step index.
      */
-    void setTime(double t)
+    void setTime(Scalar t)
     { time_ = t; }
 
     /*!
-     * \brief Set the current simulated time and the time step
-     * number.
+     * \brief Set the current simulated time and the time step index.
      */
-    void setTime(double t, int stepNum)
-    { time_ = t; stepNum_ = stepNum; }
-
-    /*!
-     * \brief Let one time step size pass.
-     */
-    void proceed()
-    { time_ += stepSize_; ++stepNum_; }
+    void setTime(Scalar t, int stepIdx)
+    { time_ = t; timeStepIdx_ = stepIdx; }
 
     /*!
      * \brief Return the current simulated time.
      */
-    double time() const
+    Scalar time() const
     { return time_; }
 
     /*!
      * \brief Returns the number of (simulated) seconds which the simulation runs.
      */
-    double endTime() const
+    Scalar endTime() const
     { return endTime_; }
 
     /*!
      * \brief Set the time of simulated seconds at which the simulation runs.
      */
-    void setEndTime(double val)
+    void setEndTime(Scalar val)
     { endTime_ = val; }
 
     /*!
@@ -130,26 +154,22 @@ public:
      * episode, the timeStep() method will take care that the
      * step size won't exceed the episode, though.
      */
-    void setTimeStepSize(double stepSize)
-    {
-        stepSize_ = stepSize;
-    }
+    void setTimeStepSize(Scalar stepSize)
+    { timeStepSize_ = stepSize; }
 
     /*!
      * \brief Returns a suggested timestep length so that we don't
      *        miss the beginning of the next episode.
      */
-    double timeStepSize() const
-    {
-        return stepSize_;
-    }
+    Scalar timeStepSize() const
+    { return timeStepSize_; }
 
     /*!
      * \brief Returns number of time steps which have been
      *        executed since t=0.
      */
-    int timeStepNum() const
-    { return stepNum_; }
+    int timeStepIndex() const
+    { return timeStepIdx_; }
 
     /*!
      * \brief Specify whether the simulation is finished
@@ -180,30 +200,12 @@ public:
      * \param tStart Time when the episode began
      * \param len    Length of the episode
      */
-    void startNextEpisode(const EpisodeIdentifer &id,
-                          double tStart,
-                          double len)
+    void startNextEpisode(Scalar tStart,
+                          Scalar len)
     {
         ++ episodeIndex_;
         episodeStartTime_ = tStart;
         episodeLength_ = len;
-
-        episode_ = id;
-    }
-
-    /*!
-     * \brief Change the current episode of the simulation
-     *        assuming that the episode starts at the current
-     *        time.
-     */
-    void startNextEpisode(const EpisodeIdentifer &id,
-                          double len = 1e100)
-    {
-        ++ episodeIndex_;
-        episodeStartTime_ = time_;
-        episodeLength_ = len;
-
-        episode_ = id;
     }
 
     /*!
@@ -212,24 +214,12 @@ public:
      *
      * \param len  Length of the episode, infinite if not specified.
      */
-    void startNextEpisode(double len = 1e100)
+    void startNextEpisode(Scalar len = 1e100)
     {
         ++ episodeIndex_;
         episodeStartTime_ = time_;
         episodeLength_ = len;
     }
-
-    /*!
-     * \brief Returns the identifier of the current episode
-     */
-    const EpisodeIdentifer &episode() const
-    { return episode_; }
-
-    /*!
-     * \brief Returns the identifier of the current episode
-     */
-    EpisodeIdentifer &episode()
-    { return episode_; }
 
     /*!
      * \brief Returns the index of the current episode.
@@ -243,14 +233,14 @@ public:
      * \brief Returns the absolute time when the current episode
      *        started.
      */
-    double episodeStartTime() const
+    Scalar episodeStartTime() const
     { return episodeStartTime_; }
 
     /*!
      * \brief Returns the length of the current episode in
      *        simulated time.
      */
-    double episodeLength() const
+    Scalar episodeLength() const
     { return std::min(episodeLength_,  endTime_ - episodeStartTime_); }
 
     /*!
@@ -263,7 +253,7 @@ public:
     /*!
      * \brief Aligns dt to the episode boundary if t+dt exceeds the current episode.
      */
-    double episodeMaxTimeStepSize() const
+    Scalar episodeMaxTimeStepSize() const
     {
         // if the current episode is over and the simulation
         // wants to give it some extra time, we will return
@@ -289,49 +279,46 @@ public:
      * This method makes sure that time steps sizes are aligned to
      * episode boundaries, amongst other stuff.
      */
-    template <class Problem>
-    void runSimulation(Problem &problem)
+    void run()
     {
-        if (verbose_)
-            std::cout <<
-                "Welcome aboard DuMuX airlines. Please fasten your seatbelts! Emergency exits are near the time integration.\n";
-
         Dune::Timer timer;
         timer.reset();
-
-        // initialize them model and write the initial
-        // condition to disk
-        double dtInitial = stepSize_;
-        stepSize_ = 0.0;
-        problem.init();
-        stepSize_ = dtInitial;
 
         // do the time steps
         while (!finished())
         {
-            problem.timeStepBegin();
+            // pre-process the current solution
+            problem_->preProcess();
 
-            // execute the time integration (i.e. Runge-Kutta
-            // or Euler).
-            problem.timeIntegration();
+            // execute the time integration scheme
+            problem_->timeIntegration();
+            
+            // post-process the current solution
+            problem_->postProcess();
+            
+            // write the result to disk
+            if (problem_->doOutput())
+                problem_->writeOutput();
 
             // advance the simulated time by the current time step
             // size
-            double dt = timeStepSize();
-            proceed();
+            Scalar dt = timeStepSize();
+            time_ += timeStepSize_;
+            ++timeStepIdx_;
 
-            problem.timeStepEnd();
-
+            if (problem_->doSerialize())
+                problem_->serialize();
+            
             // notify the problem that the timestep is done and ask it
             // for a suggestion for the next timestep size
-            double nextDt =
-                    std::min(problem.nextTimeStepSize(),
+            Scalar nextDt =
+                    std::min(problem_->nextTimeStepSize(),
                              episodeMaxTimeStepSize());
 
             if (verbose_) {
                 std::cout <<
-                    boost::format("Timestep %d done. CPUt=%.4g, t=%.4g, StepSize=%.4g, NextStepSize=%.4g\n")
-                    %timeStepNum()%timer.elapsed()%time()%dt%nextDt;
+                    boost::format("Time step %d done. CPU time:%.4g, time:%.4g, last step size:%.4g, next step size:%.4g\n")
+                    %timeStepIndex()%timer.elapsed()%time()%dt%nextDt;
             }
 
             // set the time step size for the next step
@@ -339,9 +326,10 @@ public:
         }
 
         if (verbose_)
-            std::cout <<
-                boost::format("Simulation took %.3f seconds. Hopefully you enjoyed simulating with us. We hope that you also simulate with us next time.\n")
-                %timer.elapsed();
+            std::cout << "Simulation took " << timer.elapsed() <<" seconds.\n"
+                      << "We hope that you enjoyed simulating with us\n"
+                      << "and that you will chose us next time, too.\n";
+    
     }
 
     /*!
@@ -354,11 +342,12 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        res.serializeSection("TimeManager");
+        res.serializeSectionBegin("TimeManager");
         res.serializeStream() << episodeIndex_ << " "
                               << episodeStartTime_ << " "
                               << time_ << " "
-                              << stepNum_ << "\n";
+                              << timeStepIdx_ << " ";
+        res.serializeSectionEnd();
     }
 
     /*!
@@ -367,16 +356,12 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
-        res.deserializeSection("TimeManager");
+        res.deserializeSectionBegin("TimeManager");
         res.deserializeStream() >> episodeIndex_
                                 >> episodeStartTime_
                                 >> time_
-                                >> stepNum_;
-
-
-        std::string dummy;
-        std::getline(res.deserializeStream(), dummy);
-        wasRestarted_ = true;
+                                >> timeStepIdx_;
+        res.deserializeSectionEnd();
     }
 
     /*
@@ -384,20 +369,18 @@ public:
      */
 
 private:
+    Problem *problem_;
+    int episodeIndex_;
+    Scalar episodeStartTime_;
+    Scalar episodeLength_;
 
-    int              episodeIndex_;
-    double           episodeStartTime_;
-    double           episodeLength_;
-    EpisodeIdentifer episode_;
+    Scalar time_;
+    Scalar endTime_;
 
-    double time_;
-    double endTime_;
-
-    double stepSize_;
-    int    stepNum_;
-    bool   finished_;
-    bool   verbose_;
-    bool   wasRestarted_;
+    Scalar timeStepSize_;
+    int timeStepIdx_;
+    bool finished_;
+    bool verbose_;
 };
 }
 

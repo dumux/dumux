@@ -1,25 +1,25 @@
-// $Id: newtoncontroller.hh 3826 2010-07-14 07:03:41Z bernd $
+// $Id$
 /****************************************************************************
-*   Copyright (C) 2008-2010 by Andreas Lauser                               *
-*   Copyright (C) 2008-2010 by Bernd Flemisch                               *
-*   Institute of Hydraulic Engineering                                      *
-*   University of Stuttgart, Germany                                        *
-*   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
-*                                                                           *
-*   This program is free software; you can redistribute it and/or modify    *
-*   it under the terms of the GNU General Public License as published by    *
-*   the Free Software Foundation; either version 2 of the License, or       *
-*   (at your option) any later version, as long as this copyright notice    *
-*   is included in its original form.                                       *
-*                                                                           *
-*   This program is distributed WITHOUT ANY WARRANTY.                       *
-*****************************************************************************/
+ *   Copyright (C) 2008-2010 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2010 by Bernd Flemisch                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 /*!
-* \file
-* \brief Reference implementation of a newton controller solver.
-*
-* Usually for most cases this controller should be sufficient.
-*/
+ * \file
+ * \brief Reference implementation of a newton controller solver.
+ *
+ * Usually for most cases this controller should be sufficient.
+ */
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
 
@@ -40,7 +40,7 @@
 
 #include <dumux/common/pardiso.hh>
 
-#include <dumux/boxmodels/pdelab/preconditionerpdelab.hh>
+#include <dumux/common/pdelabpreconditioner.hh>
 #include <dune/pdelab/backend/istlsolverbackend.hh>
 
 
@@ -86,12 +86,11 @@ struct NewtonConvergenceWriter
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
     NewtonConvergenceWriter(NewtonController &ctl)
-    : ctl_(ctl)
+        : ctl_(ctl)
     {
         timeStepNum_ = 0;
         iteration_ = 0;
@@ -111,19 +110,17 @@ struct NewtonConvergenceWriter
     {
         ++ iteration_;
         vtkMultiWriter_->beginTimestep(timeStepNum_ + iteration_ / 100.0,
-                gv);
+                                       gv);
     };
 
     void writeFields(const SolutionVector &uOld,
                      const SolutionVector &deltaU)
     {
-        ctl_.model().localJacobian().addConvergenceVtkFields(*vtkMultiWriter_, uOld, deltaU);
+        ctl_.method().model().addConvergenceVtkFields(*vtkMultiWriter_, uOld, deltaU);
     };
 
     void endIteration()
-    {
-        vtkMultiWriter_->endTimestep();
-    };
+    { vtkMultiWriter_->endTimestep(); };
 
     void endTimestep()
     {
@@ -143,9 +140,8 @@ struct NewtonConvergenceWriter<TypeTag, false>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector SolutionVector;
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
     NewtonConvergenceWriter(NewtonController &ctl)
@@ -158,7 +154,7 @@ struct NewtonConvergenceWriter<TypeTag, false>
     { };
 
     void writeFields(const SolutionVector &uOld,
-            const SolutionVector &deltaU)
+                     const SolutionVector &deltaU)
     { };
 
     void endIteration()
@@ -169,36 +165,34 @@ struct NewtonConvergenceWriter<TypeTag, false>
 };
 
 /*!
-* \brief The reference implementation of a newton controller.
-*
-* If you want to specialize only some methods but are happy with
-* the defaults of the reference controller, derive your
-* controller from this class and simply overload the required
-* methods.
-*/
+ * \brief The reference implementation of a newton controller.
+ *
+ * If you want to specialize only some methods but are happy with
+ * the defaults of the reference controller, derive your
+ * controller from this class and simply overload the required
+ * methods.
+ */
 template <class TypeTag>
 class NewtonController
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))    GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))        Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
 
-    typedef typename GET_PROP(TypeTag, PTAG(PDELabTypes))  PDELabTypes;
-    typedef typename PDELabTypes::GridFunctionSpace GridFunctionSpace;
-    typedef typename PDELabTypes::ConstraintsTrafo ConstraintsTrafo;
-
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))  SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector         SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
     typedef NewtonConvergenceWriter<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence))>  ConvergenceWriter;
 
 public:
     NewtonController()
-    : endIterMsgStream_(std::ostringstream::out),
-      convergenceWriter_(asImp_())
+        : endIterMsgStream_(std::ostringstream::out),
+          convergenceWriter_(asImp_())
     {
         numSteps_ = 0;
 
@@ -233,8 +227,8 @@ public:
     { maxSteps_ = maxSteps; }
 
     /*!
-    * \brief Returns true if another iteration should be done.
-    */
+     * \brief Returns true if another iteration should be done.
+     */
     bool newtonProceed(SolutionVector &u)
     {
         if (numSteps_ < 2)
@@ -250,7 +244,7 @@ public:
             return false; // we are below the desired tolerance
 
         Scalar tmp = asImp_().physicalness_(u);
-        curPhysicalness_ = model().gridView().comm().min(tmp);
+        curPhysicalness_ = gridView_().comm().min(tmp);
         curPhysicalness_ = std::min(curPhysicalness_, Scalar(1.0));
 
 
@@ -293,21 +287,21 @@ public:
     }
 
     /*!
-    * \brief Returns true iff the error of the solution is below the
-    *        tolerance.
-    */
+     * \brief Returns true iff the error of the solution is below the
+     *        tolerance.
+     */
     bool newtonConverged() const
     {
         return (error_ <= tolerance_) && (curPhysicalness_ >= 1.0);
     }
 
     /*!
-    * \brief Called before the newton method is applied to an
-    *        non-linear system of equations.
-    */
-    void newtonBegin(NewtonMethod *method, SolutionVector &u)
+     * \brief Called before the newton method is applied to an
+     *        non-linear system of equations.
+     */
+    void newtonBegin(NewtonMethod &method, SolutionVector &u)
     {
-        method_ = method;
+        method_ = &method;
         numSteps_ = 0;
         probationCount_ = 0;
         maxPhysicalness_ = 0;
@@ -317,23 +311,23 @@ public:
     }
 
     /*!
-    * \brief Indidicates the beginning of a newton iteration.
-    */
+     * \brief Indidicates the beginning of a newton iteration.
+     */
     void newtonBeginStep()
     { lastError_ = error_; }
 
     /*!
-    * \brief Returns the number of steps done since newtonBegin() was
-    *        called.
-    */
+     * \brief Returns the number of steps done since newtonBegin() was
+     *        called.
+     */
     int newtonNumSteps()
     { return numSteps_; }
 
 
     /*!
-    * \brief Update the error of the solution compared to the
-    *        previous iteration.
-    */
+     * \brief Update the error of the solution compared to the
+     *        previous iteration.
+     */
     void newtonUpdateRelError(const SolutionVector &uOld,
                               const SolutionVector &deltaU)
     {
@@ -352,23 +346,23 @@ public:
                     / std::max(std::abs(uOld[i][j]), Scalar(1e-4));
                 if (tmp > error_)
                 {
-                  idxI = i;
-                  idxJ = j;
+                    idxI = i;
+                    idxJ = j;
+                    error_ = tmp;
                 }
-                error_ = std::max(error_, tmp);
             }
         }
-        error_ = model().gridView().comm().max(error_);
+        error_ = gridView_().comm().max(error_);
     }
 
 
     /*!
-    * \brief Solve the linear system of equations \f$ \mathbf{A}x - b
-    *        = 0\f$.
-    *
-    * Throws Dumux::NumericalProblem if the linear solver didn't
-    * converge.
-    */
+     * \brief Solve the linear system of equations \f$ \mathbf{A}x - b
+     *        = 0\f$.
+     *
+     * Throws Dumux::NumericalProblem if the linear solver didn't
+     * converge.
+     */
     template <class Matrix, class Vector>
     void newtonSolveLinear(Matrix &A,
                            Vector &u,
@@ -382,21 +376,21 @@ public:
         Scalar residReduction = 1e-6;
 
         try {
-          solveLinear_(A, u, b, residReduction);
+            solveLinear_(A, u, b, residReduction);
 
-          // make sure all processes converged
-          int converged = 1;
-          model().gridView().comm().min(converged);
+            // make sure all processes converged
+            int converged = 1;
+            gridView_().comm().min(converged);
 
-          if (!converged) {
-              DUNE_THROW(NumericalProblem,
-                         "A process threw MatrixBlockError");
-          }
+            if (!converged) {
+                DUNE_THROW(NumericalProblem,
+                           "A process threw MatrixBlockError");
+            }
         }
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
             int converged = 0;
-            model().gridView().comm().min(converged);
+            gridView_().comm().min(converged);
 
             Dumux::NumericalProblem p;
             std::string msg;
@@ -408,20 +402,20 @@ public:
     }
 
     /*!
-    * \brief Update the current solution function with a delta vector.
-    *
-    * The error estimates required for the newtonConverged() and
-    * newtonProceed() methods should be updated here.
-    *
-    * Different update strategies, such as line search and chopped
-    * updates can be implemented. The default behaviour is just to
-    * subtract deltaU from uOld.
-    *
-    * \param deltaU The delta as calculated from solving the linear
-    *               system of equations. This parameter also stores
-    *               the updated solution.
-    * \param uOld   The solution of the last iteration
-    */
+     * \brief Update the current solution function with a delta vector.
+     *
+     * The error estimates required for the newtonConverged() and
+     * newtonProceed() methods should be updated here.
+     *
+     * Different update strategies, such as line search and chopped
+     * updates can be implemented. The default behaviour is just to
+     * subtract deltaU from uOld.
+     *
+     * \param deltaU The delta as calculated from solving the linear
+     *               system of equations. This parameter also stores
+     *               the updated solution.
+     * \param uOld   The solution of the last iteration
+     */
     void newtonUpdate(SolutionVector &deltaU, const SolutionVector &uOld)
     {
         writeConvergence_(uOld, deltaU);
@@ -433,52 +427,52 @@ public:
     }
 
     /*!
-    * \brief Indicates that one newton iteration was finished.
-    */
+     * \brief Indicates that one newton iteration was finished.
+     */
     void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
     {
         ++numSteps_;
 
         curPhysicalness_ = asImp_().physicalness_(u);
-        if (this->method().verbose())
+        if (verbose())
             std::cout << "\rNewton iteration " << numSteps_ << " done: "
-            << "error=" << error_ << endIterMsg().str() << "\n";
+                      << "error=" << error_ << endIterMsg().str() << "\n";
         endIterMsgStream_.str("");
     }
 
     /*!
-    * \brief Indicates that we're done solving the non-linear system of equations.
-    */
+     * \brief Indicates that we're done solving the non-linear system of equations.
+     */
     void newtonEnd()
     {
         convergenceWriter_.endTimestep();
     }
 
     /*!
-    * \brief Called if the newton method broke down.
-    *
-    * This method is called _after_ newtonEnd()
-    */
+     * \brief Called if the newton method broke down.
+     *
+     * This method is called _after_ newtonEnd()
+     */
     void newtonFail()
     {
         numSteps_ = targetSteps_*2;
     }
 
     /*!
-    * \brief Called when the newton method was sucessful.
-    *
-    * This method is called _after_ newtonEnd()
-    */
+     * \brief Called when the newton method was sucessful.
+     *
+     * This method is called _after_ newtonEnd()
+     */
     void newtonSucceed()
     { }
 
     /*!
-    * \brief Suggest a new time stepsize based on the old time step size.
-    *
-    * The default behaviour is to suggest the old time step size
-    * scaled by the ratio between the target iterations and the
-    * iterations required to actually solve the last time step.
-    */
+     * \brief Suggest a new time stepsize based on the old time step size.
+     *
+     * The default behaviour is to suggest the old time step size
+     * scaled by the ratio between the target iterations and the
+     * iterations required to actually solve the last time step.
+     */
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
         // be agressive reducing the timestep size but
@@ -493,42 +487,66 @@ public:
         else {
             /*Scalar percent = (Scalar(1))/targetSteps_;
               return oldTimeStep*(1 + percent);
-             */
+            */
             Scalar percent = ((Scalar) targetSteps_ - numSteps_)/targetSteps_;
             return oldTimeStep*(1.0 + percent/1.2);
         }
     }
 
     /*!
-    * \brief Returns a reference to the current newton method
-    *        which is controlled by this controller.
-    */
+     * \brief Returns a reference to the current newton method
+     *        which is controlled by this controller.
+     */
     NewtonMethod &method()
     { return *method_; }
 
     /*!
-    * \brief Returns a reference to the current newton method
-    *        which is controlled by this controller.
-    */
+     * \brief Returns a reference to the current newton method
+     *        which is controlled by this controller.
+     */
     const NewtonMethod &method() const
     { return *method_; }
-
-    /*!
-    * \brief Returns a reference to the current numeric model.
-    */
-    Model &model()
-    { return method_->model(); }
-
-    /*!
-    * \brief Returns a reference to the current numeric model.
-    */
-    const Model &model() const
-    { return method_->model(); }
 
     std::ostringstream &endIterMsg()
     { return endIterMsgStream_; }
 
+    /*!
+     * \brief Returns true iff the newton method ought to be chatty.
+     */
+    bool verbose() const 
+    { return gridView_().comm().rank() == 0; }
+
 protected:
+    /*!
+     * \brief Returns a reference to the grid view.
+     */
+    const GridView &gridView_() const
+    { return problem_().gridView(); }
+
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    Problem &problem_()
+    { return method_->problem(); }
+
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    const Problem &problem_() const
+    { return method_->problem(); }
+
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    Model &model_()
+    { return problem_().model(); }
+
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    const Model &model_() const
+    { return problem_().model(); }
+
     // returns the actual implementation for the cotroller we do
     // it this way in order to allow "poor man's virtual methods",
     // i.e. methods of subclasses which can be called by the base
@@ -541,7 +559,7 @@ protected:
     void writeConvergence_(const SolutionVector &uOld,
                            const SolutionVector &deltaU)
     {
-        convergenceWriter_.beginIteration(this->model().gridView());
+        convergenceWriter_.beginIteration(this->gridView_());
         convergenceWriter_.writeFields(uOld, deltaU);
         convergenceWriter_.endIteration();
     };
@@ -556,25 +574,25 @@ protected:
         Vector &x = u;
 
         int verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
-        if (model().gridView().grid().comm().rank() != 0)
+        if (gridView_().comm().rank() != 0)
             verbosity = 0;
 
 #if HAVE_PARDISO
-        typedef  Dune::PDELab::ISTLBackend_NoOverlap_Loop_Pardiso<TypeTag> Solver;
-        Solver solver(model(), 500, verbosity);
+        typedef  Dumux::PDELab::ISTLBackend_NoOverlap_Loop_Pardiso<TypeTag> Solver;
+        Solver solver(problem_(), 500, verbosity);
 #else // !HAVE_PARDISO
 #if HAVE_MPI
 //        typedef  Dune::PDELab::ISTLBackend_NOVLP_BCGS_NOPREC<GridFunctionSpace> Solver;
-//        Solver solver(model().jacobianAssembler().gridFunctionSpace(), 50000, verbosity);
-        typedef  Dune::PDELab::ISTLBackend_NoOverlap_BCGS_ILU<TypeTag> Solver;
-        Solver solver(model(), 500, verbosity);
+//        Solver solver(model_().jacobianAssembler().gridFunctionSpace(), 50000, verbosity);
+        typedef  Dumux::PDELab::ISTLBackend_NoOverlap_BCGS_ILU<TypeTag> Solver;
+        Solver solver(problem_(), 500, verbosity);
 #else
-        typedef  Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;
+        typedef  Dumux::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;
         Solver solver(500, verbosity);
 #endif // HAVE_MPI
 #endif // HAVE_PARDISO
 
-        //    Solver solver(model().jacobianAssembler().gridFunctionSpace(), 500, verbosity);
+        //    Solver solver(model_().jacobianAssembler().gridFunctionSpace(), 500, verbosity);
         solver.apply(A, x, b, residReduction);
 
         if (!solver.result().converged)
@@ -585,7 +603,7 @@ protected:
         // somewhere. this should never happen but for some strange
         // reason it happens anyway.
         Scalar xNorm2 = x.two_norm2();
-        model().gridView().grid().comm().sum(xNorm2);
+        gridView_().comm().sum(xNorm2);
         if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
             DUNE_THROW(Dumux::NumericalProblem,
                        "The linear solver produced a NaN or inf somewhere.");
@@ -629,8 +647,6 @@ protected:
     // actual number of steps done so far
     int    numSteps_;
 };
-
-}
-
+} // namespace Dumux
 
 #endif

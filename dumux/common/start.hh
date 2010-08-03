@@ -1,4 +1,4 @@
-// $Id: start.hh 3783 2010-06-24 11:33:53Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2010 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -52,9 +52,11 @@ int startFromDGF(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
+
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Scalar))  Scalar;
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid))    Grid;
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
+        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::GridPtr<Grid>                                   GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
@@ -65,24 +67,24 @@ int startFromDGF(int argc, char **argv)
             printUsage(argv[0]);
 
         // deal with the restart stuff
-        int argPos = 1;
+        int argIdx = 1;
         bool restart = false;
         double restartTime = 0;
-        if (std::string("--restart") == argv[argPos]) {
+        if (std::string("--restart") == argv[argIdx]) {
             restart = true;
-            ++argPos;
+            ++argIdx;
 
-            std::istringstream(argv[argPos++]) >> restartTime;
+            std::istringstream(argv[argIdx++]) >> restartTime;
         }
 
-        if (argc - argPos != 3) {
+        if (argc - argIdx != 3) {
             printUsage(argv[0]);
         }
 
         double tEnd, dt;
-        const char *dgfFileName = argv[argPos++];
-        std::istringstream(argv[argPos++]) >> tEnd;
-        std::istringstream(argv[argPos++]) >> dt;
+        const char *dgfFileName = argv[argIdx++];
+        std::istringstream(argv[argIdx++]) >> tEnd;
+        std::istringstream(argv[argIdx++]) >> dt;
 
         // create grid
         // -> load the grid from file
@@ -90,15 +92,14 @@ int startFromDGF(int argc, char **argv)
         Dune::gridinfo(*gridPtr);
 
         // instantiate and run the concrete problem
-        Problem problem(gridPtr->leafView());
-
+        TimeManager timeManager;
+        Problem problem(timeManager, gridPtr->leafView());       
+        timeManager.init(problem, 0, dt, tEnd, !restart);
         if (restart)
-            problem.deserialize(restartTime);
-
-        if (!problem.simulate(dt, tEnd))
-            return 2;
-
+            problem.restart(restartTime);
+        timeManager.run();
         return 0;
+
 #ifdef NDEBUG
     }
     catch (Dune::Exception &e) {

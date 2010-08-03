@@ -1,4 +1,4 @@
-// $Id: fvelementgeometry-pdelab.hh 3783 2010-06-24 11:33:53Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Bernd Flemisch, Andreas Lauser               *
  *   Institute of Hydraulic Engineering                                      *
@@ -13,13 +13,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
-#ifndef DUMUX_FVELEMENTGEOMETRY_PDELAB_HH
-#define DUMUX_FVELEMENTGEOMETRY_PDELAB_HH
-
-#ifdef DUMUX_FVELEMENTGEOMETRY_DISC_HH
-#error "you can not use dune-disc and dune-pdelab at the same time!"
-#endif
+#ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
+#define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
 #include <dune/grid/common/intersectioniterator.hh>
 #include <dune/grid/common/capabilities.hh>
@@ -37,7 +32,7 @@ NEW_PROP_TAG(Scalar);
 
 /////////////////////
 // HACK: Functions to initialize the subcontrol volume data
-// structures of FVElementGeomerty.
+// structures of BoxFVElementGeomerty.
 //
 // this is a work around to be able to to use specialization for
 // doing this.  it is required since it is not possible to
@@ -46,24 +41,24 @@ NEW_PROP_TAG(Scalar);
 
 /** \todo Please doc me! */
 
-template <typename FVElementGeometry, int dim>
-class _FVElemGeomHelper
+template <typename BoxFVElementGeometry, int dim>
+class _BoxFVElemGeomHelper
 {
 public:
-    static void fillSubContVolData(FVElementGeometry &eg, int numVertices)
+    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices)
     {
-        DUNE_THROW(Dune::NotImplemented, "_FVElemGeomHelper::fillSubContVolData dim = " << dim);
+        DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim);
     };
 };
 
 /** \todo Please doc me! */
 
-template <typename FVElementGeometry>
-class _FVElemGeomHelper<FVElementGeometry, 1>
+template <typename BoxFVElementGeometry>
+class _BoxFVElemGeomHelper<BoxFVElementGeometry, 1>
 {
 public:
     enum { dim = 1 };
-    static void fillSubContVolData(FVElementGeometry &eg, int numVertices)
+    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices)
     {
         // 1D
         eg.subContVol[0].volume = 0.5*eg.elementVolume;
@@ -73,13 +68,13 @@ public:
 
 /** \todo Please doc me! */
 
-template <typename FVElementGeometry>
-class _FVElemGeomHelper<FVElementGeometry, 2>
+template <typename BoxFVElementGeometry>
+class _BoxFVElemGeomHelper<BoxFVElementGeometry, 2>
 {
 public:
     enum { dim = 2 };
 
-    static void fillSubContVolData(FVElementGeometry &eg, int numVertices)
+    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices)
     {
         switch (numVertices) {
         case 3: // 2D, triangle
@@ -88,7 +83,7 @@ public:
             eg.subContVol[2].volume = eg.elementVolume/3;
             break;
         case 4: // 2D, quadrilinear
-            if (!Dune::Capabilities::IsUnstructured<typename FVElementGeometry::Grid>::v) {
+            if (!Dune::Capabilities::IsUnstructured<typename BoxFVElementGeometry::Grid>::v) {
                 eg.subContVol[0].volume = eg.elementVolume/4;
                 eg.subContVol[1].volume = eg.elementVolume/4;
                 eg.subContVol[2].volume = eg.elementVolume/4;
@@ -102,20 +97,20 @@ public:
             }
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "_FVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
         }
     }
 };
 
 /** \todo Please doc me! */
 
-template <typename FVElementGeometry>
-class _FVElemGeomHelper<FVElementGeometry, 3>
+template <typename BoxFVElementGeometry>
+class _BoxFVElemGeomHelper<BoxFVElementGeometry, 3>
 {
 public:
     enum { dim = 3 };
 
-    static void fillSubContVolData(FVElementGeometry &eg, int numVertices)
+    static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices)
     {
         switch (numVertices) {
         case 4: // 3D, tetrahedron
@@ -278,7 +273,7 @@ public:
                                                           eg.edgeCoord[9]);
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "_FVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
         }
     }
 };
@@ -288,18 +283,18 @@ public:
 /** \todo Please doc me! */
 
 template<class TypeTag>
-class FVElementGeometry
+class BoxFVElementGeometry
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) LocalFEMSpace;
 
-    typedef FVElementGeometry<TypeTag>   ThisType;
+    typedef BoxFVElementGeometry<TypeTag>   ThisType;
 
     /** \todo Please doc me! */
-    friend class _FVElemGeomHelper<ThisType, Grid::dimension>;
+    friend class _BoxFVElemGeomHelper<ThisType, Grid::dimension>;
 
-    typedef _FVElemGeomHelper<ThisType, Grid::dimension> FVElemGeomHelper;
+    typedef _BoxFVElemGeomHelper<ThisType, Grid::dimension> BoxFVElemGeomHelper;
 
     enum{dim = Grid::dimension};
     enum{maxNC = (dim < 3 ? 4 : 8)};
@@ -443,7 +438,7 @@ class FVElementGeometry
             rightFace = edgeToFaceHex[1][k];
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "FVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
             break;
         }
     }
@@ -525,7 +520,7 @@ class FVElementGeometry
             rightEdge = faceAndVertexToRightEdgeHex[face][vert];
             break;
         default:
-            DUNE_THROW(Dune::NotImplemented, "FVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
+            DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
             break;
         }
     }
@@ -578,13 +573,12 @@ public:
     int numFaces; //!< number of faces (0 in < 3D)
 
     const LocalFEMSpace feMap_;
-    const GridView& gridView_;
 
-    FVElementGeometry(const GridView& gridView)
-        : feMap_(), gridView_(gridView)
+    BoxFVElementGeometry()
+        : feMap_()
     {}
 
-    void update(const Element& e)
+    void update(const GridView& gridView, const Element& e)
     {
         const Geometry& geometry = e.geometry();
         Dune::GeometryType gt = geometry.type();
@@ -623,9 +617,9 @@ public:
         // fill sub control volume data use specialization for this
         // \todo maybe it would be a good idea to migrate everything
         // which is dependend of the grid's dimension to
-        // _FVElemGeomHelper in order to benefit from more aggressive
+        // _BoxFVElemGeomHelper in order to benefit from more aggressive
         // compiler optimizations...
-        FVElemGeomHelper::fillSubContVolData(*this, numVertices);
+        BoxFVElemGeomHelper::fillSubContVolData(*this, numVertices);
 
         // fill sub control volume face data:
         for (int k = 0; k < numEdges; k++) { // begin loop over edges / sub control volume faces
@@ -700,8 +694,8 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
-        IntersectionIterator endit = gridView_.template iend(e);
-        for (IntersectionIterator it = gridView_.template ibegin(e); it != endit; ++it)
+        IntersectionIterator endit = gridView.template iend(e);
+        for (IntersectionIterator it = gridView.template ibegin(e); it != endit; ++it)
             if (it->boundary())
             {
                 int face = it->indexInInside();
@@ -711,7 +705,7 @@ public:
                     int vertInElement = referenceElement.subEntity(face, 1, vertInFace, dim);
                     int bfIdx = boundaryFaceIndex(face, vertInFace);
                     subContVol[vertInElement].inner = false;
-                    switch (dim) {
+                    switch ((short) dim) {
                     case 1:
                         boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim);
                         boundaryFace[bfIdx].area = 1.0;
@@ -735,7 +729,7 @@ public:
                                                                        edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
                         break;
                     default:
-                        DUNE_THROW(Dune::NotImplemented, "FVElementGeometry for dim = " << dim);
+                        DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry for dim = " << dim);
                     }
                     boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
 
@@ -829,7 +823,6 @@ public:
 };
 
 }
-
 
 #endif
 

@@ -1,4 +1,4 @@
-// $Id: newtonmethod.hh 3738 2010-06-15 14:01:09Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -23,10 +23,6 @@
 #ifndef DUMUX_NEWTONMETHOD_HH
 #define DUMUX_NEWTONMETHOD_HH
 
-#ifdef DUMUX_NEWTONMETHOD_DEPRECATED_HH
-# error "Never use the old and the new newton method in one program!"
-#endif
-
 #include <limits>
 #include <dumux/common/exceptions.hh>
 
@@ -44,54 +40,59 @@ template <class TypeTag>
 class NewtonMethod
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector          SolutionVector;
-    typedef typename SolutionTypes::JacobianAssembler       JacobianAssembler;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 public:
-    NewtonMethod(Model &model)
-        : model_(model)
+    NewtonMethod(Problem &problem)
+        : problem_(problem)
     { }
 
     /*!
-     * \brief Returns a reference to the current numeric model.
+     * \brief Returns a reference to the current numeric problem.
+     */
+    Problem &problem()
+    { return problem_; }
+
+    /*!
+     * \brief Returns a reference to the current numeric problem.
+     */
+    const Problem &problem() const
+    { return problem_; }
+
+    /*!
+     * \brief Returns a reference to the numeric model.
      */
     Model &model()
-    { return model_; }
+    { return problem().model(); }
 
     /*!
-     * \brief Returns a reference to the current numeric model.
+     * \brief Returns a reference to the numeric model.
      */
     const Model &model() const
-    { return model_; }
+    { return problem().model(); }
 
-    /*!
-     * \brief Returns true iff the newton method should be verbose
-     *        about what it is going on;
-     */
-    bool verbose() const
-    { return (model().gridView().comm().rank() == 0); }
 
     /*!
      * \brief Run the newton method. The controller is responsible
      *        for all the strategic decisions.
      */
-    template <class NewtonController>
     bool execute(NewtonController &ctl)
     {
         try {
             return execute_(ctl);
         }
         catch (const Dune::ISTLError &e) {
-            if (verbose())
+            if (ctl.verbose())
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
             ctl.newtonFail();
             return false;
         }
         catch (const Dumux::NumericalProblem &e) {
-            if (verbose())
+            if (ctl.verbose())
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
             ctl.newtonFail();
             return false;
@@ -99,15 +100,14 @@ public:
     }
 
 protected:
-    template <class NewtonController>
     bool execute_(NewtonController &ctl)
     {
         // TODO (?): u shouldn't be hard coded to the model
-        SolutionVector &u = model_.curSol();
-        JacobianAssembler &jacobianAsm = model_.jacobianAssembler();
+        SolutionVector &u = model().curSol();
+        JacobianAssembler &jacobianAsm = model().jacobianAssembler();
 
         // tell the controller that we begin solving
-        ctl.newtonBegin(this, u);
+        ctl.newtonBegin(*this, u);
 
         // execute the method as long as the controller thinks
         // that we should do another iteration
@@ -120,7 +120,7 @@ protected:
             // make the current solution to the old one
             uOld_ = u;
 
-            if (verbose()) {
+            if (ctl.verbose()) {
                 std::cout << "Assembling global jacobian";
                 std::cout.flush();
             }
@@ -128,7 +128,7 @@ protected:
             jacobianAsm.assemble(u);
 
             // solve the resultuing linear equation system
-            if (verbose()) {
+            if (ctl.verbose()) {
                 std::cout << "\rSolve Mx = r              ";
                 std::cout.flush();
             }
@@ -161,14 +161,13 @@ protected:
         return true;
     }
 
-
 private:
     SolutionVector uOld_;
     SolutionVector residual_;
 
-    Model &model_;
-    bool verbose_;
+    Problem &problem_;
 };
+
 }
 
 #endif

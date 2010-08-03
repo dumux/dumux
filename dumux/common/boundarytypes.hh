@@ -1,4 +1,4 @@
-// $Id: boundarytypes.hh 3834 2010-07-14 12:50:32Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -26,8 +26,6 @@
 #include <dune/common/mpihelper.hh>
 
 #include <dumux/common/valgrind.hh>
-#include <dumux/common/boundaryconditions.hh>
-#include <dumux/common/boundaryconditions.hh>
 
 namespace Dumux
 {
@@ -35,42 +33,6 @@ namespace Dumux
 template <int numEq>
 class BoundaryTypes
 {
-    class BoundaryWrapper
-    { public:
-        BoundaryWrapper(BoundaryTypes *bt, int idx)
-            : bt_(bt), idx_(idx) {};
-
-        BoundaryWrapper &operator=(int bc) {
-            switch (bc) {
-            case Dumux::BoundaryConditions::neumann:
-                bt_->boundaryInfo_[idx_].visited       = 1;
-                bt_->boundaryInfo_[idx_].isDirichlet = 0;
-
-                Valgrind::SetDefined(bt_->boundaryInfo_[idx_]);
-
-                break;
-            case Dumux::BoundaryConditions::dirichlet:
-                bt_->boundaryInfo_[idx_].visited       = 1;
-                bt_->boundaryInfo_[idx_].isDirichlet = 1;
-
-                Valgrind::SetDefined(bt_->boundaryInfo_[idx_]);
-
-                bt_->eq2pvIdx_[idx_] = idx_;
-                bt_->pv2eqIdx_[idx_] = idx_;
-                break;
-            default:
-                DUNE_THROW(Dune::InvalidStateException,
-                           "Only neumann and dirichlet "
-                           "conditions are supported!");
-            }
-            return *this;
-        }
-
-    private:
-        BoundaryTypes *bt_;
-        int            idx_;
-    };
-
 public:
     BoundaryTypes()
     { reset(); }
@@ -88,6 +50,7 @@ public:
             boundaryInfo_[i].visited = 0;
 
             boundaryInfo_[i].isDirichlet = 0;
+            boundaryInfo_[i].isNeumann = 0;
 
             eq2pvIdx_[i] = i;
             pv2eqIdx_[i] = i;
@@ -121,6 +84,7 @@ public:
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             boundaryInfo_[eqIdx].visited = 1;
             boundaryInfo_[eqIdx].isDirichlet = 0;
+            boundaryInfo_[eqIdx].isNeumann = 1;
 
             Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
@@ -134,6 +98,7 @@ public:
         for (int eqIdx = 0; eqIdx < numEq; ++ eqIdx) {
             boundaryInfo_[eqIdx].visited = 1;
             boundaryInfo_[eqIdx].isDirichlet = 1;
+            boundaryInfo_[eqIdx].isNeumann = 0;
 
             eq2pvIdx_[eqIdx] = eqIdx;
             pv2eqIdx_[eqIdx] = eqIdx;
@@ -167,6 +132,7 @@ public:
     {
         boundaryInfo_[eqIdx].visited = 1;
         boundaryInfo_[eqIdx].isDirichlet = 1;
+        boundaryInfo_[eqIdx].isNeumann = 0;
 
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
@@ -211,7 +177,7 @@ public:
      *        neumann condition.
      */
     bool isNeumann(unsigned eqIdx) const
-    { return !boundaryInfo_[eqIdx].isDirichlet; };
+    { return boundaryInfo_[eqIdx].isNeumann; };
 
     /*!
      * \brief Returns true if some equation is used to specify a
@@ -220,7 +186,7 @@ public:
     bool hasNeumann() const
     {
         for (int i = 0; i < numEq; ++i)
-            if (!boundaryInfo_[i].isDirichlet)
+            if (boundaryInfo_[i].isNeumann)
                 return true;
         return false;
     };
@@ -241,54 +207,12 @@ public:
     unsigned eqToDirichletIndex(unsigned eqIdx) const
     { return eq2pvIdx_[eqIdx]; };
 
-    /*!
-     * \brief Allows to assign Dumux::BoundaryCondition to a single
-     *        primary varible or equation.
-     *
-     * In the case of Dirichlet conditions, the equation with the same
-     * index is always disabled.
-     */
-    BoundaryWrapper operator[](int i) DUNE_DEPRECATED
-    { return BoundaryWrapper(this, i); }
-
-    /*!
-     * \brief Allows to assign Dumux::BoundaryCondition to a all
-     *        primary varibles or equations.
-     *
-     * To get rid of the "deprecated warning" do the following:
-     *     boundaryTypeVector is now a class, which has the methods
-     *     setAllNeumann() and setAllDirichlet().
-     *
-     *         deprecated System                ->        current System
-     *
-     *     values=BoundaryConditions::neumann;    ->    values.setAllNeumann();
-     *
-     */
-    BoundaryTypes &operator=(int bc) DUNE_DEPRECATED
-    {
-        switch (bc) {
-        case Dumux::BoundaryConditions::neumann:
-            reset();
-            setAllNeumann();
-            break;
-        case Dumux::BoundaryConditions::dirichlet:
-            reset();
-            setAllDirichlet();
-            break;
-
-        default:
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Only neumann and dirichlet "
-                       "conditions are supported!");
-        }
-        return *this;
-    }
-
 private:
     // this is a bitfield structure!
     struct __packed__ {
         unsigned char visited : 1;
         unsigned char isDirichlet : 1;
+        unsigned char isNeumann : 1;
     } boundaryInfo_[numEq];
 
     unsigned char eq2pvIdx_[numEq];

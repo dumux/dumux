@@ -22,7 +22,7 @@ namespace PDELab {
 
 //! ISTL backend for FunctionSpace
 template<class TypeTag>
-class ISTLVectorBackend
+class BoxISTLVectorBackend
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
 
@@ -37,7 +37,7 @@ public:
     public:
         typedef E ElementType;
         typedef Dune::BlockVector< Dune::FieldVector<E,BlockSize> > BaseT;
-        typedef ISTLVectorBackend<TypeTag> Backend;
+        typedef BoxISTLVectorBackend<TypeTag> Backend;
 
         VectorContainer()
         {}

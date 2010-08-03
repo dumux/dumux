@@ -95,8 +95,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/2p2c/Makefile 
     dumux/boxmodels/2p2cni/Makefile 
     dumux/boxmodels/2pni/Makefile 
-    dumux/boxmodels/boxscheme/Makefile 
-    dumux/boxmodels/pdelab/Makefile 
+    dumux/boxmodels/common/Makefile 
     dumux/boxmodels/richards/Makefile 
     dumux/common/Makefile 
     dumux/decoupled/Makefile 

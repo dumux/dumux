@@ -1,4 +1,4 @@
-// $Id: vtkmultiwriter.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id$
 
 /*****************************************************************************
  *   Copyright (C) 2008 by Andreas Lauser                                    *
@@ -287,8 +287,8 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        res.serializeSection("VTKMultiWriter");
-        res.serializeStream() << writerNum_ - 1 << "\n";
+        res.serializeSectionBegin("VTKMultiWriter");
+        res.serializeStream() << writerNum_ << "\n";
 
         if (commRank_ == 0) {
             size_t fileLen = 0;
@@ -311,6 +311,8 @@ public:
                 delete[] tmp;
             }
         }
+
+        res.serializeSectionEnd();
     }
 
     /*!
@@ -321,7 +323,7 @@ public:
     {
         wasRestarted_ = true;
 
-        res.deserializeSection("VTKMultiWriter");
+        res.deserializeSectionBegin("VTKMultiWriter");
         res.deserializeStream() >> writerNum_;
 
         std::string dummy;
@@ -346,6 +348,8 @@ public:
 
             multiFile_.seekp(filePos);
         }
+
+        res.deserializeSectionEnd();
     }
 
 

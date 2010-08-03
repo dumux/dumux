@@ -1,4 +1,4 @@
-// $Id: assemblerpdelab.hh 3759 2010-06-21 16:59:10Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
@@ -13,26 +13,28 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifdef HAVE_DUNE_PDELAB
-
-#ifndef DUMUX_ASSEMBLERPDELAB_HH
-#define DUMUX_ASSEMBLERPDELAB_HH
+#ifndef DUMUX_PDELAB_BOX_ASSEMBLER_HH
+#define DUMUX_PDELAB_BOX_ASSEMBLER_HH
 
 #include<dune/pdelab/finiteelementmap/p1fem.hh>
 #include<dune/pdelab/finiteelementmap/q1fem.hh>
 #include<dune/pdelab/gridfunctionspace/gridfunctionspace.hh>
 #include<dune/pdelab/gridfunctionspace/genericdatahandle.hh>
+#include<dune/pdelab/function/const.hh>
 #include<dune/pdelab/finiteelementmap/conformingconstraints.hh>
 #include<dune/pdelab/backend/istlvectorbackend.hh>
 #include<dune/pdelab/backend/istlmatrixbackend.hh>
-#include"boundarytypespdelab.hh"
-#include"boxjacobianpdelab.hh"
 
+//#include "pdelabboundarytypes.hh"
+#include "pdelabboxlocaloperator.hh"
 
+namespace Dumux {
+
+namespace PDELab {
+    
 template<class TypeTag>
-class AssemblerPDELab
+class BoxAssembler
 {
-public:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))    Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))  Problem;
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
@@ -40,64 +42,71 @@ public:
     enum{dim = GridView::dimension};
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
-    typedef typename GET_PROP(TypeTag, PTAG(PDELabTypes)) PDELabTypes;
-    typedef typename PDELabTypes::Constraints Constraints;
-    typedef typename PDELabTypes::ScalarGridFunctionSpace ScalarGridFunctionSpace;
-    typedef typename PDELabTypes::GridFunctionSpace GridFunctionSpace;
-    typedef typename PDELabTypes::ConstraintsTrafo ConstraintsTrafo;
-    typedef typename PDELabTypes::LocalOperator LocalOperator;
-    typedef typename PDELabTypes::GridOperatorSpace GridOperatorSpace;
-    typedef BoundaryIndexHelperPDELab<TypeTag> BoundaryFunction;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Constraints)) Constraints;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ScalarGridFunctionSpace)) ScalarGridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalOperator)) LocalOperator;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector SolutionVector;
-    typedef typename GridFunctionSpace::template VectorContainer<Scalar>::Type Vector;
-    typedef typename GridOperatorSpace::template MatrixContainer<Scalar>::Type Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
+public:
+
+    typedef SolutionVector Vector;
+    typedef JacobianMatrix Matrix;
     typedef Matrix RepresentationType;
 
-    AssemblerPDELab(Model &model, Problem& problem)
-    : problem_(problem)
+    BoxAssembler()
     {
+        problem_ = 0;
         fem_ = 0;
         cn_ = 0;
         scalarGridFunctionSpace_ = 0;
         gridFunctionSpace_ = 0;
-        bTypes_ = 0;
         constraintsTrafo_ = 0;
         localOperator_ = 0;
         gridOperatorSpace_ = 0;
         matrix_ = 0;
-
-        fem_ = new FEM();
-        cn_ = new Constraints(problem_);
-        scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problem_.gridView(), *fem_, *cn_);
-        gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
-
-        cn_->compute_ghosts(*gridFunctionSpace_);
-
-        bTypes_ = new BoundaryFunction();
-        constraintsTrafo_ = new ConstraintsTrafo();
-        Dune::PDELab::constraints(*bTypes_, *gridFunctionSpace_, *constraintsTrafo_, false);
-
-        localOperator_ = new LocalOperator(model);
-        gridOperatorSpace_ = new GridOperatorSpace(*gridFunctionSpace_, *constraintsTrafo_,
-                *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
-
-        matrix_ = new Matrix(*gridOperatorSpace_);
-        *matrix_ = 0;
     }
 
-    ~AssemblerPDELab()
+    ~BoxAssembler()
     {
         delete matrix_;
         delete gridOperatorSpace_;
         delete localOperator_;
         delete constraintsTrafo_;
-        delete bTypes_;
         delete gridFunctionSpace_;
         delete scalarGridFunctionSpace_;
         delete cn_;
         delete fem_;
+    }
+
+    void init(Problem& problem)
+    {
+        problem_ = &problem;
+        fem_ = new FEM();
+        //cn_ = new Constraints(*problem_);
+        cn_ = new Constraints();
+        scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problem_->gridView(), *fem_, *cn_);
+        gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
+
+        //cn_->compute_ghosts(*gridFunctionSpace_);
+        
+        //typedef BoundaryIndexHelper<TypeTag> BoundaryFunction;
+        //BoundaryFunction *bTypes = new BoundaryFunction();
+        constraintsTrafo_ = new ConstraintsTrafo();
+        //Dune::PDELab::constraints(*bTypes, *gridFunctionSpace_, *constraintsTrafo_, false);
+
+        localOperator_ = new LocalOperator(problem_->model());
+        gridOperatorSpace_ = 
+            new GridOperatorSpace(*gridFunctionSpace_, *constraintsTrafo_,
+                                  *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
+
+        matrix_ = new Matrix(*gridOperatorSpace_);
+        *matrix_ = 0;
     }
 
     void assemble(SolutionVector &u)
@@ -108,9 +117,6 @@ public:
         residual_.base().resize(u.size());
         residual_ = 0;
         gridOperatorSpace_->residual(u, residual_);
-
-        set_constrained_dofs(*constraintsTrafo_, 0.0, residual_);
-        set_constrained_dofs(*constraintsTrafo_, 0.0, u);
 
 #if 0
         // rescale jacobian and right hand side to the largest
@@ -188,12 +194,11 @@ public:
     { return residual_; }
 
 private:
-    Problem& problem_;
+    Problem *problem_;
     Constraints *cn_;
     FEM *fem_;
     ScalarGridFunctionSpace *scalarGridFunctionSpace_;
     GridFunctionSpace *gridFunctionSpace_;
-    BoundaryFunction *bTypes_;
     ConstraintsTrafo *constraintsTrafo_;
     LocalOperator *localOperator_;
     GridOperatorSpace *gridOperatorSpace_;
@@ -202,6 +207,7 @@ private:
     SolutionVector residual_;
 };
 
-#endif
+} // namespace PDELab
+} // namespace Dumux
 
 #endif

@@ -1,4 +1,4 @@
-// $Id: restart.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -32,16 +32,14 @@
 #include <fstream>
 #include <sstream>
 
-
 namespace Dumux {
-
 /*!
  * \brief Load or save a state of a model to/from the harddisk.
  */
-template <class GridView>
 class Restart {
     //! \brief Create a magic cookie for restart files, so that it is
     //!        unlikely to load a restart file for an incorrectly.
+    template <class GridView>
     static const std::string magicRestartCookie_(const GridView &gridView)
     {
         const std::string gridName = "blubb"; //gridView.grid().name();
@@ -70,6 +68,7 @@ class Restart {
     }
 
     //! \brief Return the restart file name.
+    template <class GridView>
     static const std::string restartFileName_(const GridView &gridView,
                                               const std::string &simName,
                                               double t)
@@ -92,18 +91,20 @@ public:
     /*!
      * \brief Write the current state of the model to disk.
      */
-    void serializeBegin(const GridView &gridView,
-                        const std::string &simName,
-                        double t)
+    template <class Problem>
+    void serializeBegin(Problem &problem)
     {
-        const std::string magicCookie = magicRestartCookie_(gridView);
-        fileName_ = restartFileName_(gridView, simName, t);
+        const std::string magicCookie = magicRestartCookie_(problem.gridView());
+        fileName_ = restartFileName_(problem.gridView(), 
+                                     problem.name(),
+                                     problem.timeManager().time());
 
         // open output file and write magic cookie
         outStream_.open(fileName_.c_str());
         outStream_.precision(20);
 
-        serializeSection(magicCookie);
+        serializeSectionBegin(magicCookie);
+        serializeSectionEnd();
     }
 
     /*!
@@ -117,22 +118,28 @@ public:
     /*!
      * \brief Start a new section in the serialized output.
      */
-    void serializeSection(const std::string &cookie)
+    void serializeSectionBegin(const std::string &cookie)
     {
         outStream_ << cookie << "\n";
     }
+
+    /*!
+     * \brief End of a section in the serialized output.
+     */
+    void serializeSectionEnd()
+    { outStream_ << "\n"; }
 
     /*!
      * \brief Serialize all leaf entities of a codim in a gridView.
      *
      * The actual work is done by Serializer::serialize(Entity)
      */
-    template <int codim, class Serializer>
+    template <int codim, class Serializer, class GridView>
     void serializeEntities(Serializer &serializer,
                            const GridView &gridView)
     {
         std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
-        serializeSection(cookie);
+        serializeSectionBegin(cookie);
 
         // write element data
         typedef typename GridView::template Codim<codim>::Iterator Iterator;
@@ -143,6 +150,8 @@ public:
             serializer.serializeEntity(outStream_, *it);
             outStream_ << "\n";
         };
+
+        serializeSectionEnd();
     }
 
     /*!
@@ -158,11 +167,12 @@ public:
      * \brief Start reading a restart file at a certain simulated
      *        time.
      */
-    void deserializeBegin(const GridView &grid,
-                          const std::string &simName,
-                          double t)
+    template <class Problem>
+    void deserializeBegin(Problem &problem, double t)
     {
-        fileName_ = restartFileName_(grid, simName, t);
+        fileName_ = restartFileName_(problem.gridView(),
+                                     problem.name(),
+                                     t);
 
         // open input file and read magic cookie
         inStream_.open(fileName_.c_str());
@@ -184,8 +194,11 @@ public:
         }
         inStream_.seekg(0, std::ios::beg);
 
-        const std::string magicCookie = magicRestartCookie_(grid);
-        deserializeSection(magicCookie);
+        const std::string magicCookie = 
+            magicRestartCookie_(problem.gridView());
+
+        deserializeSectionBegin(magicCookie);
+        deserializeSectionEnd();
     }
 
     /*!
@@ -200,7 +213,7 @@ public:
     /*!
      * \brief Start reading a new section of the restart file.
      */
-    void deserializeSection(const std::string &cookie)
+    void deserializeSectionBegin(const std::string &cookie)
     {
         if (!inStream_.good())
             DUNE_THROW(Dune::IOError,
@@ -212,18 +225,33 @@ public:
                        "Could not start section '" << cookie << "'");
     };
 
+    /*!
+     * \brief End of a section in the serialized output.
+     */
+    void deserializeSectionEnd()
+    {
+        std::string dummy;
+        std::getline(inStream_, dummy);
+        for (int i = 0; i < dummy.length(); ++i) {
+            if (!std::isspace(dummy[i])) {
+                DUNE_THROW(Dune::InvalidStateException,
+                           "Encountered unread values while deserializing");
+            };
+        }
+    }
+
 
     /*!
      * \brief Deserialize all leaf entities of a codim in a grid.
      *
      * The actual work is done by Deserializer::deserialize(Entity)
      */
-    template <int codim, class Deserializer>
+    template <int codim, class Deserializer, class GridView>
     void deserializeEntities(Deserializer &deserializer,
                              const GridView &gridView)
     {
         std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
-        deserializeSection(cookie);
+        deserializeSectionBegin(cookie);
 
         std::string curLine;
 
@@ -241,6 +269,8 @@ public:
             std::istringstream curLineStream(curLine);
             deserializer.deserializeEntity(curLineStream, *it);
         };
+
+        deserializeSectionEnd();
     }
 
     /*!
@@ -263,7 +293,7 @@ public:
 
 
 private:
-    std::string   fileName_;
+    std::string fileName_;
     std::ifstream inStream_;
     std::ofstream outStream_;
 };

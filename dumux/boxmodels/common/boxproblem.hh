@@ -1,4 +1,4 @@
-// $Id: boxproblem.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -30,43 +30,50 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxScheme
- * \brief  Base class for all problems which use the box scheme
+ * \ingroup BoxModel
+ * \brief Base class for all problems which use the box scheme
  *
  * \todo Please doc me more!
  */
-template<class TypeTag, class Implementation>
+template<class TypeTag>
 class BoxProblem
 {
 private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    enum Episode {}; // the type of an episode of the simulation
-    typedef Dumux::TimeManager<Episode>      TimeManager;
+    typedef Dumux::VtkMultiWriter<GridView> VtkMultiWriter;
 
-    typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))      NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))             Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))            Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::Grid::ctype                         CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld>             GlobalPosition;
-    typedef typename GridView::template Codim<dim>::Iterator     VertexIterator;
+    typedef typename GridView::template Codim<0>::Entity Element;
+
+    typedef typename GridView::Grid::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
 public:
-    BoxProblem(const GridView &gridView)
+    BoxProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
-          resultWriter_(asImp_()->name())
+          elementMapper_(gridView),
+          vertexMapper_(gridView),
+          timeManager_(&timeManager),
+          resultWriter_(asImp_().name())
     {
         wasRestarted_ = false;
 
@@ -83,8 +90,9 @@ public:
             bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
             bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
         }
-        model_ = new Model(*asImp_());
-        newtonMethod_ = new NewtonMethod(*model_);
+
+        model_ = new Model();
+        newtonMethod_ = new NewtonMethod(asImp_());
     }
 
     ~BoxProblem()
@@ -94,44 +102,34 @@ public:
     };
 
     /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
-     * \brief Start the simulation procedure.
-     *
-     * This method is usually called by the main() function and simply
-     * uses Dumux::TimeManager::runSimulation() to do the actual
-     * work.
-     */
-    bool simulate(Scalar dtInitial, Scalar tEnd)
-    {
-        // set the initial time step and the time where the simulation ends
-        timeManager_.setEndTime(tEnd);
-        timeManager_.setTimeStepSize(dtInitial);
-        timeManager_.runSimulation(*asImp_());
-        return true;
-    };
-
-
-    /*!
      * \brief Called by the Dumux::TimeManager in order to
      *        initialize the problem.
      */
     void init()
     {
         // set the initial condition of the model
-        model().initial();
-
-        // write the inital solution to disk
-        asImp_()->writeCurrentResult_();
+        model().init(asImp_());
     }
+
+    /*!
+     * \brief If model coupling is used, this updates the parameters
+     *        required to calculate the coupling fluxes between the
+     *        sub-models.
+     *
+     * By default it does nothing
+     */
+    void updateCouplingParams(const Element &element) const
+    {}
+    
+    /*!
+     * \name Simulation steering
+     */
+    // \{
 
     /*!
      * \brief Called by the time manager before the time integration.
      */
-    void timeStepBegin()
+    void preProcess()
     {}
 
     /*!
@@ -140,7 +138,26 @@ public:
      */
     void timeIntegration()
     {
-        model().update(*newtonMethod_, newtonCtl_);
+        const int maxFails = 10;
+        for (int i = 0; i < maxFails; ++i) {
+            if (i > 0 && gridView().comm().rank() == 0)
+                std::cout << "Newton solver did not converge. Retrying with time step of "
+                          << timeManager().timeStepSize() << "sec\n";
+
+            if (model_->update(*newtonMethod_, newtonCtl_))
+                return;
+            
+            // update failed
+            Scalar dt = timeManager().timeStepSize();
+            Scalar nextDt = dt / 2;
+            timeManager().setTimeStepSize(nextDt);
+        }
+        
+        DUNE_THROW(Dune::MathError,
+                   "Newton solver didn't converge after "
+                   << maxFails
+                   << " timestep divisions. dt="
+                   << timeManager().timeStepSize());
     }
 
     /*!
@@ -150,37 +167,8 @@ public:
      */
     Scalar nextTimeStepSize()
     {
-        Scalar dt = asImp_()->timeManager().timeStepSize();
+        Scalar dt = asImp_().timeManager().timeStepSize();
         return newtonCtl_.suggestTimeStepSize(dt);
-    };
-
-
-    /*!
-     * \brief This method is called by the model if the update to the
-     *        next time step failed completely.
-     */
-    void updateSuccessful()
-    {
-        wasRestarted_ = false;
-        asImp_()->writeCurrentResult_();
-    };
-
-    /*!
-     * \brief This method is called by the model if the update to the
-     *        next time step failed completely.
-     */
-    void updateFailed()
-    { };
-
-    /*!
-     * \brief This method is called by the model if the update to the
-     *        next time step failed with the curent time step size.
-     */
-    void updateFailedTry()
-    {
-        Scalar dt = asImp_()->timeManager().timeStepSize();
-        Scalar nextDt = newtonCtl_.suggestTimeStepSize(dt);
-        asImp_()->timeManager().setTimeStepSize(nextDt);
     };
 
     /*!
@@ -191,11 +179,11 @@ public:
      * steps. This file is intented to be overwritten by the
      * implementation.
      */
-    bool shouldWriteRestartFile() const
+    bool doSerialize() const
     {
         return !restarted() &&
-            timeManager().timeStepNum() > 0 &&
-            (timeManager().timeStepNum() % 5 == 0);
+            timeManager().timeStepIndex() > 0 &&
+            (timeManager().timeStepIndex() % 10 == 0);
     }
 
     /*!
@@ -206,18 +194,14 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
-    bool shouldWriteOutputFile() const
-    { return !restarted(); }
+    bool doOutput() const
+    { return true; }
 
     /*!
      * \brief Called by the time manager after the time integration.
      */
-    void timeStepEnd()
-    {
-        // write restart file if necessary
-        if (asImp_()->shouldWriteRestartFile())
-            serialize();
-    }
+    void postProcess()
+    { }
 
     // \}
 
@@ -266,16 +250,28 @@ public:
     { return bboxMax_; }
 
     /*!
+     * \brief Returns the mapper for vertices to indices.
+     */
+    const VertexMapper &vertexMapper() const
+    { return vertexMapper_; }
+
+    /*!
+     * \brief Returns the mapper for elements to indices.
+     */
+    const ElementMapper &elementMapper() const
+    { return elementMapper_; }
+
+    /*!
      * \brief Returns TimeManager object used by the simulation
      */
     TimeManager &timeManager()
-    { return timeManager_; }
+    { return *timeManager_; }
 
     /*!
      * \copydoc timeManager()
      */
     const TimeManager &timeManager() const
-    { return timeManager_; }
+    { return *timeManager_; }
 
     /*!
      * \brief Returns numerical model used for the problem.
@@ -303,7 +299,7 @@ public:
     { return wasRestarted_; }
 
     /*!
-     * \brief This method writes the complete state of the problem
+     * \brief This method writes the complete state of the simulation
      *        to the harddisk.
      *
      * The file will start with the prefix returned by the name()
@@ -313,19 +309,47 @@ public:
      */
     void serialize()
     {
-        typedef Dumux::Restart<GridView> Restarter;
-
+        typedef Dumux::Restart Restarter;
         Restarter res;
-        res.serializeBegin(gridView(),
-                           asImp_()->name(),
-                           timeManager_.time());
-        std::cerr << "Serialize to file " << res.fileName() << "\n";
+        res.serializeBegin(asImp_());
+        std::cerr << "Serialize to file '" << res.fileName() << "'\n";
 
-        timeManager_.serialize(res);
+        timeManager().serialize(res);
+        asImp_().serialize(res);
+        res.serializeEnd();
+    }
+    
+    /*!
+     * \brief This method writes the complete state of the problem
+     *        to the harddisk.
+     *
+     * The file will start with the prefix returned by the name()
+     * method, has the current time of the simulation clock in it's
+     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
+     * file.)  See Dumux::Restart for details.
+     */
+    template <class Restarter>
+    void serialize(Restarter &res)
+    {
         resultWriter_.serialize(res);
         model().serialize(res);
+    }
 
-        res.serializeEnd();
+    /*!
+     * \brief Load a previously saved state of the whole simulation
+     *        from disk.
+     */
+    void restart(Scalar tRestart)
+    {
+        typedef Dumux::Restart Restarter;
+        
+        Restarter res;
+       
+        res.deserializeBegin(asImp_(), tRestart);
+        std::cout << "Deserialize from file '" << res.fileName() << "'\n";
+        timeManager().deserialize(res);
+        asImp_().deserialize(res);
+        res.deserializeEnd();
     }
 
     /*!
@@ -334,77 +358,72 @@ public:
      *
      * It is the inverse of the serialize() method.
      */
-    void deserialize(double t)
+    template <class Restarter>
+    void deserialize(Restarter &res)
     {
-        typedef Dumux::Restart<GridView> Restarter;
-
-        Restarter res;
-        res.deserializeBegin(gridView(),
-                             asImp_()->name(),
-                             t);
-        std::cerr << "Deserialize from file " << res.fileName() << "\n";
-
-        timeManager_.deserialize(res);
         resultWriter_.deserialize(res);
         model().deserialize(res);
-
-        res.deserializeEnd();
-
+        
         wasRestarted_ = true;
     };
 
     // \}
 
-protected:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
-
-    //! Write the fields current solution into an VTK output file.
-    void writeCurrentResult_()
+    /*!
+     * \brief Write the relavant secondar variables of the current
+     *        solution into an VTK output file.
+     */
+    void writeOutput()
     {
         // write the current result to disk
-        if (asImp_()->shouldWriteOutputFile()) {
+        if (asImp_().doOutput()) {
             if (gridView().comm().rank() == 0)
-                std::cout << "Writing result file for current time step\n";
+                std::cout << "Writing result file for \"" << asImp_().name() << "\"\n";
 
             // calculate the time _after_ the time was updated
-            Scalar t = timeManager_.time() + timeManager_.timeStepSize();
-            resultWriter_.beginTimestep(t,
-                                        gridView());
-            model().addOutputVtkFields(resultWriter_);
+            Scalar t = timeManager().time() + timeManager().timeStepSize();
+            resultWriter_.beginTimestep(t, gridView());
+            model().addOutputVtkFields(model().curSol(), resultWriter_);
             resultWriter_.endTimestep();
         }
     }
+
+protected:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 
 private:
     static std::string simname_; // a string for the name of the current simulation,
                                   // which could be set by means of an program argument,
                                   // for example.
-    const GridView  gridView_;
+    const GridView gridView_;
 
-    GlobalPosition  bboxMin_;
-    GlobalPosition  bboxMax_;
+    GlobalPosition bboxMin_;
+    GlobalPosition bboxMax_;
 
-    TimeManager     timeManager_;
+    ElementMapper elementMapper_;
+    VertexMapper vertexMapper_;
 
-    Model           *model_;
+    TimeManager *timeManager_;
+
+    Model *model_;
 
     NewtonMethod    *newtonMethod_;
     NewtonController newtonCtl_;
 
-    VtkMultiWriter  resultWriter_;
+    VtkMultiWriter resultWriter_;
 
     bool wasRestarted_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.
-template <class TypeTag, class Implementation>
-std::string BoxProblem<TypeTag, Implementation>::simname_="sim"; //initialized with default "sim"
+template <class TypeTag>
+std::string BoxProblem<TypeTag>::simname_="sim"; //initialized with default "sim"
 
 }
 

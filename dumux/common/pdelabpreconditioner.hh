@@ -1,4 +1,4 @@
-// $Id: preconditionerpdelab.hh 3736 2010-06-15 09:52:10Z lauser $: preconditionerpdelab.hh 3728 2010-06-10 15:44:39Z bernd $
+// $Id$: preconditionerpdelab.hh 3728 2010-06-10 15:44:39Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
@@ -13,41 +13,41 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_PRECONDITIONERPDELAB_HH
-#define DUMUX_PRECONDITIONERPDELAB_HH
+#ifndef DUMUX_PDELAB_PRECONDITIONER_HH
+#define DUMUX_PDELAB_PRECONDITIONER_HH
 
 #include<dune/pdelab/backend/istlsolverbackend.hh>
 
-namespace Dune {
+namespace Dumux {
 namespace PDELab {
 
 template<class TypeTag>
 class Exchanger
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))   Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))  GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     enum {
         numEq     = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         dim       = GridView::dimension
     };
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid))  Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))    Scalar;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::VertexMapper            VertexMapper;
-    typedef typename GET_PROP(TypeTag, PTAG(PDELabTypes)) PDELabTypes;
-    typedef typename PDELabTypes::GridOperatorSpace GridOperatorSpace;
-    typedef typename GridOperatorSpace::template MatrixContainer<Scalar>::Type Matrix;
-    typedef typename Matrix::block_type BlockType;
-    typedef typename GridView::template Codim<dim>::Iterator  VertexIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
+
+    typedef typename JacobianMatrix::block_type BlockType;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename Grid::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container                     ReferenceElements;
-    typedef typename RefElemProp::ReferenceElement              ReferenceElement;
+    typedef typename RefElemProp::Container ReferenceElements;
+    typedef typename RefElemProp::ReferenceElement ReferenceElement;
 
 public:
-    Exchanger(const Model& model)
-    : gridView_(model.gridView()), vertexMapper_(model.vertexMapper()), borderIndices_(0)
+    Exchanger(const Problem& problem)
+        : gridView_(problem.gridView()), vertexMapper_(problem.vertexMapper()), borderIndices_(0)
     {
         gid2Index_.clear();
         index2GID_.clear();
@@ -59,7 +59,7 @@ public:
 //                    << " at (" << vertexIt->geometry().corner(0) << ") is of type "
 //                    << vertexIt->partitionType() << ", GID = "
 //                    << gridView_.grid().globalIdSet().id(*vertexIt) << std::endl;
-            if (vertexIt->partitionType() == BorderEntity)
+            if (vertexIt->partitionType() == Dune::BorderEntity)
             {
                 int localIdx = vertexMapper_.map(*vertexIt);
                 IdType globalIdx = gridView_.grid().globalIdSet().id(*vertexIt);
@@ -82,15 +82,16 @@ public:
         MatEntry (const IdType& f, const BlockType& s) : first(f),second(s) {}
         MatEntry () {}
     };
-
+    
     // A DataHandle class to exchange matrix entries
     class MatEntryExchange
-    : public CommDataHandleIF<MatEntryExchange,MatEntry> {
-        typedef typename Matrix::RowIterator RowIterator;
-        typedef typename Matrix::ColIterator ColIterator;
-public:
-    //! export type of data for message buffer
-    typedef MatEntry DataType;
+        : public Dune::CommDataHandleIF<MatEntryExchange,MatEntry> 
+    {
+        typedef typename JacobianMatrix::RowIterator RowIterator;
+        typedef typename JacobianMatrix::ColIterator ColIterator;
+    public:
+        //! export type of data for message buffer
+        typedef MatEntry DataType;
 
     //! returns true if data for this codim should be communicated
     bool contains (int dim, int codim) const
@@ -184,7 +185,7 @@ public:
     MatEntryExchange (const GridView& gridView, const std::map<IdType,int>& g2i,
             const std::map<int,IdType>& i2g,
             const VertexMapper& vm,
-            Matrix& A)
+            JacobianMatrix& A)
             : gridView_(gridView), gid2Index_(g2i), index2GID_(i2g), vertexMapper_(vm), A_(A)
             {}
 
@@ -193,15 +194,17 @@ private:
     const std::map<IdType,int>& gid2Index_;
     const std::map<int,IdType>& index2GID_;
     const VertexMapper& vertexMapper_;
-    Matrix& A_;
+    JacobianMatrix& A_;
     };
 
-    void sumEntries (Matrix& A)
+    void sumEntries (JacobianMatrix& A)
     {
       if (gridView_.comm().size() > 1)
       {
           MatEntryExchange datahandle(gridView_, gid2Index_, index2GID_, vertexMapper_, A);
-          gridView_.communicate(datahandle, InteriorBorder_InteriorBorder_Interface, ForwardCommunication);
+          gridView_.communicate(datahandle,
+                                Dune::InteriorBorder_InteriorBorder_Interface,
+                                Dune::ForwardCommunication);
       }
     }
 
@@ -237,7 +240,8 @@ public:
 
       //! Constructor.
   NonoverlappingWrappedPreconditioner (const GFS& gfs_, P& prec_, const CC& cc_,
-                                    const std::vector<int>& borderIndices, const ParallelISTLHelper<GFS>& helper_)
+                                       const std::vector<int>& borderIndices, 
+                                       const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
     : gfs(gfs_), prec(prec_), cc(cc_), borderIndices_(borderIndices), helper(helper_)
   {}
 
@@ -285,16 +289,16 @@ private:
   P& prec;
   const CC& cc;
   const std::vector<int>& borderIndices_;
-  const ParallelISTLHelper<GFS>& helper;
+    const Dune::PDELab::ParallelISTLHelper<GFS>& helper;
 };
 
 template<class TypeTag>
 class ISTLBackend_NoOverlap_BCGS_ILU
 {
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GET_PROP(TypeTag, PTAG(PDELabTypes)) PDELabTypes;
-    typedef typename PDELabTypes::GridFunctionSpace GridFunctionSpace;
-    typedef typename PDELabTypes::ConstraintsTrafo ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
     typedef Dune::PDELab::ParallelISTLHelper<GridFunctionSpace> PHELPER;
 
 public:
@@ -304,10 +308,13 @@ public:
     \param[in] maxiter maximum number of iterations to do
     \param[in] verbose print messages if true
     */
-    explicit ISTLBackend_NoOverlap_BCGS_ILU (Model& model, unsigned maxiter_=5000, int verbose_=1)
-    : gfs(model.jacobianAssembler().gridFunctionSpace()), phelper(gfs),
-      maxiter(maxiter_), verbose(verbose_), constraintsTrafo_(model.jacobianAssembler().constraintsTrafo()),
-      exchanger_(model)
+    explicit ISTLBackend_NoOverlap_BCGS_ILU (Problem& problem, unsigned maxiter_=5000, int verbose_=1)
+        : gfs(problem.model().jacobianAssembler().gridFunctionSpace()), 
+          phelper(gfs),
+          maxiter(maxiter_),
+          verbose(verbose_), 
+          constraintsTrafo_(problem.model().jacobianAssembler().constraintsTrafo()),
+          exchanger_(problem)
     {}
 
     /*! \brief compute global norm of a vector
@@ -331,19 +338,19 @@ public:
     \param[in] r right hand side
     \param[in] reduction to be achieved
     */
-    template<class Matrix, class SolVector, class RhsVector>
-    void apply(Matrix& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
+    template<class JacobianMatrix, class SolVector, class RhsVector>
+    void apply(JacobianMatrix& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
     {
-        typedef Dune::SeqILU0<Matrix,SolVector,RhsVector> SeqPreCond;
-        Matrix B(A);
+        typedef Dune::SeqILU0<JacobianMatrix,SolVector,RhsVector> SeqPreCond;
+        JacobianMatrix B(A);
         exchanger_.sumEntries(B);
         SeqPreCond seqPreCond(B, 0.9);
 
-        typedef Dune::PDELab::NonoverlappingOperator<GridFunctionSpace,Matrix,SolVector,RhsVector> POP;
+        typedef Dune::PDELab::NonoverlappingOperator<GridFunctionSpace,JacobianMatrix,SolVector,RhsVector> POP;
         POP pop(gfs,A,phelper);
         typedef Dune::PDELab::NonoverlappingScalarProduct<GridFunctionSpace,SolVector> PSP;
         PSP psp(gfs,phelper);
-        typedef Dune::PDELab::NonoverlappingWrappedPreconditioner<ConstraintsTrafo, GridFunctionSpace, SeqPreCond> ParPreCond;
+        typedef NonoverlappingWrappedPreconditioner<ConstraintsTrafo, GridFunctionSpace, SeqPreCond> ParPreCond;
         ParPreCond parPreCond(gfs, seqPreCond, constraintsTrafo_, exchanger_.borderIndices(), phelper);
 
         int verb=0;
@@ -376,10 +383,10 @@ private:
 template<class TypeTag>
 class ISTLBackend_NoOverlap_Loop_Pardiso
 {
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GET_PROP(TypeTag, PTAG(PDELabTypes))  PDELabTypes;
-    typedef typename PDELabTypes::GridFunctionSpace GridFunctionSpace;
-    typedef typename PDELabTypes::ConstraintsTrafo ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
     typedef Dune::PDELab::ParallelISTLHelper<GridFunctionSpace> PHELPER;
 
 public:
@@ -389,10 +396,13 @@ public:
     \param[in] maxiter maximum number of iterations to do
     \param[in] verbose print messages if true
     */
-    explicit ISTLBackend_NoOverlap_Loop_Pardiso (Model& model, unsigned maxiter_=5000, int verbose_=1)
-    : gfs(model.jacobianAssembler().gridFunctionSpace()), phelper(gfs),
-      maxiter(maxiter_), verbose(verbose_), constraintsTrafo_(model.jacobianAssembler().constraintsTrafo()),
-      exchanger_(model)
+    explicit ISTLBackend_NoOverlap_Loop_Pardiso (Problem& problem, unsigned maxiter_=5000, int verbose_=1)
+        : gfs(problem.model().jacobianAssembler().gridFunctionSpace()), 
+          phelper(gfs),
+          maxiter(maxiter_), 
+          verbose(verbose_), 
+          constraintsTrafo_(problem.model().jacobianAssembler().constraintsTrafo()),
+          exchanger_(problem)
     {}
 
     /*! \brief compute global norm of a vector
@@ -416,19 +426,19 @@ public:
     \param[in] r right hand side
     \param[in] reduction to be achieved
     */
-    template<class Matrix, class SolVector, class RhsVector>
-    void apply(Matrix& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
+    template<class JacobianMatrix, class SolVector, class RhsVector>
+    void apply(JacobianMatrix& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
     {
-        typedef Dune::SeqPardiso<Matrix,SolVector,RhsVector> SeqPreCond;
-        Matrix B(A);
+        typedef Dune::SeqPardiso<JacobianMatrix,SolVector,RhsVector> SeqPreCond;
+        JacobianMatrix B(A);
         exchanger_.sumEntries(B);
         SeqPreCond seqPreCond(B);
 
-        typedef Dune::PDELab::NonoverlappingOperator<GridFunctionSpace,Matrix,SolVector,RhsVector> POP;
+        typedef Dune::PDELab::NonoverlappingOperator<GridFunctionSpace,JacobianMatrix,SolVector,RhsVector> POP;
         POP pop(gfs,A,phelper);
         typedef Dune::PDELab::NonoverlappingScalarProduct<GridFunctionSpace,SolVector> PSP;
         PSP psp(gfs,phelper);
-        typedef Dune::PDELab::NonoverlappingWrappedPreconditioner<ConstraintsTrafo, GridFunctionSpace, SeqPreCond> ParPreCond;
+        typedef NonoverlappingWrappedPreconditioner<ConstraintsTrafo, GridFunctionSpace, SeqPreCond> ParPreCond;
         ParPreCond parPreCond(gfs, seqPreCond, constraintsTrafo_, exchanger_.borderIndices(), phelper);
 
         //        typedef Dune::PDELab::NonoverlappingRichardson<GridFunctionSpace,SolVector,RhsVector> PRICH;

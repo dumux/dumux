@@ -1,4 +1,4 @@
-// $Id: boxjacobianpdelab.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
@@ -13,10 +13,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifdef HAVE_DUNE_PDELAB
-
-#ifndef DUMUX_BOXJACOBIANPDELAB_HH
-#define DUMUX_BOXJACOBIANPDELAB_HH
+#ifndef DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
+#define DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 
 #include<vector>
 #include<dune/common/fvector.hh>
@@ -27,11 +25,15 @@
 #include<dune/pdelab/localoperator/pattern.hh>
 #include<dune/pdelab/localoperator/flags.hh>
 
+namespace Dumux {
+
+namespace PDELab {
+
 template<class TypeTag>
-class BoxJacobianPDELab
+class BoxLocalOperator
     :
-//    : public Dune::PDELab::NumericalJacobianApplyVolume<BoxJacobianPDELab<TypeTag> >,
-//public Dune::PDELab::NumericalJacobianVolume<BoxJacobianPDELab<TypeTag> >,
+//    : public Dune::PDELab::NumericalJacobianApplyVolume<BoxLocalOperatorPDELab<TypeTag> >,
+//public Dune::PDELab::NumericalJacobianVolume<BoxLocalOperatorPDELab<TypeTag> >,
     public Dune::PDELab::FullVolumePattern,
     public Dune::PDELab::LocalOperatorDefaultFlags
 {
@@ -42,39 +44,27 @@ public:
     // residual assembly flags
     enum { doAlphaVolume = true };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))    Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))  Problem;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionOnElement       SolutionOnElement;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
 
-    BoxJacobianPDELab (Model &model)
+    BoxLocalOperator(Model &model)
         : model_(model)
     {}
 
     // volume integral depending on test and ansatz functions
     template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
     void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x,
-            const LFSV& lfsv, R& r) const
+                       const LFSV& lfsv, R& r) const
     {
         typedef typename LFSU::Traits::SizeType size_type;
 
-        model_.localJacobian().setCurrentElement(eg.entity());
-
+        model_.localResidual().eval(eg.entity());
+        
         int numVertices = x.size()/numEq;
-
-        SolutionOnElement localU(numVertices);
-        model_.localJacobian().restrictToElement(localU, model_.curSol());
-        model_.localJacobian().setCurrentSolution(localU);
-
-        SolutionOnElement localUOld(numVertices);
-        model_.localJacobian().restrictToElement(localUOld, model_.prevSol());
-        model_.localJacobian().setPreviousSolution(localUOld);
-
-        SolutionOnElement localResidual(numVertices);
-        model_.localJacobian().evalLocalResidual(localResidual);
         for (size_type comp = 0; comp < r.size(); comp++)
-            r[comp] = localResidual[comp%numVertices][comp/numVertices];
+            r[comp] = model_.localResidual().residual(comp%numVertices)[comp/numVertices];
     }
 
     // jacobian of volume term
@@ -99,6 +89,7 @@ private:
     Model& model_;
 };
 
-#endif
+} // namespace PDELab
+} // namespace Dumux
 
 #endif
