@@ -48,9 +48,6 @@ class TwoPTwoCSecondaryVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-
-    // this is a bit hacky: the vertex data might not be identical to
-    // the implementation.
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
 
     enum {

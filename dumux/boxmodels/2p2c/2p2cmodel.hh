@@ -13,8 +13,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_NEW_2P2C_MODEL_HH
-#define DUMUX_NEW_2P2C_MODEL_HH
+#ifndef DUMUX_2P2C_MODEL_HH
+#define DUMUX_2P2C_MODEL_HH
 
 #include "2p2clocalresidual.hh"
 #include "2p2cproblem.hh"

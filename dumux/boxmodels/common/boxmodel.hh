@@ -1,11 +1,7 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2007 by Peter Bastian                                     *
- *   Institute of Parallel and Distributed System                            *
- *   Department Simulation of Large Systems                                  *
- *   University of Stuttgart, Germany                                        *
- *                                                                           *
- *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Copyright (C) 2008-2010 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2010 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -18,8 +14,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_BOX_SCHEME_HH
-#define DUMUX_BOX_SCHEME_HH
+#ifndef DUMUX_BOX_MODEL_HH
+#define DUMUX_BOX_MODEL_HH
 
 #include <dumux/common/valgrind.hh>
 #include <dune/grid/common/genericreferenceelements.hh>

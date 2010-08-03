@@ -216,14 +216,10 @@ public:
         ScalarField *Sw = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *Sn = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *Te = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *rhoW =
-                writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *rhoN =
-                writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *mobW =
-                writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *mobN =
-                writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *rhoW = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *rhoN = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *mobW = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *mobN = writer.template createField<Scalar, 1> (numVertices);
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =

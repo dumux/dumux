@@ -13,8 +13,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_RICHARDSLENSPROBLEM_HH
-#define DUMUX_RICHARDSLENSPROBLEM_HH
+#ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
+#define DUMUX_RICHARDS_LENSPROBLEM_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
@@ -48,7 +48,6 @@ SET_PROP(RichardsLensProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
 //SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
-#ifdef HAVE_DUNE_PDELAB
 SET_PROP(RichardsLensProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -59,7 +58,6 @@ public:
     typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
 //    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
-#endif
 
 // Set the problem property
 SET_PROP(RichardsLensProblem, Problem)

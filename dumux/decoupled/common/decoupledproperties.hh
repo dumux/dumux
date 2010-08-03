@@ -115,15 +115,9 @@ private:
     static const int dim = Grid::dimension;
 
 public:
-#if HAVE_DUNE_PDELAB
     typedef Dune::GenericReferenceElements<CoordScalar, dim> Container;
     typedef Dune::GenericReferenceElements<CoordScalar, dim-1> ContainerFaces;
     typedef Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
-#else
-    typedef Dune::ReferenceElements<CoordScalar, dim> Container;
-    typedef Dune::ReferenceElements<CoordScalar, dim-1> ContainerFaces;
-    typedef Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
-#endif
 };
 
 //////////////////////////////////////////////////////////////////
