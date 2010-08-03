@@ -190,6 +190,13 @@ public:
     bool finished() const
     { return finished_ || time() >= endTime(); }
 
+    /*!
+     * \brief Returns true if the simulation is finished after the
+     *        time level is incremented by the current time step size.
+     */
+    bool willBeFinished() const
+    { return finished_ || time() + timeStepSize() >= endTime(); }
+
 
     /*
      * @}

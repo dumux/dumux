@@ -213,11 +213,12 @@ public:
         ScalarField *pC = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *Sw = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *Sn = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *Te = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *rhoW = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *rhoN = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *mobW = writer.template createField<Scalar, 1> (numVertices);
         ScalarField *mobN = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *poro = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *Te = writer.template createField<Scalar, 1> (numVertices);
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
@@ -255,6 +256,7 @@ public:
                 (*rhoN)[globalIdx] = secVars.density(nPhaseIdx);
                 (*mobW)[globalIdx] = secVars.mobility(wPhaseIdx);
                 (*mobN)[globalIdx] = secVars.mobility(nPhaseIdx);
+                (*poro)[globalIdx] = secVars.porosity();
                 (*Te)[globalIdx] = secVars.temperature();
             };
         }
@@ -268,6 +270,7 @@ public:
         writer.addVertexData(rhoN, "rhoN");
         writer.addVertexData(mobW, "mobW");
         writer.addVertexData(mobN, "mobN");
+        writer.addVertexData(poro, "porosity");
         writer.addVertexData(Te, "temperature");
         writer.addCellData(rank, "process rank");
     }

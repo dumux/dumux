@@ -359,15 +359,14 @@ public:
                 writer.template createField<Scalar, 1> (numVertices);
         ScalarField *mobG =
                 writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *temperature = writer.template createField<Scalar, 1> (
-                numVertices);
         ScalarField *phasePresence = writer.template createField<Scalar, 1> (
                 numVertices);
         ScalarField *massFrac[numPhases][numComponents];
         for (int i = 0; i < numPhases; ++i)
             for (int j = 0; j < numComponents; ++j)
-                massFrac[i][j] = writer.template createField<Scalar, 1> (
-                        numVertices);
+                massFrac[i][j] = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *temperature = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *poro = writer.template createField<Scalar, 1>(numVertices);
 
 #ifdef VELOCITY_OUTPUT  // check if velocity output is demanded
         ScalarField *velocityX = writer.template createField<Scalar, 1>(numVertices);
@@ -420,7 +419,6 @@ public:
                 (*pc)[globalIdx] = secVars.capillaryPressure();
                 (*rhoL)[globalIdx] = secVars.fluidState().density(lPhaseIdx);
                 (*rhoG)[globalIdx] = secVars.fluidState().density(gPhaseIdx);
-                ;
                 (*mobL)[globalIdx] = secVars.mobility(lPhaseIdx);
                 (*mobG)[globalIdx] = secVars.mobility(gPhaseIdx);
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -433,6 +431,7 @@ public:
                         Valgrind::CheckDefined(
                             (*massFrac[phaseIdx][compIdx])[globalIdx][0]);
                     }
+                (*poro)[globalIdx] = secVars.porosity();
                 (*temperature)[globalIdx] = secVars.temperature();
                 (*phasePresence)[globalIdx]
                         = staticVertexDat_[globalIdx].phasePresence;
@@ -523,6 +522,7 @@ public:
                 writer.addVertexData(massFrac[i][j], name.c_str());
             }
         }
+        writer.addVertexData(poro, "porosity");
         writer.addVertexData(temperature, "temperature");
         writer.addVertexData(phasePresence, "phase presence");
 
