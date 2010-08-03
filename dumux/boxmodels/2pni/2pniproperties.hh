@@ -25,9 +25,9 @@
 #define DUMUX_2PNI_PROPERTIES_HH
 
 #include <dumux/boxmodels/2p/2pproperties.hh>
-#include "2pnivertexdata.hh"
-#include "2pnielementdata.hh"
-#include "2pnifluxdata.hh"
+#include "2pnisecondaryvars.hh"
+
+#include "2pnifluxvars.hh"
 
 namespace Dumux
 {
@@ -40,19 +40,16 @@ namespace Dumux
 // forward declarations
 ////////////////////////////////
 template<class TypeTag>
-class TwoPNIBoxModel;
+class TwoPNIModel;
 
 template<class TypeTag>
-class TwoPNIBoxJacobian;
+class TwoPNILocalResidual;
 
 template <class TypeTag>
-class TwoPNIVertexData;
+class TwoPNISecondaryVars;
 
 template <class TypeTag>
-class TwoPNIElementData;
-
-template <class TypeTag>
-class TwoPNIFluxData;
+class TwoPNIFluxVars;
 
 /*!
  * \brief Enumerations for the non-isothermal two-phase model
@@ -92,20 +89,17 @@ SET_INT_PROP(BoxTwoPNI, NumEq, 3); //!< set the number of equations to 3
 
 //! Use the 2pni local jacobian operator for the 2pni model
 SET_TYPE_PROP(BoxTwoPNI,
-              LocalJacobian,
-              TwoPNIBoxJacobian<TypeTag>);
+              LocalResidual,
+              TwoPNILocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoPNI, Model, TwoPNIBoxModel<TypeTag>);
+SET_TYPE_PROP(BoxTwoPNI, Model, TwoPNIModel<TypeTag>);
 
-//! the VertexData property
-SET_TYPE_PROP(BoxTwoPNI, VertexData, TwoPNIVertexData<TypeTag>);
+//! the SecondaryVars property
+SET_TYPE_PROP(BoxTwoPNI, SecondaryVars, TwoPNISecondaryVars<TypeTag>);
 
-//! the ElementData property
-SET_TYPE_PROP(BoxTwoPNI, ElementData, TwoPNIElementData<TypeTag>);
-
-//! the FluxData property
-SET_TYPE_PROP(BoxTwoPNI, FluxData, TwoPNIFluxData<TypeTag>);
+//! the FluxVars property
+SET_TYPE_PROP(BoxTwoPNI, FluxVars, TwoPNIFluxVars<TypeTag>);
 
 //! The indices required by the non-isothermal two-phase model
 SET_TYPE_PROP(BoxTwoPNI, TwoPIndices,   TwoPNIIndices<0>);

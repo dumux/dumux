@@ -21,7 +21,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/boxmodels/2pni/2pniboxmodel.hh>
+#include <dumux/boxmodels/2pni/2pnimodel.hh>
 
 #include <dumux/material/fluidsystems/h2o_n2_system.hh>
 
@@ -62,8 +62,8 @@ SET_PROP(InjectionProblem2PNI, LocalFEMSpace)
     enum{dim = GridView::dimension};
 
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for cubes
-//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for simplices
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
+//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
 
 // Set the problem property
@@ -143,17 +143,15 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
 template<class TypeTag>
 class InjectionProblem2PNI
 #if !ISOTHERMAL
-  : public TwoPNIBoxProblem<TypeTag,
-                            InjectionProblem2PNI<TypeTag> >
+  : public TwoPNIProblem<TypeTag>
 #else
-  : public TwoPNIBoxProblem<TypeTag,
-                            InjectionProblem2PNI<TypeTag> >
+  : public TwoPNIProblem<TypeTag>
 #endif
 {
-    typedef InjectionProblem2PNI<TypeTag>                     ThisType;
-    typedef TwoPNIBoxProblem<TypeTag, ThisType>               ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef InjectionProblem2PNI<TypeTag> ThisType;
+    typedef TwoPNIProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 #if ISOTHERMAL
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -178,9 +176,10 @@ class InjectionProblem2PNI
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector PrimaryVarVector;
-    typedef typename SolutionTypes::BoundaryTypeVector BoundaryTypeVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
@@ -193,8 +192,8 @@ class InjectionProblem2PNI
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    InjectionProblem2PNI(const GridView &grid)
-        : ParentType(grid)
+    InjectionProblem2PNI(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         // initialize the tables of the fluid system
         FluidSystem::init();
@@ -224,7 +223,7 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypeVector &values,
+    void boundaryTypes(BoundaryTypes &values,
                        const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        const Intersection &is,
@@ -306,7 +305,7 @@ public:
      */
     Scalar temperature(const Element           &element,
                        const FVElementGeometry &fvElemGeom,
-                       int                      scvIdx) const
+                       int scvIdx) const
     {
         return 273.15 + 30; // [K]
     };

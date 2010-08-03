@@ -19,34 +19,34 @@
  * \brief Base class for all problems which use the non-isothermal
  *        two-phase box model
  */
-#ifndef DUMUX_2PNI_BOX_PROBLEM_HH
-#define DUMUX_2PNI_BOX_PROBLEM_HH
+#ifndef DUMUX_2PNI_PROBLEM_HH
+#define DUMUX_2PNI_PROBLEM_HH
 
-#include <dumux/boxmodels/2p/2pboxproblem.hh>
+#include <dumux/boxmodels/2p/2pproblem.hh>
 
 
 namespace Dumux
 {
 /*!
  * \ingroup TwoPNIProblems
- * \brief  Base class for all problems which use the non-isothermal
+ * \brief Base class for all problems which use the non-isothermal
  *         two-phase box model.
  *
  * \todo Please doc me more!
  */
-template<class TypeTag, class Implementation>
-class TwoPNIBoxProblem : public TwoPBoxProblem<TypeTag, Implementation>
+template<class TypeTag>
+class TwoPNIProblem : public TwoPProblem<TypeTag>
 {
-    typedef TwoPBoxProblem<TypeTag, Implementation> ParentType;
+    typedef TwoPProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
 public:
-    TwoPNIBoxProblem(const GridView &gridView)
-        : ParentType(gridView)
-    {
-    }
+    TwoPNIProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
+    {}
 
     /*!
      * \name Problem parameters

@@ -18,7 +18,7 @@
 /**
  * @file
  * \ingroup TwoPTwoCBoxProblems
- * @brief  Definition of a problem, where air is injected under a low permeable layer
+ * @brief Definition of a problem, where air is injected under a low permeable layer
  * @author Klaus Mosthaf, Andreas Lauser, Bernd Flemisch
  */
 #ifndef DUMUX_INJECTIONPROBLEM_HH
@@ -62,8 +62,8 @@ SET_PROP(InjectionProblem, LocalFEMSpace)
     enum{dim = GridView::dimension};
 
 public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for cubes
-//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim>  type; // for simplices
+    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
+//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
 #endif
 
@@ -108,13 +108,13 @@ SET_INT_PROP(InjectionProblem, NewtonLinearSolverVerbosity, 0);
  * This problem uses the \ref TwoPTwoCBoxModel.
  */
 template <class TypeTag = TTAG(InjectionProblem) >
-class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag, InjectionProblem<TypeTag> >
+class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag>
 {
-    typedef InjectionProblem<TypeTag>             ThisType;
-    typedef TwoPTwoCBoxProblem<TypeTag, ThisType> ParentType;
+    typedef InjectionProblem<TypeTag> ThisType;
+    typedef TwoPTwoCBoxProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     enum {
         // Grid and world dimension
@@ -135,18 +135,18 @@ class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag, InjectionProblem<Typ
         contiGEqIdx = Indices::contiGEqIdx,
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
-    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename GridView::template Codim<0>::Entity        Element;
-    typedef typename GridView::template Codim<dim>::Entity      Vertex;
-    typedef typename GridView::Intersection                     Intersection;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     InjectionProblem(const GridView &gridView)
@@ -177,7 +177,7 @@ public:
      */
     Scalar temperature(const Element           &element,
                        const FVElementGeometry &fvElemGeom,
-                       int                      scvIdx) const
+                       int scvIdx) const
     {
         return temperature_;
     };
@@ -193,12 +193,12 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypeVector         &values,
+    void boundaryTypes(BoundaryTypes         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
                        const Intersection         &is,
-                       int                         scvIdx,
-                       int                         boundaryFaceIdx) const
+                       int scvIdx,
+                       int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
@@ -218,8 +218,8 @@ public:
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const Intersection         &is,
-                   int                         scvIdx,
-                   int                         boundaryFaceIdx) const
+                   int scvIdx,
+                   int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
@@ -238,8 +238,8 @@ public:
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const Intersection         &is,
-                 int                         scvIdx,
-                 int                         boundaryFaceIdx) const
+                 int scvIdx,
+                 int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
@@ -268,7 +268,7 @@ public:
     void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
-                int                      scvIdx) const
+                int scvIdx) const
     {
         values = Scalar(0.0);
     }
@@ -282,7 +282,7 @@ public:
     void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
-                 int                      scvIdx) const
+                 int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 

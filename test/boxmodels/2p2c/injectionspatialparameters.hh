@@ -32,11 +32,11 @@ namespace Dumux
 template<class TypeTag>
 class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag>                   ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid))     Grid;
+    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-    typedef typename Grid::ctype                            CoordScalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
@@ -48,19 +48,19 @@ class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>
         gPhaseIdx = FluidSystem::nPhaseIdx,
     };
 
-    typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
+    typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionVector        SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxData))   FluxData;
-    typedef std::vector<VertexData>                           VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity             Element;
+    typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
     //typedef LinearMaterial<Scalar> EffMaterialLaw;
@@ -112,14 +112,14 @@ public:
      * \brief Apply the intrinsic permeability tensor to a pressure
      *        potential gradient.
      *
-     * \param element       The current finite element
-     * \param fvElemGeom    The current finite volume geometry of the element
-     * \param scvfIdx       The index sub-control volume face where the
+     * \param element The current finite element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvfIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
     const Scalar intrinsicPermeability(const Element           &element,
                                        const FVElementGeometry &fvElemGeom,
-                                       int                      scvIdx) const
+                                       int scvIdx) const
     {
         const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
@@ -130,15 +130,15 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the soil
      *
-     * \param vDat        The data defined on the sub-control volume
-     * \param element     The finite element
-     * \param fvElemGeom  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
+     * \param vDat The data defined on the sub-control volume
+     * \param element The finite element
+     * \param fvElemGeom The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
     double porosity(const Element           &element,
                     const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
+                    int scvIdx) const
     {
         const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
@@ -150,7 +150,7 @@ public:
     // return the brooks-corey context depending on the position
     const MaterialLawParams& materialLawParams(const Element           &element,
                                                 const FVElementGeometry &fvElemGeom,
-                                                int                      scvIdx) const
+                                                int scvIdx) const
     {
         const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
@@ -163,14 +163,14 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param element     The finite element
-     * \param fvElemGeom  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
+     * \param element The finite element
+     * \param fvElemGeom The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
     double heatCapacity(const Element           &element,
                         const FVElementGeometry &fvElemGeom,
-                        int                      scvIdx) const
+                        int scvIdx) const
     {
         return
             790 // specific heat capacity of granite [J / (kg K)]
@@ -184,20 +184,20 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param heatFlux    The result vector
-     * \param tempGrad    The temperature gradient
-     * \param element     The current finite element
-     * \param fvElemGeom  The finite volume geometry of the current element
-     * \param scvfIdx     The local index of the sub-control volume face where
+     * \param heatFlux The result vector
+     * \param tempGrad The temperature gradient
+     * \param element The current finite element
+     * \param fvElemGeom The finite volume geometry of the current element
+     * \param scvfIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
     void matrixHeatFlux(Vector                  &heatFlux,
-                        const FluxData          &fluxDat,
-                        const VertexDataArray   &vDat,
+                        const FluxVars          &fluxDat,
+                        const ElementSecondaryVars   &vDat,
                         const Vector            &tempGrad,
                         const Element           &element,
                         const FVElementGeometry &fvElemGeom,
-                        int                      scvfIdx) const
+                        int scvfIdx) const
     {
         static const Scalar lWater = 0.6;
         static const Scalar lGranite = 2.8;

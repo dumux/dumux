@@ -1,4 +1,4 @@
-// $Id: 2pniboxjacobian.hh 3840 2010-07-15 10:14:15Z bernd $
+// $Id: 2pnilocalresidual.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -27,11 +27,11 @@
 
 #include "2pniproperties.hh"
 
-#include <dumux/boxmodels/2p/2pboxjacobian.hh>
+#include <dumux/boxmodels/2p/2plocalresidual.hh>
 
-#include <dumux/boxmodels/2pni/2pnielementdata.hh>
-#include <dumux/boxmodels/2pni/2pnivertexdata.hh>
-#include <dumux/boxmodels/2pni/2pnifluxdata.hh>
+
+#include <dumux/boxmodels/2pni/2pnisecondaryvars.hh>
+#include <dumux/boxmodels/2pni/2pnifluxvars.hh>
 
 
 namespace Dumux
@@ -43,17 +43,17 @@ namespace Dumux
  */
 
 template<class TypeTag>
-class TwoPNIBoxJacobian : public TwoPBoxJacobian<TypeTag>
+class TwoPNILocalResidual : public TwoPLocalResidual<TypeTag>
 {
-    typedef TwoPNIBoxJacobian<TypeTag> ThisType;
-    typedef TwoPBoxJacobian<TypeTag>   ParentType;
+    typedef TwoPNILocalResidual<TypeTag> ThisType;
+    typedef TwoPLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))   Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))  GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))    Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
@@ -70,21 +70,16 @@ class TwoPNIBoxJacobian : public TwoPBoxJacobian<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData))   VertexData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxData))     FluxData;
-    typedef std::vector<VertexData> VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
 
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     static const Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:
-    TwoPNIBoxJacobian(Problem &problem)
-        : ParentType(problem)
-    {
-    };
-
     /*!
      * \brief Evaluate the amount all conservation quantites
      *        (e.g. phase mass) within a sub-control volume.
@@ -102,8 +97,8 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const VertexDataArray &vertDatArray = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
-        const VertexData      &vertDat = vertDatArray[scvIdx];
+        const ElementSecondaryVars &vertDatArray = usePrevSol ? this->prevSecVars_()  : this->curSecVars_();
+        const SecondaryVars      &vertDat = vertDatArray[scvIdx];
 
         // compute the energy storage
         result[temperatureIdx] =
@@ -125,7 +120,7 @@ public:
      * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVarVector &flux,
-                              const FluxData &fluxData) const
+                              const FluxVars &fluxData) const
     {
         // advective mass flux
         ParentType::computeAdvectiveFlux(flux, fluxData);
@@ -134,8 +129,8 @@ public:
         flux[energyEqIdx] = 0;
         for (int phase = 0; phase < numPhases; ++phase) {
             // vertex data of the upstream and the downstream vertices
-            const VertexData &up = this->curElemDat_[fluxData.upstreamIdx(phase)];
-            const VertexData &dn = this->curElemDat_[fluxData.downstreamIdx(phase)];
+            const SecondaryVars &up = this->curSecVars_(fluxData.upstreamIdx(phase));
+            const SecondaryVars &dn = this->curSecVars_(fluxData.downstreamIdx(phase));
 
             flux[energyEqIdx] +=
                 fluxData.KmvpNormal(phase) * (
@@ -156,7 +151,7 @@ public:
      *        the face of a sub-control volume.
      */
     void computeDiffusiveFlux(PrimaryVarVector &flux,
-                              const FluxData &fluxData) const
+                              const FluxVars &fluxData) const
     {
         // diffusive mass flux
         ParentType::computeDiffusiveFlux(flux, fluxData);

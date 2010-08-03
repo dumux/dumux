@@ -24,12 +24,12 @@
  * \brief Adaption of the BOX scheme to the non-isothermal twophase flow model.
  */
 
-#ifndef DUMUX_NEW_2PNI_BOX_MODEL_HH
-#define DUMUX_NEW_2PNI_BOX_MODEL_HH
+#ifndef DUMUX_2PNI_MODEL_HH
+#define DUMUX_2PNI_MODEL_HH
 
-#include <dumux/boxmodels/2p/2pboxmodel.hh>
-#include "2pniboxjacobian.hh"
-#include "2pniboxproblem.hh"
+#include <dumux/boxmodels/2p/2pmodel.hh>
+#include "2pnilocalresidual.hh"
+#include "2pniproblem.hh"
 
 namespace Dumux {
 
@@ -81,39 +81,8 @@ namespace Dumux {
  */
 
 template<class TypeTag>
-class TwoPNIBoxModel: public BoxScheme<TypeTag, TwoPNIBoxModel<TypeTag> > {
-    typedef TwoPNIBoxModel<TypeTag> ThisType;
-    typedef BoxScheme<TypeTag, ThisType> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
-
-public:
-    TwoPNIBoxModel(Problem &prob)
-    : ParentType(prob)
-    {
-    }
-
-    /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
-     */
-    template <class MultiWriter>
-    void addOutputVtkFields(MultiWriter &writer)
-    {
-        this->localJacobian().addOutputVtkFields(writer, this->curSol());
-    }
-
-    /*!
-     * \brief Calculate the phase masses in the system for
-     *        the current timestep.
-     */
-    void calculateMass(Dune::FieldVector<Scalar, 2> &mass)
-    {
-        this->localJacobian().calculateMass(this->curSol(), mass);
-    }
+class TwoPNIModel: public TwoPModel<TypeTag>
+{
 };
 
 }
