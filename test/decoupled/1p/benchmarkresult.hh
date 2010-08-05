@@ -165,8 +165,8 @@ struct BenchmarkResult
             int i = -1;
             Dune::FieldVector<ct,2*dim> fluxVector;
             Dune::FieldVector<ct,dim> exactGradient;
-            IntersectionIterator endis = gridview.template iend(element);
-            for (IntersectionIterator is = gridview.template ibegin(element); is!=endis; ++is)
+            IntersectionIterator endis = gridview.iend(element);
+            for (IntersectionIterator is = gridview.ibegin(element); is!=endis; ++is)
             {
                 // local number of facet
                 i = is->indexInInside();

@@ -149,8 +149,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
         double facevol[2 * dim];
         Dune::FieldVector<Scalar, dimWorld> unitOuterNormal[2 * dim];
 
-        IntersectionIterator isItBegin = this->problem().gridView().template ibegin(*eIt);
-        IntersectionIterator isItEnd = this->problem().gridView().template iend(*eIt);
+        IntersectionIterator isItBegin = this->problem().gridView().ibegin(*eIt);
+        IntersectionIterator isItEnd = this->problem().gridView().iend(*eIt);
         for (IntersectionIterator isIt = isItBegin; isIt != isItEnd; ++isIt)
         {
             // intersection iterator 'nextisIt' is used to get geometry information
@@ -334,11 +334,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     double lambda4 = 0;
                     int globalIdx4 = 0;
 
-                    IntersectionIterator innerisItEnd = this->problem().gridView().template iend(*outside);
-                    IntersectionIterator innernextisItEnd = this->problem().gridView().template iend(*nextisItoutside);
-                    for (IntersectionIterator innerisIt = this->problem().gridView().template ibegin(*outside); innerisIt
+                    IntersectionIterator innerisItEnd = this->problem().gridView().iend(*outside);
+                    IntersectionIterator innernextisItEnd = this->problem().gridView().iend(*nextisItoutside);
+                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*outside); innerisIt
                             != innerisItEnd; ++innerisIt)
-                        for (IntersectionIterator innernextisIt = this->problem().gridView().template ibegin(
+                        for (IntersectionIterator innernextisIt = this->problem().gridView().ibegin(
                                 *nextisItoutside); innernextisIt != innernextisItEnd; ++innernextisIt)
                         {
                             if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -375,9 +375,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     // through the second half edge of 'nextisIt'
 
                     // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-                    IntersectionIterator isIt24 = this->problem().gridView().template ibegin(*outside);
+                    IntersectionIterator isIt24 = this->problem().gridView().ibegin(*outside);
 
-                    for (IntersectionIterator innerisIt = this->problem().gridView().template ibegin(*outside); innerisIt
+                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*outside); innerisIt
                             != innerisItEnd; ++innerisIt)
                     {
                         if (innerisIt->neighbor())
@@ -412,9 +412,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     integrationOuterNormaln4 *= face24vol / 2.0;
 
                     // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                    IntersectionIterator isIt34 = this->problem().gridView().template ibegin(*nextisItoutside);
+                    IntersectionIterator isIt34 = this->problem().gridView().ibegin(*nextisItoutside);
 
-                    for (IntersectionIterator innerisIt = this->problem().gridView().template ibegin(*nextisItoutside); innerisIt
+                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*nextisItoutside); innerisIt
                             != innernextisItEnd; ++innerisIt)
                     {
                         if (innerisIt->neighbor())
@@ -598,9 +598,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                     // get common geometry information for the following computation
                     // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-                    IntersectionIterator isIt24 = this->problem().gridView().template ibegin(*outside);
-                    IntersectionIterator innerisItEnd = this->problem().gridView().template iend(*outside);
-                    for (IntersectionIterator innerisIt = this->problem().gridView().template ibegin(*outside); innerisIt
+                    IntersectionIterator isIt24 = this->problem().gridView().ibegin(*outside);
+                    IntersectionIterator innerisItEnd = this->problem().gridView().iend(*outside);
+                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*outside); innerisIt
                             != innerisItEnd; ++innerisIt)
                     {
                         if (innerisIt->boundary())
@@ -1257,10 +1257,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     + this->problem().variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                        IntersectionIterator isIt34 = this->problem().gridView().template ibegin(*nextisItoutside);
-                        IntersectionIterator innernextisItEnd = this->problem().gridView().template iend(
+                        IntersectionIterator isIt34 = this->problem().gridView().ibegin(*nextisItoutside);
+                        IntersectionIterator innernextisItEnd = this->problem().gridView().iend(
                                 *nextisItoutside);
-                        for (IntersectionIterator innerisIt = this->problem().gridView().template ibegin(
+                        for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(
                                 *nextisItoutside); innerisIt != innernextisItEnd; ++innerisIt)
                         {
                             if (innerisIt->boundary())
@@ -1757,10 +1757,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     + this->problem().variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                        IntersectionIterator isIt34 = this->problem().gridView().template ibegin(*nextisItoutside);
-                        IntersectionIterator innernextisItEnd = this->problem().gridView().template iend(
+                        IntersectionIterator isIt34 = this->problem().gridView().ibegin(*nextisItoutside);
+                        IntersectionIterator innernextisItEnd = this->problem().gridView().iend(
                                 *nextisItoutside);
-                        for (IntersectionIterator innerisIt = this->problem().gridView().template ibegin(
+                        for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(
                                 *nextisItoutside); innerisIt != innernextisItEnd; ++innerisIt)
                         {
                             if (innerisIt->boundary())

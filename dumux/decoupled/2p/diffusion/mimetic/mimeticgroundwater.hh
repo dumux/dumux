@@ -183,8 +183,8 @@ public:
         typedef typename GridView::IntersectionIterator IntersectionIterator;
 
         int i = -1;
-        IntersectionIterator endit = gridView_.template iend(element);
-        for (IntersectionIterator it = gridView_.template ibegin(element); it!=endit; ++it)
+        IntersectionIterator endit = gridView_.iend(element);
+        for (IntersectionIterator it = gridView_.ibegin(element); it!=endit; ++it)
         {
             // local number of facet
             i = it->indexInInside();
@@ -371,8 +371,8 @@ private:
         // evaluate boundary conditions via intersection iterator
         typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = gridView_.template iend(element);
-        for (IntersectionIterator it = gridView_.template ibegin(element); it!=endit; ++it)
+        IntersectionIterator endit = gridView_.iend(element);
+        for (IntersectionIterator it = gridView_.ibegin(element); it!=endit; ++it)
             if (!it->neighbor())
             {
                 Dune::FieldVector<Scalar,dim> faceGlobal = it->geometry().center();

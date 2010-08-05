@@ -230,8 +230,8 @@ protected:
 
         // evaluate boundary conditions for all intersections of
         // the current element
-        IntersectionIterator isIt = gridView_().template ibegin(elem_());
-        const IntersectionIterator &endIt = gridView_().template iend(elem_());
+        IntersectionIterator isIt = gridView_().ibegin(elem_());
+        const IntersectionIterator &endIt = gridView_().iend(elem_());
         for (; isIt != endIt; ++isIt)
         {
             // handle only faces on the boundary

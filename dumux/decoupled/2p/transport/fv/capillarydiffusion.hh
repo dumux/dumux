@@ -102,8 +102,8 @@ public:
         // get absolute permeability of cell
         FieldMatrix permeability(problem_.spatialParameters().intrinsicPermeability(globalPos,element));
 
-        IntersectionIterator isItEnd = problem_.gridView().template iend(element);
-        IntersectionIterator isIt = problem_.gridView().template ibegin(element);
+        IntersectionIterator isItEnd = problem_.gridView().iend(element);
+        IntersectionIterator isIt = problem_.gridView().ibegin(element);
         for (; isIt != isItEnd; ++isIt)
         {
             if(isIt->indexInInside() == indexInInside)

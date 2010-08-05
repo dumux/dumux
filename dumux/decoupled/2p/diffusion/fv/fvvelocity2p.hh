@@ -185,9 +185,9 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
 
         // run through all intersections with neighbors and boundary
         IntersectionIterator
-        isItEnd = this->problem().gridView().template iend(*eIt);
+        isItEnd = this->problem().gridView().iend(*eIt);
         for (IntersectionIterator
-                isIt = this->problem().gridView().template ibegin(*eIt); isIt
+                isIt = this->problem().gridView().ibegin(*eIt); isIt
                 !=isItEnd; ++isIt)
         {
             // local number of facet

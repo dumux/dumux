@@ -166,8 +166,8 @@ private:
                 int globalIdxI = elementMapper_.map(*eIt);
 
                 // run through all intersections with neighbors and boundary
-                IntersectionIterator isItEnd = gridView_.template iend(*eIt);
-                for (IntersectionIterator isIt = gridView_.template ibegin(*eIt); isIt != isItEnd; ++isIt)
+                IntersectionIterator isItEnd = gridView_.iend(*eIt);
+                for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isItEnd; ++isIt)
                 {
                     // local number of facet
                     int indexInInside = isIt->indexInInside();

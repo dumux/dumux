@@ -704,8 +704,8 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
-        IntersectionIterator endit = gridView.template iend(e);
-        for (IntersectionIterator it = gridView.template ibegin(e); it != endit; ++it)
+        IntersectionIterator endit = gridView.iend(e);
+        for (IntersectionIterator it = gridView.ibegin(e); it != endit; ++it)
             if (it->boundary())
             {
                 int face = it->indexInInside();

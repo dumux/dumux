@@ -208,8 +208,8 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isItBegin = problem_.gridView().template ibegin(*eIt);
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
         {
             IntersectionIterator tempisIt = isIt;
@@ -296,8 +296,8 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
         A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItBegin = problem_.gridView().template ibegin(*eIt);
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
         {
             IntersectionIterator tempisIt = isIt;
@@ -379,12 +379,12 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
                 ElementPointer outside = isIt->outside();
                 ElementPointer nextisItoutside = nextisIt->outside();
 
-                IntersectionIterator innerisItEnd = problem_.gridView().template iend(*outside);
-                IntersectionIterator innernextisItEnd = problem_.gridView().template iend(*nextisItoutside);
+                IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
+                IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
 
-                for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*outside);
+                for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
                         innerisIt!=innerisItEnd; ++innerisIt )
-                for (IntersectionIterator innernextisIt = problem_.gridView().template ibegin(*nextisItoutside);
+                for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(*nextisItoutside);
                         innernextisIt!=innernextisItEnd; ++innernextisIt)
                 {
                     if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -469,8 +469,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
             continue;
         }
 
-        IntersectionIterator isItBegin = problem_.gridView().template ibegin(*eIt);
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
         {
             // intersection iterator 'nextisIt' is used to get geometry information
@@ -637,11 +637,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     double lambda4 = 0;
                     int globalIdx4 = 0;
 
-                    IntersectionIterator innerisItEnd = problem_.gridView().template iend(*outside);
-                    IntersectionIterator innernextisItEnd = problem_.gridView().template iend(*nextisItoutside);
-                    for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*outside);
+                    IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
+                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
                             innerisIt!=innerisItEnd; ++innerisIt )
-                    for (IntersectionIterator innernextisIt = problem_.gridView().template ibegin(*nextisItoutside);
+                    for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(*nextisItoutside);
                             innernextisIt!=innernextisItEnd; ++innernextisIt)
                     {
                         if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -674,9 +674,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     // through the second half edge of 'nextisIt'
 
                     // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-                    IntersectionIterator isIt24 = problem_.gridView().template ibegin(*outside);
+                    IntersectionIterator isIt24 = problem_.gridView().ibegin(*outside);
 
-                    for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*outside);
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
                             innerisIt != innerisItEnd; ++innerisIt)
                     {
                         if (innerisIt->neighbor())
@@ -714,9 +714,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     *= face24vol/2.0;
 
                     // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                    IntersectionIterator isIt34 = problem_.gridView().template ibegin(*nextisItoutside);
+                    IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
 
-                    for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*nextisItoutside);
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*nextisItoutside);
                             innerisIt != innernextisItEnd; ++innerisIt)
                     {
                         if (innerisIt->neighbor())
@@ -890,9 +890,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                     // get common geometry information for the following computation
                     // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-                    IntersectionIterator isIt24 = problem_.gridView().template ibegin(*outside);
-                    IntersectionIterator innerisItEnd = problem_.gridView().template iend(*outside);
-                    for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*outside);
+                    IntersectionIterator isIt24 = problem_.gridView().ibegin(*outside);
+                    IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
                             innerisIt != innerisItEnd; ++innerisIt)
                     {
                         if (innerisIt->boundary())
@@ -1521,9 +1521,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                        IntersectionIterator isIt34 = problem_.gridView().template ibegin(*nextisItoutside);
-                        IntersectionIterator innernextisItEnd = problem_.gridView().template iend(*nextisItoutside);
-                        for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*nextisItoutside);
+                        IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
+                        IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
+                        for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*nextisItoutside);
                                 innerisIt != innernextisItEnd; ++innerisIt)
                         {
                             if (innerisIt->boundary())
@@ -2003,9 +2003,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                        IntersectionIterator isIt34 = problem_.gridView().template ibegin(*nextisItoutside);
-                        IntersectionIterator innernextisItEnd = problem_.gridView().template iend(*nextisItoutside);
-                        for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*nextisItoutside);
+                        IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
+                        IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
+                        for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*nextisItoutside);
                                 innerisIt != innernextisItEnd; ++innerisIt)
                         {
                             if (innerisIt->boundary())
@@ -2253,8 +2253,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 //        ++num_nonzero;
 //
 //        // run through all intersections with neighbors
-//        IntersectionIterator isItBegin = problem_.gridView().template ibegin(*eIt);
-//        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+//        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
+//        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
 //        for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
 //        {
 //            IntersectionIterator tempisIt = isIt;
@@ -2335,12 +2335,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 //                ElementPointer outside = isIt->outside();
 //                ElementPointer nextisItoutside = nextisIt->outside();
 //
-//                IntersectionIterator innerisItEnd = problem_.gridView().template iend(*outside);
-//                IntersectionIterator innernextisItEnd = problem_.gridView().template iend(*nextisItoutside);
+//                IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
+//                IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
 //
-//                for (IntersectionIterator innerisIt = problem_.gridView().template ibegin(*outside);
+//                for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside);
 //                        innerisIt!=innerisItEnd; ++innerisIt )
-//                for (IntersectionIterator innernextisIt = problem_.gridView().template ibegin(*nextisItoutside);
+//                for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(*nextisItoutside);
 //                        innernextisIt!=innernextisItEnd; ++innernextisIt)
 //                {
 //                    if (innerisIt->neighbor() && innernextisIt->neighbor())

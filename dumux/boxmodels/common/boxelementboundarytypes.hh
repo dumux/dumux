@@ -70,8 +70,8 @@ public:
             (*this)[i].reset();
 
         // evaluate boundary conditions
-        IntersectionIterator isIt = problem.gridView().template ibegin(element);
-        const IntersectionIterator &endIt = problem.gridView().template iend(element);
+        IntersectionIterator isIt = problem.gridView().ibegin(element);
+        const IntersectionIterator &endIt = problem.gridView().iend(element);
         for (; isIt != endIt; ++isIt) {
             // Ignore non- boundary faces.
             if (!isIt->boundary())

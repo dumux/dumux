@@ -259,8 +259,8 @@ void FVPressure2P<TypeTag>::initializeMatrix()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             if (isIt->neighbor())
                 rowSize++;
         A_.setrowsize(globalIdxI, rowSize);
@@ -277,8 +277,8 @@ void FVPressure2P<TypeTag>::initializeMatrix()
         A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             if (isIt->neighbor())
             {
                 // access neighbor
@@ -344,8 +344,8 @@ void FVPressure2P<TypeTag>::assemble(bool first)
         Scalar fractionalNWI = problem_.variables().fracFlowFuncNonwetting(globalIdxI);
         Scalar pcI = problem_.variables().capillaryPressure(globalIdxI);
 
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
 
             // get geometry type of face
