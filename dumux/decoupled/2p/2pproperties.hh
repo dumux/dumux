@@ -84,7 +84,7 @@ NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPES, Transport))
 NEW_PROP_TAG ( TwoPIndices )
 ;
 NEW_PROP_TAG( SpatialParameters )
-; //!< The type of the soil properties object
+; //!< The type of the spatial parameters object
 NEW_PROP_TAG( EnableGravity)
 ; //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( PressureFormulation)

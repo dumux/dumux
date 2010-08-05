@@ -118,7 +118,7 @@ public:
      */
     void updateCouplingParams(const Element &element) const
     {}
-    
+
     /*!
      * \name Simulation steering
      */
@@ -127,7 +127,7 @@ public:
     /*!
      * \brief Called by the time manager before the time integration.
      */
-    void preProcess()
+    void preTimeStep()
     {}
 
     /*!
@@ -144,13 +144,13 @@ public:
 
             if (model_->update(*newtonMethod_, newtonCtl_))
                 return;
-            
+
             // update failed
             Scalar dt = timeManager().timeStepSize();
             Scalar nextDt = dt / 2;
             timeManager().setTimeStepSize(nextDt);
         }
-        
+
         DUNE_THROW(Dune::MathError,
                    "Newton solver didn't converge after "
                    << maxFails
@@ -177,7 +177,7 @@ public:
      * steps. This file is intented to be overwritten by the
      * implementation.
      */
-    bool doSerialize() const
+    bool shouldWriteRestartFile() const
     {
         return timeManager().timeStepIndex() > 0 &&
             (timeManager().timeStepIndex() % 10 == 0);
@@ -191,13 +191,13 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
-    bool doOutput() const
+    bool shouldWriteOutput() const
     { return true; }
 
     /*!
      * \brief Called by the time manager after the time integration.
      */
-    void postProcess()
+    void postTimeStep()
     { }
 
     /*!
@@ -317,7 +317,7 @@ public:
         asImp_().serialize(res);
         res.serializeEnd();
     }
-    
+
     /*!
      * \brief This method writes the complete state of the problem
      *        to the harddisk.
@@ -341,9 +341,9 @@ public:
     void restart(Scalar tRestart)
     {
         typedef Dumux::Restart Restarter;
-        
+
         Restarter res;
-       
+
         res.deserializeBegin(asImp_(), tRestart);
         std::cout << "Deserialize from file '" << res.fileName() << "'\n";
         timeManager().deserialize(res);
@@ -373,7 +373,7 @@ public:
     void writeOutput()
     {
         // write the current result to disk
-        if (asImp_().doOutput()) {
+        if (asImp_().shouldWriteOutput()) {
             if (gridView().comm().rank() == 0)
                 std::cout << "Writing result file for \"" << asImp_().name() << "\"\n";
 

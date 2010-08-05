@@ -1382,7 +1382,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             r1[0] = -J1 * face12vol / 2.0;
                             r1[1] = -J2 * isIt34->geometry().volume() / 2.0;
 
-                            // compute  r = CA^{-1}r1
+                            // compute r = CA^{-1}r1
                             Dune::FieldVector<Scalar, 2 * dim - 1> r(0);
                             CAinv.umv(r1, r);
 
@@ -1518,7 +1518,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             r2[0] = -J1 * face12vol / 2.0;
                             r2[1] = g213 * g2;
 
-                            // compute  r = CA^{-1}r1
+                            // compute r = CA^{-1}r1
                             FieldVector r(0);
                             CAinv.umv(r2, r);
                             r += r1;

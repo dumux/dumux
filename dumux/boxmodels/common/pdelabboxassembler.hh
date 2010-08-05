@@ -29,16 +29,16 @@
 namespace Dumux {
 
 namespace PDELab {
-    
+
 template<class TypeTag>
 class BoxAssembler
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))    Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))  Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     enum{dim = GridView::dimension};
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Constraints)) Constraints;
@@ -92,14 +92,14 @@ public:
         gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
 
         //cn_->compute_ghosts(*gridFunctionSpace_);
-        
+
         //typedef BoundaryIndexHelper<TypeTag> BoundaryFunction;
         //BoundaryFunction *bTypes = new BoundaryFunction();
         constraintsTrafo_ = new ConstraintsTrafo();
         //Dune::PDELab::constraints(*bTypes, *gridFunctionSpace_, *constraintsTrafo_, false);
 
         localOperator_ = new LocalOperator(problem_->model());
-        gridOperatorSpace_ = 
+        gridOperatorSpace_ =
             new GridOperatorSpace(*gridFunctionSpace_, *constraintsTrafo_,
                                   *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
 
@@ -121,7 +121,7 @@ public:
         // entry on the main diagonal block matrix
         typedef typename Matrix::RowIterator RowIterator;
         typedef typename Matrix::ColIterator ColIterator;
-        typedef typename Matrix::block_type  BlockType;
+        typedef typename Matrix::block_type BlockType;
         const typename Matrix::block_type::size_type rowsInBlock = Matrix::block_type::rows;
         const typename Matrix::block_type::size_type colsInBlock = Matrix::block_type::cols;
         Scalar diagonalEntry[rowsInBlock];

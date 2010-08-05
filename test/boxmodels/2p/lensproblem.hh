@@ -95,7 +95,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
 };
 
-// Set the soil properties
+// Set the spatial parameters
 SET_PROP(LensProblem, SpatialParameters)
 {
     typedef Dumux::LensSpatialParameters<TypeTag> type;
@@ -137,7 +137,7 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  * <tt>./test_2p 50000 1000</tt>
  */
 template <class TypeTag >
-class LensProblem  : public TwoPProblem<TypeTag>
+class LensProblem : public TwoPProblem<TypeTag>
 {
     typedef LensProblem<TypeTag> ThisType;
     typedef TwoPProblem<TypeTag> ParentType;
@@ -149,10 +149,10 @@ class LensProblem  : public TwoPProblem<TypeTag>
     typedef TwoPFluidState<TypeTag> FluidState;
 
     enum {
-        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
         // primary variable indices
-        pressureIdx   = Indices::pressureIdx,
+        pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         pwIdx = Indices::pwIdx,
         SnIdx = Indices::SnIdx,
@@ -167,12 +167,12 @@ class LensProblem  : public TwoPProblem<TypeTag>
 
 
         // Grid and world dimension
-        dim         = GridView::dimension,
-        dimWorld    = GridView::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
@@ -187,7 +187,7 @@ class LensProblem  : public TwoPProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    LensProblem(TimeManager &timeManager, 
+    LensProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 const GlobalPosition &lensLowerLeft,
                 const GlobalPosition &lensUpperRight)
@@ -214,7 +214,7 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const Element           &element,
+    Scalar temperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
@@ -232,10 +232,10 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypes         &values,
-                       const Element              &element,
-                       const FVElementGeometry    &fvElemGeom,
-                       const Intersection         &is,
+    void boundaryTypes(BoundaryTypes &values,
+                       const Element &element,
+                       const FVElementGeometry &fvElemGeom,
+                       const Intersection &is,
                        int scvIdx,
                        int boundaryFaceIdx) const
     {
@@ -258,10 +258,10 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVarVector           &values,
-                   const Element              &element,
-                   const FVElementGeometry    &fvElemGeom,
-                   const Intersection         &is,
+    void dirichlet(PrimaryVariables &values,
+                   const Element &element,
+                   const FVElementGeometry &fvElemGeom,
+                   const Intersection &is,
                    int scvIdx,
                    int boundaryFaceIdx) const
     {
@@ -302,10 +302,10 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVarVector           &values,
-                 const Element              &element,
-                 const FVElementGeometry    &fvElemGeom,
-                 const Intersection         &is,
+    void neumann(PrimaryVariables &values,
+                 const Element &element,
+                 const FVElementGeometry &fvElemGeom,
+                 const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
@@ -332,8 +332,8 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVarVector        &values,
-                const Element           &element,
+    void source(PrimaryVariables &values,
+                const Element &element,
                 const FVElementGeometry &,
                 int subControlVolumeIdx) const
     {
@@ -346,8 +346,8 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVarVector        &values,
-                 const Element           &element,
+    void initial(PrimaryVariables &values,
+                 const Element &element,
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
@@ -383,7 +383,7 @@ private:
     {
         Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
         Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda  && lambda < 2.0/3.0;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
     static const Scalar eps_ = 3e-6;

@@ -15,17 +15,17 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_NEW_2P2C_BOX_JACOBIAN_BASE_HH
-#define DUMUX_NEW_2P2C_BOX_JACOBIAN_BASE_HH
+#ifndef DUMUX_NEW_2P2C_LOCAL_RESIDUAL_BASE_HH
+#define DUMUX_NEW_2P2C_LOCAL_RESIDUAL_BASE_HH
 
 #include <dumux/boxmodels/common/boxmodel.hh>
 #include <dumux/common/math.hh>
 
 #include "2p2cproperties.hh"
 
-#include "2p2csecondaryvars.hh"
+#include "2p2cvolumevariables.hh"
 
-#include "2p2cfluxvars.hh"
+#include "2p2cfluxvariables.hh"
 
 #include "2p2cnewtoncontroller.hh"
 
@@ -61,7 +61,7 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     typedef TwoPTwoCFluidState<TypeTag> FluidState;
@@ -98,9 +98,9 @@ protected:
         formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation))
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -118,16 +118,16 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      */
-    void computeStorage(PrimaryVarVector &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementSecondaryVars &elemDat = usePrevSol ? this->prevSecVars_()
-                : this->curSecVars_();
-        const SecondaryVars &vertDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_()
+                : this->curVolVars_();
+        const VolumeVariables &vertDat = elemDat[scvIdx];
 
         // compute storage term of all components within all phases
         result = 0;
@@ -148,13 +148,13 @@ public:
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a subcontrol volume.
      */
-    void computeFlux(PrimaryVarVector &flux, int faceIdx) const
+    void computeFlux(PrimaryVariables &flux, int faceIdx) const
     {
-        FluxVars vars(this->problem_(), 
+        FluxVariables vars(this->problem_(),
                       this->elem_(),
-                      this->fvElemGeom_(), 
-                      faceIdx, 
-                      this->curSecVars_());
+                      this->fvElemGeom_(),
+                      faceIdx,
+                      this->curVolVars_());
 
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
@@ -169,7 +169,7 @@ public:
      * \brief Evaluates the advective mass flux of all components over
      *        a face of a subcontrol volume.
      */
-    void computeAdvectiveFlux(PrimaryVarVector &flux, const FluxVars &vars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
         ////////
         // advective fluxes of all components in all phases
@@ -178,9 +178,9 @@ public:
         {
             // data attached to upstream and the downstream vertices
             // of the current phase
-            const SecondaryVars &up =
-                    this->curSecVars_(vars.upstreamIdx(phaseIdx));
-            const SecondaryVars &dn = this->curSecVars_()[vars.downstreamIdx(
+            const VolumeVariables &up =
+                    this->curVolVars_(vars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_()[vars.downstreamIdx(
                     phaseIdx)];
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
@@ -208,19 +208,19 @@ public:
      * \brief Adds the diffusive mass flux of all components over
      *        a face of a subcontrol volume.
      */
-    void computeDiffusiveFlux(PrimaryVarVector &flux, const FluxVars &vars) const
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp = 
-            - vars.porousDiffCoeff(lPhaseIdx) * 
+        Scalar tmp =
+            - vars.porousDiffCoeff(lPhaseIdx) *
             vars.molarDensityAtIP(lPhaseIdx) *
             (vars.molarConcGrad(lPhaseIdx) * vars.face().normal);
         flux[contiGEqIdx] += tmp * FluidSystem::molarMass(gCompIdx);
         flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
 
         // add diffusive flux of liquid component in gas phase
-        tmp = 
-            - vars.porousDiffCoeff(gPhaseIdx) * 
+        tmp =
+            - vars.porousDiffCoeff(gPhaseIdx) *
             vars.molarDensityAtIP(gPhaseIdx) *
             (vars.molarConcGrad(gPhaseIdx) * vars.face().normal);
         flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
@@ -230,7 +230,7 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      */
-    void computeSource(PrimaryVarVector &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
         this->problem_().source(q,
                                 this->elem_(),

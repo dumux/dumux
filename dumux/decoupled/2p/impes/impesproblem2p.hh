@@ -42,12 +42,12 @@ class IMPESProblem2P : public IMPESProblem<TypeTag, Implementation>
     typedef IMPESProblem<TypeTag, Implementation> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::Grid                         Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GridView::Grid Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))       FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))            SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
 
     enum {
@@ -133,7 +133,7 @@ private:
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
 
-    GlobalPosition  gravity_;
+    GlobalPosition gravity_;
 
     // fluids and material properties
     SpatialParameters*  spatialParameters_;

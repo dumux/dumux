@@ -64,7 +64,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureModel)) PressureModel;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SaturationModel)) SaturationModel;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))            Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     enum
     {
@@ -78,7 +78,7 @@ private:
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GridView::template Codim<dim>::Iterator    VertexIterator;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
 public:
 
@@ -86,7 +86,7 @@ public:
     /** @param variables object of class VariableClass.
      *  @param wettingPhase implementation of a wetting phase.
      *  @param nonWettingPhase implementation of a non-wetting phase.
-     *  @param soil implementation of the solid matrix
+     *  @param spatial parameters implementation of the solid matrix
      *  @param materialLaw implementation of Material laws. Class TwoPhaseRelations or derived.
      */
     IMPESProblem(const GridView &gridView, bool verbose = true)
@@ -138,7 +138,7 @@ public:
     /*!
      * \brief Called by the time manager before the time integration.
      */
-    void preProcess()
+    void preTimeStep()
     {}
 
     /*!
@@ -180,7 +180,7 @@ public:
      * This is used to do some janitorial tasks like writing the
      * current solution to disk.
      */
-    void postProcess()
+    void postTimeStep()
     { };
 
     /*!
@@ -211,9 +211,9 @@ public:
      * steps. This file is intented to be overwritten by the
      * implementation.
      */
-    bool doSerialize() const
+    bool shouldWriteRestartFile() const
     {
-        return 
+        return
             timeManager().timeStepIndex() > 0 &&
             (timeManager().timeStepIndex() % 5 == 0);
     }
@@ -226,7 +226,7 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
-    bool doOutput() const
+    bool shouldWriteOutput() const
     { return true; }
 
     /*!
@@ -397,7 +397,7 @@ public:
     {
         if (gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
-        
+
         resultWriter_.beginTimestep(timeManager_.time() + timeManager_.timeStepSize(),
                                     gridView());
         model().addOutputVtkFields(resultWriter_);
@@ -429,12 +429,12 @@ private:
     static std::string simname_; // a string for the name of the current simulation,
                                   // which could be set by means of an program argument,
                                  // for example.
-    const GridView  gridView_;
+    const GridView gridView_;
 
-    GlobalPosition  bboxMin_;
-    GlobalPosition  bboxMax_;
+    GlobalPosition bboxMin_;
+    GlobalPosition bboxMax_;
 
-    TimeManager     timeManager_;
+    TimeManager timeManager_;
 
     Variables variables_;
 
@@ -444,7 +444,7 @@ private:
     SaturationModel* satModel_;//!< object including the saturation model
     IMPESModel* model_;
 
-    VtkMultiWriter  resultWriter_;
+    VtkMultiWriter resultWriter_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.

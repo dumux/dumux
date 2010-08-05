@@ -35,7 +35,7 @@ class TwoPFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Sc
                                            TwoPFluidState<TypeTag> >
 {
     typedef TwoPFluidState<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;

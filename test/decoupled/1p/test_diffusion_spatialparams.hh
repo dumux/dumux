@@ -28,14 +28,14 @@ namespace Dumux
 template<class TypeTag>
 class TestDiffusionSpatialParams
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid))     Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-    typedef typename Grid::ctype                            CoordScalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename Grid::ctype CoordScalar;
 
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
-    typedef    typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
@@ -51,7 +51,7 @@ public:
 
     }
 
-    const FieldMatrix& intrinsicPermeability  (const GlobalPosition& globalPos, const Element& element) const
+    const FieldMatrix& intrinsicPermeability (const GlobalPosition& globalPos, const Element& element) const
     {
         double rt = globalPos[0]*globalPos[0]+globalPos[1]*globalPos[1];
         permeability_[0][0] = (delta_*globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1])/rt;

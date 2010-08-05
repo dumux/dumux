@@ -39,8 +39,8 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(DiffusionTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         static const int dim = Grid::dimension;
         typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 

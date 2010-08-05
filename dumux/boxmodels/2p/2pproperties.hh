@@ -46,10 +46,10 @@ template <class TypeTag>
 class TwoPProblem;
 
 template <class TypeTag>
-class TwoPSecondaryVars;
+class TwoPVolumeVariables;
 
 template <class TypeTag>
-class TwoPFluxVars;
+class TwoPFluxVariables;
 
 template<class TypeTag>
 class FluidSystem2P;
@@ -81,7 +81,7 @@ template <int formulation = TwoPCommonIndices::pwSn, int PVOffset = 0>
 struct TwoPIndices : public TwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx   = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
 
     // indices of the primary variables
@@ -104,7 +104,7 @@ struct TwoPIndices<TwoPCommonIndices::pnSw, PVOffset>
     : public TwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx   = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
 
     // indices of the primary variables
@@ -145,9 +145,9 @@ NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the p
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
 NEW_PROP_TAG(TwoPIndices); //!< Enumerations for the 2p models
-NEW_PROP_TAG(SpatialParameters); //!< The type of the soil properties object
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the soil)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)
+NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
+NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
 NEW_PROP_TAG(WettingPhase); //!< The wetting phase for two-phase models
 NEW_PROP_TAG(NonwettingPhase); //!< The non-wetting phase for two-phase models
 NEW_PROP_TAG( FluidSystem ); //!<The fluid systems including the information about the phases
@@ -157,8 +157,8 @@ NEW_PROP_TAG( FluidState ); //!<The phases state
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_INT_PROP(BoxTwoP, NumEq,         2); //!< set the number of equations to 2
-SET_INT_PROP(BoxTwoP, NumPhases,     2); //!< The number of phases in the 2p model is 2
+SET_INT_PROP(BoxTwoP, NumEq, 2); //!< set the number of equations to 2
+SET_INT_PROP(BoxTwoP, NumPhases, 2); //!< The number of phases in the 2p model is 2
 
 //! Set the default formulation to pWsN
 SET_INT_PROP(BoxTwoP,
@@ -176,14 +176,14 @@ SET_TYPE_PROP(BoxTwoP, Model, TwoPModel<TypeTag>);
 //! the default newton controller for two-phase problems
 SET_TYPE_PROP(BoxTwoP, NewtonController, TwoPNewtonController<TypeTag>);
 
-//! the SecondaryVars property
-SET_TYPE_PROP(BoxTwoP, SecondaryVars, TwoPSecondaryVars<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxTwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
 
-//! the FluxVars property
-SET_TYPE_PROP(BoxTwoP, FluxVars, TwoPFluxVars<TypeTag>);
+//! the FluxVariables property
+SET_TYPE_PROP(BoxTwoP, FluxVariables, TwoPFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
-SET_SCALAR_PROP(BoxTwoP, MobilityUpwindAlpha,  1.0);
+SET_SCALAR_PROP(BoxTwoP, MobilityUpwindAlpha, 1.0);
 
 //! The indices required by the isothermal 2p model
 SET_PROP(BoxTwoP, TwoPIndices)

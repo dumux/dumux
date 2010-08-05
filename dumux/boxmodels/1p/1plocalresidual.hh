@@ -19,14 +19,14 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_1P_BOX_JACOBIAN_HH
-#define DUMUX_1P_BOX_JACOBIAN_HH
+#ifndef DUMUX_1P_LOCAL_RESIDUAL_HH
+#define DUMUX_1P_LOCAL_RESIDUAL_HH
 
 #include <dumux/boxmodels/common/boxlocalresidual.hh>
 
-#include "1psecondaryvars.hh"
+#include "1pvolumevariables.hh"
 
-#include "1pfluxvars.hh"
+#include "1pfluxvariables.hh"
 
 namespace Dumux
 {
@@ -51,27 +51,27 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
 
     enum {
-        dim              = GridView::dimension,
-        dimWorld         = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
 
-        pressureIdx      = Indices::pressureIdx,
+        pressureIdx = Indices::pressureIdx,
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    
+
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -81,18 +81,18 @@ public:
      *
      * This function should not include the source and sink terms.
      */
-    void computeStorage(PrimaryVarVector &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementSecondaryVars &elemVars = usePrevSol ? this->prevSecVars_()  : this->curSecVars_();
-        const SecondaryVars  &secVars = elemVars[scvIdx];
+        const ElementVolumeVariables &elemVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVars[scvIdx];
 
         // partial time derivative of the wetting phase mass
-        result[pressureIdx] =  secVars.density * secVars.porosity;
+        result[pressureIdx] =  volVars.density * volVars.porosity;
     }
 
 
@@ -100,13 +100,13 @@ public:
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
      */
-    void computeFlux(PrimaryVarVector &flux, int faceId) const
+    void computeFlux(PrimaryVariables &flux, int faceId) const
     {
-        FluxVars vars(this->problem_(),
+        FluxVariables vars(this->problem_(),
                       this->elem_(),
                       this->fvElemGeom_(),
                       faceId,
-                      this->curSecVars_());
+                      this->curVolVars_());
 
         flux[pressureIdx] = vars.densityAtIP * vars.vDarcyNormal / vars.viscosityAtIP;
     }
@@ -114,7 +114,7 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      */
-    void computeSource(PrimaryVarVector &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
         this->problem_().source(q,
                                 this->elem_(),
@@ -126,8 +126,8 @@ public:
      * \brief Return the temperature given the solution vector of a
      *        finite volume.
      */
-    template <class PrimaryVarVector>
-    Scalar temperature(const PrimaryVarVector &sol)
+    template <class PrimaryVariables>
+    Scalar temperature(const PrimaryVariables &sol)
     { return this->problem_.temperature(); /* constant temperature */ }
 
 private:

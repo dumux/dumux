@@ -285,7 +285,7 @@ public:
      gnuplot
 
      gnuplot> plot "spline.csv" using 1:2 w l ti "Curve", \
-     "spline.csv" using 1:3 w l ti "Derivative",          \
+     "spline.csv" using 1:3 w l ti "Derivative", \
      "spline.csv" using 1:4 w p ti "Monotonic"
      ----------- snap -----------
      */
@@ -491,10 +491,10 @@ public:
      * \brief Return true iff the given x is in range [x1, xn].
      */
     bool applies(Scalar x) const
-    { 
+    {
         return x_[0] <= x && x <= x_[numSamples() - 1];
     };
-    
+
     /*!
      * \brief Return the x value of the leftmost sampling point.
      */
@@ -643,7 +643,7 @@ public:
      gnuplot
 
      gnuplot> plot "spline.csv" using 1:2 w l ti "Curve", \
-     "spline.csv" using 1:3 w l ti "Derivative",          \
+     "spline.csv" using 1:3 w l ti "Derivative", \
      "spline.csv" using 1:4 w p ti "Monotonic"
      ----------- snap -----------
      */
@@ -695,7 +695,7 @@ private:
         x_.resize(numSamples);
         y_.resize(numSamples);
         moments_.resize(numSamples);
-        
+
         // copy sample points, make sure that the first x value is
         // smaller than the last one
         for (int i = 0; i < numSamples; ++i) {
@@ -928,7 +928,7 @@ public:
         c_ = tmpRight/tmpLeft;
 
         tmpRight = y1 - (x1*x1*x1*a_ + x1*x1*b_ + x1*c_);
-        tmpLeft  = 1;
+        tmpLeft = 1;
         d_ = tmpRight/tmpLeft;
 
         assert(fabs(eval(x1) - y1) < std::max(1e-11, fabs(1e-8*y1)));
@@ -1045,7 +1045,7 @@ public:
      gnuplot
 
      gnuplot> plot "spline.csv" using 1:2 w l ti "Curve", \
-     "spline.csv" using 1:3 w l ti "Derivative",          \
+     "spline.csv" using 1:3 w l ti "Derivative", \
      "spline.csv" using 1:4 w p ti "Monotonic"
      ----------- snap -----------
      */

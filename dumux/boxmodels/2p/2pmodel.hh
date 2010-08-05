@@ -86,10 +86,10 @@ class TwoPModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
@@ -101,7 +101,7 @@ class TwoPModel : public BoxModel<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
     };
 
-public:   
+public:
     /*!
      * \brief Calculate mass of both components in the whole model domain
      *         and get minimum and maximum values of primary variables
@@ -117,7 +117,7 @@ public:
             this->gridView_().template begin<0> ();
         ElementIterator endit = this->gridView_().template end<0> ();
 
-        ElementSecondaryVars elemDat;
+        ElementVolumeVariables elemDat;
 
         Scalar minSat = 1e100;
         Scalar maxSat = -1e100;
@@ -129,7 +129,7 @@ public:
 #endif
 
         FVElementGeometry fvElemGeom;
-        SecondaryVars secVars;
+        VolumeVariables volVars;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
@@ -141,18 +141,18 @@ public:
             for (int i = 0; i < numLocalVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                secVars.update(sol[globalIdx], 
+                volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom, 
+                               fvElemGeom,
                                i,
                                false);
 
                 Scalar vol = fvElemGeom.subContVol[i].volume;
 
-                Scalar satN = secVars.saturation(nPhaseIdx);
-                Scalar pW = secVars.pressure(wPhaseIdx);
-                Scalar T = secVars.temperature();
+                Scalar satN = volVars.saturation(nPhaseIdx);
+                Scalar pW = volVars.pressure(wPhaseIdx);
+                Scalar T = volVars.temperature();
 
                 // get minimum and maximum values of primary variables
                 minSat = std::min(minSat, satN);
@@ -164,11 +164,11 @@ public:
                 maxTe = std::max(maxTe, T);
 #endif
 
-                mass[nPhaseIdx] += secVars.porosity() * secVars.saturation(nPhaseIdx)
-                        * secVars.density(nPhaseIdx) * vol;
+                mass[nPhaseIdx] += volVars.porosity() * volVars.saturation(nPhaseIdx)
+                        * volVars.density(nPhaseIdx) * vol;
 
-                mass[wPhaseIdx] += secVars.porosity() * secVars.saturation(wPhaseIdx)
-                        * secVars.density(wPhaseIdx) * vol;
+                mass[wPhaseIdx] += volVars.porosity() * volVars.saturation(wPhaseIdx)
+                        * volVars.density(wPhaseIdx) * vol;
             }
         }
 
@@ -201,7 +201,7 @@ public:
      *        writer.
      */
     template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, 
+    void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
@@ -225,7 +225,7 @@ public:
                 writer.template createField<Scalar, 1> (numElements);
 
         FVElementGeometry fvElemGeom;
-        SecondaryVars secVars;
+        VolumeVariables volVars;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
@@ -240,24 +240,24 @@ public:
             for (int i = 0; i < numVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                secVars.update(sol[globalIdx], 
+                volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom, 
+                               fvElemGeom,
                                i,
                                false);
-                
-                (*pW)[globalIdx] = secVars.pressure(wPhaseIdx);
-                (*pN)[globalIdx] = secVars.pressure(nPhaseIdx);
-                (*pC)[globalIdx] = secVars.capillaryPressure();
-                (*Sw)[globalIdx] = secVars.saturation(wPhaseIdx);
-                (*Sn)[globalIdx] = secVars.saturation(nPhaseIdx);
-                (*rhoW)[globalIdx] = secVars.density(wPhaseIdx);
-                (*rhoN)[globalIdx] = secVars.density(nPhaseIdx);
-                (*mobW)[globalIdx] = secVars.mobility(wPhaseIdx);
-                (*mobN)[globalIdx] = secVars.mobility(nPhaseIdx);
-                (*poro)[globalIdx] = secVars.porosity();
-                (*Te)[globalIdx] = secVars.temperature();
+
+                (*pW)[globalIdx] = volVars.pressure(wPhaseIdx);
+                (*pN)[globalIdx] = volVars.pressure(nPhaseIdx);
+                (*pC)[globalIdx] = volVars.capillaryPressure();
+                (*Sw)[globalIdx] = volVars.saturation(wPhaseIdx);
+                (*Sn)[globalIdx] = volVars.saturation(nPhaseIdx);
+                (*rhoW)[globalIdx] = volVars.density(wPhaseIdx);
+                (*rhoN)[globalIdx] = volVars.density(nPhaseIdx);
+                (*mobW)[globalIdx] = volVars.mobility(wPhaseIdx);
+                (*mobN)[globalIdx] = volVars.mobility(nPhaseIdx);
+                (*poro)[globalIdx] = volVars.porosity();
+                (*Te)[globalIdx] = volVars.temperature();
             };
         }
 

@@ -54,8 +54,8 @@ class TwoPProblem : public BoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    TwoPProblem(TimeManager &timeManager, 
-                const GridView &gridView, 
+    TwoPProblem(TimeManager &timeManager,
+                const GridView &gridView,
                 bool verbose = true)
         : ParentType(timeManager, gridView),
           gravity_(0)
@@ -68,9 +68,9 @@ public:
             gravity_[dim-1]  = -9.81;
     }
 
-    TwoPProblem(TimeManager &timeManager, 
+    TwoPProblem(TimeManager &timeManager,
                 const GridView &gridView,
-                SpatialParameters &spatialParameters, 
+                SpatialParameters &spatialParameters,
                 bool verbose = true)
         : ParentType(timeManager, gridView), spatialParameters_(&spatialParameters),
         gravity_(0)

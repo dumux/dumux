@@ -24,7 +24,7 @@
 
 #include "boxproperties.hh"
 
-#include "boxelementsecondaryvars.hh"
+#include "boxelementvolumevariables.hh"
 #include "boxlocaljacobian.hh"
 #include "boxlocalresidual.hh"
 
@@ -60,31 +60,31 @@ class BoxModel
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))    Scalar;
-    typedef typename GridView::Grid::ctype                   CoordScalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GridView::Grid::ctype CoordScalar;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DofMapper)) DofMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 
     enum {
-        numEq   = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        dim     = GridView::dimension
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        dim = GridView::dimension
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements))        RefElemProp;
-    typedef typename RefElemProp::Container                            ReferenceElements;
-    typedef typename RefElemProp::ReferenceElement                     ReferenceElement;
+    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
+    typedef typename RefElemProp::Container ReferenceElements;
+    typedef typename RefElemProp::ReferenceElement ReferenceElement;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry))   FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
@@ -112,7 +112,7 @@ public:
     {
         problemPtr_ = &prob;
 
-        int nDofs = asImp_().numDofs(); 
+        int nDofs = asImp_().numDofs();
         uCur_.resize(nDofs);
         uPrev_.resize(nDofs);
         boxVolume_.resize(nDofs);
@@ -120,7 +120,7 @@ public:
         localJacobian_.init(problem_());
         jacAsm_ = new JacobianAssembler();
         jacAsm_->init(problem_());
-        
+
         applyInitialSolution_();
 
         // also set the solution of the "previous" time step to the
@@ -148,7 +148,7 @@ public:
     Scalar globalResidual(SolutionVector &dest)
     {
         dest = 0;
-        
+
         ElementIterator elemIt = gridView_().template begin<0>();
         const ElementIterator elemEndIt = gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -253,13 +253,13 @@ public:
             asImp_().updateSuccessful();
         else
             asImp_().updateFailed();
-        
+
 #if HAVE_VALGRIND
         for (size_t i = 0; i < curSol().size(); ++i) {
             Valgrind::CheckDefined(curSol()[i]);
         }
 #endif // HAVE_VALGRIND
-        
+
         return converged;
     }
 
@@ -395,7 +395,7 @@ public:
      */
     template <class MultiWriter>
     void addConvergenceVtkFields(MultiWriter &writer,
-                                 const SolutionVector &u,                               
+                                 const SolutionVector &u,
                                  const SolutionVector &deltaU)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
@@ -440,7 +440,7 @@ public:
 
     /*!
      * \brief Add the quantities of a time step which ought to be
-     *        written to disk. 
+     *        written to disk.
      *
      * This should be overwritten by the acutal model if any secondary
      * variables should be written out. Read: This should _always_ be
@@ -449,14 +449,14 @@ public:
      * \param writer  The VTK multi writer where the fields should be added.
      */
     template <class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, 
+    void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
-        
+
         // global defect of the two auxiliary equations
         ScalarField* x[numEq];
         for (int i = 0; i < numEq; ++i) {
@@ -504,9 +504,9 @@ protected:
         // first set the whole domain to zero
         uCur_ = Scalar(0.0);
         boxVolume_ = Scalar(0.0);
-        
+
         FVElementGeometry fvElemGeom;
-        
+
         // iterate through leaf grid and evaluate initial
         // condition at the center of each sub control volume
         //
@@ -528,7 +528,7 @@ protected:
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
-                PrimaryVarVector initVal;
+                PrimaryVariables initVal;
                 Valgrind::SetUndefined(initVal);
                 problem_().initial(initVal,
                                    *it,
@@ -537,7 +537,7 @@ protected:
                 Valgrind::CheckDefined(initVal);
 
                 // add up the initial values of all sub-control
-                // volumes. If the initial values disagree for 
+                // volumes. If the initial values disagree for
                 // different sub control volumes, the initial value
                 // will be the arithmetic mean.
                 initVal *= fvElemGeom.subContVol[scvIdx].volume;
@@ -566,7 +566,7 @@ protected:
     Problem *problemPtr_;
 
     // calculates the local jacobian matrix for a given element
-    LocalJacobian     localJacobian_;
+    LocalJacobian localJacobian_;
     // Linearizes the problem at the current time step using the
     // local jacobian
     JacobianAssembler *jacAsm_;

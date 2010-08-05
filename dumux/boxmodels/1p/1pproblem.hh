@@ -42,7 +42,7 @@ class OnePBoxProblem : public BoxProblem<TypeTag>
     typedef typename GridView::Grid Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-    
+
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 

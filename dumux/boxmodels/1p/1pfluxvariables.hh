@@ -1,4 +1,4 @@
-// $Id: 1pfluxvars.hh 3759 2010-06-21 16:59:10Z bernd $
+// $Id: 1pfluxvariables.hh 3759 2010-06-21 16:59:10Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Onur Dogan                                   *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -20,8 +20,8 @@
  * \brief This file contains the data which is required to calculate
  *        the flux of the fluid over a face of a finite volume.
  */
-#ifndef DUMUX_1P_FLUX_DATA_HH
-#define DUMUX_1P_FLUX_DATA_HH
+#ifndef DUMUX_1P_FLUX_VARIABLES_HH
+#define DUMUX_1P_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 
@@ -35,16 +35,16 @@ namespace Dumux
  *        finite volume for the one-phase model.
  */
 template <class TypeTag>
-class OnePFluxVars
+class OnePFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     enum {
         dim = GridView::dimension,
@@ -62,11 +62,11 @@ class OnePFluxVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
 
 public:
-    OnePFluxVars(const Problem &problem,
+    OnePFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &elemGeom,
                  int faceIdx,
-                 const ElementSecondaryVars &elemDat)
+                 const ElementVolumeVariables &elemDat)
         : fvElemGeom_(elemGeom)
     {
         scvfIdx_ = faceIdx;
@@ -85,7 +85,7 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementSecondaryVars &elemDat)
+                             const ElementVolumeVariables &elemDat)
     {
         // calculate gradients
         GlobalPosition tmp(0.0);
@@ -119,7 +119,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const ElementSecondaryVars &elemDat)
+                              const ElementVolumeVariables &elemDat)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;

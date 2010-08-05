@@ -39,10 +39,10 @@ template<class TypeTag>
 class OnePTwoCLocalResidual;
 
 template <class TypeTag>
-class OnePTwoCSecondaryVars;
+class OnePTwoCVolumeVariables;
 
 template <class TypeTag>
-class OnePTwoCFluxVars;
+class OnePTwoCFluxVariables;
 
 /*!
  * \brief The indices for the isothermal single-phase, two-component model.
@@ -71,7 +71,7 @@ NEW_TYPE_TAG(BoxOnePTwoC, INHERITS_FROM(BoxModel));
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents);   //!< Number of fluid components in the system
 NEW_PROP_TAG(OnePTwoCIndices); //!< Enumerations for the 1p2c models
-NEW_PROP_TAG(SpatialParameters); //!< The type of the soil
+NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 NEW_PROP_TAG(UpwindAlpha);   //!< The default value of the upwind parameter
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
@@ -80,8 +80,8 @@ NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the p
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_INT_PROP(BoxOnePTwoC, NumEq,         2); //!< set the number of equations to 2
-SET_INT_PROP(BoxOnePTwoC, NumPhases,     1); //!< The number of phases in the 1p2c model is 1
+SET_INT_PROP(BoxOnePTwoC, NumEq, 2); //!< set the number of equations to 2
+SET_INT_PROP(BoxOnePTwoC, NumPhases, 1); //!< The number of phases in the 1p2c model is 1
 SET_INT_PROP(BoxOnePTwoC, NumComponents, 2); //!< The number of components in the 1p2c model is 2
 
 //! Use the 1p2c local jacobian operator for the 1p2c model
@@ -92,14 +92,14 @@ SET_TYPE_PROP(BoxOnePTwoC,
 //! the Model property
 SET_TYPE_PROP(BoxOnePTwoC, Model, OnePTwoCBoxModel<TypeTag>);
 
-//! the SecondaryVars property
-SET_TYPE_PROP(BoxOnePTwoC, SecondaryVars, OnePTwoCSecondaryVars<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxOnePTwoC, VolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
 
 
 
 
-//! the FluxVars property
-SET_TYPE_PROP(BoxOnePTwoC, FluxVars, OnePTwoCFluxVars<TypeTag>);
+//! the FluxVariables property
+SET_TYPE_PROP(BoxOnePTwoC, FluxVariables, OnePTwoCFluxVariables<TypeTag>);
 
 //! the default upwind factor. Default 1.0, i.e. fully upwind...
 SET_SCALAR_PROP(BoxOnePTwoC, UpwindAlpha, 1.0);

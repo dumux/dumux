@@ -77,7 +77,7 @@ SET_PROP(TissueTumorProblem, FluidSystem)
     typedef Dumux::ISFluid_Trail_System<TypeTag> type;
 };
 
-// Set the soil properties
+// Set the spatial parameters
 SET_TYPE_PROP(TissueTumorProblem,
               SpatialParameters,
               Dumux::TissueTumorSpatialParameters<TypeTag>);
@@ -126,16 +126,16 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     enum {
         // Grid and world dimension
-        dim         = GridView::dimension,
-        dimWorld    = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
 
         // indices of the primary variables
-        konti               = Indices::konti,
-        transport        = Indices::transport,
+        konti = Indices::konti,
+        transport = Indices::transport,
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
@@ -172,7 +172,7 @@ public:
      *
      * This problem assumes a temperature of 36 degrees Celsius.
      */
-    Scalar temperature(const Element           &element,
+    Scalar temperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
@@ -190,10 +190,10 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypes         &values,
-                       const Element              &element,
-                       const FVElementGeometry    &fvElemGeom,
-                       const Intersection         &is,
+    void boundaryTypes(BoundaryTypes &values,
+                       const Element &element,
+                       const FVElementGeometry &fvElemGeom,
+                       const Intersection &is,
                        int scvIdx,
                        int boundaryFaceIdx) const
     {
@@ -206,10 +206,10 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVarVector           &values,
-                   const Element              &element,
-                   const FVElementGeometry    &fvElemGeom,
-                   const Intersection         &is,
+    void dirichlet(PrimaryVariables &values,
+                   const Element &element,
+                   const FVElementGeometry &fvElemGeom,
+                   const Intersection &is,
                    int scvIdx,
                    int boundaryFaceIdx) const
     {
@@ -227,10 +227,10 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    void neumann(PrimaryVarVector           &values,
-                 const Element              &element,
-                 const FVElementGeometry    &fvElemGeom,
-                 const Intersection         &is,
+    void neumann(PrimaryVariables &values,
+                 const Element &element,
+                 const FVElementGeometry &fvElemGeom,
+                 const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
@@ -265,8 +265,8 @@ public:
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      */
-    void source(PrimaryVarVector        &values,
-                const Element           &element,
+    void source(PrimaryVariables &values,
+                const Element &element,
                 const FVElementGeometry &fvElemGeom,
                 int scvIdx) const
     {
@@ -285,8 +285,8 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVarVector        &values,
-                 const Element           &element,
+    void initial(PrimaryVariables &values,
+                 const Element &element,
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
@@ -300,8 +300,8 @@ public:
 
 private:
     // the internal method for the initial condition
-    void initial_(PrimaryVarVector       &values,
-                  const GlobalPosition   &globalPos) const
+    void initial_(PrimaryVariables &values,
+                  const GlobalPosition &globalPos) const
     {
 
         values[konti] = -1067;              //initial condition for the pressure

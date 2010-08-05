@@ -1,4 +1,4 @@
-// $Id: richardssecondaryvars.hh 3840 2010-07-15 10:14:15Z bernd $
+// $Id: richardsvolumevariables.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -19,8 +19,8 @@
  *
  * \brief Quantities required by the richards box model defined on a vertex.
  */
-#ifndef DUMUX_RICHARDS_SECONDARY_VARS_HH
-#define DUMUX_RICHARDS_SECONDARY_VARS_HH
+#ifndef DUMUX_RICHARDS_VOLUME_VARIABLES_HH
+#define DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 
 #include "richardsproperties.hh"
 
@@ -33,17 +33,17 @@ namespace Dumux
  *        finite volume in the Richards model.
  */
 template <class TypeTag>
-class RichardsSecondaryVars
+class RichardsVolumeVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
 
     enum {
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
@@ -52,7 +52,7 @@ class RichardsSecondaryVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
@@ -65,14 +65,14 @@ public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector &priVars,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
                 int vertIdx,
                 bool isOldSol)
     {
-        primaryVars_  = priVars;
+        primaryVars_ = priVars;
 
         // material law parameters
         const MaterialLawParams &materialParams =
@@ -97,7 +97,7 @@ public:
     /*!
      * \brief Return the vector of primary variables
      */
-    const PrimaryVarVector &primaryVars() const
+    const PrimaryVariables &primaryVars() const
     { return primaryVars_; }
 
     /*!
@@ -118,7 +118,7 @@ public:
     Scalar temperature;
 
 protected:
-    PrimaryVarVector primaryVars_;
+    PrimaryVariables primaryVars_;
 };
 
 }

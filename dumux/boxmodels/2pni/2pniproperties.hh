@@ -25,9 +25,9 @@
 #define DUMUX_2PNI_PROPERTIES_HH
 
 #include <dumux/boxmodels/2p/2pproperties.hh>
-#include "2pnisecondaryvars.hh"
+#include "2pnivolumevariables.hh"
 
-#include "2pnifluxvars.hh"
+#include "2pnifluxvariables.hh"
 
 namespace Dumux
 {
@@ -46,10 +46,10 @@ template<class TypeTag>
 class TwoPNILocalResidual;
 
 template <class TypeTag>
-class TwoPNISecondaryVars;
+class TwoPNIVolumeVariables;
 
 template <class TypeTag>
-class TwoPNIFluxVars;
+class TwoPNIFluxVariables;
 
 /*!
  * \brief Enumerations for the non-isothermal two-phase model
@@ -95,14 +95,14 @@ SET_TYPE_PROP(BoxTwoPNI,
 //! the Model property
 SET_TYPE_PROP(BoxTwoPNI, Model, TwoPNIModel<TypeTag>);
 
-//! the SecondaryVars property
-SET_TYPE_PROP(BoxTwoPNI, SecondaryVars, TwoPNISecondaryVars<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxTwoPNI, VolumeVariables, TwoPNIVolumeVariables<TypeTag>);
 
-//! the FluxVars property
-SET_TYPE_PROP(BoxTwoPNI, FluxVars, TwoPNIFluxVars<TypeTag>);
+//! the FluxVariables property
+SET_TYPE_PROP(BoxTwoPNI, FluxVariables, TwoPNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal two-phase model
-SET_TYPE_PROP(BoxTwoPNI, TwoPIndices,   TwoPNIIndices<0>);
+SET_TYPE_PROP(BoxTwoPNI, TwoPIndices, TwoPNIIndices<0>);
 SET_TYPE_PROP(BoxTwoPNI, TwoPNIIndices, TwoPNIIndices<0>);
 
 }

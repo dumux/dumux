@@ -37,10 +37,10 @@ template<class TypeTag>
 class RichardsLocalResidual;
 
 template <class TypeTag>
-class RichardsSecondaryVars;
+class RichardsVolumeVariables;
 
 template <class TypeTag>
-class RichardsFluxVars;
+class RichardsFluxVariables;
 
 /*!
  * \brief Indices for the single phase model.
@@ -70,9 +70,9 @@ NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(RichardsIndices); //!< Enumerations for the richards models
-NEW_PROP_TAG(SpatialParameters); //!< The type of the soil properties object
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the soil)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)
+NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
+NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
 NEW_PROP_TAG(WettingPhase); //!< The wetting phase for the richards model
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
@@ -91,14 +91,14 @@ SET_TYPE_PROP(BoxRichards,
 //! the Model property
 SET_TYPE_PROP(BoxRichards, Model, RichardsModel<TypeTag>);
 
-//! the SecondaryVars property
-SET_TYPE_PROP(BoxRichards, SecondaryVars, RichardsSecondaryVars<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxRichards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 
 
 
-//! the FluxVars property
-SET_TYPE_PROP(BoxRichards, FluxVars, RichardsFluxVars<TypeTag>);
+//! the FluxVariables property
+SET_TYPE_PROP(BoxRichards, FluxVariables, RichardsFluxVariables<TypeTag>);
 
 //! the weight of the upwind vertex for the mobility
 SET_SCALAR_PROP(BoxRichards,

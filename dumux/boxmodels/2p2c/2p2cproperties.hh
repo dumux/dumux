@@ -48,11 +48,11 @@ NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
 NEW_PROP_TAG(TwoPTwoCIndices); //!< Enumerations for the 2p2c models
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
-NEW_PROP_TAG(SpatialParameters); //!< The type of the soil
+NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the soil)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)
+NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
 
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
@@ -71,10 +71,10 @@ template<class TypeTag>
 class TwoPTwoCLocalResidual;
 
 template <class TypeTag>
-class TwoPTwoCSecondaryVars;
+class TwoPTwoCVolumeVariables;
 
 template <class TypeTag>
-class TwoPTwoCFluxVars;
+class TwoPTwoCFluxVariables;
 
 template <class TypeTag>
 class TwoPTwoCNewtonController;
@@ -118,7 +118,7 @@ public:
 
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int switchIdx   = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+    static const int switchIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int plIdx = pressureIdx; //!< Index for liquid phase pressure in a solution vector
     static const int SgOrXIdx = switchIdx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component in the only phase
@@ -155,7 +155,7 @@ public:
 
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int switchIdx   = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+    static const int switchIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
 
     static const int pgIdx = pressureIdx; //!< Index for gas phase pressure in a solution vector
     static const int SlOrXIdx = switchIdx; //!< Index of the either the saturation of the liquid phase or the mass fraction secondary component in the only phase
@@ -208,7 +208,7 @@ public:
                   "Only fluid systems with 2 phases are supported by the 2p-2c model!");
 };
 
-SET_INT_PROP(BoxTwoPTwoC, NumEq,         2); //!< set the number of equations to 2
+SET_INT_PROP(BoxTwoPTwoC, NumEq, 2); //!< set the number of equations to 2
 
 //! Set the default formulation to pl-Sg
 SET_INT_PROP(BoxTwoPTwoC,
@@ -252,11 +252,11 @@ SET_TYPE_PROP(BoxTwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
 //! the Model property
 SET_TYPE_PROP(BoxTwoPTwoC, Model, TwoPTwoCModel<TypeTag>);
 
-//! the SecondaryVars property
-SET_TYPE_PROP(BoxTwoPTwoC, SecondaryVars, TwoPTwoCSecondaryVars<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 
-//! the FluxVars property
-SET_TYPE_PROP(BoxTwoPTwoC, FluxVars, TwoPTwoCFluxVars<TypeTag>);
+//! the FluxVariables property
+SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(BoxTwoPTwoC, MobilityUpwindAlpha, 1.0);

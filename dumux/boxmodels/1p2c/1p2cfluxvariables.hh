@@ -1,4 +1,4 @@
-// $Id: 1p2cfluxvars.hh 3838 2010-07-15 08:31:53Z bernd $
+// $Id: 1p2cfluxvariables.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -24,8 +24,8 @@
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
  */
-#ifndef DUMUX_1P2C_FLUX_DATA_HH
-#define DUMUX_1P2C_FLUX_DATA_HH
+#ifndef DUMUX_1P2C_FLUX_VARIABLES_HH
+#define DUMUX_1P2C_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 
@@ -41,16 +41,16 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class OnePTwoCFluxVars
+class OnePTwoCFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     enum {
         dim = GridView::dimension,
@@ -71,11 +71,11 @@ class OnePTwoCFluxVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
 
 public:
-    OnePTwoCFluxVars(const Problem &problem,
+    OnePTwoCFluxVariables(const Problem &problem,
                      const Element &element,
                      const FVElementGeometry &elemGeom,
                      int faceIdx,
-                     const ElementSecondaryVars &elemDat)
+                     const ElementVolumeVariables &elemDat)
         : fvElemGeom(elemGeom)
     {
         face = &fvElemGeom.subContVolFace[faceIdx];
@@ -101,7 +101,7 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementSecondaryVars &elemDat)
+                             const ElementVolumeVariables &elemDat)
     {
         GlobalPosition tmp;
         if (!problem.spatialParameters().useTwoPointGradient(element, face->i, face->j)) {
@@ -143,16 +143,16 @@ private:
             tmp -= element.geometry().corner(face->j);
             Scalar dist = tmp.two_norm();
 
-            tmp  = face->normal;
+            tmp = face->normal;
             tmp /= face->normal.two_norm()*dist;
 
-            pressureGrad       = tmp;
+            pressureGrad = tmp;
             pressureGrad      *= elemDat[face->j].pressure - elemDat[face->i].pressure;
-            concentrationGrad  = tmp;
+            concentrationGrad = tmp;
             concentrationGrad *= elemDat[face->j].molefraction - elemDat[face->i].molefraction;
-            densityAtIP        = (elemDat[face->j].density + elemDat[face->i].density)/2;
-            molarDensityAtIP        = (elemDat[face->j].molarDensity + elemDat[face->i].molarDensity)/2;
-            viscosityAtIP      = (elemDat[face->j].viscosity  + elemDat[face->i].viscosity)/2;
+            densityAtIP = (elemDat[face->j].density + elemDat[face->i].density)/2;
+            molarDensityAtIP = (elemDat[face->j].molarDensity + elemDat[face->i].molarDensity)/2;
+            viscosityAtIP = (elemDat[face->j].viscosity + elemDat[face->i].viscosity)/2;
         }
 
         // correct the pressure by the hydrostatic pressure due to
@@ -166,7 +166,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const ElementSecondaryVars &elemDat)
+                              const ElementVolumeVariables &elemDat)
     {
         Tensor K;
         problem.spatialParameters().meanK(K,
@@ -190,10 +190,10 @@ private:
 
     void calculateDiffCoeffPM_(const Problem &problem,
                                const Element &element,
-                               const ElementSecondaryVars &elemDat)
+                               const ElementVolumeVariables &elemDat)
     {
-        const SecondaryVars &vDat_i = elemDat[face->i];
-        const SecondaryVars &vDat_j = elemDat[face->j];
+        const VolumeVariables &vDat_i = elemDat[face->i];
+        const VolumeVariables &vDat_j = elemDat[face->j];
 
         // Diffusion coefficient in the porous medium
         diffCoeffPM
@@ -203,10 +203,10 @@ private:
 
     void calculateDispersionTensor_(const Problem &problem,
             const Element &element,
-            const ElementSecondaryVars &elemDat)
+            const ElementVolumeVariables &elemDat)
     {
-        const SecondaryVars &vDat_i = elemDat[face->i];
-        const SecondaryVars &vDat_j = elemDat[face->j];
+        const VolumeVariables &vDat_i = elemDat[face->i];
+        const VolumeVariables &vDat_j = elemDat[face->j];
 
         //calculate dispersivity at the interface: [0]: alphaL = longitudinal disp. [m], [1] alphaT = transverse disp. [m]
         Dune::FieldVector<Scalar, 2> dispersivity(0);

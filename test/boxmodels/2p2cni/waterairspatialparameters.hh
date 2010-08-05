@@ -26,7 +26,7 @@ namespace Dumux
 {
 
 /**
- * \brief Definition of the soil properties for the water-air problem
+ * \brief Definition of the spatial parameters for the water-air problem
  *
  */
 template<class TypeTag>
@@ -56,9 +56,9 @@ class WaterAirSpatialParameters : public BoxSpatialParameters<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -119,7 +119,7 @@ public:
      * \param scvfIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    const Scalar intrinsicPermeability(const Element           &element,
+    const Scalar intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvElemGeom,
                                        int scvIdx) const
     {
@@ -130,7 +130,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the soil
+     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param vDat The data defined on the sub-control volume
      * \param element The finite element
@@ -138,7 +138,7 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    double porosity(const Element           &element,
+    double porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {
@@ -151,7 +151,7 @@ public:
 
 
     // return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParams(const Element           &element,
+    const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const
     {
@@ -172,7 +172,7 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
-    double heatCapacity(const Element           &element,
+    double heatCapacity(const Element &element,
                         const FVElementGeometry &fvElemGeom,
                         int scvIdx) const
     {
@@ -195,11 +195,11 @@ public:
      * \param scvfIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
-    void matrixHeatFlux(Vector                  &heatFlux,
-                        const FluxVars          &fluxDat,
-                        const ElementSecondaryVars   &vDat,
-                        const Vector            &tempGrad,
-                        const Element           &element,
+    void matrixHeatFlux(Vector &heatFlux,
+                        const FluxVariables &fluxDat,
+                        const ElementVolumeVariables &vDat,
+                        const Vector &tempGrad,
+                        const Element &element,
                         const FVElementGeometry &fvElemGeom,
                         int scvfIdx) const
     {
@@ -209,7 +209,7 @@ public:
         // arithmetic mean of the liquid saturation and the porosity
         const int i = fvElemGeom.subContVolFace[scvfIdx].i;
         const int j = fvElemGeom.subContVolFace[scvfIdx].j;
-        Scalar Sl   = std::max(0.0, (vDat[i].saturation(lPhaseIdx) +
+        Scalar Sl = std::max(0.0, (vDat[i].saturation(lPhaseIdx) +
                                      vDat[j].saturation(lPhaseIdx)) / 2);
         Scalar poro = (porosity(element, fvElemGeom, i) +
                        porosity(element, fvElemGeom, j)) / 2;
@@ -223,7 +223,7 @@ public:
 
         // the matrix heat flux is the negative temperature gradient
         // times the heat conductivity.
-        heatFlux  = tempGrad;
+        heatFlux = tempGrad;
         heatFlux *= -heatCond;
     }
 

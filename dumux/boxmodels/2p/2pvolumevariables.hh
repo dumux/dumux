@@ -1,4 +1,4 @@
-// $Id: 2psecondaryvars.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 2pvolumevariables.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -19,8 +19,8 @@
  *
  * \brief Quantities required by the twophase box model defined on a vertex.
  */
-#ifndef DUMUX_2P_SECONDARY_VARS_HH
-#define DUMUX_2P_SECONDARY_VARS_HH
+#ifndef DUMUX_2P_VOLUME_VARIABLES_HH
+#define DUMUX_2P_VOLUME_VARIABLES_HH
 
 #include "2pproperties.hh"
 
@@ -33,22 +33,22 @@ namespace Dumux
  *        finite volume in the two-phase model.
  */
 template <class TypeTag>
-class TwoPSecondaryVars
+class TwoPVolumeVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
 
     enum {
-        numEq         = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
 
-        formulation   = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
+        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
 
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -73,7 +73,7 @@ class TwoPSecondaryVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -83,12 +83,12 @@ public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &priVars,
-                const Problem           &problem,
-                const Element           &element,
+    void update(const PrimaryVariables &priVars,
+                const Problem &problem,
+                const Element &element,
                 const FVElementGeometry &elemGeom,
-                int                      scvIdx,
-                bool                     isOldSol)
+                int scvIdx,
+                bool isOldSol)
     {
         primaryVars_ = priVars;
 
@@ -142,11 +142,11 @@ public:
                                                          scvIdx);
     }
 
-    void updateTemperature_(const PrimaryVarVector  &priVars,
-                            const Element           &element,
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
-                            const Problem           &problem)
+                            const Problem &problem)
     {
         temperature_ = problem.temperature(element, elemGeom, scvIdx);
     }
@@ -154,7 +154,7 @@ public:
     /*!
      * \brief Return the vector of primary variables
      */
-    const PrimaryVarVector &primaryVars() const
+    const PrimaryVariables &primaryVars() const
     { return primaryVars_; }
 
     /*!
@@ -220,7 +220,7 @@ public:
     { return porosity_; }
 
 protected:
-    PrimaryVarVector primaryVars_;
+    PrimaryVariables primaryVars_;
     FluidState fluidState_;
     Scalar porosity_;
     Scalar temperature_;

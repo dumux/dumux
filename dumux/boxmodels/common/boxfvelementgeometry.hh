@@ -446,60 +446,60 @@ class BoxFVElementGeometry
     void getEdgeIndices(int numVertices, int face, int vert, int& leftEdge, int& rightEdge)
     {
         static const int faceAndVertexToLeftEdgeTet[4][4] = {
-                { 0,  0,  2, -1},
-                { 0,  0, -1,  3},
-                { 1, -1,  1,  3},
-                {-1,  2,  2,  4}
+                { 0, 0, 2, -1},
+                { 0, 0, -1, 3},
+                { 1, -1, 1, 3},
+                {-1, 2, 2, 4}
         };
         static const int faceAndVertexToRightEdgeTet[4][4] = {
-                { 1,  2,  1, -1},
-                { 3,  4, -1,  4},
-                { 3, -1,  5,  5},
-                {-1,  4,  5,  5}
+                { 1, 2, 1, -1},
+                { 3, 4, -1, 4},
+                { 3, -1, 5, 5},
+                {-1, 4, 5, 5}
         };
         static const int faceAndVertexToLeftEdgePyramid[5][5] = {
-            { 0,  2,  3,  1, -1},
-            { 0, -1,  0, -1,  4},
-            {-1,  1, -1,  1,  5},
-            { 2,  2, -1, -1,  4},
-            {-1, -1,  3,  3,  7}
+            { 0, 2, 3, 1, -1},
+            { 0, -1, 0, -1, 4},
+            {-1, 1, -1, 1, 5},
+            { 2, 2, -1, -1, 4},
+            {-1, -1, 3, 3, 7}
         };
         static const int faceAndVertexToRightEdgePyramid[5][5] = {
-            { 2,  1,  0,  3, -1},
-            { 4, -1,  6, -1,  6},
-            {-1,  5, -1,  7,  7},
-            { 4,  5, -1, -1,  5},
-            {-1, -1,  6,  7,  6}
+            { 2, 1, 0, 3, -1},
+            { 4, -1, 6, -1, 6},
+            {-1, 5, -1, 7, 7},
+            { 4, 5, -1, -1, 5},
+            {-1, -1, 6, 7, 6}
         };
         static const int faceAndVertexToLeftEdgePrism[5][6] = {
-            { 3,  3, -1,  0,  1, -1},
-            { 4, -1,  4,  0, -1,  2},
-            {-1,  5,  5, -1,  1,  2},
-            { 3,  3,  5, -1, -1, -1},
-            {-1, -1, -1,  6,  6,  8}
+            { 3, 3, -1, 0, 1, -1},
+            { 4, -1, 4, 0, -1, 2},
+            {-1, 5, 5, -1, 1, 2},
+            { 3, 3, 5, -1, -1, -1},
+            {-1, -1, -1, 6, 6, 8}
         };
         static const int faceAndVertexToRightEdgePrism[5][6] = {
-            { 0,  1, -1,  6,  6, -1},
-            { 0, -1,  2,  7, -1,  7},
-            {-1,  1,  2, -1,  8,  8},
-            { 4,  5,  4, -1, -1, -1},
-            {-1, -1, -1,  7,  8,  7}
+            { 0, 1, -1, 6, 6, -1},
+            { 0, -1, 2, 7, -1, 7},
+            {-1, 1, 2, -1, 8, 8},
+            { 4, 5, 4, -1, -1, -1},
+            {-1, -1, -1, 7, 8, 7}
         };
         static const int faceAndVertexToLeftEdgeHex[6][8] = {
-            { 0, -1,  4, -1,  8, -1,  2, -1},
-            {-1,  5, -1,  3, -1,  1, -1,  9},
-            { 6,  1, -1, -1,  0, 10, -1, -1},
-            {-1, -1,  2,  7, -1, -1, 11,  3},
-            { 4,  6,  7,  5, -1, -1, -1, -1},
-            {-1, -1, -1, -1, 10,  9,  8, 11}
+            { 0, -1, 4, -1, 8, -1, 2, -1},
+            {-1, 5, -1, 3, -1, 1, -1, 9},
+            { 6, 1, -1, -1, 0, 10, -1, -1},
+            {-1, -1, 2, 7, -1, -1, 11, 3},
+            { 4, 6, 7, 5, -1, -1, -1, -1},
+            {-1, -1, -1, -1, 10, 9, 8, 11}
         };
         static const int faceAndVertexToRightEdgeHex[6][8] = {
-            { 4, -1,  2, -1,  0, -1,  8, -1},
-            {-1,  1, -1,  5, -1,  9, -1,  3},
-            { 0,  6, -1, -1, 10,  1, -1, -1},
-            {-1, -1,  7,  3, -1, -1,  2, 11},
-            { 6,  5,  4,  7, -1, -1, -1, -1},
-            {-1, -1, -1, -1,  8, 10, 11,  9}
+            { 4, -1, 2, -1, 0, -1, 8, -1},
+            {-1, 1, -1, 5, -1, 9, -1, 3},
+            { 0, 6, -1, -1, 10, 1, -1, -1},
+            {-1, -1, 7, 3, -1, -1, 2, 11},
+            { 6, 5, 4, 7, -1, -1, -1, -1},
+            {-1, -1, -1, -1, 8, 10, 11, 9}
         };
 
         switch (numVertices) {
@@ -609,7 +609,7 @@ public:
 
         // corners:
         for (int vert = 0; vert < numVertices; vert++) {
-            subContVol[vert].local  = referenceElement.position(vert, dim);
+            subContVol[vert].local = referenceElement.position(vert, dim);
             subContVol[vert].global = geometry.global(subContVol[vert].local);
             subContVol[vert].inner = true;
         }
@@ -660,7 +660,7 @@ public:
                 subContVolFace[k].normal[0] = diffVec[1];
                 subContVolFace[k].normal[1] = -diffVec[0];
 
-                diffVec  = subContVol[j].global;
+                diffVec = subContVol[j].global;
                 diffVec -= subContVol[i].global;
                 // make sure the normal points to the right direction
                 if (subContVolFace[k].normal * diffVec < 0)

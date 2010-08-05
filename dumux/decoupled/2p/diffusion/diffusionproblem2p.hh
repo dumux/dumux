@@ -85,7 +85,7 @@ public:
      * \name Problem parameters
      */
     // \{
-    
+
     void timeIntegration()
     {
         // set the initial condition of the model

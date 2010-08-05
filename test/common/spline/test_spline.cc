@@ -47,7 +47,7 @@ void plot(bool reallyPlot)
 
     double x_[] = { 0, 5, 7.5, 8.75, 9.375 };
     double y_[] = { 10, 0, 10, 0, 10 };
-    double m1 =  10;
+    double m1 = 10;
     double m2 = -10;
     FV &xs = *reinterpret_cast<FV*>(x_);
     FV &ys = *reinterpret_cast<FV*>(y_);

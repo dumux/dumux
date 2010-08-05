@@ -103,7 +103,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-// Set the soil properties
+// Set the spatial parameters
 SET_PROP(TwoPTestProblem, SpatialParameters)
 {
 private:

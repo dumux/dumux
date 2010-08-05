@@ -39,7 +39,7 @@ class OnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
 
@@ -55,7 +55,7 @@ public:
     /*!
      * \brief Update the phase state from the primary variables.
      */
-    void update(const PrimaryVarVector &primaryVars,
+    void update(const PrimaryVariables &primaryVars,
                 Scalar temperature)
     {
         Valgrind::CheckDefined(primaryVars);

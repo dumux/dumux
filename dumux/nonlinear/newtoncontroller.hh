@@ -92,7 +92,7 @@ struct NewtonConvergenceWriter
     NewtonConvergenceWriter(NewtonController &ctl)
         : ctl_(ctl)
     {
-        timeStepNum_ = 0;
+        timeStepIndex_ = 0;
         iteration_ = 0;
         vtkMultiWriter_ = new VtkMultiWriter("convergence");
     }
@@ -102,14 +102,14 @@ struct NewtonConvergenceWriter
 
     void beginTimestep()
     {
-        ++timeStepNum_;
+        ++timeStepIndex_;
         iteration_ = 0;
     };
 
     void beginIteration(const GridView &gv)
     {
         ++ iteration_;
-        vtkMultiWriter_->beginTimestep(timeStepNum_ + iteration_ / 100.0,
+        vtkMultiWriter_->beginTimestep(timeStepIndex_ + iteration_ / 100.0,
                                        gv);
     };
 
@@ -124,12 +124,12 @@ struct NewtonConvergenceWriter
 
     void endTimestep()
     {
-        ++timeStepNum_;
+        ++timeStepIndex_;
         iteration_ = 0;
     };
 
 private:
-    int timeStepNum_;
+    int timeStepIndex_;
     int iteration_;
     VtkMultiWriter *vtkMultiWriter_;
     NewtonController &ctl_;
@@ -513,7 +513,7 @@ public:
     /*!
      * \brief Returns true iff the newton method ought to be chatty.
      */
-    bool verbose() const 
+    bool verbose() const
     { return gridView_().comm().rank() == 0; }
 
 protected:
@@ -578,16 +578,16 @@ protected:
             verbosity = 0;
 
 #if HAVE_PARDISO
-        typedef  Dumux::PDELab::ISTLBackend_NoOverlap_Loop_Pardiso<TypeTag> Solver;
+        typedef Dumux::PDELab::ISTLBackend_NoOverlap_Loop_Pardiso<TypeTag> Solver;
         Solver solver(problem_(), 500, verbosity);
 #else // !HAVE_PARDISO
 #if HAVE_MPI
-//        typedef  Dune::PDELab::ISTLBackend_NOVLP_BCGS_NOPREC<GridFunctionSpace> Solver;
+//        typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_NOPREC<GridFunctionSpace> Solver;
 //        Solver solver(model_().jacobianAssembler().gridFunctionSpace(), 50000, verbosity);
-        typedef  Dumux::PDELab::ISTLBackend_NoOverlap_BCGS_ILU<TypeTag> Solver;
+        typedef Dumux::PDELab::ISTLBackend_NoOverlap_BCGS_ILU<TypeTag> Solver;
         Solver solver(problem_(), 500, verbosity);
 #else
-        typedef  Dumux::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;
+        typedef Dumux::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;
         Solver solver(500, verbosity);
 #endif // HAVE_MPI
 #endif // HAVE_PARDISO
@@ -638,14 +638,14 @@ protected:
     Scalar curPhysicalness_;
     Scalar error_;
     Scalar lastError_;
-    int    probationCount_;
+    int probationCount_;
 
     // optimal number of iterations we want to achive
-    int    targetSteps_;
+    int targetSteps_;
     // maximum number of iterations we do before giving up
-    int    maxSteps_;
+    int maxSteps_;
     // actual number of steps done so far
-    int    numSteps_;
+    int numSteps_;
 };
 } // namespace Dumux
 

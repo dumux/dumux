@@ -38,8 +38,8 @@ namespace Dumux
  *
  * Template parameters are:
 
- - GridView      a DUNE gridview type
- - Scalar        type used for scalar quantities
+ - GridView a DUNE gridview type
+ - Scalar type used for scalar quantities
  */
 template<class TypeTag>
 class VariableClass2P: public VariableClass<TypeTag>
@@ -366,8 +366,8 @@ public:
 
     //! Get saturation
     /*! evaluate saturation at given element
-     @param  element      entity of codim 0
-     \return     value of saturation
+     @param element entity of codim 0
+     \return value of saturation
      */
     Dune::FieldVector<Scalar, 1>& satElement(const Element& element)
     {

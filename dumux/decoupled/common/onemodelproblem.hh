@@ -65,7 +65,7 @@ private:
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))            Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     enum
     {
@@ -79,7 +79,7 @@ private:
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GridView::template Codim<dim>::Iterator    VertexIterator;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
 public:
 
@@ -87,7 +87,7 @@ public:
     /** @param variables object of class VariableClass.
      *  @param wettingPhase implementation of a wetting phase.
      *  @param nonWettingPhase implementation of a non-wetting phase.
-     *  @param soil implementation of the solid matrix
+     *  @param spatial parameters implementation of the solid matrix
      *  @param materialLaw implementation of Material laws. Class TwoPhaseRelations or derived.
      */
     OneModelProblem(const GridView &gridView, bool verbose = true)
@@ -156,7 +156,7 @@ public:
      * \brief Called by Dumux::TimeManager just before the time
      *        integration.
      */
-    void preProcess()
+    void preTimeStep()
     { };
 
     /*!
@@ -194,7 +194,7 @@ public:
      * \brief Called by Dumux::TimeManager just before the time
      *        integration.
      */
-    void postProcess()
+    void postTimeStep()
     { };
 
     /*!
@@ -225,9 +225,9 @@ public:
      * steps. This file is intented to be overwritten by the
      * implementation.
      */
-    bool doSerialize() const
+    bool shouldWriteRestartFile() const
     {
-        return 
+        return
             timeManager().timeStepIndex() > 0 &&
             (timeManager().timeStepIndex() % 5 == 0);
     }
@@ -240,7 +240,7 @@ public:
      * very time step. This file is intented to be overwritten by the
      * implementation.
      */
-    bool doOutput() const
+    bool shouldWriteOutput() const
     { return true; }
 
     //! Write the fields current solution into an VTK output file.
@@ -248,7 +248,7 @@ public:
     {
         if (gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
-        
+
         resultWriter_.beginTimestep(timeManager_.time(), gridView());
         model().addOutputVtkFields(resultWriter_);
         resultWriter_.endTimestep();
@@ -263,7 +263,7 @@ public:
                   << "does not override the episodeEnd() method. "
                   << "Doing nothing!\n";
     };
-    
+
     // \}
 
     /*!
@@ -419,12 +419,12 @@ private:
     static std::string simname_; // a string for the name of the current simulation,
                                   // which could be set by means of an program argument,
                                  // for example.
-    const GridView  gridView_;
+    const GridView gridView_;
 
-    GlobalPosition  bboxMin_;
-    GlobalPosition  bboxMax_;
+    GlobalPosition bboxMin_;
+    GlobalPosition bboxMax_;
 
-    TimeManager     timeManager_;
+    TimeManager timeManager_;
 
     Variables variables_;
 
@@ -432,7 +432,7 @@ private:
 
     Model* model_;
 
-    VtkMultiWriter  resultWriter_;
+    VtkMultiWriter resultWriter_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.

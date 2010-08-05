@@ -1,4 +1,4 @@
-// $Id: 2pfluxvars.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2pfluxvariables.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -23,8 +23,8 @@
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
  */
-#ifndef DUMUX_2P_FLUX_DATA_HH
-#define DUMUX_2P_FLUX_DATA_HH
+#ifndef DUMUX_2P_FLUX_VARIABLES_HH
+#define DUMUX_2P_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 
@@ -41,17 +41,17 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class TwoPFluxVars
+class TwoPFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     enum {
         dim = GridView::dimension,
@@ -71,11 +71,11 @@ class TwoPFluxVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
 public:
-    TwoPFluxVars(const Problem &problem,
+    TwoPFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &elemGeom,
                  int faceIdx,
-                 const ElementSecondaryVars &elemDat)
+                 const ElementVolumeVariables &elemDat)
         : fvElemGeom_(elemGeom)
     {
         scvfIdx_ = faceIdx;
@@ -156,7 +156,7 @@ protected:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementSecondaryVars &elemDat)
+                             const ElementVolumeVariables &elemDat)
     {
         // calculate gradients
         Vector tmp(0.0);
@@ -196,7 +196,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const ElementSecondaryVars &elemDat)
+                              const ElementVolumeVariables &elemDat)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         // multiply the pressure potential with the intrinsic

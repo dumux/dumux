@@ -95,7 +95,7 @@ public:
     void serializeBegin(Problem &problem)
     {
         const std::string magicCookie = magicRestartCookie_(problem.gridView());
-        fileName_ = restartFileName_(problem.gridView(), 
+        fileName_ = restartFileName_(problem.gridView(),
                                      problem.name(),
                                      problem.timeManager().time());
 
@@ -194,7 +194,7 @@ public:
         }
         inStream_.seekg(0, std::ios::beg);
 
-        const std::string magicCookie = 
+        const std::string magicCookie =
             magicRestartCookie_(problem.gridView());
 
         deserializeSectionBegin(magicCookie);

@@ -28,11 +28,11 @@ class Exchanger
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     enum {
-        numEq     = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        dim       = GridView::dimension
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        dim = GridView::dimension
     };
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid))  Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))    Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
@@ -82,10 +82,10 @@ public:
         MatEntry (const IdType& f, const BlockType& s) : first(f),second(s) {}
         MatEntry () {}
     };
-    
+
     // A DataHandle class to exchange matrix entries
     class MatEntryExchange
-        : public Dune::CommDataHandleIF<MatEntryExchange,MatEntry> 
+        : public Dune::CommDataHandleIF<MatEntryExchange,MatEntry>
     {
         typedef typename JacobianMatrix::RowIterator RowIterator;
         typedef typename JacobianMatrix::ColIterator ColIterator;
@@ -240,7 +240,7 @@ public:
 
       //! Constructor.
   NonoverlappingWrappedPreconditioner (const GFS& gfs_, P& prec_, const CC& cc_,
-                                       const std::vector<int>& borderIndices, 
+                                       const std::vector<int>& borderIndices,
                                        const Dune::PDELab::ParallelISTLHelper<GFS>& helper_)
     : gfs(gfs_), prec(prec_), cc(cc_), borderIndices_(borderIndices), helper(helper_)
   {}
@@ -309,10 +309,10 @@ public:
     \param[in] verbose print messages if true
     */
     explicit ISTLBackend_NoOverlap_BCGS_ILU (Problem& problem, unsigned maxiter_=5000, int verbose_=1)
-        : gfs(problem.model().jacobianAssembler().gridFunctionSpace()), 
+        : gfs(problem.model().jacobianAssembler().gridFunctionSpace()),
           phelper(gfs),
           maxiter(maxiter_),
-          verbose(verbose_), 
+          verbose(verbose_),
           constraintsTrafo_(problem.model().jacobianAssembler().constraintsTrafo()),
           exchanger_(problem)
     {}
@@ -358,10 +358,10 @@ public:
         Dune::BiCGSTABSolver<SolVector> solver(pop,psp,parPreCond,reduction,maxiter,verb);
         Dune::InverseOperatorResult stat;
         solver.apply(z,r,stat);
-        res.converged  = stat.converged;
+        res.converged = stat.converged;
         res.iterations = stat.iterations;
-        res.elapsed    = stat.elapsed;
-        res.reduction  = stat.reduction;
+        res.elapsed = stat.elapsed;
+        res.reduction = stat.reduction;
     }
 
     /*! \brief Return access to result data */
@@ -397,10 +397,10 @@ public:
     \param[in] verbose print messages if true
     */
     explicit ISTLBackend_NoOverlap_Loop_Pardiso (Problem& problem, unsigned maxiter_=5000, int verbose_=1)
-        : gfs(problem.model().jacobianAssembler().gridFunctionSpace()), 
+        : gfs(problem.model().jacobianAssembler().gridFunctionSpace()),
           phelper(gfs),
-          maxiter(maxiter_), 
-          verbose(verbose_), 
+          maxiter(maxiter_),
+          verbose(verbose_),
           constraintsTrafo_(problem.model().jacobianAssembler().constraintsTrafo()),
           exchanger_(problem)
     {}
@@ -448,10 +448,10 @@ public:
         Dune::BiCGSTABSolver<SolVector> solver(pop,psp,parPreCond,reduction,maxiter,verb);
         Dune::InverseOperatorResult stat;
         solver.apply(z,r,stat);
-        res.converged  = stat.converged;
+        res.converged = stat.converged;
         res.iterations = stat.iterations;
-        res.elapsed    = stat.elapsed;
-        res.reduction  = stat.reduction;
+        res.elapsed = stat.elapsed;
+        res.reduction = stat.reduction;
     }
 
     /*! \brief Return access to result data */

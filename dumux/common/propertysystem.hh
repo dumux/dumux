@@ -52,7 +52,7 @@ namespace Properties
 {
 #if !defined NO_PROPERTY_INTROSPECTION
 //! Internal macro which is only required if the property introspection is enabled
-#define PROP_INFO_(EffTypeTagName, PropTagName)                         \
+#define PROP_INFO_(EffTypeTagName, PropTagName) \
     template <>                                                         \
     struct PropertyInfo< TTAG(EffTypeTagName), PTAG(PropTagName) >      \
     {                                                                   \
@@ -70,12 +70,12 @@ namespace Properties
 /*!
  * \brief Makes a type out of a type tag name
  */
-#define TTAG(TypeTagName)  ::Dumux::Properties::TTag::TypeTagName
+#define TTAG(TypeTagName) ::Dumux::Properties::TTag::TypeTagName
 
 /*!
  * \brief Makes a type out of a property tag name
  */
-#define PTAG(PropTagName)  ::Dumux::Properties::PTag::PropTagName
+#define PTAG(PropTagName) ::Dumux::Properties::PTag::PropTagName
 
 /*!
  * \brief Define a new type tag.
@@ -94,7 +94,7 @@ namespace Properties
  * // preceedence over those defined for FooTypeTag:
  * NEW_TYPE_TAG(FooBarTypeTag, INHERITS_FROM(FooTypeTag, BarTypeTag));
  */
-#define NEW_TYPE_TAG(TypeTagName, ...)                              \
+#define NEW_TYPE_TAG(TypeTagName, ...) \
     namespace TTag {                                                \
     struct TypeTagName : public TypeTag<TypeTagName, ##__VA_ARGS__> \
     {                                                               \
@@ -107,7 +107,7 @@ namespace Properties
  *
  * See the documentation for NEW_TYPE_TAG.
  */
-#define INHERITS_FROM(...)  __VA_ARGS__
+#define INHERITS_FROM(...) __VA_ARGS__
 
 /*!
  * \brief Define a property tag.
@@ -121,7 +121,7 @@ namespace Properties
  * NEW_PROP_TAG(blubbPropTag);
  * NEW_PROP_TAG(blabbPropTag);
  */
-#define NEW_PROP_TAG(PTagName)                             \
+#define NEW_PROP_TAG(PTagName) \
     namespace PTag {                                       \
     struct PTagName; } extern int semicolonHack_
 /*                                                         \
@@ -159,15 +159,15 @@ namespace Properties
  *    { return arg * blabb::value; };
  * };
  */
-#define SET_PROP(EffTypeTagName, PropTagName)                   \
+#define SET_PROP(EffTypeTagName, PropTagName) \
     template <class TypeTag>                                    \
-    struct Property<TypeTag,                                    \
-                    TTAG(EffTypeTagName),                       \
+    struct Property<TypeTag, \
+                    TTAG(EffTypeTagName), \
                     PTAG(PropTagName)>;                         \
-    PROP_INFO_(EffTypeTagName, PropTagName)                     \
+    PROP_INFO_(EffTypeTagName, PropTagName) \
     template <class TypeTag>                                    \
-    struct Property<TypeTag,                                    \
-                    TTAG(EffTypeTagName),                       \
+    struct Property<TypeTag, \
+                    TTAG(EffTypeTagName), \
                     PTAG(PropTagName) >
 
 /*!
@@ -185,7 +185,7 @@ namespace Properties
  *    static const int value = 3;
  * };
  */
-#define SET_PROP_DEFAULT(PropTagName)                                   \
+#define SET_PROP_DEFAULT(PropTagName) \
     template <class TypeTag>                                            \
     struct DefaultProperty<TypeTag, PTAG(PropTagName)>;                 \
     template <>                                                         \
@@ -210,15 +210,15 @@ namespace Properties
  * // make the blabbPropTag property undefined for the BarTypeTag.
  * UNSET_PROP(BarTypeTag, blabbPropTag);
  */
-#define UNSET_PROP(EffTypeTagName, PropTagName)                 \
+#define UNSET_PROP(EffTypeTagName, PropTagName) \
     template <>                                                 \
-    struct PropertyUnset<TTAG(EffTypeTagName),                  \
+    struct PropertyUnset<TTAG(EffTypeTagName), \
                          PTAG(PropTagName) >;                   \
-    PROP_INFO_(EffTypeTagName, PropTagName)                     \
+    PROP_INFO_(EffTypeTagName, PropTagName) \
     template <>                                                 \
-    struct PropertyUnset<TTAG(EffTypeTagName),                  \
+    struct PropertyUnset<TTAG(EffTypeTagName), \
                          PTAG(PropTagName) >                    \
-        : public PropertyExplicitlyUnset                        \
+        : public PropertyExplicitlyUnset \
         {}
 
 /*!
@@ -226,8 +226,8 @@ namespace Properties
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_INT_PROP(EffTypeTagName, PropTagName, Value)        \
-    SET_PROP(EffTypeTagName, PropTagName)                       \
+#define SET_INT_PROP(EffTypeTagName, PropTagName, Value) \
+    SET_PROP(EffTypeTagName, PropTagName) \
     {                                                           \
         typedef int type;                                       \
         static const int value = Value;                         \
@@ -238,8 +238,8 @@ namespace Properties
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_BOOL_PROP(EffTypeTagName, PropTagName, Value)  \
-    SET_PROP(EffTypeTagName, PropTagName)                  \
+#define SET_BOOL_PROP(EffTypeTagName, PropTagName, Value) \
+    SET_PROP(EffTypeTagName, PropTagName) \
     {                                                      \
         typedef bool type;                                 \
         static const bool value = Value;                   \
@@ -250,8 +250,8 @@ namespace Properties
  *
  * The type can be accessed by the 'type' attribute.
  */
-#define SET_TYPE_PROP(EffTypeTagName, PropTagName, Type)   \
-    SET_PROP(EffTypeTagName, PropTagName)                  \
+#define SET_TYPE_PROP(EffTypeTagName, PropTagName, Type) \
+    SET_PROP(EffTypeTagName, PropTagName) \
     {                                                      \
         typedef Type type;                                 \
     }
@@ -263,8 +263,8 @@ namespace Properties
  * use this macro, the property tag "Scalar" needs to be defined for
  * the real type tag.
  */
-#define SET_SCALAR_PROP(EffTypeTagName, PropTagName, Value)             \
-    SET_PROP(EffTypeTagName, PropTagName)                               \
+#define SET_SCALAR_PROP(EffTypeTagName, PropTagName, Value) \
+    SET_PROP(EffTypeTagName, PropTagName) \
     {                                                                   \
         typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;   \
     public:                                                             \
@@ -279,7 +279,7 @@ namespace Properties
  * type (including the property itself), GET_PROP must be preceeded by
  * the 'typename' keyword.
  */
-#define GET_PROP(TypeTag, PropTag)              \
+#define GET_PROP(TypeTag, PropTag) \
     ::Dumux::Properties::GetProperty< TypeTag, PropTag>::p
 
 /*!
@@ -289,7 +289,7 @@ namespace Properties
  * PropTag)::value.  If the property doesn't have an attribute named
  * 'value', this yields a compiler error.
  */
-#define GET_PROP_VALUE(TypeTag, PropTag)  \
+#define GET_PROP_VALUE(TypeTag, PropTag) \
     ::Dumux::Properties::GetProperty< TypeTag, PropTag>::p::value
 
 /*!
@@ -300,7 +300,7 @@ namespace Properties
  * 'type', this yields a compiler error. Also, if you use this macro
  * within a template, it must be preceeded by the 'typename' keyword.
  */
-#define GET_PROP_TYPE(TypeTag, PropTag)          \
+#define GET_PROP_TYPE(TypeTag, PropTag) \
     ::Dumux::Properties::GetProperty< TypeTag, \
                                      PropTag>::p::type
 
@@ -319,7 +319,7 @@ namespace Properties
  *    std::cout << PROP_DIAGNOSTIC(FooBarTypeTag, blabbPropTag) << "\n";
  * };
  */
-#define PROP_DIAGNOSTIC(TypeTag, PropTag)       \
+#define PROP_DIAGNOSTIC(TypeTag, PropTag) \
     ::Dumux::Properties::propertyDiagnostic< TypeTag, \
                                             TypeTag, \
                                             PropTag>::message()
@@ -338,7 +338,7 @@ namespace Properties
  *    std::cout << PROP_DIAGNOSTIC(FooBarTypeTag, blabbPropTag) << "\n";
  * };
  */
-#define PROP_DIAGNOSTIC(TypeTag, PropTag)  "Property introspection disabled by NO_PROPERTY_INTROSPECTION"
+#define PROP_DIAGNOSTIC(TypeTag, PropTag) "Property introspection disabled by NO_PROPERTY_INTROSPECTION"
 #endif
 
 
@@ -516,7 +516,7 @@ template <class RealTypeTag, class Tree, class PropertyTag>
 class propertyDefined
 {
 public:
-    static const bool onSelf =  propertyDefinedOnSelf<RealTypeTag,Tree,PropertyTag>::value;
+    static const bool onSelf = propertyDefinedOnSelf<RealTypeTag,Tree,PropertyTag>::value;
 
     static const bool onChild1 = propertyDefinedOnTree<RealTypeTag,typename Tree::Child1,PropertyTag>::value;
     static const bool onChild2 = propertyDefinedOnTree<RealTypeTag,typename Tree::Child2,PropertyTag>::value;
@@ -536,7 +536,7 @@ public:
                >::value;
 
     static const bool value =
-        ice_or<onSelf  ,
+        ice_or<onSelf ,
                onChildren>::value;
 
 
@@ -569,13 +569,13 @@ template <class SelfT,
 class TypeTag
 {
 public:
-    typedef SelfT      SelfType;
+    typedef SelfT SelfType;
 
-    typedef Child1T    Child1;
-    typedef Child2T    Child2;
-    typedef Child3T    Child3;
-    typedef Child4T    Child4;
-    typedef Child5T    Child5;
+    typedef Child1T Child1;
+    typedef Child2T Child2;
+    typedef Child3T Child3;
+    typedef Child4T Child4;
+    typedef Child5T Child5;
 };
 
 template <class EffectiveTypeTag,
@@ -603,31 +603,31 @@ struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 0>
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 1>
 {
-    typedef typename GetProperty<typename TypeTag::Child1, PropertyTag, RealTypeTag>::p   p;
+    typedef typename GetProperty<typename TypeTag::Child1, PropertyTag, RealTypeTag>::p p;
 };
 
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 2>
 {
-    typedef typename GetProperty<typename TypeTag::Child2, PropertyTag, RealTypeTag>::p   p;
+    typedef typename GetProperty<typename TypeTag::Child2, PropertyTag, RealTypeTag>::p p;
 };
 
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 3>
 {
-    typedef typename GetProperty<typename TypeTag::Child3, PropertyTag, RealTypeTag>::p   p;
+    typedef typename GetProperty<typename TypeTag::Child3, PropertyTag, RealTypeTag>::p p;
 };
 
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 4>
 {
-    typedef typename GetProperty<typename TypeTag::Child4, PropertyTag, RealTypeTag>::p   p;
+    typedef typename GetProperty<typename TypeTag::Child4, PropertyTag, RealTypeTag>::p p;
 };
 
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 5>
 {
-    typedef typename GetProperty<typename TypeTag::Child5, PropertyTag, RealTypeTag>::p   p;
+    typedef typename GetProperty<typename TypeTag::Child5, PropertyTag, RealTypeTag>::p p;
 };
 
 #if !defined NO_PROPERTY_INTROSPECTION
@@ -699,7 +699,7 @@ struct propertyDiagnostic
         switch (inheritedFrom) {
         case -1:
             result += newIndent;
-            result += (boost::format("default from  %s:%d\n")
+            result += (boost::format("default from %s:%d\n")
                        %propInfoDefault::fileDefined()
                        %propInfoDefault::lineDefined()).str();
             break;

@@ -143,10 +143,10 @@ public:
     {
         /*
         // useful typedefs
-        typedef typename Function::RangeFieldType                      Scalar;
+        typedef typename Function::RangeFieldType Scalar;
         typedef typename GridView::Traits::template Codim<GridView::dimension> VertexTraits;
-        typedef typename VertexTraits::Entity                          Vertex;
-        typedef typename VertexTraits::LeafIterator                    VertexIterator;
+        typedef typename VertexTraits::Entity Vertex;
+        typedef typename VertexTraits::LeafIterator VertexIterator;
         typedef Dune::ReferenceElement<typename GridView::ctype, 0>        VertexReferenceElement;
         typedef Dune::ReferenceElements<typename GridView::ctype, 0>       VertexReferenceElements;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> >       ScalarField;
@@ -177,7 +177,7 @@ public:
         // this is pretty hacky as it assumes that the mapping
         // to the vertices is the same for the function a and
         // the vertex mapper
-        typedef typename Function::RangeFieldType                Scalar;
+        typedef typename Function::RangeFieldType Scalar;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         unsigned nVerts = (*fn).size();
@@ -201,9 +201,9 @@ public:
     {
         // some typedefs
 
-        typedef typename Function::RT                                        Scalar;
-        typedef typename GridView::template Codim<0>::Entity                 Cell;
-        typedef typename GridView::template Codim<0>::Iterator               CellIterator;
+        typedef typename Function::RT Scalar;
+        typedef typename GridView::template Codim<0>::Entity Cell;
+        typedef typename GridView::template Codim<0>::Iterator CellIterator;
         typedef Dune::GenericReferenceElement<typename GridView::ctype, GridView::dimgrid>  CellReferenceElement;
         typedef Dune::GenericReferenceElements<typename GridView::ctype, GridView::dimgrid> CellReferenceElements;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> >             ScalarField;
@@ -253,7 +253,7 @@ public:
                            << "\" file=\""
                            << fileName << "." << suffix << "\"/>\n";
             }
-            if (commSize_ > 1 && commRank_ == 0)  {
+            if (commSize_ > 1 && commRank_ == 0) {
                 // only the first process updates the multi-file
                 for (int part=0; part < commSize_; ++part) {
                     fileName = fileName_(part);
@@ -457,18 +457,18 @@ private:
 
     bool wasRestarted_;
 
-    std::string     simName_;
-    std::ofstream   multiFile_;
-    std::string     multiFileName_;
+    std::string simName_;
+    std::ofstream multiFile_;
+    std::string multiFileName_;
 
     int commSize_; // number of processes in the communicator
     int commRank_; // rank of the current process in the communicator
 
     VtkWriter     * curWriter_;
-    double          curTime_;
+    double curTime_;
     const GridView* curGridView_;
-    std::string     curOutFileName_;
-    int             writerNum_;
+    std::string curOutFileName_;
+    int writerNum_;
 
     std::list<VtkVectorFieldStoreBase_*> vectorFields_;
 };

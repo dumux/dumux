@@ -1,4 +1,4 @@
-// $Id: 2p2csecondaryvars.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2cvolumevariables.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008,2009 by Klaus Mosthaf,                               *
  *                              Andreas Lauser,                              *
@@ -22,8 +22,8 @@
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */
-#ifndef DUMUX_2P2C_SECONDARY_VARS_HH
-#define DUMUX_2P2C_SECONDARY_VARS_HH
+#ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
+#define DUMUX_2P2C_VOLUME_VARIABLES_HH
 
 #include <dumux/boxmodels/common/boxmodel.hh>
 #include <dumux/common/math.hh>
@@ -42,23 +42,23 @@ namespace Dumux
  *        finite volume in the two-phase, two-component model.
  */
 template <class TypeTag>
-class TwoPTwoCSecondaryVars
+class TwoPTwoCVolumeVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
 
     enum {
-        numEq         = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
         numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
-        formulation   = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
+        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
 
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -66,15 +66,15 @@ class TwoPTwoCSecondaryVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     enum {
-        lCompIdx  = Indices::lCompIdx,
-        gCompIdx  = Indices::gCompIdx,
+        lCompIdx = Indices::lCompIdx,
+        gCompIdx = Indices::gCompIdx,
 
-        lPhaseIdx  = Indices::lPhaseIdx,
-        gPhaseIdx  = Indices::gPhaseIdx
+        lPhaseIdx = Indices::lPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef TwoPTwoCFluidState<TypeTag> FluidState;
@@ -86,12 +86,12 @@ public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &priVars,
-                const Problem           &problem,
-                const Element           &element,
+    void update(const PrimaryVariables &priVars,
+                const Problem &problem,
+                const Element &element,
                 const FVElementGeometry &elemGeom,
-                int                      scvIdx,
-                bool                     isOldSol)
+                int scvIdx,
+                bool isOldSol)
     {
         primaryVars_ = priVars;
 
@@ -152,11 +152,11 @@ public:
         Valgrind::CheckDefined(porosity_);
    }
 
-    void updateTemperature_(const PrimaryVarVector  &priVars,
-                            const Element           &element,
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
-                            const Problem           &problem)
+                            const Problem &problem)
     {
         temperature_ = problem.temperature(element, elemGeom, scvIdx);
     }
@@ -164,7 +164,7 @@ public:
     /*!
      * \brief Return the vector of primary variables
      */
-    const PrimaryVarVector &primaryVars() const
+    const PrimaryVariables &primaryVars() const
     { return primaryVars_; }
 
     /*!
@@ -246,7 +246,7 @@ public:
 
 
 protected:
-    PrimaryVarVector primaryVars_;
+    PrimaryVariables primaryVars_;
     Scalar temperature_;     //!< Temperature within the control volume
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume

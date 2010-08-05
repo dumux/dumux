@@ -1,4 +1,4 @@
-// $Id: 2pnisecondaryvars.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2pnivolumevariables.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -19,10 +19,10 @@
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the non-isothermal two-phase model.
  */
-#ifndef DUMUX_2PNI_SECONDARY_VARS_HH
-#define DUMUX_2PNI_SECONDARY_VARS_HH
+#ifndef DUMUX_2PNI_VOLUME_VARIABLES_HH
+#define DUMUX_2PNI_VOLUME_VARIABLES_HH
 
-#include <dumux/boxmodels/2p/2psecondaryvars.hh>
+#include <dumux/boxmodels/2p/2pvolumevariables.hh>
 
 namespace Dumux
 {
@@ -33,9 +33,9 @@ namespace Dumux
  *        finite volume in the non-isothermal two-phase model.
  */
 template <class TypeTag>
-class TwoPNISecondaryVars : public TwoPSecondaryVars<TypeTag>
+class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
 {
-    typedef TwoPSecondaryVars<TypeTag> ParentType;
+    typedef TwoPVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -45,10 +45,10 @@ class TwoPNISecondaryVars : public TwoPSecondaryVars<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum {
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
 
-        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -59,19 +59,19 @@ class TwoPNISecondaryVars : public TwoPSecondaryVars<TypeTag>
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
     typedef typename RefElemProp::Container ReferenceElements;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &priVars,
-                const Problem           &problem,
-                const Element           &element,
+    void update(const PrimaryVariables &priVars,
+                const Problem &problem,
+                const Element &element,
                 const FVElementGeometry &elemGeom,
-                int                      scvIdx,
-                bool                     isOldSol)
+                int scvIdx,
+                bool isOldSol)
     {
         typedef Indices I;
 
@@ -101,11 +101,11 @@ public:
     }
 
     // this method gets called by the parent class
-    void updateTemperature_(const PrimaryVarVector  &priVars,
-                            const Element           &element,
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
-                            const Problem           &problem)
+                            const Problem &problem)
     {
         // retrieve temperature from primary variables
         this->temperature_ = priVars[temperatureIdx];

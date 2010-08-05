@@ -1,4 +1,4 @@
-// $Id: 2p2cnisecondaryvars.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2cnivolumevariables.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                                  *
  *   Copyright (C) 2008-2010 by Andreas Lauser                               *
@@ -22,10 +22,10 @@
  *        finite volume in the non-isothermal two-phase, two-component
  *        model.
  */
-#ifndef DUMUX_2P2CNI_SECONDARY_VARS_HH
-#define DUMUX_2P2CNI_SECONDARY_VARS_HH
+#ifndef DUMUX_2P2CNI_VOLUME_VARIABLES_HH
+#define DUMUX_2P2CNI_VOLUME_VARIABLES_HH
 
-#include <dumux/boxmodels/2p2c/2p2csecondaryvars.hh>
+#include <dumux/boxmodels/2p2c/2p2cvolumevariables.hh>
 
 namespace Dumux
 {
@@ -37,9 +37,9 @@ namespace Dumux
  *        model.
  */
 template <class TypeTag>
-class TwoPTwoCNISecondaryVars : public TwoPTwoCSecondaryVars<TypeTag>
+class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 {
-    typedef TwoPTwoCSecondaryVars<TypeTag> ParentType;
+    typedef TwoPTwoCVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -49,8 +49,8 @@ class TwoPTwoCNISecondaryVars : public TwoPTwoCSecondaryVars<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     enum {
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -62,14 +62,14 @@ class TwoPTwoCNISecondaryVars : public TwoPTwoCSecondaryVars<TypeTag>
 
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements))::Container ReferenceElements;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector &sol,
+    void update(const PrimaryVariables &sol,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
@@ -108,11 +108,11 @@ public:
     };
 
     // this method gets called by the parent class
-    void updateTemperature_(const PrimaryVarVector  &sol,
-                            const Element           &element,
+    void updateTemperature_(const PrimaryVariables &sol,
+                            const Element &element,
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
-                            const Problem           &problem)
+                            const Problem &problem)
     {
         // retrieve temperature from solution vector
         this->temperature_ = sol[temperatureIdx];

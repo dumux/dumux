@@ -19,16 +19,16 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_TWOP_BOX_JACOBIAN_BASE_HH
-#define DUMUX_TWOP_BOX_JACOBIAN_BASE_HH
+#ifndef DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH
+#define DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH
 
 #include <dumux/boxmodels/common/boxmodel.hh>
 
 #include "2pproperties.hh"
 
-#include "2psecondaryvars.hh"
+#include "2pvolumevariables.hh"
 
-#include "2pfluxvars.hh"
+#include "2pfluxvariables.hh"
 #include "2pfluidstate.hh"
 
 #include <dune/common/collectivecommunication.hh>
@@ -84,7 +84,7 @@ protected:
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DofMapper)) DofMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
@@ -92,11 +92,11 @@ protected:
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
     static const Scalar mobilityUpwindAlpha =
@@ -107,15 +107,15 @@ public:
      * \brief Evaluate the amount all conservation quantites
      *        (e.g. phase mass) within a finite sub-control volume.
      */
-    void computeStorage(PrimaryVarVector &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementSecondaryVars &elemDat = usePrevSol ? this->prevSecVars_() : this->curSecVars_();
-        const SecondaryVars &vertDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &vertDat = elemDat[scvIdx];
 
         // wetting phase mass
         result[contiWEqIdx] = vertDat.density(wPhaseIdx) * vertDat.porosity()
@@ -131,13 +131,13 @@ public:
      * \brief Evaluates the mass flux over a face of a sub-control
      *        volume.
      */
-    void computeFlux(PrimaryVarVector &flux, int faceIdx) const
+    void computeFlux(PrimaryVariables &flux, int faceIdx) const
     {
-        FluxVars vars(this->problem_(),
+        FluxVariables vars(this->problem_(),
                       this->elem_(),
                       this->fvElemGeom_(),
                       faceIdx,
-                      this->curSecVars_());
+                      this->curVolVars_());
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
         asImp_()->computeDiffusiveFlux(flux, vars);
@@ -151,7 +151,7 @@ public:
      * This method is called by compute flux and is mainly there for
      * derived models to ease adding equations selectively.
      */
-    void computeAdvectiveFlux(PrimaryVarVector &flux, const FluxVars &vars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
         ////////
         // advective fluxes of all components in all phases
@@ -160,8 +160,8 @@ public:
         {
             // data attached to upstream and the downstream vertices
             // of the current phase
-            const SecondaryVars &up = this->curSecVars_(vars.upstreamIdx(phaseIdx));
-            const SecondaryVars &dn = this->curSecVars_(vars.downstreamIdx(phaseIdx));
+            const VolumeVariables &up = this->curVolVars_(vars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(vars.downstreamIdx(phaseIdx));
 
             // add advective flux of current component in current
             // phase
@@ -181,7 +181,7 @@ public:
      * non-isothermal two-phase models to calculate diffusive heat
      * fluxes
      */
-    void computeDiffusiveFlux(PrimaryVarVector &flux, const FluxVars &fluxData) const
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxData) const
     {
         // diffusive fluxes
         flux += 0.0;
@@ -190,11 +190,11 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      */
-    void computeSource(PrimaryVarVector &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
         // retrieve the source term intrinsic to the problem
         this->problem_().source(q,
-                                this->elem_(), 
+                                this->elem_(),
                                 this->fvElemGeom_(),
                                 localVertexIdx);
     }

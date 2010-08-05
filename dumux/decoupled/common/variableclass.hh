@@ -42,8 +42,8 @@ namespace Dumux
  *
  * Template parameters are:
 
- - GridView      a DUNE gridview type
- - Scalar        type used for scalar quantities
+ - GridView a DUNE gridview type
+ - Scalar type used for scalar quantities
  */
 template<class TypeTag>
 class VariableClass
@@ -297,8 +297,8 @@ public:
 
     //! Get pressure
     /*! evaluate pressure at given element
-     @param  element      entity of codim 0
-     \return     value of pressure
+     @param element entity of codim 0
+     \return value of pressure
      */
     Dune::FieldVector<Scalar, 1>& pressElement(const Element& element)
     {
@@ -312,9 +312,9 @@ public:
 
     //! Get velocity at given element face
     /*! evaluate velocity at given location
-     @param  element      entity of codim 0
-     @param  indexInInside     index in reference element
-     \return     vector of velocity
+     @param element entity of codim 0
+     @param indexInInside index in reference element
+     \return vector of velocity
      */
     Dune::FieldVector<Scalar, dim>& velocityElementFace(const Element& element, const int indexInInside)
     {

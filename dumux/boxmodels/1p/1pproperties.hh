@@ -40,10 +40,10 @@ template<class TypeTag>
 class OnePLocalResidual;
 
 template <class TypeTag>
-class OnePSecondaryVars;
+class OnePVolumeVariables;
 
 template <class TypeTag>
-class OnePFluxVars;
+class OnePFluxVariables;
 
 /*!
  * \brief Indices for the single phase model.
@@ -71,7 +71,7 @@ NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(OnePIndices); //!< Enumerations for the 1p models
-NEW_PROP_TAG(SpatialParameters); //!< The type of the soil properties object
+NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
 NEW_PROP_TAG(Fluid); //!< The fluid for the single-phase problems
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 
@@ -90,11 +90,11 @@ SET_TYPE_PROP(BoxOneP,
 //! the Model property
 SET_TYPE_PROP(BoxOneP, Model, OnePBoxModel<TypeTag>);
 
-//! the SecondaryVars property
-SET_TYPE_PROP(BoxOneP, SecondaryVars, OnePSecondaryVars<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxOneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
-//! the FluxVars property
-SET_TYPE_PROP(BoxOneP, FluxVars, OnePFluxVars<TypeTag>);
+//! the FluxVariables property
+SET_TYPE_PROP(BoxOneP, FluxVariables, OnePFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);

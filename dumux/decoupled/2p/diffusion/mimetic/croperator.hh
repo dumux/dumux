@@ -237,15 +237,15 @@ public:
       This method takes an object that can compute local stiffness matrices and
       assembles the global linear system Au=f.
 
-      @param[in] loc    the local assembler providing element stiffness and boundary conditions for all elements
-      @param[in,out] u  solution, contains initial values on input, Dirichlet values are set. The
+      @param[in] loc the local assembler providing element stiffness and boundary conditions for all elements
+      @param[in,out] u solution, contains initial values on input, Dirichlet values are set. The
       type of boundary condition for a node is inferred from the values returned
       by the local assembler. A node is of Neumann type if all elements referring
       to that node report a Neumann boundary condition, it is set to Dirichlet
       if a least one element reports a process or Dirichlet boundary condition. The difference
       between process and Dirichlet is that process always denotes a homogeneous Dirichlet
       value.
-      @param[in] f      right hand side is filled by this method
+      @param[in] f right hand side is filled by this method
 
       Note that the rows corresponding to nodes at the Dirichlet boundary are filled
       with trivial equations of the form \f[1\cdot u_i = f_i \f] where \f$u_i\f$ and \f$f_i\f$ are both set to the

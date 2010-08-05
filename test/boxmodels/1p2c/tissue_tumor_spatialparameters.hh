@@ -26,7 +26,7 @@ namespace Dumux
 {
 
 /**
- * \brief Definition of the soil properties for the injection problem
+ * \brief Definition of the spatial parameters for the injection problem
  *
  */
 template<class TypeTag>
@@ -49,9 +49,9 @@ class TissueTumorSpatialParameters : public BoxSpatialParameters<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -91,7 +91,7 @@ public:
      * \param fvElemGeom The current finite volume geometry of the element
      * \param scvfIdx The index sub-control volume face where the
      */
-    const Scalar intrinsicPermeability(const Element           &element,
+    const Scalar intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvElemGeom,
                                        int scvIdx) const
     {
@@ -109,7 +109,7 @@ public:
      * \param fvElemGeom The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      */
-    double porosity(const Element           &element,
+    double porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {
@@ -127,7 +127,7 @@ public:
      * \param fvElemGeom The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      */
-    double tortuosity(const Element           &element,
+    double tortuosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {
@@ -145,7 +145,7 @@ public:
      * \param fvElemGeom The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      */
-    double dispersivity(const Element           &element,
+    double dispersivity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {

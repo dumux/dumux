@@ -73,10 +73,10 @@ class RichardsModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
@@ -107,7 +107,7 @@ public:
         ScalarField *mobW = writer.template createField<Scalar, 1>(numVertices);
 
         FVElementGeometry fvElemGeom;
-        SecondaryVars secVars;
+        VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
@@ -121,20 +121,20 @@ public:
             for (int i = 0; i < numVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                secVars.update(sol[globalIdx], 
+                volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom, 
+                               fvElemGeom,
                                i,
                                false);
-                
-                (*Sw)[globalIdx] = secVars.Sw;
-                (*Sn)[globalIdx] = 1.0 - secVars.Sw;
-                (*pC)[globalIdx] = secVars.pC;
-                (*pW)[globalIdx] = secVars.pW;
-                (*dSwdpC)[globalIdx] = secVars.dSwdpC;
-                (*rhoW)[globalIdx] = secVars.densityW;
-                (*mobW)[globalIdx] = secVars.mobilityW;
+
+                (*Sw)[globalIdx] = volVars.Sw;
+                (*Sn)[globalIdx] = 1.0 - volVars.Sw;
+                (*pC)[globalIdx] = volVars.pC;
+                (*pW)[globalIdx] = volVars.pW;
+                (*dSwdpC)[globalIdx] = volVars.dSwdpC;
+                (*rhoW)[globalIdx] = volVars.densityW;
+                (*mobW)[globalIdx] = volVars.mobilityW;
             };
         }
 

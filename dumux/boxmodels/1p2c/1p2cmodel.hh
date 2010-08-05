@@ -43,7 +43,7 @@ namespace Dumux
  * approach (neglecting gravitation) as the equation for the conservation of momentum:
  \f[
  v_{D} = - \frac{K}{\mu}
- \left(\text{grad} p - \varrho g  \right)
+ \left(\text{grad} p - \varrho g \right)
  \f]
  *
  * By inserting this into the continuity equation, one gets
@@ -56,7 +56,7 @@ namespace Dumux
  * The transport of the components is described by the following equation:
  \f[
  \Phi \varrho \frac{ \partial x}{\partial t} - \text{div} \left( \varrho \frac{K x}{\mu} \left( \text{grad} p -
- \varrho g \right)  + \varrho \tau \Phi D \text{grad} x \right) = q.
+ \varrho g \right) + \varrho \tau \Phi D \text{grad} x \right) = q.
  \f]
  *
  * All equations are discretized using a fully-coupled vertex
@@ -79,8 +79,8 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
@@ -97,7 +97,7 @@ public:
      *        writer.
      */
     template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, 
+    void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
@@ -112,7 +112,7 @@ public:
                 writer.template createField<Scalar, 1> (numElements);
 
         FVElementGeometry fvElemGeom;
-        SecondaryVars secVars;
+        VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
@@ -129,16 +129,16 @@ public:
             for (int i = 0; i < numVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                secVars.update(sol[globalIdx], 
+                volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom, 
+                               fvElemGeom,
                                i,
                                false);
-                
 
-                (*pressure)[globalIdx] = secVars.pressure;
-                (*molefraction)[globalIdx] = secVars.molefraction;
+
+                (*pressure)[globalIdx] = volVars.pressure;
+                (*molefraction)[globalIdx] = volVars.molefraction;
             };
         }
 

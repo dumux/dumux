@@ -53,14 +53,14 @@ public:
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    Scalar intrinsicPermeability(const Element           &element,
+    Scalar intrinsicPermeability(const Element &element,
                                  const FVElementGeometry &fvElemGeom,
                                  int scvIdx) const
     {
         return 1e-10;
     }
 
-    Scalar porosity(const Element           &element,
+    Scalar porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {

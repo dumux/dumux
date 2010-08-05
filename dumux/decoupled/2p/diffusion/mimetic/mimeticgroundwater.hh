@@ -58,8 +58,8 @@ u = g on Gamma1; j*n = J on Gamma2.
 
 Template parameters are:
 
-- Grid  a DUNE grid type
-- RT    type used for return values
+- Grid a DUNE grid type
+- RT type used for return values
 */
 template<class GridView, class Scalar, class VC, class Problem>
 class MimeticGroundwaterEquationLocalStiffness
@@ -100,8 +100,8 @@ public:
     - The boundary conditions have been evaluated and are accessible with the bc() method
     - The right hand side has been assembled. It contains either the value of the essential boundary
     condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
-    @param[in]  e    a codim 0 entity reference
-    @param[in]  k    order of CR basis
+    @param[in]  e a codim 0 entity reference
+    @param[in]  k order of CR basis
     */
     void assemble (const Element& element, int k=1)
     {
@@ -136,8 +136,8 @@ public:
     - The boundary conditions have been evaluated and are accessible with the bc() method
     - The right hand side contains either the value of the essential boundary
     condition or the assembled neumann boundary condition. It is accessible via the rhs() method.
-    @param[in]  element    a codim 0 entity reference
-    @param[in]  k    order of CR basis
+    @param[in]  element a codim 0 entity reference
+    @param[in]  k order of CR basis
     */
     void assembleBoundaryCondition (const Element& element, int k=1)
     {

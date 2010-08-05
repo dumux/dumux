@@ -55,10 +55,10 @@ namespace Dumux
  *
  * Template parameters are:
  *
- - GridView      a DUNE gridview type
- - Scalar        type used for scalar quantities
- - VC            type of a class containing different variables of the model
- - Problem       class defining the physical problem
+ - GridView a DUNE gridview type
+ - Scalar type used for scalar quantities
+ - VC type of a class containing different variables of the model
+ - Problem class defining the physical problem
  */
 template<class TypeTag> class MimeticPressure2P
 {
@@ -74,7 +74,7 @@ template<class TypeTag> class MimeticPressure2P
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))       FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
     enum

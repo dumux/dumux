@@ -65,16 +65,16 @@ NEW_PROP_TAG(JacobianMatrix); //!< Type of the global jacobian matrix
 NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG(ElementBoundaryTypes); //!< Stores the boundary types on an element
 
-NEW_PROP_TAG(PrimaryVarVector); //!< A vector of primary variables within a sub-control volume
+NEW_PROP_TAG(PrimaryVariables); //!< A vector of primary variables within a sub-control volume
 NEW_PROP_TAG(SolutionVector); //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a sub-control volume
 
-NEW_PROP_TAG(SecondaryVars);  //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(ElementSecondaryVars); //!< The secondary variables of all sub-control volumes in an element
-NEW_PROP_TAG(FluxVars); //!< Data required to calculate a flux over a face
+NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
+NEW_PROP_TAG(ElementVolumeVariables); //!< The secondary variables of all sub-control volumes in an element
+NEW_PROP_TAG(FluxVariables); //!< Data required to calculate a flux over a face
 
 // high level simulation control
-NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time 
+NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(NewtonMethod);     //!< The type of the newton method
 NEW_PROP_TAG(NewtonController); //!< The type of the newton controller
 
@@ -115,7 +115,7 @@ template<typename TypeTag>
 class BoxElementBoundaryTypes;
 
 template<typename TypeTag>
-class BoxElementSecondaryVars;
+class BoxElementVolumeVariables;
 
 template<typename TypeTag>
 class BoxLocalJacobian;
@@ -244,7 +244,7 @@ SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
  */
 SET_PROP(BoxModel, SolutionVector)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))    Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
 public:
     typedef typename GridFunctionSpace::template VectorContainer<Scalar>::Type type;
@@ -255,21 +255,21 @@ public:
  */
 SET_PROP(BoxModel, ElementSolutionVector)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 public:
-    typedef Dune::BlockVector<PrimaryVarVector> type;
+    typedef Dune::BlockVector<PrimaryVariables> type;
 };
 
 /*!
  * \brief A vector of primary variables.
  */
-SET_PROP(BoxModel, PrimaryVarVector)
+SET_PROP(BoxModel, PrimaryVariables)
 { typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector))::block_type type; };
 
 /*!
  * \brief An array of secondary variable containers.
  */
-SET_TYPE_PROP(BoxModel, ElementSecondaryVars, Dumux::BoxElementSecondaryVars<TypeTag>);
+SET_TYPE_PROP(BoxModel, ElementVolumeVariables, Dumux::BoxElementVolumeVariables<TypeTag>);
 
 /*!
  * \brief Boundary types at a single degree of freedom.
@@ -292,7 +292,7 @@ SET_PROP(BoxModel, JacobianMatrix)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
-public: 
+public:
     typedef typename GridOperatorSpace::template MatrixContainer<Scalar>::Type type;
 };
 
@@ -322,8 +322,8 @@ public:
 
     typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq, Dune::PDELab::GridFunctionSpaceBlockwiseMapper>
         type;
-    
-    typedef typename type::template ConstraintsContainer<Scalar>::Type 
+
+    typedef typename type::template ConstraintsContainer<Scalar>::Type
         ConstraintsTrafo;
 };
 
@@ -341,7 +341,7 @@ SET_PROP(BoxModel, GridOperatorSpace)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
 
-public:    
+public:
     typedef Dumux::PDELab::BoxLocalOperator<TypeTag> LocalOperator;
 
     typedef Dune::PDELab::GridOperatorSpace<GridFunctionSpace,

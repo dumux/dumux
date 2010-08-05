@@ -54,8 +54,8 @@ namespace Dumux
  * saturation.
  Template parameters are:
 
- - GridView      a DUNE gridView type
- - Scalar        type used for return values
+ - GridView a DUNE gridView type
+ - Scalar type used for return values
  */
 template<class TypeTag>
 class FVMPFAOPressure2P
@@ -72,7 +72,7 @@ class FVMPFAOPressure2P
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))       FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridTypeIndices)) GridTypeIndices;
@@ -1649,7 +1649,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             r1[0] = -J1 * face12vol/2.0;
                             r1[1] = -J2 * isIt34->geometry().volume()/2.0;
 
-                            // compute  r = CA^{-1}r1
+                            // compute r = CA^{-1}r1
                             Dune::FieldVector<Scalar,2*dim-1> r(0);
                             CAinv.umv(r1, r);
 
@@ -1783,7 +1783,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             r2[0] = -J1 * face12vol/2.0;
                             r2[1] = g213 * g2;
 
-                            // compute  r = CA^{-1}r1
+                            // compute r = CA^{-1}r1
                             FieldVector r(0);
                             CAinv.umv(r2, r);
                             r += r1;

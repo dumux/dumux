@@ -51,8 +51,8 @@ namespace Dumux
  * saturation.
  Template parameters are:
 
- - GridView      a DUNE gridView type
- - Scalar        type used for return values
+ - GridView a DUNE gridView type
+ - Scalar type used for return values
  */
 template<class TypeTag>
 class FVMPFAOPressure2P
@@ -433,22 +433,22 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
 //                 Indices used in a interaction volume of the MPFA-o method
 //                 ___________________________________________________
 //                 |                        |                        |
-//                 | nuxy: cell geometry    |       nxy: face normal |
-//                 |       vectors (see MPFA)                        |
+//                 | nuxy: cell geometry |       nxy: face normal |
+//                 |       vectors (see MPFA) |
 //                 |                        |                        |
-//                 |            4-----------3-----------3            |
-//                 |            | --> nu43  |   nu34 <--|            |
-//                 |            | |nu41    1|--> n43   ||nu32        |
-//                 |            | v   ^     |0     ^   v|            |
+//                 |            4-----------3-----------3 |
+//                 |            | --> nu43 |   nu34 <--|            |
+//                 |            | |nu41 1|--> n43 ||nu32 |
+//                 |            | v ^     |0 ^   v|            |
 //                 |____________4__0__|n14__|__n23_|_1__2____________|
-//                 |            |    1      |     0     |            |
-//                 |            | ^         |1   nu23 ^ |            |
-//                 |            | |nu14    0|--> n12  | |            |
-//                 |            | -->nu12   |   nu21<-- |            |
-//                 |            1-----------1-----------2            |
-//                 |    elementnumber       |inter-                  |
+//                 |            |    1 |     0 |            |
+//                 |            | ^         |1 nu23 ^ |            |
+//                 |            | |nu14 0|--> n12 | |            |
+//                 |            | -->nu12 |   nu21<-- |            |
+//                 |            1-----------1-----------2 |
+//                 |    elementnumber |inter-                  |
 //                 |                        |face-                   |
-//                 |                        |number                  |
+//                 |                        |number |
 //                 |________________________|________________________|
 
 

@@ -23,14 +23,14 @@
  *        using the non-isothermal two-phase two-component box model.
  *
  */
-#ifndef DUMUX_NEW_2P2CNI_BOX_JACOBIAN_HH
-#define DUMUX_NEW_2P2CNI_BOX_JACOBIAN_HH
+#ifndef DUMUX_NEW_2P2CNI_LOCAL_RESIDUAL_HH
+#define DUMUX_NEW_2P2CNI_LOCAL_RESIDUAL_HH
 
 #include <dumux/boxmodels/2p2c/2p2clocalresidual.hh>
 
 
-#include <dumux/boxmodels/2p2cni/2p2cnisecondaryvars.hh>
-#include <dumux/boxmodels/2p2cni/2p2cnifluxvars.hh>
+#include <dumux/boxmodels/2p2cni/2p2cnivolumevariables.hh>
+#include <dumux/boxmodels/2p2cni/2p2cnifluxvariables.hh>
 
 #include <dumux/boxmodels/2p2cni/2p2cniproperties.hh>
 
@@ -52,25 +52,25 @@ class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     enum {
-        dim              = GridView::dimension,
-        dimWorld         = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
 
-        numPhases        = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        temperatureIdx   = Indices::temperatureIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        temperatureIdx = Indices::temperatureIdx,
 
-        lPhaseIdx   = Indices::lPhaseIdx,
-        gPhaseIdx   = Indices::gPhaseIdx
+        lPhaseIdx = Indices::lPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -85,7 +85,7 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      */
-    void computeStorage(PrimaryVarVector &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
         // compute the storage term for phase mass
         ParentType::computeStorage(result, scvIdx, usePrevSol);
@@ -95,8 +95,8 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementSecondaryVars &elemDat = usePrevSol ? this->prevSecVars_()  : this->curSecVars_();
-        const SecondaryVars  &vertDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &vertDat = elemDat[scvIdx];
 
         // compute the energy storage
         result[temperatureIdx] =
@@ -121,8 +121,8 @@ public:
      *
      * This method is called by compute flux (base class)
      */
-    void computeAdvectiveFlux(PrimaryVarVector &flux,
-                              const FluxVars &fluxData) const
+    void computeAdvectiveFlux(PrimaryVariables &flux,
+                              const FluxVariables &fluxData) const
     {
         // advective mass flux
         ParentType::computeAdvectiveFlux(flux, fluxData);
@@ -131,8 +131,8 @@ public:
         flux[temperatureIdx] = 0;
         for (int phase = 0; phase < numPhases; ++phase) {
             // vertex data of the upstream and the downstream vertices
-            const SecondaryVars &up = this->curSecVars_(fluxData.upstreamIdx(phase));
-            const SecondaryVars &dn = this->curSecVars_(fluxData.downstreamIdx(phase));
+            const VolumeVariables &up = this->curVolVars_(fluxData.upstreamIdx(phase));
+            const VolumeVariables &dn = this->curVolVars_(fluxData.downstreamIdx(phase));
 
             flux[temperatureIdx] +=
                 fluxData.KmvpNormal(phase) * (
@@ -152,8 +152,8 @@ public:
      * \brief Adds the diffusive heat flux to the flux vector over
      *        the face of a sub-control volume.
      */
-    void computeDiffusiveFlux(PrimaryVarVector &flux,
-                              const FluxVars &fluxData) const
+    void computeDiffusiveFlux(PrimaryVariables &flux,
+                              const FluxVariables &fluxData) const
     {
         // diffusive mass flux
         ParentType::computeDiffusiveFlux(flux, fluxData);

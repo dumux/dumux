@@ -54,7 +54,7 @@ class TwoPTwoCNewtonController : public NewtonController<TypeTag>
 
     enum {
         pressureIdx = Indices::pressureIdx,
-        switchIdx   = Indices::switchIdx
+        switchIdx = Indices::switchIdx
     };
 
 public:
@@ -127,7 +127,7 @@ private:
            ++n;
        }
     };
-    
+
 };
 }
 

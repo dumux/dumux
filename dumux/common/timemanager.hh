@@ -94,7 +94,7 @@ public:
      * \brief Initialize the model and problem and write the initial
      *        condition to disk.
      */
-    void init(Problem &problem, 
+    void init(Problem &problem,
               Scalar tStart,
               Scalar dtInitial,
               Scalar tEnd,
@@ -109,7 +109,7 @@ public:
 
         // initialize the problem
         problem_->init();
-        
+
         // initialize the problem
         if (writeInitialSol) {
             time_ -= timeStepSize_;
@@ -310,16 +310,16 @@ public:
         while (!finished())
         {
             // pre-process the current solution
-            problem_->preProcess();
+            problem_->preTimeStep();
 
             // execute the time integration scheme
             problem_->timeIntegration();
-            
+
             // post-process the current solution
-            problem_->postProcess();
-            
+            problem_->postTimeStep();
+
             // write the result to disk
-            if (problem_->doOutput())
+            if (problem_->shouldWriteOutput())
                 problem_->writeOutput();
 
             // advance the simulated time by the current time step
@@ -328,12 +328,12 @@ public:
             time_ += timeStepSize_;
             ++timeStepIdx_;
 
-            if (problem_->doSerialize())
+            if (problem_->shouldWriteRestartFile())
                 problem_->serialize();
 
             if (episodeIsOver())
                 problem_->episodeEnd();
-            
+
             // notify the problem that the timestep is done and ask it
             // for a suggestion for the next timestep size
             Scalar nextDt =
@@ -354,7 +354,7 @@ public:
             std::cout << "Simulation took " << timer.elapsed() <<" seconds.\n"
                       << "We hope that you enjoyed simulating with us\n"
                       << "and that you will chose us next time, too.\n";
-    
+
     }
 
     /*!

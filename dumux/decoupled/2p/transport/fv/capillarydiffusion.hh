@@ -38,10 +38,10 @@ namespace Dumux
  *
  * Template parameters are:
 
- - GridView      a DUNE gridview type
- - Scalar        type used for scalar quantities
- - VC            type of a class containing different variables of the model
- - Problem       class defining the physical problem
+ - GridView a DUNE gridview type
+ - Scalar type used for scalar quantities
+ - VC type of a class containing different variables of the model
+ - Problem class defining the physical problem
  */
 template<class TypeTag>
 class CapillaryDiffusion: public DiffusivePart<TypeTag>
@@ -226,7 +226,7 @@ public:
 
     /*! @brief Constructs a CapillaryDiffusion object
      *  @param problem an object of class Dumux::TransportProblem or derived
-     *  @param soil implementation of the solid matrix
+     *  @param spatial parameters implementation of the solid matrix
      *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
      */
     CapillaryDiffusion (Problem& problem, const bool preComput = true)

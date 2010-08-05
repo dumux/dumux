@@ -1,4 +1,4 @@
-// $Id: 2p2cfluxvars.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id: 2p2cfluxvariables.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -25,8 +25,8 @@
  * This means pressure, concentration and temperature gradients, phase
  * densities, etc. at the integration points of the control volume
  */
-#ifndef DUMUX_2P2C_FLUX_DATA_HH
-#define DUMUX_2P2C_FLUX_DATA_HH
+#ifndef DUMUX_2P2C_FLUX_VARIABLES_HH
+#define DUMUX_2P2C_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 #include <dumux/common/spline.hh>
@@ -43,17 +43,17 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class TwoPTwoCFluxVars
+class TwoPTwoCFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     enum {
         dim = GridView::dimension,
@@ -79,11 +79,11 @@ class TwoPTwoCFluxVars
     };
 
 public:
-    TwoPTwoCFluxVars(const Problem &problem,
+    TwoPTwoCFluxVariables(const Problem &problem,
                      const Element &element,
                      const FVElementGeometry &elemGeom,
                      int faceIdx,
-                     const ElementSecondaryVars &elemDat)
+                     const ElementVolumeVariables &elemDat)
         : fvElemGeom_(elemGeom)
     {
         scvfIdx_ = faceIdx;
@@ -104,7 +104,7 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementSecondaryVars &elemDat)
+                             const ElementVolumeVariables &elemDat)
     {
         // calculate gradients
         Vector tmp(0.0);
@@ -176,7 +176,7 @@ private:
         }
     }
 
-    Scalar rhoFactor_(int phaseIdx, int scvIdx, const ElementSecondaryVars &vDat)
+    Scalar rhoFactor_(int phaseIdx, int scvIdx, const ElementVolumeVariables &vDat)
     {
         static const Scalar eps = 1e-2;
         const Scalar sat = vDat[scvIdx].density(phaseIdx);
@@ -193,7 +193,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const ElementSecondaryVars &elemDat)
+                              const ElementVolumeVariables &elemDat)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         // multiply the pressure potential with the intrinsic
@@ -228,10 +228,10 @@ private:
 
     void calculateDiffCoeffPM_(const Problem &problem,
                                const Element &element,
-                               const ElementSecondaryVars &elemDat)
+                               const ElementVolumeVariables &elemDat)
     {
-        const SecondaryVars &vDat_i = elemDat[face().i];
-        const SecondaryVars &vDat_j = elemDat[face().j];
+        const VolumeVariables &vDat_i = elemDat[face().i];
+        const VolumeVariables &vDat_j = elemDat[face().j];
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {

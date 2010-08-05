@@ -88,12 +88,12 @@ int startFromDGF(int argc, char **argv)
 
         // create grid
         // -> load the grid from file
-        GridPointer gridPtr =  GridPointer(dgfFileName);
+        GridPointer gridPtr = GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
 
         // instantiate and run the concrete problem
         TimeManager timeManager;
-        Problem problem(timeManager, gridPtr->leafView());       
+        Problem problem(timeManager, gridPtr->leafView());
         timeManager.init(problem, 0, dt, tEnd, !restart);
         if (restart)
             problem.restart(restartTime);

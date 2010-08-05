@@ -59,10 +59,10 @@ class OnePBoxModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
@@ -80,7 +80,7 @@ public:
      *        writer.
      */
     template<class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, 
+    void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
@@ -88,13 +88,13 @@ public:
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
         ScalarField *p = writer.template createField<Scalar, 1> (numVertices);
-        
+
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
                 writer.template createField<Scalar, 1> (numElements);
 
         FVElementGeometry fvElemGeom;
-        SecondaryVars secVars;
+        VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
@@ -111,14 +111,14 @@ public:
             for (int i = 0; i < numVerts; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                secVars.update(sol[globalIdx], 
+                volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom, 
+                               fvElemGeom,
                                i,
                                false);
-                
-                (*p)[globalIdx] = secVars.pressure;
+
+                (*p)[globalIdx] = volVars.pressure;
             };
         }
 

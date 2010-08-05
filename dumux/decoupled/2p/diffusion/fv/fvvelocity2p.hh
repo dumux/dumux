@@ -40,16 +40,16 @@ namespace Dumux
  *
  * Template parameters are:
  *
- - GridView      a DUNE gridview type
- - Scalar        type used for scalar quantities
- - VC            type of a class containing different variables of the model
- - Problem       class defining the physical problem
+ - GridView a DUNE gridview type
+ - Scalar type used for scalar quantities
+ - VC type of a class containing different variables of the model
+ - Problem class defining the physical problem
  */
 
 template<class TypeTag>
 class FVVelocity2P: public FVPressure2P<TypeTag>
 {
-    typedef  FVVelocity2P<TypeTag> ThisType;
+    typedef FVVelocity2P<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -58,14 +58,14 @@ class FVVelocity2P: public FVPressure2P<TypeTag>
      typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
 
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-     typedef typename SpatialParameters::MaterialLaw                  MaterialLaw;
+     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))       FluidSystem;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState))        FluidState;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
-typedef    typename GridView::Traits::template Codim<0>::Entity Element;
+typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;

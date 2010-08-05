@@ -55,9 +55,9 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam GV    A grid view type
-  \tparam RT   The field type used in the elements of the stiffness matrix
-  \tparam m    number of degrees of freedom per node (system size)
+  \tparam GV A grid view type
+  \tparam RT The field type used in the elements of the stiffness matrix
+  \tparam m number of degrees of freedom per node (system size)
    */
   template<class GV, class RT, int m>
   class LocalStiffness
@@ -92,8 +92,8 @@ namespace Dumux
         condition or the assembled source term and neumann boundary condition.
         It is accessible via the rhs() method.
 
-      @param[in]  e    a codim 0 entity reference
-      @param[in]  k    order of Lagrange basis (default is 1)
+      @param[in]  e a codim 0 entity reference
+      @param[in]  k order of Lagrange basis (default is 1)
      */
       virtual void assemble (const Entity& e, int k=1) = 0;
 
@@ -116,9 +116,9 @@ namespace Dumux
         condition or the assembled source term and neumann boundary condition.
         It is accessible via the rhs() method.
 
-      @param[in]  e    a codim 0 entity reference
+      @param[in]  e a codim 0 entity reference
           @param[in] localSolution The current solution on the entity, which is needed by nonlinear assemblers
-      @param[in]  k    order of Lagrange basis (default is 1)
+      @param[in]  k order of Lagrange basis (default is 1)
      */
       virtual void assemble (const Entity& e, const Dune::BlockVector<VBlockType>& localSolution, int k=1) = 0;
 
@@ -137,8 +137,8 @@ namespace Dumux
         condition or the assembled neumann boundary condition.
         It is accessible via the rhs() method.
 
-      @param[in]  e    a codim 0 entity reference
-      @param[in]  k    order of Lagrange basis (default is 1)
+      @param[in]  e a codim 0 entity reference
+      @param[in]  k order of Lagrange basis (default is 1)
      */
       virtual void assembleBoundaryCondition (const Entity& e, int k=1) = 0;
 
@@ -233,9 +233,9 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam GV    A grid view type
-  \tparam RT   The field type used in the elements of the stiffness matrix
-  \tparam m    number of degrees of freedom per node (system size)
+  \tparam GV A grid view type
+  \tparam RT The field type used in the elements of the stiffness matrix
+  \tparam m number of degrees of freedom per node (system size)
    */
   template<class GV, class RT, int m>
   class LinearLocalStiffness : public LocalStiffness<GV,RT,m>
@@ -274,8 +274,8 @@ namespace Dumux
         condition or the assembled source term and neumann boundary condition.
         It is accessible via the rhs() method.
 
-        @param[in]  e    a codim 0 entity reference
-        @param[in]  k    order of Lagrange basis (default is 1)
+        @param[in]  e a codim 0 entity reference
+        @param[in]  k order of Lagrange basis (default is 1)
       */
       virtual void assemble (const Entity& e, int k=1) = 0;
 
@@ -283,9 +283,9 @@ namespace Dumux
 
       Since this is a base class for linear assemblers, the local solution will be ignored.
 
-      @param[in]  e    a codim 0 entity reference
+      @param[in]  e a codim 0 entity reference
       @param[in] localSolution The current solution on the entity, which is needed by nonlinear assemblers
-      @param[in]  k    order of Lagrange basis (default is 1)
+      @param[in]  k order of Lagrange basis (default is 1)
       */
       virtual void assemble (const Entity& e, const Dune::BlockVector<VBlockType>& localSolution, int k=1)
       {

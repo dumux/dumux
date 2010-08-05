@@ -48,7 +48,7 @@ namespace Dumux
 
   The template parameters are:
 
-  - Scalar   The field type used in the elements of the stiffness matrix
+  - Scalar The field type used in the elements of the stiffness matrix
 */
 template<class Scalar, class GridView>
 class MimeticOperatorAssembler : public CROperatorAssembler<Scalar, GridView>

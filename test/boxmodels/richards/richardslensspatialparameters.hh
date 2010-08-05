@@ -99,7 +99,7 @@ public:
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    Scalar intrinsicPermeability(const Element           &element,
+    Scalar intrinsicPermeability(const Element &element,
                                  const FVElementGeometry &fvElemGeom,
                                  int scvIdx) const
     {
@@ -109,13 +109,13 @@ public:
         return outerK_;
     }
 
-    Scalar porosity(const Element           &element,
+    Scalar porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     { return 0.4; }
 
     // return the brooks-corey context depending on the position
-    const MaterialLawParams& materialLawParams(const Element           &element,
+    const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const
     {

@@ -1,4 +1,4 @@
-// $Id: richardsfluxvars.hh 3840 2010-07-15 10:14:15Z bernd $
+// $Id: richardsfluxvariables.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -20,8 +20,8 @@
  * \brief This file contains the data which is required to calculate
  *        the flux of fluid over a face of a finite volume.
  */
-#ifndef DUMUX_RICHARDS_FLUX_DATA_HH
-#define DUMUX_RICHARDS_FLUX_DATA_HH
+#ifndef DUMUX_RICHARDS_FLUX_VARIABLES_HH
+#define DUMUX_RICHARDS_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 
@@ -34,16 +34,16 @@ namespace Dumux
  *        calculate the flux of fluid over a face of a finite volume.
  */
 template <class TypeTag>
-class RichardsFluxVars
+class RichardsFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     enum {
         dim = GridView::dimension,
@@ -60,11 +60,11 @@ class RichardsFluxVars
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
 
 public:
-    RichardsFluxVars(const Problem &problem,
+    RichardsFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &elemGeom,
                  int faceIdx,
-                 const ElementSecondaryVars &elemDat)
+                 const ElementVolumeVariables &elemDat)
         : fvElemGeom(elemGeom)
     {
         face = &fvElemGeom.subContVolFace[faceIdx];
@@ -85,7 +85,7 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementSecondaryVars &elemDat)
+                             const ElementVolumeVariables &elemDat)
     {
         // calculate gradients
         GlobalPosition tmp(0.0);
@@ -116,7 +116,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const ElementSecondaryVars &elemDat)
+                              const ElementVolumeVariables &elemDat)
     {
         // calculate the permeability tensor. TODO: this should be
         // more flexible

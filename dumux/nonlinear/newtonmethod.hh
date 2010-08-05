@@ -129,7 +129,7 @@ protected:
 
             // solve the resultuing linear equation system
             if (ctl.verbose()) {
-                std::cout << "\rSolve Mx = r              ";
+                std::cout << "\rSolve Mx = r ";
                 std::cout.flush();
             }
 

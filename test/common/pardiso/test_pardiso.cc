@@ -16,30 +16,30 @@ int main(int argc, char** argv)
     {
 #ifdef HAVE_PARDISO
         /* Matrix data. */
-        int    n = 8;
-        int    ia[ 9] = { 0, 4, 7, 9, 11, 12, 15, 17, 20 };
-        int    ja[20] = { 0,    2,       5, 6,
-                          1, 2,    4,
-                          2,             7,
-                          3,       6,
+        int n = 8;
+        int ia[ 9] = { 0, 4, 7, 9, 11, 12, 15, 17, 20 };
+        int ja[20] = { 0, 2, 5, 6,
+                          1, 2, 4,
+                          2, 7,
+                          3, 6,
                           4,
-                          2,       5,    7,
-                          1,             6,
-                          2,          6, 7 };
-        double  a[20] = { 7.0,      1.0,           2.0, 7.0,
-                          -4.0, 8.0,      2.0,
-                          1.0,                     5.0,
-                          7.0,           9.0,
+                          2, 5, 7,
+                          1, 6,
+                          2, 6, 7 };
+        double a[20] = { 7.0, 1.0, 2.0, 7.0,
+                          -4.0, 8.0, 2.0,
+                          1.0, 5.0,
+                          7.0, 9.0,
                           -4.0,
-                          7.0,           3.0,      8.0,
-                          1.0,                    11.0,
-                          -3.0,                2.0, 5.0 };
+                          7.0, 3.0, 8.0,
+                          1.0, 11.0,
+                          -3.0, 2.0, 5.0 };
 
-        int      nnz = ia[n];
+        int nnz = ia[n];
         int      mtype = 11;        /* Real unsymmetric matrix */
 
         /* RHS and solution vectors. */
-        double   b[8], x[8];
+        double b[8], x[8];
         int      nrhs = 1;          /* Number of right hand sides. */
 
         /* Internal solver memory pointer pt,                  */
@@ -48,15 +48,15 @@ int main(int argc, char** argv)
         void    *pt[64];
 
         /* Pardiso control parameters. */
-        int      iparm[64];
-        int      maxfct, mnum, phase, error, msglvl;
+        int iparm[64];
+        int maxfct, mnum, phase, error, msglvl;
 
         /* Number of processors. */
-        //int      num_procs;
+        //int num_procs;
 
         /* Auxiliary variables. */
         //char    *var;
-        int      i;
+        int i;
 
         double   ddum;              /* Double dummy */
         int      idum;              /* Integer dummy. */
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
         /* ..  Setup Pardiso control parameters.                                */
         /* -------------------------------------------------------------------- */
 
-        F77_FUN(pardisoinit) (pt,  &mtype, iparm);
+        F77_FUN(pardisoinit) (pt, &mtype, iparm);
 
         iparm[2]  = 1;
 

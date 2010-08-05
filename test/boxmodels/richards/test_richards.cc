@@ -72,7 +72,7 @@ int main(int argc, char** argv)
         // create grid
 
         // -> load the grid from file
-        GridPointer gridPtr =  GridPointer(dgfFileName);
+        GridPointer gridPtr = GridPointer(dgfFileName);
         (*gridPtr).loadBalance();
        Dune::gridinfo(*gridPtr);
 

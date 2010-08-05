@@ -79,7 +79,7 @@ SET_PROP(InjectionProblem,
     typedef Dumux::H2O_N2_System<TypeTag> type;
 };
 
-// Set the soil properties
+// Set the spatial parameters
 SET_TYPE_PROP(InjectionProblem,
               SpatialParameters,
               Dumux::InjectionSpatialParameters<TypeTag>);
@@ -97,7 +97,7 @@ SET_INT_PROP(InjectionProblem, NewtonLinearSolverVerbosity, 0);
  * \brief Problem where air is injected under a low permeable layer in a depth of 800m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately
- * permeable soil (\f$ K=10e-12\f$) for \f$ y>22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
+ * permeable spatial parameters (\f$ K=10e-12\f$) for \f$ y>22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
  * in the rest of the domain.
  *
  * Air enters a water-filled aquifer, which is situated 800m below sea level, at the right boundary
@@ -116,8 +116,8 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
 
     enum {
         // Grid and world dimension
-        dim         = GridView::dimension,
-        dimWorld    = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
     // copy some indices for convenience
@@ -134,7 +134,7 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
@@ -174,7 +174,7 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const Element           &element,
+    Scalar temperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
@@ -192,10 +192,10 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypes         &values,
-                       const Element              &element,
-                       const FVElementGeometry    &fvElemGeom,
-                       const Intersection         &is,
+    void boundaryTypes(BoundaryTypes &values,
+                       const Element &element,
+                       const FVElementGeometry &fvElemGeom,
+                       const Intersection &is,
                        int scvIdx,
                        int boundaryFaceIdx) const
     {
@@ -213,10 +213,10 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVarVector           &values,
-                   const Element              &element,
-                   const FVElementGeometry    &fvElemGeom,
-                   const Intersection         &is,
+    void dirichlet(PrimaryVariables &values,
+                   const Element &element,
+                   const FVElementGeometry &fvElemGeom,
+                   const Intersection &is,
                    int scvIdx,
                    int boundaryFaceIdx) const
     {
@@ -233,10 +233,10 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    void neumann(PrimaryVarVector           &values,
-                 const Element              &element,
-                 const FVElementGeometry    &fvElemGeom,
-                 const Intersection         &is,
+    void neumann(PrimaryVariables &values,
+                 const Element &element,
+                 const FVElementGeometry &fvElemGeom,
+                 const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
@@ -264,8 +264,8 @@ public:
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      */
-    void source(PrimaryVarVector        &values,
-                const Element           &element,
+    void source(PrimaryVariables &values,
+                const Element &element,
                 const FVElementGeometry &fvElemGeom,
                 int scvIdx) const
     {
@@ -278,8 +278,8 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVarVector        &values,
-                 const Element           &element,
+    void initial(PrimaryVariables &values,
+                 const Element &element,
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
@@ -291,8 +291,8 @@ public:
     /*!
      * \brief Return the initial phase state inside a control volume.
      */
-    int initialPhasePresence(const Vertex       &vert,
-                             int                &globalIdx,
+    int initialPhasePresence(const Vertex &vert,
+                             int &globalIdx,
                              const GlobalPosition &globalPos) const
     { return Indices::lPhaseOnly; }
 
@@ -300,8 +300,8 @@ public:
 
 private:
     // the internal method for the initial condition
-    void initial_(PrimaryVarVector       &values,
-                  const GlobalPosition   &globalPos) const
+    void initial_(PrimaryVariables &values,
+                  const GlobalPosition &globalPos) const
     {
         Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 

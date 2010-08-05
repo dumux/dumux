@@ -61,7 +61,7 @@ public:
         typedef typename LFSU::Traits::SizeType size_type;
 
         model_.localResidual().eval(eg.entity());
-        
+
         int numVertices = x.size()/numEq;
         for (size_type comp = 0; comp < r.size(); comp++)
             r[comp] = model_.localResidual().residual(comp%numVertices)[comp/numVertices];

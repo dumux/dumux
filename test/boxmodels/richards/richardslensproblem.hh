@@ -74,7 +74,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-// Set the soil properties
+// Set the spatial parameters
 SET_PROP(RichardsLensProblem, SpatialParameters)
 {
     typedef Dumux::RichardsLensSpatialParameters<TypeTag> type;
@@ -106,18 +106,18 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
-        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
         // copy some indices for convenience
         pW = Indices::pW,
 
         // Grid and world dimension
-        dim         = GridView::dimension,
-        dimWorld    = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
@@ -161,7 +161,7 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const Element           &element,
+    Scalar temperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
@@ -189,19 +189,19 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypes         &values,
-                       const Element              &element,
-                       const FVElementGeometry    &fvElemGeom,
-                       const Intersection         &is,
+    void boundaryTypes(BoundaryTypes &values,
+                       const Element &element,
+                       const FVElementGeometry &fvElemGeom,
+                       const Intersection &is,
                        int scvIdx,
                        int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
 
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) 
+        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
             values.setAllDirichlet();
-        else 
+        else
             values.setAllNeumann();
     }
 
@@ -211,10 +211,10 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVarVector           &values,
-                   const Element              &element,
-                   const FVElementGeometry    &fvElemGeom,
-                   const Intersection         &is,
+    void dirichlet(PrimaryVariables &values,
+                   const Element &element,
+                   const FVElementGeometry &fvElemGeom,
+                   const Intersection &is,
                    int scvIdx,
                    int boundaryFaceIdx) const
     {
@@ -242,10 +242,10 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVarVector           &values,
-                 const Element              &element,
-                 const FVElementGeometry    &fvElemGeom,
-                 const Intersection         &is,
+    void neumann(PrimaryVariables &values,
+                 const Element &element,
+                 const FVElementGeometry &fvElemGeom,
+                 const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
@@ -272,8 +272,8 @@ public:
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      */
-    void source(PrimaryVarVector        &values,
-                const Element           &element,
+    void source(PrimaryVariables &values,
+                const Element &element,
                 const FVElementGeometry &fvElemGeom,
                 int scvIdx) const
     {
@@ -286,8 +286,8 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVarVector        &values,
-                 const Element           &element,
+    void initial(PrimaryVariables &values,
+                 const Element &element,
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
@@ -330,7 +330,7 @@ private:
     {
         Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
         Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda  && lambda < 2.0/3.0;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
     static const Scalar eps_ = 3e-6;

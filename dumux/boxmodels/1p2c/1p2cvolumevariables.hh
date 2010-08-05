@@ -1,4 +1,4 @@
-// $Id: 1p2csecondaryvars.hh 3838 2010-07-15 08:31:53Z bernd $
+// $Id: 1p2cvolumevariables.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -21,8 +21,8 @@
  * \brief Quantities required by the single-phase, two-component box
  *        model defined on a vertex.
  */
-#ifndef DUMUX_1P2C_SECONDARY_VARS_HH
-#define DUMUX_1P2C_SECONDARY_VARS_HH
+#ifndef DUMUX_1P2C_VOLUME_VARIABLES_HH
+#define DUMUX_1P2C_VOLUME_VARIABLES_HH
 
 #include "1p2cfluidstate.hh"
 
@@ -34,24 +34,24 @@ namespace Dumux
  *        finite volume in the single-phase, two-component model.
  */
 template <class TypeTag>
-class OnePTwoCSecondaryVars
+class OnePTwoCVolumeVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
     typedef OnePTwoCFluidState<TypeTag> FluidState;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum {
-        numEq         = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
         numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
 
         konti = Indices::konti,
         transport = Indices::transport
@@ -63,7 +63,7 @@ class OnePTwoCSecondaryVars
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -73,12 +73,12 @@ public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &priVars,
-                const Problem           &problem,
-                const Element           &element,
+    void update(const PrimaryVariables &priVars,
+                const Problem &problem,
+                const Element &element,
                 const FVElementGeometry &elemGeom,
-                int                      scvIdx,
-                bool                     isOldSol)
+                int scvIdx,
+                bool isOldSol)
     {
         primaryVars_ = priVars;
 
@@ -106,7 +106,7 @@ public:
     /*!
      * \brief Return the vector of primary variables
      */
-    const PrimaryVarVector &primaryVars() const
+    const PrimaryVariables &primaryVars() const
     { return primaryVars_; }
 
     Scalar porosity;
@@ -121,7 +121,7 @@ public:
     FluidState fluidState_;
 
 protected:
-    PrimaryVarVector primaryVars_;
+    PrimaryVariables primaryVars_;
 };
 
 }

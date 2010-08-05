@@ -97,7 +97,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
-// Set the soil properties
+// Set the spatial parameters
 SET_PROP(DiffusionTestProblem, SpatialParameters)
 {
 private:
@@ -200,7 +200,7 @@ public:
         return "test_diffusion";
     }
 
-    bool doSerialize() const
+    bool shouldWriteRestartFile() const
     { return false; }
 
     /*!

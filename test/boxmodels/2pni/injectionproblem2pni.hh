@@ -72,7 +72,7 @@ SET_PROP(InjectionProblem2PNI, Problem)
     typedef Dumux::InjectionProblem2PNI<TypeTag> type;
 };
 
-// Set the soil properties. we use the same spatial parameters as the
+// Set the spatial parameters. we use the same spatial parameters as the
 // 2p2c injection problem
 SET_PROP(InjectionProblem2PNI, SpatialParameters)
 { typedef InjectionSpatialParameters<TypeTag> type; };
@@ -177,7 +177,7 @@ class InjectionProblem2PNI
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
@@ -250,7 +250,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVarVector &values,
+    void dirichlet(PrimaryVariables &values,
                    const Element &element,
                    const FVElementGeometry &fvElemGeom,
                    const Intersection &is,
@@ -274,7 +274,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVarVector &values,
+    void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvElemGeom,
                  const Intersection &is,
@@ -303,7 +303,7 @@ public:
      *
      * This problem assumes a temperature of 30 degrees Celsius.
      */
-    Scalar temperature(const Element           &element,
+    Scalar temperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
@@ -319,7 +319,7 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVarVector &values,
+    void source(PrimaryVariables &values,
                 const Element &element,
                 const FVElementGeometry &,
                 int subControlVolumeIdx) const
@@ -333,7 +333,7 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVarVector &values,
+    void initial(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const

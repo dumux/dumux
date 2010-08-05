@@ -40,9 +40,9 @@ struct BoundaryConditions
         couplingOutflow = -2,
         couplingInflow = -1,
         outflow = 0,
-        neumann = 1,          //!< Neumann boundary
-        process = 2,          //!< Processor boundary
-        dirichlet = 3         //!< Dirichlet boundary
+        neumann = 1, //!< Neumann boundary
+        process = 2, //!< Processor boundary
+        dirichlet = 3 //!< Dirichlet boundary
     };
 };
 

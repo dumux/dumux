@@ -26,9 +26,9 @@
 #ifdef HAVE_PARDISO
 
 #ifdef AIX
-#define F77_FUN(func)  func
+#define F77_FUN(func) func
 #else
-#define F77_FUN(func)  func ## _
+#define F77_FUN(func) func ## _
 #endif
 
 
@@ -81,11 +81,11 @@ public:
         nrhs_ = 1;
         num_procs_ = 1;
         maxfct_ = 1;
-        mnum_   = 1;
+        mnum_ = 1;
         msglvl_ = 0;
-        error_  = 0;
+        error_ = 0;
 
-        //F77_FUN(pardisoinit) (pt_,  &mtype_, iparm_);
+        //F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
 #else
         DUNE_THROW(Dune::NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
 #endif
@@ -153,7 +153,7 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-        F77_FUN(pardisoinit) (pt_,  &mtype_, iparm_);
+        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
 
 
         phase_ = 11;
@@ -169,7 +169,7 @@ public:
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
 
         if (verbose_)
-            std::cout << "  Reordering completed. Number of nonzeros in factors  = " << iparm_[17] << std::endl;
+            std::cout << "  Reordering completed. Number of nonzeros in factors = " << iparm_[17] << std::endl;
 
         phase_ = 22;
 
@@ -193,9 +193,9 @@ public:
         nrhs_ = 1;
         num_procs_ = 1;
         maxfct_ = 1;
-        mnum_   = 1;
+        mnum_ = 1;
         msglvl_ = 0;
-        error_  = 0;
+        error_ = 0;
 
         RowIterator i0 = A.begin();
         ColIterator j0 = (*i0).begin();
@@ -258,7 +258,7 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-        F77_FUN(pardisoinit) (pt_,  &mtype_, iparm_);
+        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
 
         phase_ = 11;
         int idum;
@@ -273,7 +273,7 @@ public:
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
 
         if (verbose_)
-            std::cout << "  Reordering completed. Number of nonzeros in factors  = " << iparm_[17] << std::endl;
+            std::cout << "  Reordering completed. Number of nonzeros in factors = " << iparm_[17] << std::endl;
 
         phase_ = 22;
 

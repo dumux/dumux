@@ -15,16 +15,16 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_ONEP_TWOC_BOX_JACOBIAN_HH
-#define DUMUX_ONEP_TWOC_BOX_JACOBIAN_HH
+#ifndef DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
+#define DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
 
 #include <dumux/boxmodels/common/boxmodel.hh>
 
 #include <dumux/boxmodels/1p2c/1p2cproperties.hh>
 
-#include <dumux/boxmodels/1p2c/1p2csecondaryvars.hh>
+#include <dumux/boxmodels/1p2c/1p2cvolumevariables.hh>
 
-#include <dumux/boxmodels/1p2c/1p2cfluxvars.hh>
+#include <dumux/boxmodels/1p2c/1p2cfluxvariables.hh>
 
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -69,17 +69,17 @@ protected:
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVars)) FluxVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
     static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
@@ -89,15 +89,15 @@ public:
      * \brief Evaluate the amount all conservation quantites
      *        (e.g. phase mass) within a finite volume.
      */
-    void computeStorage(PrimaryVarVector &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementSecondaryVars &elemDat = usePrevSol ? this->prevSecVars_() : this->curSecVars_();
-        const SecondaryVars &vertDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &vertDat = elemDat[scvIdx];
 
         // storage term of continuity equation
         result[konti] = 0;
@@ -110,19 +110,19 @@ public:
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
      */
-    void computeFlux(PrimaryVarVector &flux, int faceId) const
+    void computeFlux(PrimaryVariables &flux, int faceId) const
     {
-        FluxVars vars(this->problem_(),
+        FluxVariables vars(this->problem_(),
                       this->elem_(),
                       this->fvElemGeom_(),
                       faceId,
-                      this->curSecVars_());
+                      this->curVolVars_());
         flux = 0;
 
         // data attached to upstream and the downstream vertices
         // of the current phase
-        const SecondaryVars &up = this->curSecVars_(vars.upstreamIdx);
-        const SecondaryVars &dn = this->curSecVars_(vars.downstreamIdx);
+        const VolumeVariables &up = this->curVolVars_(vars.upstreamIdx);
+        const VolumeVariables &dn = this->curVolVars_(vars.downstreamIdx);
 
         flux[konti] = vars.vDarcyNormal / vars.viscosityAtIP;
 
@@ -155,7 +155,7 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      */
-    void computeSource(PrimaryVarVector &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
         this->problem_().source(q,
                                 this->elem_(),

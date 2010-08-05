@@ -1,15 +1,9 @@
-// $Id: 2pnifluxvars.hh 3793 2010-06-25 15:38:42Z melanie $
+// $Id: 2p2cnifluxvariables.hh 3736 2010-06-15 09:52:10Z lauser $
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
- *   Institute of Hydraulic Engineering                                      *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
-
- *   Copyright (C) 2008,2009 by Melanie Darcis                               *
- *                              Klaus Mosthaf,                               *
- *                              Andreas Lauser,                              *
- *                              Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Melanie Darcis                               *
+ *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
+ *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -26,13 +20,13 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        all fluxes (mass and energy) of all phases over a face of a finite volume.
+ *        all fluxes (mass of components and energy) over a face of a finite volume.
  *
- * This means pressure and temperature gradients, phase densities at
- * the integration point, etc.
+ * This means pressure, concentration and temperature gradients, phase
+ * densities at the integration point, etc.
  */
-#ifndef DUMUX_2PNI_FLUX_DATA_HH
-#define DUMUX_2PNI_FLUX_DATA_HH
+#ifndef DUMUX_2P2CNI_FLUX_VARIABLES_HH
+#define DUMUX_2P2CNI_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 
@@ -40,33 +34,33 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPNIBoxModel
+ * \ingroup TwoPTwoCNIModel
  * \brief This template class contains the data which is required to
- *        calculate all fluxes (mass and energy) of all phases over a
- *        face of a finite volume for the non-isothermal two-phase model.
+ *        calculate all fluxes (mass of components and energy) over a face of a finite
+ *        volume for the non-isothermal two-phase, two-component model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the integration point, etc.
  */
 template <class TypeTag>
-class TwoPNIFluxVars : public TwoPFluxVars<TypeTag>
+class TwoPTwoCNIFluxVariables : public TwoPTwoCFluxVariables<TypeTag>
 {
-    typedef TwoPFluxVars<TypeTag> ParentType;
+    typedef TwoPTwoCFluxVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
     enum {
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
 
-        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -76,11 +70,11 @@ class TwoPNIFluxVars : public TwoPFluxVars<TypeTag>
     typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
 
 public:
-    TwoPNIFluxVars(const Problem &problem,
-                   const Element &element,
-                   const FVElementGeometry &elemGeom,
-                   int scvfIdx,
-                   const ElementSecondaryVars &elemDat)
+    TwoPTwoCNIFluxVariables(const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int scvfIdx,
+                       const ElementVolumeVariables &elemDat)
         : ParentType(problem, element, elemGeom, scvfIdx, elemDat)
     {
         // calculate temperature gradient using finite element
@@ -94,7 +88,7 @@ public:
             temperatureGrad += tmp;
         }
 
-        // The soil calculates the actual heat flux vector
+        // The spatial parameters calculates the actual heat flux vector
         problem.spatialParameters().matrixHeatFlux(tmp,
                                                    *this,
                                                    elemDat,
@@ -103,7 +97,7 @@ public:
                                                    elemGeom,
                                                    scvfIdx);
         // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = tmp * elemGeom.subContVolFace[scvfIdx].normal;
+        normalMatrixHeatFlux_ = tmp*elemGeom.subContVolFace[scvfIdx].normal;
     }
 
     /*!

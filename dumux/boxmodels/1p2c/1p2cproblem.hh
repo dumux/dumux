@@ -86,13 +86,13 @@ public:
     { return gravity_; }
 
     /*!
-     * \brief Returns the soil properties object.
+     * \brief Returns the spatial parameters object.
      */
     SpatialParameters &spatialParameters()
     { return spatialParams_; }
 
     /*!
-     * \copydoc soil()
+     * \copydoc spatialParameters()
      */
     const SpatialParameters &spatialParameters() const
     { return spatialParams_; }
@@ -110,7 +110,7 @@ private:
 
     GlobalPosition gravity_;
 
-    // soil properties
+    // spatial parameters
     SpatialParameters spatialParams_;
 };
 

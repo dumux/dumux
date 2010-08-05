@@ -31,8 +31,8 @@ namespace Dumux
  *
  * Template parameters are:
 
- - GridView      a DUNE gridview type
- - Scalar        type used for scalar quantities
+ - GridView a DUNE gridview type
+ - Scalar type used for scalar quantities
  */
 template<class TypeTag>
 class DiffusivePart

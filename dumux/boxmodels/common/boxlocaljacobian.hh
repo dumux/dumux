@@ -37,7 +37,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/matrix.hh>
 
-#include "boxelementsecondaryvars.hh"
+#include "boxelementvolumevariables.hh"
 #include "boxfvelementgeometry.hh"
 #include "boxlocalresidual.hh"
 
@@ -66,37 +66,37 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     enum {
-        numEq     = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
-        dim       = GridView::dimension,
-        dimWorld  = GridView::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GridView::Grid::ctype                CoordScalar;
+    typedef typename GridView::Grid::ctype CoordScalar;
 
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
-    typedef typename GridView::template Codim<0>::Entity               Element;
-    typedef typename GridView::template Codim<0>::Iterator             ElementIterator;
-    typedef typename Element::EntityPointer                            ElementPointer;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename Element::EntityPointer ElementPointer;
 
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container                     ReferenceElements;
-    typedef typename RefElemProp::ReferenceElement              ReferenceElement;
+    typedef typename RefElemProp::Container ReferenceElements;
+    typedef typename RefElemProp::ReferenceElement ReferenceElement;
 
-    typedef typename GridView::IntersectionIterator                    IntersectionIterator;
-    typedef typename Element::Geometry                                 Geometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry))   FVElementGeometry;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename Element::Geometry Geometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) SecondaryVars;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSecondaryVars)) ElementSecondaryVars;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
 
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
@@ -116,7 +116,7 @@ public:
         // assume quadrilinears as elements with most vertices
         A_.setSize(2<<dim, 2<<dim);
     }
-    
+
     /*!
      * \brief Assemble the linear system of equations for the
      *        verts of a element, given a local solution 'localU'.
@@ -141,11 +141,11 @@ public:
 
         // update the secondary variables for the element at the last
         // and the current time levels
-        prevSecVars_.update(problem_(),
+        prevVolVars_.update(problem_(),
                             elem_(),
                             fvElemGeom_,
                             true /* isOldSol? */);
-        curSecVars_.update(problem_(),
+        curVolVars_.update(problem_(),
                            elem_(),
                            fvElemGeom_,
                            false /* isOldSol? */);
@@ -176,7 +176,7 @@ public:
     /*!
      * \brief Returns a reference to the local residual.
      */
-    LocalResidual &localResidual() 
+    LocalResidual &localResidual()
     { return localResidual_; }
 
     /*!
@@ -196,7 +196,7 @@ protected:
      * \brief Returns a reference to the problem.
      */
     const Problem &problem_() const
-    {   
+    {
         Valgrind::CheckDefined(problemPtr_);
         return *problemPtr_;
     };
@@ -240,26 +240,26 @@ protected:
                                 int pvIdx)
     {
         int globalIdx = vertexMapper_().map(elem_(), scvIdx, dim);
-        PrimaryVarVector priVars(model_().curSol()[globalIdx]);
-        SecondaryVars origSecVars(curSecVars_[scvIdx]);
+        PrimaryVariables priVars(model_().curSol()[globalIdx]);
+        VolumeVariables origVolVars(curVolVars_[scvIdx]);
 
-        curSecVars_[scvIdx].setEvalPoint(&origSecVars);
+        curVolVars_[scvIdx].setEvalPoint(&origVolVars);
         Scalar eps = asImp_().numericEpsilon_(scvIdx, pvIdx);
-        
+
         // deflect primary variables
         priVars[pvIdx] += eps;
-        
+
         // calculate the residual
-        curSecVars_[scvIdx].update(priVars, 
+        curVolVars_[scvIdx].update(priVars,
                                    problem_(),
                                    elem_(),
                                    fvElemGeom_,
                                    scvIdx,
                                    false);
-        localResidual().eval(elem_(), 
-                             fvElemGeom_, 
-                             prevSecVars_,
-                             curSecVars_,
+        localResidual().eval(elem_(),
+                             fvElemGeom_,
+                             prevVolVars_,
+                             curVolVars_,
                              bcTypes_);
 
         // store the residual
@@ -269,16 +269,16 @@ protected:
         priVars[pvIdx] -= 2*eps;
 
         // calculate residual again
-        curSecVars_[scvIdx].update(priVars, 
+        curVolVars_[scvIdx].update(priVars,
                                    problem_(),
                                    elem_(),
                                    fvElemGeom_,
                                    scvIdx,
                                    false);
-        localResidual().eval(elem_(), 
-                             fvElemGeom_, 
-                             prevSecVars_,
-                             curSecVars_,
+        localResidual().eval(elem_(),
+                             fvElemGeom_,
+                             prevVolVars_,
+                             curVolVars_,
                              bcTypes_);
 
         // central differences
@@ -287,7 +287,7 @@ protected:
 
         // restore the orignal state of the element's secondary
         // variables
-        curSecVars_[scvIdx] = origSecVars;
+        curVolVars_[scvIdx] = origVolVars;
 
 #if HAVE_VALGRIND
         for (unsigned i = 0; i < dest.size(); ++i)
@@ -306,8 +306,8 @@ protected:
      */
     Scalar numericEpsilon_(int scvIdx,
                            int pvIdx) const
-    { 
-        Scalar pv = this->curSecVars_[scvIdx].primaryVars()[pvIdx];
+    {
+        Scalar pv = this->curVolVars_[scvIdx].primaryVars()[pvIdx];
         return 1e-9*(std::abs(pv) + 1);
     }
 
@@ -339,12 +339,12 @@ protected:
 
     // The problem we would like to solve
     Problem *problemPtr_;
-    
+
     // secondary variables at the previous and at the current time
     // levels
-    ElementSecondaryVars prevSecVars_;
-    ElementSecondaryVars curSecVars_;
-    
+    ElementVolumeVariables prevVolVars_;
+    ElementVolumeVariables curVolVars_;
+
     LocalResidual localResidual_;
     LocalBlockMatrix A_;
 };

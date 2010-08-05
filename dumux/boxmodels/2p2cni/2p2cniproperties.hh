@@ -24,9 +24,9 @@
 
 #include <dumux/boxmodels/2p2c/2p2cproperties.hh>
 
-#include "2p2cnisecondaryvars.hh"
+#include "2p2cnivolumevariables.hh"
 
-#include "2p2cnifluxvars.hh"
+#include "2p2cnifluxvariables.hh"
 
 namespace Dumux
 {
@@ -44,10 +44,10 @@ template<class TypeTag>
 class TwoPTwoCNILocalResidual;
 
 template <class TypeTag>
-class TwoPTwoCNISecondaryVars;
+class TwoPTwoCNIVolumeVariables;
 
 template <class TypeTag>
-class TwoPTwoCNIFluxVars;
+class TwoPTwoCNIFluxVariables;
 
 /*!
  * \brief Enumerations for the non-isothermal 2-phase 2-component model
@@ -83,7 +83,7 @@ NEW_PROP_TAG(TwoPTwoCNIIndices); //!< Enumerations for the 2p2cni models
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_INT_PROP(BoxTwoPTwoCNI, NumEq,         3); //!< set the number of equations to 3
+SET_INT_PROP(BoxTwoPTwoCNI, NumEq, 3); //!< set the number of equations to 3
 
 //! Use the 2p2cni local jacobian operator for the 2p2cni model
 SET_TYPE_PROP(BoxTwoPTwoCNI,
@@ -93,14 +93,14 @@ SET_TYPE_PROP(BoxTwoPTwoCNI,
 //! the Model property
 SET_TYPE_PROP(BoxTwoPTwoCNI, Model, TwoPTwoCNIModel<TypeTag>);
 
-//! the SecondaryVars property
-SET_TYPE_PROP(BoxTwoPTwoCNI, SecondaryVars, TwoPTwoCNISecondaryVars<TypeTag>);
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxTwoPTwoCNI, VolumeVariables, TwoPTwoCNIVolumeVariables<TypeTag>);
 
 
 
 
-//! the FluxVars property
-SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVars, TwoPTwoCNIFluxVars<TypeTag>);
+//! the FluxVariables property
+SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVariables, TwoPTwoCNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal 2p2c model
 SET_PROP(BoxTwoPTwoCNI, TwoPTwoCIndices)

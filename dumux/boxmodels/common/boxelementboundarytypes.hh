@@ -34,7 +34,7 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef std::vector<BoundaryTypes> ParentType;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
@@ -57,18 +57,18 @@ public:
     BoxElementBoundaryTypes()
     { }
 
-    void update(const Problem &problem, 
-                const Element &element, 
+    void update(const Problem &problem,
+                const Element &element,
                 const FVElementGeometry &fvElemGeom)
     {
-        Dune::GeometryType      geoType = element.geometry().type();
+        Dune::GeometryType geoType = element.geometry().type();
         const ReferenceElement &refElem = ReferenceElements::general(geoType);
-        
+
         int numVerts = element.template count<dim>();
         this->resize(numVerts);
         for (int i = 0; i < numVerts; ++i)
             (*this)[i].reset();
-    
+
         // evaluate boundary conditions
         IntersectionIterator isIt = problem.gridView().template ibegin(element);
         const IntersectionIterator &endIt = problem.gridView().template iend(element);
@@ -76,7 +76,7 @@ public:
             // Ignore non- boundary faces.
             if (!isIt->boundary())
                 continue;
-            
+
             // Set the boundary type for all vertices of the face
             int faceIdx = isIt->indexInInside();
             int numFaceVerts = refElem.size(faceIdx, 1, dim);

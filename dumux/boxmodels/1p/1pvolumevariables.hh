@@ -1,4 +1,4 @@
-// $Id: 1psecondaryvars.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 1pvolumevariables.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008 by Onur Dogan                                        *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -19,8 +19,8 @@
  *
  * \brief Quantities required by the single-phase box model defined on a vertex.
  */
-#ifndef DUMUX_1P_SECONDARY_VARS_HH
-#define DUMUX_1P_SECONDARY_VARS_HH
+#ifndef DUMUX_1P_VOLUME_VARIABLES_HH
+#define DUMUX_1P_VOLUME_VARIABLES_HH
 
 #include "1pproperties.hh"
 
@@ -33,27 +33,27 @@ namespace Dumux
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class OnePSecondaryVars
+class OnePVolumeVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SecondaryVars)) Implementation;
-    
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
+
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum {
-        dim           = GridView::dimension,
-        dimWorld      = GridView::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
     typedef typename RefElemProp::Container ReferenceElements;
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVarVector)) PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
 
@@ -64,12 +64,12 @@ public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
-    void update(const PrimaryVarVector  &priVars,
-                const Problem           &problem,
-                const Element           &element,
+    void update(const PrimaryVariables &priVars,
+                const Problem &problem,
+                const Element &element,
                 const FVElementGeometry &elemGeom,
-                int                      scvIdx,
-                bool                     isOldSol)
+                int scvIdx,
+                bool isOldSol)
     {
         primaryVars_ = priVars;
 
@@ -95,7 +95,7 @@ public:
     /*!
      * \brief Return the vector of primary variables
      */
-    const PrimaryVarVector &primaryVars() const
+    const PrimaryVariables &primaryVars() const
     { return primaryVars_; }
 
     Scalar pressure;
@@ -104,7 +104,7 @@ public:
     Scalar porosity;
 
 protected:
-    PrimaryVarVector primaryVars_;
+    PrimaryVariables primaryVars_;
 };
 
 }
