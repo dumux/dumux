@@ -45,9 +45,9 @@ class Restart {
         const std::string gridName = "blubb"; //gridView.grid().name();
         const int dim = GridView::dimension;
 
-        int numVertices = gridView.template size(dim);
-        int numElements = gridView.template size(0);
-        int numEdges = gridView.template size(dim-1);
+        int numVertices = gridView.size(dim);
+        int numElements = gridView.size(0);
+        int numEdges = gridView.size(dim-1);
         int numCPUs = gridView.comm().size();
         int rank = gridView.comm().rank();
 
