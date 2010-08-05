@@ -96,6 +96,7 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
@@ -173,6 +174,25 @@ public:
         }
     }
 
+    /*!
+     * \brief Compute the total storage inside one phase of all
+     *        conservation quantities.
+     */
+    void globalPhaseStorage(PrimaryVariables &dest, int phaseIdx)
+    {
+        dest = 0;
+
+        ElementIterator elemIt = this->gridView_().template begin<0>();
+        const ElementIterator elemEndIt = this->gridView_().template end<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            this->localResidual().evalPhaseStorage(*elemIt, phaseIdx);
+
+            for (int i = 0; i < elemIt->template count<dim>(); ++i)
+                dest += this->localResidual().residual(i);
+        };
+
+        this->gridView_().comm().sum(dest);
+    }
 
     /*!
      * \brief Called by the update() method if applying the newton
@@ -187,8 +207,7 @@ public:
         /*this->localJacobian().updateStaticData(this->curSolFunction(),
          this->prevSolFunction());
          */
-    }
-    ;
+    };
 
     /*!
      * \brief Called by the BoxModel's update method.
@@ -217,119 +236,6 @@ public:
     {
         return oldSol ? staticVertexDat_[globalVertexIdx].oldPhasePresence
                 : staticVertexDat_[globalVertexIdx].phasePresence;
-    }
-
-
-
-    /*!
-     * \brief Calculate mass of both components in the whole model domain
-     *         and get minimum and maximum values of primary variables
-     *
-     */
-    void calculateMass(Dune::FieldVector<Scalar, 2> &massGas,
-                       Dune::FieldVector<Scalar, 2> &massLiquid)
-    {
-        const SolutionVector &sol = this->curSol();
-
-        massGas = 0;
-        massLiquid = 0;
-
-        ElementIterator elemIt = this->gridView_().template begin<0> ();
-        ElementIterator endit = this->gridView_().template end<0> ();
-
-        FVElementGeometry fvElemGeom;
-        VolumeVariables volVars;
-
-        Scalar minSat = 1e100;
-        Scalar maxSat = -1e100;
-        Scalar minP = 1e100;
-        Scalar maxP = -1e100;
-        Scalar minTe = 1e100;
-        Scalar maxTe = -1e100;
-        Scalar minX = 1e100;
-        Scalar maxX = -1e100;
-
-        // Loop over elements
-        for (; elemIt != endit; ++elemIt)
-        {
-            if (elemIt->partitionType() != Dune::InteriorEntity)
-                continue;
-
-            fvElemGeom.update(this->gridView_(), *elemIt);
-            // Loop over element vertices
-            for (int i = 0; i < fvElemGeom.numVertices; ++i)
-            {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                volVars.update(sol[globalIdx],
-                               this->problem_(),
-                               *elemIt,
-                               fvElemGeom,
-                               i,
-                               false);
-
-                const FluidState &fs = volVars.fluidState();
-                Scalar vol = fvElemGeom.subContVol[i].volume;
-
-                Scalar satN = fs.saturation(gPhaseIdx);
-                Scalar xAW = fs.massFrac(lPhaseIdx, gCompIdx);
-                Scalar pW = fs.phasePressure(lPhaseIdx);
-                Scalar T = fs.temperature();
-
-                // get minimum and maximum values of primary variables
-                minSat = std::min(minSat, satN);
-                maxSat = std::max(maxSat, satN);
-                minP = std::min(minP, pW);
-                maxP = std::max(maxP, pW);
-                minX = std::min(minX, xAW);
-                maxX = std::max(maxX, xAW);
-                minTe = std::min(minTe, T);
-                maxTe = std::max(maxTe, T);
-
-                // calculate total mass
-                Scalar mGas = volVars.porosity() * fs.saturation(gPhaseIdx)
-                        * fs.density(gPhaseIdx) * vol;
-                massGas[lCompIdx] += mGas * fs.massFrac(gPhaseIdx, lCompIdx);
-                massGas[gCompIdx] += mGas * fs.massFrac(gPhaseIdx, gCompIdx);
-
-                Scalar mLiquid = volVars.porosity() * fs.saturation(lPhaseIdx)
-                        * fs.density(lPhaseIdx) * vol;
-                massLiquid[lCompIdx] += mLiquid * fs.massFrac(lPhaseIdx,
-                        lCompIdx);
-                massLiquid[gCompIdx] += mLiquid * fs.massFrac(lPhaseIdx,
-                        gCompIdx);
-            }
-        }
-
-        massGas[lCompIdx] = this->gridView_().comm().sum(massGas[lCompIdx]);
-        massGas[gCompIdx] = this->gridView_().comm().sum(massGas[gCompIdx]);
-        massLiquid[lCompIdx] = this->gridView_().comm().sum(massLiquid[lCompIdx]);
-        massLiquid[gCompIdx] = this->gridView_().comm().sum(massLiquid[gCompIdx]);
-
-        Scalar minS = this->gridView_().comm().min(minSat);
-        Scalar maxS = this->gridView_().comm().max(maxSat);
-        Scalar minPr = this->gridView_().comm().min(minP);
-        Scalar maxPr = this->gridView_().comm().max(maxP);
-        Scalar minXw = this->gridView_().comm().min(minX);
-        Scalar maxXw = this->gridView_().comm().max(maxX);
-        Scalar minT = this->gridView_().comm().min(minTe);
-        Scalar maxT = this->gridView_().comm().max(maxTe);
-
-        // IF PARALLEL: mass calculation still needs to be adjusted
-        //        massGas = this->gridView_().comm().sum(massGas);
-        //        massLiquid = this->gridView_().comm().sum(massLiquid);
-
-        if (this->gridView_().comm().rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
-        {
-            // print minimum and maximum values
-            std::cout << "gas phase saturation: min = " << minS << ", max = "
-                    << maxS << std::endl;
-            std::cout << "liquid phase pressure: min = " << minPr << ", max = "
-                    << maxPr << std::endl;
-            std::cout << "mass fraction gCompIdx: min = " << minXw
-                    << ", max = " << maxXw << std::endl;
-            std::cout << "temperature: min = " << minT << ", max = " << maxT
-                    << std::endl;
-        }
     }
 
     /*!

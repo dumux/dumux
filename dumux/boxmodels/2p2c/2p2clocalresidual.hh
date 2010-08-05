@@ -55,8 +55,6 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GridView::Grid::ctype CoordScalar;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
@@ -98,9 +96,14 @@ protected:
         formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation))
     };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::ctype CoordScalar;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -111,6 +114,30 @@ protected:
             GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:
+    /*!
+     * \brief Evaluate the storage term of the current solution in a
+     *        single phase.
+     */
+    void evalPhaseStorage(const Element &element, int phaseIdx)
+    {
+        FVElementGeometry fvGeom;
+        fvGeom.update(this->gridView_(), element);
+        ElementBoundaryTypes bcTypes;
+        bcTypes.update(this->problem_(), element, fvGeom);
+        ElementVolumeVariables volVars;
+        volVars.update(this->problem_(), element, fvGeom, false);
+        
+        this->residual_.resize(fvGeom.numVertices);
+        this->residual_ = 0;
+
+        this->elemPtr_ = &element;
+        this->fvElemGeomPtr_ = &fvGeom;
+        this->bcTypesPtr_ = &bcTypes;
+        this->prevVolVarsPtr_ = 0;
+        this->curVolVarsPtr_ = &volVars;
+        evalPhaseStorage_(phaseIdx);
+    }
+    
     /*!
      * \brief Evaluate the amount all conservation quantites
      *        (e.g. phase mass) within a sub-control volume.
@@ -125,9 +152,9 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_()
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
                 : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute storage term of all components within all phases
         result = 0;
@@ -136,12 +163,12 @@ public:
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
-                result[eqIdx] += vertDat.density(phaseIdx)
-                        * vertDat.saturation(phaseIdx)
-                        * vertDat.fluidState().massFrac(phaseIdx, compIdx);
+                result[eqIdx] += volVars.density(phaseIdx)
+                        * volVars.saturation(phaseIdx)
+                        * volVars.fluidState().massFrac(phaseIdx, compIdx);
             }
         }
-        result *= vertDat.porosity();
+        result *= volVars.porosity();
     }
 
     /*!
@@ -239,6 +266,30 @@ public:
     }
 
 protected:
+    void evalPhaseStorage_(int phaseIdx)
+    {
+        // evaluate the storage terms of a single phase
+        for (int i=0; i < this->fvElemGeom_().numVertices; i++) {
+            PrimaryVariables &result = this->residual_[i];
+            const ElementVolumeVariables &elemVolVars = this->curVolVars_();
+            const VolumeVariables &volVars = elemVolVars[i];
+            
+            // compute storage term of all components within all phases
+            result = 0;
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
+                result[eqIdx] += volVars.density(phaseIdx)
+                    * volVars.saturation(phaseIdx)
+                    * volVars.fluidState().massFrac(phaseIdx, compIdx);
+            }
+
+            result *= volVars.porosity();
+            result *= this->fvElemGeom_().subContVol[i].volume;
+        }
+    }
+
+
     Implementation *asImp_()
     {
         return static_cast<Implementation *> (this);

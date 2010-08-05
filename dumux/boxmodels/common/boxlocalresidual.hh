@@ -53,7 +53,7 @@ template<class TypeTag>
 class BoxLocalResidual
 {
 private:
-    typedef BoxLocalResidual<TypeTag>                                 ThisType;
+    typedef BoxLocalResidual<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
@@ -133,6 +133,32 @@ public:
         problem_().updateCouplingParams(element);
 
         asImp_().eval(element, fvGeom, volVarsPrev, volVarsCur, bcTypes);
+    }
+
+    /*!
+     * \brief Compute the storage term for the current solution.
+     *
+     * This can be used to figure out how much of each conservation
+     * quantity is inside the element.
+     */
+    void evalStorage(const Element &element)
+    {
+        FVElementGeometry fvGeom;
+        fvGeom.update(gridView_(), element);
+        ElementBoundaryTypes bcTypes;
+        bcTypes.update(problem_(), element, fvGeom);
+        ElementVolumeVariables volVars;
+        volVars.update(problem_(), element, fvGeom, false);
+        
+        residual_.resize(fvGeom.numVertices);
+        residual_ = 0;
+
+        elemPtr_ = &element;
+        fvElemGeomPtr_ = &fvGeom;
+        bcTypesPtr_ = &bcTypes;
+        prevVolVarsPtr_ = 0;
+        curVolVarsPtr_ = &volVars;
+        asImp_().evalStorage_();
     }
 
     /*!
@@ -328,6 +354,17 @@ protected:
         }
     }
 
+    void evalStorage_()
+    {
+        // calculate the amount of conservation each quantity inside
+        // all sub control volumes
+        for (int i=0; i < fvElemGeom_().numVertices; i++) {
+            residual_[i] = 0.0;
+            this->asImp_().computeStorage(residual_[i], i, false /*isOldSol*/);
+            residual_[i] *= fvElemGeom_().subContVol[i].volume;
+        }
+    }
+
     void evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
@@ -349,7 +386,7 @@ protected:
                 fvElemGeom_().subContVol[i].volume
                 /
                 problem_().timeManager().timeStepSize();
-
+            
             for (int j = 0; j < numEq; ++j)
                 residual_[i][j] += massContrib[j];
 
@@ -438,7 +475,6 @@ protected:
 protected:
     ElementSolutionVector residual_;
 
-private:
     // The problem we would like to solve
     Problem *problemPtr_;
 

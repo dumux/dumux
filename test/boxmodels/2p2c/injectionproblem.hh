@@ -155,6 +155,23 @@ public:
         FluidSystem::init();
     }
 
+    /*!
+     * \brief Called directly after the time integration.
+     */
+    void postTimeStep()
+    {
+        // Calculate storage terms
+        PrimaryVariables storageL, storageG;
+        this->model().globalPhaseStorage(storageL, lPhaseIdx);
+        this->model().globalPhaseStorage(storageG, gPhaseIdx);
+        
+        // Write mass balance information for rank 0
+        if (this->gridView().comm().rank() == 0) {
+            std::cout<<"Storage: liquid=[" << storageL << "]"
+                     << " gas=[" << storageG << "]\n";
+        }
+    }
+
 
     /*!
      * \name Problem parameters

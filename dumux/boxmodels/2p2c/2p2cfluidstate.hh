@@ -91,7 +91,7 @@ public:
         Valgrind::CheckDefined(primaryVars);
 
         Valgrind::SetUndefined(concentration_);
-        Valgrind::SetUndefined(totalConcentration_);
+        Valgrind::SetUndefined(phaseConcentration_);
         Valgrind::SetUndefined(avgMolarMass_);
         Valgrind::SetUndefined(phasePressure_);
         Valgrind::SetUndefined(temperature_);
@@ -157,14 +157,14 @@ public:
             concentration_[gPhaseIdx][gCompIdx] *= avgMolarMass_[gPhaseIdx]/M2;
 
             // convert to real concentrations
-            totalConcentration_[gPhaseIdx] = 1.0;
+            phaseConcentration_[gPhaseIdx] = 1.0;
             Scalar rhog = FluidSystem::phaseDensity(gPhaseIdx,
                                                     temperature_,
                                                     phasePressure_[gPhaseIdx],
                                                     *this);
-            totalConcentration_[gPhaseIdx] = rhog / avgMolarMass_[gPhaseIdx];
-            concentration_[gPhaseIdx][lCompIdx] *= totalConcentration_[gPhaseIdx];
-            concentration_[gPhaseIdx][gCompIdx] *= totalConcentration_[gPhaseIdx];
+            phaseConcentration_[gPhaseIdx] = rhog / avgMolarMass_[gPhaseIdx];
+            concentration_[gPhaseIdx][lCompIdx] *= phaseConcentration_[gPhaseIdx];
+            concentration_[gPhaseIdx][gCompIdx] *= phaseConcentration_[gPhaseIdx];
 
             // tell the fluid system to calculate the composition of
             // the remaining phases
@@ -189,14 +189,14 @@ public:
             concentration_[lPhaseIdx][gCompIdx] *= avgMolarMass_[lPhaseIdx]/M2;
 
             // convert to real concentrations
-            totalConcentration_[lPhaseIdx] = 1.0;
+            phaseConcentration_[lPhaseIdx] = 1.0;
             Scalar rhol = FluidSystem::phaseDensity(lPhaseIdx,
                                                     temperature_,
                                                     phasePressure_[lPhaseIdx],
                                                     *this);
-            totalConcentration_[lPhaseIdx] = rhol / avgMolarMass_[lPhaseIdx];
-            concentration_[lPhaseIdx][lCompIdx] *= totalConcentration_[lPhaseIdx];
-            concentration_[lPhaseIdx][gCompIdx] *= totalConcentration_[lPhaseIdx];
+            phaseConcentration_[lPhaseIdx] = rhol / avgMolarMass_[lPhaseIdx];
+            concentration_[lPhaseIdx][lCompIdx] *= phaseConcentration_[lPhaseIdx];
+            concentration_[lPhaseIdx][gCompIdx] *= phaseConcentration_[lPhaseIdx];
 
             // tell the fluid system to calculate the composition of
             // the remaining phases
@@ -204,7 +204,7 @@ public:
         }
 
         Valgrind::CheckDefined(concentration_);
-        Valgrind::CheckDefined(totalConcentration_);
+        Valgrind::CheckDefined(phaseConcentration_);
         Valgrind::CheckDefined(avgMolarMass_);
         Valgrind::CheckDefined(phasePressure_);
         Valgrind::CheckDefined(temperature_);
@@ -225,7 +225,7 @@ public:
         avgMolarMass_[phaseIdx] = compo.meanMolarMass();
         phasePressure_[phaseIdx] = compo.pressure();
 
-        totalConcentration_[phaseIdx] = compo.totalConcentration();
+        phaseConcentration_[phaseIdx] = compo.phaseConcentration();
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             concentration_[phaseIdx][compIdx] = compo.concentration(compIdx);
     };
@@ -248,7 +248,7 @@ public:
     {
         return
             concentration_[phaseIdx][compIdx]/
-            totalConcentration_[phaseIdx];
+            phaseConcentration_[phaseIdx];
     }
 
     /*!
@@ -256,8 +256,8 @@ public:
      *
      * This is equivalent to the sum of all component concentrations.
      */
-    Scalar totalConcentration(int phaseIdx) const
-    { return totalConcentration_[phaseIdx]; };
+    Scalar phaseConcentration(int phaseIdx) const
+    { return phaseConcentration_[phaseIdx]; };
 
     /*!
      * \brief Returns the concentration of a component in a phase [mol / m^3].
@@ -279,7 +279,7 @@ public:
      * \brief Returns the density of a phase [kg / m^3].
      */
     Scalar density(int phaseIdx) const
-    { return totalConcentration_[phaseIdx]*avgMolarMass_[phaseIdx]; }
+    { return phaseConcentration_[phaseIdx]*avgMolarMass_[phaseIdx]; }
 
     /*!
      * \brief Returns mean molar mass of a phase [kg / mol].
@@ -313,7 +313,7 @@ public:
 
 public:
     Scalar concentration_[numPhases][numComponents];
-    Scalar totalConcentration_[numPhases];
+    Scalar phaseConcentration_[numPhases];
     Scalar avgMolarMass_[numPhases];
     Scalar phasePressure_[numPhases];
     Scalar temperature_;

@@ -172,6 +172,25 @@ public:
     }
 
     /*!
+     * \brief Compute the total storage of all conservation quantities.
+     */
+    void globalStorage(PrimaryVariables &dest)
+    {
+        dest = 0;
+        
+        ElementIterator elemIt = gridView_().template begin<0>();
+        const ElementIterator elemEndIt = gridView_().template end<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            localResidual().evalStorage(*elemIt);
+
+            for (int i = 0; i < elemIt->template count<dim>(); ++i)
+                dest += localResidual().residual(i);
+        };
+
+        gridView_().comm().sum(dest);
+    }
+
+    /*!
      * \brief Returns the volume of a given control volume.
      */
     Scalar boxVolume(int globalIdx) const

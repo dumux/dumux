@@ -102,7 +102,7 @@ public:
      *
      * This is equivalent to the sum of all component concentrations.
      */
-    Scalar totalConcentration(int phaseIdx) const
+    Scalar phaseConcentration(int phaseIdx) const
     {
         return density_[phaseIdx]/FluidSystem::molarMass(phaseIdx);
     };
@@ -113,7 +113,7 @@ public:
     Scalar concentration(int phaseIdx, int compIdx) const
     {
         if (phaseIdx == compIdx)
-            return totalConcentration(phaseIdx);
+            return phaseConcentration(phaseIdx);
         return 0;
     };
 
