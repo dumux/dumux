@@ -40,6 +40,8 @@ class BoxAssembler
     enum{dim = GridView::dimension};
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Constraints)) Constraints;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ScalarGridFunctionSpace)) ScalarGridFunctionSpace;
@@ -51,15 +53,21 @@ class BoxAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
-public:
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef SolutionVector Vector;
     typedef JacobianMatrix Matrix;
     typedef Matrix RepresentationType;
 
+public:
     BoxAssembler()
     {
-        problem_ = 0;
+        problemPtr_ = 0;
         fem_ = 0;
         cn_ = 0;
         scalarGridFunctionSpace_ = 0;
@@ -84,11 +92,11 @@ public:
 
     void init(Problem& problem)
     {
-        problem_ = &problem;
+        problemPtr_ = &problem;
         fem_ = new FEM();
-        //cn_ = new Constraints(*problem_);
+        //cn_ = new Constraints(*problemPtr_);
         cn_ = new Constraints();
-        scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problem_->gridView(), *fem_, *cn_);
+        scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problemPtr_->gridView(), *fem_, *cn_);
         gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
 
         //cn_->compute_ghosts(*gridFunctionSpace_);
@@ -98,14 +106,27 @@ public:
         constraintsTrafo_ = new ConstraintsTrafo();
         //Dune::PDELab::constraints(*bTypes, *gridFunctionSpace_, *constraintsTrafo_, false);
 
-        localOperator_ = new LocalOperator(problem_->model());
+        // initialize the grid operator spaces
+        localOperator_ = new LocalOperator(problemPtr_->model());
         gridOperatorSpace_ =
             new GridOperatorSpace(*gridFunctionSpace_, *constraintsTrafo_,
                                   *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
 
+        // initialize the jacobian matrix and the right hand side
+        // vector
         matrix_ = new Matrix(*gridOperatorSpace_);
         *matrix_ = 0;
         reuseMatrix_ = false;
+
+        // calculate the ghost vertices
+        VertexIterator vIt = gridView_().template begin<dim>();
+        VertexIterator vEndIt = gridView_().template end<dim>();
+        for (; vIt != vEndIt; ++vIt) {
+            if (vIt->partitionType() == Dune::GhostEntity) {
+                int vIdx = vertexMapper_().map(*vIt);
+                ghostIndices_.push_back(vIdx);
+            }
+        };
     }
 
     void assemble(SolutionVector &u)
@@ -116,7 +137,17 @@ public:
         }
         reuseMatrix_ = false;
 
-        residual_.base().resize(u.size());
+        // set the entries for the ghost nodes
+        typedef typename Matrix::block_type BlockType;
+        BlockType Id(0.0);
+        for (int i=0; i < BlockType::rows; ++i)
+            Id[i][i] = 1.0;
+
+        for (int i=0; i < ghostIndices_.size(); ++i) {
+            int globI = ghostIndices_[i];
+            (*matrix_)[globI][globI] = Id;
+        }
+
         residual_ = 0;
         gridOperatorSpace_->residual(u, residual_);
 
@@ -150,10 +181,10 @@ public:
 
         Dune::PDELab::AddDataHandle<GridFunctionSpace,Vector> adddh(*gridFunctionSpace_, diagonalEntries);
         if (gridFunctionSpace_->gridview().comm().size()>1)
-          gridFunctionSpace_->gridview().communicate(adddh,
-              Dune::InteriorBorder_InteriorBorder_Interface,
-              Dune::ForwardCommunication);
-
+            gridFunctionSpace_->gridview().communicate(adddh,
+                                                       Dune::InteriorBorder_InteriorBorder_Interface,
+                                                       Dune::ForwardCommunication);
+        
         for (RowIterator iBlock = matrix_->begin(); iBlock != endIBlock; ++iBlock) {
             // divide right-hand side
             for (int i = 0; i < rowsInBlock; i++) {
@@ -196,7 +227,16 @@ public:
     { return residual_; }
 
 private:
-    Problem *problem_;
+    const Problem &problem_() const
+    { return *problemPtr_; }
+    const GridView &gridView_() const
+    { return problem_().gridView(); }
+    const VertexMapper &vertexMapper_() const
+    { return problem_().vertexMapper(); }
+    const ElementMapper &elementMapper_() const
+    { return problem_().elementMapper(); }
+    
+    Problem *problemPtr_;
     Constraints *cn_;
     FEM *fem_;
     ScalarGridFunctionSpace *scalarGridFunctionSpace_;
@@ -207,6 +247,8 @@ private:
 
     Matrix *matrix_;
     bool reuseMatrix_;
+    std::vector<int> ghostIndices_;
+
     SolutionVector residual_;
 };
 
