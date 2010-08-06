@@ -87,6 +87,11 @@ NEW_PROP_TAG(ConstraintsTrafo); //!< The type of PDELab's constraints transforma
 NEW_PROP_TAG(LocalOperator); //!< The type of the local operator used by PDELab
 NEW_PROP_TAG(GridOperatorSpace); //!< The used grid operator space
 
+//! Specify whether the jacobian matrix of the last iteration of a
+//! time step should be re-used as the jacobian of the first iteration
+//! of the next time step.
+NEW_PROP_TAG(EnableJacobianRecycling);
+
 // mappers from local to global indices
 NEW_PROP_TAG(VertexMapper);
 NEW_PROP_TAG(ElementMapper);
@@ -358,6 +363,8 @@ public:
 SET_PROP(BoxModel, LocalOperator)
 { typedef typename GET_PROP(TypeTag, PTAG(GridOperatorSpace))::LocalOperator type; };
 
+// enable jacobian matrix recycling by default
+SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, true);
 // \}
 
 }

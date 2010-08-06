@@ -327,9 +327,9 @@ public:
      * converge.
      */
     template <class Matrix, class Vector>
-    void newtonSolveLinear(Matrix &A,
+    void newtonSolveLinear(const Matrix &A,
                            Vector &u,
-                           Vector &b)
+                           const Vector &b)
     {
         // if the deflection of the newton method is large, we do not
         // need to solve the linear approximation accurately. Assuming
@@ -529,13 +529,11 @@ protected:
 
 
     template <class Matrix, class Vector>
-    void solveLinear_(Matrix &A,
-                      Vector &u,
-                      Vector &b,
+    void solveLinear_(const Matrix &A,
+                      Vector &x,
+                      const Vector &b,
                       Scalar residReduction)
     {
-        Vector &x = u;
-
         int verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
         if (gridView_().comm().rank() != 0)
             verbosity = 0;
@@ -556,7 +554,8 @@ protected:
 #endif // HAVE_PARDISO
 
         //    Solver solver(model_().jacobianAssembler().gridFunctionSpace(), 500, verbosity);
-        solver.apply(A, x, b, residReduction);
+        Vector bTmp(b);
+        solver.apply(A, x, bTmp, residReduction);
 
         if (!solver.result().converged)
             DUNE_THROW(Dumux::NumericalProblem,

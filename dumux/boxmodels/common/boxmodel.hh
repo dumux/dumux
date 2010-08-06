@@ -73,6 +73,7 @@ class BoxModel
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        enableJacobianRecycling  = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)),
         dim = GridView::dimension
     };
 
@@ -299,6 +300,12 @@ public:
      */
     void updateSuccessful()
     {
+        // the jacobian matrix of the last iteration of the current
+        // time step is the same as the jacobian of the first
+        // iteration of the next time step
+        if (enableJacobianRecycling)
+            jacAsm_->setMatrixReuseable(true);
+
         // make the current solution the previous one.
         uPrev_ = uCur_;
     };

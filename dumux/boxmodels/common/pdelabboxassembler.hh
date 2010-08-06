@@ -105,12 +105,16 @@ public:
 
         matrix_ = new Matrix(*gridOperatorSpace_);
         *matrix_ = 0;
+        reuseMatrix_ = false;
     }
 
     void assemble(SolutionVector &u)
     {
-        *matrix_ = 0;
-        gridOperatorSpace_->jacobian(u, *matrix_);
+        if (!reuseMatrix_) {
+            *matrix_ = 0;
+            gridOperatorSpace_->jacobian(u, *matrix_);
+        }
+        reuseMatrix_ = false;
 
         residual_.base().resize(u.size());
         residual_ = 0;
@@ -169,6 +173,10 @@ public:
 #endif
     }
 
+    void setMatrixReuseable(bool yesno = true)
+    { reuseMatrix_ = yesno; }
+    
+
     const GridFunctionSpace& gridFunctionSpace() const
     {
         return *gridFunctionSpace_;
@@ -182,13 +190,9 @@ public:
     //! return const reference to matrix
     const Matrix& matrix() const
     { return *matrix_; }
-    Matrix& matrix()
-    { return *matrix_; }
 
     //! return const reference to residual
     const SolutionVector& residual() const
-    { return residual_; }
-    SolutionVector& residual()
     { return residual_; }
 
 private:
@@ -202,6 +206,7 @@ private:
     GridOperatorSpace *gridOperatorSpace_;
 
     Matrix *matrix_;
+    bool reuseMatrix_;
     SolutionVector residual_;
 };
 

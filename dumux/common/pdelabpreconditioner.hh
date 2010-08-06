@@ -339,7 +339,7 @@ public:
     \param[in] reduction to be achieved
     */
     template<class JacobianMatrix, class SolVector, class RhsVector>
-    void apply(JacobianMatrix& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
+    void apply(const JacobianMatrix& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
     {
         typedef Dune::SeqILU0<JacobianMatrix,SolVector,RhsVector> SeqPreCond;
         JacobianMatrix B(A);
