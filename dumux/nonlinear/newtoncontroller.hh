@@ -196,18 +196,16 @@ public:
     {
         numSteps_ = 0;
 
-        // maximum tolerated deflection between two iterations
+        // maximum acceptable difference of any primary variable
+        // between two iterations for convergence
         setRelTolerance(1e-7);
         setTargetSteps(8);
         setMaxSteps(12);
-
-        curPhysicalness_ = 0;
-        maxPhysicalness_ = 0;
     };
 
     /*!
-     * \brief Set the relative deflection of any degree of freedom
-     *        between two iterations which is tolerated.
+     * \brief Set the maximum acceptable difference for convergence of
+     *        any primary variable between two iterations
      */
     void setRelTolerance(Scalar tolerance)
     { tolerance_ = tolerance; }
@@ -225,11 +223,11 @@ public:
      */
     void setMaxSteps(int maxSteps)
     { maxSteps_ = maxSteps; }
-
+    
     /*!
      * \brief Returns true if another iteration should be done.
      */
-    bool newtonProceed(SolutionVector &u)
+    bool newtonProceed(const SolutionVector &u)
     {
         if (numSteps_ < 2)
             return true; // we always do at least two iterations
@@ -243,47 +241,7 @@ public:
         else if (asImp_().newtonConverged())
             return false; // we are below the desired tolerance
 
-        Scalar tmp = asImp_().physicalness_(u);
-        curPhysicalness_ = gridView_().comm().min(tmp);
-        curPhysicalness_ = std::min(curPhysicalness_, Scalar(1.0));
-
-
-        // check for the physicalness of the solution
-        if (curPhysicalness_ <= 0)
-            // not physical enough even for a temporary
-            // solution
-            return false;
-        else if (curPhysicalness_ < ((Scalar) numSteps_)/(maxSteps_ - 1)) {
-            // we require that the solution gets more physical
-            // with every step and at the last step the
-            // solution must be completely physical.
-            return false;
-        }
-        else if (curPhysicalness_ < maxPhysicalness_)
-        {
-            if (probationCount_ > 1) {
-                // an iterative solution was more physical
-                // than the current solution and at least 2
-                // others.
-                return false;
-            }
-            else {
-                // we are physical enough, but some earlier
-                // solution was more physical, so we let the
-                // solver continue on probation.
-                ++probationCount_;
-                return true;
-            }
-        }
-        else {
-            // everything's fine: the solution is physical
-            // enough for the number of iterations we did and
-            // it is the most physical so far.
-            maxPhysicalness_ = curPhysicalness_;
-            probationCount_ = std::max(0, probationCount_ - 1);
-
-            return true; // do another round
-        };
+        return true;
     }
 
     /*!
@@ -292,7 +250,7 @@ public:
      */
     bool newtonConverged() const
     {
-        return (error_ <= tolerance_) && (curPhysicalness_ >= 1.0);
+        return error_ <= tolerance_;
     }
 
     /*!
@@ -303,9 +261,6 @@ public:
     {
         method_ = &method;
         numSteps_ = 0;
-        probationCount_ = 0;
-        maxPhysicalness_ = 0;
-        curPhysicalness_ = 0;
 
         convergenceWriter_.beginTimestep();
     }
@@ -339,11 +294,14 @@ public:
         int idxI = -1;
         int idxJ = -1;
         for (int i = 0; i < int(uOld.size()); ++i) {
+            bool needReassemble = false;
             for (int j = 0; j < FV::size; ++j) {
                 Scalar tmp
                     =
                     std::abs(deltaU[i][j])
                     / std::max(std::abs(uOld[i][j]), Scalar(1e-4));
+                if (tmp > tolerance_/2)
+                    needReassemble = true;
                 if (tmp > error_)
                 {
                     idxI = i;
@@ -351,7 +309,12 @@ public:
                     error_ = tmp;
                 }
             }
+            
+            model_().jacobianAssembler().setReassembleVertex(i, 
+                                                             needReassemble);
         }
+
+        model_().jacobianAssembler().calcElementsToReassemble();
         error_ = gridView_().comm().max(error_);
     }
 
@@ -426,6 +389,7 @@ public:
         deltaU += uOld;
     }
 
+
     /*!
      * \brief Indicates that one newton iteration was finished.
      */
@@ -433,7 +397,6 @@ public:
     {
         ++numSteps_;
 
-        curPhysicalness_ = asImp_().physicalness_(u);
         if (verbose())
             std::cout << "\rNewton iteration " << numSteps_ << " done: "
                       << "error=" << error_ << endIterMsg().str() << "\n";
@@ -609,23 +572,6 @@ protected:
                        "The linear solver produced a NaN or inf somewhere.");
     }
 
-    //! this function is an indication of how "physically
-    //! meaningful" a temporary solution is. 0 means it isn't
-    //! meaningful at all (maybe because it has highly negative
-    //! pressures, etc) and the newton method can be stopped
-    //! immediately. Conversly 1 means that the solution is
-    //! perfectly physically meaningful (although it doesn't need
-    //! to be the solution in any way) and the method can to run.
-    //! Values inbetween mean that the funtion is not meaningfull,
-    //! but can be tolerated as temporary solution at some
-    //! iteration. (The controller assumes that as the method
-    //! progresses, the physicallness of the solution must
-    //! increase.)
-    Scalar physicalness_(SolutionVector &u)
-    {
-        return 1;
-    }
-
     std::ostringstream endIterMsgStream_;
 
     NewtonMethod *method_;
@@ -634,11 +580,8 @@ protected:
 
     Scalar tolerance_;
 
-    Scalar maxPhysicalness_;
-    Scalar curPhysicalness_;
     Scalar error_;
     Scalar lastError_;
-    int probationCount_;
 
     // optimal number of iterations we want to achive
     int targetSteps_;
