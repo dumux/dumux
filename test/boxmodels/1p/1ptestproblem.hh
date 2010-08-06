@@ -201,7 +201,7 @@ public:
         const GlobalPosition &globalPos
             = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
 
-        if (globalPos[dim-1] < eps || globalPos[dim-1] > 1.0 - eps)
+        if (globalPos[dim-1] < eps || globalPos[dim-1] > this->bboxMax()[dim-1] - eps)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -226,7 +226,7 @@ public:
         if (globalPos[dim-1] < eps) {
             values[pressureIdx] = 2.0e+5;
         }
-        else if (globalPos[dim-1] > 1.0 -eps) {
+        else if (globalPos[dim-1] > this->bboxMax()[dim-1] - eps) {
             values[pressureIdx] = 1.0e+5;
         }
     }
@@ -287,7 +287,7 @@ public:
                  int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        values[pressureIdx] = 1.0e+5 + 9.81*1.23*(20-globalPos[dim-1]);
+        values[pressureIdx] = 1.0e+5;// + 9.81*1.23*(20-globalPos[dim-1]);
     }
 
     // \}
