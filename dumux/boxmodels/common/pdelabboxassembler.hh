@@ -148,6 +148,7 @@ public:
             (*matrix_)[globI][globI] = Id;
         }
 
+        residual_.resize(u.size());
         residual_ = 0;
         gridOperatorSpace_->residual(u, residual_);
 
