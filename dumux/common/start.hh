@@ -60,7 +60,7 @@ int startFromDGF(int argc, char **argv)
         typedef Dune::GridPtr<Grid> GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
+        static Dune::MPIHelper& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
         // parse the command line arguments for the program
         if (argc < 4)
@@ -89,6 +89,8 @@ int startFromDGF(int argc, char **argv)
         // create grid
         // -> load the grid from file
         GridPointer gridPtr = GridPointer(dgfFileName);
+        if (mpiHelper.size() > 1)
+        	gridPtr->loadBalance();
         Dune::gridinfo(*gridPtr);
 
         // instantiate and run the concrete problem
