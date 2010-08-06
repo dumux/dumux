@@ -310,11 +310,11 @@ public:
                 }
             }
             
-            model_().jacobianAssembler().setReassembleVertex(i, 
-                                                             needReassemble);
+            //model_().jacobianAssembler().setReassembleVertex(i, 
+            //                                                  needReassemble);
         }
 
-        model_().jacobianAssembler().calcElementsToReassemble();
+        //model_().jacobianAssembler().calcElementsToReassemble();
         error_ = gridView_().comm().max(error_);
     }
 
