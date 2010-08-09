@@ -156,29 +156,28 @@ private:
     {
         //resize to grid size
         velocitySecondPhase_.resize(this->gridSize());//depends on pressure
-        density_.resize(this->gridSize());//depends on pressure
-        viscosity_.resize(this->gridSize());//depends on pressure
-
+        for (int i=0; i<2; i++) //for both phases
+        {
+        density_[i].resize(this->gridSize());//depends on pressure
+        viscosity_[i].resize(this->gridSize());//depends on pressure
+        }
         //initialise variables
         velocitySecondPhase_ = initialVel;
-        density_ = 0;
-        viscosity_ = 0;
     }
     void initializeGlobalVariablesTransPart(int initialSat)
     {
         //resize to grid size
         saturation_.resize(this->gridSize());
-        mobility_.resize(this->gridSize());//lambda is dependent on saturation! ->choose same size
-        fracFlowFunc_.resize(this->gridSize());//depends on saturation
+        for (int i=0; i<2; i++) //for both phases
+        {
+        mobility_[i].resize(this->gridSize());//lambda is dependent on saturation! ->choose same size
+        fracFlowFunc_[i].resize(this->gridSize());//depends on saturation
+        }
         capillaryPressure_.resize(this->gridSize());//depends on saturation
         volumecorrection_.resize(this->gridSize());//dS/dt for correction of pressure equation
 
         //initialise variables
         saturation_ = initialSat;
-        mobility_ = 0;
-        fracFlowFunc_ = 0;
-        capillaryPressure_ = 0;
-        volumecorrection_ = 0;
     }
 
 public:
@@ -196,6 +195,11 @@ public:
 
             writer.addCellData(pressure, "pressure");
             writer.addCellData(saturation, "saturation");
+
+//            // exemplary output for phase-dependent stuff
+//            ScalarSolutionType *fractionalflowW = writer.template createField<Scalar, 1> (this->gridSize());
+//            *fractionalflowW = fracFlowFunc_[wPhaseIdx];
+//            writer.addCellData(fractionalflowW, "fractional flow function w-phase");
         }
         if (codim_ == dim)
         {
@@ -210,6 +214,12 @@ public:
         }
 
         return;
+    }
+
+    //! Return the vector of the transported quantity, which is the saturation for an IMPES scheme
+    ScalarSolutionType& transportedQuantity()
+    {
+        return saturation_;
     }
 
     //! Return saturation vector
@@ -259,45 +269,45 @@ public:
     //! Return vector of wetting phase mobilities
     Scalar& mobilityWetting(int Idx)
     {
-        return mobility_[Idx][wPhaseIdx];
+        return mobility_[wPhaseIdx][Idx][0];
     }
 
     const Scalar& mobilityWetting(int Idx) const
     {
-        return mobility_[Idx][wPhaseIdx];
+        return mobility_[wPhaseIdx][Idx][0];
     }
 
     //! Return vector of non-wetting phase mobilities
     Scalar& mobilityNonwetting(int Idx)
     {
-        return mobility_[Idx][nPhaseIdx];
+        return mobility_[nPhaseIdx][Idx][0];
     }
 
     const Scalar& mobilityNonwetting(int Idx) const
     {
-        return mobility_[Idx][nPhaseIdx];
+        return mobility_[nPhaseIdx][Idx][0];
     }
 
     //! Return vector of wetting phase fractional flow functions
     Scalar& fracFlowFuncWetting(int Idx)
     {
-        return fracFlowFunc_[Idx][wPhaseIdx];
+        return fracFlowFunc_[wPhaseIdx][Idx][0];
     }
 
     const Scalar& fracFlowFuncWetting(int Idx) const
     {
-        return fracFlowFunc_[Idx][wPhaseIdx];
+        return fracFlowFunc_[wPhaseIdx][Idx][0];
     }
 
     //! Return vector of non-wetting phase fractional flow functions
     Scalar& fracFlowFuncNonwetting(int Idx)
     {
-        return fracFlowFunc_[Idx][nPhaseIdx];
+        return fracFlowFunc_[nPhaseIdx][Idx][0];
     }
 
     const Scalar& fracFlowFuncNonwetting(int Idx) const
     {
-        return fracFlowFunc_[Idx][nPhaseIdx];
+        return fracFlowFunc_[nPhaseIdx][Idx][0];
     }
 
     //! Return capillary pressure vector
@@ -314,44 +324,44 @@ public:
     //! Return density vector
     Scalar& densityWetting(int Idx)
     {
-        return density_[Idx][wPhaseIdx];
+        return density_[wPhaseIdx][Idx][0];
     }
     const Scalar& densityWetting(int Idx) const
     {
-        return density_[Idx][wPhaseIdx];
+        return density_[wPhaseIdx][Idx][0];
     }
 
     //! Return density vector
     Scalar& densityNonwetting(int Idx)
     {
-        return density_[Idx][nPhaseIdx];
+        return density_[nPhaseIdx][Idx][0];
     }
 
     const Scalar& densityNonwetting(int Idx) const
     {
-        return density_[Idx][nPhaseIdx];
+        return density_[nPhaseIdx][Idx][0];
     }
 
     //! Return density vector
     Scalar& viscosityWetting(int Idx)
     {
-        return viscosity_[Idx][wPhaseIdx];
+        return viscosity_[wPhaseIdx][Idx][0];
     }
 
     const Scalar& viscosityWetting(int Idx) const
     {
-        return viscosity_[Idx][wPhaseIdx];
+        return viscosity_[wPhaseIdx][Idx][0];
     }
 
     //! Return density vector
     Scalar& viscosityNonwetting(int Idx)
     {
-        return viscosity_[Idx][nPhaseIdx];
+        return viscosity_[nPhaseIdx][Idx][0];
     }
 
     const Scalar& viscosityNonwetting(int Idx) const
     {
-        return viscosity_[Idx][nPhaseIdx];
+        return viscosity_[nPhaseIdx][Idx][0];
     }
 
     Scalar& volumecorrection(int Idx)

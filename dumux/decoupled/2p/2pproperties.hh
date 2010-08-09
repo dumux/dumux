@@ -131,6 +131,8 @@ static const int value = FluidSystem::numPhases;
 static_assert(value == 2,
         "Only fluid systems with 2 phases are supported by the 2p model!");
 };
+SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
+
 
 SET_PROP(DecoupledTwoP, TwoPIndices)
 {

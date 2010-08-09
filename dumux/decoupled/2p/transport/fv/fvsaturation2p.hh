@@ -152,7 +152,7 @@ public:
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing a CFL condition.
      */
-    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac, bool impes);
+    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, bool impes);
 
     //! Sets the initial solution \f$S_0\f$.
     void initialTransport();
@@ -218,8 +218,7 @@ private:
 };
 
 template<class TypeTag>
-int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac = 1,
-        bool impes = false)
+int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationType& updateVec, bool impes = false)
 {
     if (!impes)
     {
