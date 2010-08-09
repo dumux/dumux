@@ -61,6 +61,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) IMPESModel;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureModel)) PressureModel;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SaturationModel)) SaturationModel;
 
@@ -155,10 +156,9 @@ public:
     void timeIntegration()
     {
         // allocate temporary vectors for the updates
-        typedef typename IMPESModel::SolutionType Solution;
-        Solution k1 = (*asImp_()).variables().saturation();
+        typedef TransportSolutionType Solution;
+        Solution k1 = (*asImp_()).variables().transportedQuantity();
 
-        dt_ = 1e100;
         Scalar t = timeManager().time();
 
         // obtain the first update and the time step size
@@ -166,10 +166,23 @@ public:
 
         //make sure t_old + dt is not larger than tend
         dt_ = std::min(dt_, timeManager().episodeMaxTimeStepSize());
+
+        // check if we are in first TS and an initialDt was assigned
+        if (t==0. && timeManager().timeStepSize()!=0.)
+        {
+            // check if assigned initialDt is in accordance with dt_ from first transport step
+            if (timeManager().timeStepSize() > dt_)
+                Dune::dwarn << "initial timestep of size " << timeManager().timeStepSize()
+                            << "is larger then dt_= "<<dt_<<" from transport" << std::endl;
+            // internally assign next tiestep size
+            dt_ = std::min(dt_, timeManager().timeStepSize());
+        }
+
+        //assign next tiestep size
         timeManager().setTimeStepSize(dt_);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        (*asImp_()).variables().saturation() += (k1 *= dt_);
+        (*asImp_()).variables().transportedQuantity() += (k1 *= timeManager().timeStepSize());
     }
 
     /*!
@@ -181,7 +194,9 @@ public:
      * current solution to disk.
      */
     void postTimeStep()
-    { };
+    {
+        (*asImp_()).pressureModel().updateMaterialLaws();
+    };
 
     /*!
      * \brief Returns the current time step size [seconds].

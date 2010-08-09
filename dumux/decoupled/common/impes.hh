@@ -60,6 +60,7 @@ template<class TypeTag> class IMPES
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -82,6 +83,11 @@ public:
         problem.pressureModel().initial();
         problem.pressureModel().calculateVelocity();
 
+        //update constitutive functions
+        problem.pressureModel().updateMaterialLaws();
+
+        Dune::dinfo << "IMPES: initialization done." << std::endl;
+
         return;
     }
 
@@ -95,19 +101,18 @@ public:
      *  Calculates the new pressure and velocity and determines the time step size and the saturation update for the explicit time step
      *  Called from Dumux::Timestep.
      */
-    void update(const Scalar t, Scalar& dt, ScalarSolutionType& updateVec)
+    void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
     {
+    	// the method is valid for any transported quantity. For sake of brevity,
+    	// variable names refer to the saturation as an exemplary transported quantity.
         int satSize = problem.variables().gridSize();
-        ScalarSolutionType saturation(problem.variables().saturation());
-        ScalarSolutionType satOldIter(problem.variables().saturation());
-        ScalarSolutionType satHelp(satSize);
-        ScalarSolutionType satDiff(satSize);
-        ScalarSolutionType updateOldIter(satSize);
-        ScalarSolutionType updateHelp(satSize);
-        ScalarSolutionType updateDiff(satSize);
-
-        //update constitutive functions
-        problem.pressureModel().updateMaterialLaws();
+        TransportSolutionType saturation(problem.variables().transportedQuantity());
+        TransportSolutionType satOldIter(problem.variables().transportedQuantity());
+        TransportSolutionType satHelp(satSize);
+        TransportSolutionType satDiff(satSize);
+        TransportSolutionType updateOldIter(satSize);
+        TransportSolutionType updateHelp(satSize);
+        TransportSolutionType updateDiff(satSize);
 
         bool converg = false;
         int iter = 0;
@@ -124,12 +129,12 @@ public:
             problem.pressureModel().calculateVelocity();
 
             //calculate saturation defect
-            problem.saturationModel().update(t, dt, updateVec, cFLFactor_, true);
+            problem.saturationModel().update(t, dt, updateVec, true);
 
             if (iterFlag_)
             { // only needed if iteration has to be done
                 updateHelp = updateVec;
-                saturation = problem.variables().saturation();
+                saturation = problem.variables().transportedQuantity();
                 saturation += (updateHelp *= (dt * cFLFactor_));
                 saturation *= omega_;
                 satHelp = satOldIter;
