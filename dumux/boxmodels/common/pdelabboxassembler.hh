@@ -283,7 +283,7 @@ public:
         
     }
     
-    EntityColor vertexColor(const Element &element, int vertIdx) const
+    int vertexColor(const Element &element, int vertIdx) const
     {
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
@@ -292,14 +292,14 @@ public:
         return vertexColor_[globalIdx];
     }
 
-    EntityColor vertexColor(int globalVertIdx) const
+    int vertexColor(int globalVertIdx) const
     {
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
         return vertexColor_[globalVertIdx];
     }
 
-    EntityColor elementColor(const Element &element) const
+    int elementColor(const Element &element) const
     {
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!
@@ -308,7 +308,7 @@ public:
         return elementColor_[globalIdx];
     }
 
-    EntityColor elementColor(int globalElementIdx) const
+    int elementColor(int globalElementIdx) const
     {
         if (!enablePartialReassemble)
             return Red; // reassemble unconditionally!

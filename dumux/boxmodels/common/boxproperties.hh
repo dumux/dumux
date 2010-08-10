@@ -371,7 +371,7 @@ SET_PROP(BoxModel, LocalOperator)
 // enable jacobian matrix recycling by default
 SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, true);
 // enable partial reassembling by default
-SET_BOOL_PROP(BoxModel, EnablePartialReassemble, true);
+SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
 
 // \}
 
