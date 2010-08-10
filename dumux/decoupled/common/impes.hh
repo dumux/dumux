@@ -78,9 +78,9 @@ public:
     virtual void initial()
     {
         //initial saturations
-        problem.saturationModel().initialTransport();
+        problem.saturationModel().initialize();
         //call function with true to get a first initialisation of the pressure field
-        problem.pressureModel().initial();
+        problem.pressureModel().initialize();
         problem.pressureModel().calculateVelocity();
 
         //update constitutive functions

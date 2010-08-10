@@ -155,7 +155,7 @@ public:
     virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, bool impes);
 
     //! Sets the initial solution \f$S_0\f$.
-    void initialTransport();
+    void initialize();
 
     //! Update the values of the material laws and constitutive relations.
     /*!
@@ -948,7 +948,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
 }
 
 template<class TypeTag>
-void FVSaturation2P<TypeTag>::initialTransport()
+void FVSaturation2P<TypeTag>::initialize()
 {
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = problem_.gridView().template end<0> ();

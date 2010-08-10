@@ -142,7 +142,7 @@ public:
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws(bool first);
 
-    void initial(bool solveTwice = true)
+    void initialize(bool solveTwice = true)
     {
         updateMaterialLaws(true);
 
