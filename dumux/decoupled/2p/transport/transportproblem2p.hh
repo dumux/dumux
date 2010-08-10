@@ -77,7 +77,7 @@ public:
      * This method MUST be overwritten by the actual problem.
      */
     Scalar temperature() const
-    { return asImp_()->temperature(); };
+    { return this->asImp_()->temperature(); };
 
     /*!
      * \brief Returns the acceleration due to gravity.
@@ -104,14 +104,6 @@ public:
     // \}
 
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
-
     GlobalPosition gravity_;
 
     // fluids and material properties

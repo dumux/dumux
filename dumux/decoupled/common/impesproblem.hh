@@ -98,19 +98,19 @@ public:
           variables_(gridView),
           dt_(0)
     {
-//        // calculate the bounding box of the grid view
-//        VertexIterator vIt = gridView.template begin<dim>();
-//        const VertexIterator vEndIt = gridView.template end<dim>();
-//        for (; vIt!=vEndIt; ++vIt) {
-//            for (int i=0; i<dim; i++) {
-//                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().corner(0)[i]);
-//                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
-//            }
-//        }
+        // calculate the bounding box of the grid view
+        VertexIterator vIt = gridView.template begin<dim>();
+        const VertexIterator vEndIt = gridView.template end<dim>();
+        for (; vIt!=vEndIt; ++vIt) {
+            for (int i=0; i<dim; i++) {
+                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().corner(0)[i]);
+                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
+            }
+        }
 
-        pressModel_ = new PressureModel(*asImp_());
-        satModel_ = new SaturationModel(*asImp_());
-        model_ = new IMPESModel(*asImp_()) ;
+        pressModel_ = new PressureModel(asImp_());
+        satModel_ = new SaturationModel(asImp_());
+        model_ = new IMPESModel(asImp_()) ;
     }
 
     //! destructor
@@ -157,7 +157,7 @@ public:
     {
         // allocate temporary vectors for the updates
         typedef TransportSolutionType Solution;
-        Solution k1 = (*asImp_()).variables().transportedQuantity();
+        Solution k1 = asImp_().variables().transportedQuantity();
 
         Scalar t = timeManager().time();
 
@@ -182,7 +182,7 @@ public:
         timeManager().setTimeStepSize(dt_);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        (*asImp_()).variables().transportedQuantity() += (k1 *= timeManager().timeStepSize());
+        asImp_().variables().transportedQuantity() += (k1 *= timeManager().timeStepSize());
     }
 
     /*!
@@ -195,7 +195,7 @@ public:
      */
     void postTimeStep()
     {
-        (*asImp_()).pressureModel().updateMaterialLaws();
+        asImp_().pressureModel().updateMaterialLaws();
     };
 
     /*!
@@ -376,7 +376,7 @@ public:
         typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.serializeBegin(*asImp_());
+        res.serializeBegin(asImp_());
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
         timeManager_.serialize(res);
@@ -397,7 +397,7 @@ public:
         typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.deserializeBegin(*asImp_(), t);
+        res.deserializeBegin(asImp_(), t);
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager_.deserialize(res);
@@ -423,12 +423,12 @@ public:
 
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
 
     //! \copydoc asImp_()
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 
     VtkMultiWriter& resultWriter()
     {

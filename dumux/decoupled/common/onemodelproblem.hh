@@ -96,8 +96,7 @@ public:
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
           variables_(gridView),
-          dt_(0),
-          resultWriter_(asImp_()->name())
+          dt_(0)
     {
 //        // calculate the bounding box of the grid view
 //        VertexIterator vIt = gridView.template begin<dim>();
@@ -109,7 +108,7 @@ public:
 //            }
 //        }
 
-        model_ = new Model(*asImp_()) ;
+        model_ = new Model(asImp_()) ;
     }
 
     //! destructor
@@ -117,29 +116,6 @@ public:
     {
         delete model_;
     }
-
-    /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
-     * \brief Start the simulation procedure.
-     *
-     * This method is usually called by the main() function and simply
-     * uses Dumux::TimeManager::runSimulation() to do the actual
-     * work.
-     */
-/*
-    bool simulate(Scalar dtInitial, Scalar tEnd)
-    {
-        // set the initial time step and the time where the simulation ends
-        timeManager_.setEndTime(tEnd);
-        timeManager_.setTimeStepSize(dtInitial);
-        timeManager_.runSimulation(*asImp_());
-        return true;
-    };
-*/
 
 
     /*!
@@ -174,7 +150,7 @@ public:
     {
         // allocate temporary vectors for the updates
         typedef typename Model::SolutionType Solution;
-        Solution k1 = (*asImp_()).variables().saturation();
+        Solution k1 = asImp_().variables().saturation();
 
         dt_ = 1e100;
         Scalar t = timeManager().time();
@@ -187,7 +163,7 @@ public:
         timeManager().setTimeStepSize(dt_);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        (*asImp_()).variables().saturation() += (k1 *= dt_);
+        asImp_().variables().saturation() += (k1 *= dt_);
     }
 
     /*!
@@ -382,9 +358,7 @@ public:
         typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.deserializeBegin(gridView(),
-                             asImp_()->name(),
-                             t);
+        res.deserializeBegin(asImp_(), t);
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager_.deserialize(res);
@@ -398,12 +372,12 @@ public:
 
 protected:
     //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
 
     //! \copydoc asImp_()
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 
     VtkMultiWriter& resultWriter()
     {
