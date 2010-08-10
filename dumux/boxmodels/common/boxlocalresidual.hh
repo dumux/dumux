@@ -95,6 +95,9 @@ private:
     typedef Dune::FieldMatrix<Scalar, numEq, numEq>  MatrixBlock;
     typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
 
+    // copying the local residual class is not a good idea
+    BoxLocalResidual(const BoxLocalResidual &);
+
 public:
     BoxLocalResidual()
     { }

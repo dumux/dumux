@@ -89,6 +89,9 @@ SET_BOOL_PROP(InjectionProblem, EnableGravity, true);
 
 // Enable gravity
 SET_INT_PROP(InjectionProblem, NewtonLinearSolverVerbosity, 0);
+
+SET_BOOL_PROP(InjectionProblem, EnableJacobianRecycling, true);
+SET_BOOL_PROP(InjectionProblem, EnablePartialReassemble, true);
 }
 
 

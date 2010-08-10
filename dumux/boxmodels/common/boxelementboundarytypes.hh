@@ -51,6 +51,12 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
     enum { dim = GridView::dimension };
 
 public:
+    // copying a the boundary types of an element should be explicitly
+    // requested
+    explicit BoxElementBoundaryTypes(const BoxElementBoundaryTypes &v)
+        : ParentType(v)
+    {}
+
     /*!
      * \brief The constructor.
      */

@@ -65,6 +65,9 @@ private:
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
+    // copying a problem is not a good idea
+    BoxProblem(const BoxProblem &);
+
 public:
     BoxProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),

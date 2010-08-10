@@ -96,6 +96,9 @@ class BoxModel
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
+    // copying a model is not a good idea
+    BoxModel(const BoxModel &);
+
 public:
     /*!
      * \brief The constructor.
@@ -229,6 +232,12 @@ public:
     { return *jacAsm_; }
 
     /*!
+     * \copydoc jacobianAssembler()
+     */
+    const JacobianAssembler &jacobianAssembler() const
+    { return *jacAsm_; }
+
+    /*!
      * \brief Returns the local jacobian which calculates the local
      *        stiffness matrix for an arbitrary element.
      *
@@ -321,6 +330,7 @@ public:
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
+        jacAsm_->reassembleAll();
     };
 
     /*!

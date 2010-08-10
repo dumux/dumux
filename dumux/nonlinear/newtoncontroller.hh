@@ -278,7 +278,6 @@ public:
     int newtonNumSteps()
     { return numSteps_; }
 
-
     /*!
      * \brief Update the error of the solution compared to the
      *        previous iteration.
@@ -293,6 +292,7 @@ public:
 
         int idxI = -1;
         int idxJ = -1;
+        int numReassemble = 0;
         for (int i = 0; i < int(uOld.size()); ++i) {
             bool needReassemble = false;
             for (int j = 0; j < FV::size; ++j) {
@@ -300,8 +300,9 @@ public:
                     =
                     std::abs(deltaU[i][j])
                     / std::max(std::abs(uOld[i][j]), Scalar(1e-4));
-                if (tmp > tolerance_/2)
+                if (tmp > tolerance_ / 10) {
                     needReassemble = true;
+                }
                 if (tmp > error_)
                 {
                     idxI = i;
@@ -310,11 +311,17 @@ public:
                 }
             }
             
-            //model_().jacobianAssembler().setReassembleVertex(i, 
-            //                                                  needReassemble);
+            if (needReassemble) {
+                ++ numReassemble;
+            }
+            
+            model_().jacobianAssembler().markVertexRed(i, 
+                                                       needReassemble);
         }
 
-        //model_().jacobianAssembler().calcElementsToReassemble();
+        model_().jacobianAssembler().computeColors();
+
+        endIterMsg() << ", red vertices: " << numReassemble << "/" << uOld.size();
         error_ = gridView_().comm().max(error_);
     }
 
@@ -384,7 +391,7 @@ public:
         writeConvergence_(uOld, deltaU);
 
         newtonUpdateRelError(uOld, deltaU);
-
+        
         deltaU *= -1;
         deltaU += uOld;
     }

@@ -28,6 +28,7 @@
 
 #include <dumux/io/vtkmultiwriter.hh>
 
+#include <dune/istl/io.hh>
 
 namespace Dumux
 {

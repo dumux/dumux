@@ -37,6 +37,15 @@ class BoxLocalOperator
     public Dune::PDELab::FullVolumePattern,
     public Dune::PDELab::LocalOperatorDefaultFlags
 {
+    // copying the local operator for PDELab is not a good idea
+    BoxLocalOperator(const BoxLocalOperator &);
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
+    enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
+
 public:
     // pattern assembly flags
     enum { doPatternVolume = true };
@@ -44,10 +53,6 @@ public:
     // residual assembly flags
     enum { doAlphaVolume = true };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
-    enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
 
     BoxLocalOperator(Model &model)
         : model_(model)
@@ -59,6 +64,11 @@ public:
                        const LFSV& lfsv, R& r) const
     {
         typedef typename LFSU::Traits::SizeType size_type;
+
+        //enum { Green = JacobianAssembler::Green };
+        //if (model_.jacobianAssembler().elementColor(eg.entity()) == Green)
+            // Green elements don't need to be reassembled
+        //  return;        
 
         model_.localResidual().eval(eg.entity());
 
@@ -76,13 +86,15 @@ public:
                           Dune::PDELab::LocalMatrix<R>& mat) const
     {
         typedef typename LFSU::Traits::SizeType size_type;
-
+        
         model_.localJacobian().assemble(eg.entity());
 
         int numVertices = x.size()/numEq;
-        for (size_type j=0; j<lfsu.size(); j++)
-          for (size_type i=0; i<lfsu.size(); i++)
-              mat(i,j) = (model_.localJacobian().mat(i%numVertices,j%numVertices))[i/numVertices][j/numVertices];
+        for (size_type j=0; j<lfsu.size(); j++) {
+            for (size_type i=0; i<lfsu.size(); i++) {
+                mat(i,j) = (model_.localJacobian().mat(i%numVertices,j%numVertices))[i/numVertices][j/numVertices];
+            }
+        }
     }
 
 private:

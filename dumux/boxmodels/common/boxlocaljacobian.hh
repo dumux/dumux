@@ -64,12 +64,17 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld,
+
+        Red = JacobianAssembler::Red,
+        Yellow = JacobianAssembler::Yellow,
+        Green = JacobianAssembler::Green
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -102,10 +107,14 @@ private:
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
     typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
 
+    // copying a local jacobian is not a good idea
+    BoxLocalJacobian(const BoxLocalJacobian &);
+
 public:
     BoxLocalJacobian()
     {
         Valgrind::SetUndefined(problemPtr_);
+        notReassembled = 0;
     }
 
 
@@ -117,6 +126,7 @@ public:
         A_.setSize(2<<dim, 2<<dim);
     }
 
+    int notReassembled;
     /*!
      * \brief Assemble the linear system of equations for the
      *        verts of a element, given a local solution 'localU'.
@@ -126,6 +136,15 @@ public:
         // set the current grid element and update the element's
         // finite volume geometry
         elemPtr_ = &element;
+        reset_();
+        
+        int elemColor = jacAsm_().elementColor(element);
+        if (elemColor == Green) {
+            ++notReassembled;
+            // Green elements don't need to be reassembled
+            return;
+        }
+
         fvElemGeom_.update(gridView_(), elem_());
         bcTypes_.update(problem_(), elem_(), fvElemGeom_);
 
@@ -135,7 +154,6 @@ public:
         // abstraction, makes everything more prone to errors and is
         // not thread save.) The real solution are context objects!
         problem_().updateCouplingParams(elem_());
-
 
         int numVertices = fvElemGeom_.numVertices;
 
@@ -223,10 +241,29 @@ protected:
     { return problem_().model(); };
 
     /*!
+     * \brief Returns a reference to the jacobian assembler.
+     */
+    const JacobianAssembler &jacAsm_() const
+    { return model_().jacobianAssembler(); }
+
+    /*!
      * \brief Returns a reference to the vertex mapper.
      */
     const VertexMapper &vertexMapper_() const
     { return problem_().vertexMapper(); };
+
+    /*!
+     * \brief Reset the local jacobian matrix to 0
+     */
+    void reset_()
+    {
+        int n = elem_().template count<dim>();
+        for (int i = 0; i < n; ++ i) {
+            for (int j = 0; j < n; ++ j) {
+                A_[i][j] = 0.0;
+            }
+        }
+    }
 
     /*!
      * \brief Compute the partial derivatives to a primary variable at
@@ -318,15 +355,21 @@ protected:
      */
     void updateLocalJacobian_(int scvIdx,
                               int pvIdx,
-                              const ElementSolutionVector &stiffness)
+                              const ElementSolutionVector &deriv)
     {
-        for (int i = 0; i < fvElemGeom_.numVertices; i++) {
+        for (int i = 0; i < fvElemGeom_.numVertices; i++)
+        {
+            if (jacAsm_().vertexColor(elem_(), i) == Green) {
+                // Green vertices are not to be changed!
+                continue;
+            }
+
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
-                // A[i][scvIdx][eqIdx][pvIdx] is the approximate rate
-                // of change of the residual of equation 'eqIdx' at
-                // vertex 'i' depending on the primary variable
-                // 'pvIdx' at vertex 'scvIdx'.
-                this->A_[i][scvIdx][eqIdx][pvIdx] = stiffness[i][eqIdx];
+                // A[i][scvIdx][eqIdx][pvIdx] is the rate of change of
+                // the residual of equation 'eqIdx' at vertex 'i'
+                // depending on the primary variable 'pvIdx' at vertex
+                // 'scvIdx'.
+                this->A_[i][scvIdx][eqIdx][pvIdx] = deriv[i][eqIdx];
                 Valgrind::CheckDefined(this->A_[i][scvIdx][eqIdx][pvIdx]);
             }
         }
@@ -347,7 +390,7 @@ protected:
 
     LocalResidual localResidual_;
     LocalBlockMatrix A_;
-};
+    };
 }
 
 #endif

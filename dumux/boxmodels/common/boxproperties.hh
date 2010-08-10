@@ -92,6 +92,11 @@ NEW_PROP_TAG(GridOperatorSpace); //!< The used grid operator space
 //! of the next time step.
 NEW_PROP_TAG(EnableJacobianRecycling);
 
+//! Specify whether the jacobian matrix should be only reassembled for
+//! elements where at least one vertex is above the specified
+//! tolerance
+NEW_PROP_TAG(EnablePartialReassemble);
+
 // mappers from local to global indices
 NEW_PROP_TAG(VertexMapper);
 NEW_PROP_TAG(ElementMapper);
@@ -365,6 +370,9 @@ SET_PROP(BoxModel, LocalOperator)
 
 // enable jacobian matrix recycling by default
 SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, true);
+// enable partial reassembling by default
+SET_BOOL_PROP(BoxModel, EnablePartialReassemble, true);
+
 // \}
 
 }

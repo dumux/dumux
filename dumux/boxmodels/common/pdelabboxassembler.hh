@@ -64,7 +64,21 @@ class BoxAssembler
     typedef JacobianMatrix Matrix;
     typedef Matrix RepresentationType;
 
+    enum {
+        enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)),
+        enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling))
+    };
+
+    // copying the jacobian assembler is not a good idea
+    BoxAssembler(const BoxAssembler &);
+
 public:
+    enum EntityColor {
+        Red, //!< entity needs to be reassembled because it's above the tolerance
+        Yellow, //!< entity needs to be reassembled because a neighboring element is red
+        Green //!< entity does not need to be reassembled
+    };
+
     BoxAssembler()
     {
         problemPtr_ = 0;
@@ -127,12 +141,30 @@ public:
                 ghostIndices_.push_back(vIdx);
             }
         };
+
+        int numVerts = gridView_().size(dim);
+        int numElems = gridView_().size(0);
+        residual_.resize(numVerts);
+        
+        // initialize data needed for partial reassembly
+        if (enablePartialReassemble) {
+            vertexColor_.resize(numVerts);
+            elementColor_.resize(numElems);
+        }
+        std::fill(vertexColor_.begin(),
+                  vertexColor_.end(),
+                  Red);
+        std::fill(elementColor_.begin(),
+                  elementColor_.end(), 
+                  Red);
     }
 
     void assemble(SolutionVector &u)
     {
+        // assemble the global jacobian matrix
         if (!reuseMatrix_) {
-            *matrix_ = 0;
+            // we actually need to reassemle!
+            resetMatrix_();
             gridOperatorSpace_->jacobian(u, *matrix_);
         }
         reuseMatrix_ = false;
@@ -148,67 +180,141 @@ public:
             (*matrix_)[globI][globI] = Id;
         }
 
-        residual_.resize(u.size());
+        // calculate the global residual
         residual_ = 0;
         gridOperatorSpace_->residual(u, residual_);
-
-#if 0
-        // rescale jacobian and right hand side to the largest
-        // entry on the main diagonal block matrix
-        typedef typename Matrix::RowIterator RowIterator;
-        typedef typename Matrix::ColIterator ColIterator;
-        typedef typename Matrix::block_type BlockType;
-        const typename Matrix::block_type::size_type rowsInBlock = Matrix::block_type::rows;
-        const typename Matrix::block_type::size_type colsInBlock = Matrix::block_type::cols;
-        Scalar diagonalEntry[rowsInBlock];
-        Vector diagonalEntries(*f);
-        RowIterator endIBlock = matrix_->end();
-        for (RowIterator iBlock = matrix_->begin(); iBlock != endIBlock; ++iBlock) {
-            BlockType &diagBlock = (*iBlock)[iBlock.index()];
-
-            for (int i = 0; i < rowsInBlock; ++i) {
-                diagonalEntry[i] = 0;
-                for (int j = 0; j < colsInBlock; ++j) {
-                    diagonalEntry[i] = std::max(diagonalEntry[i],
-                                                std::abs(diagBlock[i][j]));
-                }
-
-                if (diagonalEntry[i] < 1e-14)
-                    diagonalEntry[i] = 1.0;
-
-                diagonalEntries[iBlock.index()][i] = diagonalEntry[i];
-            }
-        }
-
-        Dune::PDELab::AddDataHandle<GridFunctionSpace,Vector> adddh(*gridFunctionSpace_, diagonalEntries);
-        if (gridFunctionSpace_->gridview().comm().size()>1)
-            gridFunctionSpace_->gridview().communicate(adddh,
-                                                       Dune::InteriorBorder_InteriorBorder_Interface,
-                                                       Dune::ForwardCommunication);
-        
-        for (RowIterator iBlock = matrix_->begin(); iBlock != endIBlock; ++iBlock) {
-            // divide right-hand side
-            for (int i = 0; i < rowsInBlock; i++) {
-                (*f)[iBlock.index()][i] /= diagonalEntries[iBlock.index()][i];
-            }
-
-            // divide row of the jacobian
-            ColIterator endJBlock = iBlock->end();
-            for (ColIterator jBlock = iBlock->begin(); jBlock != endJBlock; ++jBlock) {
-                for (int i = 0; i < rowsInBlock; i++) {
-                    for (int j = 0; j < colsInBlock; j++) {
-                        (*jBlock)[i][j] /= diagonalEntries[iBlock.index()][i];
-                    }
-                }
-            }
-        }
-#endif
     }
 
     void setMatrixReuseable(bool yesno = true)
-    { reuseMatrix_ = yesno; }
-    
+    {
+        if (enableJacobianRecycling)
+            reuseMatrix_ = yesno;
+    }
 
+    void reassembleAll()
+    {
+        std::fill(vertexColor_.begin(),
+                  vertexColor_.end(),
+                  Red);
+        std::fill(elementColor_.begin(),
+                  elementColor_.end(), 
+                  Red);
+    }
+    
+    void markVertexRed(int globalVertIdx, bool yesno)
+    {
+        if (enablePartialReassemble)
+            vertexColor_[globalVertIdx] = yesno?Red:Green;
+    }
+    
+    void computeColors()
+    { 
+
+        if (!enablePartialReassemble)
+            return;
+
+        ElementIterator elemIt = gridView_().template begin<0>();
+        ElementIterator elemEndIt = gridView_().template end<0>();
+
+        // Mark all red elements
+        for (; elemIt != elemEndIt; ++elemIt) {
+            bool needReassemble = false;
+            int numVerts = elemIt->template count<dim>();
+            for (int i=0; i < numVerts; ++i) {
+                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                if (vertexColor_[globalI] == Red) {
+                    needReassemble = true;
+                    break;
+                }
+            };
+            
+            int globalElemIdx = elementMapper_().map(*elemIt);
+            elementColor_[globalElemIdx] = needReassemble?Red:Green;
+        }
+        
+        // Mark all yellow vertices
+        elemIt = gridView_().template begin<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            int elemIdx = this->elementMapper_().map(*elemIt);
+            if (elementColor_[elemIdx] == Green)
+                continue; // green elements do not tint vertices
+                          // yellow!
+            
+            int numVerts = elemIt->template count<dim>();
+            for (int i=0; i < numVerts; ++i) {
+                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                // if a vertex is already red, don't recolor it to
+                // yellow!
+                if (vertexColor_[globalI] != Red)
+                    vertexColor_[globalI] = Yellow;
+            };
+        }
+
+        // Mark all yellow elements
+        int numReassemble = 0;
+        int numGreen = 0;
+        elemIt = gridView_().template begin<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            int elemIdx = this->elementMapper_().map(*elemIt);
+            if (elementColor_[elemIdx] == Red) {
+                ++ numReassemble;
+                continue; // element is red already!
+            }
+
+            bool isYellow = false;
+            int numVerts = elemIt->template count<dim>();
+            for (int i=0; i < numVerts; ++i) {
+                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                if (vertexColor_[globalI] == Yellow) {
+                    ++ numReassemble;
+                    isYellow = true;
+                    break;
+                }
+            };
+            
+            if (isYellow) {
+                ++ isYellow;
+                elementColor_[elemIdx] = Yellow;
+            }
+
+            if (elementColor_[elemIdx] == Green)
+                ++ numGreen;
+        }
+        
+    }
+    
+    EntityColor vertexColor(const Element &element, int vertIdx) const
+    {
+        if (!enablePartialReassemble)
+            return Red; // reassemble unconditionally!
+        
+        int globalIdx = vertexMapper_().map(element, vertIdx, dim);
+        return vertexColor_[globalIdx];
+    }
+
+    EntityColor vertexColor(int globalVertIdx) const
+    {
+        if (!enablePartialReassemble)
+            return Red; // reassemble unconditionally!
+        return vertexColor_[globalVertIdx];
+    }
+
+    EntityColor elementColor(const Element &element) const
+    {
+        if (!enablePartialReassemble)
+            return Red; // reassemble unconditionally!
+        
+        int globalIdx = elementMapper_().map(element);
+        return elementColor_[globalIdx];
+    }
+
+    EntityColor elementColor(int globalElementIdx) const
+    {
+        if (!enablePartialReassemble)
+            return Red; // reassemble unconditionally!
+        return elementColor_[globalElementIdx];
+    }
+   
     const GridFunctionSpace& gridFunctionSpace() const
     {
         return *gridFunctionSpace_;
@@ -228,8 +334,38 @@ public:
     { return residual_; }
 
 private:
+    void resetMatrix_()
+    {
+        if (!enablePartialReassemble) {
+            (*matrix_) = 0;
+            return;
+        }
+      
+        // reset all entries corrosponding to a red vertex
+        for (int rowIdx = 0; rowIdx < matrix_->N(); ++rowIdx) {
+            if (vertexColor_[rowIdx] == Green)
+                continue; // the equations for this control volume are
+                          // already below the treshold
+            // reset row to 0
+            typedef typename JacobianMatrix::ColIterator ColIterator;
+            ColIterator colIt = (*matrix_)[rowIdx].begin();
+            const ColIterator &colEndIt = (*matrix_)[rowIdx].end();
+            for (; colIt != colEndIt; ++colIt) {
+                (*colIt) = 0.0;
+            }
+        };
+
+        //printSparseMatrix(std::cout, *matrix_, "J", "row");
+    }
+    
+    Problem &problem_()
+    { return *problemPtr_; }
     const Problem &problem_() const
     { return *problemPtr_; }
+    const Model &model_() const
+    { return problem_().model(); }
+    Model &model_()
+    { return problem_().model(); }
     const GridView &gridView_() const
     { return problem_().gridView(); }
     const VertexMapper &vertexMapper_() const
@@ -248,6 +384,8 @@ private:
 
     Matrix *matrix_;
     bool reuseMatrix_;
+    std::vector<EntityColor> vertexColor_;
+    std::vector<EntityColor> elementColor_;
     std::vector<int> ghostIndices_;
 
     SolutionVector residual_;
