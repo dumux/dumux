@@ -96,7 +96,8 @@ public:
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
           variables_(gridView),
-          dt_(0)
+          dt_(0),
+          resultWriter_(asImp().name())
     {
 //        // calculate the bounding box of the grid view
 //        VertexIterator vIt = gridView.template begin<dim>();
