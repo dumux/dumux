@@ -97,7 +97,7 @@ public:
           timeManager_(verbose),
           variables_(gridView),
           dt_(0),
-          resultWriter_(asImp().name())
+          resultWriter_(asImp_().name())
     {
 //        // calculate the bounding box of the grid view
 //        VertexIterator vIt = gridView.template begin<dim>();
