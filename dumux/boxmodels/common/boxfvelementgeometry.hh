@@ -692,7 +692,7 @@ public:
 
             // calculate the shape function gradients
             //typedef Dune::FieldVector< Dune::FieldVector< CoordScalar, dim >, 1 > ShapeJacobian;
-            typedef Dune::FieldVector< CoordScalar, 1 >                           ShapeValue;
+            typedef Dune::FieldVector< CoordScalar, 1 > ShapeValue;
             std::vector<ShapeJacobian> localJac;
             std::vector<ShapeValue>    shapeVal;
             localFiniteElement.localBasis().evaluateJacobian(subContVolFace[k].ipLocal, localJac);
@@ -816,17 +816,13 @@ public:
                         }
                     }
 
-    //                typedef Dune::FieldVector< CoordScalar, 1 > ShapeValue;
                     std::vector<ShapeJacobian> localJac;
-    //                std::vector<ShapeValue>    shapeVal;
                     localFiniteElement.localBasis().evaluateJacobian(subContVol[vert].localCenter, localJac);
-    //                localFiniteElement.localBasis().evaluateFunction(subContVol[vert].ipLocal, shapeVal);
 
                     Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT =
                             geometry.jacobianInverseTransposed(subContVol[vert].localCenter);
                     for (int vert = 0; vert < numVertices; vert++)
                         jacInvT.mv(localJac[vert][0], subContVol[vert].gradCenter[vert]);
-    //                    subContVol[vert].shapeValue[vert] = Scalar(shapeVal[vert]);
                 }
         }
     }
