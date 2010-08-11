@@ -344,7 +344,7 @@ public:
         typedef Dune::SeqILU0<JacobianMatrix,SolVector,RhsVector> SeqPreCond;
         JacobianMatrix B(A);
         exchanger_.sumEntries(B);
-        SeqPreCond seqPreCond(B, 0.9);
+        SeqPreCond seqPreCond(B, 1.0);
 
         typedef Dune::PDELab::NonoverlappingOperator<GridFunctionSpace,JacobianMatrix,SolVector,RhsVector> POP;
         POP pop(gfs,A,phelper);
@@ -387,6 +387,7 @@ class ISTLBackend_NoOverlap_Loop_Pardiso
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
     typedef Dune::PDELab::ParallelISTLHelper<GridFunctionSpace> PHELPER;
 
 public:
@@ -426,8 +427,8 @@ public:
     \param[in] r right hand side
     \param[in] reduction to be achieved
     */
-    template<class JacobianMatrix, class SolVector, class RhsVector>
-    void apply(JacobianMatrix& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
+    template<class M, class SolVector, class RhsVector>
+    void apply(M& A, SolVector& z, RhsVector& r, typename SolVector::ElementType reduction)
     {
         typedef Dune::SeqPardiso<JacobianMatrix,SolVector,RhsVector> SeqPreCond;
         JacobianMatrix B(A);

@@ -169,20 +169,60 @@ public:
         }
         reuseMatrix_ = false;
 
-        // set the entries for the ghost nodes
+        // calculate the global residual
+        residual_ = 0;
+        gridOperatorSpace_->residual(u, residual_);
+
         typedef typename Matrix::block_type BlockType;
+        // set the entries for the ghost nodes
         BlockType Id(0.0);
         for (int i=0; i < BlockType::rows; ++i)
             Id[i][i] = 1.0;
 
         for (int i=0; i < ghostIndices_.size(); ++i) {
             int globI = ghostIndices_[i];
-            (*matrix_)[globI][globI] = Id;
-        }
 
-        // calculate the global residual
-        residual_ = 0;
-        gridOperatorSpace_->residual(u, residual_);
+            (*matrix_)[globI] = 0;
+            (*matrix_)[globI][globI] = Id;
+            residual_[globI] = 0;
+            u[globI] = 0;
+        }
+//        typedef typename Matrix::RowIterator RowIterator;
+//        typedef typename Matrix::ColIterator ColIterator;
+//        const typename Matrix::block_type::size_type rowsInBlock = Matrix::block_type::rows;
+//        const typename Matrix::block_type::size_type colsInBlock = Matrix::block_type::cols;
+//        Scalar diagonalEntry[rowsInBlock];
+//        RowIterator endIBlock = matrix_->end();
+//        for (RowIterator iBlock = matrix_->begin(); iBlock != endIBlock; ++iBlock) {
+//            BlockType &diagBlock = (*iBlock)[iBlock.index()];
+//
+//            for (int i = 0; i < rowsInBlock; ++i) {
+//                diagonalEntry[i] = 0;
+//                for (int j = 0; j < colsInBlock; ++j) {
+//                    diagonalEntry[i] = std::max(diagonalEntry[i],
+//                                                std::abs(diagBlock[i][j]));
+//                    }
+//
+//                if (diagonalEntry[i] < 1e-14)
+//                    diagonalEntry[i] = 1.0;
+//            }
+//
+//            // divide right-hand side
+//            for (int i = 0; i < rowsInBlock; i++) {
+//                (residual_)[iBlock.index()][i] /= diagonalEntry[i];
+//                }
+//
+//            // divide row of the jacobian
+//            ColIterator endJBlock = iBlock->end();
+//            for (ColIterator jBlock = iBlock->begin(); jBlock != endJBlock; ++jBlock) {
+//                for (int i = 0; i < rowsInBlock; i++) {
+//                    for (int j = 0; j < colsInBlock; j++) {
+//                        (*jBlock)[i][j] /= diagonalEntry[i];
+//                    }
+//                }
+//            }
+//        }
+
     }
 
     void setMatrixReuseable(bool yesno = true)

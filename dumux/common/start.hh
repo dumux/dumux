@@ -88,7 +88,7 @@ int startFromDGF(int argc, char **argv)
 
         // create grid
         // -> load the grid from file
-        GridPointer gridPtr = GridPointer(dgfFileName);
+        GridPointer gridPtr(dgfFileName);
         if (mpiHelper.size() > 1)
         	gridPtr->loadBalance();
         Dune::gridinfo(*gridPtr);

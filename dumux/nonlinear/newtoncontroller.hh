@@ -26,10 +26,10 @@
 #include <dumux/common/exceptions.hh>
 
 #include <dune/istl/overlappingschwarz.hh>
-#include <dune/istl/schwarz.hh>
+//#include <dune/istl/schwarz.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
-#include "dune/istl/owneroverlapcopy.hh"
+//#include "dune/istl/owneroverlapcopy.hh"
 
 #include <dune/istl/io.hh>
 
@@ -182,6 +182,7 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
@@ -333,8 +334,8 @@ public:
      * Throws Dumux::NumericalProblem if the linear solver didn't
      * converge.
      */
-    template <class Matrix, class Vector>
-    void newtonSolveLinear(const Matrix &A,
+    template <class Vector>
+    void newtonSolveLinear(const JacobianMatrix &A,
                            Vector &u,
                            const Vector &b)
     {
@@ -535,8 +536,8 @@ protected:
     };
 
 
-    template <class Matrix, class Vector>
-    void solveLinear_(const Matrix &A,
+    template <class Vector>
+    void solveLinear_(const JacobianMatrix &A,
                       Vector &x,
                       const Vector &b,
                       Scalar residReduction)
