@@ -20,6 +20,7 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 
 #include <dumux/boxmodels/1p/1pmodel.hh>
@@ -47,7 +48,7 @@ public:
 
 // Set the grid type
 #if HAVE_UG
-SET_PROP(OnePTestProblem, Grid) { typedef Dune::UGGrid<3> type; };
+SET_PROP(OnePTestProblem, Grid) { typedef Dune::ALUCubeGrid<3,3> type; };
 #else
 //SET_PROP(OnePTestProblem, Grid) { typedef Dune::SGrid<3, 3> type; };
 SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<3>);
