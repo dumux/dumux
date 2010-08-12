@@ -17,7 +17,7 @@
  *****************************************************************************/
 #include "config.h"
 
-#include "test_2p_problem.hh"
+#include "test_transport_problem.hh"
 
 #include <dune/grid/common/gridinfo.hh>
 
@@ -40,7 +40,7 @@ void usage(const char *progname)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(TwoPTestProblem) TypeTag;
+        typedef TTAG(TransportTestProblem) TypeTag;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -80,9 +80,9 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> N(6); N[0] = 30;
+        Dune::FieldVector<int,dim> N(4); N[0] = 4;
         Dune::FieldVector<double ,dim> L(0);
-        Dune::FieldVector<double,dim> H(60); H[0] = 300;
+        Dune::FieldVector<double,dim> H(1);
         Grid grid(N,L,H);
 
         ////////////////////////////////////////////////////////////
@@ -97,6 +97,7 @@ int main(int argc, char** argv)
 
         problem.timeManager().init(problem, 0, dt, tEnd, !restart);
         problem.timeManager().run();
+
         return 0;
     }
     catch (Dune::Exception &e) {

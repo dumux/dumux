@@ -15,8 +15,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_TEST_2P_PROBLEM_HH
-#define DUMUX_TEST_2P_PROBLEM_HH
+#ifndef DUMUX_TEST_IMPES_PROBLEM_HH
+#define DUMUX_TEST_IMPES_PROBLEM_HH
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -36,57 +36,57 @@
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
 #include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
 
-#include "test_2p_spatialparams.hh"
+#include "test_impes_spatialparams.hh"
 
 namespace Dumux
 {
 
 template<class TypeTag>
-class Test2PProblem;
+class TestIMPESProblem;
 
 //////////
 // Specify the properties
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TwoPTestProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties, Transport));
+NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties, Transport));
 
 // Set the grid type
-SET_PROP(TwoPTestProblem, Grid)
+SET_PROP(IMPESTestProblem, Grid)
 {
     //    typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
 
 // Set the problem property
-SET_PROP(TwoPTestProblem, Problem)
+SET_PROP(IMPESTestProblem, Problem)
 {
 public:
-    typedef Dumux::Test2PProblem<TTAG(TwoPTestProblem)> type;
+    typedef Dumux::TestIMPESProblem<TTAG(IMPESTestProblem)> type;
 };
 
 // Set the model properties
-SET_PROP(TwoPTestProblem, SaturationModel)
+SET_PROP(IMPESTestProblem, SaturationModel)
 {
-    typedef Dumux::FVSaturation2P<TTAG(TwoPTestProblem)> type;
+    typedef Dumux::FVSaturation2P<TTAG(IMPESTestProblem)> type;
 };
-SET_TYPE_PROP(TwoPTestProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
-SET_TYPE_PROP(TwoPTestProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
 
-SET_PROP(TwoPTestProblem, PressureModel)
+SET_PROP(IMPESTestProblem, PressureModel)
 {
-    typedef Dumux::FVVelocity2P<TTAG(TwoPTestProblem)> type;
-//    typedef Dumux::FVMPFAOVelocity2P<TTAG(TwoPTestProblem)> type;
+    typedef Dumux::FVVelocity2P<TTAG(IMPESTestProblem)> type;
+//    typedef Dumux::FVMPFAOVelocity2P<TTAG(IMPESTestProblem)> type;
 };
 
-//SET_INT_PROP(TwoPTestProblem, VelocityFormulation,
+//SET_INT_PROP(IMPESTestProblem, VelocityFormulation,
 //        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityW);
 
-//SET_INT_PROP(TwoPTestProblem, PressureFormulation,
+//SET_INT_PROP(IMPESTestProblem, PressureFormulation,
 //        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureGlobal);
 
 // Set the wetting phase
-SET_PROP(TwoPTestProblem, WettingPhase)
+SET_PROP(IMPESTestProblem, WettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -95,7 +95,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(TwoPTestProblem, NonwettingPhase)
+SET_PROP(IMPESTestProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -104,29 +104,29 @@ public:
 };
 
 // Set the spatial parameters
-SET_PROP(TwoPTestProblem, SpatialParameters)
+SET_PROP(IMPESTestProblem, SpatialParameters)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 public:
-    typedef Dumux::Test2PSpatialParams<TypeTag> type;
+    typedef Dumux::TestIMPESSpatialParams<TypeTag> type;
 };
 
 // Enable gravity
-SET_BOOL_PROP(TwoPTestProblem, EnableGravity, false);
+SET_BOOL_PROP(IMPESTestProblem, EnableGravity, false);
 
-SET_SCALAR_PROP(TwoPTestProblem, CFLFactor, 0.95);
+SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
 }
 
 /*!
  * \ingroup DecoupledProblems
  */
-template<class TypeTag = TTAG(TwoPTestProblem)>
-class Test2PProblem: public IMPESProblem2P<TypeTag, Test2PProblem<TypeTag> >
+template<class TypeTag = TTAG(IMPESTestProblem)>
+class TestIMPESProblem: public IMPESProblem2P<TypeTag, TestIMPESProblem<TypeTag> >
 {
-typedef Test2PProblem<TypeTag> ThisType;
+typedef TestIMPESProblem<TypeTag> ThisType;
 typedef IMPESProblem2P<TypeTag, ThisType> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
@@ -153,7 +153,7 @@ typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
-Test2PProblem(const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
+TestIMPESProblem(const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
 ParentType(gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
 {
 }

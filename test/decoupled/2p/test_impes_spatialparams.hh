@@ -13,11 +13,10 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef TEST_2P_SPATIALPARAMETERS_HH
-#define TEST_2P_SPATIALPARAMETERS_HH
+#ifndef TEST_IMPES_SPATIALPARAMETERS_HH
+#define TEST_IMPES_SPATIALPARAMETERS_HH
 
 
-//#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -28,7 +27,7 @@ namespace Dumux
 /** \todo Please doc me! */
 
 template<class TypeTag>
-class Test2PSpatialParams
+class TestIMPESSpatialParams
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -72,7 +71,7 @@ public:
     }
 
 
-    Test2PSpatialParams(const GridView& gridView)
+    TestIMPESSpatialParams(const GridView& gridView)
     : constPermeability_(0)
     {
         // residual saturations
