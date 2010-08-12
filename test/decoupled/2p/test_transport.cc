@@ -33,7 +33,7 @@
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s [--restart restartTime] tEnd\n")%progname;
+    std::cout << boost::format("usage: %s [--restart restartTime] gridFile.dgf tEnd\n")%progname;
     exit(1);
 }
 
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // parse the command line arguments
         ////////////////////////////////////////////////////////////
-        if (argc < 2)
+        if (argc < 3)
             usage(argv[0]);
 
         // deal with the restart stuff
@@ -68,9 +68,15 @@ int main(int argc, char** argv)
             std::istringstream(argv[argPos++]) >> restartTime;
         }
 
-        if (argc - argPos != 1) {
+        if (argc - argPos != 2) {
             usage(argv[0]);
         }
+
+        ////////////////////////////////////////////////////////////
+        // create the grid
+        ////////////////////////////////////////////////////////////
+        const char *dgfFileName = argv[argPos++];
+        Dune::GridPtr<Grid> gridPtr(dgfFileName);
 
         // read the initial time step and the end time
         double tEnd, dt;
@@ -78,18 +84,11 @@ int main(int argc, char** argv)
         dt = tEnd;
 
         ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> N(4); N[0] = 4;
-        Dune::FieldVector<double ,dim> L(0);
-        Dune::FieldVector<double,dim> H(1);
-        Grid grid(N,L,H);
-
-        ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
-
-        Problem problem(grid.leafView(), L, H);
+        Dune::FieldVector<double ,dim> L(0);
+        Dune::FieldVector<double,dim> H(1);
+        Problem problem(gridPtr->leafView(), L, H);
 
         // load restart file if necessarry
         if (restart)

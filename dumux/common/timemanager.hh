@@ -322,8 +322,7 @@ public:
             if (problem_->shouldWriteOutput())
                 problem_->writeOutput();
 
-            // advance the simulated time by the current time step
-            // size
+            // advance the simulated time by the current time step size
             Scalar dt = timeStepSize();
             time_ += timeStepSize_;
             ++timeStepIdx_;

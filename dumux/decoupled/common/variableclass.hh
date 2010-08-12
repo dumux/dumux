@@ -141,19 +141,6 @@ public:
         instream >> pressure_[globalIdx];
     }
 
-private:
-    void initializeGlobalVariables(Dune::FieldVector<Scalar, dim>& initialVel)
-    {
-        //resize to grid size
-        pressure_.resize(gridSize_);
-        velocity_.resize(gridSize_);//depends on pressure
-        potential_.resize(gridSize_);//depends on pressure
-
-        //initialise variables
-        pressure_ = 0;
-        velocity_ = initialVel;
-    }
-
     void initializePotentials(Dune::FieldVector<Scalar, dim>& initialVel)
     {
         if (initialVel.two_norm())
@@ -184,6 +171,50 @@ private:
         }
         return;
     }
+
+private:
+    void initializeGlobalVariables(Dune::FieldVector<Scalar, dim>& initialVel)
+    {
+        //resize to grid size
+        pressure_.resize(gridSize_);
+        velocity_.resize(gridSize_);//depends on pressure
+        potential_.resize(gridSize_);//depends on pressure
+
+        //initialise variables
+        pressure_ = 0;
+        velocity_ = initialVel;
+    }
+
+//    void initializePotentials(Dune::FieldVector<Scalar, dim>& initialVel)
+//    {
+//        if (initialVel.two_norm())
+//        {
+//            // compute update vector
+//            ElementIterator eItEnd = gridView_.template end<0> ();
+//            for (ElementIterator eIt = gridView_.template begin<0> (); eIt != eItEnd; ++eIt)
+//            {
+//                // cell index
+//                int globalIdxI = elementMapper_.map(*eIt);
+//
+//                // run through all intersections with neighbors and boundary
+//                IntersectionIterator isItEnd = gridView_.iend(*eIt);
+//                for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isItEnd; ++isIt)
+//                {
+//                    // local number of facet
+//                    int indexInInside = isIt->indexInInside();
+//
+//                    Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+//
+//                    for (int i = 0; i < numPhase; i++) {potential_[globalIdxI][indexInInside][i] = initialVel * unitOuterNormal;}
+//                }
+//            }
+//        }
+//        else
+//        {
+//            potential_ = Dune::FieldVector<Scalar, numPhase> (0);
+//        }
+//        return;
+//    }
 
     //Write saturation and pressure into file
     template<class MultiWriter>

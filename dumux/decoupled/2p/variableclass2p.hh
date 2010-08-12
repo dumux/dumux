@@ -82,7 +82,7 @@ public:
     typedef typename SolutionTypes::PhasePropertyElemFace PhasePropertyElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of scalars
     typedef typename SolutionTypes::DimVecElemFace DimVecElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 
-private:
+public:
     const int codim_;
 
     ScalarSolutionType saturation_;

@@ -33,6 +33,11 @@
 namespace Dumux
 {
 
+namespace Properties
+{
+NEW_PROP_TAG(CFLFactor);
+}
+
 /*! \ingroup diffusion
  * @brief base class that defines the parameters of loosely coupled diffusion and transport equations
  *
@@ -66,6 +71,9 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::ScalarSolution Solution;
 
     enum
     {
@@ -108,6 +116,7 @@ public:
 //                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
 //            }
 //        }
+    	 cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
 
         model_ = new Model(asImp_()) ;
     }
@@ -126,7 +135,7 @@ public:
     void init()
     {
         // set the initial condition of the model
-        model().initial();
+        model().initialize();
     }
 
     /*!
@@ -150,7 +159,6 @@ public:
     void timeIntegration()
     {
         // allocate temporary vectors for the updates
-        typedef typename Model::SolutionType Solution;
         Solution k1 = asImp_().variables().saturation();
 
         dt_ = 1e100;
@@ -160,7 +168,7 @@ public:
         model().update(t, dt_, k1);
 
         //make sure t_old + dt is not larger than tend
-        dt_ = std::min(dt_, timeManager().episodeMaxTimeStepSize());
+        dt_ = std::min(dt_*cFLFactor_, timeManager().episodeMaxTimeStepSize());
         timeManager().setTimeStepSize(dt_);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
@@ -226,7 +234,7 @@ public:
         if (gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
 
-        resultWriter_.beginTimestep(timeManager_.time(), gridView());
+        resultWriter_.beginTimestep(timeManager_.time() + timeManager_.timeStepSize(), gridView());
         model().addOutputVtkFields(resultWriter_);
         resultWriter_.endTimestep();
     }
@@ -338,7 +346,7 @@ public:
         typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.serializeBegin(*asImp_());
+        res.serializeBegin(asImp_());
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
         timeManager_.serialize(res);
@@ -404,6 +412,8 @@ private:
     Variables variables_;
 
     Scalar dt_;
+
+    Scalar cFLFactor_;
 
     Model* model_;
 

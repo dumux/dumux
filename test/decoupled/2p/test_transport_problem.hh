@@ -22,8 +22,7 @@
 #include <dune/grid/uggrid.hh>
 #endif
 
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
@@ -51,8 +50,7 @@ NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(DecoupledModel, Transport));
 // Set the grid type
 SET_PROP(TransportTestProblem, Grid)
 {
-	//    typedef Dune::YaspGrid<2> type;
-	typedef Dune::SGrid<2, 2> type;
+	typedef Dune::UGGrid<2> type;
 };
 
 // Set the problem property
