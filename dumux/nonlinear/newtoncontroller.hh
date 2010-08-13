@@ -183,6 +183,7 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
@@ -190,18 +191,21 @@ class NewtonController
 
     typedef NewtonConvergenceWriter<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence))>  ConvergenceWriter;
 
+    enum { enableTimeStepRampUp = GET_PROP_VALUE(TypeTag, PTAG(EnableTimeStepRampUp)) };
+
 public:
     NewtonController()
         : endIterMsgStream_(std::ostringstream::out),
           convergenceWriter_(asImp_())
     {
         numSteps_ = 0;
+        rampUpSteps_ = 4;
 
         // maximum acceptable difference of any primary variable
         // between two iterations for convergence
         setRelTolerance(1e-7);
-        setTargetSteps(8);
-        setMaxSteps(12);
+        setTargetSteps(9);
+        setMaxSteps(15);
     };
 
     /*!
@@ -230,7 +234,7 @@ public:
      */
     bool newtonProceed(const SolutionVector &u)
     {
-        if (numSteps_ < 2)
+        if (numSteps_ < rampUpSteps_)
             return true; // we always do at least two iterations
         else if (numSteps_ >= maxSteps_) {
             // we have exceeded the allowed number of steps.  if the
@@ -262,6 +266,18 @@ public:
     {
         method_ = &method;
         numSteps_ = 0;
+
+        if (enableTimeStepRampUp) {
+            destTimeStepSize_ = timeManager_().timeStepSize();
+
+            // reduce initial time step size for ramp-up
+            timeManager_().setTimeStepSize(destTimeStepSize_ / rampUpSteps_);
+
+            // reduce the tolerance for partial reassembly during the
+            // ramp up
+            finalTolerance_ = tolerance_;
+            tolerance_ = tolerance_*1e8;
+        }
 
         convergenceWriter_.beginTimestep();
     }
@@ -397,6 +413,17 @@ public:
     void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
     {
         ++numSteps_;
+        
+        if (enableTimeStepRampUp) {
+            if (numSteps_ < rampUpSteps_) {
+                // increase time step size
+                Scalar dt = destTimeStepSize_ * (numSteps_ + 1) / rampUpSteps_;
+                timeManager_().setTimeStepSize(dt);
+            }
+            else // if we're not in the ramp-up reduce the target
+                 // tolerance
+                tolerance_ = finalTolerance_;
+        }
 
         if (verbose())
             std::cout << "\rNewton iteration " << numSteps_ << " done: "
@@ -409,6 +436,8 @@ public:
      */
     void newtonEnd()
     {
+        if (enableTimeStepRampUp)
+            timeManager_().setTimeStepSize(destTimeStepSize_);
         convergenceWriter_.endTimestep();
     }
 
@@ -439,20 +468,24 @@ public:
      */
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
+        Scalar n = numSteps_;
+        if (enableTimeStepRampUp) {
+            n -= rampUpSteps_/2;
+        }
         // be agressive reducing the timestep size but
         // conservative when increasing it. the rationale is
         // that we want to avoid failing in the next newton
         // iteration which would require another linearization
         // of the problem.
-        if (numSteps_ > targetSteps_) {
-            Scalar percent = ((Scalar) numSteps_ - targetSteps_)/targetSteps_;
+        if (n > targetSteps_) {
+            Scalar percent = (n - targetSteps_)/targetSteps_;
             return oldTimeStep/(1.0 + percent);
         }
         else {
             /*Scalar percent = (Scalar(1))/targetSteps_;
               return oldTimeStep*(1 + percent);
             */
-            Scalar percent = ((Scalar) targetSteps_ - numSteps_)/targetSteps_;
+            Scalar percent = (targetSteps_ - n)/targetSteps_;
             return oldTimeStep*(1.0 + percent/1.2);
         }
     }
@@ -498,6 +531,12 @@ protected:
      */
     const Problem &problem_() const
     { return method_->problem(); }
+
+    /*!
+     * \brief Returns a reference to the time manager.
+     */
+    TimeManager &timeManager_()
+    { return problem_().timeManager(); }
 
     /*!
      * \brief Returns a reference to the problem.
@@ -579,9 +618,15 @@ protected:
     ConvergenceWriter convergenceWriter_;
 
     Scalar tolerance_;
+    Scalar finalTolerance_;
 
     Scalar error_;
     Scalar lastError_;
+
+    // number of iterations for the time-step ramp-up
+    Scalar rampUpSteps_;
+    // time step size after the ramp-up
+    Scalar destTimeStepSize_;
 
     // optimal number of iterations we want to achive
     int targetSteps_;

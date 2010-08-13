@@ -97,6 +97,10 @@ NEW_PROP_TAG(EnableJacobianRecycling);
 //! tolerance
 NEW_PROP_TAG(EnablePartialReassemble);
 
+//! Specify whether the time step should be increased in between
+//! newton iterations to achive larger time step sizes
+NEW_PROP_TAG(EnableTimeStepRampUp);
+
 // mappers from local to global indices
 NEW_PROP_TAG(VertexMapper);
 NEW_PROP_TAG(ElementMapper);
@@ -372,6 +376,8 @@ SET_PROP(BoxModel, LocalOperator)
 SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);
 // disable partial reassembling by default
 SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
+// disable time-step ramp up by default
+SET_BOOL_PROP(BoxModel, EnableTimeStepRampUp, false);
 
 // \}
 
