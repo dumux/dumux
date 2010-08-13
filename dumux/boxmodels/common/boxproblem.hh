@@ -162,6 +162,18 @@ public:
     }
 
     /*!
+     * \brief Returns the newton contoller object
+     */
+    NewtonController &newtonController()
+    { return newtonCtl_; }
+
+    /*!
+     * \copydoc newtonController()
+     */
+    const NewtonController &newtonController() const
+    { return newtonCtl_; }
+
+    /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
      *        timestep has been computed and the simulation time has
      *        been updated.

@@ -234,7 +234,7 @@ public:
             return true; // we always do at least two iterations
         else if (numSteps_ >= maxSteps_) {
             // we have exceeded the allowed number of steps.  if the
-            // relative error was reduced by a factor of at least 5,
+            // relative error was reduced by a factor of at least 4,
             // we proceed even if we are above the maximum number of
             // steps
             return error_*4.0 < lastError_ && !asImp_().newtonConverged();
@@ -293,7 +293,6 @@ public:
 
         int idxI = -1;
         int idxJ = -1;
-        int numReassemble = 0;
         for (int i = 0; i < int(uOld.size()); ++i) {
             bool needReassemble = false;
             for (int j = 0; j < FV::size; ++j) {
@@ -312,17 +311,11 @@ public:
                 }
             }
             
-            if (needReassemble) {
-                ++ numReassemble;
-            }
-            
             model_().jacobianAssembler().markVertexRed(i, 
                                                        needReassemble);
         }
 
         model_().jacobianAssembler().computeColors();
-
-        endIterMsg() << ", red vertices: " << numReassemble << "/" << uOld.size();
         error_ = gridView_().comm().max(error_);
     }
 

@@ -368,9 +368,9 @@ public:
 SET_PROP(BoxModel, LocalOperator)
 { typedef typename GET_PROP(TypeTag, PTAG(GridOperatorSpace))::LocalOperator type; };
 
-// enable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, true);
-// enable partial reassembling by default
+// disable jacobian matrix recycling by default
+SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);
+// disable partial reassembling by default
 SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
 
 // \}

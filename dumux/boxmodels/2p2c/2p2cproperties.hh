@@ -270,6 +270,11 @@ public:
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };
 
+// enable jacobian matrix recycling by default
+SET_BOOL_PROP(BoxTwoPTwoC, EnableJacobianRecycling, true);
+// enable partial reassembling by default
+SET_BOOL_PROP(BoxTwoPTwoC, EnablePartialReassemble, true);
+
 // \}
 }
 

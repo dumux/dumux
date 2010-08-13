@@ -255,13 +255,11 @@ public:
         }
 
         // Mark all yellow elements
-        int numReassemble = 0;
         int numGreen = 0;
         elemIt = gridView_().template begin<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             int elemIdx = this->elementMapper_().map(*elemIt);
             if (elementColor_[elemIdx] == Red) {
-                ++ numReassemble;
                 continue; // element is red already!
             }
 
@@ -270,22 +268,24 @@ public:
             for (int i=0; i < numVerts; ++i) {
                 int globalI = vertexMapper_().map(*elemIt, i, dim);
                 if (vertexColor_[globalI] == Yellow) {
-                    ++ numReassemble;
                     isYellow = true;
                     break;
                 }
             };
             
             if (isYellow) {
-                ++ isYellow;
                 elementColor_[elemIdx] = Yellow;
             }
-
-            if (elementColor_[elemIdx] == Green)
+            else // elementColor_[elemIdx] == Green
                 ++ numGreen;
         }
         
-    }
+        int numTot = gridView_().size(0);
+        problem_().newtonController().endIterMsg()
+            << ", reassemble " 
+            << numTot - numGreen << "/" << numTot
+            << " (" << 100*Scalar(numTot - numGreen)/numTot << "%) elems";
+    };
     
     int vertexColor(const Element &element, int vertIdx) const
     {

@@ -221,6 +221,11 @@ SET_TYPE_PROP(BoxTwoP, FluidSystem, FluidSystem2P<TypeTag>);
 
 SET_TYPE_PROP(BoxTwoP, FluidState, TwoPFluidState<TypeTag>);
 
+// enable jacobian matrix recycling by default
+SET_BOOL_PROP(BoxTwoP, EnableJacobianRecycling, true);
+// enable partial reassembling by default
+SET_BOOL_PROP(BoxTwoP, EnablePartialReassemble, true);
+
 // \}
 }
 
