@@ -143,7 +143,6 @@ public:
 
     void initialize(bool solveTwice = true)
     {
-
         updateMaterialLaws();
 
         assemble(true);
@@ -184,6 +183,15 @@ public:
     {
         assemble(false);
         solve();
+
+        return;
+    }
+
+    void update()
+    {
+        updateMaterialLaws();
+
+        pressure(false);
 
         return;
     }
@@ -245,6 +253,12 @@ public:
         typename Variables::ScalarSolutionType *viscosityNonwetting = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
         *viscosityNonwetting = problem_.variables().viscosityNonwetting();
         writer.addCellData(viscosityNonwetting, "nonwetting viscosity");
+
+//        typename Variables::ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
+//
+//        *saturation = problem_.variables().saturation();
+//
+//        writer.addCellData(saturation, "wetting saturation");
 
         return;
     }

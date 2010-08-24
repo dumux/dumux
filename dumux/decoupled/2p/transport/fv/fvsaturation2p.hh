@@ -57,12 +57,13 @@ namespace Dumux
 template<class TypeTag>
 class FVSaturation2P
 {
-	typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-	typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-	typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-	typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-	typedef typename ReferenceElements::Container ReferenceElementContainer;
-	typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
+    typedef typename ReferenceElements::Container ReferenceElementContainer;
+    typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
 
 	typedef typename GET_PROP_TYPE(TypeTag, PTAG(DiffusivePart)) DiffusivePart;
 	typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConvectivePart)) ConvectivePart;
@@ -164,12 +165,26 @@ public:
 	 */
 	void updateMaterialLaws(RepresentationType& saturation, bool iterate);
 
-	template<class MultiWriter>
-	void addOutputVtkFields(MultiWriter &writer)
-	{
-		problem_.variables().addOutputVtkFields(writer);
-		return;
-	}
+    //! \brief Write data files
+    /*  \param name file name */
+    template<class MultiWriter>
+    void addOutputVtkFields(MultiWriter &writer)
+    {
+        typename Variables::ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
+
+        *saturation = problem_.variables().saturation();
+
+        if (saturationType_ == Sw)
+        {
+        writer.addCellData(saturation, "wetting saturation");
+        }
+        if (saturationType_ == Sn)
+        {
+        writer.addCellData(saturation, "nonwetting saturation");
+        }
+
+        return;
+    }
 
 	// serialization methods
 	template<class Restarter>

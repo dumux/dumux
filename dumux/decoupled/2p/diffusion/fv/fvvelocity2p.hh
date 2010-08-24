@@ -50,6 +50,7 @@ template<class TypeTag>
 class FVVelocity2P: public FVPressure2P<TypeTag>
 {
     typedef FVVelocity2P<TypeTag> ThisType;
+    typedef FVPressure2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -150,6 +151,15 @@ public:
      *  to provide the velocity field required for the solution of the saturation equation.
      */
     void calculateVelocity();
+
+    void update()
+    {
+        ParentType::update();
+
+        calculateVelocity();
+
+        return;
+    }
 
 private:
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation)); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
