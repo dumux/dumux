@@ -1,4 +1,4 @@
-// $Id: test_propertysystem.cc 3831 2010-07-14 08:37:48Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
