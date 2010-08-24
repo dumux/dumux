@@ -1,4 +1,4 @@
-// $Id: 1p2cboxmodel.hh 3738 2010-06-15 14:01:09Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *

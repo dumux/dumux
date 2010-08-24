@@ -1,4 +1,4 @@
-// $Id: 1p2cboxproblem.hh 3838 2010-07-15 08:31:53Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
