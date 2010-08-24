@@ -488,6 +488,25 @@ public:
     }
 
     /*!
+     * \brief Set the sampling points  of the
+     *        spline function.
+     *
+     * The second derivatives at the boundaries are 0 in this
+     * case. (i.e. this is a natural spline)
+     */
+    void set(int numSamples,
+             const BlockVector &x,
+             const BlockVector &y)
+    {
+        BTDMatrix M(numSamples);
+        BlockVector d(numSamples);
+        fillNatural_(M, d, numSamples, x, y);
+
+        // solve for the moments
+        M.solve(moments_, d);
+    }
+
+    /*!
      * \brief Return true iff the given x is in range [x1, xn].
      */
     bool applies(Scalar x) const
@@ -686,11 +705,12 @@ public:
 
 private:
     // fill the system of equations for a natrural spline
+    template <class ScalarArray>
     void fillNatural_(BTDMatrix &M,
                       BlockVector &d,
                       int numSamples,
-                      const Scalar *x,
-                      const Scalar *y)
+                      const ScalarArray &x,
+                      const ScalarArray &y)
     {
         x_.resize(numSamples);
         y_.resize(numSamples);
@@ -699,7 +719,7 @@ private:
         // copy sample points, make sure that the first x value is
         // smaller than the last one
         for (int i = 0; i < numSamples; ++i) {
-            int idx = 0;
+            int idx = i;
             if (x[0] > x[numSamples - 1])
                 idx = numSamples - i - 1;
             x_[i] = x[idx];
