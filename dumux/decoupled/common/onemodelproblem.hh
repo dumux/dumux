@@ -33,11 +33,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(CFLFactor);
-}
-
 /*! \ingroup diffusion
  * @brief base class that defines the parameters of loosely coupled diffusion and transport equations
  *
@@ -116,7 +111,6 @@ public:
 //                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
 //            }
 //        }
-    	 cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
 
         model_ = new Model(asImp_()) ;
     }
@@ -144,36 +138,6 @@ public:
      */
     void preTimeStep()
     { };
-
-    /*!
-     * \brief Called by Dumux::TimeManager in order to do a time
-     *        integration on the model.
-     *
-     * \note \a timeStepSize and \a nextStepSize are references and may
-     *       be modified by the timeIntegration(). On exit of this
-     *       function \a timeStepSize must contain the step size
-     *       actually used by the time integration for the current
-     *       steo, and \a nextStepSize must contain a suggestion for the
-     *       next time step size.
-     */
-    void timeIntegration()
-    {
-        // allocate temporary vectors for the updates
-        Solution k1 = asImp_().variables().saturation();
-
-        dt_ = 1e100;
-        Scalar t = timeManager().time();
-
-        // obtain the first update and the time step size
-        model().update(t, dt_, k1);
-
-        //make sure t_old + dt is not larger than tend
-        dt_ = std::min(dt_*cFLFactor_, timeManager().episodeMaxTimeStepSize());
-        timeManager().setTimeStepSize(dt_);
-
-        // explicit Euler: Sat <- Sat + dt*N(Sat)
-        asImp_().variables().saturation() += (k1 *= dt_);
-    }
 
     /*!
      * \brief Called by Dumux::TimeManager just before the time
@@ -412,8 +376,6 @@ private:
     Variables variables_;
 
     Scalar dt_;
-
-    Scalar cFLFactor_;
 
     Model* model_;
 

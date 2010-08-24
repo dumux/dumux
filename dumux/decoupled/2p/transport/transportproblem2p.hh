@@ -48,6 +48,9 @@ class TransportProblem2P : public OneModelProblem<TypeTag, Implementation>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::ScalarSolution Solution;
+
 
     enum {
         dim = Grid::dimension,
@@ -100,6 +103,24 @@ public:
     const SpatialParameters &spatialParameters() const
     { return spatialParameters_; }
 
+    void timeIntegration()
+    {
+        // allocate temporary vectors for the updates
+        Solution k1 = asImp_().variables().saturation();
+
+        dt_ = 1e100;
+        Scalar t = timeManager().time();
+
+        // obtain the first update and the time step size
+        model().update(t, dt_, k1);
+
+        //make sure t_old + dt is not larger than tend
+        dt_ = std::min(dt_*cFLFactor_, timeManager().episodeMaxTimeStepSize());
+        timeManager().setTimeStepSize(dt_);
+
+        // explicit Euler: Sat <- Sat + dt*N(Sat)
+        asImp_().variables().saturation() += (k1 *= dt_);
+    }
 
     // \}
 
@@ -108,6 +129,8 @@ private:
 
     // fluids and material properties
     SpatialParameters spatialParameters_;
+
+    static const Scalar cFLFactor_= GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
 };
 
 }
