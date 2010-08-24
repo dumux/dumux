@@ -1,4 +1,4 @@
-// $Id: 2pniboxmodel.hh 3738 2010-06-15 14:01:09Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2007 by Peter Bastian                                     *
  *   Institute of Parallel and Distributed System                            *

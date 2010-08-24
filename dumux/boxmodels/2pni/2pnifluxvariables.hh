@@ -1,4 +1,4 @@
-// $Id: 2pnifluxvariables.hh 3793 2010-06-25 15:38:42Z melanie $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
