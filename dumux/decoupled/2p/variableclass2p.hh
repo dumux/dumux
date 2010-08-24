@@ -60,6 +60,8 @@ private:
     enum
     {
         pw = Indices::pressureW, pn = Indices::pressureNW, pglobal = Indices::pressureGlobal,
+                Sw = Indices::saturationW,
+                Sn = Indices::saturationNW
     };
     enum
     {
@@ -67,6 +69,7 @@ private:
     };
 
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -82,7 +85,7 @@ public:
     typedef typename SolutionTypes::PhasePropertyElemFace PhasePropertyElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of scalars
     typedef typename SolutionTypes::DimVecElemFace DimVecElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 
-public:
+private:
     const int codim_;
 
     ScalarSolutionType saturation_;
@@ -193,13 +196,48 @@ public:
             *pressure = this->pressure();
             *saturation = saturation_;
 
-            writer.addCellData(pressure, "pressure");
-            writer.addCellData(saturation, "saturation");
+            if (pressureType_ == pw)
+            {
+            writer.addCellData(pressure, "wetting pressure");
+            }
+            if (pressureType_ == pn)
+            {
+                writer.addCellData(pressure, "nonwetting pressure");
+            }
+            if (pressureType_ == pglobal)
+            {
+                writer.addCellData(pressure, "global pressure");
+            }
 
-//            // exemplary output for phase-dependent stuff
-//            ScalarSolutionType *fractionalflowW = writer.template createField<Scalar, 1> (this->gridSize());
-//            *fractionalflowW = fracFlowFunc_[wPhaseIdx];
-//            writer.addCellData(fractionalflowW, "fractional flow function w-phase");
+            if (saturationType_ == Sw)
+            {
+            writer.addCellData(saturation, "wetting saturation");
+            }
+            if (saturationType_ == Sn)
+            {
+            writer.addCellData(saturation, "nonwetting saturation");
+            }
+
+            // output  phase-dependent stuff
+            ScalarSolutionType *pC = writer.template createField<Scalar, 1> (this->gridSize());
+            *pC = capillaryPressure_;
+            writer.addCellData(pC, "capillary pressure");
+
+            ScalarSolutionType *densityWetting = writer.template createField<Scalar, 1> (this->gridSize());
+            *densityWetting = density_[wPhaseIdx];
+            writer.addCellData(densityWetting, "wetting density");
+
+            ScalarSolutionType *densityNonwetting = writer.template createField<Scalar, 1> (this->gridSize());
+            *densityNonwetting = density_[nPhaseIdx];
+            writer.addCellData(densityNonwetting, "nonwetting density");
+
+            ScalarSolutionType *viscosityWetting = writer.template createField<Scalar, 1> (this->gridSize());
+            *viscosityWetting = viscosity_[wPhaseIdx];
+            writer.addCellData(viscosityWetting, "wetting viscosity");
+
+            ScalarSolutionType *viscosityNonwetting = writer.template createField<Scalar, 1> (this->gridSize());
+            *viscosityNonwetting = viscosity_[nPhaseIdx];
+            writer.addCellData(viscosityNonwetting, "nonwetting viscosity");
         }
         if (codim_ == dim)
         {
@@ -215,6 +253,10 @@ public:
 
         return;
     }
+
+    ////////////////////////////////////////////////////////////
+    // functions returning the vectors of the primary variables
+    ////////////////////////////////////////////////////////////
 
     //! Return the vector of the transported quantity, which is the saturation for an IMPES scheme
     ScalarSolutionType& transportedQuantity()
@@ -233,6 +275,10 @@ public:
         return saturation_;
     }
 
+    //////////////////////////////////////////////////////////////
+    // functions returning the vectors of secondary variables
+    //////////////////////////////////////////////////////////////
+
     //! Return velocity vector
     DimVecElemFaceType& velocitySecondPhase()
     {
@@ -243,6 +289,108 @@ public:
     {
         return velocitySecondPhase_;
     }
+
+    //! Return vector of wetting phase mobilities
+    ScalarSolutionType& mobilityWetting()
+    {
+        return mobility_[wPhaseIdx];
+    }
+
+    const ScalarSolutionType& mobilityWetting() const
+    {
+        return mobility_[wPhaseIdx];
+    }
+
+    //! Return vector of non-wetting phase mobilities
+    ScalarSolutionType& mobilityNonwetting()
+    {
+        return mobility_[nPhaseIdx];
+    }
+
+    const ScalarSolutionType& mobilityNonwetting() const
+    {
+        return mobility_[nPhaseIdx];
+    }
+
+    //! Return vector of wetting phase fractional flow functions
+    ScalarSolutionType& fracFlowFuncWetting()
+    {
+        return fracFlowFunc_[wPhaseIdx];
+    }
+
+    const ScalarSolutionType& fracFlowFuncWetting() const
+    {
+        return fracFlowFunc_[wPhaseIdx];
+    }
+
+    //! Return vector of non-wetting phase fractional flow functions
+    ScalarSolutionType& fracFlowFuncNonwetting()
+    {
+        return fracFlowFunc_[nPhaseIdx];
+    }
+
+    const ScalarSolutionType& fracFlowFuncNonwetting() const
+    {
+        return fracFlowFunc_[nPhaseIdx];
+    }
+
+    //! Return capillary pressure vector
+    ScalarSolutionType& capillaryPressure()
+    {
+        return capillaryPressure_;
+    }
+
+    const ScalarSolutionType& capillaryPressure() const
+    {
+        return capillaryPressure_;
+    }
+
+    //! Return density vector
+    ScalarSolutionType& densityWetting()
+    {
+        return density_[wPhaseIdx];
+    }
+    ScalarSolutionType& densityWetting() const
+    {
+        return density_[wPhaseIdx];
+    }
+
+    //! Return density vector
+    ScalarSolutionType& densityNonwetting()
+    {
+        return density_[nPhaseIdx];
+    }
+
+    const ScalarSolutionType& densityNonwetting() const
+    {
+        return density_[nPhaseIdx];
+    }
+
+    //! Return density vector
+    ScalarSolutionType& viscosityWetting()
+    {
+        return viscosity_[wPhaseIdx];
+    }
+
+    const ScalarSolutionType& viscosityWetting() const
+    {
+        return viscosity_[wPhaseIdx];
+    }
+
+    //! Return density vector
+    ScalarSolutionType& viscosityNonwetting()
+    {
+        return viscosity_[nPhaseIdx];
+    }
+
+    const ScalarSolutionType& viscosityNonwetting() const
+    {
+        return viscosity_[nPhaseIdx];
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // functions returning entries of the vectors of secondary variables
+    ////////////////////////////////////////////////////////////////////////
 
     //! Return vector of wetting phase potential gradients
     Scalar& potentialWetting(int Idx1, int Idx2)
@@ -255,6 +403,7 @@ public:
         return this->potential(Idx1, Idx2)[wPhaseIdx];
     }
 
+
     //! Return vector of non-wetting phase potential gradients
     Scalar& potentialNonwetting(int Idx1, int Idx2)
     {
@@ -265,6 +414,7 @@ public:
     {
         return this->potential(Idx1, Idx2)[nPhaseIdx];
     }
+
 
     //! Return vector of wetting phase mobilities
     Scalar& mobilityWetting(int Idx)
@@ -277,6 +427,7 @@ public:
         return mobility_[wPhaseIdx][Idx][0];
     }
 
+
     //! Return vector of non-wetting phase mobilities
     Scalar& mobilityNonwetting(int Idx)
     {
@@ -287,6 +438,7 @@ public:
     {
         return mobility_[nPhaseIdx][Idx][0];
     }
+
 
     //! Return vector of wetting phase fractional flow functions
     Scalar& fracFlowFuncWetting(int Idx)
@@ -299,6 +451,7 @@ public:
         return fracFlowFunc_[wPhaseIdx][Idx][0];
     }
 
+
     //! Return vector of non-wetting phase fractional flow functions
     Scalar& fracFlowFuncNonwetting(int Idx)
     {
@@ -309,6 +462,7 @@ public:
     {
         return fracFlowFunc_[nPhaseIdx][Idx][0];
     }
+
 
     //! Return capillary pressure vector
     Scalar& capillaryPressure(int Idx)
@@ -321,6 +475,7 @@ public:
         return capillaryPressure_[Idx][0];
     }
 
+
     //! Return density vector
     Scalar& densityWetting(int Idx)
     {
@@ -330,6 +485,7 @@ public:
     {
         return density_[wPhaseIdx][Idx][0];
     }
+
 
     //! Return density vector
     Scalar& densityNonwetting(int Idx)
@@ -342,6 +498,7 @@ public:
         return density_[nPhaseIdx][Idx][0];
     }
 
+
     //! Return density vector
     Scalar& viscosityWetting(int Idx)
     {
@@ -353,6 +510,7 @@ public:
         return viscosity_[wPhaseIdx][Idx][0];
     }
 
+
     //! Return density vector
     Scalar& viscosityNonwetting(int Idx)
     {
@@ -363,6 +521,7 @@ public:
     {
         return viscosity_[nPhaseIdx][Idx][0];
     }
+
 
     Scalar& volumecorrection(int Idx)
     {
