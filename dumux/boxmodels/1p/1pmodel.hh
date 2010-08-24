@@ -1,4 +1,4 @@
-// $Id: 1pboxmodel.hh 3738 2010-06-15 14:01:09Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2009 by Onur Dogan                                        *
