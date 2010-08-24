@@ -1,4 +1,4 @@
-// $Id: test_diffusion.cc 3780 2010-06-24 07:39:50Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 20010 by Markus Wolff                                     *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
