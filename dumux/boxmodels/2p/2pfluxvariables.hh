@@ -1,4 +1,4 @@
-// $Id: 2pfluxvariables.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *

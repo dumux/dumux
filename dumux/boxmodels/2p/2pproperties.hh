@@ -1,4 +1,4 @@
-// $Id: 2pproperties.hh 3357 2010-03-25 13:02:05Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
