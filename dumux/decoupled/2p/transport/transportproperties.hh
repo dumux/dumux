@@ -1,4 +1,4 @@
-// $Id: transportproperties.hh 3732 2010-06-11 13:27:20Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *

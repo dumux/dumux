@@ -1,4 +1,4 @@
-// $Id: impes.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *

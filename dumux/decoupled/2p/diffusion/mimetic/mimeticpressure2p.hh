@@ -1,4 +1,4 @@
-// $Id: mimeticpressure2p.hh 3826 2010-07-14 07:03:41Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Copyright (C) 2007-2009 by Jochen Fritz                                 *

@@ -1,4 +1,4 @@
-// $Id: mpfaproperties.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2010 by Markus Wolff                                      *
  *   Copyright (C) 2007-2010 by Yufei Cao                                    *

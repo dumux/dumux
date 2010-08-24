@@ -1,4 +1,4 @@
-// $Id: decoupledproperties.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *
