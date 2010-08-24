@@ -1,4 +1,4 @@
-// $Id: 2p2cproblem.hh 3723 2010-06-10 13:26:00Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *

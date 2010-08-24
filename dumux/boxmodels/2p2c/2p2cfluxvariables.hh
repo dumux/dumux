@@ -1,4 +1,4 @@
-// $Id: 2p2cfluxvariables.hh 3736 2010-06-15 09:52:10Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *

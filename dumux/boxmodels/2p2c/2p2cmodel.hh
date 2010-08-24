@@ -1,4 +1,4 @@
-// $Id: 2p2cmodel.hh 3795 2010-06-25 16:08:04Z melanie $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Klaus Mosthaf, Andreas Lauser, Bernd Flemisch     *
  *   Institute of Hydraulic Engineering                                      *

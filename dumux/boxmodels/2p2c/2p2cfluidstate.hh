@@ -1,4 +1,4 @@
-// $Id: 2p2cfluidstate.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2010 by Andreas Lauser                                    *
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
