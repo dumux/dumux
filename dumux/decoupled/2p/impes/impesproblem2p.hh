@@ -21,8 +21,8 @@
 #ifndef DUMUX_IMPESPROBLEM_2P_HH
 #define DUMUX_IMPESPROBLEM_2P_HH
 
-#include <dumux/decoupled/common/impes.hh>
-#include <dumux/decoupled/common/impesproblem.hh>
+#include <dumux/decoupled/common/impet.hh>
+#include <dumux/decoupled/common/impetproblem.hh>
 #include <dumux/decoupled/2p/variableclass2p.hh>
 #include <dumux/material/fluidsystems/2p_system.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
@@ -37,9 +37,9 @@ namespace Dumux
  * \todo Please doc me more!
  */
 template<class TypeTag, class Implementation>
-class IMPESProblem2P : public IMPESProblem<TypeTag, Implementation>
+class IMPESProblem2P : public IMPETProblem<TypeTag, Implementation>
 {
-    typedef IMPESProblem<TypeTag, Implementation> ParentType;
+    typedef IMPETProblem<TypeTag, Implementation> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid Grid;

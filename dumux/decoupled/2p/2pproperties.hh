@@ -30,7 +30,7 @@
 #include <dune/istl/preconditioners.hh>
 
 //Dumux-includes
-#include <dumux/decoupled/common/impesproperties.hh>
+#include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/transport/transportproperties.hh>
 
 namespace Dumux
@@ -74,7 +74,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPES, Transport))
+NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPET, Transport))
 ;
 
 //////////////////////////////////////////////////////////////////
