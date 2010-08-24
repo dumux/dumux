@@ -30,8 +30,7 @@
 #include <dumux/decoupled/2p/diffusion/fvmpfa/mpfaproperties.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
-//#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocities2p_upwind.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
 
 #include "test_diffusion_spatialparams.hh"
@@ -124,8 +123,7 @@ SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG
 NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
 SET_INT_PROP(FVMPFAOVelocity2PTestProblem, FileName, FileNames::MPFAName);
 SET_INT_PROP(FVMPFAOVelocity2PTestProblem, IterationNumberPreconditioner, 1);
-//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocities2P<TypeTag>);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVMPFAOVelocity2PTestProblem)>);
 
 // set the types for the mimetic FD method
