@@ -1,4 +1,4 @@
-// $Id: test_1p2c.cc 3779 2010-06-24 07:07:56Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *

@@ -1,4 +1,4 @@
-// $Id: test_2pni.cc 3779 2010-06-24 07:07:56Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2007-2008 by Melanie Darcis                               *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

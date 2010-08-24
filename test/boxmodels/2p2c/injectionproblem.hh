@@ -1,4 +1,4 @@
-// $Id: injectionproblem.hh 3783 2010-06-24 11:33:53Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
