@@ -106,20 +106,20 @@ public:
     void timeIntegration()
     {
         // allocate temporary vectors for the updates
-        Solution k1 = asImp_().variables().saturation();
+        Solution k1 = this->asImp_().variables().saturation();
 
-        dt_ = 1e100;
-        Scalar t = timeManager().time();
+        Scalar t = this->timeManager().time();
+        Scalar dt = 1e100;
 
         // obtain the first update and the time step size
-        model().update(t, dt_, k1);
+        this->model().update(t, dt, k1);
 
         //make sure t_old + dt is not larger than tend
-        dt_ = std::min(dt_*cFLFactor_, timeManager().episodeMaxTimeStepSize());
-        timeManager().setTimeStepSize(dt_);
+        dt = std::min(dt*cFLFactor_, this->timeManager().episodeMaxTimeStepSize());
+        this->timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        asImp_().variables().saturation() += (k1 *= dt_);
+        this->asImp_().variables().saturation() += (k1 *= dt);
     }
 
     // \}

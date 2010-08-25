@@ -50,9 +50,11 @@ template<class TypeTag>
 class FVVelocity1P: public FVPressure1P<TypeTag>
 {
     typedef FVVelocity1P<TypeTag> ThisType;
+    typedef FVPressure1P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
      typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
      typedef typename ReferenceElements::Container ReferenceElementContainer;
      typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
@@ -74,7 +76,6 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
@@ -103,6 +104,75 @@ public:
      */
     void calculateVelocity();
 
+    void initialize()
+    {
+        ParentType::initialize();
+
+        calculateVelocity();
+
+        return;
+    }
+
+    //! \brief Write data files
+    /*  \param name file name */
+    template<class MultiWriter>
+    void addOutputVtkFields(MultiWriter &writer)
+    {
+        ParentType::addOutputVtkFields(writer);
+
+        typename Variables::ScalarSolutionType *velocityX = writer.template createField<Scalar, 1> (
+                this->problem().gridView().size(0));
+        typename Variables::ScalarSolutionType *velocityY = writer.template createField<Scalar, 1> (
+                this->problem().gridView().size(0));
+
+        // compute update vector
+        ElementIterator eItEnd = this->problem().gridView().template end<0>();
+        for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        {
+            // cell index
+            int globalIdx = this->problem().variables().index(*eIt);
+
+
+            Dune::FieldVector<Scalar, 2*dim> flux(0);
+            // run through all intersections with neighbors and boundary
+            IntersectionIterator
+            isItEnd = this->problem().gridView().iend(*eIt);
+            for (IntersectionIterator
+                    isIt = this->problem().gridView().ibegin(*eIt); isIt
+                    !=isItEnd; ++isIt)
+            {
+                int isIndex = isIt->indexInInside();
+
+                flux[isIndex] = isIt->geometry().volume() * (isIt->centerUnitOuterNormal() * this->problem().variables().velocityElementFace(*eIt, isIndex));
+            }
+
+            Dune::FieldVector<Scalar, dim> refVelocity(0);
+            refVelocity[0] = 0.5 * (flux[1] - flux[0]);
+            refVelocity[1] = 0.5 * (flux[3] - flux[2]);
+
+            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0,
+                    0);
+
+            // get the transposed Jacobian of the element mapping
+            const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
+            FieldMatrix jacobianT(jacobianInv);
+            jacobianT.invert();
+
+            // calculate the element velocity by the Piola transformation
+            Dune::FieldVector<Scalar, dim> elementVelocity(0);
+            jacobianT.umtv(refVelocity, elementVelocity);
+            elementVelocity /= eIt->geometry().integrationElement(localPos);
+
+            (*velocityX)[globalIdx] = elementVelocity[0];
+            (*velocityY)[globalIdx] = elementVelocity[1];
+        }
+
+        writer.addCellData(velocityX, "x-velocity");
+        writer.addCellData(velocityY, "y-velocity");
+
+        return;
+    }
+
 };
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocity()
@@ -119,8 +189,8 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
 
         Scalar pressI = this->problem().variables().pressure()[globalIdxI];
 
-        Scalar temperatureI = problem_.temperature(globalPos, *eIt);
-        referencePressI = problem_.referencePressure(globalPos, *eIt);
+        Scalar temperatureI = this->problem().temperature(globalPos, *eIt);
+        Scalar referencePressI = this->problem().referencePressure(globalPos, *eIt);
 
         Scalar densityI = Fluid::density(temperatureI, referencePressI);
 
@@ -184,23 +254,20 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
 
                 Scalar pressJ = this->problem().variables().pressure()[globalIdxJ];
 
-                Scalar temperatureJ = problem_.temperature(globalPos, *eIt);
-                referencePressJ = problem_.referencePressure(globalPos, *eIt);
+                Scalar temperatureJ = this->problem().temperature(globalPos, *eIt);
+                Scalar referencePressJ = this->problem().referencePressure(globalPos, *eIt);
 
-                Scalar densityJ = Fluid::density(temperatureI, referencePressI);
+                Scalar densityJ = Fluid::density(temperatureJ, referencePressJ);
 
                 //calculate potential gradients
-                Scalar potential = 0;
-
-                potentialW = this->problem().variables().potentialWetting(globalIdxI, isIndex);
-                potentialNW = this->problem().variables().potentialNonwetting(globalIdxI, isIndex);
+                Scalar potential = this->problem().variables().potential(globalIdxI, isIndex);
 
                 Scalar density = (potential> 0.) ? densityI : densityJ;
 
                 density= (potential == 0.) ? 0.5 * (densityI + densityJ) : density;
 
 
-                    potential = (pressI - pressJ) / dist;
+                potential = (pressI - pressJ) / dist;
 
 
                 potential += density * (unitOuterNormal * this->gravity);
@@ -210,16 +277,17 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
 
                 //do the upwinding depending on the potentials
                 density = (potential> 0.) ? densityI : densityJ;
-                density = (potential == 0.) ? 0.5 * (densityI + densityJ) : densityW;
+                density = (potential == 0.) ? 0.5 * (densityI + densityJ) : density;
 
                 //calculate the gravity term
                 Dune::FieldVector<Scalar,dimWorld> velocity(permeability);
-                Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
+                velocity *= (pressI - pressJ)/dist;
 
+                Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
                 gravityTerm *= (this->gravity*permeability)*density;
 
                 //store velocities
-                this->problem().variables().velocity()[globalIdxI][isIndex] = (velocity + gravityTermW);
+                this->problem().variables().velocity()[globalIdxI][isIndex] = (velocity + gravityTerm);
 
             }//end intersection with neighbor
 
@@ -245,14 +313,15 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 Dune::FieldVector<Scalar,dim> permeability(0);
                 permeabilityI.mv(unitOuterNormal, permeability);
 
-                if (bcTypePress == BoundaryConditions::dirichlet)
+                if (bcType == BoundaryConditions::dirichlet)
                 {
                     Scalar pressBound = this->problem().dirichlet(globalPosFace, *isIt);
 
                     //calculate the gravity term
                     Dune::FieldVector<Scalar,dimWorld> velocity(permeability);
-                    Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
+                    velocity *= (pressI - pressBound)/dist;
 
+                    Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
                     gravityTerm *= (this->gravity*permeability)*densityI;
 
                     this->problem().variables().velocity()[globalIdxI][isIndex] = (velocity + gravityTerm);

@@ -106,8 +106,6 @@ SET_INT_PROP(DecoupledOneP, NumPhases, 1)
 ;
 SET_INT_PROP(DecoupledOneP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
-SET_BOOL_PROP(DecoupledOneP, EnableCompressibility, false);
-
 SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
 
 SET_PROP(DecoupledOneP, PressureCoefficientMatrix)
