@@ -59,6 +59,10 @@ class TransportProblem2P : public OneModelProblem<TypeTag, Implementation>
 
     typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
 
+    // private!! copy constructor
+    TransportProblem2P(const TransportProblem2P&)
+    {}
+
 public:
     TransportProblem2P(const GridView &gridView)
         : ParentType(gridView),

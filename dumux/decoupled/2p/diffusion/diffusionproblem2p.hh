@@ -53,6 +53,10 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag, Implementation>
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+    // private!! copy constructor
+    DiffusionProblem2P(const DiffusionProblem2P&)
+    {}
+
 public:
     DiffusionProblem2P(const GridView &gridView, bool verbose = true) :
         ParentType(gridView, verbose), gravity_(0)

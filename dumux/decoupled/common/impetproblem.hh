@@ -71,6 +71,10 @@ private:
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
+    //private!! copy constructor
+    IMPETProblem(const IMPETProblem&)
+    {}
+
 public:
 
     //! Constructs an object of type IMPETProblemProblem

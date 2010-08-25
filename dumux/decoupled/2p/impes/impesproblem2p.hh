@@ -57,6 +57,9 @@ class IMPESProblem2P : public IMPETProblem<TypeTag, Implementation>
 
     typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
 
+    IMPESProblem2P(const IMPESProblem2P &)
+    {}
+
 public:
     IMPESProblem2P(const GridView &gridView, bool verbose = true)
         : ParentType(gridView, verbose),
