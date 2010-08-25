@@ -97,15 +97,17 @@ public:
         }
 
         pressModel_ = new PressureModel(asImp_());
-        satModel_ = new TransportModel(asImp_());
+
+        transportModel_ = new TransportModel(asImp_());
         model_ = new IMPETModel(asImp_()) ;
+
     }
 
     //! destructor
     virtual ~IMPETProblem ()
     {
         delete pressModel_;
-        delete satModel_;
+        delete transportModel_;
         delete model_;
     }
 
@@ -336,13 +338,13 @@ public:
      * \brief Returns numerical model used for the problem.
      */
     TransportModel &transportModel()
-    { return *satModel_; }
+    { return *transportModel_; }
 
     /*!
      * \copydoc model()
      */
     const TransportModel &transportModel() const
-    { return *satModel_; }
+    { return *transportModel_; }
     // \}
 
     /*!
@@ -444,7 +446,7 @@ private:
     Scalar dt_;
 
     PressureModel* pressModel_;//!< object including the pressure model
-    TransportModel* satModel_;//!< object including the transport model
+    TransportModel* transportModel_;//!< object including the saturation model
     IMPETModel* model_;
 
     VtkMultiWriter resultWriter_;
