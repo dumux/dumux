@@ -799,7 +799,11 @@ private:
     };
 
     Scalar h_(int i) const
-    { return x_[i] - x_[i-1]; }
+    {
+        assert(x_[i] - x_[i-1] > 0);
+
+        return x_[i] - x_[i-1];
+    }
 
     int findIntervalIdx_(Scalar x) const
     {
