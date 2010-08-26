@@ -26,6 +26,8 @@
 #ifndef DUMUX_2P_FLUX_VARIABLES_HH
 #define DUMUX_2P_FLUX_VARIABLES_HH
 
+#include "2pproperties.hh"
+
 #include <dumux/common/math.hh>
 
 namespace Dumux
@@ -47,7 +49,6 @@ class TwoPFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -59,16 +60,13 @@ class TwoPFluxVariables
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
 
 public:
     TwoPFluxVariables(const Problem &problem,
@@ -81,7 +79,6 @@ public:
         scvfIdx_ = faceIdx;
 
         for (int phase = 0; phase < numPhases; ++phase) {
-            densityAtIP_[phase] = Scalar(0);
             potentialGrad_[phase] = Scalar(0);
         }
 
@@ -90,41 +87,35 @@ public:
     };
 
 public:
-    /*!
-     * \brief Return the pressure potential multiplied with the
-     *        intrinsic permeability which goes from vertex i to
-     *        vertex j.
-     *
-     * Note that the length of the face's normal is the area of the
-     * phase, so this is not the actual velocity by the integral of
-     * the velocity over the face's area. Also note that the phase
-     * mobility is not yet included here since this would require a
-     * decision on the upwinding approach (which is done in the
-     * actual model).
+    /*
+     * \brief Return the intrinsic permeability.
      */
-    Scalar KmvpNormal(int phaseIdx) const
-    { return KmvpNormal_[phaseIdx]; }
+    const Tensor &intrinsicPermeability() const
+    { return K_; }
 
     /*!
-     * \brief Return the local index of the upstream control volume
+     * \brief Return the pressure potential gradient.
+     */
+    const Vector &potentialGrad(int phaseIdx) const
+    { return potentialGrad_[phaseIdx]; }
+
+    /*!
+     * \brief Given the intrinisc permeability times the pressure
+     *        potential gradient and SCV face normal for a phase,
+     *        return the local index of the downstream control volume
      *        for a given phase.
      */
-    int upstreamIdx(int phaseIdx) const
-    { return upstreamIdx_[phaseIdx]; }
+    int downstreamIdx(Scalar normalFlux) const
+    { return (normalFlux >= 0)?face().j:face().i; }
 
     /*!
-     * \brief Return the local index of the downstream control volume
+     * \brief Given the intrinisc permeability times the pressure
+     *        potential gradient and SCV face normal for a phase,
+     *        return the local index of the upstream control volume
      *        for a given phase.
      */
-    int downstreamIdx(int phaseIdx) const
-    { return downstreamIdx_[phaseIdx]; }
-
-    /*!
-     * \brief Return density [kg/m^3] of a phase at the integration
-     *        point.
-     */
-    Scalar densityAtIP(int phaseIdx) const
-    { return densityAtIP_[phaseIdx]; }
+    int upstreamIdx(Scalar normalFlux) const
+    { return (normalFlux > 0)?face().i:face().j; }
 
     const SCVFace &face() const
     { return fvElemGeom_.subContVolFace[scvfIdx_]; }
@@ -135,23 +126,9 @@ protected:
 
     // gradients
     Vector potentialGrad_[numPhases];
-    Vector concentrationGrad_[numPhases];
 
-    // density of each face at the integration point
-    Scalar densityAtIP_[numPhases];
-
-    // intrinsic permeability times pressure potential gradient
-    // projected on the face normal
-    Scalar KmvpNormal_[numPhases];
-
-    // local index of the upwind vertex for each phase
-    int upstreamIdx_[numPhases];
-    // local index of the downwind vertex for each phase
-    int downstreamIdx_[numPhases];
-
-    // the diffusion coefficient for the porous medium
-    Scalar porousDiffCoeff_[numPhases];
-
+    // intrinsic permeability
+    Tensor K_;
 
 private:
     void calculateGradients_(const Problem &problem,
@@ -159,7 +136,6 @@ private:
                              const ElementVolumeVariables &elemDat)
     {
         // calculate gradients
-        Vector tmp(0.0);
         for (int idx = 0;
              idx < fvElemGeom_.numVertices;
              idx++) // loop over adjacent vertices
@@ -171,26 +147,34 @@ private:
             for (int phase = 0; phase < numPhases; phase++)
             {
                 // the pressure gradient
-                tmp = feGrad;
+                Vector tmp(feGrad);
                 tmp *= elemDat[idx].pressure(phase);
                 potentialGrad_[phase] += tmp;
-
-                // phase density
-                densityAtIP_[phase]
-                    +=
-                    elemDat[idx].density(phase) *
-                    face().shapeValue[idx];
             }
         }
 
         // correct the pressure gradients by the hydrostatic
         // pressure due to gravity
-        for (int phase=0; phase < numPhases; phase++)
+        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
         {
-            tmp = problem.gravity();
-            tmp *= densityAtIP_[phase];
+            // calculate the phase density at the integration
+            // point. for this we make sure only existing phases
+            // matter
+            Scalar SI = elemDat[face().i].saturation(phaseIdx);
+            Scalar SJ = elemDat[face().j].saturation(phaseIdx);
+            Scalar rhoI = elemDat[face().i].density(phaseIdx);
+            Scalar rhoJ = elemDat[face().j].density(phaseIdx);
+            Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
+            Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+            if (fI + fJ == 0)
+                fI = fJ = 0.5; // doesn't matter because no phase is
+                               // present in both cells!
+            Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
 
-            potentialGrad_[phase] -= tmp;
+            Vector tmp(problem.gravity());
+            tmp *= density;
+
+            potentialGrad_[phaseIdx] -= tmp;
         }
     }
 
@@ -199,34 +183,14 @@ private:
                               const ElementVolumeVariables &elemDat)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
-        // multiply the pressure potential with the intrinsic
-        // permeability
-        Tensor K;
-        Vector Kmvp;
-        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
-        {
-            spatialParams.meanK(K,
-                   spatialParams.intrinsicPermeability(element,
-                                                       fvElemGeom_,
-                                                       face().i),
-                    spatialParams.intrinsicPermeability(element,
-                                                        fvElemGeom_,
-                                                        face().j));
-            K.mv(potentialGrad_[phaseIdx], Kmvp);
-            KmvpNormal_[phaseIdx] = - (Kmvp * face().normal);
-        }
-
-        // set the upstream and downstream vertices
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            upstreamIdx_[phaseIdx] = face().i;
-            downstreamIdx_[phaseIdx] = face().j;
-
-            if (KmvpNormal_[phaseIdx] < 0) {
-                std::swap(upstreamIdx_[phaseIdx],
-                          downstreamIdx_[phaseIdx]);
-            }
-        }
+        // calculate the intrinsic permeability
+        spatialParams.meanK(K_,
+                            spatialParams.intrinsicPermeability(element,
+                                                                fvElemGeom_,
+                                                                face().i),
+                            spatialParams.intrinsicPermeability(element,
+                                                                fvElemGeom_,
+                                                                face().j));
     }
 };
 

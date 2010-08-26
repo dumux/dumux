@@ -26,6 +26,8 @@
 
 #include "1p2cfluidstate.hh"
 
+#include <dumux/boxmodels/common/boxvolumevariables.hh>
+
 namespace Dumux
 {
 
@@ -34,40 +36,37 @@ namespace Dumux
  *        finite volume in the single-phase, two-component model.
  */
 template <class TypeTag>
-class OnePTwoCVolumeVariables
+class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
+    typedef BoxVolumeVariables<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
-    typedef OnePTwoCFluidState<TypeTag> FluidState;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
         numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
-        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        konti = Indices::konti,
-        transport = Indices::transport
+        phaseIndex = GET_PROP_VALUE(TypeTag, PTAG(PhaseIndex)),
+        comp1Index = GET_PROP_VALUE(TypeTag, PTAG(Comp1Index)),
+        comp2Index = GET_PROP_VALUE(TypeTag, PTAG(Comp2Index)),
+        
+        contiEqIdx = Indices::contiEqIdx,
+        transEqIdx = Indices::transEqIdx
     };
 
-
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container ReferenceElements;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef OnePTwoCFluidState<TypeTag> FluidState;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef Dune::FieldVector<Scalar,dimWorld> Vector;
 
 public:
     /*!
@@ -80,48 +79,121 @@ public:
                 int scvIdx,
                 bool isOldSol)
     {
-        primaryVars_ = priVars;
+        ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
-        porosity = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
-        tortuosity = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
-        dispersivity = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
+        porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
+        tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
+        dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
 
         Scalar temperature = problem.temperature(element, elemGeom, scvIdx);
         fluidState_.update(priVars, temperature);
-        pressure = fluidState_.phasePressure(konti);
-        molefraction = fluidState_.moleFrac(konti, transport);
 
-        density = FluidSystem::phaseDensity(konti, temperature, pressure, fluidState_);
-        molarDensity = FluidSystem::molarDensity(konti, temperature, pressure, fluidState_);
-        viscosity = FluidSystem::phaseViscosity(konti, temperature, pressure, fluidState_);
-        diffCoeff = FluidSystem::diffCoeff(konti, transport, konti, temperature, pressure, fluidState_);
+        viscosity_ = FluidSystem::phaseViscosity(phaseIndex,
+                                                 temperature,
+                                                 pressure(),
+                                                 fluidState_);
+        diffCoeff_ = FluidSystem::diffCoeff(phaseIndex, 
+                                            comp1Index,
+                                            comp2Index,
+                                            temperature,
+                                            pressure(),
+                                            *this);
+
+        Valgrind::CheckDefined(porosity_);
+        Valgrind::CheckDefined(viscosity_);
+        Valgrind::CheckDefined(tortuosity_);
+        Valgrind::CheckDefined(dispersivity_);
+        Valgrind::CheckDefined(diffCoeff_);
+        Valgrind::CheckDefined(fluidState_);
+        Valgrind::CheckDefined(*this);
     }
+    
+    /*!
+     * \brief Return the fluid configuration at the given primary
+     *        variables
+     */
+    const FluidState &fluidState() const
+    { return fluidState_; }
 
     /*!
-     * \brief Sets the evaluation point used in the by the local jacobian.
+     * \brief Returns density the of the fluid phase.
      */
-    void setEvalPoint(const Implementation *ep)
-    { }
+    Scalar density() const
+    { return fluidState_.density(phaseIndex); }
 
     /*!
-     * \brief Return the vector of primary variables
+     * \brief Returns mole fraction of a component in the phase
      */
-    const PrimaryVariables &primaryVars() const
-    { return primaryVars_; }
+    Scalar moleFrac(int compIdx) const
+    { return fluidState_.moleFrac(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
 
-    Scalar porosity;
-    Scalar density;
-    Scalar viscosity;
-    Scalar tortuosity;
-    Dune::FieldVector<Scalar,dim> dispersivity;
-    Scalar diffCoeff;
-    Scalar molefraction;
-    Scalar pressure;
-    Scalar molarDensity;
-    FluidState fluidState_;
+    /*!
+     * \brief Returns mass fraction of a component in the phase
+     */
+    Scalar massFrac(int compIdx) const
+    { return fluidState_.massFrac(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
+
+    /*!
+     * \brief Returns concentration of a component in the phase
+     */
+    Scalar concentration(int compIdx) const
+    { return fluidState_.concentration(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
+    
+    /*!
+     * \brief Returns the effective pressure of a given phase within
+     *        the control volume.
+     */
+    Scalar pressure() const
+    { return fluidState_.phasePressure(phaseIndex); }
+
+    /*!
+     * \brief Returns the binary diffusion coefficient in the fluid
+     */
+    Scalar diffCoeff() const
+    { return diffCoeff_; }
+
+    /*!
+     * \brief Returns the tortuosity of the streamlines of the fluid.
+     */
+    Scalar tortuosity() const
+    { return tortuosity_; }
+
+    /*!
+     * \brief Returns the dispersivity of the fluid's streamlines.
+     */
+    const Vector &dispersivity() const
+    { return dispersivity_; }
+
+    /*!
+     * \brief Returns temperature inside the sub-control volume.
+     *
+     * Note that we assume thermodynamic equilibrium, i.e. the
+     * temperature of the rock matrix and of all fluid phases are
+     * identical.
+     */
+    Scalar temperature() const
+    { return fluidState_.temperature(); }
+
+    /*!
+     * \brief Returns the dynamic viscosity [Pa s] of a given phase
+     *        within the control volume.
+     */
+    Scalar viscosity() const
+    { return viscosity_; }
+
+    /*!
+     * \brief Returns the average porosity within the control volume.
+     */
+    Scalar porosity() const
+    { return porosity_; }    
 
 protected:
-    PrimaryVariables primaryVars_;
+    Scalar porosity_;
+    Scalar viscosity_;
+    Scalar tortuosity_;
+    Vector dispersivity_;
+    Scalar diffCoeff_;
+    FluidState fluidState_;
 };
 
 }

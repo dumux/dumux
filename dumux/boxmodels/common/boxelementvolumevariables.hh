@@ -18,8 +18,6 @@
 
 #include "boxproperties.hh"
 
-#include <vector>
-#include <dumux/common/boundarytypes.hh>
 
 namespace Dumux
 {
@@ -36,7 +34,6 @@ class BoxElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(Type
     typedef std::vector<VolumeVariables> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;

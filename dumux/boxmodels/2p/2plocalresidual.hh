@@ -26,14 +26,8 @@
 
 #include "2pproperties.hh"
 
-#include "2pvolumevariables.hh"
 
-#include "2pfluxvariables.hh"
-#include "2pfluidstate.hh"
 
-#include <dune/common/collectivecommunication.hh>
-#include <vector>
-#include <iostream>
 
 namespace Dumux
 {
@@ -53,7 +47,6 @@ protected:
     typedef TwoPLocalResidual<TypeTag> ThisType;
     typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -80,23 +73,12 @@ protected:
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DofMapper)) DofMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
-
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
     static const Scalar mobilityUpwindAlpha =
@@ -134,10 +116,10 @@ public:
     void computeFlux(PrimaryVariables &flux, int faceIdx) const
     {
         FluxVariables vars(this->problem_(),
-                      this->elem_(),
-                      this->fvElemGeom_(),
-                      faceIdx,
-                      this->curVolVars_());
+                           this->elem_(),
+                           this->fvElemGeom_(),
+                           faceIdx,
+                           this->curVolVars_());
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
         asImp_()->computeDiffusiveFlux(flux, vars);
@@ -151,25 +133,34 @@ public:
      * This method is called by compute flux and is mainly there for
      * derived models to ease adding equations selectively.
      */
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         ////////
         // advective fluxes of all components in all phases
         ////////
+        Vector tmpVec;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
+            // calculate the flux in the normal direction of the
+            // current sub control volume face
+            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
+                                                tmpVec);
+            Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
+
             // data attached to upstream and the downstream vertices
             // of the current phase
-            const VolumeVariables &up = this->curVolVars_(vars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_(vars.downstreamIdx(phaseIdx));
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
 
             // add advective flux of current component in current
             // phase
             int eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
-            flux[eqIdx] += vars.KmvpNormal(phaseIdx) * (mobilityUpwindAlpha * // upstream vertex
-                    (up.density(phaseIdx) * up.mobility(phaseIdx)) + (1
-                    - mobilityUpwindAlpha) * // downstream vertex
-                    (dn.density(phaseIdx) * dn.mobility(phaseIdx)));
+            flux[eqIdx] += 
+                normalFlux
+                *
+                ((    mobilityUpwindAlpha)*up.density(phaseIdx)*up.mobility(phaseIdx) 
+                 +
+                 (1 - mobilityUpwindAlpha)*dn.density(phaseIdx)*dn.mobility(phaseIdx));
         }
     }
 

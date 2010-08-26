@@ -16,14 +16,10 @@
 #ifndef DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 #define DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 
-#include<vector>
-#include<dune/common/fvector.hh>
-#include<dune/common/geometrytype.hh>
-#include<dune/grid/common/quadraturerules.hh>
-#include<dune/pdelab/gridoperatorspace/gridoperatorspace.hh>
-#include<dune/pdelab/gridoperatorspace/gridoperatorspaceutilities.hh>
 #include<dune/pdelab/localoperator/pattern.hh>
 #include<dune/pdelab/localoperator/flags.hh>
+
+#include "boxproperties.hh"
 
 namespace Dumux {
 
@@ -41,9 +37,6 @@ class BoxLocalOperator
     BoxLocalOperator(const BoxLocalOperator &);
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
 
 public:

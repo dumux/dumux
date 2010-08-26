@@ -39,12 +39,10 @@
 #include <boost/type_traits.hpp>
 
 // Integral Constant Expressions
-#include <boost/type_traits/ice.hpp>
 
 // string formating
 #include <boost/format.hpp>
 
-#include <iostream>
 
 namespace Dumux
 {

@@ -1,5 +1,8 @@
+// $Id: 1p2cproperties.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
- *   Copyright (C) 2009 by Andreas Lauser
+ *   Copyright (C) 2009 by Karin Erbertseder                                 *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -15,49 +18,31 @@
 /*!
  * \file
  *
- * \brief Properties of pure water \f$H_2O\f$.
+ * \brief Defines the primary variable and equation indices used by
+ *        the 1p2c model
  */
-#ifndef DUMUX_OIL_HH
-#define DUMUX_OIL_HH
 
-
-#include "component.hh"
+#ifndef DUMUX_1P2C_INDICES_HH
+#define DUMUX_1P2C_INDICES_HH
 
 namespace Dumux
 {
+
 /*!
- * \brief Rough estimate for testing purposes of some oil.
+ * \brief The indices for the isothermal single-phase, two-component model.
  */
-template <class Scalar>
-class Oil : public Component<Scalar, Oil<Scalar> >
+struct OnePTwoCIndices
 {
-    typedef Component<Scalar, Oil<Scalar> > ParentType;
+    // Equation indices
+    static const int contiEqIdx = 0; //!< continuity equation index
+    static const int transEqIdx = 1; //!< transport equation index
 
-public:
-    /*!
-     * \brief A human readable name for the water.
-     */
-    static const char *name()
-    { return "Oil"; }
-
-    /*!
-     * \brief Rough estimate of the density of oil [kg/m^3].
-     */
-    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
-    {
-        return 890;
-    }
-
-    /*!
-     * \brief Rough estimate of the viscosity of oil kg/(ms).
-     */
-    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
-    {
-        return 8e-3;
-    };
-
+    // primary variable indices
+    static const int pressureIdx = 0; //!< pressure
+    static const int x1Idx = 1; //!< mole fraction of the second component
 };
 
-} // end namepace
+}
 
 #endif
+

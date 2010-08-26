@@ -17,18 +17,12 @@
 #ifndef DUMUX_BOX_MODEL_HH
 #define DUMUX_BOX_MODEL_HH
 
-#include <dumux/common/valgrind.hh>
-#include <dune/grid/common/genericreferenceelements.hh>
-
-#include <boost/format.hpp>
-
 #include "boxproperties.hh"
+#include "boxpropertydefaults.hh"
 
 #include "boxelementvolumevariables.hh"
 #include "boxlocaljacobian.hh"
 #include "boxlocalresidual.hh"
-
-#include "pdelabboxlocaloperator.hh"
 
 namespace Dumux
 {
@@ -68,7 +62,6 @@ class BoxModel
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DofMapper)) DofMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 
     enum {
@@ -85,7 +78,6 @@ class BoxModel
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
@@ -95,6 +87,8 @@ class BoxModel
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+
+    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
 
     // copying a model is not a good idea
     BoxModel(const BoxModel &);
@@ -204,13 +198,30 @@ public:
      * \brief Reference to the current solution as a block vector.
      */
     const SolutionVector &curSol() const
-    { return uCur_; }
+    { 
+        return uCur_; 
+        if (enablePartialReassemble && 
+            jacobianAssembler().inJacobianAssemble())
+        {
+            return jacobianAssembler().evalPoint();
+        }
+        return uCur_;
+    }
 
     /*!
      * \brief Reference to the current solution as a block vector.
      */
     SolutionVector &curSol()
-    { return uCur_; }
+    {
+        return uCur_; 
+
+        if (enablePartialReassemble && 
+            jacobianAssembler().inJacobianAssemble())
+        {
+            return jacobianAssembler().evalPoint();
+        }
+        return uCur_; 
+    }
 
     /*!
      * \brief Reference to the previous solution as a block vector.
@@ -264,6 +275,37 @@ public:
     const LocalResidual &localResidual() const
     { return localJacobian().localResidual(); }
 
+    /*!
+     * \brief Returns the relative weight of a primary variable for
+     *        calculating relative errors.
+     */
+    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    { return 1.0; }
+
+    /*!
+     * \brief Returns the relative error between two vectors of
+     *        primary variables.
+     *
+     * \todo The vertexIdx argument is pretty hacky. it is required by
+     *       models with pseudo primary variables (i.e. the primary
+     *       variable switching models). the clean solution would be
+     *       to access the pseudo primary variables from the primary
+     *       variables.
+     */
+    Scalar relativeErrorVertex(int vertexIdx,
+                               const PrimaryVariables &pv1,
+                               const PrimaryVariables &pv2)
+    {
+        Scalar result = 0.0;
+        for (int j = 0; j < numEq; ++j) {
+            Scalar weight = asImp_().primaryVarWeight(vertexIdx, j);
+            Scalar eqErr = std::abs(pv1[j] - pv2[j])*weight;
+
+            result = std::max(result, eqErr);
+        }
+        return result;
+    }
+    
     /*!
      * \brief Try to progress the model to the next timestep.
      */

@@ -1,5 +1,7 @@
+// $Id: 1pproperties.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
- *   Copyright (C) 2009 by Andreas Lauser
+ *   Copyright (C) 2008-2010 by Andreas Lauser                               *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -15,47 +17,19 @@
 /*!
  * \file
  *
- * \brief Properties of pure water \f$H_2O\f$.
+ * \brief  Indices for the single phase model.
  */
-#ifndef DUMUX_OIL_HH
-#define DUMUX_OIL_HH
-
-
-#include "component.hh"
+#ifndef DUMUX_1P_INDICES_HH
+#define DUMUX_1P_INDICES_HH
 
 namespace Dumux
 {
 /*!
- * \brief Rough estimate for testing purposes of some oil.
+ * \brief Indices for the single phase model.
  */
-template <class Scalar>
-class Oil : public Component<Scalar, Oil<Scalar> >
+struct OnePIndices
 {
-    typedef Component<Scalar, Oil<Scalar> > ParentType;
-
-public:
-    /*!
-     * \brief A human readable name for the water.
-     */
-    static const char *name()
-    { return "Oil"; }
-
-    /*!
-     * \brief Rough estimate of the density of oil [kg/m^3].
-     */
-    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
-    {
-        return 890;
-    }
-
-    /*!
-     * \brief Rough estimate of the viscosity of oil kg/(ms).
-     */
-    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
-    {
-        return 8e-3;
-    };
-
+    static const int pressureIdx = 0;
 };
 
 } // end namepace

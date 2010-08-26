@@ -121,6 +121,10 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
@@ -130,28 +134,39 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
 
         // indices of the primary variables
-        konti = Indices::konti,
-        transport = Indices::transport,
+        pressureIdx = Indices::pressureIdx,
+        x1Idx = Indices::x1Idx,
+
+        // indices of the equations
+        contiEqIdx = Indices::contiEqIdx,
+        transEqIdx = Indices::transEqIdx,
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     TissueTumorProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
+        // calculate the injection volume
+        totalInjectionVolume_ = 0;
+        FVElementGeometry fvGeom;
+        ElementIterator elemIt = gridView.template begin<0>();
+        const ElementIterator endIt = gridView.template end<0>();
+        for (; elemIt != endIt; ++ elemIt) {
+            fvGeom.update(gridView, *elemIt);
+            for (int i = 0; i < fvGeom.numVertices; ++i) {
+                const GlobalPosition &pos = fvGeom.subContVol[i].global;
+                if (inInjectionVolume_(pos))
+                    totalInjectionVolume_ += fvGeom.subContVol[i].volume;
+            };
+        }
     }
 
     /*!
@@ -242,10 +257,11 @@ public:
 
         //Scalar lambda = (globalPos[1])/height_;
         if (globalPos[0] < eps_ ) {
-            values[konti] = -3.8676e-8;
-            //values[transport] = -4.35064e-10;
+            values[contiEqIdx] = -3.8676e-2; // [kg/(m^2 * s)]
+
+            //values[transEqIdx] = -4.35064e-4; // [mol/(m^2*s)
             //Robin-Boundary
-            //values[transport] = (*this->model().curSolFunction())[globalIdx][transport];
+            //values[transEqIdx] = (*this->model().curSolFunction())[globalIdx][transEqIdx];
         }
     }
 
@@ -270,13 +286,29 @@ public:
                 const FVElementGeometry &fvElemGeom,
                 int scvIdx) const
     {
-         const GlobalPosition &globalPos
-                    = element.geometry().corner(scvIdx);
-
+        const GlobalPosition &globalPos
+            = element.geometry().corner(scvIdx);
+        
         values = Scalar(0.0);
+        if (inInjectionVolume_(globalPos)) {
+            // total volumetric injection rate in ml/h
+            Scalar injRateVol = 0.1;
+            // convert to m^3/s
+            injRateVol *= 1e-6/3600;
+            // total mass injection rate. assume a density of 1030kg/m^3
+            Scalar injRateMass = injRateVol*1030.0;
 
-        if(globalPos[0]>10 && globalPos[0]<12 && globalPos[1]>10 && globalPos[1]<12)
-            values[0]= 1.5e-6;
+            // trail concentration in injected fluid in [mol/ml]
+            Scalar trailInjRate = 1e-5;
+            // convert to mol/m^3
+            trailInjRate *= 1e6;
+            // convert to mol/s
+            trailInjRate *= injRateVol;
+
+            // source term of the total mass
+            values[contiEqIdx] = injRateMass / totalInjectionVolume_; // [kg/(s*m^3)]
+            values[transEqIdx] = trailInjRate / totalInjectionVolume_; // [mol/(s*m^3)]
+        }
     }
 
     /*!
@@ -299,16 +331,21 @@ public:
     // \}
 
 private:
+    bool inInjectionVolume_(const GlobalPosition &globalPos) const
+    {
+        return
+            10e-3 < globalPos[0] && globalPos[0] < 12e-3 && 
+            10e-3 < globalPos[1] && globalPos[1] < 12e-3;
+    };
     // the internal method for the initial condition
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-
-        values[konti] = -1067;              //initial condition for the pressure
-        values[transport] = 1.1249e-8;       //initial condition for the molefraction
-
+        values[pressureIdx] = 0; //initial condition for the pressure
+        values[x1Idx] = 0; //initial condition for the trail molefraction
     }
 
+    Scalar totalInjectionVolume_;
     static const Scalar eps_ = 1e-6;
 }; //end namespace
 }

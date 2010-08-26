@@ -20,10 +20,7 @@
 #ifndef BOUNDARY_TYPES_HH
 #define BOUNDARY_TYPES_HH
 
-#include <boost/format.hpp>
 
-#include <dune/common/timer.hh>
-#include <dune/common/mpihelper.hh>
 
 #include <dumux/common/valgrind.hh>
 

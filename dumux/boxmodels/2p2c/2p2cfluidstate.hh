@@ -299,8 +299,8 @@ public:
     /*!
      * \brief Return the fugacity of a component [Pa].
      */
-    Scalar fugacity(int phaseIdx, int compIdx) const
-    { return moleFrac(phaseIdx, compIdx)*phasePressure(compIdx); };
+    Scalar fugacity(int compIdx) const
+    { return moleFrac(gPhaseIdx, compIdx)*phasePressure(gPhaseIdx); };
 
     /*!
      * \brief Returns the capillary pressure [Pa]

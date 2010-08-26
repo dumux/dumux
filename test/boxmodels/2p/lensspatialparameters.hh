@@ -24,6 +24,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+#include <dumux/boxmodels/2p/2pmodel.hh>
+
 /**
  * @file
  * @brief Class for defining spatial parameters

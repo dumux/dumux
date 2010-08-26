@@ -23,6 +23,8 @@
 #ifndef DUMUX_1P_FLUX_VARIABLES_HH
 #define DUMUX_1P_FLUX_VARIABLES_HH
 
+#include "1pproperties.hh"
+
 #include <dumux/common/math.hh>
 
 namespace Dumux
@@ -61,6 +63,9 @@ class OnePFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
 
+    typedef Dune::FieldVector<Scalar, dim> Vector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
+
 public:
     OnePFluxVariables(const Problem &problem,
                  const Element &element,
@@ -71,24 +76,53 @@ public:
     {
         scvfIdx_ = faceIdx;
 
-        densityAtIP = 0;
-        viscosityAtIP = 0;
-        pressureGrad = Scalar(0);
-
         calculateGradients_(problem, element, elemDat);
-        calculateVelocities_(problem, element, elemDat);
+        calculateK_(problem, element);
     };
+
 
     const SCVFace &face() const
     { return fvElemGeom_.subContVolFace[scvfIdx_]; }
+
+    /*!
+     * \brief Return the intrinsic permeability.
+     */
+    const Tensor &intrinsicPermeability() const
+    { return K_; }
+
+    /*!
+     * \brief Return the pressure potential gradient.
+     */
+    const Vector &potentialGrad() const
+    { return potentialGrad_; }
+
+    /*!
+     * \brief Given the intrinisc permeability times the pressure
+     *        potential gradient and SCV face normal for a phase,
+     *        return the local index of the upstream control volume
+     *        for a given phase.
+     */
+    int upstreamIdx(Scalar normalFlux) const
+    { return (normalFlux >= 0)?face().i:face().j; }
+
+    /*!
+     * \brief Given the intrinisc permeability times the pressure
+     *        potential gradient and SCV face normal for a phase,
+     *        return the local index of the downstream control volume
+     *        for a given phase.
+     */
+    int downstreamIdx(Scalar normalFlux) const
+    { return (normalFlux >= 0)?face().j:face().i; }
 
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemDat)
     {
-        // calculate gradients
-        GlobalPosition tmp(0.0);
+        potentialGrad_ = 0.0;
+        Scalar densityAtIP = 0.0;
+
+        // calculate potential gradient
         for (int idx = 0;
              idx < fvElemGeom_.numVertices;
              idx++) // loop over adjacent vertices
@@ -97,72 +131,50 @@ private:
             const LocalPosition &feGrad = face().grad[idx];
 
             // the pressure gradient
-            tmp = feGrad;
-            tmp *= elemDat[idx].pressure;
-            pressureGrad += tmp;
-
+            Vector tmp(feGrad);
+            tmp *= elemDat[idx].pressure();
+            potentialGrad_ += tmp;
+            
             // fluid density
             densityAtIP +=
-                elemDat[idx].density*face().shapeValue[idx];
-            // fluid viscosity
-            viscosityAtIP +=
-                elemDat[idx].viscosity*face().shapeValue[idx];
+                elemDat[idx].density()*face().shapeValue[idx];
         }
 
         // correct the pressure gradients by the hydrostatic
         // pressure due to gravity
-        tmp = problem.gravity();
+        Vector tmp(problem.gravity());
         tmp *= densityAtIP;
 
-        pressureGrad -= tmp;
+        potentialGrad_ -= tmp;
     }
 
-    void calculateVelocities_(const Problem &problem,
-                              const Element &element,
-                              const ElementVolumeVariables &elemDat)
+    void calculateK_(const Problem &problem,
+                     const Element &element)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
-        typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
-        Tensor K;
-        spatialParams.meanK(K,
-               spatialParams.intrinsicPermeability(element,
-                                                   fvElemGeom_,
-                                                   face().i),
-                spatialParams.intrinsicPermeability(element,
-                                                    fvElemGeom_,
-                                                    face().j));
-
-        // temporary vector for the Darcy velocity
-        GlobalPosition vDarcy;
-        K.mv(pressureGrad, vDarcy);  // vDarcy = K * grad p
-        vDarcyNormal = vDarcy*face().normal;
-
-        // set the upstream and downstream vertices
-        upstreamIdx = face().i;
-        downstreamIdx = face().j;
-        if (vDarcyNormal > 0)
-            std::swap(upstreamIdx, downstreamIdx);
+        spatialParams.meanK(K_,
+                            spatialParams.intrinsicPermeability(element,
+                                                                fvElemGeom_,
+                                                                face().i),
+                            spatialParams.intrinsicPermeability(element,
+                                                                fvElemGeom_,
+                                                                face().j));
     }
 
-public:
+protected:
     const FVElementGeometry &fvElemGeom_;
     int scvfIdx_;
 
     // gradients
-    GlobalPosition pressureGrad;
+    Vector potentialGrad_;
 
-    // density of the fluid at the integration point
-    Scalar densityAtIP;
-    // viscosity of the fluid at the integration point
-    Scalar viscosityAtIP;
-
-    // darcy velocity in direction of the face normal
-    Scalar vDarcyNormal;
+    // intrinsic permeability
+    Tensor K_;
 
     // local index of the upwind vertex
-    int upstreamIdx;
+    int upstreamIdx_;
     // local index of the downwind vertex
-    int downstreamIdx;
+    int downstreamIdx_;
 };
 
 } // end namepace

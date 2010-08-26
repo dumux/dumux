@@ -23,6 +23,7 @@
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
 #include "1pproperties.hh"
+#include <dumux/boxmodels/common/boxvolumevariables.hh>
 
 namespace Dumux
 {
@@ -33,8 +34,10 @@ namespace Dumux
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class OnePVolumeVariables
+class OnePVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
+    typedef BoxVolumeVariables<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
@@ -71,40 +74,74 @@ public:
                 int scvIdx,
                 bool isOldSol)
     {
-        primaryVars_ = priVars;
+        ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
-        typedef Indices I;
+        this->asImp_().updateTemperature_(priVars,
+                                          element,
+                                          elemGeom,
+                                          scvIdx,
+                                          problem);
 
-        Scalar temperature = problem.temperature(element, elemGeom, scvIdx);
-        pressure = priVars[I::pressureIdx];
-        density = Fluid::density(temperature, pressure);
-        viscosity = Fluid::viscosity(temperature, pressure);
+        pressure_ = priVars[Indices::pressureIdx];
+        density_ = Fluid::density(temperature(), pressure());
+        viscosity_ = Fluid::viscosity(temperature(), pressure());
 
         // porosity
-        porosity = problem.spatialParameters().porosity(element,
-                                                        elemGeom,
-                                                        scvIdx);
+        porosity_ = problem.spatialParameters().porosity(element,
+                                                         elemGeom,
+                                                         scvIdx);
     };
+    
+    /*!
+     * \brief Returns temperature inside the sub-control volume.
+     *
+     * Note that we assume thermodynamic equilibrium, i.e. the
+     * temperature of the rock matrix and of all fluid phases are
+     * identical.
+     */
+    Scalar temperature() const
+    { return temperature_; }
 
     /*!
-     * \brief Sets the evaluation point used in the by the local jacobian.
+     * \brief Returns the effective pressure of a given phase within
+     *        the control volume.
      */
-    void setEvalPoint(const Implementation *ep)
-    { }
+    Scalar pressure() const
+    { return pressure_; }
 
     /*!
-     * \brief Return the vector of primary variables
+     * \brief Returns the mass density of a given phase within the
+     *        control volume.
      */
-    const PrimaryVariables &primaryVars() const
-    { return primaryVars_; }
+    Scalar density() const
+    { return density_; }
 
-    Scalar pressure;
-    Scalar density;
-    Scalar viscosity;
-    Scalar porosity;
+    /*!
+     * \brief Returns the dynamic viscosity of the fluid within the
+     *        control volume.
+     */
+    Scalar viscosity() const
+    { return viscosity_; }
+
+    /*!
+     * \brief Returns the average porosity within the control volume.
+     */
+    Scalar porosity() const
+    { return porosity_; }
 
 protected:
-    PrimaryVariables primaryVars_;
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem)
+    { temperature_ = problem.temperature(element, elemGeom, scvIdx); }
+
+    Scalar temperature_;
+    Scalar pressure_;
+    Scalar density_;
+    Scalar viscosity_;
+    Scalar porosity_;
 };
 
 }

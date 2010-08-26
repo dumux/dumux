@@ -62,13 +62,13 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
         pressureIdx = Indices::pressureIdx,
     };
 
+    static const Scalar upwindWeight = GET_PROP_VALUE(TypeTag, PTAG(UpwindWeight));
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
 public:
 
@@ -92,7 +92,7 @@ public:
         const VolumeVariables &volVars = elemVars[scvIdx];
 
         // partial time derivative of the wetting phase mass
-        result[pressureIdx] =  volVars.density * volVars.porosity;
+        result[pressureIdx] =  volVars.density() * volVars.porosity();
     }
 
 
@@ -102,13 +102,25 @@ public:
      */
     void computeFlux(PrimaryVariables &flux, int faceId) const
     {
-        FluxVariables vars(this->problem_(),
-                      this->elem_(),
-                      this->fvElemGeom_(),
-                      faceId,
-                      this->curVolVars_());
+        FluxVariables fluxVars(this->problem_(),
+                               this->elem_(),
+                               this->fvElemGeom_(),
+                               faceId,
+                               this->curVolVars_());
+        
+        Vector tmpVec;
+        fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(),
+                                            tmpVec);
+        Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
 
-        flux[pressureIdx] = vars.densityAtIP * vars.vDarcyNormal / vars.viscosityAtIP;
+        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
+        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+        flux[pressureIdx] = 
+            ((    upwindWeight)*(up.density()/up.viscosity()) 
+             +
+             (1 - upwindWeight)*(dn.density()/dn.viscosity()))
+            *
+            normalFlux;
     }
 
     /*!

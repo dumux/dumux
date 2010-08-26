@@ -22,19 +22,23 @@
 
 #include <dumux/common/propertysystem.hh>
 
+#include <dune/grid/io/file/dgfparser.hh>
 #include <dune/common/mpihelper.hh>
-
-#include <dune/grid/common/gridinfo.hh>
-
-#include <boost/format.hpp>
-
 #include <iostream>
 
 namespace Dumux
 {
+// forward declaration of property tags
+namespace Properties
+{
+NEW_PROP_TAG(Grid);
+NEW_PROP_TAG(Problem);
+NEW_PROP_TAG(TimeManager);
+}
+
 void printUsage(const char *progname)
 {
-    std::cout << boost::format("usage: %s [--restart restartTime] gridFile.dgf tEnd dt\n")%progname;
+    std::cout << "usage: " << progname << " [--restart restartTime] gridFile.dgf tEnd dt\n";
     exit(1);
 };
 
@@ -53,7 +57,6 @@ int startFromDGF(int argc, char **argv)
     try {
 #endif
 
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Scalar)) Scalar;
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid)) Grid;
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
         typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
@@ -91,7 +94,6 @@ int startFromDGF(int argc, char **argv)
         GridPointer gridPtr(dgfFileName);
         if (mpiHelper.size() > 1)
         	gridPtr->loadBalance();
-        Dune::gridinfo(*gridPtr);
 
         // instantiate and run the concrete problem
         TimeManager timeManager;

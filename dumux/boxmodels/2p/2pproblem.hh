@@ -20,8 +20,9 @@
 #ifndef DUMUX_2P_PROBLEM_HH
 #define DUMUX_2P_PROBLEM_HH
 
+#include "2pproperties.hh"
+
 #include <dumux/boxmodels/common/boxproblem.hh>
-#include <dumux/material/fluidsystems/2p_system.hh>
 
 namespace Dumux
 {
@@ -43,7 +44,6 @@ class TwoPProblem : public BoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
     enum {

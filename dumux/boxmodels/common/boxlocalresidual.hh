@@ -26,19 +26,12 @@
 #ifndef DUMUX_BOX_LOCAL_RESIDUAL_HH
 #define DUMUX_BOX_LOCAL_RESIDUAL_HH
 
-#include <dune/common/exceptions.hh>
+#include <dune/istl/matrix.hh>
+#include <dune/grid/common/geometry.hh>
 
 #include <dumux/common/valgrind.hh>
-#include <dune/grid/common/genericreferenceelements.hh>
-
-#include <boost/format.hpp>
-
-#include <dune/common/fmatrix.hh>
-#include <dune/istl/matrix.hh>
 
 #include "boxproperties.hh"
-#include "boxfvelementgeometry.hh"
-#include "boxelementboundarytypes.hh"
 
 namespace Dumux
 {
@@ -69,8 +62,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GridView::Grid::ctype CoordScalar;
 
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim>  LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -84,7 +77,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;

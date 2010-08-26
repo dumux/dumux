@@ -23,6 +23,9 @@
 #define DUMUX_2P_VOLUME_VARIABLES_HH
 
 #include "2pproperties.hh"
+#include "2pfluidstate.hh"
+
+#include <dune/common/fvector.hh>
 
 namespace Dumux
 {
@@ -142,15 +145,6 @@ public:
                                                          scvIdx);
     }
 
-    void updateTemperature_(const PrimaryVariables &priVars,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
-    {
-        temperature_ = problem.temperature(element, elemGeom, scvIdx);
-    }
-
     /*!
      * \brief Return the vector of primary variables
      */
@@ -220,6 +214,15 @@ public:
     { return porosity_; }
 
 protected:
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem)
+    {
+        temperature_ = problem.temperature(element, elemGeom, scvIdx);
+    }
+
     PrimaryVariables primaryVars_;
     FluidState fluidState_;
     Scalar porosity_;

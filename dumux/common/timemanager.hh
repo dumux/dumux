@@ -27,7 +27,6 @@
 #include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 
-#include <dumux/io/restart.hh>
 
 namespace Dumux
 {
@@ -162,7 +161,9 @@ public:
      * step size won't exceed the episode, though.
      */
     void setTimeStepSize(Scalar stepSize)
-    { timeStepSize_ = stepSize; }
+    { 
+        timeStepSize_ = std::min(stepSize, maxTimeStepSize());
+    }
 
     /*!
      * \brief Returns a suggested timestep length so that we don't
@@ -197,6 +198,19 @@ public:
     bool willBeFinished() const
     { return finished_ || time() + timeStepSize() >= endTime(); }
 
+    /*!
+     * \brief Aligns dt to the episode boundary or the end time of the
+     *        simulation.
+     */
+    Scalar maxTimeStepSize() const
+    {
+        if (finished())
+            return 0.0;
+
+        return
+            std::min(episodeMaxTimeStepSize(),
+                     std::max(0.0, endTime() - time()));
+    };
 
     /*
      * @}
@@ -335,9 +349,10 @@ public:
 
             // notify the problem that the timestep is done and ask it
             // for a suggestion for the next timestep size
-            Scalar nextDt =
-                    std::min(problem_->nextTimeStepSize(),
-                             episodeMaxTimeStepSize());
+            // set the time step size for the next step
+            setTimeStepSize(problem_->nextTimeStepSize());
+
+            Scalar nextDt = timeStepSize();
 
             if (verbose_) {
                 std::cout <<
@@ -345,8 +360,6 @@ public:
                     %timeStepIndex()%timer.elapsed()%time()%dt%nextDt;
             }
 
-            // set the time step size for the next step
-            setTimeStepSize(nextDt);
         }
 
         if (verbose_)

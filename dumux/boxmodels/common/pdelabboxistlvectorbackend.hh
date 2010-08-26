@@ -7,10 +7,10 @@
 #ifndef DUMUX_BOX_SOLUTION_VECTOR_HH
 #define DUMUX_BOX_SOLUTION_VECTOR_HH
 
-#include<vector>
+#include "boxproperties.hh"
 
-#include<dune/common/fvector.hh>
-#include<dune/istl/bvector.hh>
+#include <dune/common/fvector.hh>
+#include <dune/istl/bvector.hh>
 
 namespace Dumux {
 namespace Properties {

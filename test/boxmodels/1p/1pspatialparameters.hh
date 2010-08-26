@@ -22,24 +22,18 @@ namespace Dumux
 {
 
 /** \todo Please doc me! */
-
 template<class TypeTag>
 class OnePSpatialParameters : public BoxSpatialParameters<TypeTag>
 {
     typedef BoxSpatialParameters<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GridView::ctype CoordScalar;
-
-    enum {
-        dimWorld=GridView::dimensionworld,
-    };
-
-    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-public:
+    typedef typename GridView::template Codim<0>::Entity Element;
 
+public:
     OnePSpatialParameters(const GridView& gridView)
         : ParentType(gridView)
     {}
@@ -56,18 +50,12 @@ public:
     Scalar intrinsicPermeability(const Element &element,
                                  const FVElementGeometry &fvElemGeom,
                                  int scvIdx) const
-    {
-        return 1e-10;
-    }
+    { return 1e-10; }
 
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
-    {
-        return 0.4;
-    }
-
-private:
+    { return 0.4; }
 };
 
 } // end namespace

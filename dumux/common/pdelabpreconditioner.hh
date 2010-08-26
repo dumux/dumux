@@ -16,25 +16,40 @@
 #ifndef DUMUX_PDELAB_PRECONDITIONER_HH
 #define DUMUX_PDELAB_PRECONDITIONER_HH
 
-#include<dune/pdelab/backend/istlsolverbackend.hh>
+#include <dumux/common/pardiso.hh>
+#include <dumux/common/propertysystem.hh>
+#include <dune/pdelab/backend/istlsolverbackend.hh>
 
 namespace Dumux {
-namespace PDELab {
+// forward declaration of property tags
+namespace Properties {
+NEW_PROP_TAG(Problem);
+NEW_PROP_TAG(Model);
+NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(NumEq);
+NEW_PROP_TAG(Grid);
+NEW_PROP_TAG(Scalar);
+NEW_PROP_TAG(VertexMapper);
+NEW_PROP_TAG(GridOperatorSpace);
+NEW_PROP_TAG(JacobianMatrix);
+NEW_PROP_TAG(ReferenceElements);
+NEW_PROP_TAG(GridFunctionSpace);
+NEW_PROP_TAG(ConstraintsTrafo);
+};
 
+
+namespace PDELab {
 template<class TypeTag>
 class Exchanger
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         dim = GridView::dimension
     };
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
 
     typedef typename JacobianMatrix::block_type BlockType;
@@ -296,7 +311,6 @@ template<class TypeTag>
 class ISTLBackend_NoOverlap_BCGS_ILU
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
     typedef Dune::PDELab::ParallelISTLHelper<GridFunctionSpace> PHELPER;
@@ -384,7 +398,6 @@ template<class TypeTag>
 class ISTLBackend_NoOverlap_Loop_Pardiso
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;

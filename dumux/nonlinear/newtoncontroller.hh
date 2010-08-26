@@ -25,29 +25,40 @@
 
 #include <dumux/common/exceptions.hh>
 
-#include <dune/istl/overlappingschwarz.hh>
-//#include <dune/istl/schwarz.hh>
-#include <dune/istl/preconditioners.hh>
-#include <dune/istl/solvers.hh>
-//#include "dune/istl/owneroverlapcopy.hh"
-
-#include <dune/istl/io.hh>
-
-#include <dune/common/mpihelper.hh>
-
-#include <iostream>
-#include <boost/format.hpp>
+#include <queue> // for std::priority_queue
 
 #include <dumux/common/pardiso.hh>
 
+#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/common/pdelabpreconditioner.hh>
-#include <dune/pdelab/backend/istlsolverbackend.hh>
+
 
 
 namespace Dumux
 {
 namespace Properties
 {
+//! specifies the implementation of the newton controller
+NEW_PROP_TAG(NewtonController);
+
+//! specifies the type of the actual newton method
+NEW_PROP_TAG(NewtonMethod);
+
+//! specifies the type of a solution
+NEW_PROP_TAG(SolutionVector);
+
+//! specifies the type of a vector of primary variables at an DOF
+NEW_PROP_TAG(PrimaryVariables);
+
+//! specifies the type of a global jacobian matrix
+NEW_PROP_TAG(JacobianMatrix);
+
+//! specifies the type of the jacobian matrix assembler
+NEW_PROP_TAG(JacobianAssembler);
+
+//! specifies the type of the time manager
+NEW_PROP_TAG(TimeManager);
+
 //! specifies the verbosity of the linear solver (by default it is 0,
 //! i.e. it doesn't print anything)
 NEW_PROP_TAG(NewtonLinearSolverVerbosity);
@@ -55,6 +66,14 @@ NEW_PROP_TAG(NewtonLinearSolverVerbosity);
 //! specifies whether the convergence rate and the global residual
 //! gets written out to disk for every newton iteration (default is false)
 NEW_PROP_TAG(NewtonWriteConvergence);
+
+//! specifies whether time step size should be increased during the
+//! newton methods first few iterations
+NEW_PROP_TAG(EnableTimeStepRampUp);
+
+//! specifies whether the jacobian matrix should only be reassembled
+//! if the current solution deviates too much from the evaluation point
+NEW_PROP_TAG(EnablePartialReassemble);
 
 //! specifies whether the update should be done using the line search
 //! method instead of the "raw" newton method. whether this property
@@ -185,13 +204,37 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     typedef NewtonConvergenceWriter<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence))>  ConvergenceWriter;
 
     enum { enableTimeStepRampUp = GET_PROP_VALUE(TypeTag, PTAG(EnableTimeStepRampUp)) };
+    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
+    enum { Red = JacobianAssembler::Red };
+
+    // class to keep track of the most offending vertices in a way
+    // compatible with std::priority_queue
+    class VertexError
+    {
+    public:
+        VertexError(int idx, Scalar err)
+        {
+            idx_ = idx;
+            err_ = err;
+        }
+        
+        int index() const
+        { return idx_; }
+        
+        bool operator<(const VertexError &a) const
+        { return a.err_ < err_; }
+
+    private:
+        int idx_;
+        Scalar err_;
+    };
 
 public:
     NewtonController()
@@ -199,13 +242,21 @@ public:
           convergenceWriter_(asImp_())
     {
         numSteps_ = 0;
-        rampUpSteps_ = 4;
 
-        // maximum acceptable difference of any primary variable
-        // between two iterations for convergence
-        setRelTolerance(1e-7);
-        setTargetSteps(9);
-        setMaxSteps(15);
+        this->setRelTolerance(1e-8);
+        this->rampUpSteps_ = 0;
+
+        if (enableTimeStepRampUp) {
+            this->rampUpSteps_ = 9;
+            
+            // the ramp-up steps are not counting
+            this->setTargetSteps(10);
+            this->setMaxSteps(12);
+        }
+        else {
+            this->setTargetSteps(10);
+            this->setMaxSteps(18);
+        }
     };
 
     /*!
@@ -230,21 +281,34 @@ public:
     { maxSteps_ = maxSteps; }
     
     /*!
+     * \brief Returns the number of iterations used for the time step
+     *        ramp-up.
+     */
+    Scalar rampUpSteps() const
+    { return enableTimeStepRampUp?rampUpSteps_:0; }
+
+    /*!
+     * \brief Returns whether the time-step ramp-up is still happening
+     */
+    bool inRampUp() const
+    { return numSteps_ < rampUpSteps(); }
+
+    /*!
      * \brief Returns true if another iteration should be done.
      */
     bool newtonProceed(const SolutionVector &u)
     {
-        if (numSteps_ < rampUpSteps_)
+        if (numSteps_ < rampUpSteps() + 2)
             return true; // we always do at least two iterations
-        else if (numSteps_ >= maxSteps_) {
+        else if (asImp_().newtonConverged())
+            return false; // we are below the desired tolerance
+        else if (numSteps_ >= rampUpSteps() + maxSteps_) {
             // we have exceeded the allowed number of steps.  if the
             // relative error was reduced by a factor of at least 4,
             // we proceed even if we are above the maximum number of
             // steps
-            return error_*4.0 < lastError_ && !asImp_().newtonConverged();
+            return error_*4.0 < lastError_;
         }
-        else if (asImp_().newtonConverged())
-            return false; // we are below the desired tolerance
 
         return true;
     }
@@ -255,7 +319,9 @@ public:
      */
     bool newtonConverged() const
     {
-        return error_ <= tolerance_;
+        return 
+            error_ <= tolerance_ && 
+            model_().jacobianAssembler().reassembleTolerance() <= tolerance_/2;
     }
 
     /*!
@@ -267,16 +333,19 @@ public:
         method_ = &method;
         numSteps_ = 0;
 
+        model_().jacobianAssembler().reassembleAll();
+
+        dtInitial_ = timeManager_().timeStepSize();
         if (enableTimeStepRampUp) {
-            destTimeStepSize_ = timeManager_().timeStepSize();
+            rampUpDelta_ = 
+                timeManager_().timeStepSize() 
+                /
+                rampUpSteps()
+                *
+                2;
 
-            // reduce initial time step size for ramp-up
-            timeManager_().setTimeStepSize(destTimeStepSize_ / rampUpSteps_);
-
-            // reduce the tolerance for partial reassembly during the
-            // ramp up
-            finalTolerance_ = tolerance_;
-            tolerance_ = tolerance_*1e8;
+            // reduce initial time step size for ramp-up.
+            timeManager_().setTimeStepSize(rampUpDelta_);
         }
 
         convergenceWriter_.beginTimestep();
@@ -308,33 +377,25 @@ public:
         error_ = 0;
 
         int idxI = -1;
-        int idxJ = -1;
+        int aboveTol = 0;
         for (int i = 0; i < int(uOld.size()); ++i) {
-            bool needReassemble = false;
-            for (int j = 0; j < FV::size; ++j) {
-                Scalar tmp
-                    =
-                    std::abs(deltaU[i][j])
-                    / std::max(std::abs(uOld[i][j]), Scalar(1e-4));
-                if (tmp > tolerance_ / 10) {
-                    needReassemble = true;
-                }
-                if (tmp > error_)
-                {
-                    idxI = i;
-                    idxJ = j;
-                    error_ = tmp;
-                }
-            }
+            PrimaryVariables uNewI = uOld[i];
+            uNewI -= deltaU[i];
+            Scalar vertErr = 
+                model_().relativeErrorVertex(i,
+                                             uOld[i],
+                                             uNewI);
             
-            model_().jacobianAssembler().markVertexRed(i, 
-                                                       needReassemble);
+            if (vertErr > tolerance_)
+                ++aboveTol;
+            if (vertErr > error_) {
+                idxI = i;
+                error_ = vertErr;
+            }
         }
 
-        model_().jacobianAssembler().computeColors();
         error_ = gridView_().comm().max(error_);
     }
-
 
     /*!
      * \brief Solve the linear system of equations \f$ \mathbf{A}x - b
@@ -401,11 +462,30 @@ public:
         writeConvergence_(uOld, deltaU);
 
         newtonUpdateRelError(uOld, deltaU);
-        
+
         deltaU *= -1;
         deltaU += uOld;
-    }
 
+        // compute the vertex and element colors for partial
+        // reassembly
+        if (enablePartialReassemble) {
+            Scalar maxDelta = 0;
+            for (int i = 0; i < int(uOld.size()); ++i) {
+                const PrimaryVariables &uEval = this->model_().jacobianAssembler().evalPoint()[i];
+                const PrimaryVariables &uSol = this->model_().curSol()[i];
+                Scalar tmp = 
+                    model_().relativeErrorVertex(i,
+                                                 uEval,
+                                                 uSol);
+                maxDelta = std::max(tmp, maxDelta);
+            }
+            
+            Scalar reassembleTol = std::max(maxDelta/10, this->tolerance_/5);
+            if (error_ < 10*tolerance_)
+                reassembleTol = tolerance_/5;
+            this->model_().jacobianAssembler().computeColors(reassembleTol);
+        }               
+    }
 
     /*!
      * \brief Indicates that one newton iteration was finished.
@@ -413,21 +493,20 @@ public:
     void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
     {
         ++numSteps_;
-        
-        if (enableTimeStepRampUp) {
-            if (numSteps_ < rampUpSteps_) {
-                // increase time step size
-                Scalar dt = destTimeStepSize_ * (numSteps_ + 1) / rampUpSteps_;
-                timeManager_().setTimeStepSize(dt);
-            }
-            else // if we're not in the ramp-up reduce the target
-                 // tolerance
-                tolerance_ = finalTolerance_;
+
+        Scalar realError = error_;
+        if (inRampUp() && error_ < 1.0) {
+            // change time step size
+            Scalar dt = timeManager_().timeStepSize();
+            dt += rampUpDelta_;
+            timeManager_().setTimeStepSize(dt);
+
+            endIterMsg() << ", dt=" << timeManager_().timeStepSize() << ", ddt=" << rampUpDelta_;
         }
 
         if (verbose())
             std::cout << "\rNewton iteration " << numSteps_ << " done: "
-                      << "error=" << error_ << endIterMsg().str() << "\n";
+                      << "error=" << realError << endIterMsg().str() << "\n";
         endIterMsgStream_.str("");
     }
 
@@ -436,8 +515,6 @@ public:
      */
     void newtonEnd()
     {
-        if (enableTimeStepRampUp)
-            timeManager_().setTimeStepSize(destTimeStepSize_);
         convergenceWriter_.endTimestep();
     }
 
@@ -448,6 +525,7 @@ public:
      */
     void newtonFail()
     {
+        timeManager_().setTimeStepSize(dtInitial_);
         numSteps_ = targetSteps_*2;
     }
 
@@ -468,10 +546,12 @@ public:
      */
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
+        if (enableTimeStepRampUp)
+            return oldTimeStep; 
+
         Scalar n = numSteps_;
-        if (enableTimeStepRampUp) {
-            n -= rampUpSteps_/2;
-        }
+        n -= rampUpSteps();
+
         // be agressive reducing the timestep size but
         // conservative when increasing it. the rationale is
         // that we want to avoid failing in the next newton
@@ -539,6 +619,12 @@ protected:
     { return problem_().timeManager(); }
 
     /*!
+     * \brief Returns a reference to the time manager.
+     */
+    const TimeManager &timeManager_() const
+    { return problem_().timeManager(); }
+
+    /*!
      * \brief Returns a reference to the problem.
      */
     Model &model_()
@@ -588,7 +674,7 @@ protected:
         typedef Dumux::PDELab::ISTLBackend_NoOverlap_BCGS_ILU<TypeTag> Solver;
         Solver solver(problem_(), 500, verbosity);
 #else
-        typedef Dumux::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;
+        typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;
         Solver solver(500, verbosity);
 #endif // HAVE_MPI
 #endif // HAVE_PARDISO
@@ -618,15 +704,16 @@ protected:
     ConvergenceWriter convergenceWriter_;
 
     Scalar tolerance_;
-    Scalar finalTolerance_;
 
     Scalar error_;
     Scalar lastError_;
 
     // number of iterations for the time-step ramp-up
     Scalar rampUpSteps_;
-    // time step size after the ramp-up
-    Scalar destTimeStepSize_;
+    // the increase of the time step size during the rampup
+    Scalar rampUpDelta_;
+
+    Scalar dtInitial_; // initial time step size
 
     // optimal number of iterations we want to achive
     int targetSteps_;

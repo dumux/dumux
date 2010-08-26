@@ -17,7 +17,6 @@
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
 #include <dune/grid/common/intersectioniterator.hh>
-#include <dune/grid/common/capabilities.hh>
 #include <dumux/common/propertysystem.hh>
 
 namespace Dumux

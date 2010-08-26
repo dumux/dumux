@@ -47,12 +47,7 @@ public:
 };
 
 // Set the grid type
-#if HAVE_UG
-SET_PROP(OnePTestProblem, Grid) { typedef Dune::ALUCubeGrid<3,3> type; };
-#else
-//SET_PROP(OnePTestProblem, Grid) { typedef Dune::SGrid<3, 3> type; };
 SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<3>);
-#endif
 
 SET_PROP(OnePTestProblem, LocalFEMSpace)
 {
@@ -65,36 +60,15 @@ public:
 //    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
 
-SET_PROP(OnePTestProblem, NewtonLinearSolverVerbosity)
-{public:
-    static const int value = 1;
-};
+SET_INT_PROP(OnePTestProblem, NewtonLinearSolverVerbosity, 0);
 
 // Set the problem property
 SET_PROP(OnePTestProblem, Problem)
-{
-    typedef Dumux::OnePTestProblem<TTAG(OnePTestProblem)> type;
-};
+{ typedef Dumux::OnePTestProblem<TTAG(OnePTestProblem)> type; };
 
-// Set the wetting phase
-//SET_TYPE_PROP(OnePTestProblem, Fluid, Dumux::Air);
-
-//! Use the leaf grid view if not defined otherwise
-//SET_PROP(OnePTestProblem, GridView)
-//{
-//private:
-//    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-//
-//public:
-//    typedef typename Grid::LevelGridView type;
-//};
-
-// Set the spatial parameters
 // Set the spatial parameters
 SET_PROP(OnePTestProblem, SpatialParameters)
-{
-    typedef Dumux::OnePSpatialParameters<TypeTag> type;
-};
+{ typedef Dumux::OnePSpatialParameters<TypeTag> type; };
 
 // Enable gravity
 SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
@@ -287,7 +261,7 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+        //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values[pressureIdx] = 1.0e+5;// + 9.81*1.23*(20-globalPos[dim-1]);
     }
 

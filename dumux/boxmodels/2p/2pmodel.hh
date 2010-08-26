@@ -22,8 +22,8 @@
 #ifndef DUMUX_TWOP_MODEL_HH
 #define DUMUX_TWOP_MODEL_HH
 
+#include "2pproperties.hh"
 #include "2plocalresidual.hh"
-#include "2pnewtoncontroller.hh"
 #include "2pproblem.hh"
 
 namespace Dumux
@@ -80,18 +80,13 @@ class TwoPModel : public BoxModel<TypeTag>
     typedef TwoPModel<TypeTag> ThisType;
     typedef BoxModel<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
@@ -102,6 +97,17 @@ class TwoPModel : public BoxModel<TypeTag>
     };
 
 public:
+    /*!
+     * \brief Returns the relative weight of a primary variable for
+     *        calculating relative errors.
+     */
+    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    {
+        if (Indices::pressureIdx == pvIdx)
+            return 1e-7;
+        return 1;
+    }
+
     /*!
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
@@ -183,5 +189,7 @@ public:
     }
 };
 }
+
+#include "2ppropertydefaults.hh"
 
 #endif

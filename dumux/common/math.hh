@@ -20,11 +20,12 @@
 #ifndef DUMUX_MATH_HH
 #define DUMUX_MATH_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
 #include <cmath>
 
 namespace Dumux
 {
-
 /*!
  * \brief Calculate the harmonic mean of two scalar values.
  */
@@ -109,7 +110,7 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
  */
 template <class Scalar, int dim>
 bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
-              const Dune::FieldVector<Scalar, dim> &largerVec)
+               const Dune::FieldVector<Scalar, dim> &largerVec)
 {
     for (int i=0; i < dim; i++)
     {

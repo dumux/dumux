@@ -16,12 +16,6 @@
 #ifndef DUMUX_PDELAB_BOX_ASSEMBLER_HH
 #define DUMUX_PDELAB_BOX_ASSEMBLER_HH
 
-#include<dune/pdelab/finiteelementmap/p1fem.hh>
-#include<dune/pdelab/finiteelementmap/q1fem.hh>
-#include<dune/pdelab/gridfunctionspace/gridfunctionspace.hh>
-#include<dune/pdelab/gridfunctionspace/genericdatahandle.hh>
-#include<dune/pdelab/backend/istlvectorbackend.hh>
-#include<dune/pdelab/backend/istlmatrixbackend.hh>
 
 //#include "pdelabboundarytypes.hh"
 #include "pdelabboxlocaloperator.hh"
@@ -35,9 +29,7 @@ class BoxAssembler
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
@@ -50,10 +42,11 @@ class BoxAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalOperator)) LocalOperator;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
+    enum{dim = GridView::dimension};
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
@@ -66,7 +59,9 @@ class BoxAssembler
 
     enum {
         enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)),
-        enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling))
+        enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)),
+
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
     };
 
     // copying the jacobian assembler is not a good idea
@@ -106,6 +101,7 @@ public:
 
     void init(Problem& problem)
     {
+        inJacobianAssemble_ = false;
         problemPtr_ = &problem;
         fem_ = new FEM();
         //cn_ = new Constraints(*problemPtr_);
@@ -145,27 +141,44 @@ public:
         int numVerts = gridView_().size(dim);
         int numElems = gridView_().size(0);
         residual_.resize(numVerts);
-        
+      
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {
+            evalPoint_.resize(numVerts);
             vertexColor_.resize(numVerts);
             elementColor_.resize(numElems);
         }
-        std::fill(vertexColor_.begin(),
-                  vertexColor_.end(),
-                  Red);
-        std::fill(elementColor_.begin(),
-                  elementColor_.end(), 
-                  Red);
+        reassembleAll();
     }
 
+    SolutionVector &evalPoint()
+    { return evalPoint_; }
+
+    const SolutionVector &evalPoint() const
+    { return evalPoint_; }
+
+    bool inJacobianAssemble() const
+    { return inJacobianAssemble_; }
+    
     void assemble(SolutionVector &u)
     {
         // assemble the global jacobian matrix
         if (!reuseMatrix_) {
+            if (enablePartialReassemble) {
+                // move the evaluation points of red vertices
+                for (int i = 0; i < vertexColor_.size(); ++i) {
+                    if (vertexColor_[i] == Red)
+                        evalPoint_[i] = model_().curSol()[i];
+                }
+            }
+
+            reassembleTolerance_ = nextReassembleTolerance_;
+
             // we actually need to reassemle!
             resetMatrix_();
+            inJacobianAssemble_ = true;
             gridOperatorSpace_->jacobian(u, *matrix_);
+            inJacobianAssemble_ = false;
         }
         reuseMatrix_ = false;
 
@@ -195,30 +208,57 @@ public:
             reuseMatrix_ = yesno;
     }
 
+    
     void reassembleAll()
     {
-        std::fill(vertexColor_.begin(),
-                  vertexColor_.end(),
-                  Red);
-        std::fill(elementColor_.begin(),
-                  elementColor_.end(), 
-                  Red);
+        nextReassembleTolerance_ = 0.0;
+        if (enablePartialReassemble) {
+            std::fill(vertexColor_.begin(),
+                      vertexColor_.end(),
+                      Red);
+            std::fill(elementColor_.begin(),
+                      elementColor_.end(), 
+                      Red);
+        }
     }
-    
+   
+    Scalar reassembleTolerance() const
+    { return reassembleTolerance_; }
+
     void markVertexRed(int globalVertIdx, bool yesno)
     {
         if (enablePartialReassemble)
             vertexColor_[globalVertIdx] = yesno?Red:Green;
     }
     
-    void computeColors()
+    void computeColors(Scalar relTol)
     { 
-
         if (!enablePartialReassemble)
             return;
 
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
+
+        nextReassembleTolerance_ = 0;
+
+        int redVert = 0;
+        // mark the red vertices
+        for (int i = 0; i < vertexColor_.size(); ++i) {
+            const PrimaryVariables &evalPv = evalPoint_[i];
+            const PrimaryVariables &solPv = model_().curSol()[i];
+            
+            Scalar vertErr = model_().relativeErrorVertex(i,
+                                                          evalPv,
+                                                          solPv);
+
+            // mark vertex as red or green
+            vertexColor_[i] = (vertErr > relTol)?Red:Green;
+            if (vertErr > relTol)
+                ++redVert;
+            else
+                nextReassembleTolerance_ = 
+                    std::max(nextReassembleTolerance_, vertErr);
+        };
 
         // Mark all red elements
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -281,12 +321,16 @@ public:
         }
         
         int numTot = gridView_().size(0);
+        numTot = gridView_().comm().sum(numTot);
+        numGreen = gridView_().comm().sum(numGreen);
+        elemsReasm = numTot - numGreen;
         problem_().newtonController().endIterMsg()
             << ", reassemble " 
             << numTot - numGreen << "/" << numTot
             << " (" << 100*Scalar(numTot - numGreen)/numTot << "%) elems";
     };
     
+    int elemsReasm;
     int vertexColor(const Element &element, int vertIdx) const
     {
         if (!enablePartialReassemble)
@@ -388,10 +432,14 @@ private:
 
     Matrix *matrix_;
     bool reuseMatrix_;
+    bool inJacobianAssemble_;
+    SolutionVector evalPoint_;
     std::vector<EntityColor> vertexColor_;
     std::vector<EntityColor> elementColor_;
     std::vector<int> ghostIndices_;
 
+    Scalar nextReassembleTolerance_;
+    Scalar reassembleTolerance_;
     SolutionVector residual_;
 };
 

@@ -169,8 +169,8 @@ public:
 private:
     bool isTumor_(const Dune::FieldVector<CoordScalar,dim>& globalPos) const
     {
-        if(globalPos[0] > 0.99 && globalPos[0] < 2.01 &&
-           globalPos[1] > 0.99 && globalPos[1] < 3.01)
+        if(10e-3 < globalPos[0] && globalPos[0] < 15e-3 &&
+           10e-3 < globalPos[1] && globalPos[1] < 15e-3)
             return true;
         return false;
     }

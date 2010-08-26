@@ -1,4 +1,4 @@
-// $Id$
+// $Id: 1pproperties.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
@@ -19,39 +19,46 @@
  *
  * \brief Defines the properties required for the onephase BOX model.
  */
-#ifndef DUMUX_1P_PROPERTIES_DATA_HH
-#define DUMUX_1P_PROPERTIES_DATA_HH
+#ifndef DUMUX_1P_PROPERTY_DEFAULTS_HH
+#define DUMUX_1P_PROPERTY_DEFAULTS_HH
 
 #include <dumux/boxmodels/common/boxproperties.hh>
 
+#include "1pmodel.hh"
+#include "1plocalresidual.hh"
+#include "1pvolumevariables.hh"
+#include "1pfluxvariables.hh"
+#include "1pindices.hh"
+
 namespace Dumux
 {
-/*!
- * \addtogroup OnePBoxModel
- */
-// \{
 ///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal single phase model
+// default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
+SET_INT_PROP(BoxOneP, NumEq, 1);
+SET_INT_PROP(BoxOneP, NumPhases, 1);
 
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
+//! The local residual function
+SET_TYPE_PROP(BoxOneP,
+              LocalResidual,
+              OnePLocalResidual<TypeTag>);
 
-//! The type tag for the isothermal single phase problems
-NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel));
+//! the Model property
+SET_TYPE_PROP(BoxOneP, Model, OnePBoxModel<TypeTag>);
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxOneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(OnePIndices); //!< Enumerations for the 1p models
-NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
-NEW_PROP_TAG(Fluid); //!< The fluid for the single-phase problems
-NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(UpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
+//! the FluxVariables property
+SET_TYPE_PROP(BoxOneP, FluxVariables, OnePFluxVariables<TypeTag>);
+
+//! The indices required by the isothermal single-phase model
+SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);
+
+//! The weight of the upwind control volume when calculating
+//! fluxes. Use central differences by default.
+SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);
 
 // \}
 };

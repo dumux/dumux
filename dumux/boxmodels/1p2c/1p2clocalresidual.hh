@@ -21,9 +21,7 @@
 #include <dumux/boxmodels/common/boxmodel.hh>
 
 #include <dumux/boxmodels/1p2c/1p2cproperties.hh>
-
 #include <dumux/boxmodels/1p2c/1p2cvolumevariables.hh>
-
 #include <dumux/boxmodels/1p2c/1p2cfluxvariables.hh>
 
 #include <dune/common/collectivecommunication.hh>
@@ -44,45 +42,34 @@ protected:
     typedef BoxLocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     enum
     {
-        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+        // indices of the primary variables
+        pressureIdx = Indices::pressureIdx,
+        x1Idx = Indices::x1Idx,
 
-        konti = Indices::konti,
-        transport = Indices::transport,
+        // indices of the equations
+        contiEqIdx = Indices::contiEqIdx,
+        transEqIdx = Indices::transEqIdx,
     };
+
+    static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
-
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
-
-    static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
 public:
     /*!
@@ -96,14 +83,19 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        const VolumeVariables &volVars = 
+            usePrevSol ?
+            this->prevVolVars_(scvIdx) : 
+            this->curVolVars_(scvIdx);
 
         // storage term of continuity equation
-        result[konti] = 0;
+        result[contiEqIdx] = 
+            volVars.density()*volVars.porosity();
 
         // storage term of the transport equation
-        result[transport] = vertDat.molarDensity * vertDat.porosity * vertDat.molefraction;
+        result[transEqIdx] = 
+            volVars.concentration(1) * 
+            volVars.porosity();
     }
 
     /*!
@@ -112,44 +104,50 @@ public:
      */
     void computeFlux(PrimaryVariables &flux, int faceId) const
     {
-        FluxVariables vars(this->problem_(),
-                      this->elem_(),
-                      this->fvElemGeom_(),
-                      faceId,
-                      this->curVolVars_());
         flux = 0;
+        FluxVariables fluxVars(this->problem_(),
+                               this->elem_(),
+                               this->fvElemGeom_(),
+                               faceId,
+                               this->curVolVars_());
+        
+        Vector tmpVec;
+        fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(), tmpVec);
 
-        // data attached to upstream and the downstream vertices
-        // of the current phase
-        const VolumeVariables &up = this->curVolVars_(vars.upstreamIdx);
-        const VolumeVariables &dn = this->curVolVars_(vars.downstreamIdx);
+        // "intrinsic" flux from cell i to cell j
+        Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
+        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
+        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+              
+        // total mass flux
+        flux[contiEqIdx] = 
+            normalFlux * 
+            ((     upwindAlpha)*up.density()/up.viscosity()
+             +
+             ((1 - upwindAlpha)*dn.density()/dn.viscosity()));
 
-        flux[konti] = vars.vDarcyNormal / vars.viscosityAtIP;
+        // advective flux of the second component
+        flux[transEqIdx] +=
+            normalFlux * 
+            ((    upwindAlpha)*up.concentration(1)/up.viscosity()
+             +
+             (1 - upwindAlpha)*dn.concentration(1)/dn.viscosity());
+        
+        // diffusive flux of second component
+        Scalar c = (up.concentration(1) + dn.concentration(1))/2;
+        flux[transEqIdx] += 
+            c * fluxVars.porousDiffCoeff() *
+            (fluxVars.concentrationGrad(1) * fluxVars.face().normal);
 
-        // advective flux
-        flux[transport] +=
-        vars.vDarcyNormal *
-        ( upwindAlpha*
-                ( up.molarDensity * up.molefraction/up.viscosity )
-                +
-                (1 - upwindAlpha)*
-                ( dn.molarDensity * dn.molefraction/dn.viscosity ) );
-
-        Dune::FieldVector<Scalar,dim> unitNormal(vars.face->normal);
-        unitNormal/=vars.face->normal.two_norm();
-
-        // diffusive flux
-        flux[transport] +=
-        vars.molarDensityAtIP * vars.diffCoeffPM *
-        (vars.concentrationGrad * vars.face->normal);
-
-        //multiply hydrodynamic dispersion tensor with the face normal
-        Dune::FieldVector<Scalar,dim> normalDisp;
-        vars.dispersionTensor.mv(vars.face->normal, normalDisp);
-
-        //add dispersive flux
-        flux[transport] +=
-        vars.molarDensityAtIP * (normalDisp * vars.concentrationGrad);
+        // dispersive flux of second component
+        Vector normalDisp;
+        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+        flux[transEqIdx] +=
+            c * (normalDisp * fluxVars.concentrationGrad(1));
+                
+        // we need to calculate the flux from i to j, not the other
+        // way round...
+        flux *= -1;
     }
 
     /*!

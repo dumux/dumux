@@ -23,15 +23,26 @@
 #ifndef DUMUX_NEWTONMETHOD_HH
 #define DUMUX_NEWTONMETHOD_HH
 
-#include <limits>
 #include <dumux/common/exceptions.hh>
+#include <dumux/common/propertysystem.hh>
 
-#include <dumux/io/vtkmultiwriter.hh>
+#include <dune/istl/istlexception.hh>
 
-#include <dune/istl/io.hh>
+#include <iostream>
 
 namespace Dumux
 {
+// forward declaration of property tags
+namespace Properties
+{
+NEW_PROP_TAG(Scalar);
+NEW_PROP_TAG(Problem);
+NEW_PROP_TAG(Model);
+NEW_PROP_TAG(NewtonController);
+NEW_PROP_TAG(SolutionVector);
+NEW_PROP_TAG(JacobianAssembler);
+};
+
 /*!
  * \brief The algorithmic part of the multi dimensional newton method.
  *

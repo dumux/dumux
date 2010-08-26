@@ -118,7 +118,7 @@ public:
                                i,
                                false);
 
-                (*p)[globalIdx] = volVars.pressure;
+                (*p)[globalIdx] = volVars.pressure();
             };
         }
 
@@ -127,5 +127,7 @@ public:
     }
 };
 }
+
+#include "1ppropertydefaults.hh"
 
 #endif

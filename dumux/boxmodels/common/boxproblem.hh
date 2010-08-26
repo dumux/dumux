@@ -25,8 +25,6 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
-#include <dumux/common/timemanager.hh>
-
 namespace Dumux
 {
 /*!

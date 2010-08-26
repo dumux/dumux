@@ -18,8 +18,9 @@
 
 #include "boxproperties.hh"
 
-#include <vector>
-#include <dumux/common/boundarytypes.hh>
+#include <dune/grid/common/geometry.hh>
+
+#include <dumux/common/valgrind.hh>
 
 namespace Dumux
 {
@@ -36,7 +37,6 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
     typedef std::vector<BoundaryTypes> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;

@@ -18,8 +18,10 @@
 #ifndef DUMUX_ONEP_TWOC_MODEL_HH
 #define DUMUX_ONEP_TWOC_MODEL_HH
 
-#include "1p2clocalresidual.hh"
+#include "1p2cproperties.hh"
 #include "1p2cproblem.hh"
+
+#include <dumux/boxmodels/common/boxmodel.hh>
 
 namespace Dumux
 {
@@ -105,7 +107,10 @@ public:
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
         ScalarField *pressure = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *molefraction = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *moleFrac0 = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *moleFrac1 = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *massFrac0 = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *massFrac1 = writer.template createField<Scalar, 1>(numVertices);
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
@@ -137,17 +142,25 @@ public:
                                false);
 
 
-                (*pressure)[globalIdx] = volVars.pressure;
-                (*molefraction)[globalIdx] = volVars.molefraction;
+                (*pressure)[globalIdx] = volVars.pressure();
+                (*moleFrac0)[globalIdx] = volVars.moleFrac(0);
+                (*moleFrac1)[globalIdx] = volVars.moleFrac(1);
+                (*massFrac0)[globalIdx] = volVars.massFrac(0);
+                (*massFrac1)[globalIdx] = volVars.massFrac(1);
             };
         }
 
-        writer.addVertexData(pressure, "pressure");
-        writer.addVertexData(molefraction, "molefraction");
+        writer.addVertexData(pressure, "p");
+        writer.addVertexData(moleFrac0, "x_0");
+        writer.addVertexData(moleFrac1, "x_1");
+        writer.addVertexData(massFrac0, "X_0");
+        writer.addVertexData(massFrac1, "X_1");
         writer.addCellData(rank, "process rank");
     }
 
 };
 }
+
+#include "1p2cpropertydefaults.hh"
 
 #endif

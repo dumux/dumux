@@ -26,24 +26,9 @@
 #ifndef DUMUX_BOX_LOCAL_JACOBIAN_HH
 #define DUMUX_BOX_LOCAL_JACOBIAN_HH
 
-#include <dune/common/exceptions.hh>
-
-#include <dumux/common/valgrind.hh>
-
-#include <dune/grid/common/genericreferenceelements.hh>
-
-#include <boost/format.hpp>
-
-#include <dune/common/fmatrix.hh>
 #include <dune/istl/matrix.hh>
 
-#include "boxelementvolumevariables.hh"
-#include "boxfvelementgeometry.hh"
-#include "boxlocalresidual.hh"
-
-#include "boxproperties.hh"
-
-
+#include "boxelementboundarytypes.hh"
 
 namespace Dumux
 {
@@ -96,7 +81,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
