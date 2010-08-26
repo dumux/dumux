@@ -71,9 +71,6 @@ class RichardsModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
@@ -82,11 +79,28 @@ class RichardsModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
         dim = GridView::dimension,
+        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
     };
 
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+
 public:
+    /*!
+     * \brief Returns the relative weight of a primary variable for
+     *        calculating relative errors.
+     */
+    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    {
+        if (Indices::pwIdx == pvIdx)
+            return 1e-6;
+        return 1;
+    }
+
     /*!
      * \brief All relevant primary and secondary of a given
      *        solution to an ouput writer.
@@ -97,25 +111,34 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // create the required scalar fields
-        unsigned numVertices = this->gridView_().size(dim);
-        ScalarField *Sw = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *Sn = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *pC = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *pW = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *dSwdpC = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *rhoW = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *mobW = writer.template createField<Scalar, 1>(numVertices);
+        unsigned numVertices = this->problem_().gridView().size(dim);
+        ScalarField *pW = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *pN = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *pC = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *Sw = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *Sn = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *rhoW = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *rhoN = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *mobW = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *mobN = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *poro = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *Te = writer.template createField<Scalar, 1> (numVertices);
+
+        unsigned numElements = this->gridView_().size(0);
+        ScalarField *rank =
+                writer.template createField<Scalar, 1> (numElements);
 
         FVElementGeometry fvElemGeom;
         VolumeVariables volVars;
-        ElementBoundaryTypes elemBcTypes;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
+            int idx = this->problem_().model().elementMapper().map(*elemIt);
+            (*rank)[idx] = this->gridView_().comm().rank();
+
             fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
 
             int numVerts = elemIt->template count<dim> ();
             for (int i = 0; i < numVerts; ++i)
@@ -128,26 +151,36 @@ public:
                                i,
                                false);
 
-                (*Sw)[globalIdx] = volVars.Sw;
-                (*Sn)[globalIdx] = 1.0 - volVars.Sw;
-                (*pC)[globalIdx] = volVars.pC;
-                (*pW)[globalIdx] = volVars.pW;
-                (*dSwdpC)[globalIdx] = volVars.dSwdpC;
-                (*rhoW)[globalIdx] = volVars.densityW;
-                (*mobW)[globalIdx] = volVars.mobilityW;
+                (*pW)[globalIdx] = volVars.pressure(wPhaseIdx);
+                (*pN)[globalIdx] = volVars.pressure(nPhaseIdx);
+                (*pC)[globalIdx] = volVars.capillaryPressure();
+                (*Sw)[globalIdx] = volVars.saturation(wPhaseIdx);
+                (*Sn)[globalIdx] = volVars.saturation(nPhaseIdx);
+                (*rhoW)[globalIdx] = volVars.density(wPhaseIdx);
+                (*rhoN)[globalIdx] = volVars.density(nPhaseIdx);
+                (*mobW)[globalIdx] = volVars.mobility(wPhaseIdx);
+                (*mobN)[globalIdx] = volVars.mobility(nPhaseIdx);
+                (*poro)[globalIdx] = volVars.porosity();
+                (*Te)[globalIdx] = volVars.temperature();
             };
         }
 
-
-        writer.addVertexData(Sw, "Sw");
         writer.addVertexData(Sn, "Sn");
-        writer.addVertexData(pC, "pC");
-        writer.addVertexData(pW, "pW");
-        writer.addVertexData(dSwdpC, "dSwdpC");
+        writer.addVertexData(Sw, "Sw");
+        writer.addVertexData(pN, "pn");
+        writer.addVertexData(pW, "pw");
+        writer.addVertexData(pC, "pc");
         writer.addVertexData(rhoW, "rhoW");
+        writer.addVertexData(rhoN, "rhoN");
         writer.addVertexData(mobW, "mobW");
+        writer.addVertexData(mobN, "mobN");
+        writer.addVertexData(poro, "porosity");
+        writer.addVertexData(Te, "temperature");
+        writer.addCellData(rank, "process rank");
     }
 };
 }
+
+#include "richardspropertydefaults.hh"
 
 #endif

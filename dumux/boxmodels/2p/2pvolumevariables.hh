@@ -41,25 +41,24 @@ template <class TypeTag>
 class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
 
         formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
 
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
-    enum {
         pwSn = Indices::pwSn,
         pnSw = Indices::pnSw,
 
@@ -70,21 +69,8 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container ReferenceElements;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef TwoPFluidState<TypeTag> FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
     /*!

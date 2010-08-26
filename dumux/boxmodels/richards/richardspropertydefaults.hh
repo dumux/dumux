@@ -1,7 +1,6 @@
-// $Id: 2pproperties.hh 3357 2010-03-25 13:02:05Z lauser $
+// $Id: richardsproperties.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
- *   Copyright (C) 2008-2010 by Andreas Lauser                               *
- *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -17,68 +16,68 @@
 /*!
  * \file
  *
- * \brief Defines default values for the properties required by the
- *        twophase box model.
+ * \brief Contains the default definitions for the properties for the
+ *        Richards BOX model.
  */
-#ifndef DUMUX_2P_PROPERTY_DEFAULTS_HH
-#define DUMUX_2P_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
+#define DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
 
-#include "2pmodel.hh"
-#include "2pproblem.hh"
-#include "2pindices.hh"
-#include "2pfluxvariables.hh"
-#include "2pvolumevariables.hh"
-#include "2pfluidstate.hh"
-#include "2pproperties.hh"
+#include "richardsmodel.hh"
+#include "richardsproblem.hh"
+#include "richardsindices.hh"
+#include "richardsfluxvariables.hh"
+#include "richardsvolumevariables.hh"
+#include "richardsfluidstate.hh"
+#include "richardsproperties.hh"
+#include "richardsnewtoncontroller.hh"
+
 #include <dumux/material/fluidsystems/2p_system.hh>
+#include <dumux/material/components/n2.hh>
 
 namespace Dumux
 {
 /*!
- * \addtogroup TwoPBoxModel
+ * \addtogroup RichardsModel
  */
 // \{
-namespace Properties
-{
-//////////////////////////////////////////////////////////////////
-// Property defaults
-//////////////////////////////////////////////////////////////////
-SET_INT_PROP(BoxTwoP, NumEq, 2); //!< set the number of equations to 2
-SET_INT_PROP(BoxTwoP, NumPhases, 2); //!< The number of phases in the 2p model is 2
 
-//! Set the default formulation to pWsN
-SET_INT_PROP(BoxTwoP,
-             Formulation,
-             TwoPCommonIndices::pwSn);
+namespace Properties {
+//////////////////////////////////////////////////////////////////
+// Properties values
+//////////////////////////////////////////////////////////////////
+SET_INT_PROP(BoxRichards, NumEq, 1);
+SET_INT_PROP(BoxRichards, NumPhases, 2);
 
 //! Use the 2p local jacobian operator for the 2p model
-SET_TYPE_PROP(BoxTwoP,
+SET_TYPE_PROP(BoxRichards,
               LocalResidual,
-              TwoPLocalResidual<TypeTag>);
+              RichardsLocalResidual<TypeTag>);
 
 //! the Model property
-SET_TYPE_PROP(BoxTwoP, Model, TwoPModel<TypeTag>);
+SET_TYPE_PROP(BoxRichards, Model, RichardsModel<TypeTag>);
 
 //! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
+SET_TYPE_PROP(BoxRichards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoP, FluxVariables, TwoPFluxVariables<TypeTag>);
+SET_TYPE_PROP(BoxRichards, FluxVariables, RichardsFluxVariables<TypeTag>);
 
-//! the upwind factor for the mobility.
-SET_SCALAR_PROP(BoxTwoP, MobilityUpwindAlpha, 1.0);
+//! the NewtonController property
+SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
 
-//! The indices required by the isothermal 2p model
-SET_PROP(BoxTwoP, TwoPIndices)
-{
-    typedef TwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
-};
+//! the weight of the upwind vertex for the mobility
+SET_SCALAR_PROP(BoxRichards,
+                MobilityUpwindAlpha,
+                1.0);
+
+//! The indices required by the isothermal single-phase model
+SET_TYPE_PROP(BoxRichards, RichardsIndices, Dumux::RichardsIndices);
 
 /*!
  * \brief Set the property for the material law by retrieving it from
  *        the spatial parameters.
  */
-SET_PROP(BoxTwoP, MaterialLaw)
+SET_PROP(BoxRichards, MaterialLaw)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
@@ -91,7 +90,7 @@ public:
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_PROP(BoxTwoP, MaterialLawParams)
+SET_PROP(BoxRichards, MaterialLawParams)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
@@ -100,20 +99,18 @@ public:
     typedef typename MaterialLaw::Params type;
 };
 
-SET_TYPE_PROP(BoxTwoP, FluidSystem, FluidSystem2P<TypeTag>);
+SET_TYPE_PROP(BoxRichards, FluidSystem, FluidSystem2P<TypeTag>);
+SET_PROP(BoxRichards, NonwettingPhase)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef GasPhase<Scalar, N2<Scalar>> type;
+};
 
-SET_TYPE_PROP(BoxTwoP, FluidState, TwoPFluidState<TypeTag>);
+SET_TYPE_PROP(BoxRichards, FluidState, RichardsFluidState<TypeTag>);
 
-// enable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxTwoP, EnableJacobianRecycling, true);
-// enable partial reassembling by default
-SET_BOOL_PROP(BoxTwoP, EnablePartialReassemble, true);
-// enable time-step ramp up by default
-SET_BOOL_PROP(BoxTwoP, EnableTimeStepRampUp, false);
-
-}
 // \}
+};
 
-}
+} // end namepace
 
 #endif

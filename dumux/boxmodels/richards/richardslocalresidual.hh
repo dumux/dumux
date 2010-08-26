@@ -38,40 +38,25 @@ namespace Dumux
 template<class TypeTag>
 class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
 {
-    typedef RichardsLocalResidual<TypeTag> ThisType;
-    typedef BoxLocalResidual<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        pW = Indices::pW,
-    };
-
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
+    enum {
+        dimWorld = GridView::dimensionworld,
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+        contiEqIdx = Indices::contiEqIdx,
 
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+    };
+
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     static const Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
-
+    
 public:
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -88,15 +73,16 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        const VolumeVariables &volVars = 
+            usePrevSol ? 
+            this->prevVolVars_(scvIdx) :
+            this->curVolVars_(scvIdx);
 
         // partial time derivative of the wetting phase mass
-        result[pW] =
-            vertDat.densityW
-            * vertDat.porosity
-            * this->prevVolVars_()[scvIdx].dSwdpC // TODO: use derivative for the current solution
-            * (vertDat.pNreference - vertDat.pW);
+        result[contiEqIdx] =
+            volVars.density(wPhaseIdx)
+            * volVars.saturation(wPhaseIdx)
+            * volVars.porosity();
     }
 
 
@@ -106,25 +92,33 @@ public:
      */
     void computeFlux(PrimaryVariables &flux, int faceId) const
     {
-        FluxVariables vars(this->problem_(),
-                      this->elem_(),
-                      this->fvElemGeom_(),
-                      faceId,
-                      this->curVolVars_());
+        FluxVariables fluxVars(this->problem_(),
+                               this->elem_(),
+                               this->fvElemGeom_(),
+                               faceId,
+                               this->curVolVars_());
 
+        // calculate the flux in the normal direction of the
+        // current sub control volume face
+        Vector tmpVec;
+        fluxVars.intrinsicPermeability().mv(fluxVars.potentialGradW(),
+                                            tmpVec);
+        Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
+        
         // data attached to upstream and the downstream vertices
-        const VolumeVariables &up = this->curVolVars_(vars.upstreamIdx);
-        const VolumeVariables &dn = this->curVolVars_(vars.downstreamIdx);
+        // of the current phase
+        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
+        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+        
+        flux[contiEqIdx] =
+            normalFlux
+            *
+            ((    mobilityUpwindAlpha)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx) 
+             +
+             (1 - mobilityUpwindAlpha)*dn.density(wPhaseIdx)*dn.mobility(wPhaseIdx));
 
-        flux[pW] =
-            vars.vDarcyNormal*
-            (  mobilityUpwindAlpha*
-               (  up.densityW *
-                  up.mobilityW)
-               +
-               (1 - mobilityUpwindAlpha)*
-               (  dn.densityW*
-                  dn.mobilityW));
+        // we need the flux from i to j instead of the other way
+        flux *= -1;
     }
 
     /*!
@@ -137,21 +131,6 @@ public:
                                 this->fvElemGeom_(),
                                 localVertexIdx);
     }
-
-    /*!
-     * \brief Return the temperature given the solution vector of a
-     *        finite volume.
-     */
-    template <class PrimaryVariables>
-    Scalar temperature(const PrimaryVariables &sol)
-    { return this->problem_.temperature(); /* constant temperature */ }
-
-private:
-    ThisType &asImp_()
-    { return *static_cast<ThisType *>(this); }
-
-    const ThisType &asImp_() const
-    { return *static_cast<const ThisType *>(this); }
 };
 
 };

@@ -16,18 +16,20 @@
 /*!
  * \file
  *
- * \brief Gives the phase state.
+ * \brief Calcultes the fluid state from the primary variables in the
+ *        2p model.
  */
-#ifndef DUMUX_2P_PHASE_STATE_HH
-#define DUMUX_2P_PHASE_STATE_HH
+#ifndef DUMUX_2P_FLUID_STATE_HH
+#define DUMUX_2P_FLUID_STATE_HH
 
 #include <dumux/material/fluidstate.hh>
-#include <dumux/boxmodels/2p/2pproperties.hh>
+
+#include "2pproperties.hh"
 
 namespace Dumux
 {
 /*!
- * \brief Calcultes the phase state from the primary variables in the
+ * \brief Calcultes the fluid state from the primary variables in the
  *        2p model.
  */
 template <class TypeTag>
@@ -51,7 +53,6 @@ class TwoPFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Sc
 public:
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
 
-public:
     void update(Scalar Sn, Scalar pressW, Scalar pressN, Scalar temperature)
     {
         Sn_ = Sn;

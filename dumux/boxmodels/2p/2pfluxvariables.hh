@@ -83,7 +83,7 @@ public:
         }
 
         calculateGradients_(problem, element, elemDat);
-        calculateVelocities_(problem, element, elemDat);
+        calculateK_(problem, element, elemDat);
     };
 
 public:
@@ -178,9 +178,9 @@ private:
         }
     }
 
-    void calculateVelocities_(const Problem &problem,
-                              const Element &element,
-                              const ElementVolumeVariables &elemDat)
+    void calculateK_(const Problem &problem,
+                     const Element &element,
+                     const ElementVolumeVariables &elemDat)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         // calculate the intrinsic permeability

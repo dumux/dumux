@@ -82,9 +82,6 @@ class TwoPModel : public BoxModel<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
@@ -96,6 +93,8 @@ class TwoPModel : public BoxModel<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
     };
 
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+
 public:
     /*!
      * \brief Returns the relative weight of a primary variable for
@@ -104,7 +103,7 @@ public:
     Scalar primaryVarWeight(int vertIdx, int pvIdx) const
     {
         if (Indices::pressureIdx == pvIdx)
-            return 1e-7;
+            return 1e-5;
         return 1;
     }
 
@@ -176,8 +175,8 @@ public:
 
         writer.addVertexData(Sn, "Sn");
         writer.addVertexData(Sw, "Sw");
-        writer.addVertexData(pW, "pg");
         writer.addVertexData(pN, "pn");
+        writer.addVertexData(pW, "pw");
         writer.addVertexData(pC, "pc");
         writer.addVertexData(rhoW, "rhoW");
         writer.addVertexData(rhoN, "rhoN");

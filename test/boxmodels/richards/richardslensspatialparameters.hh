@@ -72,12 +72,12 @@ public:
         outerMaterialParams_.setSwr(0.05);
         outerMaterialParams_.setSnr(0.0);
 
-//        // parameters for the Van Genuchten law
-//        // alpha and n
-        lensMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgAlpha(0.00045);
-        lensMaterialParams_.setVgN(4.7);
-        outerMaterialParams_.setVgN(7.3);
+        // parameters for the Van Genuchten law
+        // alpha and n
+        lensMaterialParams_.setVgAlpha(0.00045);
+        lensMaterialParams_.setVgN(7.3);
+        outerMaterialParams_.setVgAlpha(0.0037);
+        outerMaterialParams_.setVgN(4.7);
 
         // parameters for the linear law
         // minimum and maximum pressures
@@ -86,8 +86,8 @@ public:
 //        lensMaterialParams_.setMaxPC(0);
 //        outerMaterialParams_.setMaxPC(0);
 
-        lensK_ = 1e-13;
-        outerK_ = 5e-10;
+        lensK_ = 1e-12;
+        outerK_ = 5e-12;
     }
 
     /*!
@@ -125,7 +125,6 @@ public:
             return lensMaterialParams_;
         return outerMaterialParams_;
     }
-
 
     //! Set the bounding box of the fine-sand lens
     void setLensCoords(const GlobalPosition& lensLowerLeft,

@@ -82,6 +82,9 @@ SET_PROP(RichardsLensProblem, SpatialParameters)
 
 // Enable gravity
 SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
+
+// Write the intermediate results of the newton method?
+SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 }
 
 /*!
@@ -102,33 +105,27 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
 {
     typedef RichardsLensProblem<TypeTag> ThisType;
     typedef RichardsBoxProblem<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-
         // copy some indices for convenience
-        pW = Indices::pW,
+        pwIdx = Indices::pwIdx,
+        contiEqIdx = Indices::contiEqIdx,
 
         // Grid and world dimension
-        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
     };
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
@@ -175,7 +172,7 @@ public:
      */
     Scalar pNreference() const
     {
-        return 1.0e+5; // reference non-wetting phase pressure [Pa] used for viscosity and density calculations
+        return 1e5; // reference non-wetting phase pressure [Pa] used for viscosity and density calculations
     };
 
     // \}
@@ -199,8 +196,11 @@ public:
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
 
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+        if (onLeftBoundary_(globalPos) || 
+            onRightBoundary_(globalPos))
+        {
             values.setAllDirichlet();
+        }
         else
             values.setAllNeumann();
     }
@@ -218,21 +218,8 @@ public:
                    int scvIdx,
                    int boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
-        if (onLeftBoundary_(globalPos))
-        {
-            // unsaturated
-            values[pW] = 1.0e+5 - 2.5e+4;
-        }
-        else if (onRightBoundary_(globalPos))
-        {
-            // unsaturated
-            values[pW] = 1.0e+5 - 2.5e+4;
-        }
-        else
-            values = 0.0;
+        // use initial values as boundary conditions
+        initial(values, element, fvElemGeom, scvIdx);
     }
 
     /*!
@@ -249,12 +236,14 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
+        
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
 
-        values[pW] = 0.0;
+        values = 0.0;
         if (onInlet_(globalPos)) {
-            values[pW] = -0.04; // kg / (m * s)
+            // inflow of water
+            values[contiEqIdx] = -0.04; // kg / (m * s)
         }
     }
 
@@ -291,19 +280,18 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
-        if ((globalPos[0] > lensLowerLeft_[0] && globalPos[0] < lensUpperRight_[0])
-            && (globalPos[1] > lensLowerLeft_[1] && globalPos[1] < lensUpperRight_[1]))
-        {
-            values[pW] = 1.0e+5 - 5.0e+4; // kg / (m * s)
-        }
-        else
-        {
-            values[pW] = 1.0e+5 - 2.5e+4;
-        }
-
+        //const GlobalPosition &pos = element.geometry().corner(scvIdx);
+        
+        Scalar Sw = 0.0;
+        Scalar pc =
+            MaterialLaw::pC(this->spatialParameters().materialLawParams(element, 
+                                                                        fvElemGeom,
+                                                                        scvIdx),
+                            Sw);
+        values[pwIdx] = pNreference() - pc;
     }
+
+    // \}
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const

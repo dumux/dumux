@@ -21,36 +21,14 @@
 #ifndef DUMUX_RICHARDS_PROPERTIES_HH
 #define DUMUX_RICHARDS_PROPERTIES_HH
 
+#include <dumux/boxmodels/common/boxproperties.hh>
+
 namespace Dumux
 {
 /*!
  * \addtogroup RichardsModel
  */
 // \{
-////////////////////////////////
-// forward declarations
-////////////////////////////////
-template<class TypeTag>
-class RichardsModel;
-
-template<class TypeTag>
-class RichardsLocalResidual;
-
-template <class TypeTag>
-class RichardsVolumeVariables;
-
-template <class TypeTag>
-class RichardsFluxVariables;
-
-/*!
- * \brief Indices for the single phase model.
- */
-struct RichardsIndices
-{
-    //! index of the wetting phase pressure
-    static const int pW = 0;
-};
-
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal richards model
 ///////////////////////////////////////////////////////////////////////////
@@ -73,67 +51,10 @@ NEW_PROP_TAG(RichardsIndices); //!< Enumerations for the richards models
 NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
-NEW_PROP_TAG(WettingPhase); //!< The wetting phase for the richards model
+NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the richards model
+NEW_PROP_TAG(FluidState); //!< The fluid state to be used for the richards model
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
-
-//////////////////////////////////////////////////////////////////
-// Properties
-//////////////////////////////////////////////////////////////////
-SET_INT_PROP(BoxRichards, NumEq, 1);
-SET_INT_PROP(BoxRichards, NumPhases, 2);
-
-//! Use the 2p local jacobian operator for the 2p model
-SET_TYPE_PROP(BoxRichards,
-              LocalResidual,
-              RichardsLocalResidual<TypeTag>);
-
-//! the Model property
-SET_TYPE_PROP(BoxRichards, Model, RichardsModel<TypeTag>);
-
-//! the VolumeVariables property
-SET_TYPE_PROP(BoxRichards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
-
-
-
-
-//! the FluxVariables property
-SET_TYPE_PROP(BoxRichards, FluxVariables, RichardsFluxVariables<TypeTag>);
-
-//! the weight of the upwind vertex for the mobility
-SET_SCALAR_PROP(BoxRichards,
-                MobilityUpwindAlpha,
-                1.0);
-
-//! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(BoxRichards, RichardsIndices, Dumux::RichardsIndices);
-
-/*!
- * \brief Set the property for the material law by retrieving it from
- *        the spatial parameters.
- */
-SET_PROP(BoxRichards, MaterialLaw)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-
-public:
-    typedef typename SpatialParameters::MaterialLaw type;
-};
-
-/*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
-SET_PROP(BoxRichards, MaterialLawParams)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-
-public:
-    typedef typename MaterialLaw::Params type;
-};
-
 // \}
 };
 
