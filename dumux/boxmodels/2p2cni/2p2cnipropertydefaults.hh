@@ -1,4 +1,4 @@
-// $Id$
+// $Id: 2p2cniproperties.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2010 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
@@ -19,45 +19,59 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the 2p2c BOX model.
+ * \brief Defines default values for most properties required by the 2p2cni 
+ *        box model.
  */
-#ifndef DUMUX_2P2C_PROPERTIES_HH
-#define DUMUX_2P2C_PROPERTIES_HH
+#ifndef DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH
+#define DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH
 
-#include <dumux/boxmodels/common/boxproperties.hh>
+#include <dumux/boxmodels/2p2c/2p2cpropertydefaults.hh>
+
+#include "2p2cnimodel.hh"
+#include "2p2cniproblem.hh"
+#include "2p2cniindices.hh"
+#include "2p2cnilocalresidual.hh"
+#include "2p2cnivolumevariables.hh"
+#include "2p2cnifluxvariables.hh"
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPTwoCModel
- */
-// \{
+
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
-// Type tags
+// Property values
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the isothermal single phase problems
-NEW_TYPE_TAG(BoxTwoPTwoC, INHERITS_FROM(BoxModel));
+SET_INT_PROP(BoxTwoPTwoCNI, NumEq, 3); //!< set the number of equations to 3
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
+//! Use the 2p2cni local jacobian operator for the 2p2cni model
+SET_TYPE_PROP(BoxTwoPTwoCNI,
+              LocalResidual,
+              TwoPTwoCNILocalResidual<TypeTag>);
 
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
-NEW_PROP_TAG(TwoPTwoCIndices); //!< Enumerations for the 2p2c models
-NEW_PROP_TAG(Formulation);   //!< The formulation of the model
-NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
-NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
+//! the Model property
+SET_TYPE_PROP(BoxTwoPTwoCNI, Model, TwoPTwoCNIModel<TypeTag>);
 
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
+//! the VolumeVariables property
+SET_TYPE_PROP(BoxTwoPTwoCNI, VolumeVariables, TwoPTwoCNIVolumeVariables<TypeTag>);
 
-NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
+
+//! the FluxVariables property
+SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVariables, TwoPTwoCNIFluxVariables<TypeTag>);
+
+//! The indices required by the non-isothermal 2p2c model
+SET_PROP(BoxTwoPTwoCNI, TwoPTwoCIndices)
+{ typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCNIIndices)) type; };
+
+SET_PROP(BoxTwoPTwoCNI, TwoPTwoCNIIndices)
+{ private:
+    enum { formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)) };
+public:
+    typedef TwoPTwoCNIIndices<TypeTag, formulation, 0> type;
+};
+
 }
-}
 
+}
 #endif

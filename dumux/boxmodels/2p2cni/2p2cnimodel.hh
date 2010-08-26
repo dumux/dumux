@@ -26,10 +26,6 @@
 
 #include <dumux/boxmodels/2p2c/2p2cmodel.hh>
 
-#include "2p2cnilocalresidual.hh"
-#include "2p2cniproperties.hh"
-#include "2p2cniproblem.hh"
-
 namespace Dumux {
 /*!
  * \ingroup BoxProblems
@@ -105,5 +101,7 @@ class TwoPTwoCNIModel : public TwoPTwoCModel<TypeTag>
 };
 
 }
+
+#include "2p2cnipropertydefaults.hh"
 
 #endif
