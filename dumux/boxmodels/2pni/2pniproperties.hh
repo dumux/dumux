@@ -20,14 +20,10 @@
  *
  * \brief Defines the properties required for the non-isotherm two-phase BOX model.
  */
-
 #ifndef DUMUX_2PNI_PROPERTIES_HH
 #define DUMUX_2PNI_PROPERTIES_HH
 
 #include <dumux/boxmodels/2p/2pproperties.hh>
-#include "2pnivolumevariables.hh"
-
-#include "2pnifluxvariables.hh"
 
 namespace Dumux
 {
@@ -35,36 +31,6 @@ namespace Dumux
  * \addtogroup TwoPNIBoxModel
  */
 // \{
-
-////////////////////////////////
-// forward declarations
-////////////////////////////////
-template<class TypeTag>
-class TwoPNIModel;
-
-template<class TypeTag>
-class TwoPNILocalResidual;
-
-template <class TypeTag>
-class TwoPNIVolumeVariables;
-
-template <class TypeTag>
-class TwoPNIFluxVariables;
-
-/*!
- * \brief Enumerations for the non-isothermal two-phase model
- */
-template <int PVOffset = 0>
-class TwoPNIIndices : public TwoPIndices<PVOffset>
-{
-public:
-    static const int temperatureIdx = PVOffset + 2; //! The primary variable index for temperature
-    static const int energyEqIdx = PVOffset + 2; //! The equation index of the energy equation
-};
-
-////////////////////////////////
-// properties
-////////////////////////////////
 
 namespace Properties
 {
@@ -80,33 +46,7 @@ NEW_TYPE_TAG(BoxTwoPNI, INHERITS_FROM(BoxTwoP));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(TwoPNIIndices); //!< Enumerations for the non-isothermal 2p models
-
-//////////////////////////////////////////////////////////////////
-// Properties
-//////////////////////////////////////////////////////////////////
-
-SET_INT_PROP(BoxTwoPNI, NumEq, 3); //!< set the number of equations to 3
-
-//! Use the 2pni local jacobian operator for the 2pni model
-SET_TYPE_PROP(BoxTwoPNI,
-              LocalResidual,
-              TwoPNILocalResidual<TypeTag>);
-
-//! the Model property
-SET_TYPE_PROP(BoxTwoPNI, Model, TwoPNIModel<TypeTag>);
-
-//! the VolumeVariables property
-SET_TYPE_PROP(BoxTwoPNI, VolumeVariables, TwoPNIVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(BoxTwoPNI, FluxVariables, TwoPNIFluxVariables<TypeTag>);
-
-//! The indices required by the non-isothermal two-phase model
-SET_TYPE_PROP(BoxTwoPNI, TwoPIndices, TwoPNIIndices<0>);
-SET_TYPE_PROP(BoxTwoPNI, TwoPNIIndices, TwoPNIIndices<0>);
-
 }
-
 }
 
 #endif

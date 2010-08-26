@@ -82,7 +82,7 @@ SET_TYPE_PROP(WaterAirProblem,
 SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
 
 // Write newton convergence
-SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, true);
+SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
 }
 
 

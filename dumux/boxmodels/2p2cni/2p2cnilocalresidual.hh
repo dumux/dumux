@@ -61,6 +61,8 @@ class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
         dimWorld = GridView::dimensionworld,
 
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+
+        energyEqIdx = Indices::energyEqIdx,
         temperatureIdx = Indices::temperatureIdx,
 
         lPhaseIdx = Indices::lPhaseIdx,
@@ -99,7 +101,7 @@ public:
         const VolumeVariables &vertDat = elemDat[scvIdx];
 
         // compute the energy storage
-        result[temperatureIdx] =
+        result[energyEqIdx] =
             vertDat.porosity()*(vertDat.density(lPhaseIdx) *
                                 vertDat.internalEnergy(lPhaseIdx) *
                                 //vertDat.enthalpy(lPhaseIdx) *
@@ -110,8 +112,7 @@ public:
                                 //vertDat.enthalpy(gPhaseIdx) *
                                 vertDat.saturation(gPhaseIdx))
             +
-            vertDat.temperature() *
-            vertDat.heatCapacity();
+            vertDat.temperature()*vertDat.heatCapacity();
     }
 
     /*!
@@ -128,13 +129,13 @@ public:
         ParentType::computeAdvectiveFlux(flux, fluxData);
 
         // advective heat flux in all phases
-        flux[temperatureIdx] = 0;
+        flux[energyEqIdx] = 0;
         for (int phase = 0; phase < numPhases; ++phase) {
             // vertex data of the upstream and the downstream vertices
             const VolumeVariables &up = this->curVolVars_(fluxData.upstreamIdx(phase));
             const VolumeVariables &dn = this->curVolVars_(fluxData.downstreamIdx(phase));
 
-            flux[temperatureIdx] +=
+            flux[energyEqIdx] +=
                 fluxData.KmvpNormal(phase) * (
                     mobilityUpwindAlpha * // upstream vertex
                     (  up.density(phase) *

@@ -28,8 +28,6 @@
 #define DUMUX_2PNI_MODEL_HH
 
 #include <dumux/boxmodels/2p/2pmodel.hh>
-#include "2pnilocalresidual.hh"
-#include "2pniproblem.hh"
 
 namespace Dumux {
 
@@ -85,5 +83,7 @@ class TwoPNIModel: public TwoPModel<TypeTag>
 };
 
 }
+
+#include "2pnipropertydefaults.hh"
 
 #endif

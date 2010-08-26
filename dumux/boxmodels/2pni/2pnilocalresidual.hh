@@ -74,8 +74,7 @@ class TwoPNILocalResidual : public TwoPLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
     static const Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
@@ -120,29 +119,39 @@ public:
      * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxData) const
+                              const FluxVariables &fluxVars) const
     {
         // advective mass flux
-        ParentType::computeAdvectiveFlux(flux, fluxData);
+        ParentType::computeAdvectiveFlux(flux, fluxVars);
 
         // advective heat flux in all phases
         flux[energyEqIdx] = 0;
-        for (int phase = 0; phase < numPhases; ++phase) {
-            // vertex data of the upstream and the downstream vertices
-            const VolumeVariables &up = this->curVolVars_(fluxData.upstreamIdx(phase));
-            const VolumeVariables &dn = this->curVolVars_(fluxData.downstreamIdx(phase));
+        Vector tmpVec;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            // calculate the flux in the normal direction of the
+            // current sub control volume face
+            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
+                                                tmpVec);
+            Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
 
-            flux[energyEqIdx] +=
-                fluxData.KmvpNormal(phase) * (
-                    mobilityUpwindAlpha * // upstream vertex
-                    (  up.density(phase) *
-                       up.mobility(phase) *
-                       up.enthalpy(phase))
-                    +
-                    (1 - mobilityUpwindAlpha) * // downstream vertex
-                    (  dn.density(phase) *
-                       dn.mobility(phase) *
-                       dn.enthalpy(phase)) );
+            // data attached to upstream and the downstream vertices
+            // of the current phase
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+
+            // add advective energy flux in current phase
+            flux[energyEqIdx] += 
+                normalFlux
+                *
+                ((    mobilityUpwindAlpha)*
+                 up.density(phaseIdx)*
+                 up.mobility(phaseIdx)*
+                 up.enthalpy(phaseIdx)
+                 +
+                 (1 - mobilityUpwindAlpha)*
+                 dn.density(phaseIdx)*
+                 dn.mobility(phaseIdx)*
+                 dn.enthalpy(phaseIdx));
         }
     }
 

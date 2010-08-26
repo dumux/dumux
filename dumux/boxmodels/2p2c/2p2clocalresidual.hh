@@ -206,9 +206,9 @@ public:
             // data attached to upstream and the downstream vertices
             // of the current phase
             const VolumeVariables &up =
-                    this->curVolVars_(vars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_()[vars.downstreamIdx(
-                    phaseIdx)];
+                this->curVolVars_(vars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn =
+                this->curVolVars_(vars.downstreamIdx(phaseIdx));
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {

@@ -211,6 +211,17 @@ public:
     };
 
     /*!
+     * \brief Returns the relative weight of a primary variable for
+     *        calculating relative errors.
+     */
+    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    {
+        if (Indices::pressureIdx == pvIdx)
+            return 1e-5;
+        return 1;
+    }
+
+    /*!
      * \brief Called by the BoxModel's update method.
      */
     void updateSuccessful()
