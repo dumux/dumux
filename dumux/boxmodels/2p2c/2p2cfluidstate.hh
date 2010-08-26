@@ -25,6 +25,7 @@
 #define DUMUX_2P2C_PHASE_STATE_HH
 
 #include "2p2cproperties.hh"
+#include "2p2cindices.hh"
 
 #include <dumux/material/fluidstate.hh>
 

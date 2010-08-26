@@ -32,6 +32,7 @@
 #include <vector>
 #include <iostream>
 
+#include "2p2cproperties.hh"
 #include "2p2cfluidstate.hh"
 
 namespace Dumux
@@ -42,30 +43,27 @@ namespace Dumux
  *        finite volume in the two-phase, two-component model.
  */
 template <class TypeTag>
-class TwoPTwoCVolumeVariables
+class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
+    typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
+    
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
-
-    enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
-
-        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
-
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-    };
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     enum {
+        dim = GridView::dimension,
+
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
+
         lCompIdx = Indices::lCompIdx,
         gCompIdx = Indices::gCompIdx,
 
@@ -73,14 +71,8 @@ class TwoPTwoCVolumeVariables
         gPhaseIdx = Indices::gPhaseIdx
     };
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef TwoPTwoCFluidState<TypeTag> FluidState;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
 
 public:
     /*!
@@ -93,7 +85,12 @@ public:
                 int scvIdx,
                 bool isOldSol)
     {
-        primaryVars_ = priVars;
+        ParentType::update(priVars,
+                           problem,
+                           element,
+                           elemGeom,
+                           scvIdx,
+                           isOldSol);
 
         asImp().updateTemperature_(priVars,
                                    element,
@@ -160,18 +157,6 @@ public:
     {
         temperature_ = problem.temperature(element, elemGeom, scvIdx);
     }
-
-    /*!
-     * \brief Return the vector of primary variables
-     */
-    const PrimaryVariables &primaryVars() const
-    { return primaryVars_; }
-
-    /*!
-     * \brief Sets the evaluation point used in the by the local jacobian.
-     */
-    void setEvalPoint(const Implementation *ep)
-    { }
 
     /*!
      * \brief Returns the phase state for the control-volume.
@@ -246,7 +231,6 @@ public:
 
 
 protected:
-    PrimaryVariables primaryVars_;
     Scalar temperature_;     //!< Temperature within the control volume
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
