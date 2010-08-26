@@ -26,6 +26,7 @@
 #include "boxelementboundarytypes.hh"
 #include "boxlocaljacobian.hh"
 #include "boxelementvolumevariables.hh"
+#include "boxvolumevariables.hh"
 
 #include <dune/pdelab/finiteelementmap/p1fem.hh>
 #include <dune/pdelab/finiteelementmap/q1fem.hh>
@@ -172,6 +173,13 @@ public:
  */
 SET_PROP(BoxModel, PrimaryVariables)
 { typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector))::block_type type; };
+
+/*!
+ * \brief The volume variable class.
+ *
+ * This should almost certainly be overloaded by the model...
+ */
+SET_TYPE_PROP(BoxModel, VolumeVariables, Dumux::BoxVolumeVariables<TypeTag>);
 
 /*!
  * \brief An array of secondary variable containers.

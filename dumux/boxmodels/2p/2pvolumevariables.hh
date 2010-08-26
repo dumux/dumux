@@ -25,6 +25,8 @@
 #include "2pproperties.hh"
 #include "2pfluidstate.hh"
 
+#include <dumux/boxmodels/common/boxvolumevariables.hh>
+
 #include <dune/common/fvector.hh>
 
 namespace Dumux
@@ -36,8 +38,10 @@ namespace Dumux
  *        finite volume in the two-phase model.
  */
 template <class TypeTag>
-class TwoPVolumeVariables
+class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
+    typedef BoxVolumeVariables<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
@@ -93,7 +97,12 @@ public:
                 int scvIdx,
                 bool isOldSol)
     {
-        primaryVars_ = priVars;
+        ParentType::update(priVars,
+                           problem,
+                           element,
+                           elemGeom,
+                           scvIdx,
+                           isOldSol);
 
         asImp().updateTemperature_(priVars,
                                    element,
@@ -144,18 +153,6 @@ public:
                                                          elemGeom,
                                                          scvIdx);
     }
-
-    /*!
-     * \brief Return the vector of primary variables
-     */
-    const PrimaryVariables &primaryVars() const
-    { return primaryVars_; }
-
-    /*!
-     * \brief Sets the evaluation point used in the by the local jacobian.
-     */
-    void setEvalPoint(const Implementation *ep)
-    { }
 
     /*!
      * \brief Returns the phase state for the control-volume.
@@ -223,7 +220,6 @@ protected:
         temperature_ = problem.temperature(element, elemGeom, scvIdx);
     }
 
-    PrimaryVariables primaryVars_;
     FluidState fluidState_;
     Scalar porosity_;
     Scalar temperature_;

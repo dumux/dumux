@@ -17,7 +17,8 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the twophase BOX model.
+ * \brief Defines default values for the properties required by the
+ *        twophase box model.
  */
 #ifndef DUMUX_2P_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P_PROPERTY_DEFAULTS_HH
@@ -26,6 +27,7 @@
 
 #include "2pmodel.hh"
 #include "2pproblem.hh"
+#include "2pindices.hh"
 #include "2pfluxvariables.hh"
 #include "2pvolumevariables.hh"
 #include "2pfluidstate.hh"
@@ -37,68 +39,6 @@ namespace Dumux
  * \addtogroup TwoPBoxModel
  */
 // \{
-
-/*!
- * \brief The common indices for the isothermal two-phase model.
- */
-struct TwoPCommonIndices
-{
-    // Formulations
-    static const int pwSn = 0; //!< Pw and Sn as primary variables
-    static const int pnSw = 1; //!< Pn and Sw as primary variables
-
-    // Phase indices
-    static const int wPhaseIdx = 0; //!< Index of the wetting phase in a phase vector
-    static const int nPhaseIdx = 1; //!< Index of the non-wetting phase in a phase vector
-};
-
-/*!
- * \brief The indices for the \f$p_w-S_n\f$ formulation of the
- *        isothermal two-phase model.
- *
- * \tparam PVOffset The first index in a primary variable vector.
- */
-template <int formulation = TwoPCommonIndices::pwSn, int PVOffset = 0>
-struct TwoPIndices : public TwoPCommonIndices
-{
-    // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
-
-    // indices of the primary variables
-    static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int SnIdx = PVOffset + 1; //!< Saturation index of the wetting phase
-
-    // indices of the equations
-    static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
-    static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
-};
-
-/*!
- * \brief The indices for the \f$p_w-S_n\f$ formulation of the
- *        isothermal two-phase model.
- *
- * \tparam PVOffset The first index in a primary variable vector.
- */
-template <int PVOffset>
-struct TwoPIndices<TwoPCommonIndices::pnSw, PVOffset>
-    : public TwoPCommonIndices
-{
-    // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
-
-    // indices of the primary variables
-    static const int pnIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int SwIdx = PVOffset + 1; //!< Saturation index of the wetting phase
-
-    // indices of the equations
-    static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
-    static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
-};
-
-// \}
-
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
@@ -172,8 +112,8 @@ SET_BOOL_PROP(BoxTwoP, EnablePartialReassemble, true);
 // enable time-step ramp up by default
 SET_BOOL_PROP(BoxTwoP, EnableTimeStepRampUp, false);
 
-// \}
 }
+// \}
 
 }
 
