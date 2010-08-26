@@ -23,6 +23,8 @@
 
 #include "boxproperties.hh"
 
+#include <dumux/common/valgrind.hh>
+
 namespace Dumux
 {
 
@@ -51,14 +53,19 @@ public:
     // copy constructor
     BoxVolumeVariables(const BoxVolumeVariables &v)
     { 
-        primaryVars_ = v.primaryVars_;
         evalPoint_ = 0;
+        primaryVars_ = v.primaryVars_;
+
+        Valgrind::CheckDefined(*this);
     };
 
     // assignment operator
     BoxVolumeVariables &operator=(const BoxVolumeVariables &v)
     {
         evalPoint_ = 0;
+        primaryVars_ = v.primaryVars_;
+        Valgrind::CheckDefined(*this);
+
         return *this;
     };
 
@@ -66,13 +73,16 @@ public:
      * \brief Sets the evaluation point used in the by the local jacobian.
      */
     void setEvalPoint(const Implementation *ep)
-    { evalPoint_ = ep; }
+    { 
+        evalPoint_ = ep;
+        Valgrind::CheckDefined(evalPoint_);
+    }
 
     /*!
      * \brief Returns the evaluation point used in the by the local jacobian.
      */
     const Implementation &evalPoint() const
-    { return (evalPoint_ == 0)?asImp_():evalPoint_; }
+    { return (evalPoint_ == 0)?asImp_():*evalPoint_; }
 
     /*!
      * \brief Update all quantities for a given control volume.
@@ -85,6 +95,7 @@ public:
                 bool isOldSol)
     {
         primaryVars_ = priVars;
+        Valgrind::CheckDefined(primaryVars_);
     }
 
     /*!
@@ -96,12 +107,12 @@ public:
     /*!
      * \brief Return a component of primary variable vector
      */
-    Scalar primaryVars(int pvIdx) const
+    Scalar primaryVar(int pvIdx) const
     { return primaryVars_[pvIdx]; }
 
 protected:
     const Implementation &asImp_() const
-    { return *static_cast<Implementation*>(this); }
+    { return *static_cast<const Implementation*>(this); }
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
