@@ -214,20 +214,25 @@ public:
      * \brief Returns the relative weight of a primary variable for
      *        calculating relative errors.
      */
-    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
     {
         if (Indices::pressureIdx == pvIdx)
-            return 1e-5;
+            return std::min(1.0/this->oldSol()[globalVertexIdx][pvIdx], 1);
         return 1;
     }
 
     /*!
-     * \brief Called by the BoxModel's update method.
+     * \brief Called by the problem if a timeintegration was
+     *        successful, post processing of the solution is done and the 
+     *        result has been written to disk. 
+     *
+     * This should perpare the model for the next time integration.
      */
-    void updateSuccessful()
+    void advanceTimeLevel()
     {
-        ParentType::updateSuccessful();
+        ParentType::advanceTimeLevel();
 
+        // update the phase state
         updateOldPhasePresence_();
         setSwitched_(false);
     }

@@ -336,28 +336,31 @@ public:
             if (problem_->shouldWriteOutput())
                 problem_->writeOutput();
 
+            // perpare the model for the next time integration
+            problem_->advanceTimeLevel();
+
             // advance the simulated time by the current time step size
             Scalar dt = timeStepSize();
-            time_ += timeStepSize_;
+            time_ += dt;
             ++timeStepIdx_;
 
+            // write restart file if mandated by the problem
             if (problem_->shouldWriteRestartFile())
                 problem_->serialize();
 
+            // notify the problem if an episode is finished
             if (episodeIsOver())
                 problem_->episodeEnd();
 
             // notify the problem that the timestep is done and ask it
             // for a suggestion for the next timestep size
             // set the time step size for the next step
-            setTimeStepSize(problem_->nextTimeStepSize());
-
-            Scalar nextDt = timeStepSize();
+            setTimeStepSize(problem_->nextTimeStepSize(timeStepSize_));
 
             if (verbose_) {
                 std::cout <<
-                    boost::format("Time step %d done. CPU time:%.4g, time:%.4g, last step size:%.4g, next step size:%.4g\n")
-                    %timeStepIndex()%timer.elapsed()%time()%dt%nextDt;
+                    boost::format("Time step %d done. CPU time:%.4g, time:%.4g, time step size:%.4g\n")
+                    %timeStepIndex()%timer.elapsed()%time()%dt;
             }
 
         }

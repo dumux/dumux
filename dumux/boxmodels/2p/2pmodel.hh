@@ -100,10 +100,10 @@ public:
      * \brief Returns the relative weight of a primary variable for
      *        calculating relative errors.
      */
-    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
     {
         if (Indices::pressureIdx == pvIdx)
-            return 1e-5;
+            return std::min(1.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
         return 1;
     }
 

@@ -130,7 +130,8 @@ public:
      * \brief Compute the global residual for an arbitrary solution
      *        vector.
      */
-    Scalar globalResidual(SolutionVector &dest, const SolutionVector &u)
+    Scalar globalResidual(SolutionVector &dest, 
+                          const SolutionVector &u)
     {
         SolutionVector tmp(curSol());
         curSol() = u;
@@ -351,14 +352,6 @@ public:
      */
     void updateSuccessful()
     {
-        // the jacobian matrix of the last iteration of the current
-        // time step is the same as the jacobian of the first
-        // iteration of the next time step
-        if (enableJacobianRecycling)
-            jacAsm_->setMatrixReuseable(true);
-
-        // make the current solution the previous one.
-        uPrev_ = uCur_;
     };
 
     /*!
@@ -374,6 +367,19 @@ public:
         uCur_ = uPrev_;
         jacAsm_->reassembleAll();
     };
+
+    /*!
+     * \brief Called by the problem if a timeintegration was
+     *        successful, post processing of the solution is done and the 
+     *        result has been written to disk. 
+     *
+     * This should perpare the model for the next time integration.
+     */
+    void advanceTimeLevel()
+    {
+        // make the current solution the previous one.
+        uPrev_ = uCur_;
+    }
 
     /*!
      * \brief Serializes the current state of the model.

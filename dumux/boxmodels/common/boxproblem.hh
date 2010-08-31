@@ -176,11 +176,8 @@ public:
      *        timestep has been computed and the simulation time has
      *        been updated.
      */
-    Scalar nextTimeStepSize()
-    {
-        Scalar dt = asImp_().timeManager().timeStepSize();
-        return newtonCtl_.suggestTimeStepSize(dt);
-    };
+    Scalar nextTimeStepSize(Scalar dt)
+    { return newtonCtl_.suggestTimeStepSize(dt); };
 
     /*!
      * \brief Returns true if a restart file should be written to
@@ -208,13 +205,26 @@ public:
     { return true; }
 
     /*!
-     * \brief Called by the time manager after the time integration.
+     * \brief Called by the time manager after the time integration to
+     *        do some post processing on the solution.
      */
     void postTimeStep()
     { }
 
     /*!
-     * \brief Called when the end of an simulation episode is reached.
+     * \brief Called by the time manager after everything which can be
+     *        done about the current time step is finished and the
+     *        model should be prepared to do the next time integration.
+     */
+    void advanceTimeLevel()
+    { 
+        model_->advanceTimeLevel();
+    }
+
+    /*!
+     * \brief Called when the end of an simulation episode is reached. 
+     *
+     * Typically a new episode should be started in this method.
      */
     void episodeEnd()
     {
