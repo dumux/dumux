@@ -93,8 +93,8 @@ public:
 //        lensMaterialParams_.setMaxPC(0);
 //        outerMaterialParams_.setMaxPC(0);
 
-        lensK_ = 1e-12;
-        outerK_ = 5e-12;
+        lensK_ = 1e-11;
+        outerK_ = 5e-11;
     }
 
     /*!
