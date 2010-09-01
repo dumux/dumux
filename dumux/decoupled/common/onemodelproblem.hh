@@ -151,6 +151,14 @@ public:
     { };
 
     /*!
+     * \brief Called by the time manager after everything which can be
+     *        done about the current time step is finished and the
+     *        model should be prepared to do the next time integration.
+     */
+    void advanceTimeLevel()
+    {}
+
+    /*!
      * \brief Returns the current time step size [seconds].
      */
     Scalar timeStepSize() const

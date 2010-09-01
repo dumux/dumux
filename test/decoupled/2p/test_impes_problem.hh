@@ -66,7 +66,7 @@ public:
 };
 
 // Set the model properties
-SET_PROP(IMPESTestProblem, SaturationModel)
+SET_PROP(IMPESTestProblem, TransportModel)
 {
     typedef Dumux::FVSaturation2P<TTAG(IMPESTestProblem)> type;
 };

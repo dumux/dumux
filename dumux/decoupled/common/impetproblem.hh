@@ -87,7 +87,6 @@ public:
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
           variables_(gridView),
-          dt_(0),
           resultWriter_(asImp_().name())
     {
         // calculate the bounding box of the grid view
@@ -154,26 +153,27 @@ public:
         Solution k1 = asImp_().variables().transportedQuantity();
 
         Scalar t = timeManager().time();
+        Scalar dt = 1e100;
 
         // obtain the first update and the time step size
-        model().update(t, dt_, k1);
+        model().update(t, dt, k1);
 
         //make sure t_old + dt is not larger than tend
-        dt_ = std::min(dt_, timeManager().episodeMaxTimeStepSize());
+        dt = std::min(dt, timeManager().episodeMaxTimeStepSize());
 
         // check if we are in first TS and an initialDt was assigned
         if (t==0. && timeManager().timeStepSize()!=0.)
         {
-            // check if assigned initialDt is in accordance with dt_ from first transport step
-            if (timeManager().timeStepSize() > dt_)
+            // check if assigned initialDt is in accordance with dt from first transport step
+            if (timeManager().timeStepSize() > dt)
                 Dune::dwarn << "initial timestep of size " << timeManager().timeStepSize()
-                            << "is larger then dt_= "<<dt_<<" from transport" << std::endl;
+                            << "is larger then dt= "<<dt<<" from transport" << std::endl;
             // internally assign next tiestep size
-            dt_ = std::min(dt_, timeManager().timeStepSize());
+            dt = std::min(dt, timeManager().timeStepSize());
         }
 
         //assign next tiestep size
-        timeManager().setTimeStepSize(dt_);
+        timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
         asImp_().variables().transportedQuantity() += (k1 *= timeManager().timeStepSize());
@@ -193,6 +193,14 @@ public:
     };
 
     /*!
+     * \brief Called by the time manager after everything which can be
+     *        done about the current time step is finished and the
+     *        model should be prepared to do the next time integration.
+     */
+    void advanceTimeLevel()
+    {}
+
+    /*!
      * \brief Returns the current time step size [seconds].
      */
     Scalar timeStepSize() const
@@ -209,8 +217,8 @@ public:
      *        timestep has been computed and the simulation time has
      *        been updated.
      */
-    Scalar nextTimeStepSize()
-    { return dt_;}
+    Scalar nextTimeStepSize(Scalar dt)
+    { return timeManager_.timeStepSize();}
 
     /*!
      * \brief Returns true if a restart file should be written to
@@ -446,8 +454,6 @@ private:
     TimeManager timeManager_;
 
     Variables variables_;
-
-    Scalar dt_;
 
     PressureModel* pressModel_;//!< object including the pressure model
     TransportModel* transportModel_;//!< object including the saturation model
