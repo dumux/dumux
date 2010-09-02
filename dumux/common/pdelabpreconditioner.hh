@@ -459,7 +459,8 @@ public:
         //        PRICH prich(gfs,phelper);
         int verb=0;
         if (gfs.gridview().comm().rank()==0) verb=verbose;
-        Dune::BiCGSTABSolver<SolVector> solver(pop,psp,parPreCond,reduction,maxiter,verb);
+        Dune::LoopSolver<SolVector> solver(pop,psp,parPreCond,reduction,maxiter,verb);
+//        Dune::BiCGSTABSolver<SolVector> solver(pop,psp,parPreCond,reduction,maxiter,verb);
         Dune::InverseOperatorResult stat;
         solver.apply(z,r,stat);
         res.converged = stat.converged;

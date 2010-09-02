@@ -303,6 +303,7 @@ class BoxFVElementGeometry
     enum{maxBF = (dim < 3 ? 8 : 24)};
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename Grid::ctype CoordScalar;
+  //typedef Scalar CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dim> FV;
@@ -768,62 +769,59 @@ public:
             }
 
 
-        if (computeGradientAtScvCenters)
-        {
             // calculate gradients at the center of the scv
-            for (int vert = 0; vert < numVertices; vert++)
+            for (int scvIdx = 0; scvIdx < numVertices; scvIdx++)
                 if (dim == 2)
                 {
-                    if (!subContVol[vert].inner)
+//                    if (!subContVol[scvIdx].inner)
                     {
-                        switch (vert)
+                        switch (scvIdx)
                         {
                         case 0:
                             if (numVertices == 4) {
-                                subContVol[vert].localCenter[0] = 0.25;
-                                subContVol[vert].localCenter[1] = 0.25;
+                                subContVol[scvIdx].localCenter[0] = 0.25;
+                                subContVol[scvIdx].localCenter[1] = 0.25;
                             }
                             else {
-                                subContVol[vert].localCenter[0] = 1.0/6.0;
-                                subContVol[vert].localCenter[1] = 1.0/6.0;
+                                subContVol[scvIdx].localCenter[0] = 1.0/6.0;
+                                subContVol[scvIdx].localCenter[1] = 1.0/6.0;
                             }
                             break;
                         case 1:
                             if (numVertices == 4) {
-                                subContVol[vert].localCenter[0] = 0.75;
-                                subContVol[vert].localCenter[1] = 0.25;
+                                subContVol[scvIdx].localCenter[0] = 0.75;
+                                subContVol[scvIdx].localCenter[1] = 0.25;
                             }
                             else {
-                                subContVol[vert].localCenter[0] = 4.0/6.0;
-                                subContVol[vert].localCenter[1] = 1.0/6.0;
+                                subContVol[scvIdx].localCenter[0] = 4.0/6.0;
+                                subContVol[scvIdx].localCenter[1] = 1.0/6.0;
                             }
                             break;
                         case 2:
                             if (numVertices == 4) {
-                                subContVol[vert].localCenter[0] = 0.25;
-                                subContVol[vert].localCenter[1] = 0.75;
+                                subContVol[scvIdx].localCenter[0] = 0.25;
+                                subContVol[scvIdx].localCenter[1] = 0.75;
                             }
                             else {
-                                subContVol[vert].localCenter[0] = 1.0/6.0;
-                                subContVol[vert].localCenter[1] = 4.0/6.0;
+                                subContVol[scvIdx].localCenter[0] = 1.0/6.0;
+                                subContVol[scvIdx].localCenter[1] = 4.0/6.0;
                             }
                             break;
                         case 3:
-                            subContVol[vert].localCenter[0] = 0.75;
-                            subContVol[vert].localCenter[1] = 0.75;
+                            subContVol[scvIdx].localCenter[0] = 0.75;
+                            subContVol[scvIdx].localCenter[1] = 0.75;
                             break;
                         }
                     }
 
                     std::vector<ShapeJacobian> localJac;
-                    localFiniteElement.localBasis().evaluateJacobian(subContVol[vert].localCenter, localJac);
+                    localFiniteElement.localBasis().evaluateJacobian(subContVol[scvIdx].localCenter, localJac);
 
                     Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT =
-                            geometry.jacobianInverseTransposed(subContVol[vert].localCenter);
+                            geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
                     for (int vert = 0; vert < numVertices; vert++)
-                        jacInvT.mv(localJac[vert][0], subContVol[vert].gradCenter[vert]);
+                        jacInvT.mv(localJac[vert][0], subContVol[scvIdx].gradCenter[vert]);
                 }
-        }
     }
 };
 
