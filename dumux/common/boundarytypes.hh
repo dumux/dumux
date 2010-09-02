@@ -49,6 +49,8 @@ public:
             boundaryInfo_[i].isDirichlet = 0;
             boundaryInfo_[i].isNeumann = 0;
             boundaryInfo_[i].isOutflow = 0;
+            boundaryInfo_[i].isCouplingInflow = 0;
+            boundaryInfo_[i].isCouplingOutflow = 0;
 
             eq2pvIdx_[i] = i;
             pv2eqIdx_[i] = i;
@@ -154,7 +156,7 @@ public:
             boundaryInfo_[eqIdx].visited = 1;
             boundaryInfo_[eqIdx].isDirichlet = 0;
             boundaryInfo_[eqIdx].isNeumann = 0;
-            boundaryInfo_[eqIdx].isOutflow = 1;
+            boundaryInfo_[eqIdx].isOutflow = 0;
             boundaryInfo_[eqIdx].isCouplingInflow = 0;
             boundaryInfo_[eqIdx].isCouplingOutflow = 1;
 
