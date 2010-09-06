@@ -561,6 +561,11 @@ public:
             writer.addVertexData(x[i], (boost::format("primaryVar%i")%i).str().c_str());
     }
 
+    /*!
+     * \brief Reference to the grid view of the spatial domain.
+     */
+    const GridView &gridView() const
+    { return problem_().gridView(); }
 
 protected:
     /*!

@@ -86,6 +86,7 @@ AC_CONFIG_FILES([dumux.pc
     Makefile
     doc/Makefile 
     doc/doxygen/Makefile 
+    doc/doxygen/Doxyfile
     doc/handbook/Makefile
     dumux/Makefile 
     dumux/boxmodels/Makefile 
