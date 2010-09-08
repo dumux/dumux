@@ -73,6 +73,203 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 }
 
 /*!
+ * \brief Invert a linear polynomial analytically
+ *
+ * Returns the number of solutions which are in the real numbers.
+ */
+template <class Scalar, class SolContainer>
+int invertLinearPolynomial(SolContainer &sol, 
+                           Scalar a,
+                           Scalar b)
+{
+    if (a == 0.0)
+        return 0;
+
+    sol[0] = -b/a;
+    return 1;
+}
+
+/*!
+ * \brief Invert a quadratic polynomial analytically
+ *
+ * Returns the number of solutions which are in the real numbers.
+ */
+template <class Scalar, class SolContainer>
+int invertQuadraticPolynomial(SolContainer &sol, 
+                              Scalar a,
+                              Scalar b,
+                              Scalar c)
+{
+    // check for a line
+    if (a == 0.0)
+        return invertLinearPolynomial(sol, b, c);
+    
+    // discriminant
+    Scalar Delta = b*b - 4*a*c;
+    if (Delta < 0)
+        return 0; // no real roots
+
+    Delta = std::sqrt(Delta);
+    sol[0] = (- b + Delta)/(2*a);
+    sol[1] = (- b - Delta)/(2*a);
+    return 2; // two real roots
+}
+
+/*!
+ * \brief Invert a cubic polynomial analytically
+ *
+ * Returns the number of solutions which are in the real numbers.
+ */
+template <class Scalar, class SolContainer>
+int invertCubicPolynomial(SolContainer &sol,
+                          Scalar a,
+                          Scalar b,
+                          Scalar c, 
+                          Scalar d)
+{
+    // reduces to a quadratic polynomial
+    if (a == 0.0)
+        return invertQuadraticPolynomial(sol, b, c, d);
+    
+    // normalize the polynomial
+    b /= a;
+    c /= a;
+    d /= a;
+    a = 1;
+
+    // get rid of the quadratic term by subsituting x = t - b/3
+    Scalar p = c - b*b/3;
+    Scalar q = d + (2*b*b*b - 9*b*c)/27;
+
+    // now we are at the form t^3 + p*t + q = 0. First we handle some
+    // special cases to avoid divisions by zero later...
+    if (p == 0.0 && q == 0.0) {
+        // t^3 = 0, i.e. triple root at t = 0
+        sol[0] = sol[1] = sol[2] = 0.0 - b/3;
+        return 3;
+    }
+    else if (p == 0.0 && q != 0.0) {
+        // t^3 + q = 0, 
+        //
+        // i. e. single real root at t=curt(q)
+        Scalar t;
+        if (-q > 0) t = std::pow(-q, 1./3);
+        else t = - std::pow(q, 1./3);
+        sol[0] = t - b/3;
+        return 1;
+    }
+    else if (p != 0.0 && q == 0.0) {
+        // t^3 + p*t = 0 = t*(t^2 + p), 
+        //
+        // i. e. roots at t = 0, t^2 + p = 0 
+        sol[0] = 0.0 - b/3;
+        if (p > 0)
+            return 1; // only a single real root at t=0
+        // two additional real roots at t = sqrt(-p) and t = -sqrt(-p)
+        sol[1] = std::sqrt(-p) - b/3;
+        sol[2] = -sol[1];
+        return 3;
+    }
+
+    // At this point
+    //
+    // t^3 + p*t + q = 0
+    //
+    // with p != 0 and q != 0 holds. Introducing the variables u and v
+    // with
+    //
+    //   u + v = t  and
+    //   3*u*v + p = 0.
+    //
+    // This leads to
+    //
+    // u^3 + v^3 + q = 0 .
+    //
+    // multiplying both sides with u^3 and taking advantage of the
+    // fact that u*v = -p/3 leads to
+    //
+    // u^6 + q*u^3 - p^3/27 = 0
+    //
+    // Now, substituting u^3 = w yields
+    //
+    // w^2 + q*w - p^3/27
+    // 
+    // This is a quadratic equation which can be solved by
+    //
+    // w = -q/2 +- sqrt(q^2/4 + p^3/27)
+    //
+    // Since w = u^3 it is sufficient to only look at the case where
+    // the square root is added. There are 2 cases: positive and
+    // negative discriminant.
+    Scalar wDisc = q*q/4 + p*p*p/27;
+    if (wDisc >= 0) { // positive discriminant
+        // calculate the cube root of - q/2 + sqrt(q/4 + p^3/27)
+        Scalar u = - q/2 + std::sqrt(wDisc);
+        if (u < 0) u = - std::pow(-u, 1.0/3);
+        else u = std::pow(u, 1.0/3);
+
+        // at this point, u != 0 since p^3 = 0 is necessary in order
+        // for u = 0 to hold
+        sol[0] = u - p/(3*u) - b/3;
+        // the remaining two roots of u are rotated by 2/3*pi in the
+        // complex plane
+        return 1;
+    }
+    else { // negative discriminant
+        // calculate the cube root of q/2 + sqrt(q/2 + p^3/27)
+        Scalar uCubedRe = q/2;
+        Scalar uCubedIm = std::sqrt(-wDisc);
+        // calculate the length and the angle of the primitive root
+        Scalar uAbs = std::pow(std::sqrt(uCubedRe*uCubedRe + uCubedIm*uCubedIm), 1.0/3);
+        Scalar phi = std::atan2(uCubedIm, uCubedRe)/3;
+        
+        // with the definitions form above it follows that 
+        //
+        // x = u - p/(3*u) - b/3
+        //
+        // where x and u are complex numbers. rewritten in polar form
+        // this is equivalent to
+        //
+        // x = abs(u)*e^(i*phi) - p*e^(-i*phi)/(3*abs(u)) - b/3
+        //
+        // now factoring out the e^ terms and subtracting the
+        // additional terms, yields
+        //
+        // x = (e^(i*phi) + e^(-i*phi))*(abs(u)* - p/(3*abs(u))) - y - b/3
+        // 
+        // with 
+        //
+        // y = - abs(u)*e^(-i*phi) + p*e^(i*phi)/(3*abs(u)) 
+        //
+        // and
+        //
+        // e^(i*phi) + e^(-i*phi) = 2*cos(phi)
+        //
+        // The crucial observation is the fact that y is the conjugate
+        // of - x + b/3. This means that
+        //
+        // x = 2*cos(phi)*(abs(u) - p / (3*abs(u))) - conj(x) - 2*b/3
+        // 
+        // holds. Since abs(u), p, b and cos(phi) are real numbers, it
+        // follows that Im(x) = 0 and 
+        //
+        // Re(x) = x = cos(phi)*(abs(u) - p / (3*abs(u))) - b/3
+        //
+        // Considering the fact that u is a cubic root, we have three
+        // values for phi which differ by 2/3*pi. This allows to
+        // calculate the three real roots of the polynomial:
+        for (int i = 0; i < 3; ++i) {
+            sol[i] = - std::cos(phi)*(uAbs - p/(3*uAbs)) - b/3;
+            phi += 2*M_PI/3;
+        }
+        return 3;
+    }
+
+    // NOT REACHABLE!
+    return 0;
+}
+
+/*!
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
