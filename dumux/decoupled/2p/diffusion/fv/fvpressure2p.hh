@@ -101,7 +101,6 @@ template<class TypeTag> class FVPressure2P
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
@@ -359,14 +358,8 @@ void FVPressure2P<TypeTag>::assemble(bool first)
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
-        // cell geometry type
-        Dune::GeometryType gt = eIt->geometry().type();
-
-        // cell center in reference element
-        const LocalPosition& localPos = ReferenceElementContainer::general(gt).position(0, 0);
-
         // get global coordinate of cell center
-        const GlobalPosition& globalPos = eIt->geometry().global(localPos);
+        const GlobalPosition& globalPos = eIt->geometry().center();
 
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -401,20 +394,11 @@ void FVPressure2P<TypeTag>::assemble(bool first)
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
-
-            // get geometry type of face
-            Dune::GeometryType faceGT = isIt->geometryInInside().type();
-
-            // center in face's reference element
-            const Dune::FieldVector<Scalar, dim - 1>& faceLocal = ReferenceElementFaceContainer::general(faceGT).position(0, 0);
-
             int isIndex = isIt->indexInInside();
 
-            // center of face inside volume reference element
-            const LocalPosition localPosFace(0);
 
             // get normal vector
-            Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
+            Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
 
             // get face volume
             Scalar faceArea = isIt->geometry().volume();
@@ -426,21 +410,14 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 ElementPointer neighborPointer = isIt->outside();
                 int globalIdxJ = problem_.variables().index(*neighborPointer);
 
-                // compute factor in neighbor
-                Dune::GeometryType neighborGT = neighborPointer->geometry().type();
-                const LocalPosition& localPosNeighbor = ReferenceElementContainer::general(neighborGT).position(0, 0);
-
                 // neighbor cell center in global coordinates
-                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
                 // distance vector between barycenters
                 Dune::FieldVector<Scalar, dimWorld> distVec = globalPosNeighbor - globalPos;
 
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
-
-                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
-                unitDistVec /= dist;
 
                 FieldMatrix permeabilityJ = problem_.spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer);
 
@@ -462,7 +439,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 }
 
                 Dune::FieldVector<Scalar, dim> permeability(0);
-                meanPermeability.mv(unitDistVec, permeability);
+                meanPermeability.mv(unitOuterNormal, permeability);
 
                 // get mobilities and fractional flow factors
                 Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
@@ -528,8 +505,8 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     }
                     }
 
-                    potentialW += densityW * (unitDistVec * gravity);
-                    potentialNW += densityNW * (unitDistVec * gravity);
+                    potentialW += densityW * (unitOuterNormal * gravity);
+                    potentialNW += densityNW * (unitOuterNormal * gravity);
 
                     //store potentials for further calculations (velocity, saturation, ...)
                     problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;
@@ -549,7 +526,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 densityNW = (potentialNW == 0) ? rhoMeanNW : densityNW;
 
                 //calculate current matrix entry
-                entry = (lambdaW + lambdaNW) * ((permeability * unitDistVec) / dist) * faceArea * (unitOuterNormal * unitDistVec);
+                entry = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
 
                 //calculate right hand side
                 Scalar rightEntry = (lambdaW * densityW + lambdaNW * densityNW) * (permeability * gravity) * faceArea;
@@ -559,7 +536,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 case pw:
                 {
                     // calculate capillary pressure gradient
-                    Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
+                    Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
                     pCGradient *= (pcI - pcJ) / dist;
 
                     //add capillary pressure term to right hand side
@@ -569,7 +546,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 case pn:
                 {
                     // calculate capillary pressure gradient
-                    Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
+                    Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
                     pCGradient *= (pcI - pcJ) / dist;
 
                     //add capillary pressure term to right hand side
@@ -579,7 +556,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 }
 
                 //set right hand side
-                f_[globalIdxI] -= rightEntry * (unitOuterNormal * unitDistVec);
+                f_[globalIdxI] -= rightEntry;
 
                 // set diagonal entry
                 A_[globalIdxI][globalIdxI] += entry;
@@ -593,12 +570,10 @@ void FVPressure2P<TypeTag>::assemble(bool first)
             else
             {
                 // center of face in global coordinates
-                const GlobalPosition& globalPosFace = isIt->geometry().global(faceLocal);
+                const GlobalPosition& globalPosFace = isIt->geometry().center();
 
                 Dune::FieldVector<Scalar, dimWorld> distVec(globalPosFace - globalPos);
                 Scalar dist = distVec.two_norm();
-                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
-                unitDistVec /= dist;
 
                 //get boundary condition for boundary face center
                 BoundaryConditions::Flags bctype = problem_.bctypePress(globalPosFace, *isIt);
@@ -608,7 +583,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 {
                     //permeability vector at boundary
                     Dune::FieldVector<Scalar, dim> permeability(0);
-                    permeabilityI.mv(unitDistVec, permeability);
+                    permeabilityI.mv(unitOuterNormal, permeability);
 
                     //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
                     Scalar satBound;
@@ -747,8 +722,8 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                         }
                         }
 
-                        potentialW += densityW * (unitDistVec * gravity);
-                        potentialNW += densityNW * (unitDistVec * gravity);
+                        potentialW += densityW * (unitOuterNormal * gravity);
+                        potentialNW += densityNW * (unitOuterNormal * gravity);
 
                         //store potential gradients for further calculations
                         problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;
@@ -767,8 +742,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     densityNW = (potentialNW == 0) ? rhoMeanNW : densityNW;
 
                     //calculate current matrix entry
-                    Scalar entry = (lambdaW + lambdaNW) * ((permeability * unitDistVec) / dist) * faceArea
-                            * (unitOuterNormal * unitDistVec);
+                    Scalar entry = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
 
                     //calculate right hand side
                     Scalar rightEntry = (lambdaW * densityW + lambdaNW * densityNW) * (permeability * gravity) * faceArea;
@@ -778,7 +752,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     case pw:
                     {
                         // calculate capillary pressure gradient
-                        Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
+                        Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
                         pCGradient *= (pcI - pcBound) / dist;
 
                         //add capillary pressure term to right hand side
@@ -788,7 +762,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     case pn:
                     {
                         // calculate capillary pressure gradient
-                        Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
+                        Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
                         pCGradient *= (pcI - pcBound) / dist;
 
                         //add capillary pressure term to right hand side
@@ -800,7 +774,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     // set diagonal entry and right hand side entry
                     A_[globalIdxI][globalIdxI] += entry;
                     f_[globalIdxI] += entry * pressBound;
-                    f_[globalIdxI] -= rightEntry * (unitOuterNormal * unitDistVec);
+                    f_[globalIdxI] -= rightEntry;
                 }
                 //set neumann boundary condition
 
@@ -883,14 +857,8 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
-        // get geometry type
-        Dune::GeometryType gt = eIt->geometry().type();
-
-        // get cell center in reference element
-        const LocalPosition &localPos = ReferenceElementContainer::general(gt).position(0, 0);
-
         // get global coordinate of cell center
-        GlobalPosition globalPos = eIt->geometry().global(localPos);
+        GlobalPosition globalPos = eIt->geometry().center();
 
         int globalIdx = problem_.variables().index(*eIt);
 
