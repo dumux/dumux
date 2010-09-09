@@ -548,6 +548,26 @@ public:
         return saturation_[this->elementMapper().map(element)];;
     }
 
+    //! Get velocity at given element face
+    /*! evaluate velocity at given location
+     @param element entity of codim 0
+     @param indexInInside index in reference element
+     \return vector of velocity
+     */
+    Dune::FieldVector<Scalar, dim>& velocitySecondPhaseElementFace(const Element& element, const int indexInInside)
+    {
+        int elemId = this->index(element);
+
+        return (velocitySecondPhase_[elemId][indexInInside]);
+    }
+
+    const Dune::FieldVector<Scalar, dim>& velocitySecondPhaseElementFace(const Element& element, const int indexInInside) const
+    {
+        int elemId = this->index(element);
+
+        return (velocitySecondPhase_[elemId][indexInInside]);
+    }
+
 };
 }
 #endif
