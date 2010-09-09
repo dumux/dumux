@@ -103,7 +103,6 @@ public:
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
           variables_(gridView),
-          dt_(0),
           resultWriter_(asImp_().name())
     {
 //        // calculate the bounding box of the grid view
@@ -175,8 +174,8 @@ public:
      *        timestep has been computed and the simulation time has
      *        been updated.
      */
-    Scalar nextTimeStepSize()
-    { return dt_;}
+    Scalar nextTimeStepSize(Scalar dt)
+    { return timeManager_.timeStepSize();}
 
     /*!
      * \brief Returns true if a restart file should be written to
@@ -204,6 +203,11 @@ public:
     bool shouldWriteOutput() const
     { return true; }
 
+    void addOutputVtkFields()
+    {
+        model().addOutputVtkFields(resultWriter_);
+    }
+
     //! Write the fields current solution into an VTK output file.
     void writeOutput()
     {
@@ -211,7 +215,7 @@ public:
             std::cout << "Writing result file for current time step\n";
 
         resultWriter_.beginTimestep(timeManager_.time() + timeManager_.timeStepSize(), gridView());
-        model().addOutputVtkFields(resultWriter_);
+        asImp_().addOutputVtkFields();
         resultWriter_.endTimestep();
     }
 
@@ -386,8 +390,6 @@ private:
     TimeManager timeManager_;
 
     Variables variables_;
-
-    Scalar dt_;
 
     Model* model_;
 
