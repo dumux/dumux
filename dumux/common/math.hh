@@ -156,6 +156,7 @@ int invertCubicPolynomial(SolContainer &sol,
         if (-q > 0) t = std::pow(-q, 1./3);
         else t = - std::pow(q, 1./3);
         sol[0] = t - b/3;
+
         return 1;
     }
     else if (p != 0.0 && q == 0.0) {
@@ -176,12 +177,11 @@ int invertCubicPolynomial(SolContainer &sol,
     // t^3 + p*t + q = 0
     //
     // with p != 0 and q != 0 holds. Introducing the variables u and v
-    // with
+    // with the properties
     //
-    //   u + v = t  and
-    //   3*u*v + p = 0.
+    //   u + v = t       and       3*u*v + p = 0
     //
-    // This leads to
+    // leads to
     //
     // u^3 + v^3 + q = 0 .
     //
@@ -194,72 +194,77 @@ int invertCubicPolynomial(SolContainer &sol,
     //
     // w^2 + q*w - p^3/27
     // 
-    // This is a quadratic equation which can be solved by
+    // This is a quadratic equation with the solutions
     //
-    // w = -q/2 +- sqrt(q^2/4 + p^3/27)
+    // w = -q/2 + sqrt(q^2/4 + p^3/27) and
+    // w = -q/2 - sqrt(q^2/4 + p^3/27)
     //
-    // Since w = u^3 it is sufficient to only look at the case where
-    // the square root is added. There are 2 cases: positive and
-    // negative discriminant.
+    // Since w is equivalent to u^3 it is sufficient to only look at
+    // one of the two cases. Then, there are still 2 cases: positive
+    // and negative discriminant.
     Scalar wDisc = q*q/4 + p*p*p/27;
-    if (wDisc >= 0) { // positive discriminant
-        // calculate the cube root of - q/2 + sqrt(q/4 + p^3/27)
+    if (wDisc >= 0) { // the positive discriminant case:
+        // calculate the cube root of - q/2 + sqrt(q^2/4 + p^3/27)
         Scalar u = - q/2 + std::sqrt(wDisc);
         if (u < 0) u = - std::pow(-u, 1.0/3);
         else u = std::pow(u, 1.0/3);
 
         // at this point, u != 0 since p^3 = 0 is necessary in order
-        // for u = 0 to hold
+        // for u = 0 to hold, so
         sol[0] = u - p/(3*u) - b/3;
-        // the remaining two roots of u are rotated by 2/3*pi in the
-        // complex plane
+        // does not produce a division by zero. the remaining two
+        // roots of u are rotated by +- 2/3*pi in the complex plane
+        // and thus not considered here
         return 1;
     }
-    else { // negative discriminant
-        // calculate the cube root of q/2 + sqrt(q/2 + p^3/27)
-        Scalar uCubedRe = q/2;
+    else { // the negative discriminant case:
+        Scalar uCubedRe = - q/2;
         Scalar uCubedIm = std::sqrt(-wDisc);
-        // calculate the length and the angle of the primitive root
-        Scalar uAbs = std::pow(std::sqrt(uCubedRe*uCubedRe + uCubedIm*uCubedIm), 1.0/3);
+        // calculate the cube root of - q/2 + sqrt(q^2/4 + p^3/27)
+        Scalar uAbs  = std::pow(std::sqrt(uCubedRe*uCubedRe + uCubedIm*uCubedIm), 1.0/3);
         Scalar phi = std::atan2(uCubedIm, uCubedRe)/3;
+
+        // calculate the length and the angle of the primitive root
         
-        // with the definitions form above it follows that 
+        // with the definitions from above it follows that 
         //
         // x = u - p/(3*u) - b/3
         //
-        // where x and u are complex numbers. rewritten in polar form
+        // where x and u are complex numbers. Rewritten in polar form
         // this is equivalent to
         //
-        // x = abs(u)*e^(i*phi) - p*e^(-i*phi)/(3*abs(u)) - b/3
+        // x = |u|*e^(i*phi) - p*e^(-i*phi)/(3*|u|) - b/3 .
         //
-        // now factoring out the e^ terms and subtracting the
-        // additional terms, yields
+        // Factoring out the e^ terms and subtracting the additional
+        // terms, yields
         //
-        // x = (e^(i*phi) + e^(-i*phi))*(abs(u)* - p/(3*abs(u))) - y - b/3
+        // x = (e^(i*phi) + e^(-i*phi))*(|u| - p/(3*|u|)) - y - b/3
         // 
         // with 
         //
-        // y = - abs(u)*e^(-i*phi) + p*e^(i*phi)/(3*abs(u)) 
-        //
-        // and
-        //
-        // e^(i*phi) + e^(-i*phi) = 2*cos(phi)
+        // y = - |u|*e^(-i*phi) + p*e^(i*phi)/(3*|u|) .
         //
         // The crucial observation is the fact that y is the conjugate
-        // of - x + b/3. This means that
+        // of - x + b/3. This means that after taking advantage of the
+        // relation
         //
-        // x = 2*cos(phi)*(abs(u) - p / (3*abs(u))) - conj(x) - 2*b/3
+        // e^(i*phi) + e^(-i*phi) = 2*cos(phi) 
+        //
+        // the equation
+        //
+        // x = 2*cos(phi)*(|u| - p / (3*|u|)) - conj(x) - 2*b/3
         // 
-        // holds. Since abs(u), p, b and cos(phi) are real numbers, it
-        // follows that Im(x) = 0 and 
+        // holds. Since |u|, p, b and cos(phi) are real numbers, it
+        // follows that Im(x) = - Im(x) and thus Im(x) = 0. This
+        // implies
         //
-        // Re(x) = x = cos(phi)*(abs(u) - p / (3*abs(u))) - b/3
+        // Re(x) = x = cos(phi)*(|u| - p / (3*|u|)) - b/3 .
         //
         // Considering the fact that u is a cubic root, we have three
         // values for phi which differ by 2/3*pi. This allows to
         // calculate the three real roots of the polynomial:
         for (int i = 0; i < 3; ++i) {
-            sol[i] = - std::cos(phi)*(uAbs - p/(3*uAbs)) - b/3;
+            sol[i] = std::cos(phi)*(uAbs - p/(3*uAbs)) - b/3;
             phi += 2*M_PI/3;
         }
         return 3;
