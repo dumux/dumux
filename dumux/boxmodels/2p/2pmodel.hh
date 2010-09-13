@@ -103,7 +103,7 @@ public:
     Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
     {
         if (Indices::pressureIdx == pvIdx)
-            return std::min(1.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
+            return std::min(10.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
         return 1;
     }
 
