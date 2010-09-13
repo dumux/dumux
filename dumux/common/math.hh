@@ -22,7 +22,9 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+
 #include <cmath>
+#include <algorithm>
 
 namespace Dumux
 {
@@ -92,7 +94,9 @@ int invertLinearPolynomial(SolContainer &sol,
 /*!
  * \brief Invert a quadratic polynomial analytically
  *
- * Returns the number of solutions which are in the real numbers.
+ * Returns the number of solutions which are in the real numbers. The
+ * "sol" argument contains the real roots of the parabola in order
+ * with the smallest root first.
  */
 template <class Scalar, class SolContainer>
 int invertQuadraticPolynomial(SolContainer &sol, 
@@ -112,6 +116,10 @@ int invertQuadraticPolynomial(SolContainer &sol,
     Delta = std::sqrt(Delta);
     sol[0] = (- b + Delta)/(2*a);
     sol[1] = (- b - Delta)/(2*a);
+
+    // sort the result
+    if (sol[0] > sol[1])
+        std::swap(sol[0], sol[1]);
     return 2; // two real roots
 }
 
@@ -169,6 +177,10 @@ int invertCubicPolynomial(SolContainer &sol,
         // two additional real roots at t = sqrt(-p) and t = -sqrt(-p)
         sol[1] = std::sqrt(-p) - b/3;
         sol[2] = -sol[1];
+
+        // sort the result
+        std::sort(sol, sol + 3);
+
         return 3;
     }
 
@@ -267,6 +279,9 @@ int invertCubicPolynomial(SolContainer &sol,
             sol[i] = std::cos(phi)*(uAbs - p/(3*uAbs)) - b/3;
             phi += 2*M_PI/3;
         }
+
+        // sort the result
+        std::sort(sol, sol + 3);
         return 3;
     }
 
