@@ -127,7 +127,7 @@ class FVSaturation2P
     }
 
     //function to calculate the time step if a non-wetting phase velocity is used
-    Scalar evaluateTimeStepPhaseFlux(Scalar timestepFactorIn, Scalar timestepFactorOutNW, Scalar& residualSatW,
+    Scalar evaluateTimeStepPhaseFlux(Scalar timestepFactorIn, Scalar timestepFactorOutW, Scalar timestepFactorOutNW, Scalar& residualSatW,
             Scalar& residualSatNW, int globalIdxI);
 
     //function to calculate the time step if a total velocity is used
@@ -299,8 +299,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
         Scalar lambdaWI = problem_.variables().mobilityWetting(globalIdxI);
         Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
 
-        Scalar timestepFactorIn = 0;
         Scalar timestepFactorOut = 0;
+        Scalar timestepFactorIn = 0;
+        Scalar timestepFactorOutW = 0;
+        Scalar timestepFactorOutNW = 0;
         Scalar diffFactorIn = 0;
         Scalar diffFactorOut = 0;
 
@@ -488,7 +490,11 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     //for time step criterion
                     if (factor >= 0)
                     {
-                        timestepFactorOut += factor / (krSum * viscosityRatio);
+                        timestepFactorOutW += factor / (krSum * viscosityRatio);
+                    }
+                    if (factorSecondPhase >= 0)
+                    {
+                        timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
                     }
                     if (factor < 0)
                     {
@@ -503,6 +509,15 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     {
                         timestepFactorIn = 1e-100;
                     }
+                    if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
+                    {
+                        timestepFactorOutW = 1e-100;
+                    }
+                    if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
+                    {
+                        timestepFactorOutNW = 1e-100;
+                    }
+
                     break;
                 }
 
@@ -518,8 +533,13 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     //for time step criterion
                     if (factor >= 0)
                     {
-                        timestepFactorOut += factor / (krSum * viscosityRatio);
+                        timestepFactorOutW += factor / (krSum * viscosityRatio);
                     }
+                    if (factorSecondPhase >= 0)
+                    {
+                        timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
+                    }
+
                     if (factor < 0)
                     {
                         timestepFactorIn -= factor / (krSum * viscosityRatio);
@@ -533,6 +553,15 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     {
                         timestepFactorIn = 1e-100;
                     }
+                    if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
+                    {
+                        timestepFactorOutW = 1e-100;
+                    }
+                    if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
+                    {
+                        timestepFactorOutNW = 1e-100;
+                    }
+
                     break;
                 }
                 }
@@ -744,8 +773,13 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         //for time step criterion
                         if (factor >= 0)
                         {
-                            timestepFactorOut += factor / (krSum * viscosityRatio);
+                            timestepFactorOutW += factor / (krSum * viscosityRatio);
                         }
+                        if (factorSecondPhase >= 0)
+                        {
+                            timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
+                        }
+
                         if (factor < 0)
                         {
                             timestepFactorIn -= factor / (krSum * viscosityRatio);
@@ -759,6 +793,15 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         {
                             timestepFactorIn = 1e-100;
                         }
+                        if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
+                        {
+                            timestepFactorOutW = 1e-100;
+                        }
+                        if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
+                        {
+                            timestepFactorOutNW = 1e-100;
+                        }
+
                         break;
                     }
 
@@ -774,8 +817,13 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         //for time step criterion
                         if (factor >= 0)
                         {
-                            timestepFactorOut += factor / (krSum * viscosityRatio);
+                            timestepFactorOutW += factor / (krSum * viscosityRatio);
                         }
+                        if (factorSecondPhase >= 0)
+                        {
+                            timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
+                        }
+
                         if (factor < 0)
                         {
                             timestepFactorIn -= factor / (krSum * viscosityRatio);
@@ -789,6 +837,15 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         {
                             timestepFactorIn = 1e-100;
                         }
+                        if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
+                        {
+                            timestepFactorOutW = 1e-100;
+                        }
+                        if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
+                        {
+                            timestepFactorOutNW = 1e-100;
+                        }
+
                         break;
                     }
                     }
@@ -862,7 +919,9 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     if (factor >= 0)
                     {
                         timestepFactorOut += factor / (krSum * viscosityRatio);
+                        timestepFactorOutW += factor / (krSum * viscosityRatio);
                     }
+
                     if (factor < 0)
                     {
                         timestepFactorIn -= factor / (krSum * viscosityRatio);
@@ -929,6 +988,24 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
             }
             else
             {
+                switch (velocityType_)
+                {
+                case vw:
+                {
+                    timestepFactorOutW -= source / (porosity * viscosityRatio * krSum);
+                    break;
+                }
+                case vn:
+                {
+                    timestepFactorOutNW -= source / (porosity * viscosityRatio * krSum);
+                    break;
+                }
+                case vt:
+                {
+                	timestepFactorOut -= source / (porosity * viscosityRatio * krSum);
+                    break;
+                }
+                }
                 timestepFactorOut -= source / (porosity * viscosityRatio * krSum);
             }
         }
@@ -936,7 +1013,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
         //calculate time step
         if (velocityType_ == vw || velocityType_ == vn)
         {
-            dt = std::min(dt, evaluateTimeStepPhaseFlux(timestepFactorIn, timestepFactorOut, residualSatW,
+            dt = std::min(dt, evaluateTimeStepPhaseFlux(timestepFactorIn, timestepFactorOutW, timestepFactorOutNW, residualSatW,
                     residualSatNW, globalIdxI));
         }
         if (velocityType_ == vt)
@@ -1006,26 +1083,31 @@ typename FVSaturation2P<TypeTag>::Scalar FVSaturation2P<TypeTag>::evaluateTimeSt
 }
 template<class TypeTag>
 typename FVSaturation2P<TypeTag>::Scalar FVSaturation2P<TypeTag>::evaluateTimeStepPhaseFlux(Scalar timestepFactorIn,
-        Scalar timestepFactorOut, Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI)
+        Scalar timestepFactorOutW, Scalar timestepFactorOutNW, Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI)
 {
     // compute dt restriction
     Scalar volumeCorrectionFactorIn = 1 - residualSatW - residualSatNW;
-    Scalar volumeCorrectionFactorOut = 0;
-    if (saturationType_ == Sw)
-    {
+    Scalar volumeCorrectionFactorOutW = 0;
+    Scalar volumeCorrectionFactorOutNW = 0;
+//    if (saturationType_ == Sw)
+//    {
         Scalar satI = problem_.variables().saturation()[globalIdxI];
-        volumeCorrectionFactorOut = std::max((satI - residualSatW), 1e-2);
-    }
-    if (saturationType_ == Sn)
-    {
-        Scalar satI = problem_.variables().saturation()[globalIdxI];
-        volumeCorrectionFactorOut = std::max((satI - residualSatNW), 1e-2);
-    }
+        volumeCorrectionFactorOutW = std::max((satI - residualSatW), 1e-1);
+//    }
+//    if (saturationType_ == Sn)
+//    {
+//        Scalar satI = problem_.variables().saturation()[globalIdxI];
+        volumeCorrectionFactorOutNW = std::max((1 - satI - residualSatNW), 1e-1);
+//    }
 
     //make sure correction is in the right range. If not: force dt to be not min-dt!
-    if (volumeCorrectionFactorOut <= 0)
+    if (volumeCorrectionFactorOutW <= 0)
     {
-        volumeCorrectionFactorOut = 1e100;
+        volumeCorrectionFactorOutW = 1e100;
+    }
+    if (volumeCorrectionFactorOutNW <= 0)
+    {
+        volumeCorrectionFactorOutNW = 1e100;
     }
 
     //make sure correction is in the right range. If not: force dt to be not min-dt!
@@ -1033,14 +1115,18 @@ typename FVSaturation2P<TypeTag>::Scalar FVSaturation2P<TypeTag>::evaluateTimeSt
     {
         timestepFactorIn = 1e-100;
     }
-    if (timestepFactorOut <= 0)
+    if (timestepFactorOutW <= 0)
     {
-        timestepFactorOut = 1e-100;
+        timestepFactorOutW = 1e-100;
+    }
+    if (timestepFactorOutNW <= 0)
+    {
+        timestepFactorOutNW = 1e-100;
     }
 
     //correct volume
     timestepFactorIn = volumeCorrectionFactorIn / timestepFactorIn;
-    timestepFactorOut = volumeCorrectionFactorOut / timestepFactorOut;
+    Scalar timestepFactorOut = volumeCorrectionFactorOutW / timestepFactorOutW + volumeCorrectionFactorOutNW / timestepFactorOutNW;
 
     //determine timestep
     Scalar timestepFactor = std::min(timestepFactorIn, timestepFactorOut);
