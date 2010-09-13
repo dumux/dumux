@@ -36,9 +36,15 @@ NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(TimeManager);
 }
 
-void printUsage(const char *progname)
+void printUsageDGF(const char *progname)
 {
     std::cout << "usage: " << progname << " [--restart restartTime] gridFile.dgf tEnd dt\n";
+    exit(1);
+};
+
+void printUsageGrid(const char *progname)
+{
+    std::cout << "usage: " << progname << " [--restart restartTime] tEnd dt\n";
     exit(1);
 };
 
@@ -67,7 +73,7 @@ int startFromDGF(int argc, char **argv)
 
         // parse the command line arguments for the program
         if (argc < 4)
-            printUsage(argv[0]);
+            printUsageDGF(argv[0]);
 
         // deal with the restart stuff
         int argIdx = 1;
@@ -81,7 +87,7 @@ int startFromDGF(int argc, char **argv)
         }
 
         if (argc - argIdx != 3) {
-            printUsage(argv[0]);
+            printUsageDGF(argv[0]);
         }
 
         double tEnd, dt;
@@ -116,6 +122,75 @@ int startFromDGF(int argc, char **argv)
 
     return 3;
 };
+
+
+/*!
+ * \brief Provides a default main function for simulations.
+ *
+ * \tparam ProblemTypeTag  The type tag of the problem which needs to be solved
+ *
+ * \param grid  The grid used by the simulation
+ * \param argc  The 'argc' argument of the main function
+ * \param argv  The 'argv' argument of the main function
+ */
+template <class TypeTag>
+int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid, 
+                  int argc,
+                  char **argv)
+{
+#ifdef NDEBUG
+    try {
+#endif
+
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
+        // parse the command line arguments for the program
+        if (argc < 3)
+            printUsageGrid(argv[0]);
+
+        // deal with the restart stuff
+        int argIdx = 1;
+        bool restart = false;
+        double restartTime = 0;
+        if (std::string("--restart") == argv[argIdx]) {
+            restart = true;
+            ++argIdx;
+
+            std::istringstream(argv[argIdx++]) >> restartTime;
+        }
+
+        if (argc - argIdx != 2) {
+            printUsageGrid(argv[0]);
+        }
+
+        double tEnd, dt;
+        std::istringstream(argv[argIdx++]) >> tEnd;
+        std::istringstream(argv[argIdx++]) >> dt;
+
+        // instantiate and run the concrete problem
+        TimeManager timeManager;
+        Problem problem(timeManager, grid.leafView());
+        timeManager.init(problem, 0, dt, tEnd, !restart);
+        if (restart)
+            problem.restart(restartTime);
+        timeManager.run();
+        return 0;
+
+#ifdef NDEBUG
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!\n";
+    }
+#endif
+
+    return 3;
+};
+
 }
 
 #endif
