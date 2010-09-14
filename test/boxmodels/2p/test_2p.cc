@@ -188,6 +188,8 @@ int main(int argc, char** argv)
         upperRight[1] = 4.0;
         res[0] = 96;
         res[1] = 64;
+        //res[0] = 24;
+        //res[1] = 16;
 
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
 

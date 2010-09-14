@@ -101,6 +101,15 @@ SET_PROP(LensProblem, SpatialParameters)
     typedef Dumux::LensSpatialParameters<TypeTag> type;
 };
 
+// Enable the time step ramp up inside the newton method?
+SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, true);
+
+// Enable partial reassembly of the jacobian matrix?
+SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
+
+// Enable reuse of jacobian matrices?
+SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
+
 // Enable gravity
 SET_BOOL_PROP(LensProblem, EnableGravity, true);
 }
@@ -367,7 +376,7 @@ public:
                  int scvIdx) const
     {
         // no DNAPL, some random pressure
-        values[pwIdx] = 0.0;
+        values[pwIdx] = 1e5;
         values[SnIdx] = 0.0;
     }
     // \}
