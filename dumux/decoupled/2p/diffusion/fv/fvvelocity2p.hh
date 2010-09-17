@@ -54,6 +54,7 @@ class FVVelocity2P: public FVPressure2P<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
      typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
      typedef typename ReferenceElements::Container ReferenceElementContainer;
      typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
