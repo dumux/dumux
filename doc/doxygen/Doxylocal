@@ -1,5 +1,5 @@
 # This file contains local changes to the doxygen configuration
 # please us '+=' to add file/directories to the lists
 
-INPUT                 += @top_srcdir@/dune/dumux
+INPUT                 += @top_srcdir@/dumux
 EXTRA_PACKAGES        += amsmath,amssymb
