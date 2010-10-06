@@ -15,6 +15,14 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Base class for all models which use the single-phase,
+ *        two-component box model
+ */
+
+
 #ifndef DUMUX_ONEP_TWOC_MODEL_HH
 #define DUMUX_ONEP_TWOC_MODEL_HH
 
