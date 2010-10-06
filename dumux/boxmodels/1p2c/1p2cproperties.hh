@@ -19,7 +19,7 @@
  * \file
  *
  * \brief Defines the properties required for the single-phase,
- *        two-compenent BOX model.
+ *        two-component BOX model.
  */
 
 #ifndef DUMUX_1P2C_PROPERTIES_HH
