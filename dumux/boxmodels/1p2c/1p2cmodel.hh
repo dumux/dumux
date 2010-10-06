@@ -105,6 +105,10 @@ public:
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
+     *
+     *        \param sol A vector containing the solutions of the primary variables after solving
+     *        the system of equations
+     *        \param writer
      */
     template<class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
