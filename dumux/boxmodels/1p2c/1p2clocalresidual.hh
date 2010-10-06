@@ -15,6 +15,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Calculate the local Jacobian for the single-phase,
+ *        two-component model in the BOX scheme.
+ */
+
 #ifndef DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
 #define DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
 
@@ -73,7 +80,7 @@ protected:
 
 public:
     /*!
-     * \brief Evaluate the amount all conservation quantites
+     * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a finite volume.
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
