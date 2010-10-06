@@ -26,7 +26,7 @@ namespace Dumux
 {
 
 /**
- * \brief Definition of the spatial parameters for the injection problem
+ * \brief Definition of the spatial parameters for the problem
  *
  */
 template<class TypeTag>
