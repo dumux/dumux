@@ -71,6 +71,13 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
+     *
+     * \param priVars A vector containing the primary variables
+     * \param problem The considered problem
+     * \param element The considered element of the grid
+     * \param elemGeom
+     * \param scvIdx  The index of the considered subcontrol volume
+     * \param isOldSol A boolean parameter either the old or the new solution should be taken
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -123,18 +130,22 @@ public:
 
     /*!
      * \brief Returns mole fraction of a component in the phase
+     *
+     * \param compIdx The index of the component
      */
     Scalar moleFrac(int compIdx) const
     { return fluidState_.moleFrac(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
 
     /*!
      * \brief Returns mass fraction of a component in the phase
+     * \param compIdx The index of the component
      */
     Scalar massFrac(int compIdx) const
     { return fluidState_.massFrac(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
 
     /*!
      * \brief Returns concentration of a component in the phase
+     * \param compIdx The index of the component
      */
     Scalar concentration(int compIdx) const
     { return fluidState_.concentration(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
