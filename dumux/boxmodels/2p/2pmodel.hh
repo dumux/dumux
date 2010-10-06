@@ -19,6 +19,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+
+/*!
+* \file
+*
+* \brief Adaption of the BOX scheme to the two-phase flow model.
+*/
+
 #ifndef DUMUX_TWOP_MODEL_HH
 #define DUMUX_TWOP_MODEL_HH
 
@@ -65,7 +72,7 @@ namespace Dumux
  * the implicit Euler method as time discretization.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
- * p_n - p_w\f$ and relative permability \f$k_{r\alpha}\f$ and taking
+ * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
  * advantage of the fact that \f$S_w + S_n = 1\f$, the number of
  * unknowns can be reduced to two. Currently the model supports
  * choosing either \f$p_w\f$ and \f$S_n\f$ or \f$p_n\f$ and \f$S_w\f$
@@ -99,6 +106,9 @@ public:
     /*!
      * \brief Returns the relative weight of a primary variable for
      *        calculating relative errors.
+     *
+     *        \param globalVertexIdx The global index of the vertex
+     *        \param pvIdx The index of the primary variable
      */
     Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
     {
@@ -111,6 +121,9 @@ public:
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
+     *
+     *        \param sol The global solution vector
+     *        \param writer The writer for multi-file VTK datasets
      */
     template<class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
