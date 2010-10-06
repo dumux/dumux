@@ -59,6 +59,9 @@ public:
 
     /*!
      * \brief Update the phase state from the primary variables.
+     *
+     * \param primaryVars The primary variables
+     * \param temperature The temperature in Kelvin
      */
     void update(const PrimaryVariables &primaryVars,
                 Scalar temperature)
@@ -85,12 +88,17 @@ public:
 
     /*!
      * \brief Returns the saturation of a phase.
+     *
+     * \param phaseIdx The index of the considered phase
      */
     Scalar saturation(int phaseIdx) const
     { return (phaseIndex == phaseIdx)?1.0:0.0; };
 
     /*!
      * \brief Returns the molar fraction of a component in a fluid phase.
+     *
+     * \param phaseIdx The index of the considered phase
+     * \param compIdx The index of the considered component
      */
     Scalar moleFrac(int phaseIdx, int compIdx) const
     { 
@@ -108,6 +116,7 @@ public:
      * \brief Returns the total concentration of a phase [mol / m^3].
      *
      * This is equivalent to the sum of all component concentrations.
+     * \param phaseIdx The index of the considered phase
      */
     Scalar phaseConcentration(int phaseIdx) const
     { 
@@ -118,6 +127,9 @@ public:
 
     /*!
      * \brief Returns the concentration of a component in a phase [mol / m^3].
+     *
+     * \param phaseIdx The index of the considered phase
+     * \param compIdx The index of the considered component
      */
     Scalar concentration(int phaseIdx, int compIdx) const
     { return phaseConcentration(phaseIdx)*moleFrac(phaseIdx, compIdx); };
@@ -125,6 +137,9 @@ public:
 
     /*!
      * \brief Returns the mass fraction of a component in a phase.
+     *
+     * \param phaseIdx The index of the considered phase
+     * \param compIdx The index of the considered component
      */
     Scalar massFrac(int phaseIdx, int compIdx) const
     {
@@ -139,6 +154,9 @@ public:
 
     /*!
      * \brief Returns the density of a phase [kg / m^3].
+     *
+     * \param phaseIdx The index of the considered phase
+     *
      */
     Scalar density(int phaseIdx) const
     { 
@@ -152,6 +170,8 @@ public:
      *
      * This is equivalent to the sum of all component molar masses
      * weighted by their respective mole fraction.
+     *
+     * \param phaseIdx The index of the considered phase
      */
     Scalar meanMolarMass(int phaseIdx) const
     { 
@@ -162,6 +182,8 @@ public:
     
     /*!
      * \brief Returns the pressure of a fluid phase [Pa].
+     *
+     * \param phaseIdx The index of the considered phase
      */
     Scalar phasePressure(int phaseIdx) const
     { 
