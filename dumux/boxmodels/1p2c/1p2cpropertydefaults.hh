@@ -19,7 +19,7 @@
  * \file
  *
  * \brief Defines some default values for the properties of the the
- *        single-phase, two-compenent BOX model.
+ *        single-phase, two-component BOX model.
  */
 
 #ifndef DUMUX_1P2C_PROPERTY_DEFAULTS_HH
