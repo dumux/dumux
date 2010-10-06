@@ -37,7 +37,7 @@ namespace Dumux
 /*!
  * \brief This template class contains the data which is required to
  *        calculate the fluxes of the fluid phases over a face of a
- *        finite volume for the two-phase model.
+ *        finite volume for the one-phase model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.
@@ -104,6 +104,8 @@ public:
 
     /*!
      * \brief Return the concentration gradient.
+     *
+     * \param compIdx The index of the considered component
      */
     const Vector &concentrationGrad(int compIdx) const
     { 
@@ -127,6 +129,8 @@ public:
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the upstream control volume
      *        for a given phase.
+     *
+     *        \param normalFlux The flux over a face of the sub control volume
      */
     int upstreamIdx(Scalar normalFlux) const
     { return (normalFlux >= 0)?face().i:face().j; }
@@ -136,11 +140,21 @@ public:
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the downstream control volume
      *        for a given phase.
+     *
+     *        \param normalFlux The flux over a face of the sub control volume
      */
     int downstreamIdx(Scalar normalFlux) const
     { return (normalFlux > 0)?face().j:face().i; }
 
 protected:
+
+        /*!
+         * \brief Calculation of the pressure and concentration gradient
+         *
+         *        \param problem The considered problem file
+         *        \param element The considered element of the grid
+         *        \param elemDat The parameters stored in the considered element
+         */
     void calculateGradients_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemDat)
@@ -152,6 +166,8 @@ protected:
         concentrationGrad_ = 0.0;
 
         Vector tmp;
+        //The decision of the if-statement depends on the function useTwoPointGradient(const Element &elem,
+        //int vertexI,int vertexJ) defined in test/tissue_tumor_spatialparameters.hh
         if (!problem.spatialParameters().useTwoPointGradient(element, face().i, face().j)) {
             // use finite-element gradients
             tmp = 0.0;
@@ -196,6 +212,15 @@ protected:
         }
     }
 
+    /*!
+    * \brief Calculation of the harmonic mean of the intrinsic permeability
+    *        uses the meanK function in the boxspatialparameters.hh file in the folder
+    *        material/spatialparameters
+    *
+    *        \param problem The considered problem file
+    *        \param element The considered element of the grid
+    *        \param elemDat The parameters stored in the considered element
+    */
     void calculateK_(const Problem &problem,
                      const Element &element,
                      const ElementVolumeVariables &elemDat)
@@ -210,6 +235,13 @@ protected:
                                           face().j));
     }
 
+    /*!
+    * \brief Calculation of the effective diffusion coefficient
+    *
+    *        \param problem The considered problem file
+    *        \param element The considered element of the grid
+    *        \param elemDat The parameters stored in the considered element
+    */
     void calculateDiffCoeffPM_(const Problem &problem,
                                const Element &element,
                                const ElementVolumeVariables &elemDat)
@@ -223,6 +255,13 @@ protected:
                     vDat_j.porosity() * vDat_j.tortuosity() * vDat_j.diffCoeff());
     }
 
+    /*!
+    * \brief Calculation of the dispersion
+    *
+    *        \param problem The considered problem file
+    *        \param element The considered element of the grid
+    *        \param elemDat The parameters stored in the considered element
+    */
     void calculateDispersionTensor_(const Problem &problem,
                                     const Element &element,
                                     const ElementVolumeVariables &elemDat)
