@@ -1,6 +1,8 @@
 // $Id$
 /*****************************************************************************
+ *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -30,7 +32,6 @@ namespace Dumux
  * \ingroup OnePTwoCProblems
  * \brief Base class for all problems which use the single-phase, two-component box model
  *
- * \todo Please doc me more!
  */
 template<class TypeTag>
 class OnePTwoCBoxProblem : public BoxProblem<TypeTag>
