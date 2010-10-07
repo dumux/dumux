@@ -80,8 +80,13 @@ protected:
 
 public:
     /*!
-     * \brief Evaluate the amount all conservation quantities
+     * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a finite volume.
+     *
+     *        \param result A vector containing the primary variables of your problem
+     *        \param scvIdx The index of the considered face of the sub control volume
+     *        \param usePrevSol A boolean parameter to decide between an implicit and
+     *                          a explicit euler method
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
@@ -108,6 +113,9 @@ public:
     /*!
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
+     *
+     *        \param flux A vector containing the primary variables of your problem
+     *        \param faceId The index of the considered face of the sub control volume
      */
     void computeFlux(PrimaryVariables &flux, int faceId) const
     {
@@ -119,6 +127,7 @@ public:
                                this->curVolVars_());
         
         Vector tmpVec;
+
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(), tmpVec);
 
         // "intrinsic" flux from cell i to cell j
@@ -159,6 +168,9 @@ public:
 
     /*!
      * \brief Calculate the source term of the equation
+     *        \param q A vector containing the primary variables of your problem
+     *        \param localVertexIdx The index of the vertex of the sub control volume
+     *
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
