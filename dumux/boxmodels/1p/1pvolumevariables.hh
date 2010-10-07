@@ -17,7 +17,7 @@
 /*!
  * \file
  *
- * \brief Quantities required by the single-phase box model defined on a vertex.
+ * \brief Quantities required by the one-phase box model defined on a vertex.
  */
 #ifndef DUMUX_1P_VOLUME_VARIABLES_HH
 #define DUMUX_1P_VOLUME_VARIABLES_HH
