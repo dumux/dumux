@@ -19,6 +19,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the one-phase box model.
+ */
 #ifndef DUMUX_1P_LOCAL_RESIDUAL_HH
 #define DUMUX_1P_LOCAL_RESIDUAL_HH
 
