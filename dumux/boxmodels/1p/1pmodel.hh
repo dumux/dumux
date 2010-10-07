@@ -14,6 +14,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Base class for all models which use the one-phase,
+ *        box model
+ */
+
 #ifndef DUMUX_1P_MODEL_HH
 #define DUMUX_1P_MODEL_HH
 
