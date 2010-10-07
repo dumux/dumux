@@ -16,7 +16,7 @@
 /*!
  * \file
  *
- * \brief Base class for all problems which use the single-phase box
+ * \brief Base class for all problems which use the one-phase box
  *        model
  */
 #ifndef DUMUX_1P_PROBLEM_HH
