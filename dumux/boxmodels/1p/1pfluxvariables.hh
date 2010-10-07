@@ -18,7 +18,7 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        the flux of the fluid over a face of a finite volume.
+ *        the flux of the fluid over a face of a finite volume for the one-phase model.
  */
 #ifndef DUMUX_1P_FLUX_VARIABLES_HH
 #define DUMUX_1P_FLUX_VARIABLES_HH
