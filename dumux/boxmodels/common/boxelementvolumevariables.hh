@@ -33,6 +33,7 @@ class BoxElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(Type
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef std::vector<VolumeVariables> ParentType;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
@@ -51,7 +52,9 @@ public:
      */
     BoxElementVolumeVariables()
     { }
-
+    /*!
+     * \todo please doc me
+     */
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvElemGeom,
@@ -77,6 +80,34 @@ public:
                               oldSol);
         }
     };
+
+    //overloaded update function
+    //possible to give solution vector
+    template<typename SolVectorType>
+    void update(const Problem &problem,
+                    const Element &element,
+                    const FVElementGeometry &fvElemGeom,
+                    const SolVectorType& elementSolVector,
+                    const int numEq)
+        {
+            int n = element.template count<dim>();
+            this->resize(n);
+            for (int vertexIdx= 0; vertexIdx < n; vertexIdx++)
+            {
+                PrimaryVariables solI(0);
+                for (int eqnIdx=0; eqnIdx<numEq; eqnIdx++)
+                {
+                    solI[eqnIdx] = elementSolVector[vertexIdx+eqnIdx*n];
+                }
+                    (*this)[vertexIdx].update(solI,
+                                      problem,
+                                      element,
+                                      fvElemGeom,
+                                      vertexIdx,
+                                      false);
+
+            }
+        };
 };
 
 } // namespace Dumux
