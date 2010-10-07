@@ -1,4 +1,4 @@
-// $Id: 1pproperties.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
@@ -17,7 +17,7 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for the onephase BOX model.
+ * \brief Defines the properties required for the one-phase BOX model.
  */
 #ifndef DUMUX_1P_PROPERTY_DEFAULTS_HH
 #define DUMUX_1P_PROPERTY_DEFAULTS_HH
