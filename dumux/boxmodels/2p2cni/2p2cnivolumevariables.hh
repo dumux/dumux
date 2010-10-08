@@ -68,6 +68,13 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
+     *
+     * \param priVars The primary variables
+     * \param problem The problem
+     * \param element The element
+     * \param elemGeom Evaluate function with solution of current or previous time step
+     * \param scvIdx The local index of the SCV (sub-control volume)
+     * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &sol,
                 const Problem &problem,
@@ -107,6 +114,32 @@ public:
         Valgrind::CheckDefined(enthalpy_);
     };
 
+    /*!
+     * \brief Returns the total internal energy of a phase in the
+     *        sub-control volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar internalEnergy(int phaseIdx) const
+    { return internalEnergy_[phaseIdx]; };
+
+    /*!
+     * \brief Returns the total enthalpy of a phase in the sub-control
+     *        volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar enthalpy(int phaseIdx) const
+    { return enthalpy_[phaseIdx]; };
+
+    /*!
+     * \brief Returns the total heat capacity [J/(K m^3)] of the rock matrix in
+     *        the sub-control volume.
+     */
+    Scalar heatCapacity() const
+    { return heatCapacity_; };
+
+protected:
     // this method gets called by the parent class
     void updateTemperature_(const PrimaryVariables &sol,
                             const Element &element,
@@ -124,28 +157,6 @@ public:
         Valgrind::CheckDefined(heatCapacity_);
     }
 
-    /*!
-     * \brief Returns the total internal energy of a phase in the
-     *        sub-control volume.
-     */
-    Scalar internalEnergy(int phaseIdx) const
-    { return internalEnergy_[phaseIdx]; };
-
-    /*!
-     * \brief Returns the total enthalpy of a phase in the sub-control
-     *        volume.
-     */
-    Scalar enthalpy(int phaseIdx) const
-    { return enthalpy_[phaseIdx]; };
-
-    /*!
-     * \brief Returns the total heat capacity [J/(K m^3)] of the rock matrix in
-     *        the sub-control volume.
-     */
-    Scalar heatCapacity() const
-    { return heatCapacity_; };
-
-protected:
     Scalar internalEnergy_[numPhases];
     Scalar enthalpy_[numPhases];
     Scalar heatCapacity_;

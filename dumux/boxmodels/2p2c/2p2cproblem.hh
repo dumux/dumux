@@ -56,7 +56,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time mananager
+     * \param timeManager The time manager
      * \param gridView The grid view
      */
     TwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView)

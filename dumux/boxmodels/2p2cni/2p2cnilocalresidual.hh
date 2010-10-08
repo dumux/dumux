@@ -81,11 +81,15 @@ class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
 
 public:
     /*!
-     * \brief Evaluate the amount all conservation quantites
+     * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
+     *
+     *  \param result The storage of the conservation quantitiy (mass or energy) within the sub-control volume
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
@@ -120,6 +124,9 @@ public:
      * over a face of a subcontrol volume and writes the result in
      * the flux vector.
      *
+     * \param flux The advective flux over the SCV (sub-control-volume) face for each component
+     * \param faceIdx The index of the SCV face
+     *
      * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
@@ -152,6 +159,11 @@ public:
     /*!
      * \brief Adds the diffusive heat flux to the flux vector over
      *        the face of a sub-control volume.
+     *
+     * \param flux The diffusive flux over the SCV (sub-control-volume) face for each conservation quantity (mass, energy)
+     * \param faceIdx The index of the SCV face
+     *
+     * This method is called by compute flux (base class)
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxData) const

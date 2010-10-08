@@ -30,8 +30,6 @@ namespace Dumux
  * \ingroup TwoPTwoCNIProblems
  * \brief Base class for all problems which use the non-isothermal
  *         two-phase, two-component box model.
- *
- * \todo Please doc me more!
  */
 template<class TypeTag>
 class TwoPTwoCNIProblem : public TwoPTwoCProblem<TypeTag>
@@ -43,6 +41,12 @@ class TwoPTwoCNIProblem : public TwoPTwoCProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     */
     TwoPTwoCNIProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {

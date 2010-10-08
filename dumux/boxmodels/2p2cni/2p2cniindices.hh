@@ -35,6 +35,9 @@ namespace Dumux
 
 /*!
  * \brief Enumerations for the non-isothermal 2-phase 2-component model
+ *
+ * \tparam formulation The formulation, either pwSn or pnSw.
+ * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int formulation, int PVOffset>
 class TwoPTwoCNIIndices : public TwoPTwoCIndices<TypeTag, formulation, PVOffset>

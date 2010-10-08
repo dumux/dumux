@@ -56,8 +56,14 @@ public:
         this->setMaxSteps(18);
     };
 
-    //! Suggest a new time stepsize based either on the number of newton
-    //! iterations required or on the variable switch
+    /*!
+    * \brief Suggest a new time step size based either on the number of newton
+    * iterations required or on the variable switch
+    *
+    * \param u The current global solution vector
+    * \param uOld The previous global solution vector
+    *
+    */
     void newtonEndStep(SolutionFunction &u, SolutionFunction &uOld)
     {
         // call the method of the base class
@@ -65,15 +71,26 @@ public:
         ParentType::newtonEndStep(u, uOld);
     }
 
-    //! Suggest a new time stepsize based either on the number of newton
-    //! iterations required or on the variable switch
+    /*!
+     * \brief Suggest a new time stepsize based on the old time step size.
+     *
+     * The default behaviour is to suggest the old time step size
+     * scaled by the ratio between the target iterations and the
+     * iterations required to actually solve the last time step.
+     *
+     * \param oldTimeStep The old time step size
+     */
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
         // use function of the newtoncontroller
         return ParentType::suggestTimeStepSize(oldTimeStep);
     }
 
-    //! Returns true if another iteration should be done.
+    /*!
+    * \brief Returns true if another iteration should be done.
+    *
+    *\param u The global solution
+    */
     bool newtonProceed(SolutionFunction &u)
     {
         return ParentType::newtonProceed(u);
