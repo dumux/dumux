@@ -237,6 +237,13 @@ public:
     const PrimaryVariables residual(int scvIdx) const
     { return residual_[scvIdx]; }
 
+    /*!
+     * \brief Returns the local residual for a given sub-control
+     *        volume of the element - as a reference!
+     */
+    PrimaryVariables& residualReference(int scvIdx)
+    { return residual_[scvIdx]; }
+
 protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
