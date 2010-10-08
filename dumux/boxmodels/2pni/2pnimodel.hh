@@ -33,7 +33,7 @@ namespace Dumux {
 
 /*!
  * \ingroup BoxProblems
- * \defgroup TwoPNIBoxProblems Non-isothermal two-phase box problems
+ * \defgroup TwoPNIProblems Non-isothermal two-phase box problems
  */
 
 /*!

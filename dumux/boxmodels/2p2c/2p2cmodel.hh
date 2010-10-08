@@ -31,7 +31,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxProblems
- * \defgroup TwoPTwoCBoxProblems Two-phase two-component box problems
+ * \defgroup TwoPTwoCProblems Two-phase two-component box problems
  */
 
 /*!

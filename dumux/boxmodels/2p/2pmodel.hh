@@ -38,7 +38,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxProblems
- * \defgroup TwoPBoxProblems Two-phase box problems
+ * \defgroup TwoPProblems Two-phase box problems
  */
 
 /*!
