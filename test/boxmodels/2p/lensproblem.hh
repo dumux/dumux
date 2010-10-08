@@ -15,6 +15,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Soil contamination problem where DNAPL infiltrates a fully
+ *        water saturated medium.
+ */
+
 #ifndef DUMUX_LENSPROBLEM_HH
 #define DUMUX_LENSPROBLEM_HH
 
@@ -116,7 +123,7 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
 
 /*!
  * \ingroup TwoPBoxProblems
- * \brief Soil decontamination problem where DNAPL infiltrates a fully
+ * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  *
  * The domain is sized 6m times 4m and features a rectangular lens
@@ -196,6 +203,14 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     * \param lensLowerLeft Global position of the lenses lower left corner
+     * \param lensUpperRight Global position of the lenses upper right corner
+     */
     LensProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 const GlobalPosition &lensLowerLeft,
@@ -236,6 +251,10 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
+     * \param element The element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index (SCV index)
+     *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature(const Element &element,
@@ -255,6 +274,13 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
+     * \param values The boundary types for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
      */
     void boundaryTypes(BoundaryTypes &values,
                        const Element &element,
@@ -279,6 +305,13 @@ public:
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
      *
      * For this method, the \a values parameter stores primary variables.
      */
@@ -323,6 +356,13 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
+     * \param values The neumann values for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
+     *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
@@ -352,6 +392,10 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
+     * \param values The source and sink values for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     *
      * For this method, the \a values parameter stores the rate mass
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
@@ -366,6 +410,11 @@ public:
 
     /*!
      * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The initial values for the primary variables
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores primary
      * variables.

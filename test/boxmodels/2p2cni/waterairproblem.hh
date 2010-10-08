@@ -14,6 +14,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+
+/*!
+ * \file
+ *
+ * \brief TwoPTwoCNIBoxProblems Non-isothermal two-phase two-component box problems.
+ */
 #ifndef DUMUX_WATERAIRPROBLEM_HH
 #define DUMUX_WATERAIRPROBLEM_HH
 
@@ -165,6 +171,12 @@ class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     */
     WaterAirProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
@@ -188,6 +200,10 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
+     * \param element The element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index (SCV index)
+     *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature(const Element &element,
@@ -208,6 +224,13 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
+     * \param values The boundary types for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
      */
     void boundaryTypes(BoundaryTypes &values,
                        const Element &element,
@@ -232,6 +255,13 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
+     * \param values The dirichlet values for the primary variables
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
+     *
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichlet(PrimaryVariables &values,
@@ -253,9 +283,15 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
+     * \param values The neumann values for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
+     *
      * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
+     * in normal direction of each phase. Negative values mean influx.
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -286,10 +322,13 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
+     * \param values The source and sink values for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     *
      * For this method, the \a values parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
+     * generated or annihilate per volume unit. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
      */
     void source(PrimaryVariables &values,
                 const Element &element,
@@ -301,6 +340,11 @@ public:
 
     /*!
      * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The initial values for the primary variables
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores primary
      * variables.
@@ -322,6 +366,10 @@ public:
 
     /*!
      * \brief Return the initial phase state inside a control volume.
+     *
+     * \param vert The vertex
+     * \param globalIdx The index of the global vertex
+     * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vert,
                              int &globalIdx,
