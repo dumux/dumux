@@ -14,6 +14,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Definition of the spatial parameters for the injection problem
+ */
+
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
@@ -25,7 +31,9 @@
 namespace Dumux
 {
 
-/**
+/*!
+ * \ingroup SpatialParameters
+ *
  * \brief Definition of the spatial parameters for the injection problem
  *
  */
@@ -68,6 +76,11 @@ public:
     typedef EffToAbsLaw<EffMaterialLaw> MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
+    /*!
+     * \brief The constructor
+     *
+     * \param gv The grid view
+     */
     InjectionSpatialParameters(const GridView &gv)
         : ParentType(gv)
     {
@@ -102,7 +115,7 @@ public:
      * \brief Update the spatial parameters with the flow solution
      *        after a timestep.
      *
-     * \TODO call interface
+     * \param globalSolution The global solution vector
      */
     void update(const SolutionVector &globalSolution)
     {
@@ -147,7 +160,14 @@ public:
     }
 
 
-    // return the brooks-corey context depending on the position
+    /*!
+     * \brief return the brooks-corey context depending on the position
+     *
+    * \param element The current finite element
+    * \param fvElemGeom The current finite volume geometry of the element
+    * \param scvfIdx The index sub-control volume face where the
+    *                      intrinsic velocity ought to be calculated.
+    */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const
@@ -184,7 +204,9 @@ public:
      *
      * This is only required for non-isothermal models.
      *
-     * \param heatFlux The result vector
+     * \param heatFlux The resulting heat flux vector
+     * \param fluxDat The flux variables
+     * \param vDat The volume variables
      * \param tempGrad The temperature gradient
      * \param element The current finite element
      * \param fvElemGeom The finite volume geometry of the current element
