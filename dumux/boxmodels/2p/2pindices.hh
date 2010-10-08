@@ -17,7 +17,7 @@
 /*!
  * \file
  *
- * \brief Defines the indices required for the twophase box model.
+ * \brief Defines the indices required for the two-phase box model.
  */
 #ifndef DUMUX_BOX_2P_INDICES_HH
 #define DUMUX_BOX_2P_INDICES_HH
@@ -47,6 +47,7 @@ struct TwoPCommonIndices
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
+ * \tparam formulation The formulation, either pwSn or pnSw
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int formulation = TwoPCommonIndices::pwSn, int PVOffset = 0>

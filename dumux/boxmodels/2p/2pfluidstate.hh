@@ -16,7 +16,7 @@
 /*!
  * \file
  *
- * \brief Calcultes the fluid state from the primary variables in the
+ * \brief Calculates the fluid state as a function of the primary variables in the
  *        2p model.
  */
 #ifndef DUMUX_2P_FLUID_STATE_HH
@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \brief Calcultes the fluid state from the primary variables in the
+ * \brief Calculates the fluid state as a function of the primary variables in the
  *        2p model.
  */
 template <class TypeTag>
@@ -53,6 +53,14 @@ class TwoPFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Sc
 public:
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
 
+    /*!
+     * \brief Update of the fluid state
+     *
+     * \param Sn The saturation of the nonwetting phase
+     * \param pressW The pressure of the wetting phase
+     * \param pressN The pressure of the nonwetting phase
+     * \param temperature The temperature
+     */
     void update(Scalar Sn, Scalar pressW, Scalar pressN, Scalar temperature)
     {
         Sn_ = Sn;
@@ -71,6 +79,8 @@ public:
 
     /*!
      * \brief Returns the saturation of a phase.
+     *
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar saturation(int phaseIdx) const
     {
@@ -81,27 +91,9 @@ public:
     };
 
     /*!
-     * \brief Returns the mass fraction of a component in a phase.
-     */
-    Scalar massFrac(int phaseIdx, int compIdx) const
-    {
-        if (compIdx == phaseIdx)
-            return 1.0;
-        return 0;
-    }
-
-    /*!
-     * \brief Returns the molar fraction of a component in a fluid phase.
-     */
-    Scalar moleFrac(int phaseIdx, int compIdx) const
-    {
-        return massFrac(phaseIdx, compIdx);
-    }
-
-    /*!
-     * \brief Returns the total concentration of a phase [mol / m^3].
+     * \brief Returns the molar density of a phase [mol / m^3].
      *
-     * This is equivalent to the sum of all component concentrations.
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar phaseConcentration(int phaseIdx) const
     {
@@ -109,42 +101,25 @@ public:
     };
 
     /*!
-     * \brief Returns the concentration of a component in a phase [mol / m^3].
-     */
-    Scalar concentration(int phaseIdx, int compIdx) const
-    {
-        if (phaseIdx == compIdx)
-            return phaseConcentration(phaseIdx);
-        return 0;
-    };
-
-    /*!
      * \brief Returns the density of a phase [kg / m^3].
+     *
+     *  \param phaseIdx The index of the fluid phase
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief Returns mean molar mass of a phase [kg / mol].
+     * \brief Returns molar mass of a phase [kg / mol].
      *
-     * This is equivalent to the sum of all component molar masses
-     * weighted by their respective mole fraction.
+     *  \param phaseIdx The index of the fluid phase
      */
     Scalar averageMolarMass(int phaseIdx) const
     { return FluidSystem::molarMass(phaseIdx); };
 
     /*!
-     * \brief Returns the partial pressure of a component in the gas phase [Pa].
-     */
-    Scalar partialPressure(int compIdx) const
-    {
-        if (compIdx == wPhaseIdx)
-            return 0;
-        return phasePressure_[nPhaseIdx];
-    }
-
-    /*!
      * \brief Returns the pressure of a fluid phase [Pa].
+     *
+     *  \param phaseIdx The index of the fluid phase
      */
     Scalar phasePressure(int phaseIdx) const
     { return phasePressure_[phaseIdx]; }

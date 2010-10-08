@@ -15,7 +15,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ * \brief Base class for all problems which use the two-phase box model
  */
 #ifndef DUMUX_2P_PROBLEM_HH
 #define DUMUX_2P_PROBLEM_HH
@@ -29,8 +29,6 @@ namespace Dumux
 /*!
  * \ingroup TwoPProblems
  * \brief Base class for all problems which use the two-phase box model
- *
- * \todo Please doc me more!
  */
 template<class TypeTag>
 class TwoPProblem : public BoxProblem<TypeTag>
@@ -54,6 +52,13 @@ class TwoPProblem : public BoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+/*!
+ * \brief The constructor
+ *
+ * \param timeManager The time manager
+ * \param gridView The grid view
+ * \param verbose Turn verbosity on or off
+ */
     TwoPProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 bool verbose = true)
@@ -68,6 +73,14 @@ public:
             gravity_[dim-1]  = -9.81;
     }
 
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     * \param spatialParameters The spatial parameters object
+     * \param verbose Turn verbosity on or off
+     */
     TwoPProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 SpatialParameters &spatialParameters,

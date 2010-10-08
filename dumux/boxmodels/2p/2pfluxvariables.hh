@@ -69,6 +69,15 @@ class TwoPFluxVariables
     typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
 
 public:
+    /*
+     * \brief The constructor
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param elemDat The volume variables of the current element
+     */
     TwoPFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &elemGeom,
@@ -95,28 +104,37 @@ public:
 
     /*!
      * \brief Return the pressure potential gradient.
+     *
+     * \param phaseIdx The index of the fluid phase
      */
     const Vector &potentialGrad(int phaseIdx) const
     { return potentialGrad_[phaseIdx]; }
 
     /*!
-     * \brief Given the intrinisc permeability times the pressure
-     *        potential gradient and SCV face normal for a phase,
-     *        return the local index of the downstream control volume
-     *        for a given phase.
+     * \brief Return the local index of the downstream control volume
+     *        for a given phase as a function of the normal flux.
+     *
+     * \param normalFlux The normal flux i.e. the given intrinsic permeability
+     *                   times the pressure potential gradient and SCV face normal.
+     *        .
      */
     int downstreamIdx(Scalar normalFlux) const
     { return (normalFlux >= 0)?face().j:face().i; }
 
     /*!
-     * \brief Given the intrinisc permeability times the pressure
-     *        potential gradient and SCV face normal for a phase,
-     *        return the local index of the upstream control volume
-     *        for a given phase.
+     * \brief Return the local index of the upstream control volume
+     *        for a given phase as a function of the normal flux.
+     *
+     * \param normalFlux The normal flux i.e. the given intrinsic permeability
+     *                   times the pressure potential gradient and SCV face normal.
+     *        .
      */
     int upstreamIdx(Scalar normalFlux) const
     { return (normalFlux > 0)?face().i:face().j; }
 
+    /*!
+     * \brief Return the SCV (sub-control-volume) face
+    */
     const SCVFace &face() const
     { return fvElemGeom_.subContVolFace[scvfIdx_]; }
 

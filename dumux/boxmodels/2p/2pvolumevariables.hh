@@ -17,7 +17,8 @@
 /*!
  * \file
  *
- * \brief Quantities required by the twophase box model defined on a vertex.
+ * \brief Contains the quantities which are are constant within a
+ *        finite volume in the two-phase model.
  */
 #ifndef DUMUX_2P_VOLUME_VARIABLES_HH
 #define DUMUX_2P_VOLUME_VARIABLES_HH
@@ -75,6 +76,13 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
+     *
+     * \param priVars The local primary variable vector
+     * \param problem The problem object
+     * \param element The current element
+     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local index of the SCV (sub-control volume)
+     * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -149,6 +157,8 @@ public:
     /*!
      * \brief Returns the effective saturation of a given phase within
      *        the control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar saturation(int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
@@ -156,6 +166,8 @@ public:
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
     { return fluidState_.density(phaseIdx); }
@@ -163,6 +175,8 @@ public:
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
     { return fluidState_.phasePressure(phaseIdx); }
@@ -180,6 +194,8 @@ public:
     /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar mobility(int phaseIdx) const
     { return mobility_[phaseIdx]; }
