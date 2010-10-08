@@ -19,6 +19,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the two-phase box model.
+ */
 #ifndef DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH
 
@@ -178,8 +184,8 @@ public:
      * \brief Adds the diffusive flux to the flux vector over
      *        the face of a sub-control volume.
      *
-     * \param flux The advective flux over the sub-control-volume face for each phase
-     * \param fluxVars The flux variables at the current SCV
+     * \param flux The diffusive flux over the sub-control-volume face for each phase
+     * \param fluxData The flux variables at the current SCV
      *
      * It doesn't do anything in two-phase model but is used by the
      * non-isothermal two-phase models to calculate diffusive heat
