@@ -48,7 +48,8 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -65,6 +66,13 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
+     * \param priVars The local primary variable vector
+     * \param problem The problem object
+     * \param element The current element
+     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local index of the SCV (sub-control volume)
+     * \param isOldSol Evaluate function with solution of current or previous time step
+     *
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -100,6 +108,17 @@ public:
         Valgrind::CheckDefined(enthalpy_);
     }
 
+    /*!
+        * \brief Update the temperature for a given control volume.
+        *
+        * \param priVars The local primary variable vector
+        * \param element The current element
+        * \param elemGeom The finite-volume geometry in the box scheme
+        * \param scvIdx The local index of the SCV (sub-control volume)
+        * \param problem The problem object
+        *
+        */
+
     // this method gets called by the parent class
     void updateTemperature_(const PrimaryVariables &priVars,
                             const Element &element,
@@ -120,6 +139,9 @@ public:
     /*!
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
+     *
+     * \param phaseIdx The phase index
+     *
      */
     Scalar internalEnergy(int phaseIdx) const
     { return internalEnergy_[phaseIdx]; };
@@ -127,6 +149,8 @@ public:
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
      *        volume.
+     *
+     *  \param phaseIdx The phase index
      */
     Scalar enthalpy(int phaseIdx) const
     { return enthalpy_[phaseIdx]; };

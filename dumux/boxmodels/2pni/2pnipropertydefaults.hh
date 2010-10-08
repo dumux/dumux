@@ -35,6 +35,10 @@
 
 namespace Dumux
 {
+/*!
+ * \addtogroup TwoPNIBoxModel
+ */
+
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////

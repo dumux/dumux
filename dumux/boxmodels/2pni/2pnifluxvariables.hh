@@ -70,6 +70,17 @@ class TwoPNIFluxVariables : public TwoPFluxVariables<TypeTag>
     typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
 
 public:
+
+    /*
+        * \brief The constructor
+        *
+        * \param problem The problem
+        * \param element The finite element
+        * \param elemGeom The finite-volume geometry in the box scheme
+        * \param faceIdx The local index of the SCV (sub-control-volume) face
+        * \param elemDat The volume variables of the current element
+        */
+
     TwoPNIFluxVariables(const Problem &problem,
                    const Element &element,
                    const FVElementGeometry &elemGeom,

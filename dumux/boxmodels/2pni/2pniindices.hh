@@ -39,6 +39,9 @@ class TwoPNIIndices : public TwoPIndices<PVOffset>
 public:
     static const int temperatureIdx = PVOffset + 2; //! The primary variable index for temperature
     static const int energyEqIdx = PVOffset + 2; //! The equation index of the energy equation
+    // Phase indices
+       static const int wPhaseIdx = 0; //!< Index of the wetting phase in a phase vector
+       static const int nPhaseIdx = 1; //!< Index of the non-wetting phase in a phase vector
 };
 // \}
 }

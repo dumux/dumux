@@ -44,6 +44,12 @@ class TwoPNIProblem : public TwoPProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+        */
     TwoPNIProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {}
