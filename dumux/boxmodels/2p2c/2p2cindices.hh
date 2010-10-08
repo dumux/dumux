@@ -42,6 +42,7 @@ struct TwoPTwoCFormulation
 /*!
  * \brief The indices for the isothermal TwoPTwoC model.
  *
+ * \tparam formulation The formulation, either pwSn or pnSw.
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag,

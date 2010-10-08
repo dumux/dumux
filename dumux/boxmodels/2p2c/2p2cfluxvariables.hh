@@ -18,12 +18,12 @@
 /*!
  * \file
  *
+ * \brief   This file contains the data which is required to calculate
+ *          all fluxes of components over a face of a finite volume for
+ *          the two-phase, two-component model.
+ */
+/*!
  * \ingroup TwoPTwoCModel
- * \brief This file contains the data which is required to calculate
- *        all fluxes of components over a face of a finite volume.
- *
- * This means pressure, concentration and temperature gradients, phase
- * densities, etc. at the integration points of the control volume
  */
 #ifndef DUMUX_2P2C_FLUX_VARIABLES_HH
 #define DUMUX_2P2C_FLUX_VARIABLES_HH
@@ -40,7 +40,7 @@ namespace Dumux
  *        volume for the two-phase, two-component model.
  *
  * This means pressure and concentration gradients, phase densities at
- * the intergration point, etc.
+ * the integration point, etc.
  */
 template <class TypeTag>
 class TwoPTwoCFluxVariables

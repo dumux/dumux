@@ -15,6 +15,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the two-phase two-component box model.
+ */
+
 #ifndef DUMUX_NEW_2P2C_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_NEW_2P2C_LOCAL_RESIDUAL_BASE_HH
 
@@ -38,8 +45,8 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCModel
- * \brief 2P-2C specific details needed to approximately calculate
- *        the local jacobian in the BOX scheme.
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the two-phase two-component box model.
  *
  * This class is used to fill the gaps in BoxLocalResidual for the 2P-2C flow.
  */
@@ -117,6 +124,9 @@ public:
     /*!
      * \brief Evaluate the storage term of the current solution in a
      *        single phase.
+     *
+     * \param element The element
+     * \param phaseIdx The index of the fluid phase
      */
     void evalPhaseStorage(const Element &element, int phaseIdx)
     {
@@ -139,11 +149,15 @@ public:
     }
     
     /*!
-     * \brief Evaluate the amount all conservation quantites
+     * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
+     *
+     *  \param result The mass of the component within the sub-control volume
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
@@ -173,7 +187,10 @@ public:
 
     /*!
      * \brief Evaluates the total flux of all conservation quantities
-     *        over a face of a subcontrol volume.
+     *        over a face of a sub-control volume.
+     *
+     * \param flux The flux over the SCV (sub-control-volume) face for each component
+     * \param faceIdx The index of the SCV face
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx) const
     {
@@ -195,6 +212,9 @@ public:
     /*!
      * \brief Evaluates the advective mass flux of all components over
      *        a face of a subcontrol volume.
+     *
+     * \param flux The advective flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current SCV
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
@@ -234,6 +254,9 @@ public:
     /*!
      * \brief Adds the diffusive mass flux of all components over
      *        a face of a subcontrol volume.
+     *
+     * \param flux The diffusive flux over the sub-control-volume face for each component
+     * \param fluxData The flux variables at the current SCV
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
@@ -256,6 +279,9 @@ public:
 
     /*!
      * \brief Calculate the source term of the equation
+     *
+     * \param q The source/sink in the SCV for each component
+     * \param localVertexIdx The index of the SCV
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {

@@ -77,6 +77,13 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
+     *
+     * \param priVars The primary variables
+     * \param problem The problem
+     * \param element The element
+     * \param elemGeom Evaluate function with solution of current or previous time step
+     * \param scvIdx The local index of the SCV (sub-control volume)
+     * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -149,15 +156,6 @@ public:
         Valgrind::CheckDefined(porosity_);
    }
 
-    void updateTemperature_(const PrimaryVariables &priVars,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
-    {
-        temperature_ = problem.temperature(element, elemGeom, scvIdx);
-    }
-
     /*!
      * \brief Returns the phase state for the control-volume.
      */
@@ -167,6 +165,8 @@ public:
     /*!
      * \brief Returns the effective saturation of a given phase within
      *        the control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar saturation(int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
@@ -174,6 +174,8 @@ public:
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
     { return fluidState_.density(phaseIdx); }
@@ -181,6 +183,8 @@ public:
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar molarDensity(int phaseIdx) const
     { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
@@ -188,6 +192,8 @@ public:
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
     { return fluidState_.phasePressure(phaseIdx); }
@@ -205,6 +211,8 @@ public:
     /*!
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar mobility(int phaseIdx) const
     {
@@ -231,6 +239,16 @@ public:
 
 
 protected:
+
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem)
+    {
+        temperature_ = problem.temperature(element, elemGeom, scvIdx);
+    }
+
     Scalar temperature_;     //!< Temperature within the control volume
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume

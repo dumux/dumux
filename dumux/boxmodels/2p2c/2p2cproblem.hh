@@ -30,7 +30,6 @@ namespace Dumux
  * \ingroup TwoPTwoCProblems
  * \brief Base class for all problems which use the two-phase, two-component box model
  *
- * \todo Please doc me more!
  */
 template<class TypeTag>
 class TwoPTwoCProblem : public BoxProblem<TypeTag>
@@ -54,6 +53,12 @@ class TwoPTwoCProblem : public BoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time mananager
+     * \param gridView The grid view
+     */
     TwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView),
           gravity_(0),

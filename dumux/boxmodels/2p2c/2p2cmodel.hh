@@ -13,6 +13,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+
+/*!
+* \file
+*
+* \brief Adaption of the BOX scheme to the two-phase two-component flow model.
+*/
+
 #ifndef DUMUX_2P2C_MODEL_HH
 #define DUMUX_2P2C_MODEL_HH
 
@@ -148,6 +155,8 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
 public:
     /*!
      * \brief Initialize the static data with the initial solution.
+     *
+     * \param problem The problem to be solved
      */
     void init(Problem &problem)
     {
@@ -178,6 +187,9 @@ public:
     /*!
      * \brief Compute the total storage inside one phase of all
      *        conservation quantities.
+     *
+     * \param dest Contains the storage of each component for one phase
+     * \param phaseIdx The phase index
      */
     void globalPhaseStorage(PrimaryVariables &dest, int phaseIdx)
     {
@@ -213,6 +225,9 @@ public:
     /*!
      * \brief Returns the relative weight of a primary variable for
      *        calculating relative errors.
+     *
+     * \param globalVertexIdx The global vertex index
+     * \param pvIdx The primary variable index
      */
     Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
     {
@@ -222,11 +237,11 @@ public:
     }
 
     /*!
-     * \brief Called by the problem if a timeintegration was
+     * \brief Called by the problem if a time integration was
      *        successful, post processing of the solution is done and the 
      *        result has been written to disk. 
      *
-     * This should perpare the model for the next time integration.
+     * This should prepare the model for the next time integration.
      */
     void advanceTimeLevel()
     {
@@ -248,6 +263,9 @@ public:
 
     /*!
      * \brief Returns the phase presence of the current or the old solution of a vertex.
+     *
+     * \param globalVertexIdx The global vertex index
+     * \param oldSol Evaluate function with solution of current or previous time step
      */
     int phasePresence(int globalVertexIdx, bool oldSol) const
     {
@@ -259,6 +277,9 @@ public:
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
+     *
+     * \param sol The solution vector
+     * \param writer The writer for multi-file VTK datasets
      */
     template<class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
@@ -461,6 +482,9 @@ public:
 
     /*!
      * \brief Write the current solution to a restart file.
+     *
+     * \param outStream The output stream of one vertex for the restart file
+     * \param vert The vertex
      */
     void serializeEntity(std::ostream &outStream, const Vertex &vert)
     {
@@ -477,6 +501,9 @@ public:
     /*!
      * \brief Reads the current solution for a vertex from a restart
      *        file.
+     *
+     * \param inStream The input stream of one vertex from the restart file
+     * \param vert The vertex
      */
     void deserializeEntity(std::istream &inStream, const Vertex &vert)
     {
@@ -497,6 +524,9 @@ public:
 
     /*!
      * \brief Update the static data of all vertices in the grid.
+     *
+     * \param curGlobalSol The current global solution
+     * \param oldGlobalSol The previous global solution
      */
     void updateStaticData(SolutionVector &curGlobalSol,
                           SolutionVector &oldGlobalSol)

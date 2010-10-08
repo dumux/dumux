@@ -18,8 +18,8 @@
 /*!
  * \file
  *
- * \brief Calcultes the phase state from the primary variables in the
- *        2pNc model.
+ * \brief Calculates the phase state from the primary variables in the
+ *        2p2c model.
  */
 #ifndef DUMUX_2P2C_PHASE_STATE_HH
 #define DUMUX_2P2C_PHASE_STATE_HH
@@ -32,8 +32,8 @@
 namespace Dumux
 {
 /*!
- * \brief Calcultes the phase state from the primary variables in the
- *        2pNc model.
+ * \brief Calculates the phase state from the primary variables in the
+ *        2p2c model.
  */
 template <class TypeTag>
 class TwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
@@ -83,6 +83,11 @@ public:
 
     /*!
      * \brief Update the phase state from the primary variables.
+     *
+     * \param primaryVars The primary variables
+     * \param pcParams The parameters for the material law
+     * \param temperature The temperature
+     * \param phasePresence Stands either for nonwetting phase, wetting phase or both phases
      */
     void update(const PrimaryVariables &primaryVars,
                 const MaterialLawParams &pcParams,
@@ -217,6 +222,9 @@ public:
      * \brief Retrieves the phase composition and pressure from a
      *        phase composition class.
      *
+     * \param phaseIdx The phase index
+     * \param compo The index of the component
+     *
      * This method is called by the fluid system's
      * computeEquilibrium()
      */
@@ -233,6 +241,8 @@ public:
 
     /*!
      * \brief Returns the saturation of a phase.
+     *
+     * \param phaseIdx The phase index
      */
     Scalar saturation(int phaseIdx) const
     {
@@ -243,7 +253,10 @@ public:
     };
 
     /*!
-     * \brief Returns the molar fraction of a component in a fluid phase.
+     * \brief Returns the mole fraction of a component in a fluid phase.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
      */
     Scalar moleFrac(int phaseIdx, int compIdx) const
     {
@@ -253,21 +266,31 @@ public:
     }
 
     /*!
-     * \brief Returns the total concentration of a phase [mol / m^3].
+     * \brief Returns the molar density of a phase [mol / m^3].
      *
-     * This is equivalent to the sum of all component concentrations.
+     * \param phaseIdx The phase index
+     *
+     * This is equivalent to the sum of all molar component concentrations.
      */
     Scalar phaseConcentration(int phaseIdx) const
     { return phaseConcentration_[phaseIdx]; };
 
     /*!
-     * \brief Returns the concentration of a component in a phase [mol / m^3].
+     * \brief Returns the molar concentration of a component in a phase [mol / m^3].
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
+     *
      */
     Scalar concentration(int phaseIdx, int compIdx) const
     { return concentration_[phaseIdx][compIdx]; };
 
     /*!
      * \brief Returns the mass fraction of a component in a phase.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
+     *
      */
     Scalar massFrac(int phaseIdx, int compIdx) const
     {
@@ -277,13 +300,17 @@ public:
     }
 
     /*!
-     * \brief Returns the density of a phase [kg / m^3].
+     * \brief Returns the mass density of a phase [kg / m^3].
+     *
+     * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
     { return phaseConcentration_[phaseIdx]*avgMolarMass_[phaseIdx]; }
 
     /*!
      * \brief Returns mean molar mass of a phase [kg / mol].
+     *
+     * \param phaseIdx The phase index
      *
      * This is equivalent to the sum of all component molar masses
      * weighted by their respective mole fraction.
@@ -293,12 +320,16 @@ public:
 
     /*!
      * \brief Returns the pressure of a fluid phase [Pa].
+     *
+     * \param phaseIdx The phase index
      */
     Scalar phasePressure(int phaseIdx) const
     { return phasePressure_[phaseIdx]; }
 
     /*!
      * \brief Return the fugacity of a component [Pa].
+     *
+     * \param compIdx The index of the component
      */
     Scalar fugacity(int compIdx) const
     { return moleFrac(gPhaseIdx, compIdx)*phasePressure(gPhaseIdx); };

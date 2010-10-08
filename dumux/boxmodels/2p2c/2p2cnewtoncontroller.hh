@@ -65,8 +65,16 @@ public:
         this->setMaxSteps(18);
     };
 
-    //! Suggest a new time stepsize based either on the number of newton
-    //! iterations required or on the variable switch
+
+    /*!
+     * \brief
+     * Suggest a new time step size based either on the number of newton
+     * iterations required or on the variable switch
+     *
+     * \param u The current global solution vector
+     * \param uOld The previous global solution vector
+     *
+     */
     void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
     {
         // call the method of the base class
@@ -74,6 +82,21 @@ public:
         ParentType::newtonEndStep(u, uOld);
     }
 
+    /*!
+     * \brief Update the current solution function with a delta vector.
+     *
+     * The error estimates required for the newtonConverged() and
+     * newtonProceed() methods should be updated here.
+     *
+     * Different update strategies, such as line search and chopped
+     * updates can be implemented. The default behaviour is just to
+     * subtract deltaU from uOld.
+     *
+     * \param deltaU The delta as calculated from solving the linear
+     *               system of equations. This parameter also stores
+     *               the updated solution.
+     * \param uOld   The solution of the last iteration
+     */
     void newtonUpdate(SolutionVector &deltaU, const SolutionVector &uOld)
     {
         this->writeConvergence_(uOld, deltaU);
@@ -89,8 +112,11 @@ public:
     }
 
 
-    //! Returns true iff the current solution can be considered to
-    //! be acurate enough
+    /*!
+     * \brief
+     * Returns true if the current solution can be considered to
+     * be accurate enough
+     */
     bool newtonConverged()
     {
         if (this->method().model().switched())
