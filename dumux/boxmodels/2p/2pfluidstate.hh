@@ -90,6 +90,30 @@ public:
             return Sn_;
     };
 
+   /*!
+     * \brief Returns the mass fraction of a component in a phase.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
+     */
+    Scalar massFrac(int phaseIdx, int compIdx) const
+    {
+        if (compIdx == phaseIdx)
+            return 1.0;
+        return 0;
+    }
+
+    /*!
+     * \brief Returns the molar fraction of a component in a fluid phase.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
+     */
+    Scalar moleFrac(int phaseIdx, int compIdx) const
+    {
+        return massFrac(phaseIdx, compIdx);
+    }
+    
     /*!
      * \brief Returns the molar density of a phase [mol / m^3].
      *
@@ -100,6 +124,19 @@ public:
         return density_[phaseIdx]/FluidSystem::molarMass(phaseIdx);
     };
 
+    /*!
+     * \brief Returns the concentration of a component in a phase [mol / m^3].
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
+     */
+    Scalar concentration(int phaseIdx, int compIdx) const
+    {
+        if (phaseIdx == compIdx)
+            return phaseConcentration(phaseIdx);
+        return 0;
+    };
+    
     /*!
      * \brief Returns the density of a phase [kg / m^3].
      *
@@ -116,6 +153,16 @@ public:
     Scalar averageMolarMass(int phaseIdx) const
     { return FluidSystem::molarMass(phaseIdx); };
 
+    /*!
+     * \brief Returns the partial pressure of a component in the gas phase [Pa].
+     */
+    Scalar partialPressure(int compIdx) const
+    {
+        if (compIdx == wPhaseIdx)
+            return 0;
+        return phasePressure_[nPhaseIdx];
+    }
+    
     /*!
      * \brief Returns the pressure of a fluid phase [Pa].
      *
