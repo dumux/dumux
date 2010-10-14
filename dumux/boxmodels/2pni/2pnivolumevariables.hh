@@ -48,8 +48,7 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -66,6 +65,7 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
+     * 
      * \param priVars The local primary variable vector
      * \param problem The problem object
      * \param element The current element
