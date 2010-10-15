@@ -284,7 +284,7 @@ public:
      */
     Scalar primaryVarWeight(int vertIdx, int pvIdx) const
     {
-        return std::min(1.0/this->prevSol()[vertIdx][pvIdx], 1.0);
+        return 1.0/std::max(std::abs(this->prevSol()[vertIdx][pvIdx]), 1.0);
     }
 
     /*!
