@@ -281,7 +281,9 @@ public:
      *        calculating relative errors.
      */
     Scalar primaryVarWeight(int vertIdx, int pvIdx) const
-    { return 1.0; }
+    {
+        return std::min(1.0/this->prevSol()[vertIdx][pvIdx], 1.0);
+    }
 
     /*!
      * \brief Returns the relative error between two vectors of
