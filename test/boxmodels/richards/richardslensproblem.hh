@@ -121,12 +121,13 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
         contiEqIdx = Indices::contiEqIdx,
 
         // Grid and world dimension
-        dimWorld = GridView::dimensionworld,
+        dim = GridView::dimensionworld,
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
 public:
     RichardsLensProblem(TimeManager &timeManager,
@@ -185,16 +186,13 @@ public:
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
+     *
+     * \param values The boundary types for the conservation equations
+     * \param vertex The vertex for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes &values,
-                       const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       const Intersection &is,
-                       int scvIdx,
-                       int boundaryFaceIdx) const
+    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+        const GlobalPosition globalPos = vertex.geometry().center();
 
         if (onLeftBoundary_(globalPos) || 
             onRightBoundary_(globalPos))
@@ -209,17 +207,16 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
+     * \param values The dirichlet values for the primary variables
+     * \param vertex The vertex for which the boundary type is set
+     *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values,
-                   const Element &element,
-                   const FVElementGeometry &fvElemGeom,
-                   const Intersection &is,
-                   int scvIdx,
-                   int boundaryFaceIdx) const
+    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
+        const GlobalPosition globalPos = vertex.geometry().center();
         // use initial values as boundary conditions
-        initial(values, element, fvElemGeom, scvIdx);
+        initial_(values, globalPos);
     }
 
     /*!
@@ -280,20 +277,23 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
-        //const GlobalPosition &pos = element.geometry().corner(scvIdx);
+        const GlobalPosition pos = element.geometry().corner(scvIdx);
         
-        Scalar Sw = 0.0;
-        Scalar pc =
-            MaterialLaw::pC(this->spatialParameters().materialLawParams(element, 
-                                                                        fvElemGeom,
-                                                                        scvIdx),
-                            Sw);
-        values[pwIdx] = pNreference() - pc;
-    }
+        initial_(values, pos);
+    };
 
     // \}
 
 private:
+    void initial_(PrimaryVariables &values, const GlobalPosition &pos) const
+    {
+        Scalar Sw = 0.0;
+        Scalar pc =
+            MaterialLaw::pC(this->spatialParameters().materialLawParams(pos),
+                            Sw);
+        values[pwIdx] = pNreference() - pc;
+    }
+
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
         return globalPos[0] < this->bboxMin()[0] + eps_;

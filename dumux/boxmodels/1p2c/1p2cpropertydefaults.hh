@@ -61,7 +61,7 @@ SET_TYPE_PROP(BoxOnePTwoC, FluxVariables, OnePTwoCFluxVariables<TypeTag>);
 SET_SCALAR_PROP(BoxOnePTwoC, UpwindAlpha, 1.0);
 
 //! Set the indices used by the 1p2c model
-SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, Dumux::OnePTwoCIndices);
+SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, Dumux::OnePTwoCIndices<0>);
 
 //! Set the default phase used by the fluid system to the first one
 SET_INT_PROP(BoxOnePTwoC, PhaseIndex, 0);

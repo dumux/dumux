@@ -39,8 +39,6 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
     typedef typename RefElemProp::Container ReferenceElements;
@@ -49,6 +47,11 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     enum { dim = GridView::dimension };
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     // copying a the boundary types of an element should be explicitly
@@ -61,54 +64,53 @@ public:
      * \brief The constructor.
      */
     BoxElementBoundaryTypes()
-    { }
+    {
+        hasDirichlet_ = false;
+        hasNeumann_ = false;
+    }
 
+    /*!
+     * \brief Update the boundary types for all vertices of an element.
+     */
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvElemGeom)
     {
-        Dune::GeometryType geoType = element.geometry().type();
-        const ReferenceElement &refElem = ReferenceElements::general(geoType);
-
         int numVerts = element.template count<dim>();
         this->resize(numVerts);
-        for (int i = 0; i < numVerts; ++i)
+
+        hasDirichlet_ = false;
+        hasNeumann_ = false;
+        for (int i = 0; i < numVerts; ++i) {
             (*this)[i].reset();
 
-        // evaluate boundary conditions
-        IntersectionIterator isIt = problem.gridView().ibegin(element);
-        const IntersectionIterator &endIt = problem.gridView().iend(element);
-        for (; isIt != endIt; ++isIt) {
-            // Ignore non- boundary faces.
-            if (!isIt->boundary())
+            if (!problem.model().onBoundary(element, i))
                 continue;
 
-            // Set the boundary type for all vertices of the face
-            int faceIdx = isIt->indexInInside();
-            int numFaceVerts = refElem.size(faceIdx, 1, dim);
-            for (int faceVertIdx = 0;
-                 faceVertIdx < numFaceVerts;
-                 faceVertIdx++)
-            {
-                int elemVertIdx = refElem.subEntity(faceIdx,
-                                                    1,
-                                                    faceVertIdx,
-                                                    dim);
-                int boundaryFaceIdx =
-                    fvElemGeom.boundaryFaceIndex(faceIdx,
-                                                 faceVertIdx);
-                // set the boundary types
-                problem.boundaryTypes((*this)[elemVertIdx],
-                                      element,
-                                      fvElemGeom,
-                                      *isIt,
-                                      elemVertIdx,
-                                      boundaryFaceIdx);
-                (*this)[elemVertIdx].checkWellPosed();
-                Valgrind::CheckDefined((*this)[elemVertIdx]);
-            }
+            const VertexPointer vptr = element.template subEntity<dim>(i);
+            problem.boundaryTypes((*this)[i], *vptr);
+
+            hasDirichlet_ = hasDirichlet_ or (*this)[i].hasDirichlet();
+            hasNeumann_ = hasNeumann_ or (*this)[i].hasNeumann();
         }
     };
+
+    /*!
+     * \brief Returns whether the element has a Dirichlet value.
+     */
+    bool hasDirichlet() const
+    { return hasDirichlet_; }
+
+    /*!
+     * \brief Returns whether the element potentially has a Neumann
+     *        boundary segment.
+     */
+    bool hasNeumann() const
+    { return hasNeumann_; }
+    
+protected:
+    bool hasDirichlet_;
+    bool hasNeumann_;
 };
 
 } // namespace Dumux

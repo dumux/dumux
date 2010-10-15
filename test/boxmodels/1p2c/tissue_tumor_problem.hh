@@ -205,12 +205,7 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
-    void boundaryTypes(BoundaryTypes &values,
-                       const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       const Intersection &is,
-                       int scvIdx,
-                       int boundaryFaceIdx) const
+    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
         values.setAllDirichlet();
     }
@@ -221,15 +216,9 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values,
-                   const Element &element,
-                   const FVElementGeometry &fvElemGeom,
-                   const Intersection &is,
-                   int scvIdx,
-                   int boundaryFaceIdx) const
+    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+        const GlobalPosition globalPos = vertex.geometry().center();
 
         initial_(values, globalPos);
     }

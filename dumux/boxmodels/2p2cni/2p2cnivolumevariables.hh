@@ -140,7 +140,9 @@ public:
     { return heatCapacity_; };
 
 protected:
-    // this method gets called by the parent class
+    // this method gets called by the parent class. since this method
+    // is protected, we are friends with our parent..
+    friend class TwoPTwoCVolumeVariables<TypeTag>;
     void updateTemperature_(const PrimaryVariables &sol,
                             const Element &element,
                             const FVElementGeometry &elemGeom,

@@ -119,7 +119,12 @@ public:
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const
     {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
+        return materialLawParams(fvElemGeom.subContVol[scvIdx].global);
+    }
+
+    // return the brooks-corey context depending on the position
+    const MaterialLawParams& materialLawParams(const GlobalPosition &globalPos) const
+    {
 
         if (isInLens_(globalPos))
             return lensMaterialParams_;

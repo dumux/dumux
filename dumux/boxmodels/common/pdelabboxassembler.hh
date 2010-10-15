@@ -45,10 +45,12 @@ class BoxAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     enum{dim = GridView::dimension};
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
@@ -380,6 +382,7 @@ public:
     //! return const reference to residual
     const SolutionVector& residual() const
     { return residual_; }
+
 
 private:
     void resetMatrix_()

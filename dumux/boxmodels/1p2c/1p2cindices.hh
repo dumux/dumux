@@ -31,15 +31,16 @@ namespace Dumux
 /*!
  * \brief The indices for the isothermal single-phase, two-component model.
  */
+template <int PVOffset = 0>
 struct OnePTwoCIndices
 {
     // Equation indices
-    static const int contiEqIdx = 0; //!< continuity equation index
-    static const int transEqIdx = 1; //!< transport equation index
+    static const int contiEqIdx = PVOffset + 0; //!< continuity equation index
+    static const int transEqIdx = PVOffset + 1; //!< transport equation index
 
     // primary variable indices
-    static const int pressureIdx = 0; //!< pressure
-    static const int x1Idx = 1; //!< mole fraction of the second component
+    static const int pressureIdx = PVOffset + 0; //!< pressure
+    static const int x1Idx = PVOffset + 1; //!< mole fraction of the second component
                                 //in my case the therapeutic agent
 };
 

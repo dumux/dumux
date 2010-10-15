@@ -484,7 +484,7 @@ public:
             if (error_ < 10*tolerance_)
                 reassembleTol = tolerance_/5;
             this->model_().jacobianAssembler().computeColors(reassembleTol);
-        }               
+        }
     }
 
     /*!

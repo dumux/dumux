@@ -67,6 +67,8 @@ private:
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
 
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
     typedef typename RefElemProp::Container ReferenceElements;
@@ -215,7 +217,10 @@ public:
         asImp_().evalVolumeTerms_();
 
         // evaluate the boundary
-        asImp_().evalBoundary_();
+        if (bcTypes.hasNeumann())
+            asImp_().evalNeumann_();
+        if (bcTypes.hasDirichlet())
+            asImp_().evalDirichlet_();
 
 #if HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
@@ -234,7 +239,7 @@ public:
      * \brief Returns the local residual for a given sub-control
      *        volume of the element.
      */
-    const PrimaryVariables residual(int scvIdx) const
+    const PrimaryVariables &residual(int scvIdx) const
     { return residual_[scvIdx]; }
 
     /*!
@@ -251,13 +256,36 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    void evalBoundary_()
+    // set the values of the Dirichlet control volumes
+    void evalDirichlet_()
+    {
+        PrimaryVariables tmp;
+        for (int i = 0; i < fvElemGeom_().numVertices; ++i) {
+            const BoundaryTypes &bcTypes = bcTypes_(i);
+            if (! bcTypes.hasDirichlet())
+                continue;
+
+            // ask the problem for the dirichlet values
+            const VertexPointer vPtr = elem_().template subEntity<dim>(i);
+            asImp_().problem_().dirichlet(tmp, *vPtr);
+            
+            // set the dirichlet conditions
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+                if (!bcTypes.isDirichlet(eqIdx))
+                    continue;
+                int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                this->residual_[i][eqIdx] =
+                    curPrimaryVars_(i)[pvIdx] - tmp[pvIdx];
+            };
+        };
+    }
+
+    // evaluate the neumann boundary segments
+    void evalNeumann_()
     {
         Dune::GeometryType geoType = elem_().geometry().type();
         const ReferenceElement &refElem = ReferenceElements::general(geoType);
 
-        // evaluate boundary conditions for all intersections of
-        // the current element
         IntersectionIterator isIt = gridView_().ibegin(elem_());
         const IntersectionIterator &endIt = gridView_().iend(elem_());
         for (; isIt != endIt; ++isIt)
@@ -278,22 +306,23 @@ protected:
                                                     1,
                                                     faceVertIdx,
                                                     dim);
-
+                
                 int boundaryFaceIdx =
                     fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
 
-                // add the neuman fluxes of a single boundary segment
-                evalBoundarySegment_(isIt,
-                                     elemVertIdx,
-                                     boundaryFaceIdx);
+                // add the residual of all vertices of the boundary
+                // segment
+                evalNeumannSegment_(isIt,
+                                    elemVertIdx,
+                                    boundaryFaceIdx);
             }
         }
     }
 
-    // handle boundary conditions for a single sub-control volume face
-    void evalBoundarySegment_(const IntersectionIterator &isIt,
-                              int scvIdx,
-                              int boundaryFaceIdx)
+    // handle Neumann boundary conditions for a single sub-control volume face
+    void evalNeumannSegment_(const IntersectionIterator &isIt,
+                             int scvIdx,
+                             int boundaryFaceIdx)
     {
         // temporary vector to store the neumann boundary fluxes
         PrimaryVariables values(0.0);
@@ -310,26 +339,6 @@ protected:
             values *= fvElemGeom_().boundaryFace[boundaryFaceIdx].area;
             Valgrind::CheckDefined(values);
             residual_[scvIdx] += values;
-        }
-
-        // deal with dirichlet boundaries
-        if (bcTypes.hasDirichlet()) {
-            problem_().dirichlet(values,
-                                 elem_(),
-                                 fvElemGeom_(),
-                                 *isIt,
-                                 scvIdx,
-                                 boundaryFaceIdx);
-
-            Valgrind::CheckDefined(values);
-            for (int i = 0; i < numEq; ++i) {
-                if (!bcTypes.isDirichlet(i))
-                    continue;
-
-                int pvIdx = bcTypes.eqToDirichletIndex(i);
-                residual_[scvIdx][i] =
-                    curPrimaryVars_(scvIdx)[pvIdx] - values[pvIdx];
-            }
         }
     }
 

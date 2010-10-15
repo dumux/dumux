@@ -109,13 +109,16 @@ SET_PROP(LensProblem, SpatialParameters)
 };
 
 // Enable the time step ramp up inside the newton method?
-SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, true);
+SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, false);
 
 // Enable partial reassembly of the jacobian matrix?
-SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
+SET_BOOL_PROP(LensProblem, EnablePartialReassemble, false);
 
 // Enable reuse of jacobian matrices?
 SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
+
+// Write the solutions of individual newton iterations?
+SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, false);
 
 // Enable gravity
 SET_BOOL_PROP(LensProblem, EnableGravity, true);
@@ -217,6 +220,7 @@ public:
                 const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
+        temperature_ = 273.15 + 20; // -> 20°C
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
     }
 
@@ -261,7 +265,7 @@ public:
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
-        return 273.15 + 10; // -> 10°C
+        return temperature_;
     };
 
     // \}
@@ -273,24 +277,16 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
+     *        used for which equation on a given boundary control volume.
      *
      * \param values The boundary types for the conservation equations
-     * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param vertex The vertex on the boundary for which the
+     *               conditions needs to be specified
      */
     void boundaryTypes(BoundaryTypes &values,
-                       const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       const Intersection &is,
-                       int scvIdx,
-                       int boundaryFaceIdx) const
+                       const Vertex &vertex) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+        const GlobalPosition globalPos = vertex.geometry().center();
 
         if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) {
             values.setAllDirichlet();
@@ -304,30 +300,21 @@ public:
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     *        control volume.
      *
      * \param values The dirichlet values for the primary variables
-     * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param vertex The vertex representing the "half volume on the boundary"
      *
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichlet(PrimaryVariables &values,
-                   const Element &element,
-                   const FVElementGeometry &fvElemGeom,
-                   const Intersection &is,
-                   int scvIdx,
-                   int boundaryFaceIdx) const
+                   const Vertex &vertex) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+        const GlobalPosition globalPos = vertex.geometry().center();
 
         Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,
                                                         wPhaseIdx,
-                                                        temperature(element, fvElemGeom, scvIdx),
+                                                        temperature_,
                                                         1e5);
 
         if (onLeftBoundary_(globalPos))
@@ -459,6 +446,7 @@ private:
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
+    Scalar temperature_;
     static const Scalar eps_ = 3e-6;
 };
 } //end namespace

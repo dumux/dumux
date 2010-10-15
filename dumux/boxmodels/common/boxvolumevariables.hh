@@ -55,8 +55,6 @@ public:
     { 
         evalPoint_ = 0;
         primaryVars_ = v.primaryVars_;
-
-        Valgrind::CheckDefined(*this);
     };
 
     // assignment operator
@@ -64,7 +62,6 @@ public:
     {
         evalPoint_ = 0;
         primaryVars_ = v.primaryVars_;
-        Valgrind::CheckDefined(*this);
 
         return *this;
     };
