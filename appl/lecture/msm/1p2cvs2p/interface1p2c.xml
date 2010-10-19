@@ -1,0 +1,54 @@
+<iPCM_problem>
+
+    <SoilProperties>
+        <FinePermeability>
+            3.1e-12
+        </FinePermeability>
+        <CoarsePermeability>
+            4.6e-11
+        </CoarsePermeability>
+       <FinePorosity>
+            0.35
+        </FinePorosity>
+        <CoarsePorosity>
+            0.39
+        </CoarsePorosity>
+        <LongitudinalDispersivity>
+            0.2
+        </LongitudinalDispersivity>
+        <TransverseDispersivity>
+            0.02
+        </TransverseDispersivity>
+    </SoilProperties>
+
+    <FluidProperties>
+        <MolecularDiffusionCoefficient>
+            1e-9 
+        </MolecularDiffusionCoefficient>
+    </FluidProperties>
+
+    <BoundaryAndInitialConditions>
+        <UpperPressure>
+            1.6e5
+        </UpperPressure>
+        <LowerPressure>
+            1.0e5
+        </LowerPressure>
+        <InfiltrationRate>
+            0.1
+        </InfiltrationRate>
+        <MaxTimeStepSize>
+            500
+        </MaxTimeStepSize>
+        <InfiltrationStartTime>
+            0
+        </InfiltrationStartTime>
+        <InfiltrationEndTime>
+            1000
+        </InfiltrationEndTime>
+        <SimulationNumber>
+               1
+        </SimulationNumber>
+    </BoundaryAndInitialConditions>
+
+</iPCM_problem>

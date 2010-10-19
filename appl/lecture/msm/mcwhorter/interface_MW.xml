@@ -1,0 +1,51 @@
+<iPCM_problem>
+
+    <SoilProperties>
+        <Permeability>
+            1e-10
+        </Permeability>
+        <Porosity>
+            0.4
+        </Porosity>
+        <BrooksCoreyLambda>
+            2.0
+        </BrooksCoreyLambda>
+        <BrooksCoreyEntryPressure>
+            5000
+        </BrooksCoreyEntryPressure>
+        <MinCapillaryPressure>
+            5000
+        </MinCapillaryPressure>
+        <MaxCapillaryPressure>
+            8000
+        </MaxCapillaryPressure>
+        <ResidualSaturationWetting>
+            0.
+        </ResidualSaturationWetting>
+        <ResidualSaturationNonWetting>
+            0.
+        </ResidualSaturationNonWetting>
+    </SoilProperties>
+
+    <FluidProperties>
+         <FluidDensityWetting>
+            1e3 
+        </FluidDensityWetting>
+        <DensityNonWettingFluid>
+            1e3 
+        </DensityNonWettingFluid>    
+        <ViscosityWettingFluid>
+            1e-3 
+        </ViscosityWettingFluid>
+        <ViscosityNonWettingFluid>
+            1e-3 
+        </ViscosityNonWettingFluid>        
+    </FluidProperties>
+
+    <BoundaryAndInitialConditions>
+        <DiscretizationLength>
+            0.05 
+        </DiscretizationLength>
+    </BoundaryAndInitialConditions>
+
+</iPCM_problem>

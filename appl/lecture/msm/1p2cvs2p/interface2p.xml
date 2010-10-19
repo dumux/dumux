@@ -1,0 +1,63 @@
+<iPCM_problem>
+
+    <SoilProperties>
+        <FinePermeability>
+            9e-12
+        </FinePermeability>
+        <CoarsePermeability>
+            4.6e-10
+        </CoarsePermeability>
+       <FinePorosity>
+            0.39
+        </FinePorosity>
+        <CoarsePorosity>
+            0.43
+        </CoarsePorosity>
+        <FineBrooksCoreyLambda>
+            3.5
+        </FineBrooksCoreyLambda>
+        <FineBrooksCoreyEntryPressure>
+            1800 
+        </FineBrooksCoreyEntryPressure>
+        <CoarseBrooksCoreyLambda>
+            2.0
+        </CoarseBrooksCoreyLambda>
+        <CoarseBrooksCoreyEntryPressure>
+            200
+        </CoarseBrooksCoreyEntryPressure>
+        <FineResidualSaturationWetting>
+            0.18
+        </FineResidualSaturationWetting>
+        <FineResidualSaturationNonWetting>
+            0.0
+        </FineResidualSaturationNonWetting>
+        <CoarseResidualSaturationWetting>
+            0.05
+        </CoarseResidualSaturationWetting>
+        <CoarseResidualSaturationNonWetting>
+            0.0
+        </CoarseResidualSaturationNonWetting>
+    </SoilProperties>
+
+    <BoundaryAndInitialConditions>
+        <LowerPressure>
+            1.0e5
+        </LowerPressure>
+        <UpperPressure>
+            1.1e5
+        </UpperPressure>
+        <InfiltrationRate>
+            0.04
+        </InfiltrationRate>
+        <InfiltrationStartTime>
+            100
+        </InfiltrationStartTime>
+        <InfiltrationEndTime>
+            10000
+        </InfiltrationEndTime>
+        <SimulationNumber>
+               1
+        </SimulationNumber>
+    </BoundaryAndInitialConditions>
+
+</iPCM_problem>
