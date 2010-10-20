@@ -20,8 +20,12 @@
 
 namespace Dumux
 {
+/**
+ * \file
+ * 
+ * \brief Class for defining spatial parameters
+ */
 
-/** \todo Please doc me! */
 template<class TypeTag>
 class OnePSpatialParameters : public BoxSpatialParameters<TypeTag>
 {

@@ -26,6 +26,8 @@ namespace Dumux
 {
 
 /**
+ * \file
+ *
  * \brief Definition of the spatial parameters for the problem
  *
  */
