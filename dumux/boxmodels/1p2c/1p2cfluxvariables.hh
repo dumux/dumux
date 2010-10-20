@@ -23,6 +23,8 @@
  *
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
+ * 
+ * * \ingroup OnePTwoCModel
  */
 #ifndef DUMUX_1P2C_FLUX_VARIABLES_HH
 #define DUMUX_1P2C_FLUX_VARIABLES_HH
@@ -37,7 +39,7 @@ namespace Dumux
 /*!
  * \brief This template class contains the data which is required to
  *        calculate the fluxes of the fluid phases over a face of a
- *        finite volume for the one-phase model.
+ *        finite volume for the one-phase, two-component model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.
@@ -65,6 +67,15 @@ class OnePTwoCFluxVariables
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
+    /*
+     * \brief The constructor
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param scvfIdx The local index of the SCV (sub-control-volume) face
+     * \param elemDat The volume variables of the current element
+     */
     OnePTwoCFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &elemGeom,

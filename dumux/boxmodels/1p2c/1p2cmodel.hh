@@ -20,6 +20,7 @@
  *
  * \brief Base class for all models which use the single-phase,
  *        two-component box model
+ *        Adaption of the BOX scheme to the one-phase two-component flow model.
  */
 
 
@@ -108,7 +109,7 @@ public:
      *
      *        \param sol A vector containing the solutions of the primary variables after solving
      *        the system of equations
-     *        \param writer
+     *        \param writer The writer for multi-file VTK datasets
      */
     template<class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,

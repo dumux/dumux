@@ -29,6 +29,10 @@
 
 namespace Dumux
 {
+/*!
+ * \addtogroup OnePTwoCModel
+ */
+// \{
 namespace Properties
 {
 
@@ -54,7 +58,7 @@ NEW_PROP_TAG(PhaseIndex); //!< The index of the phase in the fluid system
 NEW_PROP_TAG(Comp1Index); //!< The index of the first component in the fluid system
 NEW_PROP_TAG(Comp2Index); //!< The index of the second component in the fluid system
 }
-
+// \}
 }
 
 #endif

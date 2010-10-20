@@ -18,7 +18,7 @@
 /*!
  * \file
  *
- * \brief Calculate the local Jacobian for the single-phase,
+ * \brief Element-wise calculation the local Jacobian for the single-phase,
  *        two-component model in the BOX scheme.
  */
 
@@ -38,8 +38,13 @@
 namespace Dumux
 {
 /*!
+ * 
+ * \ingroup OnePTwoCModel
+ * 
  * \brief Calculate the local Jacobian for the single-phase,
  *        two-component model in the BOX scheme.
+ * 
+ *  This class is used to fill the gaps in BoxLocalResidual for the 1P-2C flow.
  */
 template<class TypeTag>
 class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
@@ -83,10 +88,9 @@ public:
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a finite volume.
      *
-     *        \param result A vector containing the primary variables of your problem
+     *        \param result The mass of the component within the sub-control volume
      *        \param scvIdx The index of the considered face of the sub control volume
-     *        \param usePrevSol A boolean parameter to decide between an implicit and
-     *                          a explicit euler method
+     *        \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
@@ -114,7 +118,7 @@ public:
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
      *
-     *        \param flux A vector containing the primary variables of your problem
+     *        \param flux The flux over the SCV (sub-control-volume) face for each component
      *        \param faceId The index of the considered face of the sub control volume
      */
     void computeFlux(PrimaryVariables &flux, int faceId) const
@@ -168,7 +172,7 @@ public:
 
     /*!
      * \brief Calculate the source term of the equation
-     *        \param q A vector containing the primary variables of your problem
+     *        \param q The source/sink in the SCV for each component
      *        \param localVertexIdx The index of the vertex of the sub control volume
      *
      */

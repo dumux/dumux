@@ -35,6 +35,10 @@
 
 namespace Dumux
 {
+/*!
+ * \addtogroup OnePTwoCModel
+ */
+// \{
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
@@ -72,7 +76,7 @@ SET_INT_PROP(BoxOnePTwoC, Comp1Index, 0);
 //! Set the default for the second component the fluid system's second component
 SET_INT_PROP(BoxOnePTwoC, Comp2Index, 1);
 }
-
+// \}
 }
 
 #endif

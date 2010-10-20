@@ -27,6 +27,10 @@
 
 namespace Dumux
 {
+/*!
+ * \addtogroup OnePTwoCModel
+ */
+// \{
 
 /*!
  * \brief The indices for the isothermal single-phase, two-component model.
@@ -44,6 +48,7 @@ struct OnePTwoCIndices
                                 //in my case the therapeutic agent
 };
 
+// \}
 }
 
 #endif

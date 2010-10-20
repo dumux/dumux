@@ -55,6 +55,12 @@ class OnePTwoCBoxProblem : public BoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     */
     OnePTwoCBoxProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView),
           gravity_(0),

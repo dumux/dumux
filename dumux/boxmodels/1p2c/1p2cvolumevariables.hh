@@ -18,6 +18,7 @@
 /*!
  * \file
  *
+ ** \ingroup OnePTwoCModel
  * \brief Quantities required by the single-phase, two-component box
  *        model defined on a vertex.
  */
@@ -75,9 +76,9 @@ public:
      * \param priVars A vector containing the primary variables
      * \param problem The considered problem
      * \param element The considered element of the grid
-     * \param elemGeom
+     * \param elemGeom The finite-volume geometry in the box scheme
      * \param scvIdx  The index of the considered subcontrol volume
-     * \param isOldSol A boolean parameter either the old or the new solution should be taken
+     * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
