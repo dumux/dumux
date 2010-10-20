@@ -217,10 +217,7 @@ public:
         asImp_().evalVolumeTerms_();
 
         // evaluate the boundary
-        if (bcTypes.hasNeumann())
-            asImp_().evalNeumann_();
-        if (bcTypes.hasDirichlet())
-            asImp_().evalDirichlet_();
+        asImp_().evalBoundary_();
 
 #if HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
@@ -256,6 +253,13 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+    void evalBoundary_()
+    {
+        if (bcTypes_().hasNeumann())
+            asImp_().evalNeumann_();
+        if (bcTypes_().hasDirichlet())
+            asImp_().evalDirichlet_();
+    }
     // set the values of the Dirichlet control volumes
     void evalDirichlet_()
     {
