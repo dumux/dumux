@@ -30,7 +30,6 @@ namespace Dumux
  * \ingroup OnePProblems
  * \brief Base class for all problems which use the single-phase box model
  *
- * \todo Please doc me more!
  */
 template<class TypeTag>
 class OnePBoxProblem : public BoxProblem<TypeTag>
@@ -54,6 +53,12 @@ class OnePBoxProblem : public BoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+/*!
+ * \brief The constructor
+ *
+ * \param timeManager The time manager
+ * \param gridView The grid view
+ */
     OnePBoxProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView),
           gravity_(0)
