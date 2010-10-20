@@ -19,6 +19,9 @@
  *
  * \brief This file contains the data which is required to calculate
  *        the flux of the fluid over a face of a finite volume for the one-phase model.
+ *        
+ *        This means pressure and temperature gradients, phase densities at
+ * 		  the integration point, etc.
  */
 #ifndef DUMUX_1P_FLUX_VARIABLES_HH
 #define DUMUX_1P_FLUX_VARIABLES_HH
@@ -67,6 +70,15 @@ class OnePFluxVariables
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
 public:
+	/*
+     * \brief The constructor
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param elemDat The volume variables of the current element
+     */
     OnePFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &elemGeom,
@@ -101,6 +113,10 @@ public:
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the upstream control volume
      *        for a given phase.
+     *        
+     *        \param normalFlux The normal flux i.e. the given intrinsic permeability
+     *                   times the pressure potential gradient and SCV face normal.
+     *        
      */
     int upstreamIdx(Scalar normalFlux) const
     { return (normalFlux >= 0)?face().i:face().j; }
@@ -110,6 +126,10 @@ public:
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the downstream control volume
      *        for a given phase.
+     *        
+     *        \param normalFlux The normal flux i.e. the given intrinsic permeability
+     *                   times the pressure potential gradient and SCV face normal.
+     *        
      */
     int downstreamIdx(Scalar normalFlux) const
     { return (normalFlux >= 0)?face().j:face().i; }
