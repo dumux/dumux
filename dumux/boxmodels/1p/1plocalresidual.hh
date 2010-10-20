@@ -86,6 +86,9 @@ public:
      *        model.
      *
      * This function should not include the source and sink terms.
+     *  \param result The phase mass within the sub-control volume
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
@@ -105,6 +108,9 @@ public:
     /*!
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
+     *        
+     * \param flux The flux over the SCV (sub-control-volume) face 
+     * \param faceIdx The index of the SCV face
      */
     void computeFlux(PrimaryVariables &flux, int faceId) const
     {
@@ -131,6 +137,10 @@ public:
 
     /*!
      * \brief Calculate the source term of the equation
+     *
+     * \param q The source/sink in the SCV 
+     * \param localVertexIdx The index of the SCV
+     *
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
