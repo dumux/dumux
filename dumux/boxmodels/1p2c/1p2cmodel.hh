@@ -103,13 +103,12 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
 
 public:
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
      *
-     *        \param sol A vector containing the solutions of the primary variables after solving
-     *        the system of equations
-     *        \param writer The writer for multi-file VTK datasets
+     * \copydetails Dumux::BoxModel::addOutputVtkFields
+     *
+     * Specialization for the OnePTwoCBoxModel, adding pressure,
+     * mass and mole fractions, and the process rank to the VTK writer.
      */
     template<class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,

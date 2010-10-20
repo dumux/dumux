@@ -527,14 +527,14 @@ public:
     }
 
     /*!
-     * \brief Add the quantities of a time step which ought to be
-     *        written to disk.
+     * \brief Add the quantities of a time step which ought to be written to disk.
      *
-     * This should be overwritten by the acutal model if any secondary
+     * This should be overwritten by the actual model if any secondary
      * variables should be written out. Read: This should _always_ be
      * overwritten by well behaved models!
      *
-     * \param writer  The VTK multi writer where the fields should be added.
+     * \param sol The global vector of primary variable values.
+     * \param writer The VTK multi writer where the fields should be added.
      */
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
