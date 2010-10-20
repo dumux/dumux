@@ -19,6 +19,7 @@
  *
  * \brief Base class for all models which use the one-phase,
  *        box model
+ *        Adaption of the BOX scheme to the one-phase flow model.
  */
 
 #ifndef DUMUX_1P_MODEL_HH
@@ -85,6 +86,9 @@ public:
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer.
+     *        
+     * \param sol The global solution vector
+     * \param writer The writer for multi-file VTK datasets
      */
     template<class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
