@@ -17,7 +17,7 @@
 /*!
  * \file
  *
- * \brief  Indices for the single phase model.
+ * \brief  Defines the indices for the one-phase box model.
  */
 #ifndef DUMUX_1P_INDICES_HH
 #define DUMUX_1P_INDICES_HH
@@ -25,13 +25,19 @@
 namespace Dumux
 {
 /*!
- * \brief Indices for the single phase model.
+ * \addtogroup OnePBoxModel
+ */
+// \{
+
+/*!
+ * \brief Indices for the one-phase model.
  */
 struct OnePIndices
 {
     static const int pressureIdx = 0;
 };
 
+// \}
 } // end namepace
 
 #endif
