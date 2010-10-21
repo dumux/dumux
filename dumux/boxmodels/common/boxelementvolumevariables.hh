@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Volume variables gathered on an element
+ */
 #ifndef DUMUX_BOX_ELEMENT_VOLUME_VARIABLES_HH
 #define DUMUX_BOX_ELEMENT_VOLUME_VARIABLES_HH
 

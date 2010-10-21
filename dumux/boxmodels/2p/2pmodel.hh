@@ -23,7 +23,7 @@
 /*!
 * \file
 *
-* \brief Adaption of the BOX scheme to the two-phase flow model.
+* \brief Adaption of the box scheme to the two-phase flow model.
 */
 
 #ifndef DUMUX_TWOP_MODEL_HH

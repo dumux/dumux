@@ -13,7 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
+/*!
+ * \file
+ *
+ * \brief Sequential preconditioner using the Pardiso direct solver.
+ */
 #ifndef DUMUX_PARDISO_HH
 #define DUMUX_PARDISO_HH
 

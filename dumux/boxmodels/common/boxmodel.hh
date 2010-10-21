@@ -14,6 +14,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Base class for models using box discretization
+ */
 #ifndef DUMUX_BOX_MODEL_HH
 #define DUMUX_BOX_MODEL_HH
 

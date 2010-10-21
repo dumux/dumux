@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief A parallel solver for nonoverlapping grid partitions.
+ */
 #ifndef DUMUX_PDELAB_PRECONDITIONER_HH
 #define DUMUX_PDELAB_PRECONDITIONER_HH
 

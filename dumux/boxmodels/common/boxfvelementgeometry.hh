@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise geometric data for the box method
+ */
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
@@ -50,8 +55,7 @@ public:
     };
 };
 
-/** \todo Please doc me! */
-
+/*! \internal  */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 1>
 {

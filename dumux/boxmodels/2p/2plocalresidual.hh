@@ -22,8 +22,7 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the two-phase box model.
+ * \brief Element-wise calculation of the residual for the two-phase box model.
  */
 #ifndef DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH
 #define DUMUX_TWOP_LOCAL_RESIDUAL_BASE_HH

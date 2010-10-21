@@ -1,5 +1,6 @@
 # This file contains local changes to the doxygen configuration
 # please us '+=' to add file/directories to the lists
 
+INTERNAL_DOCS          = NO
 INPUT                 += @top_srcdir@/dumux
 EXTRA_PACKAGES        += amsmath,amssymb

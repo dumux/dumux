@@ -13,7 +13,11 @@
 *                                                                           *
 *   This program is distributed WITHOUT ANY WARRANTY.                       *
 *****************************************************************************/
-
+/*!
+ * \file
+ *
+ * \brief Local stiffness matrix for the diffusion equation discretized by mimetic FD
+ */
 #ifndef DUMUX_MIMETICGROUNDWATER_HH
 #define DUMUX_MIMETICGROUNDWATER_HH
 
@@ -30,12 +34,6 @@
 #include<dune/grid/common/quadraturerules.hh>
 
 #include<dumux/common/boundaryconditions.hh>
-
-/**
-* @file
-* @brief  compute local stiffness matrix for conforming finite elements for diffusion equation
-* @author Peter Bastian
-*/
 
 namespace Dumux
 {

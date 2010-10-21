@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief A local PDELab operator for box models.
+ */
 #ifndef DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 #define DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 

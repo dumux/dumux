@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Model for the pressure equation discretized by mimetic FD.
+ */
 #ifndef DUMUX_MIMETICPRESSURE2P_HH
 #define DUMUX_MIMETICPRESSURE2P_HH
 
@@ -27,12 +32,6 @@
 // dumux environment
 #include "dumux/common/pardiso.hh"
 #include <dumux/decoupled/2p/2pproperties.hh>
-
-/**
- * @file
- * @brief  mimetic Diffusion Model
- * @author Bernd Flemisch, Jochen Fritz, Markus Wolff
- */
 
 namespace Dumux
 {

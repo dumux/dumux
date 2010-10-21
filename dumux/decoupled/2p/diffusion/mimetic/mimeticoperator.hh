@@ -13,7 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
+/*!
+ * \file
+ *
+ * \brief An assembler for the Jacobian matrix based on mimetic FD.
+ */
 #ifndef DUMUX_MIMETICOPERATOR_HH
 #define DUMUX_MIMETICOPERATOR_HH
 

@@ -13,11 +13,14 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief An assembler for the Jacobian matrix based on PDELab.
+ */
 #ifndef DUMUX_PDELAB_BOX_ASSEMBLER_HH
 #define DUMUX_PDELAB_BOX_ASSEMBLER_HH
 
-
-//#include "pdelabboundarytypes.hh"
 #include "pdelabboxlocaloperator.hh"
 
 namespace Dumux {

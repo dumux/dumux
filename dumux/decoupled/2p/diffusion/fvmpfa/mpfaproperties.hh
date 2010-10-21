@@ -14,6 +14,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Properties for the MPFA-O method.
+ */
 #ifndef DUNE_MPFAOPROPERTIES_HH
 #define DUNE_MPFAOPROPERTIES_HH
 

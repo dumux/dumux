@@ -1,4 +1,4 @@
-/*
+/*!
  * \file
  *
  * \brief This is basically a copy of PDELab's ISTLVectorBackend which

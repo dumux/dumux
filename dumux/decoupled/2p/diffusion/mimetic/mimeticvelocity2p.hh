@@ -13,14 +13,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Model for the pressure equation discretized by mimetic FD including velocity calculation.
+ */
 #ifndef DUMUX_FVVELOCITY2P_HH
 #define DUMUX_FVVELOCITY2P_HH
-
-/**
- * @file
- * @brief  Finite Volume Diffusion Model
- * @author Markus Wolff
- */
 
 #include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
 
