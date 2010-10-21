@@ -214,7 +214,7 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
+     * \param vars The flux variables at the current SCV
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
@@ -256,7 +256,7 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param fluxData The flux variables at the current SCV
+     * \param vars The flux variables at the current SCV
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {

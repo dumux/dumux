@@ -320,7 +320,6 @@ protected:
      * \brief Returns the epsilon value which is added and removed
      *        from the current solution.
      *
-     * \param elemSol    The current solution on the element
      * \param scvIdx     The local index of the element's vertex for
      *                   which the local derivative ought to be calculated.
      * \param pvIdx      The index of the primary variable which gets varied

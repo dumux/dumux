@@ -298,7 +298,7 @@ int invertCubicPolynomial(SolContainer &sol,
  * larger compared to the reference vector.
  *
  * \param &pos Vektor holding the current Position that is to be checked
- * \return &smallerVec Reference vector, holding the minimum values for comparison.
+ * \param &smallerVec Reference vector, holding the minimum values for comparison.
  */
 template <class Scalar, int dim>
 bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
@@ -323,7 +323,7 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
  * smaller in comparison with the reference vector.
  *
  * \param &pos Vektor holding the current Position that is to be checked
- * \return &largerVec Reference vector, holding the maximum values for comparison.
+ * \param &largerVec Reference vector, holding the maximum values for comparison.
  */
 template <class Scalar, int dim>
 bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
@@ -351,8 +351,8 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
  * outside of a lense with different properties.
  *
  * \param &pos Vektor holding the current Position that is to be checked
- * \return &smallerVec Reference vector, holding the minimum values for comparison.
- * \return &largerVec Reference vector, holding the maximum values for comparison.
+ * \param &smallerVec Reference vector, holding the minimum values for comparison.
+ * \param &largerVec Reference vector, holding the maximum values for comparison.
  */
 template <class Scalar, int dim>
 bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,

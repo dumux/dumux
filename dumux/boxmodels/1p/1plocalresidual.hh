@@ -112,12 +112,12 @@ public:
      * \param flux The flux over the SCV (sub-control-volume) face 
      * \param faceIdx The index of the SCV face
      */
-    void computeFlux(PrimaryVariables &flux, int faceId) const
+    void computeFlux(PrimaryVariables &flux, int faceIdx) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->elem_(),
                                this->fvElemGeom_(),
-                               faceId,
+                               faceIdx,
                                this->curVolVars_());
         
         Vector tmpVec;

@@ -55,7 +55,7 @@ public:
     };
 };
 
-/*! \internal  */
+/*! \internal */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 1>
 {

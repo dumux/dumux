@@ -3,4 +3,6 @@
 
 INTERNAL_DOCS          = NO
 INPUT                 += @top_srcdir@/dumux
+INPUT                 += @top_srcdir@/test
+INPUT                 += @top_srcdir@/tutorial
 EXTRA_PACKAGES        += amsmath,amssymb

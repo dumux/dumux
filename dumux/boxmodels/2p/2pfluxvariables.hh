@@ -116,7 +116,6 @@ public:
      *
      * \param normalFlux The normal flux i.e. the given intrinsic permeability
      *                   times the pressure potential gradient and SCV face normal.
-     *        .
      */
     int downstreamIdx(Scalar normalFlux) const
     { return (normalFlux >= 0)?face().j:face().i; }
@@ -127,7 +126,6 @@ public:
      *
      * \param normalFlux The normal flux i.e. the given intrinsic permeability
      *                   times the pressure potential gradient and SCV face normal.
-     *        .
      */
     int upstreamIdx(Scalar normalFlux) const
     { return (normalFlux > 0)?face().i:face().j; }

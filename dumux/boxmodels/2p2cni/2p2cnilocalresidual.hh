@@ -125,7 +125,7 @@ public:
      * the flux vector.
      *
      * \param flux The advective flux over the SCV (sub-control-volume) face for each component
-     * \param faceIdx The index of the SCV face
+     * \param fluxData The flux variables at the current SCV face
      *
      * This method is called by compute flux (base class)
      */
@@ -161,7 +161,7 @@ public:
      *        the face of a sub-control volume.
      *
      * \param flux The diffusive flux over the SCV (sub-control-volume) face for each conservation quantity (mass, energy)
-     * \param faceIdx The index of the SCV face
+     * \param fluxData The flux variables at the current SCV face
      *
      * This method is called by compute flux (base class)
      */

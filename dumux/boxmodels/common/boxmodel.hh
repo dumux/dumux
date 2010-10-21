@@ -484,7 +484,8 @@ public:
      *        the newton method to the a VTK multi writer.
      *
      * \param writer  The VTK multi writer where the fields should be added.
-     * \param update  The delte of the solution function before and after the Newton update
+     * \param u       The solution function
+     * \param deltaU  The delta of the solution function before and after the Newton update
      */
     template <class MultiWriter>
     void addConvergenceVtkFields(MultiWriter &writer,
