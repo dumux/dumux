@@ -165,7 +165,7 @@ public:
     bool inJacobianAssemble() const
     { return inJacobianAssemble_; }
     
-    void assemble(SolutionVector &u)
+    void assemble()
     {
         // assemble the global jacobian matrix
         if (!reuseMatrix_) {
@@ -182,14 +182,14 @@ public:
             // we actually need to reassemle!
             resetMatrix_();
             inJacobianAssemble_ = true;
-            gridOperatorSpace_->jacobian(u, *matrix_);
+            gridOperatorSpace_->jacobian(model_().curSol(), *matrix_);
             inJacobianAssemble_ = false;
         }
         reuseMatrix_ = false;
 
         // calculate the global residual
         residual_ = 0;
-        gridOperatorSpace_->residual(u, residual_);
+        gridOperatorSpace_->residual(model_().curSol(), residual_);
 
         typedef typename Matrix::block_type BlockType;
         // set the entries for the ghost nodes
@@ -203,7 +203,7 @@ public:
             (*matrix_)[globI] = 0;
             (*matrix_)[globI][globI] = Id;
             residual_[globI] = 0;
-            u[globI] = 0;
+            model_().curSol()[globI] = 0;
         }
     }
 

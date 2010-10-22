@@ -137,7 +137,7 @@ protected:
                 std::cout.flush();
             }
             // linearize the problem at the current solution
-            jacobianAsm.assemble(u);
+            jacobianAsm.assemble();
 
             // solve the resultuing linear equation system
             if (ctl.verbose()) {
