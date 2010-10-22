@@ -211,10 +211,7 @@ public:
 
     //! Constructs a MimeticPressure2P object
     /**
-     * \param gridView gridView object of type GridView
-     * \param problem a problem class object
-     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
-     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
+     * \param problem The Dumux problem
      */
     MimeticPressure2P(Problem& problem) :
     problem_(problem),

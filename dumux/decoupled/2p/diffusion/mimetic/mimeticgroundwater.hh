@@ -98,8 +98,8 @@ public:
     - The boundary conditions have been evaluated and are accessible with the bc() method
     - The right hand side has been assembled. It contains either the value of the essential boundary
     condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
-    @param[in]  e a codim 0 entity reference
-    @param[in]  k order of CR basis
+    @param[in]  element a codim 0 entity reference
+    @param[in]  k order of CR basis (only k = 1 is implemented)
     */
     void assemble (const Element& element, int k=1)
     {

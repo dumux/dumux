@@ -266,9 +266,9 @@ public:
   {}
 
   /*!
-    \brief Prepare the preconditioner.
+    \brief \copybrief Dune::SeqPardiso::pre
 
-    \copydoc Preconditioner::pre(domain_type&,range_type&)
+    \copydetails Dune::SeqPardiso::pre
   */
   virtual void pre (domain_type& x, range_type& b)
   {
@@ -276,9 +276,9 @@ public:
   }
 
   /*!
-    \brief Apply the precondioner.
+    \brief \copybrief Dune::SeqPardiso::apply(X&,const Y&)
 
-    \copydoc Preconditioner::apply(domain_type&,const range_type&)
+    \copydetails Dune::SeqPardiso::apply(X&,const Y&)
   */
   virtual void apply (domain_type& v, const range_type& d)
   {
@@ -295,9 +295,9 @@ public:
   }
 
   /*!
-    \brief Clean up.
+    \brief \copybrief Dune::SeqPardiso::post(X&)
 
-    \copydoc Preconditioner::post(domain_type&)
+    \copydetails Dune::SeqPardiso::post(X&)
   */
   virtual void post (domain_type& x)
   {
@@ -323,9 +323,9 @@ class ISTLBackend_NoOverlap_BCGS_ILU
 public:
     /*! \brief make a linear solver object
 
-    \param[in] gfs a grid function space
-    \param[in] maxiter maximum number of iterations to do
-    \param[in] verbose print messages if true
+    \param[in] problem The Dumux problem
+    \param[in] maxiter_ Maximum number of iterations to do
+    \param[in] verbose_ Verbosity level
     */
     explicit ISTLBackend_NoOverlap_BCGS_ILU (Problem& problem, unsigned maxiter_=5000, int verbose_=1)
         : gfs(problem.model().jacobianAssembler().gridFunctionSpace()),
@@ -411,9 +411,9 @@ class ISTLBackend_NoOverlap_Loop_Pardiso
 public:
     /*! \brief make a linear solver object
 
-    \param[in] gfs a grid function space
-    \param[in] maxiter maximum number of iterations to do
-    \param[in] verbose print messages if true
+    \param[in] problem The Dumux problem
+    \param[in] maxiter_ Maximum number of iterations to do
+    \param[in] verbose_ Verbosity level
     */
     explicit ISTLBackend_NoOverlap_Loop_Pardiso (Problem& problem, unsigned maxiter_=5000, int verbose_=1)
         : gfs(problem.model().jacobianAssembler().gridFunctionSpace()),
