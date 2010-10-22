@@ -102,8 +102,12 @@ NEW_PROP_TAG(EnablePartialReassemble);
 NEW_PROP_TAG(EnableTimeStepRampUp);
 
 // mappers from local to global indices
+
+//! maper for vertices
 NEW_PROP_TAG(VertexMapper);
+//! maper for elements
 NEW_PROP_TAG(ElementMapper);
+//! maper for degrees of freedom
 NEW_PROP_TAG(DofMapper);
 }
 }

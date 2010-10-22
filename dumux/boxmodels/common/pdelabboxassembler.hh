@@ -1,6 +1,7 @@
 // $Id$
 /*****************************************************************************
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
+ *   Copyright (C) 2010 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -27,6 +28,9 @@ namespace Dumux {
 
 namespace PDELab {
 
+/*
+ * \brief An assembler for the Jacobian matrix based on PDELab.
+ */
 template<class TypeTag>
 class BoxAssembler
 {
@@ -73,10 +77,14 @@ class BoxAssembler
     BoxAssembler(const BoxAssembler &);
 
 public:
+    /*!
+     * \brief The colors of elements and vertices required for partial
+     *        Jacobian reassembly.
+     */
     enum EntityColor {
-        Red, //!< entity needs to be reassembled because it's above the tolerance
-        Yellow, //!< entity needs to be reassembled because a neighboring element is red
-        Green //!< entity does not need to be reassembled
+        Red, //!< Entity needs to be reassembled because relative defect is above the tolerance
+        Yellow, //!< Entity needs to be reassembled because a neighboring element is red
+        Green //!< Entity does not need to be reassembled
     };
 
     BoxAssembler()
@@ -104,6 +112,15 @@ public:
         delete fem_;
     }
 
+    /*!
+     * \brief Initialize the jacobian assembler.
+     *
+     * At this point we can assume that all objects in the problem and
+     * the model have been allocated. We can not assume that they are
+     * fully initialized, though.
+     *
+     * \param problem The problem object
+     */
     void init(Problem& problem)
     {
         inJacobianAssemble_ = false;
@@ -156,17 +173,30 @@ public:
         reassembleAll();
     }
 
+    /*!
+     * \brief Returns a reference to the solution for which the global
+     *        jacobian has been be evaluated.
+     *
+     * If partial Jacobian matrix reassembly is enabled, this is
+     * different from the model's current solution.
+     */
     SolutionVector &evalPoint()
     { return evalPoint_; }
 
+    /*!
+     * \copydoc evalPoint()
+     */
     const SolutionVector &evalPoint() const
     { return evalPoint_; }
-
-    bool inJacobianAssemble() const
-    { return inJacobianAssemble_; }
-    
-    void assemble()
-    {
+   
+    /*!
+     * \brief Assemble the local jacobian of the problem.
+     *
+     * The current state of affairs (esp. the previous and the current
+     * solutions) is represented by the model object.
+     */
+     void assemble()
+     {
         // assemble the global jacobian matrix
         if (!reuseMatrix_) {
             if (enablePartialReassemble) {
@@ -206,14 +236,25 @@ public:
             model_().curSol()[globI] = 0;
         }
     }
-
+    
+    /*!
+     * \brief If Jacobian matrix recycling is enabled, this method
+     *        specifies whether the next call to assemble() just
+     *        rescales the storage term or does a full reassembly
+     *
+     * \param yesno If true, only rescale; else do full Jacobian assembly.
+     */
     void setMatrixReuseable(bool yesno = true)
     {
         if (enableJacobianRecycling)
             reuseMatrix_ = yesno;
     }
 
-    
+    /*!
+     * \brief If partial Jacobian matrix reassembly is enabled, this
+     *        method causes all elements to be reassembled in the next
+     *        assemble() call.
+     */
     void reassembleAll()
     {
         nextReassembleTolerance_ = 0.0;
@@ -227,15 +268,39 @@ public:
         }
     }
    
+    /*!
+     * \brief Returns the relative error below which a vertex is
+     *        considered to be "green" if partial Jacobian reassembly
+     *        is enabled.
+     *
+     * This returns the _actual_ relative computed seen by
+     * computeColors(), not the tolerance which it was given.
+     */
     Scalar reassembleTolerance() const
     { return reassembleTolerance_; }
-
-    void markVertexRed(int globalVertIdx, bool yesno)
-    {
-        if (enablePartialReassemble)
-            vertexColor_[globalVertIdx] = yesno?Red:Green;
-    }
     
+
+    /*!
+     * \brief Determine the colors of vertices and elements for partial
+     *        reassembly given a relative tolerance.
+     *
+     * The following approach is used:
+     *
+     * - Set all vertices and elements to 'green'
+     * - Mark all vertices as 'red' which exhibit an relative error above
+     *   the tolerance
+     * - Mark all elements which feature a 'red' vetex as 'red'
+     * - Mark all vertices which are not 'red' and are part of a
+     *   'red' element as 'yellow'
+     * - Mark all elements which are not 'red' and contain a
+     *   'yellow' vertex as 'yellow'
+     *
+     * \param relTol The relative error below which a vertex won't be
+     *               reassembled. Note that this specifies the
+     *               relative error between the current evaluation
+     *               point and the current solution and _not_ the
+     *               delta vector of the Newton iteration!
+     */
     void computeColors(Scalar relTol)
     { 
         if (!enablePartialReassemble)
@@ -328,14 +393,20 @@ public:
         int numTot = gridView_().size(0);
         numTot = gridView_().comm().sum(numTot);
         numGreen = gridView_().comm().sum(numGreen);
-        elemsReasm = numTot - numGreen;
+        
+        // print some information at the end of the iteration
         problem_().newtonController().endIterMsg()
             << ", reassemble " 
             << numTot - numGreen << "/" << numTot
             << " (" << 100*Scalar(numTot - numGreen)/numTot << "%) elems";
     };
     
-    int elemsReasm;
+    /*!
+     * \brief Returns the reassemble color of a vertex
+     *
+     * \param element An element which contains the vertex
+     * \param vertIdx The local index of the vertex in the element.
+     */
     int vertexColor(const Element &element, int vertIdx) const
     {
         if (!enablePartialReassemble)
@@ -345,6 +416,11 @@ public:
         return vertexColor_[globalIdx];
     }
 
+    /*!
+     * \brief Returns the reassemble color of a vertex
+     *
+     * \param globalVertIdx The global index of the vertex.
+     */
     int vertexColor(int globalVertIdx) const
     {
         if (!enablePartialReassemble)
@@ -352,6 +428,11 @@ public:
         return vertexColor_[globalVertIdx];
     }
 
+    /*!
+     * \brief Returns the Jacobian reassemble color of an element
+     *
+     * \param element The Codim-0 DUNE entity
+     */
     int elementColor(const Element &element) const
     {
         if (!enablePartialReassemble)
@@ -361,6 +442,11 @@ public:
         return elementColor_[globalIdx];
     }
 
+    /*!
+     * \brief Returns the Jacobian reassemble color of an element
+     *
+     * \param globalVertIdx The global index of the vertex.
+     */
     int elementColor(int globalElementIdx) const
     {
         if (!enablePartialReassemble)
@@ -368,21 +454,32 @@ public:
         return elementColor_[globalElementIdx];
     }
    
+    /*!
+     * \brief Returns a pointer to the PDELab's grid function space.
+     */
     const GridFunctionSpace& gridFunctionSpace() const
     {
         return *gridFunctionSpace_;
     }
 
+    /*!
+     * \brief Returns a pointer to the PDELab's constraints
+     *        transformation.
+     */
     const ConstraintsTrafo& constraintsTrafo() const
     {
         return *constraintsTrafo_;
     }
 
-    //! return const reference to matrix
+    /*!
+     * \brief Return constant reference to global Jacobian matrix.
+     */
     const Matrix& matrix() const
     { return *matrix_; }
 
-    //! return const reference to residual
+    /*!
+     * \brief Return constant reference to global residual vector.
+     */
     const SolutionVector& residual() const
     { return residual_; }
 

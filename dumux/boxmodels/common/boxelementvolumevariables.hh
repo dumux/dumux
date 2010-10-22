@@ -30,7 +30,8 @@ namespace Dumux
 /*!
  * \ingroup BoxModel
  *
- * \brief This class stores an array of VolumeVariables objects
+ * \brief This class stores an array of VolumeVariables objects, one
+ *        volume variables object for each of the element's vertices
  */
 template<class TypeTag>
 class BoxElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) >
@@ -50,6 +51,7 @@ class BoxElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(Type
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     enum { dim = GridView::dimension };
+    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
 
 public:
     /*!
@@ -57,8 +59,14 @@ public:
      */
     BoxElementVolumeVariables()
     { }
+
     /*!
-     * \todo please doc me
+     * \brief Construct the volume variables for all of vertices of an element.
+     *
+     * \param problem The problem which needs to be simulated.
+     * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param oldSol Tells whether the model's previous or current solution should be used.
      */
     void update(const Problem &problem,
                 const Element &element,
@@ -86,33 +94,41 @@ public:
         }
     };
 
-    //overloaded update function
-    //possible to give solution vector
-    template<typename SolVectorType>
-    void update(const Problem &problem,
-                    const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    const SolVectorType& elementSolVector,
-                    const int numEq)
+    /*!
+     * \brief Construct the volume variables for all of vertices of an
+     *        element given a solution vector computed by PDELab.
+     *
+     * \tparam ElemSolVectorType The container type which stores the
+     *                           primary variables of the element
+     *                           using _local_ indices
+     *
+     * \param problem The problem which needs to be simulated.
+     * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param elementSolVector The local solution for the element using PDELab ordering
+     */
+    template<typename ElemSolVectorType>
+    void updatePDELab(const Problem &problem,
+                      const Element &element,
+                      const FVElementGeometry &fvElemGeom,
+                      const ElemSolVectorType& elementSolVector)
+    {
+        int n = element.template count<dim>();
+        this->resize(n);
+        for (int vertexIdx = 0; vertexIdx < n; vertexIdx++)
         {
-            int n = element.template count<dim>();
-            this->resize(n);
-            for (int vertexIdx= 0; vertexIdx < n; vertexIdx++)
-            {
-                PrimaryVariables solI(0);
-                for (int eqnIdx=0; eqnIdx<numEq; eqnIdx++)
-                {
-                    solI[eqnIdx] = elementSolVector[vertexIdx+eqnIdx*n];
-                }
-                    (*this)[vertexIdx].update(solI,
+            PrimaryVariables solI(0);
+            for (int eqnIdx=0; eqnIdx<numEq; eqnIdx++)
+                solI[eqnIdx] = elementSolVector[vertexIdx + eqnIdx*n];
+            (*this)[vertexIdx].update(solI,
                                       problem,
                                       element,
                                       fvElemGeom,
                                       vertexIdx,
                                       false);
-
-            }
-        };
+            
+        }
+    };
 };
 
 } // namespace Dumux

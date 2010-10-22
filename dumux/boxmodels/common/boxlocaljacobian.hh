@@ -21,7 +21,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Caculates the jacobian of models based on the box scheme element-wise.
+ * \brief Caculates the Jacobian of the local residual for box models
  */
 #ifndef DUMUX_BOX_LOCAL_JACOBIAN_HH
 #define DUMUX_BOX_LOCAL_JACOBIAN_HH
@@ -34,10 +34,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxModel
- * \brief Element-wise caculation of the jacobian matrix for models
- *        based on the box scheme .
- *
- * \todo Please doc me more!
+ * \brief Caculates the Jacobian of the local residual for box models
  */
 template<class TypeTag>
 class BoxLocalJacobian
@@ -96,12 +93,17 @@ private:
 
 public:
     BoxLocalJacobian()
-    {
-        Valgrind::SetUndefined(problemPtr_);
-        notReassembled = 0;
-    }
+    { Valgrind::SetUndefined(problemPtr_); }
 
-
+    
+    /*!
+     * \brief Initialize the local Jacobian object.
+     *
+     * At this point we can assume that everything has been allocated,
+     * although some objects may not yet be completely initialized.
+     *
+     * \param prob The problem which we want to simulate.
+     */
     void init(Problem &prob)
     {
         problemPtr_ = &prob;
@@ -110,10 +112,11 @@ public:
         A_.setSize(2<<dim, 2<<dim);
     }
 
-    int notReassembled;
     /*!
-     * \brief Assemble the linear system of equations for the
-     *        verts of a element, given a local solution 'localU'.
+     * \brief Assemble an element's local Jacobian matrix of the
+     *        defect.
+     *
+     * \param element The DUNE Codim<0> entity which we look at.
      */
     void assemble(const Element &element)
     {
@@ -124,7 +127,6 @@ public:
         
         int elemColor = jacAsm_().elementColor(element);
         if (elemColor == Green) {
-            ++notReassembled;
             // Green elements don't need to be reassembled
             return;
         }
@@ -182,8 +184,13 @@ public:
     { return localResidual_; }
 
     /*!
-     * \brief Returns the jacobian of the equations at vertex i to the
+     * \brief Returns the Jacobian of the equations at vertex i to the
      *        primary variables at vertex j.
+     *
+     * \param i The local vertex (or sub-contol volume) index on which
+     *          the equations are defined
+     * \param j The local vertex (or sub-contol volume) index which holds
+     *          primary variables
      */
     const MatrixBlock &mat(int i, int j) const
     { return A_[i][j]; }

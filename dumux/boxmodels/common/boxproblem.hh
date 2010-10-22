@@ -30,8 +30,6 @@ namespace Dumux
 /*!
  * \ingroup BoxModel
  * \brief Base class for all problems which use the box scheme
- *
- * \todo Please doc me more!
  */
 template<class TypeTag>
 class BoxProblem
@@ -67,6 +65,12 @@ private:
     BoxProblem(const BoxProblem &);
 
 public:
+    /*!
+     * \brief Constructor
+     *
+     * \params timeManager The TimeManager which is used by the simulation
+     * \params gridView The simulation's idea about physical space 
+     */
     BoxProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
           bboxMin_(std::numeric_limits<double>::max()),
@@ -103,6 +107,9 @@ public:
     /*!
      * \brief Called by the Dumux::TimeManager in order to
      *        initialize the problem.
+     *
+     * If you overload this method don't forget to call
+     * ParentType::init()
      */
     void init()
     {
@@ -116,6 +123,9 @@ public:
      *        sub-models.
      *
      * By default it does nothing
+     *
+     * \param element The DUNE Codim<0> entity for which the coupling
+     *                parameters should be computed.
      */
     void updateCouplingParams(const Element &element) const
     {}
@@ -175,6 +185,8 @@ public:
      * \brief Called by Dumux::TimeManager whenever a solution for a
      *        timestep has been computed and the simulation time has
      *        been updated.
+     *
+     * \param dt The current time step size
      */
     Scalar nextTimeStepSize(Scalar dt)
     { return newtonCtl_.suggestTimeStepSize(dt); };
@@ -249,9 +261,11 @@ public:
     /*!
      * \brief Set the problem name.
      *
-     * This function sets the simulation name, which should be called before
-     * the application porblem is declared! If not, the default name "sim"
-     * will be used.
+     * This static method sets the simulation name, which should be
+     * called before the application problem is declared! If not, the
+     * default name "sim" will be used.
+     *
+     * \param newName The problem's name
      */
     static void setName(const char *newName)
     {
@@ -349,6 +363,10 @@ public:
      * method, has the current time of the simulation clock in it's
      * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
      * file.)  See Dumux::Restart for details.
+     *
+     * \tparam Restarter The serializer type
+     *
+     * \param res The serializer object
      */
     template <class Restarter>
     void serialize(Restarter &res)
@@ -360,6 +378,9 @@ public:
     /*!
      * \brief Load a previously saved state of the whole simulation
      *        from disk.
+     * 
+     * \param tRestart The simulation time on which the program was
+     *                 written to disk.
      */
     void restart(Scalar tRestart)
     {
@@ -379,6 +400,10 @@ public:
      *        from disk.
      *
      * It is the inverse of the serialize() method.
+     *
+     * \tparam Restarter The deserializer type
+     *
+     * \param res The desrializer object
      */
     template <class Restarter>
     void deserialize(Restarter &res)

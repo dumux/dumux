@@ -20,7 +20,14 @@ NEW_PROP_TAG(Model);
 
 namespace PDELab {
 
-//! ISTL backend for FunctionSpace
+/*!
+ * \brief ISTL backend for FunctionSpace
+ * 
+ * This is basically a copy of PDELab's ISTLVectorBackend which allows
+ * to set the global function space later
+ *
+ * \internal
+ */
 template<class TypeTag>
 class BoxISTLVectorBackend
 {
@@ -30,7 +37,11 @@ public:
     //! \brief export the block size
     static const int BlockSize = GET_PROP_VALUE(TypeTag, PTAG(NumEq));
 
-    //! container construction
+    /*!
+     * \brief Container construction
+     * 
+     * \internal
+     */
     template<typename T, typename E>
     class VectorContainer : public Dune::BlockVector< Dune::FieldVector<E,BlockSize> >
     {

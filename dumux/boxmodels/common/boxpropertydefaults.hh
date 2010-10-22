@@ -63,7 +63,7 @@ SET_PROP_DEFAULT(TimeManager)
  * We use Dune::ReferenceElements by default (-> old entity
  * numbering).
  *
- * TODO: Some specialization if the grid only supports one kind of
+ * \todo Some specialization if the grid only supports one kind of
  *       cells would be nice. this would be better fixed inside DUNE,
  *       though. something like:
  *       Dune::GenericReferenceElements<Dune::GeometryType<cube, dim> >

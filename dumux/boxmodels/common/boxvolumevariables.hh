@@ -15,7 +15,7 @@
 /*!
  * \file
  *
- * \brief Base class for the model specific classes which provide
+ * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
 #ifndef DUMUX_BOX_VOLUME_VARIABLES_HH
@@ -29,7 +29,7 @@ namespace Dumux
 {
 
 /*!
- * \brief Base class for the model specific classes which provide
+ * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */
 template <class TypeTag>
@@ -57,7 +57,9 @@ public:
         primaryVars_ = v.primaryVars_;
     };
 
-    // assignment operator
+    /*!
+     * \brief Assignment operator
+     */
     BoxVolumeVariables &operator=(const BoxVolumeVariables &v)
     {
         evalPoint_ = 0;
@@ -67,7 +69,9 @@ public:
     };
 
     /*!
-     * \brief Sets the evaluation point used in the by the local jacobian.
+     * \brief Sets the evaluation point used by the local jacobian.
+     *
+     * The evaluation point is only used by semi-smooth models.
      */
     void setEvalPoint(const Implementation *ep)
     { 
@@ -76,13 +80,28 @@ public:
     }
 
     /*!
-     * \brief Returns the evaluation point used in the by the local jacobian.
+     * \brief Returns the evaluation point used by the local jacobian.
+     *
+     * The evaluation point is only used by semi-smooth models.
      */
     const Implementation &evalPoint() const
     { return (evalPoint_ == 0)?asImp_():*evalPoint_; }
 
     /*!
      * \brief Update all quantities for a given control volume.
+     *
+     * \param priVars The primary variables for the control volume
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param elemGeom The finite volume geometry for the element
+     * \param scvIdx Local index of the sub control volume which is inside the element
+     * \param isOldSol Specifies whether this is the previous solution or the current onw
+     *
+     * \todo Eliminate the 'isOldSol' parameter. This implies that the
+     *       'pseudo-primary variables' must be somehow be stored
+     *       inside the PrimaryVariables. (e.g. we need to know the
+     *       phase state in the 2p2c model)
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -103,6 +122,8 @@ public:
 
     /*!
      * \brief Return a component of primary variable vector
+     *
+     * \param pvIdx The index of the primary variable of interest 
      */
     Scalar primaryVar(int pvIdx) const
     { return primaryVars_[pvIdx]; }

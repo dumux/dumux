@@ -59,14 +59,18 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
-    // copying a the boundary types of an element should be explicitly
-    // requested
+    /*!
+     * \brief Copy constructor.
+     *
+     * Copying a the boundary types of an element should be explicitly
+     * requested
+     */
     explicit BoxElementBoundaryTypes(const BoxElementBoundaryTypes &v)
         : ParentType(v)
     {}
 
     /*!
-     * \brief The constructor.
+     * \brief Default constructor.
      */
     BoxElementBoundaryTypes()
     {
@@ -76,6 +80,11 @@ public:
 
     /*!
      * \brief Update the boundary types for all vertices of an element.
+     * 
+     * \param problem The problem object which needs to be simulated
+     * \param element The DUNE Codim<0> entity for which the boundary
+     *                types should be collected
+     * \param fvElemGeom The element's finite volume geometry
      */
     void update(const Problem &problem,
                 const Element &element,
@@ -101,14 +110,15 @@ public:
     };
 
     /*!
-     * \brief Returns whether the element has a Dirichlet value.
+     * \brief Returns whether the element has a vertex which contains
+     *        a Dirichlet value.
      */
     bool hasDirichlet() const
     { return hasDirichlet_; }
 
     /*!
-     * \brief Returns whether the element potentially has a Neumann
-     *        boundary segment.
+     * \brief Returns whether the element potentially features a
+     *        Neumann boundary segment.  .
      */
     bool hasNeumann() const
     { return hasNeumann_; }

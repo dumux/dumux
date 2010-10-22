@@ -105,6 +105,9 @@ public:
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero.
+     *
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
      */
     void eval(const Element &element)
     {
@@ -137,6 +140,9 @@ public:
      *
      * This can be used to figure out how much of each conservation
      * quantity is inside the element.
+     *
+     * \param element The DUNE Codim<0> entity for which the storage
+     *                term ought to be calculated
      */
     void evalStorage(const Element &element)
     {
@@ -160,6 +166,11 @@ public:
 
     /*!
      * \brief Compute the flux term for the current solution.
+     *
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param curVolVars The volume averaged variables for all
+     *                   sub-contol volumes of the element
      */
     void evalFluxes(const Element &element,
                     const ElementVolumeVariables &curVolVars)
@@ -184,6 +195,14 @@ public:
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero.
+     *
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeom The finite-volume geometry of the element
+     * \param curVolVars The volume averaged variables for all
+     *                   sub-contol volumes of the element
+     * \param bcTypes The types of the boundary conditions for all 
+     *                vertices of the element
      */
     void eval(const Element &element,
               const FVElementGeometry &fvGeom,
@@ -235,6 +254,9 @@ public:
     /*!
      * \brief Returns the local residual for a given sub-control
      *        volume of the element.
+     *
+     * \param scvIdx The local index of the sub-control volume
+     *               (i.e. the element's local vertex index)
      */
     const PrimaryVariables &residual(int scvIdx) const
     { return residual_[scvIdx]; }
@@ -242,6 +264,9 @@ public:
     /*!
      * \brief Returns the local residual for a given sub-control
      *        volume of the element - as a reference!
+     *
+     * \param scvIdx The local index of the sub-control volume
+     *               (i.e. the element's local vertex index)
      */
     PrimaryVariables& residualReference(int scvIdx)
     { return residual_[scvIdx]; }
@@ -253,6 +278,9 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+    /*!
+     * \brief Evaluate all boundary conditions on the current element.
+     */
     void evalBoundary_()
     {
         if (bcTypes_().hasNeumann())
@@ -260,7 +288,11 @@ protected:
         if (bcTypes_().hasDirichlet())
             asImp_().evalDirichlet_();
     }
-    // set the values of the Dirichlet control volumes
+
+    /*!
+     * \brief Set the values of the Dirichlet boundary control volumes
+     *        of the current element.
+     */
     void evalDirichlet_()
     {
         PrimaryVariables tmp;
@@ -284,7 +316,10 @@ protected:
         };
     }
 
-    // evaluate the neumann boundary segments
+    /*!
+     * \brief Add all Neumann boundary conditions to the local
+     *        residual.
+     */
     void evalNeumann_()
     {
         Dune::GeometryType geoType = elem_().geometry().type();
@@ -323,7 +358,10 @@ protected:
         }
     }
 
-    // handle Neumann boundary conditions for a single sub-control volume face
+    /*!
+     * \brief Add Neumann boundary conditions for a single sub-control
+     *        volume face to the local residual.
+     */
     void evalNeumannSegment_(const IntersectionIterator &isIt,
                              int scvIdx,
                              int boundaryFaceIdx)
@@ -346,6 +384,10 @@ protected:
         }
     }
 
+    /*!
+     * \brief Add the flux terms to the local residual of all
+     *        sub-control volumes of the current element.
+     */
     void evalFluxes_()
     {
         // calculate the mass flux over the faces and subtract
@@ -369,6 +411,10 @@ protected:
         }
     }
 
+    /*!
+     * \brief Set the local residual to the storage terms of all
+     *        sub-control volumes of the current element.
+     */
     void evalStorage_()
     {
         // calculate the amount of conservation each quantity inside
@@ -380,6 +426,11 @@ protected:
         }
     }
 
+    /*!
+     * \brief Add the change in the storage terms and the source term
+     *        to the local residual of all sub-control volumes of the
+     *        current element.
+     */
     void evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
@@ -437,51 +488,95 @@ protected:
      */
     const VertexMapper &vertexMapper_() const
     { return problem_().vertexMapper(); };
+
+    /*!
+     * \brief Returns a reference to the grid view.
+     */
     const GridView &gridView_() const
     { return problem_().gridView(); }
 
+    /*!
+     * \brief Returns a reference to the current element.
+     */
     const Element &elem_() const
     {
         Valgrind::CheckDefined(elemPtr_);
         return *elemPtr_;
     }
 
+    /*!
+     * \brief Returns a reference to the current element's finite
+     *        volume geometry.
+     */
     const FVElementGeometry &fvElemGeom_() const
     {
         Valgrind::CheckDefined(fvElemGeomPtr_);
         return *fvElemGeomPtr_;
     }
 
+    /*!
+     * \brief Returns a reference to the primary variables of the i'th
+     *        sub-control volume of the current element.
+     */
     const PrimaryVariables &curPrimaryVars_(int i) const
     {
         return curVolVars_(i).primaryVars();
     }
 
+    /*!
+     * \brief Returns a reference to the current volume variables of
+     *        all sub-control volumes of the current element.
+     */
     const ElementVolumeVariables &curVolVars_() const
     {
         Valgrind::CheckDefined(curVolVarsPtr_);
         return *curVolVarsPtr_;
     }
+
+    /*!
+     * \brief Returns a reference to the volume variables of the i-th
+     *        sub-control volume of the current element.
+     */
     const VolumeVariables &curVolVars_(int i) const
     {
         return curVolVars_()[i];
     }
 
+    /*!
+     * \brief Returns a reference to the previous time step's volume
+     *        variables of all sub-control volumes of the current
+     *        element.
+     */
     const ElementVolumeVariables &prevVolVars_() const
     {
         Valgrind::CheckDefined(prevVolVarsPtr_);
         return *prevVolVarsPtr_;
     }
+
+    /*!
+     * \brief Returns a reference to the previous time step's volume
+     *        variables of the i-th sub-control volume of the current
+     *        element.
+     */
     const VolumeVariables &prevVolVars_(int i) const
     {
         return prevVolVars_()[i];
     }
 
+    /*!
+     * \brief Returns a reference to the boundary types of all
+     *        sub-control volumes of the current element.
+     */
     const ElementBoundaryTypes &bcTypes_() const
     {
         Valgrind::CheckDefined(bcTypesPtr_);
         return *bcTypesPtr_;
     }
+
+    /*!
+     * \brief Returns a reference to the boundary types of the i-th
+     *        sub-control volume of the current element.
+     */
     const BoundaryTypes &bcTypes_(int i) const
     {
         return bcTypes_()[i];

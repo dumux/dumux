@@ -16,7 +16,8 @@
 /*!
  * \file
  *
- * \brief Element-wise geometric data for the box method
+ * \brief Represents the finite volume geometry of a single element in
+ *        the box scheme.
  */
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
@@ -43,8 +44,9 @@ NEW_PROP_TAG(Scalar);
 // specialize member functions of template classes because of some
 // weird reason I didn't really get...
 
-/** \todo Please doc me! */
-
+/*!
+ * \internal
+ */
 template <typename BoxFVElementGeometry, int dim>
 class _BoxFVElemGeomHelper
 {
@@ -55,7 +57,9 @@ public:
     };
 };
 
-/*! \internal */
+/*!
+ * \internal
+ */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 1>
 {
@@ -69,8 +73,9 @@ public:
     }
 };
 
-/** \todo Please doc me! */
-
+/*!
+ * \internal
+ */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 2>
 {
@@ -105,8 +110,9 @@ public:
     }
 };
 
-/** \todo Please doc me! */
-
+/*!
+ * \internal
+ */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 3>
 {
@@ -283,8 +289,22 @@ public:
 // END HACK
 /////////////////////
 
-/** \todo Please doc me! */
-
+/*!
+ * \brief Represents the finite volume geometry of a single element in
+ *        the box scheme.
+ *
+ * The box scheme is a vertex centered finite volume approach. This
+ * means that each vertex corrosponds to a control volume which
+ * intersects each of the vertex' neighboring elements. If only
+ * looking at a single element of the primary grid (which is what this
+ * class does), the element is subdivided into multiple fragments of
+ * control volumes called sub-control volumes. Each of the element's
+ * vertices corrosponds to exactly one sub-control volume in this
+ * scenario.
+ *
+ * For the box methods the sub-control volumes are constructed by
+ * connecting the element's center with each edge of the element.
+ */
 template<class TypeTag>
 class BoxFVElementGeometry
 {

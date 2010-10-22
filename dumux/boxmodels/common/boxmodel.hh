@@ -110,6 +110,9 @@ public:
 
     /*!
      * \brief Apply the initial conditions to the model.
+     *
+     * \param prob The object representing the problem which needs to
+     *             be simulated.
      */
     void init(Problem &prob)
     {
@@ -136,6 +139,9 @@ public:
     /*!
      * \brief Compute the global residual for an arbitrary solution
      *        vector.
+     *
+     * \param dest Stores the result
+     * \param u The solution for which the residual ought to be calculated
      */
     Scalar globalResidual(SolutionVector &dest, 
                           const SolutionVector &u)
@@ -150,6 +156,8 @@ public:
     /*!
      * \brief Compute the global residual for the current solution
      *        vector.
+     *
+     * \param dest Stores the result
      */
     Scalar globalResidual(SolutionVector &dest)
     {
@@ -178,7 +186,10 @@ public:
     }
 
     /*!
-     * \brief Compute the total storage of all conservation quantities.
+     * \brief Compute the integral over the domain of the storage
+     *        terms of all conservation quantities.
+     *
+     * \param dest Stores the result
      */
     void globalStorage(PrimaryVariables &dest)
     {
@@ -197,7 +208,10 @@ public:
     }
 
     /*!
-     * \brief Returns the volume of a given control volume.
+     * \brief Returns the volume [m^3] of a given control volume.
+     *
+     * \param globalIdx The global index of the control volume's
+     *                  associated vertex
      */
     Scalar boxVolume(int globalIdx) const
     { return boxVolume_[globalIdx][0]; }
@@ -206,30 +220,13 @@ public:
      * \brief Reference to the current solution as a block vector.
      */
     const SolutionVector &curSol() const
-    { 
-        return uCur_; 
-        if (enablePartialReassemble && 
-            jacobianAssembler().inJacobianAssemble())
-        {
-            return jacobianAssembler().evalPoint();
-        }
-        return uCur_;
-    }
+    { return uCur_; }
 
     /*!
      * \brief Reference to the current solution as a block vector.
      */
     SolutionVector &curSol()
-    {
-        return uCur_; 
-
-        if (enablePartialReassemble && 
-            jacobianAssembler().inJacobianAssemble())
-        {
-            return jacobianAssembler().evalPoint();
-        }
-        return uCur_; 
-    }
+    { return uCur_; }
 
     /*!
      * \brief Reference to the previous solution as a block vector.
@@ -286,6 +283,9 @@ public:
     /*!
      * \brief Returns the relative weight of a primary variable for
      *        calculating relative errors.
+     *
+     * \param vertIdx The global index of the control volume
+     * \param pvIdx The index of the primary variable
      */
     Scalar primaryVarWeight(int vertIdx, int pvIdx) const
     {
@@ -295,6 +295,11 @@ public:
     /*!
      * \brief Returns the relative error between two vectors of
      *        primary variables.
+     *
+     * \param vertexIdx The global index of the control volume's
+     *                  associated vertex
+     * \param pv1 The first vector of primary variables
+     * \param pv2 The second vector of primary variables
      *
      * \todo The vertexIdx argument is pretty hacky. it is required by
      *       models with pseudo primary variables (i.e. the primary
@@ -318,6 +323,10 @@ public:
     
     /*!
      * \brief Try to progress the model to the next timestep.
+     *
+     * \param solver The non-linear solver
+     * \param controller The controller which specifies the behaviour 
+     *                   of the non-linear solver
      */
     bool update(NewtonMethod &solver,
                 NewtonController &controller)
@@ -378,11 +387,11 @@ public:
     };
 
     /*!
-     * \brief Called by the problem if a timeintegration was
-     *        successful, post processing of the solution is done and the 
-     *        result has been written to disk. 
+     * \brief Called by the problem if a time integration was
+     *        successful, post processing of the solution is done and
+     *        the result has been written to disk.
      *
-     * This should perpare the model for the next time integration.
+     * This should prepare the model for the next time integration.
      */
     void advanceTimeLevel()
     {
@@ -392,6 +401,10 @@ public:
 
     /*!
      * \brief Serializes the current state of the model.
+     *
+     * \tparam Restarter The type of the serializer class
+     *
+     * \param res The serializer object
      */
     template <class Restarter>
     void serialize(Restarter &res)
@@ -399,6 +412,10 @@ public:
 
     /*!
      * \brief Deserializes the state of the model.
+     *
+     * \tparam Restarter The type of the serializer class
+     *
+     * \param res The serializer object
      */
     template <class Restarter>
     void deserialize(Restarter &res)
@@ -410,6 +427,11 @@ public:
     /*!
      * \brief Write the current solution for a vertex to a restart
      *        file.
+     *
+     * \param outstream The stream into which the vertex data should
+     *                  be serialized to
+     * \param vert The DUNE Codim<dim> entity which's data should be
+     *             serialized
      */
     void serializeEntity(std::ostream &outstream,
                          const Vertex &vert)
@@ -431,6 +453,11 @@ public:
     /*!
      * \brief Reads the current solution variables for a vertex from a
      *        restart file.
+     *
+     * \param instream The stream from which the vertex data should
+     *                  be deserialized from
+     * \param vert The DUNE Codim<dim> entity which's data should be
+     *             deserialized
      */
     void deserializeEntity(std::istream &instream,
                            const Vertex &vert)
@@ -472,6 +499,10 @@ public:
     const ElementMapper &elementMapper() const
     { return problem_().elementMapper(); };
 
+    /*!
+     * \brief Resets the Jacobian matrix assembler, so that the 
+     *        boundary types can be altered.
+     */
     void resetJacobianAssembler ()
     {
         delete jacAsm_;
@@ -483,7 +514,9 @@ public:
      * \brief Add the vector fields for analysing the convergence of
      *        the newton method to the a VTK multi writer.
      *
-     * \param writer  The VTK multi writer where the fields should be added.
+     * \tparam MultiWriter The type of the VTK multi writer
+     *
+     * \param writer  The VTK multi writer object on which the fields should be added.
      * \param u       The solution function
      * \param deltaU  The delta of the solution function before and after the Newton update
      */
@@ -539,6 +572,8 @@ public:
      * variables should be written out. Read: This should _always_ be
      * overwritten by well behaved models!
      *
+     * \tparam MultiWriter The type of the VTK multi writer
+     *
      * \param sol The global vector of primary variable values.
      * \param writer The VTK multi writer where the fields should be added.
      */
@@ -580,6 +615,9 @@ public:
     /*!
      * \brief Returns true if the vertex with 'globalVertIdx' is
      *        located on the grid's boundary.
+     *
+     * \param globalVertIdx The global index of the control volume's
+     *                      associated vertex
      */
     bool onBoundary(int globalVertIdx) const
     { return boundaryIndices_.count(globalVertIdx) > 0; }
@@ -587,6 +625,9 @@ public:
     /*!
      * \brief Returns true if a vertex is located on the grid's
      *        boundary.
+     *
+     * \param vertex The DUNE Codim<dim> entity associated with the
+     *               control volume
      */
     bool onBoundary(const Vertex &vertex) const
     { return onBoundary(vertexMapper().map(vertex)); }
@@ -594,6 +635,10 @@ public:
     /*!
      * \brief Returns true if a vertex is located on the grid's
      *        boundary.
+     *
+     * \param elem A DUNE Codim<0> entity which contains the control
+     *             volume's associated vertex.
+     * \param vIdx The local vertex index inside elem
      */
     bool onBoundary(const Element &elem, int vIdx) const
     { return onBoundary(vertexMapper().map(elem, vIdx, dim)); }
@@ -616,9 +661,16 @@ protected:
     const GridView &gridView_() const
     { return problem_().gridView(); }
 
+    /*!
+     * \brief Reference to the local residal object
+     */
     LocalResidual &localResidual_()
     { return localJacobian_.localResidual(); }
 
+    /*!
+     * \brief Applies the initial solution for all vertices of the
+     *        grid.
+     */
     void applyInitialSolution_()
     {
         // first set the whole domain to zero
@@ -673,10 +725,14 @@ protected:
         }
     }
 
-    // find all indices of boundary vertices. for this we need to loop
-    // over all intersections. if the DUNE grid interface would
-    // provide a onBoundary() method for entities this could be done
-    // in a much nicer way (actually this would not be necessary)
+    /*!
+     * \brief Find all indices of boundary vertices.
+     *
+     * For this we need to loop over all intersections (which is slow
+     * in general). If the DUNE grid interface would provide a
+     * onBoundary() method for entities this could be done in a much
+     * nicer way (actually this would not be necessary)
+     */
     void updateBoundaryIndices_()
     {
         boundaryIndices_.clear();
@@ -710,6 +766,9 @@ protected:
         }
     }
 
+    /*!
+     * \brief Returns whether messages should be printed
+     */
     bool verbose_() const
     { return gridView_().comm().rank() == 0; };
 

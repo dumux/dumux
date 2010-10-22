@@ -16,7 +16,7 @@
 /*!
  * \file
  *
- * \brief A local PDELab operator for box models.
+ * \brief A local operator for PDELab which wraps the box models.
  */
 #ifndef DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 #define DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
@@ -30,6 +30,11 @@ namespace Dumux {
 
 namespace PDELab {
 
+/*!
+ * \file
+ *
+ * \brief A local operator for PDELab which wraps the box models.
+ */
 template<class TypeTag>
 class BoxLocalOperator
     :
@@ -52,11 +57,28 @@ public:
     enum { doAlphaVolume = true };
 
 
+    /*!
+     * \param model The physical model for the box scheme.
+     */
     BoxLocalOperator(Model &model)
         : model_(model)
     {}
 
-    // volume integral depending on test and ansatz functions
+    /*!
+     * \brief Volume integral depending on test and ansatz functions
+     *
+     * \tparam EG The entity geometry type from PDELab
+     * \tparam LFSU The type of the local function space  of the ansatz functions
+     * \tparam X The type of the container for the coefficients for the ansatz functions
+     * \tparam LFSV The type of the local function space of the test functions
+     * \tparam R The range type (usually FieldVector<double>)     
+     *
+     * \param eg The entity geometry object
+     * \param lfsu The local function space object of the ansatz functions
+     * \param x The object of the container for the coefficients for the ansatz functions
+     * \param lfsv The local function space object of the test functions
+     * \param r The object storing the volume integral
+     */
     template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
     void alpha_volume (const EG& eg, const LFSU& lfsu, const X& x,
                        const LFSV& lfsv, R& r) const
@@ -75,7 +97,21 @@ public:
             r[comp] = model_.localResidual().residual(comp%numVertices)[comp/numVertices];
     }
 
-    // jacobian of volume term
+    /*!
+     * \brief Jacobian of volume term
+     *
+     * \tparam EG The entity geometry type from PDELab
+     * \tparam LFSU The type of the local function space  of the ansatz functions
+     * \tparam X The type of the container for the coefficients for the ansatz functions
+     * \tparam LFSV The type of the local function space of the test functions
+     * \tparam R The range type (usually FieldVector<double>)     
+     *
+     * \param eg The entity geometry object
+     * \param lfsu The local function space object of the ansatz functions
+     * \param x The object of the container for the coefficients for the ansatz functions
+     * \param lfsv The local function space object of the test functions
+     * \param mat The object containing the local jacobian matrix
+     */
     template<typename EG, typename LFSU, typename X, typename LFSV, typename R>
     void jacobian_volume (const EG& eg,
                           const LFSU& lfsu,
