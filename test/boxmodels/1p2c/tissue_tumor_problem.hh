@@ -24,7 +24,9 @@
 #ifndef DUMUX_TISSUE_TUMOR_PROBLEM_HH
 #define DUMUX_TISSUE_TUMOR_PROBLEM_HH
 
+#ifdef HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 

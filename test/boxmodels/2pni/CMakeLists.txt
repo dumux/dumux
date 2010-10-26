@@ -1,5 +1,3 @@
-add_definitions(-DYASPGRID -DENABLE_ALBERTA -DENABLE_ALUGRID -DENABLE_UG)
-
 ADD_EXECUTABLE("test_2pni" test_2pni.cc)
 TARGET_LINK_LIBRARIES("test_2pni" ${DumuxLinkLibraries})
 

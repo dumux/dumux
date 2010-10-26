@@ -1,5 +1,3 @@
-add_definitions(-DYASPGRID -DENABLE_ALBERTA -DENABLE_ALUGRID -DENABLE_UG)
-
 ADD_EXECUTABLE("test_1p2c" test_1p2c.cc)
 TARGET_LINK_LIBRARIES("test_1p2c" ${DumuxLinkLibraries})
 

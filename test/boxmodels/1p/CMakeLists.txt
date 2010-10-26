@@ -1,5 +1,3 @@
-add_definitions(-DYASPGRID -DENABLE_ALBERTA -DENABLE_ALUGRID -DENABLE_UG)
-
 # build target for the onephase-onecomponent test problem
 ADD_EXECUTABLE("test_1p" test_1p.cc)
 TARGET_LINK_LIBRARIES("test_1p" ${DumuxLinkLibraries})

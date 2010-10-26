@@ -17,10 +17,14 @@
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
 
+#ifdef HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#endif
+#ifdef HAVE_ALUGRID
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 
 #include <dumux/boxmodels/1p/1pmodel.hh>

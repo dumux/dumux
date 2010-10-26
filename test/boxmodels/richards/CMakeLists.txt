@@ -1,5 +1,3 @@
-add_definitions(-DYASPGRID -DENABLE_ALBERTA -DENABLE_ALUGRID -DENABLE_UG)
-
 if (MPI_FOUND)
   # tell UG that the model is parallelized
   add_definitions(-DModelP)

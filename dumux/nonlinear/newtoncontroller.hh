@@ -212,7 +212,6 @@ class NewtonController
 
     enum { enableTimeStepRampUp = GET_PROP_VALUE(TypeTag, PTAG(EnableTimeStepRampUp)) };
     enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
-    enum { Red = JacobianAssembler::Red };
 
     // class to keep track of the most offending vertices in a way
     // compatible with std::priority_queue

@@ -37,9 +37,9 @@ FIND_PACKAGE(Boost REQUIRED)
 ##############
 # Find the optional packages
 FIND_PACKAGE(MPI)
-FIND_PACKAGE(UG)
+#FIND_PACKAGE(UG)
 FIND_PACKAGE(ALUGrid)
-#FIND_PACKAGE(METIS REQUIRED)
+FIND_PACKAGE(METIS)
 #FIND_PACKAGE(Alberta)
 ##############
 
@@ -86,7 +86,7 @@ add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing")
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   # debug mode
   add_definitions("-g")
-  add_definitions(-DDEBUG -DDUNE_DEVEL_MODE=1 -DDUNE_ISTL_WITH_CHECKING)
+#  add_definitions(-DDEBUG -DDUNE_DEVEL_MODE=1 -DDUNE_ISTL_WITH_CHECKING)
 else(CMAKE_BUILD_TYPE STREQUAL "debug")
   # Release mode
   add_definitions("-O3 -march=native")
@@ -122,40 +122,40 @@ SetConfigHVar(PROJECT_MAINTAINER_EMAIL ProjectMaintainerEmail)
 # adapt build system to detected packages
 
 # deal with UG
-if (UG_FOUND)
-  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-      ${UG_LIBRARIES})
-  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-      ${UG_INCLUDE_DIRS})
-endif(UG_FOUND)
-SetConfigHVar(HAVE_UG UG_FOUND)
+#if (UG_FOUND)
+#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
+#      ${UG_LIBRARIES})
+#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
+#      ${UG_INCLUDE_DIRS})
+#endif(UG_FOUND)
+#SetConfigHVar(HAVE_UG UG_FOUND)
 
 # deal with ALUGrid
-if (ALUGrid_FOUND)
-  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-      ${ALUGrid_LIBRARIES})
-  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-      ${ALUGrid_INCLUDE_DIRS})
-endif(ALUGrid_FOUND)
-SetConfigHVar(HAVE_ALUGRID ALUGrid_FOUND)
+#if (ALUGrid_FOUND)
+#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
+#      ${ALUGrid_LIBRARIES})
+#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
+#      ${ALUGrid_INCLUDE_DIRS})
+#endif(ALUGrid_FOUND)
+#SetConfigHVar(HAVE_ALUGRID ALUGrid_FOUND)
 
 # deal with METIS
-if (METIS_FOUND)
-  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-      ${METIS_LIBRARIES})
-  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-      ${METIS_INCLUDE_DIRS})
-endif(METIS_FOUND)
-SetConfigHVar(HAVE_METIS METIS_FOUND)
+#if (METIS_FOUND)
+#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
+#      ${METIS_LIBRARIES})
+#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
+#      ${METIS_INCLUDE_DIRS})
+#endif(METIS_FOUND)
+#SetConfigHVar(HAVE_METIS METIS_FOUND)
 
 # deal with Alberta
-if (Alberta_FOUND)
-  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-      ${Alberta_LIBRARIES})
-  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-      ${Alberta_INCLUDE_DIRS})
-endif(Alberta_FOUND)
-SetConfigHVar(HAVE_ALBERTA Alberta_FOUND)
+#if (Alberta_FOUND)
+#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
+#      ${Alberta_LIBRARIES})
+#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
+#      ${Alberta_INCLUDE_DIRS})
+#endif(Alberta_FOUND)
+#SetConfigHVar(HAVE_ALBERTA Alberta_FOUND)
 ##############
 
 if (MPI_FOUND)
@@ -163,7 +163,7 @@ if (MPI_FOUND)
    separate_arguments(TMP)
    add_definitions(${TMP})
    add_definitions(-DENABLE_MPI=1)
-   add_definitions(-DModelP) # tell UG that the model is parallelized
+#   add_definitions(-DModelP) # tell UG that the model is parallelized
 
    set(DumuxLinkLibraries ${DumuxLinkLibraries} ${MPI_LIBRARIES})
    set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${MPI_INCLUDE_PATH})
@@ -172,7 +172,7 @@ endif (MPI_FOUND)
 
 # actually write the config.h file to disk 
 configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
-add_definitions(-DHAVE_CONFIG_H -DDUNE_ENABLE_OLD_NUMBERING)
+#add_definitions(-DHAVE_CONFIG_H)
 
 ##############
 # tell cmake that we've got a few subdirectories. (that's the

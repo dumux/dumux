@@ -60,7 +60,9 @@ class NewtonMethod
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 public:
     NewtonMethod(Problem &problem)
-        : problem_(problem)
+        : uOld_(problem.model().curSol()),
+          residual_(problem.model().curSol()),
+          problem_(problem)
     { }
 
     /*!
