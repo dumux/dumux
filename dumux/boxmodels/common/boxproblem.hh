@@ -68,8 +68,8 @@ public:
     /*!
      * \brief Constructor
      *
-     * \params timeManager The TimeManager which is used by the simulation
-     * \params gridView The simulation's idea about physical space 
+     * \param timeManager The TimeManager which is used by the simulation
+     * \param gridView The simulation's idea about physical space 
      */
     BoxProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
