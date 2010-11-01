@@ -445,7 +445,7 @@ public:
     /*!
      * \brief Returns the Jacobian reassemble color of an element
      *
-     * \param globalVertIdx The global index of the vertex.
+     * \param globalElementIdx The global index of the element.
      */
     int elementColor(int globalElementIdx) const
     {
