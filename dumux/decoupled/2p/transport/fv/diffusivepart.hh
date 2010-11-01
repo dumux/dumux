@@ -67,7 +67,7 @@ public:
      *  @param[in] element          entity of codim 0
      *  @param[in] indexInInside    face index in reference element
      *  @param[in] satIntersection  saturation at the face between element I and J
-     *  @param[in] pcGradient       gradient of saturation between element I and J
+     *  @param[in] satGradient       gradient of saturation between element I and J
      *  @param[in] time             time
      *  \return     diffusive term of an advection-diffusion equation
      */
@@ -83,7 +83,7 @@ public:
      *  @param[in] element          entity of codim 0
      *  @param[in] indexInInside    face index in reference element
      *  @param[in] satIntersection  saturation at the face between element I and J
-     *  @param[in] pcGradient       gradient of saturation between element I and J
+     *  @param[in] satGradient       gradient of saturation between element I and J
      *  @param[in] time             time
      *  @param[in] satI             saturation of current element
      *  @param[in] satJ             saturation of neighbor element
