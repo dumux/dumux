@@ -94,7 +94,6 @@ public:
     //! Constructs a VariableClass object
     /**
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     *  @param initialSat initial value for the saturation (only necessary if only diffusion part is solved)
      *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
 
@@ -108,7 +107,6 @@ public:
     /**
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      *  @param codim codimension of the entity of which data has to be strored
-     *  @param initialSat initial value for the saturation (only necessary if only diffusion part is solved)
      *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
     VariableClass(const GridView& gridView, int codim, Dune::FieldVector<Scalar,
