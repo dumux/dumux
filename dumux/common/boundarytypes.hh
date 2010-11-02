@@ -27,6 +27,9 @@
 namespace Dumux
 {
 
+/*!
+ * \brief Class to specify the type of a boundary.
+ */
 template <int numEq>
 class BoundaryTypes
 {
@@ -58,7 +61,10 @@ public:
     }
 
     /*!
-     * \brief Returns true if the boundary types for a given equation has been set.
+     * \brief Returns true if the boundary types for a given equation
+     *        has been specified.
+     *
+     * \param eqIdx The index of the equation
      */
     bool isSet(int eqIdx) const
     { return boundaryInfo_[eqIdx].visited; };
@@ -66,14 +72,16 @@ public:
     /*!
      * \brief Make sure the boundary conditions are well-posed.
      *
-     * If they are not, an exception is thrown!#
+     * If they are not, an assertation fails and the program aborts!
+     * (if the NDEBUG macro is not defined)
      */
     void checkWellPosed() const
     {
-        for (int i=0; i < numEq; ++i) {
+#ifndef NDEBUG
+        for (int i=0; i < numEq; ++i)
             // if this fails, at least one condition is missing.
             assert(boundaryInfo_[i].visited);
-        }
+#endif
     };
 
     /*!
@@ -167,6 +175,8 @@ public:
     /*!
      * \brief Set a neumann boundary condition for a single a single
      *        equation.
+     *
+     * \param eqIdx The index of the equation
      */
     void setNeumann(int eqIdx)
     {
@@ -184,13 +194,12 @@ public:
      * \brief Set a dirichlet boundary condition for a single primary
      *        variable
      *
-     * \param pvIdx The index of the primary variable which should be
-     *              dirichlet.
-     * \param eqIdx The index of the equation which should be ignored
-     *              as a consequence
+     * \param pvIdx The index of the primary variable for which the
+     *              Dirichlet condition should apply.
+     * \param eqIdx The index of the equation which should used to set
+     *              the Dirichlet condition
      */
-    void setDirichlet(int pvIdx,
-                      int eqIdx)
+    void setDirichlet(int pvIdx, int eqIdx)
     {
         boundaryInfo_[eqIdx].visited = 1;
         boundaryInfo_[eqIdx].isDirichlet = 1;
@@ -209,6 +218,9 @@ public:
     /*!
      * \brief Set a neumann boundary condition for a single a single
      *        equation.
+     *
+     * \param eqIdx The index of the equation on which the outflow
+     *              condition applies.
      */
     void setOutflow(int eqIdx)
     {
@@ -224,7 +236,11 @@ public:
 
     /*!
      * \brief Set a dirichlet boundary condition for a single primary
-     *        variable
+     *        variable. 
+     *
+     * WARNING: This method assumes that the equation with the same
+     * index as the primary variable to be set is used to specify the
+     * Dirichlet condition. USE WITH _GREAT_ CARE!
      *
      * \param eqIdx The index of the equation which is assumed to be
      *              equal to the index of the primary variable
@@ -237,6 +253,8 @@ public:
     /*!
      * \brief Returns true if an equation is used to specify a
      *        dirichlet condition.
+     *
+     * \param eqIdx The index of the equation
      */
     bool isDirichlet(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isDirichlet; };
@@ -256,6 +274,8 @@ public:
     /*!
      * \brief Returns true if an equation is used to specify a
      *        neumann condition.
+     *
+     * \param eqIdx The index of the equation
      */
     bool isNeumann(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isNeumann; };
@@ -275,6 +295,8 @@ public:
     /*!
      * \brief Returns true if an equation is used to specify an
      *        outflow condition.
+     *
+     * \param eqIdx The index of the equation
      */
     bool isOutflow(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isOutflow; };
@@ -294,6 +316,8 @@ public:
     /*!
      * \brief Returns true if an equation is used to specify an
      *        inflow coupling condition.
+     *
+     * \param eqIdx The index of the equation
      */
     bool isCouplingInflow(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isCouplingInflow; };
@@ -313,6 +337,8 @@ public:
     /*!
      * \brief Returns true if an equation is used to specify an
      *        outflow coupling condition.
+     *
+     * \param eqIdx The index of the equation
      */
     bool isCouplingOutflow(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isCouplingOutflow; };
@@ -331,16 +357,22 @@ public:
 
     /*!
      * \brief Returns the index of the equation which should be used
-     *        for the dirichlet condition of the pvIdx's primary
+     *        for the Dirichlet condition of the pvIdx's primary
      *        variable.
+     *
+     * \param pvIdx The index of the primary variable which is be set
+     *              by the Dirichlet condition.
      */
     unsigned dirichletToEqIndex(unsigned pvIdx) const
     { return pv2eqIdx_[pvIdx]; };
 
     /*!
      * \brief Returns the index of the primary variable which should
-     *        be used for the dirichlet condition given an equation
+     *        be used for the Dirichlet condition given an equation
      *        index.
+     *
+     * \param eqIdx The index of the equation which is used to set
+     *              the Dirichlet condition.
      */
     unsigned eqToDirichletIndex(unsigned eqIdx) const
     { return eq2pvIdx_[eqIdx]; };

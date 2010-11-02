@@ -352,9 +352,12 @@ using namespace boost::type_traits;
 using boost::is_void;
 using boost::is_base_of;
 
+//! \internal
 class PropertyUndefined {};
+//! \internal
 class PropertyExplicitlyUnset {};
 
+//! \internal
 template <class RealTypeTag,
           class EffectiveTypeTag,
           class PropertyTag>
@@ -362,12 +365,14 @@ struct Property : public PropertyUndefined
 {
 };
 
+//! \internal
 template <class EffectiveTypeTag,
           class PropertyTag>
 struct PropertyUnset : public PropertyUndefined
 {
 };
 
+//! \internal
 template <class EffectiveTypeTag, class PropertyTag>
 struct PropertyInfo
 {
@@ -384,12 +389,14 @@ struct PropertyInfo
     { return __LINE__; }
 };
 
+//! \internal
 template <class RealTypeTag,
           class PropertyTag>
 struct DefaultProperty : public PropertyUndefined
 {
 };
 
+//! \internal
 template <class Tree, class PropertyTag>
 struct propertyExplicitlyUnset
 {
@@ -400,6 +407,7 @@ struct propertyExplicitlyUnset
                    >::value;
 };
 
+//! \internal
 template <class Tree, class PropertyTag>
 class propertyExplicitlyUnsetOnTree
 {
@@ -424,12 +432,14 @@ public:
                >::value;
 };
 
+//! \internal
 template <class PropertyTag>
 struct propertyExplicitlyUnsetOnTree<void, PropertyTag>
 {
     const static bool value = boost::true_type::value;
 };
 
+//! \internal
 template <class RealTypeTag, class Tree, class PropertyTag>
 struct propertyDefinedOnSelf
 {
@@ -442,6 +452,7 @@ struct propertyDefinedOnSelf
                            >::value;
 };
 
+//! \internal
 template <class RealTypeTag, class Tree, class PropertyTag>
 class propertyDefinedOnTree
 {
@@ -461,6 +472,7 @@ public:
                        >::value >::value;
 };
 
+//! \internal
 template <class RealTypeTag, class PropertyTag>
 class propertyDefinedOnTree<RealTypeTag, void, PropertyTag>
 {
@@ -468,6 +480,7 @@ public:
     static const bool value = boost::false_type::value;
 };
 
+//! \internal
 template <class RealTypeTag, class PropertyTag>
 struct defaultPropertyDefined
 {
@@ -479,6 +492,7 @@ struct defaultPropertyDefined
                            >::value;
 };
 
+//! \internal
 template <class RealTypeTag, class Tree, class PropertyTag>
 class defaultPropertyDefinedOnTree
 {
@@ -503,13 +517,14 @@ public:
                        >::value >::value;
 };
 
+//! \internal
 template <class RealTypeTag, class PropertyTag>
 struct defaultPropertyDefinedOnTree<RealTypeTag,void, PropertyTag>
 {
     static const bool value = boost::false_type::value;
 };
 
-
+//! \internal
 template <class RealTypeTag, class Tree, class PropertyTag>
 class propertyDefined
 {
@@ -540,6 +555,7 @@ public:
 
 };
 
+//! \internal
 template <class RealTypeTag, class Tree, class PropertyTag>
 class propertyTagIndex
 {
@@ -558,6 +574,7 @@ public:
 };
 
 
+//! \internal
 template <class SelfT,
           class Child1T = void,
           class Child2T = void,
@@ -576,6 +593,7 @@ public:
     typedef Child5T Child5;
 };
 
+//! \internal
 template <class EffectiveTypeTag,
           class PropertyTag,
           class RealTypeTag=EffectiveTypeTag,
@@ -585,6 +603,7 @@ struct GetProperty
 };
 
 // property not defined, but a default property is available
+//! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, -1>
 {
@@ -592,36 +611,42 @@ struct GetProperty<TypeTag, PropertyTag, RealTypeTag, -1>
 };
 
 // property defined on self
+//! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 0>
 {
     typedef Property<RealTypeTag, TypeTag, PropertyTag>   p;
 };
 
+//! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 1>
 {
     typedef typename GetProperty<typename TypeTag::Child1, PropertyTag, RealTypeTag>::p p;
 };
 
+//! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 2>
 {
     typedef typename GetProperty<typename TypeTag::Child2, PropertyTag, RealTypeTag>::p p;
 };
 
+//! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 3>
 {
     typedef typename GetProperty<typename TypeTag::Child3, PropertyTag, RealTypeTag>::p p;
 };
 
+//! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 4>
 {
     typedef typename GetProperty<typename TypeTag::Child4, PropertyTag, RealTypeTag>::p p;
 };
 
+//! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 5>
 {
@@ -629,6 +654,7 @@ struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 5>
 };
 
 #if !defined NO_PROPERTY_INTROSPECTION
+//! \internal
 template <class RealTypeTag, class Tree, class PropertyTag>
 struct propertyDiagnostic
 {
@@ -807,6 +833,7 @@ struct propertyDiagnostic
     }
 };
 
+//! \internal
 template <class RealTypeTag, class PropertyTag>
 struct propertyDiagnostic<RealTypeTag, void, PropertyTag>
 {

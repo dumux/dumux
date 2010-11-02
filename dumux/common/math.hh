@@ -30,6 +30,9 @@ namespace Dumux
 {
 /*!
  * \brief Calculate the harmonic mean of two scalar values.
+ *
+ * \param x The first input value
+ * \param y The second input value
  */
 template <class Scalar>
 Scalar harmonicMean(Scalar x, Scalar y)
@@ -41,6 +44,9 @@ Scalar harmonicMean(Scalar x, Scalar y)
 
 /*!
  * \brief Calculate the geometric mean of two scalar values.
+ *
+ * \param x The first input value
+ * \param y The second input value
  */
 template <class Scalar>
 Scalar geometricMean(Scalar x, Scalar y)
@@ -55,6 +61,10 @@ Scalar geometricMean(Scalar x, Scalar y)
  *
  * This is done by calculating the harmonic mean for each entry
  * individually. The result is stored the first argument.
+ *
+ * \param K The matrix for storing the result
+ * \param Ki The first input matrix
+ * \param Kj The second input matrix
  */
 template <class Scalar, int m, int n>
 void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
@@ -77,7 +87,15 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 /*!
  * \brief Invert a linear polynomial analytically
  *
- * Returns the number of solutions which are in the real numbers.
+ * The polynomial is defined as
+ * \f[ p(x) = a\; x + b \f]
+ *
+ * This method Returns the number of solutions which are in the real
+ * numbers, i.e. 1 except if the slope of the line is 0.
+ *
+ * \param sol Container into which the solutions are written
+ * \param a The coefficiont for the linear term
+ * \param b The coefficiont for the constant term
  */
 template <class Scalar, class SolContainer>
 int invertLinearPolynomial(SolContainer &sol, 
@@ -94,9 +112,17 @@ int invertLinearPolynomial(SolContainer &sol,
 /*!
  * \brief Invert a quadratic polynomial analytically
  *
- * Returns the number of solutions which are in the real numbers. The
- * "sol" argument contains the real roots of the parabola in order
- * with the smallest root first.
+ * The polynomial is defined as
+ * \f[ p(x) = a\; x^2 + + b\;x + c \f]
+ *
+ * This method teturns the number of solutions which are in the real
+ * numbers. The "sol" argument contains the real roots of the parabola
+ * in order with the smallest root first.
+ *
+ * \param sol Container into which the solutions are written
+ * \param a The coefficiont for the quadratic term
+ * \param b The coefficiont for the linear term
+ * \param c The coefficiont for the constant term
  */
 template <class Scalar, class SolContainer>
 int invertQuadraticPolynomial(SolContainer &sol, 
@@ -126,7 +152,18 @@ int invertQuadraticPolynomial(SolContainer &sol,
 /*!
  * \brief Invert a cubic polynomial analytically
  *
- * Returns the number of solutions which are in the real numbers.
+ * The polynomial is defined as
+ * \f[ p(x) = a\; x^3 + + b\;x^3 + c\;x + d \f]
+ *
+ * This method teturns the number of solutions which are in the real
+ * numbers. The "sol" argument contains the real roots of the cubic
+ * polynomial in order with the smallest root first.
+ *
+ * \param sol Container into which the solutions are written
+ * \param a The coefficiont for the cubic term
+ * \param b The coefficiont for the quadratic term
+ * \param c The coefficiont for the linear term
+ * \param d The coefficiont for the constant term
  */
 template <class Scalar, class SolContainer>
 int invertCubicPolynomial(SolContainer &sol,
@@ -297,8 +334,8 @@ int invertCubicPolynomial(SolContainer &sol,
  * "Larger" in this case means that all the entries of each spacial dimension are
  * larger compared to the reference vector.
  *
- * \param &pos Vektor holding the current Position that is to be checked
- * \param &smallerVec Reference vector, holding the minimum values for comparison.
+ * \param pos Vektor holding the current Position that is to be checked
+ * \param smallerVec Reference vector, holding the minimum values for comparison.
  */
 template <class Scalar, int dim>
 bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
@@ -322,8 +359,8 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
  * "Smaller" in this case means that all the entries of each spacial dimension are
  * smaller in comparison with the reference vector.
  *
- * \param &pos Vektor holding the current Position that is to be checked
- * \param &largerVec Reference vector, holding the maximum values for comparison.
+ * \param pos Vektor holding the current Position that is to be checked
+ * \param largerVec Reference vector, holding the maximum values for comparison.
  */
 template <class Scalar, int dim>
 bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
@@ -350,9 +387,9 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
  * This is comfortable to cheack weather the current position is located inside or
  * outside of a lense with different properties.
  *
- * \param &pos Vektor holding the current Position that is to be checked
- * \param &smallerVec Reference vector, holding the minimum values for comparison.
- * \param &largerVec Reference vector, holding the maximum values for comparison.
+ * \param pos Vektor holding the current Position that is to be checked
+ * \param smallerVec Reference vector, holding the minimum values for comparison.
+ * \param largerVec Reference vector, holding the maximum values for comparison.
  */
 template <class Scalar, int dim>
 bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
@@ -373,6 +410,11 @@ bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
  *        pressure of various liquids.
  *
  * See http://en.wikipedia.org/wiki/Antoine_equation
+ *
+ * \param temperature The temperature [K] of the fluid
+ * \param A The first coefficient for the Antoine equation
+ * \param B The first coefficient for the Antoine equation
+ * \param C The first coefficient for the Antoine equation
  */
 template <class Scalar>
 Scalar antoine(Scalar temperature,

@@ -37,6 +37,10 @@ namespace Valgrind
  *
  * Please note that this does not check whether the destinations of
  * the object's pointers or references are defined.
+ *
+ * \tparam T The type of the object which ought to be checked
+ *
+ * \param value the object which valgrind should check
  */
 template <class T>
 inline void CheckDefined(const T &value)
@@ -48,6 +52,10 @@ inline void CheckDefined(const T &value)
 
 /*!
  * \brief Make the memory on which an object resides undefined.
+ *
+ * \tparam T The type of the object which ought to be set to undefined
+ *
+ * \param value The object which's memory valgrind should be told is undefined
  */
 template <class T>
 inline void SetUndefined(const T &value)
@@ -59,6 +67,10 @@ inline void SetUndefined(const T &value)
 
 /*!
  * \brief Make the memory on which an object resides defined.
+ *
+ * \tparam T The type of the object which valgrind should consider as defined
+ *
+ * \param value The object which's memory valgrind should consider as defined
  */
 template <class T>
 inline void SetDefined(const T &value)
@@ -70,6 +82,10 @@ inline void SetDefined(const T &value)
 
 /*!
  * \brief Make valgrind complain if an object's memory is accessed.
+ *
+ * \tparam T The type of the object which valgrind should complain if accessed
+ *
+ * \param value The object which's memory valgrind should complain if accessed
  */
 template <class T>
 inline void SetNoAccess(const T &value)

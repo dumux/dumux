@@ -15,7 +15,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Provides a default main function for simulations.
+ * \brief Provides a few default main functions for convenience.
  */
 #ifndef DUMUX_START_HH
 #define DUMUX_START_HH
@@ -36,12 +36,24 @@ NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(TimeManager);
 }
 
+/*!
+ * \brief Print a usage string for simulations using 
+ *        Dumux::startFromDGF() as their main() function.
+ *
+ * \param progname The name of the executable
+ */
 void printUsageDGF(const char *progname)
 {
     std::cout << "usage: " << progname << " [--restart restartTime] gridFile.dgf tEnd dt\n";
     exit(1);
 };
 
+/*!
+ * \brief Print a usage string for simulations using 
+ *        Dumux::startWithGrid() as their main() function.
+ *
+ * \param progname The name of the executable
+ */
 void printUsageGrid(const char *progname)
 {
     std::cout << "usage: " << progname << " [--restart restartTime] tEnd dt\n";
@@ -49,7 +61,8 @@ void printUsageGrid(const char *progname)
 };
 
 /*!
- * \brief Provides a default main function for simulations.
+ * \brief Provides a default main function for simulations requiring
+ *        only a single DGF file as their grid specification.
  *
  * \tparam ProblemTypeTag  The type tag of the problem which needs to be solved
  *
@@ -125,7 +138,9 @@ int startFromDGF(int argc, char **argv)
 
 
 /*!
- * \brief Provides a default main function for simulations.
+ * \brief Provides a default main function for simulations which
+ *        create the grid themself but do not require any other
+ *        parameters.
  *
  * \tparam ProblemTypeTag  The type tag of the problem which needs to be solved
  *

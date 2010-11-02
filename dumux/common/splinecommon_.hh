@@ -29,7 +29,9 @@
 
 namespace Dumux
 {
-/*
+/*!
+ * \internal
+ *
  * \brief The common code for all 3rd order polynomial splines.
  */
 template<class ScalarT, class ImplementationT>

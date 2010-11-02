@@ -48,16 +48,12 @@ NEW_PROP_TAG(Problem);
  * problem is not static, i.e. that boundary conditions change
  * over time.
  *
- * This class is a low level way to simplify time management for
- * the simulation. It doesn't manage any user data, but only keeps
- * track about what the current "episode" of the simulation is. An
- * episode is a span of simulated time at which the problem
- * behaves in a specific way. It is characerized by the
- * (simulated) time it starts, its length, an identifier, and a
- * consecutive index starting at 0.
- *
- * \todo Change the time manager to the property system (?)
- * \todo Remove the episode identifier stuff
+ * This class is a low level way to simplify time management for the
+ * simulation. It doesn't manage any user data, but only keeps track
+ * about what the current "episode" of the simulation is. An episode
+ * is a span of simulated time at which the problem behaves in a
+ * specific way. It is characerized by the (simulation) time it
+ * starts, its length and a consecutive index starting at 0.
  */
 template <class TypeTag>
 class TimeManager
@@ -92,6 +88,11 @@ public:
     /*!
      * \brief Initialize the model and problem and write the initial
      *        condition to disk.
+     *
+     * \param problem The physical problem which needs to be solved
+     * \param tStart The start time [s] of the simulation (typically 0)
+     * \param dtInitial The initial time step size [s]
+     * \param tEnd The time at which the simulation is finished [s]
      */
     void init(Problem &problem,
               Scalar tStart,
@@ -125,18 +126,23 @@ public:
     /*!
      * \brief Set the current simulated time, don't change the current
      *        time step index.
+     *
+     * \param t The time [s] which should be jumped to
      */
     void setTime(Scalar t)
     { time_ = t; }
 
     /*!
      * \brief Set the current simulated time and the time step index.
+     *
+     * \param t The time [s] which should be jumped to
+     * \param stepIdx The new time step index
      */
     void setTime(Scalar t, int stepIdx)
     { time_ = t; timeStepIdx_ = stepIdx; }
 
     /*!
-     * \brief Return the current simulated time.
+     * \brief Return the current simulated time [s].
      */
     Scalar time() const
     { return time_; }
@@ -149,44 +155,55 @@ public:
 
     /*!
      * \brief Set the time of simulated seconds at which the simulation runs.
+     *
+     * \param t The time [s] at which the simulation is finished
      */
-    void setEndTime(Scalar val)
-    { endTime_ = val; }
+    void setEndTime(Scalar t)
+    { endTime_ = t; }
 
     /*!
-     * \brief Set the suggested time step size to a fixed value.
+     * \brief Set the current time step size to a given value.
      *
      * If the step size would exceed the length of the current
-     * episode, the timeStep() method will take care that the
-     * step size won't exceed the episode, though.
+     * episode, the timeStep() method will take care that the step
+     * size won't exceed the episode or the end of the simulation,
+     * though.
+     *
+     * \param dt The new value for the time step size [s] 
      */
-    void setTimeStepSize(Scalar stepSize)
-    { 
-        timeStepSize_ = std::min(stepSize, maxTimeStepSize());
-    }
+    void setTimeStepSize(Scalar dt)
+    { timeStepSize_ = std::min(dt, maxTimeStepSize()); }
 
     /*!
-     * \brief Returns a suggested timestep length so that we don't
-     *        miss the beginning of the next episode.
+     * \brief Returns the suggested time step length [s] so that we
+     *        don't miss the beginning of the next episode or cross
+     *        the end of the simlation.
      */
     Scalar timeStepSize() const
     { return timeStepSize_; }
 
     /*!
      * \brief Returns number of time steps which have been
-     *        executed since t=0.
+     *        executed since the beginning of the simulation.
      */
     int timeStepIndex() const
     { return timeStepIdx_; }
 
     /*!
      * \brief Specify whether the simulation is finished
+     *
+     * \param yesno If true the simulation is considered finished
+     *              before the end time is reached, else it is only
+     *              considered finished if the end time is reached.
      */
     void setFinished(bool yesno = true)
     { finished_ = yesno; }
 
     /*!
      * \brief Returns true if the simulation is finished.
+     * 
+     * This is the case if either setFinished(true) has been called or
+     * if the end time is reached.
      */
     bool finished() const
     { return finished_ || time() >= endTime(); }
@@ -225,8 +242,8 @@ public:
     /*!
      * \brief Change the current episode of the simulation.
      *
-     * \param tStart Time when the episode began
-     * \param len    Length of the episode
+     * \param tStart Time when the episode began [s]
+     * \param len    Length of the episode [s]
      */
     void startNextEpisode(Scalar tStart,
                           Scalar len)
@@ -240,7 +257,7 @@ public:
      * \brief Start the next episode, but don't change the episode
      *        identifier.
      *
-     * \param len  Length of the episode, infinite if not specified.
+     * \param len  Length of the episode [s], infinite if not specified.
      */
     void startNextEpisode(Scalar len = 1e100)
     {
@@ -259,14 +276,14 @@ public:
 
     /*!
      * \brief Returns the absolute time when the current episode
-     *        started.
+     *        started [s].
      */
     Scalar episodeStartTime() const
     { return episodeStartTime_; }
 
     /*!
      * \brief Returns the length of the current episode in
-     *        simulated time.
+     *        simulated time [s].
      */
     Scalar episodeLength() const
     { return episodeLength_; }
@@ -287,7 +304,8 @@ public:
 
 
     /*!
-     * \brief Aligns dt to the episode boundary if t+dt exceeds the current episode.
+     * \brief Aligns the time step size to the episode boundary if the
+     *        current time step crosses the boundary of the current episode.
      */
     Scalar episodeMaxTimeStepSize() const
     {
@@ -301,8 +319,8 @@ public:
         // make sure that we don't exceed the end of the
         // current episode.
         return
-	  std::max<Scalar>(0.0,
-			   episodeLength() - (time() - episodeStartTime()));
+            std::max<Scalar>(0.0,
+                             episodeLength() - (time() - episodeStartTime()));
     };
 
     /*
@@ -378,6 +396,10 @@ public:
      */
     /*!
      * \brief Write the time manager's state to a restart file.
+     * 
+     * \tparam Restarter The type of the object which takes care to serialize data
+     *
+     * \param res The serializer object
      */
     template <class Restarter>
     void serialize(Restarter &res)
@@ -392,6 +414,10 @@ public:
 
     /*!
      * \brief Read the time manager's state from a restart file.
+     * 
+     * \tparam Restarter The type of the object which takes care to deserialize data
+     *
+     * \param res The deserializer object
      */
     template <class Restarter>
     void deserialize(Restarter &res)

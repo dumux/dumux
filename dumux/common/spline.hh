@@ -15,14 +15,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 3rd order polynomial p(x) for which, given two points x1 and x2!=x1,
- *        the following hold:
- *        p(x1) = y1
- *        p(x2) = y2
- *        p'(x1) = m1
- *        p'(x2) = m2
- *
- * or any given y1, y2, m1, m2.
+ * \brief Provides 3rd order polynomial splines.
  */
 #ifndef DUMUX_SPLINE_HH
 #define DUMUX_SPLINE_HH
@@ -36,34 +29,62 @@ namespace Dumux
 /*!
  * \brief A 3rd order polynomial spline.
 
- * This class implements a spline s(x) for which, given n sampling
- * points x_1, ..., x_n, the following holds:
+ * This class implements a spline \f$s(x)\f$ for which, given \f$n\f$ sampling
+ * points \f$x_1, \dots, x_n\f$, the following conditions hold
+ *\f{align*}{
+   s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \}\\
+   s'(x_1) & = m_1 \\
+   s'(x_n) = m_n
+   \f}
  *
- *        s(x_i) = y_i
- *        s'(x_1) = m_1
- *        s'(x_n) = m_n
- *
- * for any given boundary slopes m_1 and m_n.
+ * for any given boundary slopes \f$m_1\f$ and \f$m_n\f$. Alternatively, natural
+ * splines are supported which are defined by
+ *\f{align*}{
+ s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \} \\
+ s''(x_1) & = 0 \\
+ s''(x_n) = 0
+ \f}
  */
 template<class Scalar, int numSamples = 2>
 class Spline : public FixedLengthSpline_<Scalar, numSamples>
 {
 public: 
+    /*!
+     * \brief Default constructor for a spline.
+     *
+     * To specfiy the acutal curve, use one of the set() methods.
+     */
     Spline()
     { };
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a natural spline
+     *
+     * \param x An array containing the \f$x\f$ values of the spline's sampling points
+     * \param y An array containing the \f$y\f$ values of the spline's sampling points
+     */
     template <class ScalarContainer>
     Spline(const ScalarContainer &x, 
            const ScalarContainer &y)
     { this->set(x, y); }
     
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a natural spline
+     *
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     */
     template <class XYContainer>
     Spline(const XYContainer &tuples)
     { this->set(tuples); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param x An array containing the \f$x\f$ values of the spline's sampling points
+     * \param y An array containing the \f$y\f$ values of the spline's sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class ScalarContainer>
     Spline(const ScalarContainer &x,
            const ScalarContainer &y,
@@ -71,7 +92,13 @@ public:
            Scalar m1)
     { this->set(x, y, m0, m1); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class XYContainer>
     Spline(const XYContainer &points,
            Scalar m0,
@@ -82,39 +109,88 @@ public:
 /*
  * \brief Specialization of a spline with the number of sampling
  *        points only known at run time.
- */
+ *
+ * This class implements a spline \f$s(x)\f$ for which, given \f$n\f$ sampling
+ * points \f$x_1, \dots, x_n\f$, the following conditions hold
+ *\f{align*}{
+   s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \}\\
+   s'(x_1) & = m_1 \\
+   s'(x_n) = m_n
+   \f}
+ *
+ * for any given boundary slopes \f$m_1\f$ and \f$m_n\f$. Alternatively, natural
+ * splines are supported which are defined by
+ *\f{align*}{
+ s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \} \\
+ s''(x_1) & = 0 \\
+ s''(x_n) = 0
+ \f}
+*/
 template<class Scalar>
 class Spline<Scalar, -1> : public VariableLengthSpline_<Scalar>
 { 
 public:
+    /*!
+     * \brief Default constructor for a spline.
+     *
+     * To specfiy the acutal curve, use one of the set() methods.
+     */
     Spline()
     { }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a natural spline
+     *
+     * \param nSamples The number of sampling points (must be > 2)
+     * \param x An array containing the \f$x\f$ values of the spline's sampling points
+     * \param y An array containing the \f$y\f$ values of the spline's sampling points
+     */
     template <class ScalarContainer>
     Spline(int nSamples,
            const ScalarContainer &x, 
            const ScalarContainer &y)
     { this->set(nSamples, x, y); }
     
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a natural spline
+     *
+     * \param nSamples The number of sampling points (must be > 2)
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     */
     template <class XYContainer>
     Spline(int nSamples,
            const XYContainer &tuples)
     { this->set(nSamples, tuples); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a natural spline
+     *
+     * \param x An array containing the \f$x\f$ values of the spline's sampling points (must have a size() method)
+     * \param y An array containing the \f$y\f$ values of the spline's sampling points (must have a size() method)
+     */
     template <class ScalarContainer>
     Spline(const ScalarContainer &x, 
            const ScalarContainer &y)
     { this->set(x, y); }
     
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a natural spline
+     *
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points (must have a size() method)
+     */
     template <class XYContainer>
     Spline(const XYContainer &tuples)
     { this->set(tuples); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param nSamples The number of sampling points (must be >= 2)
+     * \param x An array containing the \f$x\f$ values of the spline's sampling points
+     * \param y An array containing the \f$y\f$ values of the spline's sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class ScalarContainer>
     Spline(int nSamples, 
            const ScalarContainer &x,
@@ -123,7 +199,14 @@ public:
            Scalar m1)
     { this->set(nSamples, x, y, m0, m1); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param nSamples The number of sampling points (must be >= 2)
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class XYContainer>
     Spline(int nSamples, 
            const XYContainer &points,
@@ -131,7 +214,14 @@ public:
            Scalar m1)
     { this->set(nSamples, points, m0, m1); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param x An array containing the \f$x\f$ values of the spline's sampling points (must have a size() method)
+     * \param y An array containing the \f$y\f$ values of the spline's sampling points (must have a size() method)
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class ScalarContainer>
     Spline(const ScalarContainer &x,
            const ScalarContainer &y,
@@ -139,7 +229,13 @@ public:
            Scalar m1)
     { this->set(x, y, m0, m1); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points (must have a size() method)
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class XYContainer>
     Spline(const XYContainer &points,
            Scalar m0,
@@ -179,7 +275,14 @@ public:
     Spline()
     {};
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param x An array containing the \f$x\f$ values of the spline's sampling points
+     * \param y An array containing the \f$y\f$ values of the spline's sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class ScalarContainer>
     Spline(const ScalarContainer &x,
            const ScalarContainer &y,
@@ -188,14 +291,29 @@ public:
         set(x,y,m0,m1);
     }
     
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     template <class XYContainer>
     Spline(const XYContainer &points,
            Scalar m0,
            Scalar m1)
     { this->set(points, m0, m1); }
 
-    // convenience constructor
+    /*!
+     * \brief Convenience constructor for a full spline
+     *
+     * \param x0 The \f$x\f$ value of the first sampling point
+     * \param x1 The \f$x\f$ value of the second sampling point
+     * \param y0 The \f$y\f$ value of the first sampling point
+     * \param y1 The \f$y\f$ value of the second sampling point
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_n\f$
+     */
     Spline(Scalar x0, Scalar x1,
            Scalar y0, Scalar y1,
            Scalar m0, Scalar m1)
@@ -214,6 +332,13 @@ public:
     /*!
      * \brief Set the sampling points and the boundary slopes of the
      *        spline.
+     *
+     * \param x0 The \f$x\f$ value of the first sampling point
+     * \param x1 The \f$x\f$ value of the second sampling point
+     * \param y0 The \f$y\f$ value of the first sampling point
+     * \param y1 The \f$y\f$ value of the second sampling point
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_1\f$
      */
     void set(Scalar x0, Scalar x1,
              Scalar y0, Scalar y1,
@@ -231,6 +356,11 @@ public:
     /*!
      * \brief Set the sampling points and the boundary slopes of the
      *        spline.
+     *
+     * \param x An array containing the \f$x\f$ values of the sampling points
+     * \param y An array containing the \f$y\f$ values of the sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_1\f$
      */
     template <class ScalarContainer>
     void set(const ScalarContainer &x, const ScalarContainer &y,
@@ -246,9 +376,12 @@ public:
     }
 
     /*!
-     * \brief Set the sampling points using an array of (x,y) tuples.
+     * \brief Set the sampling points and the boundary slopes of the
+     *        spline.
      *
-     * Variant for a full spline.
+     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param m0 The slope of the spline at \f$x_0\f$
+     * \param m1 The slope of the spline at \f$x_1\f$
      */
     template <class XYContainer>
     void set(const XYContainer &points, Scalar m0, Scalar m1)
