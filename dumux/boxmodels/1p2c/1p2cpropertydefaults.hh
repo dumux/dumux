@@ -36,7 +36,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup OnePTwoCModel
+ * \addtogroup OnePTwoCBoxModel
  */
 // \{
 namespace Properties
