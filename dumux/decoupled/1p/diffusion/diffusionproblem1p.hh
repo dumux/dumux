@@ -29,7 +29,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Decoupled
- * \brief  Base class for all 2-phase problems which use an impes algorithm
+ * \brief  Base class for all 1-phase problems which use an impes algorithm
  *
  * \todo Please doc me more!
  */
