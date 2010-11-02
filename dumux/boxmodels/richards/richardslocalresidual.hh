@@ -139,10 +139,10 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param flux Stores the average source term of all phases inside a 
-     *             sub-control volume of the current element [kg/(m^3 s)]
+     * \param q Stores the average source term of all phases inside a 
+     *          sub-control volume of the current element [kg/(m^3 s)]
      * \param scvIdx The sub control volume index inside the current 
-     *                element
+     *               element
      */
     void computeSource(PrimaryVariables &q, int scvIdx)
     {

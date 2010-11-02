@@ -76,11 +76,11 @@ public:
     RichardsFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvElemGeom,
-                          int scfvIdx,
+                          int scvfIdx,
                           const ElementVolumeVariables &elemVolVars)
         : fvElemGeom_(fvElemGeom)
     {
-        scvfIdx_ = scfvIdx;
+        scvfIdx_ = scvfIdx;
 
         calculateGradients_(problem, element, elemVolVars);
         calculateK_(problem, element, elemVolVars);

@@ -98,7 +98,16 @@ public:
 
     ~BoxLocalResidual()
     { }
-
+    
+    /*!
+     * \brief Initialize the local residual.
+     *
+     * This assumes that all objects of the simulation have been fully
+     * allocated but not necessarrily initialized completely.
+     *
+     * \param prob The representation of the physical problem to be
+     *             solved.
+     */
     void init(Problem &prob)
     { problemPtr_ = &prob; }
 
@@ -199,8 +208,12 @@ public:
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeom The finite-volume geometry of the element
+     * \param prevVolVars The volume averaged variables for all
+     *                   sub-contol volumes of the element at the previous 
+     *                   time level
      * \param curVolVars The volume averaged variables for all
-     *                   sub-contol volumes of the element
+     *                   sub-contol volumes of the element at the current
+     *                   time level
      * \param bcTypes The types of the boundary conditions for all 
      *                vertices of the element
      */

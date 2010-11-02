@@ -93,6 +93,8 @@ public:
      * \param tStart The start time [s] of the simulation (typically 0)
      * \param dtInitial The initial time step size [s]
      * \param tEnd The time at which the simulation is finished [s]
+     * \param writeInitialSol Specifies whether the initial condition 
+     *                        should be written to disk
      */
     void init(Problem &problem,
               Scalar tStart,

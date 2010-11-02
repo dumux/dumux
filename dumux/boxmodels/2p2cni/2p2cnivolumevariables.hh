@@ -39,6 +39,7 @@ namespace Dumux
 template <class TypeTag>
 class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 {
+    //! \cond 0
     typedef TwoPTwoCVolumeVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -59,11 +60,11 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
     enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
     enum { temperatureIdx = Indices::temperatureIdx };
 
-
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements))::Container ReferenceElements;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
+    //! \endcond
 
 public:
     /*!

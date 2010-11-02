@@ -95,7 +95,7 @@ public:
     /*!
      * \brief Convenience constructor for a full spline
      *
-     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
      * \param m0 The slope of the spline at \f$x_0\f$
      * \param m1 The slope of the spline at \f$x_n\f$
      */
@@ -203,7 +203,7 @@ public:
      * \brief Convenience constructor for a full spline
      *
      * \param nSamples The number of sampling points (must be >= 2)
-     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
      * \param m0 The slope of the spline at \f$x_0\f$
      * \param m1 The slope of the spline at \f$x_n\f$
      */
@@ -232,7 +232,7 @@ public:
     /*!
      * \brief Convenience constructor for a full spline
      *
-     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points (must have a size() method)
+     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points (must have a size() method)
      * \param m0 The slope of the spline at \f$x_0\f$
      * \param m1 The slope of the spline at \f$x_n\f$
      */
@@ -294,7 +294,7 @@ public:
     /*!
      * \brief Convenience constructor for a full spline
      *
-     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
      * \param m0 The slope of the spline at \f$x_0\f$
      * \param m1 The slope of the spline at \f$x_n\f$
      */
