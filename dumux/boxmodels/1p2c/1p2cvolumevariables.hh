@@ -18,7 +18,7 @@
 /*!
  * \file
  *
- ** \ingroup OnePTwoCModel
+ * \ingroup OnePTwoCBoxModel
  * \brief Quantities required by the single-phase, two-component box
  *        model defined on a vertex.
  */

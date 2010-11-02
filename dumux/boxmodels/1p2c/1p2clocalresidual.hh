@@ -39,7 +39,7 @@ namespace Dumux
 {
 /*!
  * 
- * \ingroup OnePTwoCModel
+ * \ingroup OnePTwoCBoxModel
  * 
  * \brief Calculate the local Jacobian for the single-phase,
  *        two-component model in the BOX scheme.

@@ -28,7 +28,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup OnePTwoCModel
+ * \addtogroup OnePTwoCBoxModel
  */
 // \{
 

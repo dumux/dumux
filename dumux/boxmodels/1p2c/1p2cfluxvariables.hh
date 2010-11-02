@@ -24,7 +24,7 @@
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
  * 
- * * \ingroup OnePTwoCModel
+ * \ingroup OnePTwoCBoxModel
  */
 #ifndef DUMUX_1P2C_FLUX_VARIABLES_HH
 #define DUMUX_1P2C_FLUX_VARIABLES_HH
