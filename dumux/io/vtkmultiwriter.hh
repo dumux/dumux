@@ -87,7 +87,7 @@ public:
         }
 
 
-        curWriter_ = new VtkWriter(gridView);
+        curWriter_ = new VtkWriter(gridView, Dune::VTKOptions::conforming);
         ++writerNum_;
 
         curTime_ = t;

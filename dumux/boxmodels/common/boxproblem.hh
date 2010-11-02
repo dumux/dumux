@@ -95,7 +95,6 @@ public:
         }
 
         model_ = new Model();
-        newtonMethod_ = new NewtonMethod(asImp_());
     }
 
     ~BoxProblem()
@@ -115,6 +114,7 @@ public:
     {
         // set the initial condition of the model
         model().init(asImp_());
+        newtonMethod_ = new NewtonMethod(asImp_());
     }
 
     /*!

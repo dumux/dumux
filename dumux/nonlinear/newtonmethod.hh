@@ -61,7 +61,6 @@ class NewtonMethod
 public:
     NewtonMethod(Problem &problem)
         : uOld_(problem.model().curSol()),
-          residual_(problem.model().curSol()),
           problem_(problem)
     { }
 
@@ -182,7 +181,6 @@ protected:
 
 private:
     SolutionVector uOld_;
-    SolutionVector residual_;
 
     Problem &problem_;
 };
