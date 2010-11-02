@@ -3,7 +3,7 @@
  *   Copyright (C) 2010 by Markus Wolff                                      *
  *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
- *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2010 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -16,25 +16,23 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_LENSSPATIALPARAMETERS_HH
-#define DUMUX_LENSSPATIALPARAMETERS_HH
+/*!
+ * \brief The spatial parameters for the RichardsLensProblem
+ */
+#ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
+#define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-/**
- * @file
- * @brief Class for defining spatial parameters
- * @author Bernd Flemisch, Klaus Mosthaf, Markus Wolff
- */
-
 namespace Dumux
 {
 
-/** \todo Please doc me! */
-
+/*!
+ * \brief The spatial parameters for the RichardsLensProblem
+ */
 template<class TypeTag>
 class RichardsLensSpatialParameters : public BoxSpatialParameters<TypeTag>
 {
@@ -59,10 +57,21 @@ class RichardsLensSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
 
 public:
-    // define the material law parameterized by absolute saturations
+    /*!
+     * \brief The material law to be used.
+     *
+     * This problem uses the RegularizedVanGenuchten material law.
+     */
     typedef EffToAbsLaw<EffectiveLaw> MaterialLaw;
+    //! The parameters of the material law to be used
     typedef typename MaterialLaw::Params MaterialLawParams;
 
+    /*!
+     * \brief Constructor
+     *
+     * \param gridView The DUNE GridView representing the spatial
+     *                 domain of the problem.
+     */
     RichardsLensSpatialParameters(const GridView& gridView)
         : ParentType(gridView)
     {
@@ -91,13 +100,11 @@ public:
     }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Returns the intrinsic permeability tensor [m^2] at a given location
      *
-     * \param element The current finite element
+     * \param element An arbitrary DUNE Codim<0> entity of the grid view
      * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param scvIdx The index of the sub-control volume
      */
     Scalar intrinsicPermeability(const Element &element,
                                  const FVElementGeometry &fvElemGeom,
@@ -108,13 +115,26 @@ public:
             return lensK_;
         return outerK_;
     }
-
+    
+    /*!
+     * \brief Returns the porosity [] at a given location
+     *
+     * \param element An arbitrary DUNE Codim<0> entity of the grid view
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume
+     */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     { return 0.4; }
 
-    // return the brooks-corey context depending on the position
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     *
+     * \param element An arbitrary DUNE Codim<0> entity of the grid view
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume
+     */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const
@@ -122,7 +142,14 @@ public:
         return materialLawParams(fvElemGeom.subContVol[scvIdx].global);
     }
 
-    // return the brooks-corey context depending on the position
+    /*!
+     * \brief Returns the parameters for the material law at a given location
+     *
+     * This method is not actually required by the Richards model, but provided 
+     * for the convenience of the RichardsLensProblem
+     *
+     * \param globalPos A global coordinate vector 
+     */
     const MaterialLawParams& materialLawParams(const GlobalPosition &globalPos) const
     {
 
@@ -131,7 +158,14 @@ public:
         return outerMaterialParams_;
     }
 
-    //! Set the bounding box of the fine-sand lens
+    /*!
+     * \brief Set the bounding box of the low-permeability lens
+     *
+     * This method is not actually required by the Richards model, but provided 
+     * for the convenience of the RichardsLensProblem
+     *
+     * \param globalPos A global coordinate vector 
+     */
     void setLensCoords(const GlobalPosition& lensLowerLeft,
                        const GlobalPosition& lensUpperRight)
     {
@@ -159,5 +193,6 @@ private:
 };
 
 } // end namespace
+
 #endif
 

@@ -17,7 +17,7 @@
 /*!
  * \file
  *
- * \brief Quantities required by the richards box model defined on a vertex.
+ * \brief Volume averaged quantities required by the Richards model.
  */
 #ifndef DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDS_VOLUME_VARIABLES_HH
@@ -30,8 +30,10 @@ namespace Dumux
 
 /*!
  * \ingroup RichardsModel
- * \brief Contains the quantities which are are constant within a
- *        finite volume in the Richards model.
+ * \brief Volume averaged quantities required by the Richards model.
+ * 
+ * This contains the quantities which are are constant within a finite
+ * volume in the Richards model
  */
 template <class TypeTag>
 class RichardsVolumeVariables : public BoxVolumeVariables<TypeTag>
@@ -65,6 +67,15 @@ class RichardsVolumeVariables : public BoxVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
+     *
+     * \param priVars The primary variables as a vector for the finite
+     *                volume.
+     * \param problem The physical problem which needs to be solved.
+     * \param element The DUNE Codim<0> enitity which intersects 
+     *                the control volume of the box method
+     * \param scvIdx The local index of the sub control volume inside the element
+     * \param isOldSol Specifies whether the solution is from 
+     *                 the previous time step or from the current one
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
@@ -87,9 +98,10 @@ public:
                                           problem);
 
         // material law parameters
+        Scalar pnRef = problem.referencePressure(element, elemGeom, scvIdx);
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
-        fluidState_.update(problem, materialParams, priVars, temperature_);
+        fluidState_.update(pnRef, materialParams, priVars, temperature_);
         
         mobility_[wPhaseIdx] = 
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx)) /
@@ -107,28 +119,52 @@ public:
     }
 
     /*!
-     * \brief Returns the effective saturation of a given phase within
-     *        the control volume.
+     * \brief Returns the average porosity [] within the control volume.
+     *
+     * The porosity is defined as the ratio of the pore space to the
+     * total volume, i.e. \f[ \Phi := \frac{V_{pore}}{V_{pore} + V_{rock}} \f]
+     */
+    Scalar porosity() const
+    { return porosity_; }
+
+    /*!
+     * \brief Returns the average absolute saturation [] of a given
+     *        fluid phase within the finite volume.
+     *
+     * The saturation of a fluid phase is defined as the fraction of
+     * the pore volume filled by it, i.e.
+     * \f[ S_\alpha := \frac{V_\alpha}{V_{pore}} = \phi \frac{V_\alpha}{V} \f]
+     *
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar saturation(int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
 
     /*!
-     * \brief Returns the mass density of a given phase within the
-     *        control volume.
+     * \brief Returns the average mass density [kg/m^3] of a given
+     *        fluid phase within the control volume.
+     *
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar density(int phaseIdx) const
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns the effective pressure of a given phase within
+     * \brief Returns the effective pressure [Pa] of a given phase within
      *        the control volume.
+     *
+     * For the non-wetting phase (i.e. the gas phase), we assume
+     * infinite mobility, which implies that the non-wetting phase
+     * pressure is equal to the finite volume's reference pressure
+     * defined by the problem.
+     *
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar pressure(int phaseIdx) const
     { return fluidState_.phasePressure(phaseIdx); }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
+     * \brief Returns average temperature [K] inside the control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -138,23 +174,29 @@ public:
     { return fluidState_.temperature(); }
 
     /*!
-     * \brief Returns the effective mobility of a given phase within
+     * \brief Returns the effective mobility [1/(Pa s)] of a given phase within
      *        the control volume.
+     *
+     * The mobility of a fluid phase is defined as the relative
+     * permeability of the phase (given by the chosen material law)
+     * divided by the dynamic viscosity of the fluid, i.e.
+     * \f[ \lambda_\alpha := \frac{k_{r\alpha}}{\mu_\alpha} \f]
+     *
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar mobility(int phaseIdx) const
     { return mobility_[phaseIdx]; }
 
     /*!
-     * \brief Returns the effective capillary pressure within the control volume.
+     * \brief Returns the effective capillary pressure [Pa] within the
+     *        control volume.
+     *
+     * The capillary pressure is defined as the difference in
+     * pressures of the non-wetting and the wetting phase, i.e.
+     * \f[ p_c = p_n - p_w \f]
      */
     Scalar capillaryPressure() const
     { return fluidState_.capillaryPressure(); }
-
-    /*!
-     * \brief Returns the average porosity within the control volume.
-     */
-    Scalar porosity() const
-    { return porosity_; }
 
     
 protected:

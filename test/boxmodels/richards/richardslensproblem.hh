@@ -1,6 +1,6 @@
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
- *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2009-2010 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -13,6 +13,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief A water infiltration problem with a low-permeability lens
+ *        embedded into a high- permeability domain which uses the
+ *        Richards box model.
+ */
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
@@ -39,8 +46,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards));
 
-// Set the grid type
-// Set the grid type
+// Set the grid type. Use UG if available, else SGrid
 #if HAVE_UG
 SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::UGGrid<2>);
 #else
@@ -48,6 +54,8 @@ SET_PROP(RichardsLensProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
 //SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
+// set the local finite element space to be used to calculate the
+// gradients in the flux calculation
 SET_PROP(RichardsLensProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -59,11 +67,9 @@ public:
 //    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
 
-// Set the problem property
+// Set the phsical problem to be solved
 SET_PROP(RichardsLensProblem, Problem)
-{
-    typedef Dumux::RichardsLensProblem<TTAG(RichardsLensProblem)> type;
-};
+{ typedef Dumux::RichardsLensProblem<TypeTag> type; };
 
 // Set the wetting phase
 SET_PROP(RichardsLensProblem, WettingPhase)
@@ -76,11 +82,9 @@ public:
 
 // Set the spatial parameters
 SET_PROP(RichardsLensProblem, SpatialParameters)
-{
-    typedef Dumux::RichardsLensSpatialParameters<TypeTag> type;
-};
+{ typedef Dumux::RichardsLensSpatialParameters<TypeTag> type; };
 
-// Enable gravity
+// Enable gravity?
 SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
 
 // Write the intermediate results of the newton method?
@@ -88,17 +92,27 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 }
 
 /*!
- * \ingroup RichardsBoxProblems
- * \brief Base class for defining an instance of a Richard`s problem, where water is infiltrating into an initially unsaturated zone.
+ * \ingroup RichardsModel
  *
- * The domain is box shaped. Left and right boundaries are Dirichlet boundaries with fixed water pressure (fixed Saturation Sw = 0),
- * bottom boundary is closed (Neumann 0 boundary), the top boundary (Neumann 0 boundary) is also closed except for infiltration section,
- * where water is infiltrating into an initially unsaturated zone. Linear capillary pressure-saturation relationship is used.
+ * \brief A water infiltration problem with a low-permeability lens
+ *        embedded into a high- permeability domain which uses the
+ *        Richards box model.
+ *
+ * The domain is box shaped. Left and right boundaries are Dirichlet
+ * boundaries with fixed water pressure (fixed Saturation $S_w = 0$),
+ * bottom boundary is closed (Neumann 0 boundary), the top boundary
+ * (Neumann 0 boundary) is also closed except for infiltration
+ * section, where water is infiltrating into an initially unsaturated
+ * porous medium. This problem is very similar the the LensProblem
+ * which uses the TwoPBoxModel, with the main difference being that 
+ * the domain is initally fully saturated by gas instead of water and 
+ * water instead of a %DNAPL infiltrates from the top.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./lens_richards ./grids/lens_richards_2d.dgf 10000 1</tt>
+ * <tt>./test_richards grids/richardslens.dgf 10e6 100</tt>
  *
- * where start simulation time = 1 second, end simulation time = 10000 seconds
+ * where the initial time step is 100 seconds, and the end of the
+ * simulation time is 10,000,000 seconds (115.7 days)
  */
 template <class TypeTag = TTAG(RichardsLensProblem) >
 class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
@@ -130,6 +144,16 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
 public:
+    /*!
+     * \brief Constructor
+     *
+     * \param timeManager The Dumux TimeManager for simulation management.
+     * \param gridView The grid view on the spatial domain of the problem
+     * \param lensLowerLeft The lower left coordinate of the 
+     *                      low-permeability lens
+     * \param lensUpperRight The upper right coordinate of the 
+     *                       low-permeability lens
+     */
     RichardsLensProblem(TimeManager &timeManager,
                         const GridView &gridView,
                         const GlobalPosition &lensLowerLeft,
@@ -138,6 +162,7 @@ public:
     {
         lensLowerLeft_=lensLowerLeft;
         lensUpperRight_=lensUpperRight;
+        pnRef_ = 1e5;
         this->spatialParameters().setLensCoords(lensLowerLeft_, lensUpperRight_);
     }
 
@@ -147,7 +172,7 @@ public:
     // \{
 
     /*!
-     * \brief The problem name.
+     * \brief The problem name
      *
      * This is used as a prefix for files generated by the simulation.
      */
@@ -155,26 +180,37 @@ public:
     { return "richardslens"; }
 
     /*!
-     * \brief Returns the temperature within the domain.
+     * \brief Returns the temperature [K] within a finite volume
      *
      * This problem assumes a temperature of 10 degrees Celsius.
+     *
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume in question
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param scvIdx The sub control volume index inside the finite 
+     *               volume geometry
      */
     Scalar temperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
-    {
-        return 283.15; // -> 10°C
-    };
+    { return 273.15 + 10; }; // -> 10°C
 
     /*!
-     * \brief Returns the reference pressure of the nonwetting phase.
+     * \brief Returns the reference pressure [Pa] of the non-wetting
+     *        fluid phase within a finite volume
      *
-     * This problem assumes a pressure of 1 bar.
+     * This problem assumes a constant reference pressure of 1 bar.
+     *
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume in question
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param scvIdx The sub control volume index inside the finite 
+     *               volume geometry
      */
-    Scalar pNreference() const
-    {
-        return 1e5; // reference non-wetting phase pressure [Pa] used for viscosity and density calculations
-    };
+    Scalar referencePressure(const Element &element,
+                             const FVElementGeometry &fvElemGeom,
+                             int scvIdx) const
+    { return pnRef_; };
 
     // \}
 
@@ -225,6 +261,15 @@ public:
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
+     *
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume in question
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param is The DUNE boundary intersection of the boundary segment
+     * \param scvIdx The sub control volume index of the finite 
+     *               volume geometry
+     * \param boundaryFaceIdx The index of the boundary face of the 
+     *                        finite volume geometry
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
@@ -250,13 +295,20 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     * \brief Specify the source term [kg/m^3] for the wetting phase
+     *        within a given sub-control-volume.
      *
      * For this method, the \a values parameter stores the rate
      * wetting phase mass is generated or annihilate per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
+     *
+     * \param values Storage for all values for the source terms
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume in question
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param scvIdx The sub control volume index of the finite 
+     *               volume geometry
      */
     void source(PrimaryVariables &values,
                 const Element &element,
@@ -267,10 +319,17 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial values for a control volume.
      *
      * For this method, the \a values parameter stores primary
      * variables.
+     *
+     * \param values Storage for all primary variables of the initial condition
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume in question
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param scvIdx The sub control volume index of the finite 
+     *               volume geometry
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
@@ -291,7 +350,7 @@ private:
         Scalar pc =
             MaterialLaw::pC(this->spatialParameters().materialLawParams(pos),
                             Sw);
-        values[pwIdx] = pNreference() - pc;
+        values[pwIdx] = pnRef_ - pc;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -322,6 +381,7 @@ private:
     }
 
     static const Scalar eps_ = 3e-6;
+    Scalar pnRef_;
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 };

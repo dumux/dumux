@@ -16,7 +16,8 @@
 /*!
  * \file
  *
- * \brief Contains the properties for the Richards BOX model.
+ * \brief Contains the property declarations for the Richards box
+ *        model.
  */
 #ifndef DUMUX_RICHARDS_PROPERTIES_HH
 #define DUMUX_RICHARDS_PROPERTIES_HH
@@ -38,8 +39,7 @@ namespace Properties {
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for problems discretized using the isothermal
-//! richards model
+//! The type tag for problems discretized using the Richards model
 NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel));
 
 //////////////////////////////////////////////////////////////////
@@ -47,12 +47,12 @@ NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(RichardsIndices); //!< Enumerations for the richards models
+NEW_PROP_TAG(RichardsIndices); //!< Enumerations used by the Richards models
 NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
-NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the richards model
-NEW_PROP_TAG(FluidState); //!< The fluid state to be used for the richards model
+NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (by default extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLawParams); //!< The context material law (by default extracted from the spatial parameters)
+NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the Richards model
+NEW_PROP_TAG(FluidState); //!< The fluid state to be used for the Richards model
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
 // \}

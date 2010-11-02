@@ -28,7 +28,7 @@ namespace Dumux
  * \ingroup RichardsProblems
  * \brief Base class for all problems which use the two-phase box model
  *
- * \todo Please doc me more!
+ * For a description of the Richards model, see Dumux::RichardsModel
  */
 template<class TypeTag>
 class RichardsBoxProblem : public BoxProblem<TypeTag>
@@ -38,6 +38,7 @@ class RichardsBoxProblem : public BoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
@@ -46,10 +47,25 @@ class RichardsBoxProblem : public BoxProblem<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
+    
+    typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*!
+     * \brief The constructor.
+     *
+     * The overloaded class must allocate all data structures
+     * required, but _must not_ do any calls to the model, the
+     * jacobian assembler, etc inside the constructor.
+     *
+     * If the problem requires information from these, the
+     * BoxProblem::init() method be overloaded.
+     *
+     * \param timeManager The TimeManager which keeps track of time
+     * \param gridView The GridView used by the problem.
+     */
     RichardsBoxProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView),
           gravity_(0), spatialParams_(gridView)
@@ -65,23 +81,38 @@ public:
     // \{
 
     /*!
-     * \brief Returns the temperature within the domain.
+     * \brief Returns the temperature [K] within a control volume.
      *
      * This method MUST be overwritten by the actual problem.
+     *
+     * \param element The DUNE Codim<0> enitiy which intersects with
+     *                the finite volume.
+     * \param fvGeom The finite volume geometry of the element.
+     * \param scvIdx The local index of the sub control volume inside the element
      */
-    Scalar temperature() const
-    { return asImp_()->temperature(); };
+    Scalar temperature(const Element &element,
+                       const FVElementGeometry fvGeom,
+                       int scvIdx) const
+    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
 
     /*!
-     * \brief Returns the reference pressure of the non-wetting phase within the domain.
+     * \brief Returns the reference pressure [Pa] of the non-wetting
+     *        phase within a control volume.
      *
      * This method MUST be overwritten by the actual problem.
+     *
+          * \param element The DUNE Codim<0> enitiy which intersects with
+     *                the finite volume.
+     * \param fvGeom The finite volume geometry of the element.
+     * \param scvIdx The local index of the sub control volume inside the element
      */
-    Scalar pNreference() const
-    { return asImp_()->pNreference(); };
+    Scalar referencePressure(const Element &element,
+                             const FVElementGeometry fvGeom,
+                             int scvIdx) const
+    { DUNE_THROW(Dune::NotImplemented, "referencePressure() method not implemented by the actual problem"); };
 
     /*!
-     * \brief Returns the acceleration due to gravity.
+     * \brief Returns the acceleration due to gravity [m/s^2].
      *
      * If the <tt>EnableGravity</tt> property is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
@@ -104,14 +135,7 @@ public:
     // \}
 
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
-
+    // the gravity vector
     GlobalPosition gravity_;
 
     // material properties

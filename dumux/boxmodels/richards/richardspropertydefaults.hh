@@ -16,8 +16,8 @@
 /*!
  * \file
  *
- * \brief Contains the default definitions for the properties for the
- *        Richards BOX model.
+ * \brief Contains the default definitions for the properties required
+ *        by the Richards box model.
  */
 #ifndef DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
 #define DUMUX_RICHARDS_PROPERTY_DEFAULTS_HH
@@ -45,37 +45,41 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties values
 //////////////////////////////////////////////////////////////////
+//! Number of equations required by the model
 SET_INT_PROP(BoxRichards, NumEq, 1);
+//! Number of fluid phases considered
 SET_INT_PROP(BoxRichards, NumPhases, 2);
 
-//! Use the 2p local jacobian operator for the 2p model
+//! The local residual operator
 SET_TYPE_PROP(BoxRichards,
               LocalResidual,
               RichardsLocalResidual<TypeTag>);
 
-//! the Model property
+//! The global model used
 SET_TYPE_PROP(BoxRichards, Model, RichardsModel<TypeTag>);
 
-//! the VolumeVariables property
+//! The class for the volume averaged quantities
 SET_TYPE_PROP(BoxRichards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
-//! the FluxVariables property
+//! The class for the quantities required for the flux calculation
 SET_TYPE_PROP(BoxRichards, FluxVariables, RichardsFluxVariables<TypeTag>);
 
-//! the NewtonController property
+//! The class of the newton controller
 SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
 
-//! the weight of the upwind vertex for the mobility
+//! The weight of the upwind vertex when looking at the mobility
 SET_SCALAR_PROP(BoxRichards,
                 MobilityUpwindAlpha,
                 1.0);
 
-//! The indices required by the isothermal single-phase model
+//! The class with all index definitions for the model
 SET_TYPE_PROP(BoxRichards, RichardsIndices, Dumux::RichardsIndices);
 
 /*!
- * \brief Set the property for the material law by retrieving it from
- *        the spatial parameters.
+ * \brief The material law for capillary pressure and relative permeability
+ *
+ * By default this type is determined by retrieving it from the
+ * spatial parameters.
  */
 SET_PROP(BoxRichards, MaterialLaw)
 {
@@ -87,8 +91,9 @@ public:
 };
 
 /*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
+ * \brief Set type of the parameter objects for the material law
+ *
+ * By default this is just retrieved from the material law.
  */
 SET_PROP(BoxRichards, MaterialLawParams)
 {
@@ -99,13 +104,33 @@ public:
     typedef typename MaterialLaw::Params type;
 };
 
+/*!
+ *\brief The fluid system used by the model.
+ *
+ * By default this uses the immiscible twophase fluid system. The
+ * actual fluids used are specified using in the problem definition by
+ * the WettingPhase and NonwettingPhase properties. Be aware that
+ * using different fluid systems in conjunction with the Richards
+ * model only makes very limited sense.
+ */
 SET_TYPE_PROP(BoxRichards, FluidSystem, FluidSystem2P<TypeTag>);
+
+/*!
+ * \brief The non-wetting phase used.
+ *
+ * By default we use gaseous nitrogen as non-wetting phase. Please be
+ * aware that you should be careful to use the Richards model in
+ * conjunction with liquid non-wetting phases. This is only meaningful
+ * if the viscosity of the liquid phase is _much_ lower than the
+ * viscosity of the wetting phase.
+ */
 SET_PROP(BoxRichards, NonwettingPhase)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef GasPhase<Scalar, N2<Scalar>> type;
 };
 
+//! The fluid state class
 SET_TYPE_PROP(BoxRichards, FluidState, RichardsFluidState<TypeTag>);
 
 // \}

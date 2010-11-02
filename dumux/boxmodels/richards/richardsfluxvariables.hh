@@ -17,8 +17,8 @@
 /*!
  * \file
  *
- * \brief This file contains the data which is required to calculate
- *        the flux of fluid over a face of a finite volume.
+ * \brief Data which is required to calculate the flux of fluid over a
+ *        face of a finite volume
  */
 #ifndef DUMUX_RICHARDS_FLUX_VARIABLES_HH
 #define DUMUX_RICHARDS_FLUX_VARIABLES_HH
@@ -30,7 +30,7 @@ namespace Dumux
 
 /*!
  * \ingroup RichardsModel
- * \brief This template class contains the data which is required to
+ * \brief Calculates and stores the data which is required to
  *        calculate the flux of fluid over a face of a finite volume.
  */
 template <class TypeTag>
@@ -61,27 +61,39 @@ class RichardsFluxVariables
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
+    /*!
+     * \brief Constructor
+     *
+     * \param problem The representation of the physical problem 
+     * \param element The DUNE Codim<0> entity which contains the face of 
+     *                the finite volume
+     * \param fvElemGeom The finite volume geometry of the element
+     * \param scvfIdx The local index of the sub-control volume face in the
+     *                element's finite volume geometry.
+     * \param elemVolVars An array containing the volume variables for all 
+     *                    sub-control volumes of the element.
+     */
     RichardsFluxVariables(const Problem &problem,
                           const Element &element,
-                          const FVElementGeometry &elemGeom,
-                          int faceIdx,
+                          const FVElementGeometry &fvElemGeom,
+                          int scfvIdx,
                           const ElementVolumeVariables &elemVolVars)
-        : fvElemGeom_(elemGeom)
+        : fvElemGeom_(fvElemGeom)
     {
-        scvfIdx_ = faceIdx;
+        scvfIdx_ = scfvIdx;
 
         calculateGradients_(problem, element, elemVolVars);
         calculateK_(problem, element, elemVolVars);
     };
 
     /*
-     * \brief Return the intrinsic permeability.
+     * \brief Return the intrinsic permeability [m^2].
      */
     const Tensor &intrinsicPermeability() const
     { return K_; }
 
     /*!
-     * \brief Return the pressure potential gradient.
+     * \brief Return the pressure potential gradient [Pa/m]
      */
     const Vector &potentialGradW() const
     { return potentialGrad_; }
@@ -91,6 +103,9 @@ public:
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the downstream control volume
      *        for a given phase.
+     *
+     * \param normalFlux The mass flux over the face multiplied with
+     *                   the face's normal.
      */
     int downstreamIdx(Scalar normalFlux) const
     { return (normalFlux >= 0)?face().j:face().i; }
@@ -100,10 +115,17 @@ public:
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the upstream control volume
      *        for a given phase.
+     *
+     * \param normalFlux The mass flux over the face multiplied with
+     *                   the face's normal.
      */
     int upstreamIdx(Scalar normalFlux) const
     { return (normalFlux > 0)?face().i:face().j; }
 
+    /*!
+     * \brief Returns the face of the element's finite volume geometry
+     *        which the flux variables object looks at
+     */
     const SCVFace &face() const
     { return fvElemGeom_.subContVolFace[scvfIdx_]; }
 

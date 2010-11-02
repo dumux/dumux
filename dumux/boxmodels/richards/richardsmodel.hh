@@ -37,37 +37,49 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxProblems
- * \defgroup RichardsBoxProblems Richards box problems
- */
-
-/*!
  * \ingroup BoxModels
  * \defgroup RichardsModel Richards box model
  */
 
 /*!
  * \ingroup RichardsModel
- * \brief Adaption of the BOX scheme to the isothermal Richards model.
+ * \brief Implements the Richards model for quasi twophase flow.
  *
- *
- * In the unsaturated zone, Richards' equation can be used.
- * Gas has resistance against the water flow in porous media.
- * However, viscosity of air is about 1\% of the viscosity of water,
- * which makes it highly mobile compared to the water phase.
- * Therefore, in Richards` equation only water phase with capillary effects are considered,
- * where pressure of the gas phase is set to a reference pressure (\f${p_n}_{ref}\f$).
- *
- * \f{align*}
- * \varrho \hspace{1mm} \phi \hspace{1mm} \frac{\partial S_w}{\partial p_c} \frac{\partial p_c}{\partial t} - \nabla \cdot (\frac{kr_w}{\mu_w} \hspace{1mm} \varrho_w \hspace{1mm} K \hspace{1mm}
- * (\nabla p_w - \varrho_w \hspace{1mm} \vec{g})) \hspace{1mm} = \hspace{1mm} q,
- * \f}
- * where \f$p_w = {p_n}_{ref} - p_c\f$.
- * Here \f$ p_w \f$, \f$ p_c \f$, and \f$ {p_n}_{ref} \f$
- * denote water pressure, capillary pressure, and non-wetting phase reference pressure, repectively.
- *
- * To overcome convergence problems, \f$ \frac{\partial S_w}{\partial p_c} \f$ is taken from the old iteration step.
- *
+ * In the unsaturated zone, Richards' equation can be used. Fundamentally, the Richards-equation
+ * is equivalent to the twophase model, i.e.
+ \f[
+ \frac{\partial\;\phi S_\alpha \rho_\alpha}{\partial t}
+ -
+ \mathbf{div} \left\{
+ \frac{k_{r\alpha}}{\mu_\alpha}\;K
+ \mathbf{grad}\left[
+ p_alpha - g\rho_\alpha
+ \right]
+ \right\}
+ =
+ q_\alpha,
+ \f]
+ * where \f$\alpha \in \{w, n\}\f$ is the fluid phase, \f$\rho_\alpha\f$ is the fluid 
+ * density, \f$S_\alpha\f$ is the fluid saturation, \f$\phi\f$ is the porosity, 
+ * \f$k_{r\alpha}\f$ is the relative permeability of the fluid, \f$\mu_\alpha\f$ is
+ * the fluid's dynamic viscosity, \f$K\f$ is the intrinsic permeability, \f$p_\alpha\f$ 
+ * is the fluid pressure and \f$g\f$ is the potential of the gravity.
+ * 
+ * However, the Richards model assumes that the non-wetting is gas
+ * which typically exhibits a much low viscosity than the liquid
+ * wetting phase. (For example air has about \f$1\%\f$ of the viscosity of
+ * liquid water.) As a consequence, the
+ * \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term is typically much larger for
+ * the non-wetting phase than for the wetting phase. In the Richards
+ * model it is now assumed that \f$\frac{k_{rn}}{\mu_n} \to \infty\f$
+ * which means that the pressure of the non-wetting phase is
+ * equivalent to hydrostatic pressure of the gas or can be externally
+ * specified.  Therefore, in Richards' equation mass conservation only
+ * needs to be considered for the wetting phase. The model thus choses
+ * \f$p_w\f$ as its only primary variable and calculates the wetting phase
+ * saturation using the inverse of the capilary pressure, i.e.
+ \f[ S_w = p_c^{-1}(p_n - p_w)\, \f]
+ * where \f$p_n\f$ is an externally given reference pressure.
  */
 template<class TypeTag >
 class RichardsModel : public BoxModel<TypeTag>
@@ -100,6 +112,9 @@ public:
     /*!
      * \brief Returns the relative weight of a primary variable for
      *        calculating relative errors.
+     *
+     * \param vertIdx The global index of the vertex in question
+     * \param pvIdx The index of the primary variable
      */
     Scalar primaryVarWeight(int vertIdx, int pvIdx) const
     {
@@ -111,6 +126,9 @@ public:
     /*!
      * \brief All relevant primary and secondary of a given
      *        solution to an ouput writer.
+     *
+     * \param sol The current solution which ought to be written to disk
+     * \param writer The Dumux::VtkMultiWriter which is be used to write the data
      */
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)

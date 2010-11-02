@@ -26,11 +26,10 @@
 
 namespace Dumux {
 /*!
- * \brief A 2pNc specific controller for the newton solver.
+ * \brief A Richards model specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the newton method to abort quicker if the solution is
- * way out of bounds.
+ * and can thus do update smarter than the plain Newton controller.
  */
 template <class TypeTag>
 class RichardsNewtonController : public NewtonController<TypeTag>
@@ -59,9 +58,25 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
 public:
+    /*!
+     * \brief Constructor
+     */
     RichardsNewtonController()
     { };
 
+    /*!
+     * \brief Update the current solution of the newton method
+     *
+     * This is basically the step
+     * \f[ u^{k+1} = u^k - \Delta u^k \f]
+     *
+     * \param deltaU When the method is called, this contains the
+     *               vector of differences between the current
+     *               iterative solution and the next \f$\Delta
+     *               u\f$. After the method is finished it should
+     *               contain the next iterative solution \f$ u^{k+1} \f$.
+     * \param uOld The current iterative solution \f$ u^k \f$
+     */
     void newtonUpdate(SolutionVector &deltaU, const SolutionVector &uOld)
     {
         this->writeConvergence_(uOld, deltaU);
@@ -89,7 +104,8 @@ public:
                     const MaterialLawParams &mp = sp.materialLawParams(*eIt, fvElemGeom, i);
                     Scalar pcMin = MaterialLaw::pC(mp, 1.0);
                     Scalar pW = uOld[globI][pwIdx];
-                    Scalar pN = std::max(this->problem_().pNreference(), pW + pcMin);
+                    Scalar pN = std::max(this->problem_().referencePressure(*eIt, fvElemGeom, i), 
+                                         pW + pcMin);
                     Scalar pcOld = pN - pW;
                     Scalar SwOld = std::max(0.0, MaterialLaw::Sw(mp, pcOld));
 

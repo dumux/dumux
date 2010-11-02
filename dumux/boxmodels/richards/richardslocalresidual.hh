@@ -37,8 +37,7 @@ namespace Dumux
 {
 /*!
  * \ingroup RichardsModel
- * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the Richards box model.
+ * \brief Element-wise calculation of the residual for the Richards box model.
  */
 template<class TypeTag>
 class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
@@ -70,6 +69,11 @@ public:
      *        model.
      *
      * This function should not include the source and sink terms.
+     *
+     * \param result Stores the average mass per unit volume for each phase [kg/m^3]
+     * \param scvIdx The sub control volume index of the current element
+     * \param usePrevSol Calculate the storage term of the previous solution
+     *                   instead of the model's current solution.
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {
@@ -94,13 +98,19 @@ public:
     /*!
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
+     *
+     * 
+     * \param flux Stores the total mass fluxes over a sub-control volume face
+     *             of the current element [kg/s]
+     * \param scvfIdx The sub control volume face index inside the current 
+     *                element
      */
-    void computeFlux(PrimaryVariables &flux, int faceId) const
+    void computeFlux(PrimaryVariables &flux, int scvfIdx) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->elem_(),
                                this->fvElemGeom_(),
-                               faceId,
+                               scvfIdx,
                                this->curVolVars_());
 
         // calculate the flux in the normal direction of the
@@ -128,13 +138,18 @@ public:
 
     /*!
      * \brief Calculate the source term of the equation
+     *
+     * \param flux Stores the average source term of all phases inside a 
+     *             sub-control volume of the current element [kg/(m^3 s)]
+     * \param scvIdx The sub control volume index inside the current 
+     *                element
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &q, int scvIdx)
     {
         this->problem_().source(q,
                                 this->elem_(),
                                 this->fvElemGeom_(),
-                                localVertexIdx);
+                                scvIdx);
     }
 };
 
