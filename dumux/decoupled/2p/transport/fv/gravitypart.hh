@@ -27,7 +27,7 @@
 
 namespace Dumux
 {
-/*!\ingroup convPart
+/*!\ingroup Transport2p
  * @brief  Class for defining the gravity term of a saturation equation
  *
  * Defines the gravity term of the form

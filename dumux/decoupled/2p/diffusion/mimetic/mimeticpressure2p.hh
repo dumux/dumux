@@ -36,7 +36,7 @@
 namespace Dumux
 {
 
-//! \ingroup diffusion
+//! \ingroup mimetic
 //! mimetic Diffusion Model
 /*! Provides a mimetic implementation for the evaluation
  * of equations of the form

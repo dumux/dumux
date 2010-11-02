@@ -30,14 +30,16 @@
 
 namespace Dumux
 {
-
-/*! \ingroup impet
+/*!
+ * \ingroup IMPET
+ * \defgroup IMPETproblems IMPET problems
+ */
+/*!
+ * \ingroup IMPETproblems
  * @brief base class for problems using a sequential implicit-explicit strategy
  *
- *  Template parameters are:
- *
- *  - TypeTag      problem TypeTag
- *  - Implementation        problem implementation
+ *  \tparam TypeTag      problem TypeTag
+ *  \tparam Implementation problem implementation
  */
 template<class TypeTag, class Implementation>
 class IMPETProblem
@@ -115,11 +117,6 @@ public:
     }
 
     /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
      * \brief Called by the Dumux::TimeManager in order to
      *        initialize the problem.
      */
@@ -130,7 +127,8 @@ public:
     }
 
     /*!
-     * \brief Called by the time manager before the time integration.
+     * \brief Called by Dumux::TimeManager just before the time
+     *        integration.
      */
     void preTimeStep()
     {}
@@ -308,15 +306,20 @@ public:
     TimeManager &timeManager()
     { return timeManager_; }
 
-    /*!
-     * \copydoc timeManager()
-     */
+    //! \copydoc Dumux::IMPETProblem::timeManager()
     const TimeManager &timeManager() const
     { return timeManager_; }
 
+    /*!
+     * \brief Returns variables container
+     *
+     * This provides access to the important variables that are used in the
+     * simulation process, such as pressure, saturation etc.
+     */
     Variables& variables ()
     { return variables_; }
 
+    //! \copydoc Dumux::IMPETProblem::variables ()
     const Variables& variables () const
     { return variables_; }
 
@@ -326,35 +329,29 @@ public:
     IMPETModel &model()
     { return *model_; }
 
-    /*!
-     * \copydoc model()
-     */
+    //! \copydoc Dumux::IMPETProblem::model()
     const IMPETModel &model() const
     { return *model_; }
     // \}
 
     /*!
-     * \brief Returns numerical model used for the problem.
+     * \brief Returns the pressure model used for the problem.
      */
     PressureModel &pressureModel()
     { return *pressModel_; }
 
-    /*!
-     * \copydoc model()
-     */
+    //! \copydoc Dumux::IMPETProblem::pressureModel()
     const PressureModel &pressureModel() const
     { return *pressModel_; }
     // \}
 
     /*!
-     * \brief Returns numerical model used for the problem.
+     * \brief Returns transport model used for the problem.
      */
     TransportModel &transportModel()
     { return *transportModel_; }
 
-    /*!
-     * \copydoc model()
-     */
+    //! \copydoc Dumux::IMPETProblem::transportModel()
     const TransportModel &transportModel() const
     { return *transportModel_; }
     // \}
@@ -408,7 +405,7 @@ public:
 
         res.deserializeEnd();
     };
-
+    // \}
 
     void addOutputVtkFields()
     {
@@ -434,15 +431,16 @@ protected:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc asImp_()
+    //! \copydoc Dumux::IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
+    //! Returns the applied VTK-writer for the output
     VtkMultiWriter& resultWriter()
     {
         return resultWriter_;
     }
-
+    //! \copydoc Dumux::IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
         return resultWriter_;

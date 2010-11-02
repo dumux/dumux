@@ -17,11 +17,17 @@
 #define DUMUX_IMPET_PROPERTIES_HH
 
 #include <dumux/decoupled/common/decoupledproperties.hh>
-
+/*!
+ * \ingroup Sequential
+ * \defgroup IMPET IMPET (Implicit Pressure Explicit Transport)
+ */
+/*!
+ * \ingroup IMPET
+ * \ingroup Properties
+ */
 /*!
  * \file
- * \brief Specify the shape functions, operator assemblers, etc
- *        used for the BoxScheme.
+ * \brief Base file for properties related to sequential IMPET algorithms
  */
 namespace Dumux
 {
@@ -32,9 +38,11 @@ class IMPET;
 namespace Properties
 {
 /*!
- * \addtogroup diffusion
+ *
+ * \brief General properties for sequential IMPET algorithms
+ *
+ * This class holds properties necessary for the sequential IMPET solution.
  */
-// \{
 
 //////////////////////////////////////////////////////////////////
 // Type tags tags

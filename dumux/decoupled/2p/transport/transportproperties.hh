@@ -16,7 +16,14 @@
 #ifndef DUMUX_TRANSPORT_PROPERTIES_HH
 #define DUMUX_TRANSPORT_PROPERTIES_HH
 
-
+/*!
+ * \ingroup FV2p
+ * \defgroup Transport2p Immiscible Transport
+ */
+/*!
+ * \ingroup Transport2p
+ * \ingroup Properties
+ */
 /*!
  * \file
  * \brief Specify the shape functions, operator assemblers, etc
@@ -45,9 +52,6 @@ class VariableClass2P;
 
 namespace Properties
 {
-/*!
- * \addtogroup diffusion
- */
 // \{
 
 //////////////////////////////////////////////////////////////////

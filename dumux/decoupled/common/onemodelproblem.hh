@@ -33,7 +33,8 @@
 namespace Dumux
 {
 
-/*! \ingroup diffusion
+/*! \ingroup IMPET
+ *
  * @brief base class that defines the parameters of loosely coupled diffusion and transport equations
  *
  * An interface for defining parameters for the stationary diffusion equation
@@ -45,11 +46,7 @@ namespace Dumux
  *  where, the velocity \f$\boldsymbol{v} \sim \boldsymbol{K} \nabla p \f$,
  *  \f$p\f$ is a pressure and q a source/sink term, \f$S\f$ denotes a phase saturation and \f$\boldsymbol{v_\alpha}\f$ is a phase velocity.
  *
- *  Template parameters are:
- *
- *  - GridView      a DUNE gridview type
- *  - Scalar        type used for scalar quantities
- *  - VC            type of a class containing different variables of the model
+ * @tparam TypeTag The Type Tag
  */
 template<class TypeTag, class Implementation>
 class OneModelProblem
@@ -91,11 +88,9 @@ private:
 public:
 
     //! Constructs an object of type OneModelProblemProblem
-    /** @param variables object of class VariableClass.
-     *  @param wettingPhase implementation of a wetting phase.
-     *  @param nonWettingPhase implementation of a non-wetting phase.
-     *  @param spatial parameters implementation of the solid matrix
-     *  @param materialLaw implementation of Material laws. Class TwoPhaseRelations or derived.
+    /*!
+     *  \tparam TypeTag The TypeTag
+     *  \tparam verbose Output level for Dumux::TimeManager
      */
     OneModelProblem(const GridView &gridView, bool verbose = true)
         : gridView_(gridView),
@@ -143,8 +138,12 @@ public:
     { };
 
     /*!
-     * \brief Called by Dumux::TimeManager just before the time
-     *        integration.
+     * \brief Called by Dumux::TimeManager whenever a solution for a
+     *        timestep has been computed and the simulation time has
+     *        been updated.
+     *
+     * This is used to do some janitorial tasks like writing the
+     * current solution to disk.
      */
     void postTimeStep()
     { };
@@ -282,7 +281,7 @@ public:
     { return timeManager_; }
 
     /*!
-     * \copydoc timeManager()
+     * \brief \copybrief Dumux::OneModelProblem::timeManager()
      */
     const TimeManager &timeManager() const
     { return timeManager_; }
@@ -300,7 +299,7 @@ public:
     { return *model_; }
 
     /*!
-     * \copydoc model()
+     * \brief \copybrief Dumux::OneModelProblem::model()
      */
     const Model &model() const
     { return *model_; }
@@ -364,7 +363,7 @@ protected:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc asImp_()
+    //! \brief \copybrief Dumux::OneModelProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

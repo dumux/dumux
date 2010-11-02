@@ -16,9 +16,27 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \ingroup IMPET
+ * \defgroup IMPES Immiscible IMPES
+ */
+/*!
+ * \ingroup IMPES
+ * \defgroup FV2p Finite-Volume
+ */
+/*! \ingroup IMPES
+ * \defgroup MPFA2p MPFA
+ */
+/*! \ingroup IMPES
+ * \defgroup mimetic Mimetic FiniteDifference
+ */
+/*!
+ * \ingroup IMPES
+ * \ingroup Properties
+ */
+/*!
  * \file
  *
- * \brief Defines the properties required for the twophase BOX model.
+ * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
 
 #ifndef DUMUX_2PPROPERTIES_HH
@@ -35,10 +53,6 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup fracflow
- * \addtogroup DecoupledModel
- */
 // \{
 
 ////////////////////////////////
@@ -62,10 +76,8 @@ struct TwoPCommonIndices;
 ////////////////////////////////
 namespace Properties
 {
-
 /*!
- * \ingroup fracflow
- * \addtogroup DecoupledModel
+ * \ingroup Properties
  */
 // \{
 
@@ -193,6 +205,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
 public:
     typedef Dune::BiCGSTABSolver<Vector> type;
+//    typedef Dune::CGSolver<Vector> type;
 };
 
 //SET_INT_PROP(DecoupledTwoP, PressurePreconditioner, SolverIndices::seqILU0);

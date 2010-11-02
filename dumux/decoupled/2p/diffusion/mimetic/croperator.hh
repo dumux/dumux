@@ -44,21 +44,10 @@
  * @author Peter Bastian
  */
 
-/*! @defgroup DISC_Operators Operators
-  @ingroup DISC
-  @brief
-
-  @section D1 Introduction
-  <!--=================-->
-
-  To be written
-*/
-
 namespace Dumux
 {
-/** @addtogroup DISC_Operators
- *
- * @{
+/*!
+ * \ingroup mimetic
  */
 /**
  * @brief defines a class for Crozieux-Raviart piecewise linear finite element functions

@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ * \brief doc me!!
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
 #define DUMUX_DIFFUSIONPROBLEM_2P_HH
@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup Decoupled
+ * \ingroup IMPESproblems
  * \brief  Base class for all 2-phase problems which use an impes algorithm
  *
  * \todo Please doc me more!

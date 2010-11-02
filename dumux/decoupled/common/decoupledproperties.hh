@@ -19,20 +19,21 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
-
+/*!
+ * \defgroup Sequential Sequential Scheme
+ */
+/*!
+ * \ingroup Sequential
+ * \ingroup Properties
+ */
 /*!
  * \file
- * \brief Specify the shape functions, operator assemblers, etc
- *        used for the BoxScheme.
+ * \brief Base file for properties related to sequential (decoupled) models
  */
 namespace Dumux
 {
 namespace Properties
 {
-/*!
- * \addtogroup diffusion
- */
-// \{
 
 //////////////////////////////////////////////////////////////////
 // Type tags tags
@@ -126,8 +127,10 @@ public:
 // Properties
 //////////////////////////////////////////////////////////////////
 
+//! Use the parent VariableClass
 SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);
 
+//! TODO: could this be moved (with includes) to /2p/2pproperties.hh ??
 SET_PROP_DEFAULT(LocalStiffness)
 {
 private:
@@ -198,6 +201,13 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, 2*dim > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 };
 
+/*!
+ * \brief Default implementation for the Vector of the transportet quantity
+ *
+ * This type defines the data type of the transportet quantity. In case of a
+ * immiscible 2p system, this would represent a vector holding the saturation
+ * of one phase.
+ */
 SET_PROP_DEFAULT(TransportSolutionType)
 {
 	private:

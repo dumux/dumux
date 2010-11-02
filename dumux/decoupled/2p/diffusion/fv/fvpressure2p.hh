@@ -37,8 +37,8 @@
 namespace Dumux
 {
 
-//! \ingroup diffusion
-//! Finite Volume Diffusion Model
+//! \ingroup FV2p
+//! \brief Pressure equation of the sequential Finite Volume Model
 /*! Provides a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
@@ -53,12 +53,7 @@ namespace Dumux
  * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
  * on \f$\Gamma_{Dirichlet}\f$.
  *
- * Template parameters are:
- *
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVPressure2P
 {
@@ -128,18 +123,9 @@ protected:
     }
 
 public:
-    //! Calculate the pressure.
-    /*!
-     *  \param t time
-     *
-     *  Calculates the pressure \f$p\f$ as solution of the boundary value
-     *  \f[  \text{div}\, \boldsymbol{v} = q, \f]
-     *  subject to appropriate boundary conditions.
-     */
 
-    //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
-
+    //! \copydoc Dumux::FVPressure1P::initialize()
     void initialize(bool solveTwice = true)
     {
         updateMaterialLaws();
@@ -177,7 +163,7 @@ public:
         }
         return;
     }
-
+    //! \copydoc Dumux::FVPressure1P::pressure()
     void pressure(bool solveTwice = true)
     {
         assemble(false);
@@ -185,7 +171,7 @@ public:
 
         return;
     }
-
+    //! What is this method here fore???
     void update()
     {
         updateMaterialLaws();
@@ -208,8 +194,7 @@ public:
         return;
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    //! \copydoc Dumux::FVPressure1P::addOutputVtkFields(MultiWriter &writer)
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -264,10 +249,7 @@ public:
 
     //! Constructs a FVPressure2P object
     /**
-     * \param gridView gridView object of type GridView
      * \param problem a problem class object
-     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
-     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
      */
     FVPressure2P(Problem& problem) :
         problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (2 * dim + 1)
@@ -347,7 +329,7 @@ void FVPressure2P<TypeTag>::initializeMatrix()
     return;
 }
 
-//function which assembles the system of equations to be solved
+//!function which assembles the system of equations to be solved
 template<class TypeTag>
 void FVPressure2P<TypeTag>::assemble(bool first)
 {
@@ -817,7 +799,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
     return;
 }
 
-//solves the system of equations to get the spatial distribution of the pressure
+//!solves the system of equations to get the spatial distribution of the pressure
 template<class TypeTag>
 void FVPressure2P<TypeTag>::solve()
 {
@@ -847,7 +829,7 @@ void FVPressure2P<TypeTag>::solve()
 
     return;
 }
-//constitutive functions are updated once if new saturations are calculated and stored in the variables object
+//!constitutive functions are updated once if new saturations are calculated and stored in the variables object
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
 {

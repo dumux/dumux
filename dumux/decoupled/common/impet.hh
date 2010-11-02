@@ -28,7 +28,7 @@
 namespace Dumux
 {
 /**
- * \ingroup impet
+ * \ingroup IMPET
  * \brief IMplicit Pressure Explicit Transport (IMPET) scheme for the solution of weakly coupled diffusion/transport problems.
  *
  * The model implements the decoupled equations of two-phase flow.
@@ -169,8 +169,8 @@ public:
 
     //! \brief Write data files
     /*!
-     *  \param name file name
-     *  \param k format parameter
+     *  calls the output methods of both models, pressure and transport.
+     *  \param writer the current VTKwriter
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)

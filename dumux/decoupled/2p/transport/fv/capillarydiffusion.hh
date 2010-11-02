@@ -21,12 +21,12 @@
 
 /**
  * @file
- * @brief  Class for defining the diffusive capillary pressure term of a saturation equation
+ * @brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation
  * @author Bernd Flemisch, Markus Wolff
  */
 namespace Dumux
 {
-/*!\ingroup diffPart
+/*!\ingroup Transport2p
  * @brief  Class for defining the diffusive capillary pressure term of a saturation equation
  *
  * Defines the diffusive capillary pressure term of the form

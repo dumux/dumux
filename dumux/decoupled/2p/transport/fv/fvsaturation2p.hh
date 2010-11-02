@@ -29,8 +29,8 @@
 
 namespace Dumux
 {
-//! \ingroup transport
-//! The finite volume model for the solution of the non-wetting phase saturation equation
+//! \ingroup Transport2p
+//! \brief The finite volume model for the solution of the non-wetting phase saturation equation
 /*! Provides a Finite Volume implementation for the evaluation
  *  of equations of the form
  *  \f[
@@ -44,15 +44,7 @@ namespace Dumux
  *  \f$f_n\f$ is the non-wetting phase fractional flow function, \f$\lambda_w\f$ is the wetting phase mobility, \f$\boldsymbol{K}\f$ the absolute permeability,
  *  \f$p_c\f$ the capillary pressure and \f$S_n\f$ the wetting phase saturation.
  *
- *
-
- Template parameters are:
-
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
-
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class FVSaturation2P
@@ -140,7 +132,6 @@ public:
      *  \param[in]  t         time
      *  \param[in] dt         time step size
      *  \param[in] updateVec  vector for the update values
-     *  \param[in] CLFFac     security factor for the time step criterion (0 < CLFFac <= 1)
      *  \param[in] impes      variable is true if an impes algorithm is used and false if the transport part is solved independently
      *
      *  This method calculates the update vector \f$ u \f$ of the discretized equation
@@ -895,24 +886,26 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         break;
                     }
                     }
-                    Scalar boundaryFactor = problem_.neumannSat(globalPosFace, *isIt, factor);
 
-                    if (factor != boundaryFactor)
+
+                    switch (saturationType_)
                     {
-                        switch (saturationType_)
-                        {
-                        case Sw:
-                        {
-                            factor = boundaryFactor / densityWI * faceArea / (volume * porosity);
-                            break;
-                        }
-                        case Sn:
-                        {
-                            factor = boundaryFactor / densityNWI * faceArea / (volume * porosity);
-                            break;
-                        }
-                        }
+                    case Sw:
+                    {
+                        Scalar boundaryFactor = problem_.neumannPress(globalPosFace, *isIt)[wPhaseIdx];
+
+                        factor = boundaryFactor / densityWI * faceArea / (volume * porosity);
+                        break;
                     }
+                    case Sn:
+                    {
+                        Scalar boundaryFactor = problem_.neumannPress(globalPosFace, *isIt)[nPhaseIdx];
+
+                        factor = boundaryFactor / densityNWI * faceArea / (volume * porosity);
+                        break;
+                    }
+                    }
+
 
                     //for time step criterion
 

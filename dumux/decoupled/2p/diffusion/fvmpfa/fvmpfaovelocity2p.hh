@@ -28,7 +28,7 @@
 
 namespace Dumux
 {
-
+//! \ingroup MPFA2p
 template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTag>
 {
     typedef FVMPFAOVelocity2P<TypeTag> ThisType;

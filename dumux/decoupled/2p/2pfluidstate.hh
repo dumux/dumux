@@ -16,7 +16,7 @@
 /*!
  * \file
  *
- * \brief Gives the phase state.
+ * \brief Determines the phase state of the immiscible sequential 2p model.
  */
 #ifndef DUMUX_2P_FLUID_STATE_HH
 #define DUMUX_2P_FLUID_STATE_HH
@@ -27,7 +27,10 @@
 namespace Dumux
 {
 /*!
- * \brief Calcultes the phase state from the primary variables in the
+ * \ingroup IMPES
+ */
+/*!
+ * \brief Calcultes the phase state from the primary variables in the sequential
  *        2p model.
  */
 template <class TypeTag>

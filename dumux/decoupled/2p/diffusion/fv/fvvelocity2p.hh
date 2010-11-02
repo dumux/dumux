@@ -26,8 +26,8 @@
 
 namespace Dumux
 {
-//! \ingroup diffusion
-//! Finite Volume Diffusion Model
+//! \ingroup FV2p
+//! \brief Determines the velocity of the sequential Finite Volume Model
 /*! Calculates non-wetting phase velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
@@ -38,12 +38,7 @@ namespace Dumux
  * As in the two-phase pressure equation a total flux depending on a total velocity is considered one has to be careful at neumann flux boundaries. Here, a phase velocity is only uniquely defined, if
  * the saturation is at the maximum (\f$1-S_{rw}\f$, \f$\boldsymbol{v}_{total} = \boldsymbol{v}_n\f$) or at the minimum (\f$ S_{rn} \f$, \f$\boldsymbol{v}_n = 0\f$)
  *
- * Template parameters are:
- *
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
+ * \tparam TypeTag The Type Tag
  */
 
 template<class TypeTag>
@@ -99,11 +94,8 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
 public:
     //! Constructs a FVNonWettingPhaseVelocity2P object
-    /**
-     * \param gridView gridView object of type GridView
+    /*!
      * \param problem a problem class object
-     * \param pressureType a string giving the type of pressure used (could be: pw, pn, pglobal)
-     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
      */
     FVVelocity2P(Problem& problem)
     : FVPressure2P<TypeTag>(problem)
@@ -119,10 +111,7 @@ public:
     }
     //! Constructs a FVNonWettingPhaseVelocity2P object
     /**
-     * \param gridView gridView object of type GridView
      * \param problem a problem class object
-     * \param pressureType a string giving the type of pressure used (could be: pw, pn, pglobal)
-     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
      * \param solverName a string giving the type of solver used (could be: CG, BiCGSTAB, Loop)
      * \param preconditionerName a string giving the type of the matrix preconditioner used (could be: Dune::SeqILU0, SeqPardiso)
      */
@@ -142,8 +131,6 @@ public:
 
     //! Calculate the velocity.
     /*!
-     *  \param t time
-     *
      *
      *  Given the piecewise constant pressure \f$p\f$,
      *  this method calculates the velocity
@@ -161,8 +148,7 @@ public:
         return;
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    //! \copydoc Dumux::FVVelocity1P::addOutputVtkFields(MultiWriter &writer)
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -224,6 +210,7 @@ public:
 private:
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation)); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
 };
+//! \copydoc Dumux::FVVelocity1P::calculateVelocity()
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocity()
 {

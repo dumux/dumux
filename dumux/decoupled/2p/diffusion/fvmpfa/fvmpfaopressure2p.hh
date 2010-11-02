@@ -41,7 +41,7 @@
 
 namespace Dumux
 {
-//! \ingroup diffusion
+//! \ingroup MPFA2p
 //! Base class for defining an instance of a numerical diffusion model.
 /*! An interface for defining a numerical diffusion model for the
  *  solution of equations of the form

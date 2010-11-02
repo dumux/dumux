@@ -24,26 +24,19 @@
 
 /**
  * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations
+ * @brief  Base class holding the variables for sequential models.
  * @author Markus Wolff
  */
 
 namespace Dumux
 {
 /*!
- * \ingroup fracflow
- * \ingroup diffusion
- * \ingroup transport
+ * \ingroup Sequential
  */
-//! Class including the variables and data of discretized data of the constitutive relations.
-/*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
- * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
- *
- * Template parameters are:
-
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
+//! Class holding the variables and discretized data for sequential models.
+/*!
+ * For multi-phase flow, the common variable in all sequential models is the saturation, stored in this class.
+ * Additionally, general access to grids and serialize methods is prepared.
  */
 template<class TypeTag>
 class VariableClass

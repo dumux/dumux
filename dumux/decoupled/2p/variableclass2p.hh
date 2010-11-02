@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup DecoupledModel
+ * \ingroup Immiscible IMPES
  */
 //! Class including the variables and data of discretized data of the constitutive relations.
 /*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.

@@ -16,6 +16,11 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \ingroup IMPES
+ * \defgroup FV1p Single Phase Finite-Volume
+ */
+/*!
+ * \ingroup FV1p
  * \file
  *
  * \brief Defines the properties required for the twophase BOX model.
@@ -34,10 +39,6 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup fracflow
- * \addtogroup DecoupledModel
- */
 
 ////////////////////////////////
 // forward declarations

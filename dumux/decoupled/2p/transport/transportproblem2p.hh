@@ -30,7 +30,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup Decoupled
+ * \ingroup Transport2p
+ * \ingroup IMPESproblems
  * \brief  Base class for all 2-phase problems which use an impes algorithm
  *
  * \todo Please doc me more!

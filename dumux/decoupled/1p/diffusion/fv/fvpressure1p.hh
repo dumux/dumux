@@ -37,8 +37,8 @@
 namespace Dumux
 {
 
-//! \ingroup diffusion
-//! Finite Volume Diffusion Model
+//! \ingroup FV1p
+//! \brief Single Phase Finite Volume Diffusion Model
 /*! Provides a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
@@ -53,12 +53,8 @@ namespace Dumux
  * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
  * on \f$\Gamma_{Dirichlet}\f$.
  *
- * Template parameters are:
+ * @tparam TypeTag The Type Tag
  *
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
  */
 template<class TypeTag> class FVPressure1P
 {
@@ -113,9 +109,9 @@ protected:
     }
 
 public:
-    //! Calculate the pressure.
+    //! Initializes the problem
     /*!
-     *  \param t time
+     *  @param solveTwice repeats the pressure calculation step
      *
      *  Calculates the pressure \f$p\f$ as solution of the boundary value
      *  \f[  \text{div}\, \boldsymbol{v} = q, \f]
@@ -134,6 +130,14 @@ public:
         return;
     }
 
+    //! Calculate the pressure.
+    /*!
+     *  @param solveTwice without any function here!
+     *
+     *  Calculates the pressure \f$p\f$ as solution of the boundary value
+     *  \f[  \text{div}\, \boldsymbol{v} = q, \f]
+     *  subject to appropriate boundary conditions.
+     */
     void pressure(bool solveTwice = true)
     {
         assemble(false);
@@ -156,7 +160,7 @@ public:
     }
 
     //! \brief Write data files
-    /*  \param name file name */
+    /*  \param writer VTK-Writer for the current simulation run */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -172,10 +176,7 @@ public:
 
     //! Constructs a FVPressure1P object
     /**
-     * \param gridView gridView object of type GridView
      * \param problem a problem class object
-     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
-     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
      */
     FVPressure1P(Problem& problem) :
         problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (2 * dim + 1)
@@ -193,7 +194,7 @@ protected:
     const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
 };
 
-//initializes the matrix to store the system of equations
+//!initializes the matrix to store the system of equations
 template<class TypeTag>
 void FVPressure1P<TypeTag>::initializeMatrix()
 {
@@ -243,7 +244,7 @@ void FVPressure1P<TypeTag>::initializeMatrix()
     return;
 }
 
-//function which assembles the system of equations to be solved
+//!function which assembles the system of equations to be solved
 template<class TypeTag>
 void FVPressure1P<TypeTag>::assemble(bool first)
 {
@@ -429,7 +430,7 @@ void FVPressure1P<TypeTag>::assemble(bool first)
     return;
 }
 
-//solves the system of equations to get the spatial distribution of the pressure
+//!solves the system of equations to get the spatial distribution of the pressure
 template<class TypeTag>
 void FVPressure1P<TypeTag>::solve()
 {

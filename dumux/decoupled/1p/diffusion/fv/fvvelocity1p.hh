@@ -26,8 +26,8 @@
 
 namespace Dumux
 {
-//! \ingroup diffusion
-//! Finite Volume Diffusion Model
+//! \ingroup FV1p
+//! \brief Single Phase Finite Volume Diffusion Model
 /*! Calculates non-wetting phase velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
@@ -38,12 +38,7 @@ namespace Dumux
  * As in the two-phase pressure equation a total flux depending on a total velocity is considered one has to be careful at neumann flux boundaries. Here, a phase velocity is only uniquely defined, if
  * the saturation is at the maximum (\f$1-S_{rw}\f$, \f$\boldsymbol{v}_{total} = \boldsymbol{v}_n\f$) or at the minimum (\f$ S_{rn} \f$, \f$\boldsymbol{v}_n = 0\f$)
  *
- * Template parameters are:
- *
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
+ * @tparam TypeTag The Type Tag
  */
 
 template<class TypeTag>
@@ -82,10 +77,7 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
 public:
     //! Constructs a FVNonWettingPhaseVelocity2P object
     /**
-     * \param gridView gridView object of type GridView
      * \param problem a problem class object
-     * \param pressureType a string giving the type of pressure used (could be: pw, pn, pglobal)
-     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
      */
     FVVelocity1P(Problem& problem)
     : FVPressure1P<TypeTag>(problem)
@@ -94,8 +86,6 @@ public:
 
     //! Calculate the velocity.
     /*!
-     *  \param t time
-     *
      *
      *  Given the piecewise constant pressure \f$p\f$,
      *  this method calculates the velocity

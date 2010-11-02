@@ -37,9 +37,8 @@
 
 namespace Dumux
 {
-/**
-*
-*
+/*!
+*  \ingroup mimetic
 */
 /**
 * @brief compute local stiffness matrix for conforming finite elements for diffusion equation

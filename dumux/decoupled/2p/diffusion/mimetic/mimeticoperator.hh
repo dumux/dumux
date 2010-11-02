@@ -44,7 +44,9 @@
 
 namespace Dumux
 {
-/*! @brief Levelwise assembler
+/*!
+ * \ingroup mimetic
+ * @brief Levelwise assembler
 
   This class serves as a base class for local assemblers. It provides
   space and access to the local stiffness matrix. The actual assembling is done

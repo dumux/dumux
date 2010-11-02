@@ -28,8 +28,10 @@
 namespace Dumux
 {
 /*!
- * \ingroup Decoupled
- * \brief  Base class for all 1-phase problems which use an impes algorithm
+ * \ingroup FV1p
+ * \ingroup IMPESproblems
+ *
+ * \brief  Base class for all single phase problems which use an impes algorithm
  *
  * \todo Please doc me more!
  */

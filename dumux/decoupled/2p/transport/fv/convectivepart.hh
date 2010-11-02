@@ -16,8 +16,6 @@
 #ifndef DUMUX_CONVECTIVEPART_HH
 #define DUMUX_CONVECTIVEPART_HH
 
-//! \ingroup transport
-//! \defgroup convPart Convective transport
 /**
  * @file
  * @brief  Base class for defining a convective part of an advection-diffusion equation
@@ -27,7 +25,7 @@
 namespace Dumux
 {
 
-/*!\ingroup convPart
+/*!\ingroup Transport2p
  * @brief  Base class for defining the convective part of an advection-diffusion equation
  *
  * Template parameters are:

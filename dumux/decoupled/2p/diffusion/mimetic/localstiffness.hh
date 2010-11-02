@@ -27,19 +27,9 @@
  * @author Peter Bastian
  */
 
-/*! @defgroup DISC_Operators Operators
-  @ingroup DISC
-  @brief
-
-  @section D1 Introduction
-  <!--=================-->
-
-  To be written
-*/
-
 namespace Dumux
 {
-  /** @addtogroup DISC_Operators
+  /** @addtogroup mimetic
    *
    * @{
    */

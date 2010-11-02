@@ -17,8 +17,6 @@
 #ifndef DUMUX_DIFFUSIVEPART_HH
 #define DUMUX_DIFFUSIVEPART_HH
 
-//! \ingroup transport
-//! \defgroup diffPart Diffusive transport
 /**
  * @file
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation
@@ -26,7 +24,7 @@
  */
 namespace Dumux
 {
-/*!\ingroup diffPart
+/*!\ingroup Transport2p
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation
  *
  * Template parameters are:
