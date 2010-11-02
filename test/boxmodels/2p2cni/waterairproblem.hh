@@ -14,11 +14,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
 /*!
  * \file
  *
- * \brief TwoPTwoCNIBoxProblems Non-isothermal two-phase two-component box problems.
+ * \brief Non-isothermal gas injection problem where a gas (e.g. air)
+ *        is injected into a fully water saturated medium.
  */
 #ifndef DUMUX_WATERAIRPROBLEM_HH
 #define DUMUX_WATERAIRPROBLEM_HH
@@ -38,11 +38,6 @@
 #include "waterairspatialparameters.hh"
 
 #define ISOTHERMAL 0
-
-/*!
- * \ingroup BoxProblems
- * \brief TwoPTwoCNIBoxProblems Non-isothermal two-phase two-component box problems
- */
 
 namespace Dumux
 {
@@ -93,13 +88,16 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
 
 
 /*!
- * \ingroup TwoPTwoCNIBoxProblems
- * \brief Nonisothermal gas injection problem where a gas (e.g. air) is injected into a fully
- *        water saturated medium. During buoyancy driven upward migration the gas
- *        passes a high temperature area.
+ * \ingroup TwoPTwoCNIBoxModel
  *
- * The domain is sized 40 m times 40 m. The rectangular area with the increased temperature (380 K)
- * starts at (20 m, 5 m) and ends at (30 m, 35 m).
+ * \brief Non-isothermal gas injection problem where a gas (e.g. air)
+ *        is injected into a fully water saturated medium. During
+ *        buoyancy driven upward migration the gas passes a high
+ *        temperature area.
+ *
+ * The domain is sized 40 m times 40 m. The rectangular area with the
+ * increased temperature (380 K) starts at (20 m, 5 m) and ends at (30
+ * m, 35 m).
  *
  * For the mass conservation equation neumann boundary conditions are used on
  * the top and on the bottom of the domain, while dirichlet conditions

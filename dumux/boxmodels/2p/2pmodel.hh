@@ -37,11 +37,6 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BoxProblems
- * \defgroup TwoPProblems Two-phase box problems
- */
-
-/*!
  * \ingroup BoxModels
  * \defgroup TwoPBoxModel Two-phase box model
  */

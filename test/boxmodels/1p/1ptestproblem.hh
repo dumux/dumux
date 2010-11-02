@@ -31,7 +31,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include "1pspatialparameters.hh"
+#include "1ptestspatialparameters.hh"
 
 namespace Dumux
 {
@@ -72,14 +72,14 @@ SET_PROP(OnePTestProblem, Problem)
 
 // Set the spatial parameters
 SET_PROP(OnePTestProblem, SpatialParameters)
-{ typedef Dumux::OnePSpatialParameters<TypeTag> type; };
+{ typedef Dumux::OnePTestSpatialParameters<TypeTag> type; };
 
 // Enable gravity
 SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
 }
 
 /*!
- * \ingroup OnePBoxProblems
+ * \ingroup OnePBoxModel
  * \brief Air flow in porous media
  *
  * The domain is box shaped. All sides are closed (Neumann 0 boundary)

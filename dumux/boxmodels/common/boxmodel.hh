@@ -33,15 +33,11 @@ namespace Dumux
 {
 
 /*!
- * \defgroup BoxModel   Box-Scheme
+ * \defgroup BoxModel The core infrastructure of the box scheme
  */
 /*!
  * \ingroup BoxModel
- * \defgroup BoxProblems Box-Problems
- */
-/*!
- * \ingroup BoxModel
- * \defgroup BoxModels   Box-Models
+ * \defgroup BoxModels Physical models and problems which use the box scheme
  */
 
 

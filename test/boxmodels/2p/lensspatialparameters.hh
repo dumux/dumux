@@ -16,6 +16,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief The spatial parameters for the LensProblem which uses the
+ *        twophase box model
+ */
 #ifndef DUMUX_LENSSPATIALPARAMETERS_HH
 #define DUMUX_LENSSPATIALPARAMETERS_HH
 
@@ -26,17 +32,15 @@
 
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
-/**
- * @file
- * @brief Class for defining spatial parameters
- * @author Bernd Flemisch, Klaus Mosthaf, Markus Wolff
- */
-
 namespace Dumux
 {
 
-/** \todo Please doc me! */
-
+/*!
+ * \ingroup TwoPBoxModel
+ *
+ * \brief The spatial parameters for the LensProblem which uses the
+ *        twophase box model
+ */
 template<class TypeTag>
 class LensSpatialParameters : public BoxSpatialParameters<TypeTag>
 {

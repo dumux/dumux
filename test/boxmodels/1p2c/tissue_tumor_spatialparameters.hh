@@ -14,6 +14,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Definition of the spatial parameters for the 1p2c
+ *        tissue-tumor problem
+ */
 #ifndef DUMUX_TISSUE_TUMOR_SPATIAL_PARAMETERS_HH
 #define DUMUX_TISSUE_TUMOR_SPATIAL_PARAMETERS_HH
 
@@ -25,11 +31,11 @@
 namespace Dumux
 {
 
-/**
- * \file
+/*!
+ * \ingroup OnePTwoCBoxModel
  *
- * \brief Definition of the spatial parameters for the problem
- *
+ * \brief Definition of the spatial parameters for the 1p2c
+ *        tissue-tumor problem
  */
 template<class TypeTag>
 class TissueTumorSpatialParameters : public BoxSpatialParameters<TypeTag>

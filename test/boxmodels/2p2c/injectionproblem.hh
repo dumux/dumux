@@ -96,7 +96,7 @@ SET_BOOL_PROP(InjectionProblem, EnablePartialReassemble, true);
 
 
 /*!
- * \ingroup TwoPBoxProblems
+ * \ingroup TwoPTwoCModel
  * \brief Problem where air is injected under a low permeable layer in a depth of 800m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately

@@ -31,6 +31,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup RichardsModel
  * \brief The spatial parameters for the RichardsLensProblem
  */
 template<class TypeTag>

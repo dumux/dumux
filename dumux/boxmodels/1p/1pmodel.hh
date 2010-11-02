@@ -33,11 +33,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxProblems
- * \defgroup OnePBoxProblems One-phase box problems
- */
-
-/*!
  * \ingroup BoxModels
  * \defgroup OnePBoxModel One-phase box model
  */

@@ -28,11 +28,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup BoxProblems
- * \defgroup TwoPTwoCNIProblems Non-isothermal two-phase two-component box problems
- */
-
-/*!
  * \ingroup BoxModels
  * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component box model
  */

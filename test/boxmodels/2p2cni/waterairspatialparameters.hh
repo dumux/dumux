@@ -14,7 +14,6 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
 /*!
  * \file
  *
@@ -32,10 +31,9 @@ namespace Dumux
 {
 
 /*!
-* \ingroup SpatialParameters
-*
- * \brief Definition of the spatial parameters for the water-air problem
+ * \ingroup TwoPTwoCNIModel
  *
+ * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>
 class WaterAirSpatialParameters : public BoxSpatialParameters<TypeTag>

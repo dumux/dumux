@@ -13,21 +13,28 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_1PSPATIALPARAMETERS_HH
-#define DUMUX_1PSPATIALPARAMETERS_HH
+/*!
+ * \file
+ * 
+ * \brief The spatial parameters class for the test problem using the
+ *        1p box model
+ */
+#ifndef DUMUX_1P_TEST_SPATIALPARAMETERS_HH
+#define DUMUX_1P_TEST_SPATIALPARAMETERS_HH
 
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
 
 namespace Dumux
 {
-/**
- * \file
- * 
- * \brief Class for defining spatial parameters
- */
 
+/*!
+ * \ingroup OnePBoxModel
+ * 
+ * \brief The spatial parameters class for the test problem using the
+ *        1p box model
+ */
 template<class TypeTag>
-class OnePSpatialParameters : public BoxSpatialParameters<TypeTag>
+class OnePTestSpatialParameters : public BoxSpatialParameters<TypeTag>
 {
     typedef BoxSpatialParameters<TypeTag> ParentType;
 
@@ -38,7 +45,7 @@ class OnePSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
-    OnePSpatialParameters(const GridView& gridView)
+    OnePTestSpatialParameters(const GridView& gridView)
         : ParentType(gridView)
     {}
 

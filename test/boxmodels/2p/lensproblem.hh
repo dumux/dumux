@@ -125,7 +125,7 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
 }
 
 /*!
- * \ingroup TwoPBoxProblems
+ * \ingroup TwoPBoxModel
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  *

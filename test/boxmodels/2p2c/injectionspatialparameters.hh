@@ -17,7 +17,8 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for the injection problem
+ * \brief Definition of the spatial parameters for the injection
+ *        problem which uses the isothermal 2p2c box model
  */
 
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
@@ -32,10 +33,10 @@ namespace Dumux
 {
 
 /*!
- * \ingroup SpatialParameters
+ * \ingroup TwoPTwoCModel
  *
- * \brief Definition of the spatial parameters for the injection problem
- *
+ * \brief Definition of the spatial parameters for the injection
+ *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
 class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>

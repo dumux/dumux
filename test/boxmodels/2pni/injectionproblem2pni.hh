@@ -119,7 +119,7 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
 }
 
 /*!
- * \ingroup TwoPNIBoxProblems
+ * \ingroup TwoPNIBoxModel
  * \brief Nonisothermal gas injection problem where a gas (e.g. air) is injected into a fully
  *        water saturated medium. During buoyancy driven upward migration the gas
  *        passes a high temperature area.

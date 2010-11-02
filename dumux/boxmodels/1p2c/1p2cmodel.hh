@@ -36,11 +36,6 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BoxProblems
- * \defgroup OnePTwoCBoxProblems One-phase Two-component box problems
- */
-
-/*!
  * \ingroup BoxModels
  * \defgroup OnePTwoCBoxModel One-phase Two-component box model
  */
