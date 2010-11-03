@@ -53,7 +53,6 @@
 
 namespace Dumux
 {
-// \{
 
 ////////////////////////////////
 // forward declarations
@@ -76,11 +75,6 @@ struct TwoPCommonIndices;
 ////////////////////////////////
 namespace Properties
 {
-/*!
- * \ingroup Properties
- */
-// \{
-
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -257,7 +251,6 @@ static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting p
 static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase in a phase vector
 };
 
-// \}
 
 }
 

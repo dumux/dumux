@@ -13,9 +13,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+
 /*!
  * \file
  * \brief Provides the magic behind the DuMuX property system.
+ *
+ * \defgroup Properties Property System
  *
  * Properties allow to associate arbitrary data types to
  * identifiers. A property is always defined on a pair (TypeTag,

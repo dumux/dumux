@@ -26,8 +26,7 @@
  */
 /*!
  * \file
- * \brief Specify the shape functions, operator assemblers, etc
- *        used for the BoxScheme.
+ * \brief Specifies the properties for immiscible 2p transport
  */
 namespace Dumux
 {
