@@ -136,7 +136,7 @@ public:
     { return *spatialParameters_; }
 
     /*!
-     * \copydoc spatialParameters()
+     * \copydoc Dumux::IMPESProblem2P::spatialParameters()
      */
     const SpatialParameters &spatialParameters() const
     { return *spatialParameters_; }
