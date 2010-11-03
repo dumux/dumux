@@ -218,7 +218,6 @@ public:
     }
     /*! @brief Constructs a GravityPart object
      *  @param problem an object of class Dumux::TransportProblem or derived
-     *  @param spatial parameters implementation of the solid matrix
      *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
      */
     GravityPart (Problem& problem, const bool preComput = true)
