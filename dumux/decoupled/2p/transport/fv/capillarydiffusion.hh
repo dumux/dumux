@@ -226,7 +226,6 @@ public:
 
     /*! @brief Constructs a CapillaryDiffusion object
      *  @param problem an object of class Dumux::TransportProblem or derived
-     *  @param spatial parameters implementation of the solid matrix
      *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
      */
     CapillaryDiffusion (Problem& problem, const bool preComput = true)
