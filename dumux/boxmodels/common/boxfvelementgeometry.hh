@@ -555,7 +555,7 @@ public:
         return (face*maxCOS + vertInFace);
     }
 
-    struct SubControlVolume //!< FV intersected with element
+    struct SubControlVolume //! FV intersected with element
     {
         FV local; //!< local vert position
         FV global; //!< global vert position
