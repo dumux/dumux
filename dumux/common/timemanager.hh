@@ -348,7 +348,8 @@ public:
 
             // execute the time integration scheme
             problem_->timeIntegration();
-
+            Scalar dt = timeStepSize();
+            
             // post-process the current solution
             problem_->postTimeStep();
 
@@ -360,7 +361,6 @@ public:
             problem_->advanceTimeLevel();
 
             // advance the simulated time by the current time step size
-            Scalar dt = timeStepSize();
             time_ += dt;
             ++timeStepIdx_;
 

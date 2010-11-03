@@ -41,44 +41,58 @@ namespace Dumux
  */
 
 /*!
- * \ingroup RichardsModel
- * \brief Implements the Richards model for quasi twophase flow.
+ * \ingroup RichardsModel 
  *
- * In the unsaturated zone, Richards' equation can be used. Fundamentally, the Richards-equation
- * is equivalent to the twophase model, i.e.
+ * \brief This model implements a variant of the Richards equation for
+ *        quasi-twophase flow.
+ *
+ * In the unsaturated zone, Richards' equation is frequently used to
+ * calculate the water distribution above the groundwater level. It
+ * can be derived from the twophase equations, i.e.
  \f[
  \frac{\partial\;\phi S_\alpha \rho_\alpha}{\partial t}
  -
  \mathbf{div} \left\{
  \frac{k_{r\alpha}}{\mu_\alpha}\;K
  \mathbf{grad}\left[
- p_alpha - g\rho_\alpha
+ p_\alpha - g\rho_\alpha
  \right]
  \right\}
  =
  q_\alpha,
  \f]
- * where \f$\alpha \in \{w, n\}\f$ is the fluid phase, \f$\rho_\alpha\f$ is the fluid 
- * density, \f$S_\alpha\f$ is the fluid saturation, \f$\phi\f$ is the porosity, 
- * \f$k_{r\alpha}\f$ is the relative permeability of the fluid, \f$\mu_\alpha\f$ is
- * the fluid's dynamic viscosity, \f$K\f$ is the intrinsic permeability, \f$p_\alpha\f$ 
- * is the fluid pressure and \f$g\f$ is the potential of the gravity.
+ * where \f$\alpha \in \{w, n\}\f$ is the fluid phase,
+ * \f$\rho_\alpha\f$ is the fluid density, \f$S_\alpha\f$ is the fluid
+ * saturation, \f$\phi\f$ is the porosity of the soil,
+ * \f$k_{r\alpha}\f$ is the relative permeability for the fluid,
+ * \f$\mu_\alpha\f$ is the fluid's dynamic viscosity, \f$K\f$ is the
+ * intrinsic permeability, \f$p_\alpha\f$ is the fluid pressure and
+ * \f$g\f$ is the potential of the gravity field.
  * 
- * However, the Richards model assumes that the non-wetting is gas
- * which typically exhibits a much low viscosity than the liquid
- * wetting phase. (For example air has about \f$1\%\f$ of the viscosity of
- * liquid water.) As a consequence, the
- * \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term is typically much larger for
- * the non-wetting phase than for the wetting phase. In the Richards
- * model it is now assumed that \f$\frac{k_{rn}}{\mu_n} \to \infty\f$
- * which means that the pressure of the non-wetting phase is
- * equivalent to hydrostatic pressure of the gas or can be externally
- * specified.  Therefore, in Richards' equation mass conservation only
- * needs to be considered for the wetting phase. The model thus choses
- * \f$p_w\f$ as its only primary variable and calculates the wetting phase
- * saturation using the inverse of the capilary pressure, i.e.
- \f[ S_w = p_c^{-1}(p_n - p_w)\, \f]
- * where \f$p_n\f$ is an externally given reference pressure.
+ * In contrast to the full twophase model, the Richards model assumes
+ * gas as the non-wetting fluid and that it exhibits a much lower
+ * viscosity than the (liquid) wetting phase. (For example at
+ * atmospheric pressure and at room temperature, the viscosity of air
+ * is only about \f$1\%\f$ of the viscosity of liquid water.) As a
+ * consequence, the \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term
+ * typically is much larger for the gas phase than for the wetting
+ * phase. For this reason, the Richards model assumes that
+ * \f$\frac{k_{rn}}{\mu_n}\f$ tends to infinity. This implies that the
+ * pressure of the gas phase is equivalent to a static pressure and
+ * can thus be specified externally and that therefore, mass
+ * conservation only needs to be considered for the wetting phase. 
+ *
+ * The model thus choses the absolute pressure of the wetting phase
+ * \f$p_w\f$ as its only primary variable. The wetting phase
+ * saturation is calculated using the inverse of the capillary
+ * pressure, i.e.  
+ \f[
+ S_w = p_c^{-1}(p_n - p_w)
+ \f] 
+ * holds, where \f$p_n\f$ is a given reference pressure. Nota bene that the
+ * last step is assumes that the capillary pressure-saturation curve
+ * can be inverted uniquely, so it is not possible to set the
+ * capillary pressure to zero when using the Richards model!
  */
 template<class TypeTag >
 class RichardsModel : public BoxModel<TypeTag>

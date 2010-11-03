@@ -99,7 +99,7 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
  *        Richards box model.
  *
  * The domain is box shaped. Left and right boundaries are Dirichlet
- * boundaries with fixed water pressure (fixed Saturation $S_w = 0$),
+ * boundaries with fixed water pressure (fixed Saturation \f$S_w = 0\f$),
  * bottom boundary is closed (Neumann 0 boundary), the top boundary
  * (Neumann 0 boundary) is also closed except for infiltration
  * section, where water is infiltrating into an initially unsaturated
