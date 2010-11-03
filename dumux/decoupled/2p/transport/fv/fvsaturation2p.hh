@@ -191,10 +191,8 @@ public:
 
     //! Constructs a FVSaturationNonWetting2P object
     /**
-     * \param gridView gridView object of type GridView
+
      * \param problem a problem class object
-     * \param velocityType a string giving the type of velocity used (could be: vn, vt)
-     * \param diffPart a object of class Dune::DiffusivePart or derived from Dune::DiffusivePart (only used with vt)
      */
 
     FVSaturation2P(Problem& problem) :
