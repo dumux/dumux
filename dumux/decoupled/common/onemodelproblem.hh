@@ -100,15 +100,15 @@ public:
           variables_(gridView),
           resultWriter_(asImp_().name())
     {
-//        // calculate the bounding box of the grid view
-//        VertexIterator vIt = gridView.template begin<dim>();
-//        const VertexIterator vEndIt = gridView.template end<dim>();
-//        for (; vIt!=vEndIt; ++vIt) {
-//            for (int i=0; i<dim; i++) {
-//                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().corner(0)[i]);
-//                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
-//            }
-//        }
+        // calculate the bounding box of the grid view
+        VertexIterator vIt = gridView.template begin<dim>();
+        const VertexIterator vEndIt = gridView.template end<dim>();
+        for (; vIt!=vEndIt; ++vIt) {
+            for (int i=0; i<dim; i++) {
+                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().center()[i]);
+                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
+            }
+        }
 
         model_ = new Model(asImp_()) ;
     }

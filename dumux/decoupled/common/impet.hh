@@ -108,6 +108,7 @@ public:
         int iter = 0;
         int iterTot = 0;
         updateOldIter = 0;
+
         while (!converg)
         {
             iter++;
@@ -134,7 +135,6 @@ public:
                 updateDiff -= updateOldIter;
                 transValueOldIter = transportedQuantity;
                 updateOldIter = updateVec;
-                //                problem.transportModel().updateMaterialLaws(transportedQuantity, true);
             }
             // break criteria for iteration loop
             if (iterFlag_ == 2 && dt * updateDiff.two_norm() / transportedQuantity.two_norm() <= maxDefect_)
@@ -155,6 +155,7 @@ public:
             }
             if (!converg && iter > nIter_)
             {
+                converg = true;
                 std::cout << "Nonlinear loop in IMPET.update exceeded nIter = " << nIter_ << " iterations." << std::endl;
                 std::cout << transportedQuantity.infinity_norm() << std::endl;
             }
@@ -191,6 +192,8 @@ public:
     void deserialize(Restarter &res)
     {
         problem.variables().deserialize<Restarter> (res);
+        //update constitutive functions
+        problem.pressureModel().initialize();
     }
 
     //! Constructs an IMPET object

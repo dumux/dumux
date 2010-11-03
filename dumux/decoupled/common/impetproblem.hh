@@ -96,8 +96,8 @@ public:
         const VertexIterator vEndIt = gridView.template end<dim>();
         for (; vIt!=vEndIt; ++vIt) {
             for (int i=0; i<dim; i++) {
-                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().corner(0)[i]);
-                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
+                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().center()[i]);
+                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
             }
         }
 
