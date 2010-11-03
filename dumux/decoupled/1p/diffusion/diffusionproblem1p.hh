@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ * \brief Base class for all single phase problems which use an impes algorithm
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_1P_HH
 #define DUMUX_DIFFUSIONPROBLEM_1P_HH

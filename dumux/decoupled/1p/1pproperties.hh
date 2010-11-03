@@ -23,7 +23,7 @@
  * \ingroup FV1p
  * \file
  *
- * \brief Defines the properties required for the twophase BOX model.
+ * \brief Defines the properties required for the single phase sequential model.
  */
 
 #ifndef DUMUX_1PPROPERTIES_HH
@@ -52,19 +52,12 @@ class VariableClass;
 ////////////////////////////////
 namespace Properties
 {
-
-/*!
- * \ingroup fracflow
- * \addtogroup DecoupledModel
- */
-
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel))
-;
+NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

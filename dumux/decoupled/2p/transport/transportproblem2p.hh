@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ * \brief Base class for all 2-phase transport problems which use an impes algorithm
  */
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
 #define DUMUX_TRANSPORTPROBLEM_2P_HH
@@ -32,7 +32,7 @@ namespace Dumux
 /*!
  * \ingroup Transport2p
  * \ingroup IMPESproblems
- * \brief  Base class for all 2-phase problems which use an impes algorithm
+ * \brief  Base class for all 2-phase transport problems which use an impes algorithm
  *
  * \todo Please doc me more!
  */
