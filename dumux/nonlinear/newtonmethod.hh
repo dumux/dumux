@@ -65,25 +65,25 @@ public:
     { }
 
     /*!
-     * \brief Returns a reference to the current numeric problem.
+     * \brief Returns a reference to the object representing the physical model.
      */
     Problem &problem()
     { return problem_; }
 
     /*!
-     * \brief Returns a reference to the current numeric problem.
+     * \brief Returns a reference to the object representing the physical problem.
      */
     const Problem &problem() const
     { return problem_; }
 
     /*!
-     * \brief Returns a reference to the numeric model.
+     * \brief Returns a reference to the object representing the physical model.
      */
     Model &model()
     { return problem().model(); }
 
     /*!
-     * \brief Returns a reference to the numeric model.
+     * \brief Returns a reference to the object representing the physical model.
      */
     const Model &model() const
     { return problem().model(); }
@@ -92,6 +92,9 @@ public:
     /*!
      * \brief Run the newton method. The controller is responsible
      *        for all the strategic decisions.
+     *
+     * \param ctl The NewtonController which controls the course of
+     *            the Newton algorithm.
      */
     bool execute(NewtonController &ctl)
     {

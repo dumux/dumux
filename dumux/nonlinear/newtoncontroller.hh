@@ -16,9 +16,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Reference implementation of a newton controller solver.
+ * \brief Reference implementation of a controller class for the Newton solver.
  *
- * Usually for most cases this controller should be sufficient.
+ * Usually this controller should be sufficient.
  */
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
@@ -38,48 +38,56 @@ namespace Dumux
 {
 namespace Properties
 {
-//! specifies the implementation of the newton controller
+//! Specifies the implementation of the Newton controller
 NEW_PROP_TAG(NewtonController);
 
-//! specifies the type of the actual newton method
+//! Specifies the type of the actual Newton method
 NEW_PROP_TAG(NewtonMethod);
 
-//! specifies the type of a solution
+//! Specifies the type of a solution
 NEW_PROP_TAG(SolutionVector);
 
-//! specifies the type of a vector of primary variables at an DOF
+//! Specifies the type of a vector of primary variables at a degree of freedom
 NEW_PROP_TAG(PrimaryVariables);
 
-//! specifies the type of a global jacobian matrix
+//! Specifies the type of a global Jacobian matrix
 NEW_PROP_TAG(JacobianMatrix);
 
-//! specifies the type of the jacobian matrix assembler
+//! Specifies the type of the Jacobian matrix assembler
 NEW_PROP_TAG(JacobianAssembler);
 
 //! specifies the type of the time manager
 NEW_PROP_TAG(TimeManager);
 
-//! specifies the verbosity of the linear solver (by default it is 0,
-//! i.e. it doesn't print anything)
+/*!
+ * \brief Specifies the verbosity of the linear solver
+ *
+ * By default it is 0, i.e. it doesn't print anything. Setting this
+ * property to 1 prints aggregated convergence rates, 2 prints the
+ * convergence rate of every iteration of the scheme.
+ */
 NEW_PROP_TAG(NewtonLinearSolverVerbosity);
 
 //! specifies whether the convergence rate and the global residual
 //! gets written out to disk for every newton iteration (default is false)
 NEW_PROP_TAG(NewtonWriteConvergence);
 
-//! specifies whether time step size should be increased during the
-//! newton methods first few iterations
+//! Specifies whether time step size should be increased during the
+//! Newton methods first few iterations
 NEW_PROP_TAG(EnableTimeStepRampUp);
 
-//! specifies whether the jacobian matrix should only be reassembled
+//! Specifies whether the Jacobian matrix should only be reassembled
 //! if the current solution deviates too much from the evaluation point
 NEW_PROP_TAG(EnablePartialReassemble);
 
-//! specifies whether the update should be done using the line search
-//! method instead of the "raw" newton method. whether this property
-//! has any effect depends on wether the line search method is
-//! implemented for the actual model's newton controller's update()
-//! method. By default we do not use line search.
+/*!
+ * \brief Specifies whether the update should be done using the line search
+ *        method instead of the plain Newton method. 
+ *
+ * Whether this property has any effect depends on wether the line
+ * search method is implemented for the actual model's Newton
+ * controller's update() method. By default line search is not used.
+ */
 NEW_PROP_TAG(NewtonUseLineSearch);
 
 SET_PROP_DEFAULT(NewtonLinearSolverVerbosity)
@@ -98,7 +106,11 @@ SET_PROP_DEFAULT(NewtonUseLineSearch)
 };
 };
 
-
+/*!
+ * \internal
+ * \brief Writes the intermediate solutions during 
+ *        the Newton scheme
+ */
 template <class TypeTag, bool enable>
 struct NewtonConvergenceWriter
 {
@@ -154,6 +166,14 @@ private:
     NewtonController &ctl_;
 };
 
+/*!
+ * \internal
+ * \brief Writes the intermediate solutions during 
+ *        the Newton scheme. 
+ *
+ * This is the dummy specialization for the case where we don't want
+ * to do anything.
+ */
 template <class TypeTag>
 struct NewtonConvergenceWriter<TypeTag, false>
 {
@@ -184,12 +204,12 @@ struct NewtonConvergenceWriter<TypeTag, false>
 };
 
 /*!
- * \brief The reference implementation of a newton controller.
+ * \brief A reference implementation of a newton controller specific
+ *        for the box scheme.
  *
- * If you want to specialize only some methods but are happy with
- * the defaults of the reference controller, derive your
- * controller from this class and simply overload the required
- * methods.
+ * If you want to specialize only some methods but are happy with the
+ * defaults of the reference controller, derive your controller from
+ * this class and simply overload the required methods.
  */
 template <class TypeTag>
 class NewtonController
@@ -236,6 +256,9 @@ class NewtonController
     };
 
 public:
+    /*!
+     * \brief Constructor
+     */
     NewtonController()
         : endIterMsgStream_(std::ostringstream::out),
           convergenceWriter_(asImp_())
@@ -260,7 +283,11 @@ public:
 
     /*!
      * \brief Set the maximum acceptable difference for convergence of
-     *        any primary variable between two iterations
+     *        any primary variable between two iterations.
+     *
+     * \param tolerance The maximum relative error between two Newton
+     *                  iterations at which the scheme is considered
+     *                  finished
      */
     void setRelTolerance(Scalar tolerance)
     { tolerance_ = tolerance; }
@@ -268,6 +295,12 @@ public:
     /*!
      * \brief Set the number of iterations at which the Newton method
      *        should aim at.
+     *
+     * This is used to control the time step size. The heuristic used
+     * is to scale the last time step size by the deviation of the
+     * number of iterations used from the target steps.
+     *
+     * \param targetSteps Number of iterations which are considered "optimal"
      */
     void setTargetSteps(int targetSteps)
     { targetSteps_ = targetSteps; }
@@ -275,6 +308,8 @@ public:
     /*!
      * \brief Set the number of iterations after which the Newton
      *        method gives up.
+     *
+     * \param maxSteps Number of iterations after we give up
      */
     void setMaxSteps(int maxSteps)
     { maxSteps_ = maxSteps; }
@@ -294,6 +329,8 @@ public:
 
     /*!
      * \brief Returns true if another iteration should be done.
+     *
+     * \param u The current solution
      */
     bool newtonProceed(const SolutionVector &u)
     {
@@ -326,6 +363,9 @@ public:
     /*!
      * \brief Called before the newton method is applied to an
      *        non-linear system of equations.
+     *
+     * \param method The object where the NewtonMethod is executed
+     * \param u The initial solution
      */
     void newtonBegin(NewtonMethod &method, SolutionVector &u)
     {
@@ -364,8 +404,14 @@ public:
     { return numSteps_; }
 
     /*!
-     * \brief Update the error of the solution compared to the
-     *        previous iteration.
+     * \brief Update the relative error of the solution compared to
+     *        the previous iteration.
+     *
+     * The relative error can be seen as a norm of the difference
+     * between the current and the next iteration.
+     *
+     * \param uOld The current iterative solution
+     * \param deltaU The difference between the current and the next solution
      */
     void newtonUpdateRelError(const SolutionVector &uOld,
                               const SolutionVector &deltaU)
@@ -397,11 +443,14 @@ public:
     }
 
     /*!
-     * \brief Solve the linear system of equations \f$ \mathbf{A}x - b
-     *        = 0\f$.
+     * \brief Solve the linear system of equations \f$\mathbf{A}u - b = 0\f$.
      *
      * Throws Dumux::NumericalProblem if the linear solver didn't
      * converge.
+     *
+     * \param A The matrix of the linear system of equations
+     * \param u The vector which solves the linear system
+     * \param b The right hand side of the linear system
      */
     template <class Vector>
     void newtonSolveLinear(const JacobianMatrix &A,
@@ -442,19 +491,20 @@ public:
     }
 
     /*!
-     * \brief Update the current solution function with a delta vector.
+     * \brief Update the current solution with a delta vector.
      *
      * The error estimates required for the newtonConverged() and
-     * newtonProceed() methods should be updated here.
+     * newtonProceed() methods should be updated inside this method.
      *
      * Different update strategies, such as line search and chopped
      * updates can be implemented. The default behaviour is just to
-     * subtract deltaU from uOld.
+     * subtract deltaU from uOld, i.e.
+     * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
      * \param deltaU The delta as calculated from solving the linear
      *               system of equations. This parameter also stores
      *               the updated solution.
-     * \param uOld   The solution of the last iteration
+     * \param uOld   The solution vector of the last iteration
      */
     void newtonUpdate(SolutionVector &deltaU, const SolutionVector &uOld)
     {
@@ -488,6 +538,9 @@ public:
 
     /*!
      * \brief Indicates that one newton iteration was finished.
+     *
+     * \param u The solution after the current iteration
+     * \param uOld The solution at the beginning of the current iteration
      */
     void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
     {
@@ -510,7 +563,8 @@ public:
     }
 
     /*!
-     * \brief Indicates that we're done solving the non-linear system of equations.
+     * \brief Indicates that we're done solving the non-linear system
+     *        of equations.
      */
     void newtonEnd()
     {
@@ -537,7 +591,8 @@ public:
     { }
 
     /*!
-     * \brief Suggest a new time stepsize based on the old time step size.
+     * \brief Suggest a new time stepsize based on the old time step
+     *        size.
      *
      * The default behaviour is to suggest the old time step size
      * scaled by the ratio between the target iterations and the
@@ -652,7 +707,11 @@ protected:
         convergenceWriter_.endIteration();
     };
 
-
+    /*!
+     * \brief Actually invoke the linear solver 
+     *
+     * Usually we use the solvers from DUNE-ISTL.
+     */
     template <class Vector>
     void solveLinear_(const JacobianMatrix &A,
                       Vector &x,
@@ -702,10 +761,9 @@ protected:
 
     ConvergenceWriter convergenceWriter_;
 
-    Scalar tolerance_;
-
     Scalar error_;
     Scalar lastError_;
+    Scalar tolerance_;
 
     // number of iterations for the time-step ramp-up
     Scalar rampUpSteps_;
