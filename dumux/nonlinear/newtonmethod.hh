@@ -60,30 +60,29 @@ class NewtonMethod
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 public:
     NewtonMethod(Problem &problem)
-        : uOld_(problem.model().curSol()),
-          problem_(problem)
+        : problem_(problem)
     { }
 
     /*!
-     * \brief Returns a reference to the object representing the physical model.
+     * \brief Returns a reference to the current numeric problem.
      */
     Problem &problem()
     { return problem_; }
 
     /*!
-     * \brief Returns a reference to the object representing the physical problem.
+     * \brief Returns a reference to the current numeric problem.
      */
     const Problem &problem() const
     { return problem_; }
 
     /*!
-     * \brief Returns a reference to the object representing the physical model.
+     * \brief Returns a reference to the numeric model.
      */
     Model &model()
     { return problem().model(); }
 
     /*!
-     * \brief Returns a reference to the object representing the physical model.
+     * \brief Returns a reference to the numeric model.
      */
     const Model &model() const
     { return problem().model(); }
@@ -92,9 +91,6 @@ public:
     /*!
      * \brief Run the newton method. The controller is responsible
      *        for all the strategic decisions.
-     *
-     * \param ctl The NewtonController which controls the course of
-     *            the Newton algorithm.
      */
     bool execute(NewtonController &ctl)
     {
