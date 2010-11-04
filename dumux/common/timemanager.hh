@@ -369,13 +369,18 @@ public:
                 problem_->serialize();
 
             // notify the problem if an episode is finished
-            if (episodeIsOver())
+            Scalar nextDt = problem_->nextTimeStepSize(dt);
+            if (episodeIsOver()) {
                 problem_->episodeEnd();
+                // the problem sets the initial time step size of a
+                // new episode...
+                nextDt = timeStepSize();
+            }
 
             // notify the problem that the timestep is done and ask it
             // for a suggestion for the next timestep size
             // set the time step size for the next step
-            setTimeStepSize(problem_->nextTimeStepSize(timeStepSize_));
+            setTimeStepSize(nextDt);
 
             if (verbose_) {
                 std::cout <<
