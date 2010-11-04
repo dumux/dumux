@@ -884,24 +884,23 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         break;
                     }
                     }
+                    Scalar boundaryFactor = problem_.neumannSat(globalPosFace, *isIt, factor);
 
-
-                    switch (saturationType_)
+                    if (factor != boundaryFactor)
                     {
-                    case Sw:
-                    {
-                        Scalar boundaryFactor = problem_.neumannPress(globalPosFace, *isIt)[wPhaseIdx];
-
-                        factor = boundaryFactor / densityWI * faceArea / (volume * porosity);
-                        break;
-                    }
-                    case Sn:
-                    {
-                        Scalar boundaryFactor = problem_.neumannPress(globalPosFace, *isIt)[nPhaseIdx];
-
-                        factor = boundaryFactor / densityNWI * faceArea / (volume * porosity);
-                        break;
-                    }
+                        switch (saturationType_)
+                        {
+                        case Sw:
+                        {
+                            factor = boundaryFactor / densityWI * faceArea / (volume * porosity);
+                            break;
+                        }
+                        case Sn:
+                        {
+                            factor = boundaryFactor / densityNWI * faceArea / (volume * porosity);
+                            break;
+                        }
+                        }
                     }
 
 
