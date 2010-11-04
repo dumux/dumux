@@ -46,12 +46,13 @@ namespace Dumux
  *
  * This model implements an one-phase flow of an incompressible fluid, that consists of two components,
  * using a standard Darcy
- * approach (neglecting gravitation) as the equation for the conservation of momentum:
+ * approach as the equation for the conservation of momentum:
  \f[
  v_{D} = - \frac{K}{\mu}
  \left(\text{grad} p - \varrho g \right)
  \f]
  *
+ * Gravity can be enabled or disabled via the Property system.
  * By inserting this into the continuity equation, one gets
  \f[
  - \text{div} \left\{
