@@ -113,7 +113,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/decoupled/2p/diffusion/mimetic/Makefile 
     dumux/decoupled/2p/impes/Makefile 
     dumux/decoupled/2p/transport/Makefile 
-    dumux/decoupled/2p/transport/fv/Makefile 
+    dumux/decoupled/2p/transport/fv/Makefile
     dumux/decoupled/common/Makefile 
     dumux/io/Makefile
     dumux/material/Makefile 
@@ -140,6 +140,7 @@ AC_CONFIG_FILES([dumux.pc
     test/decoupled/Makefile
     test/decoupled/1p/Makefile
     test/decoupled/2p/Makefile
+    test/decoupled/2p2c/Makefile
     tutorial/Makefile
 ])
 

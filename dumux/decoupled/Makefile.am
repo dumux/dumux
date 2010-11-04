@@ -1,4 +1,4 @@
-SUBDIRS = 2p common
+SUBDIRS = 1p 2p 2p2c common
 
 decoupleddir = $(includedir)/dumux/decoupled
 
