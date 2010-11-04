@@ -72,8 +72,11 @@ public:
         lensPorosity_ = interfaceSoilProps.ISP_FinePorosity;
         outerPorosity_ = interfaceSoilProps.ISP_CoarsePorosity;
 
-        longitudinalDispersivity_ = interfaceSoilProps.ISP_LongitudinalDispersivity;
-        transverseDispersivity_ = interfaceSoilProps.ISP_TransverseDispersivity;
+        //longitudinalDispersivity_ = interfaceSoilProps.ISP_LongitudinalDispersivity;
+        //transverseDispersivity_ = interfaceSoilProps.ISP_TransverseDispersivity;
+	longitudinalDispersivity_ = 0.0;
+        transverseDispersivity_ = 0.0;
+
 
         for(int i = 0; i < dim; i++){
             lensK_[i][i] = interfaceSoilProps.ISP_FinePermeability;
@@ -181,4 +184,3 @@ private:
 
 } // end namespace
 #endif
-

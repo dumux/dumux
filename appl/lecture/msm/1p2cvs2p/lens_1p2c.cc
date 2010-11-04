@@ -160,7 +160,7 @@ int main(int argc, char** argv)
         upperRight[0] = 5.0;
         upperRight[1] = 4.0;
         res[0]        = 40;
-        res[1]        = 32;
+        res[1]        = 64;
 
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
 
@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 
         // instantiate and run the concrete problem
         TimeManager timeManager;
-        Problem problem(timeManager, grid->leafView(), lowerLeftLens, upperRightLens);
+        Problem problem(timeManager, grid->leafView(), lowerLeft, upperRight, lowerLeftLens, upperRightLens);
         timeManager.init(problem, 0, dt, tEnd, !restart);
         if (restart)
             problem.restart(restartTime);

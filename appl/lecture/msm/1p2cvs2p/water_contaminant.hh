@@ -119,8 +119,8 @@ public:
                             Scalar temperature,
                             Scalar pressure,
                             const FluidState &fluidState)
-    {
-        return  1e-9; // in [m^2/s]
+    {//TODO: return diffCoefficient_;
+        return  0.0; // in [m^2/s]
     }
 
 

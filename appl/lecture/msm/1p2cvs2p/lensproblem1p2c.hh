@@ -33,7 +33,7 @@
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
 #include <water_contaminant.hh>
-
+#include "lens_1p2cnewtoncontroller.hh"
 #include "lensspatialparameters1p2c.hh"
 
 namespace Dumux
@@ -90,30 +90,33 @@ namespace Dumux
         };
 
         // Enable gravity
-        SET_BOOL_PROP(LensProblem, EnableGravity, true);
+        SET_BOOL_PROP(LensProblem, EnableGravity, false);
+
+	// Set specific Newton controller
+	SET_PROP(LensProblem, NewtonController)
+	{
+		typedef Dumux::LensOnePTwoCNewtonController<TypeTag> type;
+	};
     }
 
     /*!
      * \ingroup TwoPBoxProblems
-     * \brief Soil decontamination problem where DNAPL infiltrates a fully
+     * \brief Soil decontamination problem where a contaminant infiltrates a fully
      *        water saturated medium.
      *
-     * The domain is sized 6m times 4m and features a rectangular lens
+     * The whole problem is symmetric.
+     *
+     * The domain is sized 5m times 4m and features a rectangular lens
      * with low permeablility which spans from (1 m , 2 m) to (4 m, 3 m)
      * and is surrounded by a medium with higher permability.
      *
-     * On the top and the bottom of the domain neumann boundary conditions
-     * are used, while dirichlet conditions apply on the left and right
+     * On the top and the bottom of the domain Dirichlet boundary conditions
+     * are used, while Neumann conditions apply on the left and right
      * boundaries.
      *
-     * DNAPL is injected at the top boundary from 3m to 4m at a rate of
-     * 0.04 kg/(s m), the remaining neumann boundaries are no-flow
-     * boundaries.
+     * The contaminant is injected at the top boundary from 2.25m to 2.75m at a variable rate.
      *
-     * The dirichlet boundaries on the left boundary is the hydrostatic
-     * pressure scaled by a factor of 1.125, while on the right side it is
-     * just the hydrostatic pressure. The DNAPL saturation on both sides
-     * is zero.
+     * The Dirichlet boundaries on the top boundary is different to the bottom pressure.
      *
      * This problem uses the \ref TwoPBoxModel.
      *
@@ -160,15 +163,18 @@ namespace Dumux
     public:
         LensProblem(TimeManager &timeManager,
                     const GridView &gridView,
+		    const GlobalPosition &lowerLeft,
+                    const GlobalPosition &upperRight,
                     const GlobalPosition &lensLowerLeft,
                     const GlobalPosition &lensUpperRight)
             : ParentType(timeManager, gridView)
         {
             this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
 
-            bboxMin_ = 0.0;
-            bboxMax_[0] = 5.0;
-            bboxMax_[1] = 4.0;
+            bboxMin_[0] = lowerLeft[0];
+	    bboxMin_[1] = lowerLeft[1];
+            bboxMax_[0] = upperRight[0];
+            bboxMax_[1] = upperRight[1];
 
             //load interface-file
             Dumux::InterfaceProblemProperties interfaceProbProps("interface1p2c.xml");
@@ -176,7 +182,8 @@ namespace Dumux
             upperPressure_ = interfaceProbProps.IPP_UpperPressure;
             lowerPressure_ = interfaceProbProps.IPP_LowerPressure;
             infiltrationRate_ = interfaceProbProps.IPP_InfiltrationRate;
-            infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
+            //infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
+	    infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
             infiltrationEndTime_= interfaceProbProps.IPP_InfiltrationEndTime;
         }
 
@@ -218,7 +225,7 @@ namespace Dumux
          * \name Boundary conditions
          */
         // \{
-        
+
         /*!
          * \brief Specifies which kind of boundary condition should be
          *        used for which equation on a given boundary segment.
@@ -237,8 +244,10 @@ namespace Dumux
             	values.setAllNeumann();
             if (onInlet_(globalPos))
             	values.setNeumann(transEqIdx);
+	    if (onLowerBoundary_(globalPos))
+            	values.setNeumann(transEqIdx);
         }
-        
+
         /*!
          * \brief Evaluate the boundary conditions for a dirichlet
          *        control volume.
@@ -290,8 +299,8 @@ namespace Dumux
             if (time >= infiltrationStartTime_ && time <= infiltrationEndTime_)
             {
                 if (onInlet_(globalPos))
-                    values[transEqIdx] = -infiltrationRate_; //
-            }
+                    values[transEqIdx] = -infiltrationRate_;
+	    }
         }
         // \}
 
@@ -335,7 +344,10 @@ namespace Dumux
             const Scalar height = this->bboxMax()[1] - this->bboxMin()[1];
 
             values[contiEqIdx] = upperPressure_ - depth/height*(upperPressure_-lowerPressure_);
-            values[transEqIdx] = 0.0;
+		//if (globalPos[1]>3.5 && globalPos[1]<3.75 && globalPos[0]>2.25 && globalPos[0]<2.75 )
+		//{ values[transEqIdx] = 0.001;}
+		//else
+		values[transEqIdx] = 0.0;
         }
         // \}
 
@@ -365,7 +377,7 @@ namespace Dumux
             Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
             Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
             return onUpperBoundary_(globalPos)
-                    && (bboxMax_[0] - 0.35*width)/width > lambda
+                    && (bboxMax_[0] - 0.45*width)/width > lambda
                     && lambda > (bboxMax_[0] - 0.55*width)/width;
         }
 

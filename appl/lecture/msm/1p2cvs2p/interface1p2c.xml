@@ -5,27 +5,15 @@
             3.1e-12
         </FinePermeability>
         <CoarsePermeability>
-            4.6e-11
+            3.1e-12
         </CoarsePermeability>
        <FinePorosity>
             0.35
         </FinePorosity>
         <CoarsePorosity>
-            0.39
+            0.35
         </CoarsePorosity>
-        <LongitudinalDispersivity>
-            0.2
-        </LongitudinalDispersivity>
-        <TransverseDispersivity>
-            0.02
-        </TransverseDispersivity>
     </SoilProperties>
-
-    <FluidProperties>
-        <MolecularDiffusionCoefficient>
-            1e-9 
-        </MolecularDiffusionCoefficient>
-    </FluidProperties>
 
     <BoundaryAndInitialConditions>
         <UpperPressure>
@@ -35,19 +23,16 @@
             1.0e5
         </LowerPressure>
         <InfiltrationRate>
-            0.1
+            0.5
         </InfiltrationRate>
         <MaxTimeStepSize>
-            500
+            50
         </MaxTimeStepSize>
-        <InfiltrationStartTime>
-            0
-        </InfiltrationStartTime>
         <InfiltrationEndTime>
             1000
         </InfiltrationEndTime>
         <SimulationNumber>
-               1
+               4
         </SimulationNumber>
     </BoundaryAndInitialConditions>
 

@@ -41,22 +41,9 @@ class LensOnePTwoCNewtonController
 {
     typedef LensOnePTwoCNewtonController<TypeTag>  ThisType;
     typedef NewtonController<TypeTag>      ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
-
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename SolutionTypes::SolutionFunction SolutionFunction;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
-
-    enum {
-        konti = Indices::konti,
-        transport = Indices::transport
-    };
 
 public:
     LensOnePTwoCNewtonController()
@@ -65,7 +52,6 @@ public:
         this->setTargetSteps(9);
         this->setMaxSteps(18);
 
-        relDefect_ = 1e100;
         //load interface-file
 
         Dumux::InterfaceProblemProperties interfaceProbProps("interface1p2c.xml");
@@ -75,43 +61,12 @@ public:
 
     //! Suggest a new time stepsize based either on the number of newton
     //! iterations required or on the variable switch
-    void newtonEndStep(SolutionFunction &u, SolutionFunction &uOld)
-    {
-        // call the method of the base class
-        ParentType::newtonEndStep(u, uOld);
-
-        relDefect_ = 0;
-        for (unsigned i = 0; i < (*u).size(); ++i) {
-            Scalar normP = std::max(1e3,std::abs((*u)[i][konti]));
-            normP = std::max(normP, std::abs((*uOld)[i][konti]));
-
-            Scalar normTrans = std::max(1e-3,std::abs((*u)[i][transport]));
-            normTrans = std::max(normTrans, std::abs((*uOld)[i][transport]));
-
-            relDefect_ = std::max(relDefect_,
-                                  std::abs((*u)[i][konti] - (*uOld)[i][konti])/normP);
-            relDefect_ = std::max(relDefect_,
-                                  std::abs((*u)[i][transport] - (*uOld)[i][transport])/normTrans);
-        }
-    }
-
-    //! Suggest a new time stepsize based either on the number of newton
-    //! iterations required or on the variable switch
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
         // use function of the newtoncontroller
         return std::min(maxTimeStepSize_, ParentType::suggestTimeStepSize(oldTimeStep));
     }
 
-    //! Returns true iff the current solution can be considered to
-    //! be acurate enough
-    bool newtonConverged()
-    {
-        return relDefect_ <= this->tolerance_;
-    };
-
-protected:
-    Scalar relDefect_;
 private:
     Scalar maxTimeStepSize_;
 };
