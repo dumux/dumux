@@ -83,7 +83,7 @@ public:
      * \brief The constructor
      *
      * \param gridView The grid view
-     * \param SpatialParameters SpatialParameters instantiation
+     * \param spatialParameters SpatialParameters instantiation
      * \param verbose Output flag for the time manager.
      */
     IMPETProblem2P2C(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
