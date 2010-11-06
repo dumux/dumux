@@ -316,7 +316,7 @@ public:
     }
 
     //! Return vector of wetting phase potential gradients
-    /*! \param Idx Element index
+    /*! \param Idx1 Element index
      *  \param isIdx Intersection index */
     Scalar& potentialWetting(int Idx1, int isIdx)
     {
@@ -328,7 +328,7 @@ public:
         return this->potential(Idx1, isIdx)[wPhaseIdx];
     }
     //! Return vector of nonwetting phase potential gradients
-    /*! \param Idx Element index
+    /*! \param Idx1 Element index
      *  \param isIdx Intersection index */
     Scalar& potentialNonwetting(int Idx1, int isIdx)
     {
