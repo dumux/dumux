@@ -32,19 +32,21 @@ namespace Dumux
  * This class implements a spline \f$s(x)\f$ for which, given \f$n\f$ sampling
  * points \f$x_1, \dots, x_n\f$, the following conditions hold
  *\f{align*}{
-   s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \}\\
-   s'(x_1) & = m_1 \\
-   s'(x_n) = m_n
+   s(x_i)   & = y_i \quad \forall i \in \{1, \dots, n \}\\
+   s'(x_1)  & = m_1 \\
+   s'(x_n)  & = m_n
    \f}
- *
- * for any given boundary slopes \f$m_1\f$ and \f$m_n\f$. Alternatively, natural
- * splines are supported which are defined by
- *\f{align*}{
- s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \} \\
- s''(x_1) & = 0 \\
- s''(x_n) = 0
- \f}
+*
+* for any given boundary slopes \f$m_1\f$ and \f$m_n\f$. Alternatively, natural
+* splines are supported which are defined by
+*\f{align*}{
+    s(x_i)     & = y_i \quad \forall i \in \{1, \dots, n \} \\
+    s''(x_1)   & = 0 \\
+    s''(x_n)   & = 0
+\f}
  */
+
+
 template<class Scalar, int numSamples = 2>
 class Spline : public FixedLengthSpline_<Scalar, numSamples>
 {
@@ -113,19 +115,21 @@ public:
  * This class implements a spline \f$s(x)\f$ for which, given \f$n\f$ sampling
  * points \f$x_1, \dots, x_n\f$, the following conditions hold
  *\f{align*}{
-   s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \}\\
-   s'(x_1) & = m_1 \\
-   s'(x_n) = m_n
+     s(x_i)   & = y_i \quad \forall i \in \{1, \dots, n \}\\
+     s'(x_1)  & = m_1 \\
+     s'(x_n)  & = m_n
    \f}
  *
  * for any given boundary slopes \f$m_1\f$ and \f$m_n\f$. Alternatively, natural
  * splines are supported which are defined by
  *\f{align*}{
- s(x_i) & = y_i \quad \forall i \in \{1, \dots, n \} \\
- s''(x_1) & = 0 \\
- s''(x_n) = 0
+    s(x_i)     & = y_i \quad \forall i \in \{1, \dots, n \} \\
+    s''(x_1)   & = 0 \\
+    s''(x_n)   & = 0
  \f}
 */
+
+
 template<class Scalar>
 class Spline<Scalar, -1> : public VariableLengthSpline_<Scalar>
 { 
