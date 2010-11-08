@@ -203,7 +203,7 @@ namespace Properties
 /*!
  * \brief Explicitly unset a property for a type tag.
  *
- * This means that the property will not be inherited by the type
+ * This means that the property will not be inherited from the type
  * tag's parents and that no default will be used.
  *
  * Example:
@@ -347,6 +347,8 @@ namespace Properties
 // some serious template kung fu. Don't look at it too closely, it
 // might damage your brain!
 //////////////////////////////////////////////
+
+//! \cond 0
 
 namespace PTag {}
 namespace TTag {}
@@ -713,7 +715,8 @@ struct propertyDiagnostic
         std::string newIndent = indent + "  ";
 
         if (explicitlyUnsetOnSelf) {
-            result += (boost::format("explicitly unset at %s:%d\n")
+            result += (boost::format("%sexplicitly unset at %s:%d\n")
+                       %newIndent
                        %propInfo::fileDefined()
                        %propInfo::lineDefined()).str();
             return result;
@@ -744,7 +747,7 @@ struct propertyDiagnostic
             result += explicitlyUnsetOnChildMsg(indent, 3);
             result += explicitlyUnsetOnChildMsg(indent, 2);
             result += newIndent;
-            result += (boost::format("inherited by '%s'\n"
+            result += (boost::format("inherited from '%s'\n"
                                      "%s") %
                        Child1Diagnostic::typeTagName() %
                        Child1Diagnostic::message(newIndent, false)).str();
@@ -755,7 +758,7 @@ struct propertyDiagnostic
             result += explicitlyUnsetOnChildMsg(indent, 4);
             result += explicitlyUnsetOnChildMsg(indent, 3);
             result += newIndent;
-            result += (boost::format("inherited by '%s'\n"
+            result += (boost::format("inherited from '%s'\n"
                                      "%s") %
                        Child2Diagnostic::typeTagName() %
                        Child2Diagnostic::message(newIndent, false)).str();
@@ -765,7 +768,7 @@ struct propertyDiagnostic
             result += explicitlyUnsetOnChildMsg(indent, 5);
             result += explicitlyUnsetOnChildMsg(indent, 4);
             result += newIndent;
-            result += (boost::format("inherited by '%s'\n"
+            result += (boost::format("inherited from '%s'\n"
                                      "%s") %
                        Child3Diagnostic::typeTagName() %
                        Child3Diagnostic::message(newIndent, false)).str();
@@ -774,7 +777,7 @@ struct propertyDiagnostic
         case 4:
             result += explicitlyUnsetOnChildMsg(indent, 5);
             result += newIndent;
-            result += (boost::format("inherited by '%s'\n"
+            result += (boost::format("inherited from '%s'\n"
                                      "%s") %
                        Child4Diagnostic::typeTagName() %
                        Child4Diagnostic::message(newIndent, false)).str();
@@ -782,7 +785,7 @@ struct propertyDiagnostic
 
         case 5:
             result += newIndent;
-            result += (boost::format("inherited by '%s'\n"
+            result += (boost::format("inherited from '%s'\n"
                                      "%s") %
                        Child5Diagnostic::typeTagName() %
                        Child5Diagnostic::message(newIndent, false)).str();
@@ -859,6 +862,8 @@ struct propertyDiagnostic<RealTypeTag, void, PropertyTag>
     };
 };
 #endif // !defined NO_PROPERTY_INTROSPECTION
+
+//! \endcond
 
 } // namespace Properties
 } // namespace Dumux

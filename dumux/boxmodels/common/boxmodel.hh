@@ -71,10 +71,6 @@ class BoxModel
         dim = GridView::dimension
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container ReferenceElements;
-    typedef typename RefElemProp::ReferenceElement ReferenceElement;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
@@ -88,6 +84,9 @@ class BoxModel
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+
+    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
     enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
 

@@ -53,7 +53,7 @@ namespace Dumux
  \frac{\partial\;\phi S_\alpha \rho_\alpha}{\partial t}
  -
  \mathbf{div} \left\{
- \frac{k_{r\alpha}}{\mu_\alpha}\;K
+ \rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\;K
  \mathbf{grad}\left[
  p_\alpha - g\rho_\alpha
  \right]

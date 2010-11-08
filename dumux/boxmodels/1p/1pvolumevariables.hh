@@ -52,10 +52,6 @@ class OnePVolumeVariables : public BoxVolumeVariables<TypeTag>
         dimWorld = GridView::dimensionworld,
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container ReferenceElements;
-
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;

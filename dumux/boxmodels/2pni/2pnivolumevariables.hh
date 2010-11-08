@@ -55,10 +55,6 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
     enum { temperatureIdx = Indices::temperatureIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container ReferenceElements;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 

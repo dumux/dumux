@@ -87,7 +87,7 @@ SET_PROP_DEFAULT(AutomaticTransmission)
 // (HummmerH1, TopSpeed) = (Pickup, TopSpeed)
 ///////////////////
 
-SET_INT_PROP(CompactCar, TopSpeed, GET_PROP_VALUE(TypeTag, PTAG(GasUsage)) * 35);
+SET_INT_PROP(CompactCar, TopSpeed, GET_PROP_VALUE(TypeTag, PTAG(GasUsage)) * 30);
 SET_INT_PROP(CompactCar, NumSeats, 5);
 SET_INT_PROP(CompactCar, GasUsage, 4);
 

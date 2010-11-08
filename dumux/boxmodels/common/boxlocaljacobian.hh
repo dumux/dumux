@@ -69,9 +69,8 @@ private:
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename Element::EntityPointer ElementPointer;
 
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container ReferenceElements;
-    typedef typename RefElemProp::ReferenceElement ReferenceElement;
+    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename Element::Geometry Geometry;

@@ -31,9 +31,6 @@
 
 #include "2pproperties.hh"
 
-
-
-
 namespace Dumux
 {
 /*!
@@ -115,7 +112,6 @@ public:
         // non-wetting phase mass
         result[contiNEqIdx] = vertDat.density(nPhaseIdx) * vertDat.porosity()
                 * vertDat.saturation(nPhaseIdx);
-        ;
     }
 
     /*!

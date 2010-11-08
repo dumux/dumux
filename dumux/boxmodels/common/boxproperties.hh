@@ -51,7 +51,6 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Grid);     //!< The type of the DUNE grid
 NEW_PROP_TAG(GridView); //!< The type of the grid view
 
-NEW_PROP_TAG(ReferenceElements); //!< DUNE reference elements to be used
 NEW_PROP_TAG(FVElementGeometry); //! The type of the finite-volume geometry in the box scheme
 
 NEW_PROP_TAG(Problem);       //!< The type of the problem

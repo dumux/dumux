@@ -60,8 +60,6 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
     enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
     enum { temperatureIdx = Indices::temperatureIdx };
 
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements))::Container ReferenceElements;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     //! \endcond

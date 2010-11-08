@@ -130,7 +130,6 @@ public:
         cn_ = new Constraints();
         scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problemPtr_->gridView(), *fem_, *cn_);
         gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
-
         //cn_->compute_ghosts(*gridFunctionSpace_);
 
         //typedef BoundaryIndexHelper<TypeTag> BoundaryFunction;

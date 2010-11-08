@@ -61,9 +61,10 @@ class Exchanger
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename Grid::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
-    typedef typename RefElemProp::Container ReferenceElements;
-    typedef typename RefElemProp::ReferenceElement ReferenceElement;
+    typedef typename GridView::ctype CoordScalar;
+
+    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
 public:
     Exchanger(const Problem& problem)

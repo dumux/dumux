@@ -50,36 +50,10 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! Set the default type for scalar values to double
-SET_PROP_DEFAULT(Scalar)
-{ typedef double type; };
+SET_TYPE_PROP(BoxModel, Scalar, double);
 
 //! Set the default type for the time manager
-SET_PROP_DEFAULT(TimeManager)
-{ typedef Dumux::TimeManager<TypeTag> type; };
-
-/*!
- * \brief Specify the reference elements which we ought to use.
- *
- * We use Dune::ReferenceElements by default (-> old entity
- * numbering).
- *
- * \todo Some specialization if the grid only supports one kind of
- *       cells would be nice. this would be better fixed inside DUNE,
- *       though. something like:
- *       Dune::GenericReferenceElements<Dune::GeometryType<cube, dim> >
- */
-SET_PROP_DEFAULT(ReferenceElements)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-
-    typedef typename Grid::ctype CoordScalar;
-    static const int dim = Grid::dimension;
-
-public:
-    typedef Dune::GenericReferenceElements<CoordScalar, dim> Container;
-    typedef Dune::GenericReferenceElement<CoordScalar, dim>  ReferenceElement;
-};
+SET_TYPE_PROP(BoxModel, TimeManager, Dumux::TimeManager<TypeTag>);
 
 //////////////////////////////////////////////////////////////////
 // Properties
