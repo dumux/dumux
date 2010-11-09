@@ -171,7 +171,7 @@ private:
  *  \param t Current simulation time [s]
  *  \param[out] dt Time step size [s]
  *  \param[out] updateVec Update vector, or update estimate for secants, resp. Here in [kg/m^3]
- *  \param impes Flag that determines if it is a real impes step or an update estimate for volume derivatives
+ *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
  */
 template<class TypeTag>
 void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false)
