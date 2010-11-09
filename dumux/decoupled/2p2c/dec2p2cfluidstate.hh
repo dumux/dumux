@@ -73,7 +73,7 @@ public:
      * - comparison with Z1 to determine phase presence => phase mass fractions
      * - round off fluid properties
      * \param Z1 Feed mass fraction [-]
-     * \param phasePressure Vector holding the pressure of the phases [Pa]
+     * \param pw Pressure of the wetting phase [Pa]
      * \param poro Porosity [-]
      * \param temperature Temperature [K]
      */
@@ -166,8 +166,8 @@ public:
      * - determination of the equilibrium constants from the fluid system
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - round off fluid properties
-     * \param sat saturation of phase 1 [-]
-     * \param phasePressure Vector holding the pressure of the phases [Pa]
+     * \param sat Saturation of phase 1 [-]
+     * \param pw Pressure of the wetting phase [Pa]
      * \param poro Porosity [-]
      * \param temperature Temperature [K]
      */
@@ -310,7 +310,7 @@ public:
      * For an ideal gas, this means R*T*c.
      * Unit: [Pa] = [N/m^2]
      *
-     * \param compIdx the index of the component
+     * \param componentIdx the index of the component
      */
     Scalar partialPressure(int componentIdx) const
     {
