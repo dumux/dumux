@@ -303,8 +303,6 @@ public:
         return saturation_;
     }
     //! Return saturation vector
-    /*! \param Idx Element index
-     *  \param compIdx Index of the component */
     const ScalarSolutionType& saturation() const
     {
         return saturation_;
