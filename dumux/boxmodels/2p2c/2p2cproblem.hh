@@ -27,7 +27,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPTwoCProblems
+ * \ingroup TwoPTwoCModel
  * \brief Base class for all problems which use the two-phase, two-component box model
  *
  */

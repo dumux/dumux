@@ -1,4 +1,4 @@
-// $Id: 2pproperties.hh 3357 2010-03-25 13:02:05Z lauser $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2010 by Andreas Lauser                               *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
@@ -14,6 +14,9 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \ingroup TwoPBoxModel
+ */
 /*!
  * \file
  *
@@ -34,10 +37,6 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPBoxModel
- */
-// \{
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
@@ -112,7 +111,7 @@ SET_BOOL_PROP(BoxTwoP, EnablePartialReassemble, true);
 SET_BOOL_PROP(BoxTwoP, EnableTimeStepRampUp, false);
 
 }
-// \}
+//
 
 }
 

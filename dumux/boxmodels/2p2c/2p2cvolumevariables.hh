@@ -18,7 +18,6 @@
 /*!
  * \file
  *
- * \ingroup TwoPTwoCModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */
@@ -39,6 +38,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup TwoPTwoCModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */

@@ -32,6 +32,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup TwoPTwoCModel
  * \brief Calculates the phase state from the primary variables in the
  *        2p2c model.
  */

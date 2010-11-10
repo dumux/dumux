@@ -14,6 +14,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \ingroup TwoPTwoCModel
+ */
+/*!
  * \file
  *
  * \brief Defines default values for most properties required by the
@@ -35,10 +38,7 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPTwoCModel
- */
-// \{
+
 namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Property values
@@ -148,7 +148,7 @@ SET_BOOL_PROP(BoxTwoPTwoC, EnablePartialReassemble, true);
 // enable time-step ramp up by default
 SET_BOOL_PROP(BoxTwoPTwoC, EnableTimeStepRampUp, false);
 
-// \}
+//
 }
 
 }

@@ -13,6 +13,7 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+
 /*!
  * \file
  *
@@ -24,7 +25,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup TwoPTwoCModel
+ * \ingroup TwoPTwoCModel
  */
 // \{
 

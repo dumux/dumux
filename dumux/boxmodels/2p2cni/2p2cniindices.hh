@@ -16,6 +16,7 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+
 /*!
  * \file
  *
@@ -29,7 +30,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup TwoPTwoCNIModel
+ * \ingroup TwoPTwoCNIModel
  */
 // \{
 

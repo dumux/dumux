@@ -27,7 +27,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPProblems
+ * \ingroup TwoPBoxModel
  * \brief Base class for all problems which use the two-phase box model
  */
 template<class TypeTag>

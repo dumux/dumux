@@ -15,6 +15,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \ingroup TwoPBoxModel
+ */
+/*!
  * \file
  *
  * \brief Defines the properties required for the twophase BOX model.
@@ -27,21 +30,14 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPBoxModel
- */
-// \{
+
+
 
 ////////////////////////////////
 // properties
 ////////////////////////////////
 namespace Properties
 {
-
-/*!
- * \addtogroup TwoPBoxModel
- */
-// \{
 
 //////////////////////////////////////////////////////////////////
 // Type tags
@@ -67,7 +63,7 @@ NEW_PROP_TAG(NonwettingPhase); //!< The non-wetting phase for two-phase models
 NEW_PROP_TAG(FluidSystem); //!<The fluid systems including the information about the phases
 NEW_PROP_TAG(FluidState); //!<The phases state
 
-// \}
+//
 }
 
 }

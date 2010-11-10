@@ -14,6 +14,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \ingroup TwoPTwoCNIModel
+ */
+/*!
  * \file
  *
  * \brief Defines the properties required for the non-isothermal two-phase,
@@ -26,10 +29,7 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPTwoCNIModel
- */
-// \{
+
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////

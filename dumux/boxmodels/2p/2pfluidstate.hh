@@ -29,6 +29,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup TwoPBoxModel
  * \brief Calculates the fluid state as a function of the primary variables in the
  *        2p model.
  */

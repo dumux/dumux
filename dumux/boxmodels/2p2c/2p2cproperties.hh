@@ -17,6 +17,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \ingroup TwoPTwoCModel
+ */
+/*!
  * \file
  *
  * \brief Defines the properties required for the 2p2c BOX model.
@@ -28,10 +31,7 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPTwoCModel
- */
-// \{
+
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////

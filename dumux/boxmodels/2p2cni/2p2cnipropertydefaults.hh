@@ -1,4 +1,4 @@
-// $Id: 2p2cniproperties.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2010 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
@@ -16,6 +16,9 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \ingroup TwoPTwoCNIModel
+ */
 /*!
  * \file
  *
