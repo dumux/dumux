@@ -248,6 +248,9 @@ public:
 SET_PROP(BoxModel, LocalOperator)
 { typedef typename GET_PROP(TypeTag, PTAG(GridOperatorSpace))::LocalOperator type; };
 
+//! use central differences to calculate the jacobian by default
+SET_INT_PROP(BoxModel, NumericDifferenceMethod, 0);
+
 // disable jacobian matrix recycling by default
 SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);
 // disable partial reassembling by default

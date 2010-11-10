@@ -56,8 +56,12 @@ private:
 
         Red = JacobianAssembler::Red,
         Yellow = JacobianAssembler::Yellow,
-        Green = JacobianAssembler::Green
+        Green = JacobianAssembler::Green,
+
+        numDiffMethod = GET_PROP_VALUE(TypeTag,
+                                       PTAG(NumericDifferenceMethod))
     };
+
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GridView::Grid::ctype CoordScalar;
@@ -152,6 +156,17 @@ public:
                            elem_(),
                            fvElemGeom_,
                            false /* isOldSol? */);
+        if (numDiffMethod != 0) {
+            // for forward and backward differences we need the local
+            // residual at the evaluation point. For efficiency we
+            // only calculate this once.
+            localResidual().eval(elem_(),
+                                 fvElemGeom_,
+                                 prevVolVars_,
+                                 curVolVars_,
+                                 bcTypes_);
+            evalPointResid_ = localResidual().residual();
+        };
 
         // calculate the local jacobian matrix
         ElementSolutionVector partialDeriv(numVertices);
@@ -272,45 +287,60 @@ protected:
 
         curVolVars_[scvIdx].setEvalPoint(&origVolVars);
         Scalar eps = asImp_().numericEpsilon_(scvIdx, pvIdx);
+        Scalar delta = 0;
 
-        // deflect primary variables
-        priVars[pvIdx] += eps;
+        if (numDiffMethod >= 0) { // not backward differences
+            // deflect primary variables
+            priVars[pvIdx] += eps;
+            delta += eps;
 
-        // calculate the residual
-        curVolVars_[scvIdx].update(priVars,
-                                   problem_(),
-                                   elem_(),
-                                   fvElemGeom_,
-                                   scvIdx,
-                                   false);
-        localResidual().eval(elem_(),
-                             fvElemGeom_,
-                             prevVolVars_,
-                             curVolVars_,
-                             bcTypes_);
+            // calculate the residual
+            curVolVars_[scvIdx].update(priVars,
+                                       problem_(),
+                                       elem_(),
+                                       fvElemGeom_,
+                                       scvIdx,
+                                       false);
+            localResidual().eval(elem_(),
+                                 fvElemGeom_,
+                                 prevVolVars_,
+                                 curVolVars_,
+                                 bcTypes_);
+            
+            // store the residual
+            dest = localResidual().residual();
+        }
+        else {
+            // backward differences
+            dest = evalPointResid_;
+        }
 
-        // store the residual
-        dest = localResidual().residual();
 
-        // deflect the primary variables
-        priVars[pvIdx] -= 2*eps;
+        if (numDiffMethod <= 0) { // not forward differences
+            // deflect the primary variables
+            priVars[pvIdx] -= delta + eps;
+            delta += eps;
 
-        // calculate residual again
-        curVolVars_[scvIdx].update(priVars,
-                                   problem_(),
-                                   elem_(),
-                                   fvElemGeom_,
-                                   scvIdx,
-                                   false);
-        localResidual().eval(elem_(),
-                             fvElemGeom_,
-                             prevVolVars_,
-                             curVolVars_,
-                             bcTypes_);
+            // calculate residual again
+            curVolVars_[scvIdx].update(priVars,
+                                       problem_(),
+                                       elem_(),
+                                       fvElemGeom_,
+                                       scvIdx,
+                                       false);
+            localResidual().eval(elem_(),
+                                 fvElemGeom_,
+                                 prevVolVars_,
+                                 curVolVars_,
+                                 bcTypes_);
+            dest -= localResidual().residual();
+        }
+        else {
+            // forward differences
+            dest -= evalPointResid_;
+        }
 
-        // central differences
-        dest -= localResidual().residual();
-        dest /= 2*eps;
+        dest /= delta;
 
         // restore the orignal state of the element's secondary
         // variables
@@ -376,6 +406,7 @@ protected:
     // levels
     ElementVolumeVariables prevVolVars_;
     ElementVolumeVariables curVolVars_;
+    ElementSolutionVector evalPointResid_; // residual at evaluation point
 
     LocalResidual localResidual_;
     LocalBlockMatrix A_;

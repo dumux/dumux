@@ -99,6 +99,15 @@ NEW_PROP_TAG(EnablePartialReassemble);
 //! newton iterations to achive larger time step sizes
 NEW_PROP_TAG(EnableTimeStepRampUp);
 
+/*!
+ * \brief Specify which kind of method should be used to numerically
+ * calculate the partial derivatives of the residual.
+ *
+ * -1 means backward differences, 0 means central differences, 1 means
+ * forward differences. By default we use central differences.
+ */
+NEW_PROP_TAG(NumericDifferenceMethod);
+
 // mappers from local to global indices
 
 //! maper for vertices
