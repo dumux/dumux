@@ -1503,7 +1503,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
  * \param ep A pointer to the current element
  * \param[out] dv_dC1 partial derivative of fluid volume w.r.t. mass of component 1 [m^3/kg]
  * \param[out] dv_dC2 partial derivative of fluid volume w.r.t. mass of component 2 [m^3/kg]
- * \param[out] dV_dp partial derivative of fluid volume w.r.t. pressure [1/Pa]
+ * \param[out] dv_dp partial derivative of fluid volume w.r.t. pressure [1/Pa]
  */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::volumeDerivatives(GlobalPosition globalPos, ElementPointer ep, Scalar& dv_dC1, Scalar& dv_dC2, Scalar& dv_dp)
