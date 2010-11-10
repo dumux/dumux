@@ -131,7 +131,6 @@ public:
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
         asImp_()->computeDiffusiveFlux(flux, vars);
-        flux *= -1;
     }
 
     /*!

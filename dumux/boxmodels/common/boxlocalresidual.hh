@@ -414,12 +414,21 @@ protected:
             this->asImp_().computeFlux(flux, k);
             Valgrind::CheckDefined(flux);
 
-            // subtract fluxes from the local mass rates of the
-            // respective sub control volume adjacent to the face.
-            for (int eq = 0; eq < numEq; ++ eq) {
-                residual_[i][eq] -= flux[eq];
-                residual_[j][eq] += flux[eq];
-            }
+            // The balance equation for a finite volume is:
+            // 
+            // dStorage/dt = Flux + Source
+            //
+            // Re-arranging this, we get 
+            //
+            // dStorage/dt - Source - Flux = 0
+            //
+            // The residual already contains the "dStorage/dt -
+            // Source" term, so we have to subtract the flux
+            // term. Since the calculated flux goes from sub-control
+            // volume i to sub-control volume j, we need to add the
+            // flux to j and subtract it from i
+            residual_[i] += flux;
+            residual_[j] -= flux;
         }
     }
 
@@ -448,7 +457,7 @@ protected:
         // evaluate the volume terms (storage + source terms)
         for (int i=0; i < fvElemGeom_().numVertices; i++)
         {
-            PrimaryVariables massContrib(0), tmp(0);
+            PrimaryVariables dStorage_dt(0), tmp(0);
 
             // mass balance within the element. this is the
             // $\frac{m}{\partial t}$ term if using implicit
@@ -456,30 +465,25 @@ protected:
             //
             // TODO (?): we might need a more explicit way for
             // doing the time discretization...
-            this->asImp_().computeStorage(massContrib, i, false);
+            this->asImp_().computeStorage(dStorage_dt, i, false);
             this->asImp_().computeStorage(tmp, i, true);
 
-            massContrib -= tmp;
-            massContrib *=
+            dStorage_dt -= tmp;
+            dStorage_dt *=
                 fvElemGeom_().subContVol[i].volume
                 /
                 problem_().timeManager().timeStepSize();
-            
-            for (int j = 0; j < numEq; ++j)
-                residual_[i][j] += massContrib[j];
+            residual_[i] += dStorage_dt;
 
             // subtract the source term from the local rate
             PrimaryVariables source;
             this->asImp_().computeSource(source, i);
             source *= fvElemGeom_().subContVol[i].volume;
-
-            for (int j = 0; j < numEq; ++j) {
-                residual_[i][j] -= source[j];
-
-                // make sure that only defined quantities where used
-                // to calculate the residual.
-                Valgrind::CheckDefined(residual_[i][j]);
-            }
+            residual_[i] -= source;
+            
+            // make sure that only defined quantities where used
+            // to calculate the residual.
+            Valgrind::CheckDefined(residual_[i]);
         }
     }
 

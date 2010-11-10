@@ -131,9 +131,6 @@ public:
             ((    mobilityUpwindAlpha)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx) 
              +
              (1 - mobilityUpwindAlpha)*dn.density(wPhaseIdx)*dn.mobility(wPhaseIdx));
-
-        // we need the flux from i to j instead of the other way
-        flux *= -1;
     }
 
     /*!

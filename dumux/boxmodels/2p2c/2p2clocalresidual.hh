@@ -203,10 +203,6 @@ public:
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
         asImp_()->computeDiffusiveFlux(flux, vars);
-
-        // the face normal points into the outward direction, so we
-        // have to multiply all fluxes with -1
-        flux *= -1;
     }
 
     /*!

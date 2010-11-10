@@ -164,10 +164,6 @@ public:
         fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
         flux[transEqIdx] +=
             c * (normalDisp * fluxVars.concentrationGrad(1));
-                
-        // we need to calculate the flux from i to j, not the other
-        // way round...
-        flux *= -1;
     }
 
     /*!
