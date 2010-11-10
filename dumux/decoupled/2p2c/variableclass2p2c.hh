@@ -209,13 +209,16 @@ public:
         	// pressure & saturation
             ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (size_);
             ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *pc = writer.template createField<Scalar, 1> (size_);
             *pressure = this->pressure();
             *saturation = saturation_;
-            *pc = capillaryPressure_;
             writer.addCellData(pressure, "pressure");
             writer.addCellData(saturation, "water saturation");
-            writer.addCellData(pc, "capillary pressure");
+            if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+            {
+                ScalarSolutionType *pc = writer.template createField<Scalar, 1> (size_);
+                *pc = capillaryPressure_;
+                writer.addCellData(pc, "capillary pressure");
+            }
 
             //total Concentration
             ScalarSolutionType *totalConcentration1 = writer.template createField<Scalar, 1> (size_);

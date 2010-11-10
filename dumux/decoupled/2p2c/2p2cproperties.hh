@@ -27,7 +27,7 @@
  * \defgroup multiphysics Multiphysics Compositional Models
  */
 /*!
- * \ingroup IMPEC
+ * \ingroup IMPEC Properties
  * \file
  *
  * \brief Defines the properties required for the decoupled 2p2c models.

@@ -165,7 +165,7 @@ public:
     }
 
     //numerical volume derivatives wrt changes in mass, pressure
-    void volumeDerivatives(GlobalPosition globalPos, ElementPointer ep, Scalar& dv_dC1, Scalar& dv_dC2, Scalar& dV_dp);
+    void volumeDerivatives(GlobalPosition globalPos, ElementPointer ep, Scalar& dv_dC1, Scalar& dv_dC2, Scalar& dv_dp);
 
     /*! \name general methods for serialization, output */
     //@{
@@ -190,21 +190,21 @@ public:
         problem().variables().addOutputVtkFields(writer);
 
         // add multiphysics stuff
-        Dune::BlockVector<Dune::FieldVector<int,1> > *subdomainPtr = writer.template createField<int, 1> (dV_dp.size());
+        Dune::BlockVector<Dune::FieldVector<int,1> > *subdomainPtr = writer.template createField<int, 1> (dv_dp.size());
         *subdomainPtr = problem_.variables().subdomain();
         writer.addCellData(subdomainPtr, "subdomain");
 
 #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
         // add debug stuff
-        Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer.template createField<double, 1> (dV_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer.template createField<double, 1> (dv_dp.size());
         *errorCorrPtr = errorCorrection;
         writer.addCellData(errorCorrPtr, "Error Correction");
         // add debug stuff
-        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dpPtr = writer.template createField<double, 1> (dV_dp.size());
-        *dV_dpPtr = dV_dp;
-        writer.addCellData(dV_dpPtr, "dV_dP");
-                Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC1Ptr = writer.template createField<double, 1> (dV_dp.size());
-        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC2Ptr = writer.template createField<double, 1> (dV_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *dv_dpPtr = writer.template createField<double, 1> (dv_dp.size());
+        *dv_dpPtr = dv_dp;
+        writer.addCellData(dv_dpPtr, "dv_dP");
+                Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC1Ptr = writer.template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC2Ptr = writer.template createField<double, 1> (dv_dp.size());
         *dV_dC1Ptr = dV_[0];
         *dV_dC2Ptr = dV_[1];
         writer.addCellData(dV_dC1Ptr, "dV_dC1");
@@ -235,7 +235,7 @@ public:
         //rezise block vectors
         dV_[wPhaseIdx].resize(problem_.variables().gridSize());
         dV_[nPhaseIdx].resize(problem_.variables().gridSize());
-        dV_dp.resize(problem_.variables().gridSize());
+        dv_dp.resize(problem_.variables().gridSize());
         problem_.variables().subdomain().resize(problem_.variables().gridSize());
         nextSubdomain.resize(problem_.variables().gridSize());
 
@@ -254,7 +254,7 @@ private:
 
     //vectors for partial derivatives
     typename SolutionTypes::PhaseProperty dV_;
-    typename SolutionTypes::ScalarSolution dV_dp;
+    typename SolutionTypes::ScalarSolution dv_dp;
 
     // subdomain map
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //! vector holding next subdomain
@@ -406,7 +406,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
     {
         dV_[wPhaseIdx][i] = 0;     // dv_dC1 = dV/dm1
         dV_[nPhaseIdx][i] = 0;     // dv / dC2
-        dV_dp[i] = 0;      // dv / dp
+        dv_dp[i] = 0;      // dv / dp
     }
 
     // determine maximum error to scale error-term
@@ -447,7 +447,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         {
 		        // derivatives of the fluid volume with respect to concentration of components, or pressure
 				if (dV_[0][globalIdxI] == 0)
-					volumeDerivatives(globalPos, *eIt, dV_[wPhaseIdx][globalIdxI][0], dV_[nPhaseIdx][globalIdxI][0], dV_dp[globalIdxI][0]);
+					volumeDerivatives(globalPos, *eIt, dV_[wPhaseIdx][globalIdxI][0], dV_[nPhaseIdx][globalIdxI][0], dv_dp[globalIdxI][0]);
 
 				source[wPhaseIdx] *= dV_[wPhaseIdx][globalIdxI];		// note: dV_[i][1] = dv_dC1 = dV/dm1
 				source[nPhaseIdx] *= dV_[nPhaseIdx][globalIdxI];
@@ -607,7 +607,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     {
                         // determine volume derivatives
                         if (dV_[0][globalIdxJ] == 0)
-                            volumeDerivatives(globalPosNeighbor, *neighborPointer, dV_[wPhaseIdx][globalIdxJ][0], dV_[nPhaseIdx][globalIdxJ][0], dV_dp[globalIdxJ][0]);
+                            volumeDerivatives(globalPosNeighbor, *neighborPointer, dV_[wPhaseIdx][globalIdxJ][0], dV_[nPhaseIdx][globalIdxJ][0], dv_dp[globalIdxJ][0]);
                         dv_dC1 = (dV_[wPhaseIdx][globalIdxI] + dV_[wPhaseIdx][globalIdxJ]) / 2; // dV/dm1= dV/dC^1
                         dv_dC2 = (dV_[nPhaseIdx][globalIdxI] + dV_[nPhaseIdx][globalIdxJ]) / 2;
 
@@ -1082,7 +1082,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         // compressibility term
         if (!first && timestep_ != 0.)
         {
-            if (dV_dp[globalIdxI] == 0.)
+            if (dv_dp[globalIdxI] == 0.)
             {
                 assert(problem_.variables().subdomain(globalIdxI)==1);
 
@@ -1098,7 +1098,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     Scalar v_w_ = 1. / FluidSystem::phaseDensity(wPhaseIdx,
                                                         problem_.temperature(globalPos, *eIt),
                                                         p_, pseudoFluidState);
-                    dV_dp[globalIdxI] = (problem_.variables().totalConcentration(globalIdxI, wCompIdx)
+                    dv_dp[globalIdxI] = (problem_.variables().totalConcentration(globalIdxI, wCompIdx)
                             + problem_.variables().totalConcentration(globalIdxI, nCompIdx))
                             * ( v_w_  - 1./densityWI) / 1e-2;
                 }
@@ -1107,12 +1107,12 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     Scalar v_n_ = 1. / FluidSystem::phaseDensity(nPhaseIdx,
                                                         problem_.temperature(globalPos, *eIt),
                                                         p_, pseudoFluidState);
-                    dV_dp[globalIdxI] = (problem_.variables().totalConcentration(globalIdxI, wCompIdx)
+                    dv_dp[globalIdxI] = (problem_.variables().totalConcentration(globalIdxI, wCompIdx)
                             + problem_.variables().totalConcentration(globalIdxI, nCompIdx))
                             * ( v_n_  - 1./densityNWI) / 1e-2;
                 }
             }    //end calculation of 1p compress_term
-            Scalar compress_term = dV_dp[globalIdxI] / timestep_;
+            Scalar compress_term = dv_dp[globalIdxI] / timestep_;
 
             A_[globalIdxI][globalIdxI] -= compress_term*volume;
             f_[globalIdxI] -= problem_.variables().pressure()[globalIdxI] * compress_term * volume;
@@ -1506,7 +1506,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
  * \param[out] dV_dp partial derivative of fluid volume w.r.t. pressure [1/Pa]
  */
 template<class TypeTag>
-void FVPressure2P2CMultiPhysics<TypeTag>::volumeDerivatives(GlobalPosition globalPos, ElementPointer ep, Scalar& dv_dC1, Scalar& dv_dC2, Scalar& dV_dp)
+void FVPressure2P2CMultiPhysics<TypeTag>::volumeDerivatives(GlobalPosition globalPos, ElementPointer ep, Scalar& dv_dC1, Scalar& dv_dC2, Scalar& dv_dp)
 {
 	// cell index
     int globalIdx = problem_.variables().index(*ep);
@@ -1567,7 +1567,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::volumeDerivatives(GlobalPosition globa
             p_, problem_.spatialParameters().porosity(globalPos, *ep), temperature_);
     Scalar v_w_ = 1. / FluidSystem::phaseDensity(wPhaseIdx, temperature_, p_, updFluidState);
     Scalar v_g_ = 1. / FluidSystem::phaseDensity(nPhaseIdx, temperature_, p_, updFluidState);
-    dV_dp = ((m1+m2) * (nuw1 * v_w_ + (1-nuw1) * v_g_) - volalt) /incp;
+    dv_dp = ((m1+m2) * (nuw1 * v_w_ + (1-nuw1) * v_g_) - volalt) /incp;
 
     // numerical derivative of fluid volume with respect to mass of component 1
     m1 +=  inc1;

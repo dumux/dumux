@@ -444,7 +444,6 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     double potentialW = (unitOuterNormal * distVec) * (pressI - pressBound) / (dist * dist);
                     double potentialNW = potentialW + densityNW_mean * (unitDistVec * gravity_);
                     potentialW += densityW_mean * (unitDistVec * gravity_);
-                    potentialNW += densityNW_mean * (unitDistVec * gravity_);
 
                     // do upwinding for lambdas
                     double lambdaW, lambdaN;
@@ -470,7 +469,6 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                                     problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(nPhaseIdx))
                                     / viscosityNWBound;
                         }
-
                     // prepare K
                     Dune::FieldVector<Scalar,dim> K(0);
                     K_I.umv(unitDistVec,K);
