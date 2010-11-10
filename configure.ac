@@ -105,7 +105,10 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/common/Makefile 
     dumux/boxmodels/richards/Makefile 
     dumux/common/Makefile 
-    dumux/decoupled/Makefile 
+    dumux/decoupled/Makefile
+    dumux/decoupled/1p/Makefile
+    dumux/decoupled/1p/diffusion/Makefile
+    dumux/decoupled/1p/diffusion/fv/Makefile 
     dumux/decoupled/2p/Makefile 
     dumux/decoupled/2p/diffusion/Makefile 
     dumux/decoupled/2p/diffusion/fv/Makefile 
@@ -114,6 +117,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/decoupled/2p/impes/Makefile 
     dumux/decoupled/2p/transport/Makefile 
     dumux/decoupled/2p/transport/fv/Makefile
+    dumux/decoupled/2p2c/Makefile 
     dumux/decoupled/common/Makefile 
     dumux/io/Makefile
     dumux/material/Makefile 
