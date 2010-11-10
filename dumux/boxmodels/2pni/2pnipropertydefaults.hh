@@ -16,6 +16,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ *  \ingroup TwoPNIBoxModel
+ */
+/*!
  * \file
  *
  * \brief Defines the default values for most of the properties
@@ -35,9 +38,7 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPNIBoxModel
- */
+
 
 namespace Properties
 {

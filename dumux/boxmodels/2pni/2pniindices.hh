@@ -26,7 +26,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup TwoPNIBoxModel
+ * \ingroup TwoPNIBoxModel
  */
 // \{
 

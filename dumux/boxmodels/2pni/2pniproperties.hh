@@ -16,6 +16,10 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ *  \ingroup TwoPNIBoxModel
+ */
+
+/*!
  * \file
  *
  * \brief Defines the properties required for the non-isotherm two-phase BOX model.
@@ -27,10 +31,6 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup TwoPNIBoxModel
- */
-// \{
 
 namespace Properties
 {

@@ -28,11 +28,10 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPNIProblems
+ * \ingroup TwoPNIBoxModel
  * \brief Base class for all problems which use the non-isothermal
  *         two-phase box model.
  *
- * \todo Please doc me more!
  */
 template<class TypeTag>
 class TwoPNIProblem : public TwoPProblem<TypeTag>
