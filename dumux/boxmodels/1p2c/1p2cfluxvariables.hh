@@ -195,7 +195,7 @@ protected:
 
                 // the concentration gradient
                 tmp = feGrad;
-                tmp *= elemDat[idx].moleFrac(1);
+                tmp *= elemDat[idx].concentration(1);
                 concentrationGrad_ += tmp;
             }
         }
