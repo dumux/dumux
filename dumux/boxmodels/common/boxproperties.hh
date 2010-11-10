@@ -41,7 +41,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the box-scheme
-NEW_TYPE_TAG(BoxModel, INHERITS_FROM(CoupledModel));
+NEW_TYPE_TAG(BoxModel, INHERITS_FROM(ImplicitModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

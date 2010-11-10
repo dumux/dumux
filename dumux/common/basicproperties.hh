@@ -33,19 +33,19 @@ namespace Properties
 //
 // NumericModel
 // |
-// +-> CoupledModel
+// +-> ImplicitModel
 // |
-// \-> DecoupledModel
+// \-> ExplicitModel
 ///////////////////////////////////
 
 //! Type tag for all models.
 NEW_TYPE_TAG(NumericModel);
 
 //! Type tag for all fully coupled models.
-NEW_TYPE_TAG(CoupledModel, INHERITS_FROM(NumericModel));
+NEW_TYPE_TAG(ImplicitModel, INHERITS_FROM(NumericModel));
 
 //! Type tag for all decoupled models.
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(NumericModel));
+NEW_TYPE_TAG(ExplicitModel, INHERITS_FROM(NumericModel));
 
 
 ///////////////////////////////////

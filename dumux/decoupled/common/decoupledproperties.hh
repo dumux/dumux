@@ -41,7 +41,8 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-// The DecoupledModel type tag is defined in dumux/common/basicproperties.hh
+//! Create a type tag for all decoupled models
+NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
