@@ -64,9 +64,6 @@ class FVMPFAOPressure2P
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-    typedef typename ReferenceElements::Container ReferenceElementContainer;
-    typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
@@ -2429,6 +2426,7 @@ void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
         Dune::GeometryType gt = eIt->geometry().type();
 
         // get cell center in reference element
+        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
         const LocalPosition &localPos = ReferenceElementContainer::general(gt).position(0, 0);
 
         // get global coordinate of cell center

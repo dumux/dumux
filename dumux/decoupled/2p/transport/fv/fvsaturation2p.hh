@@ -53,9 +53,6 @@ class FVSaturation2P
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-    typedef typename ReferenceElements::Container ReferenceElementContainer;
-    typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DiffusivePart)) DiffusivePart;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConvectivePart)) ConvectivePart;

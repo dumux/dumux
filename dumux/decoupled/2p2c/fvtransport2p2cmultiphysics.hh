@@ -52,9 +52,6 @@ class FVTransport2P2CMultiPhysics
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-    typedef typename ReferenceElements::Container ReferenceElementContainer;
-    typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
@@ -237,8 +234,9 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                 Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
                 // center in face's reference element
+                typedef Dune::GenericReferenceElements<Scalar, dim - 1> FaceReferenceElements;
                 const Dune::FieldVector<Scalar, dim - 1>& faceLocal =
-                        ReferenceElementFaceContainer::general(faceGT).position(0, 0);
+                    FaceReferenceElements::general(faceGT).position(0, 0);
 
                 // center of face inside volume reference element
                 const LocalPosition localPosFace(0);

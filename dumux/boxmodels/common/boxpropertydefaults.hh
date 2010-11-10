@@ -49,9 +49,6 @@ namespace Properties {
 // Some defaults for very fundamental properties
 //////////////////////////////////////////////////////////////////
 
-//! Set the default type for scalar values to double
-SET_TYPE_PROP(BoxModel, Scalar, double);
-
 //! Set the default type for the time manager
 SET_TYPE_PROP(BoxModel, TimeManager, Dumux::TimeManager<TypeTag>);
 

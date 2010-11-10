@@ -71,10 +71,6 @@ template<class TypeTag> class FVPressure2P2CMultiPhysics
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-    typedef typename ReferenceElements::Container ReferenceElementContainer;
-    typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
@@ -424,7 +420,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         Dune::GeometryType gt = eIt->geometry().type();
 
         // number of Faces of current element
-        int numberOfFaces = ReferenceElementContainer::general(gt).size(1);
+        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+        int numberOfFaces = ReferenceElements::general(gt).size(1);
 
 
         // get global coordinate of cell center
@@ -485,7 +482,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
             Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
             // center in face's reference element
-            const Dune::FieldVector<Scalar, dim - 1>& faceLocal = ReferenceElementFaceContainer::general(faceGT).position(0,0);
+            typedef Dune::GenericReferenceElements<Scalar, dim - 1> FaceReferenceElements;
+            const Dune::FieldVector<Scalar, dim - 1>& faceLocal = 
+                FaceReferenceElements::general(faceGT).position(0,0);
 
             int isIndex = isIt->indexInInside();
 

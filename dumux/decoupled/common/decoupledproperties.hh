@@ -17,6 +17,8 @@
 #define DUMUX_DECOUPLED_PROPERTIES_HH
 
 #include <dumux/common/propertysystem.hh>
+#include <dumux/common/basicproperties.hh>
+
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
 /*!
@@ -36,18 +38,14 @@ namespace Properties
 {
 
 //////////////////////////////////////////////////////////////////
-// Type tags tags
+// Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG( DecoupledModel);
+// The DecoupledModel type tag is defined in dumux/common/basicproperties.hh
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-//!< Property tag for scalar values
-NEW_PROP_TAG( Scalar);
 
 //! Property tag for types associated with the solution of the PDE.
 //! This means vectors of primary variables, solution functions on the
@@ -57,8 +55,6 @@ NEW_PROP_TAG( TransportSolutionType);
 
 NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
 NEW_PROP_TAG( GridView); //!< The type of the grid view
-
-NEW_PROP_TAG( ReferenceElements); //!< DUNE reference elements to be used
 
 NEW_PROP_TAG( Problem); //!< The type of the problem
 NEW_PROP_TAG( Model); //!< The type of the discretizations
@@ -81,15 +77,11 @@ namespace Dumux
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
-// Some defaults for very fundamental properties
+// Properties
 //////////////////////////////////////////////////////////////////
 
-//! Set the default type for scalar values to double
-SET_PROP_DEFAULT(Scalar)
-{   typedef double type;};
-
 //! Use the leaf grid view if not defined otherwise
-SET_PROP_DEFAULT(GridView)
+SET_PROP(DecoupledModel, GridView)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
@@ -98,34 +90,6 @@ public:
     typedef typename Grid::LeafGridView type;
 };
 
-/*!
- * \brief Specify the reference elements which we ought to use.
- *
- * We use Dune::ReferenceElements by default (-> old entity
- * numbering).
- *
- * TODO: Some specialization if the grid only supports one kind of
- *       cells would be nice. this would be better fixed inside DUNE,
- *       though. something like:
- *       Dune::GenericReferenceElements<Dune::GeometryType<cube, dim> >
- */
-SET_PROP_DEFAULT(ReferenceElements)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-
-    typedef typename Grid::ctype CoordScalar;
-    static const int dim = Grid::dimension;
-
-public:
-    typedef Dune::GenericReferenceElements<CoordScalar, dim> Container;
-    typedef Dune::GenericReferenceElements<CoordScalar, dim-1> ContainerFaces;
-    typedef Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
-};
-
-//////////////////////////////////////////////////////////////////
-// Properties
-//////////////////////////////////////////////////////////////////
 
 //! Use the parent VariableClass
 SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);

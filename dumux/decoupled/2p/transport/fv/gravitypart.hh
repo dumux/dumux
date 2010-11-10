@@ -52,9 +52,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-      typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-      typedef typename ReferenceElements::Container ReferenceElementContainer;
-
       typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
       typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
@@ -95,7 +92,8 @@ public:
         Dune::GeometryType gt = element.geometry().type();
 
         // cell center in reference element
-        const LocalPosition& localPos = ReferenceElementContainer::general(gt).position(0,0);
+        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+        const LocalPosition& localPos = ReferenceElements::general(gt).position(0,0);
 
         // get global coordinate of cell center
         const GlobalPosition& globalPos = element.geometry().global(localPos);
@@ -159,7 +157,8 @@ public:
 
             // compute factor in neighbor
             Dune::GeometryType neighborGT = neighborPointer->geometry().type();
-            const LocalPosition& localPosNeighbor = ReferenceElementContainer::general(neighborGT).position(0,0);
+            typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+            const LocalPosition& localPosNeighbor = ReferenceElements::general(neighborGT).position(0,0);
 
             // neighbor cell center in global coordinates
             const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);

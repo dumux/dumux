@@ -50,13 +50,7 @@ class FVVelocity1P: public FVPressure1P<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
-     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-     typedef typename ReferenceElements::Container ReferenceElementContainer;
-     typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
-
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-
-
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -139,10 +133,11 @@ public:
             Dune::FieldVector<Scalar, dim> refVelocity(0);
             refVelocity[0] = 0.5 * (flux[1] - flux[0]);
             refVelocity[1] = 0.5 * (flux[3] - flux[2]);
-
-            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0,
+            
+            typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(eIt->geometry().type()).position(0,
                     0);
-
+            
             // get the transposed Jacobian of the element mapping
             const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
             FieldMatrix jacobianT(jacobianInv);

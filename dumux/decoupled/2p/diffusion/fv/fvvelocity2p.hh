@@ -50,10 +50,7 @@ class FVVelocity2P: public FVPressure2P<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
-     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) ReferenceElements;
-     typedef typename ReferenceElements::Container ReferenceElementContainer;
-     typedef typename ReferenceElements::ContainerFaces ReferenceElementFaceContainer;
-
+    
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
      typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
@@ -184,7 +181,7 @@ public:
 //            refVelocity[0] = 0.5 * (flux[1] - flux[0]);
 //            refVelocity[1] = 0.5 * (flux[3] - flux[2]);
 //
-//            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0,
+//            const Dune::FieldVector<Scalar, dim>& localPos = GenericReferenceElements::general(eIt->geometry().type()).position(0,
 //                    0);
 //
 //            // get the transposed Jacobian of the element mapping

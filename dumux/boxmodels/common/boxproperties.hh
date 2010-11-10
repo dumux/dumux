@@ -19,6 +19,8 @@
 
 #include <dumux/common/propertysystem.hh>
 
+#include <dumux/common/basicproperties.hh>
+
 /*!
  * \file
  * \brief Specify the shape functions, operator assemblers, etc
@@ -35,18 +37,15 @@ namespace Properties
 // \{
 
 //////////////////////////////////////////////////////////////////
-// Type tags tags
+// Type tags
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the box-scheme
-NEW_TYPE_TAG(BoxModel);
+NEW_TYPE_TAG(BoxModel, INHERITS_FROM(CoupledModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-//!< Property tag for scalar vaslues
-NEW_PROP_TAG(Scalar);
 
 NEW_PROP_TAG(Grid);     //!< The type of the DUNE grid
 NEW_PROP_TAG(GridView); //!< The type of the grid view
