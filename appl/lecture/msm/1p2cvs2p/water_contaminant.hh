@@ -119,8 +119,10 @@ public:
                             Scalar temperature,
                             Scalar pressure,
                             const FluidState &fluidState)
-    {//TODO: return diffCoefficient_;
+    {
+    //TODO: return diffCoefficient_;
         return  0.0; // in [m^2/s]
+    //TODO: The example is very bad! The numerical diffusion is very high, so that the diffusion/dispersion coefficients nearly do not have any influence!
     }
 
 
