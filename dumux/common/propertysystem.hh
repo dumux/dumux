@@ -287,7 +287,7 @@ namespace Properties
  * \brief Access the 'value' attribute of a property for a type tag.
  *
  * This is just for convenience and equivalent to GET_PROP(TypeTag,
- * PropTag)::value.  If the property doesn't have an attribute named
+ * PropTag) :: value.  If the property doesn't have an attribute named
  * 'value', this yields a compiler error.
  */
 #define GET_PROP_VALUE(TypeTag, PropTag) \
@@ -297,7 +297,7 @@ namespace Properties
  * \brief Access the 'type' attribute of a property for a type tag.
  *
  * This is just for convenience and equivalent to GET_PROP(TypeTag,
- * PropTag)::type.  If the property doesn't have an attribute named
+ * PropTag) :: type.  If the property doesn't have an attribute named
  * 'type', this yields a compiler error. Also, if you use this macro
  * within a template, it must be preceeded by the 'typename' keyword.
  */
