@@ -141,7 +141,7 @@ public:
     }
 
     /*!
-     * \copydoc spatialParameters()
+     * \brief Returns the spatial parameters object.
      */
     const SpatialParameters &spatialParameters() const
     {

@@ -106,7 +106,7 @@ SET_BOOL_PROP(InjectionProblem, EnablePartialReassemble, true);
  * Air enters a water-filled aquifer, which is situated 800m below sea level, at the right boundary
  * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
  * partially enters the lower permeable aquitard.
- * This problem uses the \ref TwoPTwoCBoxModel.
+ * This problem uses the \ref TwoPTwoCModel.
  */
 template <class TypeTag = TTAG(InjectionProblem) >
 class InjectionProblem : public TwoPTwoCProblem<TypeTag>
@@ -294,6 +294,7 @@ public:
      * \param values The source and sink values for the conservation equations
      * \param element The finite element
      * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores the rate mass
      * generated or annihilate per volume unit. Positive values mean

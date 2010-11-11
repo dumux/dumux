@@ -340,6 +340,7 @@ public:
      * \param values The source and sink values for the conservation equations
      * \param element The finite element
      * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores the rate mass
      * generated or annihilate per volume unit. Positive values mean
@@ -347,8 +348,8 @@ public:
      */
     void source(PrimaryVariables &values,
                 const Element &element,
-                const FVElementGeometry &,
-                int subControlVolumeIdx) const
+                const FVElementGeometry &fvElemGeom,
+                int scvIdx) const
     {
            values = Scalar(0.0);
     }

@@ -128,8 +128,7 @@ public:
      *
      * \param element The current finite element
      * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvfIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvElemGeom,
@@ -144,7 +143,6 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
-     * \param vDat The data defined on the sub-control volume
      * \param element The finite element
      * \param fvElemGeom The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
@@ -166,8 +164,7 @@ public:
      *
     * \param element The current finite element
     * \param fvElemGeom The current finite volume geometry of the element
-    * \param scvfIdx The index sub-control volume face where the
-    *                      intrinsic velocity ought to be calculated.
+    * \param scvIdx The index of the sub-control volume
     */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,

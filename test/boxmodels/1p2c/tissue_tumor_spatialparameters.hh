@@ -86,7 +86,7 @@ public:
      * \brief Update the spatial parameters with the flow solution
      *        after a timestep.
      *
-     * \TODO call interface
+     * \param globalSolution the global solution vector
      */
     void update(const SolutionVector &globalSolution)
     {
@@ -97,7 +97,7 @@ public:
      *
      * \param element The current finite element
      * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvfIdx The index sub-control volume face where the
+     * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvElemGeom,

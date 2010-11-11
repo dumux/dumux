@@ -165,7 +165,8 @@ public:
      * This method is not actually required by the Richards model, but provided 
      * for the convenience of the RichardsLensProblem
      *
-     * \param globalPos A global coordinate vector 
+     * \param lensLowerLeft the lower left corner of the lens
+     * \param lensUpperRight the upper right corner of the lens
      */
     void setLensCoords(const GlobalPosition& lensLowerLeft,
                        const GlobalPosition& lensUpperRight)
