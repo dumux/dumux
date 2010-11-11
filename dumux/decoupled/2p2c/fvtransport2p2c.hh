@@ -466,7 +466,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                             lambdaN = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
                         else
                             lambdaN = MaterialLaw::krn(
-                                    problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(nPhaseIdx))
+                                    problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityNWBound;
                         }
                     // prepare K
@@ -503,6 +503,14 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                         - velocityIJw * (1. - Xw1_I) * densityWI
                         + velocityJIn * (1. - Xn1Bound) * densityNWBound
                         - velocityIJn * (1. - Xn1_I) * densityNWI ;
+
+                    if (velocityN != 0.)
+                        Dune::dwarn << " updFactor[nCompIdx] " << updFactor[nCompIdx]
+                                  << "velocityW " << velocityW <<" velocityN " << velocityN
+                                  << " Xw1Bound " << Xw1Bound << " Xn1Bound " << Xn1Bound
+                                  << " Xw1_I " << Xw1_I << " Xn1_I " << Xn1_I
+                                  << "lambdaN "<< lambdaN << " with  Sat on boundary " << BCfluidState.saturation(nPhaseIdx)
+                                  << " at global Idx "<< globalIdxI<< std::endl;
                 }//end dirichlet boundary
 
                 if (bcTypeTransport_ == BoundaryConditions::neumann)

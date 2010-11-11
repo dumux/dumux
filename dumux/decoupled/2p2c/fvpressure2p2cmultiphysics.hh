@@ -71,6 +71,7 @@ template<class TypeTag> class FVPressure2P2CMultiPhysics
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
@@ -108,6 +109,7 @@ template<class TypeTag> class FVPressure2P2CMultiPhysics
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
+    typedef Dune::FieldVector<Scalar, 2> PhaseVector;
 
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
@@ -1220,7 +1222,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::initialMaterialLaws(bool compositional
 			// phase pressures are unknown, so start with an exemplary
         	Scalar exemplaryPressure = problem_.referencePressure(globalPos, *eIt);
 			pressW = pressNW = problem_.variables().pressure()[globalIdx] = exemplaryPressure;
-
+        	problem_.variables().capillaryPressure(globalIdx) = 0.;
+        
 			if (ictype == BoundaryConditions2p2c::saturation)  // saturation initial condition
 			{
 				sat_0 = problem_.initSat(globalPos, *eIt);
