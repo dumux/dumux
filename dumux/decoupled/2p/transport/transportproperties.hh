@@ -49,6 +49,9 @@ class TwoPFluidState;
 template<class TypeTag>
 class VariableClass2P;
 
+template<class TypeTag>
+class EvalCflFluxDefault;
+
 namespace Properties
 {
 // \{
@@ -76,6 +79,7 @@ NEW_PROP_TAG( EnableCompressibility );
 NEW_PROP_TAG( PressureFormulation );
 NEW_PROP_TAG( SaturationFormulation );
 NEW_PROP_TAG( VelocityFormulation );
+NEW_PROP_TAG( EvalCflFluxFunction );
 NEW_PROP_TAG( CFLFactor );
 
 SET_TYPE_PROP(Transport, DiffusivePart, DiffusivePart<TypeTag>);
@@ -90,6 +94,7 @@ SET_BOOL_PROP(Transport, EnableCompressibility, false);
 SET_INT_PROP(Transport, PressureFormulation, TwoPCommonIndices<TypeTag>::pressureW);
 SET_INT_PROP(Transport, SaturationFormulation, TwoPCommonIndices<TypeTag>::saturationW);
 SET_INT_PROP(Transport, VelocityFormulation, TwoPCommonIndices<TypeTag>::velocityTotal);
+SET_TYPE_PROP(Transport, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
 SET_SCALAR_PROP(Transport, CFLFactor, 1.0);
 }
 }

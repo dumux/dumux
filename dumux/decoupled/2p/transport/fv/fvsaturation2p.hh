@@ -20,6 +20,7 @@
 #include "dumux/decoupled/2p/transport/fv/convectivepart.hh"
 #include <dumux/decoupled/2p/transport/transportproperties.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
+#include "evalcflflux_default.hh"
 
 /**
  * @file
@@ -50,12 +51,22 @@ template<class TypeTag>
 class FVSaturation2P
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+
+    enum
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
 
+    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
+    typedef Dune::GenericReferenceElements<Scalar, dim - 1> ReferenceElementFaceContainer;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DiffusivePart)) DiffusivePart;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConvectivePart)) ConvectivePart;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(EvalCflFluxFunction)) EvalCflFluxFunction;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
@@ -65,10 +76,6 @@ class FVSaturation2P
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
-    enum
-    {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
     enum
     {
         pw = Indices::pressureW,
@@ -94,6 +101,7 @@ class FVSaturation2P
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
     DiffusivePart& diffusivePart()
     {
@@ -115,13 +123,15 @@ class FVSaturation2P
         return *convectivePart_;
     }
 
-    //function to calculate the time step if a non-wetting phase velocity is used
-    Scalar evaluateTimeStepPhaseFlux(Scalar timestepFactorIn, Scalar timestepFactorOutW, Scalar timestepFactorOutNW, Scalar& residualSatW,
-            Scalar& residualSatNW, int globalIdxI);
+    EvalCflFluxFunction& evalCflFluxFunction()
+    {
+        return *evalCflFluxFunction_;
+    }
 
-    //function to calculate the time step if a total velocity is used
-    Scalar evaluateTimeStepTotalFlux(Scalar timestepFactorIn, Scalar timestepFactorOut, Scalar diffFactorIn,
-            Scalar diffFactorOut, Scalar& residualSatW, Scalar& residualSatNW);
+    const EvalCflFluxFunction& evalCflFluxFunction() const
+    {
+        return *evalCflFluxFunction_;
+    }
 
 public:
     //! Calculate the update vector.
@@ -215,18 +225,21 @@ public:
 
         diffusivePart_ = new DiffusivePart(problem);
         convectivePart_ = new ConvectivePart(problem);
+        evalCflFluxFunction_ = new EvalCflFluxFunction(problem);
     }
 
     ~FVSaturation2P()
     {
         delete diffusivePart_;
         delete convectivePart_;
+        delete evalCflFluxFunction_;
     }
 
 private:
     Problem& problem_;
     DiffusivePart* diffusivePart_;
     ConvectivePart* convectivePart_;
+    EvalCflFluxFunction* evalCflFluxFunction_;
 
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
     ;
@@ -266,9 +279,6 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
 
-        Scalar residualSatW = problem_.spatialParameters().materialLawParams(globalPos, *eIt).Swr();
-        Scalar residualSatNW = problem_.spatialParameters().materialLawParams(globalPos, *eIt).Snr();
-
         //for benchmark only!
         //        problem_.variables().storeSrn(residualSatNW, globalIdxI);
         //for benchmark only!
@@ -277,20 +287,12 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
 
         Scalar viscosityWI = problem_.variables().viscosityWetting(globalIdxI);
         Scalar viscosityNWI = problem_.variables().viscosityNonwetting(globalIdxI);
-        Scalar viscosityRatio = 1 - fabs(0.5 - viscosityNWI / (viscosityWI + viscosityNWI));//1 - fabs(viscosityWI-viscosityNWI)/(viscosityWI+viscosityNWI);
 
         Scalar densityWI = problem_.variables().densityWetting(globalIdxI);
         Scalar densityNWI = problem_.variables().densityNonwetting(globalIdxI);
 
         Scalar lambdaWI = problem_.variables().mobilityWetting(globalIdxI);
         Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
-
-        Scalar timestepFactorOut = 0;
-        Scalar timestepFactorIn = 0;
-        Scalar timestepFactorOutW = 0;
-        Scalar timestepFactorOutNW = 0;
-        Scalar diffFactorIn = 0;
-        Scalar diffFactorOut = 0;
 
         // run through all intersections with neighbors and boundary
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
@@ -331,10 +333,9 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                 Scalar densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
 
                 //get velocity*normalvector*facearea/(volume*porosity)
-                factor = (problem_.variables().velocity()[globalIdxI][isIndex] * unitOuterNormal) * (faceArea)
-                        / (volume * porosity);
+                factor = (problem_.variables().velocity()[globalIdxI][isIndex] * unitOuterNormal) * (faceArea);
                 factorSecondPhase = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex] * unitOuterNormal)
-                        * (faceArea) / (volume * porosity);
+                        * (faceArea);
 
                 Scalar lambdaW = 0;
                 Scalar lambdaNW = 0;
@@ -379,22 +380,13 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     }//divide by density because lambda is saved as lambda*density
                     viscosityNW = problem_.variables().viscosityNonwetting(globalIdxJ);
                 }
-                Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
 
                 switch (velocityType_)
                 {
                 case vt:
                 {
-                    //for time step criterion
-
-                    if (factor >= 0)
-                    {
-                        timestepFactorOut += factor / (krSum * viscosityRatio);
-                    }
-                    if (factor < 0)
-                    {
-                        timestepFactorIn -= factor / (krSum * viscosityRatio);
-                    }
+                    //add cflFlux for time-stepping
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt);
 
                     //determine phase saturations from primary saturation variable
                     Scalar satWI = 0;
@@ -423,28 +415,16 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     pcGradient *= (pcI - pcJ) / dist;
 
                     // get the diffusive part -> give 1-sat because sat = S_n and lambda = lambda(S_w) and pc = pc(S_w)
-                    Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI, satWJ, pcGradient) * unitOuterNormal * faceArea
-                            / (volume * porosity);
-                    Scalar convPart = convectivePart()(*eIt, isIndex, satWI, satWJ) * unitOuterNormal * faceArea / (volume
-                            * porosity);
+                    Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI, satWJ, pcGradient) * unitOuterNormal
+                            * faceArea;
 
-                    //for time step criterion
-                    if (diffPart >= 0)
-                    {
-                        diffFactorIn += diffPart / (krSum * viscosityRatio);
-                    }
-                    if (diffPart < 0)
-                    {
-                        diffFactorOut -= diffPart / (krSum * viscosityRatio);
-                    }
-                    if (convPart >= 0)
-                    {
-                        timestepFactorOut += convPart / (krSum * viscosityRatio);
-                    }
-                    if (convPart < 0)
-                    {
-                        timestepFactorIn -= convPart / (krSum * viscosityRatio);
-                    }
+                    //add cflFlux for time-stepping
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, 10 * diffPart, *isIt);
+
+                    Scalar convPart = convectivePart()(*eIt, isIndex, satWI, satWJ) * unitOuterNormal * faceArea;
+
+                    //add cflFlux for time-stepping
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, 10 * convPart, *isIt);
 
                     switch (saturationType_)
                     {
@@ -473,41 +453,14 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         factorSecondPhase /= densityNWI;
                     }
 
-                    //for time step criterion
-                    if (factor >= 0)
-                    {
-                        timestepFactorOutW += factor / (krSum * viscosityRatio);
-                    }
-                    if (factorSecondPhase >= 0)
-                    {
-                        timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
-                    }
-                    if (factor < 0)
-                    {
-                        timestepFactorIn -= factor / (krSum * viscosityRatio);
-                    }
-                    if (factorSecondPhase < 0)
-                    {
-                        timestepFactorIn -= factorSecondPhase / (krSum * viscosityRatio);
-                    }
-
-                    if (std::isnan(timestepFactorIn) || std::isinf(timestepFactorIn))
-                    {
-                        timestepFactorIn = 1e-100;
-                    }
-                    if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
-                    {
-                        timestepFactorOutW = 1e-100;
-                    }
-                    if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
-                    {
-                        timestepFactorOutNW = 1e-100;
-                    }
+                    //add cflFlux for time-stepping
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt,
+                            wPhaseIdx);
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factorSecondPhase,
+                            *isIt, nPhaseIdx);
 
                     break;
                 }
-
-                    //for time step criterion if the non-wetting phase velocity is used
                 case vn:
                 {
                     if (compressibility_)
@@ -516,37 +469,11 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         factorSecondPhase /= densityWI;
                     }
 
-                    //for time step criterion
-                    if (factor >= 0)
-                    {
-                        timestepFactorOutW += factor / (krSum * viscosityRatio);
-                    }
-                    if (factorSecondPhase >= 0)
-                    {
-                        timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
-                    }
-
-                    if (factor < 0)
-                    {
-                        timestepFactorIn -= factor / (krSum * viscosityRatio);
-                    }
-                    if (factorSecondPhase < 0)
-                    {
-                        timestepFactorIn -= factorSecondPhase / (krSum * viscosityRatio);
-                    }
-
-                    if (std::isnan(timestepFactorIn) || std::isinf(timestepFactorIn))
-                    {
-                        timestepFactorIn = 1e-100;
-                    }
-                    if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
-                    {
-                        timestepFactorOutW = 1e-100;
-                    }
-                    if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
-                    {
-                        timestepFactorOutNW = 1e-100;
-                    }
+                    //add cflFlux for time-stepping
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt,
+                            nPhaseIdx);
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factorSecondPhase,
+                            *isIt, wPhaseIdx);
 
                     break;
                 }
@@ -572,10 +499,9 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     Scalar satBound = problem_.dirichletSat(globalPosFace, *isIt);
 
                     //get velocity*normalvector*facearea/(volume*porosity)
-                    factor = (problem_.variables().velocity()[globalIdxI][isIndex] * unitOuterNormal) * (faceArea)
-                            / (volume * porosity);
+                    factor = (problem_.variables().velocity()[globalIdxI][isIndex] * unitOuterNormal) * (faceArea);
                     factorSecondPhase = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
-                            * unitOuterNormal) * (faceArea) / (volume * porosity);
+                            * unitOuterNormal) * (faceArea);
 
                     Scalar pressBound = problem_.variables().pressure()[globalIdxI];
                     Scalar temperature = problem_.temperature(globalPosFace, *eIt);
@@ -680,22 +606,11 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                     }
                     //                    std::cout<<lambdaW<<" "<<lambdaNW<<std::endl;
 
-                    Scalar krSum = lambdaW * viscosityWI + lambdaNW * viscosityNWI;
-
                     switch (velocityType_)
                     {
                     case vt:
                     {
-                        //for time step criterion
-
-                        if (factor >= 0)
-                        {
-                            timestepFactorOut += factor / (krSum * viscosityRatio);
-                        }
-                        if (factor < 0)
-                        {
-                            timestepFactorIn -= factor / (krSum * viscosityRatio);
-                        }
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt);
 
                         Scalar pcI = problem_.variables().capillaryPressure(globalIdxI);
 
@@ -704,28 +619,19 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         pcGradient *= (pcI - pcBound) / dist;
 
                         // get the diffusive part -> give 1-sat because sat = S_n and lambda = lambda(S_w) and pc = pc(S_w)
-                        Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI, satWBound, pcGradient) * unitOuterNormal
-                                * faceArea / (volume * porosity);
-                        Scalar convPart = convectivePart()(*eIt, isIndex, satWI, satWBound) * unitOuterNormal * faceArea
-                                / (volume * porosity);
+                        Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI, satWBound, pcGradient)
+                                * unitOuterNormal * faceArea;
 
-                        //for time step criterion
-                        if (diffPart >= 0)
-                        {
-                            diffFactorIn += diffPart / (krSum * viscosityRatio);
-                        }
-                        if (diffPart < 0)
-                        {
-                            diffFactorOut -= diffPart / (krSum * viscosityRatio);
-                        }
-                        if (convPart >= 0)
-                        {
-                            timestepFactorOut += convPart / (krSum * viscosityRatio);
-                        }
-                        if (convPart < 0)
-                        {
-                            timestepFactorIn -= convPart / (krSum * viscosityRatio);
-                        }
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, 10 * diffPart,
+                                *isIt);
+
+                        Scalar convPart = convectivePart()(*eIt, isIndex, satWI, satWBound) * unitOuterNormal
+                                * faceArea;
+
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, 10 * convPart,
+                                *isIt);
 
                         switch (saturationType_)
                         {
@@ -756,37 +662,11 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                             factorSecondPhase /= densityNWI;
                         }
 
-                        //for time step criterion
-                        if (factor >= 0)
-                        {
-                            timestepFactorOutW += factor / (krSum * viscosityRatio);
-                        }
-                        if (factorSecondPhase >= 0)
-                        {
-                            timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
-                        }
-
-                        if (factor < 0)
-                        {
-                            timestepFactorIn -= factor / (krSum * viscosityRatio);
-                        }
-                        if (factorSecondPhase < 0)
-                        {
-                            timestepFactorIn -= factorSecondPhase / (krSum * viscosityRatio);
-                        }
-
-                        if (std::isnan(timestepFactorIn) || std::isinf(timestepFactorIn))
-                        {
-                            timestepFactorIn = 1e-100;
-                        }
-                        if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
-                        {
-                            timestepFactorOutW = 1e-100;
-                        }
-                        if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
-                        {
-                            timestepFactorOutNW = 1e-100;
-                        }
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt,
+                                wPhaseIdx);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factorSecondPhase,
+                                *isIt, nPhaseIdx);
 
                         break;
                     }
@@ -800,37 +680,11 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                             factorSecondPhase /= densityWI;
                         }
 
-                        //for time step criterion
-                        if (factor >= 0)
-                        {
-                            timestepFactorOutW += factor / (krSum * viscosityRatio);
-                        }
-                        if (factorSecondPhase >= 0)
-                        {
-                            timestepFactorOutNW -= factorSecondPhase / (krSum * viscosityRatio);
-                        }
-
-                        if (factor < 0)
-                        {
-                            timestepFactorIn -= factor / (krSum * viscosityRatio);
-                        }
-                        if (factorSecondPhase < 0)
-                        {
-                            timestepFactorIn -= factorSecondPhase / (krSum * viscosityRatio);
-                        }
-
-                        if (std::isnan(timestepFactorIn) || std::isinf(timestepFactorIn))
-                        {
-                            timestepFactorIn = 1e-100;
-                        }
-                        if (std::isnan(timestepFactorOutW) || std::isinf(timestepFactorOutW))
-                        {
-                            timestepFactorOutW = 1e-100;
-                        }
-                        if (std::isnan(timestepFactorOutNW) || std::isinf(timestepFactorOutNW))
-                        {
-                            timestepFactorOutNW = 1e-100;
-                        }
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt,
+                                nPhaseIdx);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factorSecondPhase,
+                                *isIt, wPhaseIdx);
 
                         break;
                     }
@@ -854,11 +708,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         lambdaNW /= densityNWI;
                     }
 
-                    Scalar krSum = lambdaW * viscosityWI + lambdaNW * viscosityNWI;
-
                     //get velocity*normalvector*facearea/(volume*porosity)
-                    factor = (problem_.variables().velocity()[globalIdxI][isIndex] * unitOuterNormal) * faceArea
-                            / (volume * porosity);
+                    factor = (problem_.variables().velocity()[globalIdxI][isIndex] * unitOuterNormal) * faceArea;
                     switch (velocityType_)
                     {
                     case vt:
@@ -889,34 +740,43 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                         {
                         case Sw:
                         {
-                            factor = boundaryFactor / densityWI * faceArea / (volume * porosity);
+                            factor = boundaryFactor / densityWI * faceArea;
                             break;
                         }
                         case Sn:
                         {
-                            factor = boundaryFactor / densityNWI * faceArea / (volume * porosity);
+                            factor = boundaryFactor / densityNWI * faceArea;
                             break;
                         }
                         }
                     }
-
-
-                    //for time step criterion
-
-                    if (factor >= 0)
+                    switch (velocityType_)
                     {
-                        timestepFactorOut += factor / (krSum * viscosityRatio);
-                        timestepFactorOutW += factor / (krSum * viscosityRatio);
+                    case vt:
+                    {
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt);
+                    }
+                    case vw:
+                    {
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt,
+                                wPhaseIdx);
+                        break;
+                    }
+                    case vn:
+                    {
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, factor, *isIt,
+                                nPhaseIdx);
+                        break;
+                    }
                     }
 
-                    if (factor < 0)
-                    {
-                        timestepFactorIn -= factor / (krSum * viscosityRatio);
-                    }
                 }//end neumann boundary
             }//end boundary
             // add to update vector
-            updateVec[globalIdxI] -= factor;//-:v>0, if flow leaves the cell
+            updateVec[globalIdxI] -= factor / (volume * porosity);//-:v>0, if flow leaves the cell
         }// end all intersections
         Scalar source = 0;
         switch (velocityType_)
@@ -955,7 +815,6 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                 lambdaNW /= densityNWI;
             }
 
-            Scalar krSum = lambdaW * viscosityWI + lambdaNW * viscosityNWI;
             switch (saturationType_)
             {
             case Sw:
@@ -969,45 +828,34 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationTy
                 break;
             }
             }
-            if (source >= 0)
+
+            switch (velocityType_)
             {
-                timestepFactorIn += source / (porosity * viscosityRatio * krSum);
+            case vw:
+            {
+                //add cflFlux for time-stepping
+                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, source * volume, *eIt,
+                        wPhaseIdx);
+                break;
             }
-            else
+            case vn:
             {
-                switch (velocityType_)
-                {
-                case vw:
-                {
-                    timestepFactorOutW -= source / (porosity * viscosityRatio * krSum);
-                    break;
-                }
-                case vn:
-                {
-                    timestepFactorOutNW -= source / (porosity * viscosityRatio * krSum);
-                    break;
-                }
-                case vt:
-                {
-                	timestepFactorOut -= source / (porosity * viscosityRatio * krSum);
-                    break;
-                }
-                }
-                timestepFactorOut -= source / (porosity * viscosityRatio * krSum);
+                //add cflFlux for time-stepping
+                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, source * volume, *eIt,
+                        nPhaseIdx);
+                break;
+            }
+            case vt:
+            {
+                //add cflFlux for time-stepping
+                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI, viscosityNWI, source * volume, *eIt);
+                break;
+            }
             }
         }
 
         //calculate time step
-        if (velocityType_ == vw || velocityType_ == vn)
-        {
-            dt = std::min(dt, evaluateTimeStepPhaseFlux(timestepFactorIn, timestepFactorOutW, timestepFactorOutNW, residualSatW,
-                    residualSatNW, globalIdxI));
-        }
-        if (velocityType_ == vt)
-        {
-            dt = std::min(dt, evaluateTimeStepTotalFlux(timestepFactorIn, timestepFactorOut, diffFactorIn,
-                    diffFactorOut, residualSatW, residualSatNW));
-        }
+        dt = std::min(dt, evalCflFluxFunction().getCflFluxFunction(globalPos, *eIt) * (porosity * volume));
 
         problem_.variables().volumecorrection(globalIdxI) = updateVec[globalIdxI];
     } // end grid traversal
@@ -1031,95 +879,6 @@ void FVSaturation2P<TypeTag>::initialize()
     return;
 }
 
-template<class TypeTag>
-typename FVSaturation2P<TypeTag>::Scalar FVSaturation2P<TypeTag>::evaluateTimeStepTotalFlux(Scalar timestepFactorIn,
-        Scalar timestepFactorOut, Scalar diffFactorIn, Scalar diffFactorOut, Scalar& residualSatW,
-        Scalar& residualSatNW)
-{
-    // compute volume correction
-    Scalar volumeCorrectionFactor = (1 - residualSatW - residualSatNW);
-
-    //make sure correction is in the right range. If not: force dt to be not min-dt!
-    if (timestepFactorIn <= 0)
-    {
-        timestepFactorIn = 1e-100;
-    }
-    if (timestepFactorOut <= 0)
-    {
-        timestepFactorOut = 1e-100;
-    }
-
-    Scalar sumFactor = std::min(volumeCorrectionFactor / timestepFactorIn, volumeCorrectionFactor / timestepFactorOut);
-
-    //make sure that diffFactor > 0
-    if (diffFactorIn <= 0)
-    {
-        diffFactorIn = 1e-100;
-    }
-    if (diffFactorOut <= 0)
-    {
-        diffFactorOut = 1e-100;
-    }
-
-    Scalar minDiff = std::min(volumeCorrectionFactor / diffFactorIn, volumeCorrectionFactor / diffFactorOut);
-
-    //determine time step
-    sumFactor = std::min(sumFactor, 0.1 * minDiff);
-
-    return sumFactor;
-}
-template<class TypeTag>
-typename FVSaturation2P<TypeTag>::Scalar FVSaturation2P<TypeTag>::evaluateTimeStepPhaseFlux(Scalar timestepFactorIn,
-        Scalar timestepFactorOutW, Scalar timestepFactorOutNW, Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI)
-{
-    // compute dt restriction
-    Scalar volumeCorrectionFactorIn = 1 - residualSatW - residualSatNW;
-    Scalar volumeCorrectionFactorOutW = 0;
-    Scalar volumeCorrectionFactorOutNW = 0;
-//    if (saturationType_ == Sw)
-//    {
-        Scalar satI = problem_.variables().saturation()[globalIdxI];
-        volumeCorrectionFactorOutW = std::max((satI - residualSatW), 1e-1);
-//    }
-//    if (saturationType_ == Sn)
-//    {
-//        Scalar satI = problem_.variables().saturation()[globalIdxI];
-        volumeCorrectionFactorOutNW = std::max((1 - satI - residualSatNW), 1e-1);
-//    }
-
-    //make sure correction is in the right range. If not: force dt to be not min-dt!
-    if (volumeCorrectionFactorOutW <= 0)
-    {
-        volumeCorrectionFactorOutW = 1e100;
-    }
-    if (volumeCorrectionFactorOutNW <= 0)
-    {
-        volumeCorrectionFactorOutNW = 1e100;
-    }
-
-    //make sure correction is in the right range. If not: force dt to be not min-dt!
-    if (timestepFactorIn <= 0)
-    {
-        timestepFactorIn = 1e-100;
-    }
-    if (timestepFactorOutW <= 0)
-    {
-        timestepFactorOutW = 1e-100;
-    }
-    if (timestepFactorOutNW <= 0)
-    {
-        timestepFactorOutNW = 1e-100;
-    }
-
-    //correct volume
-    timestepFactorIn = volumeCorrectionFactorIn / timestepFactorIn;
-    Scalar timestepFactorOut = volumeCorrectionFactorOutW / timestepFactorOutW + volumeCorrectionFactorOutNW / timestepFactorOutNW;
-
-    //determine timestep
-    Scalar timestepFactor = std::min(timestepFactorIn, timestepFactorOut);
-
-    return timestepFactor;
-}
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::updateMaterialLaws(RepresentationType& saturation = *(new RepresentationType(0)),
         bool iterate = false)
