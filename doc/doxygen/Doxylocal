@@ -12,6 +12,6 @@ INPUT                 += @srcdir@/mainpage \
 						 @top_srcdir@/test \
 						 @top_srcdir@/tutorial
 						 
-IMAGE_PATH             = @srcdir@/Images
+IMAGE_PATH             = @srcdir@/images
 					 
 EXTRA_PACKAGES        += amsmath,amssymb
