@@ -26,6 +26,7 @@
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/propertysystem.hh>
 
+#include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>
 
 #include <iostream>
@@ -118,6 +119,10 @@ protected:
         SolutionVector &u = model().curSol();
         JacobianAssembler &jacobianAsm = model().jacobianAssembler();
 
+        Dune::Timer assembleTimer(false);
+        Dune::Timer solveTimer(false);
+        Dune::Timer updateTimer(false);
+
         // tell the controller that we begin solving
         ctl.newtonBegin(*this, u);
 
@@ -136,8 +141,11 @@ protected:
                 std::cout << "Assembling global jacobian";
                 std::cout.flush();
             }
+            
+            assembleTimer.start();
             // linearize the problem at the current solution
             jacobianAsm.assemble();
+            assembleTimer.stop();
 
             // solve the resultuing linear equation system
             if (ctl.verbose()) {
@@ -150,17 +158,20 @@ protected:
                 std::cout.flush();
             }
 
+            solveTimer.start();
             // set the delta vector to zero before solving the linear system!
             u = 0;
-
             // ask the controller to solve the linearized system
             ctl.newtonSolveLinear(jacobianAsm.matrix(),
                                   u,
                                   jacobianAsm.residual());
+            solveTimer.stop();
 
+            updateTimer.start();
             // update the current solution (i.e. uOld) with the delta
             // (i.e. u). The result is stored in u
             ctl.newtonUpdate(u, uOld_);
+            updateTimer.stop();
 
             // tell the controller that we're done with this iteration
             ctl.newtonEndStep(u, uOld_);
@@ -168,6 +179,17 @@ protected:
 
         // tell the controller that we're done
         ctl.newtonEnd();
+
+        Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+        if (ctl.verbose()) {
+            std::cout << "Timings assemble/solve/update: " 
+                      <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+                      <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+                      <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+                //<< " localEvals: " << problem_.model().localResidual().elapsed() << "("<<100*problem_.model().localResidual().elapsed()/assembleTimer.elapsed()<<"% of asm)"
+                //<< " singleEvalTime: " << problem_.model().localResidual().evalTimeSingle() << " sec"
+                      << "\n";
+        }
 
         if (!ctl.newtonConverged()) {
             ctl.newtonFail();

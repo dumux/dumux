@@ -51,8 +51,7 @@ public:
     static Dune::UGGrid<2> *create(const Dune::FieldVector<Scalar, 2> &upperRight,
                                    const Dune::FieldVector<int, 2> &cellRes)
     {
-        Dune::UGGrid<2> *grid = new Dune::UGGrid<2>;
-        Dune::GridFactory<Dune::UGGrid<2> > factory(grid);
+        Dune::GridFactory<Dune::UGGrid<2> > factory;
         for (int i=0; i<=cellRes[0]; i++) {
             for (int j=0; j<=cellRes[1]; j++) {
                 Dune::FieldVector<double,2> pos;
@@ -95,7 +94,7 @@ public:
             }
         }
 
-        factory.createGrid();
+        Dune::UGGrid<2> *grid = factory.createGrid();
         grid->loadBalance();
         return grid;
     }
@@ -199,7 +198,6 @@ int main(int argc, char** argv)
         //res[1] = 16;
 
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
-
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////

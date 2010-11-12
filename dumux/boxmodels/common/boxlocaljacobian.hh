@@ -126,15 +126,15 @@ public:
         // set the current grid element and update the element's
         // finite volume geometry
         elemPtr_ = &element;
+        fvElemGeom_.update(gridView_(), element);
         reset_();
-        
+
         int elemColor = jacAsm_().elementColor(element);
         if (elemColor == Green) {
             // Green elements don't need to be reassembled
             return;
         }
 
-        fvElemGeom_.update(gridView_(), elem_());
         bcTypes_.update(problem_(), elem_(), fvElemGeom_);
 
         // this is pretty much a HACK because the internal state of
@@ -156,18 +156,14 @@ public:
                            elem_(),
                            fvElemGeom_,
                            false /* isOldSol? */);
-        if (numDiffMethod != 0) {
-            // for forward and backward differences we need the local
-            // residual at the evaluation point. For efficiency we
-            // only calculate this once.
-            localResidual().eval(elem_(),
-                                 fvElemGeom_,
-                                 prevVolVars_,
-                                 curVolVars_,
-                                 bcTypes_);
-            evalPointResid_ = localResidual().residual();
-        };
-
+        // calculate the local residual
+        localResidual().eval(elem_(),
+                             fvElemGeom_,
+                             prevVolVars_,
+                             curVolVars_,
+                             bcTypes_);
+        residual_ = localResidual().residual();
+        
         // calculate the local jacobian matrix
         ElementSolutionVector partialDeriv(numVertices);
         for (int j = 0; j < numVertices; j++) {
@@ -186,13 +182,15 @@ public:
     }
 
     /*!
-     * \brief Returns a reference to the local residual.
+     * \brief Returns a reference to the object which calculates the
+     *        local residual.
      */
     const LocalResidual &localResidual() const
     { return localResidual_; }
 
     /*!
-     * \brief Returns a reference to the local residual.
+     * \brief Returns a reference to the object which calculates the
+     *        local residual.
      */
     LocalResidual &localResidual()
     { return localResidual_; }
@@ -208,6 +206,15 @@ public:
      */
     const MatrixBlock &mat(int i, int j) const
     { return A_[i][j]; }
+
+    /*!
+     * \brief Returns the residual of the equations at vertex i.
+     *
+     * \param i The local vertex (or sub-contol volume) index on which
+     *          the equations are defined
+     */
+    const PrimaryVariables &residual(int i) const
+    { return residual_[i]; }
 
 protected:
     Implementation &asImp_()
@@ -312,7 +319,7 @@ protected:
         }
         else {
             // backward differences
-            dest = evalPointResid_;
+            dest = residual_;
         }
 
 
@@ -337,7 +344,7 @@ protected:
         }
         else {
             // forward differences
-            dest -= evalPointResid_;
+            dest -= residual_;
         }
 
         dest /= delta;
@@ -395,8 +402,8 @@ protected:
     }
 
     const Element *elemPtr_;
-
     FVElementGeometry fvElemGeom_;
+
     ElementBoundaryTypes bcTypes_;
 
     // The problem we would like to solve
@@ -406,11 +413,12 @@ protected:
     // levels
     ElementVolumeVariables prevVolVars_;
     ElementVolumeVariables curVolVars_;
-    ElementSolutionVector evalPointResid_; // residual at evaluation point
 
     LocalResidual localResidual_;
+
     LocalBlockMatrix A_;
-    };
+    ElementSolutionVector residual_;
+};
 }
 
 #endif

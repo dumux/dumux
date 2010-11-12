@@ -25,7 +25,6 @@
 #include "pdelabboxlocaloperator.hh"
 
 namespace Dumux {
-
 namespace PDELab {
 
 /*!
@@ -42,6 +41,7 @@ class BoxAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Constraints)) Constraints;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ScalarGridFunctionSpace)) ScalarGridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
@@ -60,6 +60,7 @@ class BoxAssembler
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef SolutionVector Vector;
@@ -123,7 +124,6 @@ public:
      */
     void init(Problem& problem)
     {
-        inJacobianAssemble_ = false;
         problemPtr_ = &problem;
         fem_ = new FEM();
         //cn_ = new Constraints(*problemPtr_);
@@ -148,17 +148,7 @@ public:
         matrix_ = new Matrix(*gridOperatorSpace_);
         *matrix_ = 0;
         reuseMatrix_ = false;
-
-        // calculate the ghost vertices
-        VertexIterator vIt = gridView_().template begin<dim>();
-        VertexIterator vEndIt = gridView_().template end<dim>();
-        for (; vIt != vEndIt; ++vIt) {
-            if (vIt->partitionType() == Dune::GhostEntity) {
-                int vIdx = vertexMapper_().map(*vIt);
-                ghostIndices_.push_back(vIdx);
-            }
-        };
-
+        
         int numVerts = gridView_().size(dim);
         int numElems = gridView_().size(0);
         residual_.resize(numVerts);
@@ -196,8 +186,26 @@ public:
      */
      void assemble()
      {
-        // assemble the global jacobian matrix
+        (*matrix_) = 0.0;
+        residual_ = 0.0;
+        
+        ElementIterator elemIt = gridView_().template begin<0>();
+        ElementIterator elemEndIt = gridView_().template end<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            const Element &elem = *elemIt;
+            if (elem.partitionType() == Dune::GhostEntity)
+                assembleGhostElement_(elem);
+            else
+                assembleElement_(elem);
+        };
+
+         return;
+
+#if 0
+         // assemble the global jacobian matrix
         if (!reuseMatrix_) {
+            // we actually need to reassemle!
+
             if (enablePartialReassemble) {
                 // move the evaluation points of red vertices
                 for (int i = 0; i < vertexColor_.size(); ++i) {
@@ -208,18 +216,16 @@ public:
 
             reassembleTolerance_ = nextReassembleTolerance_;
 
-            // we actually need to reassemle!
             resetMatrix_();
-            inJacobianAssemble_ = true;
-            gridOperatorSpace_->jacobian(model_().curSol(), *matrix_);
-            inJacobianAssemble_ = false;
+            assemble_();
         }
         reuseMatrix_ = false;
 
         // calculate the global residual
         residual_ = 0;
-        gridOperatorSpace_->residual(model_().curSol(), residual_);
+        //gridOperatorSpace_->residual(model_().curSol(), residual_);
 
+#if 0
         typedef typename Matrix::block_type BlockType;
         // set the entries for the ghost nodes
         BlockType Id(0.0);
@@ -234,6 +240,8 @@ public:
             residual_[globI] = 0;
             model_().curSol()[globI] = 0;
         }
+#endif
+#endif
     }
     
     /*!
@@ -484,9 +492,53 @@ public:
 
 
 private:
+    // assemble a non-ghost element
+    void assembleElement_(const Element &elem)
+    {
+        model_().localJacobian().assemble(elem);
+        
+        int numVertices = elem.template count<dim>();
+        for (int i=0; i < numVertices; ++ i) {
+            int globI = vertexMapper_().map(elem, i, dim);
+            
+            // update the global residual
+            residual_[globI] += model_().localJacobian().residual(i);
+            
+            // update the global jacobian
+            for (int j=0; j < numVertices; ++ j) {
+                int globJ = vertexMapper_().map(elem, j, dim);
+                (*matrix_)[globI][globJ] +=
+                    model_().localJacobian().mat(i,j);
+            }
+        }
+    }
+
+    // "assemble" a ghost element
+    void assembleGhostElement_(const Element &elem)
+    {
+        int n = elem.template count<dim>();
+        for (int i=0; i < n; ++i) {
+            const VertexPointer vp = elem.template subEntity<dim>(i);
+            if (vp->partitionType() != Dune::GhostEntity)
+                continue; // ignore a ghost cell's non-ghost vertices
+
+            // set main diagonal entries for the vertex
+            int vIdx = vertexMapper_().map(*vp);
+            typedef typename Matrix::block_type BlockType;
+            BlockType &J = (*matrix_)[vIdx][vIdx];
+            for (int j = 0; j < BlockType::rows; ++j)
+                J[j][j] = 1.0;
+
+            // set residual for the vertex
+            residual_[vIdx] = 0;
+        }
+    }
+
     void resetMatrix_()
     {
         if (!enablePartialReassemble) {
+            // If partial reassembly of the jacobian is not enabled,
+            // we can just reset everything!
             (*matrix_) = 0;
             return;
         }
@@ -507,7 +559,7 @@ private:
 
         //printSparseMatrix(std::cout, *matrix_, "J", "row");
     }
-    
+   
     Problem &problem_()
     { return *problemPtr_; }
     const Problem &problem_() const
@@ -534,7 +586,6 @@ private:
 
     Matrix *matrix_;
     bool reuseMatrix_;
-    bool inJacobianAssemble_;
     SolutionVector evalPoint_;
     std::vector<EntityColor> vertexColor_;
     std::vector<EntityColor> elementColor_;

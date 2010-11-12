@@ -111,8 +111,13 @@ int startFromDGF(int argc, char **argv)
         // create grid
         // -> load the grid from file
         GridPointer gridPtr(dgfFileName);
-        if (mpiHelper.size() > 1)
+        if (mpiHelper.size() > 1) {
+            if (!Dune::Capabilities::isParallel<Grid>::v) {
+                std::cerr << "WARNING: THE PROGRAM IS STARTED USING MPI, BUT THE GRID IMPLEMENTATION\n"
+                          << "         YOU HAVE CHOSEN IS NOT PARALLEL!\n";
+            }
         	gridPtr->loadBalance();
+        }
 
         // instantiate and run the concrete problem
         TimeManager timeManager;

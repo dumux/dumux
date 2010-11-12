@@ -51,7 +51,7 @@ NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI));
 // Set the grid type
 SET_PROP(WaterAirProblem, Grid)
 {
-    typedef Dune::SGrid<2,2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 SET_PROP(WaterAirProblem, LocalFEMSpace)
@@ -81,6 +81,9 @@ SET_TYPE_PROP(WaterAirProblem,
 
 // Enable gravity
 SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
+
+// Use forward differences instead of central differences
+SET_INT_PROP(WaterAirProblem, NumericDifferenceMethod, +1);
 
 // Write newton convergence
 SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);

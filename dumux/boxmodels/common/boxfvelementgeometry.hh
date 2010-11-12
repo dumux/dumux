@@ -592,11 +592,10 @@ public:
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
 
-    const LocalFEMSpace feMap_;
+    static const LocalFEMSpace feMap_;
     bool computeGradientAtScvCenters;
 
     BoxFVElementGeometry()
-        : feMap_()
     {
         computeGradientAtScvCenters = false;
     }
@@ -842,6 +841,9 @@ public:
                 }
     }
 };
+
+template<class TypeTag>
+const typename BoxFVElementGeometry<TypeTag>::LocalFEMSpace BoxFVElementGeometry<TypeTag>::feMap_;
 
 }
 

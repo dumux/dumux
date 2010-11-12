@@ -119,19 +119,22 @@ public:
      */
     void eval(const Element &element)
     {
-        FVElementGeometry fvGeom;
-        fvGeom.update(gridView_(), element);
+        FVElementGeometry fvElemGeom;
+        fvElemGeom.update(gridView_(), element);
+        fvElemGeomPtr_ = &fvElemGeom;
+
         ElementVolumeVariables volVarsPrev, volVarsCur;
         volVarsPrev.update(problem_(),
                            element,
-                           fvGeom,
+                           fvElemGeom_(),
                            true /* oldSol? */);
         volVarsCur.update(problem_(),
                           element,
-                          fvGeom,
+                          fvElemGeom_(),
                           false /* oldSol? */);
+
         ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem_(), element, fvGeom);
+        bcTypes.update(problem_(), element, fvElemGeom_());
 
         // this is pretty much a HACK because the internal state of
         // the problem is not supposed to be changed during the
@@ -140,7 +143,7 @@ public:
         // not thread save.) The real solution are context objects!
         problem_().updateCouplingParams(element);
 
-        asImp_().eval(element, fvGeom, volVarsPrev, volVarsCur, bcTypes);
+        asImp_().eval(element, fvElemGeom_(), volVarsPrev, volVarsCur, bcTypes);
     }
 
     /*!
@@ -154,21 +157,26 @@ public:
      */
     void evalStorage(const Element &element)
     {
-        FVElementGeometry fvGeom;
-        fvGeom.update(gridView_(), element);
+        elemPtr_ = &element;
+
+        FVElementGeometry fvElemGeom;
+        fvElemGeom.update(gridView_(), element);
+        fvElemGeomPtr_ = &fvElemGeom;
+
         ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem_(), element, fvGeom);
+        bcTypes.update(problem_(), element, fvElemGeom_());
+        bcTypesPtr_ = &bcTypes;
+
+        // no previous volume variables!
+        prevVolVarsPtr_ = 0;
+
         ElementVolumeVariables volVars;
-        volVars.update(problem_(), element, fvGeom, false);
+        volVars.update(problem_(), element, fvElemGeom_(), false);
+        curVolVarsPtr_ = &volVars;
         
-        residual_.resize(fvGeom.numVertices);
+        residual_.resize(fvElemGeom_().numVertices);
         residual_ = 0;
 
-        elemPtr_ = &element;
-        fvElemGeomPtr_ = &fvGeom;
-        bcTypesPtr_ = &bcTypes;
-        prevVolVarsPtr_ = 0;
-        curVolVarsPtr_ = &volVars;
         asImp_().evalStorage_();
     }
 
@@ -183,22 +191,20 @@ public:
     void evalFluxes(const Element &element,
                     const ElementVolumeVariables &curVolVars)
     {
-        FVElementGeometry fvGeom;
-        fvGeom.update(gridView_(), element);
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem_(), element, fvGeom);
+        elemPtr_ = &element;
+        fvElemGeomPtr_ = &model_().fvElemGeom(element);
 
-        residual_.resize(fvGeom.numVertices);
+        ElementBoundaryTypes bcTypes;
+        bcTypes.update(problem_(), element, fvElemGeom_());
+
+        residual_.resize(fvElemGeom_().numVertices);
         residual_ = 0;
 
-        elemPtr_ = &element;
-        fvElemGeomPtr_ = &fvGeom;
         bcTypesPtr_ = &bcTypes;
         prevVolVarsPtr_ = 0;
         curVolVarsPtr_ = &curVolVars;
         asImp_().evalFluxes_();
     }
-
 
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
@@ -418,15 +424,16 @@ protected:
             // 
             // dStorage/dt = Flux + Source
             //
-            // Re-arranging this, we get 
+            // where the 'Flux' and the 'Source' terms represent the
+            // mass per second which _ENTER_ the finite
+            // volume. Re-arranging this, we get
             //
             // dStorage/dt - Source - Flux = 0
             //
-            // The residual already contains the "dStorage/dt -
-            // Source" term, so we have to subtract the flux
-            // term. Since the calculated flux goes from sub-control
-            // volume i to sub-control volume j, we need to add the
-            // flux to j and subtract it from i
+            // Since the flux calculated by computeFlux() goes _OUT_
+            // of sub-control volume i and _INTO_ sub-control volume
+            // j, we need to add the flux to finite volume i and
+            // subtract it from finite volume j
             residual_[i] += flux;
             residual_[j] -= flux;
         }
@@ -613,6 +620,7 @@ protected:
 
     const ElementBoundaryTypes *bcTypesPtr_;
 };
+
 }
 
 #endif
