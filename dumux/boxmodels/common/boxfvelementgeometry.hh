@@ -44,7 +44,7 @@ NEW_PROP_TAG(Scalar);
 // specialize member functions of template classes because of some
 // weird reason I didn't really get...
 
-//!< \cond INTERNAL
+//! \cond INTERNAL
 
 template <typename BoxFVElementGeometry, int dim>
 class _BoxFVElemGeomHelper
@@ -277,7 +277,7 @@ public:
     }
 };
 
-//!< \endcond
+//! \endcond
 
 // END HACK
 /////////////////////
