@@ -235,6 +235,36 @@ public:
     }
 
     /*!
+     * \brief Set a boundary condition for a single equation to coupling inflow.
+     */
+    void setCouplingInflow(int eqIdx)
+    {
+        boundaryInfo_[eqIdx].visited = 1;
+        boundaryInfo_[eqIdx].isDirichlet = 0;
+        boundaryInfo_[eqIdx].isNeumann = 0;
+        boundaryInfo_[eqIdx].isOutflow = 0;
+        boundaryInfo_[eqIdx].isCouplingInflow = 1;
+        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+
+        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+    }
+
+    /*!
+     * \brief Set a boundary condition for a single equation to coupling outflow.
+     */
+    void setCouplingOutflow(int eqIdx)
+    {
+        boundaryInfo_[eqIdx].visited = 1;
+        boundaryInfo_[eqIdx].isDirichlet = 0;
+        boundaryInfo_[eqIdx].isNeumann = 0;
+        boundaryInfo_[eqIdx].isOutflow = 0;
+        boundaryInfo_[eqIdx].isCouplingInflow = 1;
+        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+
+        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+    }
+
+    /*!
      * \brief Set a dirichlet boundary condition for a single primary
      *        variable. 
      *

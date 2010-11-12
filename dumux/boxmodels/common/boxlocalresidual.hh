@@ -145,6 +145,40 @@ public:
 
         asImp_().eval(element, fvElemGeom_(), volVarsPrev, volVarsCur, bcTypes);
     }
+    /*!
+     * \brief Compute the local residual, i.e. the deviation of the
+     *        equations from zero. Gets a solution vector computed by PDELab
+     *
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param elementSolVector The local solution for the element using PDELab ordering
+     */
+    template<typename ElemSolVectorType>
+    void evalPDELab(const Element &element, const ElemSolVectorType& elementSolVector)
+    {
+        FVElementGeometry fvGeom;
+        fvGeom.update(gridView_(), element);
+        ElementVolumeVariables volVarsPrev, volVarsCur;
+        volVarsPrev.update(problem_(),
+                           element,
+                           fvGeom,
+                           true /* oldSol? */);
+        volVarsCur.updatePDELab(problem_(),
+                          element,
+                          fvGeom,
+                          elementSolVector);
+        ElementBoundaryTypes bcTypes;
+        bcTypes.update(problem_(), element, fvGeom);
+
+        // this is pretty much a HACK because the internal state of
+        // the problem is not supposed to be changed during the
+        // evaluation of the residual. (Reasons: It is a violation of
+        // abstraction, makes everything more prone to errors and is
+        // not thread save.) The real solution are context objects!
+        problem_().updateCouplingParams(element);
+
+        asImp_().eval(element, fvGeom, volVarsPrev, volVarsCur, bcTypes);
+    }
 
     /*!
      * \brief Compute the storage term for the current solution.
