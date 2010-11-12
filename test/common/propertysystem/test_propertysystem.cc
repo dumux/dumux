@@ -14,6 +14,8 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \file
+ *
  * \brief This file tests the properties system.
  *
  * We define a few type tags and property tags, then we attach values

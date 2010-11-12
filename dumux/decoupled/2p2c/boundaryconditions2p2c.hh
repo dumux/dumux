@@ -13,7 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
+/*!
+ * \file
+ *
+ * \brief boundary condition flags for the decoupled 2p2c model
+ */
 #ifndef DUMUX_BOUNDARYCONDITIONS2P2C_HH
 #define DUMUX_BOUNDARYCONDITIONS2P2C_HH
 

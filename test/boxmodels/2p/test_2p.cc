@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the two-phase box model
+ */
 #include "config.h"
 
 #define CUBES 1

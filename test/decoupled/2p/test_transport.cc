@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the explicit transport model
+ */
 #include "config.h"
 
 #include "test_transport_problem.hh"

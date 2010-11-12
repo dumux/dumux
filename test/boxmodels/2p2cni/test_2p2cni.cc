@@ -16,6 +16,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the 2p2cni box model
+ */
 #include "config.h"
 #include "waterairproblem.hh"
 #include <dumux/common/start.hh>

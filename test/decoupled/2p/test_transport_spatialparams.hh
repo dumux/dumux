@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief spatial parameters for the explicit transport test
+ */
 #ifndef TEST_TRANSPORT_SPATIALPARAMETERS_HH
 #define TEST_TRANSPORT_SPATIALPARAMETERS_HH
 

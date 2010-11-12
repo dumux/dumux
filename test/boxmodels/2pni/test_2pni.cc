@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the 2pni box model
+ */
 #include "config.h"
 #include "injectionproblem2pni.hh"
 #include <dumux/common/start.hh>

@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief spatial parameters for the sequential 2p2c test
+ */
 #ifndef TEST_2P2C_SPATIALPARAMETERS_HH
 #define TEST_2P2C_SPATIALPARAMETERS_HH
 

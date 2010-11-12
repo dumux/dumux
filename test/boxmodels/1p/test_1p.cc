@@ -14,6 +14,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the one-phase box model
+ */
 #include "config.h"
 
 #include "1ptestproblem.hh"

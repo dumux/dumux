@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the sequential 2p2c model
+ */
 #include "config.h"
 
 #include "test_dec2p2cproblem.hh"

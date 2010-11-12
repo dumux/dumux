@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the 2p2c box model
+ */
 #include "config.h"
 #include "injectionproblem.hh"
 #include <dumux/common/start.hh>

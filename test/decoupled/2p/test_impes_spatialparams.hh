@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief spatial parameters for the sequential 2p test
+ */
 #ifndef TEST_IMPES_SPATIALPARAMETERS_HH
 #define TEST_IMPES_SPATIALPARAMETERS_HH
 

@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the sequential 2p model
+ */
 #include "config.h"
 
 #include "test_impes_problem.hh"

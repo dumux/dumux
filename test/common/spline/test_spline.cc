@@ -14,6 +14,8 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
+ * \file
+ *
  * \brief This is a program to test the polynomial spline interpolation.
  *
  * It just prints some function to stdout. You can look at the result

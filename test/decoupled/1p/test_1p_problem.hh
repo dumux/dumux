@@ -15,8 +15,13 @@
 *                                                                           *
 *   This program is distributed WITHOUT ANY WARRANTY.                       *
 *****************************************************************************/
-#ifndef DUMUX_TEST_2P_PROBLEM_HH
-#define DUMUX_TEST_2P_PROBLEM_HH
+/*!
+ * \file
+ *
+ * \brief test problem for the decoupled one-phase model.
+ */
+#ifndef DUMUX_TEST_1P_PROBLEM_HH
+#define DUMUX_TEST_1P_PROBLEM_HH
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>

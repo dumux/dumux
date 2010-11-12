@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the decoupled one-phase model.
+ */
 #include "config.h"
 #include <iostream>
 #include <boost/format.hpp>

@@ -17,7 +17,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \brief The spatial parameters for the RichardsLensProblem
+ * \file
+ *
+ * \brief spatial parameters for the RichardsLensProblem
  */
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH

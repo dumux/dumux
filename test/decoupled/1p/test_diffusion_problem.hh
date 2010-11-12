@@ -15,6 +15,11 @@
 *                                                                           *
 *   This program is distributed WITHOUT ANY WARRANTY.                       *
 *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test problem for diffusion models from the FVCA5 benchmark.
+ */
 #ifndef DUMUX_TEST_2P_PROBLEM_HH
 #define DUMUX_TEST_2P_PROBLEM_HH
 

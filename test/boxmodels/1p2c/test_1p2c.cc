@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief test for the 1p2c box model
+ */
 #include "config.h"
 
 #include "tissue_tumor_problem.hh"

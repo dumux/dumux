@@ -13,6 +13,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief spatial parameters for the test problem for diffusion models.
+ */
 #ifndef TEST_DIFFUSION_SPATIALPARAMETERS_HH
 #define TEST_DIFFUSION_SPATIALPARAMETERS_HH
 
