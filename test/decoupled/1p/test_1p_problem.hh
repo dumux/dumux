@@ -91,8 +91,10 @@ SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TTAG(TestProblemO
 }
 
 /*!
-* \ingroup DecoupledProblems
-*/
+ * \ingroup DecoupledProblems
+ *
+ * \brief test problem for the decoupled one-phase model.
+ */
 template<class TypeTag = TTAG(TestProblemOneP)>
 class TestProblemOneP: public DiffusionProblem1P<TypeTag, TestProblemOneP<TypeTag> >
 {

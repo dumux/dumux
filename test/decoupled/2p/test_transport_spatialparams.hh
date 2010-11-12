@@ -29,8 +29,9 @@
 namespace Dumux
 {
 
-/** \todo Please doc me! */
-
+/*!
+ * \brief spatial parameters for the explicit transport test
+ */
 template<class TypeTag>
 class TestTransportSpatialParams
 {

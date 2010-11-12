@@ -28,10 +28,8 @@
 
 namespace Dumux
 {
-
+//! \cond INTERNAL
 /*
- * \internal
- *
  * \brief The common code for all 3rd order polynomial splines with
  *        where the number of sampling points only known at run-time.
  */
@@ -209,7 +207,7 @@ protected:
     Vector yPos_;
     Vector m_;
 };
-
+//! \endcond
 }
 
 #endif

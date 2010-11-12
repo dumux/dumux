@@ -31,8 +31,6 @@ namespace Dumux {
 namespace PDELab {
 
 /*!
- * \file
- *
  * \brief A local operator for PDELab which wraps the box models.
  */
 template<class TypeTag>

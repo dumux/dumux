@@ -28,7 +28,10 @@
 
 namespace Dumux
 {
-//! \ingroup MPFA2p
+/*! \ingroup MPFA2p
+ *
+ * \brief velocity calculation for the MPFA-O method
+ */
 template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTag>
 {
     typedef FVMPFAOVelocity2P<TypeTag> ThisType;

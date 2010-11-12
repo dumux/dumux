@@ -127,6 +127,8 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
 
 /*!
  * \ingroup DecoupledProblems
+ *
+ * \brief test problem for the sequential 2p model
  */
 template<class TypeTag = TTAG(IMPESTestProblem)>
 class TestIMPESProblem: public IMPESProblem2P<TypeTag, TestIMPESProblem<TypeTag> >

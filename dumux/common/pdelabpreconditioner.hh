@@ -44,6 +44,10 @@ NEW_PROP_TAG(ConstraintsTrafo);
 
 
 namespace PDELab {
+
+/*!
+ * \brief exchanges matrix entries for parallel computations
+ */
 template<class TypeTag>
 class Exchanger
 {
@@ -67,6 +71,7 @@ class Exchanger
     typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
 public:
+
     Exchanger(const Problem& problem)
         : gridView_(problem.gridView()), vertexMapper_(problem.vertexMapper()), borderIndices_(0)
     {
@@ -96,6 +101,9 @@ public:
         }
     }
 
+    /*!
+     * \brief matrix entry for the MatEntryExchange class
+     */
     struct MatEntry
     {
         IdType first;
@@ -104,7 +112,9 @@ public:
         MatEntry () {}
     };
 
-    // A DataHandle class to exchange matrix entries
+    /*!
+     * \brief A DataHandle class to exchange matrix entries
+     */
     class MatEntryExchange
         : public Dune::CommDataHandleIF<MatEntryExchange,MatEntry>
     {
@@ -242,7 +252,9 @@ private:
     std::vector<int> borderIndices_;
 };
 
-// wrapped sequential preconditioner
+/*!
+ * \brief Wrapper for a sequential preconditioner
+ */
 template<class CC, class GFS, class P>
 class NonoverlappingWrappedPreconditioner
   : public Dune::Preconditioner<typename P::domain_type,typename P::range_type>
@@ -313,6 +325,9 @@ private:
     const Dune::PDELab::ParallelISTLHelper<GFS>& helper;
 };
 
+/*!
+ * \brief backend for an ISTL parallel ILU preconditioned BiCGSTAB solver
+ */
 template<class TypeTag>
 class ISTLBackend_NoOverlap_BCGS_ILU
 {
@@ -400,6 +415,9 @@ private:
     Exchanger<TypeTag> exchanger_;
 };
 
+/*!
+ * \brief backend for an ISTL parallel Pardiso preconditioned loop solver
+ */
 template<class TypeTag>
 class ISTLBackend_NoOverlap_Loop_Pardiso
 {

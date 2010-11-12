@@ -29,8 +29,9 @@
 namespace Dumux
 {
 
-/** \todo Please doc me! */
-
+/*!
+ * \brief spatial parameters for the sequential 2p test
+ */
 template<class TypeTag>
 class TestIMPESSpatialParams
 {

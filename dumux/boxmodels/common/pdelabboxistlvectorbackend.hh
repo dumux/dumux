@@ -96,7 +96,7 @@ public:
         }
     };
 
-    // extract type of container element
+    //! extract type of container element
     template<class C>
     struct Value
     {

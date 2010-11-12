@@ -44,9 +44,8 @@ NEW_PROP_TAG(Scalar);
 // specialize member functions of template classes because of some
 // weird reason I didn't really get...
 
-/*!
- * \internal
- */
+//!< \cond INTERNAL
+
 template <typename BoxFVElementGeometry, int dim>
 class _BoxFVElemGeomHelper
 {
@@ -57,9 +56,6 @@ public:
     };
 };
 
-/*!
- * \internal
- */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 1>
 {
@@ -73,9 +69,6 @@ public:
     }
 };
 
-/*!
- * \internal
- */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 2>
 {
@@ -110,9 +103,6 @@ public:
     }
 };
 
-/*!
- * \internal
- */
 template <typename BoxFVElementGeometry>
 class _BoxFVElemGeomHelper<BoxFVElementGeometry, 3>
 {
@@ -286,6 +276,9 @@ public:
         }
     }
 };
+
+//!< \endcond
+
 // END HACK
 /////////////////////
 
@@ -567,7 +560,7 @@ public:
         bool inner;
     };
 
-    struct SubControlVolumeFace
+    struct SubControlVolumeFace //! interior face of a sub control volume
     {
         int i,j; //!< scvf seperates corner i and j of elem
         FV ipLocal; //!< integration point in local coords
@@ -577,7 +570,8 @@ public:
         Dune::FieldVector<Scalar, maxNC> shapeValue; //!< value of shape functions at ip
     };
 
-    struct BoundaryFace {
+    struct BoundaryFace //! boundary face of a sub control volume
+    {
         FV ipLocal; //!< integration point in local coords
         FV ipGlobal; //!< integration point in global coords
         Scalar area; //!< area of boundary face

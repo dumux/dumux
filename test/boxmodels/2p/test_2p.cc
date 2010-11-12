@@ -34,6 +34,7 @@
 #include <iostream>
 #include <boost/format.hpp>
 
+//! \cond INTERNAL
 ////////////////////////
 // helper class for grid instantiation
 ////////////////////////
@@ -132,6 +133,7 @@ public:
 
     };
 };
+//! \endcond
 
 ////////////////////////
 // the main function

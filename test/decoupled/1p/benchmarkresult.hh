@@ -24,26 +24,31 @@
 namespace Dumux
 {
 
-template<int dim>
-struct ElementLayout
-{
-    bool contains (Dune::GeometryType gt)
-    {
-        return gt.dim() == dim;
-    }
-};
-
-template<int dim>
-struct FaceLayout
-{
-    bool contains (Dune::GeometryType gt)
-    {
-        return gt.dim() == dim-1;
-    }
-};
-
+/*!
+ * \brief calculate errors for a FVCA5 benchmark problem
+ */
 struct BenchmarkResult
 {
+private:
+	template<int dim>
+	struct ElementLayout
+	{
+	    bool contains (Dune::GeometryType gt)
+	    {
+	        return gt.dim() == dim;
+	    }
+	};
+
+	template<int dim>
+	struct FaceLayout
+	{
+	    bool contains (Dune::GeometryType gt)
+	    {
+	        return gt.dim() == dim-1;
+	    }
+	};
+
+public:
     double relativeL2Error;
     double ergrad;
     double ervell2;
@@ -308,8 +313,31 @@ struct BenchmarkResult
     }
 };
 
+/*!
+ * \brief calculate errors for a FVCA5 benchmark problem
+ */
 struct ResultEvaluation
 {
+private:
+	template<int dim>
+	struct ElementLayout
+	{
+	    bool contains (Dune::GeometryType gt)
+	    {
+	        return gt.dim() == dim;
+	    }
+	};
+
+	template<int dim>
+	struct FaceLayout
+	{
+	    bool contains (Dune::GeometryType gt)
+	    {
+	        return gt.dim() == dim-1;
+	    }
+	};
+
+public:
     double relativeL2Error;
     double ergrad;
     double ervell2;

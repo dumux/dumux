@@ -41,9 +41,11 @@
 
 namespace Dumux
 {
-//! \ingroup MPFA2p
-//! Base class for defining an instance of a numerical diffusion model.
-/*! An interface for defining a numerical diffusion model for the
+/*! \ingroup MPFA2p
+ *
+ * \brief MPFA-O method for the pressure equation
+ *
+ * An interface for defining a numerical diffusion model for the
  *  solution of equations of the form
  * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
  * \f$p = g\f$ on \f$\Gamma_1\f$, and

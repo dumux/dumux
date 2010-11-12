@@ -108,6 +108,8 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
 
 /*!
  * \ingroup DecoupledProblems
+ *
+ * \brief test problem for the explicit transport model
  */
 template<class TypeTag = TTAG(TransportTestProblem)>
 class TestTransportProblem: public TransportProblem2P<TypeTag, TestTransportProblem<TypeTag> >

@@ -105,8 +105,8 @@ SET_PROP_DEFAULT(NewtonUseLineSearch)
 };
 };
 
+//! \cond INTERNAL
 /*!
- * \internal
  * \brief Writes the intermediate solutions during 
  *        the Newton scheme
  */
@@ -166,7 +166,6 @@ private:
 };
 
 /*!
- * \internal
  * \brief Writes the intermediate solutions during 
  *        the Newton scheme. 
  *
@@ -201,6 +200,7 @@ struct NewtonConvergenceWriter<TypeTag, false>
     void endTimestep()
     { };
 };
+//! \endcond
 
 /*!
  * \brief A reference implementation of a newton controller specific

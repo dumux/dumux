@@ -43,6 +43,7 @@
 namespace Dumux
 {
 
+//! \cond INTERNAL
 struct FileNames
 {
     enum
@@ -50,6 +51,7 @@ struct FileNames
         TPFAName = 0, MPFAName = 1, MimeticName = 2
     };
 };
+//! \endcond
 
 template<class TypeTag>
 class TestDiffusionProblem;
@@ -140,8 +142,10 @@ SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem
 }
 
 /*!
-* \ingroup DecoupledProblems
-*/
+ * \ingroup DecoupledProblems
+ *
+ * \brief test problem for diffusion models from the FVCA5 benchmark.
+ */
 template<class TypeTag = TTAG(DiffusionTestProblem)>
 class TestDiffusionProblem: public DiffusionProblem2P<TypeTag, TestDiffusionProblem<TypeTag> >
 {

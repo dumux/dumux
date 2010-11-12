@@ -28,7 +28,7 @@ namespace Dumux {
 
 namespace PDELab {
 
-/*
+/*!
  * \brief An assembler for the Jacobian matrix based on PDELab.
  */
 template<class TypeTag>

@@ -36,9 +36,11 @@
 namespace Dumux
 {
 
-//! \ingroup mimetic
-//! mimetic Diffusion Model
-/*! Provides a mimetic implementation for the evaluation
+/*! \ingroup mimetic
+ *
+ * \brief mimetic method for the pressure equation
+ *
+ * Provides a mimetic implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
  * The definition of the total velocity \f$\boldsymbol{v}_total\f$ depends on the kind of pressure chosen. This could be a wetting (w) phase pressure leading to

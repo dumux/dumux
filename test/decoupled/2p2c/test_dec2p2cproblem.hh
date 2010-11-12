@@ -119,6 +119,8 @@ SET_SCALAR_PROP(TestTwoPTwoCProblem, CFLFactor, 0.8);
 
 /*!
  * \ingroup DecoupledProblems
+ *
+ * \brief test problem for the sequential 2p2c model
  */
 template<class TypeTag = TTAG(TestTwoPTwoCProblem)>
 class TestTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag, TestTwoPTwoCProblem<TypeTag> >

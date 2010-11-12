@@ -108,7 +108,7 @@ public:
     { this->set(points, m0, m1); }
 };
 
-/*
+/*!
  * \brief Specialization of a spline with the number of sampling
  *        points only known at run time.
  *
@@ -128,8 +128,6 @@ public:
     s''(x_n)   & = 0
  \f}
 */
-
-
 template<class Scalar>
 class Spline<Scalar, -1> : public VariableLengthSpline_<Scalar>
 { 

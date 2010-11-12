@@ -28,8 +28,9 @@
 namespace Dumux
 {
 
-/** \todo Please doc me! */
-
+/*!
+ * \brief spatial parameters for the test problem for diffusion models.
+ */
 template<class TypeTag>
 class TestDiffusionSpatialParams
 {

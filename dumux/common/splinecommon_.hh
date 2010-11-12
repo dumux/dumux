@@ -29,8 +29,8 @@
 
 namespace Dumux
 {
+//! \cond INTERNAL
 /*!
- * \internal
  *
  * \brief The common code for all 3rd order polynomial splines.
  */
@@ -588,6 +588,8 @@ protected:
     Scalar numSamples_() const
     { return asImp_().numSamples(); }
 };
+
+//! \endcond
 
 }
 

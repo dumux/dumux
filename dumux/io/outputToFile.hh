@@ -50,7 +50,7 @@ namespace Properties
 
 }
 
-/*
+/*!
  * \brief A collection of functions for output purposes.
  *          These output files are meant for visualization with another program (matlab, gnuplot...)
  */
