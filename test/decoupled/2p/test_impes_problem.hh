@@ -43,6 +43,8 @@
 
 #include "test_impes_spatialparams.hh"
 
+//#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
+
 namespace Dumux
 {
 
@@ -121,6 +123,8 @@ public:
 
 // Enable gravity
 SET_BOOL_PROP(IMPESTestProblem, EnableGravity, false);
+
+//SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
 SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
 }
