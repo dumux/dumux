@@ -18,7 +18,7 @@
 /*!
  * \file
  *
- * \brief Contains the quantities which are are constant within a
+ * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase, two-component model.
  */
 #ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
