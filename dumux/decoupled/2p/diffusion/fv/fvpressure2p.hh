@@ -469,23 +469,22 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     case pn:
                     {
                         potentialW
-                                = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] - pcI + pcJ)
-                                        / dist;
-                        potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]) / dist;
+                                = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] - pcI + pcJ);
+                        potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]);
                         break;
                     }
                     case pglobal:
                     {
                         potentialW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] - fMeanNW
-                                * (pcI - pcJ)) / dist;
+                                * (pcI - pcJ));
                         potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] + fMeanW
-                                * (pcI - pcJ)) / dist;
+                                * (pcI - pcJ));
                         break;
                     }
                     }
 
-                    potentialW += densityW * (unitOuterNormal * gravity);
-                    potentialNW += densityNW * (unitOuterNormal * gravity);
+                    potentialW += densityW * (distVec * gravity);
+                    potentialNW += densityNW * (distVec * gravity);
 
                     //store potentials for further calculations (velocity, saturation, ...)
                     problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;
@@ -683,26 +682,26 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                         {
                         case pw:
                         {
-                            potentialW = (problem_.variables().pressure()[globalIdxI] - pressBound) / dist;
-                            potentialNW = (problem_.variables().pressure()[globalIdxI] + pcI - pressBound - pcBound) / dist;
+                            potentialW = (problem_.variables().pressure()[globalIdxI] - pressBound);
+                            potentialNW = (problem_.variables().pressure()[globalIdxI] + pcI - pressBound - pcBound);
                             break;
                         }
                         case pn:
                         {
-                            potentialW = (problem_.variables().pressure()[globalIdxI] - pcI - pressBound + pcBound) / dist;
-                            potentialNW = (problem_.variables().pressure()[globalIdxI] - pressBound) / dist;
+                            potentialW = (problem_.variables().pressure()[globalIdxI] - pcI - pressBound + pcBound);
+                            potentialNW = (problem_.variables().pressure()[globalIdxI] - pressBound);
                             break;
                         }
                         case pglobal:
                         {
-                            potentialW = (problem_.variables().pressure()[globalIdxI] - pressBound - fMeanNW * (pcI - pcBound)) / dist;
-                            potentialNW = (problem_.variables().pressure()[globalIdxI] - pressBound + fMeanW * (pcI - pcBound)) / dist;
+                            potentialW = (problem_.variables().pressure()[globalIdxI] - pressBound - fMeanNW * (pcI - pcBound));
+                            potentialNW = (problem_.variables().pressure()[globalIdxI] - pressBound + fMeanW * (pcI - pcBound));
                             break;
                         }
                         }
 
-                        potentialW += densityW * (unitOuterNormal * gravity);
-                        potentialNW += densityNW * (unitOuterNormal * gravity);
+                        potentialW += densityW * (distVec * gravity);
+                        potentialNW += densityNW * (distVec * gravity);
 
                         //store potential gradients for further calculations
                         problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;

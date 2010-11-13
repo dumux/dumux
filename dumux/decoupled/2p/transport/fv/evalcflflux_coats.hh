@@ -228,11 +228,30 @@ public:
                 cflFluxFunction_ -= transmissibility * lambdaWCap * lambdaNWCap * (dPcdSI + dPcdSJ) / (lambdaW
                         + lambdaNW);
             }
-            if (phaseIdx == nPhaseIdx)
+            else if (phaseIdx == nPhaseIdx)
             {
                 if (flux != 0)
                 {
                     cflFluxFunction_ -= lambdaW * dLambdaNWdS * std::abs(flux) / (lambdaNW * (lambdaW + lambdaNW));
+                }
+            }
+            else
+            {
+                if (flux != 0)
+                {
+                    switch (saturationType_)
+                    {
+                    case Sw:
+                    {
+                    cflFluxFunction_ += dLambdaWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
+                    break;
+                    }
+                    case Sn:
+                    {
+                    cflFluxFunction_ +=  dLambdaNWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
+                    break;
+                    }
+                    }
                 }
             }
         }
@@ -376,11 +395,30 @@ public:
                 cflFluxFunction_ -= transmissibility * lambdaWCap * lambdaNWCap * (dPcdSI + dPcdSBound) / (lambdaW
                         + lambdaNW);
             }
-            if (phaseIdx == nPhaseIdx)
+            else if (phaseIdx == nPhaseIdx)
             {
                 if (flux != 0)
                 {
                     cflFluxFunction_ -= lambdaW * dLambdaNWdS * std::abs(flux) / (lambdaNW * (lambdaW + lambdaNW));
+                }
+            }
+            else
+            {
+                if (flux != 0)
+                {
+                    switch (saturationType_)
+                    {
+                    case Sw:
+                    {
+                    cflFluxFunction_ += dLambdaWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
+                    break;
+                    }
+                    case Sn:
+                    {
+                    cflFluxFunction_ +=  dLambdaNWdS / (dLambdaWdS + dLambdaNWdS) * std::abs(flux);
+                    break;
+                    }
+                    }
                 }
             }
         }

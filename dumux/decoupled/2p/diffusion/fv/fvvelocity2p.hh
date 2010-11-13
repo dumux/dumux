@@ -243,7 +243,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
             Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
 
             // get absolute permeability
-            FieldMatrix permeabilityI(this->problem().spatialParameters().intrinsicPermeability(globalPos, *eIt));
+            const FieldMatrix& permeabilityI(this->problem().spatialParameters().intrinsicPermeability(globalPos, *eIt));
 
             // handle interior face
             if (isIt->neighbor())
@@ -262,7 +262,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                 Scalar dist = distVec.two_norm();
 
                 // get absolute permeability
-                FieldMatrix permeabilityJ(this->problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
+                const FieldMatrix& permeabilityJ(this->problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
 
                 // compute vectorized permeabilities
                 FieldMatrix meanPermeability(0);
@@ -310,26 +310,26 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                 {
                 case pw:
                 {
-                    potentialW = (pressI - pressJ) / dist;
-                    potentialNW = (pressI - pressJ+ pcI - pcJ) / dist;
+                    potentialW = (pressI - pressJ);
+                    potentialNW = (pressI - pressJ+ pcI - pcJ);
                     break;
                 }
                 case pn:
                 {
-                    potentialW = (pressI - pressJ - pcI + pcJ) / dist;
-                    potentialNW = (pressI - pressJ) / dist;
+                    potentialW = (pressI - pressJ - pcI + pcJ);
+                    potentialNW = (pressI - pressJ);
                     break;
                 }
                 case pglobal:
                 {
-                    potentialW = (pressI - pressJ - 0.5 * (fractionalNWI+fractionalNWJ)*(pcI - pcJ)) / dist;
-                    potentialNW = (pressI - pressJ + 0.5 * (fractionalWI+fractionalWJ)*(pcI - pcJ)) / dist;
+                    potentialW = (pressI - pressJ - 0.5 * (fractionalNWI+fractionalNWJ)*(pcI - pcJ));
+                    potentialNW = (pressI - pressJ + 0.5 * (fractionalWI+fractionalWJ)*(pcI - pcJ));
                     break;
                 }
                 }
 
-                potentialW += densityW * (unitOuterNormal * this->gravity);//delta z/delta x in unitOuterNormal[z]
-                potentialNW += densityNW * (unitOuterNormal * this->gravity);
+                potentialW += densityW * (distVec * this->gravity);//delta z/delta x in unitOuterNormal[z]
+                potentialNW += densityNW * (distVec * this->gravity);
 
                 //store potentials for further calculations (velocity, saturation, ...)
                 this->problem().variables().potentialWetting(globalIdxI, isIndex) = potentialW;
@@ -544,26 +544,26 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                     {
                     case pw:
                     {
-                        potentialW = (pressI - pressBound) / dist;
-                        potentialNW = (pressI + pcI - pressBound - pcBound) / dist;
+                        potentialW = (pressI - pressBound);
+                        potentialNW = (pressI + pcI - pressBound - pcBound);
                         break;
                     }
                     case pn:
                     {
-                        potentialW = (pressI - pcI - pressBound + pcBound) / dist;
-                        potentialNW = (pressI - pressBound) / dist;
+                        potentialW = (pressI - pcI - pressBound + pcBound);
+                        potentialNW = (pressI - pressBound);
                         break;
                     }
                     case pglobal:
                     {
-                        potentialW = (pressI - pressBound - fractionalNWI * (pcI - pcBound)) / dist;
-                        potentialNW = (pressI - pressBound + fractionalWI * (pcI - pcBound)) / dist;
+                        potentialW = (pressI - pressBound - fractionalNWI * (pcI - pcBound));
+                        potentialNW = (pressI - pressBound + fractionalWI * (pcI - pcBound));
                         break;
                     }
                     }
 
-                    potentialW += densityW * (unitOuterNormal * this->gravity);
-                    potentialNW += densityNW * (unitOuterNormal * this->gravity);
+                    potentialW += densityW * (distVec * this->gravity);
+                    potentialNW += densityNW * (distVec * this->gravity);
 
                     //store potential gradients for further calculations
                     this->problem().variables().potentialWetting(globalIdxI, isIndex) = potentialW;
