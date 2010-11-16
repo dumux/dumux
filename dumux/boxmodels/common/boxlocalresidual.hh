@@ -226,7 +226,10 @@ public:
                     const ElementVolumeVariables &curVolVars)
     {
         elemPtr_ = &element;
-        fvElemGeomPtr_ = &model_().fvElemGeom(element);
+
+        FVElementGeometry fvElemGeom;
+        fvElemGeom.update(gridView_(), element);
+        fvElemGeomPtr_ = &fvElemGeom;
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvElemGeom_());
