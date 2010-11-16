@@ -84,18 +84,10 @@ public:
             eg.subContVol[2].volume = eg.elementVolume/3;
             break;
         case 4: // 2D, quadrilinear
-            if (!Dune::Capabilities::IsUnstructured<typename BoxFVElementGeometry::Grid>::v) {
-                eg.subContVol[0].volume = eg.elementVolume/4;
-                eg.subContVol[1].volume = eg.elementVolume/4;
-                eg.subContVol[2].volume = eg.elementVolume/4;
-                eg.subContVol[3].volume = eg.elementVolume/4;
-            }
-            else {
-                eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, eg.edgeCoord[2], eg.elementGlobal, eg.edgeCoord[0]);
-                eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, eg.edgeCoord[1], eg.elementGlobal, eg.edgeCoord[2]);
-                eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, eg.edgeCoord[0], eg.elementGlobal, eg.edgeCoord[3]);
-                eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, eg.edgeCoord[3], eg.elementGlobal, eg.edgeCoord[1]);
-            }
+            eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, eg.edgeCoord[2], eg.elementGlobal, eg.edgeCoord[0]);
+            eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, eg.edgeCoord[1], eg.elementGlobal, eg.edgeCoord[2]);
+            eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, eg.edgeCoord[0], eg.elementGlobal, eg.edgeCoord[3]);
+            eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, eg.edgeCoord[3], eg.elementGlobal, eg.edgeCoord[1]);
             break;
         default:
             DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
@@ -395,12 +387,9 @@ class BoxFVElementGeometry
     Scalar hexahedronVolume (const FV& p0, const FV& p1, const FV& p2, const FV& p3,
                              const FV& p4, const FV& p5, const FV& p6, const FV& p7)
     {
-        if (!Dune::Capabilities::IsUnstructured<Grid>::v) {
-            return elementVolume / 8.0;
-        }
-        else
-            return prismVolume(p0,p1,p2,p4,p5,p6)
-                + prismVolume(p0,p2,p3,p4,p6,p7);
+        return
+            prismVolume(p0,p1,p2,p4,p5,p6)
+            + prismVolume(p0,p2,p3,p4,p6,p7);
     }
 
     void normalOfQuadrilateral3D(FV &normal, const FV& p0, const FV& p1, const FV& p2, const FV& p3)
