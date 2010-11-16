@@ -75,6 +75,7 @@ public:
     {
         hasDirichlet_ = false;
         hasNeumann_ = false;
+        hasOutflow_ = false;
     }
 
     /*!
@@ -94,6 +95,7 @@ public:
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
+        hasOutflow_ = false;
         for (int i = 0; i < numVerts; ++i) {
             (*this)[i].reset();
 
@@ -105,6 +107,7 @@ public:
 
             hasDirichlet_ = hasDirichlet_ or (*this)[i].hasDirichlet();
             hasNeumann_ = hasNeumann_ or (*this)[i].hasNeumann();
+            hasOutflow_ = hasOutflow_ or (*this)[i].hasOutflow();
         }
     };
 
@@ -117,14 +120,22 @@ public:
 
     /*!
      * \brief Returns whether the element potentially features a
-     *        Neumann boundary segment.  .
+     *        Neumann boundary segment.
      */
     bool hasNeumann() const
     { return hasNeumann_; }
     
+    /*!
+     * \brief Returns whether the element potentially features an
+     *        outflow boundary segment.
+     */
+    bool hasOutflow() const
+    { return hasOutflow_; }
+
 protected:
     bool hasDirichlet_;
     bool hasNeumann_;
+    bool hasOutflow_;
 };
 
 } // namespace Dumux

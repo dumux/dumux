@@ -124,7 +124,7 @@ public:
         jacAsm_ = new JacobianAssembler();
         jacAsm_->init(problem_());
 
-        applyInitialSolution_();
+        asImp_().applyInitialSolution_();
 
         // also set the solution of the "previous" time step to the
         // initial solution.
@@ -663,8 +663,7 @@ protected:
     { return localJacobian_.localResidual(); }
 
     /*!
-     * \brief Applies the initial solution for all vertices of the
-     *        grid.
+     * \brief Applies the initial solution for all vertices of the grid.
      */
     void applyInitialSolution_()
     {
