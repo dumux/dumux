@@ -154,14 +154,14 @@ public:
              (1 - upwindAlpha)*dn.concentration(1)/dn.viscosity());
         
         // diffusive flux of second component
-        flux[transEqIdx] += 
+        flux[transEqIdx] -= 
             fluxVars.porousDiffCoeff() *
             (fluxVars.concentrationGrad(1) * fluxVars.face().normal);
 
         // dispersive flux of second component
         Vector normalDisp;
         fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-        flux[transEqIdx] +=
+        flux[transEqIdx] -=
             (normalDisp * fluxVars.concentrationGrad(1));
     }
 
