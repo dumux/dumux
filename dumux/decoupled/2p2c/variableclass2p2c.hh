@@ -410,12 +410,15 @@ public:
     }
 
     //! Return nonwetting phase density
-    /*! \param Idx Element index*/
+    /*! \param Idx Element index
+     * \param phaseIdx Index of the phase */
+
     Scalar& numericalDensity(int Idx, int phaseIdx)
     {
         return numericalDensity_[phaseIdx][Idx][0];
     }
     //! \copydoc Dumux::VariableClass2P2C::densityNonwetting()
+     /*! \param phaseIdx Index of the phase */
     const Scalar& numericalDensity(int Idx, int phaseIdx) const
     {
         return numericalDensity_[phaseIdx][Idx][0];
