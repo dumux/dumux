@@ -234,9 +234,19 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         double Xw1_I = problem_.variables().wet_X1(globalIdxI);
         double Xn1_I = problem_.variables().nonwet_X1(globalIdxI);
 
-        Scalar densityWI = problem_.variables().densityWetting(globalIdxI);
-        Scalar densityNWI = problem_.variables().densityNonwetting(globalIdxI);
+        //TODO: decide which to use!!
+        Scalar densityWI (0.), densityNWI(0.);
+        if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
+        {
+            densityWI= problem_.variables().numericalDensity(globalIdxI, wPhaseIdx);
+            densityNWI = problem_.variables().numericalDensity(globalIdxI, nPhaseIdx);
 
+        }
+        else
+        {
+            densityWI= problem_.variables().densityWetting(globalIdxI);
+            densityNWI = problem_.variables().densityNonwetting(globalIdxI);
+        }
         // some variables for time step calculation
         double sumfactorin = 0;
         double sumfactorout = 0;
@@ -295,8 +305,17 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 double Xn1_J = problem_.variables().nonwet_X1(globalIdxJ);
 
                 // phase densities in neighbor
-                Scalar densityWJ = problem_.variables().densityWetting(globalIdxJ);
-                Scalar densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
+                Scalar densityWJ (0.), densityNWJ(0.);
+                if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
+                {
+                    densityWJ = problem_.variables().numericalDensity(globalIdxJ, wPhaseIdx);
+                    densityNWJ = problem_.variables().numericalDensity(globalIdxJ, nPhaseIdx);
+                }
+                else
+                {
+                    densityWJ = problem_.variables().densityWetting(globalIdxJ);
+                    densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
+                }
 
                 // average phase densities with central weighting
                 double densityW_mean = (densityWI + densityWJ) * 0.5;
@@ -503,14 +522,6 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                         - velocityIJw * (1. - Xw1_I) * densityWI
                         + velocityJIn * (1. - Xn1Bound) * densityNWBound
                         - velocityIJn * (1. - Xn1_I) * densityNWI ;
-
-                    if (velocityN != 0.)
-                        Dune::dwarn << " updFactor[nCompIdx] " << updFactor[nCompIdx]
-                                  << "velocityW " << velocityW <<" velocityN " << velocityN
-                                  << " Xw1Bound " << Xw1Bound << " Xn1Bound " << Xn1Bound
-                                  << " Xw1_I " << Xw1_I << " Xn1_I " << Xn1_I
-                                  << "lambdaN "<< lambdaN << " with  Sat on boundary " << BCfluidState.saturation(nPhaseIdx)
-                                  << " at global Idx "<< globalIdxI<< std::endl;
                 }//end dirichlet boundary
 
                 if (bcTypeTransport_ == BoundaryConditions::neumann)
@@ -539,6 +550,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 					#endif
                 }//end neumann boundary
             }//end boundary
+            // correct update Factor by volume error
+            #ifdef errorInTransport
+            updFactor[wCompIdx] *= problem_.variables().volErr(globalIdxI);
+            updFactor[nCompIdx] *= problem_.variables().volErr(globalIdxI);
+            #endif
             // add to update vector
             updateVec[wCompIdx][globalIdxI] += updFactor[wCompIdx];
             updateVec[nCompIdx][globalIdxI] += updFactor[nCompIdx];

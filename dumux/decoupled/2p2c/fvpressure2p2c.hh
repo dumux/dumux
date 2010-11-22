@@ -220,6 +220,29 @@ public:
                                     problem_.gridView());
         problem().variables().addOutputVtkFields(debugWriter_);
 
+        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+                // output porosity, permeability
+                Dune::BlockVector<Dune::FieldVector<double,1> > *poroPtr = debugWriter_.template createField<double, 1> (dv_dp.size());
+                Dune::BlockVector<Dune::FieldVector<double,1> > *permPtr = debugWriter_.template createField<double, 1> (dv_dp.size());
+
+                Dune::BlockVector<Dune::FieldVector<double,1> > poro_(0.), perm_(0.);
+                poro_.resize(dv_dp.size()); perm_.resize(dv_dp.size());
+                // iterate over all elements of domain
+                for (ElementIterator eIt = problem_.gridView().template begin<0> ();
+                        eIt != problem_.gridView().template end<0>(); ++eIt)
+                {
+                    // get position, index
+                    GlobalPosition globalPos = eIt->geometry().center();
+                    int globalIdx = problem_.variables().index(*eIt);
+                    poro_[globalIdx] = problem().spatialParameters().porosity(globalPos, *eIt);
+                    perm_[globalIdx] = problem().spatialParameters().intrinsicPermeability(globalPos, *eIt)[0][0];
+                }
+                *poroPtr = poro_;
+                *permPtr = perm_;
+                debugWriter_.addCellData(poroPtr, "porosity");
+                debugWriter_.addCellData(permPtr, "permeability");
+        #endif
+
         debugWriter_.endTimestep();
         return;
     }
@@ -970,16 +993,15 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
         Scalar hifac = 0.;
         hifac /= fac;
 
-        if (erri*timestep_ > 5e-5)
-            if (erri > x_lo * maxErr)
-            {
-                if (erri <= x_mi * maxErr)
-                    f_[globalIdxI] += errorCorrection[globalIdxI]= fac* (1-x_mi*(lofac/fac-1)/(x_lo-x_mi) + (lofac/fac-1)/(x_lo-x_mi)*erri/maxErr)
-										* problem_.variables().volErr()[globalIdxI] * volume;
-                else
-                    f_[globalIdxI] += errorCorrection[globalIdxI]= fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr)
-										* problem_.variables().volErr()[globalIdxI] * volume;
-            }
+        if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxErr))
+        {
+            if (erri <= x_mi * maxErr)
+                f_[globalIdxI] += errorCorrection[globalIdxI] = fac* (1-x_mi*(lofac/fac-1)/(x_lo-x_mi) + (lofac/fac-1)/(x_lo-x_mi)*erri/maxErr)
+                                    * problem_.variables().volErr()[globalIdxI] * volume;
+            else
+                f_[globalIdxI] += errorCorrection[globalIdxI] = fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr)
+                                    * problem_.variables().volErr()[globalIdxI] * volume;
+        }
     } // end grid traversal
     return;
 }
@@ -1155,7 +1177,9 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 
 
         // get the overall mass of component 1 Z1 = C^k / (C^1+C^2) [-]
-        Scalar Z1 = problem_.variables().totalConcentration(globalIdx, wCompIdx) / (problem_.variables().totalConcentration(globalIdx, wCompIdx) + problem_.variables().totalConcentration(globalIdx, nCompIdx));
+        Scalar Z1 = problem_.variables().totalConcentration(globalIdx, wCompIdx)
+                / (problem_.variables().totalConcentration(globalIdx, wCompIdx)
+                        + problem_.variables().totalConcentration(globalIdx, nCompIdx));
 
         //determine phase pressures from primary pressure variable
         Scalar pressW(0.), pressNW(0.);
@@ -1221,8 +1245,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
         // determine volume mismatch between actual fluid volume and pore volume
         Scalar sumConc = (problem_.variables().totalConcentration(globalIdx, wCompIdx)
                 + problem_.variables().totalConcentration(globalIdx, nCompIdx));
-        Scalar massw = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
-        Scalar massn = sumConc * fluidState.phaseMassFraction(nPhaseIdx);
+        Scalar massw = problem_.variables().numericalDensity(globalIdx, wPhaseIdx) = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
+        Scalar massn = problem_.variables().numericalDensity(globalIdx, nPhaseIdx) = sumConc * fluidState.phaseMassFraction(nPhaseIdx);
 
         if ((problem_.variables().densityWetting(globalIdx)*problem_.variables().densityNonwetting(globalIdx)) == 0)
         	DUNE_THROW(Dune::MathError, "Decoupled2p2c::postProcessUpdate: try to divide by 0 density");

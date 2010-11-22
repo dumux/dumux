@@ -266,7 +266,7 @@ private:
 
 protected:
     const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
-    static const Scalar cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
+    static const Scalar cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor)); //!< determines the CFLfactor
     static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$ 0 = S_w \f$, \f$ 1 = S_n \f$)
 };
@@ -790,7 +790,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
                 //get boundary condition for boundary face center
                 BoundaryConditions::Flags bctype = problem_.bcTypePress(globalPosFace, *isIt);
-//                BoundaryConditions::Flags bcTypeSat = problem_.bctypeSat(globalPosFace, *isIt);
 
                 /**********         Dirichlet Boundary        *************/
                 if (bctype == BoundaryConditions::dirichlet)
@@ -852,6 +851,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                				BCfluidState.satFlash(satBound, pressBC, problem_.spatialParameters().porosity(globalPos, *eIt), temperatureBC);
                             Dune::dwarn << "no boundary saturation/concentration specified on boundary pos " << globalPosFace << std::endl;
                         }
+
 
                         // determine fluid properties at the boundary
                         Scalar lambdaWBound = 0.;
@@ -1020,30 +1020,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                             rightEntry = (lambdaW * densityW * dV_w + lambdaNW * densityNW * dV_n) * (permeability * gravity)
                                     * faceArea ;
 
-        //                    switch (pressureType)
-        //                    {
-        //                    case pw:
-        //                    {
-        //                        // calculate capillary pressure gradient
-        //                        Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-        //                        pCGradient *= (pcI - pcBound) / dist;
-        //
-        //                        //add capillary pressure term to right hand side
-        //                        rightEntry += 0.5 * (lambdaNWI + lambdaNWBound) * (permeability * pCGradient) * faceArea;
-        //                        break;
-        //                    }
-        //                    case pn:
-        //                    {
-        //                        // calculate capillary pressure gradient
-        //                        Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-        //                        pCGradient *= (pcI - pcBound) / dist;
-        //
-        //                        //add capillary pressure term to right hand side
-        //                        rightEntry -= 0.5 * (lambdaWI + lambdaWBound) * (permeability * pCGradient) * faceArea;
-        //                        break;
-        //                    }
-        //                    }
-                        }   //end 2p subdomain
 
 
                         // set diagonal entry and right hand side entry
@@ -1211,6 +1187,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::initialMaterialLaws(bool compositional
         Scalar temperature_ = problem_.temperature(globalPos, *eIt);
 
         // initial conditions
+        problem_.variables().capillaryPressure(globalIdx) = 0.;
 		Scalar pressW = 0;
 		Scalar pressNW = 0;
 		Scalar sat_0=0.;
@@ -1222,8 +1199,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::initialMaterialLaws(bool compositional
 			// phase pressures are unknown, so start with an exemplary
         	Scalar exemplaryPressure = problem_.referencePressure(globalPos, *eIt);
 			pressW = pressNW = problem_.variables().pressure()[globalIdx] = exemplaryPressure;
-        	problem_.variables().capillaryPressure(globalIdx) = 0.;
-        
+      
 			if (ictype == BoundaryConditions2p2c::saturation)  // saturation initial condition
 			{
 				sat_0 = problem_.initSat(globalPos, *eIt);
@@ -1289,7 +1265,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::initialMaterialLaws(bool compositional
         problem_.variables().totalConcentration(globalIdx, wCompIdx) = fluidState.massConcentration(wCompIdx);
         problem_.variables().totalConcentration(globalIdx, nCompIdx) = fluidState.massConcentration(nCompIdx);
         problem_.variables().saturation()[globalIdx] = fluidState.saturation(wPhaseIdx);
-
     }
     return;
 }
@@ -1400,8 +1375,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
             // determine volume mismatch between actual fluid volume and pore volume
             Scalar sumConc = (problem_.variables().totalConcentration(globalIdx, wCompIdx)
                     + problem_.variables().totalConcentration(globalIdx, nCompIdx));
-            Scalar massw = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
-            Scalar massn = sumConc * fluidState.phaseMassFraction(nPhaseIdx);
+            Scalar massw = problem_.variables().numericalDensity(globalIdx, wPhaseIdx) = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
+            Scalar massn = problem_.variables().numericalDensity(globalIdx, nPhaseIdx) =sumConc * fluidState.phaseMassFraction(nPhaseIdx);
             Scalar vol = massw / problem_.variables().densityWetting(globalIdx)
                        + massn / problem_.variables().densityNonwetting(globalIdx);
             if (dt != 0)

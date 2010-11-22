@@ -454,7 +454,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                                 lambdaN = fluidState.saturation(nPhaseIdx) / viscosityNWBound;
                             else
                                 lambdaN = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(nPhaseIdx))
+                                        problem_.spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(wPhaseIdx))
                                         / viscosityNWBound;
                             }
 

@@ -87,6 +87,7 @@ NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
 NEW_PROP_TAG( EnableCompressibility);// ! Returns whether compressibility is allowed
 NEW_PROP_TAG(EnableCapillarity); //!< Returns whether capillarity is regarded
 NEW_PROP_TAG( BoundaryMobility );
+NEW_PROP_TAG( NumDensityTransport );
 NEW_PROP_TAG( FluidSystem );
 NEW_PROP_TAG( FluidState );
 
@@ -164,7 +165,10 @@ SET_PROP_DEFAULT(BoundaryMobility)
 {
     static const int value = TwoPCommonIndices<TypeTag>::satDependent;
 };
-
+SET_PROP_DEFAULT(NumDensityTransport)
+{
+    static const bool value = false;
+};
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass2P2C<TypeTag>);
 

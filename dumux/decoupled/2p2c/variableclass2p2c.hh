@@ -86,6 +86,7 @@ private:
     DimVecElemFaceType velocitySecondPhase_;	//necessary??
 
     FluidPropertyType density_;
+    FluidPropertyType numericalDensity_;
     FluidPropertyType viscosity_;
 
     ScalarSolutionType volErr_;
@@ -171,6 +172,7 @@ private:
         for (int i=0; i<2; i++)	//for both phases
         {
         density_[i].resize(size_);//depends on pressure
+        numericalDensity_[i].resize(size_);//depends on pressure
         viscosity_[i].resize(size_);//depends on pressure
         };
         // b) transport variables
@@ -246,14 +248,20 @@ public:
             ScalarSolutionType *mobilityNW = writer.template createField<Scalar, 1> (size_);
             ScalarSolutionType *densityW = writer.template createField<Scalar, 1> (size_);
             ScalarSolutionType *densityNW = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *numdensityW = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *numdensityNW = writer.template createField<Scalar, 1> (size_);
             *mobilityW = mobility_[0];
             *mobilityNW = mobility_[1];
             *densityW = density_[0];
             *densityNW = density_[1];
+            *numdensityW = density_[0];
+            *numdensityNW = density_[1];
             writer.addCellData(mobilityW, "mobility w-phase");
             writer.addCellData(mobilityNW, "mobility nw-phase");
             writer.addCellData(densityW, "density w-phase");
             writer.addCellData(densityNW, "density nw-phase");
+            writer.addCellData(numdensityW, "numerical density (mass/volume) w-phase");
+            writer.addCellData(numdensityNW, "numerical density (mass/volume) nw-phase");
         }
         if (codim_ == dim)
         {
@@ -399,6 +407,18 @@ public:
     const Scalar& densityNonwetting(int Idx) const
     {
         return density_[nPhaseIdx][Idx][0];
+    }
+
+    //! Return nonwetting phase density
+    /*! \param Idx Element index*/
+    Scalar& numericalDensity(int Idx, int phaseIdx)
+    {
+        return numericalDensity_[phaseIdx][Idx][0];
+    }
+    //! \copydoc Dumux::VariableClass2P2C::densityNonwetting()
+    const Scalar& numericalDensity(int Idx, int phaseIdx) const
+    {
+        return numericalDensity_[phaseIdx][Idx][0];
     }
 
     //! Return viscosity of the wetting phase
