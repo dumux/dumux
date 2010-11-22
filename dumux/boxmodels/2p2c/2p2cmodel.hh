@@ -206,9 +206,9 @@ public:
      * \brief Called by the update() method if applying the newton
      *         method was unsuccessful.
      */
-    void updateFailedTry()
+    void updateFailed()
     {
-        ParentType::updateFailedTry();
+        ParentType::updateFailed();
 
         setSwitched_(false);
         resetPhasePresence_();
