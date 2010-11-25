@@ -72,7 +72,7 @@ public:
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - comparison with Z1 to determine phase presence => phase mass fractions
      * - round off fluid properties
-     * \param Z1 Feed mass fraction [-]
+     * \param Z1 Feed mass fraction: Mass of comp1 per total mass [-]
      * \param pw Pressure of the wetting phase [Pa]
      * \param poro Porosity [-]
      * \param temperature Temperature [K]
@@ -122,11 +122,13 @@ public:
         {
             nu_[nPhaseIdx] = 1; // only nPhase
             massfrac_[nPhaseIdx][wCompIdx] = Z1; // hence, assign complete mass soluted into nPhase
+            massfrac_[wPhaseIdx][wCompIdx] = 1.;
         }
         else 	// (Z1 >= Xw1) => no nPhase
         {
             nu_[nPhaseIdx] = 0; // no second phase
             massfrac_[wPhaseIdx][wCompIdx] = Z1;
+            massfrac_[nPhaseIdx][wCompIdx] = 0.;
         }
 
         // complete array of mass fractions
