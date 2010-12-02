@@ -21,12 +21,12 @@
 #ifndef VTK_MULTI_WRITER_HH
 #define VTK_MULTI_WRITER_HH
 
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/common/genericreferenceelements.hh>
-
-
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
+
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+
+#include <dumux/common/valgrind.hh>
 
 #include <boost/format.hpp>
 
@@ -117,9 +117,14 @@ public:
     template <class VectorField>
     void addVertexData(VectorField *field, const char *name)
     {
+#ifndef NDEBUG
+        // make sure the field is well defined
+        for (int i = 0; i < field->size(); ++i)
+            Valgrind::CheckDefined((*field)[i]);
+#endif
         curWriter_->addVertexData(*field, name);
     }
-
+    
     /*!
      * \brief Add a finished cell centered vector field to the
      *        output. The field must have been created using
@@ -129,105 +134,12 @@ public:
     template <class VectorField>
     void addCellData(VectorField *field, const char *name)
     {
+#ifndef NDEBUG
+        // make sure the field is well defined
+        for (int i = 0; i < field->size(); ++i)
+            Valgrind::CheckDefined((*field)[i]);
+#endif
         curWriter_->addCellData(*field, name);
-    }
-
-    /*!
-     * \brief Evaluates a single component of a function defined on the grid at the
-     *        vertices and appends it to the writer.
-     */
-    template <class Function>
-    void addScalarVertexFunction(const char *name,
-                                 const Function &fn,
-                                 int comp)
-    {
-        /*
-        // useful typedefs
-        typedef typename Function::RangeFieldType Scalar;
-        typedef typename GridView::Traits::template Codim<GridView::dimension> VertexTraits;
-        typedef typename VertexTraits::Entity Vertex;
-        typedef typename VertexTraits::LeafIterator VertexIterator;
-        typedef Dune::ReferenceElement<typename GridView::ctype, 0>        VertexReferenceElement;
-        typedef Dune::ReferenceElements<typename GridView::ctype, 0>       VertexReferenceElements;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> >       ScalarField;
-
-        // create a vertex based scalar field.
-        ScalarField *field = createField<Scalar, 1>(vertexMap.size());
-        std::vector<bool> vertexVisited(vertexMap.size(), false);
-
-        // fill the Scalar field
-        VertexIterator it = curGridView_->template leafbegin<GridView::dimension>();
-        VertexIterator endIt = curGridView_->template leafend<GridView::dimension>();
-        for (; it != endIt; ++it) {
-        // extract the current solution's Sn component
-        const VertexReferenceElement &refElem =
-        VertexReferenceElements::general(it->geometry().type());
-        Scalar compValue = fn.evallocal(comp,
-        *it,
-        refElem.position(0,0));
-
-        // find out the cell's index
-        unsigned vertexIndex = vertexMap.map(*it);
-        (*field)[vertexIndex] = compValue;
-        }
-
-        addVertexData(field, name);
-        */
-
-        // this is pretty hacky as it assumes that the mapping
-        // to the vertices is the same for the function a and
-        // the vertex mapper
-        typedef typename Function::RangeFieldType Scalar;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-
-        unsigned nVerts = (*fn).size();
-        ScalarField *field = createField<Scalar, 1>(nVerts);
-        for (int i = 0; i < (int) (*fn).size(); i++) {
-            (*field)[i] = (*fn)[i][comp];
-        }
-
-        addVertexData(field, name);
-    }
-
-    /*!
-     * \brief Evaluates a single component of a function defined on the grid at the
-     *        cell centers and appends it to the writer.
-     */
-    template <class Function, class CellMap>
-    void addScalarCellFunction(const char *name,
-                               const Function &fn,
-                               const CellMap &cellMap,
-                               int comp)
-    {
-        // some typedefs
-
-        typedef typename Function::RT Scalar;
-        typedef typename GridView::template Codim<0>::Entity Cell;
-        typedef typename GridView::template Codim<0>::Iterator CellIterator;
-        typedef Dune::GenericReferenceElement<typename GridView::ctype, GridView::dimgrid>  CellReferenceElement;
-        typedef Dune::GenericReferenceElements<typename GridView::ctype, GridView::dimgrid> CellReferenceElements;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> >             ScalarField;
-
-        // create a cell based scalar field.
-        ScalarField *field = createField<Scalar, 1>(cellMap.size());
-
-        // fill the Scalar field
-        CellIterator it = curGridView_->template begin<0>();
-        CellIterator endIt = curGridView_->template end<0>();
-        for (; it != endIt; ++it) {
-            // extract the current solution's Sn component
-            const CellReferenceElement &refElem =
-                CellReferenceElements::general(it->geometry().type());
-            Scalar compValue = fn.evallocal(comp,
-                                            *it,
-                                            refElem.position(0,0));
-
-            // find out the cell's index
-            unsigned cellIndex = cellMap.map(*it);
-            (*field)[cellIndex] = compValue;
-        }
-
-        addCellData(field, name);
     }
 
     /*!
