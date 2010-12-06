@@ -87,6 +87,12 @@ SET_PROP(RichardsLensProblem, SpatialParameters)
 // Enable gravity?
 SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
 
+// Enable partial reassembly of the Jacobian matrix?
+SET_BOOL_PROP(RichardsLensProblem, EnablePartialReassemble, true);
+
+// Use forward diffferences to approximate the Jacobian matrix
+SET_BOOL_PROP(RichardsLensProblem, NumericDifferenceMethod, +1);
+
 // Write the intermediate results of the newton method?
 SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 }
