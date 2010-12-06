@@ -23,6 +23,10 @@
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
 #include <dune/grid/common/intersectioniterator.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
+
+#include <dune/localfunctions/lagrange/pqkfactory.hh>
+
 #include <dumux/common/propertysystem.hh>
 
 namespace Dumux
@@ -31,7 +35,6 @@ namespace Properties
 {
 NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridView);
-NEW_PROP_TAG(LocalFEMSpace);
 NEW_PROP_TAG(Scalar);
 };
 
@@ -295,7 +298,6 @@ class BoxFVElementGeometry
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) LocalFEMSpace;
 
     typedef BoxFVElementGeometry<TypeTag>   ThisType;
 
@@ -317,8 +319,10 @@ class BoxFVElementGeometry
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dim> FV;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename LocalFEMSpace::Traits::LocalFiniteElementType LocalFEMType;
-    typedef typename LocalFEMType::Traits::LocalBasisType::Traits LocalBasisTraits;
+
+    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
+    typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
+    typedef typename LocalFiniteElement::Traits::LocalBasisType::Traits LocalBasisTraits;
     typedef typename LocalBasisTraits::JacobianType ShapeJacobian;
 
     Scalar quadrilateralArea(const FV& p0, const FV& p1, const FV& p2, const FV& p3)
@@ -581,7 +585,7 @@ public:
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
 
-    static const LocalFEMSpace feMap_;
+    const LocalFiniteElementCache feCache_;
     bool computeGradientAtScvCenters;
 
     BoxFVElementGeometry()
@@ -602,8 +606,8 @@ public:
         const typename Dune::GenericReferenceElementContainer<CoordScalar,dim>::value_type&
             referenceElement = Dune::GenericReferenceElements<CoordScalar,dim>::general(gt);
 
-        const typename LocalFEMSpace::Traits::LocalFiniteElementType
-            &localFiniteElement = feMap_.find(gt);
+        const LocalFiniteElement
+            &localFiniteElement = feCache_.get(gt);
 
         elementVolume = geometry.volume();
         elementLocal = referenceElement.position(0,0);
@@ -830,9 +834,6 @@ public:
                 }
     }
 };
-
-template<class TypeTag>
-const typename BoxFVElementGeometry<TypeTag>::LocalFEMSpace BoxFVElementGeometry<TypeTag>::feMap_;
 
 }
 
