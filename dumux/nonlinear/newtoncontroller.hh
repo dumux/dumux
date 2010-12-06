@@ -24,8 +24,7 @@
 #define DUMUX_NEWTON_CONTROLLER_HH
 
 #include <dumux/common/exceptions.hh>
-
-#include <queue> // for std::priority_queue
+#include <dumux/common/math.hh>
 
 #include <dumux/common/pardiso.hh>
 
@@ -232,28 +231,6 @@ class NewtonController
     enum { enableTimeStepRampUp = GET_PROP_VALUE(TypeTag, PTAG(EnableTimeStepRampUp)) };
     enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
 
-    // class to keep track of the most offending vertices in a way
-    // compatible with std::priority_queue
-    class VertexError
-    {
-    public:
-        VertexError(int idx, Scalar err)
-        {
-            idx_ = idx;
-            err_ = err;
-        }
-        
-        int index() const
-        { return idx_; }
-        
-        bool operator<(const VertexError &a) const
-        { return a.err_ < err_; }
-
-    private:
-        int idx_;
-        Scalar err_;
-    };
-
 public:
     /*!
      * \brief Constructor
@@ -354,9 +331,7 @@ public:
      */
     bool newtonConverged() const
     {
-        return 
-            error_ <= tolerance_ && 
-            model_().jacobianAssembler().reassembleTolerance() <= tolerance_/2;
+        return error_ <= tolerance_;
     }
 
     /*!
@@ -511,28 +486,17 @@ public:
 
         newtonUpdateRelError(uOld, deltaU);
 
-        deltaU *= -1;
-        deltaU += uOld;
-
         // compute the vertex and element colors for partial
         // reassembly
         if (enablePartialReassemble) {
-            Scalar maxDelta = 0;
-            for (int i = 0; i < int(uOld.size()); ++i) {
-                const PrimaryVariables &uEval = this->model_().jacobianAssembler().evalPoint()[i];
-                const PrimaryVariables &uSol = this->model_().curSol()[i];
-                Scalar tmp = 
-                    model_().relativeErrorVertex(i,
-                                                 uEval,
-                                                 uSol);
-                maxDelta = std::max(tmp, maxDelta);
-            }
-            
-            Scalar reassembleTol = std::max(maxDelta/10, this->tolerance_/5);
-            if (error_ < 10*tolerance_)
-                reassembleTol = tolerance_/5;
+            Scalar reassembleTol = 0.3*Dumux::geometricMean(error_, tolerance_);
+            reassembleTol = std::max(reassembleTol, tolerance_);
+            this->model_().jacobianAssembler().updateDiscrepancy(uOld, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
+
+        deltaU *= -1;
+        deltaU += uOld;
     }
 
     /*!

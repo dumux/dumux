@@ -112,7 +112,7 @@ SET_PROP(LensProblem, SpatialParameters)
 SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, false);
 
 // Enable partial reassembly of the jacobian matrix?
-SET_BOOL_PROP(LensProblem, EnablePartialReassemble, false);
+SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
 
 // Enable reuse of jacobian matrices?
 SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);

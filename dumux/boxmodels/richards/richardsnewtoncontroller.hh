@@ -54,6 +54,8 @@ class RichardsNewtonController : public NewtonController<TypeTag>
         pwIdx = Indices::pwIdx,
     };
 
+    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
+
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
@@ -81,6 +83,16 @@ public:
     {
         this->writeConvergence_(uOld, deltaU);
         this->newtonUpdateRelError(uOld, deltaU);
+
+        // compute the vertex and element colors for partial
+        // reassembly
+        if (enablePartialReassemble) {
+            Scalar reassembleTol = 0.3*Dumux::geometricMean(this->error_, 
+                                                            this->tolerance_);
+            reassembleTol = std::max(reassembleTol, this->tolerance_);
+            this->model_().jacobianAssembler().updateDiscrepancy(uOld, deltaU);
+            this->model_().jacobianAssembler().computeColors(reassembleTol);
+        }
 
         if (GET_PROP_VALUE(TypeTag, PTAG(NewtonUseLineSearch)))
             lineSearchUpdate_(deltaU, uOld);

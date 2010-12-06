@@ -129,12 +129,6 @@ public:
         fvElemGeom_.update(gridView_(), element);
         reset_();
 
-        int elemColor = jacAsm_().elementColor(element);
-        if (elemColor == Green) {
-            // Green elements don't need to be reassembled
-            return;
-        }
-
         bcTypes_.update(problem_(), elem_(), fvElemGeom_);
 
         // this is pretty much a HACK because the internal state of
@@ -148,10 +142,19 @@ public:
 
         // update the secondary variables for the element at the last
         // and the current time levels
+/*        prevVolVars_.resize(numVertices);
+        for (int i = 0; i < numVertices; ++i)
+            prevVolVars_[i].setNoHint();
+*/
         prevVolVars_.update(problem_(),
                             elem_(),
                             fvElemGeom_,
                             true /* isOldSol? */);
+
+/*        curVolVars_.resize(numVertices);
+        for (int i = 0; i < numVertices; ++i)
+            curVolVars_[i].setHint(prevVolVars_[i]);
+*/
         curVolVars_.update(problem_(),
                            elem_(),
                            fvElemGeom_,

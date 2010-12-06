@@ -83,9 +83,32 @@ public:
      *        Jacobian reassembly.
      */
     enum EntityColor {
-        Red, //!< Entity needs to be reassembled because relative defect is above the tolerance
-        Yellow, //!< Entity needs to be reassembled because a neighboring element is red
-        Green //!< Entity does not need to be reassembled
+        /*!
+         * Vertex/element that needs to be reassembled because some
+         * relative error is above the tolerance
+         */
+        Red, 
+        
+        /*!
+         * Vertex/element that needs to be reassembled because a
+         * neighboring element/vertex is red
+         */
+        Yellow,
+
+        /*!
+         * Yellow vertex has only non-green neighbor elements.
+         * 
+         * This means that its relative error is below the tolerance,
+         * but its defect can be linearized without any additional
+         * cost. This is just an "internal" color which is not used
+         * ouside of the jacobian assembler.
+         */
+        Orange,
+
+        /*!
+         * Vertex/element that does not need to be reassembled
+         */
+        Green
     };
 
     BoxAssembler()
@@ -99,6 +122,12 @@ public:
         localOperator_ = 0;
         gridOperatorSpace_ = 0;
         matrix_ = 0;
+
+        // set reassemble tolerance to 0, so that if partial
+        // reassembly of the jacobian matrix is disabled, the
+        // reassemble tolerance is always smaller than the current
+        // relative tolerance
+        reassembleTolerance_ = 0.0;
     }
 
     ~BoxAssembler()
@@ -153,41 +182,27 @@ public:
         int numElems = gridView_().size(0);
         residual_.resize(numVerts);
       
+        totalElems_ = gridView_().comm().sum(numElems);
+        greenElems_ = 0;
+        
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {
-            evalPoint_.resize(numVerts);
             vertexColor_.resize(numVerts);
+            vertexDelta_.resize(numVerts);
             elementColor_.resize(numElems);
         }
         reassembleAll();
     }
-
-    /*!
-     * \brief Returns a reference to the solution for which the global
-     *        jacobian has been be evaluated.
-     *
-     * If partial Jacobian matrix reassembly is enabled, this is
-     * different from the model's current solution.
-     */
-    SolutionVector &evalPoint()
-    { return evalPoint_; }
-
-    /*!
-     * \copydoc evalPoint()
-     */
-    const SolutionVector &evalPoint() const
-    { return evalPoint_; }
-   
+    
     /*!
      * \brief Assemble the local jacobian of the problem.
      *
      * The current state of affairs (esp. the previous and the current
      * solutions) is represented by the model object.
      */
-     void assemble()
-     {
-        (*matrix_) = 0.0;
-        residual_ = 0.0;
+    void assemble()
+    {
+        resetSystem_();
         
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
@@ -198,50 +213,17 @@ public:
             else
                 assembleElement_(elem);
         };
-
-         return;
-
-#if 0
-         // assemble the global jacobian matrix
-        if (!reuseMatrix_) {
-            // we actually need to reassemle!
-
-            if (enablePartialReassemble) {
-                // move the evaluation points of red vertices
-                for (int i = 0; i < vertexColor_.size(); ++i) {
-                    if (vertexColor_[i] == Red)
-                        evalPoint_[i] = model_().curSol()[i];
-                }
-            }
-
+        
+        if (enablePartialReassemble) {
             reassembleTolerance_ = nextReassembleTolerance_;
-
-            resetMatrix_();
-            assemble_();
+            // print some information at the end of the iteration
+            problem_().newtonController().endIterMsg()
+                << ", reassembled " 
+                << totalElems_ - greenElems_ << "/" << totalElems_
+                << " (" << 100*Scalar(totalElems_ - greenElems_)/totalElems_ << "%) elems";
         }
-        reuseMatrix_ = false;
 
-        // calculate the global residual
-        residual_ = 0;
-        //gridOperatorSpace_->residual(model_().curSol(), residual_);
-
-#if 0
-        typedef typename Matrix::block_type BlockType;
-        // set the entries for the ghost nodes
-        BlockType Id(0.0);
-        for (int i=0; i < BlockType::rows; ++i)
-            Id[i][i] = 1.0;
-
-        for (int i=0; i < ghostIndices_.size(); ++i) {
-            int globI = ghostIndices_[i];
-
-            (*matrix_)[globI] = 0;
-            (*matrix_)[globI][globI] = Id;
-            residual_[globI] = 0;
-            model_().curSol()[globI] = 0;
-        }
-#endif
-#endif
+        return;
     }
     
     /*!
@@ -265,6 +247,7 @@ public:
     void reassembleAll()
     {
         nextReassembleTolerance_ = 0.0;
+
         if (enablePartialReassemble) {
             std::fill(vertexColor_.begin(),
                       vertexColor_.end(),
@@ -272,6 +255,9 @@ public:
             std::fill(elementColor_.begin(),
                       elementColor_.end(), 
                       Red);
+            std::fill(vertexDelta_.begin(),
+                      vertexDelta_.end(), 
+                      0.0);
         }
     }
    
@@ -285,7 +271,37 @@ public:
      */
     Scalar reassembleTolerance() const
     { return reassembleTolerance_; }
-    
+
+    /*!
+     * \brief Update the distance where the non-linear system was
+     *        originally insistently linearized and the point where it
+     *        will be linerized the next time.
+     *
+     * This only has an effect if partial reassemble is enabled.
+     */
+    void updateDiscrepancy(const SolutionVector &u,
+                           const SolutionVector &uDelta)
+    {
+        if (!enablePartialReassemble)
+            return;
+
+        // update the vector with the distances of the current
+        // evaluation point used for linearization from the original
+        // evaluation point
+        for (int i = 0; i < vertexDelta_.size(); ++i) {
+            PrimaryVariables uCurrent(u[i]);
+            PrimaryVariables uNext(uCurrent);
+            uNext -= uDelta[i];
+
+            // we need to add the distance the solution was moved for
+            // this vertex
+            Scalar dist = model_().relativeErrorVertex(i, 
+                                                       uCurrent,
+                                                       uNext);
+            vertexDelta_[i] += std::abs(dist); 
+        }
+
+    }
 
     /*!
      * \brief Determine the colors of vertices and elements for partial
@@ -316,25 +332,19 @@ public:
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
 
+        greenElems_ = 0;
         nextReassembleTolerance_ = 0;
 
-        int redVert = 0;
         // mark the red vertices
         for (int i = 0; i < vertexColor_.size(); ++i) {
-            const PrimaryVariables &evalPv = evalPoint_[i];
-            const PrimaryVariables &solPv = model_().curSol()[i];
-            
-            Scalar vertErr = model_().relativeErrorVertex(i,
-                                                          evalPv,
-                                                          solPv);
-
-            // mark vertex as red or green
-            vertexColor_[i] = (vertErr > relTol)?Red:Green;
-            if (vertErr > relTol)
-                ++redVert;
-            else
-                nextReassembleTolerance_ = 
-                    std::max(nextReassembleTolerance_, vertErr);
+            vertexColor_[i] = Green;
+            if (vertexDelta_[i] > relTol) {
+                // mark vertex as red if discrepancy is larger than
+                // the relative tolerance
+                vertexColor_[i] = Red;
+            }
+            nextReassembleTolerance_ = 
+                std::max(nextReassembleTolerance_, vertexDelta_[i]);
         };
 
         // Mark all red elements
@@ -367,7 +377,7 @@ public:
                 // if a vertex is already red, don't recolor it to
                 // yellow!
                 if (vertexColor_[globalI] != Red)
-                    vertexColor_[globalI] = Yellow;
+                    vertexColor_[globalI] = Orange;
             };
         }
 
@@ -384,7 +394,7 @@ public:
             int numVerts = elemIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
                 int globalI = vertexMapper_().map(*elemIt, i, dim);
-                if (vertexColor_[globalI] == Yellow) {
+                if (vertexColor_[globalI] == Orange) {
                     isYellow = true;
                     break;
                 }
@@ -396,16 +406,41 @@ public:
             else // elementColor_[elemIdx] == Green
                 ++ numGreen;
         }
-        
-        int numTot = gridView_().size(0);
-        numTot = gridView_().comm().sum(numTot);
-        numGreen = gridView_().comm().sum(numGreen);
-        
-        // print some information at the end of the iteration
-        problem_().newtonController().endIterMsg()
-            << ", reassemble " 
-            << numTot - numGreen << "/" << numTot
-            << " (" << 100*Scalar(numTot - numGreen)/numTot << "%) elems";
+
+        // Demote orange vertices to yellow ones if it has at least
+        // one green element as a neighbor
+        elemIt = gridView_().template begin<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            int elemIdx = this->elementMapper_().map(*elemIt);
+            if (elementColor_[elemIdx] != Green)
+                continue; // yellow and red elements do not make
+                          // orange vertices yellow!
+            
+            ++ greenElems_;
+
+            int numVerts = elemIt->template count<dim>();
+            for (int i=0; i < numVerts; ++i) {
+                int globalI = vertexMapper_().map(*elemIt, i, dim);
+                // if a vertex is orange, recolor it to yellow!
+                if (vertexColor_[globalI] == Orange)
+                    vertexColor_[globalI] = Yellow;
+            };
+        }
+
+        // promote the remaining orange vertices to red ones
+        for (int i=0; i < vertexColor_.size(); ++i) {
+            // if a vertex is green or yellow don't recolor it!
+            if (vertexColor_[i] == Green || vertexColor_[i] == Yellow)
+                continue;
+            
+            // set discrepancy for this vertex to 0 because the
+            // system will be consistently linearized for this
+            // vertex
+            vertexDelta_[i] = 0.0;
+            vertexColor_[i] = Red;
+        };
+
+        greenElems_ = gridView_().comm().sum(greenElems_);
     };
     
     /*!
@@ -492,19 +527,59 @@ public:
 
 
 private:
+    // reset the global linear system of equations. if partial
+    // reassemble is enabled, this means that the jacobian matrix must
+    // only be erased partially!
+    void resetSystem_()
+    {
+        // always reset the right hand side.
+        residual_ = 0.0;
+
+        if (!enablePartialReassemble) {
+            // If partial reassembly of the jacobian is not enabled,
+            // we can just reset everything!
+            (*matrix_) = 0;
+            return;
+        }
+      
+        // reset all entries corrosponding to a red vertex
+        for (int rowIdx = 0; rowIdx < matrix_->N(); ++rowIdx) {
+            if (vertexColor_[rowIdx] == Green)
+                continue; // the equations for this control volume are
+                          // already below the treshold
+
+            // set all entries in the row to 0
+            typedef typename JacobianMatrix::ColIterator ColIterator;
+            ColIterator colIt = (*matrix_)[rowIdx].begin();
+            const ColIterator &colEndIt = (*matrix_)[rowIdx].end();
+            for (; colIt != colEndIt; ++colIt) {
+                (*colIt) = 0.0;
+            }
+        };
+    }
+
     // assemble a non-ghost element
     void assembleElement_(const Element &elem)
     {
+        if (enablePartialReassemble) {
+            int globalElemIdx = model_().elementMapper().map(elem);
+            if (elementColor_[globalElemIdx] == Green)
+                return;
+        }
+
         model_().localJacobian().assemble(elem);
         
         int numVertices = elem.template count<dim>();
         for (int i=0; i < numVertices; ++ i) {
             int globI = vertexMapper_().map(elem, i, dim);
             
-            // update the global residual
+            // update the right hand side
+            if (vertexColor(globI) == Green)
+                continue;
+
             residual_[globI] += model_().localJacobian().residual(i);
             
-            // update the global jacobian
+            // update the jacobian matrix
             for (int j=0; j < numVertices; ++ j) {
                 int globJ = vertexMapper_().map(elem, j, dim);
                 (*matrix_)[globI][globJ] +=
@@ -534,31 +609,6 @@ private:
         }
     }
 
-    void resetMatrix_()
-    {
-        if (!enablePartialReassemble) {
-            // If partial reassembly of the jacobian is not enabled,
-            // we can just reset everything!
-            (*matrix_) = 0;
-            return;
-        }
-      
-        // reset all entries corrosponding to a red vertex
-        for (int rowIdx = 0; rowIdx < matrix_->N(); ++rowIdx) {
-            if (vertexColor_[rowIdx] == Green)
-                continue; // the equations for this control volume are
-                          // already below the treshold
-            // reset row to 0
-            typedef typename JacobianMatrix::ColIterator ColIterator;
-            ColIterator colIt = (*matrix_)[rowIdx].begin();
-            const ColIterator &colEndIt = (*matrix_)[rowIdx].end();
-            for (; colIt != colEndIt; ++colIt) {
-                (*colIt) = 0.0;
-            }
-        };
-
-        //printSparseMatrix(std::cout, *matrix_, "J", "row");
-    }
    
     Problem &problem_()
     { return *problemPtr_; }
@@ -576,6 +626,28 @@ private:
     { return problem_().elementMapper(); }
     
     Problem *problemPtr_;
+
+    // the jacobian matrix
+    Matrix *matrix_;
+    // the right-hand side
+    SolutionVector residual_;
+    
+    // attributes required for jacobian matrix recycling
+    bool reuseMatrix_;
+    
+    // attributes required for partial jacobian reassembly
+    std::vector<EntityColor> vertexColor_;
+    std::vector<EntityColor> elementColor_;
+    std::vector<Scalar> vertexDelta_;
+
+    int totalElems_;
+    int greenElems_;
+    
+
+    Scalar nextReassembleTolerance_;
+    Scalar reassembleTolerance_;
+    
+    // PDELab stuff
     Constraints *cn_;
     FEM *fem_;
     ScalarGridFunctionSpace *scalarGridFunctionSpace_;
@@ -583,17 +655,6 @@ private:
     ConstraintsTrafo *constraintsTrafo_;
     LocalOperator *localOperator_;
     GridOperatorSpace *gridOperatorSpace_;
-
-    Matrix *matrix_;
-    bool reuseMatrix_;
-    SolutionVector evalPoint_;
-    std::vector<EntityColor> vertexColor_;
-    std::vector<EntityColor> elementColor_;
-    std::vector<int> ghostIndices_;
-
-    Scalar nextReassembleTolerance_;
-    Scalar reassembleTolerance_;
-    SolutionVector residual_;
 };
 
 } // namespace PDELab
