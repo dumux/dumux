@@ -64,6 +64,7 @@ SET_PROP(LensProblem, Grid)
 #endif
 };
 
+#if HAVE_DUNE_PDELAB
 SET_PROP(LensProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -77,6 +78,7 @@ public:
     typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 #endif
 };
+#endif
 
 // Set the problem property
 SET_PROP(LensProblem, Problem)

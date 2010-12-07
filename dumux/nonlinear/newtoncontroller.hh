@@ -685,6 +685,28 @@ protected:
         if (gridView_().comm().rank() != 0)
             verbosity = 0;
 
+#if ! HAVE_DUNE_PDELAB
+       typedef Dune::SeqILU0<JacobianMatrix, Vector, Vector> Preconditioner;
+       Preconditioner precond(A, 1.0);
+
+       typedef Dune::MatrixAdapter<JacobianMatrix,Vector,Vector> MatrixAdapter;
+       MatrixAdapter operatorA(A);
+
+       typedef Dune::BiCGSTABSolver<Vector> Solver;
+       Solver solver(operatorA, precond, residReduction, 500, verbosity);
+//        typedef Dune::RestartedGMResSolver<Vector> Solver;
+//        Solver solver(operatorA, precond, residReduction, 50, 500, verbosity);
+
+       Dune::InverseOperatorResult result;
+
+        Vector bTmp(b);
+       solver.apply(x, bTmp, result);
+
+       if (!result.converged)
+               DUNE_THROW(Dumux::NumericalProblem,
+                               "Solving the linear system of equations did not converge.");
+#else // HAVE_DUNE_PDELAB
+
 #if HAVE_PARDISO
         typedef Dumux::PDELab::ISTLBackend_NoOverlap_Loop_Pardiso<TypeTag> Solver;
         Solver solver(problem_(), 500, verbosity);
@@ -707,6 +729,7 @@ protected:
         if (!solver.result().converged)
             DUNE_THROW(Dumux::NumericalProblem,
                        "Solving the linear system of equations did not converge.");
+#endif // HAVE_DUNE_PDELAB
 
         // make sure the solver didn't produce a nan or an inf
         // somewhere. this should never happen but for some strange

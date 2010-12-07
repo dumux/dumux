@@ -76,6 +76,7 @@ NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(NewtonMethod);     //!< The type of the newton method
 NEW_PROP_TAG(NewtonController); //!< The type of the newton controller
 
+#if HAVE_DUNE_PDELAB
 // properties for the PDELab wrapper
 NEW_PROP_TAG(LocalFEMSpace); //!< The local finite element space used for the finite element interpolation
 NEW_PROP_TAG(ScalarGridFunctionSpace); //!< The used grid function space for a single finite element function
@@ -84,6 +85,7 @@ NEW_PROP_TAG(Constraints); //!< The constraints on the grid function space
 NEW_PROP_TAG(ConstraintsTrafo); //!< The type of PDELab's constraints transformation
 NEW_PROP_TAG(LocalOperator); //!< The type of the local operator used by PDELab
 NEW_PROP_TAG(GridOperatorSpace); //!< The used grid operator space
+#endif
 
 //! Specify whether the jacobian matrix of the last iteration of a
 //! time step should be re-used as the jacobian of the first iteration

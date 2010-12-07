@@ -37,17 +37,20 @@ class BoxAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+
+#if HAVE_DUNE_PDELAB
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Constraints)) Constraints;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ScalarGridFunctionSpace)) ScalarGridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalOperator)) LocalOperator;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
+#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
@@ -113,7 +116,7 @@ public:
 
     BoxAssembler()
     {
-        problemPtr_ = 0;
+#if HAVE_DUNE_PDELAB
         fem_ = 0;
         cn_ = 0;
         scalarGridFunctionSpace_ = 0;
@@ -121,6 +124,9 @@ public:
         constraintsTrafo_ = 0;
         localOperator_ = 0;
         gridOperatorSpace_ = 0;
+#endif // HAVE_DUNE_PDELAB
+
+        problemPtr_ = 0;
         matrix_ = 0;
 
         // set reassemble tolerance to 0, so that if partial
@@ -133,6 +139,8 @@ public:
     ~BoxAssembler()
     {
         delete matrix_;
+
+#if HAVE_DUNE_PDELAB
         delete gridOperatorSpace_;
         delete localOperator_;
         delete constraintsTrafo_;
@@ -140,6 +148,7 @@ public:
         delete scalarGridFunctionSpace_;
         delete cn_;
         delete fem_;
+#endif
     }
 
     /*!
@@ -154,6 +163,11 @@ public:
     void init(Problem& problem)
     {
         problemPtr_ = &problem;
+
+#if !HAVE_DUNE_PDELAB
+        // initialize the BCRS matrix
+        createMatrix_();
+#else
         fem_ = new FEM();
         //cn_ = new Constraints(*problemPtr_);
         cn_ = new Constraints();
@@ -171,10 +185,11 @@ public:
         gridOperatorSpace_ =
             new GridOperatorSpace(*gridFunctionSpace_, *constraintsTrafo_,
                                   *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
+        matrix_ = new Matrix(*gridOperatorSpace_);
+#endif
 
         // initialize the jacobian matrix and the right hand side
         // vector
-        matrix_ = new Matrix(*gridOperatorSpace_);
         *matrix_ = 0;
         reuseMatrix_ = false;
         
@@ -496,6 +511,7 @@ public:
         return elementColor_[globalElementIdx];
     }
    
+#if HAVE_DUNE_PDELAB
     /*!
      * \brief Returns a pointer to the PDELab's grid function space.
      */
@@ -512,6 +528,7 @@ public:
     {
         return *constraintsTrafo_;
     }
+#endif // HAVE_DUNE_PDELAB
 
     /*!
      * \brief Return constant reference to global Jacobian matrix.
@@ -527,6 +544,54 @@ public:
 
 
 private:
+#if !HAVE_DUNE_PDELAB
+    // Construct the BCRS matrix for the global jacobian
+    void createMatrix_()
+    {
+        int nVerts = gridView_().size(dim);
+
+        // allocate raw matrix
+        matrix_ = new Matrix(nVerts, nVerts, Matrix::random);
+        
+        // find out how many neighbors each vertex has
+        typedef std::set<int> NeighborSet;
+        std::vector<NeighborSet > neighbors(nVerts);
+        ElementIterator eIt = gridView_().template begin<0>();
+        const ElementIterator eEndIt = gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            const Element &elem = *eIt;
+
+            // loop over all element vertices
+            int n = elem.template count<dim>();
+            for (int i = 0; i < n; ++i) {
+                int globalI = vertexMapper_().map(*eIt, i, dim);
+                for (int j = 0; j < n; ++j) {
+                    int globalJ = vertexMapper_().map(*eIt, j, dim);
+                    // insert into BCRS matrix
+                    neighbors[globalI].insert(globalJ);
+                }
+            }
+        };
+        
+        // allocate space for the rows
+        for (int i = 0; i < nVerts; ++i) {
+            matrix_->setrowsize(i, neighbors[i].size());
+        }
+        matrix_->endrowsizes();
+
+        // allocate space for the rows
+        for (int i = 0; i < nVerts; ++i) {
+            // off-diagonal entries
+            typename NeighborSet::iterator nIt = neighbors[i].begin();
+            typename NeighborSet::iterator nEndIt = neighbors[i].end();
+            for (; nIt != nEndIt; ++nIt) {
+                matrix_->addindex(i, *nIt);
+            }
+        }
+        matrix_->endindices();
+    };
+#endif
+
     // reset the global linear system of equations. if partial
     // reassemble is enabled, this means that the jacobian matrix must
     // only be erased partially!
@@ -647,6 +712,7 @@ private:
     Scalar nextReassembleTolerance_;
     Scalar reassembleTolerance_;
     
+#if HAVE_DUNE_PDELAB
     // PDELab stuff
     Constraints *cn_;
     FEM *fem_;
@@ -655,6 +721,7 @@ private:
     ConstraintsTrafo *constraintsTrafo_;
     LocalOperator *localOperator_;
     GridOperatorSpace *gridOperatorSpace_;
+#endif
 };
 
 } // namespace PDELab

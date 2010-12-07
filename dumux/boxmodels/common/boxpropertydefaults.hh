@@ -126,6 +126,7 @@ SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
 /*!
  * \brief The type of a solution for the whole grid at a fixed time.
  */
+#if HAVE_DUNE_PDELAB
 SET_PROP(BoxModel, SolutionVector)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -133,6 +134,15 @@ SET_PROP(BoxModel, SolutionVector)
 public:
     typedef typename GridFunctionSpace::template VectorContainer<Scalar>::Type type;
 };
+#else 
+SET_PROP(BoxModel, SolutionVector)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
+public:
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, numEq> > type;
+};
+#endif
 
 /*!
  * \brief The type of a solution for a whole element.
@@ -177,6 +187,33 @@ public:
  */
 SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::PDELab::BoxAssembler<TypeTag>);
 
+
+//! use central differences to calculate the jacobian by default
+SET_INT_PROP(BoxModel, NumericDifferenceMethod, 0);
+
+// disable jacobian matrix recycling by default
+SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);
+// disable partial reassembling by default
+SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
+// disable time-step ramp up by default
+SET_BOOL_PROP(BoxModel, EnableTimeStepRampUp, false);
+
+#if ! HAVE_DUNE_PDELAB
+
+//! Set the type of a global jacobian matrix from the solution types
+SET_PROP(BoxModel, JacobianMatrix)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
+    typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
+public:
+    typedef typename Dune::BCRSMatrix<MatrixBlock> type;
+};
+#endif
+
+
+#if HAVE_DUNE_PDELAB
 //! Extract the type of a global jacobian matrix from the solution types
 SET_PROP(BoxModel, JacobianMatrix)
 {
@@ -248,15 +285,7 @@ public:
 SET_PROP(BoxModel, LocalOperator)
 { typedef typename GET_PROP(TypeTag, PTAG(GridOperatorSpace))::LocalOperator type; };
 
-//! use central differences to calculate the jacobian by default
-SET_INT_PROP(BoxModel, NumericDifferenceMethod, 0);
-
-// disable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);
-// disable partial reassembling by default
-SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
-// disable time-step ramp up by default
-SET_BOOL_PROP(BoxModel, EnableTimeStepRampUp, false);
+#endif // HAVE_DUNE_PDELAB
 
 } // namespace Properties
 } // namespace Dumux
