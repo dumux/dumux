@@ -522,7 +522,7 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
-        SolutionVector globalResid(asImp_(), 0.0);
+        SolutionVector globalResid(u);
         asImp_().globalResidual(globalResid, u);
 
         // create the required scalar fields

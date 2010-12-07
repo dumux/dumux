@@ -141,13 +141,14 @@ private:
     {
        Scalar lambda = 1.0;
        Scalar globDef;
-       SolutionVector tmp(this->method().model(), 0.0);
+       SolutionVector tmp(u);
        Scalar oldGlobDef = this->method().model().globalResidual(tmp);
 
        int n = 0;
        while (true) {
            u *= -lambda;
            u += uOld;
+
            globDef = this->method().model().globalResidual(tmp);
 
            if (globDef < oldGlobDef || lambda <= 1.0/8) {

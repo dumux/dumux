@@ -54,6 +54,7 @@ SET_PROP(RichardsLensProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
 //SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
+#if HAVE_DUNE_PDELAB
 // set the local finite element space to be used to calculate the
 // gradients in the flux calculation
 SET_PROP(RichardsLensProblem, LocalFEMSpace)
@@ -66,6 +67,7 @@ public:
     typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
 //    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
+#endif // HAVE_DUNE_PDELAB
 
 // Set the phsical problem to be solved
 SET_PROP(RichardsLensProblem, Problem)

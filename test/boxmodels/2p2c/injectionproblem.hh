@@ -54,6 +54,8 @@ SET_PROP(InjectionProblem, Grid)
     typedef Dune::SGrid<2,2> type;
 };
 
+
+#if HAVE_DUNE_PDELAB
 SET_PROP(InjectionProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -64,6 +66,7 @@ public:
     typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
 //    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
 };
+#endif // HAVE_DUNE_PDELAB
 
 // Set the problem property
 SET_PROP(InjectionProblem, Problem)

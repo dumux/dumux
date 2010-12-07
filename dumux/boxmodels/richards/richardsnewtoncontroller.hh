@@ -137,7 +137,7 @@ private:
     {
        Scalar lambda = 1.0;
        Scalar globDef;
-       SolutionVector tmp(this->model_(), 0.0);
+       SolutionVector tmp(u);
        Scalar oldGlobDef = this->model_().globalResidual(tmp, uOld);
 
        int n = 0;
