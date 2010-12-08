@@ -22,7 +22,9 @@
 #ifndef DUMUX_PDELAB_BOX_ASSEMBLER_HH
 #define DUMUX_PDELAB_BOX_ASSEMBLER_HH
 
+#if HAVE_DUNE_PDELAB
 #include "pdelabboxlocaloperator.hh"
+#endif
 
 namespace Dumux {
 namespace PDELab {

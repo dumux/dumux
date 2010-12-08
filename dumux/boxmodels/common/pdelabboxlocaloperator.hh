@@ -21,6 +21,10 @@
 #ifndef DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 #define DUMUX_PDELAB_BOX_LOCAL_OPERATOR_HH
 
+#if ! HAVE_DUNE_PDELAB
+#error "DUNE-PDELab must be available in order to include this file!"
+#endif
+
 #include<dune/pdelab/localoperator/pattern.hh>
 #include<dune/pdelab/localoperator/flags.hh>
 

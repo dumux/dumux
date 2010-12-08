@@ -23,13 +23,28 @@
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
 
+#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
 
 #include <dumux/common/pardiso.hh>
 
 #include <dumux/io/vtkmultiwriter.hh>
+
+#if HAVE_DUNE_PDELAB
+
 #include <dumux/common/pdelabpreconditioner.hh>
+
+#else // ! HAVE_DUNE_PDELAB
+
+#include <dune/istl/overlappingschwarz.hh>
+#include <dune/istl/schwarz.hh>
+#include <dune/istl/preconditioners.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/io.hh>
+
+#endif // HAVE_DUNE_PDELAB
 
 
 namespace Dumux

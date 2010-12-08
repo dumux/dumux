@@ -33,9 +33,11 @@
 #include "boxelementvolumevariables.hh"
 #include "boxvolumevariables.hh"
 
+#if HAVE_DUNE_PDELAB
 #include <dune/pdelab/finiteelementmap/p1fem.hh>
 #include <dune/pdelab/finiteelementmap/q1fem.hh>
 #include <dune/pdelab/backend/istlmatrixbackend.hh>
+#endif // HAVE_DUNE_PDELAB
 
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/timemanager.hh>
