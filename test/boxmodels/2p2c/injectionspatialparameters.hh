@@ -160,7 +160,7 @@ public:
 
 
     /*!
-     * \brief return the brooks-corey context depending on the position
+     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
     * \param element The current finite element
     * \param fvElemGeom The current finite volume geometry of the element

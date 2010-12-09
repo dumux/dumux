@@ -152,9 +152,13 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // calculate the flux in the normal direction of the
-            // current sub control volume face
-            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
-                                                tmpVec);
+            // current sub control volume face:
+            //
+            // v = - (K grad p) * n
+            //
+            // (the minus comes from the Darcy law which states that
+            // the flux is from high to low pressure potentials.)
+            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx), tmpVec);
             Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
 
             // data attached to upstream and the downstream vertices

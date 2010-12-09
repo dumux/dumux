@@ -144,7 +144,7 @@ public:
         return outerPorosity_;
     }
 
-    // return the brooks-corey context depending on the position
+    // return the parameter object for the Brooks-Corey material law which depends on the position
     const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const

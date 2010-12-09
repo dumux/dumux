@@ -70,7 +70,7 @@ public:
     }
 
 
-    // return the brooks-corey context depending on the position
+    // return the parameter object for the Brooks-Corey material law which depends on the position
     const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos, const Element &element) const
     {
             return materialLawParams_;

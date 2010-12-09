@@ -337,9 +337,9 @@ public:
      *
      * \param relTol The relative error below which a vertex won't be
      *               reassembled. Note that this specifies the
-     *               relative error between the current evaluation
-     *               point and the current solution and _not_ the
-     *               delta vector of the Newton iteration!
+     *               worst-case relative error between the last
+     *               linearization point and the current solution and
+     *               _not_ the delta vector of the Newton iteration!
      */
     void computeColors(Scalar relTol)
     { 
@@ -349,10 +349,9 @@ public:
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
 
-        greenElems_ = 0;
+        // mark the red vertices and update the tolerance of the
+        // linearization which actually will get achieved
         nextReassembleTolerance_ = 0;
-
-        // mark the red vertices
         for (int i = 0; i < vertexColor_.size(); ++i) {
             vertexColor_[i] = Green;
             if (vertexDelta_[i] > relTol) {
@@ -366,26 +365,33 @@ public:
 
         // Mark all red elements
         for (; elemIt != elemEndIt; ++elemIt) {
-            bool needReassemble = false;
+            // find out whether the current element features a red
+            // vertex
+            bool isRed = false;
             int numVerts = elemIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
                 int globalI = vertexMapper_().map(*elemIt, i, dim);
                 if (vertexColor_[globalI] == Red) {
-                    needReassemble = true;
+                    isRed = true;
                     break;
                 }
             };
             
+            // if yes, the element color is also red, else it is not
+            // red, i.e. green for the mean time
             int globalElemIdx = elementMapper_().map(*elemIt);
-            elementColor_[globalElemIdx] = needReassemble?Red:Green;
+            if (isRed)
+                elementColor_[globalElemIdx] = Red;
+            else
+                elementColor_[globalElemIdx] = Green;
         }
         
-        // Mark all yellow vertices
+        // Mark yellow vertices (as orange for the mean time)
         elemIt = gridView_().template begin<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             int elemIdx = this->elementMapper_().map(*elemIt);
-            if (elementColor_[elemIdx] == Green)
-                continue; // green elements do not tint vertices
+            if (elementColor_[elemIdx] != Red)
+                continue; // non-red elements do not tint vertices
                           // yellow!
             
             int numVerts = elemIt->template count<dim>();
@@ -398,8 +404,7 @@ public:
             };
         }
 
-        // Mark all yellow elements
-        int numGreen = 0;
+        // Mark yellow elements
         elemIt = gridView_().template begin<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             int elemIdx = this->elementMapper_().map(*elemIt);
@@ -407,6 +412,8 @@ public:
                 continue; // element is red already!
             }
 
+            // check whether the element features a yellow
+            // (resp. orange at this point) vertex
             bool isYellow = false;
             int numVerts = elemIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
@@ -417,15 +424,14 @@ public:
                 }
             };
             
-            if (isYellow) {
+            if (isYellow)
                 elementColor_[elemIdx] = Yellow;
-            }
-            else // elementColor_[elemIdx] == Green
-                ++ numGreen;
         }
 
         // Demote orange vertices to yellow ones if it has at least
-        // one green element as a neighbor
+        // one green element as a neighbor. also count the total
+        // number of green elements for statistical purposes.
+        greenElems_ = 0;
         elemIt = gridView_().template begin<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             int elemIdx = this->elementMapper_().map(*elemIt);
@@ -444,17 +450,19 @@ public:
             };
         }
 
-        // promote the remaining orange vertices to red ones
+        // promote the remaining orange vertices to red
         for (int i=0; i < vertexColor_.size(); ++i) {
-            // if a vertex is green or yellow don't recolor it!
+            // if a vertex is green or yellow don't do anything!
             if (vertexColor_[i] == Green || vertexColor_[i] == Yellow)
                 continue;
-            
-            // set discrepancy for this vertex to 0 because the
-            // system will be consistently linearized for this
-            // vertex
-            vertexDelta_[i] = 0.0;
+
+            // make sure the vertex is red (this is a no-op vertices
+            // which are already red!)
             vertexColor_[i] = Red;
+            
+            // set the error of this vertex to 0 because the system
+            // will be consistently linearized at this vertex
+            vertexDelta_[i] = 0.0;
         };
 
         greenElems_ = gridView_().comm().sum(greenElems_);
@@ -555,9 +563,10 @@ private:
         // allocate raw matrix
         matrix_ = new Matrix(nVerts, nVerts, Matrix::random);
         
-        // find out how many neighbors each vertex has
+        // find out the global indices of the neighboring vertices of
+        // each vertex
         typedef std::set<int> NeighborSet;
-        std::vector<NeighborSet > neighbors(nVerts);
+        std::vector<NeighborSet> neighbors(nVerts);
         ElementIterator eIt = gridView_().template begin<0>();
         const ElementIterator eEndIt = gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
@@ -565,25 +574,32 @@ private:
 
             // loop over all element vertices
             int n = elem.template count<dim>();
-            for (int i = 0; i < n; ++i) {
+            for (int i = 0; i < n - 1; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
-                for (int j = 0; j < n; ++j) {
+                for (int j = i + 1; j < n; ++j) {
                     int globalJ = vertexMapper_().map(*eIt, j, dim);
-                    // insert into BCRS matrix
+                    // make sure that vertex j is in the neighbor set
+                    // of vertex i and vice-versa
                     neighbors[globalI].insert(globalJ);
+                    neighbors[globalJ].insert(globalI);
                 }
             }
         };
         
-        // allocate space for the rows
+        // make vertices neighbors to themselfs
+        for (int i = 0; i < nVerts; ++i)
+            neighbors[i].insert(i);
+        
+        // allocate space for the rows of the matrix
         for (int i = 0; i < nVerts; ++i) {
             matrix_->setrowsize(i, neighbors[i].size());
         }
         matrix_->endrowsizes();
 
-        // allocate space for the rows
+        // fill the rows with indices. each vertex talks to all of its
+        // neighbors. (it also talks to itself since vertices are
+        // sometimes quite egocentric.)
         for (int i = 0; i < nVerts; ++i) {
-            // off-diagonal entries
             typename NeighborSet::iterator nIt = neighbors[i].begin();
             typename NeighborSet::iterator nEndIt = neighbors[i].end();
             for (; nIt != nEndIt; ++nIt) {

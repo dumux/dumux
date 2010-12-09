@@ -53,7 +53,7 @@ NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extracted from the spatial parameters)
 
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility

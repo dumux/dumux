@@ -65,10 +65,10 @@ public:
     }
 
 
-    // return the brooks-corey context depending on the position
+    // return the brooks-corey material parameter object which depends on the position
     const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos, const Element &element) const
     {
-            return materialLawParams_;
+        return materialLawParams_;
     }
 
 
