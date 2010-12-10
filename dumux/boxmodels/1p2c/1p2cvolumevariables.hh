@@ -187,7 +187,7 @@ public:
     { return fluidState_.temperature(); }
 
     /*!
-     * \brief Returns the dynamic viscosity [Pa s] of a given phase
+     * \brief Returns the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of a given phase
      *        within the control volume.
      */
     Scalar viscosity() const
