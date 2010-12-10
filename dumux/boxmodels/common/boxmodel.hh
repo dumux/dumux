@@ -203,7 +203,7 @@ public:
     }
 
     /*!
-     * \brief Returns the volume [m^3] of a given control volume.
+     * \brief Returns the volume \f$\mathrm{[m^3]}\f$ of a given control volume.
      *
      * \param globalIdx The global index of the control volume's
      *                  associated vertex
