@@ -308,14 +308,14 @@ public:
     { return porousDiffCoeff_[phaseIdx]; };
 
     /*!
-     * \brief Return density [kg/m^3] of a phase at the integration
+     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
      *        point.
      */
     Scalar densityAtIP(int phaseIdx) const
     { return densityAtIP_[phaseIdx]; }
 
     /*!
-     * \brief Return molar density [mol/m^3] of a phase at the integration
+     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
      *        point.
      */
     Scalar molarDensityAtIP(int phaseIdx) const
