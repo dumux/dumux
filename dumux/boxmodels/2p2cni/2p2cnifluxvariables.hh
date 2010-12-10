@@ -110,7 +110,7 @@ public:
     }
 
     /*!
-     * \brief The total heat flux \f$[J/s]\f$ due to heat conduction
+     * \brief The total heat flux \f$\mathrm{[J/s]}\f$ due to heat conduction
      *        of the rock matrix over the sub-control volume's face in
      *        direction of the face normal.
      */
