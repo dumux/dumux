@@ -59,7 +59,7 @@ public:
      * \brief Updates the fluid quantities from the primary variables
      *        of the Richards model.
      *
-     * \param pnRef The reference pressure of the non-wetting fluid phase [Pa]
+     * \param pnRef The reference pressure of the non-wetting fluid phase \f$\mathrm{[Pa]}\f$
      * \param matParams The parameters for the capillary pressure/relative permeability material law
      * \param priVars The primary variables for which the fluid state ought to be calculated
      * \param temperature The temperature which should be used
@@ -123,7 +123,7 @@ public:
     }
 
     /*!
-     * \brief Returns the total concentration of a phase [mol / m^3].
+     * \brief Returns the total concentration of a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * This is equivalent to the sum of all component concentrations.
      *
@@ -135,7 +135,7 @@ public:
     };
 
     /*!
-     * \brief Returns the concentration of a component in a phase [mol / m^3].
+     * \brief Returns the concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The index of the fluid phase 
      * \param compIdx The index of the chemical species 
@@ -148,7 +148,7 @@ public:
     };
 
     /*!
-     * \brief Returns the density of a phase [kg / m^3].
+     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx The index of the fluid phase 
      */
@@ -156,7 +156,7 @@ public:
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief Returns mean molar mass of a phase [kg / mol].
+     * \brief Returns mean molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
      *
      * This is equivalent to the sum of all component molar masses
      * weighted by their respective mole fraction.
@@ -167,7 +167,7 @@ public:
     { return FluidSystem::molarMass(phaseIdx); };
 
     /*!
-     * \brief Returns the partial pressure of a component in the gas phase [Pa].
+     * \brief Returns the partial pressure of a component in the gas phase \f$\mathrm{[Pa]}\f$.
      *
      * \param compIdx The index of the chemical species 
      */
@@ -179,7 +179,7 @@ public:
     }
 
     /*!
-     * \brief Returns the pressure of a fluid phase [Pa].
+     * \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *
      * \param phaseIdx The index of the fluid phase 
      */
@@ -187,13 +187,13 @@ public:
     { return phasePressure_[phaseIdx]; }
 
     /*!
-     * \brief Returns the capillary pressure [Pa]
+     * \brief Returns the capillary pressure \f$\mathrm{[Pa]}\f$
      */
     Scalar capillaryPressure() const
     { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
 
     /*!
-     * \brief Returns the temperature of the fluids [K].
+     * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
      *
      * Note that we assume thermodynamic equilibrium, so all fluids
      * and the rock matrix exhibit the same temperature.

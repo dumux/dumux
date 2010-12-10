@@ -81,7 +81,7 @@ public:
     // \{
 
     /*!
-     * \brief Returns the temperature [K] within a control volume.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
      *
      * This method MUST be overwritten by the actual problem.
      *
@@ -96,7 +96,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
 
     /*!
-     * \brief Returns the reference pressure [Pa] of the non-wetting
+     * \brief Returns the reference pressure \f$\mathrm{[Pa]}\f$ of the non-wetting
      *        phase within a control volume.
      *
      * This method MUST be overwritten by the actual problem.
@@ -112,7 +112,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "referencePressure() method not implemented by the actual problem"); };
 
     /*!
-     * \brief Returns the acceleration due to gravity [m/s^2].
+     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
      *
      * If the <tt>EnableGravity</tt> property is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$

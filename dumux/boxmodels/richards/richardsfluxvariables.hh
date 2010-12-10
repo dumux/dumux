@@ -86,14 +86,14 @@ public:
         calculateK_(problem, element, elemVolVars);
     };
 
-    /*
-     * \brief Return the intrinsic permeability [m^2].
+    /*!
+     * \brief Return the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      */
     const Tensor &intrinsicPermeability() const
     { return K_; }
 
     /*!
-     * \brief Return the pressure potential gradient [Pa/m]
+     * \brief Return the pressure potential gradient \f$\mathrm{[Pa/m]}\f$
      */
     const Vector &potentialGradW() const
     { return potentialGrad_; }

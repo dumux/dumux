@@ -142,7 +142,7 @@ public:
     { return fluidState_.saturation(phaseIdx); }
 
     /*!
-     * \brief Returns the average mass density [kg/m^3] of a given
+     * \brief Returns the average mass density \f$\mathrm{[kg/m^3]}\f$ of a given
      *        fluid phase within the control volume.
      *
      * \param phaseIdx The index of the fluid phase
@@ -151,7 +151,7 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns the effective pressure [Pa] of a given phase within
+     * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      *
      * For the non-wetting phase (i.e. the gas phase), we assume
@@ -165,7 +165,7 @@ public:
     { return fluidState_.phasePressure(phaseIdx); }
 
     /*!
-     * \brief Returns average temperature [K] inside the control volume.
+     * \brief Returns average temperature \f$\mathrm{[K]}\f$ inside the control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -175,7 +175,7 @@ public:
     { return fluidState_.temperature(); }
 
     /*!
-     * \brief Returns the effective mobility [1/(Pa s)] of a given phase within
+     * \brief Returns the effective mobility \f$\mathrm{[1/(Pa*s)]}\f$ of a given phase within
      *        the control volume.
      *
      * The mobility of a fluid phase is defined as the relative
@@ -189,7 +189,7 @@ public:
     { return mobility_[phaseIdx]; }
 
     /*!
-     * \brief Returns the effective capillary pressure [Pa] within the
+     * \brief Returns the effective capillary pressure \f$\mathrm{[Pa]}\f$ within the
      *        control volume.
      *
      * The capillary pressure is defined as the difference in
