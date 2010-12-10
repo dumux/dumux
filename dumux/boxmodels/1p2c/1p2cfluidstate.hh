@@ -113,7 +113,7 @@ public:
     }
 
     /*!
-     * \brief Returns the total concentration of a phase [mol / m^3].
+     * \brief Returns the total concentration of a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * This is equivalent to the sum of all component concentrations.
      * \param phaseIdx The index of the considered phase
@@ -126,7 +126,7 @@ public:
     };
 
     /*!
-     * \brief Returns the concentration of a component in a phase [mol / m^3].
+     * \brief Returns the concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The index of the considered phase
      * \param compIdx The index of the considered component
@@ -153,7 +153,7 @@ public:
     }
 
     /*!
-     * \brief Returns the density of a phase [kg / m^3].
+     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx The index of the considered phase
      *
@@ -166,7 +166,7 @@ public:
     }
 
     /*!
-     * \brief Returns mean molar mass of a phase [kg / mol].
+     * \brief Returns mean molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
      *
      * This is equivalent to the sum of all component molar masses
      * weighted by their respective mole fraction.
@@ -181,7 +181,7 @@ public:
     };
     
     /*!
-     * \brief Returns the pressure of a fluid phase [Pa].
+     * \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *
      * \param phaseIdx The index of the considered phase
      */
@@ -191,7 +191,7 @@ public:
     }
 
     /*!
-     * \brief Returns the temperature of the fluids [K].
+     * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
      *
      * Note that we assume thermodynamic equilibrium, so all fluids
      * and the rock matrix exhibit the same temperature.
