@@ -152,7 +152,7 @@ public:
     { return enthalpy_[phaseIdx]; };
 
     /*!
-     * \brief Returns the total heat capacity [J/(K m^3)] of the rock matrix in
+     * \brief Returns the total heat capacity \f$\mathrm{[J/K*m^3]}\f$ of the rock matrix in
      *        the sub-control volume.
      */
     Scalar heatCapacity() const
