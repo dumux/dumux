@@ -116,7 +116,7 @@ public:
     }
     
     /*!
-     * \brief Returns the molar density of a phase [mol / m^3].
+     * \brief Returns the molar density of a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The index of the fluid phase
      */
@@ -126,7 +126,7 @@ public:
     };
 
     /*!
-     * \brief Returns the concentration of a component in a phase [mol / m^3].
+     * \brief Returns the concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The phase index
      * \param compIdx The index of the component
@@ -139,7 +139,7 @@ public:
     };
     
     /*!
-     * \brief Returns the density of a phase [kg / m^3].
+     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
      *  \param phaseIdx The index of the fluid phase
      */
@@ -147,7 +147,7 @@ public:
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief Returns molar mass of a phase [kg / mol].
+     * \brief Returns molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
      *
      *  \param phaseIdx The index of the fluid phase
      */
@@ -155,7 +155,7 @@ public:
     { return FluidSystem::molarMass(phaseIdx); };
 
     /*!
-     * \brief Returns the partial pressure of a component in the gas phase [Pa].
+     * \brief Returns the partial pressure of a component in the gas phase \f$\mathrm{[Pa]}\f$.
      */
     Scalar partialPressure(int compIdx) const
     {
@@ -165,7 +165,7 @@ public:
     }
     
     /*!
-     * \brief Returns the pressure of a fluid phase [Pa].
+     * \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *
      *  \param phaseIdx The index of the fluid phase
      */
@@ -173,13 +173,13 @@ public:
     { return phasePressure_[phaseIdx]; }
 
     /*!
-     * \brief Returns the capillary pressure [Pa]
+     * \brief Returns the capillary pressure \f$\mathrm{[Pa]}\f$
      */
     Scalar capillaryPressure() const
     { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
 
     /*!
-     * \brief Returns the temperature of the fluids [K].
+     * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
      *
      * Note that we assume thermodynamic equilibrium, so all fluids
      * and the rock matrix exhibit the same temperature.
