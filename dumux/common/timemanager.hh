@@ -90,9 +90,9 @@ public:
      *        condition to disk.
      *
      * \param problem The physical problem which needs to be solved
-     * \param tStart The start time [s] of the simulation (typically 0)
-     * \param dtInitial The initial time step size [s]
-     * \param tEnd The time at which the simulation is finished [s]
+     * \param tStart The start time \f$\mathrm{[s]}\f$ of the simulation (typically 0)
+     * \param dtInitial The initial time step size \f$\mathrm{[s]}\f$
+     * \param tEnd The time at which the simulation is finished \f$\mathrm{[s]}\f$
      * \param writeInitialSol Specifies whether the initial condition 
      *                        should be written to disk
      */
@@ -129,7 +129,7 @@ public:
      * \brief Set the current simulated time, don't change the current
      *        time step index.
      *
-     * \param t The time [s] which should be jumped to
+     * \param t The time \f$\mathrm{[s]}\f$ which should be jumped to
      */
     void setTime(Scalar t)
     { time_ = t; }
@@ -137,14 +137,14 @@ public:
     /*!
      * \brief Set the current simulated time and the time step index.
      *
-     * \param t The time [s] which should be jumped to
+     * \param t The time \f$\mathrm{[s]}\f$ which should be jumped to
      * \param stepIdx The new time step index
      */
     void setTime(Scalar t, int stepIdx)
     { time_ = t; timeStepIdx_ = stepIdx; }
 
     /*!
-     * \brief Return the current simulated time [s].
+     * \brief Return the current simulated time \f$\mathrm{[s]}\f$.
      */
     Scalar time() const
     { return time_; }
@@ -158,7 +158,7 @@ public:
     /*!
      * \brief Set the time of simulated seconds at which the simulation runs.
      *
-     * \param t The time [s] at which the simulation is finished
+     * \param t The time \f$\mathrm{[s]}\f$ at which the simulation is finished
      */
     void setEndTime(Scalar t)
     { endTime_ = t; }
@@ -171,13 +171,13 @@ public:
      * size won't exceed the episode or the end of the simulation,
      * though.
      *
-     * \param dt The new value for the time step size [s] 
+     * \param dt The new value for the time step size \f$\mathrm{[s]}\f$ 
      */
     void setTimeStepSize(Scalar dt)
     { timeStepSize_ = std::min(dt, maxTimeStepSize()); }
 
     /*!
-     * \brief Returns the suggested time step length [s] so that we
+     * \brief Returns the suggested time step length \f$\mathrm{[s]}\f$ so that we
      *        don't miss the beginning of the next episode or cross
      *        the end of the simlation.
      */
@@ -244,8 +244,8 @@ public:
     /*!
      * \brief Change the current episode of the simulation.
      *
-     * \param tStart Time when the episode began [s]
-     * \param len    Length of the episode [s]
+     * \param tStart Time when the episode began \f$\mathrm{[s]}\f$
+     * \param len    Length of the episode \f$\mathrm{[s]}\f$
      */
     void startNextEpisode(Scalar tStart,
                           Scalar len)
@@ -259,7 +259,7 @@ public:
      * \brief Start the next episode, but don't change the episode
      *        identifier.
      *
-     * \param len  Length of the episode [s], infinite if not specified.
+     * \param len  Length of the episode \f$\mathrm{[s]}\f$, infinite if not specified.
      */
     void startNextEpisode(Scalar len = 1e100)
     {
@@ -278,14 +278,14 @@ public:
 
     /*!
      * \brief Returns the absolute time when the current episode
-     *        started [s].
+     *        started \f$\mathrm{[s]}\f$.
      */
     Scalar episodeStartTime() const
     { return episodeStartTime_; }
 
     /*!
      * \brief Returns the length of the current episode in
-     *        simulated time [s].
+     *        simulated time \f$\mathrm{[s]}\f$.
      */
     Scalar episodeLength() const
     { return episodeLength_; }

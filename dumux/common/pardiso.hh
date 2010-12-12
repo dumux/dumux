@@ -331,9 +331,9 @@ public:
 	*/
     virtual void pre (X& x, Y& b) {}
 
-	/*! \brief Apply one step of the preconditioner to the system A(v)=d.
+	/*! \brief Apply one step of the preconditioner to the system \f$ A(v)=d \f$.
 
-    On entry v=0 and d=b-A(x) (although this might not be
+    On entry \f$ v=0 \f$ and \f$ d=b-A(x) \f$ (although this might not be
     computed in that way. On exit v contains the update, i.e
     one step computes \f$ v = M^{-1} d \f$ where \f$ M \f$ is the
     approximate inverse of the operator \f$ A \f$ characterizing
