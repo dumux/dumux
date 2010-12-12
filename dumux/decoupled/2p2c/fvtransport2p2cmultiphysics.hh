@@ -165,9 +165,9 @@ private:
  *  employing a CFL condition.
  *  This method = old concentrationUpdate()
  *
- *  \param t Current simulation time [s]
- *  \param[out] dt Time step size [s]
- *  \param[out] updateVec Update vector, or update estimate for secants, resp. Here in [kg/m^3]
+ *  \param t Current simulation time \f$\mathrm{[s]}\f$
+ *  \param[out] dt Time step size \f$\mathrm{[s]}\f$
+ *  \param[out] updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
  *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
  */
 template<class TypeTag>

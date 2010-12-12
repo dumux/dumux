@@ -60,9 +60,9 @@ public:
      * - Check if we are in single phase condition
      * - Assign total concentration to the present phase
      *
-     * \param Z1 Feed mass fraction [-]
-     * \param press1p Pressure value for present phase [Pa]
-     * \param satW Saturation of the wetting phase [-]
+     * \param Z1 Feed mass fraction \f$\mathrm{[-]}\f$
+     * \param press1p Pressure value for present phase \f$\mathrm{[Pa]}\f$
+     * \param satW Saturation of the wetting phase \f$\mathrm{[-]}\f$
      */
     void update(Scalar Z1,Scalar press1p, Scalar satW)
     {
@@ -98,7 +98,7 @@ public:
             return Scalar(1.0) - Sw_;
     };
 
-    /*! \brief Returns the pressure of a fluid phase [Pa].
+    /*! \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *  \param phaseIdx Index of the phase
      */
     Scalar phasePressure(int phaseIdx) const

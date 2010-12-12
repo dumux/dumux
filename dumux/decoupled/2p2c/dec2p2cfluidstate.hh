@@ -72,10 +72,10 @@ public:
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - comparison with Z1 to determine phase presence => phase mass fractions
      * - round off fluid properties
-     * \param Z1 Feed mass fraction: Mass of comp1 per total mass [-]
-     * \param pw Pressure of the wetting phase [Pa]
-     * \param poro Porosity [-]
-     * \param temperature Temperature [K]
+     * \param Z1 Feed mass fraction: Mass of comp1 per total mass \f$\mathrm{[-]}\f$
+     * \param pw Pressure of the wetting phase \f$\mathrm{[Pa]}\f$
+     * \param poro Porosity \f$\mathrm{[-]}\f$
+     * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
     void update(Scalar Z1, Scalar pw, Scalar poro, Scalar temperature)
     {
@@ -168,10 +168,10 @@ public:
      * - determination of the equilibrium constants from the fluid system
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - round off fluid properties
-     * \param sat Saturation of phase 1 [-]
-     * \param pw Pressure of the wetting phase [Pa]
-     * \param poro Porosity [-]
-     * \param temperature Temperature [K]
+     * \param sat Saturation of phase 1 \f$\mathrm{[-]}\f$
+     * \param pw Pressure of the wetting phase \f$\mathrm{[Pa]}\f$
+     * \param poro Porosity \f$\mathrm{[-]}\f$
+     * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
     void satFlash(Scalar sat, Scalar pw, Scalar poro, Scalar temperature)
     {
@@ -285,7 +285,7 @@ public:
     }
 
     /*!
-     * \brief Returns the total mass concentration of a component [kg / m^3].
+     * \brief Returns the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
      *
      * This is equivalent to the sum of the component concentrations for all
      * phases multiplied with the phase density.
@@ -299,7 +299,7 @@ public:
 
 
     /*!
-     * \brief Returns the density of a phase [kg / m^3].
+     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx the index of the phase
      */
@@ -309,8 +309,8 @@ public:
     /*!
      * \brief Return the partial pressure of a component in the gas phase.
      *
-     * For an ideal gas, this means R*T*c.
-     * Unit: [Pa] = [N/m^2]
+     * For an ideal gas, this means \f$ R*T*c \f$.
+     * Unit: \f$\mathrm{[Pa] = [N/m^2]}\f$
      *
      * \param componentIdx the index of the component
      */
@@ -325,7 +325,7 @@ public:
     }
 
     /*!
-     * \brief Returns the pressure of a fluid phase [Pa].
+     * \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *
      * \param phaseIdx the index of the phase
      */
@@ -333,13 +333,13 @@ public:
     { return phasePressure_[phaseIdx]; }
 
     /*!
-     * \brief Returns the capillary pressure [Pa]
+     * \brief Returns the capillary pressure \f$\mathrm{[Pa]}\f$
      */
     Scalar capillaryPressure() const
     { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
 
     /*!
-     * \brief Returns the temperature of the fluids [K].
+     * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
      *
      * Note that we assume thermodynamic equilibrium, so all fluids
      * and the rock matrix exhibit the same temperature.
@@ -348,7 +348,7 @@ public:
     { return temperature_; };
 
     /*!
-     * \brief Returns the phase mass fraction. phase mass per total mass [kg/kg].
+     * \brief Returns the phase mass fraction. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
      *
      * \param phaseIdx the index of the phase
      */
