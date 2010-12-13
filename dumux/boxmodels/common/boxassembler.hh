@@ -19,15 +19,14 @@
  *
  * \brief An assembler for the Jacobian matrix based on PDELab.
  */
-#ifndef DUMUX_PDELAB_BOX_ASSEMBLER_HH
-#define DUMUX_PDELAB_BOX_ASSEMBLER_HH
+#ifndef DUMUX_BOX_ASSEMBLER_HH
+#define DUMUX_BOX_ASSEMBLER_HH
 
 #if HAVE_DUNE_PDELAB
 #include "pdelabboxlocaloperator.hh"
 #endif
 
 namespace Dumux {
-namespace PDELab {
 
 /*!
  * \brief An assembler for the Jacobian matrix based on PDELab.
@@ -741,7 +740,6 @@ private:
 #endif
 };
 
-} // namespace PDELab
 } // namespace Dumux
 
 #endif

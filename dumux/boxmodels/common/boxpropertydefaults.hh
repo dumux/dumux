@@ -25,8 +25,8 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
-#include "pdelabboxassembler.hh"
 #include "pdelabboxistlvectorbackend.hh"
+#include "boxassembler.hh"
 #include "boxfvelementgeometry.hh"
 #include "boxelementboundarytypes.hh"
 #include "boxlocaljacobian.hh"
@@ -187,7 +187,7 @@ public:
 /*!
  * \brief Assembler for the global jacobian matrix.
  */
-SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::PDELab::BoxAssembler<TypeTag>);
+SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::BoxAssembler<TypeTag>);
 
 
 //! use central differences to calculate the jacobian by default
