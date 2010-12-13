@@ -136,14 +136,17 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  *
  * The domain is sized 6m times 4m and features a rectangular lens
  * with low permeablility which spans from (1 m , 2 m) to (4 m, 3 m)
- * and is surrounded by a medium with higher permability.
+ * and is surrounded by a medium with higher permability. Note that
+ * this problem is discretized using only two dimensions, so from the
+ * point of view of the two-phase model, the depth of the domain
+ * implicitly is 1 m everywhere.
  *
  * On the top and the bottom of the domain neumann boundary conditions
  * are used, while dirichlet conditions apply on the left and right
  * boundaries.
  *
  * DNAPL is injected at the top boundary from 3m to 4m at a rate of
- * 0.04 kg/(s m), the remaining neumann boundaries are no-flow
+ * 0.04 kg/(s m^2), the remaining neumann boundaries are no-flow
  * boundaries.
  *
  * The dirichlet boundaries on the left boundary is the hydrostatic
@@ -153,12 +156,12 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  *
  * This problem uses the \ref TwoPBoxModel.
  *
- * This problem should typically simulated until \f$t_{\text{end}} =
- * 50\,000\;s\f$ is reached. A good choice for the initial time step size
- * is \f$t_{\text{inital}} = 1\,000\;s\f$.
+ * This problem should typically be simulated until \f$t_{\text{end}}
+ * \approx 50\,000\;s\f$ is reached. A good choice for the initial time step
+ * size is \f$t_{\text{inital}} = 250\;s\f$.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p 50000 1000</tt>
+ * <tt>./test_2p 50000 250</tt>
  */
 template <class TypeTag >
 class LensProblem : public TwoPProblem<TypeTag>
@@ -348,7 +351,7 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
+     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
      * \param element The finite element
      * \param fvElemGeom The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary

@@ -52,13 +52,13 @@ class TwoPProblem : public BoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-/*!
- * \brief The constructor
- *
- * \param timeManager The time manager
- * \param gridView The grid view
- * \param verbose Turn verbosity on or off
- */
+    /*!
+     * \brief The constructor
+     *
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     * \param verbose Turn verbosity on or off
+     */
     TwoPProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 bool verbose = true)
