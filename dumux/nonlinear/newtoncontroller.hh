@@ -362,7 +362,6 @@ public:
         numSteps_ = 0;
 
         model_().jacobianAssembler().reassembleAll();
-
         dtInitial_ = timeManager_().timeStepSize();
         if (enableTimeStepRampUp) {
             rampUpDelta_ = 

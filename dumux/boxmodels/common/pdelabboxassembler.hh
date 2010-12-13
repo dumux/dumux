@@ -200,7 +200,6 @@ public:
         residual_.resize(numVerts);
       
         totalElems_ = gridView_().comm().sum(numElems);
-        greenElems_ = 0;
         
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {
@@ -221,6 +220,8 @@ public:
     {
         resetSystem_();
         
+        greenElems_ = 0;
+
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -232,6 +233,8 @@ public:
         };
         
         if (enablePartialReassemble) {
+            greenElems_ = gridView_().comm().sum(greenElems_);
+            
             reassembleTolerance_ = nextReassembleTolerance_;
             // print some information at the end of the iteration
             problem_().newtonController().endIterMsg()
@@ -429,9 +432,7 @@ public:
         }
 
         // Demote orange vertices to yellow ones if it has at least
-        // one green element as a neighbor. also count the total
-        // number of green elements for statistical purposes.
-        greenElems_ = 0;
+        // one green element as a neighbor. 
         elemIt = gridView_().template begin<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             int elemIdx = this->elementMapper_().map(*elemIt);
@@ -439,8 +440,6 @@ public:
                 continue; // yellow and red elements do not make
                           // orange vertices yellow!
             
-            ++ greenElems_;
-
             int numVerts = elemIt->template count<dim>();
             for (int i=0; i < numVerts; ++i) {
                 int globalI = vertexMapper_().map(*elemIt, i, dim);
@@ -464,8 +463,6 @@ public:
             // will be consistently linearized at this vertex
             vertexDelta_[i] = 0.0;
         };
-
-        greenElems_ = gridView_().comm().sum(greenElems_);
     };
     
     /*!
@@ -646,8 +643,10 @@ private:
     {
         if (enablePartialReassemble) {
             int globalElemIdx = model_().elementMapper().map(elem);
-            if (elementColor_[globalElemIdx] == Green)
+            if (elementColor_[globalElemIdx] == Green) {
+                ++greenElems_;
                 return;
+            }
         }
 
         model_().localJacobian().assemble(elem);
@@ -657,8 +656,9 @@ private:
             int globI = vertexMapper_().map(elem, i, dim);
             
             // update the right hand side
-            if (vertexColor(globI) == Green)
+            if (vertexColor(globI) == Green) {
                 continue;
+            }
 
             residual_[globI] += model_().localJacobian().residual(i);
             
@@ -726,7 +726,6 @@ private:
     int totalElems_;
     int greenElems_;
     
-
     Scalar nextReassembleTolerance_;
     Scalar reassembleTolerance_;
     
