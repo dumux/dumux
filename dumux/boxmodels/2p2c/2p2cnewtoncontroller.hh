@@ -74,14 +74,15 @@ public:
      * iterations required or on the variable switch
      *
      * \param u The current global solution vector
-     * \param uOld The previous global solution vector
+     * \param uLastIter The previous global solution vector
      *
      */
-    void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
+    void newtonEndStep(SolutionVector &uCurrentIter,
+                       const SolutionVector &uLastIter)
     {
         // call the method of the base class
-        this->method().model().updateStaticData(u, uOld);
-        ParentType::newtonEndStep(u, uOld);
+        this->method().model().updateStaticData(uCurrentIter, uLastIter);
+        ParentType::newtonEndStep(uCurrentIter, uLastIter);
     }
 
     /*!
@@ -92,33 +93,36 @@ public:
      *
      * Different update strategies, such as line search and chopped
      * updates can be implemented. The default behaviour is just to
-     * subtract deltaU from uOld.
+     * subtract deltaU from uLastIter.
      *
+     * \param uCurrentIter The solution after the current Newton iteration
+     * \param uLastIter The solution after the last Newton iteration
      * \param deltaU The delta as calculated from solving the linear
      *               system of equations. This parameter also stores
      *               the updated solution.
-     * \param uOld   The solution of the last iteration
      */
-    void newtonUpdate(SolutionVector &deltaU, const SolutionVector &uOld)
+    void newtonUpdate(SolutionVector &uCurrentIter,
+                      const SolutionVector &uLastIter,
+                      const SolutionVector &deltaU)
     {
-        this->writeConvergence_(uOld, deltaU);
+        this->writeConvergence_(uLastIter, deltaU);
 
-        this->newtonUpdateRelError(uOld, deltaU);
+        this->newtonUpdateRelError(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial
         // reassembly
         if (enablePartialReassemble) {
             Scalar reassembleTol = Dumux::geometricMean(this->error_, 0.1*this->tolerance_);
             reassembleTol = std::max(reassembleTol, 0.1*this->tolerance_);
-            this->model_().jacobianAssembler().updateDiscrepancy(uOld, deltaU);
+            this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
 
         if (GET_PROP_VALUE(TypeTag, PTAG(NewtonUseLineSearch)))
-            lineSearchUpdate_(deltaU, uOld);
+            lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         else {
-            deltaU *= - 1.0;
-            deltaU += uOld;
+            uCurrentIter = uLastIter;
+            uCurrentIter -= deltaU;
         }
     }
 
@@ -137,32 +141,32 @@ public:
     };
 
 private:
-    void lineSearchUpdate_(SolutionVector &u, const SolutionVector &uOld)
+    void lineSearchUpdate_(SolutionVector &uCurrentIter, 
+                           const SolutionVector &uLastIter,
+                           const SolutionVector &deltaU)
     {
        Scalar lambda = 1.0;
        Scalar globDef;
-       SolutionVector tmp(u);
-       Scalar oldGlobDef = this->method().model().globalResidual(tmp);
 
-       int n = 0;
+       // calculate the residual of the current solution
+       SolutionVector tmp(uLastIter);
+       Scalar oldGlobDef = this->method().model().globalResidual(tmp, uLastIter);
+
        while (true) {
-           u *= -lambda;
-           u += uOld;
+           uCurrentIter = deltaU;
+           uCurrentIter *= -lambda;
+           uCurrentIter += uLastIter;
 
-           globDef = this->method().model().globalResidual(tmp);
+           // calculate the residual of the current solution
+           globDef = this->method().model().globalResidual(tmp, uCurrentIter);
 
            if (globDef < oldGlobDef || lambda <= 1.0/8) {
-               this->endIterMsg() << ", defect " << oldGlobDef << "->"  << globDef << "@lambda=2^-" << n;
+               this->endIterMsg() << ", defect " << oldGlobDef << "->"  << globDef << "@lambda=" << lambda;
                return;
            }
 
-           // undo the last iteration
-           u -= uOld;
-           u /= - lambda;
-
            // try with a smaller update
            lambda /= 2;
-           ++n;
        }
     };
 

@@ -115,8 +115,10 @@ public:
 protected:
     bool execute_(NewtonController &ctl)
     {
-        // TODO (?): u shouldn't be hard coded to the model
-        SolutionVector &u = model().curSol();
+        SolutionVector &uCurrentIter = model().curSol();
+        SolutionVector uLastIter(uCurrentIter);
+        SolutionVector deltaU(uCurrentIter);
+
         JacobianAssembler &jacobianAsm = model().jacobianAssembler();
 
         Dune::Timer assembleTimer(false);
@@ -124,30 +126,39 @@ protected:
         Dune::Timer updateTimer(false);
 
         // tell the controller that we begin solving
-        ctl.newtonBegin(*this, u);
+        ctl.newtonBegin(*this, uCurrentIter);
 
         // execute the method as long as the controller thinks
         // that we should do another iteration
-        while (ctl.newtonProceed(u))
+        while (ctl.newtonProceed(uCurrentIter))
         {
             // notify the controller that we're about to start
             // a new timestep
             ctl.newtonBeginStep();
 
             // make the current solution to the old one
-            uOld_ = u;
+            uLastIter = uCurrentIter;
 
             if (ctl.verbose()) {
                 std::cout << "Assembling global jacobian";
                 std::cout.flush();
             }
+
+            ///////////////
+            // assemble
+            ///////////////
             
-            assembleTimer.start();
             // linearize the problem at the current solution
+            assembleTimer.start();
             jacobianAsm.assemble();
             assembleTimer.stop();
 
-            // solve the resultuing linear equation system
+            ///////////////
+            // linear solve
+            ///////////////
+
+            // solve the resulting linear equation system
+            solveTimer.start();
             if (ctl.verbose()) {
                 std::cout << "\rSolve Mx = r";
                 // Clear the current line using an ansi escape
@@ -158,36 +169,36 @@ protected:
                 std::cout.flush();
             }
 
-            solveTimer.start();
             // set the delta vector to zero before solving the linear system!
-            u = 0;
+            deltaU = 0;
             // ask the controller to solve the linearized system
             ctl.newtonSolveLinear(jacobianAsm.matrix(),
-                                  u,
+                                  deltaU,
                                   jacobianAsm.residual());
             solveTimer.stop();
 
+            ///////////////
+            // update
+            ///////////////
             updateTimer.start();
             // update the current solution (i.e. uOld) with the delta
             // (i.e. u). The result is stored in u
-            ctl.newtonUpdate(u, uOld_);
+            ctl.newtonUpdate(uCurrentIter, uLastIter, deltaU);
             updateTimer.stop();
 
             // tell the controller that we're done with this iteration
-            ctl.newtonEndStep(u, uOld_);
+            ctl.newtonEndStep(uCurrentIter, uLastIter);
         }
 
         // tell the controller that we're done
         ctl.newtonEnd();
 
-        Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
         if (ctl.verbose()) {
-            std::cout << "Timings assemble/solve/update: " 
+            Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+            std::cout << "Assemble/solve/update time: " 
                       <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
                       <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
                       <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                //<< " localEvals: " << problem_.model().localResidual().elapsed() << "("<<100*problem_.model().localResidual().elapsed()/assembleTimer.elapsed()<<"% of asm)"
-                //<< " singleEvalTime: " << problem_.model().localResidual().evalTimeSingle() << " sec"
                       << "\n";
         }
 
@@ -201,8 +212,6 @@ protected:
     }
 
 private:
-    SolutionVector uOld_;
-
     Problem &problem_;
 };
 

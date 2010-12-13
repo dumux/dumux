@@ -72,33 +72,33 @@ public:
      * This is basically the step
      * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
-     * \param deltaU When the method is called, this contains the
-     *               vector of differences between the current
-     *               iterative solution and the next \f$\Delta
-     *               u\f$. After the method is finished it should
-     *               contain the next iterative solution \f$ u^{k+1} \f$.
-     * \param uOld The current iterative solution \f$ u^k \f$
+     * \param uCurrentIter The solution after the current Newton iteration \f$ u^{k+1} \f$
+     * \param uLastIter The solution after the last Newton iteration \f$ u^k \f$
+     * \param deltaU The vector of differences between the last
+     *               iterative solution and the next one \f$ \Delta u^k \f$
      */
-    void newtonUpdate(SolutionVector &deltaU, const SolutionVector &uOld)
+    void newtonUpdate(SolutionVector &uCurrentIter,
+                      const SolutionVector &uLastIter,
+                      const SolutionVector &deltaU)
     {
-        this->writeConvergence_(uOld, deltaU);
-        this->newtonUpdateRelError(uOld, deltaU);
+        this->writeConvergence_(uLastIter, deltaU);
+        this->newtonUpdateRelError(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial
         // reassembly
         if (enablePartialReassemble) {
             Scalar reassembleTol = Dumux::geometricMean(this->error_, 0.1*this->tolerance_);
             reassembleTol = std::max(reassembleTol, 0.1*this->tolerance_);
-            this->model_().jacobianAssembler().updateDiscrepancy(uOld, deltaU);
+            this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
 
         if (GET_PROP_VALUE(TypeTag, PTAG(NewtonUseLineSearch)))
-            lineSearchUpdate_(deltaU, uOld);
+            lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         else {
             // update the solution vector
-            deltaU *= -1;
-            deltaU += uOld;
+            uCurrentIter = uLastIter;
+            uCurrentIter -= deltaU;
             
             // clamp saturation change to at most 20% per iteration
             FVElementGeometry fvElemGeom;
@@ -114,7 +114,7 @@ public:
                     const SpatialParameters &sp = this->problem_().spatialParameters();
                     const MaterialLawParams &mp = sp.materialLawParams(*eIt, fvElemGeom, i);
                     Scalar pcMin = MaterialLaw::pC(mp, 1.0);
-                    Scalar pW = uOld[globI][pwIdx];
+                    Scalar pW = uLastIter[globI][pwIdx];
                     Scalar pN = std::max(this->problem_().referencePressure(*eIt, fvElemGeom, i), 
                                          pW + pcMin);
                     Scalar pcOld = pN - pW;
@@ -126,38 +126,40 @@ public:
                     Scalar pwMax = pN - MaterialLaw::pC(mp, SwOld + 0.2);
                     
                     // clamp the result
-                    deltaU[globI][pwIdx] = std::max(pwMin, std::min(deltaU[globI][pwIdx], pwMax));
+                    pW = uCurrentIter[globI][pwIdx];
+                    pW = std::max(pwMin, std::min(pW, pwMax));
+                    uCurrentIter[globI][pwIdx] = pW;
+                        
                 }
             }
         }
     }
 
 private:
-    void lineSearchUpdate_(SolutionVector &u, const SolutionVector &uOld)
+    void lineSearchUpdate_(SolutionVector &uCurrentIter, 
+                           const SolutionVector &uLastIter, 
+                           const SolutionVector &deltaU)
     {
        Scalar lambda = 1.0;
        Scalar globDef;
-       SolutionVector tmp(u);
-       Scalar oldGlobDef = this->model_().globalResidual(tmp, uOld);
+       SolutionVector tmp(uLastIter);
+       Scalar oldGlobDef = this->model_().globalResidual(tmp, uLastIter);
 
-       int n = 0;
        while (true) {
-           u *= -lambda;
-           u += uOld;
-           globDef = this->model_().globalResidual(tmp);
+           uCurrentIter = deltaU;
+           uCurrentIter *= -lambda;
+           uCurrentIter += uLastIter;
+
+           // calculate the residual of the current solution
+           globDef = this->model_().globalResidual(tmp, uCurrentIter);
 
            if (globDef < oldGlobDef || lambda <= 1.0/64) {
-               this->endIterMsg() << ", defect " << oldGlobDef << "->"  << globDef << "@lambda=2^-" << n;
+               this->endIterMsg() << ", defect " << oldGlobDef << "->"  << globDef << "@lambda=" << lambda;
                return;
            }
 
-           // undo the last iteration
-           u -= uOld;
-           u /= - lambda;
-
            // try with a smaller update
            lambda /= 2;
-           ++n;
        }
     };
 };

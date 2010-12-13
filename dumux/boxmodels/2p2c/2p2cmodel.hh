@@ -524,9 +524,8 @@ public:
      * \param oldGlobalSol The previous global solution
      */
     void updateStaticData(SolutionVector &curGlobalSol,
-                          SolutionVector &oldGlobalSol)
+                          const SolutionVector &oldGlobalSol)
     {
-
         bool wasSwitched = false;
 
         for (unsigned i = 0; i < staticVertexDat_.size(); ++i)
@@ -554,8 +553,11 @@ public:
                                i,
                                false);
                 const GlobalPosition &global = it->geometry().corner(i);
-                wasSwitched = primaryVarSwitch_(curGlobalSol, volVars,
-                        globalIdx, global) || wasSwitched;
+                if (primaryVarSwitch_(curGlobalSol,
+                                      volVars,
+                                      globalIdx, 
+                                      global))
+                    wasSwitched = true;
             }
         }
 

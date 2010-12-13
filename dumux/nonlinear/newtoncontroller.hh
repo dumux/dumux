@@ -157,10 +157,10 @@ struct NewtonConvergenceWriter
                                        gv);
     };
 
-    void writeFields(const SolutionVector &uOld,
+    void writeFields(const SolutionVector &uLastIter,
                      const SolutionVector &deltaU)
     {
-        ctl_.method().model().addConvergenceVtkFields(*vtkMultiWriter_, uOld, deltaU);
+        ctl_.method().model().addConvergenceVtkFields(*vtkMultiWriter_, uLastIter, deltaU);
     };
 
     void endIteration()
@@ -204,7 +204,7 @@ struct NewtonConvergenceWriter<TypeTag, false>
     void beginIteration(const GridView &gv)
     { };
 
-    void writeFields(const SolutionVector &uOld,
+    void writeFields(const SolutionVector &uLastIter,
                      const SolutionVector &deltaU)
     { };
 
@@ -323,7 +323,7 @@ public:
      *
      * \param u The current solution
      */
-    bool newtonProceed(const SolutionVector &u)
+    bool newtonProceed(const SolutionVector &uCurrentIter)
     {
         if (numSteps_ < rampUpSteps() + 2)
             return true; // we always do at least two iterations
@@ -356,7 +356,7 @@ public:
      * \param method The object where the NewtonMethod is executed
      * \param u The initial solution
      */
-    void newtonBegin(NewtonMethod &method, SolutionVector &u)
+    void newtonBegin(NewtonMethod &method, const SolutionVector &u)
     {
         method_ = &method;
         numSteps_ = 0;
@@ -399,10 +399,10 @@ public:
      * The relative error can be seen as a norm of the difference
      * between the current and the next iteration.
      *
-     * \param uOld The current iterative solution
+     * \param uLastIter The current iterative solution
      * \param deltaU The difference between the current and the next solution
      */
-    void newtonUpdateRelError(const SolutionVector &uOld,
+    void newtonUpdateRelError(const SolutionVector &uLastIter,
                               const SolutionVector &deltaU)
     {
         // calculate the relative error as the maximum relative
@@ -412,12 +412,12 @@ public:
 
         int idxI = -1;
         int aboveTol = 0;
-        for (int i = 0; i < int(uOld.size()); ++i) {
-            PrimaryVariables uNewI = uOld[i];
+        for (int i = 0; i < int(uLastIter.size()); ++i) {
+            PrimaryVariables uNewI = uLastIter[i];
             uNewI -= deltaU[i];
             Scalar vertErr = 
                 model_().relativeErrorVertex(i,
-                                             uOld[i],
+                                             uLastIter[i],
                                              uNewI);
             
             if (vertErr > tolerance_)
@@ -432,18 +432,18 @@ public:
     }
 
     /*!
-     * \brief Solve the linear system of equations \f$\mathbf{A}u - b = 0\f$.
+     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
      * Throws Dumux::NumericalProblem if the linear solver didn't
      * converge.
      *
      * \param A The matrix of the linear system of equations
-     * \param u The vector which solves the linear system
+     * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
     template <class Vector>
     void newtonSolveLinear(const JacobianMatrix &A,
-                           Vector &u,
+                           Vector &x,
                            const Vector &b)
     {
         // if the deflection of the newton method is large, we do not
@@ -454,7 +454,7 @@ public:
         Scalar residReduction = 1e-6;
 
         try {
-            solveLinear_(A, u, b, residReduction);
+            solveLinear_(A, x, b, residReduction);
 
             // make sure all processes converged
             int converged = 1;
@@ -487,40 +487,44 @@ public:
      *
      * Different update strategies, such as line search and chopped
      * updates can be implemented. The default behaviour is just to
-     * subtract deltaU from uOld, i.e.
+     * subtract deltaU from uLastIter, i.e.
      * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
+     * \param uCurrentIter The solution vector after the current iteration
+     * \param uLastIter The solution vector after the last iteration
      * \param deltaU The delta as calculated from solving the linear
      *               system of equations. This parameter also stores
      *               the updated solution.
-     * \param uOld   The solution vector of the last iteration
      */
-    void newtonUpdate(SolutionVector &deltaU, const SolutionVector &uOld)
+    void newtonUpdate(SolutionVector &uCurrentIter,
+                      const SolutionVector &uLastIter,
+                      const SolutionVector &deltaU)
     {
-        writeConvergence_(uOld, deltaU);
+        writeConvergence_(uLastIter, deltaU);
 
-        newtonUpdateRelError(uOld, deltaU);
+        newtonUpdateRelError(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial
         // reassembly
         if (enablePartialReassemble) {
             Scalar reassembleTol = Dumux::geometricMean(error_, 0.1*tolerance_);
             reassembleTol = std::max(reassembleTol, 0.1*tolerance_);
-            this->model_().jacobianAssembler().updateDiscrepancy(uOld, deltaU);
+            this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
 
-        deltaU *= -1;
-        deltaU += uOld;
+        uCurrentIter = uLastIter;
+        uCurrentIter -= deltaU;
     }
 
     /*!
      * \brief Indicates that one newton iteration was finished.
      *
      * \param u The solution after the current iteration
-     * \param uOld The solution at the beginning of the current iteration
+     * \param uLastIter The solution at the beginning of the current iteration
      */
-    void newtonEndStep(SolutionVector &u, SolutionVector &uOld)
+    void newtonEndStep(const SolutionVector &uCurrentIter, 
+                       const SolutionVector &uLastIter)
     {
         ++numSteps_;
 
@@ -677,11 +681,11 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    void writeConvergence_(const SolutionVector &uOld,
+    void writeConvergence_(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
         convergenceWriter_.beginIteration(this->gridView_());
-        convergenceWriter_.writeFields(uOld, deltaU);
+        convergenceWriter_.writeFields(uLastIter, deltaU);
         convergenceWriter_.endIteration();
     };
 
