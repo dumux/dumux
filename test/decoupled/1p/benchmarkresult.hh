@@ -16,6 +16,7 @@
 /*!
  * \file
  *
+ * \ingroup IMPETtests
  * \brief Calculate errors for a FVCA5 benchmark problem.
  */
 #ifndef DUMUX_BENCHMARKRESULT_HH

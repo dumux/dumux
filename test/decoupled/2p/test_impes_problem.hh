@@ -130,7 +130,7 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup IMPETtests
  *
  * \brief test problem for the sequential 2p model
  */

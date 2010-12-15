@@ -29,6 +29,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup IMPETtests
  * \brief spatial parameters for the test problem for diffusion models.
  */
 template<class TypeTag>

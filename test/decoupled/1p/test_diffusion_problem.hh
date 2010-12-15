@@ -42,7 +42,6 @@
 
 namespace Dumux
 {
-
 //! \cond INTERNAL
 struct FileNames
 {
@@ -53,6 +52,9 @@ struct FileNames
 };
 //! \endcond
 
+/*!
+ * \ingroup IMPETtests
+ */
 template<class TypeTag>
 class TestDiffusionProblem;
 

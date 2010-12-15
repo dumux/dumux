@@ -18,6 +18,7 @@
 /*!
  * \file
  *
+ * \ingroup IMPETtests
  * \brief test for the sequential 2p model
  */
 #include "config.h"

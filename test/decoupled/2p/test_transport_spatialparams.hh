@@ -30,6 +30,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup IMPETtests
  * \brief spatial parameters for the explicit transport test
  */
 template<class TypeTag>

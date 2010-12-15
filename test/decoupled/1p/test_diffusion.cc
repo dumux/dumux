@@ -18,6 +18,7 @@
 /*!
  * \file
  *
+ * \ingroup IMPETtests
  * \brief test for diffusion models
  */
 #include "config.h"

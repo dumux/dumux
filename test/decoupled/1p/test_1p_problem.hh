@@ -41,7 +41,6 @@
 namespace Dumux
 {
 
-
 template<class TypeTag>
 class TestProblemOneP;
 
@@ -91,7 +90,7 @@ SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TTAG(TestProblemO
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup IMPETtests
  *
  * \brief test problem for the decoupled one-phase model.
  */

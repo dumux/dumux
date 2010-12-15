@@ -18,6 +18,7 @@
 /*!
  * \file
  *
+ * \ingroup IMPETtests
  * \brief test for the explicit transport model
  */
 #include "config.h"

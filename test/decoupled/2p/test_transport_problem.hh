@@ -107,7 +107,7 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup IMPETtests
  *
  * \brief test problem for the explicit transport model
  */

@@ -31,7 +31,7 @@
 #include <dune/grid/sgrid.hh>
 
 // fluid properties
-//#include <dumux/material/fluidsystems/simple_h2o_n2_system.hh>
+//#include <dumux/material/fluidsystems/brine_co2_system.hh>
 #include <dumux/material/fluidsystems/h2o_n2_system.hh>
 
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
@@ -83,7 +83,11 @@ SET_INT_PROP(TestTwoPTwoCProblem, VelocityFormulation,
 SET_INT_PROP(TestTwoPTwoCProblem, PressureFormulation,
         GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW);
 
-
+//// Select fluid system
+//SET_PROP(TestTwoPTwoCProblem, FluidSystem)
+//{
+//    typedef Dumux::Brine_CO2_System<TypeTag, Dumux::Benchmark3::CO2Tables> type;
+//};
 // Select fluid system
 SET_PROP(TestTwoPTwoCProblem, FluidSystem)
 {
@@ -119,7 +123,7 @@ SET_SCALAR_PROP(TestTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup IMPETtests
  */
 template<class TypeTag = TTAG(TestTwoPTwoCProblem)>
 class TestTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag, TestTwoPTwoCProblem<TypeTag> >

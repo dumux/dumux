@@ -30,6 +30,8 @@ namespace Dumux
 {
 
 /*!
+ *
+ * \ingroup IMPETtests
  * \brief spatial parameters for the sequential 2p test
  */
 template<class TypeTag>

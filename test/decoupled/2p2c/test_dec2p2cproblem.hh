@@ -118,7 +118,7 @@ SET_SCALAR_PROP(TestTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup IMPETtests
  *
  * \brief test problem for the sequential 2p2c model
  */
@@ -159,6 +159,8 @@ ParentType(gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
 //    WaterFormulation::init(273.15, 623.15, 100,
 //                            -10,   20e6, 200);
     FluidSystem::init();
+
+    sourceHelper(dim-1);
 }
 
 /*!
@@ -195,7 +197,7 @@ Scalar temperature(const GlobalPosition& globalPos, const Element& element) cons
 
 Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
 {
-    return 1e6; // TODO: proper description!!
+    return 1e5; // TODO: proper description!!
 }
 
 typename BoundaryConditions::Flags bcTypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
@@ -262,6 +264,58 @@ Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
 Scalar initConcentration(const GlobalPosition& globalPos, const Element& element) const
 {
     return 1;
+}
+
+Scalar sourceHelper(int dimOfInterest)
+{
+    Dune::dinfo << "investigating source elements" << std::endl;
+    int elementsInSource = 0;
+    // representative expansion in the direction of interest
+    Scalar representativeLength (0.);
+
+    //typedef Iterators
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+
+    // iterate over all elements of domain
+    for (ElementIterator eIt = this->gridView().template begin<0>();
+            eIt != this->gridView().template end<0>(); ++eIt)
+    {
+        // get position
+        GlobalPosition globalPos = eIt->geometry().center();
+        // expansion in the direction of interest
+        Scalar extend (0.);
+        // check if element is in source
+        if ( source(globalPos, *eIt)[0] != 0. || source(globalPos, *eIt)[1] != 0.)
+        {
+            elementsInSource++;
+
+            Scalar elemVol = eIt->geometry().volume();
+
+            //start intersection iterator
+            for (IntersectionIterator isIt = this->gridView().template ibegin(*eIt);
+                    isIt != this->gridView().template iend(*eIt); ++isIt)
+            {
+                // get normal
+                GlobalPosition faceNormal = isIt->centerUnitOuterNormal();
+
+                // check if normal points in dim of interest
+                if (std::abs(faceNormal[dimOfInterest]) >= 0.4 )
+                {
+                    extend = std::max(extend, elemVol / isIt->geometry().volume() );
+                }
+            }
+        }
+        // sum up the element lengths
+        representativeLength += extend;
+    }
+    // divide the length by number of elements
+    representativeLength /= elementsInSource;
+
+    Dune::dinfo << elementsInSource << " number of elements have sources/sinks, in dim "
+            << dimOfInterest << " the average length is " << representativeLength << std::endl;
+
+    return representativeLength;
 }
 
 private:
