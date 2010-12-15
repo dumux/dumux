@@ -23,10 +23,9 @@
 */
 namespace Dumux
 {
-/** @addtogroup DISC_Operators
-*
-* @{
-*/
+/*!
+ * \ingroup IMPETbc
+ */
 /**
 * @brief Define a class containing boundary condition flags
 *
