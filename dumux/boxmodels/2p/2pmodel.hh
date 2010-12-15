@@ -49,8 +49,8 @@ namespace Dumux
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
  * approach as the equation for the conservation of momentum:
  \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} K
- \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ \left(\text{grad} p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  \f]
  *
  * By inserting this into the equation for the conservation of the
@@ -59,8 +59,8 @@ namespace Dumux
  \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
  -
  \text{div} \left\{
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} K \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
- \right\} = q_\alpha \;,
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K} \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \right\} - q_\alpha = 0 \;,
  \f]
  * discretized by a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and

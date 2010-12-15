@@ -43,21 +43,21 @@ namespace Dumux
  * \f$\kappa \in \{ w, a \}\f$. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} K
- \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+ \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  * \f]
  *
  * By inserting this into the equations for the conservation of the
  * components, one gets one transport equation for each component
- * \f{eqnarray*}
+ * \f{eqnarray}
  && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa S_\alpha )}
  {\partial t}
- - \sum_\alpha \nabla \cdot \left\{ \varrho_\alpha X_\alpha^\kappa
+ - \sum_\alpha  \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
  \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- ({\bf \nabla} p_\alpha - \varrho_{\alpha} \mbox{\bf g}) \right\}
+ (\text{grad}\, p_\alpha - \varrho_{\alpha}  \mbox{\bf g}) \right\}
  \nonumber \\ \nonumber \\
-    &-& \sum_\alpha \nabla \cdot \left\{{\bf D_{pm}^\kappa} \varrho_{\alpha} {\bf \nabla} X^\kappa_{\alpha} \right\}
- - \sum_\alpha q_\alpha^\kappa = \quad 0 \qquad \kappa \in \{w, a\} \, ,
+    &-& \sum_\alpha \text{div} \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \text{grad}\, X^\kappa_{\alpha} \right\}
+ - \sum_\alpha q_\alpha^\kappa = 0 \qquad \kappa \in \{w, a\} \, ,
  \alpha \in \{w, g\}
  \f}
  *
