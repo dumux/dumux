@@ -15,20 +15,7 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-/*!
- * \ingroup IMPET
- * \defgroup IMPES Immiscible IMPES
- */
-/*!
- * \ingroup IMPES
- * \defgroup FV2p Finite-Volume
- */
-/*! \ingroup IMPES
- * \defgroup MPFA2p MPFA
- */
-/*! \ingroup IMPES
- * \defgroup mimetic Mimetic FiniteDifference
- */
+
 /*!
  * \ingroup IMPES
  * \ingroup Properties

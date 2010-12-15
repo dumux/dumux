@@ -31,10 +31,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPET
- * \defgroup IMPETproblems IMPET problems
- */
-/*!
  * \ingroup IMPETproblems
  * @brief base class for problems using a sequential implicit-explicit strategy
  *

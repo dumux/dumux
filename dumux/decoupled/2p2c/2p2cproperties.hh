@@ -15,18 +15,6 @@
  *****************************************************************************/
 
 /*!
- * \ingroup IMPET
- * \defgroup IMPEC Miscible IMPEC
- */
-/*!
- * \ingroup IMPEC
- * \defgroup multiphase Multiphase Compositional Models
- */
-/*!
- * \ingroup IMPEC
- * \defgroup multiphysics Multiphysics Compositional Models
- */
-/*!
  * \ingroup IMPEC Properties
  * \file
  *

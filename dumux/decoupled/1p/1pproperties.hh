@@ -15,10 +15,7 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-/*!
- * \ingroup IMPES
- * \defgroup FV1p Single Phase Finite-Volume
- */
+
 /*!
  * \ingroup FV1p
  * \file

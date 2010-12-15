@@ -185,7 +185,7 @@ public:
     {
         problem().variables().addOutputVtkFields(writer);
 
-#if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+#if DUNE_MINIMAL_DEBUG_LEVEL <= 2
         // add debug stuff
         Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer.template createField<double, 1> (dv_dp.size());
         *errorCorrPtr = errorCorrection;
@@ -220,7 +220,7 @@ public:
                                     problem_.gridView());
         problem().variables().addOutputVtkFields(debugWriter_);
 
-        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+        #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
                 // output porosity, permeability
                 Dune::BlockVector<Dune::FieldVector<double,1> > *poroPtr = debugWriter_.template createField<double, 1> (dv_dp.size());
                 Dune::BlockVector<Dune::FieldVector<double,1> > *permPtr = debugWriter_.template createField<double, 1> (dv_dp.size());
@@ -359,12 +359,12 @@ void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
     // initialguess: set saturations, determine visco and mobility for initial pressure equation
     // at this moment, the pressure is unknown. Hence, dont regard compositional effects.
     initialMaterialLaws(false);     Dune::dinfo << "first saturation guess"<<std::endl; //=J: initialGuess()
-            #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+            #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
                 debugOutput();
             #endif
     assemble(true);                 Dune::dinfo << "first pressure guess"<<std::endl;
     solve();
-            #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+            #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
                 debugOutput(1e-6);
             #endif
     // update the compositional variables (hence true)
@@ -375,7 +375,7 @@ void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
     problem_.transportModel().update(0., dt_estimate, problem_.variables().updateEstimate(), false);   Dune::dinfo << "secant guess"<< std::endl;
     dt_estimate = std::min ( problem_.timeManager().timeStepSize(), dt_estimate);
     problem_.variables().updateEstimate() *= dt_estimate;
-            #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+            #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
                 debugOutput(2e-6);
             #endif
     // pressure calculation
@@ -752,8 +752,6 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                     }
                     else if(pressureType==pn)
                     {
-                    	//TODO: take pC from variables or from MaterialLaw?
-                    	// if the latter, one needs Sw
                         pcBound = problem_.variables().capillaryPressure(globalIdxI);
                         pressBC = pressBound - pcBound;
                     }
@@ -1174,12 +1172,52 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
         int globalIdx = problem_.variables().index(*eIt);
 
         Scalar temperature_ = problem_.temperature(globalPos, *eIt);
+        // reset volume error
+        problem_.variables().volErr()[globalIdx] = 0;
 
 
         // get the overall mass of component 1 Z1 = C^k / (C^1+C^2) [-]
         Scalar Z1 = problem_.variables().totalConcentration(globalIdx, wCompIdx)
                 / (problem_.variables().totalConcentration(globalIdx, wCompIdx)
                         + problem_.variables().totalConcentration(globalIdx, nCompIdx));
+
+
+        // make shure only physical quantities enter flash calculation
+//        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+        if(Z1<0. || Z1 > 1.)
+        {
+            Dune::dgrave << "Feed mass fraction unphysical: Z1 = " << Z1
+                   << " at global Idx " << globalIdx
+                   << " , because totalConcentration(globalIdx, wCompIdx) = "
+                   << problem_.variables().totalConcentration(globalIdx, wCompIdx)
+                   << " and totalConcentration(globalIdx, nCompIdx) = "
+                   << problem_.variables().totalConcentration(globalIdx, nCompIdx)<< std::endl;
+            if(Z1<0.)
+                {
+                Z1 = 0.;
+                // add this error to volume error term for correction in next TS
+                problem_.variables().volErr()[globalIdx] +=
+                        problem_.variables().totalConcentration(globalIdx, wCompIdx)
+                        / problem_.variables().densityWetting(globalIdx);
+                //regul!
+                problem_.variables().totalConcentration(globalIdx, wCompIdx) = 0.;
+                Dune::dgrave << "Regularize totalConcentration(globalIdx, wCompIdx) = "
+                    << problem_.variables().totalConcentration(globalIdx, wCompIdx)<< std::endl;
+                }
+            else
+                {
+                Z1 = 1.;
+                // add this error to volume error term for correction in next TS
+                problem_.variables().volErr()[globalIdx] +=
+                        problem_.variables().totalConcentration(globalIdx, nCompIdx)
+                        / problem_.variables().densityNonwetting(globalIdx);
+                //regul!
+                problem_.variables().totalConcentration(globalIdx, nCompIdx) = 0.;
+                Dune::dgrave << "Regularize totalConcentration(globalIdx, nCompIdx) = "
+                    << problem_.variables().totalConcentration(globalIdx, nCompIdx)<< std::endl;
+                }
+        }
+//        #endif
 
         //determine phase pressures from primary pressure variable
         Scalar pressW(0.), pressNW(0.);
@@ -1253,7 +1291,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
         Scalar vol = massw / problem_.variables().densityWetting(globalIdx) + massn / problem_.variables().densityNonwetting(globalIdx);
         if (dt != 0)
         {
-            problem_.variables().volErr()[globalIdx] = (vol - problem_.spatialParameters().porosity(globalPos, *eIt));
+            problem_.variables().volErr()[globalIdx] += (vol - problem_.spatialParameters().porosity(globalPos, *eIt));
 
             Scalar volErrI = problem_.variables().volErr(globalIdx);
             if (std::isnan(volErrI))
@@ -1264,10 +1302,6 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
                         << ", massn = " << massn << ", rho_g = " << problem_.variables().densityNonwetting(globalIdx)
                         << ", poro = " << problem_.spatialParameters().porosity(globalPos, *eIt) << ", dt = " << dt);
             }
-        }
-        else
-        {
-            problem_.variables().volErr()[globalIdx] = 0;
         }
     }
     return;

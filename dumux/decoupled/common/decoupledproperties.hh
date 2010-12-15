@@ -21,9 +21,7 @@
 
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
-/*!
- * \defgroup Sequential Sequential Scheme
- */
+
 /*!
  * \ingroup Sequential
  * \ingroup Properties

@@ -1019,7 +1019,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                             //calculate right hand side
                             rightEntry = (lambdaW * densityW * dV_w + lambdaNW * densityNW * dV_n) * (permeability * gravity)
                                     * faceArea ;
-
+                        } //end 2p subdomain
 
 
                         // set diagonal entry and right hand side entry
@@ -1306,36 +1306,73 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
         int globalIdx = problem_.variables().index(*eIt);
 
         Scalar temperature_ = problem_.temperature(globalPos, *eIt);
+        // reset volErr
+        problem_.variables().volErr()[globalIdx] = 0;
 
         // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]
         Scalar Z1 = problem_.variables().totalConcentration(globalIdx, wCompIdx)
                 / (problem_.variables().totalConcentration(globalIdx, wCompIdx)
                         + problem_.variables().totalConcentration(globalIdx, nCompIdx));
+        // make shure only physical quantities enter flash calculation
+        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+        if(Z1<0. || Z1 > 1.)
+        {
+            std::cout << "Feed mass fraction unphysical: Z1 = " << Z1
+                   << " at global Idx " << globalIdx
+                   << " , because totalConcentration(globalIdx, wCompIdx) = "
+                   << problem_.variables().totalConcentration(globalIdx, wCompIdx)
+                   << " and totalConcentration(globalIdx, nCompIdx) = "
+                   << problem_.variables().totalConcentration(globalIdx, nCompIdx)<< std::endl;
+            if(Z1<0.)
+            {
+            Z1 = 0.;
+            // add this error to volume error term for correction in next TS
+            problem_.variables().volErr()[globalIdx] +=
+                    problem_.variables().totalConcentration(globalIdx, wCompIdx)
+                    / problem_.variables().densityWetting(globalIdx);
+            //regul!
+            problem_.variables().totalConcentration(globalIdx, wCompIdx) = 0.;
+            Dune::dgrave << "Regularize totalConcentration(globalIdx, wCompIdx) = "
+                << problem_.variables().totalConcentration(globalIdx, wCompIdx)<< std::endl;
+            }
+        else
+            {
+            Z1 = 1.;
+            // add this error to volume error term for correction in next TS
+            problem_.variables().volErr()[globalIdx] +=
+                    problem_.variables().totalConcentration(globalIdx, nCompIdx)
+                    / problem_.variables().densityNonwetting(globalIdx);
+            //regul!
+            problem_.variables().totalConcentration(globalIdx, nCompIdx) = 0.;
+            Dune::dgrave << "Regularize totalConcentration(globalIdx, nCompIdx) = "
+                << problem_.variables().totalConcentration(globalIdx, nCompIdx)<< std::endl;
+            }
+        }
+        #endif
 
         if (problem_.variables().subdomain(globalIdx)==2)   //=> 2p domain
         {
-            //determine phase pressures from primary pressure variable
-            Scalar pressW(0.), pressNW(0.);
-            switch (pressureType)
-            {
-            case pw:
-            {
-                pressW = problem_.variables().pressure()[globalIdx];
-                Scalar oldSatW = problem_.variables().saturation(globalIdx);
-                pressNW = problem_.variables().pressure()[globalIdx]
-                          + MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPos, *eIt), oldSatW);
-                break;
-            }
-            case pn:
-            {
-                //todo: check this case for consistency throughout the model!
-                pressNW = problem_.variables().pressure()[globalIdx];
-                Scalar oldSatW = problem_.variables().saturation(globalIdx);
-                pressW = problem_.variables().pressure()[globalIdx]
-                         - MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPos, *eIt), oldSatW);
-                break;
-            }
-            }
+        //determine phase pressures from primary pressure variable
+        Scalar pressW(0.), pressNW(0.);
+        switch (pressureType)
+        {
+        case pw:
+        {
+            pressW = problem_.variables().pressure()[globalIdx];
+
+            pressNW = problem_.variables().pressure()[globalIdx];
+            break;
+        }
+        case pn:
+        {
+            //todo: check this case for consistency throughout the model!
+            pressNW = problem_.variables().pressure()[globalIdx];
+
+            pressW = problem_.variables().pressure()[globalIdx];
+
+            break;
+        }
+        }
             //complete fluid state
             fluidState.update(Z1, pressW, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
 
@@ -1381,7 +1418,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
                        + massn / problem_.variables().densityNonwetting(globalIdx);
             if (dt != 0)
             {
-                problem_.variables().volErr()[globalIdx] = (vol - problem_.spatialParameters().porosity(globalPos, *eIt));
+                problem_.variables().volErr()[globalIdx] += (vol - problem_.spatialParameters().porosity(globalPos, *eIt));
 
                 Scalar volErrI = problem_.variables().volErr(globalIdx);
                 if (std::isnan(volErrI))

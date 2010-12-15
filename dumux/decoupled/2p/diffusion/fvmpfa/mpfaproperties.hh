@@ -14,10 +14,7 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-/*!
- * \ingroup IMPES
- * \addtogroup MPFA2p
- */
+
 /*!
  * \ingroup MPFA2p
  * \file

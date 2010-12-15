@@ -31,11 +31,8 @@
 namespace Dumux
 {
 /*!
+ * \ingroup IMPESproblem
  * \ingroup IMPES
- * \defgroup IMPESproblems IMPES problems
- */
-/*!
- * \ingroup IMPESproblems
  * \brief  Base class for all 2-phase problems which use an impes algorithm
  *
  * \todo Please doc me more!
@@ -145,7 +142,6 @@ public:
     // \}
 
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
     GlobalPosition gravity_;
 
     // fluids and material properties

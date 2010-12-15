@@ -24,7 +24,8 @@
 
 namespace Dumux
 {
-/** \ingroup IMPEC
+/**
+ * \ingroup IMPEC IMPETbc
  * \brief Defines type of boundary conditions for 2p2c processes
  *
  *  This is to distinguish BC types for 2p2c processes similar to

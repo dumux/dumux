@@ -17,10 +17,6 @@
 #define DUMUX_TRANSPORT_PROPERTIES_HH
 
 /*!
- * \ingroup FV2p
- * \defgroup Transport2p Immiscible Transport
- */
-/*!
  * \ingroup Transport2p
  * \ingroup Properties
  */

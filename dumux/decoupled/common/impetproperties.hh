@@ -18,10 +18,6 @@
 
 #include <dumux/decoupled/common/decoupledproperties.hh>
 /*!
- * \ingroup Sequential
- * \defgroup IMPET IMPET (Implicit Pressure Explicit Transport)
- */
-/*!
  * \ingroup IMPET
  * \ingroup Properties
  */
