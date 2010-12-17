@@ -951,7 +951,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     if (nextisItbctype == BoundaryConditions::neumann)
                     {
                         // get Neumann boundary value of 'nextisIt'
-                        std::vector<Scalar> J(problem_.neumannPress(globalPosFace13, *nextisIt));
+                        std::vector<Scalar> J(problem_.neumann(globalPosFace13, *nextisIt));
                         double J3 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
 
                         // get boundary condition for boundary face (isIt24) center
@@ -962,7 +962,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         if (isIt24bctype == BoundaryConditions::neumann)
                         {
                             // get neumann boundary value of 'isIt24'
-                            std::vector<Scalar> J(problem_.neumannPress(globalPosFace24, *isIt24));
+                            std::vector<Scalar> J(problem_.neumann(globalPosFace24, *isIt24));
                             double J4 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
@@ -1224,7 +1224,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         if (isIt24bctype == BoundaryConditions::neumann)
                         {
                             // get Neumann boundary value of 'isIt24'
-                            std::vector<Scalar> J(problem_.neumannPress(globalPosFace24, *isIt24));
+                            std::vector<Scalar> J(problem_.neumann(globalPosFace24, *isIt24));
                             double J4 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
@@ -1423,7 +1423,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 if (isItbctype == BoundaryConditions::neumann)
                 {
                     // get Neumann boundary value
-                    std::vector<Scalar> J(problem_.neumannPress(globalPosFace12, *isIt));
+                    std::vector<Scalar> J(problem_.neumann(globalPosFace12, *isIt));
                     double J1 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
 
                     // evaluate right hand side
@@ -1583,7 +1583,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         if (isIt34bctype == BoundaryConditions::neumann)
                         {
                             // get Neumann boundary value
-                            std::vector<Scalar> J(problem_.neumannPress(globalPosFace34, *isIt34));
+                            std::vector<Scalar> J(problem_.neumann(globalPosFace34, *isIt34));
                             double J2 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
@@ -1963,7 +1963,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         else
                         {
                             // get Neumann boundary value of 'nextisIt'
-                            std::vector<Scalar> J(problem_.neumannPress(globalPosFace13, *nextisIt));
+                            std::vector<Scalar> J(problem_.neumann(globalPosFace13, *nextisIt));
                             double J3 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21;
@@ -2177,7 +2177,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         else
                         {
                             // get Neumann boundary value of 'isIt34'
-                            std::vector<Scalar> J(problem_.neumannPress(globalPosFace34, *isIt34));
+                            std::vector<Scalar> J(problem_.neumann(globalPosFace34, *isIt34));
                             double J2 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;

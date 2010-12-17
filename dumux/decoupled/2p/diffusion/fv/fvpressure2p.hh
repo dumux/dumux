@@ -758,7 +758,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
 
                 else
                 {
-                    std::vector<Scalar> J(problem_.neumannPress(globalPosFace, *isIt));
+                    std::vector<Scalar> J(problem_.neumann(globalPosFace, *isIt));
                     if (!compressibility)
                     {
                         J[wPhaseIdx] /= densityWI;

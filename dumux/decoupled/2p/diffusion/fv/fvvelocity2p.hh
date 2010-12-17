@@ -656,7 +656,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
 
                 else
                 {
-                    std::vector<Scalar> J = this->problem().neumannPress(globalPosFace, *isIt);
+                    std::vector<Scalar> J = this->problem().neumann(globalPosFace, *isIt);
                     Dune::FieldVector<Scalar,dimWorld> velocityW(unitOuterNormal);
                     Dune::FieldVector<Scalar,dimWorld> velocityNW(unitOuterNormal);
 

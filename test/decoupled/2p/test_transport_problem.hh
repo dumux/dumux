@@ -189,17 +189,18 @@ public:
 	}
 
 	std::vector<Scalar> source(const GlobalPosition& globalPos, const Element& element)
-		{
-		return std::vector<Scalar>(2, 0.0);
-		}
+    {
+	    return std::vector<Scalar>(2, 0.0);
+    }
 
 	BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Intersection& intersection) const
 	{
-		if (globalPos[0] > (upperRight_[0] - eps_) || globalPos[0] < eps_)
-			//    if (globalPos[0] < eps_)
-			return Dumux::BoundaryConditions::dirichlet;
-		else
-			return Dumux::BoundaryConditions::neumann;
+	    if (globalPos[0] < eps_)
+	        return Dumux::BoundaryConditions::dirichlet;
+	    else if (globalPos[0] > upperRight_[0] - eps_)
+	        return Dumux::BoundaryConditions::outflow;
+	    else
+	        return Dumux::BoundaryConditions::neumann;
 	}
 
 	Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& intersection) const
@@ -210,11 +211,9 @@ public:
 		return 0.0;
 	}
 
-	Scalar neumannSat(const GlobalPosition& globalPos, const Intersection& intersection, Scalar factor) const
+	std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
 	{
-		if (globalPos[0] > upperRight_[0] - eps_)
-			return factor;
-		return 0;
+		return std::vector<Scalar>(2, 0.0);
 	}
 
 	Scalar initSat(const GlobalPosition& globalPos, const Element& element) const

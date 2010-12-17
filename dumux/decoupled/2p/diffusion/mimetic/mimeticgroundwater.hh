@@ -382,7 +382,7 @@ private:
 
                 if (bctypeface == BoundaryConditions::neumann)
                 {
-                    std::vector<Scalar> neumannFlux(problem_.neumannPress(faceGlobal, *it));
+                    std::vector<Scalar> neumannFlux(problem_.neumann(faceGlobal, *it));
                     Scalar J = (neumannFlux[wetting]+neumannFlux[nonwetting]);
                     this->b[faceIndex] -= J*it->geometry().volume();
                 }

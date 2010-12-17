@@ -222,9 +222,10 @@ typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos, 
 
 BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
-    if (globalPos[0] > (upperRight_[0] - eps_) || globalPos[0] < eps_)
-//    if (globalPos[0] < eps_)
+    if (globalPos[0] < eps_)
     return Dumux::BoundaryConditions::dirichlet;
+    else if (globalPos[0] > upperRight_[0] - eps_)
+        return Dumux::BoundaryConditions::outflow;
     else
     return Dumux::BoundaryConditions::neumann;
 }
@@ -260,7 +261,7 @@ Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& interse
     return 0.2;
 }
 
-std::vector<Scalar> neumannPress(const GlobalPosition& globalPos, const Intersection& intersection) const
+std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
     std::vector<Scalar> neumannFlux(2, 0.0);
     if (globalPos[0] > upperRight_[0] - eps_)
@@ -268,13 +269,6 @@ std::vector<Scalar> neumannPress(const GlobalPosition& globalPos, const Intersec
         neumannFlux[nPhaseIdx] = 3e-4;
     }
     return neumannFlux;
-}
-
-Scalar neumannSat(const GlobalPosition& globalPos, const Intersection& intersection, Scalar factor) const
-{
-    if (globalPos[0] > upperRight_[0] - eps_)
-    return factor;
-    return 0;
 }
 
 Scalar initSat(const GlobalPosition& globalPos, const Element& element) const

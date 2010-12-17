@@ -87,6 +87,7 @@ int main(int argc, char** argv)
         fvProblem.init();
         fvProblem.model().calculateVelocity();
         double fvTime = timer.elapsed();
+        fvProblem.writeOutput();
         Dumux::ResultEvaluation fvResult;
         fvResult.evaluate(grid.leafView(), fvProblem, fvProblem.variables().pressure(), fvProblem.variables().velocity(), consecutiveNumbering);
 
@@ -96,6 +97,7 @@ int main(int argc, char** argv)
         mpfaProblem.init();
         mpfaProblem.model().calculateVelocity();
         double mpfaTime = timer.elapsed();
+        mpfaProblem.writeOutput();
         Dumux::ResultEvaluation mpfaResult;
         mpfaResult.evaluate(grid.leafView(), mpfaProblem, mpfaProblem.variables().pressure(), mpfaProblem.variables().velocity(), consecutiveNumbering);
 
@@ -105,6 +107,7 @@ int main(int argc, char** argv)
         mimeticProblem.init();
         mimeticProblem.model().calculateVelocity();
         double mimeticTime = timer.elapsed();
+        mimeticProblem.writeOutput();
         Dumux::ResultEvaluation mimeticResult;
         mimeticResult.evaluate(grid.leafView(), mimeticProblem, mimeticProblem.variables().pressure(), mimeticProblem.variables().velocity(), consecutiveNumbering);
 

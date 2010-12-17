@@ -269,7 +269,7 @@ public:
         return 1.0;
     }
 
-    std::vector<Scalar> neumannPress(const GlobalPosition& globalPos, const Intersection& intersection) const
+    std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
         {
         std::vector<Scalar> neumannFlux(2, 0.0);
 
