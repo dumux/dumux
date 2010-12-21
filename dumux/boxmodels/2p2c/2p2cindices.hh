@@ -75,8 +75,8 @@ public:
     static const int SgOrXIdx = switchIdx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component in the only phase
 
     // equation indices
-    static const int contiLEqIdx = PVOffset + 0; //!< Index of the mass conservation equation for the liquid's primary component
-    static const int contiGEqIdx = PVOffset + 1; //!< Index of the mass conservation equation for the gas' primary component
+    static const int contiLEqIdx = PVOffset + lCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
+    static const int contiGEqIdx = PVOffset + gCompIdx; //!< Index of the mass conservation equation for the gas' primary component
 };
 
 /*!
@@ -112,8 +112,8 @@ public:
     static const int SlOrXIdx = switchIdx; //!< Index of the either the saturation of the liquid phase or the mass fraction secondary component in the only phase
 
     // Equation indices
-    static const int contiLEqIdx = PVOffset + 1; //!< Index of the mass conservation equation for the liquid's primary component
-    static const int contiGEqIdx = PVOffset + 0; //!< Index of the mass conservation equation for the gas' primary component
+    static const int contiLEqIdx = PVOffset + lCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
+    static const int contiGEqIdx = PVOffset + gCompIdx; //!< Index of the mass conservation equation for the gas' primary component
 };
 
 // \}
