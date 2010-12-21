@@ -145,6 +145,8 @@ AC_CONFIG_FILES([dumux.pc
     test/decoupled/1p/Makefile
     test/decoupled/2p/Makefile
     test/decoupled/2p2c/Makefile
+    test/material/Makefile
+    test/material/tabulation/Makefile
     tutorial/Makefile
 ])
 
