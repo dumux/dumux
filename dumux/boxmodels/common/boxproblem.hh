@@ -83,6 +83,7 @@ public:
           elementMapper_(gridView),
           vertexMapper_(gridView),
           timeManager_(&timeManager),
+          newtonMethod_(asImp_()),
           resultWriter_(asImp_().name())
     {
         // calculate the bounding box of the grid view
@@ -98,14 +99,10 @@ public:
             bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
             bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
         }
-
-        model_ = new Model();
     }
 
     ~BoxProblem()
     {
-        delete model_;
-        delete newtonMethod_;
     };
 
     /*!
@@ -119,7 +116,6 @@ public:
     {
         // set the initial condition of the model
         model().init(asImp_());
-        newtonMethod_ = new NewtonMethod(asImp_());
     }
 
     /*!
@@ -158,7 +154,7 @@ public:
                 std::cout << "Newton solver did not converge. Retrying with time step of "
                           << timeManager().timeStepSize() << "sec\n";
 
-            if (model_->update(*newtonMethod_, newtonCtl_))
+            if (model_.update(newtonMethod_, newtonCtl_))
                 return;
 
             // update failed
@@ -173,6 +169,18 @@ public:
                    << " timestep divisions. dt="
                    << timeManager().timeStepSize());
     }
+
+    /*!
+     * \brief Returns the newton method object 
+     */
+    NewtonMethod &newtonMethod()
+    { return newtonMethod_; }
+
+    /*!
+     * \copydoc newtonMethod()
+     */
+    const NewtonMethod &newtonMethod() const
+    { return newtonMethod_; }
 
     /*!
      * \brief Returns the newton contoller object
@@ -235,7 +243,7 @@ public:
      */
     void advanceTimeLevel()
     { 
-        model_->advanceTimeLevel();
+        model_.advanceTimeLevel();
     }
 
     /*!
@@ -325,13 +333,13 @@ public:
      * \brief Returns numerical model used for the problem.
      */
     Model &model()
-    { return *model_; }
+    { return model_; }
 
     /*!
      * \copydoc model()
      */
     const Model &model() const
-    { return *model_; }
+    { return model_; }
     // \}
 
     /*!
@@ -461,9 +469,9 @@ private:
 
     TimeManager *timeManager_;
 
-    Model *model_;
+    Model model_;
 
-    NewtonMethod    *newtonMethod_;
+    NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
 
     VtkMultiWriter resultWriter_;

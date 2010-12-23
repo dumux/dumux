@@ -364,8 +364,7 @@ public:
      *        model can overload.
      */
     void updateSuccessful()
-    {
-    };
+    { };
 
     /*!
      * \brief Called by the update() method if it was
