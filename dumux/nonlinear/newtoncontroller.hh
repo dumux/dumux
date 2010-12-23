@@ -254,6 +254,7 @@ public:
         : endIterMsgStream_(std::ostringstream::out),
           convergenceWriter_(asImp_())
     {
+        verbose_ = true;
         numSteps_ = 0;
 
         this->setRelTolerance(1e-8);
@@ -623,10 +624,16 @@ public:
     { return endIterMsgStream_; }
 
     /*!
+     * \brief Specifies if the newton method ought to be chatty.
+     */
+    void setVerbose(bool val)
+    { verbose_ = val; }
+
+    /*!
      * \brief Returns true iff the newton method ought to be chatty.
      */
     bool verbose() const
-    { return gridView_().comm().rank() == 0; }
+    { return verbose_ && gridView_().comm().rank() == 0; }
 
 protected:
     /*!
@@ -762,6 +769,7 @@ protected:
     std::ostringstream endIterMsgStream_;
 
     NewtonMethod *method_;
+    bool verbose_;
 
     ConvergenceWriter convergenceWriter_;
 
