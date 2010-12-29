@@ -157,11 +157,11 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  * This problem uses the \ref TwoPBoxModel.
  *
  * This problem should typically be simulated until \f$t_{\text{end}}
- * \approx 50\,000\;s\f$ is reached. A good choice for the initial time step
+ * \approx 20\,000\;s\f$ is reached. A good choice for the initial time step
  * size is \f$t_{\text{inital}} = 250\;s\f$.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p 50000 250</tt>
+ * <tt>./test_2p 20000 250</tt>
  */
 template <class TypeTag >
 class LensProblem : public TwoPProblem<TypeTag>
