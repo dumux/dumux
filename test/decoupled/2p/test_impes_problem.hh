@@ -133,6 +133,14 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
  * \ingroup IMPETtests
  *
  * \brief test problem for the sequential 2p model
+ *
+ * Water is injected from the left side into a rectangular 2D domain also
+ * filled with water. Upper and lower boundary is closed (Neumann = 0),
+ * and there is free outflow on the right side.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_2p 1e8</tt>,
+ * where the argument defines the simulation endtime.
  */
 template<class TypeTag = TTAG(IMPESTestProblem)>
 class TestIMPESProblem: public IMPESProblem2P<TypeTag, TestIMPESProblem<TypeTag> >

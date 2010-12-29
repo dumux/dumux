@@ -110,6 +110,18 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
  * \ingroup IMPETtests
  *
  * \brief test problem for the explicit transport model
+ *
+ *
+ * A unit "fluid" is injected from the left side into a rectangular 2D
+ * domain also this testing fluid. Upper and lower boundary are closed (Neumann = 0),
+ * and there is free outflow on the right side.
+ *
+ * This test solely applies the 2p transport on a given velocity field, without a
+ * pressure field being solved.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_2p 16000</tt>,
+ * where the argument defines the simulation endtime.
  */
 template<class TypeTag = TTAG(TransportTestProblem)>
 class TestTransportProblem: public TransportProblem2P<TypeTag, TestTransportProblem<TypeTag> >
