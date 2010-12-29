@@ -179,9 +179,9 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported in fluidState!");
         }
-//        else  if (sat <= 0 || sat >= 1)
-//            DUNE_THROW(Dune::RangeError,
-//                       "Decoupled2p2c :: saturation initial and boundary conditions may not equal zero or one!");
+//        else  if (sat <= 0. || sat >= 1.)
+//            Dune::dinfo << "saturation initial and boundary conditions set to zero or one!"
+//                << " assuming fully saturated compositional conditions" << std::endl;
 
         // assign values
         Sw_ = sat;
@@ -196,11 +196,6 @@ public:
 					/ phasePressure_[nPhaseIdx];
         double k2 = FluidSystem::activityCoeff(wPhaseIdx, nCompIdx, temperature_, phasePressure_[nPhaseIdx], *this)
 					/ phasePressure_[nPhaseIdx];
-
-        if (Sw_==1.)    //only wPhase present
-            k1 = 1.;
-        if (Sw_==0.)    //only nPhase present
-            k2 = 0.;
 
         // get mole fraction from equilibrium konstants
         Scalar xw1 = (1. - k2) / (k1 -k2);

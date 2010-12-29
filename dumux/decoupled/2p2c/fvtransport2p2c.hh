@@ -234,7 +234,6 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         double Xw1_I = problem_.variables().wet_X1(globalIdxI);
         double Xn1_I = problem_.variables().nonwet_X1(globalIdxI);
 
-        //TODO: decide which to use!!
         Scalar densityWI (0.), densityNWI(0.);
         if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
         {
@@ -408,8 +407,6 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 {
                     //get dirichlet pressure boundary condition
                     Scalar pressBound = 0.;
-                	//TODO: take pC from variables or from MaterialLaw?
-                	// if the latter, one needs Sw
                     Scalar pcBound = problem_.variables().capillaryPressure(globalIdxI);
                     switch (pressureType)
                     {
@@ -526,9 +523,10 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
                 if (bcTypeTransport_ == BoundaryConditions::neumann)
                 {
+                    // Convention: outflow => positive sign : has to be subtracted from update vec
                     Dune::FieldVector<Scalar,2> J = problem_.neumann(globalPosFace, *isIt);
-                    updFactor[wCompIdx] = J[0] * faceArea / volume;
-                    updFactor[nCompIdx] = J[1] * faceArea / volume;
+                    updFactor[wCompIdx] = - J[0] * faceArea / volume;
+                    updFactor[nCompIdx] = - J[1] * faceArea / volume;
 
                     // for timestep control
 					#define cflIgnoresNeumann

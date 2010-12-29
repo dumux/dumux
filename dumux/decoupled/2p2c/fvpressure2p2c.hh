@@ -156,7 +156,6 @@ public:
 
     void calculateVelocity()
     {
-    	// TODO: do this if we use a total velocity description. else, its just a vaste of time.
         return;
     }
 
@@ -257,7 +256,7 @@ public:
                 * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()),
                 debugWriter_("debugOutput2p2c"), gravity(problem.gravity())
     {
-        if (pressureType != pw && pressureType != pn && pressureType != pglobal)
+        if (pressureType != pw && pressureType != pn)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
         }
@@ -691,7 +690,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 	                //calculate current matrix entry
                     entry = faceArea * (lambdaW * dV_w + lambdaN * dV_n)
                             - volume / numberOfFaces * (lambdaW * gV_w + lambdaN * gV_n); 	// randintegral - gebietsintegral
-                    entry *= fabs((permeability*unitOuterNormal)/(dist)); // TODO: markus nimmt hier statt fabs() ein  unitDistVec * unitDistVec
+                    entry *= fabs((permeability*unitOuterNormal)/(dist));
 
                     //calculate right hand side
                     rightEntry = faceArea  * (unitOuterNormal * unitDistVec) * (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n);
@@ -1221,25 +1220,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 
         //determine phase pressures from primary pressure variable
         Scalar pressW(0.), pressNW(0.);
-        switch (pressureType)
-        {
-        case pw:
-        {
-            pressW = problem_.variables().pressure()[globalIdx];
+        pressW = pressNW = problem_.variables().pressure()[globalIdx];
 
-            pressNW = problem_.variables().pressure()[globalIdx];
-            break;
-        }
-        case pn:
-        {
-            //todo: check this case for consistency throughout the model!
-            pressNW = problem_.variables().pressure()[globalIdx];
-
-            pressW = problem_.variables().pressure()[globalIdx];
-
-            break;
-        }
-        }
 
         //complete fluid state
         fluidState.update(Z1, pressW, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
@@ -1250,7 +1232,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
         // initialize saturation
         problem_.variables().saturation(globalIdx) = fluidState.saturation(wPhaseIdx);
 
-        // initialize pC		todo: remove this dummy implementation
+        // initialize pC: As pC is currently neglected, it is set to zero.
         problem_.variables().capillaryPressure(globalIdx) = 0.0;
 
 

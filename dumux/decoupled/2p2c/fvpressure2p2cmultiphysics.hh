@@ -162,7 +162,6 @@ public:
 
     void calculateVelocity()
     {
-    	// TODO: do this if we use a total velocity description. else, its just a vaste of time.
         return;
     }
 
@@ -733,33 +732,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                         entry -= volume / numberOfFaces * (lambdaW * gV_w + lambdaN * gV_n);
                         rightEntry -= volume / numberOfFaces * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n);
                     }
-                    entry *= fabs((permeability*unitOuterNormal)/(dist)); // TODO: markus nimmt hier statt fabs() ein  unitDistVec * unitDistVec
+                    entry *= fabs((permeability*unitOuterNormal)/(dist));
                     rightEntry *= (permeability * gravity);
-
-                    // TODO: implement a proper capillary pressure
-//	                switch (pressureType)
-//	                {
-//	                case pw:
-//						{
-//							// calculate capillary pressure gradient
-//							Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-//							pCGradient *= (pcI - pcJ) / dist;
-//
-//							//add capillary pressure term to right hand side
-//							rightEntry += 0.5 * (lambdaNWI + lambdaNWJ) * (permeability * pCGradient) * faceArea;
-//							break;
-//						}
-//	                case pn:
-//						{
-//							// calculate capillary pressure gradient
-//							Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-//							pCGradient *= (pcI - pcJ) / dist;
-//
-//							//add capillary pressure term to right hand side
-//							rightEntry -= 0.5 * (lambdaWI + lambdaWJ) * (permeability * pCGradient) * faceArea;
-//							break;
-//						}
-//	                }
                 }   // end !first
 
                 //set right hand side
@@ -814,8 +788,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     }
                     else if(pressureType==pn)
                     {
-                    	//TODO: take pC from variables or from MaterialLaw?
-                    	// if the latter, one needs Sw
                         pcBound = problem_.variables().capillaryPressure(globalIdxI);
                         pressBC = pressBound - pcBound;
                     }
@@ -1354,25 +1326,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
         {
         //determine phase pressures from primary pressure variable
         Scalar pressW(0.), pressNW(0.);
-        switch (pressureType)
-        {
-        case pw:
-        {
-            pressW = problem_.variables().pressure()[globalIdx];
+        pressW =pressNW= problem_.variables().pressure()[globalIdx];
 
-            pressNW = problem_.variables().pressure()[globalIdx];
-            break;
-        }
-        case pn:
-        {
-            //todo: check this case for consistency throughout the model!
-            pressNW = problem_.variables().pressure()[globalIdx];
-
-            pressW = problem_.variables().pressure()[globalIdx];
-
-            break;
-        }
-        }
             //complete fluid state
             fluidState.update(Z1, pressW, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
 

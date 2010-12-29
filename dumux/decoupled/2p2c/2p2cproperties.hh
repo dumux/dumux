@@ -135,7 +135,7 @@ SET_INT_PROP(DecoupledTwoPTwoC,
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         VelocityFormulation,
-        TwoPCommonIndices<TypeTag>::velocityTotal);
+        TwoPCommonIndices<TypeTag>::velocityW);
 
 SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 {
