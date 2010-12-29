@@ -461,9 +461,9 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     {
                     case pw:
                     {
-                        potentialW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]) / dist;
+                        potentialW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]);
                         potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] + pcI
-                                - pcJ) / dist;
+                                - pcJ);
                         break;
                     }
                     case pn:
