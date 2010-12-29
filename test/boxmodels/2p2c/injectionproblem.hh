@@ -110,6 +110,9 @@ SET_BOOL_PROP(InjectionProblem, EnablePartialReassemble, true);
  * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
  * partially enters the lower permeable aquitard.
  * This problem uses the \ref TwoPTwoCModel.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_2p2c grids/test_2p2c.dgf 1e6 1e4 </tt>
  */
 template <class TypeTag = TTAG(InjectionProblem) >
 class InjectionProblem : public TwoPTwoCProblem<TypeTag>
