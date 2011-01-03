@@ -56,7 +56,10 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<3>);
+SET_PROP(OnePTestProblem, Grid)
+{
+    typedef Dune::SGrid<2, 2> type;
+};
 
 #if HAVE_DUNE_PDELAB
 SET_PROP(OnePTestProblem, LocalFEMSpace)
@@ -90,11 +93,11 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
  * \brief Air flow in porous media
  *
  * The domain is box shaped. All sides are closed (Neumann 0 boundary)
- * except the top and bottom boundaries (Dirichlet), where air is
+ * except the top and bottom boundaries (Dirichlet), where water is
  * flowing from bottom to top.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_1p ./grids/1p_2d.dgf 10 0.01</tt>
+ * <tt>./test_1p grids/1p_2d.dgf 10 0.01</tt>
  * where start simulation time = 0.01 second, end simulation time = 10 seconds
  * The same file can be also used for 3d simulation but you need to change line
  * <tt>typedef Dune::SGrid<2,2> type;</tt> to
@@ -156,7 +159,7 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This problem assumes a temperature of 36 degrees Celsius.
+     * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
