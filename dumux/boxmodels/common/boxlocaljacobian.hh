@@ -35,6 +35,33 @@ namespace Dumux
 /*!
  * \ingroup BoxModel
  * \brief Caculates the Jacobian of the local residual for box models
+ *
+ * The default behaviour is to use numeric differentiation, i.e.
+ * forward or backward differences (2nd order), or central
+ * differences (3rd order). The method used is determined by the
+ * "NumericDifferenceMethod" property:
+ *
+ * - if the value of this property is smaller than 0, backward
+ *   differences are used, i.e.:
+ *   \f[
+ \frac{\partial f(x)}{\partial x} \approx \frac{f(x) - f(x - \epsilon)}{\epsilon}
+ *   \f]
+ *
+ * - if the value of this property is 0, central
+ *   differences are used, i.e.:
+ *   \f[
+ \frac{\partial f(x)}{\partial x} \approx \frac{f(x + \epsilon) - f(x - \epsilon)}{2 \epsilon}
+ *   \f]
+ *
+ * - if the value of this property is larger than 0, forward
+ *   differences are used, i.e.:
+ *   \f[
+ \frac{\partial f(x)}{\partial x} \approx \frac{f(x + \epsilon) - f(x)}{\epsilon}
+ *   \f]
+ *
+ * Here, \f$ f \f$ is the residual function for all equations, \f$x\f$
+ * is the value of a sub-control volume's primary variable at the
+ * evaluation point and \f$\epsilon\f$ is a small value larger than 0.
  */
 template<class TypeTag>
 class BoxLocalJacobian
@@ -286,6 +313,43 @@ protected:
      *
      * This method can be overwritten by the implementation if a
      * better scheme than central differences ought to be used.
+     *
+     * The default implementation of this method uses numeric
+     * differentiation, i.e. forward or backward differences (2nd
+     * order), or central differences (3rd order). The method used is
+     * determined by the "NumericDifferenceMethod" property:
+     *
+     * - if the value of this property is smaller than 0, backward
+     *   differences are used, i.e.:
+     *   \f[
+         \frac{\partial f(x)}{\partial x} \approx \frac{f(x) - f(x - \epsilon)}{\epsilon}
+     *   \f]
+     *
+     * - if the value of this property is 0, central
+     *   differences are used, i.e.:
+     *   \f[
+           \frac{\partial f(x)}{\partial x} \approx \frac{f(x + \epsilon) - f(x - \epsilon)}{2 \epsilon}
+     *   \f]
+     *
+     * - if the value of this property is larger than 0, forward
+     *   differences are used, i.e.:
+     *   \f[
+           \frac{\partial f(x)}{\partial x} \approx \frac{f(x + \epsilon) - f(x)}{\epsilon}
+     *   \f]
+     *
+     * Here, \f$ f \f$ is the residual function for all equations, \f$x\f$
+     * is the value of a sub-control volume's primary variable at the
+     * evaluation point and \f$\epsilon\f$ is a small value larger than 0.
+     *
+     * \param dest The vector storing the partial derivatives of all
+     *              equations
+     * \param scvIdx The sub-control volume index of the current
+     *               finite element for which the partial derivative
+     *               ought to be calculated
+     * \param pvIdx The index of the primary variable at the scvIdx'
+     *              sub-control volume of the current finite element
+     *              for which the partial derivative ought to be
+     *              calculated
      */
     void evalPartialDerivative_(ElementSolutionVector &dest,
                                 int scvIdx,
@@ -299,7 +363,10 @@ protected:
         Scalar eps = asImp_().numericEpsilon_(scvIdx, pvIdx);
         Scalar delta = 0;
 
-        if (numDiffMethod >= 0) { // not backward differences
+        if (numDiffMethod >= 0) { 
+            // we are not using backward differences, i.e. we need to
+            // calculate f(x - \epsilon)
+
             // deflect primary variables
             priVars[pvIdx] += eps;
             delta += eps;
@@ -321,12 +388,17 @@ protected:
             dest = localResidual().residual();
         }
         else {
-            // backward differences
+            // we are using backward differences, i.e. we don't need
+            // to calculate f(x - \epsilon) and we can recycle the
+            // (already calculated) residual f(x)
             dest = residual_;
         }
 
 
-        if (numDiffMethod <= 0) { // not forward differences
+        if (numDiffMethod <= 0) { 
+            // we are not using forward differences, i.e. we don't
+            // need to calculate f(x + \epsilon)
+
             // deflect the primary variables
             priVars[pvIdx] -= delta + eps;
             delta += eps;
@@ -346,14 +418,17 @@ protected:
             dest -= localResidual().residual();
         }
         else {
-            // forward differences
+            // we are using forward differences, i.e. we don't need to
+            // calculate f(x + \epsilon) and we can recycle the
+            // (already calculated) residual f(x)
             dest -= residual_;
         }
 
+        // divide difference in residuals by the magnitude of the
+        // deflections between the two function evaluation
         dest /= delta;
 
-        // restore the orignal state of the element's secondary
-        // variables
+        // restore the orignal state of the element's volume variables
         curVolVars_[scvIdx] = origVolVars;
 
 #if HAVE_VALGRIND
@@ -378,9 +453,9 @@ protected:
     }
 
     /*!
-     * \brief Updates the current local stiffness matrix with the
+     * \brief Updates the current local Jacobian matrix with the
      *        partial derivatives of all equations in regard to the
-     *        primary variable 'pvIdx' at vertex j .
+     *        primary variable 'pvIdx' at vertex 'scvIdx' .
      */
     void updateLocalJacobian_(int scvIdx,
                               int pvIdx,
