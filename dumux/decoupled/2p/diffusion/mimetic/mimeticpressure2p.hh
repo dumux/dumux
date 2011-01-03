@@ -36,7 +36,7 @@
 namespace Dumux
 {
 
-/*! \ingroup mimetic
+/*! \ingroup Mimetic2p
  *
  * \brief mimetic method for the pressure equation
  *

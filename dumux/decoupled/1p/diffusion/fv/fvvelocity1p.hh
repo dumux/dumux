@@ -26,7 +26,7 @@
 
 namespace Dumux
 {
-//! \ingroup FV1p
+//! \ingroup OnePhase
 //! \brief Single Phase Finite Volume Diffusion Model
 /*! Calculates non-wetting phase velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
  * of equations of the form

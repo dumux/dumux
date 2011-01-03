@@ -1,8 +1,7 @@
 // $Id: fvpressure2p.hh 3826 2010-07-14 07:03:41Z bernd $
 /*****************************************************************************
+ *   Copyright (C) 2008-2010 by Markus Wolff                                 *
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
- *   Copyright (C) 2007-2009 by Jochen Fritz                                 *
- *   Copyright (C) 2008-2009 by Markus Wolff                                 *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -30,28 +29,24 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
- * @author Bernd Flemisch, Jochen Fritz, Markus Wolff
+ * @brief  Single Phase Finite Volume Model
+ * @author Bernd Flemisch, Markus Wolff
  */
 
 namespace Dumux
 {
 
-//! \ingroup FV1p
-//! \brief Single Phase Finite Volume Diffusion Model
+//! \ingroup OnePhase
+//! \brief Single Phase Finite Volume Model
 /*! Provides a Finite Volume implementation for the evaluation
  * of equations of the form
- * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
- * The definition of the total velocity \f$\boldsymbol{v}_total\f$ depends on the kind of pressure chosen. This could be a wetting (w) phase pressure leading to
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * a non-wetting (n) phase pressure yielding
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * or a global pressure leading to
- * \f[ - \text{div}\, \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q.\f]
- *  Here, \f$p\f$ denotes a pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda\f$ the total mobility, possibly depending on the
- * saturation,\f$f\f$ the fractional flow function of a phase, \f$\rho\f$ a phase density, \f$g\f$ the gravity constant and \f$q\f$ the source term.
- * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
- * on \f$\Gamma_{Dirichlet}\f$.
+ * \f[\text{div}\, \boldsymbol{v} = q.\f]
+ * The velocity \f$\boldsymbol{v}\f$ is the single phase Darcy velocity:
+ * \f[ \boldsymbol{v} = -\frac{1}{\mu} \boldsymbol{K} \left(\text{grad}\, p + \rho g  \text{grad}\, z\right), \f]
+ * where \f$p\f$ is the pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\mu\f$ the viscosity, \f$\rho\f$ the density, and \f$g\f$ the gravity constant,
+ * and \f$q\f$ is the source term.
+ * At the boundary, \f$p = p_D\f$ on \f$\Gamma_{Dirichlet}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
+ * on \f$\Gamma_{Neumann}\f$.
  *
  * @tparam TypeTag The Type Tag
  *
@@ -95,11 +90,12 @@ template<class TypeTag> class FVPressure1P
     void solve();
 
 protected:
+    //! Returns reference to the instance of the problem definition
     Problem& problem()
     {
         return problem_;
     }
-
+    //! Returns reference to the instance of the problem definition
     const Problem& problem() const
     {
         return problem_;
@@ -127,7 +123,7 @@ public:
         return;
     }
 
-    //! Calculate the pressure.
+    //! Calculates the pressure.
     /*!
      *  @param solveTwice without any function here!
      *
@@ -144,19 +140,21 @@ public:
     }
 
     // serialization methods
+    //! Function needed for restart option.
     template<class Restarter>
     void serialize(Restarter &res)
     {
         return;
     }
 
+    //! Function needed for restart option.
     template<class Restarter>
     void deserialize(Restarter &res)
     {
         return;
     }
 
-    //! \brief Write data files
+    //! \brief Writes data files
     /*  \param writer VTK-Writer for the current simulation run */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)

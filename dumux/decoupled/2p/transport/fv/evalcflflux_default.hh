@@ -26,7 +26,7 @@
 
 namespace Dumux
 {
-/*!\ingroup Transport2p
+/*!\ingroup Saturation2p
  * @brief  Default implementation of cfl-fluxes to evaluate a CFL-Condition
  *
  *

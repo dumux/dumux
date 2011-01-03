@@ -31,7 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPETproblems
+ * \ingroup IMPET
  * @brief base class for problems using a sequential implicit-explicit strategy
  *
  *  \tparam TypeTag      problem TypeTag

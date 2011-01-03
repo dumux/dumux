@@ -30,6 +30,7 @@ namespace Dumux
 {
 /*!
  * \ingroup IMPESproblems
+ * \ingroup Pressure2p
  * \brief  Base class for stationary sequential 2-phase problems
  *
  * \todo Please doc me more!

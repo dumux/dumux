@@ -17,7 +17,7 @@
 #define DUMUX_TRANSPORT_PROPERTIES_HH
 
 /*!
- * \ingroup Transport2p
+ * \ingroup Saturation2p
  * \ingroup Properties
  */
 /*!

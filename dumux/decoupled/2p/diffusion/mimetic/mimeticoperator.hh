@@ -45,7 +45,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup mimetic
+ * \ingroup Mimetic2P
  * @brief Levelwise assembler
 
   This class serves as a base class for local assemblers. It provides

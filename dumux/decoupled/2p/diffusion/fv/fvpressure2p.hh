@@ -30,7 +30,7 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
+ * @brief  Finite Volume Discretization of a pressure equation.
  * @author Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
@@ -38,7 +38,7 @@ namespace Dumux
 {
 
 //! \ingroup FV2p
-//! \brief Pressure equation of the sequential Finite Volume Model
+//! \brief Finite Volume discretization of the pressure equation of the sequential IMPES Model.
 /*! Provides a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]

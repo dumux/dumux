@@ -23,7 +23,7 @@
  */
 namespace Dumux
 {
-/*!\ingroup Transport2p
+/*!\ingroup Saturation2p
  * @brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
  *
  *  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition of the form

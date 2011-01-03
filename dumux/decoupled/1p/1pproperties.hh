@@ -17,7 +17,7 @@
  *****************************************************************************/
 
 /*!
- * \ingroup FV1p
+ * \ingroup OnePhase
  * \file
  *
  * \brief Defines the properties required for the single phase sequential model.

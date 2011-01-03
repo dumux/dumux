@@ -30,7 +30,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup Transport2p
+ * \ingroup Saturation2p
  * \ingroup IMPESproblems
  * \brief  Base class for all 2-phase transport problems which use an impes algorithm
  *

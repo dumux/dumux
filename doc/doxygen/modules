@@ -12,31 +12,32 @@
 	/*!
 	 * \ingroup Sequential
 	 * \defgroup IMPET IMPET Models and Base Problems
-	 */
-	 
+	 */	 
+		/*!
+		 * \ingroup IMPET
+		 * \defgroup OnePhase Single Phase Model (Finite-Volume)
+		 */ 
 		/*!
 		 * \ingroup IMPET
 		 * \defgroup IMPES Immiscible IMPES
-		 */
-		 
+		 */		 
 			/*!
 			 * \ingroup IMPES
-			 * \defgroup FV1p Single Phase Finite-Volume
+			 * \defgroup Pressure2p Immiscible pressure equation
 			 */
-			/*!
-			 * \ingroup IMPES
-			 * \defgroup FV2p Finite-Volume
-			 */
+			 	/*!
+			 	* \ingroup Pressure2p
+			 	* \defgroup FV2p Finite Volume
+			 	*/	
 				/*!
-				 * \ingroup FV2p
-				 * \defgroup Transport2p Immiscible Transport
-				 */
-			/*! \ingroup IMPES
-			 * \defgroup MPFA2p MPFA (Multi Point Flux Approximation)
+				* \ingroup Pressure2p
+			 	* \defgroup Mimetic2p Mimetic Finite Differences
+			 	*/	
+			/*!
+			 * \ingroup IMPES
+			 * \defgroup Saturation2p Immiscible saturation transport
 			 */
-			/*! \ingroup IMPES
-			 * \defgroup mimetic Mimetic Finite-Difference
-			 */
+
 		/*!
 		 * \ingroup IMPET
 		 * \defgroup IMPESproblems IMPES Base Problems

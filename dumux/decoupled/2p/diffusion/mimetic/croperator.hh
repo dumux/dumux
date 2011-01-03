@@ -47,7 +47,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup mimetic
+ * \ingroup Mimetic2p
  */
 /**
  * @brief defines a class for Crozieux-Raviart piecewise linear finite element functions

@@ -28,8 +28,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup FV1p
- * \ingroup IMPESproblems
+ * \ingroup OnePhase
  *
  * \brief  Base class for all single phase problems which use an impes algorithm
  *

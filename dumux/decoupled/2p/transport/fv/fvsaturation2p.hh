@@ -30,7 +30,7 @@
 
 namespace Dumux
 {
-//! \ingroup Transport2p
+//! \ingroup Saturation2p
 //! \brief The finite volume model for the solution of the non-wetting phase saturation equation
 /*! Provides a Finite Volume implementation for the evaluation
  *  of equations of the form

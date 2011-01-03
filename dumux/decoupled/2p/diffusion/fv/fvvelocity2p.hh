@@ -18,7 +18,7 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
+ * @brief  Velocity Field from a finite volume solution of a pressure equation.
  * @author Markus Wolff
  */
 
@@ -27,8 +27,8 @@
 namespace Dumux
 {
 //! \ingroup FV2p
-//! \brief Determines the velocity of the sequential Finite Volume Model
-/*! Calculates non-wetting phase velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
+//! \brief Determines the velocity from a finite volume solution of the  pressure equation of the sequential Model (IMPES).
+/*! Calculates phase velocities or total velocity from a known pressure field in context of a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
  * The wetting or the non-wetting phase pressure has to be given as piecewise constant cell values.

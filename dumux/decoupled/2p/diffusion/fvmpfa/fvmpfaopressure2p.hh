@@ -31,17 +31,16 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of a numerical diffusion model
- * @brief  MPFA O-method
+ * @brief  Finite Volume MPFA O-method discretization of a pressure equation.
  * @brief  Remark1: only for 2-D quadrilateral grid.
- * @brief  Remark2: can use UGGrid or SGrid (YaspGrid); variable 'ch' is chosen to decide which grid will be used.
+ * @brief  Remark2: can use UGGrid or SGrid (YaspGrid).
  * @brief  Remark3: without capillary pressure and gravity!
  * @author Yufei Cao
  */
 
 namespace Dumux
 {
-/*! \ingroup MPFA2p
+/*! \ingroup FV2p
  *
  * \brief MPFA-O method for the pressure equation
  *
@@ -466,7 +465,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
         // evaluate right hand side
         std::vector<Scalar> source(problem_.source(globalPos1, *eIt));
-        f_[globalIdx1] = volume1*(source[wPhaseIdx] + source[nPhaseIdx]);
+
+        //get the densities
+        Scalar densityW = problem_.variables().densityWetting(globalIdx1);
+        Scalar densityNW = problem_.variables().densityNonwetting(globalIdx1);
+
+        f_[globalIdx1] = volume1*(source[wPhaseIdx]/densityW + source[nPhaseIdx]/densityNW);
 
         // get absolute permeability of cell 1
         FieldMatrix K1(problem_.spatialParameters().intrinsicPermeability(globalPos1,*eIt));
@@ -474,10 +478,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
         //compute total mobility of cell 1
         double lambda1 = 0;
         lambda1 = problem_.variables().mobilityWetting(globalIdx1) + problem_.variables().mobilityNonwetting(globalIdx1);
-
-        //get the densities
-        Scalar densityW = this->problem().variables().densityWetting(globalIdx1);
-        Scalar densityNW = this->problem().variables().densityNonwetting(globalIdx1);
 
         // if K1 is zero, no flux through cell1
         // for 2-D
@@ -1943,6 +1943,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K1.umv(nu11, K1nu11);
                             FieldVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
+
                             double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
                             double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;

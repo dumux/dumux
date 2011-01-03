@@ -29,7 +29,7 @@
 
 namespace Dumux
 {
-  /** @addtogroup mimetic
+  /** @ingroup Mimetic2p
    *
    * @{
    */

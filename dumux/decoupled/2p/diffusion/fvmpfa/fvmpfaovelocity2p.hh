@@ -22,15 +22,15 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of a numerical diffusion model
+ * @brief  Velocity Field from a finite volume MPFA O-method solution of a pressure equation.
  * @author Yufei Cao
  */
 
 namespace Dumux
 {
-/*! \ingroup MPFA2p
+/*! \ingroup FV2p
  *
- * \brief velocity calculation for the MPFA-O method
+ * \brief Velocity calculation for the MPFA-O method
  */
 template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTag>
 {

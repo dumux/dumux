@@ -26,7 +26,7 @@
 
 namespace Dumux
 {
-/*!\ingroup Transport2p
+/*!\ingroup Saturation2p
  * @brief  CFL-flux-function to evaluate a CFL-Condition after Coats 2003
  *
  *

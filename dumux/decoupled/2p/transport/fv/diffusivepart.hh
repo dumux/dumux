@@ -24,7 +24,7 @@
  */
 namespace Dumux
 {
-/*!\ingroup Transport2p
+/*!\ingroup Saturation2p
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation
  *
  * Template parameters are:

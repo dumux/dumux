@@ -26,7 +26,7 @@
  */
 namespace Dumux
 {
-/*!\ingroup Transport2p
+/*!\ingroup Saturation2p
  * @brief  Class for defining the diffusive capillary pressure term of a saturation equation
  *
  * Defines the diffusive capillary pressure term of the form
