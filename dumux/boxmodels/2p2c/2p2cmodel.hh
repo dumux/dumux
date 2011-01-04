@@ -215,6 +215,9 @@ public:
 
         setSwitched_(false);
         resetPhasePresence_();
+        /*this->localJacobian().updateStaticData(this->curSolFunction(),
+         this->prevSolFunction());
+         */
     };
 
     /*!
@@ -652,11 +655,9 @@ protected:
             if (xll + xlg > xlMax)
             {
                 // liquid phase appears
-                /*
-                std::cout << "Liquid phase appears at vertex " << globalIdx
+                std::cout << "liquid phase appears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", xll + xlg: "
                         << xll + xlg << std::endl;
-                */
                 newPhasePresence = bothPhases;
                 if (formulation == pgSl)
                     globalSol[globalIdx][switchIdx] = 0.001;
@@ -682,11 +683,9 @@ protected:
             if (xgl + xgg > xgMax)
             {
                 // gas phase appears
-                /*
                 std::cout << "gas phase appears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", x_gl + x_gg: "
                         << xgl + xgg << std::endl;
-                */
                 newPhasePresence = bothPhases;
                 if (formulation == pgSl)
                     globalSol[globalIdx][switchIdx] = 0.999;
@@ -704,11 +703,9 @@ protected:
             {
                 wouldSwitch = true;
                 // gas phase disappears
-                /*
                 std::cout << "Gas phase disappears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", Sg: "
                         << volVars.saturation(gPhaseIdx) << std::endl;
-                */
                 newPhasePresence = lPhaseOnly;
 
                 globalSol[globalIdx][switchIdx]
@@ -718,11 +715,9 @@ protected:
             {
                 wouldSwitch = true;
                 // liquid phase disappears
-                /*
                 std::cout << "Liquid phase disappears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", Sl: "
                         << volVars.saturation(lPhaseIdx) << std::endl;
-                */
                 newPhasePresence = gPhaseOnly;
 
                 globalSol[globalIdx][switchIdx]

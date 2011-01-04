@@ -68,7 +68,7 @@ public:
     TwoPTwoCNewtonController()
     {
         this->setRelTolerance(1e-7);
-        this->setTargetSteps(10);
+        this->setTargetSteps(9);
         this->setMaxSteps(18);
     };
 
