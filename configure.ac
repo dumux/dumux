@@ -13,7 +13,7 @@ AC_CHECK_PROGS([LATEX], [latex], [true])
 AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
 AC_CHECK_PROGS([CONVERT], [convert], [false])
 AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
-AM_CONDITIONAL([BUILD_HANDBOOK], [test -a "stamp-vc" -a "x$LATEX" != xfalse])
+AM_CONDITIONAL([BUILD_HANDBOOK], [test -a "stamp-vc" -a "x$LATEX" != xtrue])
 
 AC_CHECK_HEADER([valgrind/memcheck.h], 
                 [HAVE_VALGRIND_H="1"],
