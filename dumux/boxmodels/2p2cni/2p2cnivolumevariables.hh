@@ -71,19 +71,6 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \brief Update the temperature of the sub-control volume.
-     */
-    Scalar getTemperature(const PrimaryVariables &sol,
-                          const Element &element,
-                          const FVElementGeometry &elemGeom,
-                          int scvIdx,
-                          const Problem &problem) const
-    {
-        // retrieve temperature from solution vector
-        return sol[temperatureIdx];
-    }
-    
-    /*!
      * \brief Update all quantities for a given control volume.
      *
      * \param sol The solution primary variables
@@ -93,26 +80,61 @@ public:
      * \param vertIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
-    template <class MutableParams>
-    void updateEnergy(MutableParams &mutParams,
-                      const PrimaryVariables &sol,
-                      const Element &element,
-                      const FVElementGeometry &elemGeom,
-                      int scvIdx,
-                      const Problem &problem)
+    void update(const PrimaryVariables &sol,
+                const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &elemGeom,
+                int vertIdx,
+                bool isOldSol)
     {
-        heatCapacity_ =
-            problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
-        Valgrind::CheckDefined(heatCapacity_);
+        // vertex update data for the mass balance
+        ParentType::update(sol,
+                           problem,
+                           element,
+                           elemGeom,
+                           vertIdx,
+                           isOldSol);
 
         // the internal energies and the enthalpies
-        typename MutableParams::FluidState &fs = mutParams.fluidState();
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            Scalar h =
-                FluidSystem::computeEnthalpy(mutParams, phaseIdx);
-            fs.setEnthalpy(phaseIdx, h);
+            if (this->fluidState().saturation(phaseIdx) != 0.0) {
+                enthalpy_[phaseIdx] =
+                    FluidSystem::phaseEnthalpy(phaseIdx,
+                                          this->fluidState().temperature(),
+                                          this->fluidState().phasePressure(phaseIdx),
+                                          this->fluidState());
+                internalEnergy_[phaseIdx] =
+                    FluidSystem::phaseInternalEnergy(phaseIdx,
+                                                this->fluidState().temperature(),
+                                                this->fluidState().phasePressure(phaseIdx),
+                                                this->fluidState());
+            }
+            else {
+                enthalpy_[phaseIdx] = 0;
+                internalEnergy_[phaseIdx] = 0;
+            }
         }
-    }
+        Valgrind::CheckDefined(internalEnergy_);
+        Valgrind::CheckDefined(enthalpy_);
+    };
+
+    /*!
+     * \brief Returns the total internal energy of a phase in the
+     *        sub-control volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar internalEnergy(int phaseIdx) const
+    { return internalEnergy_[phaseIdx]; };
+
+    /*!
+     * \brief Returns the total enthalpy of a phase in the sub-control
+     *        volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar enthalpy(int phaseIdx) const
+    { return enthalpy_[phaseIdx]; };
 
     /*!
      * \brief Returns the total heat capacity \f$\mathrm{[J/(K*m^3]}\f$ of the rock matrix in
@@ -122,6 +144,27 @@ public:
     { return heatCapacity_; };
 
 protected:
+    // this method gets called by the parent class. since this method
+    // is protected, we are friends with our parent..
+    friend class TwoPTwoCVolumeVariables<TypeTag>;
+    void updateTemperature_(const PrimaryVariables &sol,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem)
+    {
+        // retrieve temperature from solution vector
+        this->temperature_ = sol[temperatureIdx];
+
+        heatCapacity_ =
+            problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
+
+        Valgrind::CheckDefined(this->temperature_);
+        Valgrind::CheckDefined(heatCapacity_);
+    }
+
+    Scalar internalEnergy_[numPhases];
+    Scalar enthalpy_[numPhases];
     Scalar heatCapacity_;
 };
 

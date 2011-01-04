@@ -74,6 +74,8 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
+    typedef TwoPTwoCFluidState<TypeTag> FluidState;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     enum
@@ -205,9 +207,7 @@ public:
 
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
-        Valgrind::CheckDefined(flux);
         asImp_()->computeDiffusiveFlux(flux, vars);
-        Valgrind::CheckDefined(flux);
     }
 
     /*!
@@ -248,13 +248,6 @@ public:
                             - mobilityUpwindAlpha) * (dn.density(phaseIdx)
                             * dn.mobility(phaseIdx) * dn.fluidState().massFrac(
                             phaseIdx, compIdx));
-                Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
-                Valgrind::CheckDefined(up.density(phaseIdx));
-                Valgrind::CheckDefined(up.mobility(phaseIdx));
-                Valgrind::CheckDefined(up.fluidState().massFrac(phaseIdx, compIdx));
-                Valgrind::CheckDefined(dn.density(phaseIdx));
-                Valgrind::CheckDefined(dn.mobility(phaseIdx));
-                Valgrind::CheckDefined(dn.fluidState().massFrac(phaseIdx, compIdx));
             }
         }
     }
@@ -268,7 +261,6 @@ public:
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
-#if 0
         // add diffusive flux of gas component in liquid phase
         Scalar tmp =
             - vars.porousDiffCoeff(lPhaseIdx) *
@@ -284,7 +276,6 @@ public:
             (vars.molarConcGrad(gPhaseIdx) * vars.face().normal);
         flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
         flux[contiGEqIdx] -= tmp * FluidSystem::molarMass(gCompIdx);
-#endif
     }
 
     /*!

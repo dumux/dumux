@@ -135,10 +135,11 @@ public:
         problemPtr_ = 0;
         matrix_ = 0;
 
-        // set reassemble accuracy to 0, so that if partial reassembly
-        // of the jacobian matrix is disabled, the reassemble accuracy
-        // is always smaller than the current relative tolerance
-        reassembleAccuracy_ = 0.0;
+        // set reassemble tolerance to 0, so that if partial
+        // reassembly of the jacobian matrix is disabled, the
+        // reassemble tolerance is always smaller than the current
+        // relative tolerance
+        reassembleTolerance_ = 0.0;
     }
 
     ~BoxAssembler()
@@ -238,13 +239,12 @@ public:
         if (enablePartialReassemble) {
             greenElems_ = gridView_().comm().sum(greenElems_);
             
-            reassembleAccuracy_ = nextReassembleAccuracy_;
+            reassembleTolerance_ = nextReassembleTolerance_;
             // print some information at the end of the iteration
             problem_().newtonController().endIterMsg()
                 << ", reassembled " 
                 << totalElems_ - greenElems_ << "/" << totalElems_
-                << " (" << 100*Scalar(totalElems_ - greenElems_)/totalElems_ << "%) elems @accuracy="
-                << reassembleAccuracy_;
+                << " (" << 100*Scalar(totalElems_ - greenElems_)/totalElems_ << "%) elems";
         }
 
         return;
@@ -270,7 +270,7 @@ public:
      */
     void reassembleAll()
     {
-        nextReassembleAccuracy_ = 0.0;
+        nextReassembleTolerance_ = 0.0;
 
         if (enablePartialReassemble) {
             std::fill(vertexColor_.begin(),
@@ -286,17 +286,15 @@ public:
     }
    
     /*!
-     * \brief Returns the largest relative error of a "green" vertex
-     *        for the most recent call of the assemble() method.
-     *
-     * This only has an effect if partial Jacobian reassembly is
-     * enabled. If it is disabled, then this method always returns 0.
+     * \brief Returns the relative error below which a vertex is
+     *        considered to be "green" if partial Jacobian reassembly
+     *        is enabled.
      *
      * This returns the _actual_ relative computed seen by
      * computeColors(), not the tolerance which it was given.
      */
-    Scalar reassembleAccuracy() const
-    { return reassembleAccuracy_; }
+    Scalar reassembleTolerance() const
+    { return reassembleTolerance_; }
 
     /*!
      * \brief Update the distance where the non-linear system was
@@ -360,16 +358,16 @@ public:
 
         // mark the red vertices and update the tolerance of the
         // linearization which actually will get achieved
-        nextReassembleAccuracy_ = 0;
+        nextReassembleTolerance_ = 0;
         for (int i = 0; i < vertexColor_.size(); ++i) {
             vertexColor_[i] = Green;
-            if (vertexDelta_[i] > relTol)
+            if (vertexDelta_[i] > relTol) {
                 // mark vertex as red if discrepancy is larger than
                 // the relative tolerance
                 vertexColor_[i] = Red;
-            else
-                nextReassembleAccuracy_ = 
-                    std::max(nextReassembleAccuracy_, vertexDelta_[i]);
+            }
+            nextReassembleTolerance_ = 
+                std::max(nextReassembleTolerance_, vertexDelta_[i]);
         };
 
         // Mark all red elements
@@ -732,8 +730,8 @@ private:
     int totalElems_;
     int greenElems_;
     
-    Scalar nextReassembleAccuracy_;
-    Scalar reassembleAccuracy_;
+    Scalar nextReassembleTolerance_;
+    Scalar reassembleTolerance_;
     
 #if HAVE_DUNE_PDELAB
     // PDELab stuff

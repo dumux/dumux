@@ -37,7 +37,6 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/h2o_n2_system.hh>
-#include <dumux/material/new_fluidsystems/h2on2fluidsystem.hh>
 
 #include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
 
@@ -76,15 +75,11 @@ public:
 // Set the problem property
 SET_PROP(WaterAirProblem, Problem)
 {
-    typedef Dumux::WaterAirProblem<TypeTag> type;
+    typedef Dumux::WaterAirProblem<TTAG(WaterAirProblem)> type;
 };
 
-// Set fluid configuration
-SET_PROP(WaterAirProblem, FluidSystem)
-{ 
-private: typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-public:  typedef Dumux::H2ON2FluidSystem<Scalar> type;
-};
+// Set the wetting phase
+SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::H2O_N2_System<TypeTag>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(WaterAirProblem,
@@ -135,7 +130,7 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  * To run the simulation execute the following line in shell:
  * <tt>./test_2p2cni ./grids/test_2p2cni.dgf 300000 1000</tt>
  *  */
-template <class TypeTag>
+template <class TypeTag = TTAG(WaterAirProblem) >
 class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

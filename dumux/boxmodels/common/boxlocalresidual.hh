@@ -274,7 +274,7 @@ public:
         Valgrind::CheckDefined(prevVolVars);
         Valgrind::CheckDefined(curVolVars);
 
-#if 0 // HAVE_VALGRIND
+#if HAVE_VALGRIND
         for (int i=0; i < fvGeom.numVertices; i++) {
             Valgrind::CheckDefined(prevVolVars[i]);
             Valgrind::CheckDefined(curVolVars[i]);

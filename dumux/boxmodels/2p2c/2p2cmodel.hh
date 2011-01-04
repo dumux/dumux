@@ -142,6 +142,8 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
         formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation))
     };
 
+    typedef TwoPTwoCFluidState<TypeTag> FluidState;
+
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -368,7 +370,7 @@ public:
                     {
                         (*massFrac[phaseIdx][compIdx])[globalIdx]
                                 = volVars.fluidState().massFrac(phaseIdx,
-                                                                compIdx);
+                                        compIdx);
 
                         Valgrind::CheckDefined(
                             (*massFrac[phaseIdx][compIdx])[globalIdx][0]);
