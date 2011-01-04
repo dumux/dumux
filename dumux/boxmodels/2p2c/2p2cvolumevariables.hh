@@ -154,10 +154,10 @@ public:
         /////////////
         // update the temperature part of the energy module
         Scalar T = asImp_().getTemperature(priVars,
-                                             element,
-                                             elemGeom,
-                                             scvIdx,
-                                             problem);
+                                           element,
+                                           elemGeom,
+                                           scvIdx,
+                                           problem);
         Valgrind::CheckDefined(T);
         for (int i = 0; i < numPhases; ++i)
             fs.setTemperature(i, T);
@@ -426,15 +426,23 @@ public:
 #endif
 
 protected:
-
-    Scalar getTemperature_(const PrimaryVariables &priVars,
-                         const Element &element,
-                         const FVElementGeometry &elemGeom,
-                         int scvIdx,
-                         const Problem &problem)
+    Scalar getTemperature(const PrimaryVariables &priVars,
+                          const Element &element,
+                          const FVElementGeometry &elemGeom,
+                          int scvIdx,
+                          const Problem &problem)
     {
         return problem.temperature(element, elemGeom, scvIdx);
     }
+    
+    template <class MutableParameters>
+    void updateEnergy(MutableParameters &mutParams,
+                      const PrimaryVariables &priVars,
+                      const Element &element,
+                      const FVElementGeometry &elemGeom,
+                      int scvIdx,
+                      const Problem &problem)
+    {};        
 
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
