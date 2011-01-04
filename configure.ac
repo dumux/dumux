@@ -9,10 +9,11 @@ AM_CONFIG_HEADER([config.h])
 AC_CHECK_PROGS([TEX4HT], [tex4ht], [true])
 AC_CHECK_PROGS([MK4HT], [mk4ht], [true])
 AC_CHECK_PROGS([T4HT], [t4ht], [true])
+AC_CHECK_PROGS([LATEX], [latex], [true])
 AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
 AC_CHECK_PROGS([CONVERT], [convert], [false])
 AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
-AM_CONDITIONAL([BUILD_HANDBOOK], [test -a "stamp-vc"])
+AM_CONDITIONAL([BUILD_HANDBOOK], [test -a "stamp-vc" -a "x$LATEX" != xfalse])
 
 AC_CHECK_HEADER([valgrind/memcheck.h], 
                 [HAVE_VALGRIND_H="1"],
