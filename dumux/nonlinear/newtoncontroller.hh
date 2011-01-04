@@ -507,8 +507,10 @@ public:
         // compute the vertex and element colors for partial
         // reassembly
         if (enablePartialReassemble) {
-            Scalar reassembleTol = Dumux::geometricMean(error_, 0.1*tolerance_);
-            reassembleTol = std::max(reassembleTol, 0.1*tolerance_);
+            Scalar minReasmTol = 0.1*tolerance_;
+            Scalar tmp = Dumux::geometricMean(error_, minReasmTol);
+            Scalar reassembleTol = Dumux::geometricMean(error_, tmp);
+            reassembleTol = std::max(reassembleTol, minReasmTol);
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
