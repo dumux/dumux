@@ -193,7 +193,17 @@ public:
     typedef Dune::BiCGSTABSolver<Vector> type;
 //    typedef Dune::CGSolver<Vector> type;
 };
+SET_PROP_DEFAULT(LocalStiffness)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
+public:
+    typedef MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,Variables, Problem> type;
+};
 //SET_INT_PROP(DecoupledTwoP, PressurePreconditioner, SolverIndices::seqILU0);
 //SET_INT_PROP(DecoupledTwoP, PressureSolver, SolverIndices::biCGSTAB);
 SET_SCALAR_PROP(DecoupledTwoP, ReductionSolver, 1E-12);

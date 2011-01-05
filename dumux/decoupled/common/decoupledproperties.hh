@@ -98,19 +98,6 @@ public:
 //! Use the parent VariableClass
 SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);
 
-//! TODO: could this be moved (with includes) to /2p/2pproperties.hh ??
-SET_PROP_DEFAULT(LocalStiffness)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) Variables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-
-public:
-    typedef MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,Variables, Problem> type;
-};
-
 /*!
  * \brief Specifies the types which are assoicated with a solution.
  *
