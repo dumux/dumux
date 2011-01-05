@@ -28,10 +28,6 @@
 #ifndef DUMUX_WATERAIRPROBLEM_HH
 #define DUMUX_WATERAIRPROBLEM_HH
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
@@ -56,7 +52,7 @@ NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI));
 // Set the grid type
 SET_PROP(WaterAirProblem, Grid)
 {
-    typedef Dune::SGrid<2,2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 #if HAVE_DUNE_PDELAB
@@ -75,7 +71,7 @@ public:
 // Set the problem property
 SET_PROP(WaterAirProblem, Problem)
 {
-    typedef Dumux::WaterAirProblem<TTAG(WaterAirProblem)> type;
+    typedef Dumux::WaterAirProblem<TypeTag> type;
 };
 
 // Set the wetting phase
@@ -130,7 +126,7 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  * To run the simulation execute the following line in shell:
  * <tt>./test_2p2cni ./grids/test_2p2cni.dgf 300000 1000</tt>
  *  */
-template <class TypeTag = TTAG(WaterAirProblem) >
+template <class TypeTag >
 class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
