@@ -1039,6 +1039,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         {
             if (dv_dp[globalIdxI] == 0.)
             {
+                // if incompressible fluids are used, the following has to be changed
                 assert(problem_.variables().subdomain(globalIdxI)==1);
 
                 // numerical derivative of fluid volume with respect to pressure
@@ -1340,7 +1341,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
             // initialize saturation
             problem_.variables().saturation(globalIdx) = fluidState.saturation(wPhaseIdx);
 
-            // initialize pC		todo: remove this dummy implementation
+            // the following makes shure pC is neglected
             problem_.variables().capillaryPressure(globalIdx) = 0.0;
 
             // initialize viscosities
@@ -1417,7 +1418,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
         }
         else    // simple
         {
-            // Todo: update only variables of present phase!!
+            // Todo: only variables of present phase need to be updated
             Scalar press1p = problem_.variables().pressure()[globalIdx];
             pseudoFluidState.update(Z1, press1p, problem_.variables().saturation(globalIdx));
 
