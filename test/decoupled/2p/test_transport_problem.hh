@@ -32,7 +32,7 @@
 #include <dune/grid/uggrid.hh>
 #endif
 
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
@@ -60,7 +60,7 @@ NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(DecoupledModel, Transport));
 // Set the grid type
 SET_PROP(TransportTestProblem, Grid)
 {
-	typedef Dune::UGGrid<2> type;
+	typedef Dune::YaspGrid<2> type;
 };
 
 // Set the problem property
@@ -116,7 +116,6 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
  *
  * \brief test problem for the explicit transport model
  *
- *
  * A unit "fluid" is injected from the left side into a rectangular 2D
  * domain also this testing fluid. Upper and lower boundary are closed (Neumann = 0),
  * and there is free outflow on the right side.
@@ -125,7 +124,7 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
  * pressure field being solved.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p 16000</tt>,
+ * <tt>./test_transport grids/test_transport.dgf 16000</tt>,
  * where the argument defines the simulation endtime.
  */
 template<class TypeTag = TTAG(TransportTestProblem)>

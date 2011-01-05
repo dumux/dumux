@@ -144,7 +144,7 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
  * and there is free outflow on the right side.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p 1e8</tt>,
+ * <tt>./test_impes 1e8</tt>,
  * where the argument defines the simulation endtime.
  */
 template<class TypeTag = TTAG(IMPESTestProblem)>
