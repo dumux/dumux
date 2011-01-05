@@ -124,7 +124,9 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/Makefile 
     dumux/material/binarycoefficients/Makefile 
     dumux/material/components/Makefile 
+    dumux/material/components/iapws/Makefile 
     dumux/material/fluidmatrixinteractions/Makefile 
+    dumux/material/fluidmatrixinteractions/2p/Makefile 
     dumux/material/fluidsystems/Makefile 
     dumux/material/spatialparameters/Makefile 
     dumux/nonlinear/Makefile 

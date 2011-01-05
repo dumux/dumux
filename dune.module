@@ -4,7 +4,7 @@
 
 #Name of the module
 Module: dumux
-Version: 1.1
+Version: 2.0
 Maintainer: bernd@iws.uni-stuttgart.de
 #depending on 
 Depends: dune-pdelab

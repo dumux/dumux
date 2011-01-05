@@ -1,6 +1,6 @@
-dist_noinst_DATA = mcwhorter_ff
+check_PROGRAMS = mcwhorter_ff
 
-noinst_PROGRAMS = mcwhorter_ff
+noinst_HEADERS = *.hh
 
 mcwhorter_ff_SOURCES = mcwhorter_ff.cc
 
