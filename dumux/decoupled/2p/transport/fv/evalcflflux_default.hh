@@ -34,6 +34,7 @@ namespace Dumux
 /*!\ingroup Saturation2p
  * @brief  Default implementation of cfl-fluxes to evaluate a CFL-Condition
  *
+ * Compares the maximum of inflow and outflow to the element volume weighted by relative permeability and viscosity ratios.
  *
  * Template parameters are:
 
@@ -87,6 +88,16 @@ public:
     {
         addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, phaseIdx);
     }
+
+    Scalar getCflFluxFunction(const GlobalPosition& globalPos, const Element& element);
+
+    EvalCflFluxDefault (Problem& problem)
+    : problem_(problem)
+    {
+        reset();
+    }
+
+private:
 
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, int phaseIdx = -1)
     {
@@ -174,20 +185,16 @@ public:
             return fluxOut_;
     }
 
-    Scalar getCflFluxFunction(const GlobalPosition& globalPos, const Element& element);
 
+protected:
+
+    //! resets the accumulated CFL-fluxes to zero
     void reset()
     {
         fluxWettingOut_ = 0;
         fluxNonwettingOut_ = 0;
         fluxIn_ = 0;
         fluxOut_ = 0;
-    }
-
-    EvalCflFluxDefault (Problem& problem)
-    : problem_(problem)
-    {
-        reset();
     }
 
 private:

@@ -33,10 +33,7 @@ namespace Dumux
 /*!\ingroup Saturation2p
  * @brief  Base class for defining the convective part of an advection-diffusion equation
  *
- * Template parameters are:
-
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
+ * @tparam TypeTag The Type Tag
  */
 
 template<class TypeTag>
@@ -55,8 +52,8 @@ public:
     //! Returns convective term
     /*! Returns convective term for current element face
      *  @param[in] element        entity of codim 0
-     *  @param[in] sat           saturation of current element
      *  @param[in] indexInInside  face index in reference element
+     *  @param[in] sat           saturation of current element
      *  \return     convective term of an advection-diffusion equation
      */
     Scalar operator() (const Element& element, const int indexInInside, const Scalar sat) const
@@ -67,9 +64,9 @@ public:
     //! Returns convective term
     /*! Returns convective term for current element face
      *  @param[in] element        entity of codim 0
+     *  @param[in] indexInInside  face index in reference element
      *  @param[in] satI           saturation of current element
      *  @param[in] satJ           saturation of neighbor element
-     *  @param[in] indexInInside  face index in reference element
      *  \return     convective term of an advection-diffusion equation
      */
     Dune::FieldVector<Scalar, dimWorld> operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const
@@ -78,6 +75,10 @@ public:
         return trivial;
     }
 
+    //! The constructor
+    /*
+     *  \param problem object including the problem definition
+     */
     ConvectivePart(Problem& problem)
     {}
 

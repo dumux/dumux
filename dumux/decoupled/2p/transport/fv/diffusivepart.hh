@@ -32,10 +32,7 @@ namespace Dumux
 /*!\ingroup Saturation2p
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation
  *
- * Template parameters are:
-
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
+ * @tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class DiffusivePart
@@ -101,6 +98,10 @@ public:
     }
 
 
+    //! The constructor
+    /*
+     *  \param problem object including the problem definition
+     */
     DiffusivePart(Problem& problem)
     {}
     //! always define virtual destructor in abstract base class

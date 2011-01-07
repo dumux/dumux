@@ -455,12 +455,6 @@ public:
             return 1e100;
     }
 
-    void reset()
-    {
-        ParentType::reset();
-        cflFluxFunction_ = 0;
-    }
-
     EvalCflFluxCoats(Problem& problem) :
         ParentType(problem), problem_(problem)
     {
@@ -468,6 +462,12 @@ public:
     }
 
 private:
+    void reset()
+    {
+        ParentType::reset();
+        cflFluxFunction_ = 0;
+    }
+
     Problem& problem_;//problem data
     Scalar cflFluxFunction_;
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
