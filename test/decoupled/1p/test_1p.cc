@@ -83,23 +83,10 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
-//        Dune::Timer timer;
-//        bool consecutiveNumbering = true;
-
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
         Problem problem(grid.leafView(), delta);
-//        timer.reset();
         problem.init();
         problem.writeOutput();
-//        double time = timer.elapsed();
-//        Dumux::ResultEvaluation result;
-//        result.evaluate(grid.leafView(), problem, problem.variables().pressure(), problem.variables().velocity(), consecutiveNumbering);
-//
-//        std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
-//        std::cout.precision(2);
-//        std::cout << "\t error press \t error grad\t sumflux\t erflm\t\t uMin\t\t uMax\t\t time" << std::endl;
-//        std::cout << "2pfa\t " << result.relativeL2Error << "\t " << result.ergrad << "\t " << result.sumflux
-//                        << "\t " << result.erflm << "\t " << result.uMin << "\t " << result.uMax << "\t " << time << std::endl;
 
         return 0;
     }
