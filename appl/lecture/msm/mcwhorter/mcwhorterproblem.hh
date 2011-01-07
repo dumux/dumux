@@ -29,7 +29,7 @@
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
 #include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
-
+#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
 
 #include "mcwhorter_spatialparams.hh"
 #include "mcwhorter_analytic.hh"
@@ -111,7 +111,8 @@ public:
 // Disable gravity
 SET_BOOL_PROP(McWhorterProblem, EnableGravity, false);
 
-SET_SCALAR_PROP(McWhorterProblem, CFLFactor, 0.1);
+SET_TYPE_PROP(McWhorterProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+SET_SCALAR_PROP(McWhorterProblem, CFLFactor, 0.8);
 }
 
 //! \ingroup transportProblems
@@ -245,14 +246,9 @@ public:
         return 0.0;
     }
 
-    std::vector<Scalar> neumannPress(const GlobalPosition& globalPos, const Intersection& intersection) const
+    std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
     {
         return std::vector<Scalar>(2,0.0);
-    }
-
-    Scalar neumannSat(const GlobalPosition& globalPos, const Intersection& intersection, Scalar factor) const
-    {
-        return 0;
     }
 
     Scalar initSat (const GlobalPosition& globalPos, const Element& element) const
