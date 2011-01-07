@@ -29,26 +29,28 @@
 
 /**
  * @file
- * @brief  Finite Volume discretization of the non-wetting phase saturation equation
+ * @brief  Finite Volume discretization of a saturation transport equation
  * @author Markus Wolff
  */
 
 namespace Dumux
 {
 //! \ingroup Saturation2p
-//! \brief The finite volume model for the solution of the non-wetting phase saturation equation
+//! \brief The finite volume discretization of a saturation transport equation
 /*! Provides a Finite Volume implementation for the evaluation
  *  of equations of the form
- *  \f[
- *    \frac{\partial S_n}{\partial t} + \text{div}\, \boldsymbol{v_n} = 0,
- *  \f]
- *  where \f$\boldsymbol{v}_n = \lambda_n \boldsymbol{K} \left(\text{grad}\, p_n + \rho_n g  \text{grad}\, z\right)\f$,
- *  where \f$p_n\f$ denotes the wetting phase pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_n\f$ the non-wetting phase mobility,
- *  \f$\rho_n\f$ the non-wetting phase density and \f$g\f$ the gravity constant and \f$S_n\f$ the non-wetting phase saturation,
  *
- *  or where \f$\boldsymbol{v}_n = f_n \boldsymbol{v_{total}} - f_n \lambda_w \boldsymbol{K} \text{grad}\, p_c \f$,
- *  \f$f_n\f$ is the non-wetting phase fractional flow function, \f$\lambda_w\f$ is the wetting phase mobility, \f$\boldsymbol{K}\f$ the absolute permeability,
- *  \f$p_c\f$ the capillary pressure and \f$S_n\f$ the wetting phase saturation.
+ *  \f[\frac{\partial S_\alpha}{\partial t} + \text{div}\, \boldsymbol{v_\alpha} = q_\alpha,\f]
+ *
+ *  where \f$S_\alpha\f$ is the saturation of phase alpha (wetting (w), non-wetting (n)) and \f$\boldsymbol{v}_\alpha\f$ is the phase velocity calculated by the multi-phase Darcy equation,
+ *  and of the form
+ *
+ * \f[\frac{\partial S_w}{\partial t} + f_w \text{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\text{grad}\, p_c + (\rho_n-\rho_w) g \text{grad} z \right)= q_\alpha,\f]
+ *
+ * \f[\frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\text{grad}\, p_c + (\rho_n-\rho_w) g \text{grad} z \right)= q_\alpha,\f]
+ *
+ *  where \f$f_\alpha\f$ is the fractional flow function, \f$\lambda_\alpha\f$ is the mobility, \f$\boldsymbol{K}\f$ the absolute permeability,
+ *  \f$p_c\f$ the capillary pressure, \f$\rho\f$ the fluid density, \f$g\f$ the gravity constant, and \f$q\f$ the source term.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -151,11 +153,11 @@ public:
      *  \param[in] updateVec  vector for the update values
      *  \param[in] impes      variable is true if an impes algorithm is used and false if the transport part is solved independently
      *
-     *  This method calculates the update vector \f$ u \f$ of the discretized equation
-     *  \f[
-     *   S_{n_{new}} = S_{n_{old}} - u,
-     *  \f]
-     *  where \f$ u = \sum_{element faces} \boldsymbol{v}_n * \boldsymbol{n} * A_{element face}\f$, \f$\boldsymbol{n}\f$ is the face normal and \f$A_{element face}\f$ is the face area.
+     *  This method calculates the update vector \f$\boldsymbol{u}\f$ of the discretized equation
+     *
+     *  \f[S_{new} = S_{old} + u,\f]
+     *
+     *  where \f$ u = \sum_{element faces} \boldsymbol{F}\f$ and \f$\boldsymbol{F}\f$ is the flux over an element face.
      *
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing a CFL condition.
@@ -197,18 +199,21 @@ public:
     }
 
     // serialization methods
+    //! Function needed for restart option.
     template<class Restarter>
     void serialize(Restarter &res)
     {
         problem_.variables().serialize<Restarter> (res);
     }
+
+    //! Function needed for restart option.
     template<class Restarter>
     void deserialize(Restarter &res)
     {
         problem_.variables().deserialize<Restarter> (res);
     }
 
-    //! Constructs a FVSaturationNonWetting2P object
+    //! Constructs a FVSaturation2P object
     /**
 
      * \param problem a problem class object
@@ -455,20 +460,13 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                             unitOuterNormal;
                     pcGradient *= (pcI - pcJ) / dist;
 
-                    // get the diffusive part -> give 1-sat because sat = S_n and lambda = lambda(S_w) and pc = pc(S_w)
+                    // get the diffusive part
                     Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI,
                             satWJ, pcGradient) * unitOuterNormal * faceArea;
 
-                    //add cflFlux for time-stepping
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, 10 * diffPart, *isIt);
 
                     Scalar convPart = convectivePart()(*eIt, isIndex, satWI,
                             satWJ) * unitOuterNormal * faceArea;
-
-                    //add cflFlux for time-stepping
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, 10 * convPart, *isIt);
 
                     switch (saturationType_)
                     {
@@ -482,11 +480,20 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     {
                         //vt*fn
                         factor *= lambdaNW / (lambdaW + lambdaNW);
+                        diffPart *= -1;
+                        convPart *= -1;
                         break;
                     }
                     }
                     factor -= diffPart;
                     factor += convPart;
+
+                    //add cflFlux for time-stepping
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
+                            viscosityWI, viscosityNWI, 10 * diffPart, *isIt);
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
+                            viscosityWI, viscosityNWI, 10 * convPart, *isIt);
+
                     break;
                 }
                 case vw:
@@ -698,16 +705,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                                 satWBound, pcGradient) * unitOuterNormal
                                 * faceArea;
 
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, 10 * diffPart, *isIt);
-
                         Scalar convPart = convectivePart()(*eIt, isIndex,
                                 satWI, satWBound) * unitOuterNormal * faceArea;
-
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, 10 * convPart, *isIt);
 
                         switch (saturationType_)
                         {
@@ -721,12 +720,21 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                         {
                             //vt*fn
                             factor *= lambdaNW / (lambdaW + lambdaNW);
+                            diffPart *= -1;
+                            convPart *= -1;
                             break;
                         }
                         }
                         //vt*fw
                         factor -= diffPart;
                         factor += convPart;
+
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
+                                viscosityWI, viscosityNWI, 10 * diffPart, *isIt);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
+                                viscosityWI, viscosityNWI, 10 * convPart, *isIt);
+
                         break;
                     }
 
