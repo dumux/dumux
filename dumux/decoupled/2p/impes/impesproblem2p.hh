@@ -22,6 +22,7 @@
 /*!
  * \file
  * \brief Base class for all 2-phase problems which use an impes algorithm
+ * @author Markus Wolff
  */
 #ifndef DUMUX_IMPESPROBLEM_2P_HH
 #define DUMUX_IMPESPROBLEM_2P_HH
@@ -40,7 +41,8 @@ namespace Dumux
  * \ingroup IMPES
  * \brief  Base class for all 2-phase problems which use an impes algorithm
  *
- * \todo Please doc me more!
+ * @tparam TypeTag The Type Tag
+ * @tparam Implementation The Problem implementation
  */
 template<class TypeTag, class Implementation>
 class IMPESProblem2P : public IMPETProblem<TypeTag, Implementation>

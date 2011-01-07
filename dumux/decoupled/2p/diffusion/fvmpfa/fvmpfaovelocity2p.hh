@@ -84,11 +84,16 @@ template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTa
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
 public:
+    //! Constructs a FVMPFAOVelocity2P object
+    /*!
+     * \param problem a problem class object
+     */
     FVMPFAOVelocity2P(Problem& problem) :
         ParentType(problem)
     {
     }
 
+    //! \copydoc Dumux::FVVelocity2P::calculateVelocity()
     void calculateVelocity();
 
 }; // end of template

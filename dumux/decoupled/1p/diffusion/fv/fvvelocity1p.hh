@@ -23,7 +23,7 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
+ * @brief  Single Phase Finite Volume Model
  * @author Markus Wolff
  */
 
@@ -32,16 +32,14 @@
 namespace Dumux
 {
 //! \ingroup OnePhase
-//! \brief Single Phase Finite Volume Diffusion Model
-/*! Calculates non-wetting phase velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
+//! \brief Single Phase Finite Volume Model
+/*! Calculates velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
  * of equations of the form
- * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
- * The wetting or the non-wetting phase pressure has to be given as piecewise constant cell values.
+ * \f[\text{div}\, \boldsymbol{v} = q.\f]
+ * The pressure has to be given as piecewise constant cell values.
  * The velocity is calculated following  Darcy's law as
- * \f[\boldsymbol{v}_n = \lambda_n \boldsymbol{K} \left(\text{grad}\, p_n + \rho_n g  \text{grad}\, z\right),\f]
- * where, \f$p_n\f$ denotes the wetting phase pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_n\f$ the non-wetting phase mobility, \f$\rho_n\f$ the non-wetting phase density and \f$g\f$ the gravity constant.
- * As in the two-phase pressure equation a total flux depending on a total velocity is considered one has to be careful at neumann flux boundaries. Here, a phase velocity is only uniquely defined, if
- * the saturation is at the maximum (\f$1-S_{rw}\f$, \f$\boldsymbol{v}_{total} = \boldsymbol{v}_n\f$) or at the minimum (\f$ S_{rn} \f$, \f$\boldsymbol{v}_n = 0\f$)
+ * \f[\boldsymbol{v} = -\frac{1}{\mu} \boldsymbol{K} \left(\text{grad}\, p + \rho g  \text{grad}\, z\right),\f]
+ * where, \f$p\f$ is the pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\mu\f$ the viscosity, \f$\rho\f$ the density and \f$g\f$ the gravity constant.
  *
  * @tparam TypeTag The Type Tag
  */
@@ -74,7 +72,7 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! Constructs a FVNonWettingPhaseVelocity2P object
+    //! The Constructor
     /**
      * \param problem a problem class object
      */
@@ -87,11 +85,10 @@ public:
     /*!
      *
      *  Given the piecewise constant pressure \f$p\f$,
-     *  this method calculates the velocity
-     *  The method is needed in the IMPES (Implicit Pressure Explicit Saturation) algorithm which is used for a fractional flow formulation
-     *  to provide the velocity field required for the solution of the saturation equation.
+     *  this method calculates the velocity field
      */
     void calculateVelocity();
+
 
     void initialize()
     {

@@ -34,7 +34,7 @@ namespace Dumux
 {
 /**
  * \ingroup IMPET
- * \brief IMplicit Pressure Explicit Transport (IMPET) scheme for the solution of weakly coupled diffusion/transport problems.
+ * \brief IMplicit Pressure Explicit Transport (IMPET) scheme for the solution of weakly coupled diffusion-transport formulations.
  *
  * The model implements the decoupled equations of two-phase flow.
  * These equations can be derived from the two-phase flow equations shown for the two-phase box model (TwoPBoxModel).
@@ -46,6 +46,8 @@ namespace Dumux
  * second the transport equation can be solved explicitly. This solution procedure is called IMPES algorithm
  * (IMplicit Pressure Explicit Saturation) for immiscible flow or IMPEC algorithm
  * (IMplicit Pressure Explicit Concentration) for miscible flow.
+ *
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class IMPET
 {
@@ -188,11 +190,14 @@ public:
     }
 
     // serialization methods
+    //! Function needed for restart option.
     template<class Restarter>
     void serialize(Restarter &res)
     {
         problem.variables().serialize<Restarter> (res);
     }
+
+    //! Function needed for restart option.
     template<class Restarter>
     void deserialize(Restarter &res)
     {

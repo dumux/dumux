@@ -56,22 +56,22 @@ NEW_TYPE_TAG(IMPET, INHERITS_FROM(DecoupledModel));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(PressureModel);         //!< The type of the discretizations
-NEW_PROP_TAG(TransportModel);         //!< The type of the discretizations
+NEW_PROP_TAG(PressureModel);         //!< The type of the discretization
+NEW_PROP_TAG(TransportModel);         //!< The type of the discretization
 
-NEW_PROP_TAG(CFLFactor);
-NEW_PROP_TAG(IterationFlag);
-NEW_PROP_TAG(IterationNumber);
-NEW_PROP_TAG(MaximumDefect);
-NEW_PROP_TAG(RelaxationFactor);
+NEW_PROP_TAG(CFLFactor);         //!< Scalar factor for additional scaling of the time step
+NEW_PROP_TAG(IterationFlag); //!< Flag to switch the iteration type of the IMPET scheme
+NEW_PROP_TAG(IterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
+NEW_PROP_TAG(MaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags
+NEW_PROP_TAG(RelaxationFactor); //!< Used for IMPET iterations
 
 SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
 
 SET_SCALAR_PROP(IMPET, CFLFactor, 1);
-SET_INT_PROP(IMPET, IterationFlag, 0);
+SET_INT_PROP(IMPET, IterationFlag, 0); //!< 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
 SET_INT_PROP(IMPET, IterationNumber, 2);
 SET_SCALAR_PROP(IMPET, MaximumDefect, 1e-5);
-SET_SCALAR_PROP(IMPET, RelaxationFactor, 1);
+SET_SCALAR_PROP(IMPET, RelaxationFactor, 1);//!< 1 = new solution is new solution, 0 = old solution is new solution
 
 }
 }

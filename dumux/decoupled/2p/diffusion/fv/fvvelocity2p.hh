@@ -36,12 +36,14 @@ namespace Dumux
 /*! Calculates phase velocities or total velocity from a known pressure field in context of a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
- * The wetting or the non-wetting phase pressure has to be given as piecewise constant cell values.
- * The velocity is calculated following  Darcy's law as
- * \f[\boldsymbol{v}_n = \lambda_n \boldsymbol{K} \left(\text{grad}\, p_n + \rho_n g  \text{grad}\, z\right),\f]
- * where, \f$p_n\f$ denotes the wetting phase pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_n\f$ the non-wetting phase mobility, \f$\rho_n\f$ the non-wetting phase density and \f$g\f$ the gravity constant.
- * As in the two-phase pressure equation a total flux depending on a total velocity is considered one has to be careful at neumann flux boundaries. Here, a phase velocity is only uniquely defined, if
- * the saturation is at the maximum (\f$1-S_{rw}\f$, \f$\boldsymbol{v}_{total} = \boldsymbol{v}_n\f$) or at the minimum (\f$ S_{rn} \f$, \f$\boldsymbol{v}_n = 0\f$)
+ * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
+ * The phase velocities are calculated following  Darcy's law as
+ * \f[\boldsymbol{v}_\alpha = \lambda_\alpha \boldsymbol{K} \left(\text{grad}\, p_\alpha + \rho_\alpha g  \text{grad}\, z\right),\f]
+ * where \f$p_\alpha\f$ denotes the pressure of phase \f$_\alpha\f$ (wetting or non-wetting), \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_\alpha\f$ the phase mobility, \f$\rho_\alpha\f$ the phase density and \f$g\f$ the gravity constant.
+ * The total velocity is either calculated as sum of the phase velocities
+ * \f[\boldsymbol{v}_{total} = \boldsymbol{v}_{wetting}+\boldsymbol{v}_{non-wetting},\f]
+ * or with a given global pressure
+ * \f[\boldsymbol{v}_{total} = \lambda_{total} \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right).\f]
  *
  * \tparam TypeTag The Type Tag
  */
@@ -95,31 +97,12 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! Constructs a FVNonWettingPhaseVelocity2P object
+    //! Constructs a FVVelocity2P object
     /*!
      * \param problem a problem class object
      */
     FVVelocity2P(Problem& problem)
     : FVPressure2P<TypeTag>(problem)
-    {
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility)) && velocityType_ == vt)
-        {
-            DUNE_THROW(Dune::NotImplemented, "Total velocity - global pressure - model cannot be used with compressible fluids!");
-        }
-        if (velocityType_ != vw && velocityType_ != vn && velocityType_ != vt)
-        {
-            DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
-        }
-    }
-    //! Constructs a FVNonWettingPhaseVelocity2P object
-    /**
-     * \param problem a problem class object
-     * \param solverName a string giving the type of solver used (could be: CG, BiCGSTAB, Loop)
-     * \param preconditionerName a string giving the type of the matrix preconditioner used (could be: Dune::SeqILU0, SeqPardiso)
-     */
-    FVVelocity2P(Problem& problem, std::string solverName,
-            std::string preconditionerName)
-    : FVPressure2P<TypeTag>(problem, solverName, preconditionerName)
     {
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility)) && velocityType_ == vt)
         {
@@ -212,7 +195,7 @@ public:
 private:
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation)); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
 };
-//! \copydoc Dumux::FVVelocity1P::calculateVelocity()
+
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocity()
 {

@@ -21,7 +21,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all single phase problems which use an impes algorithm
+ * \brief Base class for all single phase diffusion problem
+ * @author Markus Wolff
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_1P_HH
 #define DUMUX_DIFFUSIONPROBLEM_1P_HH
@@ -35,9 +36,10 @@ namespace Dumux
 /*!
  * \ingroup OnePhase
  *
- * \brief  Base class for all single phase problems which use an impes algorithm
+ * \brief  Base class for all single phase diffusion problem
  *
- * \todo Please doc me more!
+ * @tparam TypeTag The Type Tag
+ * @tparam Implementation The Problem implementation
  */
 template<class TypeTag, class Implementation>
 class DiffusionProblem1P: public OneModelProblem<TypeTag, Implementation>
@@ -59,6 +61,12 @@ class DiffusionProblem1P: public OneModelProblem<TypeTag, Implementation>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param verbose Output flag for the time manager.
+     */
     DiffusionProblem1P(const GridView &gridView, bool verbose = true) :
         ParentType(gridView, verbose), gravity_(0)
     {
@@ -68,7 +76,13 @@ public:
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim - 1] = -9.81;
     }
-
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
+     * \param verbose Output flag for the time manager.
+     */
     DiffusionProblem1P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true) :
         ParentType(gridView, verbose), gravity_(0), spatialParameters_(&spatialParameters)
     {

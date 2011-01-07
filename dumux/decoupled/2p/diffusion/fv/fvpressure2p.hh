@@ -125,7 +125,7 @@ protected:
     }
 
 public:
-
+    //! updates and stores constitutive relations
     void updateMaterialLaws();
     //! \copydoc Dumux::FVPressure1P::initialize()
     void initialize(bool solveTwice = true)
@@ -173,7 +173,7 @@ public:
 
         return;
     }
-    //! What is this method here fore???
+    //! updates the pressure field (analog to update function in Dumux::IMPET)
     void update()
     {
         updateMaterialLaws();
@@ -184,12 +184,14 @@ public:
     }
 
     // serialization methods
+    //! \copydoc Dumux::FVPressure1P::serialize(Restarter &res)
     template<class Restarter>
     void serialize(Restarter &res)
     {
         return;
     }
 
+    //! \copydoc Dumux::FVPressure1P::deserialize(Restarter &res)
     template<class Restarter>
     void deserialize(Restarter &res)
     {
@@ -277,8 +279,8 @@ private:
 protected:
     const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
     static const bool compressibility = GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
 //initializes the matrix to store the system of equations

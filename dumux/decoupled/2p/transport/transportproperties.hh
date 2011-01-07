@@ -80,7 +80,7 @@ NEW_PROP_TAG( EnableCompressibility );
 NEW_PROP_TAG( PressureFormulation );
 NEW_PROP_TAG( SaturationFormulation );
 NEW_PROP_TAG( VelocityFormulation );
-NEW_PROP_TAG( EvalCflFluxFunction );
+NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
 NEW_PROP_TAG( CFLFactor );
 
 SET_TYPE_PROP(Transport, DiffusivePart, DiffusivePart<TypeTag>);

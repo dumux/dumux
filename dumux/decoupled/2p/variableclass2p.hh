@@ -34,18 +34,15 @@
 namespace Dumux
 {
 /*!
- * \ingroup Immiscible IMPES
+ * \ingroup IMPES
  */
 //! Class including the variables and data of discretized data of the constitutive relations.
 /*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
  * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
  *
- * Template parameters are:
-
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- */
+ * @tparam TypeTag The Type Tag
+1*/
 template<class TypeTag>
 class VariableClass2P: public VariableClass<TypeTag>
 {
@@ -137,22 +134,26 @@ public:
     }
 
     // serialization methods
+    //! Function needed for restart option.
     template<class Restarter>
     void serialize(Restarter &res)
     {
         res.template serializeEntities<0> (*this, this->gridView());
     }
+    //! Function needed for restart option.
     template<class Restarter>
     void deserialize(Restarter &res)
     {
         res.template deserializeEntities<0> (*this, this->gridView());
     }
 
+    //! Function needed for restart option.
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int globalIdx = this->elementMapper().map(element);
         outstream << this->pressure()[globalIdx] << "  " << saturation_[globalIdx];
     }
+    //! Function needed for restart option.
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = this->elementMapper().map(element);
@@ -190,6 +191,7 @@ private:
 
 public:
     //Write saturation and pressure into file
+    //! adds variables to output
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {

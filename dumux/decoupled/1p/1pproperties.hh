@@ -58,7 +58,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the two-phase problems
+//! The type tag for the single-phase problem
 NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
 
 //////////////////////////////////////////////////////////////////
@@ -74,31 +74,31 @@ NEW_PROP_TAG( Fluid )
 
 //Properties for linear solvers
 NEW_PROP_TAG(PressureCoefficientMatrix)
-;
+;//!< Type of the coefficient matrix given to the linear solver
 NEW_PROP_TAG(PressureRHSVector)
-;
+;//!< Type of the right hand side vector given to the linear solver
 NEW_PROP_TAG( PressurePreconditioner )
-;
+;//!< Type of the preconditioner
 NEW_PROP_TAG( PressureSolver )
-;
+;//!< Type of the solver
 NEW_PROP_TAG( SolverParameters )
-;
+;//!< Container for the solver parameters
 NEW_PROP_TAG(ReductionSolver)
-;
+;//!< Reduction value for linear solver
 NEW_PROP_TAG(MaxIterationNumberSolver)
-;
+;//!< Maximum iteration number for linear solver
 NEW_PROP_TAG(IterationNumberPreconditioner)
-;
+;//!< Iteration number for preconditioner
 NEW_PROP_TAG(VerboseLevelSolver)
-;
+;//!<Verbose level of linear solver and preconditioner
 NEW_PROP_TAG(RelaxationPreconditioner)
-;
+;//!< Relaxation factor for preconditioner
 
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_INT_PROP(DecoupledOneP, NumPhases, 1)
+SET_INT_PROP(DecoupledOneP, NumPhases, 1)//!< Single phase system
 ;
 SET_INT_PROP(DecoupledOneP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
