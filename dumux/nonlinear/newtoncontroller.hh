@@ -327,7 +327,7 @@ public:
     /*!
      * \brief Returns true if another iteration should be done.
      *
-     * \param u The current solution
+     * \param uCurrentIter The solution of the current newton iteration
      */
     bool newtonProceed(const SolutionVector &uCurrentIter)
     {
@@ -525,8 +525,8 @@ public:
     /*!
      * \brief Indicates that one newton iteration was finished.
      *
-     * \param u The solution after the current iteration
-     * \param uLastIter The solution at the beginning of the current iteration
+     * \param uCurrentIter The solution after the current Newton iteration
+     * \param uLastIter The solution at the beginning of the current Newton iteration
      */
     void newtonEndStep(const SolutionVector &uCurrentIter, 
                        const SolutionVector &uLastIter)
