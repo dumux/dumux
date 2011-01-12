@@ -107,7 +107,8 @@ public:
               Scalar tEnd,
               bool writeInitialSol = true)
     {
-        std::cout << "Initializing '" << problem_->name() << "'\n";
+        if (verbose_)
+            std::cout << "Initializing problem '" << problem_->name() << "'\n";
 
         problem_ = &problem;
         time_ = tStart;
