@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 
         // specify dimensions of the low-permeable lens
         GlobalPosition lowerLeftLens, upperRightLens;
-        lowerLeftLens[0] = 1.0;
+        lowerLeftLens[0] = 0.8;
         lowerLeftLens[1] = 2.0;
         upperRightLens[0] = 4.0;
         upperRightLens[1] = 3.0;

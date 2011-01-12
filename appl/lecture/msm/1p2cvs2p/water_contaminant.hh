@@ -126,18 +126,18 @@ public:
                             const FluidState &fluidState)
     {
     //TODO: return diffCoefficient_;
-        return  0.0; // in [m^2/s]
+        return  1.0e-9; // in [m^2/s]
     //TODO: The example is very bad! The numerical diffusion is very high, so that the diffusion/dispersion coefficients nearly do not have any influence!
     }
 
 
-    WaterContaminant( )
+/*    WaterContaminant( )
     {
         //load interface-file
         Dumux::InterfaceFluidProperties interfaceFluidProps("interface1p2c.xml");
 
         diffCoefficient_ = interfaceFluidProps.IFP_MolecularDiffusionCoefficient;
-    }
+    }*/
 
 
 //private:

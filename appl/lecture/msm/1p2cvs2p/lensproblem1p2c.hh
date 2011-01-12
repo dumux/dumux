@@ -112,7 +112,7 @@ namespace Dumux
      * The whole problem is symmetric.
      *
      * The domain is sized 5m times 4m and features a rectangular lens
-     * with low permeablility which spans from (1 m , 2 m) to (4 m, 3 m)
+     * with low permeablility which spans from (0.8 m , 2 m) to (4 m, 3 m)
      * and is surrounded by a medium with higher permability.
      *
      * On the top and the bottom of the domain Dirichlet boundary conditions
@@ -126,11 +126,11 @@ namespace Dumux
      * This problem uses the \ref TwoPBoxModel.
      *
      * This problem should typically simulated until \f$t_{\text{end}} =
-     * 50\,000\;s\f$ is reached. A good choice for the initial time step size
-     * is \f$t_{\text{inital}} = 1\,000\;s\f$.
+     * 30\,000\;s\f$ is reached. A good choice for the initial time step size
+     * is \f$t_{\text{inital}} = 100\;s\f$.
      *
      * To run the simulation execute the following line in shell:
-     * <tt>./lens_1p2c 50000 100</tt>
+     * <tt>./lens_1p2c 30000 100</tt>
      */
     template <class TypeTag >
     class LensProblem : public OnePTwoCBoxProblem<TypeTag>
@@ -146,9 +146,12 @@ namespace Dumux
             dim = GridView::dimension,
             dimWorld = GridView::dimensionworld,
 
-            // indices of the primary variables
+            // indices of the equations
             contiEqIdx = Indices::contiEqIdx,
-            transEqIdx = Indices::transEqIdx
+            transEqIdx = Indices::transEqIdx,
+            // indices of the primary variables
+		pressureIdx = Indices::pressureIdx,
+		x1Idx = Indices::x1Idx
         };
 
         typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
@@ -187,8 +190,7 @@ namespace Dumux
             upperPressure_ = interfaceProbProps.IPP_UpperPressure;
             lowerPressure_ = interfaceProbProps.IPP_LowerPressure;
             infiltrationRate_ = interfaceProbProps.IPP_InfiltrationRate;
-            //infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
-	    infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
+ 	    infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
             infiltrationEndTime_= interfaceProbProps.IPP_InfiltrationEndTime;
         }
 
@@ -268,13 +270,13 @@ namespace Dumux
 
             if (onUpperBoundary_(globalPos))
             {
-                values[contiEqIdx] = upperPressure_;
-                values[transEqIdx] = 0.0;
+                values[pressureIdx] = upperPressure_;
+                values[x1Idx] = 0.0;
             }
             else if (onLowerBoundary_(globalPos))
             {
-                values[contiEqIdx] = lowerPressure_;
-                values[transEqIdx] = 0.0;
+                values[pressureIdx] = lowerPressure_;
+                values[x1Idx] = 0.0;
             }
             else
             	values = 0.0;

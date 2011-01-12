@@ -105,7 +105,7 @@ SET_PROP(LensProblem, SpatialParameters)
 };
 
 // Enable gravity
-SET_BOOL_PROP(LensProblem, EnableGravity, true);
+SET_BOOL_PROP(LensProblem, EnableGravity, false);
 }
 
 /*!
@@ -113,7 +113,7 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  * \brief Soil decontamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  *
- * The domain is sized 6m times 4m and features a rectangular lens
+ * The domain is sized 5m times 4m and features a rectangular lens
  * with low permeablility which spans from (1 m , 2 m) to (4 m, 3 m)
  * and is surrounded by a medium with higher permability.
  *
@@ -192,14 +192,17 @@ class LensProblem : public TwoPProblem<TypeTag>
 public:
     LensProblem(TimeManager &timeManager,
                 const GridView &gridView,
+		    const GlobalPosition &lowerLeft,
+                    const GlobalPosition &upperRight,
                 const GlobalPosition &lensLowerLeft,
                 const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
-        bboxMin_ = 0.0;
-        bboxMax_[0] = 5.0;
-        bboxMax_[1] = 4.0;
+            bboxMin_[0] = lowerLeft[0];
+	    bboxMin_[1] = lowerLeft[1];
+            bboxMax_[0] = upperRight[0];
+            bboxMax_[1] = upperRight[1];
 
         //load interface-file
         Dumux::InterfaceProblemProperties interfaceProbProps("interface2p.xml");
@@ -207,7 +210,8 @@ public:
         lowerPressure_ = interfaceProbProps.IPP_LowerPressure;
         upperPressure_ = interfaceProbProps.IPP_UpperPressure;
         infiltrationRate_ = interfaceProbProps.IPP_InfiltrationRate;
-        infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
+             //infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
+	    infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
         infiltrationEndTime_= interfaceProbProps.IPP_InfiltrationEndTime;
     }
 
@@ -224,7 +228,7 @@ public:
     const char *name() const
     {
         std::string simName = "lens-2p_run";
-        Dumux::InterfaceProblemProperties interfaceProbProps("interface_BL.xml");
+        Dumux::InterfaceProblemProperties interfaceProbProps("interface2p.xml");
         Scalar simNum =  interfaceProbProps.IPP_SimulationNumber;
 
         return (str(boost::format("%s-%02d")
