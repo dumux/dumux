@@ -1,9 +1,5 @@
-# use these options for configure if no options a provided on the cmdline
-#AUTOGEN_FLAGS="--ac=2.59 --am=-1.8"
-
-# path to external modules 
-MODDIR=$OLDPWD/external
-DUMUXDIR=$OLDPWD/dumux 
+# path to the dumux includes
+DUMUXDIR=$(find $OLDPWD -name "dune.module" | grep -h dumux | sed "s/dune.module//")
 
 # configure flags 
 CONFIGURE_FLAGS="CXXFLAGS=\"-I$DUMUXDIR -Wall -Wno-sign-compare -fno-strict-aliasing -g\" \
