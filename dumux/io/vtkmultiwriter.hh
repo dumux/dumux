@@ -39,6 +39,8 @@
 #include <iostream>
 #include <string>
 
+#include <limits>
+
 namespace Dumux {
 /*!
  * \brief Simplyfies writing multi-file VTK datasets.
@@ -128,7 +130,7 @@ public:
 
             // set values which are too small to 0 to avoid problems
             // with paraview
-            if (std::abs((*field)[i]) < FLT_MIN)
+            if (std::abs((*field)[i]) < std::numeric_limits<float>::min())
                 (*field)[i] = 0.0;
         }
 
