@@ -68,7 +68,6 @@ AC_DEFUN([DUMUX_CHECKS],
   AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
   AC_CHECK_PROGS([CONVERT], [convert], [false])
   AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
-  AM_CONDITIONAL([BUILD_HANDBOOK], [test -a "stamp-vc" -a "x$LATEX" != xtrue])
 
   AC_CHECK_HEADER([valgrind/memcheck.h], 
                   [HAVE_VALGRIND_H="1"],
@@ -80,8 +79,26 @@ AC_DEFUN([DUMUX_CHECKS],
   # check whether pardiso is installed (this is already in dune-common
   # so we only use the results.)
   # SET_PARDISO
-
   DUNE_ADD_SUMMARY_ENTRY([Pardiso],[$acx_pardiso_ok])
+
+  # Add the latex and handbook status to the summary
+  have_latex=no
+  if test "x$LATEX" != "x"; then
+     have_latex=yes
+  fi
+  DUNE_ADD_SUMMARY_ENTRY([Latex],[$have_latex])
+
+  # only build the handbook if the documentation is build, latex is
+  # available and the tree is checked out via a version control system
+  build_handbook=no
+  if test "x$enable_documentation" != "xno" && \
+     test -a "$(pwd)/${top_srcdir}/stamp-vc" && \
+     test "$have_latex" == "yes"; then
+    build_handbook=yes
+  fi
+  AM_CONDITIONAL([BUILD_HANDBOOK], [test "$build_handbook" == "yes"])
+
+  DUNE_ADD_SUMMARY_ENTRY([Build handbook],[$build_handbook])
 ])
 
 AC_DEFUN([DUMUX_CHECK_ALL],

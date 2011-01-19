@@ -3,11 +3,9 @@ DUMUXDIR=$(find $OLDPWD -name "dune.module" | xargs grep -El '[[:space:]]*Module
 
 # configure flags 
 CONFIGURE_FLAGS="CXXFLAGS=\"-I$DUMUXDIR -Wall -Wno-sign-compare -fno-strict-aliasing -O3 -march=native -DNDEBUG\" \
-  --enable-dunedevel \
-  --enable-debug \
-  --disable-doxygen \
+  --disable-dunedevel \
   --disable-documentation \
-  --enable-parallel \
+  --disable-parallel \
   --disable-mpiruntest"
 
 # make all
