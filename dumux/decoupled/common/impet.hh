@@ -101,7 +101,7 @@ public:
      */
     void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
     {
-    	// the method is valid for any transported quantity.
+        // the method is valid for any transported quantity.
         int transSize = problem.variables().gridSize();
         TransportSolutionType transportedQuantity(problem.variables().transportedQuantity());
         TransportSolutionType transValueOldIter(problem.variables().transportedQuantity());

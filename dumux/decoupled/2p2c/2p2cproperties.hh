@@ -108,7 +108,7 @@ SET_PROP(DecoupledTwoPTwoC, TwoPIndices)
 // set fluid/component information
 SET_PROP(DecoupledTwoPTwoC, NumPhases) //!< The number of phases in the 2p model is 2
 {
-	// the property is created in decoupledproperties.hh
+    // the property is created in decoupledproperties.hh
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 

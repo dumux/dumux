@@ -67,7 +67,7 @@ public:
 
     const FieldMatrix& intrinsicPermeability  (const GlobalPosition& globalPos, const Element& element) const
     {
-    	return constPermeability_;
+        return constPermeability_;
     }
 
     double porosity(const GlobalPosition& globalPos, const Element& element) const

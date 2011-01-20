@@ -351,7 +351,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                 }
 
                 /******************************************
-                 * 	Boundary Face
+                 *     Boundary Face
                  ******************************************/
                 if (isIt->boundary())
                 {
@@ -513,13 +513,13 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                         double inflow = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;
                         if (inflow>0)
                             {
-                            factor[0] = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;	// =factor in
-                            factor[1] = -(updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI);	// =factor out
+                            factor[0] = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;    // =factor in
+                            factor[1] = -(updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI);    // =factor out
                             }
                         else
                         {
-                            factor[0] = -(updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW);	// =factor in
-                            factor[1] = updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI;	// =factor out
+                            factor[0] = -(updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW);    // =factor in
+                            factor[1] = updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI;    // =factor out
                         }
                         #endif
                     }//end neumann boundary
@@ -535,7 +535,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             }// end all intersections
 
             /************************************
-             * 	Handle source term
+             *     Handle source term
              ***********************************/
             Dune::FieldVector<double,2> q = problem_.source(globalPos, *eIt);
             updateVec[wCompIdx][globalIdxI] += q[wCompIdx];

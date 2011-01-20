@@ -186,23 +186,22 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     LensProblem(TimeManager &timeManager,
                 const GridView &gridView,
-		    const GlobalPosition &lowerLeft,
-                    const GlobalPosition &upperRight,
+                const GlobalPosition &lowerLeft,
+                const GlobalPosition &upperRight,
                 const GlobalPosition &lensLowerLeft,
                 const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
-            bboxMin_[0] = lowerLeft[0];
-	    bboxMin_[1] = lowerLeft[1];
-            bboxMax_[0] = upperRight[0];
-            bboxMax_[1] = upperRight[1];
+        bboxMin_[0] = lowerLeft[0];
+        bboxMin_[1] = lowerLeft[1];
+        bboxMax_[0] = upperRight[0];
+        bboxMax_[1] = upperRight[1];
 
         //load interface-file
         Dumux::InterfaceProblemProperties interfaceProbProps("interface2p.xml");
@@ -210,8 +209,8 @@ public:
         lowerPressure_ = interfaceProbProps.IPP_LowerPressure;
         upperPressure_ = interfaceProbProps.IPP_UpperPressure;
         infiltrationRate_ = interfaceProbProps.IPP_InfiltrationRate;
-             //infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
-	    infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
+        //infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
+        infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
         infiltrationEndTime_= interfaceProbProps.IPP_InfiltrationEndTime;
     }
 
@@ -232,7 +231,7 @@ public:
         Scalar simNum =  interfaceProbProps.IPP_SimulationNumber;
 
         return (str(boost::format("%s-%02d")
-                %simName%simNum).c_str());
+                    %simName%simNum).c_str());
     }
 
     /*!
@@ -241,8 +240,8 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature(const Element &element,
-            const FVElementGeometry &fvElemGeom,
-            int scvIdx) const
+                       const FVElementGeometry &fvElemGeom,
+                       int scvIdx) const
     {
         return 273.15 + 10; // -> 10°C
     };
@@ -267,7 +266,7 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
 
 
-            if (onUpperBoundary_(globalPos) || onLowerBoundary_(globalPos))
+        if (onUpperBoundary_(globalPos) || onLowerBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -300,7 +299,7 @@ public:
             values[SnIdx] = 0.0;
         }
         else
-        	values = 0.0;
+            values = 0.0;
 
 //        Scalar densityW = this->wettingPhase().density();
 //
@@ -345,11 +344,11 @@ public:
 
         const Scalar& time = this->timeManager().time();
 
-         if (time >= infiltrationStartTime_ && time <= infiltrationEndTime_)
-         {
-             if (onInlet_(globalPos))
-                 values[contiNEqIdx] = -infiltrationRate_; // kg / (m * s)
-         }
+        if (time >= infiltrationStartTime_ && time <= infiltrationEndTime_)
+        {
+            if (onInlet_(globalPos))
+                values[contiNEqIdx] = -infiltrationRate_; // kg / (m * s)
+        }
 
     }
     // \}
@@ -423,8 +422,8 @@ private:
     {
         Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
         Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
-          return onUpperBoundary_(globalPos) && (bboxMax_[0]-0.35*width)/width > lambda && lambda > (bboxMax_[0]-0.55*width)/width;
-      }
+        return onUpperBoundary_(globalPos) && (bboxMax_[0]-0.35*width)/width > lambda && lambda > (bboxMax_[0]-0.55*width)/width;
+    }
 
     static const Scalar eps_ = 3e-6;
     GlobalPosition bboxMin_;

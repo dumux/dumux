@@ -319,24 +319,24 @@ public:
         initAndFactor(A);
     }
 
-	/*! \brief Prepare the preconditioner.
+    /*! \brief Prepare the preconditioner.
 
-	A solver solves a linear operator equation A(x)=b by applying
+    A solver solves a linear operator equation A(x)=b by applying
     one or several steps of the preconditioner. The method pre()
     is called before the first apply operation.
     b and x are right hand side and solution vector of the linear
     system respectively. It may. e.g., scale the system, allocate memory or
     compute a (I)LU decomposition.
-	  Note: The ILU decomposition could also be computed in the constructor
+      Note: The ILU decomposition could also be computed in the constructor
     or with a separate method of the derived method if several
     linear systems with the same matrix are to be solved.
 
     \param x The left hand side of the equation.
     \param b The right hand side of the equation.
-	*/
+    */
     virtual void pre (X& x, Y& b) {}
 
-	/*! \brief Apply one step of the preconditioner to the system \f$ A(v)=d \f$.
+    /*! \brief Apply one step of the preconditioner to the system \f$ A(v)=d \f$.
 
     On entry \f$ v=0 \f$ and \f$ d=b-A(x) \f$ (although this might not be
     computed in that way. On exit v contains the update, i.e
@@ -345,7 +345,7 @@ public:
     the preconditioner.
     \param[out] v The update to be computed
     \param d The current defect.
-	*/
+    */
     virtual void apply (X& v, const Y& d)
     {
 #ifdef HAVE_PARDISO
@@ -389,14 +389,14 @@ public:
 #endif
     }
 
-	/*! \brief Clean up.
+    /*! \brief Clean up.
 
-	This method is called after the last apply call for the
+    This method is called after the last apply call for the
     linear system to be solved. Memory may be deallocated safely
     here. x is the solution of the linear equation.
 
     \param x The right hand side of the equation.
-	*/
+    */
     virtual void post (X& x)
     {
 #ifdef HAVE_PARDISO

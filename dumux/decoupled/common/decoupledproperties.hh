@@ -165,10 +165,10 @@ public:
  */
 SET_PROP_DEFAULT(TransportSolutionType)
 {
-	private:
+    private:
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionType;
 
-	public:
+    public:
     typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
 };
 

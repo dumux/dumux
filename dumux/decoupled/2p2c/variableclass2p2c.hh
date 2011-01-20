@@ -88,7 +88,7 @@ private:
     ScalarSolutionType saturation_;
     PhasePropertyType mobility_; //store lambda for efficiency reasons
     ScalarSolutionType capillaryPressure_;
-    DimVecElemFaceType velocitySecondPhase_;	//necessary??
+    DimVecElemFaceType velocitySecondPhase_;    //necessary??
 
     FluidPropertyType density_;
     FluidPropertyType numericalDensity_;
@@ -129,7 +129,7 @@ public:
             Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim>(0))) :
         VariableClass<TypeTag> (gridView, codim, initialVel), codim_(codim)
     {
-    	initialize2p2cVariables(initialVel, initialSat);
+        initialize2p2cVariables(initialVel, initialSat);
     }
 
     //! serialization methods -- same as Dumux::VariableClass2P
@@ -147,7 +147,7 @@ public:
 
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-    	Dune::dwarn << "here, rather total concentrations should be used!" << std::endl;
+        Dune::dwarn << "here, rather total concentrations should be used!" << std::endl;
         int globalIdx = this->elementMapper().map(element);
         outstream << this->pressure()[globalIdx] << "  " << saturation_[globalIdx];
     }
@@ -170,11 +170,11 @@ private:
     void initialize2p2cVariables(Dune::FieldVector<Scalar, dim>& initialVel, int initialSat)
     {
         //resize to grid size
-    	int size_ = this->gridSize();
-    	// a) global variables
+        int size_ = this->gridSize();
+        // a) global variables
         velocitySecondPhase_.resize(size_);//depends on pressure
             velocitySecondPhase_ = initialVel;
-        for (int i=0; i<2; i++)	//for both phases
+        for (int i=0; i<2; i++)    //for both phases
         {
         density_[i].resize(size_);//depends on pressure
         numericalDensity_[i].resize(size_);//depends on pressure
@@ -210,10 +210,10 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-    	int size_ = this->gridSize();
+        int size_ = this->gridSize();
         if (codim_ == 0)
         {
-        	// pressure & saturation
+            // pressure & saturation
             ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (size_);
             ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (size_);
             *pressure = this->pressure();

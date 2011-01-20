@@ -48,8 +48,8 @@ class PseudoOnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTa
 
 
 public:
-    enum { 	numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-			numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+    enum {     numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+            numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
             wPhaseIdx = 0,
             nPhaseIdx = 1,};
     
@@ -135,9 +135,9 @@ public:
         // as the mass fractions are calculated, these are used to determine the mole fractions
         if (compIdx == wPhaseIdx)   //only interested in wComp => X1
         {
-            moleFrac_ = ( massfracX1_[phaseIdx] / FluidSystem::molarMass(compIdx) );	// = moles of compIdx
+            moleFrac_ = ( massfracX1_[phaseIdx] / FluidSystem::molarMass(compIdx) );    // = moles of compIdx
             moleFrac_ /= ( massfracX1_[phaseIdx] / FluidSystem::molarMass(0)
-                           + (1.-massfracX1_[phaseIdx]) / FluidSystem::molarMass(1) );	// /= total moles in phase
+                           + (1.-massfracX1_[phaseIdx]) / FluidSystem::molarMass(1) );    // /= total moles in phase
         }
         else    // interested in nComp => 1-X1
         {
@@ -145,7 +145,7 @@ public:
             moleFrac_ /= ((1.- massfracX1_[phaseIdx] )/ FluidSystem::molarMass(0)
                            + massfracX1_[phaseIdx] / FluidSystem::molarMass(1) );    // /= total moles in phase
         }
-		return moleFrac_;
+        return moleFrac_;
     }
     //@}
 

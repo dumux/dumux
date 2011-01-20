@@ -121,7 +121,7 @@ int startFromDGF(int argc, char **argv)
                 std::cerr << "WARNING: THE PROGRAM IS STARTED USING MPI, BUT THE GRID IMPLEMENTATION\n"
                           << "         YOU HAVE CHOSEN IS NOT PARALLEL!\n";
             }
-        	gridPtr.loadBalance();
+            gridPtr.loadBalance();
         }
 
         // instantiate and run the concrete problem
