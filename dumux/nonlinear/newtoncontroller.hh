@@ -467,7 +467,7 @@ public:
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
-                           "A process threw MatrixBlockError");
+                           "A process threw NumericalProblem");
             }
         }
         catch (Dune::MatrixBlockError e) {
@@ -480,6 +480,15 @@ public:
             std::ostringstream ms(msg);
             ms << e.what() << "M=" << A[e.r][e.c];
             p.message(ms.str());
+            throw p;
+        }
+        catch (const Dune::ISTLError &e) {
+            // make sure all processes converged
+            int converged = 0;
+            gridView_().comm().min(converged);
+
+            Dumux::NumericalProblem p;
+            p.message(e.what());
             throw p;
         }
     }
