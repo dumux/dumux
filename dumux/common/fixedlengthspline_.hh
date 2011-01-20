@@ -38,8 +38,8 @@ namespace Dumux
  *        more than two sampling points.
  */
 template<class ScalarT, int nSamples>
-class FixedLengthSpline_ 
-    : public SplineCommon_<ScalarT, 
+class FixedLengthSpline_
+    : public SplineCommon_<ScalarT,
                            FixedLengthSpline_<ScalarT, nSamples> >
 {
     friend class SplineCommon_<ScalarT, FixedLengthSpline_<ScalarT, nSamples> >;
@@ -53,7 +53,7 @@ protected:
     FixedLengthSpline_()
         : m_(nSamples)
     {};
-    
+
 public:
     /*!
      * \brief Returns the number of sampling points.
@@ -66,7 +66,7 @@ public:
      *        spline.
      */
     template <class ScalarContainer>
-    void set(const ScalarContainer &x, 
+    void set(const ScalarContainer &x,
              const ScalarContainer &y,
              Scalar m0, Scalar m1)
     {
@@ -74,7 +74,7 @@ public:
         BlockVector d(numSamples());
         this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
         this->makeFullSystem_(M, d, m0, m1);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -91,7 +91,7 @@ public:
         BlockVector d(numSamples());
         this->assignSamplingPoints_(xPos_, yPos_, points, numSamples());
         this->makeFullSystem_(M, d, m0, m1);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -106,7 +106,7 @@ public:
         BlockVector d(numSamples());
         this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
         this->makeNaturalSystem_(M, d);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -123,7 +123,7 @@ public:
         BlockVector d(numSamples());
         this->assignSamplingPoints_(xPos_, yPos_, points, numSamples());
         this->makeNaturalSystem_(M, d);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }

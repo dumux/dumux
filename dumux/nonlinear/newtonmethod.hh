@@ -146,7 +146,7 @@ protected:
             ///////////////
             // assemble
             ///////////////
-            
+
             // linearize the problem at the current solution
             assembleTimer.start();
             jacobianAsm.assemble();
@@ -194,7 +194,7 @@ protected:
 
         if (ctl.verbose()) {
             Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-            std::cout << "Assemble/solve/update time: " 
+            std::cout << "Assemble/solve/update time: "
                       <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
                       <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
                       <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"

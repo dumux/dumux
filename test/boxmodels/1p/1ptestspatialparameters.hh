@@ -20,7 +20,7 @@
  *****************************************************************************/
 /*!
  * \file
- * 
+ *
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */
@@ -34,7 +34,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePBoxModel
- * 
+ *
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */

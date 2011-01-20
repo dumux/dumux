@@ -79,7 +79,7 @@ public:
      * \brief Constructor
      *
      * \param timeManager The TimeManager which is used by the simulation
-     * \param gridView The simulation's idea about physical space 
+     * \param gridView The simulation's idea about physical space
      */
     BoxProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
@@ -176,7 +176,7 @@ public:
     }
 
     /*!
-     * \brief Returns the newton method object 
+     * \brief Returns the newton method object
      */
     NewtonMethod &newtonMethod()
     { return newtonMethod_; }
@@ -247,12 +247,12 @@ public:
      *        model should be prepared to do the next time integration.
      */
     void advanceTimeLevel()
-    { 
+    {
         model_.advanceTimeLevel();
     }
 
     /*!
-     * \brief Called when the end of an simulation episode is reached. 
+     * \brief Called when the end of an simulation episode is reached.
      *
      * Typically a new episode should be started in this method.
      */
@@ -396,7 +396,7 @@ public:
     /*!
      * \brief Load a previously saved state of the whole simulation
      *        from disk.
-     * 
+     *
      * \param tRestart The simulation time on which the program was
      *                 written to disk.
      */

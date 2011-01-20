@@ -135,11 +135,11 @@ public:
             Dune::FieldVector<Scalar, dim> refVelocity(0);
             refVelocity[0] = 0.5 * (flux[1] - flux[0]);
             refVelocity[1] = 0.5 * (flux[3] - flux[2]);
-            
+
             typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
             const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(eIt->geometry().type()).position(0,
                     0);
-            
+
             // get the transposed Jacobian of the element mapping
             const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
             FieldMatrix jacobianT(jacobianInv);

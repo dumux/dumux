@@ -141,7 +141,7 @@ public:
         bcTypes.update(this->problem_(), element, fvGeom);
         ElementVolumeVariables volVars;
         volVars.update(this->problem_(), element, fvGeom, false);
-        
+
         this->residual_.resize(fvGeom.numVertices);
         this->residual_ = 0;
 
@@ -152,7 +152,7 @@ public:
         this->curVolVarsPtr_ = &volVars;
         evalPhaseStorage_(phaseIdx);
     }
-    
+
     /*!
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -300,7 +300,7 @@ protected:
             PrimaryVariables &result = this->residual_[i];
             const ElementVolumeVariables &elemVolVars = this->curVolVars_();
             const VolumeVariables &volVars = elemVolVars[i];
-            
+
             // compute storage term of all components within all phases
             result = 0;
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)

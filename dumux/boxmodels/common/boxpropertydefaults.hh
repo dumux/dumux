@@ -141,7 +141,7 @@ SET_PROP(BoxModel, SolutionVector)
 public:
     typedef typename GridFunctionSpace::template VectorContainer<Scalar>::Type type;
 };
-#else 
+#else
 SET_PROP(BoxModel, SolutionVector)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

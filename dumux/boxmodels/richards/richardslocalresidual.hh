@@ -52,7 +52,7 @@ class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
         dimWorld = GridView::dimensionworld,
@@ -65,7 +65,7 @@ class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     static const Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
-    
+
 public:
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -87,8 +87,8 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const VolumeVariables &volVars = 
-            usePrevSol ? 
+        const VolumeVariables &volVars =
+            usePrevSol ?
             this->prevVolVars_(scvIdx) :
             this->curVolVars_(scvIdx);
 
@@ -104,10 +104,10 @@ public:
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
      *
-     * 
+     *
      * \param flux Stores the total mass fluxes over a sub-control volume face
      *             of the current element \f$\mathrm{[kg/s]}\f$
-     * \param scvfIdx The sub control volume face index inside the current 
+     * \param scvfIdx The sub control volume face index inside the current
      *                element
      */
     void computeFlux(PrimaryVariables &flux, int scvfIdx) const
@@ -124,16 +124,16 @@ public:
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGradW(),
                                             tmpVec);
         Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
-        
+
         // data attached to upstream and the downstream vertices
         // of the current phase
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
-        
+
         flux[contiEqIdx] =
             normalFlux
             *
-            ((    mobilityUpwindAlpha)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx) 
+            ((    mobilityUpwindAlpha)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx)
              +
              (1 - mobilityUpwindAlpha)*dn.density(wPhaseIdx)*dn.mobility(wPhaseIdx));
     }
@@ -141,9 +141,9 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param q Stores the average source term of all phases inside a 
+     * \param q Stores the average source term of all phases inside a
      *          sub-control volume of the current element \f$\mathrm{[kg/(m^3 * s)]}\f$
-     * \param scvIdx The sub control volume index inside the current 
+     * \param scvIdx The sub control volume index inside the current
      *               element
      */
     void computeSource(PrimaryVariables &q, int scvIdx)

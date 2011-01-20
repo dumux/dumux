@@ -271,7 +271,7 @@ public:
 
     /*!
      * \brief Set a dirichlet boundary condition for a single primary
-     *        variable. 
+     *        variable.
      *
      * WARNING: This method assumes that the equation with the same
      * index as the primary variable to be set is used to specify the

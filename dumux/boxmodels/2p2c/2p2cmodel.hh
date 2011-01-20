@@ -238,8 +238,8 @@ public:
 
     /*!
      * \brief Called by the problem if a time integration was
-     *        successful, post processing of the solution is done and the 
-     *        result has been written to disk. 
+     *        successful, post processing of the solution is done and the
+     *        result has been written to disk.
      *
      * This should prepare the model for the next time integration.
      */
@@ -560,7 +560,7 @@ public:
                 const GlobalPosition &global = it->geometry().corner(i);
                 if (primaryVarSwitch_(curGlobalSol,
                                       volVars,
-                                      globalIdx, 
+                                      globalIdx,
                                       global))
                     wasSwitched = true;
             }

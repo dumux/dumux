@@ -130,7 +130,7 @@ public:
     BoxLocalJacobian()
     { Valgrind::SetUndefined(problemPtr_); }
 
-    
+
     /*!
      * \brief Initialize the local Jacobian object.
      *
@@ -190,7 +190,7 @@ public:
                              curVolVars_,
                              bcTypes_);
         residual_ = localResidual().residual();
-        
+
         // calculate the local jacobian matrix
         ElementSolutionVector partialDeriv(numVertices);
         for (int j = 0; j < numVertices; j++) {
@@ -360,7 +360,7 @@ protected:
         Scalar eps = asImp_().numericEpsilon_(scvIdx, pvIdx);
         Scalar delta = 0;
 
-        if (numDiffMethod >= 0) { 
+        if (numDiffMethod >= 0) {
             // we are not using backward differences, i.e. we need to
             // calculate f(x + \epsilon)
 
@@ -380,7 +380,7 @@ protected:
                                  prevVolVars_,
                                  curVolVars_,
                                  bcTypes_);
-            
+
             // store the residual
             dest = localResidual().residual();
         }
@@ -392,7 +392,7 @@ protected:
         }
 
 
-        if (numDiffMethod <= 0) { 
+        if (numDiffMethod <= 0) {
             // we are not using forward differences, i.e. we don't
             // need to calculate f(x - \epsilon)
 

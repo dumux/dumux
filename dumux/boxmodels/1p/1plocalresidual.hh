@@ -113,8 +113,8 @@ public:
     /*!
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
-     *        
-     * \param flux The flux over the SCV (sub-control-volume) face 
+     *
+     * \param flux The flux over the SCV (sub-control-volume) face
      * \param faceIdx The index of the SCV face
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx) const
@@ -124,7 +124,7 @@ public:
                                this->fvElemGeom_(),
                                faceIdx,
                                this->curVolVars_());
-        
+
         Vector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(),
                                             tmpVec);
@@ -132,8 +132,8 @@ public:
 
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
-        flux[pressureIdx] = 
-            ((    upwindWeight)*(up.density()/up.viscosity()) 
+        flux[pressureIdx] =
+            ((    upwindWeight)*(up.density()/up.viscosity())
              +
              (1 - upwindWeight)*(dn.density()/dn.viscosity()))
             *
@@ -143,7 +143,7 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param q The source/sink in the SCV 
+     * \param q The source/sink in the SCV
      * \param localVertexIdx The index of the SCV
      *
      */

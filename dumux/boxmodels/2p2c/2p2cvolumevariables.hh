@@ -52,7 +52,7 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;

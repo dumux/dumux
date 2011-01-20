@@ -42,7 +42,7 @@ NEW_PROP_TAG(TimeManager);
 }
 
 /*!
- * \brief Print a usage string for simulations using 
+ * \brief Print a usage string for simulations using
  *        Dumux::startFromDGF() as their main() function.
  *
  * \param progname The name of the executable
@@ -54,7 +54,7 @@ void printUsageDGF(const char *progname)
 };
 
 /*!
- * \brief Print a usage string for simulations using 
+ * \brief Print a usage string for simulations using
  *        Dumux::startWithGrid() as their main() function.
  *
  * \param progname The name of the executable
@@ -159,7 +159,7 @@ int startFromDGF(int argc, char **argv)
  * \param argv  The 'argv' argument of the main function
  */
 template <class TypeTag>
-int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid, 
+int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
                   int argc,
                   char **argv)
 {

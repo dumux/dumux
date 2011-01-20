@@ -43,7 +43,7 @@ namespace Dumux
  *  where \f$ \bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
  *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
  *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
- *  
+ *
  * The model domain is automatically divided
  * in a single-phase and a two-phase domain. The full 2p2c model is only evaluated within the
  * two-phase subdomain, whereas a single-phase transport model is computed in the rest of the

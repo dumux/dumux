@@ -519,7 +519,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 
             // center in face's reference element
             typedef Dune::GenericReferenceElements<Scalar, dim - 1> FaceReferenceElements;
-            const Dune::FieldVector<Scalar, dim - 1>& faceLocal = 
+            const Dune::FieldVector<Scalar, dim - 1>& faceLocal =
                 FaceReferenceElements::general(faceGT).position(0,0);
 
             int isIndex = isIt->indexInInside();
@@ -919,7 +919,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         else
                         {
                             densityNW = densityNWBound;
-                            dV_n = (dv_dC1 * BCfluidState.massFrac(nPhaseIdx, wCompIdx) 
+                            dV_n = (dv_dC1 * BCfluidState.massFrac(nPhaseIdx, wCompIdx)
                                     + dv_dC2 * BCfluidState.massFrac(nPhaseIdx, nCompIdx));
                             dV_n *= densityNW;
                             lambdaNW = lambdaNWBound;

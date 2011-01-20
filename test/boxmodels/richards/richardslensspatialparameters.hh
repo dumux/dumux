@@ -123,7 +123,7 @@ public:
             return lensK_;
         return outerK_;
     }
-    
+
     /*!
      * \brief Returns the porosity [] at a given location
      *
@@ -153,10 +153,10 @@ public:
     /*!
      * \brief Returns the parameters for the material law at a given location
      *
-     * This method is not actually required by the Richards model, but provided 
+     * This method is not actually required by the Richards model, but provided
      * for the convenience of the RichardsLensProblem
      *
-     * \param globalPos A global coordinate vector 
+     * \param globalPos A global coordinate vector
      */
     const MaterialLawParams& materialLawParams(const GlobalPosition &globalPos) const
     {
@@ -169,7 +169,7 @@ public:
     /*!
      * \brief Set the bounding box of the low-permeability lens
      *
-     * This method is not actually required by the Richards model, but provided 
+     * This method is not actually required by the Richards model, but provided
      * for the convenience of the RichardsLensProblem
      *
      * \param lensLowerLeft the lower left corner of the lens

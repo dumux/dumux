@@ -103,7 +103,7 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
  * \param b The coefficiont for the constant term
  */
 template <class Scalar, class SolContainer>
-int invertLinearPolynomial(SolContainer &sol, 
+int invertLinearPolynomial(SolContainer &sol,
                            Scalar a,
                            Scalar b)
 {
@@ -130,7 +130,7 @@ int invertLinearPolynomial(SolContainer &sol,
  * \param c The coefficiont for the constant term
  */
 template <class Scalar, class SolContainer>
-int invertQuadraticPolynomial(SolContainer &sol, 
+int invertQuadraticPolynomial(SolContainer &sol,
                               Scalar a,
                               Scalar b,
                               Scalar c)
@@ -138,7 +138,7 @@ int invertQuadraticPolynomial(SolContainer &sol,
     // check for a line
     if (a == 0.0)
         return invertLinearPolynomial(sol, b, c);
-    
+
     // discriminant
     Scalar Delta = b*b - 4*a*c;
     if (Delta < 0)
@@ -174,13 +174,13 @@ template <class Scalar, class SolContainer>
 int invertCubicPolynomial(SolContainer &sol,
                           Scalar a,
                           Scalar b,
-                          Scalar c, 
+                          Scalar c,
                           Scalar d)
 {
     // reduces to a quadratic polynomial
     if (a == 0.0)
         return invertQuadraticPolynomial(sol, b, c, d);
-    
+
     // normalize the polynomial
     b /= a;
     c /= a;
@@ -199,7 +199,7 @@ int invertCubicPolynomial(SolContainer &sol,
         return 3;
     }
     else if (p == 0.0 && q != 0.0) {
-        // t^3 + q = 0, 
+        // t^3 + q = 0,
         //
         // i. e. single real root at t=curt(q)
         Scalar t;
@@ -210,9 +210,9 @@ int invertCubicPolynomial(SolContainer &sol,
         return 1;
     }
     else if (p != 0.0 && q == 0.0) {
-        // t^3 + p*t = 0 = t*(t^2 + p), 
+        // t^3 + p*t = 0 = t*(t^2 + p),
         //
-        // i. e. roots at t = 0, t^2 + p = 0 
+        // i. e. roots at t = 0, t^2 + p = 0
         sol[0] = 0.0 - b/3;
         if (p > 0)
             return 1; // only a single real root at t=0
@@ -247,7 +247,7 @@ int invertCubicPolynomial(SolContainer &sol,
     // Now, substituting u^3 = w yields
     //
     // w^2 + q*w - p^3/27
-    // 
+    //
     // This is a quadratic equation with the solutions
     //
     // w = -q/2 + sqrt(q^2/4 + p^3/27) and
@@ -279,8 +279,8 @@ int invertCubicPolynomial(SolContainer &sol,
         Scalar phi = std::atan2(uCubedIm, uCubedRe)/3;
 
         // calculate the length and the angle of the primitive root
-        
-        // with the definitions from above it follows that 
+
+        // with the definitions from above it follows that
         //
         // x = u - p/(3*u) - b/3
         //
@@ -293,8 +293,8 @@ int invertCubicPolynomial(SolContainer &sol,
         // terms, yields
         //
         // x = (e^(i*phi) + e^(-i*phi))*(|u| - p/(3*|u|)) - y - b/3
-        // 
-        // with 
+        //
+        // with
         //
         // y = - |u|*e^(-i*phi) + p*e^(i*phi)/(3*|u|) .
         //
@@ -302,12 +302,12 @@ int invertCubicPolynomial(SolContainer &sol,
         // of - x + b/3. This means that after taking advantage of the
         // relation
         //
-        // e^(i*phi) + e^(-i*phi) = 2*cos(phi) 
+        // e^(i*phi) + e^(-i*phi) = 2*cos(phi)
         //
         // the equation
         //
         // x = 2*cos(phi)*(|u| - p / (3*|u|)) - conj(x) - 2*b/3
-        // 
+        //
         // holds. Since |u|, p, b and cos(phi) are real numbers, it
         // follows that Im(x) = - Im(x) and thus Im(x) = 0. This
         // implies

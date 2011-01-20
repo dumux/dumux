@@ -136,7 +136,7 @@ public:
 
         curWriter_->addVertexData(*field, name);
     }
-    
+
     /*!
      * \brief Add a finished cell centered vector field to the
      *        output. The field must have been created using

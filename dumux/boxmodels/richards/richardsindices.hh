@@ -41,7 +41,7 @@ struct RichardsIndices
     //////////
     // primary variable indices
     //////////
-    
+
     //! Primary variable index for the wetting phase pressure
     static const int pwIdx = 0;
 

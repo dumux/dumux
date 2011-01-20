@@ -174,10 +174,10 @@ public:
             // add advective flux of current component in current
             // phase
             int eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
-            flux[eqIdx] += 
+            flux[eqIdx] +=
                 normalFlux
                 *
-                ((    mobilityUpwindAlpha)*up.density(phaseIdx)*up.mobility(phaseIdx) 
+                ((    mobilityUpwindAlpha)*up.density(phaseIdx)*up.mobility(phaseIdx)
                  +
                  (1 - mobilityUpwindAlpha)*dn.density(phaseIdx)*dn.mobility(phaseIdx));
         }

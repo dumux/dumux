@@ -18,7 +18,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
  * \brief Calculates the 2p2c phase state for compositional models.
  */
@@ -62,7 +62,7 @@ class DecTwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, 
 public:
     enum {     numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
             numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),};
-    
+
 public:
     /*!
      * \name flash calculation routines

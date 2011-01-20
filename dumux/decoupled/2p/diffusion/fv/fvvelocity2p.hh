@@ -57,7 +57,7 @@ class FVVelocity2P: public FVPressure2P<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
-    
+
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
      typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 

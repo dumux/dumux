@@ -203,11 +203,11 @@ public:
      *        Dune::MathError exception if there is more or less than
      *        one solution.
      */
-    Scalar intersectInterval(Scalar x0, Scalar x1, 
+    Scalar intersectInterval(Scalar x0, Scalar x1,
                              Scalar a, Scalar b, Scalar c, Scalar d) const
     {
         assert(applies(x0) && applies(x1));
-        
+
         Scalar tmpSol[3];
         int n = numSamples_();
         int nSol = 0;
@@ -216,16 +216,16 @@ public:
         for (int i = i0; i < i1; ++i)
         {
             nSol += intersectSegment_(tmpSol, i, a, b, c, d, x0, x1);
-            
-            if (nSol > 1) 
+
+            if (nSol > 1)
                 DUNE_THROW(Dune::MathError,
                            "Spline has more than one intersection with "<<a<"x^3 + " <<b<"x^2 + "<<c<"x + "<< d);
         }
-        
+
         if (nSol != 1)
             DUNE_THROW(Dune::MathError,
                        "Spline has no intersection with "<<a<"x^3 + " <<b<"x^2 + "<<c<"x + "<< d <<"!");
-        
+
         return tmpSol[0];
     };
 
@@ -242,7 +242,7 @@ public:
         assert(applies(x0));
         assert(applies(x1));
         assert(x0 != x1);
-        
+
         // make sure that x0 is smaller than x1
         if (x0 > x1)
             std::swap(x0, x1);
@@ -301,8 +301,8 @@ protected:
      * although the input must be ordered already!
      */
     template <class DestVector, class SourceVector>
-    void assignSamplingPoints_(DestVector &destX, 
-                               DestVector &destY, 
+    void assignSamplingPoints_(DestVector &destX,
+                               DestVector &destY,
                                const SourceVector &srcX,
                                const SourceVector &srcY,
                                int numSamples)
@@ -328,13 +328,13 @@ protected:
      * if the sampling point.
      */
     template <class DestVector, class SourceVector>
-    void assignSamplingPoints_(DestVector &destX, 
-                               DestVector &destY, 
+    void assignSamplingPoints_(DestVector &destX,
+                               DestVector &destY,
                                const SourceVector &src,
                                int numSamples)
     {
         assert(numSamples >= 2);
-        
+
         // copy sample points, make sure that the first x value is
         // smaller than the last one
         for (int i = 0; i < numSamples; ++i) {
@@ -345,7 +345,7 @@ protected:
             destY[i] = src[idx][1];
         }
     };
-    
+
 
     /*!
      * \brief Make the linear system of equations Mx = d which results
@@ -367,8 +367,8 @@ protected:
 
         Scalar lambda_n = h_(1)/(h_(n) + h_(1));
         Scalar lambda_1 = M[1][2];
-        Scalar mu_1 = 1 - lambda_1; 
-        Scalar mu_n = 1 - lambda_n; 
+        Scalar mu_1 = 1 - lambda_1;
+        Scalar mu_n = 1 - lambda_n;
 
         Scalar d_n =
             6 / (h_(n) + h_(1))
@@ -437,7 +437,7 @@ protected:
 
         // first row
         M[0][0] = 2;
-        
+
         // last row
         M[n][n] = 2;
         // right hand side
@@ -498,12 +498,12 @@ protected:
      * \brief Find all the intersections of a segment of the spline
      *        with a cubic polynomial within a specified interval.
      */
-    int intersect_(Scalar *sol, 
-                   int segIdx, 
+    int intersect_(Scalar *sol,
+                   int segIdx,
                    Scalar a, Scalar b, Scalar c, Scalar d,
                    Scalar x0 = -1e100, Scalar x1 = 1e100) const
     {
-        int n = Dumux::invertCubicPolynomial(sol, 
+        int n = Dumux::invertCubicPolynomial(sol,
                                              a_(segIdx) - a,
                                              b_(segIdx) - b,
                                              c_(segIdx) - c,
@@ -543,7 +543,7 @@ protected:
      * \brief Returns x[i] - x[i - 1]
      */
     Scalar h_(int i) const
-    { 
+    {
         assert(x_(i) > x_(i-1)); // the sampling points must be given
                                  // in ascending order
         return x_(i) - x_(i - 1); }

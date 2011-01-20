@@ -66,7 +66,7 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
 public:
     /*!
      * \brief Update all quantities for a given control volume.
-     * 
+     *
      * \param priVars The local primary variable vector
      * \param problem The problem object
      * \param element The current element

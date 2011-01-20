@@ -55,7 +55,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         dim = GridView::dimension,
-        
+
         pwIdx = Indices::pwIdx,
     };
 
@@ -104,7 +104,7 @@ public:
             // update the solution vector
             uCurrentIter = uLastIter;
             uCurrentIter -= deltaU;
-            
+
             // clamp saturation change to at most 20% per iteration
             FVElementGeometry fvElemGeom;
             const GridView &gv = this->problem_().gridView();
@@ -120,7 +120,7 @@ public:
                     const MaterialLawParams &mp = sp.materialLawParams(*eIt, fvElemGeom, i);
                     Scalar pcMin = MaterialLaw::pC(mp, 1.0);
                     Scalar pW = uLastIter[globI][pwIdx];
-                    Scalar pN = std::max(this->problem_().referencePressure(*eIt, fvElemGeom, i), 
+                    Scalar pN = std::max(this->problem_().referencePressure(*eIt, fvElemGeom, i),
                                          pW + pcMin);
                     Scalar pcOld = pN - pW;
                     Scalar SwOld = std::max(0.0, MaterialLaw::Sw(mp, pcOld));
@@ -129,20 +129,20 @@ public:
                     // pressures
                     Scalar pwMin = pN - MaterialLaw::pC(mp, SwOld - 0.2);
                     Scalar pwMax = pN - MaterialLaw::pC(mp, SwOld + 0.2);
-                    
+
                     // clamp the result
                     pW = uCurrentIter[globI][pwIdx];
                     pW = std::max(pwMin, std::min(pW, pwMax));
                     uCurrentIter[globI][pwIdx] = pW;
-                        
+
                 }
             }
         }
     }
 
 private:
-    void lineSearchUpdate_(SolutionVector &uCurrentIter, 
-                           const SolutionVector &uLastIter, 
+    void lineSearchUpdate_(SolutionVector &uCurrentIter,
+                           const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
        Scalar lambda = 1.0;

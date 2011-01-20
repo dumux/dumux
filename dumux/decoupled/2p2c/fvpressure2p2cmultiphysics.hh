@@ -62,12 +62,12 @@ namespace Dumux
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
  *  The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
- *  
+ *
  * The model domain is automatically divided
  * in a single-phase and a two-phase domain. The full 2p2c model is only evaluated within the
  * two-phase subdomain, whereas a single-phase transport model is computed in the rest of the
  * domain.
- * 
+ *
  * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVPressure2P2CMultiPhysics
@@ -489,7 +489,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
             // center in face's reference element
             typedef Dune::GenericReferenceElements<Scalar, dim - 1> FaceReferenceElements;
-            const Dune::FieldVector<Scalar, dim - 1>& faceLocal = 
+            const Dune::FieldVector<Scalar, dim - 1>& faceLocal =
                 FaceReferenceElements::general(faceGT).position(0,0);
 
             int isIndex = isIt->indexInInside();
@@ -1177,7 +1177,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::initialMaterialLaws(bool compositional
             // phase pressures are unknown, so start with an exemplary
             Scalar exemplaryPressure = problem_.referencePressure(globalPos, *eIt);
             pressW = pressNW = problem_.variables().pressure()[globalIdx] = exemplaryPressure;
-      
+
             if (ictype == BoundaryConditions2p2c::saturation)  // saturation initial condition
             {
                 sat_0 = problem_.initSat(globalPos, *eIt);

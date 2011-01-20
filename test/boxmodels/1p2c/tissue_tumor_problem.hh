@@ -292,7 +292,7 @@ public:
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
-        
+
         values = Scalar(0.0);
         if (inInjectionVolume_(globalPos)) {
             // total volumetric injection rate in ml/h
@@ -338,7 +338,7 @@ private:
     bool inInjectionVolume_(const GlobalPosition &globalPos) const
     {
         return
-            10e-3 < globalPos[0] && globalPos[0] < 12e-3 && 
+            10e-3 < globalPos[0] && globalPos[0] < 12e-3 &&
             10e-3 < globalPos[1] && globalPos[1] < 12e-3;
     };
     // the internal method for the initial condition

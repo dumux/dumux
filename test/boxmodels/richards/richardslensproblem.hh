@@ -117,8 +117,8 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
  * (Neumann 0 boundary) is also closed except for infiltration
  * section, where water is infiltrating into an initially unsaturated
  * porous medium. This problem is very similar the the LensProblem
- * which uses the TwoPBoxModel, with the main difference being that 
- * the domain is initally fully saturated by gas instead of water and 
+ * which uses the TwoPBoxModel, with the main difference being that
+ * the domain is initally fully saturated by gas instead of water and
  * water instead of a %DNAPL infiltrates from the top.
  *
  * To run the simulation execute the following line in shell:
@@ -162,9 +162,9 @@ public:
      *
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
-     * \param lensLowerLeft The lower left coordinate of the 
+     * \param lensLowerLeft The lower left coordinate of the
      *                      low-permeability lens
-     * \param lensUpperRight The upper right coordinate of the 
+     * \param lensUpperRight The upper right coordinate of the
      *                       low-permeability lens
      */
     RichardsLensProblem(TimeManager &timeManager,
@@ -200,7 +200,7 @@ public:
      * \param element The DUNE Codim<0> entity which intersects with
      *                the finite volume in question
      * \param fvElemGeom The finite volume geometry of the element
-     * \param scvIdx The sub control volume index inside the finite 
+     * \param scvIdx The sub control volume index inside the finite
      *               volume geometry
      */
     Scalar temperature(const Element &element,
@@ -217,7 +217,7 @@ public:
      * \param element The DUNE Codim<0> entity which intersects with
      *                the finite volume in question
      * \param fvElemGeom The finite volume geometry of the element
-     * \param scvIdx The sub control volume index inside the finite 
+     * \param scvIdx The sub control volume index inside the finite
      *               volume geometry
      */
     Scalar referencePressure(const Element &element,
@@ -243,7 +243,7 @@ public:
     {
         const GlobalPosition globalPos = vertex.geometry().center();
 
-        if (onLeftBoundary_(globalPos) || 
+        if (onLeftBoundary_(globalPos) ||
             onRightBoundary_(globalPos))
         {
             values.setAllDirichlet();
@@ -280,9 +280,9 @@ public:
      *                the finite volume in question
      * \param fvElemGeom The finite volume geometry of the element
      * \param is The DUNE boundary intersection of the boundary segment
-     * \param scvIdx The sub control volume index of the finite 
+     * \param scvIdx The sub control volume index of the finite
      *               volume geometry
-     * \param boundaryFaceIdx The index of the boundary face of the 
+     * \param boundaryFaceIdx The index of the boundary face of the
      *                        finite volume geometry
      */
     void neumann(PrimaryVariables &values,
@@ -292,7 +292,7 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-        
+
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
 
@@ -321,7 +321,7 @@ public:
      * \param element The DUNE Codim<0> entity which intersects with
      *                the finite volume in question
      * \param fvElemGeom The finite volume geometry of the element
-     * \param scvIdx The sub control volume index of the finite 
+     * \param scvIdx The sub control volume index of the finite
      *               volume geometry
      */
     void source(PrimaryVariables &values,
@@ -342,7 +342,7 @@ public:
      * \param element The DUNE Codim<0> entity which intersects with
      *                the finite volume in question
      * \param fvElemGeom The finite volume geometry of the element
-     * \param scvIdx The sub control volume index of the finite 
+     * \param scvIdx The sub control volume index of the finite
      *               volume geometry
      */
     void initial(PrimaryVariables &values,
@@ -351,7 +351,7 @@ public:
                  int scvIdx) const
     {
         const GlobalPosition pos = element.geometry().corner(scvIdx);
-        
+
         initial_(values, pos);
     };
 

@@ -27,7 +27,7 @@
 /*!
  * \file
  *
- * \brief Defines default values for most properties required by the 2p2cni 
+ * \brief Defines default values for most properties required by the 2p2cni
  *        box model.
  */
 #ifndef DUMUX_2P2CNI_PROPERTY_DEFAULTS_HH

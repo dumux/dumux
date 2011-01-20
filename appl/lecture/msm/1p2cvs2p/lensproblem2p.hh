@@ -151,7 +151,7 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef TwoPFluidState<TypeTag> FluidState;
 
-    enum 
+    enum
     {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 

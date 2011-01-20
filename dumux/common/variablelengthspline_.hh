@@ -39,8 +39,8 @@ namespace Dumux
  *        where the number of sampling points only known at run-time.
  */
 template<class ScalarT>
-class VariableLengthSpline_ 
-    : public SplineCommon_<ScalarT, 
+class VariableLengthSpline_
+    : public SplineCommon_<ScalarT,
                            VariableLengthSpline_<ScalarT> >
 {
     friend class SplineCommon_<ScalarT, VariableLengthSpline_<ScalarT> >;
@@ -62,7 +62,7 @@ public:
      */
     template <class ScalarContainer>
     void set(int nSamples,
-             const ScalarContainer &x, 
+             const ScalarContainer &x,
              const ScalarContainer &y,
              Scalar m0, Scalar m1)
     {
@@ -74,7 +74,7 @@ public:
 
         this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
         this->makeFullSystem_(M, d, m0, m1);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -86,7 +86,7 @@ public:
      * This assumes that the ScalarContainer type has a size method.
      */
     template <class ScalarContainer>
-    void set(const ScalarContainer &x, 
+    void set(const ScalarContainer &x,
              const ScalarContainer &y,
              Scalar m0, Scalar m1)
     {
@@ -99,7 +99,7 @@ public:
      */
     template <class XYContainer>
     void set(int nSamples,
-             const XYContainer &xy, 
+             const XYContainer &xy,
              Scalar m0, Scalar m1)
     {
         xPos_.resize(nSamples);
@@ -110,7 +110,7 @@ public:
 
         this->assignSamplingPoints_(xPos_, yPos_, xy, numSamples());
         this->makeFullSystem_(M, d, m0, m1);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -119,7 +119,7 @@ public:
      * \brief Set the sampling points for a full spline using a container of (x,y) tuples.
      */
     template <class XYContainer>
-    void set(const XYContainer &xy, 
+    void set(const XYContainer &xy,
              Scalar m0, Scalar m1)
     {
         set(xy.size(), xy, m0, m1);
@@ -141,7 +141,7 @@ public:
 
         this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
         this->makeNaturalSystem_(M, d);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -174,7 +174,7 @@ public:
 
         this->assignSamplingPoints_(xPos_, yPos_, points, numSamples());
         this->makeNaturalSystem_(M, d);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }

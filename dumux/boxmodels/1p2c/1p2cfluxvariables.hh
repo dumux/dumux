@@ -28,7 +28,7 @@
  *
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
- * 
+ *
  * \ingroup OnePTwoCBoxModel
  */
 #ifndef DUMUX_1P2C_FLUX_VARIABLES_HH
@@ -124,9 +124,9 @@ public:
      * \param compIdx The index of the considered component
      */
     const Vector &concentrationGrad(int compIdx) const
-    { 
-        if (compIdx != 1) 
-        { DUNE_THROW(Dune::InvalidStateException, 
+    {
+        if (compIdx != 1)
+        { DUNE_THROW(Dune::InvalidStateException,
                      "The 1p2c model is supposed to need "
                      "only the concentration gradient of "
                      "the second component!"); }
@@ -177,7 +177,7 @@ protected:
     {
         const VolumeVariables &vVars_i = elemDat[face().i];
         const VolumeVariables &vVars_j = elemDat[face().j];
-        
+
         potentialGrad_ = 0.0;
         concentrationGrad_ = 0.0;
 
@@ -302,7 +302,7 @@ protected:
         for (int i=0; i<dim; i++)
             for (int j = 0; j<dim; j++)
                 dispersionTensor_[i][j]=velocity[i]*velocity[j];
-        
+
         //normalize velocity product --> vv^T/||v||, [m/s]
         Scalar vNorm = velocity.two_norm();
 
@@ -328,7 +328,7 @@ protected:
 
     //! the effective diffusion coefficent in the porous medium
     Scalar diffCoeffPM_;
-    
+
     //! the dispersion tensor in the porous medium
     Tensor dispersionTensor_;
 

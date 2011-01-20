@@ -146,7 +146,7 @@ public:
     };
 
 private:
-    void lineSearchUpdate_(SolutionVector &uCurrentIter, 
+    void lineSearchUpdate_(SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {

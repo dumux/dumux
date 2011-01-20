@@ -85,7 +85,7 @@ public:
 
     /*!
      * \brief Update the boundary types for all vertices of an element.
-     * 
+     *
      * \param problem The problem object which needs to be simulated
      * \param element The DUNE Codim<0> entity for which the boundary
      *                types should be collected
@@ -129,7 +129,7 @@ public:
      */
     bool hasNeumann() const
     { return hasNeumann_; }
-    
+
     /*!
      * \brief Returns whether the element potentially features an
      *        outflow boundary segment.

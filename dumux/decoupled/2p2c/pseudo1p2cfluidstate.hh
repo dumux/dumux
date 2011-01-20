@@ -18,7 +18,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
  * \brief Calculates phase state for a single phase but two-component state.
  */
@@ -52,7 +52,7 @@ public:
             numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
             wPhaseIdx = 0,
             nPhaseIdx = 1,};
-    
+
 public:
     /*!
      * \name flash calculation routines
