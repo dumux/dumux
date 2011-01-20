@@ -119,7 +119,7 @@ public:
             Sn = priVars[saturationIdx];
             p[wPhaseIdx] = priVars[pressureIdx];
             p[nPhaseIdx] =
-                p[wPhaseIdx]
+                p[wPhaseIdx] +
                 MaterialLaw::pC(materialParams, 1 - Sn);
         }
         else if (int(formulation) == pnSw) {

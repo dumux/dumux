@@ -231,9 +231,9 @@ public:
         // arithmetic mean of the liquid saturation and the porosity
         const int i = fvElemGeom.subContVolFace[scvfIdx].i;
         const int j = fvElemGeom.subContVolFace[scvfIdx].j;
-        Scalar Sl = std::max(0.0, (vDat[i].saturation(lPhaseIdx)
+        Scalar Sl = std::max(0.0, (vDat[i].saturation(lPhaseIdx) +
                                      vDat[j].saturation(lPhaseIdx)) / 2);
-        Scalar poro = (porosity(element, fvElemGeom, i)
+        Scalar poro = (porosity(element, fvElemGeom, i) +
                        porosity(element, fvElemGeom, j)) / 2;
 
         Scalar lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);

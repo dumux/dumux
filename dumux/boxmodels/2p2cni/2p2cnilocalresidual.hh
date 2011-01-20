@@ -115,12 +115,12 @@ public:
                                 vertDat.internalEnergy(lPhaseIdx) *
                                 //vertDat.enthalpy(lPhaseIdx) *
                                 vertDat.saturation(lPhaseIdx)
-                               
+                                +
                                 vertDat.density(gPhaseIdx) *
                                 vertDat.internalEnergy(gPhaseIdx) *
                                 //vertDat.enthalpy(gPhaseIdx) *
                                 vertDat.saturation(gPhaseIdx))
-           
+            +
             vertDat.temperature()*vertDat.heatCapacity();
     }
 
@@ -153,7 +153,7 @@ public:
                     (  up.density(phase) *
                        up.mobility(phase) *
                        up.enthalpy(phase))
-                   
+                    +
                     (1-mobilityUpwindAlpha) * // downstream vertex
                     (  dn.density(phase) *
                        dn.mobility(phase) *

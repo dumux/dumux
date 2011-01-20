@@ -149,11 +149,11 @@ public:
 
         return
             moment_(i)* x_i1*x_i1*x_i1 / (6 * h_i1)
-           
+            +
             moment_(i + 1)* x_i*x_i*x_i / (6 * h_i1)
-           
+            +
             A_i*x_i
-           
+            +
             B_i;
     }
 
@@ -180,9 +180,9 @@ public:
 
         return
             -moment_(i) * x_i1*x_i1 / (2 * h_i1)
-           
+            +
             moment_(i + 1) * x_i*x_i / (2 * h_i1)
-           
+            +
             A_i;
     }
 

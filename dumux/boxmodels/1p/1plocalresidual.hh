@@ -134,7 +134,7 @@ public:
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
         flux[pressureIdx] = 
             ((    upwindWeight)*(up.density()/up.viscosity()) 
-            
+             +
              (1 - upwindWeight)*(dn.density()/dn.viscosity()))
             *
             normalFlux;

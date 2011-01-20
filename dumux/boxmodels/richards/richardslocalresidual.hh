@@ -134,7 +134,7 @@ public:
             normalFlux
             *
             ((    mobilityUpwindAlpha)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx) 
-            
+             +
              (1 - mobilityUpwindAlpha)*dn.density(wPhaseIdx)*dn.mobility(wPhaseIdx));
     }
 
