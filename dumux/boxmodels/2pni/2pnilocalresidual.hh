@@ -113,7 +113,7 @@ public:
             vertDat.porosity()*(vertDat.density(wPhaseIdx) *
                                 vertDat.internalEnergy(wPhaseIdx) *
                                 vertDat.saturation(wPhaseIdx)
-                                +
+                               
                                 vertDat.density(nPhaseIdx) *
                                 vertDat.internalEnergy(nPhaseIdx) *
                                 vertDat.saturation(nPhaseIdx))
@@ -160,7 +160,7 @@ public:
                  up.density(phaseIdx)*
                  up.mobility(phaseIdx)*
                  up.enthalpy(phaseIdx)
-                 +
+                
                  (1 - mobilityUpwindAlpha)*
                  dn.density(phaseIdx)*
                  dn.mobility(phaseIdx)*

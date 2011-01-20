@@ -148,14 +148,14 @@ public:
         flux[contiEqIdx] = 
             normalFlux * 
             ((     upwindAlpha)*up.density()/up.viscosity()
-             +
+            
              ((1 - upwindAlpha)*dn.density()/dn.viscosity()));
 
         // advective flux of the second component
         flux[transEqIdx] +=
             normalFlux * 
             ((    upwindAlpha)*up.concentration(1)/up.viscosity()
-             +
+            
              (1 - upwindAlpha)*dn.concentration(1)/dn.viscosity());
         
         // diffusive flux of second component

@@ -78,7 +78,7 @@ public:
         phasePressure_ = primaryVars[pressureIdx];
         x1_ = primaryVars[x1Idx];
         meanMolarMass_ = 
-            (1 - x1_)*FluidSystem::molarMass(comp1Index) +
+            (1 - x1_)*FluidSystem::molarMass(comp1Index)
             (x1_    )*FluidSystem::molarMass(comp2Index);
         
         density_ = FluidSystem::phaseDensity(phaseIndex, temperature_, phasePressure_, *this);

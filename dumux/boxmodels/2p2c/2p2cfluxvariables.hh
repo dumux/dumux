@@ -171,14 +171,14 @@ private:
                 fI = fJ = 0.5; // doesn't matter because no phase is
                                // present in both cells!
             densityAtIP_[phaseIdx] =
-                (fI*elemDat[i].density(phaseIdx) +
+                (fI*elemDat[i].density(phaseIdx)
                  fJ*elemDat[j].density(phaseIdx))
                 /
                 (fI + fJ);
             // phase density
             molarDensityAtIP_[phaseIdx]
                 =
-                (fI*elemDat[i].molarDensity(phaseIdx) +
+                (fI*elemDat[i].molarDensity(phaseIdx)
                  fJ*elemDat[j].molarDensity(phaseIdx))
                 /
                 (fI + fJ);

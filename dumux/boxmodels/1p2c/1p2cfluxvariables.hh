@@ -267,7 +267,7 @@ protected:
 
         // Diffusion coefficient in the porous medium
         diffCoeffPM_
-            = 1./2*(vDat_i.porosity() * vDat_i.tortuosity() * vDat_i.diffCoeff() +
+            = 1./2*(vDat_i.porosity() * vDat_i.tortuosity() * vDat_i.diffCoeff()
                     vDat_j.porosity() * vDat_j.tortuosity() * vDat_j.diffCoeff());
     }
 
