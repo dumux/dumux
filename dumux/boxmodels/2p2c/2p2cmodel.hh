@@ -108,6 +108,7 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
@@ -151,6 +152,9 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+    static const Scalar mobilityUpwindAlpha =
+            GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:
     /*!
@@ -316,7 +320,7 @@ public:
         ScalarField *velocityX = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *velocityY = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *velocityZ = writer.template createField<Scalar, 1>(numVertices);
-        Scalar maxV=0.; // variable to store the maximum face velocity
+//        Scalar maxV=0.; // variable to store the maximum face velocity
 
         // initialize velocity fields
         Scalar boxSurface[numVertices];
@@ -385,32 +389,39 @@ public:
             // In the box method, the velocity is evaluated on the FE-Grid. However, to get an
             // average apparent velocity at the vertex, all contributing velocities have to be interpolated.
             GlobalPosition velocity(0.);
+            ElementVolumeVariables elemVolVars;
+
+            elemVolVars.update(this->problem_(),
+                               *elemIt,
+                               fvElemGeom,
+                               false /* isOldSol? */);
+
             // loop over the phases
-            for (int faceIdx = 0; faceIdx< this->fvElemGeom_().numEdges; faceIdx++)
+            for (int faceIdx = 0; faceIdx< fvElemGeom.numEdges; faceIdx++)
             {
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
                 FluxVariables fluxDat(this->problem_(),
-                                 this->elem_(),
-                                 this->fvElemGeom_(),
+                                 *elemIt,
+                                 fvElemGeom,
                                  faceIdx,
-                                 elemDat);
+                                 elemVolVars);
 
                 // choose phase of interest. Alternatively, a loop over all phases would be possible.
                 int phaseIdx = gPhaseIdx;
 
                 // get darcy velocity
-                velocity = fluxDat.KmvpNormal(phaseIdx); // mind the sign: vDarcy = kf grad p
+                velocity = fluxDat.Kmvp(phaseIdx); // mind the sign: vDarcy = kf grad p
 
                 // up+downstream mobility
-                const VolumeVariables &up = this->curVolVars_(fluxDat.upstreamIdx(phaseIdx));
-                const VolumeVariables &down = this->curVolVars_(fluxDat.downstreamIdx(phaseIdx));
+                const VolumeVariables &up = elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
+                const VolumeVariables &down = elemVolVars[fluxDat.downstreamIdx(phaseIdx)];
                 Scalar scvfArea = fluxDat.face().normal.two_norm(); //get surface area to weight velocity at the IP with the surface area
                 velocity *= (mobilityUpwindAlpha*up.mobility(phaseIdx) + (1-mobilityUpwindAlpha)*down.mobility(phaseIdx))* scvfArea;
 
-                int vertIIdx = this->problem().vertexMapper().map(this->elem_(),
+                int vertIIdx = this->problem_().vertexMapper().map(*elemIt,
                         fluxDat.face().i,
                         dim);
-                int vertJIdx = this->problem().vertexMapper().map(this->elem_(),
+                int vertJIdx = this->problem_().vertexMapper().map(*elemIt,
                         fluxDat.face().j,
                         dim);
                 // add surface area for weighting purposes
