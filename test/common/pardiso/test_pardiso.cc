@@ -74,6 +74,7 @@ int main(int argc, char** argv)
 
         /* Pardiso control parameters. */
         int iparm[64];
+        double dparm[64];
         int maxfct, mnum, phase, error, msglvl;
 
         /* Number of processors. */
@@ -85,12 +86,17 @@ int main(int argc, char** argv)
 
         double   ddum;              /* Double dummy */
         int      idum;              /* Integer dummy. */
+	int solver = 0;
 
         /* -------------------------------------------------------------------- */
         /* ..  Setup Pardiso control parameters.                                */
         /* -------------------------------------------------------------------- */
 
-        F77_FUN(pardisoinit) (pt, &mtype, iparm);
+        F77_FUN(pardisoinit) (pt, &mtype, &solver, iparm, dparm, &error);
+        if (error != 0) {
+            printf("\nERROR during initialization: %d", error);
+            exit(3);
+        }
 
         iparm[2]  = 1;
 
@@ -122,7 +128,7 @@ int main(int argc, char** argv)
 
         F77_FUN(pardiso) (pt, &maxfct, &mnum, &mtype, &phase,
                            &n, a, ia, ja, &idum, &nrhs,
-                           iparm, &msglvl, b, x, &error);
+                           iparm, &msglvl, b, x, &error, dparm);
 
         if (error != 0) {
             printf("\nERROR during solution: %d", error);
@@ -143,7 +149,7 @@ int main(int argc, char** argv)
 
         F77_FUN(pardiso) (pt, &maxfct, &mnum, &mtype, &phase,
                            &n, &ddum, ia, ja, &idum, &nrhs,
-                           iparm, &msglvl, &ddum, &ddum, &error);
+                           iparm, &msglvl, &ddum, &ddum, &error, dparm);
 
         typedef Dune::FieldMatrix<double,1,1> M;
         Dune::BCRSMatrix<M> B(8,8,Dune::BCRSMatrix<M>::random);

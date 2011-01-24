@@ -43,13 +43,23 @@
 
 
 /* PARDISO prototype. */
+//DW extern "C" int F77_FUN(pardisoinit)
+//DW     (void *, int *, int *);
+
+//DW extern "C" int F77_FUN(pardiso)
+//DW     (void *, int *, int *, int *, int *, int *,
+//DW      double *, int *, int *, int *, int *, int *,
+//DW      int *, double *, double *, int *);
+
+
 extern "C" int F77_FUN(pardisoinit)
-    (void *, int *, int *);
+    (void *pt, int *mtype, int *solver, int *iparm, double *dparm, int *error);
 
 extern "C" int F77_FUN(pardiso)
-    (void *, int *, int *, int *, int *, int *,
-     double *, int *, int *, int *, int *, int *,
-     int *, double *, double *, int *);
+    (void *pt, int *maxfct, int *mnum, int *mtype, int *phase, int *n,
+     double *a, int *ia, int *ja, int *perm, int *nrhs, int *iparm,
+     int *msglvl, double *b, double *x, int *error, double *dparm);
+
 #endif
 
 namespace Dune {
@@ -93,6 +103,10 @@ public:
         mnum_ = 1;
         msglvl_ = 0;
         error_ = 0;
+
+// DW solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
+        solver_ = 0;
+     
 
         //F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
 #else
@@ -162,17 +176,24 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
-
+//DW old        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
+        F77_FUN(pardisoinit) (pt_,  &mtype_, &solver_, iparm_, dparm_, &error_);
+        if (error_ != 0)
+            DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Error code " << error_);
 
         phase_ = 11;
         int idum;
         double ddum;
         iparm_[2]  = num_procs_;
 
+//DW old        F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
+//DW                           &n_, a_, ia_, ja_, &idum, &nrhs_,
+//DW                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+
+//DW new differs by adding of dparm_ 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
-                           &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                         &n_, a_, ia_, ja_, &idum, &nrhs_,
+                         iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
@@ -182,9 +203,13 @@ public:
 
         phase_ = 22;
 
+//DW old        F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
+//DW                           &n_, a_, ia_, ja_, &idum, &nrhs_,
+//DW                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
-                           &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                         &n_, a_, ia_, ja_, idum, &nrhs_,
+                         iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
@@ -205,6 +230,8 @@ public:
         mnum_ = 1;
         msglvl_ = 0;
         error_ = 0;
+// DW solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
+        solver_ = 0;
 
         RowIterator i0 = A.begin();
         ColIterator j0 = (*i0).begin();
@@ -267,7 +294,8 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
+//DW old        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
+        F77_FUN(pardisoinit) (pt_,  &mtype_, &solver_, iparm_, dparm_, &error_);
 
         phase_ = 11;
         int idum;
@@ -276,7 +304,7 @@ public:
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                           iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
@@ -288,7 +316,7 @@ public:
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                           iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
@@ -319,24 +347,24 @@ public:
         initAndFactor(A);
     }
 
-    /*! \brief Prepare the preconditioner.
+	/*! \brief Prepare the preconditioner.
 
-    A solver solves a linear operator equation A(x)=b by applying
+	A solver solves a linear operator equation A(x)=b by applying
     one or several steps of the preconditioner. The method pre()
     is called before the first apply operation.
     b and x are right hand side and solution vector of the linear
     system respectively. It may. e.g., scale the system, allocate memory or
     compute a (I)LU decomposition.
-      Note: The ILU decomposition could also be computed in the constructor
+	  Note: The ILU decomposition could also be computed in the constructor
     or with a separate method of the derived method if several
     linear systems with the same matrix are to be solved.
 
     \param x The left hand side of the equation.
     \param b The right hand side of the equation.
-    */
+	*/
     virtual void pre (X& x, Y& b) {}
 
-    /*! \brief Apply one step of the preconditioner to the system \f$ A(v)=d \f$.
+	/*! \brief Apply one step of the preconditioner to the system \f$ A(v)=d \f$.
 
     On entry \f$ v=0 \f$ and \f$ d=b-A(x) \f$ (although this might not be
     computed in that way. On exit v contains the update, i.e
@@ -345,7 +373,7 @@ public:
     the preconditioner.
     \param[out] v The update to be computed
     \param d The current defect.
-    */
+	*/
     virtual void apply (X& v, const Y& d)
     {
 #ifdef HAVE_PARDISO
@@ -365,7 +393,7 @@ public:
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, a_, ia_, ja_, &idum, &nrhs_,
                            //&n_, &ddum, &idum, &idum, &idum, &nrhs_,
-                           iparm_, &msglvl_, b, x, &error_);
+                           iparm_, &msglvl_, b, x, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "SeqPardiso.apply: Backsolve failed. Error code " << error_);
@@ -389,14 +417,14 @@ public:
 #endif
     }
 
-    /*! \brief Clean up.
+	/*! \brief Clean up.
 
-    This method is called after the last apply call for the
+	This method is called after the last apply call for the
     linear system to be solved. Memory may be deallocated safely
     here. x is the solution of the linear equation.
 
     \param x The right hand side of the equation.
-    */
+	*/
     virtual void post (X& x)
     {
 #ifdef HAVE_PARDISO
@@ -406,7 +434,7 @@ public:
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, &ddum, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                           iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
         delete a_;
         delete ia_;
         delete ja_;
@@ -423,7 +451,7 @@ public:
 
             F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                                &n_, &ddum, ia_, ja_, &idum, &nrhs_,
-                               iparm_, &msglvl_, &ddum, &ddum, &error_);
+                               iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
             delete a_;
             delete ia_;
             delete ja_;
@@ -449,6 +477,10 @@ private:
     int systemsize_;
     int phase_;
     bool verbose_;
+//DW new parameters 
+    double dparm_[64];
+    int solver_;
+//    int perm_[64]; 
 };
 
 }
