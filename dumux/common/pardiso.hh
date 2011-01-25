@@ -43,14 +43,6 @@
 
 
 /* PARDISO prototype. */
-//DW extern "C" int F77_FUN(pardisoinit)
-//DW     (void *, int *, int *);
-
-//DW extern "C" int F77_FUN(pardiso)
-//DW     (void *, int *, int *, int *, int *, int *,
-//DW      double *, int *, int *, int *, int *, int *,
-//DW      int *, double *, double *, int *);
-
 
 extern "C" int F77_FUN(pardisoinit)
     (void *pt, int *mtype, int *solver, int *iparm, double *dparm, int *error);
@@ -60,7 +52,7 @@ extern "C" int F77_FUN(pardiso)
      double *a, int *ia, int *ja, int *perm, int *nrhs, int *iparm,
      int *msglvl, double *b, double *x, int *error, double *dparm);
 
-#endif
+#endif /* HAVE_PARDISO */
 
 namespace Dune {
 
@@ -104,8 +96,7 @@ public:
         msglvl_ = 0;
         error_ = 0;
 
-// DW solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
-        solver_ = 0;
+        solver_ = 0; // solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
      
 
         //F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
@@ -176,21 +167,33 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-//DW old        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
         F77_FUN(pardisoinit) (pt_,  &mtype_, &solver_, iparm_, dparm_, &error_);
-        if (error_ != 0)
-            DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Error code " << error_);
+
+        if (error_)
+	{
+		switch(error_)
+		{
+		    case -10:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. No license file found. Error code " << error_);
+			break;
+		    case -11:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. License has expired. Error code " << error_);
+			break;
+		    case -12:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Wrong username or hostname. Error code " << error_);
+			break;
+		    default:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Error code " << error_);
+			break;
+		}
+	}
+		
 
         phase_ = 11;
         int idum;
         double ddum;
         iparm_[2]  = num_procs_;
 
-//DW old        F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
-//DW                           &n_, a_, ia_, ja_, &idum, &nrhs_,
-//DW                           iparm_, &msglvl_, &ddum, &ddum, &error_);
-
-//DW new differs by adding of dparm_ 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                          &n_, a_, ia_, ja_, &idum, &nrhs_,
                          iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
@@ -202,10 +205,6 @@ public:
             std::cout << "  Reordering completed. Number of nonzeros in factors = " << iparm_[17] << std::endl;
 
         phase_ = 22;
-
-//DW old        F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
-//DW                           &n_, a_, ia_, ja_, &idum, &nrhs_,
-//DW                           iparm_, &msglvl_, &ddum, &ddum, &error_);
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                          &n_, a_, ia_, ja_, idum, &nrhs_,
@@ -230,8 +229,7 @@ public:
         mnum_ = 1;
         msglvl_ = 0;
         error_ = 0;
-// DW solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
-        solver_ = 0;
+        solver_ = 0; // solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
 
         RowIterator i0 = A.begin();
         ColIterator j0 = (*i0).begin();
@@ -294,8 +292,26 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-//DW old        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
         F77_FUN(pardisoinit) (pt_,  &mtype_, &solver_, iparm_, dparm_, &error_);
+
+        if (error_)
+	{
+		switch(error_)
+		{
+		    case -10:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. No license file found. Error code " << error_);
+			break;
+		    case -11:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. License has expired. Error code " << error_);
+			break;
+		    case -12:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Wrong username or hostname. Error code " << error_);
+			break;
+		    default:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Error code " << error_);
+			break;
+		}
+	}
 
         phase_ = 11;
         int idum;
@@ -477,10 +493,9 @@ private:
     int systemsize_;
     int phase_;
     bool verbose_;
-//DW new parameters 
     double dparm_[64];
     int solver_;
-//    int perm_[64]; 
+//    int perm_[64];  // not yet used here
 };
 
 }
