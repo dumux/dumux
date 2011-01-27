@@ -111,16 +111,6 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-#if DUNE_MINIMAL_DEBUG_LEVEL <= 3
-        // add debug stuff
-        Dune::BlockVector<Dune::FieldVector<double,1> > *potentialDifferenceW = writer.template createField<double, 1> (problem_.variables().gridSize());
-        *potentialDifferenceW = potential_[wPhaseIdx];
-        writer.addCellData(potentialDifferenceW, "potentialDifferenceW pre/post pressure");
-        Dune::BlockVector<Dune::FieldVector<double,1> > *potentialDifferenceNW = writer.template createField<double, 1> (problem_.variables().gridSize());
-        *potentialDifferenceNW = potential_[nPhaseIdx];
-        writer.addCellData(potentialDifferenceNW, "potentialDifferenceNW pre/post pressure");
-#endif
-
         return;
     }
 
@@ -154,10 +144,6 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
         }
-
-        potential_.resize(2);
-            potential_[0].resize(problem_.variables().gridSize());
-            potential_[1].resize(problem_.variables().gridSize());
     }
 
     ~FVTransport2P2C()
@@ -166,8 +152,6 @@ public:
 
 private:
     Problem& problem_;
-
-    TransportSolutionType potential_;
 
     static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     bool switchNormals;

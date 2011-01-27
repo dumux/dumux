@@ -329,31 +329,6 @@ public:
         return saturation_[Idx][0];
     }
 
-    //! Return vector of wetting phase potential gradients
-    /*! \param Idx1 Element index
-     *  \param isIdx Intersection index */
-    Scalar& potentialWetting(int Idx1, int isIdx)
-    {
-        return this->potential(Idx1, isIdx)[wPhaseIdx];
-    }
-    //! \copydoc Dumux::VariableClass2P2C::potentialWetting()
-    const Scalar& potentialWetting(int Idx1, int isIdx) const
-    {
-        return this->potential(Idx1, isIdx)[wPhaseIdx];
-    }
-    //! Return vector of nonwetting phase potential gradients
-    /*! \param Idx1 Element index
-     *  \param isIdx Intersection index */
-    Scalar& potentialNonwetting(int Idx1, int isIdx)
-    {
-        return this->potential(Idx1, isIdx)[nPhaseIdx];
-    }
-    //! \copydoc Dumux::VariableClass2P2C::potentialNonwetting()
-    const Scalar& potentialNonwetting(int Idx1, int isIdx) const
-    {
-        return this->potential(Idx1, isIdx)[nPhaseIdx];
-    }
-
     //! Return vector of wetting phase mobilities
     /*! \param Idx Element index*/
     Scalar& mobilityWetting(int Idx)
