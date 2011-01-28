@@ -263,8 +263,8 @@ public:
         boundaryInfo_[eqIdx].isDirichlet = 0;
         boundaryInfo_[eqIdx].isNeumann = 0;
         boundaryInfo_[eqIdx].isOutflow = 0;
-        boundaryInfo_[eqIdx].isCouplingInflow = 1;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+        boundaryInfo_[eqIdx].isCouplingInflow = 0;
+        boundaryInfo_[eqIdx].isCouplingOutflow = 1;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
