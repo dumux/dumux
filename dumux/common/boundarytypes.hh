@@ -414,7 +414,7 @@ public:
 
 private:
     // this is a bitfield structure!
-    struct __packed__ {
+    struct __attribute__((__packed__)) {
         unsigned char visited : 1;
         unsigned char isDirichlet : 1;
         unsigned char isNeumann : 1;

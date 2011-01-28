@@ -2,7 +2,7 @@
 DUMUXDIR=$(find $OLDPWD -name "dune.module" | xargs grep -El '[[:space:]]*Module:[[:space:]]*dumux[[:space:]]*$' | sed "s/dune.module//")
 
 # configure flags 
-CONFIGURE_FLAGS="CXXFLAGS=\"-I$DUMUXDIR -Wall -Wno-sign-compare -fno-strict-aliasing -g\" \
+CONFIGURE_FLAGS="CXXFLAGS=\"-I$DUMUXDIR -Wall -Wno-sign-compare -Wno-packed-bitfield-compat -fno-strict-aliasing -g\" \
   --enable-dunedevel \
   --enable-documentation \
   --disable-parallel \
