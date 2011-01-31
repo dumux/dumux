@@ -1,11 +1,6 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2007 by Peter Bastian                                     *
- *   Institute of Parallel and Distributed System                            *
- *   Department Simulation of Large Systems                                  *
- *   University of Stuttgart, Germany                                        *
- *                                                                           *
- *   Copyright (C) 2008-2010 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2011 by Andreas Lauser                               *
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -525,7 +520,7 @@ protected:
             residual_[i] += dStorage_dt;
 
             // subtract the source term from the local rate
-            PrimaryVariables source;
+            PrimaryVariables source(0.0);
             this->asImp_().computeSource(source, i);
             source *= fvElemGeom_().subContVol[i].volume;
             residual_[i] -= source;
