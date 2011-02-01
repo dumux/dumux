@@ -167,7 +167,7 @@ private:
      *\param initialVel Vector containing the initial velocity
      *\param initialSat Initial value for the saturation
      */
-    void initialize2p2cVariables(Dune::FieldVector<Scalar, dim>& initialVel, 
+    void initialize2p2cVariables(Dune::FieldVector<Scalar, dim>& initialVel,
                                  Scalar initialSat)
     {
         //resize to grid size

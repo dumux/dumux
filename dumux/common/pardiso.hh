@@ -97,7 +97,7 @@ public:
         error_ = 0;
 
         solver_ = 0; // solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
-     
+
 
         //F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
 #else
@@ -187,7 +187,7 @@ public:
 			break;
 		}
 	}
-		
+
 
         phase_ = 11;
         int idum;
