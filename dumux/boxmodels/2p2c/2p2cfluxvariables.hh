@@ -167,7 +167,7 @@ private:
             int j = face().j;
             Scalar fI = rhoFactor_(phaseIdx, i, elemDat);
             Scalar fJ = rhoFactor_(phaseIdx, j, elemDat);
-            if (fI + fJ == 0)
+            if (fI + fJ <= 0)
                 fI = fJ = 0.5; // doesn't matter because no phase is
                                // present in both cells!
             densityAtIP_[phaseIdx] =

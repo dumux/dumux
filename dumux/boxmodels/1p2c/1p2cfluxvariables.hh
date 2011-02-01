@@ -307,7 +307,7 @@ protected:
         Scalar vNorm = velocity.two_norm();
 
         dispersionTensor_ /= vNorm;
-        if (vNorm == 0)
+        if (vNorm < 1e-20)
             dispersionTensor_ = 0;
 
         //multiply with dispersivity difference: vv^T/||v||*(alphaL - alphaT), [m^2/s] --> alphaL = longitudinal disp., alphaT = transverse disp.

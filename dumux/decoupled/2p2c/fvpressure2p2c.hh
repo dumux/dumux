@@ -522,8 +522,6 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
             const Dune::FieldVector<Scalar, dim - 1>& faceLocal =
                 FaceReferenceElements::general(faceGT).position(0,0);
 
-            int isIndex = isIt->indexInInside();
-
             // center of face inside volume reference element
             const LocalPosition localPosFace(0);
 

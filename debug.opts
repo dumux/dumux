@@ -1,12 +1,25 @@
-# path to the dumux includes
-DUMUXDIR=$(find $OLDPWD -name "dune.module" | xargs grep -El '[[:space:]]*Module:[[:space:]]*dumux[[:space:]]*$' | sed "s/dune.module//")
+GXX_WARNING_OPTS=" \
+    -Wall \
+    -Wmissing-include-dirs \
+    -Wcast-align \
+    -Wno-sign-compare \
+    -Wno-packed-bitfield-compat \
+    -Wno-unused-parameter"
 
-# configure flags 
-CONFIGURE_FLAGS="CXXFLAGS=\"-I$DUMUXDIR -Wall -Wno-sign-compare -Wno-packed-bitfield-compat -fno-strict-aliasing -g\" \
+# additional -W flags for g++ which will lead to many warnings in
+# other dune modules
+#    -Wextra \
+#    -Wfloat-equal \
+#    -Wstrict-overflow \
+
+GXX_OPTS=" \
+    -fno-strict-aliasing \
+    -fstrict-overflow \
+    -g"
+
+CONFIGURE_FLAGS="\
+  CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
   --enable-dunedevel \
   --enable-documentation \
   --disable-parallel \
   --disable-mpiruntest"
-
-# make all
-MAKE_FLAGS=
