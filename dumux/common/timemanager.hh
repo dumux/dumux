@@ -150,7 +150,9 @@ public:
     { time_ = t; timeStepIdx_ = stepIdx; }
 
     /*!
-     * \brief Return the current simulated time \f$\mathrm{[s]}\f$.
+     * \brief Return the time \f$\mathrm{[s]}\f$ before the time integration.
+     * To get the time after the time integration you have to add timeStepSize() to
+     * time().
      */
     Scalar time() const
     { return time_; }
