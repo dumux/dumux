@@ -218,7 +218,10 @@ public:
             ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (size_);
             *pressure = this->pressure();
             *saturation = saturation_;
-            writer.addCellData(pressure, "pressure");
+            if (GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)) == GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW)
+                writer.addCellData(pressure, "pressure w-phase");
+            else
+                writer.addCellData(pressure, "pressure nw-phase");
             writer.addCellData(saturation, "water saturation");
             if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
             {

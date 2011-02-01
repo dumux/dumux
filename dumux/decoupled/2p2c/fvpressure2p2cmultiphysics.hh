@@ -669,10 +669,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     potentialW += densityW * (unitDistVec * gravity);
                     potentialNW += densityNW * (unitDistVec * gravity);
 
-                                    //store potentials for further calculations (velocity, saturation, ...)
-                                    problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;
-                                    problem_.variables().potentialNonwetting(globalIdxI, isIndex) = potentialNW;
-
                     // initialize convenience shortcuts
                     Scalar lambdaW, lambdaN;
                     Scalar dV_w(0.), dV_n(0.);        // dV_a = \sum_k \rho_a * dv/dC^k * X^k_a
@@ -917,10 +913,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                         potentialW += densityW * (unitDistVec * gravity);
                         potentialNW += densityNW * (unitDistVec * gravity);
 
-                            //store potential gradients for further calculations
-                            problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;
-                            problem_.variables().potentialNonwetting(globalIdxI, isIndex) = potentialNW;
-
                         //do the upwinding of the mobility depending on the phase potentials
                         Scalar lambdaW, lambdaNW;
                         Scalar dV_w, dV_n;     // gV_a weglassen, da dV/dc am Rand ortsunabhängig angenommen -> am rand nicht bestimmbar -> nur Randintegral ohne Gebietsintegral
@@ -1024,11 +1016,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     }
 
                     f_[globalIdxI] -= (J[wPhaseIdx] + J[nPhaseIdx]) * faceArea;
-
-                    //Assumes that the phases flow in the same direction at the neumann boundary, which is the direction of the total flux!!!
-                    //needed to determine the upwind direction in the saturation equation
-                    problem_.variables().potentialWetting(globalIdxI, isIndex) = J[wPhaseIdx];
-                    problem_.variables().potentialNonwetting(globalIdxI, isIndex) = J[nPhaseIdx];
                 }
                 /*************************************************/
             }
