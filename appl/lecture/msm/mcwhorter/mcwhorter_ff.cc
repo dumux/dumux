@@ -40,7 +40,7 @@ int main(int argc, char** argv)
         //load interface-file
          Dumux::InterfaceProblemProperties interfaceProbProps("interface_MW.xml");
          double discretizationLength = interfaceProbProps.IPP_DiscretizationLength;
-         int cellNumber = 2/discretizationLength;
+         int cellNumber = static_cast<int>(2/discretizationLength);
 
         // define the problem dimensions
         Dune::FieldVector<Scalar, dim> lowerLeft(0);

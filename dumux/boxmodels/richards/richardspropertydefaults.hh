@@ -132,7 +132,7 @@ SET_TYPE_PROP(BoxRichards, FluidSystem, FluidSystem2P<TypeTag>);
 SET_PROP(BoxRichards, NonwettingPhase)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef GasPhase<Scalar, N2<Scalar>> type;
+    typedef GasPhase<Scalar, N2<Scalar> > type;
 };
 
 //! The fluid state class

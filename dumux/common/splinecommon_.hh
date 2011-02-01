@@ -590,7 +590,7 @@ protected:
     /*!
      * \brief Returns the number of sampling points.
      */
-    Scalar numSamples_() const
+    int numSamples_() const
     { return asImp_().numSamples(); }
 };
 

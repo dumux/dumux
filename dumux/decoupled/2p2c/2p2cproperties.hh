@@ -25,7 +25,6 @@
  *
  * \brief Defines the properties required for the decoupled 2p2c models.
  */
-
 #ifndef DUMUX_2P2CPROPERTIES_HH
 #define DUMUX_2P2CPROPERTIES_HH
 
@@ -99,7 +98,6 @@ NEW_PROP_TAG(RelaxationPreconditioner);
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-
 SET_PROP(DecoupledTwoPTwoC, TwoPIndices)
 {
   typedef TwoPCommonIndices<TypeTag> type;

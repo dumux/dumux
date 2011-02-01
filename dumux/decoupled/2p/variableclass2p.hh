@@ -173,7 +173,7 @@ private:
         //initialise variables
         velocitySecondPhase_ = initialVel;
     }
-    void initializeGlobalVariablesTransPart(int initialSat)
+    void initializeGlobalVariablesTransPart(Scalar initialSat)
     {
         //resize to grid size
         saturation_.resize(this->gridSize());

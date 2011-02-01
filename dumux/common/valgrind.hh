@@ -30,6 +30,25 @@
 #define HAVE_VALGRIND 0
 #endif
 
+#if __GNUC__ < 4 || (__GNUC__ == 4  && __GNUC_MINOR__ < 4)
+// do not do static_asserts for gcc < 4.4 (semantics changed, so old
+// GCCs will complain when using static_assert)
+#define static_assert(a, b)
+
+// do not do valgrind client requests for gcc < 4.4 (old GCCs do not
+// support anonymous template arguments which results in errors inside
+// the BoundaryTypes class)
+#define SetUndefined(a) foo();
+#define SetDefined(a) foo();
+#define CheckDefined(a) foo();
+#define SetNoAccess(a) foo();
+namespace Valgrind
+{
+inline void foo() {}; // dummy function
+}
+
+#else
+
 #if HAVE_VALGRIND
 #include <valgrind/memcheck.h>
 #endif // HAVE_VALGRIND
@@ -101,5 +120,7 @@ inline void SetNoAccess(const T &value)
 }
 
 }
+
+#endif
 
 #endif

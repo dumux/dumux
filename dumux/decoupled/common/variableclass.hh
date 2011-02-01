@@ -218,23 +218,23 @@ private:
 public:
 
     //! Return pressure vector
-    ScalarSolutionType& pressure()
-    {
-        return pressure_;
-    }
-
     const ScalarSolutionType& pressure() const
     {
         return pressure_;
     }
 
+    ScalarSolutionType& pressure()
+    {
+        return pressure_;
+    }
+
     //! Return velocity vector
-    DimVecElemFaceType& velocity()
+    const DimVecElemFaceType& velocity() const
     {
         return velocity_;
     }
 
-    const DimVecElemFaceType& velocity() const
+    DimVecElemFaceType& velocity()
     {
         return velocity_;
     }
@@ -250,11 +250,6 @@ public:
      * @param element codim 0 entity
      * \return element index
      */
-    int index(const Element& element)
-    {
-        return elementMapper_.map(element);
-    }
-
     int index(const Element& element) const
     {
         return elementMapper_.map(element);
@@ -265,36 +260,21 @@ public:
      * @param vertex codim dim entity
      * \return vertex index
      */
-    int index(const Vertex& vertex)
-    {
-        return vertexMapper_.map(vertex);
-    }
-
     int index(const Vertex& vertex) const
     {
         return vertexMapper_.map(vertex);
     }
 
     //!Return the number of data elements
-    const int gridSize()
-    {
-        return gridSize_;
-    }
-
-    const int gridSize() const
+    int gridSize() const
     {
         return gridSize_;
     }
 
     //!Return gridView
-    const GridView& gridView()
+    const GridView& gridView() const
     {
         return gridView_;
-    }
-
-    const ElementMapper& elementMapper()
-    {
-        return elementMapper_;
     }
 
     const ElementMapper& elementMapper() const
@@ -307,11 +287,6 @@ public:
      @param element entity of codim 0
      \return value of pressure
      */
-    Dune::FieldVector<Scalar, 1>& pressElement(const Element& element)
-    {
-        return pressure_[elementMapper_.map(element)];
-    }
-
     const Dune::FieldVector<Scalar, 1>& pressElement(const Element& element) const
     {
         return pressure_[elementMapper_.map(element)];
