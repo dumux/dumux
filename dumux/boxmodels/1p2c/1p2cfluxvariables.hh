@@ -90,6 +90,9 @@ public:
     {
         scvfIdx_ = scvfIdx;
 
+        viscosityAtIP_ = Scalar(0);
+        molarDensityAtIP_ = Scalar(0);
+
         calculateGradients_(problem, element, elemDat);
         calculateK_(problem, element, elemDat);
         calculateDiffCoeffPM_(problem, element, elemDat);
@@ -138,6 +141,12 @@ public:
         // TODO: tensorial diffusion coefficients
         return diffCoeffPM_;
     };
+
+    Scalar viscosityAtIP() const
+    { return viscosityAtIP_;}
+
+    Scalar molarDensityAtIP() const
+    { return molarDensityAtIP_; }
 
 
     /*!
@@ -202,6 +211,12 @@ protected:
                 tmp = feGrad;
                 tmp *= elemDat[idx].concentration(1);
                 concentrationGrad_ += tmp;
+
+                // phase viscosity
+                viscosityAtIP_ += elemDat[idx].viscosity()*face().shapeValue[idx];
+
+                //phase moledensity
+                molarDensityAtIP_ += elemDat[idx].molarDensity()*face().shapeValue[idx];
             }
         }
         else {
@@ -334,6 +349,12 @@ protected:
 
     //! the intrinsic permeability tensor
     Tensor K_;
+
+    //! viscosity of the fluid at the integration point
+    Scalar viscosityAtIP_;
+
+    //! molar densities of the fluid at the integration point
+    Scalar molarDensityAtIP_;
 };
 
 } // end namepace
