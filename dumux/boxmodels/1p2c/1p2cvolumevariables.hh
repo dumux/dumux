@@ -134,6 +134,9 @@ public:
     Scalar density() const
     { return fluidState_.density(phaseIndex); }
 
+    Scalar molarDensity() const
+    { return fluidState_.molarDensity(phaseIndex);}
+
     /*!
      * \brief Returns mole fraction of a component in the phase
      *
