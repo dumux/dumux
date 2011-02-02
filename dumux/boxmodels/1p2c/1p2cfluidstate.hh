@@ -82,6 +82,7 @@ public:
             (x1_    )*FluidSystem::molarMass(comp2Index);
 
         density_ = FluidSystem::phaseDensity(phaseIndex, temperature_, phasePressure_, *this);
+        molarDensity_ = FluidSystem::molarDensity(phaseIndex, temperature_, phasePressure_, *this);
 
         Valgrind::CheckDefined(x1_);
         Valgrind::CheckDefined(phasePressure_);
@@ -170,6 +171,13 @@ public:
         return density_;
     }
 
+    Scalar molarDensity(int phaseIdx) const
+    {
+        if (phaseIdx != phaseIndex)
+            return 0;
+        return molarDensity_;
+    }
+
     /*!
      * \brief Returns mean molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
      *
@@ -208,6 +216,7 @@ public:
     Scalar x1_;
     Scalar phasePressure_;
     Scalar density_;
+    Scalar molarDensity_;
     Scalar meanMolarMass_;
     Scalar temperature_;
 };
