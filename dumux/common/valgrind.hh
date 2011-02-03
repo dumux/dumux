@@ -30,12 +30,12 @@
 #define HAVE_VALGRIND 0
 #endif
 
-#if __GNUC__ < 4 || (__GNUC__ == 4  && __GNUC_MINOR__ < 4)
-// do not do static_asserts for gcc < 4.4 (semantics changed, so old
+#if __GNUC__ < 4 || (__GNUC__ == 4  && __GNUC_MINOR__ < 5)
+// do not do static_asserts for gcc < 4.5 (semantics changed, so old
 // GCCs will complain when using static_assert)
 #define static_assert(a, b)
 
-// do not do valgrind client requests for gcc < 4.4 (old GCCs do not
+// do not do valgrind client requests for gcc < 4.5 (old GCCs do not
 // support anonymous template arguments which results in errors inside
 // the BoundaryTypes class)
 #define SetUndefined(a) foo();
