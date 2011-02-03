@@ -57,10 +57,6 @@ dnl ]) # SET_PARDISO
 # well as by dumux itself
 AC_DEFUN([DUMUX_CHECKS],
 [
-  if test x"$HAVE_VALGRIND_H" = "x1"; then
-    AC_DEFINE(HAVE_VALGRIND,1,[Define whether the valgrind header files for client requests are present.])
-  fi
-
   AC_CHECK_PROGS([TEX4HT], [tex4ht], [true])
   AC_CHECK_PROGS([MK4HT], [mk4ht], [true])
   AC_CHECK_PROGS([T4HT], [t4ht], [true])
@@ -72,6 +68,12 @@ AC_DEFUN([DUMUX_CHECKS],
   AC_CHECK_HEADER([valgrind/memcheck.h], 
                   [HAVE_VALGRIND_H="1"],
                   AC_MSG_WARN([valgrind/memcheck.h not found]))
+  AC_DEFINE(HAVE_VALGRIND, 1, [Define whether the valgrind header files for client requests are present.])
+  if test "$HAVE_VALGRIND_H" == "1"; then
+     DUNE_ADD_SUMMARY_ENTRY([Valgrind client requests],["yes"])
+  else
+     DUNE_ADD_SUMMARY_ENTRY([Valgrind client requests],["no"])
+  fi
 
   # the Boost c++ template libraries
   AX_BOOST_BASE([1.33.1])
@@ -98,7 +100,7 @@ AC_DEFUN([DUMUX_CHECKS],
   fi
   AM_CONDITIONAL([BUILD_HANDBOOK], [test "$build_handbook" == "yes"])
 
-  DUNE_ADD_SUMMARY_ENTRY([Build handbook],[$build_handbook])
+  DUNE_ADD_SUMMARY_ENTRY([Build DuMuX handbook],[$build_handbook])
 ])
 
 AC_DEFUN([DUMUX_CHECK_ALL],
