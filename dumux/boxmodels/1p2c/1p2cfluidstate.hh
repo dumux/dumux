@@ -82,7 +82,7 @@ public:
             (x1_    )*FluidSystem::molarMass(comp2Index);
 
         density_ = FluidSystem::phaseDensity(phaseIndex, temperature_, phasePressure_, *this);
-        molarDensity_ = FluidSystem::molarDensity(phaseIndex, temperature_, phasePressure_, *this);
+        molarDensity_ = density_ / meanMolarMass_;
 
         Valgrind::CheckDefined(x1_);
         Valgrind::CheckDefined(phasePressure_);
