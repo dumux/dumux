@@ -392,7 +392,7 @@ public:
 
             if (verbose_) {
                 std::cout <<
-                    boost::format("Time step %d done. CPU time:%.4g, time:%.4g, time step size:%.4g\n")
+                    boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
                     %timeStepIndex()%timer.elapsed()%time()%dt;
             }
 
