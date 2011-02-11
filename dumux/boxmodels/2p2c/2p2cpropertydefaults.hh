@@ -40,6 +40,7 @@
 #include "2p2cfluidstate.hh"
 #include "2p2cproperties.hh"
 #include "2p2cnewtoncontroller.hh"
+#include "2p2cboundaryvariables.hh"
 
 namespace Dumux
 {
@@ -133,6 +134,9 @@ SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
 SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
+
+//! the BoundaryVariables property
+SET_TYPE_PROP(BoxTwoPTwoC, BoundaryVariables, TwoPTwoCBoundaryVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(BoxTwoPTwoC, MobilityUpwindAlpha, 1.0);
