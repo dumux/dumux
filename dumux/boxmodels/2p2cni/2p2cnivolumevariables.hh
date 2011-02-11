@@ -97,22 +97,16 @@ public:
 
         // the internal energies and the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            if (this->fluidState().saturation(phaseIdx) != 0.0) {
-                enthalpy_[phaseIdx] =
-                    FluidSystem::phaseEnthalpy(phaseIdx,
-                                          this->fluidState().temperature(),
-                                          this->fluidState().phasePressure(phaseIdx),
-                                          this->fluidState());
-                internalEnergy_[phaseIdx] =
-                    FluidSystem::phaseInternalEnergy(phaseIdx,
-                                                this->fluidState().temperature(),
-                                                this->fluidState().phasePressure(phaseIdx),
-                                                this->fluidState());
-            }
-            else {
-                enthalpy_[phaseIdx] = 0;
-                internalEnergy_[phaseIdx] = 0;
-            }
+            enthalpy_[phaseIdx] =
+                FluidSystem::phaseEnthalpy(phaseIdx,
+                                           this->fluidState().temperature(),
+                                           this->fluidState().phasePressure(phaseIdx),
+                                           this->fluidState());
+            internalEnergy_[phaseIdx] =
+                FluidSystem::phaseInternalEnergy(phaseIdx,
+                                                 this->fluidState().temperature(),
+                                                 this->fluidState().phasePressure(phaseIdx),
+                                                 this->fluidState());
         }
         Valgrind::CheckDefined(internalEnergy_);
         Valgrind::CheckDefined(enthalpy_);

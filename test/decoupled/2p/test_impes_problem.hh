@@ -214,17 +214,23 @@ Scalar temperature(const GlobalPosition& globalPos, const Element& element) cons
 
 // \}
 
-
+//! Returns the reference pressure for evaluation of constitutive relations
 Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
 {
     return 1e5; // -> 10°C
 }
 
+//!source term [kg/(m^3 s)]
 std::vector<Scalar> source(const GlobalPosition& globalPos, const Element& element)
 {
     return std::vector<Scalar>(2, 0.0);
 }
 
+/*!
+* \brief Returns the type of boundary condition for the pressure equation.
+*
+* BC can be dirichlet (pressure) or neumann (flux).
+*/
 typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
     if ((globalPos[0] < eps_))
@@ -233,6 +239,11 @@ typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos, 
     return BoundaryConditions::neumann;
 }
 
+/*!
+* \brief Returns the type of boundary condition for the saturation equation.
+*
+* BC can be dirichlet (saturation), neumann (flux), or outflow.
+*/
 BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
     if (globalPos[0] < eps_)
@@ -243,6 +254,7 @@ BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Inter
     return Dumux::BoundaryConditions::neumann;
 }
 
+//! return dirichlet condition  (pressure, [Pa])
 Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
     if (globalPos[0] < eps_)
@@ -266,6 +278,7 @@ Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& inter
     return 2e5;
 }
 
+//! return dirichlet condition  (saturation, [-])
 Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
     if (globalPos[0] < eps_)
@@ -274,6 +287,7 @@ Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& interse
     return 0.2;
 }
 
+//! return neumann condition  (flux, [kg/(m^2 s)])
 std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
     std::vector<Scalar> neumannFlux(2, 0.0);
@@ -284,6 +298,7 @@ std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection&
     return neumannFlux;
 }
 
+//! initial condition for saturation
 Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
 {
     return 0.2;

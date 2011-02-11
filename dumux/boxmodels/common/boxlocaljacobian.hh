@@ -130,7 +130,7 @@ public:
     BoxLocalJacobian()
     { Valgrind::SetUndefined(problemPtr_); }
 
-    
+
     /*!
      * \brief Initialize the local Jacobian object.
      *
@@ -174,19 +174,11 @@ public:
 
         // update the secondary variables for the element at the last
         // and the current time levels
-/*        prevVolVars_.resize(numVertices);
-        for (int i = 0; i < numVertices; ++i)
-            prevVolVars_[i].setNoHint();
-*/
         prevVolVars_.update(problem_(),
                             elem_(),
                             fvElemGeom_,
                             true /* isOldSol? */);
 
-/*        curVolVars_.resize(numVertices);
-        for (int i = 0; i < numVertices; ++i)
-            curVolVars_[i].setHint(prevVolVars_[i]);
-*/
         curVolVars_.update(problem_(),
                            elem_(),
                            fvElemGeom_,
@@ -198,7 +190,7 @@ public:
                              curVolVars_,
                              bcTypes_);
         residual_ = localResidual().residual();
-        
+
         // calculate the local jacobian matrix
         ElementSolutionVector partialDeriv(numVertices);
         for (int j = 0; j < numVertices; j++) {
@@ -317,7 +309,7 @@ protected:
      *        an degree of freedom.
      *
      * This method can be overwritten by the implementation if a
-     * better scheme than central differences ought to be used.
+     * better scheme than numerical differentiation is available.
      *
      * The default implementation of this method uses numeric
      * differentiation, i.e. forward or backward differences (2nd
@@ -368,9 +360,9 @@ protected:
         Scalar eps = asImp_().numericEpsilon_(scvIdx, pvIdx);
         Scalar delta = 0;
 
-        if (numDiffMethod >= 0) { 
+        if (numDiffMethod >= 0) {
             // we are not using backward differences, i.e. we need to
-            // calculate f(x - \epsilon)
+            // calculate f(x + \epsilon)
 
             // deflect primary variables
             priVars[pvIdx] += eps;
@@ -388,21 +380,21 @@ protected:
                                  prevVolVars_,
                                  curVolVars_,
                                  bcTypes_);
-            
+
             // store the residual
             dest = localResidual().residual();
         }
         else {
             // we are using backward differences, i.e. we don't need
-            // to calculate f(x - \epsilon) and we can recycle the
+            // to calculate f(x + \epsilon) and we can recycle the
             // (already calculated) residual f(x)
             dest = residual_;
         }
 
 
-        if (numDiffMethod <= 0) { 
+        if (numDiffMethod <= 0) {
             // we are not using forward differences, i.e. we don't
-            // need to calculate f(x + \epsilon)
+            // need to calculate f(x - \epsilon)
 
             // deflect the primary variables
             priVars[pvIdx] -= delta + eps;
@@ -424,7 +416,7 @@ protected:
         }
         else {
             // we are using forward differences, i.e. we don't need to
-            // calculate f(x + \epsilon) and we can recycle the
+            // calculate f(x - \epsilon) and we can recycle the
             // (already calculated) residual f(x)
             dest -= residual_;
         }

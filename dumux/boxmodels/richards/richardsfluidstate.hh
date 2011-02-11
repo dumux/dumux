@@ -52,7 +52,7 @@ class RichardsFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        
+
         pwIdx= Indices::pwIdx,
     };
 
@@ -70,7 +70,7 @@ public:
      * \param temperature The temperature which should be used
      */
     void update(Scalar pnRef,
-                const MaterialLawParams &matParams, 
+                const MaterialLawParams &matParams,
                 const PrimaryVariables &priVars,
                 Scalar temperature)
     {
@@ -93,7 +93,7 @@ public:
     /*!
      * \brief Returns the saturation [] of a phase.
      *
-     * \param phaseIdx The index of the fluid phase 
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar saturation(int phaseIdx) const
     {
@@ -106,8 +106,8 @@ public:
     /*!
      * \brief Returns the mass fraction [] of a component in a phase.
      *
-     * \param phaseIdx The index of the fluid phase 
-     * \param compIdx The index of the chemical species 
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The index of the chemical species
      */
     Scalar massFrac(int phaseIdx, int compIdx) const
     {
@@ -119,8 +119,8 @@ public:
     /*!
      * \brief Returns the molar fraction [] of a component in a fluid phase.
      *
-     * \param phaseIdx The index of the fluid phase 
-     * \param compIdx The index of the chemical species 
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The index of the chemical species
      */
     Scalar moleFrac(int phaseIdx, int compIdx) const
     {
@@ -132,7 +132,7 @@ public:
      *
      * This is equivalent to the sum of all component concentrations.
      *
-     * \param phaseIdx The index of the fluid phase 
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar phaseConcentration(int phaseIdx) const
     {
@@ -142,8 +142,8 @@ public:
     /*!
      * \brief Returns the concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
      *
-     * \param phaseIdx The index of the fluid phase 
-     * \param compIdx The index of the chemical species 
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The index of the chemical species
      */
     Scalar concentration(int phaseIdx, int compIdx) const
     {
@@ -155,7 +155,7 @@ public:
     /*!
      * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
-     * \param phaseIdx The index of the fluid phase 
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
@@ -166,7 +166,7 @@ public:
      * This is equivalent to the sum of all component molar masses
      * weighted by their respective mole fraction.
      *
-     * \param phaseIdx The index of the fluid phase 
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar averageMolarMass(int phaseIdx) const
     { return FluidSystem::molarMass(phaseIdx); };
@@ -174,7 +174,7 @@ public:
     /*!
      * \brief Returns the partial pressure of a component in the gas phase \f$\mathrm{[Pa]}\f$.
      *
-     * \param compIdx The index of the chemical species 
+     * \param compIdx The index of the chemical species
      */
     Scalar partialPressure(int compIdx) const
     {
@@ -186,7 +186,7 @@ public:
     /*!
      * \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *
-     * \param phaseIdx The index of the fluid phase 
+     * \param phaseIdx The index of the fluid phase
      */
     Scalar phasePressure(int phaseIdx) const
     { return phasePressure_[phaseIdx]; }

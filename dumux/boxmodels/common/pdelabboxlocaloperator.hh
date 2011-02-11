@@ -78,7 +78,7 @@ public:
      * \tparam LFSU The type of the local function space  of the ansatz functions
      * \tparam X The type of the container for the coefficients for the ansatz functions
      * \tparam LFSV The type of the local function space of the test functions
-     * \tparam R The range type (usually FieldVector<double>)     
+     * \tparam R The range type (usually FieldVector<double>)
      *
      * \param eg The entity geometry object
      * \param lfsu The local function space object of the ansatz functions
@@ -95,7 +95,7 @@ public:
         //enum { Green = JacobianAssembler::Green };
         //if (model_.jacobianAssembler().elementColor(eg.entity()) == Green)
             // Green elements don't need to be reassembled
-        //  return;        
+        //  return;
 
         model_.localResidual().eval(eg.entity());
 
@@ -111,7 +111,7 @@ public:
      * \tparam LFSU The type of the local function space  of the ansatz functions
      * \tparam X The type of the container for the coefficients for the ansatz functions
      * \tparam LFSV The type of the local function space of the test functions
-     * \tparam R The range type (usually FieldVector<double>)     
+     * \tparam R The range type (usually FieldVector<double>)
      *
      * \param eg The entity geometry object
      * \param lfsu The local function space object of the ansatz functions
@@ -127,7 +127,7 @@ public:
                           Dune::PDELab::LocalMatrix<R>& mat) const
     {
         typedef typename LFSU::Traits::SizeType size_type;
-        
+
         model_.localJacobian().assemble(eg.entity());
 
         int numVertices = x.size()/numEq;

@@ -156,7 +156,7 @@ protected:
         ScalarGradient tmp(0.0);
 
         // calculate gradients and secondary variables at IPs of the boundary
-    	for (int idx = 0;
+        for (int idx = 0;
              idx < fvElemGeom_.numVertices;
              idx++) // loop over adjacent vertices
         {
@@ -198,8 +198,8 @@ protected:
 
             for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
             {
-            	densityAtIP_[phaseIdx] += elemDat[idx].density(phaseIdx)*boundaryFace_->shapeValue[idx];
-            	molarDensityAtIP_[phaseIdx] += elemDat[idx].molarDensity(phaseIdx)*boundaryFace_->shapeValue[idx];
+                densityAtIP_[phaseIdx] += elemDat[idx].density(phaseIdx)*boundaryFace_->shapeValue[idx];
+                molarDensityAtIP_[phaseIdx] += elemDat[idx].molarDensity(phaseIdx)*boundaryFace_->shapeValue[idx];
             }
         }
 

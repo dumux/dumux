@@ -1,12 +1,10 @@
 // $Id: test_diffusion_problem.hh 3655 2010-05-26 17:13:50Z bernd $
 /*****************************************************************************
-*   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
-*   Copyright (C) 2007-2008 by Bernd Flemisch                               *
-*   Copyright (C) 2008-2009 by Andreas Lauser                               *
-*   Institute of Hydraulic Engineering                                      *
-*   University of Stuttgart, Germany                                        *
-*   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
-*                                                                           *
+*   Copyright (C) 2007-2008 by Markus Wolff                                  *
+*   Institute of Hydraulic Engineering                                       *
+*   University of Stuttgart, Germany                                         *
+*   email: <givenname>.<name>@iws.uni-stuttgart.de                           *
+*                                                                            *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
  *   the Free Software Foundation, either version 2 of the License, or       *
@@ -156,11 +154,13 @@ public:
 
     // \}
 
+    //! Returns the reference pressure for evaluation of constitutive relations
     Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
     {
         return 1e5; // -> 10°C
     }
 
+    //!source term [kg/(m^3 s)]
     Scalar source(const GlobalPosition& globalPos, const Element& element)
         {
         double pi = 4.0*atan(1.0);
@@ -179,21 +179,29 @@ public:
         return (result);
         }
 
+    /*!
+    * \brief Returns the type of boundary condition.
+    *
+    * BC can be dirichlet (pressure) or neumann (flux).
+    */
     typename BoundaryConditions::Flags bctype(const GlobalPosition& globalPos, const Intersection& intersection) const
     {
         return BoundaryConditions::dirichlet;
     }
 
+    //! return dirichlet condition  (pressure, [Pa])
     Scalar dirichlet(const GlobalPosition& globalPos, const Intersection& intersection) const
     {
         return (exact(globalPos));
     }
 
+    //! return neumann condition  (flux, [kg/(m^2 s)])
     Scalar neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
         {
         return 0.0;
         }
 
+private:
     Scalar exact (const GlobalPosition& globalPos) const
     {
         double pi = 4.0*atan(1.0);
@@ -211,7 +219,6 @@ public:
         return grad;
         }
 
-private:
     double delta_;
 };
 } //end namespace

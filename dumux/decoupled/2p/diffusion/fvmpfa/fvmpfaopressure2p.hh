@@ -58,10 +58,8 @@ namespace Dumux
  * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
  * and \f$\lambda\f$ the total mobility, possibly depending on the
  * saturation.
- Template parameters are:
-
- - GridView a DUNE gridView type
- - Scalar type used for return values
+ *
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class FVMPFAOPressure2P
@@ -132,6 +130,7 @@ protected:
 public:
 
     //constitutive functions are initialized and stored in the variables object
+    //! updates and stores constitutive relations
     void updateMaterialLaws();
 
     void initialize(bool solveTwice = true)
@@ -145,12 +144,14 @@ public:
     }
 
     // serialization methods
+    //! \copydoc Dumux::FVPressure1P::serialize(Restarter &res)
     template<class Restarter>
     void serialize(Restarter &res)
     {
        return;
     }
 
+    //! \copydoc Dumux::FVPressure1P::deserialize(Restarter &res)
     template<class Restarter>
     void deserialize(Restarter &res)
     {
@@ -184,6 +185,7 @@ public:
         return;
     }
 
+    //! \copydoc Dumux::FVPressure1P::pressure()
     void pressure(bool solveTwice = true)
     {
 //        Dune::Timer timer;
@@ -199,7 +201,10 @@ public:
         return;
     }
 
-
+    //! Constructs a FVMPFAOPressure2P object
+    /**
+     * \param problem a problem class object
+     */
     FVMPFAOPressure2P(Problem& problem)
     : problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (4*dim+(dim-1))*problem.variables().gridSize(), Matrix::random),
     f_(problem.variables().gridSize())
@@ -212,7 +217,7 @@ private:
     Matrix A_;
     Vector f_;
 protected:
-    static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
 template<class TypeTag>

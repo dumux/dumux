@@ -36,23 +36,23 @@ namespace Dumux
 struct BenchmarkResult
 {
 private:
-	template<int dim>
-	struct ElementLayout
-	{
-	    bool contains (Dune::GeometryType gt)
-	    {
-	        return gt.dim() == dim;
-	    }
-	};
+    template<int dim>
+    struct ElementLayout
+    {
+        bool contains (Dune::GeometryType gt)
+        {
+            return gt.dim() == dim;
+        }
+    };
 
-	template<int dim>
-	struct FaceLayout
-	{
-	    bool contains (Dune::GeometryType gt)
-	    {
-	        return gt.dim() == dim-1;
-	    }
-	};
+    template<int dim>
+    struct FaceLayout
+    {
+        bool contains (Dune::GeometryType gt)
+        {
+            return gt.dim() == dim-1;
+        }
+    };
 
 public:
     double relativeL2Error;
@@ -325,23 +325,23 @@ public:
 struct ResultEvaluation
 {
 private:
-	template<int dim>
-	struct ElementLayout
-	{
-	    bool contains (Dune::GeometryType gt)
-	    {
-	        return gt.dim() == dim;
-	    }
-	};
+    template<int dim>
+    struct ElementLayout
+    {
+        bool contains (Dune::GeometryType gt)
+        {
+            return gt.dim() == dim;
+        }
+    };
 
-	template<int dim>
-	struct FaceLayout
-	{
-	    bool contains (Dune::GeometryType gt)
-	    {
-	        return gt.dim() == dim-1;
-	    }
-	};
+    template<int dim>
+    struct FaceLayout
+    {
+        bool contains (Dune::GeometryType gt)
+        {
+            return gt.dim() == dim-1;
+        }
+    };
 
 public:
     double relativeL2Error;

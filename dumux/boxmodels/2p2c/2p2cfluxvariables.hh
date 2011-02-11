@@ -167,7 +167,7 @@ private:
             int j = face().j;
             Scalar fI = rhoFactor_(phaseIdx, i, elemDat);
             Scalar fJ = rhoFactor_(phaseIdx, j, elemDat);
-            if (fI + fJ == 0)
+            if (fI + fJ <= 0)
                 fI = fJ = 0.5; // doesn't matter because no phase is
                                // present in both cells!
             densityAtIP_[phaseIdx] =
@@ -213,7 +213,6 @@ private:
         // multiply the pressure potential with the intrinsic
         // permeability
         Tensor K;
-        Vector Kmvp;
         for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
         {
             spatialParams.meanK(K,
@@ -223,8 +222,8 @@ private:
                                 spatialParams.intrinsicPermeability(element,
                                                                     fvElemGeom_,
                                                                     face().j));
-            K.mv(potentialGrad_[phaseIdx], Kmvp);
-            KmvpNormal_[phaseIdx] = - (Kmvp * face().normal);
+            K.mv(potentialGrad_[phaseIdx], Kmvp_[phaseIdx]);
+            KmvpNormal_[phaseIdx] = - (Kmvp_[phaseIdx] * face().normal);
         }
 
         // set the upstream and downstream vertices
@@ -293,6 +292,13 @@ public:
     { return KmvpNormal_[phaseIdx]; }
 
     /*!
+     * \brief Return the pressure potential multiplied with the
+     *        intrinsic permeability as vector (for velocity output)
+     */
+    Vector Kmvp(int phaseIdx) const
+    { return Kmvp_[phaseIdx]; }
+
+    /*!
      * \brief Return the local index of the upstream control volume
      *        for a given phase.
      */
@@ -354,6 +360,7 @@ protected:
     Scalar densityAtIP_[numPhases], molarDensityAtIP_[numPhases];
 
     // intrinsic permeability times pressure potential gradient
+    Vector Kmvp_[numPhases];
     // projected on the face normal
     Scalar KmvpNormal_[numPhases];
 

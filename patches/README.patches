@@ -1,0 +1,24 @@
+--------------------------------------
+|Compilation problem with 'dune-istl'|
+--------------------------------------
+
+If you use DUNE 2.0 stable release use
+
+    dune-istl-2.0.patch
+
+For completeness we contain also a patch against a trunk version of dune-istl
+which an average DUMUX developer will not need, it could be useful in further releases.
+But hopefully it will be obsoleted.
+
+    dune-istl-dune-trunk-r6271.patch
+
+Application: 
+
+  cd $PATH_TO_DUNE_ISTL_2.0
+  patch -p1 < $PATH_TO_THIS_PATCHES_FOLDER/dune-istl-2.0.patch
+
+  cd $PATH_TO_DUNE_ISTL_TRUNK
+  patch -p1 < $PATH_TO_THE_DOWNLOADS_FOLDER/dune-istl-dune-trunk-r6271.patch
+
+The checkout-dumux script applies dune-istl-2.0.patch automatically, if patch application is not switched off.
+

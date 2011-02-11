@@ -117,7 +117,7 @@ public:
     void init(Problem &prob)
     {
         problemPtr_ = &prob;
-        
+
         updateBoundaryIndices_();
 
         int nDofs = asImp_().numDofs();
@@ -143,7 +143,7 @@ public:
      * \param dest Stores the result
      * \param u The solution for which the residual ought to be calculated
      */
-    Scalar globalResidual(SolutionVector &dest, 
+    Scalar globalResidual(SolutionVector &dest,
                           const SolutionVector &u)
     {
         SolutionVector tmp(curSol());
@@ -194,7 +194,7 @@ public:
     void globalStorage(PrimaryVariables &dest)
     {
         dest = 0;
-        
+
         ElementIterator elemIt = gridView_().template begin<0>();
         const ElementIterator elemEndIt = gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -320,12 +320,12 @@ public:
         }
         return result;
     }
-    
+
     /*!
      * \brief Try to progress the model to the next timestep.
      *
      * \param solver The non-linear solver
-     * \param controller The controller which specifies the behaviour 
+     * \param controller The controller which specifies the behaviour
      *                   of the non-linear solver
      */
     bool update(NewtonMethod &solver,
@@ -499,7 +499,7 @@ public:
     { return problem_().elementMapper(); };
 
     /*!
-     * \brief Resets the Jacobian matrix assembler, so that the 
+     * \brief Resets the Jacobian matrix assembler, so that the
      *        boundary types can be altered.
      */
     void resetJacobianAssembler ()

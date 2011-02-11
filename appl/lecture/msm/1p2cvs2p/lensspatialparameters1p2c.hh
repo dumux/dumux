@@ -77,11 +77,9 @@ public:
         lensPorosity_ = interfaceSoilProps.ISP_FinePorosity;
         outerPorosity_ = interfaceSoilProps.ISP_CoarsePorosity;
 
-        //TODO: longitudinalDispersivity_ = interfaceSoilProps.ISP_LongitudinalDispersivity;
-        //TODO: transverseDispersivity_ = interfaceSoilProps.ISP_TransverseDispersivity;
-    longitudinalDispersivity_ = 0.0;
-        transverseDispersivity_ = 0.0;
-    //TODO: The example is very bad! The numerical diffusion is very high, so that the dispersion/diffusion coefficients nearly do not have any influence!
+        longitudinalDispersivity_ = 1.0e-5;
+        transverseDispersivity_ = 1.0e-6;
+    //Remark: The example is very bad. The numerical diffusion is very high, so that the dispersion/diffusion coefficients nearly do not have any influence.
 
 
         for(int i = 0; i < dim; i++){

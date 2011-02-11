@@ -203,6 +203,12 @@ public:
     {
         const Scalar Sthres = params.thresholdSw();
 
+        //instead of return value = inf, return a very large number
+        if (params.pe() == 0.0)
+        {
+            return 1e100;
+        }
+
         // calculate the saturation which corresponds to the
         // saturation in the non-regularized version of the
         // Brooks-Corey law
@@ -223,7 +229,7 @@ public:
             Scalar m = BrooksCorey::dpC_dSw(params, 1.0);
             return 1/m;
         }
-        return BrooksCorey::dpC_dSw(params, pC);
+        return 1.0/BrooksCorey::dpC_dSw(params, Swe);
     }
 
     /*!

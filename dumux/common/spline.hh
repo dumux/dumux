@@ -55,7 +55,7 @@ namespace Dumux
 template<class Scalar, int numSamples = 2>
 class Spline : public FixedLengthSpline_<Scalar, numSamples>
 {
-public: 
+public:
     /*!
      * \brief Default constructor for a spline.
      *
@@ -71,10 +71,10 @@ public:
      * \param y An array containing the \f$y\f$ values of the spline's sampling points
      */
     template <class ScalarContainer>
-    Spline(const ScalarContainer &x, 
+    Spline(const ScalarContainer &x,
            const ScalarContainer &y)
     { this->set(x, y); }
-    
+
     /*!
      * \brief Convenience constructor for a natural spline
      *
@@ -135,7 +135,7 @@ public:
 */
 template<class Scalar>
 class Spline<Scalar, -1> : public VariableLengthSpline_<Scalar>
-{ 
+{
 public:
     /*!
      * \brief Default constructor for a spline.
@@ -154,10 +154,10 @@ public:
      */
     template <class ScalarContainer>
     Spline(int nSamples,
-           const ScalarContainer &x, 
+           const ScalarContainer &x,
            const ScalarContainer &y)
     { this->set(nSamples, x, y); }
-    
+
     /*!
      * \brief Convenience constructor for a natural spline
      *
@@ -176,10 +176,10 @@ public:
      * \param y An array containing the \f$y\f$ values of the spline's sampling points (must have a size() method)
      */
     template <class ScalarContainer>
-    Spline(const ScalarContainer &x, 
+    Spline(const ScalarContainer &x,
            const ScalarContainer &y)
     { this->set(x, y); }
-    
+
     /*!
      * \brief Convenience constructor for a natural spline
      *
@@ -199,7 +199,7 @@ public:
      * \param m1 The slope of the spline at \f$x_n\f$
      */
     template <class ScalarContainer>
-    Spline(int nSamples, 
+    Spline(int nSamples,
            const ScalarContainer &x,
            const ScalarContainer &y,
            Scalar m0,
@@ -215,7 +215,7 @@ public:
      * \param m1 The slope of the spline at \f$x_n\f$
      */
     template <class XYContainer>
-    Spline(int nSamples, 
+    Spline(int nSamples,
            const XYContainer &points,
            Scalar m0,
            Scalar m1)
@@ -257,7 +257,7 @@ template<class Scalar>
 class Spline<Scalar, 0>
 // Splines with zero sampling points do not make sense!
 { private: Spline() { }; };
-    
+
 /*!
  * \brief Do not allow splines with one sampling point
  */
@@ -297,7 +297,7 @@ public:
     {
         set(x,y,m0,m1);
     }
-    
+
     /*!
      * \brief Convenience constructor for a full spline
      *
@@ -355,7 +355,7 @@ public:
         Vector d;
         assignXY_(x0, x1, y0, y1);
         this->makeFullSystem_(M, d, m0, m1);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -377,7 +377,7 @@ public:
         Vector d;
         assignXY_(x[0], x[1], y[0], y[1]);
         this->makeFullSystem_(M, d, m0, m1);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }
@@ -397,7 +397,7 @@ public:
         Vector d;
         assignXY_(points[0][0], points[1][0], points[0][1], points[1][1]);
         this->makeFullSystem_(M, d, m0, m1);
-        
+
         // solve for the moments
         M.solve(m_, d);
     }

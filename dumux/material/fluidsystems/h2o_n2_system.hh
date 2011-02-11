@@ -155,10 +155,10 @@ public:
                        N2::molarMass()*fluidState.moleFrac(lPhaseIdx, N2Idx));
         }
         else if (phaseIdx == gPhaseIdx) {
-            Scalar fugH2O = 
+            Scalar fugH2O =
                 fluidState.moleFrac(gPhaseIdx, H2OIdx)  *
                 fluidState.phasePressure(gPhaseIdx);
-            Scalar fugN2 = 
+            Scalar fugN2 =
                 fluidState.moleFrac(gPhaseIdx, N2Idx)  *
                 fluidState.phasePressure(gPhaseIdx);
             return
@@ -334,7 +334,9 @@ public:
      * of component \f$\kappa\f$ by the following equation:
      *  \f[ f_\kappa = p_\alpha \gamma_{\alpha,\kappa} \f]
      * where \f$f_\kappa\f$  is the component's fugacity and \f$p_\alpha\f$
-     * is the phase' pressure
+     * is the phase' pressure. To yield a phase-independent name for this
+     * method, it also treats gaseous phases although the term "activity"
+     * might be misleading in that context.
      *
      * For liquids with very low miscibility this boils down to the
      * inverse Henry constant for the solutes and the partial pressure
@@ -459,7 +461,7 @@ public:
         else {
             Scalar cH2O = fluidState.concentration(gPhaseIdx, H2OIdx);
             Scalar cN2 = fluidState.concentration(gPhaseIdx, N2Idx);
-            
+
             Scalar pH2O = H2O::gasPressure(temperature, cH2O*H2O::molarMass());
             Scalar pN2 = N2::gasPressure(temperature, cN2*N2::molarMass());
 

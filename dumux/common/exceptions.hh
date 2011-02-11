@@ -1,5 +1,4 @@
 // $Id$
-
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -28,6 +27,8 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <string>
+
 namespace Dumux {
 /*!
  * \brief Exception thrown if a fixable numerical problem occurs.
@@ -35,7 +36,21 @@ namespace Dumux {
  * (e.g. time step too big, etc.)
  */
 class NumericalProblem : public Dune::Exception
-{ };
+{
+public:
+    // copy constructor
+    NumericalProblem(const NumericalProblem &v)
+        : Dune::Exception(v)
+    {}
+
+    // default constructor
+    NumericalProblem()
+    {}
+
+    // constructor with error message
+    NumericalProblem(const std::string &s)
+    { this->message(s); }
+ };
 }
 
 #endif

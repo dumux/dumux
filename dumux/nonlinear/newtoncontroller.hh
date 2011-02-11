@@ -100,7 +100,7 @@ NEW_PROP_TAG(EnablePartialReassemble);
 
 /*!
  * \brief Specifies whether the update should be done using the line search
- *        method instead of the plain Newton method. 
+ *        method instead of the plain Newton method.
  *
  * Whether this property has any effect depends on wether the line
  * search method is implemented for the actual model's Newton
@@ -126,7 +126,7 @@ SET_PROP_DEFAULT(NewtonUseLineSearch)
 
 //! \cond INTERNAL
 /*!
- * \brief Writes the intermediate solutions during 
+ * \brief Writes the intermediate solutions during
  *        the Newton scheme
  */
 template <class TypeTag, bool enable>
@@ -185,8 +185,8 @@ private:
 };
 
 /*!
- * \brief Writes the intermediate solutions during 
- *        the Newton scheme. 
+ * \brief Writes the intermediate solutions during
+ *        the Newton scheme.
  *
  * This is the dummy specialization for the case where we don't want
  * to do anything.
@@ -267,7 +267,7 @@ public:
 
         if (enableTimeStepRampUp) {
             this->rampUpSteps_ = 9;
-            
+
             // the ramp-up steps are not counting
             this->setTargetSteps(10);
             this->setMaxSteps(12);
@@ -310,7 +310,7 @@ public:
      */
     void setMaxSteps(int maxSteps)
     { maxSteps_ = maxSteps; }
-    
+
     /*!
      * \brief Returns the number of iterations used for the time step
      *        ramp-up.
@@ -327,7 +327,7 @@ public:
     /*!
      * \brief Returns true if another iteration should be done.
      *
-     * \param u The current solution
+     * \param uCurrentIter The solution of the current newton iteration
      */
     bool newtonProceed(const SolutionVector &uCurrentIter)
     {
@@ -370,8 +370,8 @@ public:
         model_().jacobianAssembler().reassembleAll();
         dtInitial_ = timeManager_().timeStepSize();
         if (enableTimeStepRampUp) {
-            rampUpDelta_ = 
-                timeManager_().timeStepSize() 
+            rampUpDelta_ =
+                timeManager_().timeStepSize()
                 /
                 rampUpSteps()
                 *
@@ -420,11 +420,11 @@ public:
         for (int i = 0; i < int(uLastIter.size()); ++i) {
             PrimaryVariables uNewI = uLastIter[i];
             uNewI -= deltaU[i];
-            Scalar vertErr = 
+            Scalar vertErr =
                 model_().relativeErrorVertex(i,
                                              uLastIter[i],
                                              uNewI);
-            
+
             if (vertErr > tolerance_)
                 ++aboveTol;
             if (vertErr > error_) {
@@ -467,7 +467,7 @@ public:
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
-                           "A process threw MatrixBlockError");
+                           "A process threw NumericalProblem");
             }
         }
         catch (Dune::MatrixBlockError e) {
@@ -480,6 +480,15 @@ public:
             std::ostringstream ms(msg);
             ms << e.what() << "M=" << A[e.r][e.c];
             p.message(ms.str());
+            throw p;
+        }
+        catch (const Dune::ISTLError &e) {
+            // make sure all processes converged
+            int converged = 0;
+            gridView_().comm().min(converged);
+
+            Dumux::NumericalProblem p;
+            p.message(e.what());
             throw p;
         }
     }
@@ -525,10 +534,10 @@ public:
     /*!
      * \brief Indicates that one newton iteration was finished.
      *
-     * \param u The solution after the current iteration
-     * \param uLastIter The solution at the beginning of the current iteration
+     * \param uCurrentIter The solution after the current Newton iteration
+     * \param uLastIter The solution at the beginning of the current Newton iteration
      */
-    void newtonEndStep(const SolutionVector &uCurrentIter, 
+    void newtonEndStep(const SolutionVector &uCurrentIter,
                        const SolutionVector &uLastIter)
     {
         ++numSteps_;
@@ -588,7 +597,7 @@ public:
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
         if (enableTimeStepRampUp)
-            return oldTimeStep; 
+            return oldTimeStep;
 
         Scalar n = numSteps_;
         n -= rampUpSteps();
@@ -701,7 +710,7 @@ protected:
     };
 
     /*!
-     * \brief Actually invoke the linear solver 
+     * \brief Actually invoke the linear solver
      *
      * Usually we use the solvers from DUNE-ISTL.
      */

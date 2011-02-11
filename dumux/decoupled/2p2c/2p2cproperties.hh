@@ -25,7 +25,6 @@
  *
  * \brief Defines the properties required for the decoupled 2p2c models.
  */
-
 #ifndef DUMUX_2P2CPROPERTIES_HH
 #define DUMUX_2P2CPROPERTIES_HH
 
@@ -99,7 +98,6 @@ NEW_PROP_TAG(RelaxationPreconditioner);
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-
 SET_PROP(DecoupledTwoPTwoC, TwoPIndices)
 {
   typedef TwoPCommonIndices<TypeTag> type;
@@ -108,7 +106,7 @@ SET_PROP(DecoupledTwoPTwoC, TwoPIndices)
 // set fluid/component information
 SET_PROP(DecoupledTwoPTwoC, NumPhases) //!< The number of phases in the 2p model is 2
 {
-	// the property is created in decoupledproperties.hh
+    // the property is created in decoupledproperties.hh
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 

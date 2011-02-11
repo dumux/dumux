@@ -43,7 +43,7 @@ namespace Dumux
  *  where \f$ \bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
  *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
  *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
- *  
+ *
  * The model domain is automatically divided
  * in a single-phase and a two-phase domain. The full 2p2c model is only evaluated within the
  * two-phase subdomain, whereas a single-phase transport model is computed in the rest of the
@@ -351,7 +351,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                 }
 
                 /******************************************
-                 * 	Boundary Face
+                 *     Boundary Face
                  ******************************************/
                 if (isIt->boundary())
                 {
@@ -513,13 +513,13 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                         double inflow = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;
                         if (inflow>0)
                             {
-                            factor[0] = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;	// =factor in
-                            factor[1] = -(updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI);	// =factor out
+                            factor[0] = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;    // =factor in
+                            factor[1] = -(updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI);    // =factor out
                             }
                         else
                         {
-                            factor[0] = -(updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW);	// =factor in
-                            factor[1] = updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI;	// =factor out
+                            factor[0] = -(updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW);    // =factor in
+                            factor[1] = updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI;    // =factor out
                         }
                         #endif
                     }//end neumann boundary
@@ -535,7 +535,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             }// end all intersections
 
             /************************************
-             * 	Handle source term
+             *     Handle source term
              ***********************************/
             Dune::FieldVector<double,2> q = problem_.source(globalPos, *eIt);
             updateVec[wCompIdx][globalIdxI] += q[wCompIdx];

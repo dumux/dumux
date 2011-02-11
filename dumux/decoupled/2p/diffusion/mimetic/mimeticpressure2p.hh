@@ -59,12 +59,7 @@ namespace Dumux
  * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
  * on \f$\Gamma_{Dirichlet}\f$.
  *
- * Template parameters are:
- *
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
+ *\tparam TypeTag The Type Tag
  */
 template<class TypeTag> class MimeticPressure2P
 {

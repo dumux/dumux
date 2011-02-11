@@ -22,6 +22,7 @@
 /*!
  * \file
  * \brief Base class for all 2-phase transport problems which use an impes algorithm
+ * @author Markus Wolff
  */
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
 #define DUMUX_TRANSPORTPROBLEM_2P_HH
@@ -37,9 +38,10 @@ namespace Dumux
 /*!
  * \ingroup Saturation2p
  * \ingroup IMPESproblems
- * \brief  Base class for all 2-phase transport problems which use an impes algorithm
+ * \brief  Base class for a decoupled 2-phase transport problem
  *
- * \todo Please doc me more!
+ * @tparam TypeTag The Type Tag
+ * @tparam Implementation The Problem implementation
  */
 template<class TypeTag, class Implementation>
 class TransportProblem2P : public OneModelProblem<TypeTag, Implementation>
@@ -70,6 +72,11 @@ class TransportProblem2P : public OneModelProblem<TypeTag, Implementation>
     {}
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     */
     TransportProblem2P(const GridView &gridView)
         : ParentType(gridView),
         gravity_(0),spatialParameters_(gridView)

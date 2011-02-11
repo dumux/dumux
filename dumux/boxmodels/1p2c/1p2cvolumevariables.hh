@@ -65,7 +65,7 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         phaseIndex = GET_PROP_VALUE(TypeTag, PTAG(PhaseIndex)),
         comp1Index = GET_PROP_VALUE(TypeTag, PTAG(Comp1Index)),
         comp2Index = GET_PROP_VALUE(TypeTag, PTAG(Comp2Index)),
-        
+
         contiEqIdx = Indices::contiEqIdx,
         transEqIdx = Indices::transEqIdx
     };
@@ -105,7 +105,7 @@ public:
                                                  temperature,
                                                  pressure(),
                                                  fluidState_);
-        diffCoeff_ = FluidSystem::diffCoeff(phaseIndex, 
+        diffCoeff_ = FluidSystem::diffCoeff(phaseIndex,
                                             comp1Index,
                                             comp2Index,
                                             temperature,
@@ -120,7 +120,7 @@ public:
         Valgrind::CheckDefined(fluidState_);
         Valgrind::CheckDefined(*this);
     }
-    
+
     /*!
      * \brief Return the fluid configuration at the given primary
      *        variables
@@ -133,6 +133,9 @@ public:
      */
     Scalar density() const
     { return fluidState_.density(phaseIndex); }
+
+    Scalar molarDensity() const
+    { return fluidState_.molarDensity(phaseIndex);}
 
     /*!
      * \brief Returns mole fraction of a component in the phase
@@ -155,7 +158,7 @@ public:
      */
     Scalar concentration(int compIdx) const
     { return fluidState_.concentration(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
-    
+
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.
@@ -202,7 +205,7 @@ public:
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
-    { return porosity_; }    
+    { return porosity_; }
 
 protected:
     Scalar porosity_;

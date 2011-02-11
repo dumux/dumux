@@ -35,18 +35,13 @@ namespace Dumux
  * @brief  Class for defining the diffusive capillary pressure term of a saturation equation
  *
  * Defines the diffusive capillary pressure term of the form
- * \f[
- *  \bar \lambda \boldsymbol{K} \text{grad} \, p_c,
- * \f]
+ *
+ * \f[\bar \lambda \boldsymbol{K} \text{grad} \, p_c,\f]
+ *
  * where \f$\bar \lambda = \lambda_w f_n = \lambda_n f_w\f$ and \f$\lambda\f$ is a phase mobility and \f$f\f$ a phase fractional flow function,
  * \f$\boldsymbol{K}\f$ is the intrinsic permeability and \f$p_c = p_c(S_w) \f$ the capillary pressure.
  *
- * Template parameters are:
-
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
+ * @tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class CapillaryDiffusion: public DiffusivePart<TypeTag>

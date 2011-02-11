@@ -1,4 +1,4 @@
-// $Id: richardsproperties.hh 3840 2010-07-15 10:14:15Z bernd $
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -132,7 +132,7 @@ SET_TYPE_PROP(BoxRichards, FluidSystem, FluidSystem2P<TypeTag>);
 SET_PROP(BoxRichards, NonwettingPhase)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef GasPhase<Scalar, N2<Scalar>> type;
+    typedef GasPhase<Scalar, N2<Scalar> > type;
 };
 
 //! The fluid state class

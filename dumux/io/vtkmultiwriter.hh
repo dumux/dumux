@@ -39,6 +39,8 @@
 #include <iostream>
 #include <string>
 
+#include <limits>
+
 namespace Dumux {
 /*!
  * \brief Simplyfies writing multi-file VTK datasets.
@@ -122,14 +124,19 @@ public:
     template <class VectorField>
     void addVertexData(VectorField *field, const char *name)
     {
-#ifndef NDEBUG
         // make sure the field is well defined
-        for (int i = 0; i < field->size(); ++i)
+        for (int i = 0; i < field->size(); ++i) {
             Valgrind::CheckDefined((*field)[i]);
-#endif
+
+            // set values which are too small to 0 to avoid problems
+            // with paraview
+            if (std::abs((*field)[i]) < std::numeric_limits<float>::min())
+                (*field)[i] = 0.0;
+        }
+
         curWriter_->addVertexData(*field, name);
     }
-    
+
     /*!
      * \brief Add a finished cell centered vector field to the
      *        output. The field must have been created using

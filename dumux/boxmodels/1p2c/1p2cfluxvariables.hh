@@ -28,7 +28,7 @@
  *
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
- * 
+ *
  * \ingroup OnePTwoCBoxModel
  */
 #ifndef DUMUX_1P2C_FLUX_VARIABLES_HH
@@ -90,6 +90,9 @@ public:
     {
         scvfIdx_ = scvfIdx;
 
+        viscosityAtIP_ = Scalar(0);
+        molarDensityAtIP_ = Scalar(0);
+
         calculateGradients_(problem, element, elemDat);
         calculateK_(problem, element, elemDat);
         calculateDiffCoeffPM_(problem, element, elemDat);
@@ -124,9 +127,9 @@ public:
      * \param compIdx The index of the considered component
      */
     const Vector &concentrationGrad(int compIdx) const
-    { 
-        if (compIdx != 1) 
-        { DUNE_THROW(Dune::InvalidStateException, 
+    {
+        if (compIdx != 1)
+        { DUNE_THROW(Dune::InvalidStateException,
                      "The 1p2c model is supposed to need "
                      "only the concentration gradient of "
                      "the second component!"); }
@@ -138,6 +141,12 @@ public:
         // TODO: tensorial diffusion coefficients
         return diffCoeffPM_;
     };
+
+    Scalar viscosityAtIP() const
+    { return viscosityAtIP_;}
+
+    Scalar molarDensityAtIP() const
+    { return molarDensityAtIP_; }
 
 
     /*!
@@ -177,7 +186,7 @@ protected:
     {
         const VolumeVariables &vVars_i = elemDat[face().i];
         const VolumeVariables &vVars_j = elemDat[face().j];
-        
+
         potentialGrad_ = 0.0;
         concentrationGrad_ = 0.0;
 
@@ -202,6 +211,12 @@ protected:
                 tmp = feGrad;
                 tmp *= elemDat[idx].concentration(1);
                 concentrationGrad_ += tmp;
+
+                // phase viscosity
+                viscosityAtIP_ += elemDat[idx].viscosity()*face().shapeValue[idx];
+
+                //phase moledensity
+                molarDensityAtIP_ += elemDat[idx].molarDensity()*face().shapeValue[idx];
             }
         }
         else {
@@ -302,12 +317,12 @@ protected:
         for (int i=0; i<dim; i++)
             for (int j = 0; j<dim; j++)
                 dispersionTensor_[i][j]=velocity[i]*velocity[j];
-        
+
         //normalize velocity product --> vv^T/||v||, [m/s]
         Scalar vNorm = velocity.two_norm();
 
         dispersionTensor_ /= vNorm;
-        if (vNorm == 0)
+        if (vNorm < 1e-20)
             dispersionTensor_ = 0;
 
         //multiply with dispersivity difference: vv^T/||v||*(alphaL - alphaT), [m^2/s] --> alphaL = longitudinal disp., alphaT = transverse disp.
@@ -328,12 +343,18 @@ protected:
 
     //! the effective diffusion coefficent in the porous medium
     Scalar diffCoeffPM_;
-    
+
     //! the dispersion tensor in the porous medium
     Tensor dispersionTensor_;
 
     //! the intrinsic permeability tensor
     Tensor K_;
+
+    //! viscosity of the fluid at the integration point
+    Scalar viscosityAtIP_;
+
+    //! molar densities of the fluid at the integration point
+    Scalar molarDensityAtIP_;
 };
 
 } // end namepace

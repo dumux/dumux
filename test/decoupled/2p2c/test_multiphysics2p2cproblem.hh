@@ -236,7 +236,7 @@ typename BoundaryConditions::Flags bcTypeTransport(const GlobalPosition& globalP
  */
 BoundaryConditions2p2c::Flags bcFormulation(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
-	return BoundaryConditions2p2c::concentration;
+    return BoundaryConditions2p2c::concentration;
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletPress()
@@ -264,7 +264,7 @@ Scalar dirichletTransport(const GlobalPosition& globalPos, const Intersection& i
  */
 Dune::FieldVector<Scalar,2> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
 {
-	Dune::FieldVector<Scalar,2> neumannFlux(0.0);
+    Dune::FieldVector<Scalar,2> neumannFlux(0.0);
 //    if (globalPos[1] < 15 && globalPos[1]> 5)
 //    {
 //        neumannFlux[nPhaseIdx] = -0.015;

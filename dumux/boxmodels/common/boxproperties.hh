@@ -75,6 +75,7 @@ NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
 NEW_PROP_TAG(ElementVolumeVariables); //!< The secondary variables of all sub-control volumes in an element
 NEW_PROP_TAG(FluxVariables); //!< Data required to calculate a flux over a face
+NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces (outflow)
 
 // high level simulation control
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time

@@ -1,0 +1,26 @@
+--- dune-istl-2.0/dune/istl/remoteindices.hh.orig	2010-11-26 16:18:39.703876061 +0100
++++ dune-istl-2.0/dune/istl/remoteindices.hh	2010-11-26 16:20:53.242998985 +0100
+@@ -1412,20 +1412,14 @@
+   }
+   
+   template<typename T, typename A>
+-  inline typename std::map<int, std::pair<SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*,
+-					  SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*> >::const_iterator
++  inline typename RemoteIndices<T,A>::const_iterator
+   RemoteIndices<T,A>::begin() const
+   {
+     return remoteIndices_.begin();
+   }
+-  
++
+   template<typename T, typename A>
+-  inline typename std::map<int, std::pair<SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*,
+-					  SLList<typename RemoteIndices<T,A>::RemoteIndex,
+-						 typename RemoteIndices<T,A>::Allocator >*> >::const_iterator
++  inline typename RemoteIndices<T,A>::const_iterator
+   RemoteIndices<T,A>::end() const
+   {
+     return remoteIndices_.end();

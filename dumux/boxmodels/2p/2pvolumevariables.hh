@@ -58,7 +58,7 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
-    
+
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),

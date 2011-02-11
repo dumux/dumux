@@ -98,7 +98,7 @@ public:
      * \param tStart The start time \f$\mathrm{[s]}\f$ of the simulation (typically 0)
      * \param dtInitial The initial time step size \f$\mathrm{[s]}\f$
      * \param tEnd The time at which the simulation is finished \f$\mathrm{[s]}\f$
-     * \param writeInitialSol Specifies whether the initial condition 
+     * \param writeInitialSol Specifies whether the initial condition
      *                        should be written to disk
      */
     void init(Problem &problem,
@@ -107,7 +107,8 @@ public:
               Scalar tEnd,
               bool writeInitialSol = true)
     {
-        std::cout << "Initializing '" << problem_->name() << "'\n";
+        if (verbose_)
+            std::cout << "Initializing problem '" << problem_->name() << "'\n";
 
         problem_ = &problem;
         time_ = tStart;
@@ -149,7 +150,9 @@ public:
     { time_ = t; timeStepIdx_ = stepIdx; }
 
     /*!
-     * \brief Return the current simulated time \f$\mathrm{[s]}\f$.
+     * \brief Return the time \f$\mathrm{[s]}\f$ before the time integration.
+     * To get the time after the time integration you have to add timeStepSize() to
+     * time().
      */
     Scalar time() const
     { return time_; }
@@ -176,7 +179,7 @@ public:
      * size won't exceed the episode or the end of the simulation,
      * though.
      *
-     * \param dt The new value for the time step size \f$\mathrm{[s]}\f$ 
+     * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
      */
     void setTimeStepSize(Scalar dt)
     { timeStepSize_ = std::min(dt, maxTimeStepSize()); }
@@ -208,7 +211,7 @@ public:
 
     /*!
      * \brief Returns true if the simulation is finished.
-     * 
+     *
      * This is the case if either setFinished(true) has been called or
      * if the end time is reached.
      */
@@ -354,7 +357,7 @@ public:
             // execute the time integration scheme
             problem_->timeIntegration();
             Scalar dt = timeStepSize();
-            
+
             // post-process the current solution
             problem_->postTimeStep();
 
@@ -389,7 +392,7 @@ public:
 
             if (verbose_) {
                 std::cout <<
-                    boost::format("Time step %d done. CPU time:%.4g, time:%.4g, time step size:%.4g\n")
+                    boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
                     %timeStepIndex()%timer.elapsed()%time()%dt;
             }
 
@@ -408,7 +411,7 @@ public:
      */
     /*!
      * \brief Write the time manager's state to a restart file.
-     * 
+     *
      * \tparam Restarter The type of the object which takes care to serialize data
      *
      * \param res The serializer object
@@ -426,7 +429,7 @@ public:
 
     /*!
      * \brief Read the time manager's state from a restart file.
-     * 
+     *
      * \tparam Restarter The type of the object which takes care to deserialize data
      *
      * \param res The deserializer object

@@ -44,7 +44,7 @@ gnuplot> plot "spline.csv" using 1:2 w l ti "Curve", \
 #include <dune/common/fvector.hh>
 
 template <class Spline>
-void testCommon(const Spline &sp, 
+void testCommon(const Spline &sp,
                 const double *x,
                 const double *y)
 {
@@ -52,7 +52,7 @@ void testCommon(const Spline &sp,
 
     int n = sp.numSamples();
     for (int i = 0; i < n; ++i) {
-        // sure that we hit all sampling points 
+        // sure that we hit all sampling points
         double y0 = (i>0)?sp.eval(x[i]-eps):y[0];
         double y1 = sp.eval(x[i]);
         double y2 = (i<n-1)?sp.eval(x[i]+eps):y[n-1];
@@ -67,7 +67,7 @@ void testCommon(const Spline &sp,
         double d2 = (i<n-1)?sp.evalDerivative(x[i]+eps):d1;
         assert(std::abs(d1 - d0) < 1000*eps);
         assert(std::abs(d2 - d0) < 1000*eps);
-    
+
         // make sure the derivative is consistent with the y values
         y0 = sp.eval(x[i] - ((i>0)?eps*1e2:0));
         y2 = sp.eval(x[i] + ((i<n-1)?eps*1e2:0));
@@ -79,7 +79,7 @@ void testCommon(const Spline &sp,
 }
 
 template <class Spline>
-void testFull(const Spline &sp, 
+void testFull(const Spline &sp,
               const double *x,
               const double *y,
               double m0,
@@ -90,7 +90,7 @@ void testFull(const Spline &sp,
 
     static double eps = 1e-10;
     int n = sp.numSamples();
-    
+
     // make sure the derivative at both end points is correct
     double d0 = sp.evalDerivative(x[0]);
     double d1 = sp.evalDerivative(x[n-1]);
@@ -99,7 +99,7 @@ void testFull(const Spline &sp,
 };
 
 template <class Spline>
-void testNatural(const Spline &sp, 
+void testNatural(const Spline &sp,
                  const double *x,
                  const double *y)
 {
@@ -108,7 +108,7 @@ void testNatural(const Spline &sp,
 
     static double eps = 1e-10;
     int n = sp.numSamples();
-    
+
     // make sure the second derivatives at both end points are 0
     double d0 = sp.evalDerivative(x[0]);
     double d1 = sp.evalDerivative(x[0] + eps);
@@ -125,7 +125,7 @@ void testAll()
     double y[] = { 10, 0, 10, 0, 10 };
     double m0 = 10;
     double m1 = -10;
-    double points[][2] = 
+    double points[][2] =
         {
             {x[0], y[0]},
             {x[1], y[1]},
@@ -151,7 +151,7 @@ void testAll()
     { Dumux::Spline<double, 2> sp(x[0], x[1], y[0], y[1], m0, m1); sp.set(x[0],x[1],y[0],y[1],m0, m1); testFull(sp, x, y, m0, m1); };
     { Dumux::Spline<double, 2> sp(x, y, m0, m1); sp.set(x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
     { Dumux::Spline<double, 2> sp(points, m0, m1); sp.set(points,m0, m1); testFull(sp, x, y, m0, m1); };
-    
+
 
     /////////
     // test fixed length spline, n > 2
@@ -160,7 +160,7 @@ void testAll()
     // full spline
     { Dumux::Spline<double, 5> sp(x, y, m0, m1); sp.set(x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
     { Dumux::Spline<double, 5> sp(points, m0, m1); sp.set(points,m0, m1); testFull(sp, x, y, m0, m1); };
-    
+
     // natural spline
     { Dumux::Spline<double, 5> sp(x, y); sp.set(x, y); testNatural(sp, x, y); };
     { Dumux::Spline<double, 5> sp(points); sp.set(points); testNatural(sp, x, y); };
@@ -174,7 +174,7 @@ void testAll()
     { Dumux::Spline<double, -1> sp(5, points, m0, m1); sp.set(5,points,m0, m1); testFull(sp, x, y, m0, m1); };
     { Dumux::Spline<double, -1> sp(xVec, yVec, m0, m1); sp.set(xVec,yVec,m0, m1); testFull(sp, x, y, m0, m1);  };
     { Dumux::Spline<double, -1> sp(pointVec, m0, m1); sp.set(pointVec,m0, m1); testFull(sp, x, y, m0, m1); };
-    
+
     // natural spline
     { Dumux::Spline<double, -1> sp(5, x, y); sp.set(5,x,y); testNatural(sp, x, y);  };
     { Dumux::Spline<double, -1> sp(5, points); sp.set(5,points); testNatural(sp, x, y); };
@@ -211,7 +211,7 @@ void plot()
 int main(int argc, char** argv)
 {
     testAll();
-    
+
     plot();
     return 0;
 }

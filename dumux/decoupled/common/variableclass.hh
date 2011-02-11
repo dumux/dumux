@@ -38,10 +38,13 @@ namespace Dumux
 /*!
  * \ingroup Sequential
  */
-//! Class holding the variables and discretized data for sequential models.
+//! Base class holding the variables and discretized data for sequential models.
 /*!
- * For multi-phase flow, the common variable in all sequential models is the saturation, stored in this class.
- * Additionally, general access to grids and serialize methods is prepared.
+ * Stores global information and variables that are common for all sequential models and also functions needed to access these variables.
+ * Can be directly used for a single phase model.
+ *
+ * @tparam TypeTag The Type Tag
+ *
  */
 template<class TypeTag>
 class VariableClass
@@ -115,31 +118,38 @@ public:
     }
 
     // serialization methods
+    //! Function needed for restart option.
     template<class Restarter>
     void serialize(Restarter &res)
     {
         res.template serializeEntities<0> (*this, gridView_);
     }
+
+    //! Function needed for restart option.
     template<class Restarter>
     void deserialize(Restarter &res)
     {
         res.template deserializeEntities<0> (*this, gridView_);
     }
 
+    //! Function needed for restart option.
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int globalIdx = elementMapper_.map(element);
         outstream << pressure_[globalIdx];
     }
+
+    //! Function needed for restart option.
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = elementMapper_.map(element);
         instream >> pressure_[globalIdx];
     }
 
-    void initializePotentials(Dune::FieldVector<Scalar, dim>& initialVel)
+    //! initializes the potential differences stored at the element faces.
+    void initializePotentials(Dune::FieldVector<Scalar, dim>& initialPot)
     {
-        if (initialVel.two_norm())
+        if (initialPot.two_norm())
         {
             // compute update vector
             ElementIterator eItEnd = gridView_.template end<0> ();
@@ -157,7 +167,7 @@ public:
 
                     Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
 
-                    for (int i = 0; i < numPhase; i++) {potential_[globalIdxI][indexInInside][i] = initialVel * unitOuterNormal;}
+                    for (int i = 0; i < numPhase; i++) {potential_[globalIdxI][indexInInside][i] = initialPot * unitOuterNormal;}
                 }
             }
         }
@@ -179,38 +189,8 @@ private:
         //initialise variables
         pressure_ = 0;
         velocity_ = initialVel;
+        initializePotentials(initialVel);
     }
-
-//    void initializePotentials(Dune::FieldVector<Scalar, dim>& initialVel)
-//    {
-//        if (initialVel.two_norm())
-//        {
-//            // compute update vector
-//            ElementIterator eItEnd = gridView_.template end<0> ();
-//            for (ElementIterator eIt = gridView_.template begin<0> (); eIt != eItEnd; ++eIt)
-//            {
-//                // cell index
-//                int globalIdxI = elementMapper_.map(*eIt);
-//
-//                // run through all intersections with neighbors and boundary
-//                IntersectionIterator isItEnd = gridView_.iend(*eIt);
-//                for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isItEnd; ++isIt)
-//                {
-//                    // local number of facet
-//                    int indexInInside = isIt->indexInInside();
-//
-//                    Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
-//
-//                    for (int i = 0; i < numPhase; i++) {potential_[globalIdxI][indexInInside][i] = initialVel * unitOuterNormal;}
-//                }
-//            }
-//        }
-//        else
-//        {
-//            potential_ = Dune::FieldVector<Scalar, numPhase> (0);
-//        }
-//        return;
-//    }
 
     //Write saturation and pressure into file
     template<class MultiWriter>
@@ -238,23 +218,23 @@ private:
 public:
 
     //! Return pressure vector
-    ScalarSolutionType& pressure()
-    {
-        return pressure_;
-    }
-
     const ScalarSolutionType& pressure() const
     {
         return pressure_;
     }
 
+    ScalarSolutionType& pressure()
+    {
+        return pressure_;
+    }
+
     //! Return velocity vector
-    DimVecElemFaceType& velocity()
+    const DimVecElemFaceType& velocity() const
     {
         return velocity_;
     }
 
-    const DimVecElemFaceType& velocity() const
+    DimVecElemFaceType& velocity()
     {
         return velocity_;
     }
@@ -270,11 +250,6 @@ public:
      * @param element codim 0 entity
      * \return element index
      */
-    int index(const Element& element)
-    {
-        return elementMapper_.map(element);
-    }
-
     int index(const Element& element) const
     {
         return elementMapper_.map(element);
@@ -285,36 +260,21 @@ public:
      * @param vertex codim dim entity
      * \return vertex index
      */
-    int index(const Vertex& vertex)
-    {
-        return vertexMapper_.map(vertex);
-    }
-
     int index(const Vertex& vertex) const
     {
         return vertexMapper_.map(vertex);
     }
 
     //!Return the number of data elements
-    const int gridSize()
-    {
-        return gridSize_;
-    }
-
-    const int gridSize() const
+    int gridSize() const
     {
         return gridSize_;
     }
 
     //!Return gridView
-    const GridView& gridView()
+    const GridView& gridView() const
     {
         return gridView_;
-    }
-
-    const ElementMapper& elementMapper()
-    {
-        return elementMapper_;
     }
 
     const ElementMapper& elementMapper() const
@@ -327,11 +287,6 @@ public:
      @param element entity of codim 0
      \return value of pressure
      */
-    Dune::FieldVector<Scalar, 1>& pressElement(const Element& element)
-    {
-        return pressure_[elementMapper_.map(element)];
-    }
-
     const Dune::FieldVector<Scalar, 1>& pressElement(const Element& element) const
     {
         return pressure_[elementMapper_.map(element)];

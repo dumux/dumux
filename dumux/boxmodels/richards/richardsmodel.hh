@@ -46,7 +46,7 @@ namespace Dumux
  */
 
 /*!
- * \ingroup RichardsModel 
+ * \ingroup RichardsModel
  *
  * \brief This model implements a variant of the Richards equation for
  *        quasi-twophase flow.
@@ -73,7 +73,7 @@ namespace Dumux
  * \f$\mu_\alpha\f$ is the fluid's dynamic viscosity, \f$K\f$ is the
  * intrinsic permeability, \f$p_\alpha\f$ is the fluid pressure and
  * \f$g\f$ is the potential of the gravity field.
- * 
+ *
  * In contrast to the full twophase model, the Richards model assumes
  * gas as the non-wetting fluid and that it exhibits a much lower
  * viscosity than the (liquid) wetting phase. (For example at
@@ -85,15 +85,15 @@ namespace Dumux
  * \f$\frac{k_{rn}}{\mu_n}\f$ tends to infinity. This implies that the
  * pressure of the gas phase is equivalent to a static pressure and
  * can thus be specified externally and that therefore, mass
- * conservation only needs to be considered for the wetting phase. 
+ * conservation only needs to be considered for the wetting phase.
  *
  * The model thus choses the absolute pressure of the wetting phase
  * \f$p_w\f$ as its only primary variable. The wetting phase
  * saturation is calculated using the inverse of the capillary
- * pressure, i.e.  
+ * pressure, i.e.
  \f[
  S_w = p_c^{-1}(p_n - p_w)
- \f] 
+ \f]
  * holds, where \f$p_n\f$ is a given reference pressure. Nota bene that the
  * last step is assumes that the capillary pressure-saturation curve
  * can be inverted uniquely, so it is not possible to set the

@@ -1,11 +1,6 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2007 by Peter Bastian                                     *
- *   Institute of Parallel and Distributed System                            *
- *   Department Simulation of Large Systems                                  *
- *   University of Stuttgart, Germany                                        *
- *                                                                           *
- *   Copyright (C) 2008-2010 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2011 by Andreas Lauser                               *
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -102,7 +97,7 @@ public:
 
     ~BoxLocalResidual()
     { }
-    
+
     /*!
      * \brief Initialize the local residual.
      *
@@ -212,7 +207,7 @@ public:
         ElementVolumeVariables volVars;
         volVars.update(problem_(), element, fvElemGeom_(), false);
         curVolVarsPtr_ = &volVars;
-        
+
         residual_.resize(fvElemGeom_().numVertices);
         residual_ = 0;
 
@@ -256,12 +251,12 @@ public:
      *                ought to be calculated
      * \param fvGeom The finite-volume geometry of the element
      * \param prevVolVars The volume averaged variables for all
-     *                   sub-contol volumes of the element at the previous 
+     *                   sub-contol volumes of the element at the previous
      *                   time level
      * \param curVolVars The volume averaged variables for all
      *                   sub-contol volumes of the element at the current
      *                   time level
-     * \param bcTypes The types of the boundary conditions for all 
+     * \param bcTypes The types of the boundary conditions for all
      *                vertices of the element
      */
     void eval(const Element &element,
@@ -364,7 +359,7 @@ protected:
             // ask the problem for the dirichlet values
             const VertexPointer vPtr = elem_().template subEntity<dim>(i);
             asImp_().problem_().dirichlet(tmp, *vPtr);
-            
+
             // set the dirichlet conditions
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
                 if (!bcTypes.isDirichlet(eqIdx))
@@ -405,7 +400,7 @@ protected:
                                                     1,
                                                     faceVertIdx,
                                                     dim);
-                
+
                 int boundaryFaceIdx =
                     fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
 
@@ -463,7 +458,7 @@ protected:
             Valgrind::CheckDefined(flux);
 
             // The balance equation for a finite volume is:
-            // 
+            //
             // dStorage/dt = Flux + Source
             //
             // where the 'Flux' and the 'Source' terms represent the
@@ -525,11 +520,11 @@ protected:
             residual_[i] += dStorage_dt;
 
             // subtract the source term from the local rate
-            PrimaryVariables source;
+            PrimaryVariables source(0.0);
             this->asImp_().computeSource(source, i);
             source *= fvElemGeom_().subContVol[i].volume;
             residual_[i] -= source;
-            
+
             // make sure that only defined quantities where used
             // to calculate the residual.
             Valgrind::CheckDefined(residual_[i]);

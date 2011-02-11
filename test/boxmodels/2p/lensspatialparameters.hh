@@ -94,7 +94,7 @@ public:
         lensMaterialParams_.setVgN(7.3);
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgN(4.7);
- 
+
         // parameters for the linear law
         // minimum and maximum pressures
  //        lensMaterialParams_.setEntryPC(0);

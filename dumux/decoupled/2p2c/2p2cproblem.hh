@@ -52,8 +52,8 @@ class IMPETProblem2P2C : public IMPETProblem<TypeTag, Implementation>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))			FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))	SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))            FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))    SpatialParameters;
 
 
     enum {

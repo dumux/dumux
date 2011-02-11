@@ -48,11 +48,11 @@ class RichardsFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
         dimWorld = GridView::dimensionworld,
-        
+
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
     };
@@ -69,13 +69,13 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param problem The representation of the physical problem 
-     * \param element The DUNE Codim<0> entity which contains the face of 
+     * \param problem The representation of the physical problem
+     * \param element The DUNE Codim<0> entity which contains the face of
      *                the finite volume
      * \param fvElemGeom The finite volume geometry of the element
      * \param scvfIdx The local index of the sub-control volume face in the
      *                element's finite volume geometry.
-     * \param elemVolVars An array containing the volume variables for all 
+     * \param elemVolVars An array containing the volume variables for all
      *                    sub-control volumes of the element.
      */
     RichardsFluxVariables(const Problem &problem,
@@ -170,7 +170,7 @@ protected:
         if (fI + fJ == 0)
             // doesn't matter because no wetting phase is present in
             // both cells!
-            fI = fJ = 0.5; 
+            fI = fJ = 0.5;
         Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
 
         Vector tmp(problem.gravity());

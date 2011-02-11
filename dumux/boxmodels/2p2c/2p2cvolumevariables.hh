@@ -52,7 +52,7 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -122,36 +122,30 @@ public:
         Valgrind::CheckDefined(fluidState_);
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            if (this->fluidState().saturation(phaseIdx) != 0.0) {
-                // Mobilities
-                const Scalar mu =
-                    FluidSystem::phaseViscosity(phaseIdx,
-                                                fluidState().temperature(),
-                                                fluidState().phasePressure(lPhaseIdx),
-                                                fluidState());
-                Scalar kr;
-                if (phaseIdx == lPhaseIdx)
-                    kr = MaterialLaw::krw(materialParams, saturation(lPhaseIdx));
-                else // ATTENTION: krn requires the liquid saturation
-                     // as parameter!
-                    kr = MaterialLaw::krn(materialParams, saturation(lPhaseIdx));
-                mobility_[phaseIdx] = kr / mu;
-                Valgrind::CheckDefined(mobility_[phaseIdx]);
-
-                // binary diffusion coefficents
-                diffCoeff_[phaseIdx] =
-                    FluidSystem::diffCoeff(phaseIdx,
-                                           lCompIdx,
-                                           gCompIdx,
-                                           fluidState_.temperature(),
-                                           fluidState_.phasePressure(phaseIdx),
-                                           fluidState_);
-                Valgrind::CheckDefined(diffCoeff_[phaseIdx]);
-            }
-            else {
-                mobility_[phaseIdx] = 0;
-                diffCoeff_[phaseIdx] = 0;
-            }
+            // Mobilities
+            const Scalar mu =
+                FluidSystem::phaseViscosity(phaseIdx,
+                                            fluidState().temperature(),
+                                            fluidState().phasePressure(lPhaseIdx),
+                                            fluidState());
+            Scalar kr;
+            if (phaseIdx == lPhaseIdx)
+                kr = MaterialLaw::krw(materialParams, saturation(lPhaseIdx));
+            else // ATTENTION: krn requires the liquid saturation
+                // as parameter!
+                kr = MaterialLaw::krn(materialParams, saturation(lPhaseIdx));
+            mobility_[phaseIdx] = kr / mu;
+            Valgrind::CheckDefined(mobility_[phaseIdx]);
+            
+            // binary diffusion coefficents
+            diffCoeff_[phaseIdx] =
+                FluidSystem::diffCoeff(phaseIdx,
+                                       lCompIdx,
+                                       gCompIdx,
+                                       fluidState_.temperature(),
+                                       fluidState_.phasePressure(phaseIdx),
+                                       fluidState_);
+            Valgrind::CheckDefined(diffCoeff_[phaseIdx]);
         }
 
         // porosity

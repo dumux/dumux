@@ -31,8 +31,8 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of the diffusion problem
- * @author Bernd Flemisch
+ * @brief  Base class for definition of an decoupled diffusion (pressure) or transport problem
+ * @author Markus Wolff
  */
 
 namespace Dumux
@@ -40,16 +40,7 @@ namespace Dumux
 
 /*! \ingroup IMPET
  *
- * @brief base class that defines the parameters of loosely coupled diffusion and transport equations
- *
- * An interface for defining parameters for the stationary diffusion equation
- *  \f[\text{div}\, \boldsymbol{v} = q\f]
- *  and a scalar transport equation
- *  \f[
- *    \frac{\partial S}{\partial t} + \text{div}\, \boldsymbol{v_\alpha} = 0,
- *  \f]
- *  where, the velocity \f$\boldsymbol{v} \sim \boldsymbol{K} \nabla p \f$,
- *  \f$p\f$ is a pressure and q a source/sink term, \f$S\f$ denotes a phase saturation and \f$\boldsymbol{v_\alpha}\f$ is a phase velocity.
+ * @brief Base class for definition of an decoupled diffusion (pressure) or transport problem
  *
  * @tparam TypeTag The Type Tag
  */
@@ -140,6 +131,13 @@ public:
      *        integration.
      */
     void preTimeStep()
+    { };
+
+    /*!
+     * \brief Called by Dumux::TimeManager in order to do a time
+     *        integration on the model.
+     */
+    void timeIntegration()
     { };
 
     /*!
@@ -291,9 +289,15 @@ public:
     const TimeManager &timeManager() const
     { return timeManager_; }
 
+    /*!
+     * \brief Returns variables object.
+     */
     Variables& variables ()
     { return variables_; }
 
+    /*!
+     * \brief \copybrief Dumux::OneModelProblem::variables()
+     */
     const Variables& variables () const
     { return variables_; }
 

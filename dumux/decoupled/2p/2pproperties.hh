@@ -92,27 +92,27 @@ NEW_PROP_TAG( SaturationFormulation)
 NEW_PROP_TAG( VelocityFormulation)
 ; //!< The formulation of the model
 NEW_PROP_TAG( EnableCompressibility)
-;// ! Returns whether compressibility is allowed
+;// !< Returns whether compressibility is allowed
 NEW_PROP_TAG( WettingPhase)
 ; //!< The wetting phase for two-phase models
 NEW_PROP_TAG( NonwettingPhase)
 ; //!< The non-wetting phase for two-phase models
-NEW_PROP_TAG( FluidSystem )
+NEW_PROP_TAG( FluidSystem )//!< Defines the fluid system
 ;
-NEW_PROP_TAG( FluidState )
+NEW_PROP_TAG( FluidState )//!< Defines the fluid state
 ;
 
 //Properties for linear solvers
-NEW_PROP_TAG(PressureCoefficientMatrix);
-NEW_PROP_TAG(PressureRHSVector);
-NEW_PROP_TAG( PressurePreconditioner );
-NEW_PROP_TAG( PressureSolver );
-NEW_PROP_TAG( SolverParameters );
-NEW_PROP_TAG(ReductionSolver);
-NEW_PROP_TAG(MaxIterationNumberSolver);
-NEW_PROP_TAG(IterationNumberPreconditioner);
-NEW_PROP_TAG(VerboseLevelSolver);
-NEW_PROP_TAG(RelaxationPreconditioner);
+NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
+NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
+NEW_PROP_TAG( PressurePreconditioner );//!< Type of the pressure preconditioner
+NEW_PROP_TAG( PressureSolver );//!< Type of the pressure solver
+NEW_PROP_TAG( SolverParameters );//!< Container for the solver parameters
+NEW_PROP_TAG(ReductionSolver);//!< Reduction value for linear solver
+NEW_PROP_TAG(MaxIterationNumberSolver);//!< Maximum iteration number for linear solver
+NEW_PROP_TAG(IterationNumberPreconditioner);//!< Iteration number for preconditioner
+NEW_PROP_TAG(VerboseLevelSolver);//!<Verbose level of linear solver and preconditioner
+NEW_PROP_TAG(RelaxationPreconditioner);//!< Relaxation factor for preconditioner
 
 //////////////////////////////////////////////////////////////////
 // Properties
@@ -193,7 +193,17 @@ public:
     typedef Dune::BiCGSTABSolver<Vector> type;
 //    typedef Dune::CGSolver<Vector> type;
 };
+SET_PROP_DEFAULT(LocalStiffness)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
+public:
+    typedef MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,Variables, Problem> type;
+};
 //SET_INT_PROP(DecoupledTwoP, PressurePreconditioner, SolverIndices::seqILU0);
 //SET_INT_PROP(DecoupledTwoP, PressureSolver, SolverIndices::biCGSTAB);
 SET_SCALAR_PROP(DecoupledTwoP, ReductionSolver, 1E-12);

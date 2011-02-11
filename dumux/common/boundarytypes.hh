@@ -263,15 +263,15 @@ public:
         boundaryInfo_[eqIdx].isDirichlet = 0;
         boundaryInfo_[eqIdx].isNeumann = 0;
         boundaryInfo_[eqIdx].isOutflow = 0;
-        boundaryInfo_[eqIdx].isCouplingInflow = 1;
-        boundaryInfo_[eqIdx].isCouplingOutflow = 0;
+        boundaryInfo_[eqIdx].isCouplingInflow = 0;
+        boundaryInfo_[eqIdx].isCouplingOutflow = 1;
 
         Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
      * \brief Set a dirichlet boundary condition for a single primary
-     *        variable. 
+     *        variable.
      *
      * WARNING: This method assumes that the equation with the same
      * index as the primary variable to be set is used to specify the
@@ -414,7 +414,7 @@ public:
 
 private:
     // this is a bitfield structure!
-    struct __packed__ {
+    struct __attribute__((__packed__)) {
         unsigned char visited : 1;
         unsigned char isDirichlet : 1;
         unsigned char isNeumann : 1;

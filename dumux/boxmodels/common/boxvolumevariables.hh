@@ -57,7 +57,7 @@ public:
 
     // copy constructor
     BoxVolumeVariables(const BoxVolumeVariables &v)
-    { 
+    {
         evalPoint_ = 0;
         primaryVars_ = v.primaryVars_;
     };
@@ -79,7 +79,7 @@ public:
      * The evaluation point is only used by semi-smooth models.
      */
     void setEvalPoint(const Implementation *ep)
-    { 
+    {
         evalPoint_ = ep;
         Valgrind::CheckDefined(evalPoint_);
     }
@@ -128,7 +128,7 @@ public:
     /*!
      * \brief Return a component of primary variable vector
      *
-     * \param pvIdx The index of the primary variable of interest 
+     * \param pvIdx The index of the primary variable of interest
      */
     Scalar primaryVar(int pvIdx) const
     { return primaryVars_[pvIdx]; }

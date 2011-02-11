@@ -88,7 +88,7 @@ private:
     ScalarSolutionType saturation_;
     PhasePropertyType mobility_; //store lambda for efficiency reasons
     ScalarSolutionType capillaryPressure_;
-    DimVecElemFaceType velocitySecondPhase_;	//necessary??
+    DimVecElemFaceType velocitySecondPhase_;    //necessary??
 
     FluidPropertyType density_;
     FluidPropertyType numericalDensity_;
@@ -129,7 +129,7 @@ public:
             Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim>(0))) :
         VariableClass<TypeTag> (gridView, codim, initialVel), codim_(codim)
     {
-    	initialize2p2cVariables(initialVel, initialSat);
+        initialize2p2cVariables(initialVel, initialSat);
     }
 
     //! serialization methods -- same as Dumux::VariableClass2P
@@ -147,7 +147,7 @@ public:
 
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-    	Dune::dwarn << "here, rather total concentrations should be used!" << std::endl;
+        Dune::dwarn << "here, rather total concentrations should be used!" << std::endl;
         int globalIdx = this->elementMapper().map(element);
         outstream << this->pressure()[globalIdx] << "  " << saturation_[globalIdx];
     }
@@ -167,14 +167,15 @@ private:
      *\param initialVel Vector containing the initial velocity
      *\param initialSat Initial value for the saturation
      */
-    void initialize2p2cVariables(Dune::FieldVector<Scalar, dim>& initialVel, int initialSat)
+    void initialize2p2cVariables(Dune::FieldVector<Scalar, dim>& initialVel,
+                                 Scalar initialSat)
     {
         //resize to grid size
-    	int size_ = this->gridSize();
-    	// a) global variables
+        int size_ = this->gridSize();
+        // a) global variables
         velocitySecondPhase_.resize(size_);//depends on pressure
             velocitySecondPhase_ = initialVel;
-        for (int i=0; i<2; i++)	//for both phases
+        for (int i=0; i<2; i++)    //for both phases
         {
         density_[i].resize(size_);//depends on pressure
         numericalDensity_[i].resize(size_);//depends on pressure
@@ -210,15 +211,18 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-    	int size_ = this->gridSize();
+        int size_ = this->gridSize();
         if (codim_ == 0)
         {
-        	// pressure & saturation
+            // pressure & saturation
             ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (size_);
             ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (size_);
             *pressure = this->pressure();
             *saturation = saturation_;
-            writer.addCellData(pressure, "pressure");
+            if (GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)) == GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW)
+                writer.addCellData(pressure, "pressure w-phase");
+            else
+                writer.addCellData(pressure, "pressure nw-phase");
             writer.addCellData(saturation, "water saturation");
             if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
             {
@@ -327,31 +331,6 @@ public:
     Scalar& saturation(int Idx)
     {
         return saturation_[Idx][0];
-    }
-
-    //! Return vector of wetting phase potential gradients
-    /*! \param Idx1 Element index
-     *  \param isIdx Intersection index */
-    Scalar& potentialWetting(int Idx1, int isIdx)
-    {
-        return this->potential(Idx1, isIdx)[wPhaseIdx];
-    }
-    //! \copydoc Dumux::VariableClass2P2C::potentialWetting()
-    const Scalar& potentialWetting(int Idx1, int isIdx) const
-    {
-        return this->potential(Idx1, isIdx)[wPhaseIdx];
-    }
-    //! Return vector of nonwetting phase potential gradients
-    /*! \param Idx1 Element index
-     *  \param isIdx Intersection index */
-    Scalar& potentialNonwetting(int Idx1, int isIdx)
-    {
-        return this->potential(Idx1, isIdx)[nPhaseIdx];
-    }
-    //! \copydoc Dumux::VariableClass2P2C::potentialNonwetting()
-    const Scalar& potentialNonwetting(int Idx1, int isIdx) const
-    {
-        return this->potential(Idx1, isIdx)[nPhaseIdx];
     }
 
     //! Return vector of wetting phase mobilities

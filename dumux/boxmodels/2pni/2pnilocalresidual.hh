@@ -153,7 +153,7 @@ public:
             const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
 
             // add advective energy flux in current phase
-            flux[energyEqIdx] += 
+            flux[energyEqIdx] +=
                 normalFlux
                 *
                 ((    mobilityUpwindAlpha)*

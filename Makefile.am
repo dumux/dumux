@@ -1,9 +1,11 @@
 # $Id: duneproject 5842 2010-01-20 18:48:34Z joe $
 
 # we need the module file to be able to build via dunecontrol
-EXTRA_DIST=dune.module
+EXTRA_DIST = dune.module \
+             CMake/Modules/*.cmake CMakeLists.txt \
+             CONTRIBUTORS INSTALL.cmake LICENSE
 
-SUBDIRS = doc dumux m4 test tutorial
+SUBDIRS = appl doc dumux m4 test tutorial
 
 if BUILD_DOCS
 # TODO: set up documentation tree automatically

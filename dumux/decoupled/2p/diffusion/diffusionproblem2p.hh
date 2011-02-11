@@ -22,6 +22,7 @@
 /*!
  * \file
  * \brief Base class for stationary sequential 2-phase problems
+ * @author Markus Wolff
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
 #define DUMUX_DIFFUSIONPROBLEM_2P_HH
@@ -38,7 +39,8 @@ namespace Dumux
  * \ingroup Pressure2p
  * \brief  Base class for stationary sequential 2-phase problems
  *
- * \todo Please doc me more!
+ * @tparam TypeTag The Type Tag
+ * @tparam Implementation The Problem implementation
  */
 template<class TypeTag, class Implementation>
 class DiffusionProblem2P: public OneModelProblem<TypeTag, Implementation>
@@ -64,6 +66,12 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag, Implementation>
     {}
 
 public:
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param verbose Output flag for the time manager
+     */
     DiffusionProblem2P(const GridView &gridView, bool verbose = true) :
         ParentType(gridView, verbose), gravity_(0)
     {
@@ -73,7 +81,13 @@ public:
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim - 1] = -9.81;
     }
-
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
+     * \param verbose Output flag for the time manager.
+     */
     DiffusionProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true) :
         ParentType(gridView, verbose), gravity_(0), spatialParameters_(&spatialParameters)
     {

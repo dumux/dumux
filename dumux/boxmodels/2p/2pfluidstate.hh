@@ -119,7 +119,7 @@ public:
     {
         return massFrac(phaseIdx, compIdx);
     }
-    
+
     /*!
      * \brief Returns the molar density of a phase \f$\mathrm{[mol/m^3]}\f$.
      *
@@ -142,7 +142,7 @@ public:
             return phaseConcentration(phaseIdx);
         return 0;
     };
-    
+
     /*!
      * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
@@ -168,7 +168,7 @@ public:
             return 0;
         return phasePressure_[nPhaseIdx];
     }
-    
+
     /*!
      * \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *

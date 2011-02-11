@@ -184,7 +184,7 @@ public:
         PrimaryVariables storageL, storageG;
         this->model().globalPhaseStorage(storageL, lPhaseIdx);
         this->model().globalPhaseStorage(storageG, gPhaseIdx);
-        
+
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
             std::cout<<"Storage: liquid=[" << storageL << "]"

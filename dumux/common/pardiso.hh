@@ -43,14 +43,16 @@
 
 
 /* PARDISO prototype. */
+
 extern "C" int F77_FUN(pardisoinit)
-    (void *, int *, int *);
+    (void *pt, int *mtype, int *solver, int *iparm, double *dparm, int *error);
 
 extern "C" int F77_FUN(pardiso)
-    (void *, int *, int *, int *, int *, int *,
-     double *, int *, int *, int *, int *, int *,
-     int *, double *, double *, int *);
-#endif
+    (void *pt, int *maxfct, int *mnum, int *mtype, int *phase, int *n,
+     double *a, int *ia, int *ja, int *perm, int *nrhs, int *iparm,
+     int *msglvl, double *b, double *x, int *error, double *dparm);
+
+#endif /* HAVE_PARDISO */
 
 namespace Dune {
 
@@ -93,6 +95,9 @@ public:
         mnum_ = 1;
         msglvl_ = 0;
         error_ = 0;
+
+        solver_ = 0; // solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
+
 
         //F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
 #else
@@ -162,7 +167,26 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
+        F77_FUN(pardisoinit) (pt_,  &mtype_, &solver_, iparm_, dparm_, &error_);
+
+        if (error_)
+	{
+		switch(error_)
+		{
+		    case -10:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. No license file found. Error code " << error_);
+			break;
+		    case -11:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. License has expired. Error code " << error_);
+			break;
+		    case -12:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Wrong username or hostname. Error code " << error_);
+			break;
+		    default:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Error code " << error_);
+			break;
+		}
+	}
 
 
         phase_ = 11;
@@ -171,8 +195,8 @@ public:
         iparm_[2]  = num_procs_;
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
-                           &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                         &n_, a_, ia_, ja_, &idum, &nrhs_,
+                         iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
@@ -183,8 +207,8 @@ public:
         phase_ = 22;
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
-                           &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                         &n_, a_, ia_, ja_, idum, &nrhs_,
+                         iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
@@ -205,6 +229,7 @@ public:
         mnum_ = 1;
         msglvl_ = 0;
         error_ = 0;
+        solver_ = 0; // solver_ = 0, choose sparse direct solver, = 1 multi-recursive iterative solver
 
         RowIterator i0 = A.begin();
         ColIterator j0 = (*i0).begin();
@@ -267,7 +292,26 @@ public:
           std::cout << a_[i] << std::endl;
         */
 
-        F77_FUN(pardisoinit) (pt_, &mtype_, iparm_);
+        F77_FUN(pardisoinit) (pt_,  &mtype_, &solver_, iparm_, dparm_, &error_);
+
+        if (error_)
+	{
+		switch(error_)
+		{
+		    case -10:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. No license file found. Error code " << error_);
+			break;
+		    case -11:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. License has expired. Error code " << error_);
+			break;
+		    case -12:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Wrong username or hostname. Error code " << error_);
+			break;
+		    default:
+			DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: pardisoinit failed. Error code " << error_);
+			break;
+		}
+	}
 
         phase_ = 11;
         int idum;
@@ -276,7 +320,7 @@ public:
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                           iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
@@ -288,7 +332,7 @@ public:
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, a_, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                           iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
@@ -365,7 +409,7 @@ public:
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, a_, ia_, ja_, &idum, &nrhs_,
                            //&n_, &ddum, &idum, &idum, &idum, &nrhs_,
-                           iparm_, &msglvl_, b, x, &error_);
+                           iparm_, &msglvl_, b, x, &error_, dparm_);
 
         if (error_ != 0)
             DUNE_THROW(Dune::MathError, "SeqPardiso.apply: Backsolve failed. Error code " << error_);
@@ -406,7 +450,7 @@ public:
 
         F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                            &n_, &ddum, ia_, ja_, &idum, &nrhs_,
-                           iparm_, &msglvl_, &ddum, &ddum, &error_);
+                           iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
         delete a_;
         delete ia_;
         delete ja_;
@@ -423,7 +467,7 @@ public:
 
             F77_FUN(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
                                &n_, &ddum, ia_, ja_, &idum, &nrhs_,
-                               iparm_, &msglvl_, &ddum, &ddum, &error_);
+                               iparm_, &msglvl_, &ddum, &ddum, &error_, dparm_);
             delete a_;
             delete ia_;
             delete ja_;
@@ -449,6 +493,9 @@ private:
     int systemsize_;
     int phase_;
     bool verbose_;
+    double dparm_[64];
+    int solver_;
+//    int perm_[64];  // not yet used here
 };
 
 }

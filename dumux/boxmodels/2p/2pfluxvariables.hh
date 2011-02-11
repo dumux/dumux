@@ -187,7 +187,7 @@ private:
             Scalar rhoJ = elemDat[face().j].density(phaseIdx);
             Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
             Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
-            if (fI + fJ == 0)
+            if (fI + fJ <= 0.0)
                 fI = fJ = 0.5; // doesn't matter because no phase is
                                // present in both cells!
             Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);

@@ -54,7 +54,7 @@ public:
     {
         using namespace std;
         std::cout
-                << "-----> ISP: Interface Soil Properties Initialization ...\n";
+            << "-----> ISP: Interface Soil Properties Initialization ...\n";
         //ISP input file defenition
         ifstream input;
 
@@ -65,7 +65,7 @@ public:
             cout << "\n";
             cout << "-----> ISP: Fatal error! - Data read \n";
             cout << "-----> ISP: Could not open the input data file: \""
-                    << isp_filename << "\n";
+                 << isp_filename << "\n";
         }
 
         //iPCM input file reading
@@ -81,21 +81,21 @@ public:
                 input >> reader;
                 ISP_Permeability = atof(reader);
                 cout << "-----> ISP: Permeability: " << ISP_Permeability
-                        << "\n";
+                     << "\n";
             }
             if (reader == string("<FinePermeability>"))
             {
                 input >> reader;
                 ISP_FinePermeability = atof(reader);
                 cout << "-----> ISP: Fine permeability: "
-                        << ISP_FinePermeability << "\n";
+                     << ISP_FinePermeability << "\n";
             }
             if (reader == string("<CoarsePermeability>"))
             {
                 input >> reader;
                 ISP_CoarsePermeability = atof(reader);
                 cout << "-----> ISP: Coarse permeability: "
-                        << ISP_CoarsePermeability << "\n";
+                     << ISP_CoarsePermeability << "\n";
             }
             if (reader == string("<Porosity>"))
             {
@@ -108,91 +108,91 @@ public:
                 input >> reader;
                 ISP_FinePorosity = atof(reader);
                 cout << "-----> ISP: Fine porosity: " << ISP_FinePorosity
-                        << "\n";
+                     << "\n";
             }
             if (reader == string("<CoarsePorosity>"))
             {
                 input >> reader;
                 ISP_CoarsePorosity = atof(reader);
                 cout << "-----> ISP: Coarse porosity: " << ISP_CoarsePorosity
-                        << "\n";
+                     << "\n";
             }
             if (reader == string("<LeakageWellPermeability>"))
             {
                 input >> reader;
                 ISP_LeakageWellPermeability = atof(reader);
                 cout << "-----> ISP: Leakage Well Permeability: "
-                        << ISP_LeakageWellPermeability << "\n";
+                     << ISP_LeakageWellPermeability << "\n";
             }
             if (reader == string("<LongitudinalDispersivity>"))
             {
                 input >> reader;
                 ISP_LongitudinalDispersivity = atof(reader);
                 cout << "-----> ISP: Longitudinal dispersivity: "
-                        << ISP_LongitudinalDispersivity << "\n";
+                     << ISP_LongitudinalDispersivity << "\n";
             }
             if (reader == string("<TransverseDispersivity>"))
             {
                 input >> reader;
                 ISP_TransverseDispersivity = atof(reader);
                 cout << "-----> ISP: Transverse dispersivity: "
-                        << ISP_TransverseDispersivity << "\n";
+                     << ISP_TransverseDispersivity << "\n";
             }
             if (reader == string("<FineBrooksCoreyLambda>"))
             {
                 input >> reader;
                 ISP_FineBrooksCoreyLambda = atof(reader);
                 cout << "-----> ISP: Brooks-Corey lambda, fine: "
-                        << ISP_FineBrooksCoreyLambda << "\n";
+                     << ISP_FineBrooksCoreyLambda << "\n";
             }
             if (reader == string("<FineBrooksCoreyEntryPressure>"))
             {
                 input >> reader;
                 ISP_FineBrooksCoreyEntryPressure = atof(reader);
                 cout << "-----> ISP: Brooks-Corey entry pressure, fine: "
-                        << ISP_FineBrooksCoreyEntryPressure << "\n";
+                     << ISP_FineBrooksCoreyEntryPressure << "\n";
             }
             if (reader == string("<CoarseBrooksCoreyLambda>"))
             {
                 input >> reader;
                 ISP_CoarseBrooksCoreyLambda = atof(reader);
                 cout << "-----> ISP: Brooks-Corey lambda, coarse: "
-                        << ISP_CoarseBrooksCoreyLambda << "\n";
+                     << ISP_CoarseBrooksCoreyLambda << "\n";
             }
             if (reader == string("<CoarseBrooksCoreyEntryPressure>"))
             {
                 input >> reader;
                 ISP_CoarseBrooksCoreyEntryPressure = atof(reader);
                 cout << "-----> ISP: Brooks-Corey entry pressure, coarse: "
-                        << ISP_CoarseBrooksCoreyEntryPressure << "\n";
+                     << ISP_CoarseBrooksCoreyEntryPressure << "\n";
             }
             if (reader == string("<FineResidualSaturationWetting>"))
             {
                 input >> reader;
                 ISP_FineResidualSaturationWetting = atof(reader);
                 cout << "-----> ISP: Residual saturation wetting phase, fine: "
-                        << ISP_FineResidualSaturationWetting << "\n";
+                     << ISP_FineResidualSaturationWetting << "\n";
             }
             if (reader == string("<FineResidualSaturationNonWetting>"))
             {
                 input >> reader;
                 ISP_FineResidualSaturationNonWetting = atof(reader);
                 cout << "-----> ISP: Residual saturation nonwetting phase, fine: "
-                        << ISP_FineResidualSaturationNonWetting << "\n";
+                     << ISP_FineResidualSaturationNonWetting << "\n";
             }
             if (reader == string("<CoarseResidualSaturationWetting>"))
             {
                 input >> reader;
                 ISP_CoarseResidualSaturationWetting = atof(reader);
                 cout << "-----> ISP: Residual saturation wetting phase, coarse: "
-                        << ISP_CoarseResidualSaturationWetting << "\n";
+                     << ISP_CoarseResidualSaturationWetting << "\n";
             }
             if (reader == string("<CoarseResidualSaturationNonWetting>"))
             {
                 input >> reader;
                 ISP_CoarseResidualSaturationNonWetting = atof(reader);
                 cout << "-----> ISP: Residual saturation nonwetting phase, coarse: "
-                        << ISP_CoarseResidualSaturationNonWetting << "\n";
+                     << ISP_CoarseResidualSaturationNonWetting << "\n";
             }
         }
         input.close();
@@ -216,7 +216,7 @@ public:
     {
         using namespace std;
         std::cout
-                << "-----> IFP: Interface Fluid Properties Initialization ...\n";
+            << "-----> IFP: Interface Fluid Properties Initialization ...\n";
         //IFP input file defenition
         ifstream input;
 
@@ -227,7 +227,7 @@ public:
             cout << "\n";
             cout << "-----> IFP: Fatal error! - Data read \n";
             cout << "-----> IFP: Could not open the input data file: \""
-                    << ifp_filename << "\n";
+                 << ifp_filename << "\n";
         }
 
         //iPCM input file reading
@@ -244,21 +244,21 @@ public:
                 input >> reader;
                 IFP_GasDiffCoeff = atof(reader);
                 cout << "-----> IFP: Gas Diffusion Coefficient: "
-                        << IFP_GasDiffCoeff << "\n";
+                     << IFP_GasDiffCoeff << "\n";
             }
             if (reader == string("<CO2ResidualSaturation>"))
             {
                 input >> reader;
                 IFP_CO2ResidSat = atof(reader);
                 cout << "-----> IFP: Residual Saturation of CO2: "
-                        << IFP_CO2ResidSat << "\n";
+                     << IFP_CO2ResidSat << "\n";
             }
             if (reader == string("<MolecularDiffusionCoefficient>"))
             {
                 input >> reader;
                 IFP_MolecularDiffusionCoefficient = atof(reader);
                 cout << "-----> IFP: Molecular diffusion coefficient: "
-                        << IFP_MolecularDiffusionCoefficient << "\n";
+                     << IFP_MolecularDiffusionCoefficient << "\n";
             }
         }
         input.close();
@@ -288,8 +288,7 @@ public:
     //Initialization of IPP Parameters
     {
         using namespace std;
-        std::cout
-                << "-----> IPP: Interface Soil Properties Initialization ...\n";
+        std::cout << "-----> IPP: Interface Soil Properties Initialization ...\n";
         //IPP input file defenition
         ifstream input;
 
@@ -300,7 +299,7 @@ public:
             cout << "\n";
             cout << "-----> IPP: Fatal error! - Data read \n";
             cout << "-----> IPP: Could not open the input data file: \""
-                    << ipp_filename << "\n";
+                 << ipp_filename << "\n";
         }
 
         //iPCM input file reading
@@ -323,63 +322,63 @@ public:
                 input >> reader;
                 IPP_InjectionWellRate = atof(reader);
                 cout << "-----> IPP: Injection Well Rate: "
-                        << IPP_InjectionWellRate << "\n";
+                     << IPP_InjectionWellRate << "\n";
             }
             if (reader == string("<InjectionWellWindowSize>"))
             {
                 input >> reader;
                 IPP_InjectionWindowSize = atof(reader);
                 cout << "-----> IPP: Injection Well Window Size: "
-                        << IPP_InjectionWindowSize << "\n";
+                     << IPP_InjectionWindowSize << "\n";
             }
             if (reader == string("<UpperPressure>"))
             {
                 input >> reader;
                 IPP_UpperPressure = atof(reader);
                 cout << "-----> IPP: Upper pressure: "
-                        << IPP_UpperPressure << "\n";
+                     << IPP_UpperPressure << "\n";
             }
             if (reader == string("<LowerPressure>"))
             {
                 input >> reader;
                 IPP_LowerPressure = atof(reader);
                 cout << "-----> IPP: Lower pressure: "
-                        << IPP_LowerPressure << "\n";
+                     << IPP_LowerPressure << "\n";
             }
             if (reader == string("<InfiltrationRate>"))
             {
                 input >> reader;
                 IPP_InfiltrationRate = atof(reader);
                 cout << "-----> IPP: Infiltration rate: "
-                        << IPP_InfiltrationRate << "\n";
+                     << IPP_InfiltrationRate << "\n";
             }
             if (reader == string("<MaxTimeStepSize>"))
             {
                 input >> reader;
                 IPP_MaxTimeStepSize = atof(reader);
                 cout << "-----> IPP: Maximum time step size: "
-                        << IPP_MaxTimeStepSize << "\n";
+                     << IPP_MaxTimeStepSize << "\n";
             }
             if (reader == string("<InfiltrationStartTime>"))
             {
                 input >> reader;
                 IPP_InfiltrationStartTime = atof(reader);
                 cout << "-----> IPP: Start time of infiltration: "
-                        << IPP_InfiltrationStartTime << "\n";
+                     << IPP_InfiltrationStartTime << "\n";
             }
             if (reader == string("<InfiltrationEndTime>"))
             {
                 input >> reader;
                 IPP_InfiltrationEndTime = atof(reader);
                 cout << "-----> IPP: End time of infiltration: "
-                        << IPP_InfiltrationEndTime << "\n";
+                     << IPP_InfiltrationEndTime << "\n";
             }
             if (reader == string("<SimulationNumber>"))
             {
                 input >> reader;
                 IPP_SimulationNumber = atof(reader);
                 cout << "-----> IPP: Output Name: "
-                        << IPP_SimulationNumber << "\n";
+                     << IPP_SimulationNumber << "\n";
             }
         }
         input.close();

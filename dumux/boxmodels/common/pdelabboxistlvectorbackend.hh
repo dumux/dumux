@@ -36,7 +36,7 @@ namespace PDELab {
 
 /*!
  * \brief ISTL backend for FunctionSpace
- * 
+ *
  * This is basically a copy of PDELab's ISTLVectorBackend which allows
  * to set the global function space later
  *
@@ -53,7 +53,7 @@ public:
 
     /*!
      * \brief Container construction
-     * 
+     *
      * \internal
      */
     template<typename T, typename E>

@@ -52,7 +52,7 @@ class RichardsBoxProblem : public BoxProblem<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
-    
+
     typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;

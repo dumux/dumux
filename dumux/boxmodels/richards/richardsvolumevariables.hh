@@ -36,7 +36,7 @@ namespace Dumux
 /*!
  * \ingroup RichardsModel
  * \brief Volume averaged quantities required by the Richards model.
- * 
+ *
  * This contains the quantities which are are constant within a finite
  * volume in the Richards model
  */
@@ -56,7 +56,7 @@ class RichardsVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
-    
+
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
@@ -76,11 +76,11 @@ public:
      * \param priVars The primary variables as a vector for the finite
      *                volume.
      * \param problem The physical problem which needs to be solved.
-     * \param element The DUNE Codim<0> enitity which intersects 
+     * \param element The DUNE Codim<0> enitity which intersects
      *                the control volume of the box method
      * \param elemGeom The element's finite volume geometry
      * \param scvIdx The local index of the sub control volume inside the element
-     * \param isOldSol Specifies whether the solution is from 
+     * \param isOldSol Specifies whether the solution is from
      *                 the previous time step or from the current one
      */
     void update(const PrimaryVariables &priVars,
@@ -108,16 +108,16 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
         fluidState_.update(pnRef, materialParams, priVars, temperature_);
-        
-        mobility_[wPhaseIdx] = 
+
+        mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx)) /
-            FluidSystem::phaseViscosity(wPhaseIdx, 
+            FluidSystem::phaseViscosity(wPhaseIdx,
                                         temperature(),
                                         fluidState_.phasePressure(wPhaseIdx),
                                         fluidState_);
-        mobility_[nPhaseIdx] = 
+        mobility_[nPhaseIdx] =
             MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx)) /
-            FluidSystem::phaseViscosity(nPhaseIdx, 
+            FluidSystem::phaseViscosity(nPhaseIdx,
                                         temperature(),
                                         fluidState_.phasePressure(wPhaseIdx),
                                         fluidState_);
@@ -204,7 +204,7 @@ public:
     Scalar capillaryPressure() const
     { return fluidState_.capillaryPressure(); }
 
-    
+
 protected:
     void updateTemperature_(const PrimaryVariables &priVars,
                             const Element &element,

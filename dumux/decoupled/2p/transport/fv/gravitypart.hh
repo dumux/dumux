@@ -36,19 +36,13 @@ namespace Dumux
  * @brief  Class for defining the gravity term of a saturation equation
  *
  * Defines the gravity term of the form
- * \f[
- *  \bar \lambda \boldsymbol{K} \, (\rho_n - \rho_w) \, g \, \text{grad} \, z,
- * \f]
+ *
+ * \f[\bar \lambda \boldsymbol{K} \, (\rho_n - \rho_w) \, g \, \text{grad} \, z,\f]
  *
  * where \f$\bar \lambda = \lambda_w f_n = \lambda_n f_w\f$ and \f$\lambda\f$ is a phase mobility and \f$f\f$ a phase fractional flow function,
  * \f$ \boldsymbol{K} \f$ is the intrinsic permeability, \f$\rho\f$ is a phase density and  \f$g\f$ is the gravity constant.
-
- * Template parameters are:
-
- - GridView a DUNE gridview type
- - Scalar type used for scalar quantities
- - VC type of a class containing different variables of the model
- - Problem class defining the physical problem
+ *
+ * @tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class GravityPart: public ConvectivePart<TypeTag>
@@ -86,9 +80,9 @@ public:
     //! Returns the gravity term
     /*! Returns convective term for current element face
      *  @param[in] element        entity of codim 0
+     *  @param[in] indexInInside  face index in reference element
      *  @param[in] satI           saturation of current element
      *  @param[in] satJ           saturation of neighbor element
-     *  @param[in] indexInInside  face index in reference element
      *  \return     gravity term of a saturation equation
      */
     FieldVector operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const

@@ -258,7 +258,7 @@ public:
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
-         
+
         initial_(values, globalPos);
     }
 

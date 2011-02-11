@@ -1,0 +1,25 @@
+GXX_WARNING_OPTS=" \
+    -Wall \
+    -Wmissing-include-dirs \
+    -Wcast-align \
+    -Wno-sign-compare \
+    -Wno-packed-bitfield-compat \
+    -Wno-unused-parameter"
+
+# additional -W flags for g++ which will lead to many warnings in
+# other dune modules
+#    -Wextra \
+#    -Wfloat-equal \
+#    -Wstrict-overflow \
+
+GXX_OPTS=" \
+    -fno-strict-aliasing \
+    -fstrict-overflow \
+    -g"
+
+CONFIGURE_FLAGS="\
+  CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
+  --enable-dunedevel \
+  --enable-documentation \
+  --disable-parallel \
+  --disable-mpiruntest"

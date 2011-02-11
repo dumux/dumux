@@ -43,12 +43,12 @@
 namespace Dumux
 {
 /*!
- * 
+ *
  * \ingroup OnePTwoCBoxModel
- * 
+ *
  * \brief Calculate the local Jacobian for the single-phase,
  *        two-component model in the BOX scheme.
- * 
+ *
  *  This class is used to fill the gaps in BoxLocalResidual for the 1P-2C flow.
  */
 template<class TypeTag>
@@ -104,18 +104,18 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const VolumeVariables &volVars = 
+        const VolumeVariables &volVars =
             usePrevSol ?
-            this->prevVolVars_(scvIdx) : 
+            this->prevVolVars_(scvIdx) :
             this->curVolVars_(scvIdx);
 
         // storage term of continuity equation
-        result[contiEqIdx] = 
+        result[contiEqIdx] =
             volVars.density()*volVars.porosity();
 
         // storage term of the transport equation
-        result[transEqIdx] = 
-            volVars.concentration(1) * 
+        result[transEqIdx] =
+            volVars.concentration(1) *
             volVars.porosity();
     }
 
@@ -134,7 +134,7 @@ public:
                                this->fvElemGeom_(),
                                faceId,
                                this->curVolVars_());
-        
+
         Vector tmpVec;
 
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(), tmpVec);
@@ -143,23 +143,23 @@ public:
         Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
-              
+
         // total mass flux
-        flux[contiEqIdx] = 
-            normalFlux * 
+        flux[contiEqIdx] =
+            normalFlux *
             ((     upwindAlpha)*up.density()/up.viscosity()
              +
              ((1 - upwindAlpha)*dn.density()/dn.viscosity()));
 
         // advective flux of the second component
         flux[transEqIdx] +=
-            normalFlux * 
+            normalFlux *
             ((    upwindAlpha)*up.concentration(1)/up.viscosity()
              +
              (1 - upwindAlpha)*dn.concentration(1)/dn.viscosity());
-        
+
         // diffusive flux of second component
-        flux[transEqIdx] -= 
+        flux[transEqIdx] -=
             fluxVars.porousDiffCoeff() *
             (fluxVars.concentrationGrad(1) * fluxVars.face().normal);
 
