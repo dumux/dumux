@@ -12,7 +12,7 @@ LINK_DIRECTORIES(${DumuxLinkDirectories})
 INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})
 
 # make sure the grids are present in the build directory
-add_custom_command(TARGET "test_diffusion"
+add_custom_command(TARGET "test_transport"
                    POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E
                         copy_directory 
