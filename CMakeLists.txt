@@ -194,7 +194,11 @@ add_test(test_richards test/boxmodels/richards/test_richards test/boxmodels/rich
 add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
 add_test(test_spline test/common/spline/test_spline)
 add_test(test_diffusion test/decoupled/1p/test_diffusion 1)
-add_test(test_decoupled2p test/decoupled/2p/test_decoupled2p 1)
+add_test(test_dec1p test/decoupled/1p/test_1p 3)
+add_test(test_transport test/decoupled/2p/test_transport test/decoupled/2p/grids/test_transport.dgf 1)
+add_test(test_impes test/decoupled/2p/test_impes 1)
+add_test(test_dec2p2c test/decoupled/2p2c/test_dec2p2c)
+add_test(test_multiphysics2p2c test/decoupled/2p2c/test_multiphysics2p2c)
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
