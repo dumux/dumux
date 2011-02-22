@@ -4,8 +4,8 @@ add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
 ADD_EXECUTABLE("test_diffusion" test_diffusion.cc)
 TARGET_LINK_LIBRARIES("test_diffusion" ${DumuxLinkLibraries})
 
-ADD_EXECUTABLE("test_1p" test_1p.cc)
-TARGET_LINK_LIBRARIES("test_1p" ${DumuxLinkLibraries})
+ADD_EXECUTABLE("test_dec1p" test_1p.cc)
+TARGET_LINK_LIBRARIES("test_dec1p" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
 LINK_DIRECTORIES(${DumuxLinkDirectories})

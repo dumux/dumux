@@ -194,7 +194,7 @@ add_test(test_richards test/boxmodels/richards/test_richards test/boxmodels/rich
 add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
 add_test(test_spline test/common/spline/test_spline)
 add_test(test_diffusion test/decoupled/1p/test_diffusion 1)
-add_test(test_dec1p test/decoupled/1p/test_1p 3)
+add_test(test_dec1p test/decoupled/1p/test_dec1p 3)
 add_test(test_transport test/decoupled/2p/test_transport test/decoupled/2p/grids/test_transport.dgf 1)
 add_test(test_impes test/decoupled/2p/test_impes 1)
 add_test(test_dec2p2c test/decoupled/2p2c/test_dec2p2c)
