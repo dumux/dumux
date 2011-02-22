@@ -184,7 +184,7 @@ add_subdirectory("tutorial")
 # set up CTest 
 ENABLE_TESTING()
 INCLUDE(CTest)
-ADD_TEST(test_1p test/boxmodels/1p/test_1p test/boxmodels/1p/grids/test_1p_3d.dgf 1 1)
+ADD_TEST(test_1p test/boxmodels/1p/test_1p test/boxmodels/1p/grids/test_1p_2d.dgf 1 1)
 add_test(test_1p2c test/boxmodels/1p2c/test_1p2c test/boxmodels/1p2c/grids/test_1p2c.dgf 1 1)
 add_test(test_2p test/boxmodels/2p/test_2p 1 1)
 add_test(test_2pni test/boxmodels/2pni/test_2pni test/boxmodels/2pni/grids/test_2pni.dgf 1 1)
