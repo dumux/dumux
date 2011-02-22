@@ -1,11 +1,11 @@
 add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
 
 # add build targets
-ADD_EXECUTABLE("test_impes" test_impes.cc)
-TARGET_LINK_LIBRARIES("test_impes" ${DumuxLinkLibraries})
+ADD_EXECUTABLE("test_dec2p2c" test_dec2p2c.cc)
+TARGET_LINK_LIBRARIES("test_dec2p2c" ${DumuxLinkLibraries})
 
-ADD_EXECUTABLE("test_transport" test_transport.cc)
-TARGET_LINK_LIBRARIES("test_transport" ${DumuxLinkLibraries})
+ADD_EXECUTABLE("test_multiphysics2p2c" test_multiphysics2p2c.cc)
+TARGET_LINK_LIBRARIES("test_multiphysics2p2c" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
 LINK_DIRECTORIES(${DumuxLinkDirectories})
