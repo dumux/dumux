@@ -122,7 +122,7 @@ public:
 SET_BOOL_PROP(InjectionProblem2PNI, EnableGravity, true);
 
 // write convergence behaviour to disk?
-SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, false);
+SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
 }
 
 /*!

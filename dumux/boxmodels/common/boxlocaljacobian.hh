@@ -393,7 +393,7 @@ protected:
 
 
         if (numDiffMethod <= 0) {
-            // we are not using forward differences, i.e. we
+            // we are not using forward differences, i.e. we don't
             // need to calculate f(x - \epsilon)
 
             // deflect the primary variables
