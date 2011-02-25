@@ -203,7 +203,7 @@ public:
     {
         problem.variables().deserialize<Restarter> (res);
         //update constitutive functions
-        problem.pressureModel().initialize();
+        problem.pressureModel().updateMaterialLaws();
     }
 
     //! Constructs an IMPET object

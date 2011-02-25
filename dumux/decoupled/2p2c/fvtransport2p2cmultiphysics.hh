@@ -303,12 +303,12 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                     meanK_.umv(unitDistVec,K);
 
                     // velocities
-                    double potentialW = (unitOuterNormal * distVec) * (pressI - pressJ) / (dist * dist);
-                    double potentialNW = potentialW + densityNW_mean * (unitDistVec * gravity_);
-                    potentialW += densityW_mean * (unitDistVec * gravity_);
+                    double potentialW = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
+                    double potentialNW = potentialW + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean;
+                    potentialW += (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;
                     //                  lambda = 2 * lambdaI * lambdaJ / (lambdaI + lambdaJ);
 
-                    double lambdaW, lambdaN;
+                    double lambdaW, lambdaNW;
 
                     if (potentialW >= 0.)
                         lambdaW = problem_.variables().mobilityWetting(globalIdxI);
@@ -316,18 +316,15 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                         lambdaW = problem_.variables().mobilityWetting(globalIdxJ);
 
                     if (potentialNW >= 0.)
-                        lambdaN = problem_.variables().mobilityNonwetting(globalIdxI);
+                        lambdaNW = problem_.variables().mobilityNonwetting(globalIdxI);
                     else
-                        lambdaN = problem_.variables().mobilityNonwetting(globalIdxJ);
+                        lambdaNW = problem_.variables().mobilityNonwetting(globalIdxJ);
 
-                    double velocityW = lambdaW * ((K * unitOuterNormal) * (pressI - pressJ) / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean);
-                    double velocityN = lambdaN * ((K * unitOuterNormal) * (pressI - pressJ) / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean);
-
-                    // standardized velocity
-                    double velocityJIw = std::max(-velocityW * faceArea / volume, 0.0);
-                    double velocityIJw = std::max( velocityW * faceArea / volume, 0.0);
-                    double velocityJIn = std::max(-velocityN * faceArea / volume, 0.0);
-                    double velocityIJn = std::max( velocityN * faceArea / volume, 0.0);
+                    // calculate and standardized velocity
+                    double velocityJIw = std::max(-lambdaW * potentialW * faceArea / volume, 0.0);
+                    double velocityIJw = std::max( lambdaW * potentialW * faceArea / volume, 0.0);
+                    double velocityJIn = std::max(-lambdaNW * potentialNW * faceArea / volume, 0.0);
+                    double velocityIJn = std::max( lambdaNW * potentialNW * faceArea / volume, 0.0);
 
                     // for timestep control
                     factor[0] = velocityJIw + velocityJIn;
@@ -378,21 +375,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                     if (bcTypeTransport_ == BoundaryConditions::dirichlet)
                     {
                         //get dirichlet pressure boundary condition
-                        Scalar pressBound = 0.;
-                        Scalar pcBound = problem_.variables().capillaryPressure(globalIdxI);
-                        switch (pressureType)
-                        {
-                        case pw:
-                        {
-                            pressBound = problem_.dirichletPress(globalPosFace, *isIt);
-                            break;
-                        }
-                        case pn:
-                        {
-                            pressBound = problem_.dirichletPress(globalPosFace, *isIt) - pcBound;
-                            break;
-                        }
-                        }
+                        Scalar pressBound = problem_.dirichletPress(globalPosFace, *isIt);
 
                         // read boundary values
                         BoundaryConditions2p2c::Flags bctype = problem_.bcFormulation(globalPosFace, *isIt);
@@ -419,22 +402,26 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                                                                     pressBound, fluidState);
                         Scalar densityNWBound = FluidSystem::phaseDensity(nPhaseIdx,
                                                                     problem_.temperature(globalPosFace, *eIt),
-                                                                    pressBound+pcBound, fluidState);
+                                                                    pressBound, fluidState);
                         Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
                                                                             problem_.temperature(globalPosFace, *eIt),
                                                                             pressBound, fluidState);
                         Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
                                                                             problem_.temperature(globalPosFace, *eIt),
-                                                                            pressBound+pcBound, fluidState);
+                                                                            pressBound, fluidState);
 
                         // average
                         double densityW_mean = (densityWI + densityWBound) / 2;
                         double densityNW_mean = (densityNWI + densityNWBound) / 2;
 
+                        // prepare K
+                        Dune::FieldVector<Scalar,dim> K(0);
+                        K_I.umv(unitDistVec,K);
+
                         // velocities
-                        double potentialW = (unitOuterNormal * distVec) * (pressI - pressBound) / (dist * dist);
-                        double potentialNW = potentialW + densityNW_mean * (unitDistVec * gravity_);
-                        potentialW += densityW_mean * (unitDistVec * gravity_);
+                        double potentialW = (K * unitOuterNormal) * (pressI - pressBound) / (dist);
+                        double potentialNW = potentialW + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean;
+                        potentialW += (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;
 
                         double lambdaW, lambdaN;
 
@@ -460,21 +447,11 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                                         problem_.spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(wPhaseIdx))
                                         / viscosityNWBound;
                             }
-
-                        // prepare K
-                        Dune::FieldVector<Scalar,dim> K(0);
-                        K_I.umv(unitDistVec,K);
-
-                        double velocityW = lambdaW * ((K * unitOuterNormal) * (pressI - pressBound)
-                                / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean);
-                        double velocityN = lambdaN * ((K * unitOuterNormal) * (pressI - pressBound)
-                                / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean);
-
                         // standardized velocity
-                        double velocityJIw = std::max(-velocityW * faceArea / volume, 0.0);
-                        double velocityIJw = std::max( velocityW * faceArea / volume, 0.0);
-                        double velocityJIn = std::max(-velocityN * faceArea / volume, 0.0);
-                        double velocityIJn = std::max( velocityN* faceArea / volume, 0.0);
+                        double velocityJIw = std::max(-lambdaW * potentialW * faceArea / volume, 0.0);
+                        double velocityIJw = std::max( lambdaW * potentialW * faceArea / volume, 0.0);
+                        double velocityJIn = std::max(-lambdaN * potentialNW * faceArea / volume, 0.0);
+                        double velocityIJn = std::max( lambdaN * potentialNW* faceArea / volume, 0.0);
 
                         // for timestep control
                         factor[0] = velocityJIw + velocityJIn;

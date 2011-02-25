@@ -606,15 +606,6 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                     Scalar graddv_dC1 = (dV_[wPhaseIdx][globalIdxJ] - dV_[wPhaseIdx][globalIdxI]) / dist;
                     Scalar graddv_dC2 = (dV_[nPhaseIdx][globalIdxJ] - dV_[nPhaseIdx][globalIdxI]) / dist;
 
-
-//                    potentialW = problem_.variables().potentialWetting(globalIdxI, isIndex);
-//                    potentialNW = problem_.variables().potentialNonwetting(globalIdxI, isIndex);
-//
-//                    densityW = (potentialW > 0.) ? densityWI : densityWJ;
-//                    densityNW = (potentialNW > 0.) ? densityNWI : densityNWJ;
-//
-//                    densityW = (potentialW == 0.) ? rhoMeanW : densityW;
-//                    densityNW = (potentialNW == 0.) ? rhoMeanNW : densityNW;
                     //jochen: central weighting for gravity term
                     densityW = rhoMeanW; densityNW = rhoMeanNW;
 
@@ -980,10 +971,10 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
         Scalar hifac = 0.;
         hifac /= fac;
 
-        if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxErr))
+        if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxErr) && (!problem_.timeManager().willBeFinished()))
         {
             if (erri <= x_mi * maxErr)
-                f_[globalIdxI] += errorCorrection[globalIdxI] = fac* (1-x_mi*(lofac/fac-1)/(x_lo-x_mi) + (lofac/fac-1)/(x_lo-x_mi)*erri/maxErr)
+                f_[globalIdxI] += errorCorrection[globalIdxI] = fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxErr)
                                     * problem_.variables().volErr()[globalIdxI] * volume;
             else
                 f_[globalIdxI] += errorCorrection[globalIdxI] = fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr)
