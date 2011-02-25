@@ -17,36 +17,37 @@ Getting started
 In order to compile DuMuX, you first have to download and extract the
 following DUNE modules into your source directory:
  
-  - DUNE-common        from [1]
-  - DUNE-grid          from [1]
-  - DUNE-istl          from [1]
-  - DUNE-localfuctions from [1]
-  - DUNE-pdelab        from [3]
+  - dune-common        from [1]
+  - dune-grid          from [1]
+  - dune-istl          from [1]
+  - dune-localfuctions from [1]
+  - dune-pdelab        from [2]
 
-Since many simulators of DuMuX use the UG grid manager, it is recommended
-to install it first [4].
+Use the 2.0 release of the DUNE core modules and the 2.0 snapshot of 
+dune-pdelab. 
 
 Next, you need to decide whether you want to compile in debug or in
-optimized mode and adapt the option file for the DUNE build system to
-the path where you installed UG. The files are located in
-$DUMUX_ROOT/optim.opts and $DUMUX_ROOT/debug.opts
-respectively. ($DUMUX_ROOT is the directory where the unpacked files
-of the DuMuX distribution are located.) Next, compile everything using
+optimized mode. Example files are located in $DUMUX_ROOT/optim.opts 
+and $DUMUX_ROOT/debug.opts respectively. ($DUMUX_ROOT is the 
+directory where the unpacked files of the DuMuX distribution are 
+located.) 
+
+Next, compile everything with
 
   ./dune-common/bin/dunecontrol --opts=$(DUMUX_ROOT)/optim.opts --module=dumux all
 
-Finally, install DUNE and DuMuX headers to your system using
+Finally, install DUNE and DuMuX headers to your system by
 
   ./dune-common/bin/dunecontrol --module=dumux make install
 
 A more comprehensive introduction to the DUNE build system can be
-found in [2].
+found in [3].
 
 Links
 -----
 
 0. http://www.dune-project.org/doc/installation-notes.html
 1. http://www.dune-project.org/download.html
-2. http://www.dune-project.org/doc/buildsystem/buildsystem.pdf
-3. http://www.dune-project.org/downloadext.html
-4. http://www.dune-project.org/external_libraries/install_ug.html
+2. http://www.dune-project.org/downloadext.html
+3. http://www.dune-project.org/doc/buildsystem/buildsystem.pdf
+
