@@ -208,7 +208,7 @@ public:
                 dest += this->localResidual().residual(i);
         };
 
-        if (gridView_().comm().size() > 1)
+        if (this->gridView_().comm().size() > 1)
         	this->gridView_().comm().sum(dest);
     }
 
@@ -581,7 +581,7 @@ public:
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag
         // for our partition.
-        if (gridView_().comm().size() > 1)
+        if (this->gridView_().comm().size() > 1)
         	wasSwitched = this->gridView_().comm().max(wasSwitched);
 
         setSwitched_(wasSwitched);
