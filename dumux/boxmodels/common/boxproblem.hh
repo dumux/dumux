@@ -101,8 +101,11 @@ public:
             }
         }
         for (int i=0; i<dim; i++) {
-            bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
-            bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+            if (gridView.comm().size() > 1)
+            {
+            	bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
+            	bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+            }
         }
     }
 

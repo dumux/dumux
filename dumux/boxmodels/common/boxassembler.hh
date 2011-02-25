@@ -203,7 +203,8 @@ public:
         int numElems = gridView_().size(0);
         residual_.resize(numVerts);
 
-        totalElems_ = gridView_().comm().sum(numElems);
+        if (gridView_().comm().size() > 1)
+        	totalElems_ = gridView_().comm().sum(numElems);
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {
@@ -237,7 +238,8 @@ public:
         };
 
         if (enablePartialReassemble) {
-            greenElems_ = gridView_().comm().sum(greenElems_);
+            if (gridView_().comm().size() > 1)
+            	greenElems_ = gridView_().comm().sum(greenElems_);
 
             reassembleTolerance_ = nextReassembleTolerance_;
             // print some information at the end of the iteration

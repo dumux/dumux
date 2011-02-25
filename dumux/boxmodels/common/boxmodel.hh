@@ -204,7 +204,8 @@ public:
                 dest += localResidual().residual(i);
         };
 
-        gridView_().comm().sum(dest);
+        if (gridView_().comm().size() > 1)
+        	gridView_().comm().sum(dest);
     }
 
     /*!
