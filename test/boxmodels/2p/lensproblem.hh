@@ -306,8 +306,6 @@ public:
         }
         else {
             values.setAllNeumann();
-            //values.setDirichlet(SnIdx, pwIdx);
-            //values.setNeumann(SnIdx);
         }
     }
 
