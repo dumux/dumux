@@ -59,9 +59,6 @@ NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 NEW_PROP_TAG(UpwindAlpha);   //!< The default value of the upwind parameter
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(PhaseIndex); //!< The index of the phase in the fluid system
-NEW_PROP_TAG(Comp1Index); //!< The index of the first component in the fluid system
-NEW_PROP_TAG(Comp2Index); //!< The index of the second component in the fluid system
 }
 // \}
 }

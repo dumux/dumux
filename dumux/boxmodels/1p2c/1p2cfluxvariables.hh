@@ -59,6 +59,7 @@ class OnePTwoCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
@@ -70,7 +71,11 @@ class OnePTwoCFluxVariables
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-
+    enum {
+        phaseIdx = Indices::phaseIdx,
+        comp1Idx = Indices::comp1Idx,
+        comp2Idx = Indices::comp2Idx,
+    };
 public:
     /*
      * \brief The constructor
@@ -136,6 +141,19 @@ public:
         return concentrationGrad_;
     };
 
+    /*!
+        * \brief The molar concentration gradient of a component in a phase.
+        */
+       const Vector &molarConcGrad(int compIdx) const
+       {
+           if (compIdx != 1)
+           { DUNE_THROW(Dune::InvalidStateException,
+                    "The 1p2c model is supposed to need "
+                    "only the concentration gradient of "
+                    "the second component!"); }
+           return molarConcGrad_;
+       };
+
     Scalar porousDiffCoeff() const
     {
         // TODO: tensorial diffusion coefficients
@@ -189,6 +207,7 @@ protected:
 
         potentialGrad_ = 0.0;
         concentrationGrad_ = 0.0;
+        molarConcGrad_ = 0.0;
 
         Vector tmp;
         //The decision of the if-statement depends on the function useTwoPointGradient(const Element &elem,
@@ -209,8 +228,12 @@ protected:
 
                 // the concentration gradient
                 tmp = feGrad;
-                tmp *= elemDat[idx].concentration(1);
+                tmp *= elemDat[idx].concentration(comp2Idx);
                 concentrationGrad_ += tmp;
+
+                tmp = feGrad;
+                tmp *= elemDat[idx].moleFrac(comp2Idx);
+                molarConcGrad_ += tmp;
 
                 // phase viscosity
                 viscosityAtIP_ += elemDat[idx].viscosity()*face().shapeValue[idx];
@@ -231,7 +254,9 @@ protected:
             potentialGrad_ = tmp;
             potentialGrad_ *= vVars_j.pressure() - vVars_i.pressure();
             concentrationGrad_ = tmp;
-            concentrationGrad_ *= vVars_j.moleFrac(1) - vVars_i.moleFrac(1);
+            concentrationGrad_ *= vVars_j.concentration(comp2Idx) - vVars_i.concentration(comp2Idx);
+            molarConcGrad_ = tmp;
+            molarConcGrad_ *= vVars_j.moleFrac(comp2Idx) - vVars_i.moleFrac(comp2Idx);
         }
 
         // correct the pressure by the hydrostatic pressure due to
@@ -340,6 +365,8 @@ protected:
     Vector potentialGrad_;
     //! concentratrion gradient
     Vector concentrationGrad_;
+    //! molar concentratrion gradient
+    Vector molarConcGrad_;
 
     //! the effective diffusion coefficent in the porous medium
     Scalar diffCoeffPM_;

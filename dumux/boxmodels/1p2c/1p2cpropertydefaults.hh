@@ -66,20 +66,22 @@ SET_TYPE_PROP(BoxOnePTwoC, VolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
 //! define the FluxVariables
 SET_TYPE_PROP(BoxOnePTwoC, FluxVariables, OnePTwoCFluxVariables<TypeTag>);
 
+// the BoundaryVariables property
+SET_TYPE_PROP(BoxOnePTwoC, BoundaryVariables, OnePTwoCBoundaryVariables<TypeTag>);
+
 //! set default upwind factor to 1.0, i.e. fully upwind
 SET_SCALAR_PROP(BoxOnePTwoC, UpwindAlpha, 1.0);
 
 //! Set the indices used by the 1p2c model
 SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, Dumux::OnePTwoCIndices<0>);
 
-//! Set the default phase used by the fluid system to the first one
-SET_INT_PROP(BoxOnePTwoC, PhaseIndex, 0);
+// enable jacobian matrix recycling by default
+SET_BOOL_PROP(BoxOnePTwoC, EnableJacobianRecycling, true);
+// enable partial reassembling by default
+SET_BOOL_PROP(BoxOnePTwoC, EnablePartialReassemble, true);
+// enable time-step ramp up by default
+SET_BOOL_PROP(BoxOnePTwoC, EnableTimeStepRampUp, false);
 
-//! Set the default for the first component the fluid system's first component
-SET_INT_PROP(BoxOnePTwoC, Comp1Index, 0);
-
-//! Set the default for the second component the fluid system's second component
-SET_INT_PROP(BoxOnePTwoC, Comp2Index, 1);
 }
 // \}
 }

@@ -56,6 +56,7 @@ class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
 {
 protected:
     typedef OnePTwoCLocalResidual<TypeTag> ThisType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
     typedef BoxLocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -73,7 +74,11 @@ protected:
 
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        x1Idx = Indices::x1Idx,
+        xIdx = Indices::xIdx,
+
+        phaseIdx = Indices::phaseIdx,
+        comp1Idx = Indices::comp1Idx,
+        comp2Idx = Indices::comp2Idx,
 
         // indices of the equations
         contiEqIdx = Indices::contiEqIdx,
@@ -115,7 +120,7 @@ public:
 
         // storage term of the transport equation
         result[transEqIdx] =
-            volVars.concentration(1) *
+            volVars.concentration(comp2Idx) *
             volVars.porosity();
     }
 
@@ -135,7 +140,23 @@ public:
                                faceId,
                                this->curVolVars_());
 
-        Vector tmpVec;
+        asImp_()->computeAdvectiveFlux(flux, fluxVars);
+        asImp_()->computeDiffusiveFlux(flux, fluxVars);
+    }
+
+    /*!
+         * \brief Evaluates the advective mass flux of all components over
+         *        a face of a subcontrol volume.
+         *
+         * \param flux The advective flux over the sub-control-volume face for each component
+         * \param vars The flux variables at the current SCV
+         */
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    {
+        ////////
+        // advective fluxes of all components in all phases
+        ////////
+        Vector tmpVec(0);
 
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(), tmpVec);
 
@@ -154,22 +175,32 @@ public:
         // advective flux of the second component
         flux[transEqIdx] +=
             normalFlux *
-            ((    upwindAlpha)*up.concentration(1)/up.viscosity()
+            ((    upwindAlpha)*up.concentration(comp2Idx)/up.viscosity()
              +
-             (1 - upwindAlpha)*dn.concentration(1)/dn.viscosity());
+             (1 - upwindAlpha)*dn.concentration(comp2Idx)/dn.viscosity());
 
-        // diffusive flux of second component
-        flux[transEqIdx] -=
-            fluxVars.porousDiffCoeff() *
-            (fluxVars.concentrationGrad(1) * fluxVars.face().normal);
-
-        // dispersive flux of second component
-        Vector normalDisp;
-        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-        flux[transEqIdx] -=
-            (normalDisp * fluxVars.concentrationGrad(1));
     }
 
+    /*!
+         * \brief Adds the diffusive mass flux of all components over
+         *        a face of a subcontrol volume.
+         *
+         * \param flux The diffusive flux over the sub-control-volume face for each component
+         * \param vars The flux variables at the current SCV
+         */
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    {
+        // diffusive flux of second component
+       flux[transEqIdx] -=
+           fluxVars.porousDiffCoeff() *
+           (fluxVars.concentrationGrad(1) * fluxVars.face().normal);
+
+       // dispersive flux of second component
+       Vector normalDisp;
+       fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+       flux[transEqIdx] -=
+           (normalDisp * fluxVars.concentrationGrad(comp2Idx));
+    }
     /*!
      * \brief Calculate the source term of the equation
      *        \param q The source/sink in the SCV for each component
@@ -183,6 +214,11 @@ public:
                                 this->fvElemGeom_(),
                                 localVertexIdx);
     }
+
+    Implementation *asImp_()
+    { return static_cast<Implementation *> (this); }
+    const Implementation *asImp_() const
+    { return static_cast<const Implementation *> (this); }
 };
 
 }

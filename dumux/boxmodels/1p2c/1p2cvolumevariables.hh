@@ -62,9 +62,9 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 
         dimWorld = GridView::dimensionworld,
 
-        phaseIndex = GET_PROP_VALUE(TypeTag, PTAG(PhaseIndex)),
-        comp1Index = GET_PROP_VALUE(TypeTag, PTAG(Comp1Index)),
-        comp2Index = GET_PROP_VALUE(TypeTag, PTAG(Comp2Index)),
+        phaseIdx = Indices::phaseIdx,
+        comp1Idx = Indices::comp1Idx,
+        comp2Idx = Indices::comp2Idx,
 
         contiEqIdx = Indices::contiEqIdx,
         transEqIdx = Indices::transEqIdx
@@ -93,22 +93,28 @@ public:
                 bool isOldSol)
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
-
+		
+		asImp().updateTemperature_(priVars,
+                                   element,
+                                   elemGeom,
+                                   scvIdx,
+                                   problem);
+                                   
+        fluidState_.update(priVars, temperature_);
+        
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
         tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
         dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
 
-        Scalar temperature = problem.temperature(element, elemGeom, scvIdx);
-        fluidState_.update(priVars, temperature);
-
-        viscosity_ = FluidSystem::phaseViscosity(phaseIndex,
-                                                 temperature,
+        viscosity_ = FluidSystem::phaseViscosity(phaseIdx,
+                                                 temperature_,
                                                  pressure(),
                                                  fluidState_);
-        diffCoeff_ = FluidSystem::diffCoeff(phaseIndex,
-                                            comp1Index,
-                                            comp2Index,
-                                            temperature,
+                                                 
+        diffCoeff_ = FluidSystem::diffCoeff(phaseIdx,
+                                            comp1Idx,
+                                            comp2Idx,
+                                            temperature_,
                                             pressure(),
                                             *this);
 
@@ -132,10 +138,10 @@ public:
      * \brief Returns density the of the fluid phase.
      */
     Scalar density() const
-    { return fluidState_.density(phaseIndex); }
+    { return fluidState_.density(phaseIdx); }
 
     Scalar molarDensity() const
-    { return fluidState_.molarDensity(phaseIndex);}
+    { return fluidState_.molarDensity(phaseIdx);}
 
     /*!
      * \brief Returns mole fraction of a component in the phase
@@ -143,28 +149,28 @@ public:
      * \param compIdx The index of the component
      */
     Scalar moleFrac(int compIdx) const
-    { return fluidState_.moleFrac(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
+    { return fluidState_.moleFrac(phaseIdx, (compIdx==0)?comp1Idx:comp2Idx); }
 
     /*!
      * \brief Returns mass fraction of a component in the phase
      * \param compIdx The index of the component
      */
     Scalar massFrac(int compIdx) const
-    { return fluidState_.massFrac(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
+    { return fluidState_.massFrac(phaseIdx, (compIdx==0)?comp1Idx:comp2Idx); }
 
     /*!
      * \brief Returns concentration of a component in the phase
      * \param compIdx The index of the component
      */
     Scalar concentration(int compIdx) const
-    { return fluidState_.concentration(phaseIndex, (compIdx==0)?comp1Index:comp2Index); }
+    { return fluidState_.concentration(phaseIdx, (compIdx==0)?comp1Idx:comp2Idx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.
      */
     Scalar pressure() const
-    { return fluidState_.phasePressure(phaseIndex); }
+    { return fluidState_.phasePressure(phaseIdx); }
 
     /*!
      * \brief Returns the binary diffusion coefficient in the fluid
@@ -192,7 +198,7 @@ public:
      * identical.
      */
     Scalar temperature() const
-    { return fluidState_.temperature(); }
+    { return temperature_; }
 
     /*!
      * \brief Returns the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of a given phase
@@ -208,14 +214,32 @@ public:
     { return porosity_; }
 
 protected:
-    Scalar porosity_;
+
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem)
+    {
+        temperature_ = problem.temperature(element, elemGeom, scvIdx);
+    }
+
+	Scalar temperature_;     //!< Temperature within the control volume
+    Scalar porosity_;	//!< Effective porosity within the control volume
     Scalar viscosity_;
     Scalar tortuosity_;
     Vector dispersivity_;
     Scalar diffCoeff_;
     FluidState fluidState_;
+    
+private:
+    Implementation &asImp()
+    { return *static_cast<Implementation*>(this); }
+
+    const Implementation &asImp() const
+    { return *static_cast<const Implementation*>(this); }
 };
 
-}
+}// end namepace
 
 #endif

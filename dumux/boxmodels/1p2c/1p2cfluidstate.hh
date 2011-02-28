@@ -48,14 +48,14 @@ class OnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
 
     enum {
         pressureIdx = Indices::pressureIdx,
-        x1Idx = Indices::x1Idx,
+        xIdx = Indices::xIdx,
 
         contiEqIdx = Indices::contiEqIdx,
         transEqIdx = Indices::transEqIdx,
 
-        phaseIndex = GET_PROP_VALUE(TypeTag, PTAG(PhaseIndex)),
-        comp1Index = GET_PROP_VALUE(TypeTag, PTAG(Comp1Index)),
-        comp2Index = GET_PROP_VALUE(TypeTag, PTAG(Comp2Index)),
+        phaseIdx = Indices::phaseIdx,
+        comp1Idx = Indices::comp1Idx,
+        comp2Idx = Indices::comp2Idx,
     };
 
 public:
@@ -76,15 +76,15 @@ public:
         temperature_ = temperature;
 
         phasePressure_ = primaryVars[pressureIdx];
-        x1_ = primaryVars[x1Idx];
+        x_ = primaryVars[xIdx]; //mole fraction of component 2
         meanMolarMass_ =
-            (1 - x1_)*FluidSystem::molarMass(comp1Index) +
-            (x1_    )*FluidSystem::molarMass(comp2Index);
+            (1 - x_)*FluidSystem::molarMass(comp1Idx) +
+            (x_    )*FluidSystem::molarMass(comp2Idx);
 
-        density_ = FluidSystem::phaseDensity(phaseIndex, temperature_, phasePressure_, *this);
+        density_ = FluidSystem::phaseDensity(phaseIdx, temperature_, phasePressure_, *this);
         molarDensity_ = density_ / meanMolarMass_;
 
-        Valgrind::CheckDefined(x1_);
+        Valgrind::CheckDefined(x_);
         Valgrind::CheckDefined(phasePressure_);
         Valgrind::CheckDefined(density_);
         Valgrind::CheckDefined(meanMolarMass_);
@@ -97,8 +97,8 @@ public:
      *
      * \param phaseIdx The index of the considered phase
      */
-    Scalar saturation(int phaseIdx) const
-    { return (phaseIndex == phaseIdx)?1.0:0.0; };
+    Scalar saturation(int phaseIndex) const
+    { return (phaseIdx == phaseIndex)?1.0:0.0; };
 
     /*!
      * \brief Returns the molar fraction of a component in a fluid phase.
@@ -106,15 +106,15 @@ public:
      * \param phaseIdx The index of the considered phase
      * \param compIdx The index of the considered component
      */
-    Scalar moleFrac(int phaseIdx, int compIdx) const
+    Scalar moleFrac(int phaseIndex, int compIdx) const
     {
         // we are a single phase model!
-        if (phaseIdx != phaseIndex) return 0.0;
+        if (phaseIndex != phaseIdx) return 0.0;
 
-        if (compIdx==comp1Index)
-            return 1-x1_;
-        else if (compIdx==comp2Index)
-            return x1_;
+        if (compIdx==comp1Idx)
+            return 1-x_;
+        else if (compIdx==comp2Idx)
+            return x_;
         return 0.0;
     }
 
@@ -124,9 +124,9 @@ public:
      * This is equivalent to the sum of all component concentrations.
      * \param phaseIdx The index of the considered phase
      */
-    Scalar phaseConcentration(int phaseIdx) const
+    Scalar phaseConcentration(int phaseIndex) const
     {
-        if (phaseIdx != phaseIndex)
+        if (phaseIndex != phaseIdx)
             return 0;
         return density_/meanMolarMass_;
     };
@@ -137,8 +137,8 @@ public:
      * \param phaseIdx The index of the considered phase
      * \param compIdx The index of the considered component
      */
-    Scalar concentration(int phaseIdx, int compIdx) const
-    { return phaseConcentration(phaseIdx)*moleFrac(phaseIdx, compIdx); };
+    Scalar concentration(int phaseIndex, int compIdx) const
+    { return phaseConcentration(phaseIndex)*moleFrac(phaseIndex, compIdx); };
 
 
     /*!
@@ -147,12 +147,12 @@ public:
      * \param phaseIdx The index of the considered phase
      * \param compIdx The index of the considered component
      */
-    Scalar massFrac(int phaseIdx, int compIdx) const
+    Scalar massFrac(int phaseIndex, int compIdx) const
     {
-        if (phaseIdx != phaseIndex)
+        if (phaseIndex != phaseIdx)
             return 0;
         return
-            moleFrac(phaseIdx, compIdx)*
+            moleFrac(phaseIndex, compIdx)*
             FluidSystem::molarMass(compIdx)
             /
             meanMolarMass_;
@@ -164,16 +164,16 @@ public:
      * \param phaseIdx The index of the considered phase
      *
      */
-    Scalar density(int phaseIdx) const
+    Scalar density(int phaseIndex) const
     {
-        if (phaseIdx != phaseIndex)
+        if (phaseIndex != phaseIdx)
             return 0;
         return density_;
     }
 
-    Scalar molarDensity(int phaseIdx) const
+    Scalar molarDensity(int phaseIndex) const
     {
-        if (phaseIdx != phaseIndex)
+        if (phaseIndex != phaseIdx)
             return 0;
         return molarDensity_;
     }
@@ -186,9 +186,9 @@ public:
      *
      * \param phaseIdx The index of the considered phase
      */
-    Scalar meanMolarMass(int phaseIdx) const
+    Scalar meanMolarMass(int phaseIndex) const
     {
-        if (phaseIdx != phaseIndex)
+        if (phaseIndex != phaseIdx)
             return 0;
         return meanMolarMass_;
     };
@@ -198,7 +198,7 @@ public:
      *
      * \param phaseIdx The index of the considered phase
      */
-    Scalar phasePressure(int phaseIdx) const
+    Scalar phasePressure(int phaseIndex) const
     {
         return phasePressure_;
     }
@@ -213,7 +213,7 @@ public:
     { return temperature_; };
 
 public:
-    Scalar x1_;
+    Scalar x_;
     Scalar phasePressure_;
     Scalar density_;
     Scalar molarDensity_;
