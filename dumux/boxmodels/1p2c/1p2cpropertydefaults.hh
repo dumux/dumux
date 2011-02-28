@@ -37,6 +37,7 @@
 #include "1p2cvolumevariables.hh"
 #include "1p2cfluxvariables.hh"
 #include "1p2cindices.hh"
+#include "1p2cboundaryvariables.hh"
 
 namespace Dumux
 {
