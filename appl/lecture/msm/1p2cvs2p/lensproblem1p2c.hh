@@ -153,7 +153,7 @@ class LensProblem : public OnePTwoCBoxProblem<TypeTag>
         transEqIdx = Indices::transEqIdx,
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        x1Idx = Indices::x1Idx
+        xIdx = Indices::xIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
@@ -225,7 +225,7 @@ public:
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
-        return 273.15 + 10; // -> 10°C
+        return 273.15 + 10; // -> 10��C
     };
 
     // \}
@@ -273,12 +273,12 @@ public:
         if (onUpperBoundary_(globalPos))
         {
             values[pressureIdx] = upperPressure_;
-            values[x1Idx] = 0.0;
+            values[xIdx] = 0.0;
         }
         else if (onLowerBoundary_(globalPos))
         {
             values[pressureIdx] = lowerPressure_;
-            values[x1Idx] = 0.0;
+            values[xIdx] = 0.0;
         }
         else
             values = 0.0;
