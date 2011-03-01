@@ -63,8 +63,8 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         dimWorld = GridView::dimensionworld,
 
         phaseIdx = Indices::phaseIdx,
+        comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx,
 
         contiEqIdx = Indices::contiEqIdx,
         transEqIdx = Indices::transEqIdx
@@ -112,8 +112,8 @@ public:
                                                  fluidState_);
                                                  
         diffCoeff_ = FluidSystem::diffCoeff(phaseIdx,
+                                            comp0Idx,
                                             comp1Idx,
-                                            comp2Idx,
                                             temperature_,
                                             pressure(),
                                             *this);
@@ -149,21 +149,21 @@ public:
      * \param compIdx The index of the component
      */
     Scalar moleFrac(int compIdx) const
-    { return fluidState_.moleFrac(phaseIdx, (compIdx==0)?comp1Idx:comp2Idx); }
+    { return fluidState_.moleFrac(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
      * \brief Returns mass fraction of a component in the phase
      * \param compIdx The index of the component
      */
     Scalar massFrac(int compIdx) const
-    { return fluidState_.massFrac(phaseIdx, (compIdx==0)?comp1Idx:comp2Idx); }
+    { return fluidState_.massFrac(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
      * \brief Returns concentration of a component in the phase
      * \param compIdx The index of the component
      */
     Scalar concentration(int compIdx) const
-    { return fluidState_.concentration(phaseIdx, (compIdx==0)?comp1Idx:comp2Idx); }
+    { return fluidState_.concentration(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within

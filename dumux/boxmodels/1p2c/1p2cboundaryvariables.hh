@@ -73,8 +73,8 @@ class OnePTwoCBoundaryVariables
     enum {
         phaseIdx = Indices::phaseIdx,
 
-        comp1pIdx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx,
+        comp0Idx = Indices::comp0Idx,
+        comp1Idx = Indices::comp1Idx,
 
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
@@ -166,11 +166,11 @@ protected:
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().massFrac(phaseIdx, comp2Idx);
+            tmp *= elemDat[idx].fluidState().massFrac(phaseIdx, comp1Idx);
             concentrationGrad_ += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFrac(phaseIdx, comp2Idx);
+            tmp *= elemDat[idx].fluidState().moleFrac(phaseIdx, comp1Idx);
             molarConcGrad_ += tmp;
 
                 pressureAtIP_ += elemDat[idx].pressure()*boundaryFace_->shapeValue[idx];

@@ -73,8 +73,8 @@ class OnePTwoCFluxVariables
     typedef typename GridView::template Codim<0>::Entity Element;
     enum {
         phaseIdx = Indices::phaseIdx,
+        comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx,
     };
 public:
     /*
@@ -228,11 +228,11 @@ protected:
 
                 // the concentration gradient
                 tmp = feGrad;
-                tmp *= elemDat[idx].concentration(comp2Idx);
+                tmp *= elemDat[idx].concentration(comp1Idx);
                 concentrationGrad_ += tmp;
 
                 tmp = feGrad;
-                tmp *= elemDat[idx].moleFrac(comp2Idx);
+                tmp *= elemDat[idx].moleFrac(comp1Idx);
                 molarConcGrad_ += tmp;
 
                 // phase viscosity
@@ -254,9 +254,9 @@ protected:
             potentialGrad_ = tmp;
             potentialGrad_ *= vVars_j.pressure() - vVars_i.pressure();
             concentrationGrad_ = tmp;
-            concentrationGrad_ *= vVars_j.concentration(comp2Idx) - vVars_i.concentration(comp2Idx);
+            concentrationGrad_ *= vVars_j.concentration(comp1Idx) - vVars_i.concentration(comp1Idx);
             molarConcGrad_ = tmp;
-            molarConcGrad_ *= vVars_j.moleFrac(comp2Idx) - vVars_i.moleFrac(comp2Idx);
+            molarConcGrad_ *= vVars_j.moleFrac(comp1Idx) - vVars_i.moleFrac(comp1Idx);
         }
 
         // correct the pressure by the hydrostatic pressure due to

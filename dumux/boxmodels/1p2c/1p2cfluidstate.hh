@@ -48,14 +48,14 @@ class OnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
 
     enum {
         pressureIdx = Indices::pressureIdx,
-        xIdx = Indices::xIdx,
+        x1Idx = Indices::x1Idx,
 
         contiEqIdx = Indices::contiEqIdx,
         transEqIdx = Indices::transEqIdx,
 
         phaseIdx = Indices::phaseIdx,
+        comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx,
     };
 
 public:
@@ -76,15 +76,15 @@ public:
         temperature_ = temperature;
 
         phasePressure_ = primaryVars[pressureIdx];
-        x_ = primaryVars[xIdx]; //mole fraction of component 2
+        x1_ = primaryVars[x1Idx]; //mole fraction of component 2
         meanMolarMass_ =
-            (1 - x_)*FluidSystem::molarMass(comp1Idx) +
-            (x_    )*FluidSystem::molarMass(comp2Idx);
+            (1 - x1_)*FluidSystem::molarMass(comp0Idx) +
+            (x1_    )*FluidSystem::molarMass(comp1Idx);
 
         density_ = FluidSystem::phaseDensity(phaseIdx, temperature_, phasePressure_, *this);
         molarDensity_ = density_ / meanMolarMass_;
 
-        Valgrind::CheckDefined(x_);
+        Valgrind::CheckDefined(x1_);
         Valgrind::CheckDefined(phasePressure_);
         Valgrind::CheckDefined(density_);
         Valgrind::CheckDefined(meanMolarMass_);
@@ -111,10 +111,10 @@ public:
         // we are a single phase model!
         if (phaseIndex != phaseIdx) return 0.0;
 
-        if (compIdx==comp1Idx)
-            return 1-x_;
-        else if (compIdx==comp2Idx)
-            return x_;
+        if (compIdx==comp0Idx)
+            return 1-x1_;
+        else if (compIdx==comp1Idx)
+            return x1_;
         return 0.0;
     }
 
@@ -213,7 +213,7 @@ public:
     { return temperature_; };
 
 public:
-    Scalar x_;
+    Scalar x1_;
     Scalar phasePressure_;
     Scalar density_;
     Scalar molarDensity_;

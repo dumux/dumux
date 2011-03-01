@@ -74,11 +74,11 @@ protected:
 
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        xIdx = Indices::xIdx,
+        x1Idx = Indices::x1Idx,
 
         phaseIdx = Indices::phaseIdx,
+        comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx,
 
         // indices of the equations
         contiEqIdx = Indices::contiEqIdx,
@@ -120,7 +120,7 @@ public:
 
         // storage term of the transport equation
         result[transEqIdx] =
-            volVars.concentration(comp2Idx) *
+            volVars.concentration(comp1Idx) *
             volVars.porosity();
     }
 
@@ -175,9 +175,9 @@ public:
         // advective flux of the second component
         flux[transEqIdx] +=
             normalFlux *
-            ((    upwindAlpha)*up.concentration(comp2Idx)/up.viscosity()
+            ((    upwindAlpha)*up.concentration(comp1Idx)/up.viscosity()
              +
-             (1 - upwindAlpha)*dn.concentration(comp2Idx)/dn.viscosity());
+             (1 - upwindAlpha)*dn.concentration(comp1Idx)/dn.viscosity());
 
     }
 
@@ -199,7 +199,7 @@ public:
        Vector normalDisp;
        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
        flux[transEqIdx] -=
-           (normalDisp * fluxVars.concentrationGrad(comp2Idx));
+           (normalDisp * fluxVars.concentrationGrad(comp1Idx));
     }
     /*!
      * \brief Calculate the source term of the equation
