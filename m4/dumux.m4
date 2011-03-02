@@ -68,7 +68,9 @@ AC_DEFUN([DUMUX_CHECKS],
   AC_CHECK_HEADER([valgrind/memcheck.h], 
                   [HAVE_VALGRIND_H="1"],
                   AC_MSG_WARN([valgrind/memcheck.h not found]))
-  AC_DEFINE(HAVE_VALGRIND, 1, [Define whether the valgrind header files for client requests are present.])
+  AS_IF([test "x$HAVE_VALGRIND_H" = "x1"],[
+    AC_DEFINE(HAVE_VALGRIND, 1, [Define whether the valgrind header files for client requests are present.])
+    ])
   if test "$HAVE_VALGRIND_H" == "1"; then
      DUNE_ADD_SUMMARY_ENTRY([Valgrind client requests],["yes"])
   else

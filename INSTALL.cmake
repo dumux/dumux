@@ -1,10 +1,10 @@
 Why CMake
 =========
 
-We use CMake 2.6 or higher as alternative to the build system provided
-by DUNE. CMake is included in most GNU/Linux distributions or can be
-downloaded at www.cmake.org. Using CMake has several advantages
-compared to autotools:
+You can use CMake 2.6 or higher as alternative to the build system 
+provided by DUNE. CMake is included in most GNU/Linux distributions 
+or can be downloaded at www.cmake.org. Using CMake has several 
+advantages compared to autotools:
 
  - Out-of-tree builds are the default way to build software: The
    directory where the source code resides won't get modified during
@@ -74,3 +74,8 @@ cmake -DCMAKE_BUILD_TYPE=debug \
       -DALUGrid_DIR=/usr/local/alugrid \
       -DMETIS_DIR=/usr/local/metis \
       path/to/DUMUX/source/directory
+
+With gcc >= 4.5.0, compilation might fail due to an internal compiler 
+error. In this case, you might want to specify the compiler explicitly 
+by using the cmake options -DCMAKE_CXX_COMPILER and -DCMAKE_CC_COMPILER. 
+

@@ -240,8 +240,8 @@ public:
         };
 
         if (enablePartialReassemble) {
-        	if (gridView_().comm().size() > 1)
-        		greenElems_ = gridView_().comm().sum(greenElems_);
+            if (gridView_().comm().size() > 1)
+            	greenElems_ = gridView_().comm().sum(greenElems_);
 
             reassembleTolerance_ = nextReassembleTolerance_;
             // print some information at the end of the iteration

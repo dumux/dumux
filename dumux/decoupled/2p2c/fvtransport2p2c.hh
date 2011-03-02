@@ -320,9 +320,9 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 meanK_.umv(unitDistVec,K);
 
                 // velocities
-                double potentialW = (unitOuterNormal * distVec) * (pressI - pressJ) / (dist * dist);
-                double potentialNW = potentialW + densityNW_mean * (unitDistVec * gravity_);
-                potentialW += densityW_mean * (unitDistVec * gravity_);
+                double potentialW = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
+                double potentialNW = potentialW + ((K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean);
+                potentialW += ((K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean);
 
                 // upwind mobility
                 double lambdaW, lambdaN;
@@ -336,8 +336,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 else
                     lambdaN = problem_.variables().mobilityNonwetting(globalIdxJ);
 
-                double velocityW = lambdaW * ((K * unitOuterNormal) * (pressI - pressJ) / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean);
-                double velocityN = lambdaN * ((K * unitOuterNormal) * (pressI - pressJ) / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean);
+                double velocityW = lambdaW * potentialW;
+                double velocityN = lambdaN * potentialW;
 
                 // standardized velocity
                 double velocityJIw = std::max(-velocityW * faceArea / volume, 0.0);
@@ -395,21 +395,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 if (bcTypeTransport_ == BoundaryConditions::dirichlet)
                 {
                     //get dirichlet pressure boundary condition
-                    Scalar pressBound = 0.;
-                    Scalar pcBound = problem_.variables().capillaryPressure(globalIdxI);
-                    switch (pressureType)
-                    {
-                    case pw:
-                    {
-                        pressBound = problem_.dirichletPress(globalPosFace, *isIt);
-                        break;
-                    }
-                    case pn:
-                    {
-                        pressBound = problem_.dirichletPress(globalPosFace, *isIt) - pcBound;
-                        break;
-                    }
-                    }
+                    Scalar pressBound = problem_.dirichletPress(globalPosFace, *isIt);
 
                     // read boundary values
                     BoundaryConditions2p2c::Flags bctype = problem_.bcFormulation(globalPosFace, *isIt);
@@ -439,16 +425,20 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                                                                         pressBound, BCfluidState);
                     Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
                                                                         problem_.temperature(globalPosFace, *eIt),
-                                                                        pressBound+pcBound, BCfluidState);
+                                                                        pressBound, BCfluidState);
 
                     // average
                     double densityW_mean = (densityWI + densityWBound) / 2;
                     double densityNW_mean = (densityNWI + densityNWBound) / 2;
 
+                    // prepare K
+                    Dune::FieldVector<Scalar,dim> K(0);
+                    K_I.umv(unitDistVec,K);
+
                     // velocities
-                    double potentialW = (unitOuterNormal * distVec) * (pressI - pressBound) / (dist * dist);
-                    double potentialNW = potentialW + densityNW_mean * (unitDistVec * gravity_);
-                    potentialW += densityW_mean * (unitDistVec * gravity_);
+                    double potentialW = (K * unitOuterNormal) * (pressI - pressBound) / (dist);
+                    double potentialNW = potentialW + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean;
+                    potentialW += (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;
 
                     // do upwinding for lambdas
                     double lambdaW, lambdaN;
@@ -474,20 +464,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                                     problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityNWBound;
                         }
-                    // prepare K
-                    Dune::FieldVector<Scalar,dim> K(0);
-                    K_I.umv(unitDistVec,K);
-
-                    double velocityW = lambdaW * ((K * unitOuterNormal) * (pressI - pressBound)
-                            / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean);
-                    double velocityN = lambdaN * ((K * unitOuterNormal) * (pressI - pressBound)
-                            / (dist) + (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityNW_mean);
-
                     // standardized velocity
-                    double velocityJIw = std::max(-velocityW * faceArea / volume, 0.0);
-                    double velocityIJw = std::max( velocityW * faceArea / volume, 0.0);
-                    double velocityJIn = std::max(-velocityN * faceArea / volume, 0.0);
-                    double velocityIJn = std::max( velocityN* faceArea / volume, 0.0);
+                    double velocityJIw = std::max(-lambdaW * potentialW * faceArea / volume, 0.0);
+                    double velocityIJw = std::max( lambdaW * potentialW * faceArea / volume, 0.0);
+                    double velocityJIn = std::max(-lambdaN * potentialNW * faceArea / volume, 0.0);
+                    double velocityIJn = std::max( lambdaN * potentialNW* faceArea / volume, 0.0);
 
                     // for timestep control
                     factor[0] = velocityJIw + velocityJIn;
@@ -539,8 +520,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
             }//end boundary
             // correct update Factor by volume error
             #ifdef errorInTransport
-            updFactor[wCompIdx] *= problem_.variables().volErr(globalIdxI);
-            updFactor[nCompIdx] *= problem_.variables().volErr(globalIdxI);
+            updFactor[wCompIdx] *= (1+problem_.variables().volErr(globalIdxI));
+            updFactor[nCompIdx] *= (1+problem_.variables().volErr(globalIdxI));
             #endif
             // add to update vector
             updateVec[wCompIdx][globalIdxI] += updFactor[wCompIdx];

@@ -197,10 +197,8 @@ int main(int argc, char** argv)
         Dune::FieldVector<int,dim> res; // cell resolution
         upperRight[0] = 6.0;
         upperRight[1] = 4.0;
-        res[0] = 96;
-        res[1] = 64;
-        //res[0] = 24;
-        //res[1] = 16;
+        res[0] = 48;
+        res[1] = 32;
 
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
         ////////////////////////////////////////////////////////////

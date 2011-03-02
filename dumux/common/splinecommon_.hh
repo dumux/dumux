@@ -28,6 +28,8 @@
 #include "valgrind.hh"
 #include "math.hh"
 
+#include <dune/common/exceptions.hh>
+
 #include <algorithm>
 #include <iostream>
 #include <assert.h>
@@ -209,22 +211,22 @@ public:
         assert(applies(x0) && applies(x1));
 
         Scalar tmpSol[3];
-        int n = numSamples_();
         int nSol = 0;
-        int i0 = segmentIdx_(x0);
-        int i1 = segmentIdx_(x1);
-        for (int i = i0; i < i1; ++i)
+        int iFirst = segmentIdx_(x0);
+        int iLast = segmentIdx_(x1);
+        for (int i = iFirst; i <= iLast; ++i)
         {
             nSol += intersectSegment_(tmpSol, i, a, b, c, d, x0, x1);
 
-            if (nSol > 1)
+            if (nSol > 1) {
                 DUNE_THROW(Dune::MathError,
-                           "Spline has more than one intersection with "<<a<"x^3 + " <<b<"x^2 + "<<c<"x + "<< d);
+                           "Spline has more than one intersection"); //<<a<<"x^3 + "<<b<"x^2 + "<<c<"x + "<<d);
+            }
         }
 
         if (nSol != 1)
             DUNE_THROW(Dune::MathError,
-                       "Spline has no intersection with "<<a<"x^3 + " <<b<"x^2 + "<<c<"x + "<< d <<"!");
+                       "Spline has no intersection"); //<<a<"x^3 + " <<b<"x^2 + "<<c<"x + "<<d<<"!");
 
         return tmpSol[0];
     };
@@ -498,10 +500,10 @@ protected:
      * \brief Find all the intersections of a segment of the spline
      *        with a cubic polynomial within a specified interval.
      */
-    int intersect_(Scalar *sol,
-                   int segIdx,
-                   Scalar a, Scalar b, Scalar c, Scalar d,
-                   Scalar x0 = -1e100, Scalar x1 = 1e100) const
+    int intersectSegment_(Scalar *sol,
+                          int segIdx,
+                          Scalar a, Scalar b, Scalar c, Scalar d,
+                          Scalar x0 = -1e100, Scalar x1 = 1e100) const
     {
         int n = Dumux::invertCubicPolynomial(sol,
                                              a_(segIdx) - a,
@@ -514,6 +516,7 @@ protected:
         // filter the intersections outside of the specified intervall
         int k = 0;
         for (int j = 0; j < n; ++j) {
+            sol[j] += x_(segIdx); // add the offset of the intervall. For details see Stoer
             if (x0 <= sol[j] && sol[j] <= x1) {
                 sol[k] = sol[j];
                 ++k;
@@ -567,7 +570,7 @@ protected:
     Scalar moment_(int i) const
     { return asImp_().moment_(i); }
 
-    // returns the coefficient in front of the x^3 term. In Stoer this
+    // returns the coefficient in front of the x^0 term. In Stoer this
     // is delta.
     Scalar a_(int i) const
     { return (moment_(i+1) - moment_(i))/(6*h_(i+1)); }
@@ -577,12 +580,12 @@ protected:
     Scalar b_(int i) const
     { return moment_(i)/2; }
 
-    // returns the coefficient in front of the x term. In Stoer this
+    // returns the coefficient in front of the x^1 term. In Stoer this
     // is beta.
     Scalar c_(int i) const
     { return (y_(i+1) - y_(i))/h_(i + 1) - h_(i+1)/6*(2*moment_(i) + moment_(i+1)); }
 
-    // returns the coefficient in front of the constant term. In Stoer this
+    // returns the coefficient in front of the x^0 term. In Stoer this
     // is alpha.
     Scalar d_(int i) const
     { return y_(i); }

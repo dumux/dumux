@@ -147,14 +147,15 @@ public:
 
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-        Dune::dwarn << "here, rather total concentrations should be used!" << std::endl;
         int globalIdx = this->elementMapper().map(element);
-        outstream << this->pressure()[globalIdx] << "  " << saturation_[globalIdx];
+        outstream << this->pressure()[globalIdx] << "  " << totalConcentration(globalIdx, 0)
+                  << "  " << totalConcentration(globalIdx,1);
     }
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = this->elementMapper().map(element);
-        instream >> this->pressure()[globalIdx] >> saturation_[globalIdx];
+        instream >> this->pressure()[globalIdx] >> totalConcentration(globalIdx, 0)
+                 >> totalConcentration(globalIdx,1);
     }
     //@}
 
@@ -220,9 +221,9 @@ public:
             *pressure = this->pressure();
             *saturation = saturation_;
             if (GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)) == GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW)
-                writer.addCellData(pressure, "pressure w-phase");
+                writer.addCellData(pressure, "pressure w_phase");
             else
-                writer.addCellData(pressure, "pressure nw-phase");
+                writer.addCellData(pressure, "pressure nw_phase");
             writer.addCellData(saturation, "water saturation");
             if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
             {
@@ -236,8 +237,8 @@ public:
             ScalarSolutionType *totalConcentration2 = writer.template createField<Scalar, 1> (size_);
             *totalConcentration1 = totalConcentration_[0];
             *totalConcentration2 = totalConcentration_[1];
-            writer.addCellData(totalConcentration1, "totalConcentration w-Comp");
-            writer.addCellData(totalConcentration2, "totalConcentration n-Comp");
+            writer.addCellData(totalConcentration1, "totalConcentration w_Comp");
+            writer.addCellData(totalConcentration2, "totalConcentration n_Comp");
 
             // numerical stuff
             ScalarSolutionType *volErr = writer.template createField<Scalar, 1> (size_);
@@ -249,8 +250,8 @@ public:
             ScalarSolutionType *massfraction1NW = writer.template createField<Scalar, 1> (size_);
             *massfraction1W = massfrac_[0];
             *massfraction1NW = massfrac_[1];
-            writer.addCellData(massfraction1W, "massfraction1 in w-phase");
-            writer.addCellData(massfraction1NW, "massfraction1NW nw-phase");
+            writer.addCellData(massfraction1W, "massfraction1 in w_phase");
+            writer.addCellData(massfraction1NW, "massfraction1NW nw_phase");
 
             // phase properties
             ScalarSolutionType *mobilityW = writer.template createField<Scalar, 1> (size_);
@@ -265,12 +266,12 @@ public:
             *densityNW = density_[1];
             *numdensityW = density_[0];
             *numdensityNW = density_[1];
-            writer.addCellData(mobilityW, "mobility w-phase");
-            writer.addCellData(mobilityNW, "mobility nw-phase");
-            writer.addCellData(densityW, "density w-phase");
-            writer.addCellData(densityNW, "density nw-phase");
-            writer.addCellData(numdensityW, "numerical density (mass/volume) w-phase");
-            writer.addCellData(numdensityNW, "numerical density (mass/volume) nw-phase");
+            writer.addCellData(mobilityW, "mobility w_phase");
+            writer.addCellData(mobilityNW, "mobility nw_phase");
+            writer.addCellData(densityW, "density w_phase");
+            writer.addCellData(densityNW, "density nw_phase");
+            writer.addCellData(numdensityW, "numerical density (mass/volume) w_phase");
+            writer.addCellData(numdensityNW, "numerical density (mass/volume) nw_phase");
         }
         if (codim_ == dim)
         {
@@ -299,7 +300,7 @@ public:
     }
 
     //! Returs a reference to the total concentration vector
-    const Scalar& totalConcentration() const
+    const TransportSolutionType& totalConcentration() const
     {
         return totalConcentration_;
     }
@@ -358,6 +359,11 @@ public:
     }
 
     //! Return capillary pressure vector
+    const ScalarSolutionType& capillaryPressure() const
+    {
+        return capillaryPressure_;
+    }
+    //! Return capillary pressure of specific Element
     /*! \param Idx Element index*/
     Scalar& capillaryPressure(int Idx)
     {

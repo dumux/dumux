@@ -3,7 +3,8 @@
 # we need the module file to be able to build via dunecontrol
 EXTRA_DIST = dune.module \
              CMake/Modules/*.cmake CMakeLists.txt \
-             CONTRIBUTORS INSTALL.cmake LICENSE
+             CONTRIBUTORS INSTALL.cmake LICENSE \ 
+             debug.opts optim.opts 
 
 SUBDIRS = appl doc dumux m4 test tutorial
 
