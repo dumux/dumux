@@ -1,7 +1,8 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2009 by Klaus Mosthaf                                     *
- *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -22,41 +23,41 @@
 /*!
  * \file
  *
- * \brief Non-isothermal gas injection problem where a gas (e.g. air)
- *        is injected into a fully water saturated medium.
+ * \brief Definition of a problem, where air is injected under a low permeable layer.
  */
-#ifndef DUMUX_WATERAIRPROBLEM_HH
-#define DUMUX_WATERAIRPROBLEM_HH
+
+#ifndef DUMUX_INJECTIONPROBLEM_HH
+#define DUMUX_INJECTIONPROBLEM_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/h2o_n2_system.hh>
+#include <dumux/boxmodels/new_2p2c/2p2cmodel.hh>
+#include <dumux/material/new_fluidsystems/h2on2fluidsystem.hh>
 
-#include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
+#include "injectionspatialparameters.hh"
 
-#include "waterairspatialparameters.hh"
-
-#define ISOTHERMAL 0
 
 namespace Dumux
 {
+
 template <class TypeTag>
-class WaterAirProblem;
+class InjectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI));
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC));
 
 // Set the grid type
-SET_PROP(WaterAirProblem, Grid)
+SET_PROP(InjectionProblem, Grid)
 {
-    typedef Dune::YaspGrid<2> type;
+    typedef Dune::SGrid<2,2> type;
 };
 
+
 #if HAVE_DUNE_PDELAB
-SET_PROP(WaterAirProblem, LocalFEMSpace)
+SET_PROP(InjectionProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -69,94 +70,78 @@ public:
 #endif // HAVE_DUNE_PDELAB
 
 // Set the problem property
-SET_PROP(WaterAirProblem, Problem)
+SET_PROP(InjectionProblem, Problem)
 {
-    typedef Dumux::WaterAirProblem<TypeTag> type;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:
+    typedef Dumux::InjectionProblem<TTAG(InjectionProblem)> type;
 };
 
-// Set the wetting phase
-SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::H2O_N2_System<TypeTag>);
+// Set fluid configuration
+SET_PROP(InjectionProblem, FluidSystem)
+{ 
+private: typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:  typedef Dumux::H2ON2FluidSystem<Scalar> type;
+};
 
 // Set the spatial parameters
-SET_TYPE_PROP(WaterAirProblem,
+SET_TYPE_PROP(InjectionProblem,
               SpatialParameters,
-              Dumux::WaterAirSpatialParameters<TypeTag>);
+              Dumux::InjectionSpatialParameters<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
+SET_BOOL_PROP(InjectionProblem, EnableGravity, true);
 
-// Use forward differences instead of central differences
-SET_INT_PROP(WaterAirProblem, NumericDifferenceMethod, +1);
+// Enable gravity
+SET_INT_PROP(InjectionProblem, NewtonLinearSolverVerbosity, 0);
 
-// Write newton convergence
-SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
+SET_BOOL_PROP(InjectionProblem, EnableJacobianRecycling, false);
+SET_BOOL_PROP(InjectionProblem, EnablePartialReassemble, false);
 }
 
 
 /*!
- * \ingroup TwoPTwoCNIBoxModel
+ * \ingroup TwoPTwoCModel
+ * \brief Problem where air is injected under a low permeable layer in a depth of 800m.
  *
- * \brief Non-isothermal gas injection problem where a gas (e.g. air)
- *        is injected into a fully water saturated medium. During
- *        buoyancy driven upward migration the gas passes a high
- *        temperature area.
+ * The domain is sized 60m times 40m and consists of two layers, a moderately
+ * permeable spatial parameters (\f$ K=10e-12\f$) for \f$ y>22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
+ * in the rest of the domain.
  *
- * The domain is sized 40 m times 40 m. The rectangular area with the
- * increased temperature (380 K) starts at (20 m, 5 m) and ends at (30
- * m, 35 m).
- *
- * For the mass conservation equation neumann boundary conditions are used on
- * the top and on the bottom of the domain, while dirichlet conditions
- * apply on the left and the right boundary.
- * For the energy conservation equation dirichlet boundary conditions are applied
- * on all boundaries.
- *
- * Gas is injected at the bottom boundary from 15 m to 25 m at a rate of
- * 0.001 kg/(s m), the remaining neumann boundaries are no-flow
- * boundaries.
- *
- * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
- * a geothermal temperature gradient of 0.03 K/m are applied.
- *
- * This problem uses the \ref TwoPTwoCNIModel.
- *
- * This problem should typically be simulated for 300000 s.
- * A good choice for the initial time step size is 1000 s.
+ * Air enters a water-filled aquifer, which is situated 800m below sea level, at the right boundary
+ * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
+ * partially enters the lower permeable aquitard.
+ * This problem uses the \ref TwoPTwoCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p2cni ./grids/test_2p2cni.dgf 300000 1000</tt>
- *  */
-template <class TypeTag >
-class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
+ * <tt>./test_2p2c grids/test_2p2c.dgf 1e6 1e4 </tt>
+ */
+template <class TypeTag = TTAG(InjectionProblem) >
+class InjectionProblem : public TwoPTwoCProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GridView::Grid Grid;
+    typedef InjectionProblem<TypeTag> ThisType;
+    typedef TwoPTwoCProblem<TypeTag> ParentType;
 
-    typedef WaterAirProblem<TypeTag> ThisType;
-    typedef TwoPTwoCNIProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+    enum {
+        // Grid and world dimension
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+    };
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        lPhaseIdx = Indices::lPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx,
 
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-#if !ISOTHERMAL
-        temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx,
-#endif
+        lCompIdx = Indices::lCompIdx,
+        gCompIdx = Indices::gCompIdx,
 
-        // Phase State
-        lPhaseOnly = Indices::lPhaseOnly,
-        gPhaseOnly = Indices::gPhaseOnly,
-        bothPhases = Indices::bothPhases,
-
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        contiLEqIdx = Indices::contiLEqIdx,
+        contiGEqIdx = Indices::contiGEqIdx,
     };
 
 
@@ -171,7 +156,6 @@ class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
@@ -181,11 +165,37 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    WaterAirProblem(TimeManager &timeManager, const GridView &gridView)
+    InjectionProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        FluidSystem::init();
+        Scalar Tmin = 273.0 + 35;
+        Scalar Tmax = 273.0 + 45;
+        Scalar nT = 5;
+
+        Scalar pmin = 25e6;
+        Scalar pmax = 30e6;
+        Scalar np = 250;
+        FluidSystem::init(Tmin, Tmax, nT,
+                          pmin, pmax, np);
     }
+
+    /*!
+     * \brief Called directly after the time integration.
+     */
+    void postTimeStep()
+    {
+        // Calculate storage terms
+        PrimaryVariables storageL, storageG;
+        this->model().globalPhaseStorage(storageL, lPhaseIdx);
+        this->model().globalPhaseStorage(storageG, gPhaseIdx);
+
+        // Write mass balance information for rank 0
+        if (this->gridView().comm().rank() == 0) {
+            std::cout<<"Storage: liquid=[" << storageL << "]"
+                     << " gas=[" << storageG << "]\n";
+        }
+    }
+
 
     /*!
      * \name Problem parameters
@@ -198,9 +208,8 @@ public:
      * This is used as a prefix for files generated by the simulation.
      */
     const char *name() const
-    { return "waterair"; }
+    { return "injection"; }
 
-#if ISOTHERMAL
     /*!
      * \brief Returns the temperature within the domain.
      *
@@ -214,9 +223,8 @@ public:
                        const FVElementGeometry &fvElemGeom,
                        int scvIdx) const
     {
-        return 273.15 + 10; // -> 10°C
+        return temperature_;
     };
-#endif
 
     // \}
 
@@ -236,14 +244,10 @@ public:
     {
         const GlobalPosition globalPos = vertex.geometry().center();
 
-        if(globalPos[0] > 40 - eps_ || globalPos[0] < eps_)
+        if (globalPos[0] < eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
-
-#if !ISOTHERMAL
-        values.setDirichlet(temperatureIdx, energyEqIdx);
-#endif
     }
 
     /*!
@@ -284,13 +288,10 @@ public:
                  int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        values = 0;
 
-        // negative values for injection
-        if (globalPos[0] > 15 && globalPos[0] < 25 &&
-            globalPos[1] < eps_)
-        {
-            values[Indices::contiGEqIdx] = -1e-3;
+        values = 0;
+        if (globalPos[1] < 15 && globalPos[1] > 5) {
+            values[contiGEqIdx] = -1e-3; // kg/(s*m^2)
         }
     }
 
@@ -319,7 +320,7 @@ public:
                 const FVElementGeometry &fvElemGeom,
                 int scvIdx) const
     {
-           values = Scalar(0.0);
+        values = Scalar(0.0);
     }
 
     /*!
@@ -338,14 +339,8 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int scvIdx) const
     {
-           const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
+        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         initial_(values, globalPos);
-
-#if !ISOTHERMAL
-            if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] < 30)
-               values[temperatureIdx] = 380;
-#endif
     }
 
     /*!
@@ -358,25 +353,25 @@ public:
     int initialPhasePresence(const Vertex &vert,
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
-    {
-        return lPhaseOnly;
-    }
+    { return Indices::lPhaseOnly; }
+
+    // \}
 
 private:
-    // internal method for the initial condition (reused for the
-    // dirichlet conditions!)
+    // the internal method for the initial condition
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-        Scalar densityW = 1000.0;
-        values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
-        values[switchIdx] = 0.0;
-#if !ISOTHERMAL
-        values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
-#endif
+        Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
+
+        values[Indices::plIdx] = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);
+        values[Indices::SgOrXIdx] =
+            values[Indices::plIdx]*0.95/
+            BinaryCoeff::H2O_N2::henry(temperature_);
     }
 
-    static const Scalar depthBOR_ = 1000.0; // [m]
+    static const Scalar temperature_ = 273.15 + 40; // [K]
+    static const Scalar depthBOR_ = 2700.0; // [m]
     static const Scalar eps_ = 1e-6;
 };
 } //end namespace

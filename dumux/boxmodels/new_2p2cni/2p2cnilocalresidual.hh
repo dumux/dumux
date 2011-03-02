@@ -31,13 +31,11 @@
 #ifndef DUMUX_NEW_2P2CNI_LOCAL_RESIDUAL_HH
 #define DUMUX_NEW_2P2CNI_LOCAL_RESIDUAL_HH
 
-#include <dumux/boxmodels/2p2c/2p2clocalresidual.hh>
+#include <dumux/boxmodels/new_2p2c/2p2clocalresidual.hh>
 
-
-#include <dumux/boxmodels/2p2cni/2p2cnivolumevariables.hh>
-#include <dumux/boxmodels/2p2cni/2p2cnifluxvariables.hh>
-
-#include <dumux/boxmodels/2p2cni/2p2cniproperties.hh>
+#include "2p2cnivolumevariables.hh"
+#include "2p2cnifluxvariables.hh"
+#include "2p2cniproperties.hh"
 
 namespace Dumux
 {
@@ -112,13 +110,11 @@ public:
         // compute the energy storage
         result[energyEqIdx] =
             vertDat.porosity()*(vertDat.density(lPhaseIdx) *
-                                vertDat.internalEnergy(lPhaseIdx) *
-                                //vertDat.enthalpy(lPhaseIdx) *
+                                vertDat.fluidState().internalEnergy(lPhaseIdx) *
                                 vertDat.saturation(lPhaseIdx)
                                 +
                                 vertDat.density(gPhaseIdx) *
-                                vertDat.internalEnergy(gPhaseIdx) *
-                                //vertDat.enthalpy(gPhaseIdx) *
+                                vertDat.fluidState().internalEnergy(gPhaseIdx) *
                                 vertDat.saturation(gPhaseIdx))
             +
             vertDat.temperature()*vertDat.heatCapacity();
@@ -152,12 +148,12 @@ public:
                     mobilityUpwindAlpha * // upstream vertex
                     (  up.density(phase) *
                        up.mobility(phase) *
-                       up.enthalpy(phase))
+                       up.fluidState().enthalpy(phase))
                     +
                     (1-mobilityUpwindAlpha) * // downstream vertex
                     (  dn.density(phase) *
                        dn.mobility(phase) *
-                       dn.enthalpy(phase)) );
+                       dn.fluidState().enthalpy(phase)) );
         }
     }
 

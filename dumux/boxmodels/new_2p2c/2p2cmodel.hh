@@ -143,8 +143,6 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
         formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation))
     };
 
-    typedef TwoPTwoCFluidState<TypeTag> FluidState;
-
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -222,9 +220,6 @@ public:
 
         setSwitched_(false);
         resetPhasePresence_();
-        /*this->localJacobian().updateStaticData(this->curSolFunction(),
-         this->prevSolFunction());
-         */
     };
 
     /*!
@@ -375,7 +370,7 @@ public:
                     {
                         (*massFrac[phaseIdx][compIdx])[globalIdx]
                                 = volVars.fluidState().massFrac(phaseIdx,
-                                        compIdx);
+                                                                compIdx);
 
                         Valgrind::CheckDefined(
                             (*massFrac[phaseIdx][compIdx])[globalIdx][0]);
@@ -643,7 +638,8 @@ protected:
     //  perform variable switch at a vertex; Returns true if a
     //  variable switch was performed.
     bool primaryVarSwitch_(SolutionVector &globalSol,
-                           const VolumeVariables &volVars, int globalIdx,
+                           const VolumeVariables &volVars, 
+                           int globalIdx,
                            const GlobalPosition &globalPos)
     {
         // evaluate primary variable switch
@@ -669,14 +665,16 @@ protected:
             if (xll + xlg > xlMax)
             {
                 // liquid phase appears
-                std::cout << "liquid phase appears at vertex " << globalIdx
+                /*
+                std::cout << "Liquid phase appears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", xll + xlg: "
                         << xll + xlg << std::endl;
+                */
                 newPhasePresence = bothPhases;
                 if (formulation == pgSl)
-                    globalSol[globalIdx][switchIdx] = 0.0;
+                    globalSol[globalIdx][switchIdx] = 0.001;
                 else if (formulation == plSg)
-                    globalSol[globalIdx][switchIdx] = 1.0;
+                    globalSol[globalIdx][switchIdx] = 0.999;
             };
         }
         else if (phasePresence == lPhaseOnly)
@@ -697,9 +695,11 @@ protected:
             if (xgl + xgg > xgMax)
             {
                 // gas phase appears
+                /*
                 std::cout << "gas phase appears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", x_gl + x_gg: "
                         << xgl + xgg << std::endl;
+                */
                 newPhasePresence = bothPhases;
                 if (formulation == pgSl)
                     globalSol[globalIdx][switchIdx] = 0.999;
@@ -717,9 +717,11 @@ protected:
             {
                 wouldSwitch = true;
                 // gas phase disappears
+                /*
                 std::cout << "Gas phase disappears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", Sg: "
                         << volVars.saturation(gPhaseIdx) << std::endl;
+                */
                 newPhasePresence = lPhaseOnly;
 
                 globalSol[globalIdx][switchIdx]
@@ -729,9 +731,11 @@ protected:
             {
                 wouldSwitch = true;
                 // liquid phase disappears
+                /*
                 std::cout << "Liquid phase disappears at vertex " << globalIdx
                         << ", coordinates: " << globalPos << ", Sl: "
                         << volVars.saturation(lPhaseIdx) << std::endl;
+                */
                 newPhasePresence = gPhaseOnly;
 
                 globalSol[globalIdx][switchIdx]
