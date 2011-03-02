@@ -35,6 +35,7 @@
 #endif
 
 #include <dune/grid/yaspgrid.hh>
+#include <dune/grid/sgrid.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/simplednapl.hh>
