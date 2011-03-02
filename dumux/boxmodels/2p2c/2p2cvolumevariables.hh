@@ -414,7 +414,7 @@ public:
      * \brief Returns the effective capillary pressure within the control volume.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.pressure(lPhaseIdx) - fluidState_.pressure(gPhaseIdx); }
+    { return fluidState_.pressure(gPhaseIdx) - fluidState_.pressure(lPhaseIdx); }
 
     /*!
      * \brief Returns the average porosity within the control volume.

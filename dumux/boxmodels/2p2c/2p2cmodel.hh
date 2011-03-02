@@ -641,7 +641,8 @@ protected:
     //  perform variable switch at a vertex; Returns true if a
     //  variable switch was performed.
     bool primaryVarSwitch_(SolutionVector &globalSol,
-                           const VolumeVariables &volVars, int globalIdx,
+                           const VolumeVariables &volVars, 
+                           int globalIdx,
                            const GlobalPosition &globalPos)
     {
         // evaluate primary variable switch
@@ -672,9 +673,9 @@ protected:
                         << xll + xlg << std::endl;
                 newPhasePresence = bothPhases;
                 if (formulation == pgSl)
-                    globalSol[globalIdx][switchIdx] = 0.0;
+                    globalSol[globalIdx][switchIdx] = 0.001;
                 else if (formulation == plSg)
-                    globalSol[globalIdx][switchIdx] = 1.0;
+                    globalSol[globalIdx][switchIdx] = 0.999;
             };
         }
         else if (phasePresence == lPhaseOnly)
