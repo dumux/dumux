@@ -433,7 +433,8 @@ public:
             }
         }
 
-        error_ = gridView_().comm().max(error_);
+        if (gridView_().comm().size() > 1)
+        	error_ = gridView_().comm().max(error_);
     }
 
     /*!
@@ -463,7 +464,8 @@ public:
 
             // make sure all processes converged
             int converged = 1;
-            gridView_().comm().min(converged);
+            if (gridView_().comm().size() > 1)
+            	gridView_().comm().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
@@ -473,7 +475,8 @@ public:
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
             int converged = 0;
-            gridView_().comm().min(converged);
+            if (gridView_().comm().size() > 1)
+            	gridView_().comm().min(converged);
 
             Dumux::NumericalProblem p;
             std::string msg;
@@ -485,7 +488,8 @@ public:
         catch (const Dune::ISTLError &e) {
             // make sure all processes converged
             int converged = 0;
-            gridView_().comm().min(converged);
+            if (gridView_().comm().size() > 1)
+            	gridView_().comm().min(converged);
 
             Dumux::NumericalProblem p;
             p.message(e.what());
@@ -774,7 +778,8 @@ protected:
         // somewhere. this should never happen but for some strange
         // reason it happens anyway.
         Scalar xNorm2 = x.two_norm2();
-        gridView_().comm().sum(xNorm2);
+        if (gridView_().comm().size() > 1)
+        	gridView_().comm().sum(xNorm2);
         if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
             DUNE_THROW(Dumux::NumericalProblem,
                        "The linear solver produced a NaN or inf somewhere.");
