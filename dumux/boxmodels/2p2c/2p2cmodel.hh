@@ -209,7 +209,7 @@ public:
         };
 
         if (this->gridView_().comm().size() > 1)
-        	this->gridView_().comm().sum(dest);
+        	dest = this->gridView_().comm().sum(dest);
     }
 
     /*!

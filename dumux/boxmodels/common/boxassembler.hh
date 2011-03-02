@@ -205,6 +205,8 @@ public:
 
         if (gridView_().comm().size() > 1)
         	totalElems_ = gridView_().comm().sum(numElems);
+        else
+        	totalElems_ = numElems;
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {

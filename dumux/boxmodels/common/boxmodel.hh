@@ -205,7 +205,7 @@ public:
         };
 
         if (gridView_().comm().size() > 1)
-        	gridView_().comm().sum(dest);
+        	dest = gridView_().comm().sum(dest);
     }
 
     /*!

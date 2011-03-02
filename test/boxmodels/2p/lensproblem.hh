@@ -35,7 +35,6 @@
 #endif
 
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/simplednapl.hh>
@@ -65,7 +64,6 @@ SET_PROP(LensProblem, Grid)
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::YaspGrid<2> type;
-    //typedef Dune::SGrid<2, 2> type;
 #endif
 };
 
