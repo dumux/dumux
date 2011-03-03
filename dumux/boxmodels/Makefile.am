@@ -1,4 +1,4 @@
-SUBDIRS = common 1p 1p2c 2p 2p2c 2p2cni new_2p2c new_2p2cni 2pni richards
+SUBDIRS = common 1p 1p2c 2p 2p2c 2p2cni 2pni richards
 
 boxmodelsdir = $(includedir)/dumux/boxmodels
 
