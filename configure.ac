@@ -25,8 +25,6 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/2p/Makefile 
     dumux/boxmodels/2p2c/Makefile 
     dumux/boxmodels/2p2cni/Makefile 
-    dumux/boxmodels/new_2p2c/Makefile 
-    dumux/boxmodels/new_2p2cni/Makefile 
     dumux/boxmodels/2pni/Makefile 
     dumux/boxmodels/common/Makefile 
     dumux/boxmodels/richards/Makefile 
@@ -64,8 +62,6 @@ AC_CONFIG_FILES([dumux.pc
     test/boxmodels/1p2c/Makefile 
     test/boxmodels/2p2c/Makefile
     test/boxmodels/2p2cni/Makefile
-    test/boxmodels/new_2p2c/Makefile
-    test/boxmodels/new_2p2cni/Makefile
     test/boxmodels/richards/Makefile  
     test/common/Makefile
     test/common/pardiso/Makefile
