@@ -97,14 +97,41 @@ public:
 
         viscosityAtIP_ = Scalar(0);
         molarDensityAtIP_ = Scalar(0);
+        densityAtIP_ = Scalar(0);
+        potentialGrad_ = Scalar(0);
+        concentrationGrad_ = Scalar(0);
+        molarConcGrad_ = Scalar(0);
 
         calculateGradients_(problem, element, elemDat);
         calculateK_(problem, element, elemDat);
+        calculateVelocities_(problem, element, elemDat);
         calculateDiffCoeffPM_(problem, element, elemDat);
         calculateDispersionTensor_(problem, element, elemDat);
     };
 
 public:
+    /*!
+    * \brief Return the pressure potential multiplied with the
+    *        intrinsic permeability which goes from vertex i to
+    *        vertex j.
+    *
+    * Note that the length of the face's normal is the area of the
+    * phase, so this is not the actual velocity by the integral of
+    * the velocity over the face's area. Also note that the phase
+    * mobility is not yet included here since this would require a
+    * decision on the upwinding approach (which is done in the
+    * actual model).
+    */
+   Scalar KmvpNormal() const
+   { return KmvpNormal_; }
+
+   /*!
+    * \brief Return the pressure potential multiplied with the
+    *        intrinsic permeability as vector (for velocity output)
+    */
+   Vector Kmvp() const
+   { return Kmvp_; }
+
     const SCVFace &face() const
     { return fvElemGeom_.subContVolFace[scvfIdx_]; }
 
@@ -166,6 +193,8 @@ public:
     Scalar molarDensityAtIP() const
     { return molarDensityAtIP_; }
 
+    Scalar densityAtIP() const
+        { return densityAtIP_; }
 
     /*!
      * \brief Given the intrinisc permeability times the pressure
@@ -189,6 +218,20 @@ public:
     int downstreamIdx(Scalar normalFlux) const
     { return (normalFlux > 0)?face().j:face().i; }
 
+    /*!
+    * \brief Return the local index of the upstream control volume
+    *        for a given phase.
+    */
+   int upstreamIdx() const
+   { return upstreamIdx_; }
+
+   /*!
+    * \brief Return the local index of the downstream control volume
+    *        for a given phase.
+    */
+   int downstreamIdx() const
+   { return downstreamIdx_; }
+
 protected:
 
         /*!
@@ -204,10 +247,6 @@ protected:
     {
         const VolumeVariables &vVars_i = elemDat[face().i];
         const VolumeVariables &vVars_j = elemDat[face().j];
-
-        potentialGrad_ = 0.0;
-        concentrationGrad_ = 0.0;
-        molarConcGrad_ = 0.0;
 
         Vector tmp;
         //The decision of the if-statement depends on the function useTwoPointGradient(const Element &elem,
@@ -240,6 +279,9 @@ protected:
 
                 //phase moledensity
                 molarDensityAtIP_ += elemDat[idx].molarDensity()*face().shapeValue[idx];
+
+                //phase density
+                densityAtIP_ += elemDat[idx].density()*face().shapeValue[idx];
             }
         }
         else {
@@ -289,8 +331,26 @@ protected:
                  sp.intrinsicPermeability(element,
                                           fvElemGeom_,
                                           face().j));
+
     }
 
+    void calculateVelocities_(const Problem &problem,
+                                  const Element &element,
+                                  const ElementVolumeVariables &elemDat)
+    {
+        K_.mv(potentialGrad_, Kmvp_);
+        KmvpNormal_ = - (Kmvp_ * face().normal);
+
+        // set the upstream and downstream vertices
+        upstreamIdx_ = face().i;
+        downstreamIdx_ = face().j;
+
+        if (KmvpNormal_ < 0)
+        {
+            std::swap(upstreamIdx_,
+                      downstreamIdx_);
+        }
+    }
     /*!
     * \brief Calculation of the effective diffusion coefficient
     *
@@ -307,8 +367,10 @@ protected:
 
         // Diffusion coefficient in the porous medium
         diffCoeffPM_
-            = 1./2*(vDat_i.porosity() * vDat_i.tortuosity() * vDat_i.diffCoeff() +
-                    vDat_j.porosity() * vDat_j.tortuosity() * vDat_j.diffCoeff());
+            = harmonicMean(vDat_i.porosity() * vDat_i.tortuosity() * vDat_i.diffCoeff(),
+               vDat_j.porosity() * vDat_j.tortuosity() * vDat_j.diffCoeff());
+//            = 1./2*(vDat_i.porosity() * vDat_i.tortuosity() * vDat_i.diffCoeff() +
+//                    vDat_j.porosity() * vDat_j.tortuosity() * vDat_j.diffCoeff());
     }
 
     /*!
@@ -376,12 +438,21 @@ protected:
 
     //! the intrinsic permeability tensor
     Tensor K_;
+    // intrinsic permeability times pressure potential gradient
+    Vector Kmvp_;
+    // projected on the face normal
+    Scalar KmvpNormal_;
+
+    // local index of the upwind vertex for each phase
+   int upstreamIdx_;
+   // local index of the downwind vertex for each phase
+   int downstreamIdx_;
 
     //! viscosity of the fluid at the integration point
     Scalar viscosityAtIP_;
 
     //! molar densities of the fluid at the integration point
-    Scalar molarDensityAtIP_;
+    Scalar molarDensityAtIP_, densityAtIP_;
 };
 
 } // end namepace

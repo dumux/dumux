@@ -29,6 +29,7 @@
 
 #ifndef DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
 #define DUMUX_ONEP_TWOC_LOCAL_RESIDUAL_HH
+#define VELOCITY_OUTPUT 1 //1 turns velocity output on, 0 turns it off
 
 #include <dumux/boxmodels/common/boxmodel.hh>
 
@@ -62,15 +63,22 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+
     enum
     {
+        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -118,10 +126,15 @@ public:
         result[contiEqIdx] =
             volVars.density()*volVars.porosity();
 
-        // storage term of the transport equation
+        // storage term of the transport equation - molefractions
+//        result[transEqIdx] =
+//            volVars.concentration(comp1Idx) *
+//            volVars.porosity();
+
+        //storage term of the transport equation - massfractions
         result[transEqIdx] =
-            volVars.concentration(comp1Idx) *
-            volVars.porosity();
+                   volVars.density() * volVars.massFrac(comp1Idx) * volVars.porosity();
+
     }
 
     /*!
@@ -156,28 +169,35 @@ public:
         ////////
         // advective fluxes of all components in all phases
         ////////
-        Vector tmpVec(0);
 
-        fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(), tmpVec);
-
-        // "intrinsic" flux from cell i to cell j
-        Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
-        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
-        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+        // data attached to upstream and the downstream vertices
+       // of the current phase
+       const VolumeVariables &up =
+           this->curVolVars_(fluxVars.upstreamIdx());
+       const VolumeVariables &dn =
+           this->curVolVars_(fluxVars.downstreamIdx());
 
         // total mass flux
+       //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
         flux[contiEqIdx] =
-            normalFlux *
+            fluxVars.KmvpNormal() *
             ((     upwindAlpha)*up.density()/up.viscosity()
              +
              ((1 - upwindAlpha)*dn.density()/dn.viscosity()));
 
-        // advective flux of the second component
+        // advective flux of the second component -molefraction
+//       flux[transEqIdx] +=
+//           fluxVars.KmvpNormal() *
+//           ((    upwindAlpha)*up.concentration(comp1Idx)/up.viscosity()
+//            +
+//            (1 - upwindAlpha)*dn.concentration(comp1Idx)/dn.viscosity());
+
+        // advective flux of the second component - massfraction
         flux[transEqIdx] +=
-            normalFlux *
-            ((    upwindAlpha)*up.concentration(comp1Idx)/up.viscosity()
+            fluxVars.KmvpNormal() *
+            ((    upwindAlpha)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
              +
-             (1 - upwindAlpha)*dn.concentration(comp1Idx)/dn.viscosity());
+             (1 - upwindAlpha)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
 
     }
 
@@ -190,16 +210,22 @@ public:
          */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
+        Scalar tmp(0);
         // diffusive flux of second component
-       flux[transEqIdx] -=
+      tmp -=
            fluxVars.porousDiffCoeff() *
-           (fluxVars.concentrationGrad(1) * fluxVars.face().normal);
+           (fluxVars.concentrationGrad(comp1Idx) * fluxVars.face().normal);
 
        // dispersive flux of second component
        Vector normalDisp;
        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-       flux[transEqIdx] -=
+       tmp -=
            (normalDisp * fluxVars.concentrationGrad(comp1Idx));
+
+       //molar
+//       flux[transEqIdx] += tmp;
+       //transform to mass fractions
+       flux[transEqIdx] += tmp * FluidSystem::molarMass(comp1Idx);
     }
     /*!
      * \brief Calculate the source term of the equation
@@ -214,7 +240,7 @@ public:
                                 this->fvElemGeom_(),
                                 localVertexIdx);
     }
-
+    
     Implementation *asImp_()
     { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const

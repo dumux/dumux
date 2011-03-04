@@ -183,10 +183,6 @@ protected:
 
             potentialGrad_ -= tmp;
 
-//            Scalar k = problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_);
-//            VectorGradient K(0);
-//            K[0][0] = K[1][1] = k;
-            //TODO use meanK
             VectorGradient K = problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_);
             ScalarGradient Kmvp;
             K.mv(potentialGrad_, Kmvp);
