@@ -79,6 +79,9 @@ public:
         time_ = 0.0;
         endTime_ = -1e100;
 
+        //initialize maximum allowed timestep incredibly large
+        maxAllowedTimeStepSize_ = 2e24;
+
         timeStepSize_ = 1.0;
         timeStepIdx_ = 0;
         finished_ = false;
@@ -172,6 +175,22 @@ public:
     { endTime_ = t; }
 
     /*!
+     * \brief Set the maximum time step size to a given value.
+     *
+     * Sets an absolute maximum for the timestep size for the whole simulation.
+     *
+     * \param dt The maximum allowed value for the time step size \f$\mathrm{[s]}\f$
+     */
+    void setMaxAllowedTimeStepSize(Scalar dt)
+    { maxAllowedTimeStepSize_ = dt; }
+
+    /*!
+     * \brief Returns the maximum allowed timestep size.
+     */
+    Scalar maxAllowedTimeStepSize() const
+    { return maxAllowedTimeStepSize_; }
+
+    /*!
      * \brief Set the current time step size to a given value.
      *
      * If the step size would exceed the length of the current
@@ -235,7 +254,8 @@ public:
             return 0.0;
 
         return
-            std::min(episodeMaxTimeStepSize(),
+            std::min(std::min<Scalar>(maxAllowedTimeStepSize(),
+                                      episodeMaxTimeStepSize()),
                      std::max<Scalar>(0.0, endTime() - time()));
     };
 
@@ -459,6 +479,7 @@ private:
     Scalar endTime_;
 
     Scalar timeStepSize_;
+    Scalar maxAllowedTimeStepSize_;
     int timeStepIdx_;
     bool finished_;
     bool verbose_;
