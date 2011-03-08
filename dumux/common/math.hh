@@ -269,6 +269,7 @@ int invertCubicPolynomial(SolContainer &sol,
         // does not produce a division by zero. the remaining two
         // roots of u are rotated by +- 2/3*pi in the complex plane
         // and thus not considered here
+        invertCubicPolynomialPostProcess_(sol, 1, a, b, c, d);
         return 1;
     }
     else { // the negative discriminant case:
@@ -322,14 +323,43 @@ int invertCubicPolynomial(SolContainer &sol,
             phi += 2*M_PI/3;
         }
 
+        // post process the obtained solution to increase numerical
+        // precision
+        invertCubicPolynomialPostProcess_(sol, 3, a, b, c, d);
+
         // sort the result
         std::sort(sol, sol + 3);
+
         return 3;
     }
 
     // NOT REACHABLE!
     return 0;
 }
+template <class Scalar, class SolContainer>
+void invertCubicPolynomialPostProcess_(SolContainer &sol,
+                                       int numSol,
+                                       Scalar a,
+                                       Scalar b,
+                                       Scalar c,
+                                       Scalar d)
+{
+    // do one Newton iteration on the analytic solution if the
+    // precision is increased
+    for (int i = 0; i < numSol; ++i) {
+        Scalar x = sol[i];
+        Scalar fOld = d + x*(c + x*(b + x*a));
+        
+        Scalar fPrime = c + x*(2*b + x*3*a);
+        if (fPrime == 0.0)
+            continue;
+        x -= fOld/fPrime;
+        
+        Scalar fNew = d + x*(c + x*(b + x*a));
+        if (std::abs(fNew) < std::abs(fOld)) 
+            sol[i] = x;
+    };
+};
 
 /*!
  * \brief Comparison of two position vectors
