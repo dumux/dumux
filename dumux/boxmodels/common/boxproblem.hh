@@ -88,8 +88,7 @@ public:
           elementMapper_(gridView),
           vertexMapper_(gridView),
           timeManager_(&timeManager),
-          newtonMethod_(asImp_()),
-          resultWriter_(asImp_().name())
+          newtonMethod_(asImp_())
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -107,10 +106,13 @@ public:
             	bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
             }
         }
+
+        resultWriter_ = NULL;
     }
 
     ~BoxProblem()
     {
+        delete resultWriter_;
     };
 
     /*!
@@ -392,7 +394,7 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        resultWriter_.serialize(res);
+        resultWriter_->serialize(res);
         model().serialize(res);
     }
 
@@ -429,7 +431,7 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
-        resultWriter_.deserialize(res);
+        resultWriter_->deserialize(res);
         model().deserialize(res);
     };
 
@@ -443,14 +445,16 @@ public:
     {
         // write the current result to disk
         if (asImp_().shouldWriteOutput()) {
+            if (!resultWriter_)
+                resultWriter_ = new VtkMultiWriter(asImp_().name());
             if (gridView().comm().rank() == 0)
                 std::cout << "Writing result file for \"" << asImp_().name() << "\"\n";
 
             // calculate the time _after_ the time was updated
             Scalar t = timeManager().time() + timeManager().timeStepSize();
-            resultWriter_.beginTimestep(t, gridView());
-            model().addOutputVtkFields(model().curSol(), resultWriter_);
-            resultWriter_.endTimestep();
+            resultWriter_->beginTimestep(t, gridView());
+            model().addOutputVtkFields(model().curSol(), *resultWriter_);
+            resultWriter_->endTimestep();
         }
     }
 
@@ -482,7 +486,7 @@ private:
     NewtonMethod newtonMethod_;
     NewtonController newtonCtl_;
 
-    VtkMultiWriter resultWriter_;
+    VtkMultiWriter *resultWriter_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.
