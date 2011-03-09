@@ -191,27 +191,27 @@ public:
 
 #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
         // add debug stuff
-        Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer.template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer->template createField<double, 1> (dv_dp.size());
         *errorCorrPtr = errorCorrection;
 //        int size = subdomainPtr.size();
-        writer.addCellData(errorCorrPtr, "Error Correction");
+        writer->addCellData(errorCorrPtr, "Error Correction");
 
-        Dune::BlockVector<Dune::FieldVector<double,1> > *dv_dpPtr = writer.template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *dv_dpPtr = writer->template createField<double, 1> (dv_dp.size());
         *dv_dpPtr = dv_dp;
-        writer.addCellData(dv_dpPtr, "dv_dp");
-        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC1Ptr = writer.template createField<double, 1> (dv_dp.size());
-        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC2Ptr = writer.template createField<double, 1> (dv_dp.size());
+        writer->addCellData(dv_dpPtr, "dv_dp");
+        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC1Ptr = writer->template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC2Ptr = writer->template createField<double, 1> (dv_dp.size());
         *dV_dC1Ptr = dV_[0];
         *dV_dC2Ptr = dV_[1];
-        writer.addCellData(dV_dC1Ptr, "dV_dC1");
-        writer.addCellData(dV_dC2Ptr, "dV_dC2");
+        writer->addCellData(dV_dC1Ptr, "dV_dC1");
+        writer->addCellData(dV_dC2Ptr, "dV_dC2");
 
-        Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate1 = writer.template createField<double, 1> (dv_dp.size());
-        Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate2 = writer.template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate1 = writer->template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate2 = writer->template createField<double, 1> (dv_dp.size());
         *updEstimate1 = problem_.variables().updateEstimate()[0];
         *updEstimate2 = problem_.variables().updateEstimate()[1];
-        writer.addCellData(updEstimate1, "updEstimate comp 1");
-        writer.addCellData(updEstimate2, "updEstimate comp 2");
+        writer->addCellData(updEstimate1, "updEstimate comp 1");
+        writer->addCellData(updEstimate2, "updEstimate comp 2");
 #endif
         return;
     }
@@ -966,7 +966,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
         Scalar erri = fabs(problem_.variables().volErr()[globalIdxI]);
         Scalar x_lo = 0.6;
         Scalar x_mi = 0.9;
-        Scalar fac  = 0.05;
+        Scalar fac  = 0.5;
         Scalar lofac = 0.;
         Scalar hifac = 0.;
         hifac /= fac;
@@ -1166,7 +1166,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 //        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
         if(Z1<0. || Z1 > 1.)
         {
-            Dune::dgrave << "Feed mass fraction unphysical: Z1 = " << Z1
+            std::cout << "Feed mass fraction unphysical: Z1 = " << Z1
                    << " at global Idx " << globalIdx
                    << " , because totalConcentration(globalIdx, wCompIdx) = "
                    << problem_.variables().totalConcentration(globalIdx, wCompIdx)

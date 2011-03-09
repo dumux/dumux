@@ -163,24 +163,24 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typename Variables::ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
+        typename Variables::ScalarSolutionType *pressure = writer->template createField<Scalar, 1> (problem_.gridView().size(0));
 
         *pressure = problem_.variables().pressure();
 
-        writer.addCellData(pressure, "global pressure");
+        writer->addCellData(pressure, "global pressure");
 
         // output  phase-dependent stuff
-        typename Variables::ScalarSolutionType *pC = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
+        typename Variables::ScalarSolutionType *pC = writer->template createField<Scalar, 1> (problem_.gridView().size(0));
         *pC = problem_.variables().capillaryPressure();
-        writer.addCellData(pC, "capillary pressure");
+        writer->addCellData(pC, "capillary pressure");
 
-        typename Variables::ScalarSolutionType *viscosityWetting = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
+        typename Variables::ScalarSolutionType *viscosityWetting = writer->template createField<Scalar, 1> (problem_.gridView().size(0));
         *viscosityWetting = problem_.variables().viscosityWetting();
-        writer.addCellData(viscosityWetting, "wetting viscosity");
+        writer->addCellData(viscosityWetting, "wetting viscosity");
 
-        typename Variables::ScalarSolutionType *viscosityNonwetting = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
+        typename Variables::ScalarSolutionType *viscosityNonwetting = writer->template createField<Scalar, 1> (problem_.gridView().size(0));
         *viscosityNonwetting = problem_.variables().viscosityNonwetting();
-        writer.addCellData(viscosityNonwetting, "nonwetting viscosity");
+        writer->addCellData(viscosityNonwetting, "nonwetting viscosity");
 
         return;
     }

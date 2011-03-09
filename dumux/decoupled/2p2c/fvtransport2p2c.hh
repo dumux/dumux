@@ -337,7 +337,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     lambdaN = problem_.variables().mobilityNonwetting(globalIdxJ);
 
                 double velocityW = lambdaW * potentialW;
-                double velocityN = lambdaN * potentialW;
+                double velocityN = lambdaN * potentialNW;
 
                 // standardized velocity
                 double velocityJIw = std::max(-velocityW * faceArea / volume, 0.0);
@@ -465,10 +465,10 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                                     / viscosityNWBound;
                         }
                     // standardized velocity
-                    double velocityJIw = std::max(-lambdaW * potentialW * faceArea / volume, 0.0);
-                    double velocityIJw = std::max( lambdaW * potentialW * faceArea / volume, 0.0);
-                    double velocityJIn = std::max(-lambdaN * potentialNW * faceArea / volume, 0.0);
-                    double velocityIJn = std::max( lambdaN * potentialNW* faceArea / volume, 0.0);
+                    double velocityJIw = std::max((-lambdaW * potentialW) * faceArea / volume, 0.0);
+                    double velocityIJw = std::max(( lambdaW * potentialW)* faceArea / volume, 0.0);
+                    double velocityJIn = std::max((-lambdaN * potentialNW) * faceArea / volume, 0.0);
+                    double velocityIJn = std::max(( lambdaN * potentialNW) * faceArea / volume, 0.0);
 
                     // for timestep control
                     factor[0] = velocityJIw + velocityJIn;

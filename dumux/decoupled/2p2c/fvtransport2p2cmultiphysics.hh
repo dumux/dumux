@@ -321,10 +321,10 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                         lambdaNW = problem_.variables().mobilityNonwetting(globalIdxJ);
 
                     // calculate and standardized velocity
-                    double velocityJIw = std::max(-lambdaW * potentialW * faceArea / volume, 0.0);
-                    double velocityIJw = std::max( lambdaW * potentialW * faceArea / volume, 0.0);
-                    double velocityJIn = std::max(-lambdaNW * potentialNW * faceArea / volume, 0.0);
-                    double velocityIJn = std::max( lambdaNW * potentialNW * faceArea / volume, 0.0);
+                    double velocityJIw = std::max(-(lambdaW * potentialW) * faceArea / volume, 0.0);
+                    double velocityIJw = std::max( (lambdaW * potentialW) * faceArea / volume, 0.0);
+                    double velocityJIn = std::max(-(lambdaNW * potentialNW) * faceArea / volume, 0.0);
+                    double velocityIJn = std::max( (lambdaNW * potentialNW) * faceArea / volume, 0.0);
 
                     // for timestep control
                     factor[0] = velocityJIw + velocityJIn;
@@ -448,10 +448,10 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                                         / viscosityNWBound;
                             }
                         // standardized velocity
-                        double velocityJIw = std::max(-lambdaW * potentialW * faceArea / volume, 0.0);
-                        double velocityIJw = std::max( lambdaW * potentialW * faceArea / volume, 0.0);
-                        double velocityJIn = std::max(-lambdaN * potentialNW * faceArea / volume, 0.0);
-                        double velocityIJn = std::max( lambdaN * potentialNW* faceArea / volume, 0.0);
+                        double velocityJIw = std::max(-(lambdaW * potentialW) * faceArea / volume, 0.0);
+                        double velocityIJw = std::max( (lambdaW * potentialW) * faceArea / volume, 0.0);
+                        double velocityJIn = std::max(-(lambdaN * potentialNW) * faceArea / volume, 0.0);
+                        double velocityIJn = std::max( (lambdaN * potentialNW)* faceArea / volume, 0.0);
 
                         // for timestep control
                         factor[0] = velocityJIw + velocityJIn;

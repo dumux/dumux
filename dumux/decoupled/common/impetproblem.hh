@@ -89,8 +89,7 @@ public:
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
-          variables_(gridView),
-          resultWriter_(asImp_().name())
+          variables_(gridView)
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -107,6 +106,7 @@ public:
         transportModel_ = new TransportModel(asImp_());
         model_ = new IMPETModel(asImp_()) ;
 
+        resultWriter_ = NULL;
     }
 
     //! destructor
@@ -115,6 +115,7 @@ public:
         delete pressModel_;
         delete transportModel_;
         delete model_;
+        delete resultWriter_;
     }
 
     /*!
@@ -275,6 +276,8 @@ public:
      * This function sets the simulation name, which should be called before
      * the application porblem is declared! If not, the default name "sim"
      * will be used.
+     *
+     * \param newName The problem's name
      */
     static void setName(const char *newName)
     {
@@ -380,7 +383,7 @@ public:
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
         timeManager_.serialize(res);
-        resultWriter_.serialize(res);
+        resultWriter_->serialize(res);
         model().serialize(res);
 
         res.serializeEnd();
@@ -401,7 +404,7 @@ public:
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager_.deserialize(res);
-        resultWriter_.deserialize(res);
+        resultWriter_->deserialize(res);
         model().deserialize(res);
 
         res.deserializeEnd();
@@ -419,10 +422,12 @@ public:
         if (gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
 
-        resultWriter_.beginTimestep(timeManager_.time() + timeManager_.timeStepSize(),
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        resultWriter_->beginTimestep(timeManager_.time() + timeManager_.timeStepSize(),
                                     gridView());
         asImp_().addOutputVtkFields();
-        resultWriter_.endTimestep();
+        resultWriter_->endTimestep();
     }
 
     // \}
@@ -464,7 +469,7 @@ private:
     TransportModel* transportModel_;//!< object including the saturation model
     IMPETModel* model_;
 
-    VtkMultiWriter resultWriter_;
+    VtkMultiWriter *resultWriter_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.

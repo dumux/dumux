@@ -93,8 +93,7 @@ public:
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
-          variables_(gridView),
-          resultWriter_(asImp_().name())
+          variables_(gridView)
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -107,12 +106,15 @@ public:
         }
 
         model_ = new Model(asImp_()) ;
+
+        resultWriter_ = NULL;
     }
 
     //! destructor
     virtual ~OneModelProblem ()
     {
         delete model_;
+        delete resultWriter_;
     }
 
 
@@ -215,10 +217,11 @@ public:
     {
         if (gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
-
-        resultWriter_.beginTimestep(timeManager_.time() + timeManager_.timeStepSize(), gridView());
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        resultWriter_->beginTimestep(timeManager_.time() + timeManager_.timeStepSize(), gridView());
         asImp_().addOutputVtkFields();
-        resultWriter_.endTimestep();
+        resultWriter_->endTimestep();
     }
 
     /*!
@@ -338,7 +341,7 @@ public:
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
         timeManager_.serialize(res);
-        resultWriter_.serialize(res);
+        resultWriter_->serialize(res);
         model().serialize(res);
 
         res.serializeEnd();
@@ -359,7 +362,7 @@ public:
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager_.deserialize(res);
-        resultWriter_.deserialize(res);
+        resultWriter_->deserialize(res);
         model().deserialize(res);
 
         res.deserializeEnd();
@@ -401,7 +404,7 @@ private:
 
     Model* model_;
 
-    VtkMultiWriter resultWriter_;
+    VtkMultiWriter *resultWriter_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.
