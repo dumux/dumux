@@ -444,12 +444,16 @@ protected:
     //! Returns the applied VTK-writer for the output
     VtkMultiWriter& resultWriter()
     {
-        return resultWriter_;
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        return *resultWriter_;
     }
     //! \copydoc Dumux::IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
-        return resultWriter_;
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        return *resultWriter_;
     }
 
 private:
