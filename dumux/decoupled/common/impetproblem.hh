@@ -413,7 +413,7 @@ public:
 
     void addOutputVtkFields()
     {
-        model().addOutputVtkFields(resultWriter_);
+        model().addOutputVtkFields(*resultWriter_);
     }
 
     //! Write the fields current solution into an VTK output file.

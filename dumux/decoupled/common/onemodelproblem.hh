@@ -209,7 +209,7 @@ public:
 
     void addOutputVtkFields()
     {
-        model().addOutputVtkFields(resultWriter_);
+        model().addOutputVtkFields(*resultWriter_);
     }
 
     //! Write the fields current solution into an VTK output file.
@@ -381,12 +381,16 @@ protected:
 
     VtkMultiWriter& resultWriter()
     {
-        return resultWriter_;
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        return *resultWriter_;
     }
 
     VtkMultiWriter& resultWriter() const
     {
-        return resultWriter_;
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        return *resultWriter_;
     }
 
 private:

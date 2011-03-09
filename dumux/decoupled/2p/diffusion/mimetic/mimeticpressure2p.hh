@@ -186,11 +186,11 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typename Variables::ScalarSolutionType *pressure = writer->template createField<Scalar, 1> (problem_.gridView().size(0));
+        typename Variables::ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (problem_.gridView().size(0));
 
         *pressure = problem_.variables().pressure();
 
-        writer->addCellData(pressure, "global pressure");
+        writer.addCellData(pressure, "global pressure");
 
         return;
     }
