@@ -227,7 +227,7 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     }
     if (saturationType_ == Sn)
     {
-        volumeCorrectionFactorOutNW = std::max((1 - sat - residualSatNW), 1e-2);
+        volumeCorrectionFactorOutW = std::max((1 - sat - residualSatW), 1e-2);
         volumeCorrectionFactorOutNW = std::max((sat - residualSatNW), 1e-2);
     }
 

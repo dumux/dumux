@@ -115,6 +115,7 @@ public:
         Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(globalPos,
                 *(intersection.inside())), satI);
 
+
         const Dune::FieldVector<Scalar, dimWorld>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
         if (intersection.neighbor())
@@ -136,7 +137,7 @@ public:
             potentialW = problem_.variables().potentialWetting(globalIdxI, indexInInside);
             potentialNW = problem_.variables().potentialNonwetting(globalIdxI, indexInInside);
 
-            Scalar satJ = problem_.variables().saturation()[globalIdxI];
+            Scalar satJ = problem_.variables().saturation()[globalIdxJ];
             Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
             Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
 
@@ -438,11 +439,11 @@ public:
             cflFluxFunction_ = 0;
         }
 
-        if (cflFluxDefault > 1)
-            std::cout << "cflFluxDefault = " << cflFluxDefault << "\n";
-
-        if (cflFluxFunction_ > 1)
-            std::cout << "cflFluxFunction_ = " << cflFluxFunction_ << "\n";
+//        if (cflFluxDefault > 1)
+//            std::cout << "cflFluxDefault = " << cflFluxDefault << "\n";
+//
+//        if (cflFluxFunction_ > 1)
+//            std::cout << "cflFluxFunction_ = " << cflFluxFunction_ << "\n";
 
         Scalar returnValue = std::max(cflFluxFunction_, cflFluxDefault);
         reset();
@@ -473,7 +474,7 @@ private:
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
-    static const Scalar eps_ = 1e-2;
+    static const Scalar eps_ = 5e-3;
 };
 
 }
