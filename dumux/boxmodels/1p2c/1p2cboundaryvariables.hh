@@ -175,7 +175,7 @@ protected:
             // FE gradient at vertex idx
             const ScalarGradient& feGrad = boundaryFace_->grad[idx];
 
-            /Scalar/ compute sum of pressure gradients for each phase
+            // compute sum of pressure gradients for each phase
                 // the pressure gradient
                 tmp = feGrad;
                 tmp *= elemDat[idx].pressure();
