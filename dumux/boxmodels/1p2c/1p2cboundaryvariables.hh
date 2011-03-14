@@ -54,7 +54,6 @@ class OnePTwoCBoundaryVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
 
     enum {
@@ -97,7 +96,7 @@ public:
             potentialGrad_ = Scalar(0);
             concentrationGrad_ = Scalar(0);
             molarConcGrad_ = Scalar(0);
-
+            K_= Scalar(0);
 
         calculateBoundaryValues_(problem, element, elemDat);
     };
@@ -151,6 +150,17 @@ public:
     { return *boundaryFace_; }
 
 protected:
+
+    void calculateK_(Scalar k)
+    {
+        K_[0][0] = K_[1][1] = k;
+    }
+
+    void calculateK_(VectorGradient K)
+    {
+       K_ = K;
+    }
+
     void calculateBoundaryValues_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemDat)
@@ -165,7 +175,7 @@ protected:
             // FE gradient at vertex idx
             const ScalarGradient& feGrad = boundaryFace_->grad[idx];
 
-            // compute sum of pressure gradients for each phase
+            /Scalar/ compute sum of pressure gradients for each phase
                 // the pressure gradient
                 tmp = feGrad;
                 tmp *= elemDat[idx].pressure();
@@ -192,9 +202,9 @@ protected:
 
             potentialGrad_ -= tmp;
 
-            VectorGradient K = problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_);
+            calculateK_(problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_));
             ScalarGradient Kmvp;
-            K.mv(potentialGrad_, Kmvp);
+            K_.mv(potentialGrad_, Kmvp);
             KmvpNormal_ = - (Kmvp*boundaryFace_->normal);
 
             const VolumeVariables &vertDat = elemDat[scvIdx_];
@@ -218,6 +228,8 @@ protected:
     Scalar viscosityAtIP_;
     Scalar molarDensityAtIP_;
 
+    //intrinsic permeability tensor
+    VectorGradient K_;
     // intrinsic permeability times pressure potential gradient
     // projected on the face normal
     Scalar KmvpNormal_;
