@@ -91,6 +91,7 @@ public:
         boundaryFace_ = &fvElemGeom_.boundaryFace[boundaryFaceIdx];
 
             densityAtIP_ = Scalar(0);
+            viscosityAtIP_ = Scalar(0);
             pressureAtIP_ = Scalar(0);
             molarDensityAtIP_ = Scalar(0);
             potentialGrad_ = Scalar(0);
@@ -118,6 +119,13 @@ public:
     { return densityAtIP_; }
 
     /*!
+    * \brief Return viscosity \f$\mathrm{[Pa s]}\f$ of a phase at the integration
+    *        point.
+    */
+   Scalar viscosityAtIP() const
+   { return viscosityAtIP_; }
+
+    /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
      *        point.
      */
@@ -133,7 +141,7 @@ public:
     /*!
      * \brief The molar concentration gradient of a component in a phase.
      */
-    const ScalarGradient &molarConcGrad() const
+    const ScalarGradient &molarConcGrad(int compIdx) const
     { return molarConcGrad_; };
 
     const FVElementGeometry &fvElemGeom() const
@@ -175,6 +183,7 @@ protected:
 
                 pressureAtIP_ += elemDat[idx].pressure()*boundaryFace_->shapeValue[idx];
                 densityAtIP_ += elemDat[idx].density()*boundaryFace_->shapeValue[idx];
+                viscosityAtIP_ += elemDat[idx].viscosity()*boundaryFace_->shapeValue[idx];
                 molarDensityAtIP_ += elemDat[idx].molarDensity()*boundaryFace_->shapeValue[idx];
         }
 
@@ -206,6 +215,7 @@ protected:
     // density of each face at the integration point
     Scalar pressureAtIP_;
     Scalar densityAtIP_;
+    Scalar viscosityAtIP_;
     Scalar molarDensityAtIP_;
 
     // intrinsic permeability times pressure potential gradient
