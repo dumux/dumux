@@ -76,10 +76,16 @@ public:
         temperature_ = temperature;
 
         phasePressure_ = primaryVars[pressureIdx];
-        x1_ = primaryVars[x1Idx]; //mole fraction of component 2
-        meanMolarMass_ =
-            (1 - x1_)*FluidSystem::molarMass(comp0Idx) +
-            (x1_    )*FluidSystem::molarMass(comp1Idx);
+        x1_ = primaryVars[x1Idx]; //mole or mass fraction of component 2
+        Scalar M0 = FluidSystem::molarMass(comp0Idx);
+        Scalar M1 = FluidSystem::molarMass(comp1Idx);
+        //meanMolarMass if x1_ is a massfraction
+        meanMolarMass_ = M0*M1/(M1 + (1-x1_)*(M0 - M1));
+
+        //meanMolarMass if x1_ is a molefraction
+//        meanMolarMass_ =
+//            (1 - x1_)*FluidSystem::molarMass(comp0Idx) +
+//            (x1_    )*FluidSystem::molarMass(comp1Idx);
 
         density_ = FluidSystem::phaseDensity(phaseIdx, temperature_, phasePressure_, *this);
         molarDensity_ = density_ / meanMolarMass_;
@@ -111,11 +117,23 @@ public:
         // we are a single phase model!
         if (phaseIndex != phaseIdx) return 0.0;
 
+        ///if x1_ is a massfraction
+        Scalar moleFrac1(x1_);
+        moleFrac1 *= meanMolarMass_/FluidSystem::molarMass(comp1Idx);
+
         if (compIdx==comp0Idx)
-            return 1-x1_;
+            return 1-moleFrac1;
         else if (compIdx==comp1Idx)
-            return x1_;
+            return moleFrac1;
         return 0.0;
+
+
+        //if x1_ is a molefraction
+//        if (compIdx==comp0Idx)
+//            return 1-x1_;
+//        else if (compIdx==comp1Idx)
+//            return x1_;
+//        return 0.0;
     }
 
     /*!
@@ -151,11 +169,19 @@ public:
     {
         if (phaseIndex != phaseIdx)
             return 0;
-        return
-            moleFrac(phaseIndex, compIdx)*
-            FluidSystem::molarMass(compIdx)
-            /
-            meanMolarMass_;
+        //if x1_ is amassfraction
+        if (compIdx==comp0Idx)
+            return 1-x1_;
+        else if (compIdx==comp1Idx)
+            return x1_;
+        return 0.0;
+
+        //if x1_ is a molefraction
+//        return
+//            moleFrac(phaseIndex, compIdx)*
+//            FluidSystem::molarMass(compIdx)
+//            /
+//            meanMolarMass_;
     }
 
     /*!

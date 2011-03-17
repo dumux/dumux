@@ -184,7 +184,7 @@ protected:
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().massFrac(phaseIdx, comp1Idx);
+            tmp *= elemDat[idx].fluidState().concentration(phaseIdx, comp1Idx);
             concentrationGrad_ += tmp;
 
             tmp = feGrad;
