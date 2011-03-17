@@ -89,7 +89,8 @@ public:
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
-          variables_(gridView)
+          variables_(gridView),
+          outputInterval_(1)
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -236,6 +237,14 @@ public:
     }
 
     /*!
+     * \brief Sets the interval for Output
+     *
+     * The default is 1 -> Output every time step
+     */
+    void setOutputInterval(int interval)
+    { outputInterval_ = interval; }
+
+    /*!
      * \brief Returns true if the current solution should be written to
      *        disk (i.e. as a VTK file)
      *
@@ -244,7 +253,13 @@ public:
      * implementation.
      */
     bool shouldWriteOutput() const
-    { return true; }
+    {
+        if (this->timeManager().timeStepIndex() % outputInterval_ == 0 || this->timeManager().willBeFinished())
+        {
+            return true;
+        }
+        return false;
+    }
 
     /*!
      * \brief Called when the end of an simulation episode is reached.
@@ -474,6 +489,7 @@ private:
     IMPETModel* model_;
 
     VtkMultiWriter *resultWriter_;
+    int outputInterval_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.

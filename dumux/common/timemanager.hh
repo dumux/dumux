@@ -382,7 +382,7 @@ public:
             problem_->postTimeStep();
 
             // write the result to disk
-            if (problem_->shouldWriteOutput() || willBeFinished())
+            if (problem_->shouldWriteOutput())
                 problem_->writeOutput();
 
             // perpare the model for the next time integration
