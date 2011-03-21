@@ -622,7 +622,8 @@ public:
               return oldTimeStep*(1 + percent);
             */
             Scalar percent = (targetSteps_ - n)/targetSteps_;
-            return oldTimeStep*(1.0 + percent/1.2);
+            return std::min(oldTimeStep*(1.0 + percent/1.2), 
+                            this->problem_().maxTimeStepSize());
         }
     }
 

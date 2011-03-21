@@ -269,10 +269,10 @@ public:
         Valgrind::CheckDefined(prevVolVars);
         Valgrind::CheckDefined(curVolVars);
 
-#if 0 // HAVE_VALGRIND
+#if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvGeom.numVertices; i++) {
-            Valgrind::CheckDefined(prevVolVars[i]);
-            Valgrind::CheckDefined(curVolVars[i]);
+            prevVolVars[i].checkDefined();
+            curVolVars[i].checkDefined();
         }
 #endif // HAVE_VALGRIND
 
@@ -287,13 +287,29 @@ public:
         residual_.resize(numVerts);
         residual_ = 0;
 
+#if !defined NDEBUG && HAVE_VALGRIND
+        for (int i=0; i < fvElemGeom_().numVertices; i++)
+            Valgrind::CheckDefined(residual_[i]);
+#endif // HAVE_VALGRIND
+
         asImp_().evalFluxes_();
+
+#if !defined NDEBUG && HAVE_VALGRIND
+        for (int i=0; i < fvElemGeom_().numVertices; i++)
+            Valgrind::CheckDefined(residual_[i]);
+#endif // HAVE_VALGRIND
+
         asImp_().evalVolumeTerms_();
+
+#if !defined NDEBUG && HAVE_VALGRIND
+        for (int i=0; i < fvElemGeom_().numVertices; i++)
+            Valgrind::CheckDefined(residual_[i]);
+#endif // HAVE_VALGRIND
 
         // evaluate the boundary
         asImp_().evalBoundary_();
 
-#if HAVE_VALGRIND
+#if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
@@ -340,8 +356,18 @@ protected:
     {
         if (bcTypes_().hasNeumann())
             asImp_().evalNeumann_();
+#if !defined NDEBUG && HAVE_VALGRIND
+        for (int i=0; i < fvElemGeom_().numVertices; i++)
+            Valgrind::CheckDefined(residual_[i]);
+#endif // HAVE_VALGRIND
+
         if (bcTypes_().hasDirichlet())
             asImp_().evalDirichlet_();
+
+#if !defined NDEBUG && HAVE_VALGRIND
+        for (int i=0; i < fvElemGeom_().numVertices; i++)
+            Valgrind::CheckDefined(residual_[i]);
+#endif // HAVE_VALGRIND
     }
 
     /*!
@@ -365,8 +391,12 @@ protected:
                 if (!bcTypes.isDirichlet(eqIdx))
                     continue;
                 int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                assert(0 <= pvIdx && pvIdx < numEq);
+                Valgrind::CheckDefined(pvIdx);
+                Valgrind::CheckDefined(curPrimaryVar_(i, pvIdx));
+                Valgrind::CheckDefined(tmp[pvIdx]);
                 this->residual_[i][eqIdx] =
-                    curPrimaryVars_(i)[pvIdx] - tmp[pvIdx];
+                    curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
             };
         };
     }
@@ -581,6 +611,15 @@ protected:
     const PrimaryVariables &curPrimaryVars_(int i) const
     {
         return curVolVars_(i).primaryVars();
+    }
+
+    /*!
+     * \brief Returns the j'th primary of the i'th sub-control volume
+     *        of the current element.
+     */
+    Scalar curPrimaryVar_(int i, int j) const
+    {
+        return curVolVars_(i).primaryVar(j);
     }
 
     /*!

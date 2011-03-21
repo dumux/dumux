@@ -115,8 +115,8 @@ public:
                 int scvIdx,
                 bool isOldSol)
     {
+        Valgrind::CheckDefined(priVars);
         primaryVars_ = priVars;
-        Valgrind::CheckDefined(primaryVars_);
     }
 
     /*!
@@ -131,7 +131,23 @@ public:
      * \param pvIdx The index of the primary variable of interest
      */
     Scalar primaryVar(int pvIdx) const
-    { return primaryVars_[pvIdx]; }
+    { 
+        return primaryVars_[pvIdx];
+    }
+
+    /*!
+     * \brief If running in valgrind this makes sure that all
+     *        quantities in the volume variables are defined.
+     */
+    void checkDefined() const
+    {
+#if !defined NDEBUG && HAVE_VALGRIND
+        Valgrind::CheckDefined(primaryVars_);
+        Valgrind::CheckDefined(evalPoint_);
+        if (evalPoint_ && evalPoint_ != this)
+            evalPoint_->checkDefined();
+#endif
+    };
 
 protected:
     const Implementation &asImp_() const
@@ -139,10 +155,10 @@ protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
-    PrimaryVariables primaryVars_;
-
     // the evaluation point of the local jacobian
     const Implementation *evalPoint_;
+
+    PrimaryVariables primaryVars_;
 };
 
 } // end namepace

@@ -353,6 +353,7 @@ protected:
                                 int pvIdx)
     {
         int globalIdx = vertexMapper_().map(elem_(), scvIdx, dim);
+
         PrimaryVariables priVars(model_().curSol()[globalIdx]);
         VolumeVariables origVolVars(curVolVars_[scvIdx]);
 
@@ -445,7 +446,7 @@ protected:
     Scalar numericEpsilon_(int scvIdx,
                            int pvIdx) const
     {
-        Scalar pv = this->curVolVars_[scvIdx].primaryVars()[pvIdx];
+        Scalar pv = this->curVolVars_[scvIdx].primaryVar(pvIdx);
         return 1e-9*(std::abs(pv) + 1);
     }
 

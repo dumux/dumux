@@ -44,7 +44,7 @@
 #define SetNoAccess(a) foo();
 namespace Valgrind
 {
-inline void foo() {}; // dummy function
+inline bool foo() { return true; }; // dummy function
 }
 
 #else
@@ -67,10 +67,11 @@ namespace Valgrind
  * \param value the object which valgrind should check
  */
 template <class T>
-inline void CheckDefined(const T &value)
+inline bool CheckDefined(const T &value)
 {
 #if HAVE_VALGRIND
-    VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
+    unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
+    return tmp == 0;
 #endif
 }
 
