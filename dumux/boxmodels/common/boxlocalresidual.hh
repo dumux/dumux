@@ -210,7 +210,7 @@ public:
         ElementVolumeVariables volVars;
 
         // update the hints
-        model_().setHints(volVars);
+        model_().setHints(element, volVars);
 
         // calculate volume current variables
         volVars.update(problem_(), element, fvElemGeom_(), false);

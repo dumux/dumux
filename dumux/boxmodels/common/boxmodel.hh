@@ -160,7 +160,10 @@ public:
         if (!enableHints)
             return;
 
-        for (int i = 0; i < curVolVars.size(); ++i) {
+        int n = elem.template count<dim>();
+        prevVolVars.resize(n);
+        curVolVars.resize(n);
+        for (int i = 0; i < n; ++i) {
             int globalIdx = problem_().vertexMapper().map(elem, i, dim);
             
             if (!hintsUsable_[globalIdx]) {
@@ -180,7 +183,9 @@ public:
         if (!enableHints)
             return;
 
-        for (int i = 0; i < curVolVars.size(); ++i) {
+        int n = elem.template count<dim>();
+        curVolVars.resize(n);
+        for (int i = 0; i < n; ++i) {
             int globalIdx = problem_().vertexMapper().map(elem, i, dim);
             
             if (!hintsUsable_[globalIdx])
