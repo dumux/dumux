@@ -148,11 +148,11 @@ public:
      */
     void computeSource(PrimaryVariables &q, int scvIdx)
     {
-        this->problem_().source(q,
-                                this->elem_(),
-                                this->fvElemGeom_(),
-                                scvIdx,
-                                this->curVolVars_());
+        this->problem_().boxSDSource(q,
+                                     this->elem_(),
+                                     this->fvElemGeom_(),
+                                     scvIdx,
+                                     this->curVolVars_());
     }
 };
 

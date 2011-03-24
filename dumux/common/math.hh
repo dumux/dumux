@@ -171,7 +171,7 @@ int invertQuadraticPolynomial(SolContainer &sol,
  * \param d The coefficiont for the constant term
  */
 template <class Scalar, class SolContainer>
-int invertCubicPolynomial(SolContainer &sol,
+int invertCubicPolynomial(SolContainer *sol,
                           Scalar a,
                           Scalar b,
                           Scalar c,
@@ -336,6 +336,7 @@ int invertCubicPolynomial(SolContainer &sol,
     // NOT REACHABLE!
     return 0;
 }
+
 template <class Scalar, class SolContainer>
 void invertCubicPolynomialPostProcess_(SolContainer &sol,
                                        int numSol,

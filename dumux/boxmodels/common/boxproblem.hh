@@ -224,23 +224,28 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent and requires some box method
+     * specific things.
+     *
      * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
      * \param element The finite element
      * \param fvElemGeom The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
+     * \param elemVolVars All volume variables for the element
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx,
-                 const ElementVolumeVariables &elemVolVars) const
+    void boxSDNeumann(PrimaryVariables &values,
+                      const Element &element,
+                      const FVElementGeometry &fvElemGeom,
+                      const Intersection &is,
+                      int scvIdx,
+                      int boundaryFaceIdx,
+                      const ElementVolumeVariables &elemVolVars) const
     {
         // forward it to the interface without the volume variables
         asImp_().neumann(values,
@@ -297,20 +302,25 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some box method
+     * specific things.
+     *
      * \param values The source and sink values for the conservation equations
      * \param element The finite element
      * \param fvElemGeom The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
+     * \param elemVolVars All volume variables for the element
      *
      * For this method, the \a values parameter stores the rate mass
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvElemGeom,
-                int scvIdx,
-                const ElementVolumeVariables &elemVolVars) const
+    void boxSDSource(PrimaryVariables &values,
+                     const Element &element,
+                     const FVElementGeometry &fvElemGeom,
+                     int scvIdx,
+                     const ElementVolumeVariables &elemVolVars) const
     {
         // forward to solution independent, box specific interface
         asImp_().source(values, element, fvElemGeom, scvIdx);

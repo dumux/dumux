@@ -210,10 +210,11 @@ public:
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
         // retrieve the source term intrinsic to the problem
-        this->problem_().source(q,
-                                this->elem_(),
-                                this->fvElemGeom_(),
-                                localVertexIdx);
+        this->problem_().boxSDSource(q,
+                                     this->elem_(),
+                                     this->fvElemGeom_(),
+                                     localVertexIdx,
+                                     this->curVolVars_());
     }
 
 

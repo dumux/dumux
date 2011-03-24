@@ -465,13 +465,13 @@ protected:
 
         // deal with neumann boundaries
         if (bcTypes.hasNeumann()) {
-            problem_().neumann(values,
-                               elem_(),
-                               fvElemGeom_(),
-                               *isIt,
-                               scvIdx,
-                               boundaryFaceIdx,
-                               curVolVars_());
+            problem_().boxSDNeumann(values,
+                                    elem_(),
+                                    fvElemGeom_(),
+                                    *isIt,
+                                    scvIdx,
+                                    boundaryFaceIdx,
+                                    curVolVars_());
             values *= fvElemGeom_().boundaryFace[boundaryFaceIdx].area;
             Valgrind::CheckDefined(values);
             residual_[scvIdx] += values;
