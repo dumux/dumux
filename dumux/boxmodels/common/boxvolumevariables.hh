@@ -93,6 +93,13 @@ public:
     { return (evalPoint_ == 0)?asImp_():*evalPoint_; }
 
     /*!
+     * \brief Set the volume variables which should be used as initial
+     *        conditions for complex calculations.
+     */
+    void setHint(const Implementation *hint)
+    {};
+
+    /*!
      * \brief Update all quantities for a given control volume.
      *
      * \param priVars The primary variables for the control volume

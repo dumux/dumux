@@ -91,7 +91,7 @@ private:
         Green = JacobianAssembler::Green,
 
         numDiffMethod = GET_PROP_VALUE(TypeTag,
-                                       PTAG(NumericDifferenceMethod))
+                                       PTAG(NumericDifferenceMethod)),
     };
 
 
@@ -170,19 +170,24 @@ public:
         // not thread save.) The real solution are context objects!
         problem_().updateCouplingParams(elem_());
 
-        int numVertices = fvElemGeom_.numVertices;
-
+        // set the hints for the volume variables
+        model_().setHints(element, prevVolVars_, curVolVars_);
+        
         // update the secondary variables for the element at the last
         // and the current time levels
         prevVolVars_.update(problem_(),
                             elem_(),
                             fvElemGeom_,
                             true /* isOldSol? */);
-
+        
         curVolVars_.update(problem_(),
                            elem_(),
                            fvElemGeom_,
                            false /* isOldSol? */);
+
+        // update the hints of the model
+        model_().updateCurHints(element, curVolVars_);
+
         // calculate the local residual
         localResidual().eval(elem_(),
                              fvElemGeom_,
@@ -192,6 +197,7 @@ public:
         residual_ = localResidual().residual();
 
         // calculate the local jacobian matrix
+        int numVertices = fvElemGeom_.numVertices;
         ElementSolutionVector partialDeriv(numVertices);
         for (int j = 0; j < numVertices; j++) {
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++) {
@@ -489,7 +495,7 @@ protected:
     // levels
     ElementVolumeVariables prevVolVars_;
     ElementVolumeVariables curVolVars_;
-
+    
     LocalResidual localResidual_;
 
     LocalBlockMatrix A_;

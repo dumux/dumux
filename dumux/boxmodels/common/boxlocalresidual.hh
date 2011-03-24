@@ -124,6 +124,9 @@ public:
         fvElemGeomPtr_ = &fvElemGeom;
 
         ElementVolumeVariables volVarsPrev, volVarsCur;
+        // update the hints
+        model_().setHints(element, volVarsPrev, volVarsCur);
+
         volVarsPrev.update(problem_(),
                            element,
                            fvElemGeom_(),
@@ -205,6 +208,11 @@ public:
         prevVolVarsPtr_ = 0;
 
         ElementVolumeVariables volVars;
+
+        // update the hints
+        model_().setHints(volVars);
+
+        // calculate volume current variables
         volVars.update(problem_(), element, fvElemGeom_(), false);
         curVolVarsPtr_ = &volVars;
 

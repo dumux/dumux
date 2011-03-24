@@ -70,9 +70,15 @@ class BoxModel
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+
+
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         enableJacobianRecycling  = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)),
+        enableHints = GET_PROP_VALUE(TypeTag, PTAG(EnableHints)),
+
         dim = GridView::dimension
     };
 
@@ -131,10 +137,82 @@ public:
 
         asImp_().applyInitialSolution_();
 
+        // resize the hint vectors
+        if (enableHints) {
+            int nVerts = gridView_().size(dim);
+            curHints_.resize(nVerts);
+            prevHints_.resize(nVerts);
+            hintsUsable_.resize(nVerts);
+            std::fill(hintsUsable_.begin(), 
+                      hintsUsable_.end(),
+                      false);
+        }
+
         // also set the solution of the "previous" time step to the
         // initial solution.
         uPrev_ = uCur_;
     }
+
+    void setHints(const Element &elem,
+                  ElementVolumeVariables &prevVolVars, 
+                  ElementVolumeVariables &curVolVars) const
+    {        
+        if (!enableHints)
+            return;
+
+        for (int i = 0; i < curVolVars.size(); ++i) {
+            int globalIdx = problem_().vertexMapper().map(elem, i, dim);
+            
+            if (!hintsUsable_[globalIdx]) {
+                curVolVars[i].setHint(NULL);
+                prevVolVars[i].setHint(NULL);
+            }
+            else {
+                curVolVars[i].setHint(&curHints_[globalIdx]);
+                prevVolVars[i].setHint(&prevHints_[globalIdx]);
+            }
+        }
+    };
+
+    void setHints(const Element &elem,
+                  ElementVolumeVariables &curVolVars) const
+    {        
+        if (!enableHints)
+            return;
+
+        for (int i = 0; i < curVolVars.size(); ++i) {
+            int globalIdx = problem_().vertexMapper().map(elem, i, dim);
+            
+            if (!hintsUsable_[globalIdx])
+                curVolVars[i].setHint(NULL);
+            else
+                curVolVars[i].setHint(&curHints_[globalIdx]);
+        }
+    };
+
+    void updatePrevHints()
+    {
+        if (!enableHints)
+            return;
+
+        prevHints_ = curHints_;
+    };
+
+    void updateCurHints(const Element &elem, 
+                        const ElementVolumeVariables &ev) const
+    {
+        if (!enableHints)
+            return;
+
+        for (int i = 0; i < ev.size(); ++i) {
+            int globalIdx = problem_().vertexMapper().map(elem, i, dim);
+            curHints_[globalIdx] = ev[i];
+            if (!hintsUsable_[globalIdx])
+                prevHints_[globalIdx] = ev[i];
+            hintsUsable_[globalIdx] = true;
+        }
+    };
+
 
     /*!
      * \brief Compute the global residual for an arbitrary solution
@@ -383,6 +461,8 @@ public:
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
+        curHints_ = prevHints_;
+
         jacAsm_->reassembleAll();
     };
 
@@ -397,6 +477,9 @@ public:
     {
         // make the current solution the previous one.
         uPrev_ = uCur_;
+        prevHints_ = curHints_;
+        
+        updatePrevHints();
     }
 
     /*!
@@ -764,6 +847,12 @@ protected:
             }
         }
     }
+
+    // the hint cache for the previous and the current volume
+    // variables
+    mutable std::vector<bool> hintsUsable_;
+    mutable std::vector<VolumeVariables> curHints_;
+    mutable std::vector<VolumeVariables> prevHints_;
 
     /*!
      * \brief Returns whether messages should be printed
