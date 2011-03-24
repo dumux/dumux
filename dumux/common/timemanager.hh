@@ -1,6 +1,6 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2008 by Andreas Lauser                                    *
+ *   Copyright (C) 2008-2011 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -110,18 +110,18 @@ public:
               Scalar tEnd,
               bool writeInitialSol = true)
     {
-        if (verbose_)
-            std::cout << "Initializing problem '" << problem_->name() << "'\n";
-
         problem_ = &problem;
         time_ = tStart;
         timeStepSize_ = dtInitial;
         endTime_ = tEnd;
 
+        if (verbose_)
+            std::cout << "Initializing problem '" << problem_->name() << "'\n";
+
         // initialize the problem
         problem_->init();
 
-        // initialize the problem
+        // write initial condition (if requested)
         if (writeInitialSol) {
             time_ -= timeStepSize_;
             problem_->writeOutput();
