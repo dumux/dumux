@@ -127,7 +127,7 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
  * where the initial time step is 100 seconds, and the end of the
  * simulation time is 10,000,000 seconds (115.7 days)
  */
-template <class TypeTag = TTAG(RichardsLensProblem) >
+template <class TypeTag>
 class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
 {
     typedef RichardsLensProblem<TypeTag> ThisType;
@@ -239,10 +239,10 @@ public:
      * \param values The boundary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    using ParentType::boundaryTypes;
+    void boundaryTypes(BoundaryTypes &values,
+                       const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         if (onLeftBoundary_(globalPos) ||
             onRightBoundary_(globalPos))
         {
@@ -261,9 +261,10 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    using ParentType::dirichlet;
+    void dirichlet(PrimaryVariables &values, 
+                   const GlobalPosition &globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
         // use initial values as boundary conditions
         initial_(values, globalPos);
     }
@@ -285,17 +286,10 @@ public:
      * \param boundaryFaceIdx The index of the boundary face of the
      *                        finite volume geometry
      */
+    using ParentType::neumann;
     void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+                 const GlobalPosition &globalPos) const
     {
-
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
         values = 0.0;
         if (onInlet_(globalPos)) {
             // inflow of water
@@ -307,30 +301,6 @@ public:
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Specify the source term [kg/m^3] for the wetting phase
-     *        within a given sub-control-volume.
-     *
-     * For this method, the \a values parameter stores the rate
-     * wetting phase mass is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     *
-     * \param values Storage for all values for the source terms
-     * \param element The DUNE Codim<0> entity which intersects with
-     *                the finite volume in question
-     * \param fvElemGeom The finite volume geometry of the element
-     * \param scvIdx The sub control volume index of the finite
-     *               volume geometry
-     */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvElemGeom,
-                int scvIdx) const
-    {
-        values = Scalar(0.0);
-    }
 
     /*!
      * \brief Evaluate the initial values for a control volume.
@@ -345,15 +315,10 @@ public:
      * \param scvIdx The sub control volume index of the finite
      *               volume geometry
      */
+    using ParentType::initial;
     void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
-    {
-        const GlobalPosition pos = element.geometry().corner(scvIdx);
-
-        initial_(values, pos);
-    };
+                 const GlobalPosition &pos)
+    { initial_(values, pos); };
 
     // \}
 

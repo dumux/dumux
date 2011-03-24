@@ -60,16 +60,22 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+
 
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::Intersection Intersection;
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
@@ -122,6 +128,7 @@ public:
         delete resultWriter_;
     };
 
+
     /*!
      * \brief Called by the Dumux::TimeManager in order to
      *        initialize the problem.
@@ -134,6 +141,252 @@ public:
         // set the initial condition of the model
         model().init(asImp_());
     }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param values The boundary types for the conservation equations
+     * \param vertex The vertex for which the boundary type is set
+     */
+    void boundaryTypes(BoundaryTypes &values,
+                       const Vertex &vertex) const
+    {
+        // forward it to the method which only takes the global coordinate
+        asImp_().boundaryTypes(values, vertex.geometry().center());
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param values The boundary types for the conservation equations
+     * \param pos The position of the finite volume in global coordinates
+     */
+    void boundaryTypes(PrimaryVariables &values,
+                       const GlobalPosition &pos) const
+    {
+        // Throw an exception (there is no reasonable default value
+        // for Dirichlet conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a boundaryTypes() method.");
+    }
+
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param vertex The vertex representing the "half volume on the boundary"
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void dirichlet(PrimaryVariables &values,
+                   const Vertex &vertex) const
+    {
+        // forward it to the method which only takes the global coordinate
+        asImp_().dirichlet(values, vertex.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param pos The position of the center of the finite volume
+     *            for which the dirichlet condition ought to be
+     *            set in global coordinates
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void dirichlet(PrimaryVariables &values,
+                   const GlobalPosition &pos) const
+    {
+        // Throw an exception (there is no reasonable default value
+        // for Dirichlet conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem specifies that some boundary "
+                   "segments are dirichlet, but does not provide "
+                   "a dirichlet() method.");
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
+     */
+    void neumann(PrimaryVariables &values,
+                 const Element &element,
+                 const FVElementGeometry &fvElemGeom,
+                 const Intersection &is,
+                 int scvIdx,
+                 int boundaryFaceIdx,
+                 const ElementVolumeVariables &elemVolVars) const
+    {
+        // forward it to the interface without the volume variables
+        asImp_().neumann(values,
+                         element,
+                         fvElemGeom,
+                         is,
+                         scvIdx,
+                         boundaryFaceIdx);
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param is The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
+     */
+    void neumann(PrimaryVariables &values,
+                 const Element &element,
+                 const FVElementGeometry &fvElemGeom,
+                 const Intersection &is,
+                 int scvIdx,
+                 int boundaryFaceIdx) const
+    {
+        // forward it to the interface with only the global position
+        asImp_().neumann(values, fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal);
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param pos The position of the boundary face's integration point in global coordinates
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
+     */
+    void neumann(PrimaryVariables &values,
+                 const GlobalPosition &pos) const
+    {
+        // do nothing
+        values = 0.0;
+    }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * \param values The source and sink values for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
+     *
+     * For this method, the \a values parameter stores the rate mass
+     * generated or annihilate per volume unit. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void source(PrimaryVariables &values,
+                const Element &element,
+                const FVElementGeometry &fvElemGeom,
+                int scvIdx,
+                const ElementVolumeVariables &elemVolVars) const
+    {
+        // forward to solution independent, box specific interface
+        asImp_().source(values, element, fvElemGeom, scvIdx);
+    }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * \param values The source and sink values for the conservation equations
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
+     *
+     * For this method, the \a values parameter stores the rate mass
+     * generated or annihilate per volume unit. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void source(PrimaryVariables &values,
+                const Element &element,
+                const FVElementGeometry &fvElemGeom,
+                int scvIdx) const
+    {
+        // forward to generic interface
+        asImp_().source(values, fvElemGeom.subContVol[scvIdx].global);
+    }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * \param values The source and sink values for the conservation equations
+     * \param pos The position of the center of the finite volume
+     *            for which the source term ought to be
+     *            specified in global coordinates
+     *
+     * For this method, the \a values parameter stores the rate mass
+     * generated or annihilate per volume unit. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void source(PrimaryVariables &values,
+                const GlobalPosition &pos) const
+    { values = Scalar(0.0);  }
+
+    /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The initial values for the primary variables
+     * \param element The finite element
+     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local vertex index
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
+     */
+    void initial(PrimaryVariables &values,
+                 const Element &element,
+                 const FVElementGeometry &fvElemGeom,
+                 int scvIdx) const
+    {
+        // forward to generic interface
+        asImp_().source(values, fvElemGeom.subContVol[scvIdx].global);
+    }
+
+    /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param pos The position of the center of the finite volume
+     *            for which the initial values ought to be
+     *            set (in global coordinates)
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void initial(PrimaryVariables &values,
+                 const GlobalPosition &pos) const
+    {
+        // Throw an exception (there is no reasonable default value
+        // for Dirichlet conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a initial() method.");
+    }
+
 
     /*!
      * \brief Returns the maximum allowed time step size [s]
@@ -366,108 +619,6 @@ public:
     const Model &model() const
     { return model_; }
     // \}
-
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param values The boundary types for the conservation equations
-     * \param vertex The vertex for which the boundary type is set
-     */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
-    {
-        // Throw an exception
-        DUNE_THROW(Dune::NotImplemented,
-                   "The problem specifies does not provide "
-                   "a boundaryTypes() method.");
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param pos The position of the center of the finite volume
-     *            for which the dirichlet condition ought to be
-     *            set in global coordinates
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    void dirichlet(PrimaryVariables &values,
-                   const GlobalPosition &pos) const
-    {
-        // Throw an exception (there is no reasonable default value
-        // for Dirichlet conditions)
-        DUNE_THROW(Dune::NotImplemented,
-                   "The problem specifies that some boundary "
-                   "segments are dirichlet, but does not provide "
-                   "a dirichlet() method.");
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
-     * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
-     * \param is The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
-    {
-        // Throw an exception
-        DUNE_THROW(Dune::NotImplemented,
-                   "The problem specifies that some boundary "
-                   "segments are dirichlet, but does not provide "
-                   "a neumann() method.");
-    };
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
-    {
-        // Throw an exception
-        DUNE_THROW(Dune::NotImplemented,
-                   "The problem specifies does not provide "
-                   "a initial() method.");
-    }
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvElemGeom,
-                int scvIdx) const
-    {
-        // Throw an exception
-        DUNE_THROW(Dune::NotImplemented,
-                   "The problem specifies does not provide "
-                   "a source() method.");
-    }
 
     /*!
      * \name Restart mechanism

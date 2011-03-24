@@ -462,7 +462,8 @@ protected:
                                fvElemGeom_(),
                                *isIt,
                                scvIdx,
-                               boundaryFaceIdx);
+                               boundaryFaceIdx,
+                               curVolVars_());
             values *= fvElemGeom_().boundaryFace[boundaryFaceIdx].area;
             Valgrind::CheckDefined(values);
             residual_[scvIdx] += values;

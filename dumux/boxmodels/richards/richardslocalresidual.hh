@@ -151,7 +151,8 @@ public:
         this->problem_().source(q,
                                 this->elem_(),
                                 this->fvElemGeom_(),
-                                scvIdx);
+                                scvIdx,
+                                this->curVolVars_());
     }
 };
 

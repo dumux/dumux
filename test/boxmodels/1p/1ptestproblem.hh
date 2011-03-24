@@ -222,6 +222,7 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
+    using ParentType::neumann;
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvElemGeom,
@@ -240,23 +241,6 @@ public:
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvElemGeom,
-                int scvIdx) const
-    {
-        values = Scalar(0.0);
-    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
