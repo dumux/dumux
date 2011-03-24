@@ -178,7 +178,7 @@ int invertCubicPolynomial(SolContainer &sol,
                           Scalar d)
 {
     // reduces to a quadratic polynomial
-    if (a == 0.0)
+    if (a == 0)
         return invertQuadraticPolynomial(sol, b, c, d);
 
     // normalize the polynomial

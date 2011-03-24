@@ -1,7 +1,7 @@
 // $Id$
 /*****************************************************************************
+ *   Copyright (C) 2010-2011 by Andreas Lauser                               *
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
- *   Copyright (C) 2010 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -202,10 +202,7 @@ public:
         int numElems = gridView_().size(0);
         residual_.resize(numVerts);
 
-        if (gridView_().comm().size() > 1)
-        	totalElems_ = gridView_().comm().sum(numElems);
-        else
-        	totalElems_ = numElems;
+        totalElems_ = gridView_().comm().sum(numElems);
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble) {
@@ -239,8 +236,7 @@ public:
         };
 
         if (enablePartialReassemble) {
-            if (gridView_().comm().size() > 1)
-            	greenElems_ = gridView_().comm().sum(greenElems_);
+            greenElems_ = gridView_().comm().sum(greenElems_);
 
             reassembleAccuracy_ = nextReassembleAccuracy_;
             // print some information at the end of the iteration
