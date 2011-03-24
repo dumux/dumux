@@ -143,6 +143,14 @@ public:
     }
 
     /*!
+     * \brief Returns the maximum allowed time step size [s]
+     *
+     * By default this the time step size is unrestricted.
+     */
+    Scalar maxTimeStepSize() const 
+    { return std::numeric_limits<Scalar>::infinity(); }
+
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
