@@ -662,6 +662,7 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
+        createResultWriter_();
         resultWriter_->serialize(res);
         model().serialize(res);
     }
@@ -699,6 +700,7 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
+        createResultWriter_();
         resultWriter_->deserialize(res);
         model().deserialize(res);
     };
@@ -713,13 +715,12 @@ public:
     {
         // write the current result to disk
         if (asImp_().shouldWriteOutput()) {
-            if (!resultWriter_)
-                resultWriter_ = new VtkMultiWriter(asImp_().name());
             if (gridView().comm().rank() == 0)
                 std::cout << "Writing result file for \"" << asImp_().name() << "\"\n";
 
             // calculate the time _after_ the time was updated
             Scalar t = timeManager().time() + timeManager().timeStepSize();
+            createResultWriter_();
             resultWriter_->beginTimestep(t, gridView());
             model().addOutputVtkFields(model().curSol(), *resultWriter_);
             resultWriter_->endTimestep();
@@ -736,6 +737,10 @@ protected:
     { return *static_cast<const Implementation *>(this); }
 
 private:
+    // makes sure that the result writer exists
+    void createResultWriter_()
+    { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(asImp_().name()); };
+
     static std::string simname_; // a string for the name of the current simulation,
                                   // which could be set by means of an program argument,
                                   // for example.
