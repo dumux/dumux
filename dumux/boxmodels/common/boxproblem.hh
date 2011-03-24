@@ -70,12 +70,7 @@ private:
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-
-
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
@@ -404,15 +399,6 @@ public:
                    "The problem does not provide "
                    "a initial() method.");
     }
-
-
-    /*!
-     * \brief Returns the maximum allowed time step size [s]
-     *
-     * By default this the time step size is unrestricted.
-     */
-    Scalar maxTimeStepSize() const 
-    { return std::numeric_limits<Scalar>::infinity(); }
 
     /*!
      * \brief If model coupling is used, this updates the parameters
