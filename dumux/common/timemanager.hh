@@ -79,9 +79,6 @@ public:
         time_ = 0.0;
         endTime_ = -1e100;
 
-        //initialize maximum allowed timestep incredibly large
-        maxAllowedTimeStepSize_ = 2e24;
-
         timeStepSize_ = 1.0;
         timeStepIdx_ = 0;
         finished_ = false;
@@ -175,22 +172,6 @@ public:
     { endTime_ = t; }
 
     /*!
-     * \brief Set the maximum time step size to a given value.
-     *
-     * Sets an absolute maximum for the timestep size for the whole simulation.
-     *
-     * \param dt The maximum allowed value for the time step size \f$\mathrm{[s]}\f$
-     */
-    void setMaxAllowedTimeStepSize(Scalar dt)
-    { maxAllowedTimeStepSize_ = dt; }
-
-    /*!
-     * \brief Returns the maximum allowed timestep size.
-     */
-    Scalar maxAllowedTimeStepSize() const
-    { return maxAllowedTimeStepSize_; }
-
-    /*!
      * \brief Set the current time step size to a given value.
      *
      * If the step size would exceed the length of the current
@@ -254,8 +235,7 @@ public:
             return 0.0;
 
         return
-            std::min(std::min<Scalar>(maxAllowedTimeStepSize(),
-                                      episodeMaxTimeStepSize()),
+            std::min(episodeMaxTimeStepSize(),
                      std::max<Scalar>(0.0, endTime() - time()));
     };
 
@@ -276,11 +256,13 @@ public:
      * \param len    Length of the episode \f$\mathrm{[s]}\f$
      */
     void startNextEpisode(Scalar tStart,
-                          Scalar len)
+                          Scalar len,
+                          const std::string &description = "")
     {
         ++ episodeIndex_;
         episodeStartTime_ = tStart;
         episodeLength_ = len;
+        episodeDescription_ = description;
     }
 
     /*!
@@ -385,8 +367,14 @@ public:
             if (problem_->shouldWriteOutput())
                 problem_->writeOutput();
 
-            // perpare the model for the next time integration
+            // prepare the model for the next time integration
             problem_->advanceTimeLevel();
+
+            if (verbose_) {
+                std::cout <<
+                    boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
+                    %timeStepIndex()%timer.elapsed()%time()%dt;
+            }
 
             // advance the simulated time by the current time step size
             time_ += dt;
@@ -409,13 +397,6 @@ public:
             // for a suggestion for the next timestep size
             // set the time step size for the next step
             setTimeStepSize(nextDt);
-
-            if (verbose_) {
-                std::cout <<
-                    boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
-                    %timeStepIndex()%timer.elapsed()%time()%dt;
-            }
-
         }
 
         if (verbose_)
@@ -442,6 +423,7 @@ public:
         res.serializeSectionBegin("TimeManager");
         res.serializeStream() << episodeIndex_ << " "
                               << episodeStartTime_ << " "
+                              << episodeLength_ << " "
                               << time_ << " "
                               << timeStepIdx_ << " ";
         res.serializeSectionEnd();
@@ -460,6 +442,7 @@ public:
         res.deserializeSectionBegin("TimeManager");
         res.deserializeStream() >> episodeIndex_
                                 >> episodeStartTime_
+                                >> episodeLength_
                                 >> time_
                                 >> timeStepIdx_;
         res.deserializeSectionEnd();
@@ -474,12 +457,12 @@ private:
     int episodeIndex_;
     Scalar episodeStartTime_;
     Scalar episodeLength_;
+    std::string episodeDescription_;
 
     Scalar time_;
     Scalar endTime_;
 
     Scalar timeStepSize_;
-    Scalar maxAllowedTimeStepSize_;
     int timeStepIdx_;
     bool finished_;
     bool verbose_;
