@@ -108,8 +108,8 @@ public:
         // parameters for the Brooks-Corey law
         fineMaterialParams_.setPe(1e4);
         coarseMaterialParams_.setPe(1e4);
-        fineMaterialParams_.setAlpha(2.0);
-        coarseMaterialParams_.setAlpha(2.0);
+        fineMaterialParams_.setLambda(2.0);
+        coarseMaterialParams_.setLambda(2.0);
     }
 
     ~WaterAirSpatialParameters()
