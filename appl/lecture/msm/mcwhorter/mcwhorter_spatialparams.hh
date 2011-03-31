@@ -92,7 +92,7 @@ public:
 //        // entry pressures
         materialLawParams_.setPe(interfaceSoilProps.ISP_BrooksCoreyEntryPressure);
 //        // Brooks-Corey shape parameters
-        materialLawParams_.setAlpha(interfaceSoilProps.ISP_BrooksCoreyLambda);
+        materialLawParams_.setLambda(interfaceSoilProps.ISP_BrooksCoreyLambda);
 
         // parameters for the linear
         // entry pressures function
