@@ -253,13 +253,15 @@ public:
                 // anyway...)
                 residual_[i] = fluxPlusSourceTerm_[i];
             };
+            
+            reuseMatrix_ = false;
             oldDt_ = curDt;
             return;
         }
 
         oldDt_ = curDt;
         greenElems_ = 0;
-
+        
         // reassemble the elements...
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
@@ -669,6 +671,16 @@ private:
             // If partial reassembly of the jacobian is not enabled,
             // we can just reset everything!
             (*matrix_) = 0;
+
+            // reset the parts needed for Jacobian recycling
+            if (enableJacobianRecycling) {
+                int numVertices = matrix_->N();
+                for (int i=0; i < numVertices; ++ i) {
+                    storageJacobian_[i] = 0;
+                    fluxPlusSourceTerm_[i] = 0;
+                };
+            }
+            
             return;
         }
 
@@ -677,6 +689,12 @@ private:
             if (vertexColor_[rowIdx] == Green)
                 continue; // the equations for this control volume are
                           // already below the treshold
+
+            // reset the parts needed for Jacobian recycling
+            if (enableJacobianRecycling) {
+                storageJacobian_[rowIdx] = 0;
+                fluxPlusSourceTerm_[rowIdx] = 0;
+            }
 
             // set all entries in the row to 0
             typedef typename JacobianMatrix::ColIterator ColIterator;

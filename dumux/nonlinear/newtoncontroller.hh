@@ -250,6 +250,7 @@ class NewtonController
 
     enum { enableTimeStepRampUp = GET_PROP_VALUE(TypeTag, PTAG(EnableTimeStepRampUp)) };
     enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
+    enum { enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)) };
 
 public:
     /*!
@@ -367,7 +368,6 @@ public:
         method_ = &method;
         numSteps_ = 0;
 
-        model_().jacobianAssembler().reassembleAll();
         dtInitial_ = timeManager_().timeStepSize();
         if (enableTimeStepRampUp) {
             rampUpDelta_ =
@@ -580,6 +580,7 @@ public:
      */
     void newtonFail()
     {
+        model_().jacobianAssembler().reassembleAll();
         timeManager_().setTimeStepSize(dtInitial_);
         numSteps_ = targetSteps_*2;
     }
@@ -590,7 +591,12 @@ public:
      * This method is called _after_ newtonEnd()
      */
     void newtonSucceed()
-    { }
+    { 
+        if (enableJacobianRecycling)
+            model_().jacobianAssembler().setMatrixReuseable(true);
+        else
+            model_().jacobianAssembler().reassembleAll();
+    }
 
     /*!
      * \brief Suggest a new time stepsize based on the old time step

@@ -121,7 +121,7 @@ SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, false);
 SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
 
 // Enable reuse of jacobian matrices?
-SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
+SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, true);
 
 // Write the solutions of individual newton iterations?
 SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, false);
