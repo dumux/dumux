@@ -293,39 +293,25 @@ public:
         // resize the vectors for all terms
         int numVerts = fvElemGeom_().numVertices;
         residual_.resize(numVerts);
-        fluxTerm_.resize(numVerts);
         storageTerm_.resize(numVerts);
-        sourceTerm_.resize(numVerts);
         
-        for (int i=0; i < fvGeom.numVertices; i++) {
-            residual_[i] = 0.0;
-            fluxTerm_[i] = 0.0;
-            storageTerm_[i] = 0.0;
-            sourceTerm_[i] = 0.0;
-        }
+        residual_ = 0.0;
+        storageTerm_ = 0.0;
 
         asImp_().evalFluxes_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
-            Valgrind::CheckDefined(fluxTerm_[i]);
+            Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
         asImp_().evalVolumeTerms_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++) {
-            Valgrind::CheckDefined(storageTerm_[i]);
-            Valgrind::CheckDefined(sourceTerm_[i]);
+            Valgrind::CheckDefined(residual_[i]);
         }
 #endif // HAVE_VALGRIND
-
-        // calculate the residual
-        for (int i=0; i < fvElemGeom_().numVertices; i++) {
-            residual_[i] = fluxTerm_[i];
-            residual_[i] += storageTerm_[i];
-            residual_[i] -= sourceTerm_[i];
-        }
 
         if (bcTypes_().hasDirichlet())
             asImp_().evalDirichlet_();
@@ -354,25 +340,11 @@ public:
     { return residual_[scvIdx]; }
 
     /*!
-     * \brief Returns the flux term for all sub-control volumes of the
-     *        element.
-     */
-    const ElementSolutionVector &fluxTerm() const
-    { return fluxTerm_; }
-
-    /*!
      * \brief Returns the storage term for all sub-control volumes of the
      *        element.
      */
     const ElementSolutionVector &storageTerm() const
     { return storageTerm_; }
-
-    /*!
-     * \brief Returns the source term for all sub-control volumes of the
-     *        element.
-     */
-    const ElementSolutionVector &sourceTerm() const
-    { return sourceTerm_; }
 
 protected:
     Implementation &asImp_()
@@ -409,8 +381,6 @@ protected:
                 this->residual_[i][eqIdx] =
                     curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
 
-                this->fluxTerm_[i][eqIdx] = 0.0;
-                this->sourceTerm_[i][eqIdx] = 0.0;
                 this->storageTerm_[i][eqIdx] = 0.0;
             };
         };
@@ -481,7 +451,7 @@ protected:
                                     curVolVars_());
             values *= fvElemGeom_().boundaryFace[boundaryFaceIdx].area;
             Valgrind::CheckDefined(values);
-            fluxTerm_[scvIdx] += values;
+            residual_[scvIdx] += values;
         }
     }
 
@@ -517,8 +487,8 @@ protected:
             // of sub-control volume i and _INTO_ sub-control volume
             // j, we need to add the flux to finite volume i and
             // subtract it from finite volume j
-            fluxTerm_[i] += flux;
-            fluxTerm_[j] -= flux;
+            residual_[i] += flux;
+            residual_[j] -= flux;
         }
         
         if (bcTypes_().hasNeumann())
@@ -569,10 +539,12 @@ protected:
                 fvElemGeom_().subContVol[i].volume
                 /
                 problem_().timeManager().timeStepSize();
+            residual_[i] += storageTerm_[i];
 
             // subtract the source term from the local rate
-            this->asImp_().computeSource(sourceTerm_[i], i);
-            sourceTerm_[i] *= fvElemGeom_().subContVol[i].volume;
+            this->asImp_().computeSource(tmp, i);
+            tmp *= fvElemGeom_().subContVol[i].volume;
+            residual_[i] += tmp;
 
             // make sure that only defined quantities where used
             // to calculate the residual.
@@ -702,8 +674,6 @@ protected:
 
 protected:
     ElementSolutionVector storageTerm_;
-    ElementSolutionVector sourceTerm_;
-    ElementSolutionVector fluxTerm_;
     ElementSolutionVector residual_;
 
     // The problem we would like to solve

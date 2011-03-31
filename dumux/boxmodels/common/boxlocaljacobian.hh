@@ -198,8 +198,6 @@ public:
                              bcTypes_);
         residual_ = localResidual().residual();
         storageTerm_ = localResidual().storageTerm();
-        sourceTerm_ = localResidual().sourceTerm();
-        fluxTerm_ = localResidual().fluxTerm();
 
 
         // calculate the local jacobian matrix
@@ -274,24 +272,6 @@ public:
      */
     const PrimaryVariables &storageTerm(int i) const
     { return storageTerm_[i]; }
-
-    /*!
-     * \brief Returns the flux term for vertex i.
-     *
-     * \param i The local vertex (or sub-contol volume) index on which
-     *          the equations are defined
-     */
-    const PrimaryVariables &fluxTerm(int i) const
-    { return fluxTerm_[i]; }
-
-    /*!
-     * \brief Returns the source term for vertex i.
-     *
-     * \param i The local vertex (or sub-contol volume) index on which
-     *          the equations are defined
-     */
-    const PrimaryVariables &sourceTerm(int i) const
-    { return sourceTerm_[i]; }
 
 protected:
     Implementation &asImp_()
@@ -560,8 +540,6 @@ protected:
 
     ElementSolutionVector residual_;
     ElementSolutionVector storageTerm_;
-    ElementSolutionVector fluxTerm_;
-    ElementSolutionVector sourceTerm_;
 };
 }
 

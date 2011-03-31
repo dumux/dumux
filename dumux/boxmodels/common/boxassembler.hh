@@ -211,7 +211,7 @@ public:
         // we do not waste space if it is disabled
         if (enableJacobianRecycling) {
             storageJacobian_.resize(numVerts);
-            fluxPlusSourceTerm_.resize(numVerts);
+            storageTerm_.resize(numVerts);
         }
 
         totalElems_ = gridView_().comm().sum(numElems);
@@ -249,9 +249,14 @@ public:
                 J_i_i += storageJacobian_[i];
 
                 // use the flux term plus the source term as the new
-                // residual (since the delta in the storage term is 0
-                // anyway...)
-                residual_[i] = fluxPlusSourceTerm_[i];
+                // residual (since the delta in the d(storage)/dt is 0
+                // for the first iteration and the residual is
+                // approximately 0 in the last iteration, the flux
+                // term plus the source term must be equal to the
+                // negative change of the storage term of the last
+                // iteration of the last time step...)
+                residual_[i] = storageTerm_[i];
+                residual_[i] *= -1;
             };
             
             reuseMatrix_ = false;
@@ -677,7 +682,7 @@ private:
                 int numVertices = matrix_->N();
                 for (int i=0; i < numVertices; ++ i) {
                     storageJacobian_[i] = 0;
-                    fluxPlusSourceTerm_[i] = 0;
+                    storageTerm_[i] = 0;
                 };
             }
             
@@ -693,7 +698,7 @@ private:
             // reset the parts needed for Jacobian recycling
             if (enableJacobianRecycling) {
                 storageJacobian_[rowIdx] = 0;
-                fluxPlusSourceTerm_[rowIdx] = 0;
+                storageTerm_[rowIdx] = 0;
             }
 
             // set all entries in the row to 0
@@ -737,10 +742,8 @@ private:
                 storageJacobian_[globI] +=
                     model_().localJacobian().storageJacobian(i);
 
-                fluxPlusSourceTerm_[globI] +=
-                    model_().localJacobian().fluxTerm(i);
-                fluxPlusSourceTerm_[globI] -=
-                    model_().localJacobian().sourceTerm(i);
+                storageTerm_[globI] +=
+                    model_().localJacobian().storageTerm(i);
             }
 
             // update the jacobian matrix
@@ -800,7 +803,7 @@ private:
     bool reuseMatrix_;
     // The storage part of the local Jacobian 
     std::vector<MatrixBlock> storageJacobian_;
-    std::vector<VectorBlock> fluxPlusSourceTerm_;
+    std::vector<VectorBlock> storageTerm_;
     // time step size of last assembly
     Scalar oldDt_;
 
