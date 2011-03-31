@@ -108,9 +108,9 @@ public:
 
         // parameters for the Brooks-Corey law
         lensMaterialParams_.setPe(interfaceSoilProps.ISP_FineBrooksCoreyEntryPressure);
-        lensMaterialParams_.setAlpha(interfaceSoilProps.ISP_FineBrooksCoreyLambda);
+        lensMaterialParams_.setLambda(interfaceSoilProps.ISP_FineBrooksCoreyLambda);
         outerMaterialParams_.setPe(interfaceSoilProps.ISP_CoarseBrooksCoreyEntryPressure);
-        outerMaterialParams_.setAlpha(interfaceSoilProps.ISP_CoarseBrooksCoreyLambda);
+        outerMaterialParams_.setLambda(interfaceSoilProps.ISP_CoarseBrooksCoreyLambda);
 
         // parameters for the linear law
         // minimum and maximum pressures
