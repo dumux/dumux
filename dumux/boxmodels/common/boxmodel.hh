@@ -284,7 +284,7 @@ public:
             localResidual().evalStorage(*elemIt);
 
             for (int i = 0; i < elemIt->template count<dim>(); ++i)
-                dest += localResidual().residual(i);
+                dest += localResidual().storageTerm()[i];
         };
 
         if (gridView_().comm().size() > 1)

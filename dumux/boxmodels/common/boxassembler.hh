@@ -83,6 +83,9 @@ class BoxAssembler
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
     };
 
+    typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
+    typedef Dune::FieldVector<Scalar, numEq> VectorBlock;
+
     // copying the jacobian assembler is not a good idea
     BoxAssembler(const BoxAssembler &);
 
@@ -200,7 +203,16 @@ public:
 
         int numVerts = gridView_().size(dim);
         int numElems = gridView_().size(0);
+
         residual_.resize(numVerts);
+
+        // initialize the storage part of the Jacobian matrix. Since
+        // we only need this if Jacobian matrix recycling is enabled,
+        // we do not waste space if it is disabled
+        if (enableJacobianRecycling) {
+            storageJacobian_.resize(numVerts);
+            fluxPlusSourceTerm_.resize(numVerts);
+        }
 
         totalElems_ = gridView_().comm().sum(numElems);
 
@@ -222,9 +234,33 @@ public:
     void assemble()
     {
         resetSystem_();
+        
+        // if we can "recycle" the current linearization, we do it
+        // here and be done with it...
+        Scalar curDt = problem_().timeManager().timeStepSize();
+        if (reuseMatrix_) {
+            int numVertices = storageJacobian_.size();
+            for (int i = 0; i < numVertices; ++i) {
+                // rescale the mass term of the jacobian matrix
+                MatrixBlock &J_i_i = (*matrix_)[i][i];
+                
+                J_i_i -= storageJacobian_[i];
+                storageJacobian_[i] *= oldDt_/curDt;
+                J_i_i += storageJacobian_[i];
 
+                // use the flux term plus the source term as the new
+                // residual (since the delta in the storage term is 0
+                // anyway...)
+                residual_[i] = fluxPlusSourceTerm_[i];
+            };
+            oldDt_ = curDt;
+            return;
+        }
+
+        oldDt_ = curDt;
         greenElems_ = 0;
 
+        // reassemble the elements...
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -235,11 +271,12 @@ public:
                 assembleElement_(elem);
         };
 
+        // if partial reassembly is enabled, print some statistics at
+        // the end of the iteration
         if (enablePartialReassemble) {
             greenElems_ = gridView_().comm().sum(greenElems_);
-
             reassembleAccuracy_ = nextReassembleAccuracy_;
-            // print some information at the end of the iteration
+
             problem_().newtonController().endIterMsg()
                 << ", reassembled "
                 << totalElems_ - greenElems_ << "/" << totalElems_
@@ -270,8 +307,11 @@ public:
      */
     void reassembleAll()
     {
-        nextReassembleAccuracy_ = 0.0;
+        // do not reuse the current linearization
+        reuseMatrix_ = false;
 
+        // do not use partial reassembly for the next iteration
+        nextReassembleAccuracy_ = 0.0;
         if (enablePartialReassemble) {
             std::fill(vertexColor_.begin(),
                       vertexColor_.end(),
@@ -618,6 +658,10 @@ private:
     // only be erased partially!
     void resetSystem_()
     {
+        // do not do anything if we can re-use the current linearization
+        if (reuseMatrix_)
+            return;
+
         // always reset the right hand side.
         residual_ = 0.0;
 
@@ -667,6 +711,19 @@ private:
             }
 
             residual_[globI] += model_().localJacobian().residual(i);
+
+            if (enableJacobianRecycling) {
+                // save the flux term and the jacobian of the
+                // storage term in case we can reuse the current
+                // linearization...
+                storageJacobian_[globI] +=
+                    model_().localJacobian().storageJacobian(i);
+
+                fluxPlusSourceTerm_[globI] +=
+                    model_().localJacobian().fluxTerm(i);
+                fluxPlusSourceTerm_[globI] -=
+                    model_().localJacobian().sourceTerm(i);
+            }
 
             // update the jacobian matrix
             for (int j=0; j < numVertices; ++ j) {
@@ -723,6 +780,12 @@ private:
 
     // attributes required for jacobian matrix recycling
     bool reuseMatrix_;
+    // The storage part of the local Jacobian 
+    std::vector<MatrixBlock> storageJacobian_;
+    std::vector<VectorBlock> fluxPlusSourceTerm_;
+    // time step size of last assembly
+    Scalar oldDt_;
+
 
     // attributes required for partial jacobian reassembly
     std::vector<EntityColor> vertexColor_;

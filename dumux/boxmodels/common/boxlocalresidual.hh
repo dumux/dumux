@@ -290,32 +290,45 @@ public:
         prevVolVarsPtr_ = &prevVolVars;
         curVolVarsPtr_ = &curVolVars;
 
-        // reset residual
+        // resize the vectors for all terms
         int numVerts = fvElemGeom_().numVertices;
         residual_.resize(numVerts);
-        residual_ = 0;
-
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
-            Valgrind::CheckDefined(residual_[i]);
-#endif // HAVE_VALGRIND
+        fluxTerm_.resize(numVerts);
+        storageTerm_.resize(numVerts);
+        sourceTerm_.resize(numVerts);
+        
+        for (int i=0; i < fvGeom.numVertices; i++) {
+            residual_[i] = 0.0;
+            fluxTerm_[i] = 0.0;
+            storageTerm_[i] = 0.0;
+            sourceTerm_[i] = 0.0;
+        }
 
         asImp_().evalFluxes_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
-            Valgrind::CheckDefined(residual_[i]);
+            Valgrind::CheckDefined(fluxTerm_[i]);
 #endif // HAVE_VALGRIND
 
         asImp_().evalVolumeTerms_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
-            Valgrind::CheckDefined(residual_[i]);
+        for (int i=0; i < fvElemGeom_().numVertices; i++) {
+            Valgrind::CheckDefined(storageTerm_[i]);
+            Valgrind::CheckDefined(sourceTerm_[i]);
+        }
 #endif // HAVE_VALGRIND
 
-        // evaluate the boundary
-        asImp_().evalBoundary_();
+        // calculate the residual
+        for (int i=0; i < fvElemGeom_().numVertices; i++) {
+            residual_[i] = fluxTerm_[i];
+            residual_[i] += storageTerm_[i];
+            residual_[i] -= sourceTerm_[i];
+        }
+
+        if (bcTypes_().hasDirichlet())
+            asImp_().evalDirichlet_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
@@ -341,14 +354,25 @@ public:
     { return residual_[scvIdx]; }
 
     /*!
-     * \brief Returns the local residual for a given sub-control
-     *        volume of the element - as a reference!
-     *
-     * \param scvIdx The local index of the sub-control volume
-     *               (i.e. the element's local vertex index)
+     * \brief Returns the flux term for all sub-control volumes of the
+     *        element.
      */
-    PrimaryVariables& residualReference(int scvIdx)
-    { return residual_[scvIdx]; }
+    const ElementSolutionVector &fluxTerm() const
+    { return fluxTerm_; }
+
+    /*!
+     * \brief Returns the storage term for all sub-control volumes of the
+     *        element.
+     */
+    const ElementSolutionVector &storageTerm() const
+    { return storageTerm_; }
+
+    /*!
+     * \brief Returns the source term for all sub-control volumes of the
+     *        element.
+     */
+    const ElementSolutionVector &sourceTerm() const
+    { return sourceTerm_; }
 
 protected:
     Implementation &asImp_()
@@ -356,27 +380,6 @@ protected:
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
-
-    /*!
-     * \brief Evaluate all boundary conditions on the current element.
-     */
-    void evalBoundary_()
-    {
-        if (bcTypes_().hasNeumann())
-            asImp_().evalNeumann_();
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
-            Valgrind::CheckDefined(residual_[i]);
-#endif // HAVE_VALGRIND
-
-        if (bcTypes_().hasDirichlet())
-            asImp_().evalDirichlet_();
-
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
-            Valgrind::CheckDefined(residual_[i]);
-#endif // HAVE_VALGRIND
-    }
 
     /*!
      * \brief Set the values of the Dirichlet boundary control volumes
@@ -405,6 +408,10 @@ protected:
                 Valgrind::CheckDefined(tmp[pvIdx]);
                 this->residual_[i][eqIdx] =
                     curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
+
+                this->fluxTerm_[i][eqIdx] = 0.0;
+                this->sourceTerm_[i][eqIdx] = 0.0;
+                this->storageTerm_[i][eqIdx] = 0.0;
             };
         };
     }
@@ -474,7 +481,7 @@ protected:
                                     curVolVars_());
             values *= fvElemGeom_().boundaryFace[boundaryFaceIdx].area;
             Valgrind::CheckDefined(values);
-            residual_[scvIdx] += values;
+            fluxTerm_[scvIdx] += values;
         }
     }
 
@@ -510,9 +517,16 @@ protected:
             // of sub-control volume i and _INTO_ sub-control volume
             // j, we need to add the flux to finite volume i and
             // subtract it from finite volume j
-            residual_[i] += flux;
-            residual_[j] -= flux;
+            fluxTerm_[i] += flux;
+            fluxTerm_[j] -= flux;
         }
+        
+        if (bcTypes_().hasNeumann())
+            asImp_().evalNeumann_();
+#if !defined NDEBUG && HAVE_VALGRIND
+        for (int i=0; i < fvElemGeom_().numVertices; i++)
+            Valgrind::CheckDefined(residual_[i]);
+#endif // HAVE_VALGRIND
     }
 
     /*!
@@ -524,9 +538,8 @@ protected:
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
         for (int i=0; i < fvElemGeom_().numVertices; i++) {
-            residual_[i] = 0.0;
-            this->asImp_().computeStorage(residual_[i], i, false /*isOldSol*/);
-            residual_[i] *= fvElemGeom_().subContVol[i].volume;
+            this->asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
+            storageTerm_[i] *= fvElemGeom_().subContVol[i].volume;
         }
     }
 
@@ -540,7 +553,7 @@ protected:
         // evaluate the volume terms (storage + source terms)
         for (int i=0; i < fvElemGeom_().numVertices; i++)
         {
-            PrimaryVariables dStorage_dt(0), tmp(0);
+            PrimaryVariables tmp(0);
 
             // mass balance within the element. this is the
             // $\frac{m}{\partial t}$ term if using implicit
@@ -548,21 +561,18 @@ protected:
             //
             // TODO (?): we might need a more explicit way for
             // doing the time discretization...
-            this->asImp_().computeStorage(dStorage_dt, i, false);
+            this->asImp_().computeStorage(storageTerm_[i], i, false);
             this->asImp_().computeStorage(tmp, i, true);
 
-            dStorage_dt -= tmp;
-            dStorage_dt *=
+            storageTerm_[i] -= tmp;
+            storageTerm_[i] *=
                 fvElemGeom_().subContVol[i].volume
                 /
                 problem_().timeManager().timeStepSize();
-            residual_[i] += dStorage_dt;
 
             // subtract the source term from the local rate
-            PrimaryVariables source(0.0);
-            this->asImp_().computeSource(source, i);
-            source *= fvElemGeom_().subContVol[i].volume;
-            residual_[i] -= source;
+            this->asImp_().computeSource(sourceTerm_[i], i);
+            sourceTerm_[i] *= fvElemGeom_().subContVol[i].volume;
 
             // make sure that only defined quantities where used
             // to calculate the residual.
@@ -691,6 +701,9 @@ protected:
     }
 
 protected:
+    ElementSolutionVector storageTerm_;
+    ElementSolutionVector sourceTerm_;
+    ElementSolutionVector fluxTerm_;
     ElementSolutionVector residual_;
 
     // The problem we would like to solve
