@@ -313,8 +313,8 @@ public:
         }
 #endif // HAVE_VALGRIND
 
-        if (bcTypes_().hasDirichlet())
-            asImp_().evalDirichlet_();
+        // evaluate the non-flux boundary conditions
+        asImp_().evalBoundary_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
@@ -352,6 +352,12 @@ protected:
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
+
+    void evalBoundary_()
+    {
+        if (bcTypes_().hasDirichlet())
+            asImp_().evalDirichlet_();
+    }
 
     /*!
      * \brief Set the values of the Dirichlet boundary control volumes
