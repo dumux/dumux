@@ -550,7 +550,7 @@ protected:
             // subtract the source term from the local rate
             this->asImp_().computeSource(tmp, i);
             tmp *= fvElemGeom_().subContVol[i].volume;
-            residual_[i] += tmp;
+            residual_[i] -= tmp;
 
             // make sure that only defined quantities where used
             // to calculate the residual.
