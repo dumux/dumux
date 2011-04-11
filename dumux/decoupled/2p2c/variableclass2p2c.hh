@@ -59,7 +59,7 @@ private:
     };
     enum
     {
-        pw = Indices::pressureW, pn = Indices::pressureNW, pglobal = Indices::pressureGlobal,
+        pw = Indices::pressureW, pn = Indices::pressureNW, pglobal = Indices::pressureGlobal
     };
     enum
     {
@@ -99,7 +99,12 @@ private:
     TransportSolutionType totalConcentration_;
     PhasePropertyType massfrac_;
 
+    //vectors for partial derivatives
+    PhasePropertyType dv_; // although it is a component property
+    ScalarSolutionType dv_dp_;
+
     TransportSolutionType updateEstimate_;
+    ScalarSolutionType errorCorrection_;
     Dune::BlockVector<Dune::FieldVector<int,1> > subdomain_;
 
 public:
@@ -197,8 +202,11 @@ private:
         totalConcentration_[i].resize(size_);   // resize vector to number of cells
         updateEstimate_[i].resize(size_);
         massfrac_[i].resize(size_);
+        dv_[i].resize(size_);
         }
+        dv_dp_.resize(size_);
         volErr_.resize(size_);
+        errorCorrection_.resize(size_);
     }
 
 
@@ -258,20 +266,14 @@ public:
             ScalarSolutionType *mobilityNW = writer.template createField<Scalar, 1> (size_);
             ScalarSolutionType *densityW = writer.template createField<Scalar, 1> (size_);
             ScalarSolutionType *densityNW = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *numdensityW = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *numdensityNW = writer.template createField<Scalar, 1> (size_);
             *mobilityW = mobility_[0];
             *mobilityNW = mobility_[1];
             *densityW = density_[0];
             *densityNW = density_[1];
-            *numdensityW = density_[0];
-            *numdensityNW = density_[1];
             writer.addCellData(mobilityW, "mobility w_phase");
             writer.addCellData(mobilityNW, "mobility nw_phase");
             writer.addCellData(densityW, "density w_phase");
             writer.addCellData(densityNW, "density nw_phase");
-            writer.addCellData(numdensityW, "numerical density (mass/volume) w_phase");
-            writer.addCellData(numdensityNW, "numerical density (mass/volume) nw_phase");
         }
         if (codim_ == dim)
         {
@@ -399,19 +401,31 @@ public:
         return density_[nPhaseIdx][Idx][0];
     }
 
-    //! Return nonwetting phase density
+    //! Returns numerical phase density (current mass/volume, not from EOS)
     /*! \param Idx Element index
      * \param phaseIdx Index of the phase */
-
     Scalar& numericalDensity(int Idx, int phaseIdx)
     {
         return numericalDensity_[phaseIdx][Idx][0];
     }
-    //! \copydoc Dumux::VariableClass2P2C::densityNonwetting()
+    //! \copydoc Dumux::VariableClass2P2C::numericalDensity()
      /*! \param phaseIdx Index of the phase */
-    const Scalar& numericalDensity(int Idx, int phaseIdx) const
+    const ScalarSolutionType& numericalDensity(int phaseIdx) const
     {
-        return numericalDensity_[phaseIdx][Idx][0];
+        return numericalDensity_[phaseIdx];
+    }
+
+    //! Returns correction term for volume mismatch $\varepsilon = \frac{v_t - \phi}{\Delta t}$
+    /*! \param Idx Element index*/
+    Scalar& errorCorrection(int Idx)
+    {
+        return errorCorrection_[Idx][0];
+    }
+    //! Returns correction term vector for volume mismatch $\varepsilon$
+     /*! \param phaseIdx Index of the phase */
+    const ScalarSolutionType& errorCorrection() const
+    {
+        return errorCorrection_;
     }
 
     //! Return viscosity of the wetting phase
@@ -484,6 +498,41 @@ public:
         return updateEstimate_[compIdx][Idx][0];
     }
 
+    //! Returs a reference to the volume derivatives vector
+    const PhasePropertyType& dv() const
+    {
+        return dv_;
+    }
+    //! Returs a reference to the volume derivatives
+    /*!\param Idx Element index
+     * \param compIdx Index of the component */
+    Scalar& dv(int Idx, int compIdx)
+    {
+        return dv_[compIdx][Idx][0];
+    }
+    //! \copydoc Dumux::VariableClass2P2C::dv()
+    const Scalar& dv(int Idx, int compIdx) const
+    {
+        return dv_[compIdx][Idx][0];
+    }
+
+    //! Returs a reference to the volume derivatives (wrt pressure) vector
+    const ScalarSolutionType& dv_dp() const
+    {
+        return dv_dp_;
+    }
+    //! Returs a reference to the volume derivatives (wrt pressure)
+    /*!\param Idx Element index*/
+    Scalar& dv_dp(int Idx)
+    {
+        return dv_dp_[Idx][0];
+    }
+    //! \copydoc Dumux::VariableClass2P2C::dv_dp()
+    const Scalar& dv_dp(int Idx) const
+    {
+        return dv_dp_[Idx][0];
+    }
+
     //! Return the vector holding subdomain information
     Dune::BlockVector<Dune::FieldVector<int,1> >& subdomain()
     {
@@ -496,6 +545,48 @@ public:
         return subdomain_[Idx][0];
     }
     //@}
+
+    //! \name Method for adaptive grids
+    //@{
+    //! Resizes compositional variable vectors
+    /*! Method that change the size of the vectors holding the 2p2c for h-adaptive
+     * simulations.
+     *
+     *\param adaptiveGridSize Size of the current (refined and coarsened) grid
+     */
+    void adaptVariableSize2p2c(int adaptiveGridSize)  //rename method to resizeVariableVectors() ?
+    {
+        //resize to grid size
+        int size_ = adaptiveGridSize;
+        this->setGridSize(size_);
+        // a) global variables
+        this->adaptVariableSize(size_, true); // true = resizes only pressure vector!
+        for (int i=0; i<2; i++)    //for both phases
+        {
+			density_[i].resize(size_);
+			numericalDensity_[i].resize(size_);
+			viscosity_[i].resize(size_);
+			};
+			// b) transport variables
+			saturation_.resize(size_);
+
+			capillaryPressure_.resize(size_);
+			mobility_[0].resize(size_);
+			mobility_[1].resize(size_);
+
+			// c) compositional stuff
+			for (int i=0; i<2; i++) //for both phases
+			{
+			totalConcentration_[i].resize(size_);   // resize vector to number of cells
+			updateEstimate_[i].resize(size_);
+			massfrac_[i].resize(size_);
+	        dv_[i].resize(size_);
+			}
+	    dv_dp_.resize(size_);
+        volErr_.resize(size_);
+        errorCorrection_.resize(size_);
+	};
+	//@}
 
 };
 }
