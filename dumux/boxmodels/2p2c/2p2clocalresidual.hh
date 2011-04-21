@@ -142,8 +142,8 @@ public:
         ElementVolumeVariables volVars;
         volVars.update(this->problem_(), element, fvGeom, false);
 
-        this->residual_.resize(fvGeom.numVertices);
-        this->residual_ = 0;
+        this->storageTerm_.resize(fvGeom.numVertices);
+        this->storageTerm_ = 0;
 
         this->elemPtr_ = &element;
         this->fvElemGeomPtr_ = &fvGeom;
@@ -298,7 +298,7 @@ protected:
     {
         // evaluate the storage terms of a single phase
         for (int i=0; i < this->fvElemGeom_().numVertices; i++) {
-            PrimaryVariables &result = this->residual_[i];
+            PrimaryVariables &result = this->storageTerm_[i];
             const ElementVolumeVariables &elemVolVars = this->curVolVars_();
             const VolumeVariables &volVars = elemVolVars[i];
 
