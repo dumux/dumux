@@ -282,6 +282,11 @@ public:
         return elementMapper_;
     }
 
+    const VertexMapper& vertexMapper() const
+    {
+        return vertexMapper_;
+    }
+
     //! Get pressure
     /*! evaluate pressure at given element
      @param element entity of codim 0

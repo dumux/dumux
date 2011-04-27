@@ -53,6 +53,10 @@ private:
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
 
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::VertexMapper VertexMapper;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) IMPETModel;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureModel)) PressureModel;
@@ -169,9 +173,12 @@ public:
             if (timeManager().timeStepSize() > dt)
                 Dune::dwarn << "initial timestep of size " << timeManager().timeStepSize()
                             << "is larger then dt= "<<dt<<" from transport" << std::endl;
-            // internally assign next tiestep size
+            // internally assign next timestep size
             dt = std::min(dt, timeManager().timeStepSize());
         }
+
+        // check maximum allowed time step size
+        dt = std::min(dt, asImp_().maxTimeStepSize());
 
         //assign next tiestep size
         timeManager().setTimeStepSize(dt);
@@ -222,6 +229,14 @@ public:
     { return timeManager_.timeStepSize();}
 
     /*!
+     * \brief Returns the maximum allowed time step size [s]
+     *
+     * By default this the time step size is unrestricted.
+     */
+    Scalar maxTimeStepSize() const
+    { return std::numeric_limits<Scalar>::infinity(); }
+
+    /*!
      * \brief Returns true if a restart file should be written to
      *        disk.
      *
@@ -233,7 +248,7 @@ public:
     {
         return
             timeManager().timeStepIndex() > 0 &&
-            (timeManager().timeStepIndex() % 5 == 0);
+            (timeManager().timeStepIndex() % int(5*outputInterval_) == 0);
     }
 
     /*!
@@ -304,6 +319,19 @@ public:
      */
     const GridView &gridView() const
     { return gridView_; }
+
+
+    /*!
+     * \brief Returns the mapper for vertices to indices.
+     */
+    const VertexMapper &vertexMapper() const
+    { return variables_.vertexMapper(); }
+
+    /*!
+     * \brief Returns the mapper for elements to indices.
+     */
+    const ElementMapper &elementMapper() const
+    { return variables_.elementMapper(); }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding
