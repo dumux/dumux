@@ -69,7 +69,7 @@ public:
             // execute the sequential preconditioner
             seqPreCond_.apply(x, dd);
 
-            x.syncAdd();
+            x.syncAverage();
         }
         else 
 #endif // HAVE_MPI
