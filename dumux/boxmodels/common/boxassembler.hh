@@ -274,7 +274,8 @@ public:
         ElementIterator elemEndIt = gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             const Element &elem = *elemIt;
-            if (elem.partitionType() == Dune::GhostEntity)
+            if (elem.partitionType() != Dune::InteriorEntity  &&
+                elem.partitionType() != Dune::BorderEntity) 
                 assembleGhostElement_(elem);
             else
                 assembleElement_(elem);
@@ -624,9 +625,21 @@ private:
         const ElementIterator eEndIt = gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
             const Element &elem = *eIt;
+            int n = elem.template count<dim>();
+            
+            // if the element is not in the interior or the process
+            // border, all dofs just contain main-diagonal entries
+            if (elem.partitionType() != Dune::InteriorEntity &&
+                elem.partitionType() != Dune::BorderEntity) 
+            {
+                for (int i = 0; i < n; ++i) {
+                    int globalI = vertexMapper_().map(*eIt, i, dim);
+                    neighbors[globalI].insert(globalI);
+                }
+                continue;
+            };
 
             // loop over all element vertices
-            int n = elem.template count<dim>();
             for (int i = 0; i < n - 1; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
                 for (int j = i + 1; j < n; ++j) {
@@ -661,20 +674,21 @@ private:
         }
         matrix_->endindices();
         
-        std::cout << "begin create overlap\n";
-        typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> BlockType;
-        typedef typename Dumux::OverlapMatrix<BlockType> OverlapMatrix;
+        //std::cout << "begin create overlap\n";
+        typedef typename Dumux::OverlapFromBCRSMatrix<Matrix> OverlapFromBCRSMatrix;
         typedef typename Dumux::VertexSeedListFromGrid<GridView, VertexMapper> SeedListFromGrid;
-        typedef typename OverlapMatrix::SeedList SeedList;
+        typedef typename OverlapFromBCRSMatrix::SeedList SeedList;
         
-        SeedListFromGrid seedListCreator(gridView_(), vertexMapper_());    
-        int overlapSize = 3;
-        OverlapMatrix overlapMatrix(*matrix_, seedListCreator.seedList(), overlapSize);
+        SeedListFromGrid seedListCreator(gridView_(), vertexMapper_());
+        int overlapSize = 20;
+        OverlapFromBCRSMatrix overlapMatrix(*matrix_, 
+                                            seedListCreator.seedList(),
+                                            overlapSize);
         if (gridView_().comm().rank() == 0) {
             std::cout << "initial seed list size: " << seedListCreator.seedList().size() << "\n";
             overlapMatrix.printOverlap();
         }
-        std::cout << "end create overlap\n";
+        //std::cout << "end create overlap\n";
     };
 #endif
 
@@ -776,10 +790,12 @@ private:
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &elem)
     {
+        //return; // we just ignore ghosts!
         int n = elem.template count<dim>();
         for (int i=0; i < n; ++i) {
             const VertexPointer vp = elem.template subEntity<dim>(i);
-            if (vp->partitionType() != Dune::GhostEntity)
+            if (vp->partitionType() == Dune::InteriorEntity ||
+                vp->partitionType() == Dune::BorderEntity)
                 continue; // ignore a ghost cell's non-ghost vertices
 
             // set main diagonal entries for the vertex
