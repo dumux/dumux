@@ -209,11 +209,9 @@ int main(int argc, char** argv)
         */
         
         /*
-        res[0] = 2;
-        res[1] = 4;
+        res[0] = 1;
+        res[1] = 2;
         */
-        
-        
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
