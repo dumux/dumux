@@ -413,7 +413,6 @@ public:
         typedef typename SolutionVector::block_type FV;
         error_ = 0;
 
-        int idxI = -1;
         int aboveTol = 0;
         for (int i = 0; i < int(uLastIter.size()); ++i) {
             PrimaryVariables uNewI = uLastIter[i];
@@ -426,7 +425,6 @@ public:
             if (vertErr > tolerance_)
                 ++aboveTol;
             if (vertErr > error_) {
-                idxI = i;
                 error_ = vertErr;
             }
         }

@@ -236,7 +236,7 @@ namespace Properties
     SET_PROP(EffTypeTagName, PropTagName) \
     {                                                           \
         typedef int type;                                       \
-        static const int value = Value;                         \
+        static constexpr int value = Value;                     \
     }
 
 /*!
@@ -248,7 +248,7 @@ namespace Properties
     SET_PROP(EffTypeTagName, PropTagName) \
     {                                                      \
         typedef bool type;                                 \
-        static const bool value = Value;                   \
+        static constexpr bool value = Value;               \
     }
 
 /*!
@@ -275,7 +275,7 @@ namespace Properties
         typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;   \
     public:                                                             \
         typedef Scalar type;                                            \
-        static const Scalar value = Value;                              \
+        static constexpr Scalar value = Value;                          \
     }
 
 /*!

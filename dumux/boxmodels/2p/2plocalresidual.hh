@@ -88,7 +88,7 @@ protected:
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
-    static const Scalar mobilityUpwindAlpha =
+    static constexpr Scalar mobilityUpwindAlpha =
             GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:

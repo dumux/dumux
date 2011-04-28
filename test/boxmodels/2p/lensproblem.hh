@@ -411,7 +411,7 @@ private:
     }
 
     Scalar temperature_;
-    static const Scalar eps_ = 3e-6;
+    static constexpr Scalar eps_ = 3e-6;
 };
 } //end namespace
 

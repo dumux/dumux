@@ -65,8 +65,14 @@ public:
         }
 
         writerNum_ = 0;
+
         commRank_ = 0;
         commSize_ = 1;
+#if HAVE_MPI
+        MPI_Comm_rank(MPI_COMM_WORLD, &commRank_);
+        MPI_Comm_size(MPI_COMM_WORLD, &commSize_);
+#endif
+
         wasRestarted_ = false;
     }
 
@@ -87,9 +93,6 @@ public:
         curGridView_ = &gridView;
 
         if (!multiFile_.is_open()) {
-            commRank_ = gridView.comm().rank();
-            commSize_ = gridView.comm().size();
-
             beginMultiFile_(multiFileName_);
         }
 
@@ -211,10 +214,10 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        res.serializeSectionBegin("VTKMultiWriter");
-        res.serializeStream() << writerNum_ << "\n";
-
         if (commRank_ == 0) {
+            res.serializeSectionBegin("VTKMultiWriter");
+            res.serializeStream() << writerNum_ << "\n";
+
             size_t fileLen = 0;
             size_t filePos = 0;
             if (multiFile_.is_open()) {
@@ -234,9 +237,9 @@ public:
                 res.serializeStream().write(tmp, fileLen);
                 delete[] tmp;
             }
-        }
 
-        res.serializeSectionEnd();
+            res.serializeSectionEnd();
+        }
     }
 
     /*!
@@ -247,13 +250,13 @@ public:
     {
         wasRestarted_ = true;
 
-        res.deserializeSectionBegin("VTKMultiWriter");
-        res.deserializeStream() >> writerNum_;
-
-        std::string dummy;
-        std::getline(res.deserializeStream(), dummy);
-
         if (commRank_ == 0) {
+            res.deserializeSectionBegin("VTKMultiWriter");
+            res.deserializeStream() >> writerNum_;
+            
+            std::string dummy;
+            std::getline(res.deserializeStream(), dummy);
+
             // recreate the meta file from the restart file
             size_t filePos, fileLen;
             res.deserializeStream() >> fileLen >> filePos;
@@ -271,9 +274,9 @@ public:
             }
 
             multiFile_.seekp(filePos);
-        }
 
-        res.deserializeSectionEnd();
+            res.deserializeSectionEnd();
+        }
     }
 
 
