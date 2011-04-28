@@ -145,6 +145,29 @@ public:
     };
 
     /*!
+     * \brief Return the rank of the master process for a local index.
+     */
+    int masterOf(int localIdx) const
+    { 
+        if (!isBorder(localIdx))
+            return myRank_; // interior index
+
+        // if the local index is a border index, loop over all ranks
+        // for which this index is also a border index. the lowest
+        // rank wins!
+        typedef typename std::map<ProcessRank, BorderDistance>::const_iterator iterator;
+        iterator it = foreignOverlapByIndex_[localIdx].begin();
+        iterator endIt = foreignOverlapByIndex_[localIdx].end();
+        LocalIndex masterIdx = myRank_;
+        for (; it != endIt; ++it) {
+            if (it->second == 0) 
+                masterIdx = std::min(masterIdx, it->first);
+        }
+
+        return masterIdx;
+    };
+
+    /*!
      * \brief Return true if the current rank is the "master" of an
      *        index.
      *
@@ -249,6 +272,15 @@ public:
     { 
         assert(foreignOverlapByRank_.find(peerRank) != foreignOverlapByRank_.end());
         return foreignOverlapByRank_.find(peerRank)->second;
+    }
+
+    /*!
+     * \brief Return the map of (peer rank, border distance) for a given local index.
+     */
+    const std::map<ProcessRank, BorderDistance> &foreignOverlapByIndex(int localIdx) const 
+    { 
+        assert(isLocal(localIdx));
+        return foreignOverlapByIndex_[localIdx];
     }
 
     /*!

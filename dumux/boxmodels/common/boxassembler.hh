@@ -602,13 +602,6 @@ public:
     const Matrix& matrix() const
     { return *matrix_; }
 
-#warning HACK
-    Matrix& matrix()
-    { return *matrix_; }
-    SolutionVector& residual()
-    { return residual_; }
-    // end hack
-
     /*!
      * \brief Return constant reference to global residual vector.
      */

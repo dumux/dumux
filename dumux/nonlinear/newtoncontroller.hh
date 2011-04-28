@@ -59,6 +59,7 @@
 #include <dumux/linear/overlappingblockvector.hh>
 #include <dumux/linear/overlappingpreconditioner.hh>
 #include <dumux/linear/overlappingscalarproduct.hh>
+#include <dumux/linear/overlappingoperator.hh>
 
 namespace Dumux
 {
@@ -487,16 +488,16 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    void newtonSolveLinear(JacobianMatrix &A,
+    void newtonSolveLinear(const JacobianMatrix &A,
                            SolutionVector &x,
-                           SolutionVector &b)
+                           const SolutionVector &b)
     {
         // if the deflection of the newton method is large, we do not
         // need to solve the linear approximation accurately. Assuming
         // that the initial value for the delta vector u is quite
         // close to the final value, a reduction of 9 orders of
         // magnitude in the defect should be sufficient...
-        Scalar residReduction = 1e-9;
+        Scalar residReduction = 1e-6;
 
         try {
             solveLinear_(A, x, b, residReduction);
@@ -772,9 +773,9 @@ protected:
      *
      * Usually we use the solvers from DUNE-ISTL.
      */
-    void solveLinear_(JacobianMatrix &A,
+    void solveLinear_(const JacobianMatrix &A,
                       SolutionVector &x,
-                      SolutionVector &b,
+                      const SolutionVector &b,
                       Scalar residReduction)
     {
         typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -789,11 +790,8 @@ protected:
         OverlappingMatrix overlapA(A, 
                                    borderListCreator.borderList(), 
                                    /*overlapSize=*/4);
-        overlapA.print();
-
         OverlappingVector overlapb(b, overlapA.overlap());
-        std::cout << "overlapping b:\n";
-        overlapb.print();
+        OverlappingVector overlapx(overlapb);
 
 #define PREC 3
 #if PREC == 1
@@ -816,153 +814,21 @@ protected:
         typedef Dumux::OverlappingPreconditioner<SeqPreconditioner, Overlap> OverlappingPreconditioner;
         OverlappingPreconditioner preCond(seqPreCond, overlapA.overlap());
 
-        std::cerr.precision(16);
-        std::cerr << "norm(b) = " << scalarProd.norm(overlapb) << "\n";
-        std::cerr << "norm(A) = " << overlapA.frobenius_norm() << "\n";
+        typedef Dumux::OverlappingOperator<OverlappingMatrix, OverlappingVector, OverlappingVector> OverlappingOperator;
+        OverlappingOperator opA(overlapA);
 
-        DUNE_THROW(Dune::NotImplemented,
-                   "NewtonController::solveLinear_");
-#if 0
-        int verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
-        int myRank = gridView_().comm().rank();
-        if (myRank != 0)
-            verbosity = 0;
-
-        updateOverlap_(A, x, b);
-        //printmatrix(std::cout, *((JacobianMatrix *) overlapMatrix_), "M", "row");
-
-        
-        typedef Dumux::OverlapOperator<OverlapMatrix,OverlapVector,OverlapVector> LinearOperator;
-        //typedef Dune::MatrixAdapter<OverlapMatrix,OverlapVector,OverlapVector> LinearOperator;
-        LinearOperator opA(*overlapMatrix_);
-
-        typedef Dumux::OverlapScalarProduct<OverlapVector, Overlap> OverlapScalarProduct;
-        OverlapScalarProduct scalarProd(*overlap_);
-
-        typedef Dune::BiCGSTABSolver<OverlapVector> Solver;
+        typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
         Solver solver(opA, 
                       scalarProd,
                       preCond, 
                       residReduction,
                       250,
-                      1);
-    
-#if 0
-        OverlapVector tmp(*overlapB_);
-
-        //overlapMatrix_->mv(*overlapB_, tmp);
-        //overlapMatrix_->mv(tmp, *overlapB_);
-        //overlap_->printOverlap();
-
-        std::cout << "before precond: result: " << tmp << " rhs: " << *overlapB_ << "\n";
-        preCond.pre(tmp, *overlapB_);
-        preCond.apply(tmp, *overlapB_);
-        preCond.post(tmp);
-        std::cout << "after precond: result: " << tmp << " rhs: " << *overlapB_ << "\n";
-
-        exit(1);
-      
-        Scalar dot = scalarProd.dot(tmp, tmp);
-        Scalar norm = scalarProd.norm(tmp);
-        std::cout.precision(16);
-        std::cout << "num domestic:" << overlap_->numDomestic() << "\n";
-        std::cout << "Dot:" << dot << "\n";
-        std::cout << "norm^2:" << norm*norm << "\n";
-        exit(1);
-#endif
-    
-//        typedef Dune::RestartedGMResSolver<OverlapVector> Solver;
-//        Solver solver(opA, scalarProd, precond, residReduction, 50, 500, verbosity);
-
-        /*
-        std::vector<int> per(overlapX_->size());
-        assert(overlapX_->size() == 13*9);
-        if (mySize == 2) {
-            for (int i = 0; i < 7; ++i)
-                for (int j = 0; j < 9; ++j)
-                    per[j*7 + i] = j*13 + i;
-            for (int i = 7; i < 13; ++i)
-                for (int j = 0; j < 9; ++j)
-                    per[j*(13 - 7) + (i - 7) + 7*9] = j*13 + i;
-        }
-        else {
-            for (int i = 0; i < overlapX_->size(); ++i)
-                per[i] = i;
-        }
-        
-        std::ofstream *lfp;
-        if (myRank == 0) {
-            lfp = new std::ofstream("/tmp/overlap.log");
-            std::ofstream &lf = *lfp;
-            lf.precision(18);
-            typedef typename OverlapMatrix::ColIterator ColIt;
-            for (int row = 0; row < overlapMatrix_->N(); ++ row) {
-                ColIt it = (*overlapMatrix_)[row].begin();
-                ColIt endIt = (*overlapMatrix_)[row].end();
-                for (; it != endIt; ++it) { 
-                    lf << "row "  << per[row]
-                       << " col " << per[it.index()]
-                       << " = "
-                       << (*it)[0][0] << " "
-                       << (*it)[0][1]
-                       << " / " 
-                       << (*it)[1][0] << " "
-                       << (*it)[1][1]
-                       << "\n";
-                }
-            }
-            
-            SolutionVector tmp(overlapX_->size());
-            for (int i = 0; i < overlapX_->size(); ++i) {
-                lf << "vec b row "  << per[i]
-                   << "      = " << (*overlapB_)[i]
-                   << "\n";
-                lf << "vec x init row "  << per[i]
-                   << "      = " << (*overlapX_)[i]
-                   << "\n";
-            }
-        }
-        */
-        
+                      0);
         Dune::InverseOperatorResult result;
-        solver.apply(*overlapX_, *overlapB_, result);
+        solver.apply(overlapx, overlapb, result);
         
-        overlapX_->sync();
-        if (!result.converged)
-            DUNE_THROW(Dumux::NumericalProblem,
-                       "Solving the linear system of equations did not converge.");
-        /*
-        if (myRank == 0) {
-            std::ofstream &lf = *lfp;
-            
-            for (int i = 0; i < overlapX_->size(); ++i) {
-                lf << "vec b final row "  << per[i]
-                   << "      = " << (*overlapB_)[i]
-                   << "\n";
-                lf << "vec x final row "  << per[i]
-                   << "      = " << (*overlapX_)[i]
-                   << "\n";
-            }
-            lf.close();
-            delete lfp;
-        }
-        exit(1);
-        */
-
-        // make sure the solver didn't produce a nan or an inf
-        // somewhere. this should never happen but for some strange
-        // reason it happens anyway.
-       
-        //Scalar xNorm2 = overlapX_->two_norm2();
-        Scalar xNorm2 = x.two_norm2();
-        gridView_().comm().sum(xNorm2);
-        if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
-            DUNE_THROW(Dumux::NumericalProblem,
-                       "The linear solver produced a NaN or inf somewhere.");
-       
         // copy the result back to the non-overlapping vector
-        overlapX_->assignToNonOverlapping(x);
-#endif
+        overlapx.assignTo(x);
     }
 
     void updateOverlap_(const JacobianMatrix &A,

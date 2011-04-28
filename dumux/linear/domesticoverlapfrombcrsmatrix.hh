@@ -69,11 +69,12 @@ public:
     typedef std::set<ProcessRank> PeerSet;
 
     typedef std::list<IndexDistanceNpeers> ForeignOverlapWithPeer;
+    typedef std::vector<std::map<ProcessRank, BorderDistance> > ForeignOverlapByIndex;
 
     typedef std::pair<LocalIndex, BorderDistance> IndexDistance;
-    typedef std::list<IndexDistance> DomesticOverlapWithPeer;
+    typedef std::set<LocalIndex> DomesticOverlapWithPeer;
     typedef std::map<ProcessRank, DomesticOverlapWithPeer> DomesticOverlapByRank;
-    typedef std::vector<std::map<ProcessRank, BorderDistance> > DomesticOverlapByIndex;
+    typedef std::vector<std::set<ProcessRank> > DomesticOverlapByIndex;
 
     typedef std::tuple<LocalIndex, PeerIndex, ProcessRank> LocalindexPeerindexPeerrank;
     typedef std::list<LocalindexPeerindexPeerrank> BorderList;
@@ -117,7 +118,7 @@ public:
      *        index.
      */
     int numPeers(int domesticIdx) const
-    { return numPeers_[domesticIdx]; };
+    { return domesticOverlapByIndex_[domesticIdx].size(); };
 
     /*!
      * \brief Returns the rank of the current process.
@@ -130,7 +131,7 @@ public:
      *        with the current process.
      */
     const PeerSet &peerSet() const
-    { return foreignOverlap_.peerSet(); }
+    { return peerSet_; }
     
     /*!
      * \brief Returns the foreign overlap of a peer process
@@ -195,7 +196,7 @@ public:
     { 
         if (!isLocal(domesticIdx))
             return false;
-        return foreignOverlap_.iAmMasterOf(domesticIdx);
+        return foreignOverlap_.masterOf(domesticIdx) == myRank_;
     };
 
     /*!
@@ -225,49 +226,40 @@ public:
 protected:
     void buildDomesticOverlap_(const BCRSMatrix &A)
     {
+        // copy the set of peers from the foreign overlap
+        peerSet_ = foreignOverlap_.peerSet();
+
         // resize the array which stores the number of peers for
         // each entry.
-        numPeers_.resize(numDomestic(), 0);
+        domesticOverlapByIndex_.resize(numLocal());
         // for all local indices copy the number of processes from the
         // foreign overlap
         for (int i = 0; i < numLocal(); ++i) {
-            numPeers_[i] = foreignOverlap_.numPeers(i);
+            const std::map<ProcessRank, BorderDistance> &idxOverlap =
+                foreignOverlap_.foreignOverlapByIndex(i);
+            std::map<ProcessRank, BorderDistance>::const_iterator it = idxOverlap.begin();
+            std::map<ProcessRank, BorderDistance>::const_iterator endIt = idxOverlap.end();
+            for (; it != endIt; ++it) {
+                domesticOverlapByIndex_[i].insert(it->first);
+                domesticOverlapWithPeer_[it->first].insert(i);
+            }
         }
 
-        // receive our overlap from the processes with higher rank
-        PeerSet::const_iterator peerIt = peerSet().begin();
-        PeerSet::const_iterator peerEndIt = peerSet().end();
+        PeerSet::const_iterator peerIt;
+        PeerSet::const_iterator peerEndIt = foreignOverlap_.peerSet().end();
+
+        // send the overlap indices to all peer processes 
+        peerIt = foreignOverlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            if (myRank_ < peerRank)
-                receiveIndicesFromPeer_(peerRank);
+            sendIndicesToPeer_(peerRank);
         };
 
-        // send the overlap indices to the peer processes with
-        // lower rank
-        peerIt = peerSet().begin();
+        // receive our overlap from the processes to all peer processes
+        peerIt = foreignOverlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            if (myRank_ > peerRank)
-                sendIndicesToPeer_(peerRank);
-        };
-
-
-        // receive our overlap from the processes with lower rank
-        peerIt = peerSet().begin();
-        for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            if (myRank_ > peerRank)
-                receiveIndicesFromPeer_(peerRank);
-        };
-
-        // send the overlap indices to the peer processes with
-        // higher rank
-        peerIt = peerSet().begin();
-        for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            if (myRank_ < peerRank)
-                sendIndicesToPeer_(peerRank);
+            receiveIndicesFromPeer_(peerRank);
         };
     };
 
@@ -294,25 +286,37 @@ protected:
             int localIdx = std::get<0>(*overlapIt);
             int borderDistance = std::get<1>(*overlapIt);
 
+            const std::map<ProcessRank, BorderDistance> &foreignIndexOverlap
+                = foreignOverlap_.foreignOverlapByIndex(localIdx);
+
+            int numPeers = foreignIndexOverlap.size();
+
             int sendBuff[3] = {
                 globalIndices_.domesticToGlobal(localIdx),
                 borderDistance,
-                0
+                numPeers
             };
-            if (foreignOverlap_.isBorderFor(peerRank, localIdx) &&
-                peerRank < myRank_)
-            {
-                sendBuff[2] = foreignOverlap_.numNonBorderPeers(localIdx);
-            }
-            else
-                sendBuff[2] = numPeers_[localIdx];
-            
+
             MPI_Bsend(sendBuff, // buff
                       3, // count
                       MPI_INT, // data type
                       peerRank, 
                       0, // tag
                       MPI_COMM_WORLD); // communicator
+
+            int *peerRanks = new int[numPeers];
+            typename std::map<ProcessRank, BorderDistance>::const_iterator it = foreignIndexOverlap.begin();
+            typename std::map<ProcessRank, BorderDistance>::const_iterator endIt = foreignIndexOverlap.end();
+            for (int i = 0; it != endIt; ++it, ++i)
+            { peerRanks[i] = it->first; };
+            
+            MPI_Bsend(peerRanks, // buff
+                      numPeers, // count
+                      MPI_INT, // data type
+                      peerRank, 
+                      0, // tag
+                      MPI_COMM_WORLD); // communicator
+            delete[] peerRanks;
         };
     }
 
@@ -346,28 +350,40 @@ protected:
             if (borderDistance > 0) {
                 // if the index is not on the border, add it to the
                 // domestic overlap
-
                 if (!globalIndices_.hasGlobalIndex(globalIdx)) {
                     // create and add a new domestic index
                     domesticIdx = globalIndices_.numDomestic();
                     globalIndices_.addIndex(domesticIdx, globalIdx);
-                    numPeers_.push_back(0);
+                    
+                    domesticOverlapByIndex_.resize(globalIndices_.numDomestic());
                 }
                 else {
                     domesticIdx = globalIndices_.globalToDomestic(globalIdx);
                 }
-                
-                domesticOverlapWithPeer_[peerRank].push_back(IndexDistance(domesticIdx, borderDistance));
             }
             else 
                 // border index
                 domesticIdx = globalIndices_.globalToDomestic(globalIdx);
-            
-            // calculate the number of peers
-            if (isBorder(domesticIdx) && peerRank > myRank_)
-                numPeers_[domesticIdx] += numPeers;
-            else
-                numPeers_[domesticIdx] = numPeers;
+
+            int *peerRanks = new int[numPeers];
+            MPI_Recv(peerRanks, // buff
+                     numPeers, // count
+                     MPI_INT, // data type
+                     peerRank, 
+                     0, // tag
+                     MPI_COMM_WORLD, // communicator
+                     MPI_STATUS_IGNORE);
+
+            domesticOverlapByIndex_[domesticIdx].insert(peerRank);
+            domesticOverlapWithPeer_[peerRank].insert(domesticIdx);
+            for (int i = 0; i < numPeers; ++i) {
+                if (peerRanks[i] != myRank_) {
+                    domesticOverlapByIndex_[domesticIdx].insert(peerRanks[i]);
+                    domesticOverlapWithPeer_[peerRanks[i]].insert(domesticIdx);
+                    peerSet_.insert(peerRanks[i]);
+                }
+            }
+            delete [] peerRanks;
         }
     }
 
@@ -375,9 +391,10 @@ protected:
     ForeignOverlap foreignOverlap_;
 
     DomesticOverlapByRank domesticOverlapWithPeer_;
-    std::vector<int> numPeers_;
+    DomesticOverlapByIndex domesticOverlapByIndex_;
 
     GlobalIndices globalIndices_;
+    PeerSet peerSet_;
 };
 
 } // namespace Dumux

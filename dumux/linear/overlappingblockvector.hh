@@ -45,7 +45,7 @@ class OverlappingBlockVector
 public:
     OverlappingBlockVector(const BlockVector &nbv, const Overlap &overlap)
         : ParentType(overlap.numDomestic())
-        , overlap_(overlap)
+        , overlap_(&overlap)
     {
         assignAdd(nbv);
     };
@@ -58,7 +58,6 @@ public:
         , overlap_(obv.overlap_)
     {}
     
-
     /*!
      * \brief Assign an overlapping block vector from a
      *        non-overlapping one, border entries are added.
@@ -66,20 +65,31 @@ public:
     void assignAdd(const BlockVector &nbv)
     {
         // assign the local rows
-        int numLocal = overlap_.numLocal();
+        int numLocal = overlap_->numLocal();
         for (int rowIdx = 0; rowIdx < numLocal; ++rowIdx) {
             (*this)[rowIdx] = nbv[rowIdx];
         }
 
-        int numDomestic = overlap_.numDomestic();
+        int numDomestic = overlap_->numDomestic();
         for (int rowIdx = numLocal; rowIdx < numDomestic; ++rowIdx) {
             (*this)[rowIdx] = 0;
         }
         
-        print();
-
         // add up the contents of overlapping rows
         syncAdd();
+    }
+
+    /*!
+     * \brief Assign the local values to a non-overlapping block
+     *        vector.
+     */
+    void assignTo(BlockVector &nbv) const
+    {
+        // assign the local rows
+        int numLocal = overlap_->numLocal();
+        for (int rowIdx = 0; rowIdx < numLocal; ++rowIdx) {
+            nbv[rowIdx] = (*this)[rowIdx];
+        }
     }
 
     /*!
@@ -88,47 +98,35 @@ public:
      */
     void syncAdd()
     {
-        // send all entries to the peers with lower ranks
-        typename PeerSet::const_iterator peerIt = overlap_.peerSet().begin();
-        typename PeerSet::const_iterator peerEndIt = overlap_.peerSet().end();
+        typename PeerSet::const_iterator peerIt;
+        typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
+
+        // send all entries to all peers
+        peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
-            if (peerRank < overlap_.myRank())
-                sendEntries_(peerRank);
+            sendEntries_(peerRank);
         }
 
-        // recieve entries from the peers with higher ranks
-        peerIt = overlap_.peerSet().begin();
+        // recieve all entries to the peers
+        peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
-            if (peerRank > overlap_.myRank())
-                receiveAddEntries_(peerRank);
+            receiveAddEntries_(peerRank);
         }
-
-        // then, receive all entries from peers with lower ranks
-        peerIt = overlap_.peerSet().begin();
-        for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            
-            if (peerRank < overlap_.myRank())
-                receiveAddEntries_(peerRank);
-        }
-
-        // finally, send all entries to the peers with higher ranks
-        peerIt = overlap_.peerSet().begin();
-        for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            
-            if (peerRank > overlap_.myRank())
-                sendEntries_(peerRank);
-        }
-
     };
 
     using ParentType::operator=;
-
+    /*!
+     * \brief Copy constructor.
+     */
+    OverlappingBlockVector &operator=(const OverlappingBlockVector &obv)
+    {
+        ParentType::operator=(obv);
+        overlap_ = obv.overlap_;
+        return *this;
+    }
+    
     /*!
      * \brief Syncronize an overlapping block vector and take the
      *        arthmetic mean of the entry values of all processes.
@@ -137,16 +135,16 @@ public:
     {
         syncAdd();
 
-        int numDomestic = overlap_.numDomestic();
+        int numDomestic = overlap_->numDomestic();
         for (int i = 0; i < numDomestic; ++i) {
-            (*this)[i] /= overlap_.numPeers(i) + 1;
+            (*this)[i] /= overlap_->numPeers(i) + 1;
         }
     };
 
     void print() const 
     {
         for (int i = 0; i < this->size(); ++i) {
-            std::cout << "row " << i << (overlap_.isLocal(i)?" ":"*") << ": " << (*this)[i] << "\n";
+            std::cout << "row " << i << (overlap_->isLocal(i)?" ":"*") << ": " << (*this)[i] << "\n";
         };
     };
 
@@ -154,11 +152,10 @@ private:
     void sendEntries_(int peerRank)
     {
         // send the number of non-border entries in the matrix
-        const ForeignOverlapWithPeer &foreignOverlap = overlap_.foreignOverlapWithPeer(peerRank);
-        const DomesticOverlapWithPeer &domesticOverlap = overlap_.domesticOverlapWithPeer(peerRank);
+        const DomesticOverlapWithPeer &domesticOverlap = overlap_->domesticOverlapWithPeer(peerRank);
 
         // send size of foreign overlap to peer
-        int numOverlapRows = foreignOverlap.size() + domesticOverlap.size();
+        int numOverlapRows = domesticOverlap.size();
         MPI_Bsend(&numOverlapRows, // buff
                   1, // count
                   MPI_INT, // data type
@@ -170,18 +167,11 @@ private:
         FieldVector *valuesSendBuff = new FieldVector[numOverlapRows];
 
         int i = 0;
-        typename ForeignOverlapWithPeer::const_iterator forIt = foreignOverlap.begin();
-        typename ForeignOverlapWithPeer::const_iterator forEndIt = foreignOverlap.end();
-        for (; forIt != forEndIt; ++forIt, ++i) {
-            int rowIdx = std::get<0>(*forIt);
-            indicesSendBuff[i] = overlap_.domesticToGlobal(rowIdx);
-            valuesSendBuff[i] = (*this)[rowIdx];
-        }
         typename DomesticOverlapWithPeer::const_iterator domIt = domesticOverlap.begin();
         typename DomesticOverlapWithPeer::const_iterator domEndIt = domesticOverlap.end();
         for (; domIt != domEndIt; ++domIt, ++i) {
-            int rowIdx = std::get<0>(*domIt);
-            indicesSendBuff[i] = overlap_.domesticToGlobal(rowIdx);
+            int rowIdx = *domIt;
+            indicesSendBuff[i] = overlap_->domesticToGlobal(rowIdx);
             valuesSendBuff[i] = (*this)[rowIdx];
         }
 
@@ -235,21 +225,15 @@ private:
                  MPI_STATUS_IGNORE); 
         
         for (int j = 0; j < numOverlapRows; ++j) {
-            int domRowIdx = overlap_.globalToDomestic(indicesRecvBuff[j]);
-            
-            if (peerRank < overlap_.myRank()) {
-                (*this)[domRowIdx] = valuesRecvBuff[j];
-            }
-            else {
-                (*this)[domRowIdx] += valuesRecvBuff[j];
-            }
+            int domRowIdx = overlap_->globalToDomestic(indicesRecvBuff[j]);
+            (*this)[domRowIdx] += valuesRecvBuff[j];
         }
 
         delete[] indicesRecvBuff;
         delete[] valuesRecvBuff;
     }
 
-    const Overlap &overlap_;
+    const Overlap *overlap_;
 };
 
 } // namespace Dumux

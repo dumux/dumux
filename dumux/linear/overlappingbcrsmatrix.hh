@@ -70,8 +70,6 @@ public:
                           int overlapSize)
     {
         overlap_ = std::shared_ptr<Overlap>(new Overlap(M, borderList, overlapSize));
-        overlap_->print();
-
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
 
         // build the overlapping matrix from the non-overlapping
