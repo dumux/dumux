@@ -789,7 +789,7 @@ protected:
 
         OverlappingMatrix overlapA(A, 
                                    borderListCreator.borderList(), 
-                                   /*overlapSize=*/4);
+                                   /*overlapSize=*/24);
         OverlappingVector overlapb(b, overlapA.overlap());
         OverlappingVector overlapx(overlapb);
 
@@ -808,11 +808,11 @@ protected:
         SeqPreconditioner seqPreCond(overlapA, 1.0);
 #endif
 
-        typedef Dumux::OverlappingScalarProduct<OverlappingVector, Overlap> OverlappingScalarProduct;
-        OverlappingScalarProduct scalarProd(overlapA.overlap());
-
         typedef Dumux::OverlappingPreconditioner<SeqPreconditioner, Overlap> OverlappingPreconditioner;
         OverlappingPreconditioner preCond(seqPreCond, overlapA.overlap());
+
+        typedef Dumux::OverlappingScalarProduct<OverlappingVector, Overlap> OverlappingScalarProduct;
+        OverlappingScalarProduct scalarProd(overlapA.overlap());
 
         typedef Dumux::OverlappingOperator<OverlappingMatrix, OverlappingVector, OverlappingVector> OverlappingOperator;
         OverlappingOperator opA(overlapA);

@@ -205,13 +205,13 @@ int main(int argc, char** argv)
         res[1] = 32;
 */
 
-/*
         res[0] = 24;
         res[1] = 16;
-*/
 
+        /*
         res[0] = 6;
-        res[1] = 3;
+        res[1] = 4;
+        */
 
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
         ////////////////////////////////////////////////////////////
