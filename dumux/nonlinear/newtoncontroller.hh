@@ -816,10 +816,9 @@ protected:
         typedef Dumux::OverlappingPreconditioner<SeqPreconditioner, Overlap> OverlappingPreconditioner;
         OverlappingPreconditioner preCond(seqPreCond, overlapA.overlap());
 
-        /*
-        typedef Dumux::OverlapBCRSMatrix<JacobianMatrix, GlobalIndices> OverlapMatrix;
-        OverlapMatrix overlapA(A, globalIndices);
-        */
+        std::cerr.precision(16);
+        std::cerr << "norm(b) = " << scalarProd.norm(overlapb) << "\n";
+        std::cerr << "norm(A) = " << overlapA.frobenius_norm() << "\n";
 
         DUNE_THROW(Dune::NotImplemented,
                    "NewtonController::solveLinear_");

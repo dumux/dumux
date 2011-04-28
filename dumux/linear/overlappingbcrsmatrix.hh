@@ -374,23 +374,23 @@ private:
     // communicates and adds up the contents of overlapping rows
     void sync_()
     {
-        // first, recieve entries from the peers with higher ranks
+        // first, send all entries to the peers with lower ranks
         typename PeerSet::const_iterator peerIt = overlap_->peerSet().begin();
         typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank > myRank_)
-                receiveEntries_(peerRank);
+            if (peerRank < myRank_)
+                sendEntries_(peerRank);
         }
 
-        // then, send all entries to the peers with lower ranks
+        // then, recieve entries from the peers with higher ranks
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank < myRank_)
-                sendEntries_(peerRank);
+            if (peerRank > myRank_)
+                receiveEntries_(peerRank);
         }
 
         // then, receive all entries from peers with lower ranks

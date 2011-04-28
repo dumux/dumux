@@ -76,6 +76,8 @@ public:
             (*this)[rowIdx] = 0;
         }
         
+        print();
+
         // add up the contents of overlapping rows
         syncAdd();
     }
@@ -86,23 +88,23 @@ public:
      */
     void syncAdd()
     {
-        // first, recieve entries from the peers with higher ranks
+        // send all entries to the peers with lower ranks
         typename PeerSet::const_iterator peerIt = overlap_.peerSet().begin();
         typename PeerSet::const_iterator peerEndIt = overlap_.peerSet().end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank > overlap_.myRank())
-                receiveAddEntries_(peerRank);
+            if (peerRank < overlap_.myRank())
+                sendEntries_(peerRank);
         }
 
-        // then, send all entries to the peers with lower ranks
+        // recieve entries from the peers with higher ranks
         peerIt = overlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank < overlap_.myRank())
-                sendEntries_(peerRank);
+            if (peerRank > overlap_.myRank())
+                receiveAddEntries_(peerRank);
         }
 
         // then, receive all entries from peers with lower ranks
@@ -235,10 +237,12 @@ private:
         for (int j = 0; j < numOverlapRows; ++j) {
             int domRowIdx = overlap_.globalToDomestic(indicesRecvBuff[j]);
             
-            if (peerRank < overlap_.myRank())
+            if (peerRank < overlap_.myRank()) {
                 (*this)[domRowIdx] = valuesRecvBuff[j];
-            else
+            }
+            else {
                 (*this)[domRowIdx] += valuesRecvBuff[j];
+            }
         }
 
         delete[] indicesRecvBuff;
