@@ -765,36 +765,13 @@ protected:
                       Scalar residReduction)
     {
         int verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
-        if (gridView_().comm().rank() != 0)
+        int myRank = gridView_().comm().rank();
+        if (myRank != 0)
             verbosity = 0;
 
-#if 0
-        A = 0;
-        int myRank = gridView_().comm().rank();
-        for (int i = 0; i < A.N(); ++i) {
-            for (int j = 0; j < 2; ++ j) {
-                Scalar tmp = (1 + 2*i + j) + myRank/2.0;
-                A[i][i][j][j] = 1.0;
-                x[i][j] = 0.0;
-                b[i][j] = 1.0;
-            };
-        };
-        
-        updateOverlap_(A, x, b);
-        printSparseMatrix(std::cout, *overlapMatrix_, "A", "row");
-        std::cout << *overlapB_ << "\n";
-        exit(1);
-#else
         updateOverlap_(A, x, b);
         //printmatrix(std::cout, *((JacobianMatrix *) overlapMatrix_), "M", "row");
-#endif
 
-/*
-        std::cout << "before: " << *overlapB_;
-        overlapB_->sync();
-        std::cout << "after: " << *overlapB_;
-        exit(1);
-*/
 #define PREC 3
 #if PREC == 1
         // simple Jacobi preconditioner
@@ -841,25 +818,8 @@ protected:
         preCond.post(tmp);
         std::cout << "after precond: result: " << tmp << " rhs: " << *overlapB_ << "\n";
 
-        std::cout << "overlapB: ";
-        for (int i = 0; i < overlapB_->size(); ++i) {
-            int peerRank =  1 - gridView_().comm().rank();
-            if (overlap_->isBorder(i))
-                std::cout << i << " peer border " 
-                          << overlap_->domesticToForeignIndex(i, peerRank) << ": "
-                          << tmp[i]
-                          << "\n";
-            else if (!overlap_->isLocal(i))
-                std::cout << i << " peer index " 
-                          << overlap_->domesticToForeignIndex(i, peerRank) << ": "
-                          << tmp[i]
-                          << "\n";
-            else
-                std::cout << i << ": " 
-                          << tmp[i]
-                          << "\n";
-        }
-       
+        exit(1);
+      
         Scalar dot = scalarProd.dot(tmp, tmp);
         Scalar norm = scalarProd.norm(tmp);
         std::cout.precision(16);
@@ -872,26 +832,94 @@ protected:
 //        typedef Dune::RestartedGMResSolver<OverlapVector> Solver;
 //        Solver solver(opA, scalarProd, precond, residReduction, 50, 500, verbosity);
 
-       Dune::InverseOperatorResult result;
-       solver.apply(*overlapX_, *overlapB_, result);
-       overlapX_->sync();
+        /*
+        std::vector<int> per(overlapX_->size());
+        assert(overlapX_->size() == 13*9);
+        if (mySize == 2) {
+            for (int i = 0; i < 7; ++i)
+                for (int j = 0; j < 9; ++j)
+                    per[j*7 + i] = j*13 + i;
+            for (int i = 7; i < 13; ++i)
+                for (int j = 0; j < 9; ++j)
+                    per[j*(13 - 7) + (i - 7) + 7*9] = j*13 + i;
+        }
+        else {
+            for (int i = 0; i < overlapX_->size(); ++i)
+                per[i] = i;
+        }
+        
+        std::ofstream *lfp;
+        if (myRank == 0) {
+            lfp = new std::ofstream("/tmp/overlap.log");
+            std::ofstream &lf = *lfp;
+            lf.precision(18);
+            typedef typename OverlapMatrix::ColIterator ColIt;
+            for (int row = 0; row < overlapMatrix_->N(); ++ row) {
+                ColIt it = (*overlapMatrix_)[row].begin();
+                ColIt endIt = (*overlapMatrix_)[row].end();
+                for (; it != endIt; ++it) { 
+                    lf << "row "  << per[row]
+                       << " col " << per[it.index()]
+                       << " = "
+                       << (*it)[0][0] << " "
+                       << (*it)[0][1]
+                       << " / " 
+                       << (*it)[1][0] << " "
+                       << (*it)[1][1]
+                       << "\n";
+                }
+            }
+            
+            SolutionVector tmp(overlapX_->size());
+            for (int i = 0; i < overlapX_->size(); ++i) {
+                lf << "vec b row "  << per[i]
+                   << "      = " << (*overlapB_)[i]
+                   << "\n";
+                lf << "vec x init row "  << per[i]
+                   << "      = " << (*overlapX_)[i]
+                   << "\n";
+            }
+        }
+        */
+        
+        Dune::InverseOperatorResult result;
+        solver.apply(*overlapX_, *overlapB_, result);
+        
+        overlapX_->sync();
+        if (!result.converged)
+            DUNE_THROW(Dumux::NumericalProblem,
+                       "Solving the linear system of equations did not converge.");
+        /*
+        if (myRank == 0) {
+            std::ofstream &lf = *lfp;
+            
+            for (int i = 0; i < overlapX_->size(); ++i) {
+                lf << "vec b final row "  << per[i]
+                   << "      = " << (*overlapB_)[i]
+                   << "\n";
+                lf << "vec x final row "  << per[i]
+                   << "      = " << (*overlapX_)[i]
+                   << "\n";
+            }
+            lf.close();
+            delete lfp;
+        }
+        exit(1);
+        */
 
-       if (!result.converged)
-           DUNE_THROW(Dumux::NumericalProblem,
-                      "Solving the linear system of equations did not converge.");
-
-       // make sure the solver didn't produce a nan or an inf
-       // somewhere. this should never happen but for some strange
-       // reason it happens anyway.
+        // make sure the solver didn't produce a nan or an inf
+        // somewhere. this should never happen but for some strange
+        // reason it happens anyway.
        
-       Scalar xNorm2 = x.two_norm2();
-       gridView_().comm().sum(xNorm2);
-       if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
-           DUNE_THROW(Dumux::NumericalProblem,
-                      "The linear solver produced a NaN or inf somewhere.");
+        //Scalar xNorm2 = overlapX_->two_norm2();
+        Scalar xNorm2 = x.two_norm2();
+        gridView_().comm().sum(xNorm2);
+        if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
+            DUNE_THROW(Dumux::NumericalProblem,
+                       "The linear solver produced a NaN or inf somewhere.");
        
-       // copy the result back to the non-overlapping vector
-       overlapX_->assignToNonOverlapping(x);
+        // copy the result back to the non-overlapping vector
+        overlapX_->assignToNonOverlapping(x);
     }
 
     void updateOverlap_(const JacobianMatrix &A,
@@ -905,7 +933,7 @@ protected:
 
             BorderListFromGrid borderListCreator(gridView_(), vertexMapper_());
 #warning HACK: make this a property!
-            int overlapSize = 10;
+            int overlapSize = 100;
             overlap_ = new Overlap(A,
                                    borderListCreator.borderList(),
                                    overlapSize);

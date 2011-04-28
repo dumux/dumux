@@ -668,6 +668,7 @@ protected:
                 ++ j;
             };
         };
+
     };
 
     // calculates the number of peers which overlap any given domestic
@@ -1381,38 +1382,6 @@ public:
         
     };
 
-    void copyFromMaster()
-    {
-        int myRank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-
-        ///////
-        // Send the values of all own entries to all peers
-        ///////
-        if (myRank == 0) {
-            int peerRank = 1 - myRank;
-
-            int msgSize;
-            field_type *sendMsgBuff = createAllValuesMsg_(msgSize, peerRank);
-            
-            // send the size of the overlap of each row to the peer
-            // rank
-            MPI_Send(sendMsgBuff, // pointer to user data 
-                     msgSize*sizeof(field_type), // size of user data array
-                     MPI_BYTE, // type of user data
-                     peerRank,  // peer rank
-                     0, // identifier
-                     MPI_COMM_WORLD,
-                     MPI_STATUS_IGNORE);
-            
-            delete[] sendMsgBuff;
-        }
-        else {
-            int peerRank = 1 - myRank;
-            receiveAllValues_(peerRank);
-        };
-    };
-    
     void copyOverlapFromOwner()
     {
         const PeerSet &peerSet = overlap_->peerSet();
@@ -1525,54 +1494,6 @@ private:
         }
 
         return buff;
-    };
-
-    field_type *createAllValuesMsg_(int &msgSize, int peerRank)
-    {
-        int overlapSize = overlap_->numDomestic();;
-
-        // calculate message size
-        msgSize = block_type::size * overlapSize;
-
-        // allocate message buffer
-        field_type *buff = new field_type[msgSize];
-        int pos = 0;
-
-        // fill the message buffer
-        for (int i = 0; i < this->size(); ++i) {
-            for (int j = 0; j < block_type::size; ++j) {
-                buff[pos] = (*this)[i][j];
-                ++pos;
-            }
-        }
-
-        return buff;
-    };
-
-    void receiveAllValues_(int peerRank, bool verb = false)
-    {
-        int overlapSize = overlap_->numDomestic();
-        int msgSize = block_type::size * overlapSize;
-        field_type *buff = new field_type[msgSize];
-
-        MPI_Recv(buff, // receive message buffer
-                 msgSize*sizeof(field_type), // size of user data array
-                 MPI_BYTE, // type of user data
-                 peerRank, // peer rank
-                 0, // identifier
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE); // status
-
-        int pos = 0;
-        for (int i = 0; i < this->size(); ++i) {
-            for (int j = 0; j < block_type::size; ++j) {
-                (*this)[i][j] = buff[pos];
-                ++pos;
-            }
-        }
-        
-        delete[] buff;
-
     };
 
     void receiveValues_(int peerRank)
@@ -1774,14 +1695,19 @@ public:
     }
 
     void pre(domain_type &x, range_type &y)
-    { seqPreCond_.pre(x, y); };
+    {
+        seqPreCond_.pre(x, y);
+        x.weightedSumOnOverlap();
+        y.weightedSumOnOverlap();
+    };
 
     void apply(domain_type &x, const range_type &y)
     {
         seqPreCond_.apply(x, y);
-
+        
         // communicate the results on the overlap
         x.weightedSumOnOverlap();
+        //x.sync();
     };
    
     void post(domain_type &x)
@@ -1819,8 +1745,6 @@ public:
     virtual void apply (const DomainVector& x, RangeVector& y) const
     {
         A_.mv(x,y);
-#warning "HACK! only communicate the front!"
-        y.sync();
         
         //Dune::PDELab::set_constrained_dofs(cc,0.0,y);
     }
@@ -1829,7 +1753,6 @@ public:
     virtual void applyscaleadd (field_type alpha, const DomainVector& x, RangeVector& y) const
     {
         A_.usmv(alpha,x,y);
-        y.sync();
 
         //Dune::PDELab::set_constrained_dofs(cc,0.0,y);
     }
