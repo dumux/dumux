@@ -588,19 +588,19 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     //calculate consitutive relations depending on the kind of saturation used
                     //determine phase saturations from primary saturation variable
                     Scalar satW = 0;
-                    Scalar satNW = 0;
+                    //Scalar satNW = 0;
                     switch (saturationType)
                     {
                     case Sw:
                     {
                         satW = satBound;
-                        satNW = 1 - satBound;
+                        //satNW = 1 - satBound;
                         break;
                     }
                     case Sn:
                     {
                         satW = 1 - satBound;
-                        satNW = satBound;
+                        //satNW = satBound;
                     }
                     }
 
@@ -851,26 +851,26 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
 
         //determine phase saturations from primary saturation variable
         Scalar satW = 0;
-        Scalar satNW = 0;
+        //Scalar satNW = 0;
         switch (saturationType)
         {
         case Sw:
         {
             satW = problem_.variables().saturation()[globalIdx];
-            satNW = 1 - problem_.variables().saturation()[globalIdx];
+            //satNW = 1 - problem_.variables().saturation()[globalIdx];
             break;
         }
         case Sn:
         {
             satW = 1 - problem_.variables().saturation()[globalIdx];
-            satNW = problem_.variables().saturation()[globalIdx];
+            //satNW = problem_.variables().saturation()[globalIdx];
             break;
         }
         }
 
         problem_.variables().capillaryPressure(globalIdx) = MaterialLaw::pC(
-                problem_.spatialParameters().materialLawParams(globalPos, *eIt), satW);
-
+            problem_.spatialParameters().materialLawParams(globalPos, *eIt), satW);
+        
         //determine phase pressures from primary pressure variable
         Scalar pressW = 0;
         Scalar pressNW = 0;

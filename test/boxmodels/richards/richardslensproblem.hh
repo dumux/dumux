@@ -344,7 +344,7 @@ private:
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
-    static const Scalar eps_ = 3e-6;
+    static constexpr Scalar eps_ = 3e-6;
     Scalar pnRef_;
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;

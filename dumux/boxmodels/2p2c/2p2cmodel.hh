@@ -151,7 +151,7 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    static const Scalar mobilityUpwindAlpha =
+    static constexpr Scalar mobilityUpwindAlpha =
             GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:

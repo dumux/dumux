@@ -270,9 +270,9 @@ private:
 
 protected:
     const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
-    static const Scalar cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor)); //!< determines the CFLfactor
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$ 0 = S_w \f$, \f$ 1 = S_n \f$)
+    static constexpr Scalar cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor)); //!< determines the CFLfactor
+    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static constexpr int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$ 0 = S_w \f$, \f$ 1 = S_n \f$)
 };
 
 //! initializes the matrix to store the system of equations
@@ -509,7 +509,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 int globalIdxJ = problem_.variables().index(*neighborPointer);
 
                 // gemotry info of neighbor
-                Dune::GeometryType neighborGT = neighborPointer->geometry().type();
+                //Dune::GeometryType neighborGT = neighborPointer->geometry().type();
                 const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
                 // distance vector between barycenters
@@ -1138,7 +1138,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::initialMaterialLaws(bool compositional
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // get geometry type
-        Dune::GeometryType gt = eIt->geometry().type();
+        //Dune::GeometryType gt = eIt->geometry().type();
 
         // get global coordinate of cell center
         GlobalPosition globalPos = eIt->geometry().center();
@@ -1261,7 +1261,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // get geometry type
-        Dune::GeometryType gt = eIt->geometry().type();
+        //Dune::GeometryType gt = eIt->geometry().type();
 
         // get global coordinate of cell center
         GlobalPosition globalPos = eIt->geometry().center();

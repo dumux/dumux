@@ -377,7 +377,7 @@ private:
             && lambda > (bboxMax_[0] - 0.55*width)/width;
     }
 
-    static const Scalar eps_ = 3e-6;
+    static constexpr Scalar eps_ = 3e-6;
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
 

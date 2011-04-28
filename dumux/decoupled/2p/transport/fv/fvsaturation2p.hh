@@ -288,7 +288,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
     updateVec = 0;
 
     // some phase properties
-    Dune::FieldVector<Scalar, dimWorld> gravity = problem_.gravity();
+    //Dune::FieldVector<Scalar, dimWorld> gravity = problem_.gravity();
 
     // compute update vector
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
@@ -376,8 +376,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
 
                 Scalar lambdaW = 0;
                 Scalar lambdaNW = 0;
-                Scalar viscosityW = 0;
-                Scalar viscosityNW = 0;
+                //Scalar viscosityW = 0;
+                //Scalar viscosityNW = 0;
 
                 //upwinding of lambda dependend on the phase potential gradients
                 if (potentialW >= 0.)
@@ -387,7 +387,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     {
                         lambdaW /= densityWI;
                     }//divide by density because lambda is saved as lambda*density
-                    viscosityW = viscosityWI;
+                    //viscosityW = viscosityWI;
                 }
                 else
                 {
@@ -396,8 +396,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     {
                         lambdaW /= densityWJ;
                     }//divide by density because lambda is saved as lambda*density
-                    viscosityW = problem_.variables().viscosityWetting(
-                            globalIdxJ);
+                    //viscosityW = problem_.variables().viscosityWetting(
+                    //        globalIdxJ);
                 }
 
                 if (potentialNW >= 0.)
@@ -407,7 +407,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     {
                         lambdaNW /= densityNWI;
                     }//divide by density because lambda is saved as lambda*density
-                    viscosityNW = viscosityNWI;
+                    //viscosityNW = viscosityNWI;
                 }
                 else
                 {
@@ -417,8 +417,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     {
                         lambdaNW /= densityNWJ;
                     }//divide by density because lambda is saved as lambda*density
-                    viscosityNW = problem_.variables().viscosityNonwetting(
-                            globalIdxJ);
+                    //viscosityNW = problem_.variables().viscosityNonwetting(
+                    //        globalIdxJ);
                 }
 
                 switch (velocityType_)

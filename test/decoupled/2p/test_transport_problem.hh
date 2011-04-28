@@ -237,7 +237,7 @@ private:
     GlobalPosition lowerLeft_;
     GlobalPosition upperRight_;
 
-    static const Scalar eps_ = 1e-6;
+    static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
 

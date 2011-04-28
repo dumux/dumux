@@ -313,8 +313,8 @@ private:
 GlobalPosition lowerLeft_;
 GlobalPosition upperRight_;
 
-static const Scalar eps_ = 1e-6;
-static const Scalar depthBOR_ = 1000;
+static constexpr Scalar eps_ = 1e-6;
+static constexpr Scalar depthBOR_ = 1000;
 };
 } //end namespace
 

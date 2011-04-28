@@ -81,7 +81,7 @@ class TwoPNILocalResidual : public TwoPLocalResidual<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
-    static const Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
+    static constexpr Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:
     /*!

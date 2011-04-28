@@ -201,7 +201,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
         if(impet || (problem_.variables().subdomain(globalIdxI)==2))   // estimate only necessary in subdomain
         {
             // cell geometry type
-            Dune::GeometryType gt = eIt->geometry().type();
+            //Dune::GeometryType gt = eIt->geometry().type();
 
             // get position
             GlobalPosition globalPos = eIt->geometry().center();
@@ -264,7 +264,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                     int globalIdxJ = problem_.variables().index(*neighborPointer);
 
                     // compute factor in neighbor
-                    Dune::GeometryType neighborGT = neighborPointer->geometry().type();
+                    //Dune::GeometryType neighborGT = neighborPointer->geometry().type();
 
                     // cell center in global coordinates
                     const GlobalPosition& globalPos = eIt->geometry().center();

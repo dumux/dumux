@@ -147,7 +147,7 @@ private:
     // fluids and material properties
     SpatialParameters spatialParameters_;
 
-    static const Scalar cFLFactor_= GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
+    static constexpr Scalar cFLFactor_= GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
 };
 
 }

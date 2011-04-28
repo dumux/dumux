@@ -199,7 +199,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         int globalIdxI = problem_.variables().index(*eIt);
 
         // cell geometry type
-        Dune::GeometryType gt = eIt->geometry().type();
+        //Dune::GeometryType gt = eIt->geometry().type();
 
         // get position
         GlobalPosition globalPos = eIt->geometry().center();
@@ -272,7 +272,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 int globalIdxJ = problem_.variables().index(*neighborPointer);
 
                 // compute factor in neighbor
-                Dune::GeometryType neighborGT = neighborPointer->geometry().type();
+                //Dune::GeometryType neighborGT = neighborPointer->geometry().type();
 
                 // cell center in global coordinates
                 const GlobalPosition& globalPos = eIt->geometry().center();

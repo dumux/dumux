@@ -462,7 +462,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
         // get common geometry information for the following computation
 
         // cell 1 geometry type
-        Dune::GeometryType gt1 = eIt->geometry().type();
+        //Dune::GeometryType gt1 = eIt->geometry().type();
 
         // get global coordinate of cell 1 center
         GlobalPosition globalPos1 = eIt->geometry().center();
@@ -563,7 +563,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
             }
 
             // get geometry type of face 'isIt', i.e., the face between cell1 and cell2 (locally numbered)
-            Dune::GeometryType gtf12 = isIt->geometryInInside().type();
+            //Dune::GeometryType gtf12 = isIt->geometryInInside().type();
 
             // center of face in global coordinates, i.e., the midpoint of edge 'isIt'
             GlobalPosition
@@ -579,7 +579,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
             *= face12vol/2.0;
 
             // get geometry type of 'nextisIt', i.e., face between cell1 and cell3 (locally numbered)
-            Dune::GeometryType gtf13 = nextisIt->geometryInInside().type();
+            //Dune::GeometryType gtf13 = nextisIt->geometryInInside().type();
 
             // center of face in global coordinates, i.e., the midpoint of edge 'nextisIt'
             GlobalPosition globalPosFace13
@@ -623,7 +623,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 int globalIdx2 = problem_.variables().index(*outside);
 
                 // neighbor cell 2 geometry type
-                Dune::GeometryType gt2 = outside->geometry().type();
+                //Dune::GeometryType gt2 = outside->geometry().type();
 
                 // get global coordinate of neighbor cell 2 center
                 GlobalPosition
@@ -646,7 +646,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     int globalIdx3 = problem_.variables().index(*nextisItoutside);
 
                     // neighbor cell 3 geometry type
-                    Dune::GeometryType gt3 = nextisItoutside->geometry().type();
+                    //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
 
                     // get global coordinate of neighbor cell 3 center
                     GlobalPosition
@@ -684,7 +684,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 globalIdx4 = problem_.variables().index(*innerisItoutside);
 
                                 // neighbor cell 4 geometry type
-                                Dune::GeometryType gt4 = innerisItoutside->geometry().type();
+                                //Dune::GeometryType gt4 = innerisItoutside->geometry().type();
 
                                 // get global coordinate of neighbor cell 4 center
                                 globalPos4 = innerisItoutside->geometry().center();
@@ -726,7 +726,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     }
 
                     // get geometry type of face 'isIt24'
-                    Dune::GeometryType gtf24 = isIt24->geometryInInside().type();
+                    //Dune::GeometryType gtf24 = isIt24->geometryInInside().type();
 
                     // center of face in global coordinates, i.e., the midpoint of edge 'isIt24'
                     GlobalPosition
@@ -766,7 +766,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     }
 
                     // get geometry type of face 'isIt34'
-                    Dune::GeometryType gtf34 = isIt34->geometryInInside().type();
+                    //Dune::GeometryType gtf34 = isIt34->geometryInInside().type();
 
                     // center of face in global coordinates, i.e., the midpoint of edge 'isIt34'
                     GlobalPosition
@@ -939,7 +939,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     }
 
                     // get geometry type of face 'isIt24'
-                    Dune::GeometryType gtf24 = isIt24->geometryInInside().type();
+                    //Dune::GeometryType gtf24 = isIt24->geometryInInside().type();
 
                     // center of face in global coordinates, i.e., the midpoint of edge 'isIt24'
                     GlobalPosition
@@ -1535,7 +1535,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         int globalIdx3 = problem_.variables().index(*nextisItoutside);
 
                         // neighbor cell 3 geometry type
-                        Dune::GeometryType gt3 = nextisItoutside->geometry().type();
+                        //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
 
                         // get global coordinate of neighbor cell 3 center
                         GlobalPosition
@@ -1570,7 +1570,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
 
                         // get geometry type of face 'isIt34'
-                        Dune::GeometryType gtf34 = isIt34->geometryInInside().type();
+                        //Dune::GeometryType gtf34 = isIt34->geometryInInside().type();
 
                         // center of face in global coordinates, i.e., the midpoint of edge 'isIt34'
                         GlobalPosition
@@ -2018,7 +2018,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         int globalIdx3 = problem_.variables().index(*nextisItoutside);
 
                         // neighbor cell 3 geometry type
-                        Dune::GeometryType gt3 = nextisItoutside->geometry().type();
+                        //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
 
                         // get global coordinate of neighbor cell 3 center
                         GlobalPosition
@@ -2053,7 +2053,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
 
                         // get geometry type of face 'isIt34'
-                        Dune::GeometryType gtf34 = isIt34->geometryInInside().type();
+                        //Dune::GeometryType gtf34 = isIt34->geometryInInside().type();
 
                         // center of face in global coordinates, i.e., the midpoint of edge 'isIt34'
                         GlobalPosition
@@ -2452,19 +2452,19 @@ void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
 
         //determine phase saturations from primary saturation variable
         Scalar satW = 0;
-        Scalar satNW = 0;
+        //Scalar satNW = 0;
         switch (saturationType)
         {
         case Sw:
         {
             satW = problem_.variables().saturation()[globalIdx];
-            satNW = 1 - problem_.variables().saturation()[globalIdx];
+            //satNW = 1 - problem_.variables().saturation()[globalIdx];
             break;
         }
         case Sn:
         {
             satW = 1 - problem_.variables().saturation()[globalIdx];
-            satNW = problem_.variables().saturation()[globalIdx];
+            //satNW = problem_.variables().saturation()[globalIdx];
             break;
         }
         }

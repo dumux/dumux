@@ -442,19 +442,19 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                 {
                     //determine phase saturations from primary saturation variable
                     Scalar satW;
-                    Scalar satNW;
+                    //Scalar satNW;
                     switch (this->saturationType)
                     {
                     case Sw:
                     {
                         satW = satBound;
-                        satNW = 1-satBound;
+                        //satNW = 1-satBound;
                         break;
                     }
                     case Sn:
                     {
                         satW = 1-satBound;
-                        satNW = satBound;
+                        //satNW = satBound;
                         break;
                     }
                     default:

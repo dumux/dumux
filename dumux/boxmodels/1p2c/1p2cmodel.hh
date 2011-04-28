@@ -106,7 +106,7 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     };
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator     VertexIterator;
-    static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
+    static constexpr Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
 public:

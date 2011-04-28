@@ -35,6 +35,10 @@
 
 #include <boost/format.hpp>
 
+#if HAVE_MPI
+#include <mpi.h>
+#endif
+
 #include <list>
 #include <iostream>
 #include <string>

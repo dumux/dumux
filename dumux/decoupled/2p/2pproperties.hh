@@ -215,11 +215,11 @@ SET_PROP(DecoupledTwoP, SolverParameters)
 {
 public:
     //solver parameters
-    static const double reductionSolver = GET_PROP_VALUE(TypeTag, PTAG(ReductionSolver));
-    static const int maxIterationNumberSolver = GET_PROP_VALUE(TypeTag, PTAG(MaxIterationNumberSolver));
-    static const int iterationNumberPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(IterationNumberPreconditioner));
-    static const int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(VerboseLevelSolver));
-    static const double relaxationPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(RelaxationPreconditioner));
+    static constexpr double reductionSolver = GET_PROP_VALUE(TypeTag, PTAG(ReductionSolver));
+    static constexpr int maxIterationNumberSolver = GET_PROP_VALUE(TypeTag, PTAG(MaxIterationNumberSolver));
+    static constexpr int iterationNumberPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(IterationNumberPreconditioner));
+    static constexpr int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(VerboseLevelSolver));
+    static constexpr double relaxationPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(RelaxationPreconditioner));
 };
 
 // \}

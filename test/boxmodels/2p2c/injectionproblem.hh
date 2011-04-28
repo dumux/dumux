@@ -333,9 +333,9 @@ private:
             BinaryCoeff::H2O_N2::henry(temperature_);
     }
 
-    static const Scalar temperature_ = 273.15 + 40; // [K]
-    static const Scalar depthBOR_ = 2700.0; // [m]
-    static const Scalar eps_ = 1e-6;
+    static constexpr Scalar temperature_ = 273.15 + 40; // [K]
+    static constexpr Scalar depthBOR_ = 2700.0; // [m]
+    static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
 

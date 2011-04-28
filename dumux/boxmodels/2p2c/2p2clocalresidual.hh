@@ -120,7 +120,7 @@ protected:
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
-    static const Scalar mobilityUpwindAlpha =
+    static constexpr Scalar mobilityUpwindAlpha =
             GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:

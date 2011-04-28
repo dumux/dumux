@@ -291,19 +291,19 @@ public:
 
             //determine phase saturations from primary saturation variable
             Scalar satW;
-            Scalar satNW;
+            //Scalar satNW;
             switch (saturationType_)
             {
             case Sw:
             {
                 satW = satBound;
-                satNW = 1 - satBound;
+                //satNW = 1 - satBound;
                 break;
             }
             case Sn:
             {
                 satW = 1 - satBound;
-                satNW = satBound;
+                //satNW = satBound;
                 break;
             }
             default:
@@ -474,7 +474,7 @@ private:
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
-    static const Scalar eps_ = 5e-3;
+    static constexpr Scalar eps_ = 5e-3;
 };
 
 }

@@ -77,6 +77,13 @@ AC_DEFUN([DUMUX_CHECKS],
      DUNE_ADD_SUMMARY_ENTRY([Valgrind client requests],["no"])
   fi
 
+  # check whether the constexpr keyword is present
+  AC_REQUIRE([CONSTEXPR_CHECK])
+  # define constexpr as const if it is not available. this is quite a HACK!
+  if test "x$HAVE_CONSTEXPR" != "xyes"; then
+      AC_DEFINE(constexpr, const, ['set 'constexpr' to 'const' if constexpr is not supported])
+  fi
+
   # the Boost c++ template libraries
   AX_BOOST_BASE([1.33.1])
 

@@ -115,7 +115,7 @@ public:
         int globalIdxI = problem_.variables().index(element);
 
         // get geometry type of face
-        Dune::GeometryType faceGT = isIt->geometryInInside().type();
+        //Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
         Scalar potentialW = problem_.variables().potentialWetting(globalIdxI, indexInInside);
         Scalar potentialNW = problem_.variables().potentialNonwetting(globalIdxI, indexInInside);

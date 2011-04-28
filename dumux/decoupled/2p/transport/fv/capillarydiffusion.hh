@@ -110,7 +110,7 @@ public:
         int globalIdxI = problem_.variables().index(element);
 
         // get geometry type of face
-        Dune::GeometryType faceGT = isIt->geometryInInside().type();
+        //Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
         Scalar temperature = problem_.temperature(globalPos, element);
         Scalar referencePressure = problem_.referencePressure(globalPos, element);

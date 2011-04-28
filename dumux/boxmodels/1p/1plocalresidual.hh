@@ -73,7 +73,7 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
         pressureIdx = Indices::pressureIdx,
     };
 
-    static const Scalar upwindWeight = GET_PROP_VALUE(TypeTag, PTAG(UpwindWeight));
+    static constexpr Scalar upwindWeight = GET_PROP_VALUE(TypeTag, PTAG(UpwindWeight));
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;

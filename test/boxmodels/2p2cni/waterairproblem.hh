@@ -343,8 +343,8 @@ private:
 #endif
     }
 
-    static const Scalar depthBOR_ = 1000.0; // [m]
-    static const Scalar eps_ = 1e-6;
+    static constexpr Scalar depthBOR_ = 1000.0; // [m]
+    static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
 
