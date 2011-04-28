@@ -185,6 +185,9 @@ public:
         buildForeignToDomesticMap_();
     }
 
+    int numLocal() const
+    { return numLocalIndices_; }
+
     int numDomestic() const
     { return numDomesticIndices_; }
 
@@ -698,7 +701,10 @@ public:
     };
     
     OverlapBCRSMatrix(const OverlapBCRSMatrix &M)
-        : ParentType(M), overlap_(M.overlap_)
+        : ParentType(M), 
+          overlap_(M.overlap_),
+          numOverlapEntries_(M.numOverlapEntries_),
+          overlapEntries_(M.overlapEntries_)
     {
     };
 
@@ -729,6 +735,8 @@ public:
     {
         ParentType::operator=(M);
         overlap_ = M.overlap_;
+        numOverlapEntries_ = M.numOverlapEntries_;
+        overlapEntries_ = M.overlapEntries_;
         return *this;
     };
     
@@ -1017,7 +1025,6 @@ private:
         
         int numPeers = peerSet.size();
         field_type *sendMsgBuff[numPeers];
-        int msgSize;
         MPI_Request sendRequests[numPeers];
 
         ///////
@@ -1029,6 +1036,7 @@ private:
             int peerRank = *it;
 
             // send the overlap indices to the peer rank
+            int msgSize;
             sendMsgBuff[i] = createValuesMsg_(M, msgSize, peerRank);
 
 #warning MPI_DOUBLE is only correct if field_type == double!
@@ -1149,6 +1157,152 @@ private:
     const Overlap *overlap_;
     std::map<ProcessRank, int> numOverlapEntries_;
     OverlapStructure overlapEntries_;
+};
+
+template <class BlockVector, class Overlap>
+class OverlapBlockVector : public BlockVector
+{
+    typedef BlockVector ParentType;
+
+    typedef typename Overlap::PeerSet PeerSet;
+    typedef typename Overlap::ForeignOverlapWithPeer ForeignOverlapWithPeer;
+    typedef typename Overlap::DomesticOverlapWithPeer DomesticOverlapWithPeer;
+
+public:
+    typedef typename ParentType::field_type field_type;
+    typedef typename ParentType::block_type block_type;
+
+    OverlapBlockVector(const BlockVector &bv, const Overlap &overlap)
+        : ParentType(overlap.numDomestic()),
+          overlap_(&overlap)
+    {
+        int numLocal = overlap_->numLocal();
+        // copy local entries
+        for (int i = 0; i < numLocal; ++i) {
+            (*this)[i] = bv[i];
+        };
+        
+        // retrieve the overlap values from their respective owners
+        syncronizeOverlap();
+    }
+    
+    void syncronizeOverlap()
+    {
+        const PeerSet &peerSet = overlap_->peerSet();
+        
+        int numPeers = peerSet.size();
+        field_type *sendMsgBuff[numPeers];
+        MPI_Request sendRequests[numPeers];
+
+        ///////
+        // Send the number of entries from all peers
+        ///////
+        typename PeerSet::const_iterator it = peerSet.begin();
+        typename PeerSet::const_iterator endIt = peerSet.end();
+        for (int i = 0; it != endIt; ++it, ++i) {
+            int peerRank = *it;
+
+            int msgSize;
+            sendMsgBuff[i] = createValuesMsg_(msgSize, peerRank);
+            
+            // send the size of the overlap of each row to the peer
+            // rank
+#warning MPI_DOUBLE is only correct if field_type == double!
+            MPI_Isend(sendMsgBuff[i], // pointer to user data 
+                      msgSize, // size of user data array
+                      MPI_DOUBLE, // type of user data
+                      peerRank,  // peer rank
+                      0, // identifier
+                      MPI_COMM_WORLD, // communicator
+                      &sendRequests[i]); // request object
+
+        };
+
+        ///////
+        // Receive all peer indices using syncronous receives
+        ///////
+        it = peerSet.begin();
+        for (; it != endIt; ++it) {
+            // unpack the overlap message
+            receiveValues_(*it);
+        };
+
+        ///////
+        // Wait for all send requests to complete and delete the send
+        // buffers
+        ///////
+        it = peerSet.begin();
+        for (int i = 0; it != endIt; ++it, ++i) {
+            MPI_Wait(&sendRequests[i], MPI_STATUS_IGNORE);
+
+            // free the memory used by the message buffer
+            delete[] sendMsgBuff[i];
+        }
+    };
+    
+private:
+    field_type *createValuesMsg_(int &msgSize, int peerRank)
+    {
+        msgSize = 0;
+
+        const ForeignOverlapWithPeer &olist = overlap_->foreignOverlapWithPeer(peerRank);
+        int overlapSize = olist.size();
+
+        // calculate message size
+        msgSize *= block_type::size * overlapSize;
+
+        // allocate message buffer
+        field_type *buff = new field_type[msgSize];
+        int pos = 0;
+
+        // fill the message buffer
+        typename ForeignOverlapWithPeer::const_iterator it = olist.begin();
+        typename ForeignOverlapWithPeer::const_iterator endIt = olist.end();
+        for (; it != endIt; ++it) {
+            int rowIdx = std::get<0>(*it);
+            
+            for (int i = 0; i < block_type::size; ++i) {
+                buff[pos] = (*this)[rowIdx][i];
+                ++pos;
+            }
+        }
+
+        return buff;
+    };
+
+    void receiveValues_(int peerRank)
+    {
+        // receive overlap indices itself
+        const DomesticOverlapWithPeer &olist = overlap_->domesticOverlapWithPeer(peerRank);
+        int overlapSize = olist.size();
+        int msgSize = block_type::size * overlapSize;
+        field_type *buff = new field_type[msgSize];
+
+#warning MPI_DOUBLE is only correct if field_type == double!
+        MPI_Recv(buff, // receive message buffer
+                 msgSize, // receive message size
+                 MPI_DOUBLE, // object type
+                 peerRank, // peer rank
+                 0, // identifier
+                 MPI_COMM_WORLD, // communicator
+                 MPI_STATUS_IGNORE); // status
+
+        int pos = 0;
+        typename ForeignOverlapWithPeer::const_iterator it = olist.begin();
+        typename ForeignOverlapWithPeer::const_iterator endIt = olist.end();
+        for (; it != endIt; ++it) {
+            int rowIdx = std::get<0>(*it);
+            int domRowIdx = overlap_->foreignToDomesticIdx(peerRank, rowIdx);
+            for (int i = 0; i < block_type::size; ++i) {
+                (*this)[domRowIdx][i] = buff[pos];
+                ++pos;
+            }
+        }
+
+        delete[] buff;
+
+    };
+    const Overlap *overlap_;
 };
 
 } // namespace Dumux

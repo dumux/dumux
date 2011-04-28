@@ -695,6 +695,14 @@ private:
         typedef OverlapBCRSMatrix<Matrix, Overlap> OverlapMatrix;
         OverlapMatrix overlapMatrix(*matrix_, overlap);
         overlapMatrix.assignFromNonOverlapping(*matrix_);
+
+/*
+        typedef Dune::BlockVector<PrimaryVariables> BlockVector;
+        typedef Dumux::OverlapBlockVector<BlockVector, Overlap> OverlapBlockVector;
+        BlockVector bv(matrix_->N());
+        bv = gridView_().comm().rank();
+        OverlapBlockVector overlapVector(bv, overlap);
+*/
     };
 #endif
 
