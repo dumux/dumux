@@ -789,11 +789,12 @@ protected:
 
         OverlappingMatrix overlapA(A, 
                                    borderListCreator.borderList(), 
-                                   /*overlapSize=*/24);
+                                   /*overlapSize=*/5);
         OverlappingVector overlapb(b, overlapA.overlap());
         OverlappingVector overlapx(overlapb);
+        overlapx = 0.0;
 
-#define PREC 3
+#define PREC 1
 #if PREC == 1
         // simple Jacobi preconditioner
         typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
@@ -822,11 +823,11 @@ protected:
                       scalarProd,
                       preCond, 
                       residReduction,
-                      250,
-                      0);
+                      /*maxIterations=*/250,
+                      /*verbosity=*/0);
         Dune::InverseOperatorResult result;
         solver.apply(overlapx, overlapb, result);
-        
+
         // copy the result back to the non-overlapping vector
         overlapx.assignTo(x);
     }

@@ -54,12 +54,15 @@ public:
     {
         A_.mv(x,y);
 
+        y.resetFront();
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd (field_type alpha, const DomainVector& x, RangeVector& y) const
     {
         A_.usmv(alpha,x,y);
+
+        y.resetFront();
     }
 
     //! returns the matrix

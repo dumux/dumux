@@ -114,6 +114,12 @@ public:
     };
 
     /*!
+     * \brief Returns true iff a domestic index is a front index.
+     */
+    bool isFront(int domesticIdx) const
+    { return borderDistance_[domesticIdx] == foreignOverlap_.overlapSize(); };
+
+    /*!
      * \brief Returns the number of processes which "see" a given
      *        index.
      */
@@ -232,6 +238,7 @@ protected:
         // resize the array which stores the number of peers for
         // each entry.
         domesticOverlapByIndex_.resize(numLocal());
+        borderDistance_.resize(numLocal(), -1);
         // for all local indices copy the number of processes from the
         // foreign overlap
         for (int i = 0; i < numLocal(); ++i) {
@@ -355,7 +362,9 @@ protected:
                     domesticIdx = globalIndices_.numDomestic();
                     globalIndices_.addIndex(domesticIdx, globalIdx);
                     
-                    domesticOverlapByIndex_.resize(globalIndices_.numDomestic());
+                    int nDom = globalIndices_.numDomestic();
+                    domesticOverlapByIndex_.resize(nDom);
+                    borderDistance_.resize(nDom, std::numeric_limits<int>::max());
                 }
                 else {
                     domesticIdx = globalIndices_.globalToDomestic(globalIdx);
@@ -364,6 +373,8 @@ protected:
             else 
                 // border index
                 domesticIdx = globalIndices_.globalToDomestic(globalIdx);
+
+            borderDistance_[domesticIdx] = std::min(borderDistance, borderDistance_[domesticIdx]);
 
             int *peerRanks = new int[numPeers];
             MPI_Recv(peerRanks, // buff
@@ -392,6 +403,7 @@ protected:
 
     DomesticOverlapByRank domesticOverlapWithPeer_;
     DomesticOverlapByIndex domesticOverlapByIndex_;
+    std::vector<int> borderDistance_;
 
     GlobalIndices globalIndices_;
     PeerSet peerSet_;

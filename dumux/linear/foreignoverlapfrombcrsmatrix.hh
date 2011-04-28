@@ -83,6 +83,8 @@ public:
                                  int overlapSize)
         : borderList_(borderList)
     {
+        overlapSize_ = overlapSize;
+
         myRank_ = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
         
@@ -310,28 +312,10 @@ public:
     { return foreignOverlapByIndex_[localIdx].size(); };
 
     /*!
-     * \brief Return the number of peer ranks which are not on the
-     *        border of a local index.
+     * \brief Returns the size of the overlap region
      */
-    int numNonBorderPeers(int localIdx) const
-    { 
-        if (!isBorder(localIdx))
-            return numPeers(localIdx);
-        
-        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
-        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
-        
-        int numNBPeers = 0;
-        BorderDistMap::const_iterator bdIt = borderDist.begin();
-        BorderDistMap::const_iterator bdEndIt = borderDist.end();
-        for (; bdIt != bdEndIt; ++bdIt) {
-            int dist = bdIt->second;
-            if (dist > 0)
-                ++ numNBPeers;
-        };
-
-        return numNBPeers; 
-    };
+    int overlapSize() const
+    { return overlapSize_; };
 
     /*!
      * \brief Print the foreign overlap for debugging purposes.
@@ -483,6 +467,9 @@ protected:
     // stores a list of foreign overlap indices for each rank
     ForeignOverlapByRank foreignOverlapByRank_;
     
+    // extend of the overlap region
+    int overlapSize_;
+
     // number of local indices
     int numLocal_;
 

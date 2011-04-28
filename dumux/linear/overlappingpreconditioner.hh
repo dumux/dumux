@@ -26,6 +26,8 @@
 #ifndef DUMUX_OVERLAPPING_PRECONDITIONER_HH
 #define DUMUX_OVERLAPPING_PRECONDITIONER_HH
 
+#include "overlappingscalarproduct.hh"
+
 namespace Dumux {
 
 template <class SeqPreCond, class Overlap>
@@ -48,6 +50,10 @@ public:
     void pre(domain_type &x, range_type &y)
     {
         seqPreCond_.pre(x, y);
+
+        //x.resetFront();
+        //y.resetFront();
+
         x.syncAverage();
         y.syncAverage();
     };
@@ -55,9 +61,19 @@ public:
     void apply(domain_type &x, const range_type &y)
     {
         seqPreCond_.apply(x, y);
+
+        //x.resetFront();
         
         // communicate the results on the overlap
         x.syncAverage();
+
+        /*
+        typedef Dumux::OverlappingScalarProduct<domain_type, Overlap> OverlappingScalarProduct;
+        OverlappingScalarProduct sp(*overlap_);
+        std::cout.precision(16);
+        std::cout << "abs(x): " << sp.norm(x) << "\n";
+        std::cout << "abs(y) = " << sp.norm(y) << "\n";
+        */
     };
    
     void post(domain_type &x)

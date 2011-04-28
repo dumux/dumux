@@ -44,6 +44,8 @@ class OverlappingBlockVector
     typedef typename Overlap::ForeignOverlapWithPeer ForeignOverlapWithPeer;
     typedef typename Overlap::DomesticOverlapWithPeer DomesticOverlapWithPeer;
 
+    typedef typename ParentType::field_type Scalar;
+
 public:
     OverlappingBlockVector(const BlockVector &nbv, const Overlap &overlap)
         : ParentType(overlap.numDomestic())
@@ -161,6 +163,19 @@ public:
             (*this)[i] /= overlap_->numPeers(i) + 1;
         }
     };
+
+    /*!
+     * \brief Set all front entities to a given scalar value
+     */
+    void resetFront(Scalar value = 0.0)
+    {
+        int numDomestic = this->size();
+        for (int i = 0; i < numDomestic; ++i) {
+            if (overlap_->isFront(i)) {
+                (*this)[i] = value;
+            }
+        };
+    }
 
     void print() const 
     {
