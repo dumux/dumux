@@ -120,7 +120,7 @@ public:
             upperRight, // upper right
             cellRes, // number of cells
             Dune::FieldVector<bool,2>(false), // periodic
-            4); // overlap
+            0); // overlap
     };
 };
 
@@ -199,10 +199,19 @@ int main(int argc, char** argv)
         Dune::FieldVector<int,dim> res; // cell resolution
         upperRight[0] = 6.0;
         upperRight[1] = 4.0;
-        res[0] = 48;
-        res[1] = 32;
-        //res[0] = 12;
-        //res[1] = 8;
+
+        res[0] = 96;
+        res[1] = 64;
+
+/*
+        res[0] = 12;
+        res[1] = 8;
+*/
+
+/*
+        res[0] = 2;
+        res[1] = 1;
+*/
 
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
         ////////////////////////////////////////////////////////////

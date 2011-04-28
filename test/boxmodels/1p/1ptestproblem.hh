@@ -63,7 +63,8 @@ public:
 // Set the grid type
 SET_PROP(OnePTestProblem, Grid)
 {
-    typedef Dune::SGrid<2, 2> type;
+    //typedef Dune::SGrid<2, 2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 #if HAVE_DUNE_PDELAB

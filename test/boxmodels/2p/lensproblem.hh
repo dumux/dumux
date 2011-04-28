@@ -61,7 +61,7 @@ NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP));
 // Set the grid type
 SET_PROP(LensProblem, Grid)
 {
-#if HAVE_UG
+#if 0 // HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::YaspGrid<2> type;
@@ -124,10 +124,12 @@ SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
 SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, true);
 
 // Write the solutions of individual newton iterations?
-SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, true);
+SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, false);
+SET_INT_PROP(LensProblem, NewtonLinearSolverVerbosity, 2);
 
 // Use forward differences instead of central differences
 SET_INT_PROP(LensProblem, NumericDifferenceMethod, +1);
+
 
 // Enable gravity
 SET_BOOL_PROP(LensProblem, EnableGravity, true);

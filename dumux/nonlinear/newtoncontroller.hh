@@ -257,7 +257,7 @@ class NewtonController
     typedef NewtonConvergenceWriter<TypeTag, newtonWriteConvergence>  ConvergenceWriter;
 
     // typedefs for the algebraic overlap
-    typedef typename Dumux::OverlapFromBCRSMatrix<JacobianMatrix> Overlap;
+    typedef Dumux::OverlapFromBCRSMatrix<JacobianMatrix> Overlap;
     typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
     typedef typename Overlap::BorderList BorderList;
     typedef typename Dumux::OverlapBCRSMatrix<JacobianMatrix, Overlap> OverlapMatrix;
@@ -474,16 +474,16 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    void newtonSolveLinear(const JacobianMatrix &A,
+    void newtonSolveLinear(JacobianMatrix &A,
                            SolutionVector &x,
-                           const SolutionVector &b)
+                           SolutionVector &b)
     {
         // if the deflection of the newton method is large, we do not
         // need to solve the linear approximation accurately. Assuming
         // that the initial value for the delta vector u is quite
-        // close to the final value, a reduction of 6 orders of
+        // close to the final value, a reduction of 9 orders of
         // magnitude in the defect should be sufficient...
-        Scalar residReduction = 1e-6;
+        Scalar residReduction = 1e-9;
 
         try {
             solveLinear_(A, x, b, residReduction);
@@ -759,29 +759,63 @@ protected:
      *
      * Usually we use the solvers from DUNE-ISTL.
      */
-    void solveLinear_(const JacobianMatrix &A,
+    void solveLinear_(JacobianMatrix &A,
                       SolutionVector &x,
-                      const SolutionVector &b,
+                      SolutionVector &b,
                       Scalar residReduction)
     {
         int verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
         if (gridView_().comm().rank() != 0)
             verbosity = 0;
+
+#if 0
+        A = 0;
+        int myRank = gridView_().comm().rank();
+        for (int i = 0; i < A.N(); ++i) {
+            for (int j = 0; j < 2; ++ j) {
+                Scalar tmp = (1 + 2*i + j) + myRank/2.0;
+                A[i][i][j][j] = 1.0;
+                x[i][j] = 0.0;
+                b[i][j] = 1.0;
+            };
+        };
         
         updateOverlap_(A, x, b);
+        printSparseMatrix(std::cout, *overlapMatrix_, "A", "row");
+        std::cout << *overlapB_ << "\n";
+        exit(1);
+#else
+        updateOverlap_(A, x, b);
+        //printmatrix(std::cout, *((JacobianMatrix *) overlapMatrix_), "M", "row");
+#endif
 
-        /*
-        typedef Dune::SeqILU0<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
-        SeqPreconditioner preCond(*overlapMatrix_, 1.0);
-        */
-
+/*
+        std::cout << "before: " << *overlapB_;
+        overlapB_->sync();
+        std::cout << "after: " << *overlapB_;
+        exit(1);
+*/
+#define PREC 3
+#if PREC == 1
+        // simple Jacobi preconditioner
+        typedef Dune::SeqJac<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
+        SeqPreconditioner seqPreCond(*overlapMatrix_, 1, 1.0);
+#elif PREC == 2
+        // SSOR preconditioner
+        typedef Dune::SeqSSOR<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
+        SeqPreconditioner seqPreCond(*overlapMatrix_, 1, 1.0);
+#elif PREC == 3
+        // ILU preconditioner
         typedef Dune::SeqILU0<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
         SeqPreconditioner seqPreCond(*overlapMatrix_, 1.0);
+#endif
+
         typedef Dumux::OverlapPreconditioner<SeqPreconditioner, OverlapMatrix, Overlap> OverlapPreconditioner;
         OverlapPreconditioner preCond(seqPreCond, *overlap_);
         
-        typedef Dune::MatrixAdapter<OverlapMatrix,OverlapVector,OverlapVector> MatrixAdapter;
-        MatrixAdapter opA(*overlapMatrix_);
+        typedef Dumux::OverlapOperator<OverlapMatrix,OverlapVector,OverlapVector> LinearOperator;
+        //typedef Dune::MatrixAdapter<OverlapMatrix,OverlapVector,OverlapVector> LinearOperator;
+        LinearOperator opA(*overlapMatrix_);
 
         typedef Dumux::OverlapScalarProduct<OverlapVector, Overlap> OverlapScalarProduct;
         OverlapScalarProduct scalarProd(*overlap_);
@@ -791,29 +825,56 @@ protected:
                       scalarProd,
                       preCond, 
                       residReduction,
-                      500,
-                      verbosity);
+                      250,
+                      1);
     
-/*
+#if 0
         OverlapVector tmp(*overlapB_);
-        overlapMatrix_->mv(*overlapB_, tmp);
-        
+
+        //overlapMatrix_->mv(*overlapB_, tmp);
+        //overlapMatrix_->mv(tmp, *overlapB_);
+        //overlap_->printOverlap();
+
+        std::cout << "before precond: result: " << tmp << " rhs: " << *overlapB_ << "\n";
         preCond.pre(tmp, *overlapB_);
         preCond.apply(tmp, *overlapB_);
         preCond.post(tmp);
-        
+        std::cout << "after precond: result: " << tmp << " rhs: " << *overlapB_ << "\n";
+
+        std::cout << "overlapB: ";
+        for (int i = 0; i < overlapB_->size(); ++i) {
+            int peerRank =  1 - gridView_().comm().rank();
+            if (overlap_->isBorder(i))
+                std::cout << i << " peer border " 
+                          << overlap_->domesticToForeignIndex(i, peerRank) << ": "
+                          << tmp[i]
+                          << "\n";
+            else if (!overlap_->isLocal(i))
+                std::cout << i << " peer index " 
+                          << overlap_->domesticToForeignIndex(i, peerRank) << ": "
+                          << tmp[i]
+                          << "\n";
+            else
+                std::cout << i << ": " 
+                          << tmp[i]
+                          << "\n";
+        }
+       
         Scalar dot = scalarProd.dot(tmp, tmp);
         Scalar norm = scalarProd.norm(tmp);
+        std::cout.precision(16);
+        std::cout << "num domestic:" << overlap_->numDomestic() << "\n";
         std::cout << "Dot:" << dot << "\n";
         std::cout << "norm^2:" << norm*norm << "\n";
         exit(1);
-*/
-
+#endif
+    
 //        typedef Dune::RestartedGMResSolver<OverlapVector> Solver;
 //        Solver solver(opA, scalarProd, precond, residReduction, 50, 500, verbosity);
 
        Dune::InverseOperatorResult result;
        solver.apply(*overlapX_, *overlapB_, result);
+       overlapX_->sync();
 
        if (!result.converged)
            DUNE_THROW(Dumux::NumericalProblem,
@@ -844,7 +905,7 @@ protected:
 
             BorderListFromGrid borderListCreator(gridView_(), vertexMapper_());
 #warning HACK: make this a property!
-            int overlapSize = 2;
+            int overlapSize = 10;
             overlap_ = new Overlap(A,
                                    borderListCreator.borderList(),
                                    overlapSize);
@@ -853,10 +914,16 @@ protected:
             overlapX_ = new OverlapVector(x, *overlap_);
             overlapB_ = new OverlapVector(b, *overlap_);
         }
-        else {
-            overlapX_->set(x);
-            overlapB_->set(b);
+        /*for (int i = 0; i < x.size(); ++i) {
+            (*overlapX_)[i] = x[i];
+            (*overlapB_)[i] = b[i];
         }
+        */
+        overlapB_->set(b);
+        overlapX_->set(x);
+
+        delete overlapMatrix_;
+        overlapMatrix_ = new OverlapMatrix(A, *overlap_);
         overlapMatrix_->set(A);
     };
 

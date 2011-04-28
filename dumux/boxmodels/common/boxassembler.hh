@@ -600,6 +600,13 @@ public:
     const Matrix& matrix() const
     { return *matrix_; }
 
+#warning HACK
+    Matrix& matrix()
+    { return *matrix_; }
+    SolutionVector& residual()
+    { return residual_; }
+    // end hack
+
     /*!
      * \brief Return constant reference to global residual vector.
      */
@@ -810,6 +817,7 @@ private:
         int n = elem.template count<dim>();
         for (int i=0; i < n; ++i) {
             const VertexPointer vp = elem.template subEntity<dim>(i);
+            
             if (vp->partitionType() == Dune::InteriorEntity ||
                 vp->partitionType() == Dune::BorderEntity)
                 continue; // ignore a ghost cell's non-ghost vertices
