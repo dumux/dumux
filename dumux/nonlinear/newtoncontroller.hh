@@ -1,6 +1,6 @@
 // $Id$
 /****************************************************************************
- *   Copyright (C) 2008-2010 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2011 by Andreas Lauser                               *
  *   Copyright (C) 2008-2010 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -41,8 +41,6 @@
 #include <dumux/common/pdelabpreconditioner.hh>
 
 #else // ! HAVE_DUNE_PDELAB
-
-#include <dumux/boxmodels/common/overlapmatrix.hh>
 #include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/preconditioners.hh>
@@ -50,9 +48,13 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/io.hh>
 
-#include <dumux/boxmodels/common/overlapmatrix.hh>
 #endif // HAVE_DUNE_PDELAB
 
+#include <dumux/linear/vertexborderlistfromgrid.hh>
+#include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
+#include <dumux/linear/domesticoverlapfrombcrsmatrix.hh>
+#include <dumux/linear/globalindices.hh>
+#include <dumux/linear/overlappingbcrsmatrix.hh>
 
 namespace Dumux
 {
@@ -257,12 +259,14 @@ class NewtonController
     
     typedef NewtonConvergenceWriter<TypeTag, newtonWriteConvergence>  ConvergenceWriter;
 
+/*
     // typedefs for the algebraic overlap
     typedef Dumux::OverlapFromBCRSMatrix<JacobianMatrix> Overlap;
     typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
     typedef typename Overlap::BorderList BorderList;
     typedef typename Dumux::OverlapBCRSMatrix<JacobianMatrix, Overlap> OverlapMatrix;
     typedef typename Dumux::OverlapBlockVector<SolutionVector, Overlap> OverlapVector;
+*/
 
 public:
     /*!
@@ -290,10 +294,12 @@ public:
             this->setMaxSteps(18);
         }
 
+        /*
         overlapX_ = NULL;
         overlapB_ = NULL;
         overlapMatrix_ = NULL;
         overlap_ = NULL;
+        */
     };
 
     /*!
@@ -301,10 +307,12 @@ public:
      */
     ~NewtonController()
     {
+        /*
         delete overlapX_;
         delete overlapB_;
         delete overlapMatrix_;
         delete overlap_;
+        */
     };
 
     /*!
@@ -487,6 +495,7 @@ public:
         Scalar residReduction = 1e-9;
 
         try {
+            std::cerr << "HALLO\n";
             solveLinear_(A, x, b, residReduction);
 
             // make sure all processes converged
@@ -765,6 +774,25 @@ protected:
                       SolutionVector &b,
                       Scalar residReduction)
     {
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
+        VertexBorderListFromGrid<GridView, VertexMapper>
+            borderListCreator(problem_().gridView(), problem_().vertexMapper());
+
+        typedef Dumux::DomesticOverlapFromBCRSMatrix<JacobianMatrix> DomesticOverlap;
+        DomesticOverlap domesticOverlap(A, 
+                                        borderListCreator.borderList(), 
+                                        /*overlapSize=*/2);
+        domesticOverlap.print();
+
+        /*
+        typedef Dumux::OverlapBCRSMatrix<JacobianMatrix, GlobalIndices> OverlapMatrix;
+        OverlapMatrix overlapA(A, globalIndices);
+        */
+
+        DUNE_THROW(Dune::NotImplemented,
+                   "NewtonController::solveLinear_");
+#if 0
         int verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
         int myRank = gridView_().comm().rank();
         if (myRank != 0)
@@ -921,12 +949,17 @@ protected:
        
         // copy the result back to the non-overlapping vector
         overlapX_->assignToNonOverlapping(x);
+#endif
     }
 
     void updateOverlap_(const JacobianMatrix &A,
                         const SolutionVector &x,
                         const SolutionVector &b)
     {
+        DUNE_THROW(Dune::NotImplemented,
+                   "NewtonController::updateOverlap_");
+        
+#if 0
         if (!overlap_) {
             // create overlap
 #warning HACK: only valid for vertex-based methods
@@ -954,6 +987,7 @@ protected:
         delete overlapMatrix_;
         overlapMatrix_ = new OverlapMatrix(A, *overlap_);
         overlapMatrix_->set(A);
+#endif
     };
 
     std::ostringstream endIterMsgStream_;
@@ -982,10 +1016,10 @@ protected:
     int numSteps_;
 
     // objects for the algebraic overlap
-    Overlap *overlap_;
-    OverlapMatrix *overlapMatrix_;
-    OverlapVector *overlapX_;
-    OverlapVector *overlapB_;
+    //Overlap *overlap_;
+    //OverlapMatrix *overlapMatrix_;
+    //OverlapVector *overlapX_;
+    //OverlapVector *overlapB_;
 };
 } // namespace Dumux
 

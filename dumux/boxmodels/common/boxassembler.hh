@@ -31,7 +31,9 @@
 #include "pdelabboxlocaloperator.hh"
 #endif
 
-#include "overlapmatrix.hh"
+//#include "overlapmatrix.hh"
+#include <dumux/linear/vertexborderlistfromgrid.hh>
+#include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
 
 namespace Dumux {
 
