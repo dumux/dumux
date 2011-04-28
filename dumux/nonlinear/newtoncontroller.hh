@@ -42,6 +42,7 @@
 
 #else // ! HAVE_DUNE_PDELAB
 
+#include <dumux/boxmodels/common/overlapmatrix.hh>
 #include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/preconditioners.hh>
