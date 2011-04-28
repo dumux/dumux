@@ -229,6 +229,9 @@ public:
         return domesticToForeignMap_.find(peerRank)->second.find(domesticIdx)->second;
     };
 
+    int numOverlapPeers(int domesticIdx) const
+    { return numOverlapPeers_[domesticIdx]; };
+
     void printOverlap() const
     {
         int myRank;
@@ -634,6 +637,41 @@ protected:
         };
     };
 
+    // calculates the number of peers which overlap any given domestic
+    // index
+    void buildNumOverlapPeers_()
+    {
+        int n = numDomestic();
+        numOverlapPeers_.resize(n);
+        std::fill(numOverlapPeers_.begin(),
+                  numOverlapPeers_.end(),
+                  0);
+
+        // deal with the domestic overlap
+        DomesticOverlap::iterator ovrlpIt = domesticOverlap_.begin();
+        DomesticOverlap::iterator ovrlpEndIt = domesticOverlap_.end();
+        for (; ovrlpIt != ovrlpEndIt; ++ovrlpIt) {
+            int peerRank = ovrlpIt->first;
+            
+            const DomesticOverlapWithPeer &peerOverlap 
+                = ovrlpIt->second;
+
+            int numIndices = ovrlpIt->second.size();
+            for (int i = 0; i < numIndices; ++i) {
+                int rowIdx = std::get<0>(peerOverlap[i]);
+                int numPeers = std::get<2>(peerOverlap[i]);
+                
+                int domRowIdx = foreignToDomesticIndex(peerRank, rowIdx);
+
+                numOverlapPeers_[domRowIdx] = numPeers;
+            };
+        }
+
+        // deal with the foreign overlap
+        for (int i = 0; i < numLocalIndices_; ++i)
+            numOverlapPeers_[i] = foreignOverlapByIndex_[i].size();
+    };
+
     // set of processes with which we have to communicate
     PeerSet peerSet_;
     
@@ -669,6 +707,10 @@ protected:
     // maps a peer local index to a domestic local index
     std::map<ProcessRank, std::map<PeerIndex, DomesticIndex> > foreignToDomesticMap_;
     std::map<ProcessRank, std::map<DomesticIndex, PeerIndex> > domesticToForeignMap_;
+
+    // stores the number of peers which overlap any given domestic
+    // index
+    std::vector<int> numOverlapPeers_;
 };
 
 template <class BCRSMatrix, class Overlap>
@@ -708,7 +750,7 @@ public:
     {
     };
 
-    void assignFromNonOverlapping(const BCRSMatrix &M)
+    void set(const BCRSMatrix &M)
     {
         // set everything to 0
         ParentType::operator=(0);
@@ -730,15 +772,6 @@ public:
         // communicate and add the overlap row contents
         syncronizeEntryValues_(M);
     }
-
-    OverlapBCRSMatrix &operator=(const OverlapBCRSMatrix &M)
-    {
-        ParentType::operator=(M);
-        overlap_ = M.overlap_;
-        numOverlapEntries_ = M.numOverlapEntries_;
-        overlapEntries_ = M.overlapEntries_;
-        return *this;
-    };
     
 private:
     void build_(const BCRSMatrix &M)
@@ -1163,30 +1196,48 @@ template <class BlockVector, class Overlap>
 class OverlapBlockVector : public BlockVector
 {
     typedef BlockVector ParentType;
+    typedef OverlapBlockVector<BlockVector, Overlap> ThisType;
 
     typedef typename Overlap::PeerSet PeerSet;
     typedef typename Overlap::ForeignOverlapWithPeer ForeignOverlapWithPeer;
     typedef typename Overlap::DomesticOverlapWithPeer DomesticOverlapWithPeer;
+    
 
 public:
     typedef typename ParentType::field_type field_type;
     typedef typename ParentType::block_type block_type;
-
+    
     OverlapBlockVector(const BlockVector &bv, const Overlap &overlap)
         : ParentType(overlap.numDomestic()),
           overlap_(&overlap)
     {
-        int numLocal = overlap_->numLocal();
+        set(bv);
+    }
+
+    // copy constructor
+    OverlapBlockVector(const ThisType &v)
+        : ParentType(v), overlap_(v.overlap_)
+    { };
+
+    void set(const BlockVector &v)
+    {
         // copy local entries
-        for (int i = 0; i < numLocal; ++i) {
-            (*this)[i] = bv[i];
-        };
+        int numLocal = overlap_->numLocal();
+        for (int i = 0; i < numLocal; ++i)
+            (*this)[i] = v[i];
         
         // retrieve the overlap values from their respective owners
-        syncronizeOverlap();
+        copyOverlapFromOwner();
     }
     
-    void syncronizeOverlap()
+    void assignToNonOverlapping(BlockVector &v)
+    {
+        int numLocal = overlap_->numLocal();
+        for (int i = 0; i < numLocal; ++i)
+            v[i] = (*this)[i];
+    }
+
+    void weightedSumOnOverlap()
     {
         const PeerSet &peerSet = overlap_->peerSet();
         
@@ -1195,7 +1246,73 @@ public:
         MPI_Request sendRequests[numPeers];
 
         ///////
-        // Send the number of entries from all peers
+        // Send the values of all own entries to all peers
+        ///////
+        typename PeerSet::const_iterator it = peerSet.begin();
+        typename PeerSet::const_iterator endIt = peerSet.end();
+        for (int i = 0; it != endIt; ++it, ++i) {
+            int peerRank = *it;
+
+            int msgSize;
+            sendMsgBuff[i] = createValuesMsg_(msgSize, peerRank);
+            
+            // send the size of the overlap of each row to the peer
+            // rank
+#warning MPI_DOUBLE is only correct if field_type == double!
+            MPI_Isend(sendMsgBuff[i], // pointer to user data 
+                      msgSize, // size of user data array
+                      MPI_DOUBLE, // type of user data
+                      peerRank,  // peer rank
+                      0, // identifier
+                      MPI_COMM_WORLD, // communicator
+                      &sendRequests[i]); // request object
+
+        };
+
+        // divide all values by the number of processes which "see" a
+        // given index
+        int numDomestic = overlap_->numDomestic();
+        for (int i = 0; i < numDomestic; ++i) {
+            // the number of processes which "see" the row is the
+            // number of peer processes where the row is in the
+            // overlap plus ourselfs
+            int nProc = 1 + overlap_->numOverlapPeers(i);
+            (*this)[i] /= nProc;
+        };
+
+        ///////
+        // Receive all peer values using syncronous receives
+        ///////
+        it = peerSet.begin();
+        for (; it != endIt; ++it) {
+            // unpack the overlap message
+            receiveValuesWeightedSum_(*it);
+        };
+
+        ///////
+        // Wait for all send requests to complete and delete the send
+        // buffers
+        ///////
+        it = peerSet.begin();
+        for (int i = 0; it != endIt; ++it, ++i) {
+            MPI_Wait(&sendRequests[i], MPI_STATUS_IGNORE);
+
+            // free the memory used by the message buffer
+            delete[] sendMsgBuff[i];
+        }
+        
+    };
+    
+    void copyOverlapFromOwner()
+    {
+        const PeerSet &peerSet = overlap_->peerSet();
+        
+        int numPeers = peerSet.size();
+        field_type *sendMsgBuff[numPeers];
+        MPI_Request sendRequests[numPeers];
+
+        ///////
+        // Send the values of all own entries to all peers
         ///////
         typename PeerSet::const_iterator it = peerSet.begin();
         typename PeerSet::const_iterator endIt = peerSet.end();
@@ -1239,6 +1356,18 @@ public:
             delete[] sendMsgBuff[i];
         }
     };
+
+    ThisType &operator=(const ThisType &v)
+    {
+        ParentType::operator=(v);
+        return *this;
+    }
+
+    ThisType &operator=(const field_type v)
+    {
+        ParentType::operator=(v);
+        return *this;
+    }
     
 private:
     field_type *createValuesMsg_(int &msgSize, int peerRank)
@@ -1288,13 +1417,53 @@ private:
                  MPI_STATUS_IGNORE); // status
 
         int pos = 0;
-        typename ForeignOverlapWithPeer::const_iterator it = olist.begin();
-        typename ForeignOverlapWithPeer::const_iterator endIt = olist.end();
+        typename DomesticOverlapWithPeer::const_iterator it = olist.begin();
+        typename DomesticOverlapWithPeer::const_iterator endIt = olist.end();
         for (; it != endIt; ++it) {
             int rowIdx = std::get<0>(*it);
-            int domRowIdx = overlap_->foreignToDomesticIdx(peerRank, rowIdx);
+            int domRowIdx = overlap_->foreignToDomesticIndex(peerRank, rowIdx);
             for (int i = 0; i < block_type::size; ++i) {
                 (*this)[domRowIdx][i] = buff[pos];
+                ++pos;
+            }
+        }
+
+        delete[] buff;
+
+    };
+
+    void receiveValuesWeightedSum_(int peerRank)
+    {
+        // receive overlap indices itself
+        const DomesticOverlapWithPeer &olist = overlap_->domesticOverlapWithPeer(peerRank);
+        int overlapSize = olist.size();
+        int msgSize = block_type::size * overlapSize;
+        field_type *buff = new field_type[msgSize];
+
+#warning MPI_DOUBLE is only correct if field_type == double!
+        MPI_Recv(buff, // receive message buffer
+                 msgSize, // receive message size
+                 MPI_DOUBLE, // object type
+                 peerRank, // peer rank
+                 0, // identifier
+                 MPI_COMM_WORLD, // communicator
+                 MPI_STATUS_IGNORE); // status
+
+        int pos = 0;
+
+        typename DomesticOverlapWithPeer::const_iterator it = olist.begin();
+        typename DomesticOverlapWithPeer::const_iterator endIt = olist.end();
+        for (; it != endIt; ++it) {
+            int rowIdx = std::get<0>(*it);
+            int domRowIdx = overlap_->foreignToDomesticIndex(peerRank, rowIdx);
+            
+            // the number of processes which "see" the row is the
+            // number of processes where the row is in the overlap
+            // plus ourselfs
+            int numProc = 1 + overlap_->numOverlapPeers(domRowIdx);
+            
+            for (int i = 0; i < block_type::size; ++i) {
+                (*this)[domRowIdx][i] += buff[pos] / numProc;
                 ++pos;
             }
         }
@@ -1312,6 +1481,9 @@ class OverlapScalarProduct : public Dune::ScalarProduct<BlockVector>
 public:
     typedef typename BlockVector::field_type field_type;
     typedef BlockVector domain_type;
+
+#warning should probably be overlapping!?
+    enum { category = Dune::SolverCategory::sequential };
     
     OverlapScalarProduct(const Overlap &overlap)
         : overlap_(&overlap)
@@ -1356,6 +1528,48 @@ public:
     };
 
 private:
+    const Overlap *overlap_;
+};
+
+template <class SeqPreCond, class OverlapMatrix, class Overlap>
+class OverlapPreconditioner : 
+    public Dune::Preconditioner<typename SeqPreCond::domain_type, 
+                                typename SeqPreCond::range_type>
+{
+public:
+    typedef typename SeqPreCond::domain_type domain_type;
+    typedef typename SeqPreCond::range_type range_type;
+    typedef typename SeqPreCond::field_type field_type;
+
+#warning should probably be overlapping!?
+    enum { category = Dune::SolverCategory::sequential };
+
+    OverlapPreconditioner(SeqPreCond &seqPreCond,
+                          const Overlap &overlap)
+        : seqPreCond_(seqPreCond), overlap_(&overlap)
+    {
+    }
+
+    void pre(domain_type &x, range_type &y)
+    {
+        seqPreCond_.pre(x, y);
+    };
+
+    void apply(domain_type &x, const range_type &y)
+    {
+        seqPreCond_.apply(x, y);
+
+        // communicate the results on the overlap
+        x.weightedSumOnOverlap();
+    };
+   
+    void post(domain_type &x)
+    {
+        seqPreCond_.post(x);
+    };
+
+private:
+    SeqPreCond seqPreCond_;
     const Overlap *overlap_;
 };
 

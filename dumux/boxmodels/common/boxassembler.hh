@@ -673,7 +673,8 @@ private:
             }
         }
         matrix_->endindices();
-        
+
+#if 0        
         typedef typename Dumux::OverlapFromBCRSMatrix<Matrix> OverlapFromBCRSMatrix;
         typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
         typedef typename OverlapFromBCRSMatrix::BorderList BorderList;
@@ -691,18 +692,19 @@ private:
         }
         */
         
+/*
         typedef OverlapFromBCRSMatrix Overlap;
         typedef OverlapBCRSMatrix<Matrix, Overlap> OverlapMatrix;
         OverlapMatrix overlapMatrix(*matrix_, overlap);
         overlapMatrix.assignFromNonOverlapping(*matrix_);
 
-/*
         typedef Dune::BlockVector<PrimaryVariables> BlockVector;
         typedef Dumux::OverlapBlockVector<BlockVector, Overlap> OverlapBlockVector;
         BlockVector bv(matrix_->N());
         bv = gridView_().comm().rank();
         OverlapBlockVector overlapVector(bv, overlap);
 */
+#endif
     };
 #endif
 

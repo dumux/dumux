@@ -49,6 +49,7 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/io.hh>
 
+#include <dumux/boxmodels/common/overlapmatrix.hh>
 #endif // HAVE_DUNE_PDELAB
 
 
@@ -71,8 +72,8 @@ NEW_PROP_TAG(PrimaryVariables);
 //! Specifies the type of a global Jacobian matrix
 NEW_PROP_TAG(JacobianMatrix);
 
-//! Specifies the type of the Jacobian matrix assembler
-NEW_PROP_TAG(JacobianAssembler);
+//! Specifies the type of the Vertex mapper
+NEW_PROP_TAG(VertexMapper);
 
 //! specifies the type of the time manager
 NEW_PROP_TAG(TimeManager);
@@ -136,6 +137,8 @@ struct NewtonConvergenceWriter
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
+
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
     NewtonConvergenceWriter(NewtonController &ctl)
@@ -197,7 +200,7 @@ struct NewtonConvergenceWriter<TypeTag, false>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-
+   
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
     NewtonConvergenceWriter(NewtonController &ctl)
@@ -241,16 +244,24 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-
-    typedef NewtonConvergenceWriter<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence))>  ConvergenceWriter;
 
     enum { enableTimeStepRampUp = GET_PROP_VALUE(TypeTag, PTAG(EnableTimeStepRampUp)) };
     enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
     enum { enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)) };
+    enum { newtonWriteConvergence = GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence)) };
+    
+    typedef NewtonConvergenceWriter<TypeTag, newtonWriteConvergence>  ConvergenceWriter;
+
+    // typedefs for the algebraic overlap
+    typedef typename Dumux::OverlapFromBCRSMatrix<JacobianMatrix> Overlap;
+    typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
+    typedef typename Overlap::BorderList BorderList;
+    typedef typename Dumux::OverlapBCRSMatrix<JacobianMatrix, Overlap> OverlapMatrix;
+    typedef typename Dumux::OverlapBlockVector<SolutionVector, Overlap> OverlapVector;
 
 public:
     /*!
@@ -277,6 +288,22 @@ public:
             this->setTargetSteps(10);
             this->setMaxSteps(18);
         }
+
+        overlapX_ = NULL;
+        overlapB_ = NULL;
+        overlapMatrix_ = NULL;
+        overlap_ = NULL;
+    };
+
+    /*!
+     * \brief Destructor
+     */
+    ~NewtonController()
+    {
+        delete overlapX_;
+        delete overlapB_;
+        delete overlapMatrix_;
+        delete overlap_;
     };
 
     /*!
@@ -447,10 +474,9 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    template <class Vector>
     void newtonSolveLinear(const JacobianMatrix &A,
-                           Vector &x,
-                           const Vector &b)
+                           SolutionVector &x,
+                           const SolutionVector &b)
     {
         // if the deflection of the newton method is large, we do not
         // need to solve the linear approximation accurately. Assuming
@@ -670,6 +696,12 @@ protected:
     { return problem_().gridView(); }
 
     /*!
+     * \brief Returns a reference to the vertex mapper.
+     */
+    const VertexMapper &vertexMapper_() const
+    { return model_().vertexMapper(); }
+
+    /*!
      * \brief Returns a reference to the problem.
      */
     Problem &problem_()
@@ -727,72 +759,86 @@ protected:
      *
      * Usually we use the solvers from DUNE-ISTL.
      */
-    template <class Vector>
     void solveLinear_(const JacobianMatrix &A,
-                      Vector &x,
-                      const Vector &b,
+                      SolutionVector &x,
+                      const SolutionVector &b,
                       Scalar residReduction)
     {
         int verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
         if (gridView_().comm().rank() != 0)
             verbosity = 0;
+        
+        updateOverlap_(A, x, b);
 
-#if ! HAVE_DUNE_PDELAB
-       typedef Dune::SeqILU0<JacobianMatrix, Vector, Vector> Preconditioner;
-       Preconditioner precond(A, 1.0);
+        typedef Dune::SeqILU0<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
+        SeqPreconditioner seqPreCond(*overlapMatrix_, 1.0);
 
-       typedef Dune::MatrixAdapter<JacobianMatrix,Vector,Vector> MatrixAdapter;
-       MatrixAdapter operatorA(A);
+        typedef Dumux::OverlapPreconditioner<SeqPreconditioner, OverlapMatrix, Overlap> OverlapPreconditioner;
+        OverlapPreconditioner overlapPreCond(seqPreCond, *overlap_);
 
-       typedef Dune::BiCGSTABSolver<Vector> Solver;
-       Solver solver(operatorA, precond, residReduction, 500, verbosity);
+        typedef Dune::MatrixAdapter<OverlapMatrix,OverlapVector,OverlapVector> MatrixAdapter;
+        MatrixAdapter opA(*overlapMatrix_);
+
+        typedef Dumux::OverlapScalarProduct<OverlapVector, Overlap> OverlapScalarProduct;
+        OverlapScalarProduct overlapScalarProd(*overlap_);
+
+        typedef Dune::BiCGSTABSolver<OverlapVector> Solver;
+        Solver solver(opA, 
+                      overlapScalarProd,
+                      overlapPreCond, 
+                      residReduction,
+                      500,
+                      verbosity);
 //        typedef Dune::RestartedGMResSolver<Vector> Solver;
 //        Solver solver(operatorA, precond, residReduction, 50, 500, verbosity);
 
        Dune::InverseOperatorResult result;
-
-        Vector bTmp(b);
-       solver.apply(x, bTmp, result);
+       solver.apply(*overlapX_, *overlapB_, result);
 
        if (!result.converged)
                DUNE_THROW(Dumux::NumericalProblem,
                                "Solving the linear system of equations did not converge.");
-#else // HAVE_DUNE_PDELAB
-
-#if HAVE_PARDISO
-        typedef Dumux::PDELab::ISTLBackend_NoOverlap_Loop_Pardiso<TypeTag> Solver;
-        Solver solver(problem_(), 500, verbosity);
-#else // !HAVE_PARDISO
-#if HAVE_MPI
-//        typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_NOPREC<GridFunctionSpace> Solver;
-//        Solver solver(model_().jacobianAssembler().gridFunctionSpace(), 50000, verbosity);
-        typedef Dumux::PDELab::ISTLBackend_NoOverlap_BCGS_ILU<TypeTag> Solver;
-        Solver solver(problem_(), 500, verbosity);
-#else
-        typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;
-        Solver solver(500, verbosity);
-#endif // HAVE_MPI
-#endif // HAVE_PARDISO
-
-        //    Solver solver(model_().jacobianAssembler().gridFunctionSpace(), 500, verbosity);
-        Vector bTmp(b);
-        solver.apply(A, x, bTmp, residReduction);
-
-        if (!solver.result().converged)
-            DUNE_THROW(Dumux::NumericalProblem,
-                       "Solving the linear system of equations did not converge.");
-#endif // HAVE_DUNE_PDELAB
 
         // make sure the solver didn't produce a nan or an inf
         // somewhere. this should never happen but for some strange
         // reason it happens anyway.
-        Scalar xNorm2 = x.two_norm2();
+        Scalar xNorm2 = overlapX_->two_norm2();
         if (gridView_().comm().size() > 1)
         	gridView_().comm().sum(xNorm2);
         if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
             DUNE_THROW(Dumux::NumericalProblem,
                        "The linear solver produced a NaN or inf somewhere.");
+
+        // copy the result back to the non-overlapping vector
+        overlapX_->assignToNonOverlapping(x);
     }
+
+    void updateOverlap_(const JacobianMatrix &A,
+                        const SolutionVector &x,
+                        const SolutionVector &b)
+    {
+        if (!overlap_) {
+            // create overlap
+#warning HACK: only valid for vertex-based methods
+            typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
+
+            BorderListFromGrid borderListCreator(gridView_(), vertexMapper_());
+#warning HACK: make this a property!
+            int overlapSize = 1;
+            overlap_ = new Overlap(A,
+                                   borderListCreator.borderList(),
+                                   overlapSize);
+            
+            overlapMatrix_ = new OverlapMatrix(A, *overlap_);
+            overlapX_ = new OverlapVector(x, *overlap_);
+            overlapB_ = new OverlapVector(*overlapX_);
+        }
+        else {
+            overlapMatrix_->set(A);
+            overlapX_->set(x);
+            overlapB_->set(b);
+        }
+    };
 
     std::ostringstream endIterMsgStream_;
 
@@ -818,6 +864,12 @@ protected:
     int maxSteps_;
     // actual number of steps done so far
     int numSteps_;
+
+    // objects for the algebraic overlap
+    Overlap *overlap_;
+    OverlapMatrix *overlapMatrix_;
+    OverlapVector *overlapX_;
+    OverlapVector *overlapB_;
 };
 } // namespace Dumux
 
