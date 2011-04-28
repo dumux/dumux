@@ -586,7 +586,6 @@ protected:
             //borderIndices_[peerRank] = nBorder;
             domesticOffset_[peerRank] = numDomesticIndices_;
             numDomesticIndices_ += numIndices - numBorder;
-            std::cerr << "peerRank " << peerRank << " numIndices: " << numIndices << " numIndices - numBorder: " << numIndices - numBorder << "\n";
         }
         numDomesticIndices_ += numLocalIndices_;
 
