@@ -206,7 +206,7 @@ int main(int argc, char** argv)
 */
 
         res[0] = 1;
-        res[1] = 2;
+        res[1] = 3;
 
 /*
         res[0] = 2;
