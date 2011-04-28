@@ -51,7 +51,7 @@ class TwoPTwoCNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
@@ -65,7 +65,8 @@ class TwoPTwoCNewtonController : public NewtonController<TypeTag>
     enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
 
 public:
-    TwoPTwoCNewtonController()
+    TwoPTwoCNewtonController(const Problem &problem)
+        : ParentType(problem)
     {
         this->setRelTolerance(1e-7);
         this->setTargetSteps(9);

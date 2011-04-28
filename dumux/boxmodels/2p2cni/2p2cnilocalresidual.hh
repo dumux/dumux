@@ -112,11 +112,13 @@ public:
         // compute the energy storage
         result[energyEqIdx] =
             vertDat.porosity()*(vertDat.density(lPhaseIdx) *
-                                vertDat.fluidState().internalEnergy(lPhaseIdx) *
+                                vertDat.internalEnergy(lPhaseIdx) *
+                                //vertDat.enthalpy(lPhaseIdx) *
                                 vertDat.saturation(lPhaseIdx)
                                 +
                                 vertDat.density(gPhaseIdx) *
-                                vertDat.fluidState().internalEnergy(gPhaseIdx) *
+                                vertDat.internalEnergy(gPhaseIdx) *
+                                //vertDat.enthalpy(gPhaseIdx) *
                                 vertDat.saturation(gPhaseIdx))
             +
             vertDat.temperature()*vertDat.heatCapacity();
@@ -150,12 +152,12 @@ public:
                     mobilityUpwindAlpha * // upstream vertex
                     (  up.density(phase) *
                        up.mobility(phase) *
-                       up.fluidState().enthalpy(phase))
+                       up.enthalpy(phase))
                     +
                     (1-mobilityUpwindAlpha) * // downstream vertex
                     (  dn.density(phase) *
                        dn.mobility(phase) *
-                       dn.fluidState().enthalpy(phase)) );
+                       dn.enthalpy(phase)) );
         }
     }
 

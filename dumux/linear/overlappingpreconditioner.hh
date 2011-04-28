@@ -60,7 +60,7 @@ public:
     {
 #if HAVE_MPI
         if (overlap_->peerSet().size() > 0) {
-#warning copying the defect probably not really necessary here
+            // set the residual on the front to zero
             range_type dd(d);
             dd.resetFront();
             seqPreCond_.apply(x, dd);

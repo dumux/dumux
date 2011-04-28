@@ -44,14 +44,16 @@ template <class TypeTag>
 class LensOnePTwoCNewtonController
     : public NewtonController<TypeTag >
 {
-    typedef LensOnePTwoCNewtonController<TypeTag>  ThisType;
-    typedef NewtonController<TypeTag>      ParentType;
+    typedef LensOnePTwoCNewtonController<TypeTag> ThisType;
+    typedef NewtonController<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
 public:
-    LensOnePTwoCNewtonController()
+    LensOnePTwoCNewtonController(const Problem &problem)
+        : ParentType(problem)
     {
         this->setRelTolerance(1e-7);
         this->setTargetSteps(9);

@@ -50,6 +50,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
@@ -68,7 +69,8 @@ public:
     /*!
      * \brief Constructor
      */
-    RichardsNewtonController()
+    RichardsNewtonController(const Problem &problem)
+        : ParentType(problem)
     { };
 
     /*!
