@@ -159,7 +159,7 @@ public:
         sendBuff[0] = peerLocalIdx;
         sendBuff[1] = domesticToGlobal(domesticIdx);
 
-        MPI_Bsend(sendBuff, // buff
+        MPI_Send(sendBuff, // buff
                   2, // count
                   MPI_INT, // data type
                   peerRank, 
@@ -222,12 +222,12 @@ protected:
     // global index list
     void buildGlobalIndices_() 
     {
+#if HAVE_MPI
         if (myRank_ == 0) {
             // the first rank starts at index zero
             domesticOffset_ = 0;
         }
         else {
-#if HAVE_MPI
             // all other ranks retrieve their offset from the next
             // lower rank
             MPI_Recv(&domesticOffset_, // buff
@@ -237,7 +237,6 @@ protected:
                      0, // tag
                      MPI_COMM_WORLD, // communicator
                      MPI_STATUS_IGNORE);
-#endif
         }
 
         // create maps for all master indices
@@ -252,7 +251,6 @@ protected:
         }
         
         if (myRank_ < mpiSize_ - 1) {
-#if HAVE_MPI
             // send the domestic offset plus the number of master
             // indices to the process which is one rank higher
             // all other ranks retrieve their offset from the next
@@ -264,7 +262,6 @@ protected:
                      myRank_ + 1, // peer rank
                      0, // tag
                      MPI_COMM_WORLD); // communicator
-#endif
         };
 
         // retrieve the global indices for which we are not master
@@ -312,6 +309,7 @@ protected:
                 sendBorderIndex(peerRank, localIdx, peerIdx);
             }
         }
+#endif // HAVE_MPI
     }
     
     const PeerSet &peerSet_() const

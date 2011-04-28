@@ -212,7 +212,11 @@ int main(int argc, char** argv)
         res[0] = 1;
         res[1] = 2;
         */
+        
+        
         std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
+        grid->globalRefine(2);
+
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////

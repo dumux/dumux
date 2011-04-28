@@ -97,8 +97,9 @@ public:
             return;
 
         // delete all MPI buffers
-        typename PeerSet::const_iterator peerIt = overlap_->peerSet().begin();
-        typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
+        const PeerSet &peerSet = overlap_->foreignOverlap().peerSet();
+        typename PeerSet::const_iterator peerIt = peerSet.begin();
+        typename PeerSet::const_iterator peerEndIt = peerSet.end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
@@ -230,22 +231,23 @@ private:
         /////////
 
         // first, send all our indices to all peers
-        typename PeerSet::const_iterator peerIt = overlap_->peerSet().begin();
-        typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
+        const PeerSet &peerSet = overlap_->foreignOverlap().peerSet();
+        typename PeerSet::const_iterator peerIt = peerSet.begin();
+        typename PeerSet::const_iterator peerEndIt = peerSet.end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             sendRowIndices_(M, peerRank);
         }
 
         // then recieve all indices from the peers
-        peerIt = overlap_->peerSet().begin();
+        peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             receiveRowIndices_(peerRank);
         }
         
         // wait until all send operations are completed
-        peerIt = overlap_->peerSet().begin();
+        peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
 
@@ -415,8 +417,9 @@ private:
     void sync_()
     {
         // first, send all entries to the peers
-        typename PeerSet::const_iterator peerIt = overlap_->peerSet().begin();
-        typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
+        const PeerSet &peerSet = overlap_->foreignOverlap().peerSet();
+        typename PeerSet::const_iterator peerIt = peerSet.begin();
+        typename PeerSet::const_iterator peerEndIt = peerSet.end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
@@ -424,7 +427,7 @@ private:
         }
 
         // then, receive entries from the peers
-        peerIt = overlap_->peerSet().begin();
+        peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
@@ -433,7 +436,7 @@ private:
 
         // finally, make sure that everything which we send was
         // received by the peers
-        peerIt = overlap_->peerSet().begin();
+        peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             entryValuesSendBuff_[peerRank]->wait();
