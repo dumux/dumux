@@ -118,13 +118,13 @@ SET_PROP(LensProblem, SpatialParameters)
 SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, false);
 
 // Enable partial reassembly of the jacobian matrix?
-SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
+SET_BOOL_PROP(LensProblem, EnablePartialReassemble, false);
 
 // Enable reuse of jacobian matrices?
-SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, true);
+SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
 
 // Write the solutions of individual newton iterations?
-SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, false);
+SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, true);
 SET_INT_PROP(LensProblem, NewtonLinearSolverVerbosity, 0);
 
 // Use forward differences instead of central differences
@@ -323,31 +323,7 @@ public:
     void dirichlet(PrimaryVariables &values,
                    const GlobalPosition &globalPos) const
     {
-        Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,
-                                                        wPhaseIdx,
-                                                        temperature_,
-                                                        1e5);
-
-        if (onLeftBoundary_(globalPos))
-        {
-            Scalar height = this->bboxMax()[1] - this->bboxMin()[1];
-            Scalar depth = this->bboxMax()[1] - globalPos[1];
-            Scalar alpha = (1 + 1.5/height);
-
-            // hydrostatic pressure scaled by alpha
-            values[pwIdx] = - alpha*densityW*this->gravity()[1]*depth;
-            values[SnIdx] = 0.0;
-        }
-        else if (onRightBoundary_(globalPos))
-        {
-            Scalar depth = this->bboxMax()[1] - globalPos[1];
-
-            // hydrostatic pressure
-            values[pwIdx] = -densityW*this->gravity()[1]*depth;
-            values[SnIdx] = 0.0;
-        }
-        else
-            values = 0.0;
+        initial(values, globalPos);
     }
 
     /*!
@@ -390,9 +366,29 @@ public:
     void initial(PrimaryVariables &values,
                  const GlobalPosition &globalPos) const
     {
-        // no DNAPL, some random pressure
-        values[pwIdx] = 1e5;
-        values[SnIdx] = 0.0;
+        Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,
+                                                        FluidSystem::wCompIdx,
+                                                        temperature_,
+                                                        1e5);
+
+        if (onLeftBoundary_(globalPos))
+        {
+            Scalar height = this->bboxMax()[1] - this->bboxMin()[1];
+            Scalar depth = this->bboxMax()[1] - globalPos[1];
+            Scalar alpha = (1 + 1.5/height);
+
+            // hydrostatic pressure scaled by alpha
+            values[pwIdx] = 1e5 - alpha*densityW*this->gravity()[1]*depth;
+            values[SnIdx] = 0.0;
+        }
+        else
+        {
+            Scalar depth = this->bboxMax()[1] - globalPos[1];
+
+            // hydrostatic pressure
+            values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
+            values[SnIdx] = 0.0;
+        }
     }
     // \}
 

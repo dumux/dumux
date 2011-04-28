@@ -384,6 +384,7 @@ protected:
                 Valgrind::CheckDefined(pvIdx);
                 Valgrind::CheckDefined(curPrimaryVar_(i, pvIdx));
                 Valgrind::CheckDefined(tmp[pvIdx]);
+                
                 this->residual_[i][eqIdx] =
                     curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
 

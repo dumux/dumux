@@ -51,36 +51,33 @@ public:
     {
         seqPreCond_.pre(x, y);
 
-        //x.resetFront();
-        //y.resetFront();
-
-        x.syncAverage();
-        y.syncAverage();
+        // communicate the results on the overlap
+        //x.syncAverage();
+        //y.syncAverage();
     };
 
     void apply(domain_type &x, const range_type &y)
     {
+        //x = y;
+              
         seqPreCond_.apply(x, y);
 
-        //x.resetFront();
-        
         // communicate the results on the overlap
-        x.syncAverage();
+        //x.syncAverage();
 
         /*
         typedef Dumux::OverlappingScalarProduct<domain_type, Overlap> OverlappingScalarProduct;
         OverlappingScalarProduct sp(*overlap_);
         std::cout.precision(16);
-        std::cout << "abs(x): " << sp.norm(x) << "\n";
-        std::cout << "abs(y) = " << sp.norm(y) << "\n";
+        std::cout << "precond.apply: abs(x): " << sp.norm(x) << "\n";
         */
     };
    
     void post(domain_type &x)
-    {
+    {     
         seqPreCond_.post(x);
     };
-
+    
 private:
     SeqPreCond seqPreCond_;
     const Overlap *overlap_;

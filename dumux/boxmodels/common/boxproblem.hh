@@ -98,7 +98,7 @@ public:
           timeManager_(&timeManager),
           newtonMethod_(asImp_())
     {
-        // calculate the bounding box of the grid view
+        // calculate the bounding box of the local partition of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
         const VertexIterator vEndIt = gridView.template end<dim>();
         for (; vIt!=vEndIt; ++vIt) {
@@ -107,13 +107,15 @@ public:
                 bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().corner(0)[i]);
             }
         }
-        for (int i=0; i<dim; i++) {
-            if (gridView.comm().size() > 1)
-            {
-            	bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
-            	bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
-            }
-        }
+
+        // communicate to get the bounding box of the whole domain
+        for (int i = 0; i < dim; ++i) {
+            bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
+            bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+        };
+
+        // set a default name for the problem
+        simName_ = "sim";
 
         resultWriter_ = NULL;
     }
@@ -377,7 +379,7 @@ public:
                  int scvIdx) const
     {
         // forward to generic interface
-        asImp_().source(values, fvElemGeom.subContVol[scvIdx].global);
+        asImp_().initial(values, fvElemGeom.subContVol[scvIdx].global);
     }
 
     /*!
@@ -550,7 +552,7 @@ public:
      */
     const char *name() const
     {
-        return simname_.c_str();
+        return simName_.c_str();
     }
 
     /*!
@@ -562,9 +564,9 @@ public:
      *
      * \param newName The problem's name
      */
-    static void setName(const char *newName)
+    void setName(const char *newName)
     {
-        simname_ = newName;
+        simName_ = newName;
     }
 
     /*!
@@ -745,9 +747,7 @@ private:
     void createResultWriter_()
     { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(asImp_().name()); };
 
-    static std::string simname_; // a string for the name of the current simulation,
-                                  // which could be set by means of an program argument,
-                                  // for example.
+    std::string simName_; 
     const GridView gridView_;
 
     GlobalPosition bboxMin_;
@@ -765,10 +765,6 @@ private:
 
     VtkMultiWriter *resultWriter_;
 };
-// definition of the static class member simname_,
-// which is necessary because it is of type string.
-template <class TypeTag>
-std::string BoxProblem<TypeTag>::simname_="sim"; //initialized with default "sim"
 
 }
 

@@ -35,6 +35,8 @@
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
 
+#include <dumux/common/sumvertexhandle.hh>
+
 namespace Dumux {
 
 /*!
@@ -103,13 +105,13 @@ public:
          * Vertex/element that needs to be reassembled because some
          * relative error is above the tolerance
          */
-        Red,
+        Red = 0,
 
         /*!
          * Vertex/element that needs to be reassembled because a
          * neighboring element/vertex is red
          */
-        Yellow,
+        Yellow = 1,
 
         /*!
          * Yellow vertex has only non-green neighbor elements.
@@ -119,12 +121,12 @@ public:
          * cost. This is just an "internal" color which is not used
          * ouside of the jacobian assembler.
          */
-        Orange,
+        Orange = 2,
 
         /*!
          * Vertex/element that does not need to be reassembled
          */
-        Green
+        Green = 3
     };
 
     BoxAssembler()
@@ -277,19 +279,22 @@ public:
         for (; elemIt != elemEndIt; ++elemIt) {
             const Element &elem = *elemIt;
             if (elem.partitionType() != Dune::InteriorEntity  &&
-                elem.partitionType() != Dune::BorderEntity) 
+                elem.partitionType() != Dune::BorderEntity)
+            {
                 assembleGhostElement_(elem);
+            }
             else
+            {
                 assembleElement_(elem);
+            }
         };
 
         // if partial reassembly is enabled, print some statistics at
         // the end of the iteration
         if (enablePartialReassemble) {
             greenElems_ = gridView_().comm().sum(greenElems_);
-            reassembleAccuracy_ = nextReassembleAccuracy_;
+            reassembleAccuracy_ = gridView_().comm().max(nextReassembleAccuracy_);
 
-            reassembleAccuracy_ = nextReassembleAccuracy_;
             problem_().newtonController().endIterMsg()
                 << ", reassembled "
                 << totalElems_ - greenElems_ << "/" << totalElems_
@@ -461,11 +466,21 @@ public:
                 int globalI = vertexMapper_().map(*elemIt, i, dim);
                 // if a vertex is already red, don't recolor it to
                 // yellow!
-                if (vertexColor_[globalI] != Red)
+                if (vertexColor_[globalI] != Red) {
                     vertexColor_[globalI] = Orange;
+                }
             };
         }
 
+        // at this point we communicate the yellow vertices to the
+        // neighboring processes because a neigbor process may not see
+        // the red vertex for yellow border vertices
+        VertexHandleMin<EntityColor, std::vector<EntityColor>,  VertexMapper>
+            minHandle(vertexColor_, vertexMapper_());
+        gridView_().communicate(minHandle, 
+                                Dune::InteriorBorder_InteriorBorder_Interface,
+                                Dune::ForwardCommunication);
+        
         // Mark yellow elements
         elemIt = gridView_().template begin<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -507,6 +522,14 @@ public:
                     vertexColor_[globalI] = Yellow;
             };
         }
+
+        // demote the border orange vertices
+        VertexHandleMax<EntityColor, std::vector<EntityColor>,  VertexMapper>
+            maxHandle(vertexColor_,
+                      vertexMapper_());
+        gridView_().communicate(maxHandle, 
+                                Dune::InteriorBorder_InteriorBorder_Interface,
+                                Dune::ForwardCommunication);
 
         // promote the remaining orange vertices to red
         for (int i=0; i < vertexColor_.size(); ++i) {
@@ -784,7 +807,6 @@ private:
             }
 
             residual_[globI] += model_().localJacobian().residual(i);
-
             if (enableJacobianRecycling) {
                 // save the flux term and the jacobian of the
                 // storage term in case we can reuse the current
@@ -813,10 +835,6 @@ private:
         for (int i=0; i < n; ++i) {
             const VertexPointer vp = elem.template subEntity<dim>(i);
             
-            if (vp->partitionType() == Dune::InteriorEntity ||
-                vp->partitionType() == Dune::BorderEntity)
-                continue; // ignore a ghost cell's non-ghost vertices
-
             // set main diagonal entries for the vertex
             int vIdx = vertexMapper_().map(*vp);
             typedef typename Matrix::block_type BlockType;

@@ -497,15 +497,13 @@ public:
         // that the initial value for the delta vector u is quite
         // close to the final value, a reduction of 9 orders of
         // magnitude in the defect should be sufficient...
-        Scalar residReduction = 1e-6;
+        Scalar residReduction = 1e-12;
 
         try {
-            solveLinear_(A, x, b, residReduction);
+            int converged = solveLinear_(A, x, b, residReduction);
 
             // make sure all processes converged
-            int converged = 1;
-            if (gridView_().comm().size() > 1)
-            	gridView_().comm().min(converged);
+            gridView_().comm().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
@@ -773,7 +771,7 @@ protected:
      *
      * Usually we use the solvers from DUNE-ISTL.
      */
-    void solveLinear_(const JacobianMatrix &A,
+    bool solveLinear_(const JacobianMatrix &A,
                       SolutionVector &x,
                       const SolutionVector &b,
                       Scalar residReduction)
@@ -789,14 +787,15 @@ protected:
 
         OverlappingMatrix overlapA(A, 
                                    borderListCreator.borderList(), 
-                                   /*overlapSize=*/5);
-        OverlappingVector overlapb(b, overlapA.overlap());
+                                   /*overlapSize=*/100);
+       OverlappingVector overlapb(b, overlapA.overlap());
+
         OverlappingVector overlapx(overlapb);
         overlapx = 0.0;
 
 #define PREC 1
 #if PREC == 1
-        // simple Jacobi preconditioner
+        // Jacobi preconditioner
         typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
         SeqPreconditioner seqPreCond(overlapA, 1, 1.0);
 #elif PREC == 2
@@ -819,17 +818,21 @@ protected:
         OverlappingOperator opA(overlapA);
 
         typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
+        int verbosity = 0;
+        if (verbose())
+            verbosity = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
         Solver solver(opA, 
                       scalarProd,
                       preCond, 
                       residReduction,
-                      /*maxIterations=*/250,
-                      /*verbosity=*/0);
+                      /*maxIterations=*/5000,
+                      verbosity);
         Dune::InverseOperatorResult result;
         solver.apply(overlapx, overlapb, result);
 
         // copy the result back to the non-overlapping vector
         overlapx.assignTo(x);
+        return result.converged;
     }
 
     void updateOverlap_(const JacobianMatrix &A,

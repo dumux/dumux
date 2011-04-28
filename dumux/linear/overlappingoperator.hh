@@ -53,20 +53,21 @@ public:
     virtual void apply (const DomainVector& x, RangeVector& y) const
     {
         A_.mv(x,y);
-
-        y.resetFront();
+        y.syncFrontFromMaster();
+        //y.resetFront();
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-    virtual void applyscaleadd (field_type alpha, const DomainVector& x, RangeVector& y) const
+    virtual void applyscaleadd(field_type alpha, const DomainVector& x, RangeVector& y) const
     {
-        A_.usmv(alpha,x,y);
-
-        y.resetFront();
+        A_.usmv(alpha, x, y);
+        y.syncFrontFromMaster();
+        //std::cout << "y: " << y;
+        //y.resetFront();
     }
 
     //! returns the matrix
-    virtual const OverlappingMatrix& getmat () const
+    virtual const OverlappingMatrix& getmat() const
     {
         return A_;
     }

@@ -206,6 +206,30 @@ public:
     };
 
     /*!
+     * \brief Return true iff a given rank is the master of a given
+     *        domestic index.
+     */
+    bool isMasterOf(int peerRank, int domesticIdx) const
+    { 
+        if (isLocal(domesticIdx)) {
+            return foreignOverlap_.masterOf(domesticIdx) == peerRank;
+        };
+        
+        // if the local index is a border index, loop over all ranks
+        // for which this index is also a border index. the lowest
+        // rank wins!
+        typedef typename std::set<ProcessRank>::const_iterator iterator;
+        iterator it = domesticOverlapByIndex_[domesticIdx].begin();
+        iterator endIt = domesticOverlapByIndex_[domesticIdx].end();
+        LocalIndex masterIdx = std::numeric_limits<int>::max();
+        for (; it != endIt; ++it) {
+            masterIdx = std::min(masterIdx, *it);
+        }
+
+        return masterIdx == peerRank;
+    };
+
+    /*!
      * \brief Print the foreign overlap for debugging purposes.
      */
     void print() const

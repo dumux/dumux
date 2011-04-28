@@ -34,6 +34,8 @@
 #include "boxlocaljacobian.hh"
 #include "boxlocalresidual.hh"
 
+#include <dumux/common/sumvertexhandle.hh>
+
 namespace Dumux
 {
 
@@ -257,7 +259,19 @@ public:
             }
         };
 
-        Scalar result = dest.two_norm();
+        // calculate the square norm of the residual
+        Scalar result2 = dest.two_norm2();
+        result2 = gridView().comm().sum(result2);
+
+        // add up the residuals on the process borders
+        if (gridView().comm().size() > 1) {
+            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper> 
+                sumHandle(dest, vertexMapper());
+            gridView().communicate(sumHandle, 
+                                   Dune::InteriorBorder_InteriorBorder_Interface,
+                                   Dune::ForwardCommunication);
+        }
+
         /*
         Scalar result = 0;
         for (int i = 0; i < (*tmp).size(); ++i) {
@@ -265,7 +279,7 @@ public:
                 result += std::abs((*tmp)[i][j]);
         }
         */
-        return result;
+        return std::sqrt(result2);
     }
 
     /*!
@@ -287,8 +301,7 @@ public:
                 dest += localResidual().storageTerm()[i];
         };
 
-        if (gridView_().comm().size() > 1)
-        	dest = gridView_().comm().sum(dest);
+        dest = gridView_().comm().sum(dest);
     }
 
     /*!
@@ -806,6 +819,24 @@ protected:
                 Valgrind::CheckDefined(uCur_[globalIdx]);
             }
         }
+
+        // add up the primary variables and the volumes of the boxes
+        // which cross process borders
+        if (gridView().comm().size() > 1) {
+            VertexHandleSum<Dune::FieldVector<Scalar, 1>, 
+                Dune::BlockVector<Dune::FieldVector<Scalar, 1> >,
+                VertexMapper> sumVolumeHandle(boxVolume_, vertexMapper());
+            gridView().communicate(sumVolumeHandle, 
+                                   Dune::InteriorBorder_InteriorBorder_Interface,
+                                   Dune::ForwardCommunication);
+
+            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper> 
+                sumPVHandle(uCur_, vertexMapper());
+            gridView().communicate(sumPVHandle,
+                                   Dune::InteriorBorder_InteriorBorder_Interface,
+                                   Dune::ForwardCommunication);
+        }
+
         // divide all primary variables by the volume of their boxes
         int n = gridView_().size(dim);
         for (int i = 0; i < n; ++i) {
