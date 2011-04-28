@@ -785,15 +785,15 @@ protected:
         typedef typename OverlappingMatrix::Overlap Overlap;
         typedef Dumux::OverlappingBlockVector<typename SolutionVector::block_type, Overlap> OverlappingVector;
 
-        OverlappingMatrix overlapA(A, 
+        OverlappingMatrix overlapA(A,
                                    borderListCreator.borderList(), 
-                                   /*overlapSize=*/100);
+                                   /*overlapSize=*/3);
        OverlappingVector overlapb(b, overlapA.overlap());
 
         OverlappingVector overlapx(overlapb);
         overlapx = 0.0;
 
-#define PREC 1
+#define PREC 3
 #if PREC == 1
         // Jacobi preconditioner
         typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
@@ -825,7 +825,7 @@ protected:
                       scalarProd,
                       preCond, 
                       residReduction,
-                      /*maxIterations=*/5000,
+                      /*maxIterations=*/1000,
                       verbosity);
         Dune::InverseOperatorResult result;
         solver.apply(overlapx, overlapb, result);

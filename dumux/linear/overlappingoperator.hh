@@ -55,6 +55,13 @@ public:
         A_.mv(x,y);
         y.syncFrontFromMaster();
         //y.resetFront();
+
+        /*
+        typedef Dumux::OverlappingScalarProduct<domain_type, typename OverlappingMatrix::Overlap> OverlappingScalarProduct;
+        OverlappingScalarProduct sp(A_.overlap());
+        std::cout.precision(16);
+        std::cout << "after op.apply: abs(y): " << sp.norm(y) << "\n";
+        */
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
@@ -62,6 +69,15 @@ public:
     {
         A_.usmv(alpha, x, y);
         y.syncFrontFromMaster();
+        //y.resetFront();
+
+/*
+        typedef Dumux::OverlappingScalarProduct<domain_type, typename OverlappingMatrix::Overlap> OverlappingScalarProduct;
+        OverlappingScalarProduct sp(A_.overlap());
+        std::cout.precision(16);
+        std::cout << "after op.applyscaleadd: abs(y): " << sp.norm(y) << "\n";
+*/
+
         //std::cout << "y: " << y;
         //y.resetFront();
     }
