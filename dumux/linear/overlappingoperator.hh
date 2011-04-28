@@ -53,33 +53,12 @@ public:
     virtual void apply (const DomainVector& x, RangeVector& y) const
     {
         A_.mv(x,y);
-        y.syncFrontFromMaster();
-        //y.resetFront();
-
-        /*
-        typedef Dumux::OverlappingScalarProduct<domain_type, typename OverlappingMatrix::Overlap> OverlappingScalarProduct;
-        OverlappingScalarProduct sp(A_.overlap());
-        std::cout.precision(16);
-        std::cout << "after op.apply: abs(y): " << sp.norm(y) << "\n";
-        */
     }
 
     //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
     virtual void applyscaleadd(field_type alpha, const DomainVector& x, RangeVector& y) const
     {
         A_.usmv(alpha, x, y);
-        y.syncFrontFromMaster();
-        //y.resetFront();
-
-/*
-        typedef Dumux::OverlappingScalarProduct<domain_type, typename OverlappingMatrix::Overlap> OverlappingScalarProduct;
-        OverlappingScalarProduct sp(A_.overlap());
-        std::cout.precision(16);
-        std::cout << "after op.applyscaleadd: abs(y): " << sp.norm(y) << "\n";
-*/
-
-        //std::cout << "y: " << y;
-        //y.resetFront();
     }
 
     //! returns the matrix

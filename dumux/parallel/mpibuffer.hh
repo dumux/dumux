@@ -80,7 +80,7 @@ public:
     /*!
      * \brief Send the buffer asyncronously to a peer process.
      */
-    void send(int peerRank)
+    void send(int peerRank, bool setNoAccess=true)
     {
 #if HAVE_MPI
         MPI_Isend(data_,

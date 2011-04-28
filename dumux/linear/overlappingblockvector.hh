@@ -140,6 +140,51 @@ public:
     };
 
     /*!
+     * \brief Syncronize the block vector by taking the arithmetic
+     *        mean of all entries which are not on the front of some
+     *        process
+     *
+     * \todo use specialized send methods for improved
+     *       performance. (i.e. only send the front entries to the
+     *       peers.)
+     */
+    void syncAverageFrontFromMaster()
+    {
+        // first, reset all of our front rows
+        int numLocal = overlap_->numLocal();
+        int numDomestic = overlap_->numDomestic();
+        for (int i = numLocal; i < numDomestic; ++i) {
+            if (overlap_->isFront(i))
+                (*this)[i] = 0;
+        }
+
+        typename PeerSet::const_iterator peerIt;
+        typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
+
+        // send all entries to all peers
+        peerIt = overlap_->peerSet().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            int peerRank = *peerIt;
+            sendEntries_(peerRank);
+        }
+
+        // recieve all entries to the peers
+        peerIt = overlap_->peerSet().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            int peerRank = *peerIt;
+            receiveAverageFrontFromMaster_(peerRank);
+        }
+
+        // divide each entry by the number of non-front processes
+        for (int i = 0; i < numDomestic; ++i) {
+            (*this)[i] /= overlap_->numNonFrontProcesses(i);
+        }
+        
+        // wait until we have send everything
+        waitSendFinished_();
+    };
+
+    /*!
      * \brief Syncronize an overlapping block vector by copying the
      *        front entries from their master process
      *
@@ -348,8 +393,9 @@ private:
         values.receive(peerRank);
 
         // copy them into the block vector
-        for (int i = 0; i < indices.size(); ++ i)
+        for (int i = 0; i < indices.size(); ++ i) {
             (*this)[indices[i]] += values[i];
+        }
     }
 
     void receiveFrontFromMaster_(int peerRank)
@@ -367,6 +413,21 @@ private:
                 continue;
             
             (*this)[domRowIdx] = values[j];
+        }
+    }
+
+    void receiveAverageFrontFromMaster_(int peerRank)
+    {
+        const MpiBuffer<RowIndex> &indices = *indicesRecvBuff_[peerRank];
+        MpiBuffer<FieldVector> &values = *valuesRecvBuff_[peerRank];
+
+        // receive the values from the peer
+        values.receive(peerRank);
+
+        // copy them into the block vector
+        for (int j = 0; j < indices.size(); ++j) {
+            int domRowIdx = indices[j];
+            (*this)[domRowIdx] += values[j];
         }
     }
 

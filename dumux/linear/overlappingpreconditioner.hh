@@ -51,25 +51,29 @@ public:
     {
         seqPreCond_.pre(x, y);
 
+/*
         // communicate the results on the overlap
         x.syncAverage();
         y.syncAverage();
+*/
     };
 
     void apply(domain_type &x, const range_type &d)
     {
 #if HAVE_MPI
         if (overlap_->peerSet().size() > 0) {
-            // set the residual on the front to zero
+            // set the residual and right hand side on the front to zero
             range_type dd(d);
             dd.resetFront();
+
+            // execute the sequential preconditioner
             seqPreCond_.apply(x, dd);
-            x.syncAverage();
+
+            x.syncAdd();
         }
         else 
 #endif // HAVE_MPI
             seqPreCond_.apply(x, d);
-
     };
    
     void post(domain_type &x)

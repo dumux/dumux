@@ -562,7 +562,26 @@ private:
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
-        int nVerts = gridView_().size(dim);
+        int nVerts = 0;
+        if (gridView_().comm().size() == 0)
+            nVerts = gridView_().size(dim);
+        else {
+            // AFAIK there is no way to retrieve the number of
+            // interior and border vertices from the grid without
+            // looping over it. \todo write DUNE bug report!?
+            VertexIterator vIt = gridView_().template begin<dim>();
+            const VertexIterator vEndIt = gridView_().template end<dim>();
+            for (; vIt != vEndIt; ++vIt) {
+                switch (vIt->partitionType()) {
+                case Dune::InteriorEntity:
+                case Dune::BorderEntity:
+                    ++nVerts;
+                    break;
+                default: 
+                    break;
+                }
+            }
+        }
 
         // allocate raw matrix
         matrix_ = new Matrix(nVerts, nVerts, Matrix::random);
@@ -722,7 +741,9 @@ private:
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &elem)
     {
-        //return; // we just ignore ghosts!
+        return; // we just ignore ghosts!
+        /*
+        // in PDELab we have to set the main diagonal
         int n = elem.template count<dim>();
         for (int i=0; i < n; ++i) {
             const VertexPointer vp = elem.template subEntity<dim>(i);
@@ -737,6 +758,7 @@ private:
             // set residual for the vertex
             residual_[vIdx] = 0;
         }
+        */
     }
 
 

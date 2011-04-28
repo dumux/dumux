@@ -96,7 +96,7 @@ public:
 #endif        
         
         numLocal_ = A.N();
-
+        
         // calculate the border list. From this, create an initial
         // seed list of indices which are in the overlap.
         SeedList initialSeedList;
@@ -150,6 +150,25 @@ public:
 
         // at this point, the local index is in the interior of the
         // foreign overlap for the peer, so it is a remote index
+        return false;
+    };
+
+    /*!
+     * \brief Returns true iff a local index is a front index for a given peer.
+     */
+    bool isFrontFor(int peerRank, int localIdx) const
+    { 
+        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
+        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
+        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
+
+        if (bdIt == borderDist.end())
+            return false; // this index is not seen by the peer
+        
+        BorderDistance bDist = bdIt->second;
+        if (bDist == overlapSize_)
+            // the index is on the front of the peer
+            return true;
         return false;
     };
 

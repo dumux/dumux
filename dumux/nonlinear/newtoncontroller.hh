@@ -244,12 +244,12 @@ class NewtonController
 
 public:
     /*!
-     * \brief Constructor
+     * \brief 
      */
-    NewtonController(const Problem &problem, int overlapSize=5)
+    NewtonController(const Problem &problem)
         : endIterMsgStream_(std::ostringstream::out)
         , convergenceWriter_(asImp_())
-        , linearSolver_(problem, overlapSize)
+        , linearSolver_(problem)
     {
         verbose_ = true;
         numSteps_ = 0;
@@ -268,13 +268,6 @@ public:
             this->setTargetSteps(10);
             this->setMaxSteps(18);
         }
-
-        /*
-        overlapX_ = NULL;
-        overlapB_ = NULL;
-        overlapMatrix_ = NULL;
-        overlap_ = NULL;
-        */
     };
 
     /*!
@@ -463,7 +456,7 @@ public:
         // magnitude in the defect should be sufficient...
         Scalar residReduction = 1e-6;
 
-        try {
+        //try {
             int verbosityLevel = 0;
             if (verbose()) {
                 verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
@@ -477,6 +470,7 @@ public:
                 DUNE_THROW(NumericalProblem,
                            "A process threw NumericalProblem");
             }
+            /*
         }
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
@@ -501,6 +495,7 @@ public:
             p.message(e.what());
             throw p;
         }
+            */
     }
 
     /*!

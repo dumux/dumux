@@ -230,7 +230,7 @@ protected:
         else {
             // all other ranks retrieve their offset from the next
             // lower rank
-            MPI_Recv(&domesticOffset_, // buff
+            MPI_Recv(&domesticOffset_, // buffer
                      1, // count
                      MPI_INT, // data type
                      myRank_ - 1, 

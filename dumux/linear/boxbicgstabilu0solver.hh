@@ -58,6 +58,7 @@ class BoxBiCGStabILU0Solver
     typedef typename OverlappingMatrix::Overlap Overlap;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqILU0<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    //typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef Dumux::OverlappingPreconditioner<SeqPreconditioner, Overlap> OverlappingPreconditioner;
     typedef Dumux::OverlappingScalarProduct<OverlappingVector, Overlap> OverlappingScalarProduct;
     typedef Dumux::OverlappingOperator<OverlappingMatrix, OverlappingVector, OverlappingVector> OverlappingOperator;
@@ -79,7 +80,7 @@ public:
     /*!
      * \brief Set the structure of the linear system of equations to be solved.
      * 
-     * This method allocates space an does the necessarry
+     * This method allocates space an does the necessary
      * communication before actually calling the solve() method.  As
      * long as the structure of the linear system does not change, the
      * solve method can be called arbitrarily often.
@@ -108,12 +109,14 @@ public:
         };
 
         // copy the values of the non-overlapping linear system of
-        // equations to the overlapping one.
+        // equations to the overlapping one. On ther border, we add up
+        // the values of all processes (using the assignAdd() methods)
         overlapMatrix_->assignAdd(M);
         overlapb_->assignAdd(b);
         (*overlapx_) = 0.0;
-
+        
         // create sequential and overlapping preconditioners
+        //SeqPreconditioner seqPreCond(*overlapMatrix_, 1, 1.0);
         SeqPreconditioner seqPreCond(*overlapMatrix_, 1.0);
         OverlappingPreconditioner preCond(seqPreCond, overlapMatrix_->overlap());
 
@@ -128,7 +131,7 @@ public:
                       residReduction,
                       /*maxIterations=*/250,
                       verbosityLevel);
-
+        
         // run the solver
         Dune::InverseOperatorResult result;
         solver.apply(*overlapx_, *overlapb_, result);
