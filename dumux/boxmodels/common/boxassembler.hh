@@ -674,21 +674,27 @@ private:
         }
         matrix_->endindices();
         
-        //std::cout << "begin create overlap\n";
         typedef typename Dumux::OverlapFromBCRSMatrix<Matrix> OverlapFromBCRSMatrix;
         typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
         typedef typename OverlapFromBCRSMatrix::BorderList BorderList;
         
         BorderListFromGrid borderListCreator(gridView_(), vertexMapper_());
         int overlapSize = 1;
-        OverlapFromBCRSMatrix overlapMatrix(*matrix_, 
-                                            borderListCreator.borderList(),
-                                            overlapSize);
+        OverlapFromBCRSMatrix overlap(*matrix_, 
+                                      borderListCreator.borderList(),
+                                      overlapSize);
+        
+        /*
         if (gridView_().comm().rank() == 0) {
             std::cout << "initial border list size: " << borderListCreator.borderList().size() << "\n";
-            overlapMatrix.printOverlap();
+            overlap.printOverlap();
         }
-        //std::cout << "end create overlap\n";
+        */
+        
+        typedef OverlapFromBCRSMatrix Overlap;
+        typedef OverlapBCRSMatrix<Matrix, Overlap> OverlapMatrix;
+        OverlapMatrix overlapMatrix(*matrix_, overlap);
+        overlapMatrix.assignFromNonOverlapping(*matrix_);
     };
 #endif
 

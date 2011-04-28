@@ -150,7 +150,9 @@ void usage(const char *progname)
 
 int main(int argc, char** argv)
 {
+#ifdef NDEBUG
     try {
+#endif
         typedef TTAG(LensProblem) TypeTag;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
@@ -222,6 +224,7 @@ int main(int argc, char** argv)
             problem.restart(restartTime);
         timeManager.run();
         return 0;
+#ifdef NDEBUG
     }
     catch (Dune::Exception &e) {
         std::cerr << "Dune reported error: " << e << std::endl;
@@ -230,6 +233,7 @@ int main(int argc, char** argv)
         std::cerr << "Unknown exception thrown!\n";
         throw;
     }
+#endif // NDEBUG
 
     return 3;
 }
