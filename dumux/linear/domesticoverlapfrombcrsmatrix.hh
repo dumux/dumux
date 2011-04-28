@@ -90,7 +90,10 @@ public:
         , globalIndices_(foreignOverlap_)
     {
         myRank_ = 0;
+
+#if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
+#endif // HAVE_MPI
 
         buildDomesticOverlap_(A);
     }
@@ -296,6 +299,7 @@ protected:
 
     void sendIndicesToPeer_(int peerRank)
     {          
+#if HAVE_MPI
         const ForeignOverlapWithPeer &foreignOverlap
             = foreignOverlap_.foreignOverlapWithPeer(peerRank);
 
@@ -349,10 +353,12 @@ protected:
                       MPI_COMM_WORLD); // communicator
             delete[] peerRanks;
         };
+#endif // HAVE_MPI
     }
 
     void receiveIndicesFromPeer_(int peerRank)
     {
+#if HAVE_MPI
         // receive the number of additional indices
         int numIndices = -1;
         MPI_Recv(&numIndices, // buff
@@ -420,6 +426,7 @@ protected:
             }
             delete [] peerRanks;
         }
+#endif // HAVE_MPI
     }
 
     int myRank_;

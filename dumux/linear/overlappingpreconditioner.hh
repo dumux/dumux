@@ -58,7 +58,8 @@ public:
 
     void apply(domain_type &x, const range_type &d)
     {
-        if (ENABLE_MPI && overlap_->peerSet().size() > 0) {
+#if HAVE_MPI
+        if (overlap_->peerSet().size() > 0) {
 #warning copying the defect probably not really necessary here
             range_type dd(d);
             dd.resetFront();
@@ -66,6 +67,7 @@ public:
             x.syncAverage();
         }
         else 
+#endif // HAVE_MPI
             seqPreCond_.apply(x, d);
 
     };

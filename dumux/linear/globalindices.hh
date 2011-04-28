@@ -93,8 +93,10 @@ public:
         myRank_ = 0;
         mpiSize_ = 1;
 
+#if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
         MPI_Comm_size(MPI_COMM_WORLD, &mpiSize_);
+#endif
 
         // calculate the domestic overlap (i.e. all overlap indices in
         // foreign processes which the current process overlaps.)
@@ -152,6 +154,7 @@ public:
      */
     void sendBorderIndex(int peerRank, int domesticIdx, int peerLocalIdx)
     {
+#if HAVE_MPI
         int sendBuff[2];
         sendBuff[0] = peerLocalIdx;
         sendBuff[1] = domesticToGlobal(domesticIdx);
@@ -162,6 +165,7 @@ public:
                   peerRank, 
                   0, // tag
                   MPI_COMM_WORLD); // communicator
+#endif // HAVE_MPI
     };
 
     /*!
@@ -170,6 +174,7 @@ public:
      */
     void receiveBorderIndex(int peerRank)
     {
+#if HAVE_MPI
         int recvBuff[2];
         MPI_Recv(recvBuff, // buff
                  2, // count
@@ -182,6 +187,7 @@ public:
         int domesticIdx = recvBuff[0];
         int globalIdx = recvBuff[1];
         addIndex(domesticIdx, globalIdx);
+#endif // HAVE_MPI
     };
 
     /*!
@@ -197,7 +203,9 @@ public:
     void print() const
     {
         int myRank = 0;
+#if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+#endif // HAVE_MPI
         std::cout << "(domestic index, global index, domestic->global->domestic) list for rank " << myRank << "\n";
 
         for (int domIdx = 0; domIdx < domesticToGlobal_.size(); ++ domIdx) {
@@ -219,6 +227,7 @@ protected:
             domesticOffset_ = 0;
         }
         else {
+#if HAVE_MPI
             // all other ranks retrieve their offset from the next
             // lower rank
             MPI_Recv(&domesticOffset_, // buff
@@ -228,6 +237,7 @@ protected:
                      0, // tag
                      MPI_COMM_WORLD, // communicator
                      MPI_STATUS_IGNORE);
+#endif
         }
 
         // create maps for all master indices
@@ -242,6 +252,7 @@ protected:
         }
         
         if (myRank_ < mpiSize_ - 1) {
+#if HAVE_MPI
             // send the domestic offset plus the number of master
             // indices to the process which is one rank higher
             // all other ranks retrieve their offset from the next
@@ -253,6 +264,7 @@ protected:
                      myRank_ + 1, // peer rank
                      0, // tag
                      MPI_COMM_WORLD); // communicator
+#endif
         };
 
         // retrieve the global indices for which we are not master

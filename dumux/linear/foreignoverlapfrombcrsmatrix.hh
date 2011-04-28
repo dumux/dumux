@@ -41,6 +41,11 @@
 #include <set>
 #include <map>
 
+#if HAVE_MPI
+#include <mpi.h>
+#endif // HAVE_MPI
+
+
 namespace Dumux {
 
 /*!
@@ -86,7 +91,9 @@ public:
         overlapSize_ = overlapSize;
 
         myRank_ = 0;
+#if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
+#endif        
         
         numLocal_ = A.N();
 

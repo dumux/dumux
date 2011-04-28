@@ -25,7 +25,10 @@
 #ifndef DUMUX_MPI_BUFFER_HH
 #define DUMUX_MPI_BUFFER_HH
  
+#if HAVE_MPI
 #include <mpi.h>
+#endif
+
 #include <type_traits>
 
 namespace Dumux
@@ -41,8 +44,10 @@ public:
     { 
         data_ = new DataType[size];
         dataSize_ = size;
+
+#if HAVE_MPI
         mpiDataSize_ = size;
-        
+
         // set the MPI data type
         if (std::is_same<DataType, char>::value)
             mpiDataType_ = MPI_CHAR;
@@ -64,6 +69,7 @@ public:
             mpiDataType_ = MPI_BYTE;
             mpiDataSize_ *= sizeof(DataType);
         }
+#endif // HAVE_MPI        
     };
 
     ~MpiBuffer()
@@ -76,6 +82,7 @@ public:
      */
     void send(int peerRank)
     {
+#if HAVE_MPI
         MPI_Isend(data_,
                   mpiDataSize_,
                   mpiDataType_,
@@ -83,6 +90,7 @@ public:
                   0, // tag
                   MPI_COMM_WORLD,
                   &mpiRequest_);
+#endif
     };
 
     /*!
@@ -90,7 +98,9 @@ public:
      */
     void wait()
     {
+#if HAVE_MPI
         MPI_Wait(&mpiRequest_, &mpiStatus_);
+#endif // HAVE_MPI
     };
 
     /*!
@@ -98,6 +108,7 @@ public:
      */
     void receive(int peerRank)
     {
+#if HAVE_MPI
         MPI_Recv(data_,
                  mpiDataSize_,
                  mpiDataType_,
@@ -105,8 +116,10 @@ public:
                  0, // tag
                  MPI_COMM_WORLD,
                  &mpiStatus_);
+#endif // HAVE_MPI
     };
 
+#if HAVE_MPI
     /*!
      * \brief Returns the current MPI_Request object. 
      *
@@ -136,6 +149,8 @@ public:
      */
     const MPI_Status &status() const
     { return mpiStatus_; }
+#endif // HAVE_MPI
+
 
     /*!
      * \brief Returns the number of data objects in the buffer
@@ -164,10 +179,12 @@ public:
 private:
     DataType *data_;
     int dataSize_;
-    MPI_Datatype mpiDataType_;
+#if HAVE_MPI
     int mpiDataSize_;
+    MPI_Datatype mpiDataType_;
     MPI_Request mpiRequest_;
     MPI_Status mpiStatus_;
+#endif // HAVE_MPI
 };
 
 }

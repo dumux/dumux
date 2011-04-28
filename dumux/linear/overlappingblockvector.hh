@@ -61,6 +61,7 @@ public:
      */
     OverlappingBlockVector(const OverlappingBlockVector &obv)
         : ParentType(obv)
+        , frontMaster_(obv.frontMaster_)
         , indicesSendBuff_(obv.indicesSendBuff_)
         , indicesRecvBuff_(obv.indicesRecvBuff_)
         , valuesSendBuff_(obv.valuesSendBuff_)
@@ -227,6 +228,11 @@ public:
 private:
     void createBuffers_()
     {
+#if HAVE_MPI
+        // create array for the front indices
+        int numDomestic = overlap_->numDomestic();
+        frontMaster_ = std::shared_ptr<std::vector<ProcessRank> >(new std::vector<ProcessRank>(numDomestic, -1));
+        
         typename PeerSet::const_iterator peerIt;
         typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
         
@@ -293,7 +299,14 @@ private:
             // finally, translate the global indices to domestic ones
             for (int i = 0; i != numEntries; ++i) {
                 int globalRowIdx = indicesRecvBuff[i];
-                indicesRecvBuff[i] = overlap_->globalToDomestic(globalRowIdx);
+                int domRowIdx = overlap_->globalToDomestic(globalRowIdx);
+                indicesRecvBuff[i] = domRowIdx;
+
+                if (overlap_->isFront(domRowIdx) && 
+                    overlap_->isMasterOf(peerRank, domRowIdx))
+                {
+                    (*frontMaster_)[domRowIdx] = peerRank;
+                }
             }
         }
 
@@ -303,6 +316,7 @@ private:
             int peerRank = *peerIt;
             indicesSendBuff_[peerRank]->wait();
         }
+#endif // HAVE_MPI
     }
 
     void sendEntries_(int peerRank)
@@ -353,13 +367,14 @@ private:
         // copy them into the block vector
         for (int j = 0; j < indices.size(); ++j) {
             int domRowIdx = indices[j];
-            if (overlap_->isFront(domRowIdx) && 
-                overlap_->isMasterOf(peerRank, domRowIdx))
-            {
-                (*this)[domRowIdx] = values[j];
-            }
+            if ((*frontMaster_)[domRowIdx] != peerRank)
+                continue;
+            
+            (*this)[domRowIdx] = values[j];
         }
     }
+
+    std::shared_ptr<std::vector<ProcessRank> > frontMaster_;
 
     std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesSendBuff_;
     std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesRecvBuff_;

@@ -51,13 +51,17 @@ public:
         };
         
         // compute the global sum
-        field_type sumGlobal = 0.0 ;
+        field_type sumGlobal = 0.0;
+#if HAVE_MPI
         MPI_Allreduce(&sum, // source buffer
                       &sumGlobal, // destination buffer
                       1, // number of objects in buffers
                       MPI_DOUBLE, // data type
                       MPI_SUM, // operation
                       MPI_COMM_WORLD); // communicator
+#else
+        sumGlobal = sum;
+#endif // HAVE_MPI
 
         return sumGlobal;
     };

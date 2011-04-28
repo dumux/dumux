@@ -69,7 +69,10 @@ public:
                           int overlapSize)
     {
         overlap_ = std::shared_ptr<Overlap>(new Overlap(M, borderList, overlapSize));
+        myRank_ = 0;
+#if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
+#endif // HAVE_MPI
 
         // build the overlapping matrix from the non-overlapping
         // matrix and the overlap
@@ -265,6 +268,7 @@ private:
     // send the overlap indices to a peer
     void sendRowIndices_(const BCRSMatrix &M, int peerRank)
     {
+#if HAVE_MPI
         // send the number of non-border entries in the matrix
         const ForeignOverlapWithPeer &peerOverlap = overlap_->foreignOverlapWithPeer(peerRank);
 
@@ -319,11 +323,13 @@ private:
 
             delete[] sendBuff2;
         }
+#endif // HAVE_MPI
     };
 
     // receive the overlap indices to a peer
     void receiveRowIndices_(int peerRank)
     {
+#if HAVE_MPI
         // receive the of the domestic overlap to peer
         int numOverlapRows;
         MPI_Recv(&numOverlapRows, // buff
@@ -365,7 +371,7 @@ private:
 
             delete[] recvBuff2;
         };
-    
+#endif // HAVE_MPI
     };
 
     // communicates and adds up the contents of overlapping rows
@@ -411,6 +417,7 @@ private:
 
     void sendEntries_(int peerRank)
     {
+#if HAVE_MPI
         // send the number of non-border entries in the matrix
         const ForeignOverlapWithPeer &peerOverlap = overlap_->foreignOverlapWithPeer(peerRank);
 
@@ -476,10 +483,12 @@ private:
             delete[] indicesSendBuff;
             delete[] valuesSendBuff;
         };
+#endif // HAVE_MPI
     }
 
     void receiveEntries_(int peerRank)
     {
+#if HAVE_MPI
         // receive size of foreign overlap to peer
         int numOverlapRows;
         MPI_Recv(&numOverlapRows, // buff
@@ -539,6 +548,7 @@ private:
             delete[] indicesRecvBuff;
             delete[] valuesRecvBuff;
         };
+#endif // HAVE_MPI
     }
 
     int myRank_;
