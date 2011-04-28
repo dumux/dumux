@@ -399,11 +399,14 @@ public:
             setTimeStepSize(nextDt);
         }
 
-        if (verbose_)
-            std::cout << "Simulation took " << timer.elapsed() <<" seconds.\n"
+        if (verbose_) {
+            int numProcesses = Dune::MPIHelper::getCollectiveCommunication().size();
+            std::cout << "Simulation took " << timer.elapsed() <<" seconds on " 
+                      << numProcesses << " processes.\n"
+                      << "The cumulative CPU time was " << timer.elapsed()*numProcesses << " seconds.\n"
                       << "We hope that you enjoyed simulating with us\n"
                       << "and that you will chose us next time, too.\n";
-
+        }
     }
 
     /*!
