@@ -715,6 +715,12 @@ public:
     // \}
 
     /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by writeOutput().
+     */
+    void addOutputVtkFields()
+    {}
+
+    /*!
      * \brief Write the relavant secondar variables of the current
      *        solution into an VTK output file.
      */
@@ -730,6 +736,7 @@ public:
             createResultWriter_();
             resultWriter_->beginTimestep(t, gridView());
             model().addOutputVtkFields(model().curSol(), *resultWriter_);
+            asImp_().addOutputVtkFields();
             resultWriter_->endTimestep();
         }
     }
@@ -742,6 +749,22 @@ protected:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
+
+    //! Returns the applied VTK-writer for the output
+    VtkMultiWriter& resultWriter()
+    {
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        return *resultWriter_;
+    }
+    //! \copydoc Dumux::IMPETProblem::resultWriter()
+    VtkMultiWriter& resultWriter() const
+    {
+        if (!resultWriter_)
+            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        return *resultWriter_;
+    }
+
 
 private:
     // makes sure that the result writer exists
