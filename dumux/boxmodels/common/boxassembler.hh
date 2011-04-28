@@ -35,7 +35,7 @@
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
 
-#include <dumux/common/sumvertexhandle.hh>
+#include <dumux/parallel/vertexhandles.hh>
 
 namespace Dumux {
 

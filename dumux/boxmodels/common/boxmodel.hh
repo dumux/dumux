@@ -34,7 +34,8 @@
 #include "boxlocaljacobian.hh"
 #include "boxlocalresidual.hh"
 
-#include <dumux/common/sumvertexhandle.hh>
+#include <dumux/parallel/vertexhandles.hh>
+
 
 namespace Dumux
 {
