@@ -793,18 +793,31 @@ protected:
                       residReduction,
                       500,
                       verbosity);
+    
+/*
+        OverlapVector tmp(*overlapB_);
+        overlapMatrix_->mv(*overlapB_, tmp);
+        
+        preCond.pre(tmp, *overlapB_);
+        preCond.apply(tmp, *overlapB_);
+        preCond.post(tmp);
+        
+        Scalar dot = scalarProd.dot(tmp, tmp);
+        Scalar norm = scalarProd.norm(tmp);
+        std::cout << "Dot:" << dot << "\n";
+        std::cout << "norm^2:" << norm*norm << "\n";
+        exit(1);
+*/
 
 //        typedef Dune::RestartedGMResSolver<OverlapVector> Solver;
-//        Solver solver(opA, precond, residReduction, 50, 500, verbosity);
+//        Solver solver(opA, scalarProd, precond, residReduction, 50, 500, verbosity);
 
        Dune::InverseOperatorResult result;
        solver.apply(*overlapX_, *overlapB_, result);
-       //OverlapVector bTmp(b);
-       //solver.apply(x, bTmp, result);
 
        if (!result.converged)
-               DUNE_THROW(Dumux::NumericalProblem,
-                               "Solving the linear system of equations did not converge.");
+           DUNE_THROW(Dumux::NumericalProblem,
+                      "Solving the linear system of equations did not converge.");
 
        // make sure the solver didn't produce a nan or an inf
        // somewhere. this should never happen but for some strange
@@ -831,14 +844,14 @@ protected:
 
             BorderListFromGrid borderListCreator(gridView_(), vertexMapper_());
 #warning HACK: make this a property!
-            int overlapSize = 1;
+            int overlapSize = 2;
             overlap_ = new Overlap(A,
                                    borderListCreator.borderList(),
                                    overlapSize);
             
             overlapMatrix_ = new OverlapMatrix(A, *overlap_);
             overlapX_ = new OverlapVector(x, *overlap_);
-            overlapB_ = new OverlapVector(*overlapX_);
+            overlapB_ = new OverlapVector(b, *overlap_);
         }
         else {
             overlapX_->set(x);
