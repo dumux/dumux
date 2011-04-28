@@ -676,16 +676,16 @@ private:
         
         //std::cout << "begin create overlap\n";
         typedef typename Dumux::OverlapFromBCRSMatrix<Matrix> OverlapFromBCRSMatrix;
-        typedef typename Dumux::VertexSeedListFromGrid<GridView, VertexMapper> SeedListFromGrid;
-        typedef typename OverlapFromBCRSMatrix::SeedList SeedList;
+        typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
+        typedef typename OverlapFromBCRSMatrix::BorderList BorderList;
         
-        SeedListFromGrid seedListCreator(gridView_(), vertexMapper_());
-        int overlapSize = 20;
+        BorderListFromGrid borderListCreator(gridView_(), vertexMapper_());
+        int overlapSize = 1;
         OverlapFromBCRSMatrix overlapMatrix(*matrix_, 
-                                            seedListCreator.seedList(),
+                                            borderListCreator.borderList(),
                                             overlapSize);
         if (gridView_().comm().rank() == 0) {
-            std::cout << "initial seed list size: " << seedListCreator.seedList().size() << "\n";
+            std::cout << "initial border list size: " << borderListCreator.borderList().size() << "\n";
             overlapMatrix.printOverlap();
         }
         //std::cout << "end create overlap\n";
