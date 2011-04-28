@@ -135,20 +135,54 @@ public:
      */
     bool iAmMasterOf(int localIdx) const
     { 
-        if (borderIndices_.count(localIdx) == 0)
+        if (!isBorder(localIdx))
             return true; // interior index
 
         // if the local index is a border index, loop over all ranks
         // for which this index is also a border index. the lowest
         // rank wins!
         typedef typename std::map<ProcessRank, BorderDistance>::const_iterator iterator;
-        iterator it = foreignOverlapByIndex_[localIdx].find(localIdx);
+        iterator it = foreignOverlapByIndex_[localIdx].begin();
         iterator endIt = foreignOverlapByIndex_[localIdx].end();
         LocalIndex masterIdx = myRank_;
-        for (; it != endIt; ++it)
-            masterIdx = std::min(masterIdx, it->first);
+        for (; it != endIt; ++it) {
+            if (it->first < myRank_ && it->second == 0)
+                return false;
+        }
 
         return masterIdx == myRank_;
+    };
+
+    /*!
+     * \brief Return true if a given local index is a remote index for
+     *        a peer.
+     */
+    bool isRemoteIndexFor(ProcessRank peerRank, Index localIdx) const
+    { 
+        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
+        const BorderDistMap &borderDist
+            = foreignOverlapByIndex_[localIdx];
+        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
+        if (bdIt == borderDist.end())
+            return false; // this index is not seen by the peer
+
+        BorderDistance bDist = bdIt->second;
+
+        if (bDist == 0)
+            // the index is on the border to the peer, so for the peer
+            // it is a local index.
+            return false;
+
+        if (isBorder(localIdx))
+            // if the index is not on the border with the specified
+            // peer but on a border to a different process, only the
+            // master process consideres the local index as a remote
+            // index for the peer
+            return iAmMasterOf(localIdx);
+        
+        // at this point, the local index is in the interior of the
+        // foreign overlap for the peer, so it is a remote index
+        return true;
     };
     
     /*!
@@ -156,8 +190,11 @@ public:
      *        number of processes) triples which are in the overlap of
      *        a given peer rank.
      */
-    const ForeignOverlapWithPeer &peerOverlap(int peerRank) const 
-    { return foreignOverlapByRank_.find(peerRank)->second; }
+    const ForeignOverlapWithPeer &foreignOverlapWithPeer(int peerRank) const 
+    { 
+        assert(foreignOverlapByRank_.find(peerRank) != foreignOverlapByRank_.end());
+        return foreignOverlapByRank_.find(peerRank)->second;
+    }
 
     /*!
      * \brief Return the set of process ranks which share an overlap
@@ -178,15 +215,6 @@ public:
      */
     int numPeersForIndex(int localIdx) const
     { return foreignOverlapByIndex_[localIdx].size(); };
-
-    /*!
-     * \brief Returns the number local indices
-     */
-    const ForeignOverlapWithPeer &foreignOverlapWithPeer(int peerIdx) const
-    { 
-        assert(foreignOverlapByRank_.find(peerIdx) != foreignOverlapByRank_.end());
-        return foreignOverlapByRank_.find(peerIdx)->second;
-    };
 
     /*!
      * \brief Print the foreign overlap for debugging purposes.

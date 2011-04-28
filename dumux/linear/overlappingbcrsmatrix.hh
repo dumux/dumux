@@ -48,7 +48,6 @@ class OverlappingBCRSMatrix : public BCRSMatrix
     typedef typename Overlap::BorderList BorderList;
     typedef typename Overlap::ProcessRank ProcessRank;
     typedef typename Overlap::ForeignOverlapWithPeer ForeignOverlapWithPeer;
-    typedef typename Overlap::DomesticOverlapWithPeer DomesticOverlapWithPeer;
     typedef std::vector<ColIndex> PeerColumns;
     typedef std::pair<RowIndex,  PeerColumns> PeerRow;
     typedef std::vector<PeerRow> PeerRows;
@@ -66,11 +65,15 @@ public:
                           int overlapSize)
         : overlap_(M, borderList, overlapSize)
     {
+        overlap_.print();
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
+
         // build the overlapping matrix from the non-overlapping
         // matrix and the overlap
         build_(M);
     
-        sync(M);
+        //sync(M);
     };
     
     OverlappingBCRSMatrix(const OverlappingBCRSMatrix &M)
@@ -107,6 +110,35 @@ public:
         sync_(M);
     }
 
+    void print() const 
+    {
+        for (int i = 0; i < this->N(); ++i) {
+            if (overlap_.isLocal(i))
+                std::cout << " ";
+            else 
+                std::cout << "*";
+            std::cout << "row " << i << " ";
+            
+            typedef typename BCRSMatrix::ConstColIterator ColIt;
+            ColIt colIt = (*this)[i].begin();
+            ColIt colEndIt = (*this)[i].end();
+            for (int j = 0; j < this->M(); ++j) {
+                if (colIt != colEndIt && j == colIt.index()) { 
+                    ++colIt;
+                    if (overlap_.isBorder(j))
+                        std::cout << "|";
+                    else if (overlap_.isLocal(j))
+                        std::cout << "X";
+                    else
+                        std::cout << "*";
+                }
+                else
+                    std::cout << " ";
+            }
+            std::cout << "\n";
+        };
+    };
+
 private:
     void build_(const BCRSMatrix &M)
     {
@@ -135,48 +167,63 @@ private:
         for (int rowIdx = numLocal; rowIdx < numDomestic; ++rowIdx)
             this->setrowsize(rowIdx, 0);
 
-        typename PeerSet::const_iterator peerIt = overlap_->peerSet().begin();
-        typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
+        typename PeerSet::const_iterator peerIt = overlap_.peerSet().begin();
+        typename PeerSet::const_iterator peerEndIt = overlap_.peerSet().end();
 
         // send the number of additional entries for each row to the
         // peers with lower ranks
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank < overlap_.myRank())
-                sendRowSizesToPeer_(peerRank);
+            if (peerRank < myRank_)
+                sendRowSizesToPeer_(M, peerRank);
         }
 
         // receive the number of additional entries for each row from
         // the peers with higher ranks
-        peerIt = overlap_->peerSet().begin();
+        peerIt = overlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank > overlap_.myRank())
+            if (peerRank > myRank_)
                 receiveRowSizesFromPeer_(peerRank);
         }
 
         // send the number of additional entries for each row to
         // the peers with higher ranks
-        peerIt = overlap_->peerSet().begin();
+        peerIt = overlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank > overlap_.myRank())
-                sendRowSizesToPeer_(peerRank);
+            if (peerRank > myRank_)
+                sendRowSizesToPeer_(M, peerRank);
         }
 
         // receive the number of additional entries for each row from
         // the peers with lower ranks
-        peerIt = overlap_->peerSet().begin();
+        peerIt = overlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank < overlap_.myRank())
+            if (peerRank < myRank_)
                 receiveRowSizesFromPeer_(peerRank);
         }
         this->endrowsizes();
+    }
+
+    int numRemoteEntriesInRow_(const BCRSMatrix &M, int peerRank, int rowIdx)
+    {
+        int numEntries = 0;
+
+        typedef typename BCRSMatrix::ConstColIterator ColIt;
+        ColIt colIt = M[rowIdx].begin();
+        ColIt colEndIt = M[rowIdx].end();
+        for (; colIt != colEndIt; ++colIt) {
+            if (overlap_.isRemoteIndexFor(peerRank, colIt.index()))
+                ++numEntries;
+        }
+
+        return numEntries;
     }
 
     void sendRowSizesToPeer_(const BCRSMatrix &M, int peerRank)
@@ -201,14 +248,7 @@ private:
             
             // loop over the columns of the matrix' row and find out
             // the non-border entries
-            int numEntries = 0;
-            typedef typename BCRSMatrix::ConstColIterator ColIt;
-            ColIt colIt = M[rowIdx].begin();
-            ColIt colEndIt = M[rowIdx].end();
-            for (; colIt != colEndIt; ++colIt) {
-                if (!overlap_.isBorder(colIt->index()))
-                    ++numEntries;
-            }
+            int numEntries = numRemoteEntriesInRow_(M, peerRank, rowIdx);
 
             // send the (global row index, number of additional
             // entries) pair to the peer
@@ -233,7 +273,7 @@ private:
                  0, // tag
                  MPI_COMM_WORLD, // communicator
                  MPI_STATUS_IGNORE); 
-        
+       
         for (int i = 0; i < numOverlapRows; ++i) {
             // receive the (global row index, number of additional
             // entries) pair from the peer
@@ -251,7 +291,8 @@ private:
             int globalIdx = recvBuff[0];
             int domesticIdx = overlap_.globalToDomestic(globalIdx);
             int numEntries = this->getrowsize(domesticIdx) + recvBuff[1];
-            this->setrowsize(numEntries);
+
+            this->setrowsize(domesticIdx, numEntries);
         };
     }
 
@@ -259,6 +300,7 @@ private:
     {
         // add the indices for the local entries
         // copy the rows for the local indices
+        int numLocal = M.N();
         for (int rowIdx = 0; rowIdx < numLocal; ++rowIdx) {
             ConstColIterator colIt = M[rowIdx].begin();
             ConstColIterator colEndIt = M[rowIdx].end();
@@ -269,85 +311,146 @@ private:
         // add the indices for all additional entries
 
         // first, send all indices to the peers with lower ranks
-        peerIt = overlap_->peerSet().begin();
+        typename PeerSet::const_iterator peerIt = overlap_.peerSet().begin();
+        typename PeerSet::const_iterator peerEndIt = overlap_.peerSet().end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank > myRank())
-                continue; // ignore higher ranks
-            
-            sendRowIndices_(peerRank);
+            if (peerRank < myRank_)
+                sendRowIndices_(M, peerRank);
         }
 
         // then recieve the indices from the peers with higher ranks
-        peerIt = overlap_->peerSet().begin();
+        peerIt = overlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank < myRank())
-                continue; // ignore lower ranks
-            
-            receiveRowIndices_(peerRank);
+            if (peerRank > myRank_)
+                receiveRowIndices_(peerRank);
         }
 
         // then send all indices to the peers with higher ranks
-        peerIt = overlap_->peerSet().begin();
+        peerIt = overlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank < myRank())
-                continue; // ignore lower ranks
-            
-            sendRowIndices_(peerRank);
+            if (peerRank > myRank_)
+                sendRowIndices_(M, peerRank);
         }
 
         // then receive all indices from peers with lower ranks
-        peerIt = overlap_->peerSet().begin();
+        peerIt = overlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            if (peerRank > myRank())
-                continue; // ignore higher ranks
-            
-            receiveRowIndices_(peerRank);
+            if (peerRank < myRank_)
+                receiveRowIndices_(peerRank);
         }
 
         this->endindices();
     }
 
     // send the overlap indices to a peer
-    void sendRowIndices_(int peerRank)
+    void sendRowIndices_(const BCRSMatrix &M, int peerRank)
     {
-        typename PeerRows::const_iterator rowIt = overlapEntries_[peerRank].begin();
-        typename PeerRows::const_iterator rowEndIt = overlapEntries_[peerRank].end();
-        for (; rowIt != rowEndIt; ++ rowIt) {
-            int rowIdx = rowIt->first;
-            int domesticRowIdx = overlap_->foreignToDomesticIndex(peerRank, rowIdx);
+        // send the number of non-border entries in the matrix
+        const ForeignOverlapWithPeer &peerOverlap = overlap_.foreignOverlapWithPeer(peerRank);
+
+        // send size of foreign overlap to peer
+        int numOverlapRows = peerOverlap.size();
+        MPI_Send(&numOverlapRows, // buff
+                 1, // count
+                 MPI_INT, // data type
+                 peerRank, 
+                 0, // tag
+                 MPI_COMM_WORLD); // communicator
+        
+        typename ForeignOverlapWithPeer::const_iterator it = peerOverlap.begin();
+        typename ForeignOverlapWithPeer::const_iterator endIt = peerOverlap.end();
+        for (; it != endIt; ++it) {
+            int rowIdx = std::get<0>(*it);
             
-            if (overlap_->isFront(peerRank, rowIdx)) {
-                assert(!overlap_->isLocal(domesticRowIdx));
-                this->addindex(domesticRowIdx, domesticRowIdx);
-                continue;
-            }                        
-            
-            typename PeerColumns::const_iterator colIt = rowIt->second.begin();
-            typename PeerColumns::const_iterator colEndIt = rowIt->second.end();
+            // loop over the columns of the matrix' row and find out
+            // the non-border entries
+            int numEntries = numRemoteEntriesInRow_(M, peerRank, rowIdx);
+
+            // send the (global row index, number of additional
+            // entries) pair to the peer
+            int sendBuff[2] = { overlap_.domesticToGlobal(rowIdx), numEntries };
+            MPI_Send(sendBuff, // buff
+                     2, // count
+                     MPI_INT, // data type
+                     peerRank, 
+                     0, // tag
+                     MPI_COMM_WORLD); // communicator
+
+            int *sendBuff2 = new int[numEntries];
+            typedef typename BCRSMatrix::ConstColIterator ColIt;
+            int i = 0;
+            ColIt colIt = M[rowIdx].begin();
+            ColIt colEndIt = M[rowIdx].end();
             for (; colIt != colEndIt; ++colIt) {
-                int colIdx = *colIt;
-                int domesticColIdx = overlap_->foreignToDomesticIndex(peerRank, colIdx);
-                
-                // only add new entry if row and column are not a
-                // border index!
-                if (overlap_->isLocal(domesticRowIdx) &&
-                    overlap_->isLocal(domesticColIdx))
-                {
-                    continue;
+                if (overlap_.isRemoteIndexFor(peerRank, colIt.index())) {
+                    sendBuff2[i] = overlap_.domesticToGlobal(colIt.index());
+                    i += 1;
                 }
-                
-                this->addindex(domesticRowIdx, domesticColIdx);
             }
-        }
-    }
+
+            MPI_Send(sendBuff2, // buff
+                     numEntries, // count
+                     MPI_INT, // data type
+                     peerRank, 
+                     0, // tag
+                     MPI_COMM_WORLD); // communicator
+
+            delete[] sendBuff2;
+        };
+    
+    };
+
+    // receive the overlap indices to a peer
+    void receiveRowIndices_(int peerRank)
+    {
+        // receive the of the domestic overlap to peer
+        int numOverlapRows;
+        MPI_Recv(&numOverlapRows, // buff
+                 1, // count
+                 MPI_INT, // data type
+                 peerRank, 
+                 0, // tag
+                 MPI_COMM_WORLD, // communicator
+                 MPI_STATUS_IGNORE);
+        for (int j = 0; j < numOverlapRows; ++j) {
+            // receive the (global row index, number of additional
+            // entries) pair from the peer
+            int recvBuff[2];
+            MPI_Recv(recvBuff, // buff
+                     2, // count
+                     MPI_INT, // data type
+                     peerRank, 
+                     0, // tag
+                     MPI_COMM_WORLD, // communicator
+                     MPI_STATUS_IGNORE);
+
+            int domRowIdx = overlap_.globalToDomestic(recvBuff[0]);
+            int numEntries = recvBuff[1];
+            
+            // receive the actual column indices
+            int *recvBuff2 = new int[numEntries];
+            MPI_Recv(recvBuff2, // buff
+                     numEntries, // count
+                     MPI_INT, // data type
+                     peerRank, 
+                     0, // tag
+                     MPI_COMM_WORLD, // communicator
+                     MPI_STATUS_IGNORE);
+            for (int i = 0; i < numEntries; ++i) {
+                int domColIdx = overlap_.globalToDomestic(recvBuff2[i]);
+                this->addindex(domRowIdx, domColIdx);
+            }
+
+            delete[] recvBuff2;
+        };
     
     };
 
@@ -361,7 +464,7 @@ private:
     // domestic overlap. this communicates via MPI
     void communicateOverlapStructure_(const BCRSMatrix &M)
     {
-        const PeerSet &peerSet = overlap_->peerSet();
+        const PeerSet &peerSet = overlap_.peerSet();
         
         int numPeers = peerSet.size();
         int *sendMsgBuff[numPeers][2];
@@ -430,15 +533,15 @@ private:
     {
         msgSize = 
             2*
-            overlap_->foreignOverlapWithPeer(peerRank).size();
+            overlap_.foreignOverlapWithPeer(peerRank).size();
         int *buff = new int[msgSize];
-        const ForeignOverlapWithPeer &olist = overlap_->foreignOverlapWithPeer(peerRank);
+        const ForeignOverlapWithPeer &olist = overlap_.foreignOverlapWithPeer(peerRank);
         typename ForeignOverlapWithPeer::const_iterator it = olist.begin();
         typename ForeignOverlapWithPeer::const_iterator endIt = olist.end();
         for (int i = 0; it != endIt; ++it, ++i) {
             int rowIdx = std::get<0>(*it);
             buff[2*i + 0] = rowIdx;
-            if (overlap_->isForeignFront(peerRank, rowIdx))
+            if (overlap_.isForeignFront(peerRank, rowIdx))
                 buff[2*i + 1] = 0; // we do not send anything for front rows
             else
                 buff[2*i + 1] = M.getrowsize(rowIdx);
@@ -452,7 +555,7 @@ private:
     {
         msgSize = 0;
 
-        const ForeignOverlapWithPeer &olist = overlap_->foreignOverlapWithPeer(peerRank);
+        const ForeignOverlapWithPeer &olist = overlap_.foreignOverlapWithPeer(peerRank);
         
         // calculate message size
         typename ForeignOverlapWithPeer::const_iterator it = olist.begin();
@@ -471,7 +574,7 @@ private:
         for (int i = 0; it != endIt; ++it) {
             int rowIdx = std::get<0>(*it);
             
-            if (overlap_->isForeignFront(peerRank, rowIdx)) {
+            if (overlap_.isForeignFront(peerRank, rowIdx)) {
                 continue; // we do not send anything for front rows
             }
 
@@ -490,7 +593,7 @@ private:
     // from communicateNumEntriesOverlap_()
     void receiveIndices_(int peerRank)
     {
-        int numRows = overlap_->domesticOverlapWithPeer(peerRank).size();
+        int numRows = overlap_.domesticOverlapWithPeer(peerRank).size();
         overlapEntries_[peerRank].resize(numRows);
 
         numOverlapEntries_[peerRank] = 0;
@@ -536,7 +639,7 @@ private:
                 overlapEntries_[peerRank][i].second[j] = colIndex;
             }
 
-            if (overlap_->isFront(peerRank, rowIdx))
+            if (overlap_.isFront(peerRank, rowIdx))
                 overlapEntries_[peerRank][i].second.resize(0);
         }
         delete[] buff;
@@ -544,7 +647,7 @@ private:
     
     void syncronizeEntryValues_(const BCRSMatrix &M)
     {
-        const PeerSet &peerSet = overlap_->peerSet();
+        const PeerSet &peerSet = overlap_.peerSet();
         
         int numPeers = peerSet.size();
         field_type *sendMsgBuff[numPeers];
@@ -594,11 +697,12 @@ private:
     };
 */
 
+/*
     field_type *createValuesMsg_(const BCRSMatrix &M, int &msgSize, int peerRank)
     {
         msgSize = 0;
 
-        const ForeignOverlapWithPeer &olist = overlap_->foreignOverlapWithPeer(peerRank);
+        const ForeignOverlapWithPeer &olist = overlap_.foreignOverlapWithPeer(peerRank);
         
         // calculate message size
         typename ForeignOverlapWithPeer::const_iterator it = olist.begin();
@@ -618,7 +722,7 @@ private:
         for (int i = 0; it != endIt; ++it) {
             int rowIdx = std::get<0>(*it);
             
-            if (overlap_->isForeignFront(peerRank, rowIdx))
+            if (overlap_.isForeignFront(peerRank, rowIdx))
                 continue; // we do not send anything for front rows
             
             ConstColIterator colIt = M[rowIdx].begin();
@@ -642,7 +746,7 @@ private:
     {
         // receive the values of the overlap entries
         // calculate message size
-        const DomesticOverlapWithPeer &olist = overlap_->domesticOverlapWithPeer(peerRank);
+        const DomesticOverlapWithPeer &olist = overlap_.domesticOverlapWithPeer(peerRank);
         int numRows = olist.size();
         int msgSize = numOverlapEntries_[peerRank] * block_type::rows*block_type::cols;
         field_type *buff = new field_type[msgSize];
@@ -658,9 +762,9 @@ private:
         int pos = 0;
         for (int i = 0; i < numRows; ++i) {
             int rowIdx = overlapEntries_[peerRank][i].first;
-            int domRowIdx = overlap_->foreignToDomesticIndex(peerRank, rowIdx);
+            int domRowIdx = overlap_.foreignToDomesticIndex(peerRank, rowIdx);
 
-            if (overlap_->isFront(peerRank, rowIdx)) {
+            if (overlap_.isFront(peerRank, rowIdx)) {
                 // the front entries only get an identity matrix
                 block_type &x = (*this)[domRowIdx][domRowIdx];
                 for (int k = 0; k < block_type::rows; ++k)
@@ -672,7 +776,7 @@ private:
             int nCols = overlapEntries_[peerRank][i].second.size();
             for (int j = 0; j < nCols; ++j) {
                 int colIdx = overlapEntries_[peerRank][i].second[j];
-                int domColIdx = overlap_->foreignToDomesticIndex(peerRank, colIdx);
+                int domColIdx = overlap_.foreignToDomesticIndex(peerRank, colIdx);
                      
                 block_type &x = (*this)[domRowIdx][domColIdx];
                 for (int k1 = 0; k1 < block_type::rows; ++k1) {
@@ -688,8 +792,10 @@ private:
         assert(pos == msgSize);
         delete[] buff;
     };
+*/
 
-    const Overlap *overlap_;
+    int myRank_;
+    Overlap overlap_;
     std::map<ProcessRank, int> numOverlapEntries_;
     OverlapStructure overlapEntries_;
 };

@@ -86,8 +86,7 @@ public:
     {
         myRank_ = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
-        
-        numDomestic_ = 0;
+
         buildDomesticOverlap_(A);
     }
 
@@ -106,7 +105,7 @@ public:
      */
     bool isBorder(int domesticIdx) const
     { 
-        return isLocal(domesticIdx) && foreignOverlap_.borderList();
+        return isLocal(domesticIdx) && foreignOverlap_.isBorder(domesticIdx);
     };
 
     /*!
@@ -126,12 +125,32 @@ public:
     const PeerSet &peerSet() const
     { return foreignOverlap_.peerSet(); }
     
+    /*!
+     * \brief Returns the foreign overlap of a peer process
+     */
+    const ForeignOverlapWithPeer &foreignOverlapWithPeer(ProcessRank peerRank) const
+    { return foreignOverlap_.foreignOverlapWithPeer(peerRank); }
+
+    /*!
+     * \brief Returns true iff a given local index is a remote index for a given peer
+     */
+    bool isRemoteIndexFor(ProcessRank peerRank, Index localIdx) const
+    { return foreignOverlap_.isRemoteIndexFor(peerRank, localIdx); }
 
     /*!
      * \brief Returns the number local indices
      */
     int numLocal() const
     { return foreignOverlap_.numLocal(); };
+
+    /*!
+     * \brief Returns the number domestic indices.
+     *
+     * The domestic indices are defined as the process' local indices
+     * plus its copies of indices in the overlap regions
+     */
+    int numDomestic() const
+    { return globalIndices_.numDomestic(); };
 
     /*!
      * \brief Return true if a domestic index is local for the process
@@ -141,21 +160,28 @@ public:
     { return domesticIdx < numLocal(); };
 
     /*!
-     * \brief Returns the number domestic indices.
-     *
-     * The domestic indices are defined as the process' local indices
-     * plus its copies of indices in the overlap regions
-     */
-    int numDomestic() const
-    { return numDomestic_; };
-
-    /*!
      * \brief Print the foreign overlap for debugging purposes.
      */
     void print() const
     {
         globalIndices_.print();
     };
+
+    /*!
+     * \brief Returns a domestic index given a global one
+     */
+    Index globalToDomestic(Index globalIdx) const
+    { 
+        return globalIndices_.globalToDomestic(globalIdx);
+    }
+
+    /*!
+     * \brief Returns a global index given a domestic one
+     */
+    Index domesticToGlobal(Index domIdx) const
+    { 
+        return globalIndices_.domesticToGlobal(domIdx);
+    }
     
 protected:
     void buildDomesticOverlap_(const BCRSMatrix &A)
@@ -202,17 +228,17 @@ protected:
 
     void sendIndicesToPeer_(int peerRank)
     {          
-        const ForeignOverlapWithPeer &peerList
+        const ForeignOverlapWithPeer &foreignOverlap
             = foreignOverlap_.foreignOverlapWithPeer(peerRank);
 
         // first, send a message containing the number of additional
         // indices stemming from the overlap (i.e. without the border
         // indices)
         int numIndices = 0;
-        ForeignOverlapWithPeer::const_iterator peerIt = peerList.begin();
-        ForeignOverlapWithPeer::const_iterator endPeerIt = peerList.end();
-        for (; peerIt != endPeerIt; ++peerIt) {
-            int borderDistance = std::get<1>(*peerIt);
+        ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
+        ForeignOverlapWithPeer::const_iterator overlapEndIt = foreignOverlap.end();
+        for (; overlapIt != overlapEndIt; ++overlapIt) {
+            int borderDistance = std::get<1>(*overlapIt);
             if (borderDistance > 0)
                 ++numIndices;
         };
@@ -225,10 +251,10 @@ protected:
                  MPI_COMM_WORLD); // communicator
 
         // then send the additional indices themselfs
-        peerIt = peerList.begin();
-        for (; peerIt != endPeerIt; ++peerIt) {
-            int localIdx = std::get<0>(*peerIt);
-            int borderDistance = std::get<1>(*peerIt);
+        overlapIt = foreignOverlap.begin();
+        for (; overlapIt != overlapEndIt; ++overlapIt) {
+            int localIdx = std::get<0>(*overlapIt);
+            int borderDistance = std::get<1>(*overlapIt);
             if (borderDistance > 0) {
                 globalIndices_.sendOverlapIndex(peerRank, localIdx);
             }
@@ -248,9 +274,6 @@ protected:
                  MPI_COMM_WORLD, // communicator
                  MPI_STATUS_IGNORE);
         
-        // account for the new indices
-        numDomestic_ += numIndices;
-
         // receive the additional indices themselfs
         for (int i = 0; i < numIndices; ++i) {
             globalIndices_.receiveOverlapIndex(peerRank);
@@ -258,7 +281,6 @@ protected:
     }
 
     int myRank_;
-    int numDomestic_;
     ForeignOverlap foreignOverlap_;
     GlobalIndices globalIndices_;
 };

@@ -495,7 +495,6 @@ public:
         Scalar residReduction = 1e-9;
 
         try {
-            std::cerr << "HALLO\n";
             solveLinear_(A, x, b, residReduction);
 
             // make sure all processes converged
@@ -779,11 +778,12 @@ protected:
         VertexBorderListFromGrid<GridView, VertexMapper>
             borderListCreator(problem_().gridView(), problem_().vertexMapper());
 
-        typedef Dumux::DomesticOverlapFromBCRSMatrix<JacobianMatrix> DomesticOverlap;
-        DomesticOverlap domesticOverlap(A, 
-                                        borderListCreator.borderList(), 
-                                        /*overlapSize=*/2);
-        domesticOverlap.print();
+        typedef Dumux::OverlappingBCRSMatrix<JacobianMatrix> OverlappingMatrix;
+
+        OverlappingMatrix overlapA(A, 
+                                   borderListCreator.borderList(), 
+                                   /*overlapSize=*/4);
+        overlapA.print();
 
         /*
         typedef Dumux::OverlapBCRSMatrix<JacobianMatrix, GlobalIndices> OverlapMatrix;

@@ -122,12 +122,21 @@ public:
         return globalToDomestic_.find(globalIdx)->second;
     };
 
-    /*
+    /*!
      * \brief Returns the number of indices which are in the interior or 
      *        on the border of the current rank.
      */
     int numLocal() const
     { return foreignOverlap_.numLocal(); }
+
+    /*!
+     * \brief Returns the number domestic indices.
+     *
+     * The domestic indices are defined as the process' local indices
+     * plus its copies of indices in the overlap regions
+     */
+    int numDomestic() const
+    { return domesticToGlobal_.size(); }
 
     /*!
      * \brief Add an index to the domestic<->global mapping.
@@ -143,10 +152,10 @@ public:
      */
     void sendBorderIndex(int peerRank, int domesticIdx, int peerLocalIdx)
     {
-        int sendBuff[2] = {
-            peerLocalIdx, // local index of peer
-            domesticToGlobal(domesticIdx) // global index
-        };
+        int sendBuff[2];
+        sendBuff[0] = peerLocalIdx;
+        sendBuff[1] = domesticToGlobal(domesticIdx);
+
         MPI_Send(sendBuff, // buff
                  2, // count
                  MPI_INT, // data type
@@ -170,8 +179,9 @@ public:
                  MPI_COMM_WORLD, // communicator
                  MPI_STATUS_IGNORE); // status
 
-        addIndex(recvBuff[0], // domestic index 
-                 recvBuff[1]); // global index 
+        int domesticIdx = recvBuff[0];
+        int globalIdx = recvBuff[1];
+        addIndex(domesticIdx, globalIdx);
     };
     
     /*!
@@ -195,9 +205,6 @@ public:
      */
     void receiveOverlapIndex(int peerRank)
     {
-        // add a new domestic index
-        int domesticIdx = domesticToGlobal_.size();
-
         int globalIdx;
         // all other ranks retrieve their offset from the next
         // lower rank
@@ -208,8 +215,16 @@ public:
                  0, // tag
                  MPI_COMM_WORLD, // communicator
                  MPI_STATUS_IGNORE);
-
-        addIndex(domesticIdx, globalIdx); 
+        
+        // make sure that we do not add the same global index twice
+        // (if this is not made sure of, the peers which share a
+        // border amongst each other but not with us will send the
+        // same index twice)
+        if (globalToDomestic_.find(globalIdx) == globalToDomestic_.end()) {
+            // add a new domestic index
+            int domesticIdx = numDomestic();
+            addIndex(domesticIdx, globalIdx);
+        }
     };
 
     /*!
@@ -220,10 +235,13 @@ public:
     {
         int myRank = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-        std::cout << "(global index, domestic index) list for rank " << myRank << "\n";
+        std::cout << "(global index, domestic index, domestic->global->domestic) list for rank " << myRank << "\n";
 
         for (int domIdx = 0; domIdx < domesticToGlobal_.size(); ++ domIdx) {
-            std::cout << "(" << domesticToGlobal(domIdx) << ", " << domIdx << ") ";
+            std::cout << "(" << domesticToGlobal(domIdx) 
+                      << ", " << domIdx
+                      << ", " << globalToDomestic(domesticToGlobal(domIdx))
+                      << ") ";
         };
         std::cout << "\n";
     };
@@ -252,8 +270,9 @@ protected:
         // create maps for all master indices
         numMaster_ = 0;
         for (int i = 0; i < foreignOverlap_.numLocal(); ++i) {
-            if (!foreignOverlap_.iAmMasterOf(i))
+            if (!foreignOverlap_.iAmMasterOf(i)) {
                 continue;
+            }
             
             addIndex(i, domesticOffset_ + numMaster_);
             ++ numMaster_;
@@ -304,8 +323,8 @@ protected:
             if (peerRank < myRank_)
                 continue; // ignore processes with lower rank
 
-            // receive (local index on myRank, global index) pairs and
-            // update maps
+            // send (local index on myRank, global index) pairs to the
+            // peers
             BorderList::const_iterator borderIt = borderList_().begin();
             BorderList::const_iterator borderEndIt = borderList_().end();
             for (; borderIt != borderEndIt; ++borderIt) {

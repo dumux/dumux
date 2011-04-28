@@ -200,13 +200,13 @@ int main(int argc, char** argv)
         upperRight[0] = 6.0;
         upperRight[1] = 4.0;
 
+/*
         res[0] = 48;
         res[1] = 32;
-
-/*
-        res[0] = 12;
-        res[1] = 8;
 */
+
+        res[0] = 4;
+        res[1] = 6;
 
 /*
         res[0] = 2;
