@@ -1302,6 +1302,60 @@ private:
         delete[] buff;
 
     };
+
+    const Overlap *overlap_;
+};
+
+template <class BlockVector, class Overlap>
+class OverlapScalarProduct : public Dune::ScalarProduct<BlockVector>
+{
+public:
+    typedef typename BlockVector::field_type field_type;
+    typedef BlockVector domain_type;
+    
+    OverlapScalarProduct(const Overlap &overlap)
+        : overlap_(&overlap)
+    {};
+    
+    field_type dot(const BlockVector &x, const BlockVector &y)
+    { 
+        field_type localRes = 0;
+        int n = overlap_->numLocal();
+        for (int i = 0; i < n; ++i) {
+            localRes += x[i]*y[i];
+        };
+        
+        field_type globalRes = 0;
+#warning MPI_DOUBLE is only correct if field_type == double!
+        MPI_Allreduce(&localRes, // source buffer
+                      &globalRes, // destination buffer
+                      1, // number of objects in buffers
+                      MPI_DOUBLE, // data type
+                      MPI_SUM, // operation
+                      MPI_COMM_WORLD); // communicator
+        return globalRes;
+    };
+
+    field_type norm(const BlockVector &x)
+    { 
+        field_type localRes = 0;
+        int n = overlap_->numLocal();
+        for (int i = 0; i < n; ++i) {
+            localRes += x[i]*x[i];
+        };
+        
+        field_type globalRes = 0;
+#warning MPI_DOUBLE is only correct if field_type == double!
+        MPI_Allreduce(&localRes, // source buffer
+                      &globalRes, // destination buffer
+                      1, // number of objects in buffers
+                      MPI_DOUBLE, // data type
+                      MPI_SUM, // operation
+                      MPI_COMM_WORLD); // communicator
+        return std::sqrt(globalRes);
+    };
+
+private:
     const Overlap *overlap_;
 };
 
