@@ -26,6 +26,7 @@
  * \brief Calculates the phase state from the primary variables in the
  *        2p2c model.
  */
+#if 0
 #ifndef DUMUX_2P2C_PHASE_STATE_HH
 #define DUMUX_2P2C_PHASE_STATE_HH
 
@@ -366,4 +367,5 @@ public:
 
 } // end namepace
 
+#endif
 #endif

@@ -284,6 +284,7 @@ public:
             greenElems_ = gridView_().comm().sum(greenElems_);
             reassembleAccuracy_ = nextReassembleAccuracy_;
 
+            reassembleAccuracy_ = nextReassembleAccuracy_;
             problem_().newtonController().endIterMsg()
                 << ", reassembled "
                 << totalElems_ - greenElems_ << "/" << totalElems_
