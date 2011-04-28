@@ -95,7 +95,7 @@ public:
 //        materialLawParams_.setPe(10000);
 //
 //        // Brooks-Corey shape parameters
-//        materialLawParams_.setAlpha(2);
+//        materialLawParams_.setLambda(2);
 
         // parameters for the linear
         // entry pressures function
