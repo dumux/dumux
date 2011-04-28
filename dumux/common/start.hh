@@ -118,8 +118,8 @@ int startFromDGF(int argc, char **argv)
         GridPointer gridPtr(dgfFileName);
         if (mpiHelper.size() > 1) {
             if (!Dune::Capabilities::isParallel<Grid>::v) {
-                std::cerr << "WARNING: THE PROGRAM IS STARTED USING MPI, BUT THE GRID IMPLEMENTATION\n"
-                          << "         YOU HAVE CHOSEN IS NOT PARALLEL!\n";
+                std::cerr << "DUMUX WARNING: THE PROGRAM IS STARTED USING MPI, BUT THE GRID IMPLEMENTATION\n"
+                          << "               YOU HAVE CHOSEN IS NOT PARALLEL!\n";
             }
             gridPtr.loadBalance();
         }

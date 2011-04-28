@@ -31,6 +31,8 @@
 #include "pdelabboxlocaloperator.hh"
 #endif
 
+#include "overlapmatrix.hh"
+
 namespace Dumux {
 
 /*!
@@ -658,6 +660,21 @@ private:
             }
         }
         matrix_->endindices();
+        
+        std::cout << "begin create overlap\n";
+        typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> BlockType;
+        typedef typename Dumux::OverlapMatrix<BlockType> OverlapMatrix;
+        typedef typename Dumux::VertexSeedListFromGrid<GridView, VertexMapper> SeedListFromGrid;
+        typedef typename OverlapMatrix::SeedList SeedList;
+        
+        SeedListFromGrid seedListCreator(gridView_(), vertexMapper_());    
+        int overlapSize = 3;
+        OverlapMatrix overlapMatrix(*matrix_, seedListCreator.seedList(), overlapSize);
+        if (gridView_().comm().rank() == 0) {
+            std::cout << "initial seed list size: " << seedListCreator.seedList().size() << "\n";
+            overlapMatrix.printOverlap();
+        }
+        std::cout << "end create overlap\n";
     };
 #endif
 
