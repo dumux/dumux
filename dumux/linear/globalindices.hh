@@ -235,11 +235,11 @@ public:
     {
         int myRank = 0;
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-        std::cout << "(global index, domestic index, domestic->global->domestic) list for rank " << myRank << "\n";
+        std::cout << "(domestic index, global index, domestic->global->domestic) list for rank " << myRank << "\n";
 
         for (int domIdx = 0; domIdx < domesticToGlobal_.size(); ++ domIdx) {
-            std::cout << "(" << domesticToGlobal(domIdx) 
-                      << ", " << domIdx
+            std::cout << "(" <<  domIdx
+                      << ", " << domesticToGlobal(domIdx)
                       << ", " << globalToDomestic(domesticToGlobal(domIdx))
                       << ") ";
         };

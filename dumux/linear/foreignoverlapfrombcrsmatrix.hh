@@ -160,28 +160,62 @@ public:
     bool isRemoteIndexFor(ProcessRank peerRank, Index localIdx) const
     { 
         typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
-        const BorderDistMap &borderDist
-            = foreignOverlapByIndex_[localIdx];
+        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
         BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
+
         if (bdIt == borderDist.end())
             return false; // this index is not seen by the peer
-
+        
         BorderDistance bDist = bdIt->second;
-
         if (bDist == 0)
             // the index is on the border to the peer, so for the peer
             // it is a local index.
             return false;
 
-        if (isBorder(localIdx))
-            // if the index is not on the border with the specified
-            // peer but on a border to a different process, only the
-            // master process consideres the local index as a remote
-            // index for the peer
-            return iAmMasterOf(localIdx);
-        
         // at this point, the local index is in the interior of the
         // foreign overlap for the peer, so it is a remote index
+        return true;
+    };
+
+    /*!
+     * \brief Return true if a given local index is also a local index
+     *        for a peer.
+     */
+    bool isLocalIndexFor(ProcessRank peerRank, Index localIdx) const
+    { 
+        if (!isLocal(localIdx))
+            // our own remote indices do not count!
+            return false;
+
+        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
+        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
+        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
+        if (bdIt == borderDist.end())
+            return false; // this index is not seen by the peer
+
+        // the index is also local for the peer if it an index on the
+        // border.
+        BorderDistance bDist = bdIt->second;
+        return bDist == 0;
+    };
+
+    /*!
+     * \brief Return true if a given local index is a domestic index
+     *        for a peer.
+     */
+    bool isDomesticIndexFor(ProcessRank peerRank, Index localIdx) const
+    { 
+        if (!isLocal(localIdx))
+            // our own remote indices do not count!
+            return false;
+
+        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
+        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
+        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
+        if (bdIt == borderDist.end())
+            return false; // this index is not seen by the peer
+
+        // the index is seen by the peer
         return true;
     };
     
@@ -208,6 +242,12 @@ public:
      */
     int numLocal() const
     { return numLocal_; };
+
+    /*!
+     * \brief Returns true iff a domestic index is local
+     */
+    bool isLocal(int domesticIdx) const
+    { return domesticIdx < numLocal(); };
 
     /*!
      * \brief Return the number of process ranks for which a given

@@ -138,6 +138,18 @@ public:
     { return foreignOverlap_.isRemoteIndexFor(peerRank, localIdx); }
 
     /*!
+     * \brief Returns true iff a given local index is also a local index for a given peer
+     */
+    bool isLocalIndexFor(ProcessRank peerRank, Index domesticIdx) const
+    { return foreignOverlap_.isLocalIndexFor(peerRank, domesticIdx); }
+
+    /*!
+     * \brief Returns true iff a given local index is a domestic index for a given peer
+     */
+    bool isDomesticIndexFor(ProcessRank peerRank, Index domesticIdx) const
+    { return foreignOverlap_.isDomesticIndexFor(peerRank, domesticIdx); }
+
+    /*!
      * \brief Returns the number local indices
      */
     int numLocal() const
@@ -158,6 +170,17 @@ public:
      */
     bool isLocal(int domesticIdx) const
     { return domesticIdx < numLocal(); };
+
+    /*!
+     * \brief Return true iff the current process is the master of a
+     *        given domestic index.
+     */
+    bool iAmMasterOf(int domesticIdx) const
+    { 
+        if (!isLocal(domesticIdx))
+            return false;
+        return foreignOverlap_.iAmMasterOf(domesticIdx);
+    };
 
     /*!
      * \brief Print the foreign overlap for debugging purposes.
