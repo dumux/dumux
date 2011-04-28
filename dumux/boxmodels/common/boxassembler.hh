@@ -247,6 +247,11 @@ public:
                 << reassembleAccuracy_;
         }
 
+        // reset all vertex colors to green
+        for (int i = 0; i < vertexColor_.size(); ++i) {
+            vertexColor_[i] = Green;
+        }
+
         return;
     }
 
@@ -331,6 +336,18 @@ public:
         }
 
     }
+    
+    /*!
+     * \brief Force to reassemble a given vertex next time the
+     *        assemble() method is called.
+     *
+     * \param globalVertIdx The global index of the vertex which ought
+     *                      to be red.
+     */
+    void markVertexRed(int globalVertIdx)
+    {
+        vertexColor_[globalVertIdx] = Red;
+    }
 
     /*!
      * \brief Determine the colors of vertices and elements for partial
@@ -365,7 +382,6 @@ public:
         // linearization which actually will get achieved
         nextReassembleAccuracy_ = 0;
         for (int i = 0; i < vertexColor_.size(); ++i) {
-            vertexColor_[i] = Green;
             if (vertexDelta_[i] > relTol)
                 // mark vertex as red if discrepancy is larger than
                 // the relative tolerance

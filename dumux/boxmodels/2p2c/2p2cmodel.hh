@@ -571,8 +571,11 @@ public:
                 if (primaryVarSwitch_(curGlobalSol,
                                       volVars,
                                       globalIdx,
-                                      global))
+                                      global)) 
+                {
+                    this->jacobianAssembler().markVertexRed(globalIdx);
                     wasSwitched = true;
+                }
             }
         }
 
