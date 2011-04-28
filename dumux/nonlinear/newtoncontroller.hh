@@ -54,7 +54,9 @@
 #include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
 #include <dumux/linear/domesticoverlapfrombcrsmatrix.hh>
 #include <dumux/linear/globalindices.hh>
+
 #include <dumux/linear/overlappingbcrsmatrix.hh>
+#include <dumux/linear/overlappingblockvector.hh>
 
 namespace Dumux
 {
@@ -779,11 +781,16 @@ protected:
             borderListCreator(problem_().gridView(), problem_().vertexMapper());
 
         typedef Dumux::OverlappingBCRSMatrix<JacobianMatrix> OverlappingMatrix;
+        typedef typename OverlappingMatrix::Overlap Overlap;
+        typedef Dumux::OverlappingBlockVector<typename SolutionVector::block_type, Overlap> OverlappingVector;
 
         OverlappingMatrix overlapA(A, 
                                    borderListCreator.borderList(), 
                                    /*overlapSize=*/4);
         overlapA.print();
+
+        OverlappingVector overlapb(b, overlapA.overlap());
+        overlapb.print();
 
         /*
         typedef Dumux::OverlapBCRSMatrix<JacobianMatrix, GlobalIndices> OverlapMatrix;

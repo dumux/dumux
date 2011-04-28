@@ -24,8 +24,8 @@
  * \brief A BCRS matrix which creates an algebraic overlap of
  *        arbitrary size.
  */
-#ifndef DUMUX_OVERLAPPING_MATRIX_HH
-#define DUMUX_OVERLAPPING_MATRIX_HH
+#ifndef DUMUX_OVERLAPPING_BCRS_MATRIX_HH
+#define DUMUX_OVERLAPPING_BCRS_MATRIX_HH
 
 #include <dune/istl/scalarproducts.hh>
 
@@ -40,8 +40,11 @@ template <class BCRSMatrix>
 class OverlappingBCRSMatrix : public BCRSMatrix
 {
     typedef BCRSMatrix ParentType;
-    typedef Dumux::DomesticOverlapFromBCRSMatrix<BCRSMatrix> Overlap;
 
+public:
+    typedef Dumux::DomesticOverlapFromBCRSMatrix<BCRSMatrix> Overlap;
+    
+private:
     typedef typename Overlap::Index RowIndex;
     typedef typename Overlap::Index ColIndex;
     typedef typename Overlap::PeerSet PeerSet;
@@ -82,6 +85,12 @@ public:
           overlap_(M.overlap_)
     {
     };
+
+    /*!
+     * \brief Returns the domestic overlap for the process.
+     */
+    const Overlap &overlap() const
+    { return overlap_; }
 
     /*!
      * \brief Assign and syncronize the overlapping matrix from a

@@ -117,7 +117,13 @@ public:
         DUNE_THROW(Dune::NotImplemented,
                    "NewtonController::numProcesses()");
     };
-    
+
+    /*!
+     * \brief Returns the rank of the current process.
+     */
+    int myRank() const
+    { return myRank_; }
+
     /*!
      * \brief Return the set of process ranks which share an overlap
      *        with the current process.
