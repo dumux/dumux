@@ -251,10 +251,10 @@ public:
 
     /*!
      * \brief Return the number of process ranks for which a given
-     *        local index is in the overlap.
+     *        local index is visible.
      */
-    int numPeersForIndex(int localIdx) const
-    { return foreignOverlapByIndex_[localIdx].size(); };
+    int numSeenBy(int localIdx) const
+    { return 1 + foreignOverlapByIndex_[localIdx].size(); };
 
     /*!
      * \brief Print the foreign overlap for debugging purposes.

@@ -1,0 +1,75 @@
+// $Id$
+/*****************************************************************************
+ *   Copyright (C) 2011 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief A preconditioner for overlapping matrices and vectors
+ */
+#ifndef DUMUX_OVERLAPPING_PRECONDITIONER_HH
+#define DUMUX_OVERLAPPING_PRECONDITIONER_HH
+
+namespace Dumux {
+
+template <class SeqPreCond, class Overlap>
+class OverlappingPreconditioner : 
+    public Dune::Preconditioner<typename SeqPreCond::domain_type, 
+                                typename SeqPreCond::range_type>
+{
+public:
+    typedef typename SeqPreCond::domain_type domain_type;
+    typedef typename SeqPreCond::range_type range_type;
+    typedef typename SeqPreCond::field_type field_type;
+
+    enum { category = Dune::SolverCategory::overlapping };
+
+    OverlappingPreconditioner(SeqPreCond &seqPreCond, const Overlap &overlap)
+        : seqPreCond_(seqPreCond), overlap_(&overlap)
+    {
+    }
+
+    void pre(domain_type &x, range_type &y)
+    {
+        seqPreCond_.pre(x, y);
+        x.syncAverage();
+        y.syncAverage();
+    };
+
+    void apply(domain_type &x, const range_type &y)
+    {
+        seqPreCond_.apply(x, y);
+        
+        // communicate the results on the overlap
+        x.syncAverage();
+    };
+   
+    void post(domain_type &x)
+    {
+        seqPreCond_.post(x);
+    };
+
+private:
+    SeqPreCond seqPreCond_;
+    const Overlap *overlap_;
+};
+
+} // namespace Dumux
+
+#endif

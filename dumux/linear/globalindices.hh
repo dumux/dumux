@@ -183,49 +183,12 @@ public:
         int globalIdx = recvBuff[1];
         addIndex(domesticIdx, globalIdx);
     };
-    
-    /*!
-     * \brief Send a index which is on a remote process' overlap
-     */
-    void sendOverlapIndex(int peerRank, int localIdx)
-    {
-        int globalIdx = domesticToGlobal(localIdx);
-        
-        MPI_Send(&globalIdx, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD); // communicator
-    }
 
     /*!
-     * \brief Receive a new index on the overlap from a remote process
-     *        and add it the translation maps.
+     * \brief Return true iff a given global index already exists
      */
-    void receiveOverlapIndex(int peerRank)
-    {
-        int globalIdx;
-        // all other ranks retrieve their offset from the next
-        // lower rank
-        MPI_Recv(&globalIdx, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
-        
-        // make sure that we do not add the same global index twice
-        // (if this is not made sure of, the peers which share a
-        // border amongst each other but not with us will send the
-        // same index twice)
-        if (globalToDomestic_.find(globalIdx) == globalToDomestic_.end()) {
-            // add a new domestic index
-            int domesticIdx = numDomestic();
-            addIndex(domesticIdx, globalIdx);
-        }
-    };
+    bool hasGlobalIndex(int globalIdx) const
+    { return globalToDomestic_.find(globalIdx) != globalToDomestic_.end(); };
 
     /*!
      * \brief Prints the global indices of all domestic indices 

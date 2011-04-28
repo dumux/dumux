@@ -57,6 +57,7 @@
 
 #include <dumux/linear/overlappingbcrsmatrix.hh>
 #include <dumux/linear/overlappingblockvector.hh>
+#include <dumux/linear/overlappingpreconditioner.hh>
 
 namespace Dumux
 {
@@ -792,6 +793,24 @@ protected:
         OverlappingVector overlapb(b, overlapA.overlap());
         overlapb.print();
 
+#define PREC 3
+#if PREC == 1
+        // simple Jacobi preconditioner
+        typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+        SeqPreconditioner seqPreCond(overlapA, 1, 1.0);
+#elif PREC == 2
+        // SSOR preconditioner
+        typedef Dune::SeqSSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+        SeqPreconditioner seqPreCond(overlapA, 1, 1.0);
+#elif PREC == 3
+        // ILU preconditioner
+        typedef Dune::SeqILU0<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+        SeqPreconditioner seqPreCond(overlapA, 1.0);
+#endif
+
+        typedef Dumux::OverlappingPreconditioner<SeqPreconditioner, Overlap> OverlappingPreconditioner;
+        OverlappingPreconditioner preCond(seqPreCond, overlapA.overlap());
+
         /*
         typedef Dumux::OverlapBCRSMatrix<JacobianMatrix, GlobalIndices> OverlapMatrix;
         OverlapMatrix overlapA(A, globalIndices);
@@ -808,23 +827,6 @@ protected:
         updateOverlap_(A, x, b);
         //printmatrix(std::cout, *((JacobianMatrix *) overlapMatrix_), "M", "row");
 
-#define PREC 3
-#if PREC == 1
-        // simple Jacobi preconditioner
-        typedef Dune::SeqJac<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
-        SeqPreconditioner seqPreCond(*overlapMatrix_, 1, 1.0);
-#elif PREC == 2
-        // SSOR preconditioner
-        typedef Dune::SeqSSOR<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
-        SeqPreconditioner seqPreCond(*overlapMatrix_, 1, 1.0);
-#elif PREC == 3
-        // ILU preconditioner
-        typedef Dune::SeqILU0<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
-        SeqPreconditioner seqPreCond(*overlapMatrix_, 1.0);
-#endif
-
-        typedef Dumux::OverlapPreconditioner<SeqPreconditioner, OverlapMatrix, Overlap> OverlapPreconditioner;
-        OverlapPreconditioner preCond(seqPreCond, *overlap_);
         
         typedef Dumux::OverlapOperator<OverlapMatrix,OverlapVector,OverlapVector> LinearOperator;
         //typedef Dune::MatrixAdapter<OverlapMatrix,OverlapVector,OverlapVector> LinearOperator;

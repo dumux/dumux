@@ -124,6 +124,20 @@ public:
 
     };
 
+    /*!
+     * \brief Syncronize an overlapping block vector and take the
+     *        arthmetic mean of the entry values of all processes.
+     */
+    void syncAverage()
+    {
+        syncAdd();
+
+        int numDomestic = overlap_.numDomestic();
+        for (int i = 0; i < numDomestic; ++i) {
+            (*this)[i] /= overlap_.numSeenBy(i);
+        }
+    };
+
     void print() const 
     {
         for (int i = 0; i < this->size(); ++i) {

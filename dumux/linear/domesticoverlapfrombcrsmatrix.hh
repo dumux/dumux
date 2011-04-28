@@ -112,11 +112,8 @@ public:
      * \brief Returns the number of processes which "see" a given
      *        index.
      */
-    bool numProcesses(int domesticIdx) const
-    { 
-        DUNE_THROW(Dune::NotImplemented,
-                   "NewtonController::numProcesses()");
-    };
+    bool numSeenBy(int domesticIdx) const
+    { return numSeenBy_[domesticIdx]; };
 
     /*!
      * \brief Returns the rank of the current process.
@@ -215,6 +212,14 @@ public:
 protected:
     void buildDomesticOverlap_(const BCRSMatrix &A)
     {
+        // resize the array which stores the number of processes for
+        // each entry.
+        numSeenBy_.resize(numDomestic(), 0);
+        // for all local indices copy the number of processes from the
+        // foreign overlap
+        for (int i = 0; i < numLocal(); ++i)
+            numSeenBy_[i] = foreignOverlap_.numSeenBy(i);
+
         // send the overlap indices to the peer processes with
         // lower rank
         PeerSet::const_iterator peerIt = peerSet().begin();
@@ -285,7 +290,17 @@ protected:
             int localIdx = std::get<0>(*overlapIt);
             int borderDistance = std::get<1>(*overlapIt);
             if (borderDistance > 0) {
-                globalIndices_.sendOverlapIndex(peerRank, localIdx);
+                int sendBuff[2] = {
+                    globalIndices_.domesticToGlobal(localIdx),
+                    foreignOverlap_.numSeenBy(localIdx)
+                };
+
+                MPI_Ssend(sendBuff, // buff
+                          2, // count
+                          MPI_INT, // data type
+                          peerRank, 
+                          0, // tag
+                          MPI_COMM_WORLD); // communicator
             }
         };
     }
@@ -305,13 +320,31 @@ protected:
         
         // receive the additional indices themselfs
         for (int i = 0; i < numIndices; ++i) {
-            globalIndices_.receiveOverlapIndex(peerRank);
+            int recvBuff[2];
+            MPI_Recv(recvBuff, // buff
+                     2, // count
+                     MPI_INT, // data type
+                     peerRank, 
+                     0, // tag
+                     MPI_COMM_WORLD, // communicator
+                     MPI_STATUS_IGNORE);
+
+            int globalIdx = recvBuff[0];
+            int numSeenBy = recvBuff[1];
+            if (!globalIndices_.hasGlobalIndex(globalIdx)) {
+                // create and add a new domestic index
+                int domesticIdx = globalIndices_.numDomestic();
+                
+                globalIndices_.addIndex(domesticIdx, globalIdx);
+                numSeenBy_[i] = numSeenBy;
+            }
         }
     }
 
     int myRank_;
     ForeignOverlap foreignOverlap_;
     GlobalIndices globalIndices_;
+    std::vector<int> numSeenBy_;
 };
 
 } // namespace Dumux
