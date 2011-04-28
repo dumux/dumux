@@ -102,13 +102,13 @@ SET_PROP(LensProblem, SpatialParameters)
 SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, false);
 
 // Enable partial reassembly of the jacobian matrix?
-SET_BOOL_PROP(LensProblem, EnablePartialReassemble, false);
+SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
 
 // Enable reuse of jacobian matrices?
-SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
+SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, true);
 
 // Write the solutions of individual newton iterations?
-SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, true);
+SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, false);
 
 // the verbosity of the linear solver:
 //  - 0 means that it does not print anything

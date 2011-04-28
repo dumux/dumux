@@ -116,6 +116,7 @@ public:
                  0, // tag
                  MPI_COMM_WORLD,
                  &mpiStatus_);
+        assert(! mpiStatus_.MPI_ERROR);
 #endif // HAVE_MPI
     };
 

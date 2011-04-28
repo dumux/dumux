@@ -62,6 +62,7 @@ public:
     OverlappingBlockVector(const OverlappingBlockVector &obv)
         : ParentType(obv)
         , frontMaster_(obv.frontMaster_)
+        , numIndicesSendBuff_(obv.numIndicesSendBuff_)
         , indicesSendBuff_(obv.indicesSendBuff_)
         , indicesRecvBuff_(obv.indicesRecvBuff_)
         , valuesSendBuff_(obv.valuesSendBuff_)
@@ -243,6 +244,7 @@ private:
 
             const DomesticOverlapWithPeer &domesticOverlap = overlap_->domesticOverlapWithPeer(peerRank);
             int numEntries = domesticOverlap.size();
+            numIndicesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<int> >(new MpiBuffer<int>(1));
             indicesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
             valuesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
             
@@ -256,48 +258,34 @@ private:
             }
 
             // first, send the number of indices
-            MPI_Bsend(&numEntries, // buff
-                      1, // count
-                      MPI_INT, // data type
-                      peerRank, 
-                      0, // tag
-                      MPI_COMM_WORLD); // communicator
+            (*numIndicesSendBuff_[peerRank])[0] = numEntries;
+            numIndicesSendBuff_[peerRank]->send(peerRank);
+
             // then, send the indices themselfs
             indicesSendBuff.send(peerRank);
-
-            // change the indices of the send buffer to domestic ones
-            domIt = domesticOverlap.begin();
-            for (int i = 0; domIt != domEndIt; ++domIt, ++i) {
-                int rowIdx = *domIt;
-                indicesSendBuff[i] = rowIdx;
-            }
         }
 
         // receive the indices from the peers
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-
-            int numEntries;
-            // first, receive the number of indices
-            MPI_Recv(&numEntries, // buff
-                     1, // count
-                     MPI_INT, // data type
-                     peerRank, 
-                     0, // tag
-                     MPI_COMM_WORLD, // communicator
-                     MPI_STATUS_IGNORE);
+            
+            // receive size of overlap to peer
+            int numRows;
+            MpiBuffer<int> numRowsRecvBuff(1);
+            numRowsRecvBuff.receive(peerRank);
+            numRows = numRowsRecvBuff[0];
 
             // then, create the MPI buffers
-            indicesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
-            valuesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
+            indicesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numRows));
+            valuesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numRows));
             MpiBuffer<RowIndex> &indicesRecvBuff = *indicesRecvBuff_[peerRank];
 
             // next, receive the actual indices
             indicesRecvBuff.receive(peerRank);
 
             // finally, translate the global indices to domestic ones
-            for (int i = 0; i != numEntries; ++i) {
+            for (int i = 0; i != numRows; ++i) {
                 int globalRowIdx = indicesRecvBuff[i];
                 int domRowIdx = overlap_->globalToDomestic(globalRowIdx);
                 indicesRecvBuff[i] = domRowIdx;
@@ -314,7 +302,15 @@ private:
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
+            numIndicesSendBuff_[peerRank]->wait();
             indicesSendBuff_[peerRank]->wait();
+
+            // convert the global indices of the send buffer to
+            // domestic ones
+            MpiBuffer<RowIndex> &indicesSendBuff = *indicesSendBuff_[peerRank];
+            for (int i = 0; i < indicesSendBuff.size(); ++i) {
+                indicesSendBuff[i] = overlap_->globalToDomestic(indicesSendBuff[i]);
+            }
         }
 #endif // HAVE_MPI
     }
@@ -376,6 +372,7 @@ private:
 
     std::shared_ptr<std::vector<ProcessRank> > frontMaster_;
 
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > numIndicesSendBuff_;
     std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesSendBuff_;
     std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesRecvBuff_;
 

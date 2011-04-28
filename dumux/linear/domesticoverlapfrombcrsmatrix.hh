@@ -323,15 +323,12 @@ protected:
         // indices stemming from the overlap (i.e. without the border
         // indices)
         int numIndices = foreignOverlap.size();
-        MPI_Bsend(&numIndices, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD); // communicator
+        numIndicesSendBuff_[peerRank] = new MpiBuffer<int>(1);
+        (*numIndicesSendBuff_[peerRank])[0] = numIndices;
+        numIndicesSendBuff_[peerRank]->send(peerRank);
 
         // create MPI buffers
-        sendBuff_[peerRank] = new MpiBuffer<IndexDistanceNpeers>(numIndices);
+        indicesSendBuff_[peerRank] = new MpiBuffer<IndexDistanceNpeers>(numIndices);
         
         // then send the additional indices themselfs
         ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
@@ -345,10 +342,11 @@ protected:
 
             int numPeers = foreignIndexOverlap.size();
 
-            (*sendBuff_[peerRank])[i] =
+            (*indicesSendBuff_[peerRank])[i] =
                 IndexDistanceNpeers(globalIndices_.domesticToGlobal(localIdx),
                                     borderDistance,
                                     numPeers);
+
             peersSendBuff_[peerRank].push_back(new MpiBuffer<int>(numPeers));
 
             typename std::map<ProcessRank, BorderDistance>::const_iterator it = foreignIndexOverlap.begin();
@@ -358,7 +356,7 @@ protected:
         };
 
         // send all messages
-        sendBuff_[peerRank]->send(peerRank);
+        indicesSendBuff_[peerRank]->send(peerRank);
         overlapIt = foreignOverlap.begin();
         for (int i = 0; overlapIt != overlapEndIt; ++overlapIt, ++i) {
             peersSendBuff_[peerRank][i]->send(peerRank);
@@ -368,8 +366,11 @@ protected:
 
     void waitSendIndices_(int peerRank)
     {
-        sendBuff_[peerRank]->wait();
-        delete sendBuff_[peerRank];
+        numIndicesSendBuff_[peerRank]->wait();
+        delete numIndicesSendBuff_[peerRank];
+
+        indicesSendBuff_[peerRank]->wait();
+        delete indicesSendBuff_[peerRank];
 
         const ForeignOverlapWithPeer &foreignPeerOverlap
             = foreignOverlap_.foreignOverlapWithPeer(peerRank);
@@ -386,14 +387,10 @@ protected:
 #if HAVE_MPI
         // receive the number of additional indices
         int numIndices = -1;
-        MPI_Recv(&numIndices, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
-        
+        MpiBuffer<int> numIndicesRecvBuff(1);
+        numIndicesRecvBuff.receive(peerRank);
+        numIndices = numIndicesRecvBuff[0];
+
         // receive the additional indices themselfs
         MpiBuffer<IndexDistanceNpeers> recvBuff(numIndices);
         recvBuff.receive(peerRank);
@@ -410,7 +407,6 @@ protected:
                     // create and add a new domestic index
                     domesticIdx = globalIndices_.numDomestic();
                     globalIndices_.addIndex(domesticIdx, globalIdx);
-                    
                     int nDom = globalIndices_.numDomestic();
                     domesticOverlapByIndex_.resize(nDom);
                     borderDistance_.resize(nDom, std::numeric_limits<int>::max());
@@ -447,8 +443,9 @@ protected:
     DomesticOverlapByRank domesticOverlapWithPeer_;
     DomesticOverlapByIndex domesticOverlapByIndex_;
     std::vector<int> borderDistance_;
-
-    std::map<ProcessRank, MpiBuffer<IndexDistanceNpeers>* > sendBuff_;
+    
+    std::map<ProcessRank, MpiBuffer<int>* > numIndicesSendBuff_;
+    std::map<ProcessRank, MpiBuffer<IndexDistanceNpeers>* > indicesSendBuff_;
     std::map<ProcessRank, std::vector<MpiBuffer<int>*> > peersSendBuff_;
     GlobalIndices globalIndices_;
     PeerSet peerSet_;
