@@ -791,6 +791,9 @@ protected:
         overlapA.print();
 
         OverlappingVector overlapb(b, overlapA.overlap());
+        overlapb = overlapA.overlap().myRank() + 1;
+        overlapb.syncAverage();
+        std::cout << "overlapping b:\n";
         overlapb.print();
 
 #define PREC 3

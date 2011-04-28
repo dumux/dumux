@@ -40,6 +40,7 @@ class OverlappingBlockVector
 
     typedef typename Overlap::PeerSet PeerSet;
     typedef typename Overlap::ForeignOverlapWithPeer ForeignOverlapWithPeer;
+    typedef typename Overlap::DomesticOverlapWithPeer DomesticOverlapWithPeer;
 
 public:
     OverlappingBlockVector(const BlockVector &nbv, const Overlap &overlap)
@@ -124,6 +125,8 @@ public:
 
     };
 
+    using ParentType::operator=;
+
     /*!
      * \brief Syncronize an overlapping block vector and take the
      *        arthmetic mean of the entry values of all processes.
@@ -134,7 +137,7 @@ public:
 
         int numDomestic = overlap_.numDomestic();
         for (int i = 0; i < numDomestic; ++i) {
-            (*this)[i] /= overlap_.numSeenBy(i);
+            (*this)[i] /= overlap_.numPeers(i) + 1;
         }
     };
 
@@ -149,37 +152,45 @@ private:
     void sendEntries_(int peerRank)
     {
         // send the number of non-border entries in the matrix
-        const ForeignOverlapWithPeer &peerOverlap = overlap_.foreignOverlapWithPeer(peerRank);
+        const ForeignOverlapWithPeer &foreignOverlap = overlap_.foreignOverlapWithPeer(peerRank);
+        const DomesticOverlapWithPeer &domesticOverlap = overlap_.domesticOverlapWithPeer(peerRank);
 
         // send size of foreign overlap to peer
-        int numOverlapRows = peerOverlap.size();
-        MPI_Ssend(&numOverlapRows, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD); // communicator
+        int numOverlapRows = foreignOverlap.size() + domesticOverlap.size();
+        MPI_Bsend(&numOverlapRows, // buff
+                  1, // count
+                  MPI_INT, // data type
+                  peerRank, 
+                  0, // tag
+                  MPI_COMM_WORLD); // communicator
         
         int *indicesSendBuff = new int[numOverlapRows];
         FieldVector *valuesSendBuff = new FieldVector[numOverlapRows];
 
         int i = 0;
-        typename ForeignOverlapWithPeer::const_iterator it = peerOverlap.begin();
-        typename ForeignOverlapWithPeer::const_iterator endIt = peerOverlap.end();
-        for (; it != endIt; ++it, ++i) {
-            int rowIdx = std::get<0>(*it);
+        typename ForeignOverlapWithPeer::const_iterator forIt = foreignOverlap.begin();
+        typename ForeignOverlapWithPeer::const_iterator forEndIt = foreignOverlap.end();
+        for (; forIt != forEndIt; ++forIt, ++i) {
+            int rowIdx = std::get<0>(*forIt);
+            indicesSendBuff[i] = overlap_.domesticToGlobal(rowIdx);
+            valuesSendBuff[i] = (*this)[rowIdx];
+        }
+        typename DomesticOverlapWithPeer::const_iterator domIt = domesticOverlap.begin();
+        typename DomesticOverlapWithPeer::const_iterator domEndIt = domesticOverlap.end();
+        for (; domIt != domEndIt; ++domIt, ++i) {
+            int rowIdx = std::get<0>(*domIt);
             indicesSendBuff[i] = overlap_.domesticToGlobal(rowIdx);
             valuesSendBuff[i] = (*this)[rowIdx];
         }
 
-        MPI_Ssend(indicesSendBuff, // buff
+        MPI_Bsend(indicesSendBuff, // buff
                   numOverlapRows, // count
                   MPI_INT, // data type
                   peerRank, 
                   0, // tag
                   MPI_COMM_WORLD); // communicator
         
-        MPI_Ssend(valuesSendBuff, // buff
+        MPI_Bsend(valuesSendBuff, // buff
                   numOverlapRows * sizeof(FieldVector), // count
                   MPI_BYTE, // data type
                   peerRank,

@@ -273,7 +273,7 @@ private:
 
         // send size of foreign overlap to peer
         int numOverlapRows = peerOverlap.size();
-        MPI_Ssend(&numOverlapRows, // buff
+        MPI_Bsend(&numOverlapRows, // buff
                  1, // count
                  MPI_INT, // data type
                  peerRank, 
@@ -292,7 +292,7 @@ private:
             // send the (global row index, number of additional
             // entries) pair to the peer
             int sendBuff[2] = { overlap_->domesticToGlobal(rowIdx), numEntries };
-            MPI_Ssend(sendBuff, // buff
+            MPI_Bsend(sendBuff, // buff
                      2, // count
                      MPI_INT, // data type
                      peerRank, 
@@ -313,7 +313,7 @@ private:
                 }
             }
         
-            MPI_Ssend(sendBuff2, // buff
+            MPI_Bsend(sendBuff2, // buff
                       numEntries, // count
                       MPI_INT, // data type
                       peerRank, 
@@ -419,7 +419,7 @@ private:
 
         // send size of foreign overlap to peer
         int numOverlapRows = peerOverlap.size();
-        MPI_Ssend(&numOverlapRows, // buff
+        MPI_Bsend(&numOverlapRows, // buff
                  1, // count
                  MPI_INT, // data type
                  peerRank, 
@@ -438,7 +438,7 @@ private:
             // send the (global row index, number of entries) pair to
             // the peer
             int sendBuff[2] = { overlap_->domesticToGlobal(rowIdx), numEntries };
-            MPI_Ssend(sendBuff, // buff
+            MPI_Bsend(sendBuff, // buff
                      2, // count
                      MPI_INT, // data type
                      peerRank, 
@@ -461,14 +461,14 @@ private:
                 }
             }
 
-            MPI_Ssend(indicesSendBuff, // buff
+            MPI_Bsend(indicesSendBuff, // buff
                      numEntries, // count
                      MPI_INT, // data type
                      peerRank, 
                      0, // tag
                      MPI_COMM_WORLD); // communicator
 
-            MPI_Ssend(valuesSendBuff, // buff
+            MPI_Bsend(valuesSendBuff, // buff
                       numEntries * sizeof(MatrixBlock), // count
                       MPI_BYTE, // data type
                       peerRank,

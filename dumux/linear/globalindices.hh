@@ -156,12 +156,12 @@ public:
         sendBuff[0] = peerLocalIdx;
         sendBuff[1] = domesticToGlobal(domesticIdx);
 
-        MPI_Send(sendBuff, // buff
-                 2, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD); // communicator
+        MPI_Bsend(sendBuff, // buff
+                  2, // count
+                  MPI_INT, // data type
+                  peerRank, 
+                  0, // tag
+                  MPI_COMM_WORLD); // communicator
     };
 
     /*!

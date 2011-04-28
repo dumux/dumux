@@ -68,7 +68,7 @@ public:
 
     typedef std::set<ProcessRank> PeerSet;
     typedef std::list<IndexDistanceNpeers> ForeignOverlapWithPeer;
-    typedef std::map<ProcessRank,  ForeignOverlapWithPeer> ForeignOverlapByRank;
+    typedef std::map<ProcessRank, ForeignOverlapWithPeer> ForeignOverlapByRank;
     typedef std::vector<std::map<ProcessRank, BorderDistance> > ForeignOverlapByIndex;
 
     typedef std::tuple<LocalIndex, PeerIndex, ProcessRank> LocalindexPeerindexPeerrank;
@@ -114,14 +114,35 @@ public:
      * rank) triples for all indices on a process border.
      */
     const BorderList& borderList() const
-    { return borderList_; };
-     
+    { return borderList_; };   
 
     /*!
      * \brief Returns true iff a local index is a border index.
      */
     bool isBorder(int localIdx) const
     { return borderIndices_.count(localIdx) > 0; };
+
+    /*!
+     * \brief Returns true iff a local index is a border index with a given peer.
+     */
+    bool isBorderFor(int peerRank, int localIdx) const
+    { 
+        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
+        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
+        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
+
+        if (bdIt == borderDist.end())
+            return false; // this index is not seen by the peer
+        
+        BorderDistance bDist = bdIt->second;
+        if (bDist == 0)
+            // the index is on the border to the peer
+            return true;
+
+        // at this point, the local index is in the interior of the
+        // foreign overlap for the peer, so it is a remote index
+        return false;
+    };
 
     /*!
      * \brief Return true if the current rank is the "master" of an
@@ -250,11 +271,35 @@ public:
     { return domesticIdx < numLocal(); };
 
     /*!
-     * \brief Return the number of process ranks for which a given
-     *        local index is visible.
+     * \brief Return the number of peer ranks for which a given local
+     *        index is visible.
      */
-    int numSeenBy(int localIdx) const
-    { return 1 + foreignOverlapByIndex_[localIdx].size(); };
+    int numPeers(int localIdx) const
+    { return foreignOverlapByIndex_[localIdx].size(); };
+
+    /*!
+     * \brief Return the number of peer ranks which are not on the
+     *        border of a local index.
+     */
+    int numNonBorderPeers(int localIdx) const
+    { 
+        if (!isBorder(localIdx))
+            return numPeers(localIdx);
+        
+        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
+        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
+        
+        int numNBPeers = 0;
+        BorderDistMap::const_iterator bdIt = borderDist.begin();
+        BorderDistMap::const_iterator bdEndIt = borderDist.end();
+        for (; bdIt != bdEndIt; ++bdIt) {
+            int dist = bdIt->second;
+            if (dist > 0)
+                ++ numNBPeers;
+        };
+
+        return numNBPeers; 
+    };
 
     /*!
      * \brief Print the foreign overlap for debugging purposes.
