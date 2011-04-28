@@ -58,12 +58,16 @@ public:
 
     void apply(domain_type &x, const range_type &d)
     {
+        if (ENABLE_MPI && overlap_->peerSet().size() > 0) {
 #warning copying the defect probably not really necessary here
-        range_type dd(d);
-        dd.resetFront();
+            range_type dd(d);
+            dd.resetFront();
+            seqPreCond_.apply(x, dd);
+            x.syncAverage();
+        }
+        else 
+            seqPreCond_.apply(x, d);
 
-        seqPreCond_.apply(x, dd);
-        x.syncAverage();
     };
    
     void post(domain_type &x)

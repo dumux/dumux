@@ -29,6 +29,8 @@
 
 #include <dune/istl/bvector.hh>
 
+#include <dumux/parallel/mpibuffer.hh>
+
 namespace Dumux {
 
 template <class FieldVector, class Overlap>
@@ -47,11 +49,11 @@ class OverlappingBlockVector
     typedef typename ParentType::field_type Scalar;
 
 public:
-    OverlappingBlockVector(const BlockVector &nbv, const Overlap &overlap)
+    OverlappingBlockVector(const Overlap &overlap)
         : ParentType(overlap.numDomestic())
         , overlap_(&overlap)
     {
-        assignAdd(nbv);
+        createBuffers_();
     };
 
     /*!
@@ -59,23 +61,16 @@ public:
      */
     OverlappingBlockVector(const OverlappingBlockVector &obv)
         : ParentType(obv)
+        , indicesSendBuff_(obv.indicesSendBuff_)
+        , indicesRecvBuff_(obv.indicesRecvBuff_)
+        , valuesSendBuff_(obv.valuesSendBuff_)
+        , valuesRecvBuff_(obv.valuesRecvBuff_)
         , overlap_(obv.overlap_)
     {
     }
 
     ~OverlappingBlockVector()
     {
-        // delete buffer pointers
-        typename std::map<ProcessRank, RowIndex *>::const_iterator it = indicesSendBuff_.begin();
-        typename std::map<ProcessRank, RowIndex *>::const_iterator endIt = indicesSendBuff_.end();
-        
-        // send all entries to all peers
-        for (; it != endIt; ++it) {
-            int peerRank = it->first;
-
-            delete[] indicesSendBuff_[peerRank];
-            delete[] valuesSendBuff_[peerRank];
-        }
     }
     
     /*!
@@ -136,33 +131,6 @@ public:
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             receiveAddEntries_(peerRank);
-        }
-        
-        // wait until we have send everything
-        waitSendFinished_();
-    };
-
-    /*!
-     * \brief Syncronize an overlapping block vector by adding up the
-     *        border entries and copying the remaining remote indices.
-     */
-    void syncAddBorder()
-    {
-        typename PeerSet::const_iterator peerIt;
-        typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
-
-        // send all entries to all peers
-        peerIt = overlap_->peerSet().begin();
-        for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            sendEntries_(peerRank);
-        }
-
-        // recieve all entries to the peers
-        peerIt = overlap_->peerSet().begin();
-        for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            receiveAddBorderEntries_(peerRank);
         }
         
         // wait until we have send everything
@@ -257,75 +225,95 @@ public:
     };
 
 private:
-    void createSendBuffers_()
+    void createBuffers_()
     {
-        if (indicesSendBuff_.size() > 0)
-            // already created
-            return;
-
-        // create buffer pointers
         typename PeerSet::const_iterator peerIt;
         typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
         
-        // send all entries to all peers
+        // send all indices to the peers
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
 
-            int numEntries = overlap_->domesticOverlapWithPeer(peerRank).size();
-            indicesSendBuff_[peerRank] = new RowIndex[numEntries];
-            valuesSendBuff_[peerRank] = new FieldVector[numEntries];
+            const DomesticOverlapWithPeer &domesticOverlap = overlap_->domesticOverlapWithPeer(peerRank);
+            int numEntries = domesticOverlap.size();
+            indicesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
+            valuesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
+            
+            // fill the indices buffer with global indices
+            MpiBuffer<RowIndex> &indicesSendBuff = *indicesSendBuff_[peerRank];
+            typename DomesticOverlapWithPeer::const_iterator domIt = domesticOverlap.begin();
+            typename DomesticOverlapWithPeer::const_iterator domEndIt = domesticOverlap.end();
+            for (int i = 0; domIt != domEndIt; ++domIt, ++i) {
+                int rowIdx = *domIt;
+                indicesSendBuff[i] = overlap_->domesticToGlobal(rowIdx);
+            }
 
-            // create MPI_Request objects by just accessing them via
-            // the [] operator
-            indicesSendReq_[peerRank];
-            valuesSendReq_[peerRank];
+            // first, send the number of indices
+            MPI_Bsend(&numEntries, // buff
+                      1, // count
+                      MPI_INT, // data type
+                      peerRank, 
+                      0, // tag
+                      MPI_COMM_WORLD); // communicator
+            // then, send the indices themselfs
+            indicesSendBuff.send(peerRank);
+
+            // change the indices of the send buffer to domestic ones
+            domIt = domesticOverlap.begin();
+            for (int i = 0; domIt != domEndIt; ++domIt, ++i) {
+                int rowIdx = *domIt;
+                indicesSendBuff[i] = rowIdx;
+            }
+        }
+
+        // receive the indices from the peers
+        peerIt = overlap_->peerSet().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            int peerRank = *peerIt;
+
+            int numEntries;
+            // first, receive the number of indices
+            MPI_Recv(&numEntries, // buff
+                     1, // count
+                     MPI_INT, // data type
+                     peerRank, 
+                     0, // tag
+                     MPI_COMM_WORLD, // communicator
+                     MPI_STATUS_IGNORE);
+
+            // then, create the MPI buffers
+            indicesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
+            valuesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
+            MpiBuffer<RowIndex> &indicesRecvBuff = *indicesRecvBuff_[peerRank];
+
+            // next, receive the actual indices
+            indicesRecvBuff.receive(peerRank);
+
+            // finally, translate the global indices to domestic ones
+            for (int i = 0; i != numEntries; ++i) {
+                int globalRowIdx = indicesRecvBuff[i];
+                indicesRecvBuff[i] = overlap_->globalToDomestic(globalRowIdx);
+            }
+        }
+
+        // wait for all send operations to complete
+        peerIt = overlap_->peerSet().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            int peerRank = *peerIt;
+            indicesSendBuff_[peerRank]->wait();
         }
     }
 
     void sendEntries_(int peerRank)
     {
-        createSendBuffers_();
+        // copy the values into the send buffer
+        const MpiBuffer<RowIndex> &indices = *indicesSendBuff_[peerRank];
+        MpiBuffer<FieldVector> &values = *valuesSendBuff_[peerRank];
+        for (int i = 0; i < indices.size(); ++ i)
+            values[i] = (*this)[indices[i]];
 
-        // send the number of non-border entries in the matrix
-        const DomesticOverlapWithPeer &domesticOverlap = overlap_->domesticOverlapWithPeer(peerRank);
-
-        // send size of foreign overlap to peer
-        int numOverlapRows = domesticOverlap.size();
-        MPI_Bsend(&numOverlapRows, // buff
-                  1, // count
-                  MPI_INT, // data type
-                  peerRank, 
-                  0, // tag
-                  MPI_COMM_WORLD); // communicator
-        
-        int *indicesSendBuff = indicesSendBuff_[peerRank];
-        FieldVector *valuesSendBuff = valuesSendBuff_[peerRank];
-
-        int i = 0;
-        typename DomesticOverlapWithPeer::const_iterator domIt = domesticOverlap.begin();
-        typename DomesticOverlapWithPeer::const_iterator domEndIt = domesticOverlap.end();
-        for (; domIt != domEndIt; ++domIt, ++i) {
-            int rowIdx = *domIt;
-            indicesSendBuff[i] = overlap_->domesticToGlobal(rowIdx);
-            valuesSendBuff[i] = (*this)[rowIdx];
-        }
-
-        MPI_Isend(indicesSendBuff, // buff
-                  numOverlapRows, // count
-                  MPI_INT, // data type
-                  peerRank, 
-                  0, // tag
-                  MPI_COMM_WORLD, // communicator
-                  &indicesSendReq_[peerRank]);  // request
-        
-        MPI_Isend(valuesSendBuff, // buff
-                  numOverlapRows * sizeof(FieldVector), // count
-                  MPI_BYTE, // data type
-                  peerRank,
-                  0, // tag
-                  MPI_COMM_WORLD,// communicator
-                  &valuesSendReq_[peerRank]); // request
+        values.send(peerRank);
     }
 
     void waitSendFinished_()
@@ -337,136 +325,47 @@ private:
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            MPI_Wait(&indicesSendReq_[peerRank], MPI_STATUS_IGNORE);
-            MPI_Wait(&valuesSendReq_[peerRank], MPI_STATUS_IGNORE);
+            valuesSendBuff_[peerRank]->wait();
         }
     }
 
     void receiveAddEntries_(int peerRank)
     {
-        // receive size of foreign overlap to peer
-        int numOverlapRows;
-        MPI_Recv(&numOverlapRows, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
+        const MpiBuffer<RowIndex> &indices = *indicesRecvBuff_[peerRank];
+        MpiBuffer<FieldVector> &values = *valuesRecvBuff_[peerRank];
 
-        int *indicesRecvBuff = new int[numOverlapRows];
-        FieldVector *valuesRecvBuff = new FieldVector[numOverlapRows];
-        MPI_Recv(indicesRecvBuff, // buff
-                 numOverlapRows, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
+        // receive the values from the peer
+        values.receive(peerRank);
 
-        MPI_Recv(valuesRecvBuff, // buff
-                 numOverlapRows * sizeof(FieldVector), // count
-                 MPI_BYTE, // data type
-                 peerRank,
-                 0, // tag
-                 MPI_COMM_WORLD,// communicator
-                 MPI_STATUS_IGNORE); 
-        
-        for (int j = 0; j < numOverlapRows; ++j) {
-            int domRowIdx = overlap_->globalToDomestic(indicesRecvBuff[j]);
-            (*this)[domRowIdx] += valuesRecvBuff[j];
-        }
-
-        delete[] indicesRecvBuff;
-        delete[] valuesRecvBuff;
-    }
-
-    void receiveAddBorderEntries_(int peerRank)
-    {
-        // receive size of foreign overlap to peer
-        int numOverlapRows;
-        MPI_Recv(&numOverlapRows, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
-
-        int *indicesRecvBuff = new int[numOverlapRows];
-        FieldVector *valuesRecvBuff = new FieldVector[numOverlapRows];
-        MPI_Recv(indicesRecvBuff, // buff
-                 numOverlapRows, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
-
-        MPI_Recv(valuesRecvBuff, // buff
-                 numOverlapRows * sizeof(FieldVector), // count
-                 MPI_BYTE, // data type
-                 peerRank,
-                 0, // tag
-                 MPI_COMM_WORLD,// communicator
-                 MPI_STATUS_IGNORE); 
-        
-        for (int j = 0; j < numOverlapRows; ++j) {
-            int domRowIdx = overlap_->globalToDomestic(indicesRecvBuff[j]);
-            if (overlap_->isBorder(domRowIdx) || !overlap_->isLocal(domRowIdx))
-                (*this)[domRowIdx] += valuesRecvBuff[j];
-        }
-
-        delete[] indicesRecvBuff;
-        delete[] valuesRecvBuff;
+        // copy them into the block vector
+        for (int i = 0; i < indices.size(); ++ i)
+            (*this)[indices[i]] += values[i];
     }
 
     void receiveFrontFromMaster_(int peerRank)
     {
-        // receive size of foreign overlap to peer
-        int numOverlapRows;
-        MPI_Recv(&numOverlapRows, // buff
-                 1, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
+        const MpiBuffer<RowIndex> &indices = *indicesRecvBuff_[peerRank];
+        MpiBuffer<FieldVector> &values = *valuesRecvBuff_[peerRank];
 
-        int *indicesRecvBuff = new int[numOverlapRows];
-        FieldVector *valuesRecvBuff = new FieldVector[numOverlapRows];
-        MPI_Recv(indicesRecvBuff, // buff
-                 numOverlapRows, // count
-                 MPI_INT, // data type
-                 peerRank, 
-                 0, // tag
-                 MPI_COMM_WORLD, // communicator
-                 MPI_STATUS_IGNORE);
+        // receive the values from the peer
+        values.receive(peerRank);
 
-        MPI_Recv(valuesRecvBuff, // buff
-                 numOverlapRows * sizeof(FieldVector), // count
-                 MPI_BYTE, // data type
-                 peerRank,
-                 0, // tag
-                 MPI_COMM_WORLD,// communicator
-                 MPI_STATUS_IGNORE); 
-        
-        for (int j = 0; j < numOverlapRows; ++j) {
-            int domRowIdx = overlap_->globalToDomestic(indicesRecvBuff[j]);
+        // copy them into the block vector
+        for (int j = 0; j < indices.size(); ++j) {
+            int domRowIdx = indices[j];
             if (overlap_->isFront(domRowIdx) && 
                 overlap_->isMasterOf(peerRank, domRowIdx))
-                (*this)[domRowIdx] = valuesRecvBuff[j];
+            {
+                (*this)[domRowIdx] = values[j];
+            }
         }
-
-        delete[] indicesRecvBuff;
-        delete[] valuesRecvBuff;
     }
 
-    std::map<ProcessRank, RowIndex *> indicesSendBuff_;
-    std::map<ProcessRank, FieldVector *> valuesSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesRecvBuff_;
 
-    std::map<ProcessRank, MPI_Request> indicesSendReq_;
-    std::map<ProcessRank, MPI_Request> valuesSendReq_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<FieldVector> > > valuesSendBuff_;
+    std::map<ProcessRank, std::shared_ptr<MpiBuffer<FieldVector> > > valuesRecvBuff_;
 
     const Overlap *overlap_;
 };

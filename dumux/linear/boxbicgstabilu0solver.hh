@@ -69,30 +69,26 @@ public:
         : problem_(problem)
         , overlapSize_(overlapSize)
     {
+        overlapMatrix_ = 0;
+        overlapb_ = 0;
+        overlapx_ = 0;
     };
 
+    ~BoxBiCGStabILU0Solver()
+    { cleanup_(); }
+
     /*!
-     * \brief Prepare to solve a linear system of equations.
+     * \brief Set the structure of the linear system of equations to be solved.
      * 
      * This method allocates space an does the necessarry
      * communication before actually calling the solve() method.  As
      * long as the structure of the linear system does not change, the
      * solve method can be called arbitrarily often.
      */
-    void prepare(const Matrix &M, Vector &x, const Vector &b)
+    void setStructureMatrix(const Matrix &M)
     {
-        VertexBorderListFromGrid<GridView, VertexMapper>
-            borderListCreator(problem_.gridView(), problem_.vertexMapper());
-
-        // create the overlapping Jacobian matrix
-        overlapMatrix_ = new OverlappingMatrix (M,
-                                                borderListCreator.borderList(), 
-                                                overlapSize_);
-
-        // create the overlapping vectors for the residual and the
-        // solution
-        overlapb_ = new OverlappingVector(b, overlapMatrix_->overlap());
-        overlapx_ = new OverlappingVector(*overlapb_);
+        cleanup_();
+        prepare_();
     };
 
     /*!
@@ -106,6 +102,12 @@ public:
                double residReduction, 
                int verbosityLevel = 0)
     {
+        if (!overlapMatrix_) {
+            // make sure that the overlapping matrix and block vectors
+            // have been created
+            prepare_(M);
+        };
+
         // copy the values of the non-overlapping linear system of
         // equations to the overlapping one.
         overlapMatrix_->assignAdd(M);
@@ -125,7 +127,7 @@ public:
                       scalarProd,
                       preCond, 
                       residReduction,
-                      /*maxIterations=*/500,
+                      /*maxIterations=*/250,
                       verbosityLevel);
 
         // run the solver
@@ -139,18 +141,35 @@ public:
         return result.converged;
     };
 
-    /*!
-     * \brief Clean up after the last call of the solve() method
-     */
-    void cleanup()
+private:
+    void prepare_(const Matrix &M)
+    {
+        VertexBorderListFromGrid<GridView, VertexMapper>
+            borderListCreator(problem_.gridView(), problem_.vertexMapper());
+
+        // create the overlapping Jacobian matrix
+        overlapMatrix_ = new OverlappingMatrix (M,
+                                                borderListCreator.borderList(), 
+                                                overlapSize_);
+
+        // create the overlapping vectors for the residual and the
+        // solution
+        overlapb_ = new OverlappingVector(overlapMatrix_->overlap());
+        overlapx_ = new OverlappingVector(*overlapb_);
+    };
+
+    void cleanup_()
     {
         // create the overlapping Jacobian matrix and vectors
         delete overlapMatrix_;
         delete overlapb_;
         delete overlapx_;
+
+        overlapMatrix_ = 0;
+        overlapb_ = 0;
+        overlapx_ = 0;
     };
 
-private:
     const Problem &problem_;
 
     int overlapSize_;

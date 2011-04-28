@@ -267,7 +267,6 @@ public:
     {
         verbose_ = true;
         numSteps_ = 0;
-        linearSolverPrepared_ = false;
 
         this->setRelTolerance(1e-8);
         this->rampUpSteps_ = 0;
@@ -478,11 +477,6 @@ public:
         // magnitude in the defect should be sufficient...
         Scalar residReduction = 1e-6;
 
-        if (!linearSolverPrepared_) {
-            linearSolver_.prepare(A, x, b);
-            linearSolverPrepared_ = true;
-        }
-
         try {
             int verbosityLevel = 0;
             if (verbose()) {
@@ -597,11 +591,6 @@ public:
     void newtonEnd()
     {
         convergenceWriter_.endTimestep();
-
-        if (linearSolverPrepared_) {
-            linearSolver_.cleanup();
-            linearSolverPrepared_ = false;
-        }
     }
 
     /*!
@@ -787,7 +776,6 @@ protected:
 
     // the linear solver
     LinearSolver linearSolver_;
-    bool linearSolverPrepared_;
 };
 } // namespace Dumux
 
