@@ -69,6 +69,8 @@ public:
         // build the overlapping matrix from the non-overlapping
         // matrix and the overlap
         build_(M);
+    
+        sync(M);
     };
     
     OverlappingBCRSMatrix(const OverlappingBCRSMatrix &M)
@@ -76,6 +78,34 @@ public:
           overlap_(M.overlap_)
     {
     };
+
+    /*!
+     * \brief Assign and syncronize the overlapping matrix from a
+     *       non-overlapping one.
+     */
+    void assign(const BCRSMatrix &M)
+    {
+        // set everything to 0
+        ParentType::operator=(0);
+
+        // assign the local rows
+        for (int rowIdx = 0; rowIdx < M.N(); ++rowIdx) {
+            ConstColIterator colIt = M[rowIdx].begin();
+            ConstColIterator colEndIt = M[rowIdx].end();
+            ColIterator myColIt = (*this)[rowIdx].begin();
+            for (; colIt != colEndIt; ++colIt) {
+                while (myColIt.index() < colIt.index()) {
+                    ++ myColIt;
+                }
+                assert(myColIt.index() == colIt.index());
+                
+                (*myColIt) = *colIt;
+            }
+        };
+        
+        // communicate and add the contents of overlapping rows
+        sync_(M);
+    }
 
 private:
     void build_(const BCRSMatrix &M)
@@ -225,9 +255,8 @@ private:
         };
     }
 
-    void buildIndices_()
+    void buildIndices_(const BCRSMatrix &M)
     {
-/*
         // add the indices for the local entries
         // copy the rows for the local indices
         for (int rowIdx = 0; rowIdx < numLocal; ++rowIdx) {
@@ -238,45 +267,94 @@ private:
         }
 
         // add the indices for all additional entries
+
+        // first, send all indices to the peers with lower ranks
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             
-            typename PeerRows::const_iterator rowIt = overlapEntries_[peerRank].begin();
-            typename PeerRows::const_iterator rowEndIt = overlapEntries_[peerRank].end();
-            for (; rowIt != rowEndIt; ++ rowIt) {
-                int rowIdx = rowIt->first;
-                int domesticRowIdx = overlap_->foreignToDomesticIndex(peerRank, rowIdx);
-               
-                if (overlap_->isFront(peerRank, rowIdx)) {
-                    assert(!overlap_->isLocal(domesticRowIdx));
-                    this->addindex(domesticRowIdx, domesticRowIdx);
-                    continue;
-                }                        
+            if (peerRank > myRank())
+                continue; // ignore higher ranks
+            
+            sendRowIndices_(peerRank);
+        }
 
-                typename PeerColumns::const_iterator colIt = rowIt->second.begin();
-                typename PeerColumns::const_iterator colEndIt = rowIt->second.end();
-                for (; colIt != colEndIt; ++colIt) {
-                    int colIdx = *colIt;
-                    int domesticColIdx = overlap_->foreignToDomesticIndex(peerRank, colIdx);
-                    
-                    // only add new entry if row and column are not a
-                    // border index!
-                    if (overlap_->isLocal(domesticRowIdx) &&
-                        overlap_->isLocal(domesticColIdx))
-                    {
-                        continue;
-                    }
+        // then recieve the indices from the peers with higher ranks
+        peerIt = overlap_->peerSet().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            int peerRank = *peerIt;
+            
+            if (peerRank < myRank())
+                continue; // ignore lower ranks
+            
+            receiveRowIndices_(peerRank);
+        }
 
-                    this->addindex(domesticRowIdx, domesticColIdx);
-                }
-            }
+        // then send all indices to the peers with higher ranks
+        peerIt = overlap_->peerSet().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            int peerRank = *peerIt;
+            
+            if (peerRank < myRank())
+                continue; // ignore lower ranks
+            
+            sendRowIndices_(peerRank);
+        }
+
+        // then receive all indices from peers with lower ranks
+        peerIt = overlap_->peerSet().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            int peerRank = *peerIt;
+            
+            if (peerRank > myRank())
+                continue; // ignore higher ranks
+            
+            receiveRowIndices_(peerRank);
         }
 
         this->endindices();
+    }
 
-*/
+    // send the overlap indices to a peer
+    void sendRowIndices_(int peerRank)
+    {
+        typename PeerRows::const_iterator rowIt = overlapEntries_[peerRank].begin();
+        typename PeerRows::const_iterator rowEndIt = overlapEntries_[peerRank].end();
+        for (; rowIt != rowEndIt; ++ rowIt) {
+            int rowIdx = rowIt->first;
+            int domesticRowIdx = overlap_->foreignToDomesticIndex(peerRank, rowIdx);
+            
+            if (overlap_->isFront(peerRank, rowIdx)) {
+                assert(!overlap_->isLocal(domesticRowIdx));
+                this->addindex(domesticRowIdx, domesticRowIdx);
+                continue;
+            }                        
+            
+            typename PeerColumns::const_iterator colIt = rowIt->second.begin();
+            typename PeerColumns::const_iterator colEndIt = rowIt->second.end();
+            for (; colIt != colEndIt; ++colIt) {
+                int colIdx = *colIt;
+                int domesticColIdx = overlap_->foreignToDomesticIndex(peerRank, colIdx);
+                
+                // only add new entry if row and column are not a
+                // border index!
+                if (overlap_->isLocal(domesticRowIdx) &&
+                    overlap_->isLocal(domesticColIdx))
+                {
+                    continue;
+                }
+                
+                this->addindex(domesticRowIdx, domesticColIdx);
+            }
+        }
+    }
+    
     };
+
+    // communicates and adds up the contents of overlapping rows
+    void sync_()
+    {
+    }
 
 /*
     // retrieve the number of additional entries for each row in the

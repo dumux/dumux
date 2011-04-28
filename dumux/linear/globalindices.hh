@@ -22,7 +22,7 @@
  * \file
  *
  * \brief This class maps domestic row indices to and from "global"
- *        indices which can is used to construct an algebraic overlap
+ *        indices which is used to construct an algebraic overlap
  *        for the parallel linear solvers.
  */
 #ifndef DUMUX_GLOBAL_INDICES_HH
@@ -43,7 +43,7 @@ namespace Dumux {
 
 /*!
  * \brief This class maps domestic row indices to and from "global"
- *        indices which can is used to construct an algebraic overlap
+ *        indices which is used to construct an algebraic overlap
  *        for the parallel linear solvers.
  */
 template <class ForeignOverlap>
