@@ -68,22 +68,6 @@ SET_PROP(LensProblem, Grid)
 #endif
 };
 
-#if HAVE_DUNE_PDELAB
-SET_PROP(LensProblem, LocalFEMSpace)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
-
-public:
-#if CUBES
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
-#else
-    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
-#endif
-};
-#endif
-
 // Set the problem property
 SET_PROP(LensProblem, Problem)
 {
@@ -125,7 +109,12 @@ SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
 
 // Write the solutions of individual newton iterations?
 SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, true);
-SET_INT_PROP(LensProblem, NewtonLinearSolverVerbosity, 1);
+
+// the verbosity of the linear solver:
+//  - 0 means that it does not print anything
+//  - 1 means that it prints a summary after it finished
+//  - 2 means that it prints a summary for every iteration
+SET_INT_PROP(LensProblem, NewtonLinearSolverVerbosity, 0);
 
 // Use forward differences instead of central differences
 SET_INT_PROP(LensProblem, NumericDifferenceMethod, +1);

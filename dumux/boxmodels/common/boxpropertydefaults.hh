@@ -38,12 +38,6 @@
 #include "boxelementvolumevariables.hh"
 #include "boxvolumevariables.hh"
 
-#if HAVE_DUNE_PDELAB
-#include <dune/pdelab/finiteelementmap/p1fem.hh>
-#include <dune/pdelab/finiteelementmap/q1fem.hh>
-#include <dune/pdelab/backend/istlmatrixbackend.hh>
-#endif // HAVE_DUNE_PDELAB
-
 #include <dumux/common/boundarytypes.hh>
 #include <dumux/common/timemanager.hh>
 
@@ -133,15 +127,6 @@ SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
 /*!
  * \brief The type of a solution for the whole grid at a fixed time.
  */
-#if HAVE_DUNE_PDELAB
-SET_PROP(BoxModel, SolutionVector)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
-public:
-    typedef typename GridFunctionSpace::template VectorContainer<Scalar>::Type type;
-};
-#else
 SET_PROP(BoxModel, SolutionVector)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -149,7 +134,6 @@ SET_PROP(BoxModel, SolutionVector)
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, numEq> > type;
 };
-#endif
 
 /*!
  * \brief The type of a solution for a whole element.
@@ -207,8 +191,6 @@ SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
 // disable time-step ramp up by default
 SET_BOOL_PROP(BoxModel, EnableTimeStepRampUp, false);
 
-#if ! HAVE_DUNE_PDELAB
-
 //! Set the type of a global jacobian matrix from the solution types
 SET_PROP(BoxModel, JacobianMatrix)
 {
@@ -222,83 +204,6 @@ public:
 
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
 SET_TYPE_PROP(BoxModel, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
-
-#endif
-
-
-#if HAVE_DUNE_PDELAB
-//! Extract the type of a global jacobian matrix from the solution types
-SET_PROP(BoxModel, JacobianMatrix)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
-public:
-    typedef typename GridOperatorSpace::template MatrixContainer<Scalar>::Type type;
-};
-
-//! use the local FEM space associated with cubes by default
-SET_PROP(BoxModel, LocalFEMSpace)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
-
-public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim>  type;
-};
-
-SET_PROP(BoxModel, GridFunctionSpace)
-{private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
-public:
-    //typedef MyBoxConstraints Constraints;
-    typedef Dune::PDELab::NoConstraints Constraints;
-
-    typedef Dune::PDELab::GridFunctionSpace<GridView, FEM, Constraints, Dumux::PDELab::BoxISTLVectorBackend<TypeTag> >
-        ScalarGridFunctionSpace;
-
-    typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq, Dune::PDELab::GridFunctionSpaceBlockwiseMapper>
-        type;
-
-    typedef typename type::template ConstraintsContainer<Scalar>::Type
-        ConstraintsTrafo;
-};
-
-SET_PROP(BoxModel, ConstraintsTrafo)
-{ typedef typename GET_PROP(TypeTag, PTAG(GridFunctionSpace))::ConstraintsTrafo type; };
-SET_PROP(BoxModel, Constraints)
-{ typedef typename GET_PROP(TypeTag, PTAG(GridFunctionSpace))::Constraints type; };
-SET_PROP(BoxModel, ScalarGridFunctionSpace)
-{ typedef typename GET_PROP(TypeTag, PTAG(GridFunctionSpace))::ScalarGridFunctionSpace type; };
-
-SET_PROP(BoxModel, GridOperatorSpace)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
-    enum{numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
-
-public:
-    typedef Dumux::PDELab::BoxLocalOperator<TypeTag> LocalOperator;
-
-    typedef Dune::PDELab::GridOperatorSpace<GridFunctionSpace,
-        GridFunctionSpace,
-        LocalOperator,
-        ConstraintsTrafo,
-        ConstraintsTrafo,
-        Dune::PDELab::ISTLBCRSMatrixBackend<numEq, numEq>,
-        true
-        > type;
-};
-
-
-SET_PROP(BoxModel, LocalOperator)
-{ typedef typename GET_PROP(TypeTag, PTAG(GridOperatorSpace))::LocalOperator type; };
-
-#endif // HAVE_DUNE_PDELAB
 
 } // namespace Properties
 } // namespace Dumux

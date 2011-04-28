@@ -27,10 +27,6 @@
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
 
-#if HAVE_DUNE_PDELAB
-#include "pdelabboxlocaloperator.hh"
-#endif
-
 //#include "overlapmatrix.hh"
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
@@ -53,16 +49,6 @@ class BoxAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
-#if HAVE_DUNE_PDELAB
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalFEMSpace)) FEM;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Constraints)) Constraints;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ScalarGridFunctionSpace)) ScalarGridFunctionSpace;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridFunctionSpace)) GridFunctionSpace;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConstraintsTrafo)) ConstraintsTrafo;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalOperator)) LocalOperator;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridOperatorSpace)) GridOperatorSpace;
-#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
@@ -131,16 +117,6 @@ public:
 
     BoxAssembler()
     {
-#if HAVE_DUNE_PDELAB
-        fem_ = 0;
-        cn_ = 0;
-        scalarGridFunctionSpace_ = 0;
-        gridFunctionSpace_ = 0;
-        constraintsTrafo_ = 0;
-        localOperator_ = 0;
-        gridOperatorSpace_ = 0;
-#endif // HAVE_DUNE_PDELAB
-
         problemPtr_ = 0;
         matrix_ = 0;
 
@@ -153,16 +129,6 @@ public:
     ~BoxAssembler()
     {
         delete matrix_;
-
-#if HAVE_DUNE_PDELAB
-        delete gridOperatorSpace_;
-        delete localOperator_;
-        delete constraintsTrafo_;
-        delete gridFunctionSpace_;
-        delete scalarGridFunctionSpace_;
-        delete cn_;
-        delete fem_;
-#endif
     }
 
     /*!
@@ -178,29 +144,8 @@ public:
     {
         problemPtr_ = &problem;
 
-#if !HAVE_DUNE_PDELAB
         // initialize the BCRS matrix
         createMatrix_();
-#else
-        fem_ = new FEM();
-        //cn_ = new Constraints(*problemPtr_);
-        cn_ = new Constraints();
-        scalarGridFunctionSpace_ = new ScalarGridFunctionSpace(problemPtr_->gridView(), *fem_, *cn_);
-        gridFunctionSpace_ = new GridFunctionSpace(*scalarGridFunctionSpace_);
-        //cn_->compute_ghosts(*gridFunctionSpace_);
-
-        //typedef BoundaryIndexHelper<TypeTag> BoundaryFunction;
-        //BoundaryFunction *bTypes = new BoundaryFunction();
-        constraintsTrafo_ = new ConstraintsTrafo();
-        //Dune::PDELab::constraints(*bTypes, *gridFunctionSpace_, *constraintsTrafo_, false);
-
-        // initialize the grid operator spaces
-        localOperator_ = new LocalOperator(problemPtr_->model());
-        gridOperatorSpace_ =
-            new GridOperatorSpace(*gridFunctionSpace_, *constraintsTrafo_,
-                                  *gridFunctionSpace_, *constraintsTrafo_, *localOperator_);
-        matrix_ = new Matrix(*gridOperatorSpace_);
-#endif
 
         // initialize the jacobian matrix and the right hand side
         // vector
@@ -600,25 +545,6 @@ public:
         return elementColor_[globalElementIdx];
     }
 
-#if HAVE_DUNE_PDELAB
-    /*!
-     * \brief Returns a pointer to the PDELab's grid function space.
-     */
-    const GridFunctionSpace& gridFunctionSpace() const
-    {
-        return *gridFunctionSpace_;
-    }
-
-    /*!
-     * \brief Returns a pointer to the PDELab's constraints
-     *        transformation.
-     */
-    const ConstraintsTrafo& constraintsTrafo() const
-    {
-        return *constraintsTrafo_;
-    }
-#endif // HAVE_DUNE_PDELAB
-
     /*!
      * \brief Return constant reference to global Jacobian matrix.
      */
@@ -633,7 +559,6 @@ public:
 
 
 private:
-#if !HAVE_DUNE_PDELAB
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
@@ -698,40 +623,7 @@ private:
             }
         }
         matrix_->endindices();
-
-#if 0        
-        typedef typename Dumux::OverlapFromBCRSMatrix<Matrix> OverlapFromBCRSMatrix;
-        typedef typename Dumux::VertexBorderListFromGrid<GridView, VertexMapper> BorderListFromGrid;
-        typedef typename OverlapFromBCRSMatrix::BorderList BorderList;
-        
-        BorderListFromGrid borderListCreator(gridView_(), vertexMapper_());
-        int overlapSize = 1;
-        OverlapFromBCRSMatrix overlap(*matrix_, 
-                                      borderListCreator.borderList(),
-                                      overlapSize);
-        
-        /*
-        if (gridView_().comm().rank() == 0) {
-            std::cout << "initial border list size: " << borderListCreator.borderList().size() << "\n";
-            overlap.printOverlap();
-        }
-        */
-        
-/*
-        typedef OverlapFromBCRSMatrix Overlap;
-        typedef OverlapBCRSMatrix<Matrix, Overlap> OverlapMatrix;
-        OverlapMatrix overlapMatrix(*matrix_, overlap);
-        overlapMatrix.assignFromNonOverlapping(*matrix_);
-
-        typedef Dune::BlockVector<PrimaryVariables> BlockVector;
-        typedef Dumux::OverlapBlockVector<BlockVector, Overlap> OverlapBlockVector;
-        BlockVector bv(matrix_->N());
-        bv = gridView_().comm().rank();
-        OverlapBlockVector overlapVector(bv, overlap);
-*/
-#endif
     };
-#endif
 
     // reset the global linear system of equations. if partial
     // reassemble is enabled, this means that the jacobian matrix must
@@ -889,17 +781,6 @@ private:
     
     Scalar nextReassembleAccuracy_;
     Scalar reassembleAccuracy_;
-    
-#if HAVE_DUNE_PDELAB
-    // PDELab stuff
-    Constraints *cn_;
-    FEM *fem_;
-    ScalarGridFunctionSpace *scalarGridFunctionSpace_;
-    GridFunctionSpace *gridFunctionSpace_;
-    ConstraintsTrafo *constraintsTrafo_;
-    LocalOperator *localOperator_;
-    GridOperatorSpace *gridOperatorSpace_;
-#endif
 };
 
 } // namespace Dumux

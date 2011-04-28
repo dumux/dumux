@@ -26,6 +26,9 @@
 #ifndef DUMUX_OVERLAPPING_BCRS_MATRIX_HH
 #define DUMUX_OVERLAPPING_BCRS_MATRIX_HH
 
+#include <dumux/linear/domesticoverlapfrombcrsmatrix.hh>
+#include <dumux/linear/globalindices.hh>
+
 #include <dune/istl/scalarproducts.hh>
 
 #include <algorithm>

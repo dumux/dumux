@@ -67,19 +67,6 @@ SET_PROP(OnePTestProblem, Grid)
     typedef Dune::YaspGrid<2> type;
 };
 
-#if HAVE_DUNE_PDELAB
-SET_PROP(OnePTestProblem, LocalFEMSpace)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
-
-public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
-//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
-};
-#endif // HAVE_DUNE_PDELAB
-
 SET_INT_PROP(OnePTestProblem, NewtonLinearSolverVerbosity, 0);
 
 // Set the problem property

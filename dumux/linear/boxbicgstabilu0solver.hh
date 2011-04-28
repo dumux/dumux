@@ -27,15 +27,14 @@
 #define DUMUX_BICGSTAB_ILU0_SOLVER_HH
 
 #include <dumux/linear/vertexborderlistfromgrid.hh>
-#include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
-#include <dumux/linear/domesticoverlapfrombcrsmatrix.hh>
-#include <dumux/linear/globalindices.hh>
-
 #include <dumux/linear/overlappingbcrsmatrix.hh>
 #include <dumux/linear/overlappingblockvector.hh>
 #include <dumux/linear/overlappingpreconditioner.hh>
 #include <dumux/linear/overlappingscalarproduct.hh>
 #include <dumux/linear/overlappingoperator.hh>
+
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
 
 namespace Dumux {
 

@@ -36,20 +36,6 @@
 
 #include <dumux/io/vtkmultiwriter.hh>
 
-#if HAVE_DUNE_PDELAB
-
-#include <dumux/common/pdelabpreconditioner.hh>
-
-#else // ! HAVE_DUNE_PDELAB
-#include <dune/istl/overlappingschwarz.hh>
-#include <dune/istl/schwarz.hh>
-#include <dune/istl/preconditioners.hh>
-#include <dune/istl/solvers.hh>
-#include <dune/istl/owneroverlapcopy.hh>
-#include <dune/istl/io.hh>
-
-#endif // HAVE_DUNE_PDELAB
-
 #include <dumux/linear/boxbicgstabilu0solver.hh>
 
 namespace Dumux

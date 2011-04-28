@@ -61,20 +61,6 @@ SET_PROP(TissueTumorProblem, Grid)
 #endif
 };
 
-#if HAVE_DUNE_PDELAB
-SET_PROP(TissueTumorProblem, LocalFEMSpace)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    enum{dim = GridView::dimension};
-
-public:
-    typedef Dune::PDELab::Q1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for cubes
-//    typedef Dune::PDELab::P1LocalFiniteElementMap<Scalar,Scalar,dim> type; // for simplices
-};
-#endif // HAVE_DUNE_PDELAB
-
-
 // Set the problem property
 SET_PROP(TissueTumorProblem, Problem)
 {
