@@ -200,8 +200,10 @@ int main(int argc, char** argv)
         upperRight[0] = 6.0;
         upperRight[1] = 4.0;
 
+        /*
         res[0] = 48*4;
         res[1] = 32*4;
+        */
         
         /*
         res[0] = 48;
@@ -212,11 +214,10 @@ int main(int argc, char** argv)
         res[0] = 24;
         res[1] = 16;
         */
-        /*
+        
         res[0] = 6;
         res[1] = 4;
-        */
-        
+                
         /*
         res[0] = 1;
         res[1] = 2;

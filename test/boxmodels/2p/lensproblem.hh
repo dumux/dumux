@@ -61,7 +61,7 @@ NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP));
 // Set the grid type
 SET_PROP(LensProblem, Grid)
 {
-#if 0 // HAVE_UG
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::YaspGrid<2> type;
