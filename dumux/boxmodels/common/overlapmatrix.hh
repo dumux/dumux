@@ -183,6 +183,10 @@ public:
 
         //  fill the (peerRank, peerIndex) -> domestic index map
         buildForeignToDomesticMap_();
+
+        // fills the array which stores the number of peers for each
+        // domestic index.
+        buildNumOverlapPeers_();
     }
 
     int numLocal() const
@@ -1217,7 +1221,10 @@ public:
     // copy constructor
     OverlapBlockVector(const ThisType &v)
         : ParentType(v), overlap_(v.overlap_)
-    { };
+    { 
+        for (int i = 0; i < this->size(); ++i)
+            assert( (*this)[i] == v[i]);
+    };
 
     void set(const BlockVector &v)
     {
@@ -1372,13 +1379,11 @@ public:
 private:
     field_type *createValuesMsg_(int &msgSize, int peerRank)
     {
-        msgSize = 0;
-
         const ForeignOverlapWithPeer &olist = overlap_->foreignOverlapWithPeer(peerRank);
         int overlapSize = olist.size();
 
         // calculate message size
-        msgSize *= block_type::size * overlapSize;
+        msgSize = block_type::size * overlapSize;
 
         // allocate message buffer
         field_type *buff = new field_type[msgSize];

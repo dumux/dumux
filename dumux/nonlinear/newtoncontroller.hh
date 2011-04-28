@@ -770,47 +770,54 @@ protected:
         
         updateOverlap_(A, x, b);
 
+        /*
+        typedef Dune::SeqILU0<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
+        SeqPreconditioner preCond(*overlapMatrix_, 1.0);
+        */
+
         typedef Dune::SeqILU0<OverlapMatrix, OverlapVector, OverlapVector> SeqPreconditioner;
         SeqPreconditioner seqPreCond(*overlapMatrix_, 1.0);
-
         typedef Dumux::OverlapPreconditioner<SeqPreconditioner, OverlapMatrix, Overlap> OverlapPreconditioner;
-        OverlapPreconditioner overlapPreCond(seqPreCond, *overlap_);
-
+        OverlapPreconditioner preCond(seqPreCond, *overlap_);
+        
         typedef Dune::MatrixAdapter<OverlapMatrix,OverlapVector,OverlapVector> MatrixAdapter;
         MatrixAdapter opA(*overlapMatrix_);
 
         typedef Dumux::OverlapScalarProduct<OverlapVector, Overlap> OverlapScalarProduct;
-        OverlapScalarProduct overlapScalarProd(*overlap_);
+        OverlapScalarProduct scalarProd(*overlap_);
 
         typedef Dune::BiCGSTABSolver<OverlapVector> Solver;
         Solver solver(opA, 
-                      overlapScalarProd,
-                      overlapPreCond, 
+                      scalarProd,
+                      preCond, 
                       residReduction,
                       500,
                       verbosity);
-//        typedef Dune::RestartedGMResSolver<Vector> Solver;
-//        Solver solver(operatorA, precond, residReduction, 50, 500, verbosity);
+
+//        typedef Dune::RestartedGMResSolver<OverlapVector> Solver;
+//        Solver solver(opA, precond, residReduction, 50, 500, verbosity);
 
        Dune::InverseOperatorResult result;
        solver.apply(*overlapX_, *overlapB_, result);
+       //OverlapVector bTmp(b);
+       //solver.apply(x, bTmp, result);
 
        if (!result.converged)
                DUNE_THROW(Dumux::NumericalProblem,
                                "Solving the linear system of equations did not converge.");
 
-        // make sure the solver didn't produce a nan or an inf
-        // somewhere. this should never happen but for some strange
-        // reason it happens anyway.
-        Scalar xNorm2 = overlapX_->two_norm2();
-        if (gridView_().comm().size() > 1)
-        	gridView_().comm().sum(xNorm2);
-        if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
-            DUNE_THROW(Dumux::NumericalProblem,
-                       "The linear solver produced a NaN or inf somewhere.");
-
-        // copy the result back to the non-overlapping vector
-        overlapX_->assignToNonOverlapping(x);
+       // make sure the solver didn't produce a nan or an inf
+       // somewhere. this should never happen but for some strange
+       // reason it happens anyway.
+       
+       Scalar xNorm2 = x.two_norm2();
+       gridView_().comm().sum(xNorm2);
+       if (std::isnan(xNorm2) || !std::isfinite(xNorm2))
+           DUNE_THROW(Dumux::NumericalProblem,
+                      "The linear solver produced a NaN or inf somewhere.");
+       
+       // copy the result back to the non-overlapping vector
+       overlapX_->assignToNonOverlapping(x);
     }
 
     void updateOverlap_(const JacobianMatrix &A,
@@ -834,10 +841,10 @@ protected:
             overlapB_ = new OverlapVector(*overlapX_);
         }
         else {
-            overlapMatrix_->set(A);
             overlapX_->set(x);
             overlapB_->set(b);
         }
+        overlapMatrix_->set(A);
     };
 
     std::ostringstream endIterMsgStream_;
