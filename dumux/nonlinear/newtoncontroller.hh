@@ -58,6 +58,7 @@
 #include <dumux/linear/overlappingbcrsmatrix.hh>
 #include <dumux/linear/overlappingblockvector.hh>
 #include <dumux/linear/overlappingpreconditioner.hh>
+#include <dumux/linear/overlappingscalarproduct.hh>
 
 namespace Dumux
 {
@@ -791,8 +792,6 @@ protected:
         overlapA.print();
 
         OverlappingVector overlapb(b, overlapA.overlap());
-        overlapb = overlapA.overlap().myRank() + 1;
-        overlapb.syncAverage();
         std::cout << "overlapping b:\n";
         overlapb.print();
 
@@ -810,6 +809,9 @@ protected:
         typedef Dune::SeqILU0<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
         SeqPreconditioner seqPreCond(overlapA, 1.0);
 #endif
+
+        typedef Dumux::OverlappingScalarProduct<OverlappingVector, Overlap> OverlappingScalarProduct;
+        OverlappingScalarProduct scalarProd(overlapA.overlap());
 
         typedef Dumux::OverlappingPreconditioner<SeqPreconditioner, Overlap> OverlappingPreconditioner;
         OverlappingPreconditioner preCond(seqPreCond, overlapA.overlap());
