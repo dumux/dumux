@@ -1,4 +1,3 @@
-// $Id$
 /*****************************************************************************
  *   Copyright (C) 2011 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -21,59 +20,58 @@
 /*!
  * \file
  *
- * \brief A preconditioner for overlapping matrices and vectors
+ * \brief Base class for all linear solvers
  */
-#ifndef DUMUX_OVERLAPPING_PRECONDITIONER_HH
-#define DUMUX_OVERLAPPING_PRECONDITIONER_HH
-
-#include "overlappingscalarproduct.hh"
+#ifndef DUMUX_LINEAR_SOLVER_HH
+#define DUMUX_LINEAR_SOLVER_HH
 
 namespace Dumux {
 
-template <class SeqPreCond, class Overlap>
-class OverlappingPreconditioner : 
-    public Dune::Preconditioner<typename SeqPreCond::domain_type, 
-                                typename SeqPreCond::range_type>
+/*!
+ * \brief This is the base class for all linear solvers available in
+ *        Dumux
+ */
+template <class Matrix, class Vector>
+class LinearSolver
 {
 public:
-    typedef typename SeqPreCond::domain_type domain_type;
-    typedef typename SeqPreCond::range_type range_type;
-    typedef typename SeqPreCond::field_type field_type;
-
-    enum { category = Dune::SolverCategory::overlapping };
-
-    OverlappingPreconditioner(SeqPreCond &seqPreCond, const Overlap &overlap)
-        : seqPreCond_(seqPreCond), overlap_(&overlap)
+    LinearSolver()
     {
-    }
-
-    void pre(domain_type &x, range_type &y)
-    {
-        seqPreCond_.pre(x, y);
-
-        // communicate the results on the overlap
-        x.syncAverage();
-        y.syncAverage();
     };
 
-    void apply(domain_type &x, const range_type &d)
+    /*!
+     * \brief Prepare to solve a linear system of equations.
+     * 
+     * This method allocates space an does the necessarry
+     * communication before actually calling the solve() method.  As
+     * long as the structure of the linear system does not change, the
+     * solve method can be called arbitrarily often.
+     */
+    void prepare(const Matrix &M, Vector &x, const Vector &b)
     {
-#warning copying the defect probably not really necessary here
-        range_type dd(d);
-        dd.resetFront();
+        DUNE_THROW(Dune::NotImplemented,
+                   "LinearSolver::prepare() not overloaded by the derived class");
+    };
 
-        seqPreCond_.apply(x, dd);
-        x.syncAverage();
+    /*!
+     * \brief Actually solve the linear system of equations. 
+     *
+     * \return true if the residual reduction could be achieved, else false.
+     */
+    bool solve(const Matrix &M, Vector &x, const Vector &b, double residReduction)
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "LinearSolver::solve() not overloaded by the derived class");
     };
-   
-    void post(domain_type &x)
-    {     
-        seqPreCond_.post(x);
+
+    /*!
+     * \brief Clean up after the last call of the solve() method
+     */
+    void cleanup()
+    {
+        DUNE_THROW(Dune::NotImplemented,
+                   "LinearSolver::prepare() not overloaded by the derived class");
     };
-    
-private:
-    SeqPreCond seqPreCond_;
-    const Overlap *overlap_;
 };
 
 } // namespace Dumux

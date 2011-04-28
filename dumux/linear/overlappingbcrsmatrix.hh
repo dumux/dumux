@@ -76,7 +76,7 @@ public:
         // matrix and the overlap
         build_(M);
     
-        assign(M);
+        assignAdd(M);
     };
     
     OverlappingBCRSMatrix(const OverlappingBCRSMatrix &M)
@@ -95,7 +95,7 @@ public:
      * \brief Assign and syncronize the overlapping matrix from a
      *       non-overlapping one.
      */
-    void assign(const BCRSMatrix &M)
+    void assignAdd(const BCRSMatrix &M)
     {
         // first, set everything to 0
         BCRSMatrix::operator=(0.0);

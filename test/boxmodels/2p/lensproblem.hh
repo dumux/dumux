@@ -125,7 +125,7 @@ SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
 
 // Write the solutions of individual newton iterations?
 SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, true);
-SET_INT_PROP(LensProblem, NewtonLinearSolverVerbosity, 0);
+SET_INT_PROP(LensProblem, NewtonLinearSolverVerbosity, 1);
 
 // Use forward differences instead of central differences
 SET_INT_PROP(LensProblem, NumericDifferenceMethod, +1);

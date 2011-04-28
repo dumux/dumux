@@ -96,7 +96,8 @@ public:
           elementMapper_(gridView),
           vertexMapper_(gridView),
           timeManager_(&timeManager),
-          newtonMethod_(asImp_())
+          newtonMethod_(asImp_()),
+          newtonCtl_(asImp_())
     {
         // calculate the bounding box of the local partition of the grid view
         VertexIterator vIt = gridView.template begin<dim>();

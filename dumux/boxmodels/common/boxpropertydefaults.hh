@@ -219,6 +219,10 @@ private:
 public:
     typedef typename Dune::BCRSMatrix<MatrixBlock> type;
 };
+
+// use the stabilized BiCG solver preconditioned by the ILU-0 by default
+SET_TYPE_PROP(BoxModel, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+
 #endif
 
 

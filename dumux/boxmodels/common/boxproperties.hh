@@ -81,6 +81,7 @@ NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over bou
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(NewtonMethod);     //!< The type of the newton method
 NEW_PROP_TAG(NewtonController); //!< The type of the newton controller
+NEW_PROP_TAG(LinearSolver); //!< The type of the linear solver to be used
 
 #if HAVE_DUNE_PDELAB
 // properties for the PDELab wrapper
