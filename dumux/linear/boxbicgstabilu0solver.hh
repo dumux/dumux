@@ -65,7 +65,7 @@ class BoxBiCGStabILU0Solver
     typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
 
 public:
-    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize=5)
+    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize=3)
         : problem_(problem)
         , overlapSize_(overlapSize)
     {
