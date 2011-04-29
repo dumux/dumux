@@ -241,14 +241,14 @@ protected:
         }
 
         // create maps for all master indices
-        numMaster_ = 0;
+        int numMaster = 0;
         for (int i = 0; i < foreignOverlap_.numLocal(); ++i) {
             if (!foreignOverlap_.iAmMasterOf(i)) {
                 continue;
             }
             
-            addIndex(i, domesticOffset_ + numMaster_);
-            ++ numMaster_;
+            addIndex(i, domesticOffset_ + numMaster);
+            ++ numMaster;
         }
         
         if (myRank_ < mpiSize_ - 1) {
@@ -256,7 +256,7 @@ protected:
             // indices to the process which is one rank higher
             // all other ranks retrieve their offset from the next
             // lower rank
-            int tmp = domesticOffset_ + numMaster_;
+            int tmp = domesticOffset_ + numMaster;
             MPI_Send(&tmp, // buff
                      1, // count
                      MPI_INT, // data type
