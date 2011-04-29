@@ -138,13 +138,14 @@ public:
      * plus its copies of indices in the overlap regions
      */
     int numDomestic() const
-    { return domesticToGlobal_.size(); }
+    { return numDomestic_; }
 
     /*!
      * \brief Add an index to the domestic<->global mapping.
      */
     void addIndex(int domesticIdx, int globalIdx)
     {
+        ++ numDomestic_;
         domesticToGlobal_[domesticIdx] = globalIdx;
         globalToDomestic_[globalIdx] = domesticIdx;       
     };
@@ -309,6 +310,8 @@ protected:
                 sendBorderIndex(peerRank, localIdx, peerIdx);
             }
         }
+#else // ! HAVE_MPI
+	numDomestic_ = foreignOverlap_.numLocal();
 #endif // HAVE_MPI
     }
     
@@ -323,7 +326,7 @@ protected:
     int mpiSize_;
 
     int domesticOffset_;
-    int numMaster_;
+    int numDomestic_;
     const ForeignOverlap &foreignOverlap_;
     
     GlobalToDomesticMap globalToDomestic_; 
