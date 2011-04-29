@@ -646,7 +646,8 @@ public:
         typedef Dumux::Restart Restarter;
         Restarter res;
         res.serializeBegin(asImp_());
-        std::cerr << "Serialize to file '" << res.fileName() << "'\n";
+        if (gridView().comm().rank() == 0)
+            std::cout << "Serialize to file '" << res.fileName() << "'\n";
 
         timeManager().serialize(res);
         asImp_().serialize(res);
@@ -688,7 +689,8 @@ public:
         Restarter res;
 
         res.deserializeBegin(asImp_(), tRestart);
-        std::cout << "Deserialize from file '" << res.fileName() << "'\n";
+        if (gridView().comm().rank() == 0)
+            std::cout << "Deserialize from file '" << res.fileName() << "'\n";
         timeManager().deserialize(res);
         asImp_().deserialize(res);
         res.deserializeEnd();

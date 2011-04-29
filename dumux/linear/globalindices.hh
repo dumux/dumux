@@ -148,6 +148,9 @@ public:
         ++ numDomestic_;
         domesticToGlobal_[domesticIdx] = globalIdx;
         globalToDomestic_[globalIdx] = domesticIdx;       
+
+        assert(domesticToGlobal_.size() == globalToDomestic_.size());
+        assert(domesticToGlobal_.size() == numDomestic_);
     };
     
     /*!

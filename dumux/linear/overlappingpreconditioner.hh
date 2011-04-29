@@ -66,10 +66,38 @@ public:
             range_type dd(d);
             dd.resetFront();
 
-            // execute the sequential preconditioner
-            seqPreCond_.apply(x, dd);
+            // make sure that all processes react the same if the
+            // sequential preconditioner on one process throws an
+            // exception
+            short success;
+            try {
+                // execute the sequential preconditioner
+                seqPreCond_.apply(x, dd);
+                short localSuccess = 1;
+                MPI_Allreduce(&localSuccess, // source buffer
+                              &success, // destination buffer
+                              1, // number of objects in buffers
+                              MPI_SHORT, // data type
+                              MPI_MIN, // operation
+                              MPI_COMM_WORLD); // communicator
+            } 
+            catch (const Dune::Exception &e) {
+                std::cout << "Process " << overlap_->myRank()
+                          << " threw exception in sequential preconditioner: " << e.what() << "\n";
+                short localSuccess = 0;
+                MPI_Allreduce(&localSuccess, // source buffer
+                              &success, // destination buffer
+                              1, // number of objects in buffers
+                              MPI_SHORT, // data type
+                              MPI_MIN, // operation
+                              MPI_COMM_WORLD); // communicator
+            }
 
-            x.syncAverage();
+            if (success)
+                x.syncAverage();
+            else
+                DUNE_THROW(NumericalProblem,
+                           "Preconditioner threw an exception on some process.");
         }
         else 
 #endif // HAVE_MPI

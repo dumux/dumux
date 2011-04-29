@@ -180,7 +180,6 @@ public:
                                      t);
 
 
-        std::cout << "open file name: " << fileName_ << "\n";
         // open input file and read magic cookie
         inStream_.open(fileName_.c_str());
         if (!inStream_.good()) {
@@ -222,7 +221,6 @@ public:
      */
     void deserializeSectionBegin(const std::string &cookie)
     {
-        std::cout << "deserializeSectionBegin: " << cookie << "\n";
         if (!inStream_.good())
             DUNE_THROW(Dune::IOError,
                        "Encountered unexpected EOF in restart file.");
@@ -286,7 +284,6 @@ public:
      */
     void deserializeEnd()
     {
-        std::cout << "inStream_.close()\n";
         inStream_.close();
     }
 

@@ -454,7 +454,7 @@ public:
         // magnitude in the defect should be sufficient...
         Scalar residReduction = 1e-6;
 
-        //try {
+        try {
             int verbosityLevel = 0;
             if (verbose()) {
                 verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
@@ -468,7 +468,6 @@ public:
                 DUNE_THROW(NumericalProblem,
                            "A process threw NumericalProblem");
             }
-            /*
         }
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
@@ -493,7 +492,6 @@ public:
             p.message(e.what());
             throw p;
         }
-            */
     }
 
     /*!
