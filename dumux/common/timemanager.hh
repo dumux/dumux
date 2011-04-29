@@ -370,15 +370,15 @@ public:
             // prepare the model for the next time integration
             problem_->advanceTimeLevel();
 
+            // advance the simulated time by the current time step size
+            time_ += dt;
+            ++timeStepIdx_;
+
             if (verbose_) {
                 std::cout <<
                     boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
                     %timeStepIndex()%timer.elapsed()%time()%dt;
             }
-
-            // advance the simulated time by the current time step size
-            time_ += dt;
-            ++timeStepIdx_;
 
             // write restart file if mandated by the problem
             if (problem_->shouldWriteRestartFile())
