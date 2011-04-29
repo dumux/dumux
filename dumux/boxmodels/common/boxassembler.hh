@@ -184,54 +184,24 @@ public:
      */
     void assemble()
     {
-        resetSystem_();
-        
-        // if we can "recycle" the current linearization, we do it
-        // here and be done with it...
-        Scalar curDt = problem_().timeManager().timeStepSize();
-        if (reuseMatrix_) {
-            int numVertices = storageJacobian_.size();
-            for (int i = 0; i < numVertices; ++i) {
-                // rescale the mass term of the jacobian matrix
-                MatrixBlock &J_i_i = (*matrix_)[i][i];
-                
-                J_i_i -= storageJacobian_[i];
-                storageJacobian_[i] *= oldDt_/curDt;
-                J_i_i += storageJacobian_[i];
-
-                // use the flux term plus the source term as the new
-                // residual (since the delta in the d(storage)/dt is 0
-                // for the first iteration and the residual is
-                // approximately 0 in the last iteration, the flux
-                // term plus the source term must be equal to the
-                // negative change of the storage term of the last
-                // iteration of the last time step...)
-                residual_[i] = storageTerm_[i];
-                residual_[i] *= -1;
-            };
-            
-            reuseMatrix_ = false;
-            oldDt_ = curDt;
-            return;
+        int succeeded;
+        try {
+            assemble_();
+            succeeded = 1;
+            succeeded = problem_().gridView().comm().min(succeeded);
+        }
+        catch (Dumux::NumericalProblem &e)
+        {
+            std::cout << "rank " << problem_().gridView().comm().rank()
+                      << " caught an exception while assembling:" << e.what()
+                      << "\n";
+            succeeded = 0;
+            succeeded = problem_().gridView().comm().min(succeeded);
         }
 
-        oldDt_ = curDt;
-        greenElems_ = 0;
-        
-        // reassemble the elements...
-        ElementIterator elemIt = gridView_().template begin<0>();
-        ElementIterator elemEndIt = gridView_().template end<0>();
-        for (; elemIt != elemEndIt; ++elemIt) {
-            const Element &elem = *elemIt;
-            if (elem.partitionType() != Dune::InteriorEntity  &&
-                elem.partitionType() != Dune::BorderEntity)
-            {
-                assembleGhostElement_(elem);
-            }
-            else
-            {
-                assembleElement_(elem);
-            }
+        if (!succeeded) {
+            DUNE_THROW(NumericalProblem, 
+                       "A process did not succeed in linearizing the system");
         };
 
         // if partial reassembly is enabled, print some statistics at
@@ -251,10 +221,8 @@ public:
         for (int i = 0; i < vertexColor_.size(); ++i) {
             vertexColor_[i] = Green;
         }
-
-        return;
     }
-
+    
     /*!
      * \brief If Jacobian matrix recycling is enabled, this method
      *        specifies whether the next call to assemble() just
@@ -688,6 +656,60 @@ private:
             const ColIterator &colEndIt = (*matrix_)[rowIdx].end();
             for (; colIt != colEndIt; ++colIt) {
                 (*colIt) = 0.0;
+            }
+        };
+    }
+
+    // linearize the whole system
+    void assemble_()
+    {
+        resetSystem_();
+        
+        // if we can "recycle" the current linearization, we do it
+        // here and be done with it...
+        Scalar curDt = problem_().timeManager().timeStepSize();
+        if (reuseMatrix_) {
+            int numVertices = storageJacobian_.size();
+            for (int i = 0; i < numVertices; ++i) {
+                // rescale the mass term of the jacobian matrix
+                MatrixBlock &J_i_i = (*matrix_)[i][i];
+                
+                J_i_i -= storageJacobian_[i];
+                storageJacobian_[i] *= oldDt_/curDt;
+                J_i_i += storageJacobian_[i];
+
+                // use the flux term plus the source term as the new
+                // residual (since the delta in the d(storage)/dt is 0
+                // for the first iteration and the residual is
+                // approximately 0 in the last iteration, the flux
+                // term plus the source term must be equal to the
+                // negative change of the storage term of the last
+                // iteration of the last time step...)
+                residual_[i] = storageTerm_[i];
+                residual_[i] *= -1;
+            };
+            
+            reuseMatrix_ = false;
+            oldDt_ = curDt;
+            return;
+        }
+
+        oldDt_ = curDt;
+        greenElems_ = 0;
+        
+        // reassemble the elements...
+        ElementIterator elemIt = gridView_().template begin<0>();
+        ElementIterator elemEndIt = gridView_().template end<0>();
+        for (; elemIt != elemEndIt; ++elemIt) {
+            const Element &elem = *elemIt;
+            if (elem.partitionType() != Dune::InteriorEntity  &&
+                elem.partitionType() != Dune::BorderEntity)
+            {
+                assembleGhostElement_(elem);
+            }
+            else
+            {
+                assembleElement_(elem);
             }
         };
     }

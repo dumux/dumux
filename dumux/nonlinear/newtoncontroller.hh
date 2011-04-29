@@ -332,8 +332,9 @@ public:
     {
         if (numSteps_ < rampUpSteps() + 2)
             return true; // we always do at least two iterations
-        else if (asImp_().newtonConverged())
+        else if (asImp_().newtonConverged()) {
             return false; // we are below the desired tolerance
+        }
         else if (numSteps_ >= rampUpSteps() + maxSteps_) {
             // we have exceeded the allowed number of steps.  if the
             // relative error was reduced by a factor of at least 4,
@@ -413,24 +414,18 @@ public:
         typedef typename SolutionVector::block_type FV;
         error_ = 0;
 
-        int aboveTol = 0;
         for (int i = 0; i < int(uLastIter.size()); ++i) {
             PrimaryVariables uNewI = uLastIter[i];
             uNewI -= deltaU[i];
-            Scalar vertErr =
-                model_().relativeErrorVertex(i,
-                                             uLastIter[i],
-                                             uNewI);
 
-            if (vertErr > tolerance_)
-                ++aboveTol;
-            if (vertErr > error_) {
-                error_ = vertErr;
-            }
+            Scalar vertError = model_().relativeErrorVertex(i,
+                                                            uLastIter[i],
+                                                            uNewI);
+            error_ = std::max(error_, vertError);
+                              
         }
 
-        if (gridView_().comm().size() > 1)
-        	error_ = gridView_().comm().max(error_);
+        error_ = gridView_().comm().max(error_);
     }
 
     /*!
@@ -459,10 +454,11 @@ public:
             if (verbose()) {
                 verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
             }
+
             int converged = linearSolver_.solve(A, x, b, residReduction, verbosityLevel);
 
             // make sure all processes converged
-            gridView_().comm().min(converged);
+            converged = gridView_().comm().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
@@ -472,8 +468,7 @@ public:
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
             int converged = 0;
-            if (gridView_().comm().size() > 1)
-            	gridView_().comm().min(converged);
+            converged = gridView_().comm().min(converged);
 
             Dumux::NumericalProblem p;
             std::string msg;
@@ -485,8 +480,7 @@ public:
         catch (const Dune::ISTLError &e) {
             // make sure all processes converged
             int converged = 0;
-            if (gridView_().comm().size() > 1)
-            	gridView_().comm().min(converged);
+            converged = gridView_().comm().min(converged);
 
             Dumux::NumericalProblem p;
             p.message(e.what());
