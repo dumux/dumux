@@ -224,6 +224,12 @@ protected:
     void buildGlobalIndices_() 
     {
 #if HAVE_MPI
+        numDomestic_ = 0;
+#else // HAVE_MPI
+        numDomestic_ = foreignOverlap_.numLocal();
+#endif
+
+#if HAVE_MPI
         if (myRank_ == 0) {
             // the first rank starts at index zero
             domesticOffset_ = 0;
@@ -310,8 +316,6 @@ protected:
                 sendBorderIndex(peerRank, localIdx, peerIdx);
             }
         }
-#else // ! HAVE_MPI
-	numDomestic_ = foreignOverlap_.numLocal();
 #endif // HAVE_MPI
     }
     
