@@ -138,19 +138,20 @@ public:
      * plus its copies of indices in the overlap regions
      */
     int numDomestic() const
-    { return numDomestic_; }
+    { 
+        return numDomestic_;
+    }
 
     /*!
      * \brief Add an index to the domestic<->global mapping.
      */
     void addIndex(int domesticIdx, int globalIdx)
     {
-        ++ numDomestic_;
         domesticToGlobal_[domesticIdx] = globalIdx;
         globalToDomestic_[globalIdx] = domesticIdx;       
+        numDomestic_ = domesticToGlobal_.size();
 
         assert(domesticToGlobal_.size() == globalToDomestic_.size());
-        assert(domesticToGlobal_.size() == numDomestic_);
     };
     
     /*!
@@ -226,11 +227,7 @@ protected:
     // global index list
     void buildGlobalIndices_() 
     {
-#if HAVE_MPI
         numDomestic_ = 0;
-#else // HAVE_MPI
-        numDomestic_ = foreignOverlap_.numLocal();
-#endif
 
 #if HAVE_MPI
         if (myRank_ == 0) {
