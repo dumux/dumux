@@ -1,7 +1,5 @@
-// $Id$
-
 /*****************************************************************************
- *   Copyright (C) 2008 by Andreas Lauser                                    *
+ *   Copyright (C) 2008-2011 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -256,7 +254,7 @@ public:
 
         res.deserializeSectionBegin("VTKMultiWriter");
         res.deserializeStream() >> writerNum_;
-
+        
         if (commRank_ == 0) {
             std::string dummy;
             std::getline(res.deserializeStream(), dummy);
@@ -279,6 +277,10 @@ public:
 
             multiFile_.seekp(filePos);
         }
+        else {
+            std::string tmp;
+            std::getline(res.deserializeStream(), tmp);
+        };
         res.deserializeSectionEnd();
     }
 
