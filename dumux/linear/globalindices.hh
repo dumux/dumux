@@ -316,6 +316,8 @@ protected:
                 sendBorderIndex(peerRank, localIdx, peerIdx);
             }
         }
+#else // HAVE_MPI
+	numDomestic_ = foreignOverlap_.numLocal();
 #endif // HAVE_MPI
     }
     
