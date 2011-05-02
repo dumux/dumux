@@ -218,10 +218,10 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
-        if (commRank_ == 0) {
-            res.serializeSectionBegin("VTKMultiWriter");
-            res.serializeStream() << writerNum_ << "\n";
+        res.serializeSectionBegin("VTKMultiWriter");
+        res.serializeStream() << writerNum_ << "\n";
 
+        if (commRank_ == 0) {
             size_t fileLen = 0;
             size_t filePos = 0;
             if (multiFile_.is_open()) {
@@ -241,9 +241,9 @@ public:
                 res.serializeStream().write(tmp, fileLen);
                 delete[] tmp;
             }
-
-            res.serializeSectionEnd();
         }
+
+        res.serializeSectionEnd();
     }
 
     /*!
@@ -254,10 +254,10 @@ public:
     {
         wasRestarted_ = true;
 
+        res.deserializeSectionBegin("VTKMultiWriter");
+        res.deserializeStream() >> writerNum_;
+
         if (commRank_ == 0) {
-            res.deserializeSectionBegin("VTKMultiWriter");
-            res.deserializeStream() >> writerNum_;
-            
             std::string dummy;
             std::getline(res.deserializeStream(), dummy);
 
@@ -278,9 +278,8 @@ public:
             }
 
             multiFile_.seekp(filePos);
-
-            res.deserializeSectionEnd();
         }
+        res.deserializeSectionEnd();
     }
 
 
