@@ -80,16 +80,17 @@ public:
 
 private:
     const GridView& gridView_;
-    const ElementMapper elementMapper_;
-    const VertexMapper vertexMapper_;
-    const int gridSize_;
+    ElementMapper elementMapper_;
+    VertexMapper vertexMapper_;
+    int gridSize_;
 
     const int codim_;
 
-    ScalarSolutionType pressure_;
     DimVecElemFaceType velocity_;
-
     PhasePropertyElemFaceType potential_;
+protected:
+    ScalarSolutionType pressure_;
+
 
 public:
     //! Constructs a VariableClass object
@@ -178,6 +179,18 @@ public:
         return;
     }
 
+    //! Resizes decoupled variable vectors
+    /*! Method that change the size of the vectors for h-adaptive simulations.
+     *
+     *\param size Size of the current (refined and coarsened) grid
+     *\param onlyPressure resizes only pressure vector (for compositional models)
+     */
+    void adaptVariableSize(int size)
+        {
+    		pressure_.resize(size);
+    		velocity_.resize(size);
+    		potential_.resize(size);
+        }
 private:
     void initializeGlobalVariables(Dune::FieldVector<Scalar, dim>& initialVel)
     {
@@ -271,17 +284,33 @@ public:
         return gridSize_;
     }
 
+    void setGridSize(int size)
+    {
+    	gridSize_=size;
+    }
+
     //!Return gridView
     const GridView& gridView() const
     {
         return gridView_;
     }
 
+    //! Return mapper for elements (for adaptive grids)
+    ElementMapper& elementMapper()
+    {
+        return elementMapper_;
+    }
+    //! Return mapper for elements (for static grids)
     const ElementMapper& elementMapper() const
     {
         return elementMapper_;
     }
-
+    //! Return mapper for vertices (for adaptive grids)
+    VertexMapper& vertexMapper()
+    {
+        return vertexMapper_;
+    }
+    //! Return mapper for vertices (for static grids)
     const VertexMapper& vertexMapper() const
     {
         return vertexMapper_;

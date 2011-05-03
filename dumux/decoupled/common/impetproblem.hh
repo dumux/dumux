@@ -26,6 +26,7 @@
 #include <dumux/io/restart.hh>
 
 #include <dumux/common/timemanager.hh>
+#include <dumux/decoupled/common/gridAdapt.hh>
 
 /**
  * @file
@@ -47,6 +48,7 @@ class IMPETProblem
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef Dumux::TimeManager<TypeTag>  TimeManager;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
@@ -71,12 +73,14 @@ private:
     };
     enum
     {
-        wetting = 0, nonwetting = 1
+        wetting = 0, nonwetting = 1,
+        adaptiveGrid = GET_PROP_VALUE(TypeTag, PTAG(AdaptiveGrid))
     };
-
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+	// The module to adapt grid. If adaptiveGrid is false, this model does nothing.
+    typedef GridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)
@@ -90,6 +94,7 @@ public:
      */
     IMPETProblem(const GridView &gridView, bool verbose = true)
         : gridView_(gridView),
+          grid_(0),
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(verbose),
@@ -110,6 +115,10 @@ public:
 
         transportModel_ = new TransportModel(asImp_());
         model_ = new IMPETModel(asImp_()) ;
+
+    	// create an Object to handle adaptive grids
+        if (adaptiveGrid)
+        	gridAdapt_ = new GridAdaptModel(asImp_());
 
         resultWriter_ = NULL;
     }
@@ -138,7 +147,12 @@ public:
      *        integration.
      */
     void preTimeStep()
-    {}
+    {
+    	// if adaptivity is used, this method adapts the grid.
+    	// if it is not used, this method does nothing.
+        if (adaptiveGrid)
+        	this->gridAdapt().adaptGrid();
+    }
 
     /*!
      * \brief Called by Dumux::TimeManager in order to do a time
@@ -320,6 +334,39 @@ public:
     const GridView &gridView() const
     { return gridView_; }
 
+    /*!
+     * \brief Returns the current grid which used by the problem.
+     */
+    Grid &grid()
+    { 
+    	if (grid_)
+		{
+			return *grid_;
+		}
+    	else
+    		DUNE_THROW(Dune::InvalidStateException, "Grid was called in problemclass, "
+				<< "although it is not specified. Do so by using setGrid() method!");
+	}
+    /*!
+     * \brief Specifies the grid from outside the problem.
+     * \param grid The grid used by the problem. 
+	*/
+    void setGrid(Grid &grid)
+    {
+    	grid_ = &grid;
+    }
+
+    /*!
+     * \brief Returns adaptivity model used for the problem.
+     */
+    GridAdaptModel& gridAdapt()
+	{
+        if (!adaptiveGrid)
+        	Dune::dgrave << "adaptivity module was called despite "
+        		<< "adaptivity is disabled in property system \n;" << adaptiveGrid;
+
+        return *gridAdapt_;
+	}
 
     /*!
      * \brief Returns the mapper for vertices to indices.
@@ -347,6 +394,8 @@ public:
     const GlobalPosition &bboxMax() const
     { return bboxMax_; }
 
+    //! \name Access functions
+    //@{
     /*!
      * \brief Returns TimeManager object used by the simulation
      */
@@ -379,7 +428,6 @@ public:
     //! \copydoc Dumux::IMPETProblem::model()
     const IMPETModel &model() const
     { return *model_; }
-    // \}
 
     /*!
      * \brief Returns the pressure model used for the problem.
@@ -390,7 +438,6 @@ public:
     //! \copydoc Dumux::IMPETProblem::pressureModel()
     const PressureModel &pressureModel() const
     { return *pressModel_; }
-    // \}
 
     /*!
      * \brief Returns transport model used for the problem.
@@ -504,6 +551,8 @@ private:
                                   // which could be set by means of an program argument,
                                  // for example.
     const GridView gridView_;
+    // pointer to a possibly adaptive grid.
+    Grid* grid_;
 
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
@@ -518,6 +567,7 @@ private:
 
     VtkMultiWriter *resultWriter_;
     int outputInterval_;
+    GridAdaptModel* gridAdapt_;
 };
 // definition of the static class member simname_,
 // which is necessary because it is of type string.

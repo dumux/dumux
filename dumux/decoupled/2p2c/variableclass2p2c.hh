@@ -82,7 +82,7 @@ public:
     typedef typename SolutionTypes::PhasePropertyElemFace PhasePropertyElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of scalars
     typedef typename SolutionTypes::DimVecElemFace DimVecElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 
-private:
+protected:
     const int codim_;
 
     ScalarSolutionType saturation_;
@@ -105,6 +105,7 @@ private:
 
     TransportSolutionType updateEstimate_;
     ScalarSolutionType errorCorrection_;
+    ScalarSolutionType perimeter_;
     Dune::BlockVector<Dune::FieldVector<int,1> > subdomain_;
 
 public:
@@ -207,6 +208,7 @@ private:
         dv_dp_.resize(size_);
         volErr_.resize(size_);
         errorCorrection_.resize(size_);
+        perimeter_.resize(size_);
     }
 
 
@@ -544,50 +546,14 @@ public:
     {
         return subdomain_[Idx][0];
     }
-    //@}
 
-    //! \name Method for adaptive grids
-    //@{
-    //! Resizes compositional variable vectors
-    /*! Method that change the size of the vectors holding the 2p2c for h-adaptive
-     * simulations.
-     *
-     *\param adaptiveGridSize Size of the current (refined and coarsened) grid
-     */
-    void adaptVariableSize2p2c(int adaptiveGridSize)  //rename method to resizeVariableVectors() ?
+    //! Return the perimeter of each element
+    /*!\param Idx Element index */
+    double& perimeter(int Idx)
     {
-        //resize to grid size
-        int size_ = adaptiveGridSize;
-        this->setGridSize(size_);
-        // a) global variables
-        this->adaptVariableSize(size_, true); // true = resizes only pressure vector!
-        for (int i=0; i<2; i++)    //for both phases
-        {
-			density_[i].resize(size_);
-			numericalDensity_[i].resize(size_);
-			viscosity_[i].resize(size_);
-			};
-			// b) transport variables
-			saturation_.resize(size_);
-
-			capillaryPressure_.resize(size_);
-			mobility_[0].resize(size_);
-			mobility_[1].resize(size_);
-
-			// c) compositional stuff
-			for (int i=0; i<2; i++) //for both phases
-			{
-			totalConcentration_[i].resize(size_);   // resize vector to number of cells
-			updateEstimate_[i].resize(size_);
-			massfrac_[i].resize(size_);
-	        dv_[i].resize(size_);
-			}
-	    dv_dp_.resize(size_);
-        volErr_.resize(size_);
-        errorCorrection_.resize(size_);
-	};
-	//@}
-
+        return perimeter_[Idx][0];
+    }
+    //@}
 };
 }
 #endif

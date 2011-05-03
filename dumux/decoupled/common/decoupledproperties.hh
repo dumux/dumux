@@ -59,6 +59,7 @@ NEW_PROP_TAG( TransportSolutionType);
 
 NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
 NEW_PROP_TAG( GridView); //!< The type of the grid view
+NEW_PROP_TAG( AdaptiveGrid); //!< Defines if the grid is h-adaptive
 
 NEW_PROP_TAG( Problem); //!< The type of the problem
 NEW_PROP_TAG( Model); //!< The type of the discretizations
@@ -94,6 +95,8 @@ public:
     typedef typename Grid::LeafGridView type;
 };
 
+//! Disables Grid Adaptivity as standard
+SET_BOOL_PROP(DecoupledModel, AdaptiveGrid, false);
 
 //! Use the parent VariableClass
 SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);
