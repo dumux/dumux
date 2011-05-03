@@ -243,7 +243,6 @@ private:
                                const Element &element,
                                const ElementVolumeVariables &elemDat)
     {
-#if 0
         const VolumeVariables &vDat_i = elemDat[face().i];
         const VolumeVariables &vDat_j = elemDat[face().j];
 
@@ -272,7 +271,6 @@ private:
             porousDiffCoeff_[phaseIdx] = harmonicMean(vDat_i.porosity() * vDat_i.saturation(phaseIdx) * tau_i * vDat_i.diffCoeff(phaseIdx),
                                          vDat_j.porosity() * vDat_j.saturation(phaseIdx) * tau_j * vDat_j.diffCoeff(phaseIdx));
         }
-#endif
     }
 
 public:
@@ -312,13 +310,11 @@ public:
     int downstreamIdx(int phaseIdx) const
     { return downstreamIdx_[phaseIdx]; }
 
-#if 0
     /*!
      * \brief The binary diffusion coefficient for each fluid phase.
      */
     Scalar porousDiffCoeff(int phaseIdx) const
     { return porousDiffCoeff_[phaseIdx]; };
-#endif
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
@@ -371,10 +367,8 @@ protected:
     // local index of the downwind vertex for each phase
     int downstreamIdx_[numPhases];
 
-/*
     // the diffusion coefficient for the porous medium
     Scalar porousDiffCoeff_[numPhases];
-*/
 };
 
 } // end namepace
