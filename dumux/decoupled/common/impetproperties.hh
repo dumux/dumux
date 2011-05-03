@@ -21,7 +21,14 @@
 #ifndef DUMUX_IMPET_PROPERTIES_HH
 #define DUMUX_IMPET_PROPERTIES_HH
 
+//Dune-includes
+#include <dune/istl/operators.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
+
 #include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dumux/linear/seqsolverbackend.hh>
+
 /*!
  * \ingroup IMPET
  * \ingroup Properties
@@ -67,11 +74,38 @@ NEW_PROP_TAG(RelaxationFactor); //!< Used for IMPET iterations
 
 SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
 
+//Properties for linear solvers
+NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
+NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
+NEW_PROP_TAG( LinearSolver );//!< Type of the linear solver
+
+//Set defaults
 SET_SCALAR_PROP(IMPET, CFLFactor, 1);
 SET_INT_PROP(IMPET, IterationFlag, 0); //!< 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
 SET_INT_PROP(IMPET, IterationNumber, 2);
 SET_SCALAR_PROP(IMPET, MaximumDefect, 1e-5);
 SET_SCALAR_PROP(IMPET, RelaxationFactor, 1);//!< 1 = new solution is new solution, 0 = old solution is new solution
+
+SET_PROP(IMPET, PressureCoefficientMatrix)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
+
+public:
+    typedef Dune::BCRSMatrix<MB> type;
+};
+SET_PROP(IMPET, PressureRHSVector)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+public:
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
+};
+
+// use the stabilized BiCG solver preconditioned by the ILU-0 by default
+SET_TYPE_PROP(IMPET, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 
 }
 }

@@ -231,30 +231,15 @@ protected:
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::solve()
 {
-    typedef typename GET_PROP(TypeTag, PTAG(SolverParameters)) SolverParameters;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressurePreconditioner)) Preconditioner;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureSolver)) Solver;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
 
-    typedef TraceType Vector;
-    typedef typename CROperatorAssembler<Scalar,GridView>::RepresentationType Matrix;
-    typedef Dune::MatrixAdapter<Matrix,Vector,Vector> Operator;
-
-    Operator op(*A_);
-    Dune::InverseOperatorResult result;
-
-    double reduction = SolverParameters::reductionSolver;
-    int maxItSolver = SolverParameters::maxIterationNumberSolver;
-    int iterPreconditioner = SolverParameters::iterationNumberPreconditioner;
-    int verboseLevelSolver = SolverParameters::verboseLevelSolver;
-    double relaxation = SolverParameters::relaxationPreconditioner;
+    int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
 
     if (verboseLevelSolver)
     std::cout << "MimeticPressure2P: solve for pressure" << std::endl;
 
-    Preconditioner preconditioner(*A_, iterPreconditioner, relaxation);
-    Solver solver(op, preconditioner, reduction, maxItSolver, verboseLevelSolver);
-    solver.apply(pressTrace_, f_, result);
-
+    Solver solver(problem_);
+    solver.solve(A_, problem_.variables().pressure(), f_);
     return;
 }
 

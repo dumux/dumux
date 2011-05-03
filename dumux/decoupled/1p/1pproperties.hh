@@ -38,6 +38,7 @@
 
 //Dumux-includes
 #include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 
 namespace Dumux
 {
@@ -73,26 +74,9 @@ NEW_PROP_TAG( Fluid )
 ; //!< The fluid for one-phase models
 
 //Properties for linear solvers
-NEW_PROP_TAG(PressureCoefficientMatrix)
-;//!< Type of the coefficient matrix given to the linear solver
-NEW_PROP_TAG(PressureRHSVector)
-;//!< Type of the right hand side vector given to the linear solver
-NEW_PROP_TAG( PressurePreconditioner )
-;//!< Type of the preconditioner
-NEW_PROP_TAG( PressureSolver )
-;//!< Type of the solver
-NEW_PROP_TAG( SolverParameters )
-;//!< Container for the solver parameters
-NEW_PROP_TAG(ReductionSolver)
-;//!< Reduction value for linear solver
-NEW_PROP_TAG(MaxIterationNumberSolver)
-;//!< Maximum iteration number for linear solver
-NEW_PROP_TAG(IterationNumberPreconditioner)
-;//!< Iteration number for preconditioner
-NEW_PROP_TAG(VerboseLevelSolver)
-;//!<Verbose level of linear solver and preconditioner
-NEW_PROP_TAG(RelaxationPreconditioner)
-;//!< Relaxation factor for preconditioner
+NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
+NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
+NEW_PROP_TAG( LinearSolver );//!< Type of linear solver
 
 //////////////////////////////////////////////////////////////////
 // Properties
@@ -122,39 +106,8 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
 };
 
-SET_PROP(DecoupledOneP, PressurePreconditioner)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
-public:
-    typedef Dune::SeqILUn<Matrix, Vector, Vector> type;
-};
-SET_PROP(DecoupledOneP, PressureSolver)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
-public:
-    typedef Dune::BiCGSTABSolver<Vector> type;
-};
-
-SET_SCALAR_PROP(DecoupledOneP, ReductionSolver, 1E-12);
-SET_INT_PROP(DecoupledOneP, MaxIterationNumberSolver, 10000);
-SET_INT_PROP(DecoupledOneP, IterationNumberPreconditioner, 0);
-SET_INT_PROP(DecoupledOneP, VerboseLevelSolver, 1);
-SET_SCALAR_PROP(DecoupledOneP, RelaxationPreconditioner, 1.0);
-
-SET_PROP(DecoupledOneP, SolverParameters)
-{
-public:
-    //solver parameters
-    static constexpr double reductionSolver = GET_PROP_VALUE(TypeTag, PTAG(ReductionSolver));
-    static constexpr int maxIterationNumberSolver = GET_PROP_VALUE(TypeTag, PTAG(MaxIterationNumberSolver));
-    static constexpr int iterationNumberPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(IterationNumberPreconditioner));
-    static constexpr int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(VerboseLevelSolver));
-    static constexpr double relaxationPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(RelaxationPreconditioner));
-};
+// use the stabilized BiCG solver preconditioned by the ILU-0 by default
+SET_TYPE_PROP(DecoupledOneP, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 }
 }
 #endif

@@ -269,7 +269,7 @@ public:
      */
     bool shouldWriteOutput() const
     {
-        if (this->timeManager().timeStepIndex() % outputInterval_ == 0 || this->timeManager().willBeFinished())
+        if (timeManager().timeStepIndex() % outputInterval_ == 0 || timeManager().willBeFinished() || timeManager().episodeWillBeOver())
         {
             return true;
         }

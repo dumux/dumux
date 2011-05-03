@@ -83,18 +83,6 @@ NEW_PROP_TAG( NumDensityTransport );
 NEW_PROP_TAG( FluidSystem );
 NEW_PROP_TAG( FluidState );
 
-//Properties for linear solvers
-NEW_PROP_TAG(PressureCoefficientMatrix);
-NEW_PROP_TAG(PressureRHSVector);
-NEW_PROP_TAG( PressurePreconditioner );
-NEW_PROP_TAG( PressureSolver );
-NEW_PROP_TAG( SolverParameters );
-NEW_PROP_TAG(ReductionSolver);
-NEW_PROP_TAG(MaxIterationNumberSolver);
-NEW_PROP_TAG(IterationNumberPreconditioner);
-NEW_PROP_TAG(VerboseLevelSolver);
-NEW_PROP_TAG(RelaxationPreconditioner);
-
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -164,59 +152,6 @@ SET_PROP_DEFAULT(NumDensityTransport)
 SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass2P2C<TypeTag>);
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecTwoPTwoCFluidState<TypeTag>);
-
-// solver stuff
-SET_PROP(DecoupledTwoPTwoC, PressureCoefficientMatrix)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
-
-public:
-    typedef Dune::BCRSMatrix<MB> type;
-};
-SET_PROP(DecoupledTwoPTwoC, PressureRHSVector)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-public:
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
-};
-
-SET_PROP(DecoupledTwoPTwoC, PressurePreconditioner)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
-public:
-    typedef Dune::SeqILUn<Matrix, Vector, Vector> type;
-};
-SET_PROP(DecoupledTwoPTwoC, PressureSolver)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
-public:
-    typedef Dune::BiCGSTABSolver<Vector> type;
-};
-//SET_INT_PROP(DecoupledTwoPTwoC, PressurePreconditioner, SolverIndices::seqILU0);
-//SET_INT_PROP(DecoupledTwoPTwoC, PressureSolver, SolverIndices::biCGSTAB);
-SET_SCALAR_PROP(DecoupledTwoPTwoC, ReductionSolver, 1E-12);
-SET_INT_PROP(DecoupledTwoPTwoC, MaxIterationNumberSolver, 10000);
-SET_INT_PROP(DecoupledTwoPTwoC, IterationNumberPreconditioner, 0);
-SET_INT_PROP(DecoupledTwoPTwoC, VerboseLevelSolver, 1);
-SET_SCALAR_PROP(DecoupledTwoPTwoC, RelaxationPreconditioner, 1.0);
-SET_PROP(DecoupledTwoPTwoC, SolverParameters)
-{
-public:
-    //solver parameters
-    static constexpr double reductionSolver = GET_PROP_VALUE(TypeTag, PTAG(ReductionSolver));
-    static constexpr int maxIterationNumberSolver = GET_PROP_VALUE(TypeTag, PTAG(MaxIterationNumberSolver));
-    static constexpr int iterationNumberPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(IterationNumberPreconditioner));
-    static constexpr int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(VerboseLevelSolver));
-    static constexpr double relaxationPreconditioner = GET_PROP_VALUE(TypeTag, PTAG(RelaxationPreconditioner));
-};
 
 }
 

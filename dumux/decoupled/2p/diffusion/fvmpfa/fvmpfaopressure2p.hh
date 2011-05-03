@@ -2398,25 +2398,15 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::solve()
 {
-    typedef typename GET_PROP(TypeTag, PTAG(SolverParameters)) SolverParameters;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressurePreconditioner)) Preconditioner;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureSolver)) Solver;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
 
-    Dune::MatrixAdapter<Matrix, Vector, Vector> op(A_); // make linear operator from A_
-    Dune::InverseOperatorResult result;
-
-    double reduction = SolverParameters::reductionSolver;
-    int maxItSolver = SolverParameters::maxIterationNumberSolver;
-    int iterPreconditioner = SolverParameters::iterationNumberPreconditioner;
-    int verboseLevelSolver = SolverParameters::verboseLevelSolver;
-    double relaxation = SolverParameters::relaxationPreconditioner;
+    int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
 
     if (verboseLevelSolver)
-    std::cout << "FVMPFAOPressure2P: solve for pressure" << std::endl;
+        std::cout << "FVMPFAOPressure2P: solve for pressure" << std::endl;
 
-    Preconditioner preconditioner(A_, iterPreconditioner, relaxation);
-    Solver solver(op, preconditioner, reduction, maxItSolver, verboseLevelSolver);
-    solver.apply(problem_.variables().pressure(), f_, result);
+    Solver solver(problem_);
+    solver.solve(A_, problem_.variables().pressure(), f_);
 
     //                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
     //                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
