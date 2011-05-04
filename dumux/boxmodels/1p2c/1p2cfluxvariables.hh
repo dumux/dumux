@@ -100,7 +100,8 @@ public:
         densityAtIP_ = Scalar(0);
         potentialGrad_ = Scalar(0);
         concentrationGrad_ = Scalar(0);
-        molarConcGrad_ = Scalar(0);
+        moleFracGrad_ = Scalar(0);
+        massFracGrad_ = Scalar(0);
 
         calculateGradients_(problem, element, elemDat);
         calculateK_(problem, element, elemDat);
@@ -127,16 +128,19 @@ public:
 
    /*!
     * \brief Return the pressure potential multiplied with the
-    *        intrinsic permeability as vector (for velocity output)
+    *        intrinsic permeability as vector (for velocity output).
     */
    Vector Kmvp() const
    { return Kmvp_; }
 
+   /*!
+    * \brief Return the subcontrol volume face.
+    */
     const SCVFace &face() const
     { return fvElemGeom_.subContVolFace[scvfIdx_]; }
 
     /*!
-     * \brief Return the intrinsic permeability.
+     * \brief Return the intrinsic permeability tensor.
      */
     const Tensor &intrinsicPermeability() const
     { return K_; }
@@ -170,29 +174,61 @@ public:
 
     /*!
         * \brief The molar concentration gradient of a component in a phase.
+        *
+        * \param compIdx The index of the considered component
         */
-       const Vector &molarConcGrad(int compIdx) const
+       const Vector &moleFracGrad(int compIdx) const
        {
            if (compIdx != 1)
            { DUNE_THROW(Dune::InvalidStateException,
                     "The 1p2c model is supposed to need "
                     "only the concentration gradient of "
                     "the second component!"); }
-           return molarConcGrad_;
+           return moleFracGrad_;
        };
 
+       /*!
+       * \brief The mass fraction gradient of a component in a phase.
+       *
+       * \param compIdx The index of the considered component
+       */
+      const Vector &massFracGrad(int compIdx) const
+      {
+          if (compIdx != 1)
+          { DUNE_THROW(Dune::InvalidStateException,
+                   "The 1p2c model is supposed to need "
+                   "only the concentration gradient of "
+                   "the second component!"); }
+          return massFracGrad_;
+      };
+
+    /*!
+    * \brief The binary diffusion coefficient for each fluid phase in the porous medium.
+    */
     Scalar porousDiffCoeff() const
     {
         // TODO: tensorial diffusion coefficients
         return diffCoeffPM_;
     };
 
+    /*!
+    * \brief Return viscosity \f$\mathrm{[Pa s]}\f$ of a phase at the integration
+    *        point.
+    */
     Scalar viscosityAtIP() const
     { return viscosityAtIP_;}
 
+    /*!
+     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
+     *        point.
+     */
     Scalar molarDensityAtIP() const
     { return molarDensityAtIP_; }
 
+    /*!
+     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
+     *        point.
+     */
     Scalar densityAtIP() const
         { return densityAtIP_; }
 
@@ -234,13 +270,13 @@ public:
 
 protected:
 
-        /*!
-         * \brief Calculation of the pressure and concentration gradient
-         *
-         *        \param problem The considered problem file
-         *        \param element The considered element of the grid
-         *        \param elemDat The parameters stored in the considered element
-         */
+    /*!
+     * \brief Calculation of the pressure and concentration gradients
+     *
+     *        \param problem The considered problem file
+     *        \param element The considered element of the grid
+     *        \param elemDat The parameters stored in the considered element
+     */
     void calculateGradients_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemDat)
@@ -254,8 +290,9 @@ protected:
         if (!problem.spatialParameters().useTwoPointGradient(element, face().i, face().j)) {
             // use finite-element gradients
             tmp = 0.0;
-            int n = element.template count<dim>();
-            for (int idx = 0; idx < n; idx++) // loop over adjacent vertices
+            for (int idx = 0;
+                    idx < fvElemGeom_.numVertices;
+                    idx++) // loop over adjacent vertices
             {
                 // FE gradient at vertex idx
                 const Vector &feGrad = face().grad[idx];
@@ -265,15 +302,18 @@ protected:
                 tmp *= elemDat[idx].pressure();
                 potentialGrad_ += tmp;
 
-                // the concentration gradient
+                // the concentration gradient [mol/m^3/m]
                 tmp = feGrad;
                 tmp *= elemDat[idx].concentration(comp1Idx);
                 concentrationGrad_ += tmp;
 
                 tmp = feGrad;
                 tmp *= elemDat[idx].moleFrac(comp1Idx);
-                molarConcGrad_ += tmp;
+                moleFracGrad_ += tmp;
 
+                tmp = feGrad;
+                tmp *= elemDat[idx].massFrac(comp1Idx);
+                massFracGrad_ += tmp;
                 // phase viscosity
                 viscosityAtIP_ += elemDat[idx].viscosity()*face().shapeValue[idx];
 
@@ -297,8 +337,8 @@ protected:
             potentialGrad_ *= vVars_j.pressure() - vVars_i.pressure();
             concentrationGrad_ = tmp;
             concentrationGrad_ *= vVars_j.concentration(comp1Idx) - vVars_i.concentration(comp1Idx);
-            molarConcGrad_ = tmp;
-            molarConcGrad_ *= vVars_j.moleFrac(comp1Idx) - vVars_i.moleFrac(comp1Idx);
+            moleFracGrad_ = tmp;
+            moleFracGrad_ *= vVars_j.moleFrac(comp1Idx) - vVars_i.moleFrac(comp1Idx);
         }
 
         // correct the pressure by the hydrostatic pressure due to
@@ -334,6 +374,15 @@ protected:
 
     }
 
+    /*!
+      * \brief Calculation of the velocity normal to face using Darcy's law.
+      *     Tensorial permeability is multiplied with the potential Gradient and the face normal.
+      *     Identify upstream node of face
+      *
+      *        \param problem The considered problem file
+      *        \param element The considered element of the grid
+      *        \param elemDat The parameters stored in the considered element
+      */
     void calculateVelocities_(const Problem &problem,
                                   const Element &element,
                                   const ElementVolumeVariables &elemDat)
@@ -428,8 +477,8 @@ protected:
     //! concentratrion gradient
     Vector concentrationGrad_;
     //! molar concentratrion gradient
-    Vector molarConcGrad_;
-
+    Vector moleFracGrad_;
+    Vector massFracGrad_;
     //! the effective diffusion coefficent in the porous medium
     Scalar diffCoeffPM_;
 

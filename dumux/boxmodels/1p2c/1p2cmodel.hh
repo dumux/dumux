@@ -106,7 +106,7 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     };
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator     VertexIterator;
-    static constexpr Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
+    static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
 public:
@@ -122,6 +122,7 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
+        Scalar scale = 1;//e3;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // create the required scalar fields
@@ -134,7 +135,7 @@ public:
         ScalarField *massFrac1 = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *rho = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *mu = writer.template createField<Scalar, 1>(numVertices);
-
+        ScalarField *delFrac= writer.template createField<Scalar, 1>(numVertices);
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
         ScalarField *velocityX = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *velocityY = writer.template createField<Scalar, 1>(numVertices);
@@ -186,14 +187,15 @@ public:
                                i,
                                false);
 
-                (*pressure)[globalIdx] = volVars.pressure();
-                (*delp)[globalIdx] = volVars.pressure() - 1e5;
+                (*pressure)[globalIdx] = volVars.pressure()*scale;
+                (*delp)[globalIdx] = volVars.pressure()*scale - 1e5;
                 (*moleFrac0)[globalIdx] = volVars.moleFrac(0);
                 (*moleFrac1)[globalIdx] = volVars.moleFrac(1);
                 (*massFrac0)[globalIdx] = volVars.massFrac(0);
                 (*massFrac1)[globalIdx] = volVars.massFrac(1);
-                (*rho)[globalIdx] = volVars.density();
-                (*mu)[globalIdx] = volVars.viscosity();
+                (*rho)[globalIdx] = volVars.density()*scale*scale*scale;
+                (*mu)[globalIdx] = volVars.viscosity()*scale;
+                (*delFrac)[globalIdx] = volVars.massFrac(1)-volVars.moleFrac(1);
             };
 
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
@@ -285,6 +287,7 @@ public:
 #ifdef VELOCITY_OUTPUT
         // normalize the velocities at the vertices
         // calculate the bounding box of the grid view
+        int index = 0;
         VertexIterator vIt = this->gridView_().template begin<dim>();
         const VertexIterator vEndIt = this->gridView_().template end<dim>();
         for (; vIt!=vEndIt; ++vIt)
@@ -293,17 +296,20 @@ public:
 
               //use vertiacl faces for vx and horizontal faces for vy calculation
              (*velocityX)[i] /= boxSurface[i][0];
+             (*velocityX)[i] /= scale;
              if (dim >= 2)
              {
                  (*velocityY)[i] /= boxSurface[i][1];
+                 (*velocityY)[i] /= scale;
              }
              if (dim == 3)
              {
                  (*velocityZ)[i] /= boxSurface[i][2];
+                 (*velocityZ)[i] /= scale;
              }
         }
 #endif
-        writer.addVertexData(pressure, "p");
+        writer.addVertexData(pressure, "P");
         writer.addVertexData(delp, "delp");
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
         writer.addVertexData(velocityX, "Vx");
@@ -315,6 +321,7 @@ public:
         writer.addVertexData(moleFrac1, "x_TRAIL");
         writer.addVertexData(massFrac0, "X_if");
         writer.addVertexData(massFrac1, "X_TRAIL");
+//        writer.addVertexData(delFrac, "delFrac_TRAIL");
         writer.addVertexData(rho, "rho");
         writer.addVertexData(mu, "mu");
         writer.addCellData(rank, "process rank");

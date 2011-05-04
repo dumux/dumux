@@ -36,6 +36,7 @@
 #include <dumux/boxmodels/1p2c/1p2cproperties.hh>
 #include <dumux/boxmodels/1p2c/1p2cvolumevariables.hh>
 #include <dumux/boxmodels/1p2c/1p2cfluxvariables.hh>
+#include <dumux/boxmodels/1p2c/1p2cboundaryvariables.hh>
 
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -67,6 +68,7 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryVariables)) BoundaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
@@ -93,7 +95,8 @@ protected:
         transEqIdx = Indices::transEqIdx,
     };
 
-    static constexpr Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
+    static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
+    static const int moleMass = GET_PROP_VALUE(TypeTag, PTAG(MoleMass));
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -117,23 +120,29 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const VolumeVariables &volVars =
-            usePrevSol ?
-            this->prevVolVars_(scvIdx) :
-            this->curVolVars_(scvIdx);
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
-        // storage term of continuity equation
-        result[contiEqIdx] =
-            volVars.density()*volVars.porosity();
-
-        // storage term of the transport equation - molefractions
-//        result[transEqIdx] =
-//            volVars.concentration(comp1Idx) *
-//            volVars.porosity();
-
-        //storage term of the transport equation - massfractions
-        result[transEqIdx] =
-                   volVars.density() * volVars.massFrac(comp1Idx) * volVars.porosity();
+        result = 0;
+        if(moleMass > 0)
+        {
+            // storage term of continuity equation - massfractions
+            result[contiEqIdx] +=
+                volVars.density()*volVars.porosity();
+            //storage term of the transport equation - massfractions
+            result[transEqIdx] +=
+                volVars.density() * volVars.massFrac(comp1Idx) * volVars.porosity();
+        }
+        else
+        {
+            // storage term of continuity equation- molefractions
+            result[contiEqIdx] += 0.0;
+                  //volVars.molarDensity()*volVars.porosity();
+            // storage term of the transport equation - molefractions
+            result[transEqIdx] +=
+                volVars.molarDensity()*volVars.moleFrac(comp1Idx) *
+                volVars.porosity();
+        }
 
     }
 
@@ -177,27 +186,40 @@ public:
        const VolumeVariables &dn =
            this->curVolVars_(fluxVars.downstreamIdx());
 
-        // total mass flux
-       //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
-        flux[contiEqIdx] =
-            fluxVars.KmvpNormal() *
-            ((     upwindAlpha)*up.density()/up.viscosity()
-             +
-             ((1 - upwindAlpha)*dn.density()/dn.viscosity()));
+        if(moleMass > 0)
+        {
+            // total mass flux - massfraction
+            //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
+            flux[contiEqIdx] +=
+               fluxVars.KmvpNormal() *
+               ((     upwindAlpha)*up.density()/up.viscosity()
+                +
+                ((1 - upwindAlpha)*dn.density()/dn.viscosity()));
 
-        // advective flux of the second component -molefraction
-//       flux[transEqIdx] +=
-//           fluxVars.KmvpNormal() *
-//           ((    upwindAlpha)*up.concentration(comp1Idx)/up.viscosity()
-//            +
-//            (1 - upwindAlpha)*dn.concentration(comp1Idx)/dn.viscosity());
+            // advective flux of the second component - massfraction
+            flux[transEqIdx] +=
+               fluxVars.KmvpNormal() *
+               ((    upwindAlpha)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
+                +
+                (1 - upwindAlpha)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
+        }
+        else
+        {
+            // total mass flux - molefraction
+            //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
+            flux[contiEqIdx] +=
+               fluxVars.KmvpNormal() *
+               ((     upwindAlpha)*up.molarDensity()/up.viscosity()
+                +
+                ((1 - upwindAlpha)*dn.molarDensity()/dn.viscosity()));
 
-        // advective flux of the second component - massfraction
-        flux[transEqIdx] +=
-            fluxVars.KmvpNormal() *
-            ((    upwindAlpha)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
-             +
-             (1 - upwindAlpha)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
+            // advective flux of the second component -molefraction
+            flux[transEqIdx] +=
+               fluxVars.KmvpNormal() *
+               ((    upwindAlpha)*up.molarDensity() * up.moleFrac(comp1Idx)/up.viscosity()
+                +
+                (1 - upwindAlpha)*dn.molarDensity() * dn.moleFrac(comp1Idx)/dn.viscosity());
+        }
 
     }
 
@@ -211,21 +233,31 @@ public:
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         Scalar tmp(0);
+
         // diffusive flux of second component
-      tmp -=
-           fluxVars.porousDiffCoeff() *
-           (fluxVars.concentrationGrad(comp1Idx) * fluxVars.face().normal);
+        if(moleMass > 0)
+        {
+            // diffusive flux of the second component - massfraction
+            //+ geht besser, aber mit - geht das gekoppelte besser?!
+            tmp = - fluxVars.porousDiffCoeff() * fluxVars.densityAtIP()*
+              (fluxVars.massFracGrad(comp1Idx) * fluxVars.face().normal);
 
-       // dispersive flux of second component
-       Vector normalDisp;
-       fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-       tmp -=
-           (normalDisp * fluxVars.concentrationGrad(comp1Idx));
+            flux[transEqIdx] += tmp;// * FluidSystem::molarMass(comp1Idx);
+        }
+        else
+        {
+            // diffusive flux of the second component - molefraction
+            tmp = - fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP()*
+               (fluxVars.moleFracGrad(comp1Idx) * fluxVars.face().normal);
 
-       //molar
-//       flux[transEqIdx] += tmp;
-       //transform to mass fractions
-       flux[transEqIdx] += tmp * FluidSystem::molarMass(comp1Idx);
+            // dispersive flux of second component - molefraction
+//            Vector normalDisp;
+//            fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+//            tmp -= fluxVars.molarDensityAtIP()*
+//                (normalDisp * fluxVars.moleFracGrad(comp1Idx));
+
+           flux[transEqIdx] += tmp;
+        }
     }
     /*!
      * \brief Calculate the source term of the equation
@@ -235,13 +267,238 @@ public:
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
-        this->problem_().boxSDSource(q,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
-                                     localVertexIdx,
-                                     this->curVolVars_());
+        this->problem_().source(q,
+                                this->elem_(),
+                                this->fvElemGeom_(),
+                                localVertexIdx);
     }
     
+     void evalBoundary_()
+    {
+        ParentType::evalBoundary_();
+
+        if (this->bcTypes_().hasOutflow())
+       {
+           evalOutflow_();
+       }
+
+        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+        typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+        const ReferenceElement &refElem = ReferenceElements::general(this->elem_().geometry().type());
+
+        // loop over vertices of the element
+        for (int idx = 0; idx < this->fvElemGeom_().numVertices; idx++)
+        {
+            // consider only SCVs on the boundary
+            if (this->fvElemGeom_().subContVol[idx].inner)
+                continue;
+            int numberOfOuterFaces = 0;
+
+            // evaluate boundary conditions for the intersections of
+            // the current element
+            IntersectionIterator isIt = this->gridView_().ibegin(this->elem_());
+            const IntersectionIterator &endIt = this->gridView_().iend(this->elem_());
+            for (; isIt != endIt; ++isIt)
+            {
+                // handle only intersections on the boundary
+                if (!isIt->boundary())
+                    continue;
+
+                // assemble the boundary for all vertices of the current face
+                const int faceIdx = isIt->indexInInside();
+                const int numFaceVertices = refElem.size(faceIdx, 1, dim);
+
+                // loop over the single vertices on the current face
+                for (int faceVertIdx = 0; faceVertIdx < numFaceVertices; ++faceVertIdx)
+                {
+                    const int elemVertIdx = refElem.subEntity(faceIdx, 1, faceVertIdx, dim);
+                    // only evaluate, if we consider the same face vertex as in the outer
+                    // loop over the element vertices
+                    if (elemVertIdx != idx)
+                        continue;
+
+                    if (boundaryHasCoupling_(this->bcTypes_(idx)))
+                    {
+                        const int boundaryFaceIdx = this->fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
+
+                        asImp_()->evalCouplingVertex_(isIt, elemVertIdx, boundaryFaceIdx);
+                    }
+
+                    // count the number of outer faces to determine, if we are on
+                    // a corner point and if an interpolation should be done
+                    numberOfOuterFaces++;
+                }
+            } // end loop over intersections
+
+            if (numberOfOuterFaces == 2 && this->fvElemGeom_().numVertices == 4)
+                // do interpolation at corners of the grid
+                interpolateCornerPoints_(idx);
+        } // end loop over vertices
+    }
+
+protected:
+     /*!
+         * \brief Add all Outflow boundary conditions to the local
+         *        residual.
+         */
+        void evalOutflow_()
+        {
+            Dune::GeometryType geoType = this->elem_().geometry().type();
+
+            typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+            typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+            const ReferenceElement &refElem = ReferenceElements::general(geoType);
+
+            IntersectionIterator isIt = this->gridView_().ibegin(this->elem_());
+            const IntersectionIterator &endIt = this->gridView_().iend(this->elem_());
+            for (; isIt != endIt; ++isIt)
+            {
+                // handle only faces on the boundary
+                if (!isIt->boundary())
+                    continue;
+
+                // Assemble the boundary for all vertices of the current
+                // face
+                int faceIdx = isIt->indexInInside();
+                int numFaceVerts = refElem.size(faceIdx, 1, dim);
+                for (int faceVertIdx = 0;
+                     faceVertIdx < numFaceVerts;
+                     ++faceVertIdx)
+                {
+                    int elemVertIdx = refElem.subEntity(faceIdx,
+                                                        1,
+                                                        faceVertIdx,
+                                                        dim);
+
+                    int boundaryFaceIdx =
+                        this->fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
+
+                    // add the residual of all vertices of the boundary
+                    // segment
+                    evalOutflowSegment_(isIt,
+                                        elemVertIdx,
+                                        boundaryFaceIdx);
+                }
+            }
+        }
+
+        /*!
+        * \brief Add Outflow boundary conditions for a single sub-control
+        *        volume face to the local residual.
+        */
+       void evalOutflowSegment_(const IntersectionIterator &isIt,
+                                int scvIdx,
+                                int boundaryFaceIdx)
+       {
+           // temporary vector to store the neumann boundary fluxes
+           PrimaryVariables flux(0.0);
+           const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
+
+           // deal with neumann boundaries
+           if (bcTypes.hasOutflow())
+           {
+               const BoundaryVariables boundaryVars(this->problem_(),
+                                                    this->elem_(),
+                                                    this->fvElemGeom_(),
+                                                    boundaryFaceIdx,
+                                                    this->curVolVars_(),
+                                                    scvIdx);
+
+               const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
+
+               // mass balance
+               if (bcTypes.isOutflow(contiEqIdx))
+               {
+                   if(moleMass > 0)
+                   {
+                       flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity();
+                   }
+                   else
+                   {
+                       flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity();
+                   }
+               }
+
+               // component transport
+               if (bcTypes.isOutflow(transEqIdx))
+               {
+                   if(moleMass > 0)
+                   {
+                       // advective flux
+                       flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
+                                        *vertVars.fluidState().massFrac(phaseIdx, comp1Idx);
+
+                       // diffusive flux of comp1 component in phase0
+                       Scalar tmp = -boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP()
+                                        *(boundaryVars.massFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
+                       flux[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
+                   }
+                   else
+                   {
+                       // advective flux
+                       flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
+                                       *vertVars.fluidState().moleFrac(phaseIdx, comp1Idx);
+
+                       // diffusive flux of comp1 component in phase0
+                       Scalar tmp = -boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP()
+                                        *(boundaryVars.moleFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
+                       flux[transEqIdx] += tmp;
+                   }
+               }
+
+               this->residual_[scvIdx] += flux;
+           }
+       }
+
+     void evalCouplingVertex_(const IntersectionIterator &isIt,
+                            const int scvIdx,
+                            const int boundaryFaceIdx)
+     {
+         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
+         // set pressure as part of the momentum coupling
+         if (this->bcTypes_(scvIdx).isCouplingOutflow(contiEqIdx))
+         {
+             this->residual_[scvIdx][contiEqIdx] = volVars.pressure();
+         }
+
+         if (this->bcTypes_(scvIdx).isCouplingOutflow(transEqIdx))
+         {
+             if(moleMass > 0)
+                 this->residual_[scvIdx][transEqIdx] = volVars.fluidState().massFrac(phaseIdx, comp1Idx);
+             else
+                 this->residual_[scvIdx][transEqIdx] = volVars.fluidState().moleFrac(phaseIdx, comp1Idx);
+         }
+     }
+
+     /*!
+          * \brief Interpolate the corner points of the grid.
+          */
+         void interpolateCornerPoints_(const int idx)
+         {
+     //        for (int eqnIdx=0; eqnIdx<numEq; ++eqnIdx)
+     //        {
+     //            //do not interpolate in case of Beavers-Joseph or Dirichlet condition for coupling interface
+     //            if (boundaryHasCoupling_(this->bcTypes_(idx)))
+     //                continue;
+     //
+     //            this->residual_[idx][eqnIdx] = this->curPrimaryVars_(0)[eqnIdx]+this->curPrimaryVars_(3)[eqnIdx]
+     //                                                -this->curPrimaryVars_(1)[eqnIdx]-this->curPrimaryVars_(2)[eqnIdx];
+     //        }
+         }
+
+     /*!
+          * \brief Check if one of the boundary conditions is coupling.
+          */
+     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
+     {
+         bool hasCoupling = false;
+         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+             if (bcTypes.isCouplingInflow(eqIdx) || bcTypes.isCouplingOutflow(eqIdx))
+                 hasCoupling = true;
+
+         return hasCoupling;
+     }
+
     Implementation *asImp_()
     { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const

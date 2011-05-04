@@ -58,6 +58,8 @@ class OnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
         comp1Idx = Indices::comp1Idx,
     };
 
+    static const int moleMass = GET_PROP_VALUE(TypeTag, PTAG(MoleMass));
+
 public:
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
@@ -75,17 +77,23 @@ public:
 
         temperature_ = temperature;
 
-        phasePressure_ = primaryVars[pressureIdx];
-        x1_ = primaryVars[x1Idx]; //mole or mass fraction of component 2
-        Scalar M0 = FluidSystem::molarMass(comp0Idx);
-        Scalar M1 = FluidSystem::molarMass(comp1Idx);
-        //meanMolarMass if x1_ is a massfraction
-        meanMolarMass_ = M0*M1/(M1 + (1-x1_)*(M0 - M1));
+        phasePressure_ =  primaryVars[pressureIdx];
+        x1_ = primaryVars[x1Idx]; //mole or mass fraction of component 1
 
-        //meanMolarMass if x1_ is a molefraction
-//        meanMolarMass_ =
-//            (1 - x1_)*FluidSystem::molarMass(comp0Idx) +
-//            (x1_    )*FluidSystem::molarMass(comp1Idx);
+        if(moleMass > 0) //moleMass=1 means mass-fraction formulation
+        {
+            Scalar M0 = FluidSystem::molarMass(comp0Idx);
+            Scalar M1 = FluidSystem::molarMass(comp1Idx);
+            //meanMolarMass if x1_ is a massfraction
+            meanMolarMass_ = M0*M1/(M1 + (1-x1_)*(M0 - M1));
+        }
+        else //moleMass=0 means mole-fraction formulation
+        {
+            //meanMolarMass if x1_ is a molefraction
+            meanMolarMass_ =
+            (1 - x1_)*FluidSystem::molarMass(comp0Idx) +
+            (x1_    )*FluidSystem::molarMass(comp1Idx);
+        }
 
         density_ = FluidSystem::phaseDensity(phaseIdx, temperature_, phasePressure_, *this);
         molarDensity_ = density_ / meanMolarMass_;
@@ -99,14 +107,6 @@ public:
     }
 
     /*!
-     * \brief Returns the saturation of a phase.
-     *
-     * \param phaseIdx The index of the considered phase
-     */
-    Scalar saturation(int phaseIndex) const
-    { return (phaseIdx == phaseIndex)?1.0:0.0; };
-
-    /*!
      * \brief Returns the molar fraction of a component in a fluid phase.
      *
      * \param phaseIdx The index of the considered phase
@@ -117,23 +117,29 @@ public:
         // we are a single phase model!
         if (phaseIndex != phaseIdx) return 0.0;
 
-        ///if x1_ is a massfraction
-        Scalar moleFrac1(x1_);
-        moleFrac1 *= meanMolarMass_/FluidSystem::molarMass(comp1Idx);
+        if(moleMass > 0) //moleMass=1 means mass-fraction formulation
+        {
+            ///if x1_ is a massfraction
+            Scalar moleFrac1(x1_);
+            moleFrac1 *= meanMolarMass_/FluidSystem::molarMass(comp1Idx);
 
-        if (compIdx==comp0Idx)
-            return 1-moleFrac1;
-        else if (compIdx==comp1Idx)
-            return moleFrac1;
-        return 0.0;
-
-
-        //if x1_ is a molefraction
-//        if (compIdx==comp0Idx)
-//            return 1-x1_;
-//        else if (compIdx==comp1Idx)
-//            return x1_;
-//        return 0.0;
+            if (compIdx==comp0Idx)
+                return 1-moleFrac1;
+            else if (compIdx==comp1Idx)
+                return moleFrac1;
+            else
+                return 0.0;
+        }
+        else //moleMass=0 means mole-fraction formulation
+        {
+            //if x1_ is a molefraction
+            if (compIdx==comp0Idx)
+                return 1-x1_;
+            else if (compIdx==comp1Idx)
+                return x1_;
+            else
+                return 0.0;
+        }
     }
 
     /*!
@@ -169,19 +175,23 @@ public:
     {
         if (phaseIndex != phaseIdx)
             return 0;
-        //if x1_ is amassfraction
-        if (compIdx==comp0Idx)
-            return 1-x1_;
-        else if (compIdx==comp1Idx)
-            return x1_;
-        return 0.0;
-
-        //if x1_ is a molefraction
-//        return
-//            moleFrac(phaseIndex, compIdx)*
-//            FluidSystem::molarMass(compIdx)
-//            /
-//            meanMolarMass_;
+        if(moleMass > 0)
+        {
+            //if x1_ is a mass fraction
+            if (compIdx==comp0Idx)
+                return 1-x1_;
+            else if (compIdx==comp1Idx)
+                return x1_;
+            return 0.0;
+        }
+        else
+        {
+            //if x1_ is a molefraction
+            return
+                moleFrac(phaseIndex, compIdx)*
+                FluidSystem::molarMass(compIdx)
+                / meanMolarMass_;
+        }
     }
 
     /*!
@@ -197,6 +207,12 @@ public:
         return density_;
     }
 
+    /*!
+     * \brief Returns the molar density of a phase \f$\mathrm{[mole/m^3]}\f$.
+     *
+     * \param phaseIdx The index of the considered phase
+     *
+     */
     Scalar molarDensity(int phaseIndex) const
     {
         if (phaseIndex != phaseIdx)

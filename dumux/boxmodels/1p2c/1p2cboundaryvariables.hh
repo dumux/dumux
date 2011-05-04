@@ -91,21 +91,33 @@ public:
 
             densityAtIP_ = Scalar(0);
             viscosityAtIP_ = Scalar(0);
-            pressureAtIP_ = Scalar(0);
             molarDensityAtIP_ = Scalar(0);
             potentialGrad_ = Scalar(0);
             concentrationGrad_ = Scalar(0);
-            molarConcGrad_ = Scalar(0);
+            moleFracGrad_ = Scalar(0);
+            massFracGrad_ = Scalar(0);
             K_= Scalar(0);
 
         calculateBoundaryValues_(problem, element, elemDat);
     };
 
+    /*!
+    * \brief Return the pressure potential multiplied with the
+    *        intrinsic permeability which goes from vertex i to
+    *        vertex j.
+    *
+    * Note that the length of the face's normal is the area of the
+    * phase, so this is not the actual velocity by the integral of
+    * the velocity over the face's area. Also note that the phase
+    * mobility is not yet included here since this would require a
+    * decision on the upwinding approach (which is done in the
+    * actual model).
+    */
     Scalar KmvpNormal() const
     { return KmvpNormal_; }
 
     /*!
-     * \brief The binary diffusion coefficient for each fluid phase.
+     * \brief The binary diffusion coefficient for each fluid phase in the porous medium.
      */
     Scalar porousDiffCoeff() const
     { return porousDiffCoeff_; };
@@ -133,15 +145,48 @@ public:
 
     /*!
      * \brief The concentration gradient of a component in a phase.
+     *
+     * \param compIdx The index of the considered component
      */
-    const ScalarGradient &concentrationGrad() const
-    { return concentrationGrad_; };
+    const ScalarGradient &concentrationGrad(int compIdx) const
+    {
+        if (compIdx != 1)
+        { DUNE_THROW(Dune::InvalidStateException,
+                     "The 1p2c model is supposed to need "
+                     "only the concentration gradient of "
+                     "the second component!"); }
+        return concentrationGrad_;
+    };
 
     /*!
      * \brief The molar concentration gradient of a component in a phase.
+     *
+     * \param compIdx The index of the considered component
      */
-    const ScalarGradient &molarConcGrad(int compIdx) const
-    { return molarConcGrad_; };
+    const ScalarGradient &moleFracGrad(int compIdx) const
+    {
+        if (compIdx != 1)
+        { DUNE_THROW(Dune::InvalidStateException,
+         "The 1p2c model is supposed to need "
+         "only the concentration gradient of "
+         "the second component!"); }
+        return moleFracGrad_;
+    };
+
+    /*!
+      * \brief The mass fraction gradient of a component in a phase.
+      *
+      * \param compIdx The index of the considered component
+      */
+     const ScalarGradient &massFracGrad(int compIdx) const
+     {
+         if (compIdx != 1)
+          { DUNE_THROW(Dune::InvalidStateException,
+                   "The 1p2c model is supposed to need "
+                   "only the concentration gradient of "
+                   "the second component!"); }
+         return massFracGrad_;
+     };
 
     const FVElementGeometry &fvElemGeom() const
     { return fvElemGeom_; }
@@ -151,6 +196,12 @@ public:
 
 protected:
 
+    /*!
+    * \brief Transforms scalar permeability into tensor.
+    *
+    *        \param k scalar permeability
+    *
+    */
     void calculateK_(Scalar k)
     {
         K_[0][0] = K_[1][1] = k;
@@ -160,7 +211,13 @@ protected:
     {
        K_ = K;
     }
-
+    /*!
+   * \brief Calculation of the pressure and concentration gradients
+   *
+   *        \param problem The considered problem file
+   *        \param element The considered element of the grid
+   *        \param elemDat The parameters stored in the considered element
+   */
     void calculateBoundaryValues_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemDat)
@@ -189,12 +246,15 @@ protected:
 
             tmp = feGrad;
             tmp *= elemDat[idx].fluidState().moleFrac(phaseIdx, comp1Idx);
-            molarConcGrad_ += tmp;
+            moleFracGrad_ += tmp;
 
-                pressureAtIP_ += elemDat[idx].pressure()*boundaryFace_->shapeValue[idx];
-                densityAtIP_ += elemDat[idx].density()*boundaryFace_->shapeValue[idx];
-                viscosityAtIP_ += elemDat[idx].viscosity()*boundaryFace_->shapeValue[idx];
-                molarDensityAtIP_ += elemDat[idx].molarDensity()*boundaryFace_->shapeValue[idx];
+            tmp = feGrad;
+            tmp *= elemDat[idx].fluidState().massFrac(phaseIdx, comp1Idx);
+            massFracGrad_ += tmp;
+
+            densityAtIP_ += elemDat[idx].density()*boundaryFace_->shapeValue[idx];
+            viscosityAtIP_ += elemDat[idx].viscosity()*boundaryFace_->shapeValue[idx];
+            molarDensityAtIP_ += elemDat[idx].molarDensity()*boundaryFace_->shapeValue[idx];
         }
 
             tmp = problem.gravity();
@@ -220,10 +280,10 @@ protected:
     // gradients
     ScalarGradient potentialGrad_;
     ScalarGradient concentrationGrad_;
-    ScalarGradient molarConcGrad_;
+    ScalarGradient moleFracGrad_;
+    ScalarGradient massFracGrad_;
 
     // density of each face at the integration point
-    Scalar pressureAtIP_;
     Scalar densityAtIP_;
     Scalar viscosityAtIP_;
     Scalar molarDensityAtIP_;
