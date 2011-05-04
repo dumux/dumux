@@ -79,6 +79,8 @@ SET_TYPE_PROP(TissueTumorProblem,
               Dumux::TissueTumorSpatialParameters<TypeTag>);
 
 
+SET_INT_PROP(TissueTumorProblem, MoleMass, 0);
+
 // Disable gravity
 SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
 }
@@ -156,18 +158,18 @@ public:
         : ParentType(timeManager, gridView)
     {
         // calculate the injection volume
-        totalInjectionVolume_ = 0;
+        //totalInjectionVolume_ = 0;
         FVElementGeometry fvGeom;
         ElementIterator elemIt = gridView.template begin<0>();
         const ElementIterator endIt = gridView.template end<0>();
-        for (; elemIt != endIt; ++ elemIt) {
-            fvGeom.update(gridView, *elemIt);
-            for (int i = 0; i < fvGeom.numVertices; ++i) {
-                const GlobalPosition &pos = fvGeom.subContVol[i].global;
-                if (inInjectionVolume_(pos))
-                    totalInjectionVolume_ += fvGeom.subContVol[i].volume;
-            };
-        }
+//        for (; elemIt != endIt; ++ elemIt) {
+//            fvGeom.update(gridView, *elemIt);
+//            for (int i = 0; i < fvGeom.numVertices; ++i) {
+//                const GlobalPosition &pos = fvGeom.subContVol[i].global;
+//                if (inInjectionVolume_(pos))
+//                    totalInjectionVolume_ += fvGeom.subContVol[i].volume;
+//            };
+//  }
     }
 
     /*!
@@ -247,13 +249,13 @@ public:
         //int globalIdx = this->model().vertexMapper().map(element, scvIdx, dim);
 
         //Scalar lambda = (globalPos[1])/height_;
-        if (globalPos[0] < eps_ ) {
-            values[contiEqIdx] = -3.8676e-2; // [kg/(m^2 * s)]
+//        if (globalPos[0] < eps_ ) {
+//            values[contiEqIdx] = -3.8676e-2; // [kg/(m^2 * s)]
 
             //values[transEqIdx] = -4.35064e-4; // [mol/(m^2*s)
             //Robin-Boundary
             //values[transEqIdx] = (*this->model().curSolFunction())[globalIdx][transEqIdx];
-        }
+//        }
     }
 
     // \}
@@ -277,25 +279,25 @@ public:
                 const GlobalPosition &globalPos) const
     {
         values = Scalar(0.0);
-        if (inInjectionVolume_(globalPos)) {
-            // total volumetric injection rate in ml/h
-            Scalar injRateVol = 0.1;
-            // convert to m^3/s
-            injRateVol *= 1e-6/3600;
-            // total mass injection rate. assume a density of 1030kg/m^3
-            Scalar injRateMass = injRateVol*1030.0;
-
-            // trail concentration in injected fluid in [mol/ml]
-            Scalar trailInjRate = 1e-5;
-            // convert to mol/m^3
-            trailInjRate *= 1e6;
-            // convert to mol/s
-            trailInjRate *= injRateVol;
+//        if (inInjectionVolume_(globalPos)) {
+//            // total volumetric injection rate in ml/h
+//            Scalar injRateVol = 0.1;
+//            // convert to m^3/s
+//            injRateVol *= 1e-6/3600;
+//            // total mass injection rate. assume a density of 1030kg/m^3
+//            Scalar injRateMass = injRateVol*1030.0;
+//
+//            // trail concentration in injected fluid in [mol/ml]
+//            Scalar trailInjRate = 1e-5;
+//            // convert to mol/m^3
+//            trailInjRate *= 1e6;
+//            // convert to mol/s
+//            trailInjRate *= injRateVol;
 
             // source term of the total mass
-            values[contiEqIdx] = injRateMass / totalInjectionVolume_; // [kg/(s*m^3)]
-            values[transEqIdx] = trailInjRate / totalInjectionVolume_; // [mol/(s*m^3)]
-        }
+//            values[contiEqIdx] = injRateMass / totalInjectionVolume_; // [kg/(s*m^3)]
+//            values[transEqIdx] = trailInjRate / totalInjectionVolume_; // [mol/(s*m^3)]
+//        }
     }
 
     /*!
@@ -324,12 +326,16 @@ private:
             10e-3 < globalPos[0] && globalPos[0] < 12e-3 &&
             10e-3 < globalPos[1] && globalPos[1] < 12e-3;
     };
+
+
     // the internal method for the initial condition
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-        values[pressureIdx] = 0; //initial condition for the pressure
-        values[x1Idx] = 0; //initial condition for the trail molefraction
+        values[pressureIdx] = 1e5; //initial condition for the pressure
+        values[x1Idx] = 0.0; //initial condition for the trail molefraction
+        if(globalPos[0] > 0.4 && globalPos[0] < 0.6 && globalPos[1] > 0.4 && globalPos[1] < 0.6)
+            values[x1Idx] = 0.6;
     }
 
     Scalar totalInjectionVolume_;
