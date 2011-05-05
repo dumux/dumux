@@ -136,8 +136,8 @@ public:
         else
         {
             // storage term of continuity equation- molefractions
-            result[contiEqIdx] += 0.0;
-                  //volVars.molarDensity()*volVars.porosity();
+            //careful: molarDensity changes with moleFrac! 
+            result[contiEqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
             result[transEqIdx] +=
                 volVars.molarDensity()*volVars.moleFrac(comp1Idx) *
@@ -238,7 +238,6 @@ public:
         if(moleMass > 0)
         {
             // diffusive flux of the second component - massfraction
-            //+ geht besser, aber mit - geht das gekoppelte besser?!
             tmp = - fluxVars.porousDiffCoeff() * fluxVars.densityAtIP()*
               (fluxVars.massFracGrad(comp1Idx) * fluxVars.face().normal);
 
