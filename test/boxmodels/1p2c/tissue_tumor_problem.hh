@@ -78,8 +78,8 @@ SET_TYPE_PROP(TissueTumorProblem,
               SpatialParameters,
               Dumux::TissueTumorSpatialParameters<TypeTag>);
 
-
-SET_INT_PROP(TissueTumorProblem, MoleMass, 0);
+//Define whether mole(0) or mass (1) fractions are used
+SET_INT_PROP(TissueTumorProblem, MoleMass, 1);
 
 // Disable gravity
 SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
