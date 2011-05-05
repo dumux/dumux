@@ -216,9 +216,6 @@ public:
         volVars.update(problem_(), element, fvElemGeom_(), false);
         curVolVarsPtr_ = &volVars;
 
-        residual_.resize(fvElemGeom_().numVertices);
-        residual_ = 0;
-
         asImp_().evalStorage_();
     }
 
@@ -512,6 +509,9 @@ protected:
      */
     void evalStorage_()
     {
+        storageTerm_.resize(fvElemGeom_().numVertices);
+        storageTerm_ = 0;
+
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
         for (int i=0; i < fvElemGeom_().numVertices; i++) {
