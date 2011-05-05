@@ -27,6 +27,9 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include "decoupledproperties.hh"
 
+// for  parallelization
+#include <dumux/parallel/elementhandles.hh>
+
 /**
  * @file
  * @brief  Base class holding the variables for sequential models.
@@ -229,6 +232,17 @@ private:
         return;
     }
 public:
+
+    void communicatePressure()
+    {
+#if HAVE_MPI
+        ElementHandleAssign<typename ScalarSolutionType::block_type, ScalarSolutionType, ElementMapper> elementHandle(pressure_, elementMapper_);
+        gridView_.communicate(elementHandle,
+//                Dune::Overlap_All_Interface,
+                Dune::InteriorBorder_All_Interface,
+                Dune::BackwardCommunication);
+#endif
+    }
 
     //! Return pressure vector
     const ScalarSolutionType& pressure() const

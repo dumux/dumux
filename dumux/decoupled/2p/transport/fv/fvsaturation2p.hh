@@ -295,6 +295,12 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt
             != eItEnd; ++eIt)
     {
+#if HAVE_MPI
+        if (eIt->partitionType() == Dune::GhostEntity || eIt->partitionType() == Dune::OverlapEntity)
+        {
+            continue;
+        }
+#endif
         //
         GlobalPosition globalPos = eIt->geometry().center();
 
@@ -1014,6 +1020,7 @@ void FVSaturation2P<TypeTag>::initialize()
         problem_.variables().saturation()[problem_.variables().index(*eIt)]
                 = problem_.initSat(globalPos, *eIt);
     }
+
     return;
 }
 

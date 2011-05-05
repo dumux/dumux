@@ -203,11 +203,17 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
     ElementIterator eItEnd = this->problem().gridView().template end<0>();
     for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-       //
-        GlobalPosition globalPos = eIt->geometry().center();
+#if HAVE_MPI
+        if (eIt->partitionType() == Dune::GhostEntity || eIt->partitionType() == Dune::OverlapEntity)
+        {
+            continue;
+        }
+#endif
 
         // cell index
         int globalIdxI = this->problem().variables().index(*eIt);
+
+        GlobalPosition globalPos = eIt->geometry().center();
 
         Scalar pressI = this->problem().variables().pressure()[globalIdxI];
         Scalar pcI = this->problem().variables().capillaryPressure(globalIdxI);

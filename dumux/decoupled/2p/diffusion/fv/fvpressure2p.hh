@@ -33,6 +33,7 @@
 #include "dumux/common/pardiso.hh"
 #include <dumux/decoupled/2p/2pproperties.hh>
 
+
 /**
  * @file
  * @brief  Finite Volume Discretization of a pressure equation.
@@ -344,11 +345,19 @@ void FVPressure2P<TypeTag>::assemble(bool first)
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
+        // cell index
+        int globalIdxI = problem_.variables().index(*eIt);
+
+#if HAVE_MPI
+        if (eIt->partitionType() == Dune::GhostEntity || eIt->partitionType() == Dune::OverlapEntity)
+        {
+            continue;
+        }
+#endif
+
         // get global coordinate of cell center
         const GlobalPosition& globalPos = eIt->geometry().center();
 
-        // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
 
         // cell volume, assume linear map here
         Scalar volume = eIt->geometry().volume();
@@ -548,6 +557,14 @@ void FVPressure2P<TypeTag>::assemble(bool first)
 
                 // set off-diagonal entry
                 A_[globalIdxI][globalIdxJ] = -entry;
+
+//                if (eIt->partitionType() == Dune::OverlapEntity)
+//                {
+//                    A_[globalIdxI][globalIdxI] *= 0.5;
+//                    A_[globalIdxI][globalIdxJ] *= 0.5;
+//
+//                    f_[globalIdxI] *= 0.5;
+//                }
             }
 
             // boundary face
@@ -813,12 +830,16 @@ void FVPressure2P<TypeTag>::solve()
     if (verboseLevelSolver)
     std::cout << "FVPressure2P: solve for pressure" << std::endl;
 
+//    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
+//    printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
+
     Solver solver(problem_);
     solver.solve(A_, problem_.variables().pressure(), f_);
 
-    //                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-    //                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
-    //                printvector(std::cout, (problem_.variables().pressure()), "pressure", "row", 200, 1, 3);
+//                    printvector(std::cout, (problem_.variables().pressure()), "pressure", "row", 200, 1, 3);
+
+    //for parallel use
+//    problem_.variables().communicatePressure();
 
     return;
 }
@@ -826,6 +847,15 @@ void FVPressure2P<TypeTag>::solve()
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
 {
+    //for parallel use
+//    printvector(std::cout, (problem_.variables().pressure()), "pressure", "row", 200, 1, 3);
+//    problem_.variables().communicatePressure();
+//    printvector(std::cout, (problem_.variables().pressure()), "pressureComm", "row", 200, 1, 3);
+
+//    printvector(std::cout, (problem_.variables().saturation()), "sat", "row", 200, 1, 3);
+    problem_.variables().communicateTransportedQuantity();
+//    printvector(std::cout, (problem_.variables().saturation()), "satComm", "row", 200, 1, 3);
+
     FluidState fluidState;
 
     // iterate through leaf grid an evaluate c0 at cell center

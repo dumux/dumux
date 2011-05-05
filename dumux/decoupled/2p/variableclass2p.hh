@@ -73,6 +73,8 @@ private:
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
 
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
+
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -264,6 +266,16 @@ public:
     ////////////////////////////////////////////////////////////
     // functions returning the vectors of the primary variables
     ////////////////////////////////////////////////////////////
+
+    void communicateTransportedQuantity()
+    {
+#if HAVE_MPI
+        ElementHandleAssign<typename ScalarSolutionType::block_type, ScalarSolutionType, ElementMapper> elementHandle(saturation_, this->elementMapper());
+        this->gridView().communicate(elementHandle,
+                Dune::InteriorBorder_All_Interface,
+                Dune::BackwardCommunication);
+#endif
+    }
 
     //! Return the vector of the transported quantity, which is the saturation for an IMPES scheme
     ScalarSolutionType& transportedQuantity()
