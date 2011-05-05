@@ -320,7 +320,7 @@ public:
             Scalar alpha = (1 + 1.5/height);
 
             // hydrostatic pressure scaled by alpha
-            values[pwIdx] = - alpha*densityW*this->gravity()[1]*depth;
+            values[pwIdx] = 1e5 - alpha*densityW*this->gravity()[1]*depth;
             values[SnIdx] = 0.0;
         }
         else if (onRightBoundary_(globalPos))
@@ -328,7 +328,7 @@ public:
             Scalar depth = this->bboxMax()[1] - globalPos[1];
 
             // hydrostatic pressure
-            values[pwIdx] = -densityW*this->gravity()[1]*depth;
+            values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
             values[SnIdx] = 0.0;
         }
         else
@@ -375,9 +375,16 @@ public:
     void initial(PrimaryVariables &values,
                  const GlobalPosition &globalPos) const
     {
-        // no DNAPL, some random pressure
-        values[pwIdx] = 1e5;
+        Scalar depth = this->bboxMax()[1] - globalPos[1];
+        Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,
+                                                        wPhaseIdx,
+                                                        temperature_,
+                                                        1e5);
+   
+        // hydrostatic pressure
+        values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
         values[SnIdx] = 0.0;
+
     }
     // \}
 

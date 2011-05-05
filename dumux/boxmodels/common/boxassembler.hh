@@ -1,4 +1,3 @@
-// $Id$
 /*****************************************************************************
  *   Copyright (C) 2010-2011 by Andreas Lauser                               *
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
@@ -184,6 +183,7 @@ public:
      */
     void assemble()
     {
+        bool printReassembleStatistics = enablePartialReassemble && !reuseMatrix_;
         int succeeded;
         try {
             assemble_();
@@ -204,28 +204,22 @@ public:
                        "A process did not succeed in linearizing the system");
         };
 
-        if (enablePartialReassemble)
+        if (printReassembleStatistics)
         {
-            // if partial reassembly is enabled and the current
-            // linearization is not recycled, print some statistics at
-            // the end of the iteration
-            if (!reuseMatrix_) {
-                greenElems_ = gridView_().comm().sum(greenElems_);
-                reassembleAccuracy_ = gridView_().comm().max(nextReassembleAccuracy_);
-                
-                problem_().newtonController().endIterMsg()
-                    << ", reassembled "
-                    << totalElems_ - greenElems_ << "/" << totalElems_
-                    << " (" << 100*Scalar(totalElems_ - greenElems_)/totalElems_ << "%) elems @accuracy="
-                    << reassembleAccuracy_;
-            }
-
-            // reset all vertex colors to green
-            for (int i = 0; i < vertexColor_.size(); ++i) {
-                vertexColor_[i] = Green;
-            }
+            greenElems_ = gridView_().comm().sum(greenElems_);
+            reassembleAccuracy_ = gridView_().comm().max(nextReassembleAccuracy_);
+            
+            problem_().newtonController().endIterMsg()
+                << ", reassembled "
+                << totalElems_ - greenElems_ << "/" << totalElems_
+                << " (" << 100*Scalar(totalElems_ - greenElems_)/totalElems_ << "%) elems @accuracy="
+                << reassembleAccuracy_;
         }
-
+        
+        // reset all vertex colors to green
+        for (int i = 0; i < vertexColor_.size(); ++i) {
+            vertexColor_[i] = Green;
+        }
     }
     
     /*!

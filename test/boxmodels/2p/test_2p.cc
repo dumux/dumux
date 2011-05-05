@@ -204,7 +204,12 @@ int main(int argc, char** argv)
         res[0] = 48*4;
         res[1] = 32*4;
         */
-        
+
+        /*
+        res[0] = 96;
+        res[1] = 64;
+        */
+
         res[0] = 48;
         res[1] = 32;
         
@@ -212,7 +217,7 @@ int main(int argc, char** argv)
         res[0] = 24;
         res[1] = 16;
         */
-        
+                
         /*
         res[0] = 6;
         res[1] = 4;
