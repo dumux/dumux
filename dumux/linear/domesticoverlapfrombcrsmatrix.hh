@@ -78,8 +78,7 @@ public:
     typedef std::map<ProcessRank, DomesticOverlapWithPeer> DomesticOverlapByRank;
     typedef std::vector<std::map<ProcessRank, BorderDistance> > DomesticOverlapByIndex;
 
-    typedef std::tuple<LocalIndex, PeerIndex, ProcessRank> LocalindexPeerindexPeerrank;
-    typedef std::list<LocalindexPeerindexPeerrank> BorderList;
+    typedef std::list<BorderIndex> BorderList;
 
     /*!
      * \brief Constructs the foreign overlap given a BCRS matrix and
@@ -390,9 +389,9 @@ protected:
                 IndexDistanceNpeers(globalIndices_.domesticToGlobal(localIdx),
                                     borderDistance,
                                     numPeers);
-
+            
+            // send all peer ranks which see the given index
             peersSendBuff_[peerRank].push_back(new MpiBuffer<int>(2*numPeers));
-
             typename std::map<ProcessRank, BorderDistance>::const_iterator it = foreignIndexOverlap.begin();
             typename std::map<ProcessRank, BorderDistance>::const_iterator endIt = foreignIndexOverlap.end();
             for (int j = 0; it != endIt; ++it, ++j)
@@ -455,7 +454,7 @@ protected:
                     domesticIdx = globalIndices_.numDomestic();
                     borderDistance_.resize(domesticIdx + 1, std::numeric_limits<int>::max());
                     domesticOverlapByIndex_.resize(domesticIdx + 1);
-
+                    
                     globalIndices_.addIndex(domesticIdx, globalIdx);
                     domesticOverlapByIndex_[domesticIdx][peerRank] = borderDistance;
                     domesticOverlapWithPeer_[peerRank].insert(domesticIdx);

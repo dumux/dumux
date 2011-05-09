@@ -94,8 +94,9 @@ int main(int argc, char** argv)
         Dune::FieldVector<int,dim> N(6); N[0] = 30;
         Dune::FieldVector<double ,dim> L(0);
         Dune::FieldVector<double,dim> H(60); H[0] = 300;
-        Grid grid(N,L,H);
-
+        Dune::FieldVector<bool,dim> periodic(false);
+        Grid grid(Dune::MPIHelper::getCommunicator(), H, N, periodic, /*overlap=*/1);
+            
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////

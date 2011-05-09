@@ -38,6 +38,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/oil.hh>
+#include <dumux/linear/impetbicgstabilu0solver.hh>
 
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
@@ -66,8 +67,8 @@ NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties, Tran
 // Set the grid type
 SET_PROP(IMPESTestProblem, Grid)
 {
-    //    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<2, 2> type;
+    typedef Dune::YaspGrid<2> type;
+    //typedef Dune::SGrid<2, 2> type;
 };
 
 // Set the problem property
@@ -84,6 +85,7 @@ SET_PROP(IMPESTestProblem, TransportModel)
 };
 SET_TYPE_PROP(IMPESTestProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
 SET_TYPE_PROP(IMPESTestProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, LinearSolver, Dumux::IMPETBiCGStabILU0Solver<TypeTag>);
 
 SET_PROP(IMPESTestProblem, PressureModel)
 {

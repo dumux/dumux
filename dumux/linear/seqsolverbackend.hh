@@ -54,27 +54,27 @@ NEW_PROP_TAG(PreconditionerIterations);
 
 SET_PROP_DEFAULT(LSVerbosity)
 {public:
-    static const int value = 0;
+    static constexpr int value = 0;
 };
 
 SET_PROP_DEFAULT(LSResidualReduction)
 {public:
-    static const double value = 1e-6;
+    static constexpr double value = 1e-6;
 };
 
 SET_PROP_DEFAULT(LSMaxIterations)
 {public:
-    static const int value = 500;
+    static constexpr int value = 500;
 };
 
 SET_PROP_DEFAULT(PreconditionerRelaxation)
 {public:
-    static const double value = 1.0;
+    static constexpr double value = 1.0;
 };
 
 SET_PROP_DEFAULT(PreconditionerIterations)
 {public:
-    static const int value = 1;
+    static constexpr int value = 1;
 };
 }
 

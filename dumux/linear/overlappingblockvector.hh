@@ -30,6 +30,7 @@
 #include <dune/istl/bvector.hh>
 
 #include <dumux/parallel/mpibuffer.hh>
+#include <dumux/common/valgrind.hh>
 
 namespace Dumux {
 

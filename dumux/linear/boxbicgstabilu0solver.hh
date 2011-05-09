@@ -26,6 +26,7 @@
 #ifndef DUMUX_BICGSTAB_ILU0_SOLVER_HH
 #define DUMUX_BICGSTAB_ILU0_SOLVER_HH
 
+#include <dumux/common/propertysystem.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/overlappingbcrsmatrix.hh>
 #include <dumux/linear/overlappingblockvector.hh>
@@ -65,7 +66,7 @@ class BoxBiCGStabILU0Solver
     typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
 
 public:
-    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize=3)
+    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize=1)
         : problem_(problem)
         , overlapSize_(overlapSize)
     {

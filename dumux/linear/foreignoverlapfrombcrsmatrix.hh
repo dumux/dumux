@@ -30,6 +30,8 @@
 #ifndef DUMUX_FOREIGN_OVERLAP_FROM_BCRS_MATRIX_HH
 #define DUMUX_FOREIGN_OVERLAP_FROM_BCRS_MATRIX_HH
 
+#include "borderindex.hh"
+
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -44,7 +46,6 @@
 #if HAVE_MPI
 #include <mpi.h>
 #endif // HAVE_MPI
-
 
 namespace Dumux {
 
@@ -68,16 +69,16 @@ public:
     typedef Index PeerIndex;
     typedef Index LocalIndex;
     typedef std::pair<LocalIndex, ProcessRank> IndexRank;
+    typedef std::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;
     typedef std::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
-    typedef std::list<IndexRank> SeedList;
+    typedef std::list<IndexRankDist> SeedList;
 
     typedef std::set<ProcessRank> PeerSet;
     typedef std::list<IndexDistanceNpeers> ForeignOverlapWithPeer;
     typedef std::map<ProcessRank, ForeignOverlapWithPeer> ForeignOverlapByRank;
     typedef std::vector<std::map<ProcessRank, BorderDistance> > ForeignOverlapByIndex;
 
-    typedef std::tuple<LocalIndex, PeerIndex, ProcessRank> LocalindexPeerindexPeerrank;
-    typedef std::list<LocalindexPeerindexPeerrank> BorderList;
+    typedef std::list<BorderIndex> BorderList;
 
     /*!
      * \brief Constructs the foreign overlap given a BCRS matrix and
@@ -110,7 +111,7 @@ public:
         // calculate the foreign overlap for the local partition,
         // i.e. find the distance of each row from the seed set.
         foreignOverlapByIndex_.resize(A.N());
-        extendForeignOverlap_(A, initialSeedList, 0, overlapSize);
+        extendForeignOverlap_(A, initialSeedList, overlapSize);
 
         // group foreign overlap by peer process rank
         groupForeignOverlapByRank_(); 
@@ -369,7 +370,7 @@ protected:
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it)
-            peerSet_.insert(it->second);
+            peerSet_.insert(std::get<1>(*it));
     }
     
     // calculate the local border indices given the initial seed list
@@ -378,11 +379,11 @@ protected:
         BorderList::const_iterator it = borderList.begin();
         BorderList::const_iterator endIt = borderList.end();
         for (; it != endIt; ++it) {
-            int localIdx = std::get<0>(*it);
-            int peerRank = std::get<2>(*it);
-            
-            initialSeedList.push_back(IndexRank(localIdx, peerRank));
-            borderIndices_.insert(localIdx);
+            initialSeedList.push_back(IndexRankDist(it->localIdx, 
+                                                    it->peerRank,
+                                                    it->borderDistance));
+            if (it->borderDistance == 0)
+                borderIndices_.insert(it->localIdx);
         };
     };
 
@@ -390,22 +391,32 @@ protected:
     // algorithm.
     void extendForeignOverlap_(const BCRSMatrix &A,
                                SeedList &seedList,
-                               int overlapDistance,
                                int overlapSize)
     {
         // add all processes in the seed rows of the current overlap
         // level
+        int minOverlapDistance = overlapSize*2;
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it) {
-            if (foreignOverlapByIndex_[it->first].count(it->second) == 0) {
-                foreignOverlapByIndex_[it->first][it->second] = overlapDistance;
+            int localIdx = std::get<0>(*it);
+            int peerRank = std::get<1>(*it);
+            int distance = std::get<2>(*it);
+            if (foreignOverlapByIndex_[localIdx].count(peerRank) == 0) {
+                foreignOverlapByIndex_[localIdx][peerRank] = distance;
             }
+            else {
+                foreignOverlapByIndex_[localIdx][peerRank] = 
+                    std::min(distance,
+                             foreignOverlapByIndex_[localIdx][peerRank]);
+            }                
+                
+            minOverlapDistance = std::min(minOverlapDistance, distance);
         }
 
         // if we have reached the maximum overlap distance, we're
         // finished and break the recursion
-        if (overlapSize <= overlapDistance)
+        if (minOverlapDistance >= overlapSize)
             return;
             
         // find the seed list for the next overlap level using the
@@ -413,10 +424,11 @@ protected:
         SeedList nextSeedList;
         it = seedList.begin();
         for (; it != endIt; ++it) {
-            int rowIdx = it->first;
-            int processIdx = it->second;
+            int rowIdx = std::get<0>(*it);
+            int peerRank = std::get<1>(*it);
+            int borderDist = std::get<2>(*it);
                 
-            // find all column indices in the row. The indices of the
+            // find all column indies in the row. The indices of the
             // columns are the additional indices of the overlap which
             // we would like to add
             typedef typename BCRSMatrix::ConstColIterator ColIterator;
@@ -427,19 +439,30 @@ protected:
                     
                 // if the process is already is in the overlap of the
                 // column index, ignore this column index!
-                if (foreignOverlapByIndex_[newIdx].count(processIdx) > 0)
+                if (foreignOverlapByIndex_[newIdx].count(peerRank) > 0)
                     continue;
-                    
-                // check whether the new index is already in the next seed list
-                IndexRank newPair(newIdx, processIdx);
-                if (std::find(nextSeedList.begin(), 
-                              nextSeedList.end(),
-                              newPair) != nextSeedList.end())
-                    continue; // we already have this pair                    
+                
+
+                // check whether the new index is already in the overlap
+                bool hasIndex = false;
+                typename SeedList::iterator sIt = nextSeedList.begin();
+                typename SeedList::iterator sEndIt = nextSeedList.end();
+                for (; sIt != sEndIt; ++sIt) {
+                    if (std::get<0>(*sIt) == newIdx && 
+                        std::get<1>(*sIt) == peerRank)
+                    {
+                        hasIndex = true;
+                        std::get<2>(*sIt) = std::min(std::get<2>(*sIt), borderDist + 1);
+                        break;
+                    }
+                }
+                if (hasIndex)
+                    continue; // we already have this index
 
                 // add the current processes to the seed list for the
                 // next overlap level
-                nextSeedList.push_back(newPair);
+                IndexRankDist newTuple(newIdx, peerRank, borderDist + 1);
+                nextSeedList.push_back(newTuple);
             }
         }
         
@@ -449,7 +472,6 @@ protected:
         // Perform the same excercise for the next overlap distance
         extendForeignOverlap_(A,
                               nextSeedList, 
-                              overlapDistance + 1, 
                               overlapSize);
     };
 

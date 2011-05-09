@@ -27,6 +27,8 @@
 #ifndef DUMUX_VERTEX_BORDER_LIST_FROM_GRID_HH
 #define DUMUX_VERTEX_BORDER_LIST_FROM_GRID_HH
 
+#include "borderindex.hh"
+
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -57,8 +59,7 @@ class VertexBorderListFromGrid : public Dune::CommDataHandleIF<VertexBorderListF
     typedef int Index;
     typedef Index LocalIndex;
     typedef Index PeerIndex;
-    typedef std::tuple<LocalIndex, PeerIndex, ProcessRank> LindexPindexRank;
-    typedef std::list<LindexPindexRank> BorderList;
+    typedef std::list<BorderIndex> BorderList;
 
 public:
     VertexBorderListFromGrid(const GridView &gv, 
@@ -91,14 +92,14 @@ public:
     template<class MessageBufferImp, class EntityType> 
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int peerRank;
-        int peerVertIdx;
+        BorderIndex bIdx;
+        
+        bIdx.localIdx = map_.map(e);
+        buff.read(bIdx.peerRank);
+        buff.read(bIdx.peerIdx);
+        bIdx.borderDistance = 0;
 
-        buff.read(peerRank);
-        buff.read(peerVertIdx);
-
-        int localVertIdx = map_.map(e);
-        borderList_.push_back(LindexPindexRank(localVertIdx, peerVertIdx, peerRank));
+        borderList_.push_back(bIdx);
     };
     
     // Access to the initial seed list.

@@ -26,6 +26,7 @@
 #ifndef DUMUX_BICGSTAB_ILU0_SOLVER_HH
 #define DUMUX_BICGSTAB_ILU0_SOLVER_HH
 
+#include <dumux/common/propertysystem.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dumux/common/exceptions.hh>
@@ -38,6 +39,17 @@
 #include <dumux/linear/overlappingoperator.hh>
 
 namespace Dumux {
+namespace Properties {
+NEW_PROP_TAG(Problem);
+NEW_PROP_TAG(PressureCoefficientMatrix);
+NEW_PROP_TAG(PressureRHSVector);
+NEW_PROP_TAG(SolutionTypes);
+NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(LSVerbosity);
+NEW_PROP_TAG(LSMaxIterations);
+NEW_PROP_TAG(LSResidualReduction);
+NEW_PROP_TAG(PreconditionerRelaxation);
+}
 
 /*!
  * \brief Provides a linear solver for the stabilized BiCG method with

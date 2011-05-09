@@ -75,8 +75,7 @@ class GlobalIndices
     typedef std::map<PeerIndex, DomesticIndex> BorderWithPeer;
     typedef std::map<ProcessRank, BorderWithPeer> DomesticBorder;
 
-    typedef std::tuple<DomesticIndex, PeerIndex, ProcessRank> LindexPindexRank;
-    typedef std::list<LindexPindexRank> BorderList;
+    typedef std::list<BorderIndex> BorderList;
 
     typedef std::map<PeerIndex, DomesticIndex> PeerToDomesticMap;
     typedef std::map<ProcessRank,  PeerToDomesticMap> ForeignToDomesticMap;
@@ -163,7 +162,6 @@ public:
         int sendBuff[2];
         sendBuff[0] = peerLocalIdx;
         sendBuff[1] = domesticToGlobal(domesticIdx);
-
         MPI_Send(sendBuff, // buff
                   2, // count
                   MPI_INT, // data type
@@ -227,7 +225,11 @@ protected:
     // global index list
     void buildGlobalIndices_() 
     {
+#if HAVE_MPI
         numDomestic_ = 0;
+#else 
+        numDomestic_ = foreignOverlap_.numLocal();
+#endif
 
 #if HAVE_MPI
         if (myRank_ == 0) {
@@ -285,11 +287,11 @@ protected:
             BorderList::const_iterator borderIt = borderList_().begin();
             BorderList::const_iterator borderEndIt = borderList_().end();
             for (; borderIt != borderEndIt; ++borderIt) {
-                int borderPeer = std::get<2>(*borderIt);
+                int borderPeer = borderIt->peerRank;
                 if (borderPeer != peerRank)
                     continue;
-
-                receiveBorderIndex(peerRank);
+                if (borderIt->borderDistance == 0)
+                    receiveBorderIndex(peerRank);
             }
         }
 
@@ -307,17 +309,16 @@ protected:
             BorderList::const_iterator borderIt = borderList_().begin();
             BorderList::const_iterator borderEndIt = borderList_().end();
             for (; borderIt != borderEndIt; ++borderIt) {
-                int borderPeer = std::get<2>(*borderIt);
+                int borderPeer = borderIt->peerRank;
                 if (borderPeer != peerRank)
                     continue;
 
-                int localIdx = std::get<0>(*borderIt);
-                int peerIdx = std::get<1>(*borderIt);
-                sendBorderIndex(peerRank, localIdx, peerIdx);
+                int localIdx = borderIt->localIdx;
+                int peerIdx = borderIt->peerIdx;
+                if (borderIt->borderDistance == 0)
+                    sendBorderIndex(peerRank, localIdx, peerIdx);
             }
         }
-#else // HAVE_MPI
-	numDomestic_ = foreignOverlap_.numLocal();
 #endif // HAVE_MPI
     }
     

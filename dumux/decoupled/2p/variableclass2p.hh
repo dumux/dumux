@@ -273,7 +273,7 @@ public:
         ElementHandleAssign<typename ScalarSolutionType::block_type, ScalarSolutionType, ElementMapper> elementHandle(saturation_, this->elementMapper());
         this->gridView().communicate(elementHandle,
                 Dune::InteriorBorder_All_Interface,
-                Dune::BackwardCommunication);
+                Dune::ForwardCommunication);
 #endif
     }
 

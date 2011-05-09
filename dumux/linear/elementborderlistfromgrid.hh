@@ -33,12 +33,15 @@
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/operators.hh>
 
+#include "borderindex.hh"
+
 #include <algorithm>
 #include <list>
 #include <set>
 #include <map>
 
 namespace Dumux {
+
 
 /*!
  * \brief Uses communication on the grid to find the initial seed list
@@ -51,14 +54,14 @@ namespace Dumux {
  */
 template <class GridView, class ElementMapper>
 class ElementBorderListFromGrid : public Dune::CommDataHandleIF<ElementBorderListFromGrid<GridView, ElementMapper>,
-                                                               int >
+                                                                int >
 {
     typedef int ProcessRank;
     typedef int Index;
+    typedef int Distance;
     typedef Index LocalIndex;
     typedef Index PeerIndex;
-    typedef std::tuple<LocalIndex, PeerIndex, ProcessRank> LindexPindexRank;
-    typedef std::list<LindexPindexRank> BorderList;
+    typedef std::list<BorderIndex> BorderList;
 
 public:
     ElementBorderListFromGrid(const GridView &gv,
@@ -92,14 +95,14 @@ public:
     template<class MessageBufferImp, class EntityType> 
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
-        int peerRank;
-        int peerCellIdx;
+        BorderIndex bIdx;
+        
+        bIdx.localIdx = map_.map(e);
+        buff.read(bIdx.peerRank);
+        buff.read(bIdx.peerIdx);
+        bIdx.borderDistance = 1;
 
-        buff.read(peerRank);
-        buff.read(peerCellIdx);
-
-        int localCellIdx = map_.map(e);
-        borderList_.push_back(LindexPindexRank(localCellIdx, peerCellIdx, peerRank));
+        borderList_.push_back(bIdx);
     };
     
     // Access to the initial seed list.

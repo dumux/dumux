@@ -54,8 +54,8 @@ class GridAdapt
     typedef typename Grid::template Codim<0>::Entity 		Entity;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
 
-    static const double refinetol = 0.05;
-    static const double coarsentol = 0.001;
+    static constexpr double refinetol = 0.05;
+    static constexpr double coarsentol = 0.001;
 
 public:
     /*!

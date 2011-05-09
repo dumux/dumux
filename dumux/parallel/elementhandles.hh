@@ -71,7 +71,6 @@ public:
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
         int elementIdx = mapper_.map(e);
-        std::cout << "container_[" << elementIdx << "] -> " << container_[elementIdx] << "\n";
         buff.write(container_[elementIdx]);
     }
 
@@ -82,13 +81,6 @@ public:
 
         FieldType tmp;
         buff.read(tmp);
-        if (e.partitionType() == Dune::InteriorEntity)
-            std::cout << "interior: ";
-        else if (e.partitionType() == Dune::GhostEntity)
-            std::cout << "ghost: ";
-        else if (e.partitionType() == Dune::OverlapEntity)
-            std::cout << "overlap: ";
-        std::cout << "container_[" << elementIdx << "] <- " << tmp << "\n";
         container_[elementIdx] = tmp;
     }
 

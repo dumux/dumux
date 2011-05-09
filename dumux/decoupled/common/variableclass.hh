@@ -238,9 +238,8 @@ public:
 #if HAVE_MPI
         ElementHandleAssign<typename ScalarSolutionType::block_type, ScalarSolutionType, ElementMapper> elementHandle(pressure_, elementMapper_);
         gridView_.communicate(elementHandle,
-//                Dune::Overlap_All_Interface,
-                Dune::InteriorBorder_All_Interface,
-                Dune::BackwardCommunication);
+                              Dune::InteriorBorder_All_Interface,
+                              Dune::ForwardCommunication);
 #endif
     }
 
