@@ -203,7 +203,7 @@ public:
             this->localResidual().evalPhaseStorage(*elemIt, phaseIdx);
 
             for (int i = 0; i < elemIt->template count<dim>(); ++i)
-                dest += this->localResidual().residual(i);
+                dest += this->localResidual().storageTerm()[i];
         };
 
         if (this->gridView_().comm().size() > 1)
