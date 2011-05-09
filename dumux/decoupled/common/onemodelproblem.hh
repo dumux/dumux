@@ -223,9 +223,7 @@ public:
     }
 
     void addOutputVtkFields()
-    {
-        model().addOutputVtkFields(*resultWriter_);
-    }
+    {}
 
     //! Write the fields current solution into an VTK output file.
     void writeOutput()
@@ -235,6 +233,7 @@ public:
         if (!resultWriter_)
             resultWriter_ = new VtkMultiWriter(asImp_().name());
         resultWriter_->beginTimestep(timeManager_.time() + timeManager_.timeStepSize(), gridView());
+        model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
         resultWriter_->endTimestep();
     }

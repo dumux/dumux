@@ -194,6 +194,11 @@ public:
         // check maximum allowed time step size
         dt = std::min(dt, asImp_().maxTimeStepSize());
 
+        //make sure the right time-step is used by all processes in the parallel case
+#if HAVE_MPI
+        dt = this->gridView().comm().min(dt);
+#endif
+
         //assign next tiestep size
         timeManager().setTimeStepSize(dt);
 
@@ -503,7 +508,6 @@ public:
 
     void addOutputVtkFields()
     {
-        model().addOutputVtkFields(*resultWriter_);
     }
 
     //! Write the fields current solution into an VTK output file.
@@ -516,6 +520,7 @@ public:
             resultWriter_ = new VtkMultiWriter(asImp_().name());
         resultWriter_->beginTimestep(timeManager_.time() + timeManager_.timeStepSize(),
                                     gridView());
+        model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
         resultWriter_->endTimestep();
     }

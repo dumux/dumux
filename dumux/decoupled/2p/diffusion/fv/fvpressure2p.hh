@@ -349,8 +349,10 @@ void FVPressure2P<TypeTag>::assemble(bool first)
         int globalIdxI = problem_.variables().index(*eIt);
 
 #if HAVE_MPI
-        if (eIt->partitionType() == Dune::GhostEntity || eIt->partitionType() == Dune::OverlapEntity)
+        if (eIt->partitionType() != Dune::InteriorEntity)
         {
+            A_[globalIdxI][globalIdxI]=1.0;
+            f_[globalIdxI]=0;
             continue;
         }
 #endif
