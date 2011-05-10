@@ -59,7 +59,7 @@ SET_PROP_DEFAULT(LSVerbosity)
 
 SET_PROP_DEFAULT(LSResidualReduction)
 {public:
-    static constexpr double value = 1e-6;
+    static constexpr double value = 1e-13;
 };
 
 SET_PROP_DEFAULT(LSMaxIterations)

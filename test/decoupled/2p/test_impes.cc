@@ -91,17 +91,23 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> N(6); N[0] = 30;
-        Dune::FieldVector<double ,dim> L(0);
-        Dune::FieldVector<double,dim> H(60); H[0] = 300;
+        Dune::FieldVector<int,dim> numCells; 
+        numCells[0] = 30;
+        numCells[1] = 6;
+        Dune::FieldVector<double,dim> lowerLeft;
+        lowerLeft[0] = 0;
+        lowerLeft[1] = 0;
+        Dune::FieldVector<double,dim> upperRight;
+        upperRight[0] = 300;
+        upperRight[1] = 60;
         Dune::FieldVector<bool,dim> periodic(false);
-        Grid grid(Dune::MPIHelper::getCommunicator(), H, N, periodic, /*overlap=*/1);
-            
+
+        Grid grid(Dune::MPIHelper::getCommunicator(), upperRight, numCells, periodic, /*overlap=*/1);
+        grid.loadBalance();
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
-
-        Problem problem(grid.leafView(), L, H);
+        Problem problem(grid.leafView(), lowerLeft, upperRight);
 
         // load restart file if necessarry
         if (restart)

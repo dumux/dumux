@@ -82,12 +82,17 @@ public:
      */
     void assignAdd(const BlockVector &nbv)
     {
-        Valgrind::SetDefined(nbv[7]);
-
         // assign the local rows
         int numLocal = overlap_->numLocal();
         for (int rowIdx = 0; rowIdx < numLocal; ++rowIdx) {
-            (*this)[rowIdx] = nbv[rowIdx];
+            if (overlap_->iAmMasterOf(rowIdx) ||
+                overlap_->isShared(rowIdx))
+            {
+                (*this)[rowIdx] = nbv[rowIdx];
+            }
+            else
+                (*this)[rowIdx] = 0;
+
         }
 
         // set the remote indices to 0

@@ -41,6 +41,11 @@ struct BorderIndex
     
     //! Distance to the process border for the peer (in hops)
     int borderDistance;
+
+    //! True if and only if the entity which corrosponds to the index
+    //! is in the interior of more than one process (i.e. the entity
+    //! is completely on the border)
+    bool isShared;
 };
 
 };

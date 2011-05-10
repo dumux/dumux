@@ -68,9 +68,14 @@ public:
                              const ElementMapper &map)
         : gv_(gv), map_(map)
     {
+        forwardComm_ = true;
         gv.communicate(*this, 
                        Dune::InteriorBorder_All_Interface,
-//                       Dune::Overlap_All_Interface,
+                       Dune::ForwardCommunication);
+
+        forwardComm_ = false;
+        gv.communicate(*this, 
+                       Dune::InteriorBorder_All_Interface,
                        Dune::BackwardCommunication);
     };
 
@@ -100,19 +105,39 @@ public:
         bIdx.localIdx = map_.map(e);
         buff.read(bIdx.peerRank);
         buff.read(bIdx.peerIdx);
-        bIdx.borderDistance = 1;
+        bIdx.borderDistance = 0;
+        // this index is not shared between at least two processes
+        // because an element is always in the interior of exactly one
+        // process
+        bIdx.isShared = false;
 
-        borderList_.push_back(bIdx);
+        if (forwardComm_) {
+            // add the index to the list of indices which we intersect
+            // with remote processes.
+            domesticBorderList_.push_back(bIdx);
+        }
+        else {
+            // add the index to the list of remote processes
+            // intersecting with us.
+            foreignBorderList_.push_back(bIdx);
+        }
     };
     
-    // Access to the initial seed list.
-    const BorderList &borderList() const
-    { return borderList_; }
+    // Access to the initial border list.
+    const BorderList &foreignBorderList() const
+    { return foreignBorderList_; }
+
+    // Access to the indices which are on the border but which are in
+    // the interior of a remote process
+    const BorderList &domesticBorderList() const
+    { return domesticBorderList_; }
 
 private:
     const GridView gv_;
     const ElementMapper &map_;
-    BorderList borderList_;
+    bool forwardComm_;
+    BorderList foreignBorderList_;
+    BorderList domesticBorderList_;
 };
 
 } // namespace Dumux

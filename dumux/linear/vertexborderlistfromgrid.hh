@@ -98,12 +98,20 @@ public:
         buff.read(bIdx.peerRank);
         buff.read(bIdx.peerIdx);
         bIdx.borderDistance = 0;
+        // vertices on the border are always in the interior of more
+        // than one process which means that they are shared.
+        bIdx.isShared = true;
 
         borderList_.push_back(bIdx);
     };
     
-    // Access to the initial seed list.
-    const BorderList &borderList() const
+    // Access to the foreign border list.
+    const BorderList &foreignBorderList() const
+    { return borderList_; }
+
+    // Access to the domestic border list (same as foreign border list
+    // because all vertices are shared entities)
+    const BorderList &domesticBorderList() const
     { return borderList_; }
 
 private:

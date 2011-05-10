@@ -86,8 +86,9 @@ public:
      */
     DomesticOverlapFromBCRSMatrix(const BCRSMatrix &A,
                                   const BorderList &borderList,
+                                  const BorderList &domesticBorderList,
                                   int overlapSize)
-        : foreignOverlap_(A, borderList, overlapSize)
+        : foreignOverlap_(A, borderList, domesticBorderList, overlapSize)
         , globalIndices_(foreignOverlap_)
     {
         myRank_ = 0;
@@ -255,6 +256,16 @@ public:
         if (!isLocal(domesticIdx))
             return false;
         return foreignOverlap_.masterOf(domesticIdx) == myRank_;
+    };
+
+    /*!
+     * \brief Return true iff a given index is shared by more than one process
+     */
+    bool isShared(int domesticIdx) const
+    { 
+        if (!isLocal(domesticIdx))
+            return false;
+        return foreignOverlap_.isShared(domesticIdx);
     };
 
     /*!

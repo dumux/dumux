@@ -205,11 +205,8 @@ public:
      */
     void print() const
     {
-        int myRank = 0;
-#if HAVE_MPI
-        MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
-#endif // HAVE_MPI
-        std::cout << "(domestic index, global index, domestic->global->domestic) list for rank " << myRank << "\n";
+        std::cout << "(domestic index, global index, domestic->global->domestic) list for rank " << 
+            myRank_ << "\n";
 
         for (int domIdx = 0; domIdx < domesticToGlobal_.size(); ++ domIdx) {
             std::cout << "(" <<  domIdx
@@ -272,61 +269,87 @@ protected:
                      0, // tag
                      MPI_COMM_WORLD); // communicator
         };
-
-        // retrieve the global indices for which we are not master
-        // from the processes with lower rank
-        PeerSet::const_iterator peerIt = peerSet_().begin();
-        PeerSet::const_iterator peerEndIt = peerSet_().end();
+        
+        typename PeerSet::const_iterator peerIt;
+        typename PeerSet::const_iterator peerEndIt = peerSet_().end();
+        // receive the border indices from the lower ranks
+        peerIt = peerSet_().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            if (peerRank > myRank_)
-                continue; // ignore processes with higher rank
-
-            // receive (local index on myRank, global index) pairs and
-            // update maps
-            BorderList::const_iterator borderIt = borderList_().begin();
-            BorderList::const_iterator borderEndIt = borderList_().end();
-            for (; borderIt != borderEndIt; ++borderIt) {
-                int borderPeer = borderIt->peerRank;
-                if (borderPeer != peerRank)
-                    continue;
-                if (borderIt->borderDistance == 0)
-                    receiveBorderIndex(peerRank);
-            }
+            if (*peerIt < myRank_)
+                receiveBorderFrom_(*peerIt);
         }
 
-        // send the global indices for which we are master
-        // to the processes with higher rank
+        // send the border indices to the higher ranks
         peerIt = peerSet_().begin();
-        peerEndIt = peerSet_().end();
         for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
-            if (peerRank < myRank_)
-                continue; // ignore processes with lower rank
+            if (*peerIt > myRank_)
+                sendBorderTo_(*peerIt);
+        }
 
-            // send (local index on myRank, global index) pairs to the
-            // peers
-            BorderList::const_iterator borderIt = borderList_().begin();
-            BorderList::const_iterator borderEndIt = borderList_().end();
-            for (; borderIt != borderEndIt; ++borderIt) {
-                int borderPeer = borderIt->peerRank;
-                if (borderPeer != peerRank)
-                    continue;
+        // receive the border indices from the higher ranks
+        peerIt = peerSet_().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            if (*peerIt > myRank_)
+                receiveBorderFrom_(*peerIt);
+        }
 
-                int localIdx = borderIt->localIdx;
-                int peerIdx = borderIt->peerIdx;
-                if (borderIt->borderDistance == 0)
-                    sendBorderIndex(peerRank, localIdx, peerIdx);
-            }
+        // send the border indices to the lower ranks
+        peerIt = peerSet_().begin();
+        for (; peerIt != peerEndIt; ++peerIt) {
+            if (*peerIt < myRank_)
+                sendBorderTo_(*peerIt);
         }
 #endif // HAVE_MPI
     }
     
+    void sendBorderTo_(ProcessRank peerRank)
+    {
+#if HAVE_MPI
+        // send (local index on myRank, global index) pairs to the
+        // peers
+        BorderList::const_iterator borderIt = foreignBorderList_().begin();
+        BorderList::const_iterator borderEndIt = foreignBorderList_().end();
+        for (; borderIt != borderEndIt; ++borderIt) {
+            int borderPeer = borderIt->peerRank;
+            if (borderPeer != peerRank)
+                continue;        
+
+            int localIdx = borderIt->localIdx;
+            int peerIdx = borderIt->peerIdx;
+            if (foreignOverlap_.iAmMasterOf(borderIt->localIdx)) {
+                sendBorderIndex(borderPeer, localIdx, peerIdx);
+            }
+        }
+#endif // HAVE_MPI
+    }
+
+    void receiveBorderFrom_(ProcessRank peerRank)
+    {       
+#if HAVE_MPI
+        // retrieve the global indices for which we are not master
+        // from the processes with lower rank
+        BorderList::const_iterator borderIt = domesticBorderList_().begin();
+        BorderList::const_iterator borderEndIt = domesticBorderList_().end();
+        for (; borderIt != borderEndIt; ++borderIt) {
+            int borderPeer = borderIt->peerRank;
+            if (borderPeer != peerRank)
+                continue;
+            
+            if (foreignOverlap_.masterOf(borderIt->localIdx) == borderPeer) {
+                receiveBorderIndex(borderPeer);
+            }
+        }
+#endif // HAVE_MPI
+    };
+
     const PeerSet &peerSet_() const
     { return foreignOverlap_.peerSet(); }
 
-    const BorderList &borderList_() const
-    { return foreignOverlap_.borderList(); }
+    const BorderList &foreignBorderList_() const
+    { return foreignOverlap_.foreignBorderList(); }
+
+    const BorderList &domesticBorderList_() const
+    { return foreignOverlap_.domesticBorderList(); }
 
        
     int myRank_;

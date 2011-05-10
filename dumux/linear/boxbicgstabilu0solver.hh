@@ -66,7 +66,7 @@ class BoxBiCGStabILU0Solver
     typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
 
 public:
-    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize=1)
+    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize=3)
         : problem_(problem)
         , overlapSize_(overlapSize)
     {
@@ -152,7 +152,8 @@ private:
 
         // create the overlapping Jacobian matrix
         overlapMatrix_ = new OverlappingMatrix (M,
-                                                borderListCreator.borderList(), 
+                                                borderListCreator.foreignBorderList(), 
+                                                borderListCreator.domesticBorderList(), 
                                                 overlapSize_);
 
         // create the overlapping vectors for the residual and the

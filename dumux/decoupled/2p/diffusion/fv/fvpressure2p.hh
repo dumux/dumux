@@ -348,15 +348,6 @@ void FVPressure2P<TypeTag>::assemble(bool first)
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
 
-#if HAVE_MPI
-        if (eIt->partitionType() != Dune::InteriorEntity)
-        {
-            A_[globalIdxI][globalIdxI]=1.0;
-            f_[globalIdxI]=0;
-            continue;
-        }
-#endif
-
         // get global coordinate of cell center
         const GlobalPosition& globalPos = eIt->geometry().center();
 

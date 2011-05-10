@@ -115,9 +115,9 @@ public:
                const Vector &b)
     {
         int verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-            static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-            static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
-            static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
+        static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
+        static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+        static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
 
         if (!overlapMatrix_) {
             // make sure that the overlapping matrix and block vectors
@@ -128,10 +128,16 @@ public:
         // copy the values of the non-overlapping linear system of
         // equations to the overlapping one. On ther border, we add up
         // the values of all processes (using the assignAdd() methods)
-        overlapMatrix_->assignAdd(M);
+        overlapMatrix_->assignCopy(M);
         overlapb_->assignAdd(b);
         (*overlapx_) = 0.0;
         
+        /*
+        overlapMatrix_->print();
+        overlapb_->print();
+        exit(1);
+        */
+
         // create sequential and overlapping preconditioners
         //SeqPreconditioner seqPreCond(*overlapMatrix_, 1, 1.0);
         SeqPreconditioner seqPreCond(*overlapMatrix_, relaxation);
@@ -168,7 +174,8 @@ private:
 
         // create the overlapping Jacobian matrix
         overlapMatrix_ = new OverlappingMatrix (M,
-                                                borderListCreator.borderList(), 
+                                                borderListCreator.foreignBorderList(), 
+                                                borderListCreator.domesticBorderList(),
                                                 overlapSize_);
 
         // create the overlapping vectors for the residual and the

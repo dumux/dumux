@@ -85,9 +85,11 @@ public:
      *        an initial list of border indices.
      */
     ForeignOverlapFromBCRSMatrix(const BCRSMatrix &A,
-                                 const BorderList &borderList,
+                                 const BorderList &foreignBorderList,
+                                 const BorderList &domesticBorderList,
                                  int overlapSize)
-        : borderList_(borderList)
+        : foreignBorderList_(foreignBorderList)
+        , domesticBorderList_(domesticBorderList)
     {
         overlapSize_ = overlapSize;
 
@@ -101,7 +103,7 @@ public:
         // calculate the border list. From this, create an initial
         // seed list of indices which are in the overlap.
         SeedList initialSeedList;
-        borderListToSeedList_(initialSeedList, borderList);
+        borderListToSeedList_(initialSeedList, foreignBorderList);
 
         // find the set of processes which have an overlap with the
         // local processes. (i.e. the set of processes which we will
@@ -112,19 +114,12 @@ public:
         // i.e. find the distance of each row from the seed set.
         foreignOverlapByIndex_.resize(A.N());
         extendForeignOverlap_(A, initialSeedList, overlapSize);
+        
+        updateMasterRanks_(foreignBorderList, domesticBorderList);
 
         // group foreign overlap by peer process rank
         groupForeignOverlapByRank_(); 
     }
-
-    /*!
-     * \brief Return the border list.
-     *
-     * The border list is the list of (local index, peer index, peer
-     * rank) triples for all indices on a process border.
-     */
-    const BorderList& borderList() const
-    { return borderList_; };   
 
     /*!
      * \brief Returns true iff a local index is a border index.
@@ -133,68 +128,10 @@ public:
     { return borderIndices_.count(localIdx) > 0; };
 
     /*!
-     * \brief Returns true iff a local index is a border index with a given peer.
-     */
-    bool isBorderFor(int peerRank, int localIdx) const
-    { 
-        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
-        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
-        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
-
-        if (bdIt == borderDist.end())
-            return false; // this index is not seen by the peer
-        
-        BorderDistance bDist = bdIt->second;
-        if (bDist == 0)
-            // the index is on the border to the peer
-            return true;
-
-        // at this point, the local index is in the interior of the
-        // foreign overlap for the peer, so it is a remote index
-        return false;
-    };
-
-    /*!
-     * \brief Returns true iff a local index is a front index for a given peer.
-     */
-    bool isFrontFor(int peerRank, int localIdx) const
-    { 
-        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
-        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
-        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
-
-        if (bdIt == borderDist.end())
-            return false; // this index is not seen by the peer
-        
-        BorderDistance bDist = bdIt->second;
-        if (bDist == overlapSize_)
-            // the index is on the front of the peer
-            return true;
-        return false;
-    };
-
-    /*!
      * \brief Return the rank of the master process for a local index.
      */
     int masterOf(int localIdx) const
-    { 
-        if (!isBorder(localIdx))
-            return myRank_; // interior index
-
-        // if the local index is a border index, loop over all ranks
-        // for which this index is also a border index. the lowest
-        // rank wins!
-        typedef typename std::map<ProcessRank, BorderDistance>::const_iterator iterator;
-        iterator it = foreignOverlapByIndex_[localIdx].begin();
-        iterator endIt = foreignOverlapByIndex_[localIdx].end();
-        LocalIndex masterIdx = myRank_;
-        for (; it != endIt; ++it) {
-            if (it->second == 0) 
-                masterIdx = std::min(masterIdx, it->first);
-        }
-
-        return masterIdx;
-    };
+    { return masterRank_[localIdx]; };
 
     /*!
      * \brief Return true if the current rank is the "master" of an
@@ -207,70 +144,21 @@ public:
      * rank.
      */
     bool iAmMasterOf(int localIdx) const
-    { 
-        if (!isBorder(localIdx))
-            return true; // interior index
-
-        // if the local index is a border index, loop over all ranks
-        // for which this index is also a border index. the lowest
-        // rank wins!
-        typedef typename std::map<ProcessRank, BorderDistance>::const_iterator iterator;
-        iterator it = foreignOverlapByIndex_[localIdx].begin();
-        iterator endIt = foreignOverlapByIndex_[localIdx].end();
-        LocalIndex masterIdx = myRank_;
-        for (; it != endIt; ++it) {
-            if (it->first < myRank_ && it->second == 0)
-                return false;
-        }
-
-        return masterIdx == myRank_;
-    };
+    { return masterRank_[localIdx] == myRank_; };
 
     /*!
-     * \brief Return true if a given local index is a remote index for
-     *        a peer.
+     * \brief Returns the list of indices which intersect the process
+     *        border and are in the interior of the local process.
      */
-    bool isRemoteIndexFor(ProcessRank peerRank, Index localIdx) const
-    { 
-        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
-        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
-        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
-
-        if (bdIt == borderDist.end())
-            return false; // this index is not seen by the peer
-        
-        BorderDistance bDist = bdIt->second;
-        if (bDist == 0)
-            // the index is on the border to the peer, so for the peer
-            // it is a local index.
-            return false;
-
-        // at this point, the local index is in the interior of the
-        // foreign overlap for the peer, so it is a remote index
-        return true;
-    };
+    const BorderList &foreignBorderList() const
+    { return foreignBorderList_; }
 
     /*!
-     * \brief Return true if a given local index is also a local index
-     *        for a peer.
-     */
-    bool isLocalIndexFor(ProcessRank peerRank, Index localIdx) const
-    { 
-        if (!isLocal(localIdx))
-            // our own remote indices do not count!
-            return false;
-
-        typedef std::map<ProcessRank, BorderDistance> BorderDistMap;
-        const BorderDistMap &borderDist = foreignOverlapByIndex_[localIdx];
-        BorderDistMap::const_iterator bdIt = borderDist.find(peerRank);
-        if (bdIt == borderDist.end())
-            return false; // this index is not seen by the peer
-
-        // the index is also local for the peer if it an index on the
-        // border.
-        BorderDistance bDist = bdIt->second;
-        return bDist == 0;
-    };
+     * \brief Returns the list of indices which intersect the process
+     *        border and are in the interior of some remote process.
+      */
+    const BorderList &domesticBorderList() const
+    { return domesticBorderList_; }
 
     /*!
      * \brief Return true if a given local index is a domestic index
@@ -329,7 +217,15 @@ public:
      * \brief Returns true iff a domestic index is local
      */
     bool isLocal(int domesticIdx) const
-    { return domesticIdx < numLocal(); };
+    { 
+        return domesticIdx < numLocal();
+    };
+
+    /*!
+     * \brief Returns true iff a local index is shared with an other process.
+     */
+    bool isShared(int domesticIdx) const
+    { return isLocal(domesticIdx) && isShared_[domesticIdx]; }
 
     /*!
      * \brief Return the number of peer ranks for which a given local
@@ -382,10 +278,59 @@ protected:
             initialSeedList.push_back(IndexRankDist(it->localIdx, 
                                                     it->peerRank,
                                                     it->borderDistance));
-            if (it->borderDistance == 0)
-                borderIndices_.insert(it->localIdx);
+            borderIndices_.insert(it->localIdx);
         };
     };
+
+    // given a list of border indices and provided that
+    // borderListToSeedList_() was already called, calculate the
+    // master process of each local index.
+    void updateMasterRanks_(const BorderList &foreignBorderList,
+                            const BorderList &domesticBorderList)
+    {
+        // determine the minimum rank for all indices
+        masterRank_.resize(numLocal_, myRank_);
+        for (int localIdx = 0; localIdx < masterRank_.size(); ++localIdx) {
+            int masterRank = myRank_;
+            if (isBorder(localIdx)) {
+                // if the local index is a border index, loop over all ranks
+                // for which this index is also a border index. the lowest
+                // rank wins!
+                typedef typename std::map<ProcessRank, BorderDistance>::const_iterator iterator;
+                iterator it = foreignOverlapByIndex_[localIdx].begin();
+                iterator endIt = foreignOverlapByIndex_[localIdx].end();
+                for (; it != endIt; ++it) {
+                    if (it->second == 0) {
+                        // if the border distance is zero, the rank with the minimum
+                        masterRank = std::min(masterRank, it->first);
+                    }
+                }
+            }
+            masterRank_[localIdx] = masterRank;
+        }
+        
+        // overwrite the master rank of the non-shared border indices
+        isShared_.resize(numLocal_, false);
+        BorderList::const_iterator it = foreignBorderList.begin();
+        BorderList::const_iterator endIt = foreignBorderList.end();
+        for (; it != endIt; ++it) {
+            if (!it->isShared)
+                masterRank_[it->localIdx] = myRank_;
+            else 
+                isShared_[it->localIdx] = true;
+        };
+
+        // overwrite the master rank of the non-shared border on the
+        // domestic overlap
+        it = domesticBorderList_.begin();
+        endIt = domesticBorderList_.end();
+        for (; it != endIt; ++it) {
+            if (!it->isShared) {
+                masterRank_[it->localIdx] = it->peerRank;
+            }
+        };
+    }
+
 
     // extend the foreign overlaps by one level. this uses a greedy
     // algorithm.
@@ -502,11 +447,21 @@ protected:
     PeerSet peerSet_;
 
     // the list of indices on the border
-    const BorderList &borderList_;
+    const BorderList &foreignBorderList_;
+    const BorderList &domesticBorderList_;
 
-    // set of all local indices which are on the border
+    // an array which contains the rank of the master process for each
+    // index
+    std::vector<ProcessRank> masterRank_;
+
+    // an array which stores whether an index is also in the interior
+    // of some other process
+    std::vector<bool> isShared_;
+
+    // set of all local indices which are on the border of some remote
+    // process
     std::set<LocalIndex> borderIndices_;
-    
+
     // stores the set of process ranks which are in the overlap for a
     // given row index "owned" by the current rank. The second value
     // store the distance from the nearest process border.
