@@ -264,7 +264,7 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV
+     * \param vars The flux variables at the current sub control volume face
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
@@ -290,8 +290,8 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param q The source/sink in the SCV for each component
-     * \param localVertexIdx The index of the SCV
+     * \param q The source/sink in the sub control volume for each component
+     * \param localVertexIdx The index of the sub control volume
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
