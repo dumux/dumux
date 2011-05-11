@@ -82,7 +82,6 @@ public:
 
         if(!useMoles) //mass-fraction formulation
         {
-            std::cout<<"usemass\n";
             Scalar M0 = FluidSystem::molarMass(comp0Idx);
             Scalar M1 = FluidSystem::molarMass(comp1Idx);
             //meanMolarMass if x1_ is a massfraction
@@ -90,7 +89,6 @@ public:
         }
         else //mole-fraction formulation
         {
-            std::cout<<"usemoles\n";
             //meanMolarMass if x1_ is a molefraction
             meanMolarMass_ =
             (1 - x1_)*FluidSystem::molarMass(comp0Idx) +
