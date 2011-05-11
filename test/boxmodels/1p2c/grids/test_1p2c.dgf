@@ -1,8 +1,8 @@
 DGF
 Interval
 0 0   % first corner 
-1 1 % 22e-3 22e-3   % second corner
-20 20  % x-Achse wird 44x unterteilt und y-Achse
+22e-3 22e-3   % second corner
+44 44  % x-Achse wird 44x unterteilt und y-Achse
 # 
 
 BOUNDARYDOMAIN

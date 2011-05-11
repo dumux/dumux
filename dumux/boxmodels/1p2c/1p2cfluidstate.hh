@@ -58,7 +58,7 @@ class OnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
         comp1Idx = Indices::comp1Idx,
     };
 
-    static const int moleMass = GET_PROP_VALUE(TypeTag, PTAG(MoleMass));
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
 
 public:
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
@@ -80,15 +80,17 @@ public:
         phasePressure_ =  primaryVars[pressureIdx];
         x1_ = primaryVars[x1Idx]; //mole or mass fraction of component 1
 
-        if(moleMass > 0) //moleMass=1 means mass-fraction formulation
+        if(!useMoles) //mass-fraction formulation
         {
+            std::cout<<"usemass\n";
             Scalar M0 = FluidSystem::molarMass(comp0Idx);
             Scalar M1 = FluidSystem::molarMass(comp1Idx);
             //meanMolarMass if x1_ is a massfraction
             meanMolarMass_ = M0*M1/(M1 + (1-x1_)*(M0 - M1));
         }
-        else //moleMass=0 means mole-fraction formulation
+        else //mole-fraction formulation
         {
+            std::cout<<"usemoles\n";
             //meanMolarMass if x1_ is a molefraction
             meanMolarMass_ =
             (1 - x1_)*FluidSystem::molarMass(comp0Idx) +
@@ -117,7 +119,7 @@ public:
         // we are a single phase model!
         if (phaseIndex != phaseIdx) return 0.0;
 
-        if(moleMass > 0) //moleMass=1 means mass-fraction formulation
+        if(!useMoles) //mass-fraction formulation
         {
             ///if x1_ is a massfraction
             Scalar moleFrac1(x1_);
@@ -130,7 +132,7 @@ public:
             else
                 return 0.0;
         }
-        else //moleMass=0 means mole-fraction formulation
+        else //mole-fraction formulation
         {
             //if x1_ is a molefraction
             if (compIdx==comp0Idx)
@@ -175,7 +177,7 @@ public:
     {
         if (phaseIndex != phaseIdx)
             return 0;
-        if(moleMass > 0)
+        if(!useMoles)
         {
             //if x1_ is a mass fraction
             if (compIdx==comp0Idx)

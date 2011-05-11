@@ -96,7 +96,7 @@ protected:
     };
 
     static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
-    static const int moleMass = GET_PROP_VALUE(TypeTag, PTAG(MoleMass));
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -124,7 +124,7 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         result = 0;
-        if(moleMass > 0)
+        if(!useMoles)
         {
             // storage term of continuity equation - massfractions
             result[contiEqIdx] +=
@@ -186,7 +186,7 @@ public:
        const VolumeVariables &dn =
            this->curVolVars_(fluxVars.downstreamIdx());
 
-        if(moleMass > 0)
+        if(!useMoles)
         {
             // total mass flux - massfraction
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
@@ -235,7 +235,7 @@ public:
         Scalar tmp(0);
 
         // diffusive flux of second component
-        if(moleMass > 0)
+        if(!useMoles)
         {
             // diffusive flux of the second component - massfraction
             tmp = - fluxVars.porousDiffCoeff() * fluxVars.densityAtIP()*
@@ -408,11 +408,11 @@ protected:
                // mass balance
                if (bcTypes.isOutflow(contiEqIdx))
                {
-                   if(moleMass > 0)
+                   if(!useMoles) //use massfractions
                    {
                        flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity();
                    }
-                   else
+                   else //use molefractions
                    {
                        flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity();
                    }
@@ -421,7 +421,7 @@ protected:
                // component transport
                if (bcTypes.isOutflow(transEqIdx))
                {
-                   if(moleMass > 0)
+                   if(!useMoles)//use massfractions
                    {
                        // advective flux
                        flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
@@ -432,7 +432,7 @@ protected:
                                         *(boundaryVars.massFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
                        flux[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
                    }
-                   else
+                   else //use molefractions
                    {
                        // advective flux
                        flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
@@ -462,7 +462,7 @@ protected:
 
          if (this->bcTypes_(scvIdx).isCouplingOutflow(transEqIdx))
          {
-             if(moleMass > 0)
+             if(!useMoles)
                  this->residual_[scvIdx][transEqIdx] = volVars.fluidState().massFrac(phaseIdx, comp1Idx);
              else
                  this->residual_[scvIdx][transEqIdx] = volVars.fluidState().moleFrac(phaseIdx, comp1Idx);

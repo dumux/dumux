@@ -83,8 +83,8 @@ SET_PROP(LensProblem, SpatialParameters)
     typedef Dumux::LensSpatialParameters1p2c<TypeTag> type;
 };
 
-// Define whether mole(0) or mass(1) fractions are used
-SET_INT_PROP(LensProblem, MoleMass, 0);
+// Define whether mole(true) or mass(false) fractions are used
+SET_BOOL_PROP(LensProblem, UseMoles, true);
 // Enable gravity
 SET_BOOL_PROP(LensProblem, EnableGravity, false);
 
