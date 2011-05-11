@@ -310,7 +310,7 @@ public:
         }
 #endif // HAVE_VALGRIND
 
-        // evaluate the non-flux boundary conditions
+        // evaluate the boundary conditions
         asImp_().evalBoundary_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -350,8 +350,19 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+    /*!
+     * \brief Evaluate the boundary conditions
+     *        of the current element.
+     */
     void evalBoundary_()
     {
+        if (bcTypes_().hasNeumann())
+            asImp_().evalNeumann_();
+#if !defined NDEBUG && HAVE_VALGRIND
+        for (int i=0; i < fvElemGeom_().numVertices; i++)
+            Valgrind::CheckDefined(residual_[i]);
+#endif // HAVE_VALGRIND
+
         if (bcTypes_().hasDirichlet())
             asImp_().evalDirichlet_();
     }
@@ -494,13 +505,6 @@ protected:
             residual_[i] += flux;
             residual_[j] -= flux;
         }
-        
-        if (bcTypes_().hasNeumann())
-            asImp_().evalNeumann_();
-#if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
-            Valgrind::CheckDefined(residual_[i]);
-#endif // HAVE_VALGRIND
     }
 
     /*!
