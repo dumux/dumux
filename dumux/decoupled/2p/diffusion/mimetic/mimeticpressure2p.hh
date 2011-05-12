@@ -239,7 +239,7 @@ void MimeticPressure2P<TypeTag>::solve()
     std::cout << "MimeticPressure2P: solve for pressure" << std::endl;
 
     Solver solver(problem_);
-    solver.solve(A_, problem_.variables().pressure(), f_);
+    solver.solve(*A_, problem_.variables().pressure(), f_);
     return;
 }
 
