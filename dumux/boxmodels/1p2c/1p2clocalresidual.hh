@@ -95,7 +95,7 @@ protected:
         transEqIdx = Indices::transEqIdx,
     };
 
-    static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
+    static constexpr Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
     static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
 
     typedef typename GridView::template Codim<0>::Entity Element;
