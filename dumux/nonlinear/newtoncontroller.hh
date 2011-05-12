@@ -455,7 +455,6 @@ public:
                 verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
             }
 
-            Dune::writeMatrixToMatlab(A, "matrix.txt");
             int converged = linearSolver_.solve(A, x, b, residReduction, verbosityLevel);
 
             // make sure all processes converged
