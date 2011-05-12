@@ -287,7 +287,6 @@ public:
 #ifdef VELOCITY_OUTPUT
         // normalize the velocities at the vertices
         // calculate the bounding box of the grid view
-        int index = 0;
         VertexIterator vIt = this->gridView_().template begin<dim>();
         const VertexIterator vEndIt = this->gridView_().template end<dim>();
         for (; vIt!=vEndIt; ++vIt)

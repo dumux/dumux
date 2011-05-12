@@ -242,8 +242,7 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+        //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values = 0;
 
         //int globalIdx = this->model().vertexMapper().map(element, scvIdx, dim);
