@@ -58,6 +58,9 @@ NEW_PROP_TAG(Fluid); //!< The fluid for the single-phase problems
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
 
+// use the CG solver preconditioned by ILU-0
+SET_TYPE_PROP(BoxOneP, LinearSolver, Dumux::BoxCGILU0Solver<TypeTag> );
+
 // \}
 };
 

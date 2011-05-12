@@ -36,7 +36,7 @@
 
 #include <dumux/io/vtkmultiwriter.hh>
 
-#include <dumux/linear/boxbicgstabilu0solver.hh>
+#include <dumux/linear/boxlinearsolver.hh>
 
 namespace Dumux
 {
@@ -455,6 +455,7 @@ public:
                 verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
             }
 
+            Dune::writeMatrixToMatlab(A, "matrix.txt");
             int converged = linearSolver_.solve(A, x, b, residReduction, verbosityLevel);
 
             // make sure all processes converged
