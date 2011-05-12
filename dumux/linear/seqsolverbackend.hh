@@ -121,11 +121,11 @@ private:
 };
 
 template <class TypeTag>
-class IterartivPreCondSolverBackend
+class IterativePrecondSolverBackend
 {
 public:
 
-  IterartivPreCondSolverBackend()
+  IterativePrecondSolverBackend()
   {}
 
   template<class Preconditioner, class Solver, class Matrix, class Vector>
@@ -160,10 +160,10 @@ private:
 };
 
 template <class TypeTag>
-class ILUnBiCGSTABBackend: public IterartivPreCondSolverBackend<TypeTag>
+class ILUnBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-  typedef IterartivPreCondSolverBackend<TypeTag> ParentType;
+  typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
   ILUnBiCGSTABBackend(Problem& problem)
@@ -180,10 +180,10 @@ public:
 };
 
 template <class TypeTag>
-class SORBiCGSTABBackend: public IterartivPreCondSolverBackend<TypeTag>
+class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-  typedef IterartivPreCondSolverBackend<TypeTag> ParentType;
+  typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
   SORBiCGSTABBackend(Problem& problem)
@@ -200,10 +200,10 @@ public:
 };
 
 template <class TypeTag>
-class SSORBiCGSTABBackend: public IterartivPreCondSolverBackend<TypeTag>
+class SSORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-  typedef IterartivPreCondSolverBackend<TypeTag> ParentType;
+  typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
   SSORBiCGSTABBackend(Problem& problem)
@@ -220,10 +220,10 @@ public:
 };
 
 template <class TypeTag>
-class GSBiCGSTABBackend: public IterartivPreCondSolverBackend<TypeTag>
+class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-  typedef IterartivPreCondSolverBackend<TypeTag> ParentType;
+  typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
   GSBiCGSTABBackend(Problem& problem)
@@ -240,13 +240,13 @@ public:
 };
 
 template <class TypeTag>
-class JACBiCGSTABBackend: public IterartivPreCondSolverBackend<TypeTag>
+class JacBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
   typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-  typedef IterartivPreCondSolverBackend<TypeTag> ParentType;
+  typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  JACBiCGSTABBackend(Problem& problem)
+  JacBiCGSTABBackend(Problem& problem)
   {}
 
   template<class Matrix, class Vector>
