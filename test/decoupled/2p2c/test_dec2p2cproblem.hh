@@ -44,7 +44,7 @@
 #include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
-
+#include <dumux/linear/impetbicgstabilu0solver.hh>
 namespace Dumux
 {
 
@@ -59,8 +59,8 @@ NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC/*, Transpor
 // Set the grid type
 SET_PROP(TestDecTwoPTwoCProblem, Grid)
 {
-    //    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<3, 3> type;
+        typedef Dune::YaspGrid<3> type;
+//    typedef Dune::SGrid<3, 3> type;
 };
 
 // Set the problem property
@@ -111,6 +111,8 @@ private:
 public:
     typedef Dumux::Test2P2CSpatialParams<TypeTag> type;
 };
+
+//SET_TYPE_PROP(TestDecTwoPTwoCProblem, LinearSolver, IMPETBiCGStabILU0Solver<TypeTag> );
 
 // Enable gravity
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableGravity, true);

@@ -38,6 +38,7 @@
 #include <iostream>
 #include <boost/format.hpp>
 
+
 ////////////////////////
 // the main function
 ////////////////////////
@@ -100,7 +101,14 @@ int main(int argc, char** argv)
         Dune::FieldVector<int,dim> N(10);
         Dune::FieldVector<double ,dim> L(0);
         Dune::FieldVector<double,dim> H(10);
-        Grid grid(N,L,H);
+        Grid grid(
+#ifdef HAVE_MPI
+            Dune::MPIHelper::getCommunicator(),
+#endif
+            H, // upper right
+            N, // number of cells
+            Dune::FieldVector<bool,dim>(false), // periodic
+            1); // overlap
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
