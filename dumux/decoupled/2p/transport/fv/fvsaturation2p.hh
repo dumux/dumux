@@ -296,7 +296,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
             != eItEnd; ++eIt)
     {
 #if HAVE_MPI
-        if (eIt->partitionType() == Dune::GhostEntity || eIt->partitionType() == Dune::OverlapEntity)
+        if (eIt->partitionType() != Dune::InteriorEntity)
         {
             continue;
         }

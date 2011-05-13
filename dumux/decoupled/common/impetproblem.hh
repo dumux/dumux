@@ -111,6 +111,14 @@ public:
             }
         }
 
+#if HAVE_MPI
+        // communicate to get the bounding box of the whole domain
+        for (int i = 0; i < dim; ++i) {
+            bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
+            bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+        };
+#endif
+
         pressModel_ = new PressureModel(asImp_());
 
         transportModel_ = new TransportModel(asImp_());
@@ -183,8 +191,16 @@ public:
         // check if we are in first TS and an initialDt was assigned
         if (t==0. && timeManager().timeStepSize()!=0.)
         {
+#if HAVE_MPI
+        dt = this->gridView().comm().min(dt);
+#endif
+
             // check if assigned initialDt is in accordance with dt from first transport step
-            if (timeManager().timeStepSize() > dt)
+            if (timeManager().timeStepSize() > dt
+#if HAVE_MPI
+        && this->gridView().comm().rank() == 0
+#endif
+            )
                 Dune::dwarn << "initial timestep of size " << timeManager().timeStepSize()
                             << "is larger then dt= "<<dt<<" from transport" << std::endl;
             // internally assign next timestep size
