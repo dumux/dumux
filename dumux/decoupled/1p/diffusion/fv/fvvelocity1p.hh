@@ -240,7 +240,8 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 Dune::FieldVector<Scalar,dim> permeability(0);
                 meanPermeability.mv(unitOuterNormal,permeability);
 
-                meanPermeability/=viscosityI;
+                permeability/=viscosityI;
+//                std::cout<<"Mean Permeability / Viscosity: "<<meanPermeability<<std::endl;
 
                 Scalar pressJ = this->problem().variables().pressure()[globalIdxJ];
 
@@ -256,9 +257,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
 
                 density= (potential == 0.) ? 0.5 * (densityI + densityJ) : density;
 
-
                 potential = (pressI - pressJ) / dist;
-
 
                 potential += density * (unitOuterNormal * this->gravity);
 
