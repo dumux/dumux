@@ -268,6 +268,7 @@ void FVPressure1P<TypeTag>::assemble(bool first)
         Scalar referencePressI = problem_.referencePressure(globalPos, *eIt);
 
         Scalar densityI = Fluid::density(temperatureI, referencePressI);
+        Scalar viscosityI = Fluid::viscosity(temperatureI, referencePressI);
 
         // set right side to zero
         Scalar source = problem_.source(globalPos, *eIt) / densityI;
@@ -326,6 +327,8 @@ void FVPressure1P<TypeTag>::assemble(bool first)
 
                 Dune::FieldVector < Scalar, dim > permeability(0);
                 meanPermeability.mv(unitOuterNormal, permeability);
+
+                meanPermeability/=viscosityI;
 
                 Scalar temperatureJ = problem_.temperature(globalPosNeighbor, *neighborPointer);
                 Scalar referencePressJ = problem_.referencePressure(globalPosNeighbor, *neighborPointer);
@@ -400,6 +403,8 @@ void FVPressure1P<TypeTag>::assemble(bool first)
                     //permeability vector at boundary
                     Dune::FieldVector < Scalar, dim > permeability(0);
                     permeabilityI.mv(unitOuterNormal, permeability);
+
+                    permeabilityI/= viscosityI;
 
                     //get dirichlet pressure boundary condition
                     Scalar pressBound = problem_.dirichlet(globalPosFace, *isIt);

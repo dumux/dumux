@@ -180,6 +180,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
         Scalar referencePressI = this->problem().referencePressure(globalPos, *eIt);
 
         Scalar densityI = Fluid::density(temperatureI, referencePressI);
+        Scalar viscosityI = Fluid::viscosity(temperatureI, referencePressI);
 
         // run through all intersections with neighbors and boundary
         IntersectionIterator
@@ -238,6 +239,8 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
 
                 Dune::FieldVector<Scalar,dim> permeability(0);
                 meanPermeability.mv(unitOuterNormal,permeability);
+
+                meanPermeability/=viscosityI;
 
                 Scalar pressJ = this->problem().variables().pressure()[globalIdxJ];
 
@@ -299,6 +302,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 //multiply with normal vector at the boundary
                 Dune::FieldVector<Scalar,dim> permeability(0);
                 permeabilityI.mv(unitOuterNormal, permeability);
+                permeability/=viscosityI;
 
                 if (bcType == BoundaryConditions::dirichlet)
                 {
