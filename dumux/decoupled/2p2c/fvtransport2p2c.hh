@@ -195,6 +195,13 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
+#if HAVE_MPI
+        if (eIt->partitionType() != Dune::InteriorEntity)
+        {
+            continue;
+        }
+#endif
+
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
 

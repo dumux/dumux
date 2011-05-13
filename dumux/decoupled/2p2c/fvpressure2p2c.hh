@@ -153,6 +153,8 @@ public:
         //last argument false in update() makes shure that this is estimate and no "real" transport step
         problem_.variables().updateEstimate() *= problem_.timeManager().timeStepSize();
 
+        problem_.variables().communicateUpdateEstimate();
+
         assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
         solve();
 
@@ -366,7 +368,7 @@ void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
                 debugOutput();
             #endif
-    assemble(true);                 Dune::dinfo << "first pressure guess"<<std::endl;
+                assemble(true);                 Dune::dinfo << "first pressure guess"<<std::endl;
     solve();
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
                 debugOutput(1e-6);
@@ -378,7 +380,17 @@ void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
     Scalar dt_estimate = 0.;
     problem_.transportModel().update(0., dt_estimate, problem_.variables().updateEstimate(), false);   Dune::dinfo << "secant guess"<< std::endl;
     dt_estimate = std::min ( problem_.timeManager().timeStepSize(), dt_estimate);
+
+    //make sure the right time-step is used by all processes in the parallel case
+#if HAVE_MPI
+    dt_estimate = problem_.gridView().comm().min(dt_estimate);
+#endif
+
     problem_.variables().updateEstimate() *= dt_estimate;
+
+    //communicate in parallel case
+    problem_.variables().communicateUpdateEstimate();
+
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
                 debugOutput(2e-6);
             #endif
@@ -401,6 +413,10 @@ void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
             // update for secants
             problem_.transportModel().update(0., dt_dummy, problem_.variables().updateEstimate(), false);   Dune::dinfo << "secant guess"<< std::endl;
             problem_.variables().updateEstimate() *= dt_estimate;
+
+            //communicate in parallel case
+            problem_.variables().communicateUpdateEstimate();
+
             // pressure calculation
             assemble(false);                 Dune::dinfo << "pressure guess number "<< numIter <<std::endl;
             solve();
@@ -1013,6 +1029,8 @@ void FVPressure2P2C<TypeTag>::solve()
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 {
+    problem_.variables().communicatePressure();
+
     // initialize the fluid system
     FluidState fluidState;
 
@@ -1119,6 +1137,9 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 {
+    problem_.variables().communicateTransportedQuantity();
+    problem_.variables().communicatePressure();
+
     // this method only completes the variables: = old postprocessupdate()
 
     // instantiate a brandnew fluid state object

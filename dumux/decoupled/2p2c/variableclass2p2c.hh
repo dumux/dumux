@@ -48,7 +48,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
-
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     typedef VariableClass<TypeTag> ParentClass;
@@ -63,7 +63,8 @@ private:
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
     };
 
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
@@ -292,6 +293,21 @@ public:
         return;
     }
 
+    //! Communicate transported quantity to ghosts/overlap
+    void communicateTransportedQuantity()
+    {
+#if HAVE_MPI
+        ElementHandleAssign<typename TransportSolutionType::block_type::block_type, typename TransportSolutionType::block_type, ElementMapper> elementHandleW(totalConcentration_[wCompIdx], this->elementMapper());
+        this->gridView().communicate(elementHandleW,
+                Dune::InteriorBorder_All_Interface,
+                Dune::ForwardCommunication);
+        ElementHandleAssign<typename TransportSolutionType::block_type::block_type, typename TransportSolutionType::block_type, ElementMapper> elementHandleNW(totalConcentration_[nCompIdx], this->elementMapper());
+        this->gridView().communicate(elementHandleNW,
+                Dune::InteriorBorder_All_Interface,
+                Dune::ForwardCommunication);
+#endif
+    }
+
     //! \name Access functions
     //@{
     //! Return the vector of the transported quantity
@@ -498,6 +514,21 @@ public:
     Scalar& updateEstimate(int Idx, int compIdx)
     {
         return updateEstimate_[compIdx][Idx][0];
+    }
+
+    //! Communicate the estimate of the next update to ghost/overlap cells
+    void communicateUpdateEstimate()
+    {
+#if HAVE_MPI
+        ElementHandleAssign<typename TransportSolutionType::block_type::block_type, typename TransportSolutionType::block_type, ElementMapper> elementHandleW(updateEstimate_[wCompIdx], this->elementMapper());
+        this->gridView().communicate(elementHandleW,
+                Dune::InteriorBorder_All_Interface,
+                Dune::ForwardCommunication);
+        ElementHandleAssign<typename TransportSolutionType::block_type::block_type, typename TransportSolutionType::block_type, ElementMapper> elementHandleNW(updateEstimate_[nCompIdx], this->elementMapper());
+        this->gridView().communicate(elementHandleNW,
+                Dune::InteriorBorder_All_Interface,
+                Dune::ForwardCommunication);
+#endif
     }
 
     //! Returs a reference to the volume derivatives vector
