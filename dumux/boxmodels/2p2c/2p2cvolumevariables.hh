@@ -126,7 +126,7 @@ public:
             const Scalar mu =
                 FluidSystem::phaseViscosity(phaseIdx,
                                             fluidState().temperature(),
-                                            fluidState().phasePressure(lPhaseIdx),
+                                            fluidState().phasePressure(phaseIdx),
                                             fluidState());
             Scalar kr;
             if (phaseIdx == lPhaseIdx)
