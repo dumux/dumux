@@ -62,7 +62,8 @@ public:
     //Initialization of ISP Parameters
     {
         using namespace std;
-        double viscosity, density;
+        double viscosity=0.001;
+        double density=1000;
 
         std::cout << std::endl
                 << "-----> ISP: Interface Soil Properties Initialization ...\n";
