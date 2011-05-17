@@ -41,7 +41,6 @@
 #include <dumux/decoupled/1p/diffusion/fv/fvvelocity1p.hh>
 
 #include "groundwater_spatialparams.hh"
-#include "vipWriter.hh"
 
 namespace Dumux
 {
