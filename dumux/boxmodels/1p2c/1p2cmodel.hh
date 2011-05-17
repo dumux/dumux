@@ -109,7 +109,12 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     static constexpr Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
+    const Scalar scale_;
 public:
+    OnePTwoCBoxModel():
+        scale_(GET_PROP_VALUE(TypeTag, PTAG(Scaling)))
+    {}
+
     /*!
      * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
      *
@@ -122,9 +127,8 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        Scalar scale = 1;//e3;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-
+        std::cout<<"Scaling darcy "<< scale_<<std::endl;
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
         ScalarField *pressure = writer.template createField<Scalar, 1>(numVertices);
@@ -187,14 +191,14 @@ public:
                                i,
                                false);
 
-                (*pressure)[globalIdx] = volVars.pressure()*scale;
-                (*delp)[globalIdx] = volVars.pressure()*scale - 1e5;
+                (*pressure)[globalIdx] = volVars.pressure()*scale_;
+                (*delp)[globalIdx] = volVars.pressure()*scale_ - 1e5;
                 (*moleFrac0)[globalIdx] = volVars.moleFrac(0);
                 (*moleFrac1)[globalIdx] = volVars.moleFrac(1);
                 (*massFrac0)[globalIdx] = volVars.massFrac(0);
                 (*massFrac1)[globalIdx] = volVars.massFrac(1);
-                (*rho)[globalIdx] = volVars.density()*scale*scale*scale;
-                (*mu)[globalIdx] = volVars.viscosity()*scale;
+                (*rho)[globalIdx] = volVars.density()*scale_*scale_*scale_;
+                (*mu)[globalIdx] = volVars.viscosity()*scale_;
                 (*delFrac)[globalIdx] = volVars.massFrac(1)-volVars.moleFrac(1);
             };
 
@@ -295,16 +299,16 @@ public:
 
               //use vertiacl faces for vx and horizontal faces for vy calculation
              (*velocityX)[i] /= boxSurface[i][0];
-             (*velocityX)[i] /= scale;
+             (*velocityX)[i] /= scale_;
              if (dim >= 2)
              {
                  (*velocityY)[i] /= boxSurface[i][1];
-                 (*velocityY)[i] /= scale;
+                 (*velocityY)[i] /= scale_;
              }
              if (dim == 3)
              {
                  (*velocityZ)[i] /= boxSurface[i][2];
-                 (*velocityZ)[i] /= scale;
+                 (*velocityZ)[i] /= scale_;
              }
         }
 #endif

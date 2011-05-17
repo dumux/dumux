@@ -54,6 +54,7 @@ namespace Properties
 SET_INT_PROP(BoxOnePTwoC, NumEq, 2); //!< set the number of equations to 2
 SET_INT_PROP(BoxOnePTwoC, NumPhases, 1); //!< The number of phases in the 1p2c model is 1
 SET_INT_PROP(BoxOnePTwoC, NumComponents, 2); //!< The number of components in the 1p2c model is 2
+SET_SCALAR_PROP(BoxOnePTwoC, Scaling, 1); //!< Scaling of the model is set to 1 by default
 
 //! Use the 1p2c local residual function for the 1p2c model
 SET_TYPE_PROP(BoxOnePTwoC, LocalResidual, OnePTwoCLocalResidual<TypeTag>);
