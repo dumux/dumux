@@ -128,7 +128,7 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        std::cout<<"Scaling darcy "<< scale_<<std::endl;
+
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
         ScalarField *pressure = writer.template createField<Scalar, 1>(numVertices);
