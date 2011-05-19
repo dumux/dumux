@@ -39,8 +39,11 @@ namespace Dumux
  * \ingroup IMPECproblems
  * \brief  Base class for all compositional 2-phase problems which use an impet algorithm
  *
- * Differs from .../2p/impes/impesproblem2p.hh only in the includes:
- * Usage of the compositional properties and variableclass.
+ * Differs from .../2p/impes/impesproblem2p.hh in the includes
+ * (usage of the compositional properties and variableclass) and
+ * empty functions for the boundary formulation. Because of the latter,
+ * only the functions of the currently used formulation has to be specified
+ * in the specific problem.
  */
 template<class TypeTag, class Implementation>
 class IMPETProblem2P2C : public IMPETProblem<TypeTag, Implementation>
@@ -50,6 +53,8 @@ class IMPETProblem2P2C : public IMPETProblem<TypeTag, Implementation>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid                         Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))            FluidSystem;
@@ -122,6 +127,30 @@ public:
     const GlobalPosition &gravity() const
     { return gravity_; }
 
+    //! Saturation initial condition (dimensionless)
+    /*! The problem is initialized with the following saturation. Both
+     * phases are assumed to contain an equilibrium concentration of the
+     * correspondingly other component.
+     */
+    Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "please specify initial saturation in the problem!");
+        return NAN;
+    }
+    //! Concentration initial condition (dimensionless)
+    /*! The problem is initialized with the following concentration.
+     */
+    Scalar initConcentration(const GlobalPosition& globalPos, const Element& element) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "please specify initial Concentration in the problem!");
+        return NAN;
+    }
+    // \}
+
+    /*!
+     * \name Access functions
+     */
+    // \{
     /*!
      * \copydoc Dumux::IMPESProblem2P::spatialParameters()
      */
