@@ -51,7 +51,7 @@ NEW_PROP_TAG(TimeManager);
  */
 void printUsageDGF(const char *progname)
 {
-    std::cout << "usage: " << progname << " [--restart restartTime] inputfile\n";
+    std::cout << "usage: " << progname << " [--restart restartTime] gridfile.dgf tEnd dt\n";
     exit(1);
 }
 
