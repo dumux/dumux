@@ -120,6 +120,7 @@ public:
     void eval(const Element &element)
     {
         FVElementGeometry fvElemGeom;
+
         fvElemGeom.update(gridView_(), element);
         fvElemGeomPtr_ = &fvElemGeom;
 
@@ -345,10 +346,16 @@ public:
 
 protected:
     Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
+    { 
+      assert(static_cast<Implementation*>(this) != 0);
+      return *static_cast<Implementation*>(this);
+    }
 
     const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
+    {
+      assert(static_cast<const Implementation*>(this) != 0);
+      return *static_cast<const Implementation*>(this);
+    }
 
     /*!
      * \brief Evaluate the boundary conditions
@@ -483,7 +490,7 @@ protected:
             int i = fvElemGeom_().subContVolFace[k].i;
             int j = fvElemGeom_().subContVolFace[k].j;
 
-            PrimaryVariables flux;
+	    PrimaryVariables flux;
             Valgrind::SetUndefined(flux);
             this->asImp_().computeFlux(flux, k);
             Valgrind::CheckDefined(flux);
@@ -557,7 +564,7 @@ protected:
             tmp *= fvElemGeom_().subContVol[i].volume;
             residual_[i] -= tmp;
 
-            // make sure that only defined quantities where used
+            // make sure that only defined quantities were used
             // to calculate the residual.
             Valgrind::CheckDefined(residual_[i]);
         }

@@ -110,9 +110,9 @@ public:
             const VertexPointer vptr = element.template subEntity<dim>(i);
             problem.boundaryTypes((*this)[i], *vptr);
 
-            hasDirichlet_ = hasDirichlet_ or (*this)[i].hasDirichlet();
-            hasNeumann_ = hasNeumann_ or (*this)[i].hasNeumann();
-            hasOutflow_ = hasOutflow_ or (*this)[i].hasOutflow();
+            hasDirichlet_   = hasDirichlet_ or (*this)[i].hasDirichlet();
+            hasNeumann_     = hasNeumann_   or (*this)[i].hasNeumann();
+            hasOutflow_     = hasOutflow_   or (*this)[i].hasOutflow();
         }
     };
 

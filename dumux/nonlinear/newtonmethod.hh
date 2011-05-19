@@ -161,7 +161,7 @@ protected:
             if (ctl.verbose()) {
                 std::cout << "\rSolve Mx = r";
                 // Clear the current line using an ansi escape
-                // sequence.  for an explaination see
+                // sequence.  for an explanation see
                 // http://en.wikipedia.org/wiki/ANSI_escape_code
                 const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
                 std::cout << clearRemainingLine;
