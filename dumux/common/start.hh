@@ -30,7 +30,7 @@
 #include <dune/grid/io/file/dgfparser.hh>
 #include <dune/common/mpihelper.hh>
 #include <iostream>
-//#include <dune/common/parametertreeparser.hh>
+#include <dune/common/parametertreeparser.hh>
 
 
 namespace Dumux
@@ -239,91 +239,96 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
  * \param argc  The 'argc' argument of the main function
  * \param argv  The 'argv' argument of the main function
  */
-template <class ProblemTypeTag>
-int startFromInputFile(int argc, char **argv)
-{
-#ifdef NDEBUG
-    try {
-#endif
 
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid)) Grid;
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
-        typedef Dune::GridPtr<Grid> GridPointer;
+///////
+// commented out, because it does not work with dune 2.0
+///////
 
-        // initialize MPI, finalize is done automatically on exit
-        static Dune::MPIHelper& mpiHelper = Dune::MPIHelper::instance(argc, argv);
-
-        // parse the command line arguments for the program
-        if (argc < 2)
-            printUsageInputFile(argv[0]);
-
-        // deal with the restart stuff
-        int argIdx = 1;
-        bool restart = false;
-        double restartTime = 0;
-        if (std::string("--restart") == argv[argIdx]) {
-            restart = true;
-            ++argIdx;
-
-            std::istringstream(argv[argIdx++]) >> restartTime;
-        }
-
-        if (argc - argIdx != 1) {
-            printUsageInputFile(argv[0]);
-        }
-
-        std::string inputFileName;
-        std::istringstream(argv[argIdx++]) >> inputFileName;
-
-        ////////////////////////////////////////////////////////////
-        // Load the input parameters
-        ////////////////////////////////////////////////////////////
-        Dune::ParameterTree inputParameters;
-        Dune::ParameterTreeParser::readINITree(inputFileName, inputParameters);
-
-
-        double tEnd, dt;
-        tEnd 	= inputParameters.get<double>("SimulationControl.tEnd");
-        dt 		= inputParameters.get<double>("SimulationControl.tIni");
-
-        const std::string dgfFileName =
-        		inputParameters.template get<std::string>("SimulationControl.gridName", "test_inputfile");
-
-        // create grid
-        // -> load the grid from file
-        GridPointer gridPtr(dgfFileName);
-        if (mpiHelper.size() > 1) {
-            if (!Dune::Capabilities::isParallel<Grid>::v) {
-                std::cerr << "DUMUX WARNING: THE PROGRAM IS STARTED USING MPI, BUT THE GRID IMPLEMENTATION\n"
-                          << "               YOU HAVE CHOSEN IS NOT PARALLEL!\n";
-            }
-            gridPtr.loadBalance();
-        }
-
-        // instantiate and run the concrete problem
-        TimeManager timeManager;
-        Problem problem(timeManager,
-        		gridPtr->leafView(),
-        		inputParameters);
-        timeManager.init(problem, 0, dt, tEnd, !restart);
-        if (restart)
-            problem.restart(restartTime);
-        timeManager.run();
-        return 0;
-
-#ifdef NDEBUG
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-    }
-#endif
-
-    return 3;
-};
+//template <class ProblemTypeTag>
+//int startFromInputFile(int argc, char **argv)
+//{
+//#ifdef NDEBUG
+//    try {
+//#endif
+//
+//        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid)) Grid;
+//        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
+//        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
+//        typedef Dune::GridPtr<Grid> GridPointer;
+//
+//        // initialize MPI, finalize is done automatically on exit
+//        static Dune::MPIHelper& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+//
+//        // parse the command line arguments for the program
+//        if (argc < 2)
+//            printUsageInputFile(argv[0]);
+//
+//        // deal with the restart stuff
+//        int argIdx = 1;
+//        bool restart = false;
+//        double restartTime = 0;
+//        if (std::string("--restart") == argv[argIdx]) {
+//            restart = true;
+//            ++argIdx;
+//
+//            std::istringstream(argv[argIdx++]) >> restartTime;
+//        }
+//
+//        if (argc - argIdx != 1) {
+//            printUsageInputFile(argv[0]);
+//        }
+//
+//        std::string inputFileName;
+//        std::istringstream(argv[argIdx++]) >> inputFileName;
+//
+//        ////////////////////////////////////////////////////////////
+//        // Load the input parameters
+//        ////////////////////////////////////////////////////////////
+//        Dune::ParameterTree inputParameters;
+//        Dune::ParameterTreeParser::readINITree(inputFileName, inputParameters);
+//
+//
+//        double tEnd, dt;
+//        tEnd 	= inputParameters.get<double>("SimulationControl.tEnd");
+//        dt 		= inputParameters.get<double>("SimulationControl.tIni");
+//
+//        const std::string dgfFileName =
+//        		inputParameters.template get<std::string>("SimulationControl.gridName", "test_inputfile");
+//
+//        // create grid
+//        // -> load the grid from file
+//        GridPointer gridPtr(dgfFileName);
+//        if (mpiHelper.size() > 1) {
+//            if (!Dune::Capabilities::isParallel<Grid>::v) {
+//                std::cerr << "DUMUX WARNING: THE PROGRAM IS STARTED USING MPI, BUT THE GRID IMPLEMENTATION\n"
+//                          << "               YOU HAVE CHOSEN IS NOT PARALLEL!\n";
+//            }
+//            gridPtr.loadBalance();
+//        }
+//
+//        // instantiate and run the concrete problem
+//        TimeManager timeManager;
+//        Problem problem(timeManager,
+//        		gridPtr->leafView(),
+//        		inputParameters);
+//        timeManager.init(problem, 0, dt, tEnd, !restart);
+//        if (restart)
+//            problem.restart(restartTime);
+//        timeManager.run();
+//        return 0;
+//
+//#ifdef NDEBUG
+//    }
+//    catch (Dune::Exception &e) {
+//        std::cerr << "Dune reported error: " << e << std::endl;
+//    }
+//    catch (...) {
+//        std::cerr << "Unknown exception thrown!\n";
+//    }
+//#endif
+//
+//    return 3;
+//}
 
 
 }
