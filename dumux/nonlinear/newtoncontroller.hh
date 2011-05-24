@@ -63,15 +63,6 @@ NEW_PROP_TAG(VertexMapper);
 //! specifies the type of the time manager
 NEW_PROP_TAG(TimeManager);
 
-/*!
- * \brief Specifies the verbosity of the linear solver
- *
- * By default it is 0, i.e. it doesn't print anything. Setting this
- * property to 1 prints aggregated convergence rates, 2 prints the
- * convergence rate of every iteration of the scheme.
- */
-NEW_PROP_TAG(NewtonLinearSolverVerbosity);
-
 //! specifies whether the convergence rate and the global residual
 //! gets written out to disk for every newton iteration (default is false)
 NEW_PROP_TAG(NewtonWriteConvergence);
@@ -93,11 +84,6 @@ NEW_PROP_TAG(EnablePartialReassemble);
  * controller's update() method. By default line search is not used.
  */
 NEW_PROP_TAG(NewtonUseLineSearch);
-
-SET_PROP_DEFAULT(NewtonLinearSolverVerbosity)
-{public:
-    static const int value = 0;
-};
 
 SET_PROP_DEFAULT(NewtonWriteConvergence)
 {public:
@@ -442,20 +428,8 @@ public:
                            SolutionVector &x,
                            const SolutionVector &b)
     {
-        // if the deflection of the newton method is large, we do not
-        // need to solve the linear approximation accurately. Assuming
-        // that the initial value for the delta vector u is quite
-        // close to the final value, a reduction of 9 orders of
-        // magnitude in the defect should be sufficient...
-        Scalar residReduction = 1e-6;
-
         try {
-            int verbosityLevel = 0;
-            if (verbose()) {
-                verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
-            }
-
-            int converged = linearSolver_.solve(A, x, b, residReduction, verbosityLevel);
+            int converged = linearSolver_.solve(A, x, b);
 
             // make sure all processes converged
             converged = gridView_().comm().min(converged);

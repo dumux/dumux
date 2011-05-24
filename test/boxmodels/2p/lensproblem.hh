@@ -110,11 +110,14 @@ SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, true);
 // Write the solutions of individual newton iterations?
 SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, false);
 
-// The verbosity of the linear solver
-SET_BOOL_PROP(LensProblem, NewtonLinearSolverVerbosity, 0);
-
 // Use forward differences instead of central differences
 SET_INT_PROP(LensProblem, NumericDifferenceMethod, +1);
+
+// Linear solver settings
+SET_TYPE_PROP(LensProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
+SET_INT_PROP(LensProblem, LSVerbosity, 0);
+SET_INT_PROP(LensProblem, PreconditionerIterations, 1);
+SET_SCALAR_PROP(LensProblem, PreconditionerRelaxation, 1.0);
 
 // Enable gravity
 SET_BOOL_PROP(LensProblem, EnableGravity, true);

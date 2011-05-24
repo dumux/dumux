@@ -67,8 +67,6 @@ SET_PROP(OnePTestProblem, Grid)
     typedef Dune::YaspGrid<2> type;
 };
 
-SET_INT_PROP(OnePTestProblem, NewtonLinearSolverVerbosity, 0);
-
 // Set the problem property
 SET_PROP(OnePTestProblem, Problem)
 { typedef Dumux::OnePTestProblem<TTAG(OnePTestProblem)> type; };
@@ -76,6 +74,12 @@ SET_PROP(OnePTestProblem, Problem)
 // Set the spatial parameters
 SET_PROP(OnePTestProblem, SpatialParameters)
 { typedef Dumux::OnePTestSpatialParameters<TypeTag> type; };
+
+// Linear solver settings
+SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxCGILU0Solver<TypeTag> );
+SET_INT_PROP(OnePTestProblem, LSVerbosity, 1);
+SET_INT_PROP(OnePTestProblem, PreconditionerIterations, 1);
+SET_SCALAR_PROP(OnePTestProblem, PreconditionerRelaxation, 1.0);
 
 // Enable gravity
 SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);

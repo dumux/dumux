@@ -278,11 +278,12 @@ void FVPressure1P<TypeTag>::assemble(bool first)
         // get absolute permeability
         FieldMatrix permeabilityI(problem_.spatialParameters().intrinsicPermeability(globalPos, *eIt));
 
+        int isIndex = 0;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt);
+             isIt != isItEnd;
+             ++isIt, ++isIndex)
         {
-            int isIndex = isIt->indexInInside();
-
             // get normal vector
             Dune::FieldVector < Scalar, dimWorld > unitOuterNormal = isIt->centerUnitOuterNormal();
 
@@ -430,7 +431,6 @@ void FVPressure1P<TypeTag>::assemble(bool first)
                 }
             }
         } // end all intersections
-
     } // end grid traversal
     return;
 }

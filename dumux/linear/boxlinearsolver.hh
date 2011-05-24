@@ -39,6 +39,75 @@
 
 namespace Dumux {
 
+namespace Properties
+{
+/*!
+ * \brief Specifies the verbosity of the linear solver
+ *
+ * By default it is 0, i.e. it doesn't print anything. Setting this
+ * property to 1 prints aggregated convergence rates, 2 prints the
+ * convergence rate of every iteration of the scheme.
+ */
+NEW_PROP_TAG(LSVerbosity);
+// the outdated name
+NEW_PROP_TAG(NewtonLinearSolverVerbosity);
+
+//! target reduction of the initial residual
+// if the deflection of the newton method is large, we do not
+// need to solve the linear approximation accurately. Assuming
+// that the initial value for the delta vector u is quite
+// close to the final value, a reduction of 6 orders of
+// magnitude in the defect should be sufficient...
+NEW_PROP_TAG(LSResidualReduction);
+
+//! maximum number of iterations of solver
+NEW_PROP_TAG(LSMaxIterations);
+
+//! relaxation parameter for the preconditioner
+NEW_PROP_TAG(PreconditionerRelaxation);
+
+//! number of preconditioner iterations per solver iteration
+NEW_PROP_TAG(PreconditionerIterations);
+
+//! restart parameter for GMRes
+NEW_PROP_TAG(GMResRestart);
+
+SET_PROP_DEFAULT(NewtonLinearSolverVerbosity)
+{public:
+    static constexpr int value = 0;
+};
+
+SET_PROP_DEFAULT(LSVerbosity)
+{public:
+    static constexpr int value = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
+};
+
+SET_PROP_DEFAULT(LSResidualReduction)
+{public:
+    static constexpr double value = 1e-6;
+};
+
+SET_PROP_DEFAULT(LSMaxIterations)
+{public:
+    static constexpr int value = 250;
+};
+
+SET_PROP_DEFAULT(PreconditionerRelaxation)
+{public:
+    static constexpr double value = 1.0;
+};
+
+SET_PROP_DEFAULT(PreconditionerIterations)
+{public:
+    static constexpr int value = 1;
+};
+
+SET_PROP_DEFAULT(GMResRestart)
+{public:
+    static constexpr int value = 10;
+};
+}
+
 /*!
  * \brief Provides a linear solver for the stabilized BiCG method with
  *        an ILU-0 preconditioner.
@@ -93,13 +162,17 @@ public:
      *
      * \return true if the residual reduction could be achieved, else false.
      */
-    template <class SeqPreconditioner, class Solver>
+    template <class PrecBackend, class SolverBackend>
     bool solve(const Matrix &M, 
             Vector &x,
-            const Vector &b,
-            double residReduction,
-            int verbosityLevel = 0)
+            const Vector &b)
     {
+        int verbosity = 0;
+        if (problem_.gridView().comm().rank() == 0)
+            verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
+        static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
+        static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+
         if (!overlapMatrix_) {
             // make sure that the overlapping matrix and block vectors
             // have been created
@@ -114,26 +187,26 @@ public:
         (*overlapx_) = 0.0;
 
         // create sequential and overlapping preconditioners
-        //SeqPreconditioner seqPreCond(*overlapMatrix_, 1, 1.0);
-        SeqPreconditioner seqPreCond(*overlapMatrix_, 1.0);
+        PrecBackend seqPreCond(*overlapMatrix_);
+        typedef typename PrecBackend::Implementation SeqPreconditioner;
         typedef Dumux::OverlappingPreconditioner<SeqPreconditioner, Overlap> OverlappingPreconditioner;
-        OverlappingPreconditioner preCond(seqPreCond, overlapMatrix_->overlap());
+        OverlappingPreconditioner preCond(seqPreCond.imp(), overlapMatrix_->overlap());
 
         // create the scalar products and linear operators for ISTL
         OverlappingScalarProduct scalarProd(overlapMatrix_->overlap());
         OverlappingOperator opA(*overlapMatrix_);
 
         // create the actual solver
-        Solver solver(opA, 
+        SolverBackend solver(opA,
                 scalarProd,
                 preCond,
                 residReduction,
-                /*maxIterations=*/250,
-                verbosityLevel);
+                maxIter,
+                verbosity);
 
         // run the solver
         Dune::InverseOperatorResult result;
-        solver.apply(*overlapx_, *overlapb_, result);
+        solver.imp().apply(*overlapx_, *overlapb_, result);
 
         // copy the result back to the non-overlapping vector
         overlapx_->assignTo(x);
@@ -180,6 +253,70 @@ private:
     OverlappingVector *overlapx_;
 };
 
+template <class TypeTag, class Imp>
+class PrecNoIterBackend
+{
+public:
+    typedef Imp Implementation;
+
+    template <class Matrix>
+    PrecNoIterBackend(Matrix& A)
+    : imp_(A, GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation)))
+    {}
+
+    Imp& imp()
+    {
+        return imp_;
+    }
+
+private:
+    Imp imp_;
+};
+
+template <class TypeTag, class Imp>
+class PrecIterBackend
+{
+public:
+    typedef Imp Implementation;
+
+    template <class Matrix>
+    PrecIterBackend(Matrix& A)
+    : imp_(A,
+           GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations)),
+           GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation)))
+    {}
+
+    Imp& imp()
+    {
+        return imp_;
+    }
+
+private:
+    Imp imp_;
+};
+
+template <class TypeTag, class Imp>
+class StandardSolverBackend
+{
+public:
+    typedef Imp Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+    template <class Operator, class ScalarProduct, class Prec>
+    StandardSolverBackend(Operator& A, ScalarProduct& sp, Prec& prec,
+                          Scalar residReduction, int maxIter, int verbosity)
+    : imp_(A, sp, prec, residReduction, maxIter, verbosity)
+    {}
+
+    Imp& imp()
+    {
+        return imp_;
+    }
+
+private:
+    Imp imp_;
+};
+
 template <class TypeTag>
 class BoxBiCGStabILU0Solver : public BoxLinearSolver<TypeTag>
 {
@@ -190,7 +327,9 @@ class BoxBiCGStabILU0Solver : public BoxLinearSolver<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqILU0<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecNoIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
     typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
 
 public:
     template <class Problem>
@@ -200,11 +339,121 @@ public:
 
     bool solve(const Matrix &M,
             Vector &x,
-            const Vector &b,
-            double residReduction,
-            int verbosityLevel = 0)
+            const Vector &b)
     {
-        return ParentType::template solve<SeqPreconditioner, Solver>(M, x, b, residReduction, verbosityLevel);
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxBiCGStabSORSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxBiCGStabSORSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxBiCGStabSSORSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqSSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxBiCGStabSSORSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxBiCGStabJacSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxBiCGStabJacSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxBiCGStabGSSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqGS<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::BiCGSTABSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxBiCGStabGSSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
     }
 };
 
@@ -218,7 +467,9 @@ class BoxCGILU0Solver : public BoxLinearSolver<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqILU0<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecNoIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
     typedef Dune::CGSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
 
 public:
     template <class Problem>
@@ -228,11 +479,121 @@ public:
 
     bool solve(const Matrix &M,
             Vector &x,
-            const Vector &b,
-            double residReduction,
-            int verbosityLevel = 0)
+            const Vector &b)
     {
-        return ParentType::template solve<SeqPreconditioner, Solver>(M, x, b, residReduction, verbosityLevel);
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxCGSORSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::CGSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxCGSORSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxCGSSORSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqSSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::CGSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxCGSSORSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxCGJacSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::CGSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxCGJacSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
+    }
+};
+
+template <class TypeTag>
+class BoxCGGSSolver : public BoxLinearSolver<TypeTag>
+{
+    typedef BoxLinearSolver<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
+    typedef typename OverlappingMatrix::Overlap Overlap;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
+    typedef Dune::SeqGS<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
+    typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
+    typedef Dune::CGSolver<OverlappingVector> Solver;
+    typedef StandardSolverBackend<TypeTag, Solver> SolverBackend;
+
+public:
+    template <class Problem>
+    BoxCGGSSolver(const Problem &problem, int overlapSize = 3)
+    : ParentType(problem, overlapSize)
+    {}
+
+    bool solve(const Matrix &M,
+            Vector &x,
+            const Vector &b)
+    {
+        return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
     }
 };
 
