@@ -302,7 +302,7 @@ public:
      */
     using ParentType::initial;
     void initial(PrimaryVariables &values,
-                 const GlobalPosition &pos)
+                 const GlobalPosition &pos) const
     { initial_(values, pos); };
 
     // \}
