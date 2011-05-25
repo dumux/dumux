@@ -207,7 +207,7 @@ public:
      * \param localVertexIdx The index of the SCV
      *
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &q, int localVertexIdx) const
     {
         // retrieve the source term intrinsic to the problem
         this->problem_().boxSDSource(q,
