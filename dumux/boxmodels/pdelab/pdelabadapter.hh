@@ -31,6 +31,8 @@
 #error "DUNE-PDELab must be available in order to include this file!"
 #endif
 
+#include <dune/pdelab/backend/istlmatrixbackend.hh>
+#include <dune/pdelab/finiteelementmap/q1fem.hh>
 #include "pdelabboxistlvectorbackend.hh"
 #include "pdelabboxlocaloperator.hh"
 
