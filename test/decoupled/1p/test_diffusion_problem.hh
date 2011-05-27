@@ -1,4 +1,3 @@
-// $Id: test_diffusion_problem.hh 3655 2010-05-26 17:13:50Z bernd $
 /*****************************************************************************
 *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
 *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

@@ -1,4 +1,3 @@
-// $Id: 2pnilocalresidual.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *

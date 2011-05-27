@@ -1,4 +1,3 @@
-// $Id$
 /*****************************************************************************
  *   Copyright (C) 2010 by Markus Wolff                                      *
  *   Copyright (C) 2009 by Andreas Lauser                                    *

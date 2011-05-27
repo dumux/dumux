@@ -1,4 +1,3 @@
-// $Id: 1p2cfluidstate.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2010 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *

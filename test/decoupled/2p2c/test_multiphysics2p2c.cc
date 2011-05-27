@@ -1,4 +1,3 @@
-// $Id:
 /*****************************************************************************
  *   Copyright (C) 20010 by Benjamin Faigle                                  *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

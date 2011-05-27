@@ -1,4 +1,3 @@
-// $Id: 2p2clocalresidual.hh 3795 2010-06-25 16:08:04Z melanie $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008-2009 by Bernd Flemisch                               *

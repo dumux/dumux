@@ -1,4 +1,3 @@
-// $Id: boundaryconditions2p2c.hh 3357 2010-03-25 13:02:05Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2007-2008 by Jochen Fritz                                 *
  *   Institute of Hydraulic Engineering                                      *

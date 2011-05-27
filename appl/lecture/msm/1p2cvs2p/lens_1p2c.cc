@@ -1,4 +1,3 @@
-// $Id: test_1p2c.cc 2425 2009-08-27 16:53:36Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder, Klaus Mosthaf                  *
  *   Copyright (C) 2009 by Andreas Lauser                                    *

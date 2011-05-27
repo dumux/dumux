@@ -1,4 +1,3 @@
-// $Id$
 /*****************************************************************************
  *   Copyright (C) 2010 by Katherina Baber, Klaus Mosthaf                    *
  *   Copyright (C) 2008-2009 by Bernd Flemisch, Andreas Lauser               *

@@ -1,4 +1,3 @@
-// $Id: pardiso.hh 3826 2010-07-14 07:03:41Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *

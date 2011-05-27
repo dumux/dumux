@@ -1,4 +1,3 @@
-// $Id: buckleyleverett_spatialparams.hh 4144 2010-08-24 10:10:47Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *
  *   Copyright (C) 2010 by Klaus Mosthaf                                     *

@@ -1,4 +1,3 @@
-// $Id: test_2p_injectionproblem.hh 3456 2010-04-09 12:11:51Z mwolff $
 /*****************************************************************************
  *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

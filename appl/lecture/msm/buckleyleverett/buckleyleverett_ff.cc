@@ -1,4 +1,3 @@
-// $Id: test_impes.cc 4144 2010-08-24 10:10:47Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2010 by Markus Wolff, Klaus Mosthaf                       *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

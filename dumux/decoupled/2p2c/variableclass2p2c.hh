@@ -1,4 +1,3 @@
-// $Id: variableclass2p.hh 3357 2010-03-25 13:02:05Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2009 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *

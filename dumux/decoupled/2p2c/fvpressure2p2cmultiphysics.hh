@@ -1,4 +1,3 @@
-// $Id: fvpressure2p.hh 3357 2010-03-25 13:02:05Z lauser $
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Copyright (C) 2007-2009 by Jochen Fritz                                 *

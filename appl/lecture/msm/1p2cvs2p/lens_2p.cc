@@ -1,4 +1,3 @@
-// $Id: test_2p.cc 2539 2009-10-13 14:49:40Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2010 by Klaus Mosthaf                                     *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

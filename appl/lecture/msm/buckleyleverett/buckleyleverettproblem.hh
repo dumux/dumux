@@ -1,4 +1,3 @@
-// $Id: test_impes_problem.hh 4209 2010-09-01 12:31:45Z mwolff $
 /*****************************************************************************
  *   Copyright (C) 2007-2008 by Markus Wolff, Klaus Mosthaf                  *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

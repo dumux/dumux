@@ -1,4 +1,3 @@
-// $Id: test_2p.cc 3732 2010-06-11 13:27:20Z bernd $
 /*****************************************************************************
  *   Copyright (C) 20010 by Markus Wolff                                     *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

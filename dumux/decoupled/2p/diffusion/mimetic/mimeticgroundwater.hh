@@ -1,4 +1,3 @@
-// $Id$
 /*****************************************************************************
 *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
 *   Institute of Hydraulic Engineering                                      *

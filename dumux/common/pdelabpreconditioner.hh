@@ -1,4 +1,3 @@
-// $Id$: preconditionerpdelab.hh 3728 2010-06-10 15:44:39Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *

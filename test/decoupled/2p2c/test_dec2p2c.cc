@@ -1,4 +1,3 @@
-// $Id: test_2pinjection.cc 3151 2010-02-15 11:41:23Z mwolff $
 /*****************************************************************************
  *   Copyright (C) 20010 by Markus Wolff                                     *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *

@@ -1,4 +1,3 @@
-// $Id: 2p2cproperties.hh 3784 2010-06-24 13:43:57Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008 by Klaus Mosthaf, Andreas Lauser, Bernd Flemisch     *
  *   Institute of Hydraulic Engineering                                      *

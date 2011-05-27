@@ -1,4 +1,3 @@
-// $Id:
 /*****************************************************************************
  *   Copyright (C) 2010 by Benjamin Faigle					                 *
  *   Institute of Hydraulic Engineering                                      *
