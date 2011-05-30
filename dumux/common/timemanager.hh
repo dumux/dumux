@@ -404,7 +404,7 @@ public:
                       << numProcesses << " processes.\n"
                       << "The cumulative CPU time was " << timer.elapsed()*numProcesses << " seconds.\n"
                       << "We hope that you enjoyed simulating with us\n"
-                      << "and that you will chose us next time, too.\n";
+                      << "and that you will choose us next time, too.\n";
         }
     }
 
