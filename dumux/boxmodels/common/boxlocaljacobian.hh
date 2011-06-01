@@ -38,9 +38,9 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxModel
- * \brief Caculates the Jacobian of the local residual for box models
+ * \brief Calculates the Jacobian of the local residual for box models
  *
- * The default behaviour is to use numeric differentiation, i.e.
+ * The default behavior is to use numeric differentiation, i.e.
  * forward or backward differences (2nd order), or central
  * differences (3rd order). The method used is determined by the
  * "NumericDifferenceMethod" property:
@@ -238,9 +238,9 @@ public:
      * \brief Returns the Jacobian of the equations at vertex i to the
      *        primary variables at vertex j.
      *
-     * \param i The local vertex (or sub-contol volume) index on which
+     * \param i The local vertex (or sub-control volume) index on which
      *          the equations are defined
-     * \param j The local vertex (or sub-contol volume) index which holds
+     * \param j The local vertex (or sub-control volume) index which holds
      *          primary variables
      */
     const MatrixBlock &mat(int i, int j) const
@@ -249,7 +249,7 @@ public:
     /*!
      * \brief Returns the Jacobian of the storage term at vertex i.
      *
-     * \param i The local vertex (or sub-contol volume) index
+     * \param i The local vertex (or sub-control volume) index
      */
     const MatrixBlock &storageJacobian(int i) const
     { return storageJacobian_[i]; }
@@ -257,7 +257,7 @@ public:
     /*!
      * \brief Returns the residual of the equations at vertex i.
      *
-     * \param i The local vertex (or sub-contol volume) index on which
+     * \param i The local vertex (or sub-control volume) index on which
      *          the equations are defined
      */
     const PrimaryVariables &residual(int i) const
@@ -266,7 +266,7 @@ public:
     /*!
      * \brief Returns the storage term for vertex i.
      *
-     * \param i The local vertex (or sub-contol volume) index on which
+     * \param i The local vertex (or sub-control volume) index on which
      *          the equations are defined
      */
     const PrimaryVariables &storageTerm(int i) const
@@ -462,7 +462,7 @@ protected:
         dest /= delta;
         destStorage /= delta;
 
-        // restore the orignal state of the element's volume variables
+        // restore the original state of the element's volume variables
         curVolVars_[scvIdx] = origVolVars;
 
 #if HAVE_VALGRIND

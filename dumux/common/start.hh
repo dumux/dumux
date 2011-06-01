@@ -162,7 +162,7 @@ int startFromDGF(int argc, char **argv)
 
 /*!
  * \brief Provides a default main function for simulations which
- *        create the grid themself but do not require any other
+ *        create the grid themselves but do not require any other
  *        parameters.
  *
  * \tparam ProblemTypeTag  The type tag of the problem which needs to be solved
