@@ -921,12 +921,41 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         {
         case vw:
         {
-            source = problem_.source(globalPos, *eIt)[wPhaseIdx] / densityWI;
+            Scalar sat = 0;
+            switch (saturationType_)
+            {
+            case Sw:
+            {
+                sat = problem_.variables().saturation()[globalIdxI];
+                break;
+            }
+            case Sn:
+            {
+                sat = 1
+                        - problem_.variables().saturation()[globalIdxI];
+                break;
+            }
+            }
+            source = (sat > 0) ? problem_.source(globalPos, *eIt)[wPhaseIdx] / densityWI : 0.0;
             break;
         }
         case vn:
         {
-            source = problem_.source(globalPos, *eIt)[nPhaseIdx] / densityNWI;
+            Scalar sat = 0;
+            switch (saturationType_)
+            {
+            case Sw:
+            {
+                sat = 1 - problem_.variables().saturation()[globalIdxI];
+                break;
+            }
+            case Sn:
+            {
+                sat = problem_.variables().saturation()[globalIdxI];
+                break;
+            }
+            }
+            source =  (sat > 0) ? problem_.source(globalPos, *eIt)[nPhaseIdx] / densityNWI : 0.0;
             break;
         }
         case vt:
