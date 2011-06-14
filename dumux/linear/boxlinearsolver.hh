@@ -36,6 +36,7 @@
 
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/superlu.hh>
 
 namespace Dumux {
 
@@ -595,6 +596,48 @@ public:
     {
         return ParentType::template solve<PrecBackend, SolverBackend>(M, x, b);
     }
+};
+
+template <class TypeTag>
+class SuperLUBackend
+{
+  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+
+public:
+
+  SuperLUBackend(const Problem& problem, int overlapSize = 0)
+  : problem_(problem)
+  {}
+
+  template<class Matrix, class Vector>
+  int solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
+    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
+    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+
+    Vector bTmp(b);
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    enum {numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
+    typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
+    typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
+
+    Dune::SuperLU<ISTLMatrix> solver(A);
+
+    solver.apply(x, bTmp, result_);
+
+    return result_.converged;
+  }
+
+  const Dune::InverseOperatorResult& result() const
+  {
+    return result_;
+  }
+
+private:
+  Dune::InverseOperatorResult result_;
+  const Problem& problem_;
 };
 
 } // namespace Dumux
