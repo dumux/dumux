@@ -598,6 +598,7 @@ public:
     }
 };
 
+#if HAVE_SUPERLU
 template <class TypeTag>
 class SuperLUBackend
 {
@@ -639,6 +640,7 @@ private:
   Dune::InverseOperatorResult result_;
   const Problem& problem_;
 };
+#endif
 
 } // namespace Dumux
 
