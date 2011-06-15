@@ -26,6 +26,7 @@
 #define DUMUX_FIXED_LENGTH_SPLINE_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/fmatrixev.hh>
 #include <dune/istl/btdmatrix.hh>
 
 #include "splinecommon_.hh"
