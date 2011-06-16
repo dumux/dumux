@@ -410,8 +410,10 @@ public:
     {
         Scalar result = 0.0;
         for (int j = 0; j < numEq; ++j) {
-            Scalar weight = asImp_().primaryVarWeight(vertexIdx, j);
-            Scalar eqErr = std::abs(pv1[j] - pv2[j])*weight;
+            //Scalar weight = asImp_().primaryVarWeight(vertexIdx, j);
+            //Scalar eqErr = std::abs(pv1[j] - pv2[j])*weight;
+            Scalar eqErr = std::abs(pv1[j] - pv2[j]);
+            eqErr /= std::max(1.0, std::abs(pv1[j] + pv2[j])/2);
 
             result = std::max(result, eqErr);
         }
