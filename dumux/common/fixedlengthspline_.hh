@@ -69,13 +69,44 @@ public:
              const ScalarContainer &y,
              Scalar m0, Scalar m1)
     {
-        BTDMatrix M(numSamples());
-        BlockVector d(numSamples());
         this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
-        this->makeFullSystem_(M, d, m0, m1);
+        myMakeFullSpline_(m0, m1);
+    }
 
-        // solve for the moments
-        M.solve(m_, d);
+    /*!
+     * \brief Set the sampling points using an array of (x,y) pairs.
+     *
+     * Variant for a full spline.
+     */
+    template <class XYContainer>
+    void setViaArrayContainer(const XYContainer &points, Scalar m0, Scalar m1)
+    {
+        assert(points.size() == numSamples());
+
+        this->assignFromArrayList_(xPos_,
+                                   yPos_,
+                                   points.begin(),
+                                   points.end(),
+                                   numSamples());
+        myMakeFullSpline_(m0, m1);
+    }
+
+    /*!
+     * \brief Set the sampling points using an array of (x,y) pairs.
+     *
+     * Variant for a full spline.
+     */
+    template <class XYContainer>
+    void setViaArrayArray(int nuSamples, const XYContainer &points, Scalar m0, Scalar m1)
+    {
+        assert(nuSamples == numSamples());
+
+        this->assignFromArrayList_(xPos_,
+                                   yPos_,
+                                   &points[0],
+                                   &points[numSamples() - 1],
+                                   numSamples());
+        myMakeFullSpline_(m0, m1);
     }
 
     /*!
@@ -83,16 +114,15 @@ public:
      *
      * Variant for a full spline.
      */
-    template <class XYContainer>
-    void set(const XYContainer &points, Scalar m0, Scalar m1)
+    template <class TupleContainer>
+    void setViaTupleContainer(const TupleContainer &points, Scalar m0, Scalar m1)
     {
-        BTDMatrix M(numSamples());
-        BlockVector d(numSamples());
-        this->assignSamplingPoints_(xPos_, yPos_, points, numSamples());
-        this->makeFullSystem_(M, d, m0, m1);
-
-        // solve for the moments
-        M.solve(m_, d);
+        this->assignFromTupleList_(xPos_,
+                                   yPos_,
+                                   points.begin(),
+                                   points.end(),
+                                   numSamples());
+        myMakeFullSpline_(m0, m1);
     }
 
     /*!
@@ -101,13 +131,8 @@ public:
     template <class ScalarContainer>
     void set(const ScalarContainer &x, const ScalarContainer &y)
     {
-        BTDMatrix M(numSamples());
-        BlockVector d(numSamples());
         this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
-        this->makeNaturalSystem_(M, d);
-
-        // solve for the moments
-        M.solve(m_, d);
+        myMakeNaturalSpline_();
     }
 
     /*!
@@ -116,18 +141,85 @@ public:
      * Variant for a natural spline.
      */
     template <class XYContainer>
-    void set(const XYContainer &points)
+    void setViaArrayContainer(const XYContainer &points)
+    {
+        this->assignFromArrayList_(xPos_,
+                                   yPos_,
+                                   points.begin(),
+                                   points.end(),
+                                   numSamples());
+        myMakeNaturalSpline_();
+    }
+
+    /*!
+     * \brief Set the sampling points using an array of (x,y) tuples.
+     *
+     * Variant for a natural spline.
+     */
+    template <class XYContainer>
+    void setViaArrayArray(int nuSamples, const XYContainer &points)
+    {
+        assert(nuSamples == numSamples());
+
+        this->assignFromArrayList_(xPos_,
+                                   yPos_,
+                                   &points[0],
+                                   &points[numSamples() - 1], 
+                                   numSamples());
+        myMakeNaturalSpline_();
+    }
+
+    /*!
+     * \brief Set the sampling points using an array of (x,y) tuples.
+     *
+     * Variant for a natural spline.
+     */
+    template <class TupleContainer>
+    void setViaTupleContainer(const TupleContainer &points)
+    {
+        this->assignFromTupleList_(xPos_,
+                                   yPos_,
+                                   points.begin(),
+                                   points.end(),
+                                   numSamples());
+        myMakeNaturalSpline_();
+    }
+
+protected:
+    /*!
+     * \brief Create a full spline from the already set sampling points.
+     *
+     * Also creates temporary matrix and right hand side vector.
+     */
+    void myMakeFullSpline_(Scalar m0, Scalar m1)
     {
         BTDMatrix M(numSamples());
         BlockVector d(numSamples());
-        this->assignSamplingPoints_(xPos_, yPos_, points, numSamples());
+
+        // create linear system of equations
+        this->makeFullSystem_(M, d, m0, m1);
+
+        // solve for the moments
+        M.solve(m_, d);
+    }
+
+    /*!
+     * \brief Create a natural spline from the already set sampling points.
+     *
+     * Also creates temporary matrix and right hand side vector.
+     */
+    void myMakeNaturalSpline_()
+    {
+        BTDMatrix M(numSamples());
+        BlockVector d(numSamples());
+
+        // create linear system of equations
         this->makeNaturalSystem_(M, d);
 
         // solve for the moments
         M.solve(m_, d);
     }
 
-protected:
     /*!
      * \brief Returns the x coordinate of the i-th sampling point.
      */

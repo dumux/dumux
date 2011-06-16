@@ -321,6 +321,33 @@ protected:
         }
     };
 
+    template <class DestVector, class ListIterator>
+    void assignFromArrayList_(DestVector &destX,
+                              DestVector &destY,
+                              const ListIterator &srcBegin,
+                              const ListIterator &srcEnd,
+                              int numSamples)
+    {
+        assert(numSamples >= 2);
+
+        // find out wether the x values are in reverse order
+        ListIterator it = srcBegin;
+        ++it;
+        bool reverse = false;
+        if ((*srcBegin)[0] > (*it)[0])
+            reverse = true;
+        --it;
+
+        // loop over all sampling points
+        for (int i = 0; it != srcEnd; ++i, ++it) {
+            int idx = i;
+            if (reverse)
+                idx = numSamples - i - 1;
+            destX[i] = (*it)[0];
+            destY[i] = (*it)[1];
+        }
+    };
+
     /*!
      * \brief Set the sampling points.
      *
@@ -328,22 +355,33 @@ protected:
      * [] operator where v[0] is the x value and v[1] is the y value
      * if the sampling point.
      */
-    template <class DestVector, class SourceVector>
-    void assignSamplingPoints_(DestVector &destX,
-                               DestVector &destY,
-                               const SourceVector &src,
-                               int numSamples)
+    template <class DestVector, class ListIterator>
+    void assignFromTupleList_(DestVector &destX,
+                              DestVector &destY,
+                              ListIterator srcBegin,
+                              ListIterator srcEnd,
+                              int numSamples)
     {
         assert(numSamples >= 2);
-
+        
         // copy sample points, make sure that the first x value is
         // smaller than the last one
-        for (int i = 0; i < numSamples; ++i) {
+
+        // find out wether the x values are in reverse order
+        ListIterator it = srcBegin;
+        ++it;
+        bool reverse = false;
+        if (std::get<0>(*srcBegin) > std::get<0>(*it))
+            reverse = true;
+        --it;
+
+        // loop over all sampling points
+        for (int i = 0; it != srcEnd; ++i, ++it) {
             int idx = i;
-            if (src[0][0] > src[numSamples - 1][0])
+            if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = src[idx][0];
-            destY[i] = src[idx][1];
+            destX[i] = std::get<0>(*it);
+            destY[i] = std::get<1>(*it);
         }
     };
 
@@ -445,6 +483,7 @@ protected:
         d[0] = 0.0;
         d[n] = 0.0;
     }
+
 
     // returns the monotonicality of an interval of a spline segment
     //

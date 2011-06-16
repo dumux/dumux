@@ -79,9 +79,8 @@ public:
      *
      * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
      */
-    template <class XYContainer>
-    Spline(const XYContainer &tuples)
-    { this->set(tuples); }
+    Spline(const std::initializer_list<const std::pair<Scalar, Scalar> > &points)
+    { this->setViaTupleContainer(points); }
 
     /*!
      * \brief Convenience constructor for a full spline
@@ -105,11 +104,10 @@ public:
      * \param m0 The slope of the spline at \f$x_0\f$
      * \param m1 The slope of the spline at \f$x_n\f$
      */
-    template <class XYContainer>
-    Spline(const XYContainer &points,
+    Spline(const std::initializer_list<const std::pair<Scalar, Scalar> > &points,
            Scalar m0,
            Scalar m1)
-    { this->set(points, m0, m1); }
+    { this->setViaTupleContainer(points, m0, m1); }
 };
 
 /*!
@@ -184,9 +182,8 @@ public:
      *
      * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points (must have a size() method)
      */
-    template <class XYContainer>
-    Spline(const XYContainer &tuples)
-    { this->set(tuples); }
+    Spline(const std::initializer_list<const std::pair<Scalar, Scalar> > &points)
+    { this->setViaArrayContainer(points); }
 
     /*!
      * \brief Convenience constructor for a full spline
@@ -218,7 +215,7 @@ public:
            const XYContainer &points,
            Scalar m0,
            Scalar m1)
-    { this->set(nSamples, points, m0, m1); }
+    { this->setViaArrayArray(nSamples, points, m0, m1); }
 
     /*!
      * \brief Convenience constructor for a full spline
@@ -246,7 +243,7 @@ public:
     Spline(const XYContainer &points,
            Scalar m0,
            Scalar m1)
-    { this->set(points, m0, m1); }
+    { this->setViaTupleContainer(points, m0, m1); }
 };
 
 /*!
