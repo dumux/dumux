@@ -1,0 +1,51 @@
+# build system clutter
+Makefile.in
+Makefile
+.deps/
+aclocal*
+depcomp
+dependencies.m4
+am
+autom4*
+dumux.pc
+install-sh
+libtool
+ltmain
+ltmain.sh
+missing
+stamp-h1
+config.*
+configure
+
+# auto-generated doxygen files
+Doxyfile
+Doxyfile.in
+doc/doxygen/html
+
+# auto-saved files
+*~
+
+# object files
+*.o
+
+# ignore CSV files which are usually auto generated 
+# from some simulation results
+*.csv
+
+# latex clutter from dumux handbook 
+dumux-handbook.pdf
+*.aux
+*.blg
+*.log
+*.bbl
+*.dvi
+*.idx
+*.out
+*.toc
+
+# simulation results and restart files
+*.pvd
+*.vtu
+*.pvtu
+*.vtp
+*.drs
