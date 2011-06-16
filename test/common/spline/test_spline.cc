@@ -157,8 +157,8 @@ void testAll()
 
     // full spline
     { Dumux::Spline<double, 2> sp(x[0], x[1], y[0], y[1], m0, m1); sp.set(x[0],x[1],y[0],y[1],m0, m1); testFull(sp, x, y, m0, m1); };
-    { Dumux::Spline<double, 2> sp(x, y, m0, m1); sp.set(x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, 2> sp(points, m0, m1); sp.set(points,m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, 2> sp(x, y, m0, m1); sp.setXYArrays(2, x, y, m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, 2> sp(points, m0, m1); sp.setArrayOfPoints(2, points, m0, m1); testFull(sp, x, y, m0, m1); };
 
 
     /////////
@@ -166,33 +166,33 @@ void testAll()
     /////////
 
     // full spline
-    { Dumux::Spline<double, 5> sp(x, y, m0, m1); sp.set(x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, 5> sp; sp.setViaArrayArray(5, points, m0, m1); testFull(sp, x, y, m0, m1); };
-    { Dumux::Spline<double, 5> sp; sp.setViaArrayContainer(pointVec,m0, m1); testFull(sp, x, y, m0, m1); };
-    { Dumux::Spline<double, 5> sp(pointsInitList, m0, m1); sp.setViaTupleContainer(pointsInitList, m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, 5> sp(x, y, m0, m1); sp.setXYArrays(5, x, y, m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, 5> sp; sp.setArrayOfPoints(5, points, m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList, m0, m1); testFull(sp, x, y, m0, m1); };
 
     // natural spline
-    { Dumux::Spline<double, 5> sp(x, y); sp.set(x, y); testNatural(sp, x, y); };
-    { Dumux::Spline<double, 5> sp; sp.setViaArrayArray(5, pointVec); testNatural(sp, x, y); };
-    { Dumux::Spline<double, 5> sp(pointsInitList); sp.setViaTupleContainer(pointsInitList); testNatural(sp, x, y); };
+    { Dumux::Spline<double, 5> sp(x, y); sp.setXYArrays(5, x, y); testNatural(sp, x, y); };
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); };
+    { Dumux::Spline<double, 5> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); };
 
     /////////
     // test variable length splines
     /////////
 
     // full spline
-    { Dumux::Spline<double, -1> sp(5, x, y, m0, m1); sp.set(5,x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, -1> sp(xVec, yVec, m0, m1); sp.set(xVec,yVec,m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, -1> sp; sp.setViaArrayArray(5,points,m0, m1); testFull(sp, x, y, m0, m1); };
-    { Dumux::Spline<double, -1> sp; sp.setViaArrayContainer(pointVec,m0, m1); testFull(sp, x, y, m0, m1);  };
-    { Dumux::Spline<double, -1> sp(pointsInitList, m0, m1); sp.setViaTupleContainer(pointsInitList,m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, -1> sp(5, x, y, m0, m1); sp.setXYArrays(5,x,y,m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, -1> sp(xVec, yVec, m0, m1); sp.setXYContainers(xVec,yVec,m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points,m0, m1); testFull(sp, x, y, m0, m1); };
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec,m0, m1); testFull(sp, x, y, m0, m1);  };
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList,m0, m1); testFull(sp, x, y, m0, m1); };
 
     // natural spline
-    { Dumux::Spline<double, -1> sp(5, x, y); sp.set(5,x,y); testNatural(sp, x, y);  };
-    { Dumux::Spline<double, -1> sp(xVec, yVec); sp.set(xVec,yVec); testNatural(sp, x, y); };
-    { Dumux::Spline<double, -1> sp; sp.setViaArrayArray(5,points); testNatural(sp, x, y); };
-    { Dumux::Spline<double, -1> sp; sp.setViaArrayContainer(pointVec); testNatural(sp, x, y); };
-    { Dumux::Spline<double, -1> sp(pointsInitList, m0, m1); sp.setViaTupleContainer(pointsInitList); testNatural(sp, x, y); };
+    { Dumux::Spline<double, -1> sp(5, x, y); sp.setXYArrays(5,x,y); testNatural(sp, x, y);  };
+    { Dumux::Spline<double, -1> sp(xVec, yVec); sp.setXYContainers(xVec,yVec); testNatural(sp, x, y); };
+    { Dumux::Spline<double, -1> sp; sp.setArrayOfPoints(5,points); testNatural(sp, x, y); };
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfPoints(pointVec); testNatural(sp, x, y); };
+    { Dumux::Spline<double, -1> sp; sp.setContainerOfTuples(pointsInitList); testNatural(sp, x, y); };
 }
 
 void plot()

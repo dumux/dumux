@@ -55,176 +55,368 @@ public:
     int numSamples() const
     { return xPos_.size(); }
 
-    /*!
-     * \brief Set the sampling points and the boundary slopes of the
-     *        spline.
-     */
-    template <class ScalarContainer>
-    void set(int nSamples,
-             const ScalarContainer &x,
-             const ScalarContainer &y,
-             Scalar m0, Scalar m1)
-    {
-        setNumSamples_(nSamples);
-        this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
-        myMakeFullSpline_(m0, m1);
-    }
+   
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    // Full splines                      //
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
 
     /*!
-     * \brief Set the sampling points and the boundary slopes of the
-     *        spline.
+     * \brief Set the sampling points and the boundary slopes of a
+     *        full spline using C-style arrays.
      *
-     * This assumes that the ScalarContainer type has a size method.
+     * This method uses separate array-like objects for the values of
+     * the X and Y coordinates. In this context 'array-like' means
+     * that an access to the members is provided via the []
+     * operator. (e.g. C arrays, std::vector, std::array, etc.)  Each
+     * array must be of size 'nSamples' at least. Also, the number of
+     * sampling points must be larger than 1.
      */
-    template <class ScalarContainer>
-    void set(const ScalarContainer &x,
-             const ScalarContainer &y,
-             Scalar m0, Scalar m1)
+    template <class ScalarArrayX, class ScalarArrayY>
+    void setXYArrays(int nSamples,
+                     const ScalarArrayX &x,
+                     const ScalarArrayY &y,
+                     Scalar m0, Scalar m1)
+    {
+        assert(nSamples > 1);
+
+        setNumSamples_(nSamples);
+        for (int i = 0; i < nSamples; ++i) {
+            xPos_[i] = x[i];
+            yPos_[i] = y[i];
+        }
+        makeFullSpline_(m0, m1);
+    }
+
+    template <class ScalarArray>
+    DUNE_DEPRECATED // use setXYArrays
+    void set(int nSamples,
+             const ScalarArray &x,
+             const ScalarArray &y,
+             Scalar m0, 
+             Scalar m1)
+    { setXYArrays(nSamples, x, y, m0, m1); }
+
+    /*!
+     * \brief Set the sampling points and the boundary slopes of a
+     *        full spline using STL-compatible containers.
+     *
+     * This method uses separate STL-compatible containers for the
+     * values of the sampling points' X and Y
+     * coordinates. "STL-compatible" means that the container provides
+     * access to iterators using the begin(), end() methods and also
+     * provides a size() method. Also, the number of entries in the X
+     * and the Y containers must be equal and larger than 1.
+     */
+    template <class ScalarContainerX, class ScalarContainerY>
+    void setXYContainers(const ScalarContainerX &x,
+                         const ScalarContainerY &y,
+                         Scalar m0, Scalar m1)
     {
         assert(x.size() == y.size());
-        set(x.size(), x, y, m0, m1);
-    }
+        assert(x.size() > 1);
 
+        setNumSamples_(x.size());
+        std::copy(x.begin(), x.end(), xPos_.begin());
+        std::copy(y.begin(), y.end(), yPos_.begin());
+        makeFullSpline_(m0, m1);
+    }
+    
+    template <class ScalarContainer>
+    DUNE_DEPRECATED // use setXYContainers
+    void set(const ScalarContainer &x,
+             const ScalarContainer &y,
+             Scalar m0, 
+             Scalar m1)
+    { setXYContainers(x, y, m0, m1); }
+
+        
     /*!
-     * \brief Set the sampling points for a full spline using a
-     *        container of (x,y) tuples.
+     * \brief Set the sampling points and the boundary slopes of a
+     *        full spline using a C-style array.
+     *
+     * This method uses a single array of sampling points, which are
+     * seen as an array-like object which provides access to the X and
+     * Y coordinates.  In this context 'array-like' means that an
+     * access to the members is provided via the [] operator. (e.g. C
+     * arrays, std::vector, std::array, etc.)  The array containing
+     * the sampling points must be of size 'nSamples' at least. Also,
+     * the number of sampling points must be larger than 1.
      */
-    template <class XYContainer>
-    void setViaArrayArray(int nSamples, 
-                          const XYContainer &points,
+    template <class PointArray>
+    void setArrayOfPoints(int nSamples, 
+                          const PointArray &points,
                           Scalar m0, 
                           Scalar m1)
     {
+        // a spline with no or just one sampling points? what an
+        // incredible bad idea!
+        assert(nSamples > 1);
+
         setNumSamples_(nSamples);
-        this->assignFromArrayList_(xPos_, 
-                                   yPos_,
-                                   &points[0],
-                                   &points[numSamples() - 1],
-                                   numSamples());
-        myMakeFullSpline_(m0, m1);
+        for (int i = 0; i < nSamples; ++i) {
+            xPos_[i] = points[i][0];
+            yPos_[i] = points[i][1];
+        }
+        makeFullSpline_(m0, m1);
     }
 
-    /*!
-     * \brief Set the sampling points for a full spline using a
-     *        container of (x,y) tuples.
-     *
-     * This assimes the XYContainer type has a size() method
-     */
     template <class XYContainer>
-    void setViaArrayContainer(const XYContainer &points,
-                              Scalar m0, 
-                              Scalar m1)
-
-    {
-        setNumSamples_(points.size());
-        this->assignFromArrayList_(xPos_, 
-                                   yPos_,
-                                   points.begin(),
-                                   points.end(),
-                                   numSamples());
-
-        // make a full spline
-        myMakeFullSpline_(m0, m1);
-    }
-
-    /*!
-     * \brief Set the sampling points for a fill spline.
-     */
-    template <class XYContainer>
-    void setViaTupleContainer(const XYContainer &points,
-                              Scalar m0, 
-                              Scalar m1)
-    {
-        // resize internal arrays
-        setNumSamples_(points.size());
-
-        // assign the values to the internal arrays
-        this->assignFromTupleList_(xPos_,
-                                   yPos_,
-                                   points.begin(),
-                                   points.end(),
-                                   numSamples());
-
-        // make a full spline
-        myMakeFullSpline_(m0, m1);
-    }
-
-    /*!
-     * \brief Set the sampling points for a natural spline.
-     */
-    template <class ScalarContainer>
+    DUNE_DEPRECATED // use setArrayOfPoints instead
     void set(int nSamples,
-             const ScalarContainer &x,
-             const ScalarContainer &y)
-    {
-        // resize internal arrays
-        setNumSamples_(nSamples);
-        this->assignSamplingPoints_(xPos_, yPos_, x, y, numSamples());
-        // make a natural spline
-        myMakeNaturalSpline_();
-    }
+             const XYContainer &points,
+             Scalar m0, 
+             Scalar m1)
+    { setArrayOfPoints(nSamples, points, m0, m1); }
+
 
     /*!
-     * \brief Set the sampling points for a natural spline.
+     * \brief Set the sampling points and the boundary slopes of a
+     *        full spline using a STL-compatible container of
+     *        array-like objects.
      *
-     * This assimes the ScalarContainer type has a size() method
+     * This method uses a single STL-compatible container of sampling
+     * points, which are assumed to be array-like objects storing the
+     * X and Y coordinates.  "STL-compatible" means that the container
+     * provides access to iterators using the begin(), end() methods
+     * and also provides a size() method. Also, the number of entries
+     * in the X and the Y containers must be equal and larger than 1.
      */
-    template <class ScalarContainer>
-    void set(const ScalarContainer &x,
-             const ScalarContainer &y)
+    template <class XYContainer>
+    void setContainerOfPoints(const XYContainer &points,
+                              Scalar m0, 
+                              Scalar m1)
+    {
+        // a spline with no or just one sampling points? what an
+        // incredible bad idea!
+        assert(points.size() > 1);
+
+        setNumSamples_(points.size());
+        typename XYContainer::const_iterator it = points.begin();
+        typename XYContainer::const_iterator endIt = points.end();
+        for (int i = 0; it != endIt; ++i, ++it) {
+            xPos_[i] = (*it)[0];
+            yPos_[i] = (*it)[1];
+        }
+
+        // make a full spline
+        makeFullSpline_(m0, m1);
+    }
+
+    template <class XYContainer>
+    DUNE_DEPRECATED // use setContainerOfPoints() instead
+    void set(const XYContainer &points,
+             Scalar m0, 
+             Scalar m1)
+    { setContainerOfPoints(points, m0, m1); }
+
+    /*!
+     * \brief Set the sampling points and the boundary slopes of a
+     *        full spline using a STL-compatible container of
+     *        tuple-like objects.
+     *
+     * This method uses a single STL-compatible container of sampling
+     * points, which are assumed to be tuple-like objects storing the
+     * X and Y coordinates.  "tuple-like" means that the objects
+     * provide access to the x values via std::get<0>(obj) and to the
+     * y value via std::get<1>(obj) (e.g. std::tuple or
+     * std::pair). "STL-compatible" means that the container provides
+     * access to iterators using the begin(), end() methods and also
+     * provides a size() method. Also, the number of entries in the X
+     * and the Y containers must be equal and larger than 1.
+     */
+    template <class XYContainer>
+    void setContainerOfTuples(const XYContainer &points,
+                              Scalar m0, 
+                              Scalar m1)
+    {
+        // resize internal arrays
+        setNumSamples_(points.size());
+        typename XYContainer::const_iterator it = points.begin();
+        typename XYContainer::const_iterator endIt = points.end();
+        for (int i = 0; it != endIt; ++i, ++it) {
+            xPos_[i] = std::get<0>(*it);
+            yPos_[i] = std::get<1>(*it);
+        }
+
+        // make a full spline
+        makeFullSpline_(m0, m1);
+    }
+    
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    // Natural splines                   //
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    ///////////////////////////////////////
+    /*!
+     * \brief Set the sampling points natural spline using C-style arrays.
+     *
+     * This method uses separate array-like objects for the values of
+     * the X and Y coordinates. In this context 'array-like' means
+     * that an access to the members is provided via the []
+     * operator. (e.g. C arrays, std::vector, std::array, etc.)  Each
+     * array must be of size 'nSamples' at least. Also, the number of
+     * sampling points must be larger than 1.
+     */
+    template <class ScalarArrayX, class ScalarArrayY>
+    void setXYArrays(int nSamples,
+                     const ScalarArrayX &x,
+                     const ScalarArrayY &y)
+    {
+        assert(nSamples > 1);
+
+        setNumSamples_(nSamples);
+        for (int i = 0; i < nSamples; ++i) {
+            xPos_[i] = x[i];
+            yPos_[i] = y[i];
+        }
+        
+        makeNaturalSpline_();
+    }
+
+    template <class ScalarArray>
+    DUNE_DEPRECATED // use setXYArrays
+    void set(int nSamples,
+             const ScalarArray &x,
+             const ScalarArray &y)
+    { setXYArrays(nSamples, x, y); }
+
+    /*!
+     * \brief Set the sampling points of a natural spline using
+     *        STL-compatible containers.
+     *
+     * This method uses separate STL-compatible containers for the
+     * values of the sampling points' X and Y
+     * coordinates. "STL-compatible" means that the container provides
+     * access to iterators using the begin(), end() methods and also
+     * provides a size() method. Also, the number of entries in the X
+     * and the Y containers must be equal and larger than 1.
+     */
+    template <class ScalarContainerX, class ScalarContainerY>
+    void setXYContainers(const ScalarContainerX &x,
+                         const ScalarContainerY &y)
     {
         assert(x.size() == y.size());
-        set(x.size(), x, y);
-    }
+        assert(x.size() > 1);
 
-    /*!
-     * \brief Set the sampling points for a natural spline using a container of (x,y) tuples.
-     */
-    template <class XYContainer>
-    void setViaArrayArray(int nSamples, 
-                          const XYContainer &points)
-    {
-        setNumSamples_(nSamples);
-        this->assignFromArrayList_(xPos_, 
-                                   yPos_,
-                                   &points[0],
-                                   &points[numSamples() - 1],
-                                   numSamples());
-        myMakeNaturalSpline_();
+        setNumSamples_(x.size());
+        std::copy(x.begin(), x.end(), xPos_.begin());
+        std::copy(y.begin(), y.end(), yPos_.begin());
+        makeNaturalSpline_();
     }
+    
+    template <class ScalarContainer>
+    DUNE_DEPRECATED // use setXYContainers
+    void set(const ScalarContainer &x,
+             const ScalarContainer &y)
+    { setXYContainers(x, y); }
 
+        
     /*!
-     * \brief Set the sampling points for a natural spline using a container of (x,y) tuples.
+     * \brief Set the sampling points of a natural spline using a
+     *        C-style array.
      *
-     * This assimes the XYContainer type has a size() method
+     * This method uses a single array of sampling points, which are
+     * seen as an array-like object which provides access to the X and
+     * Y coordinates.  In this context 'array-like' means that an
+     * access to the members is provided via the [] operator. (e.g. C
+     * arrays, std::vector, std::array, etc.)  The array containing
+     * the sampling points must be of size 'nSamples' at least. Also,
+     * the number of sampling points must be larger than 1.
      */
-    template <class XYContainer>
-    void setViaArrayContainer(const XYContainer &points)
+    template <class PointArray>
+    void setArrayOfPoints(int nSamples, 
+                          const PointArray &points)
     {
-        setNumSamples_(points.size());
-        this->assignFromArrayList_(xPos_, 
-                                   yPos_,
-                                   points.begin(),
-                                   points.end(),
-                                   numSamples());
-        myMakeNaturalSpline_();
+        // a spline with no or just one sampling points? what an
+        // incredible bad idea!
+        assert(nSamples > 1);
+
+        setNumSamples_(nSamples);
+        for (int i = 0; i < nSamples; ++i) {
+            xPos_[i] = points[i][0];
+            yPos_[i] = points[i][1];
+        }
+        makeNaturalSpline_();
     }
+
+    template <class XYContainer>
+    DUNE_DEPRECATED // use setArrayOfPoints instead
+    void set(int nSamples,
+             const XYContainer &points)
+    { setArrayOfPoints(nSamples, points); }
+
 
     /*!
-     * \brief Set the sampling points for a natural spline.
+     * \brief Set the sampling points of a natural spline using a
+     *        STL-compatible container of array-like objects.
+     *
+     * This method uses a single STL-compatible container of sampling
+     * points, which are assumed to be array-like objects storing the
+     * X and Y coordinates.  "STL-compatible" means that the container
+     * provides access to iterators using the begin(), end() methods
+     * and also provides a size() method. Also, the number of entries
+     * in the X and the Y containers must be equal and larger than 1.
      */
     template <class XYContainer>
-    void setViaTupleContainer(const XYContainer &points)
+    void setContainerOfPoints(const XYContainer &points)
     {
+        // a spline with no or just one sampling points? what an
+        // incredible bad idea!
+        assert(points.size() > 1);
+
         setNumSamples_(points.size());
-        this->assignFromTupleList_(xPos_,
-                                   yPos_,
-                                   points.begin(),
-                                   points.end(),
-                                   numSamples());
-        myMakeNaturalSpline_();
+        typename XYContainer::const_iterator it = points.begin();
+        typename XYContainer::const_iterator endIt = points.end();
+        for (int i = 0; it != endIt; ++ i, ++it) {
+            xPos_[i] = (*it)[0];
+            yPos_[i] = (*it)[1];
+        }
+
+        // make a natural spline
+        makeNaturalSpline_();
     }
 
+    template <class XYContainer>
+    DUNE_DEPRECATED // use setContainerOfPoints() instead
+    void set(const XYContainer &points)
+    { setContainerOfPoints(points); }
+
+    /*!
+     * \brief Set the sampling points of a natural spline using a
+     *        STL-compatible container of tuple-like objects.
+     *
+     * This method uses a single STL-compatible container of sampling
+     * points, which are assumed to be tuple-like objects storing the
+     * X and Y coordinates.  "tuple-like" means that the objects
+     * provide access to the x values via std::get<0>(obj) and to the
+     * y value via std::get<1>(obj) (e.g. std::tuple or
+     * std::pair). "STL-compatible" means that the container provides
+     * access to iterators using the begin(), end() methods and also
+     * provides a size() method. Also, the number of entries in the X
+     * and the Y containers must be equal and larger than 1.
+     */
+    template <class XYContainer>
+    void setContainerOfTuples(const XYContainer &points)
+    {
+        // resize internal arrays
+        setNumSamples_(points.size());
+        typename XYContainer::const_iterator it = points.begin();
+        typename XYContainer::const_iterator endIt = points.end();
+        for (int i = 0; it != endIt; ++i, ++it) {
+            xPos_[i] = std::get<0>(*it);
+            yPos_[i] = std::get<1>(*it);
+        }
+
+        // make a natural spline
+        makeNaturalSpline_();
+    }
+    
 protected:
     /*!
      * \brief Resizes the internal vectors to store the sample points.
@@ -237,11 +429,11 @@ protected:
     }
 
     /*!
-     * \brief Create a full spline from the already set sampling points.
+     * \brief Create a natural spline from the already set sampling points.
      *
      * Also creates temporary matrix and right hand side vector.
      */
-    void myMakeFullSpline_(Scalar m0, Scalar m1)
+    void makeFullSpline_(Scalar m0, Scalar m1)
     {
         BTDMatrix M(numSamples());
         Vector d(numSamples());
@@ -258,7 +450,7 @@ protected:
      *
      * Also creates temporary matrix and right hand side vector.
      */
-    void myMakeNaturalSpline_()
+    void makeNaturalSpline_()
     {
         BTDMatrix M(numSamples());
         Vector d(numSamples());
