@@ -130,40 +130,40 @@ public:
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField *pressure = writer.allocateManagedBuffer(numVertices);
-        ScalarField *delp = writer.allocateManagedBuffer(numVertices);
-        ScalarField *moleFrac0 = writer.allocateManagedBuffer(numVertices);
-        ScalarField *moleFrac1 = writer.allocateManagedBuffer(numVertices);
-        ScalarField *massFrac0 = writer.allocateManagedBuffer(numVertices);
-        ScalarField *massFrac1 = writer.allocateManagedBuffer(numVertices);
-        ScalarField *rho = writer.allocateManagedBuffer(numVertices);
-        ScalarField *mu = writer.allocateManagedBuffer(numVertices);
-        ScalarField *delFrac= writer.allocateManagedBuffer(numVertices);
+        ScalarField &pressure = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &delp = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &moleFrac0 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &moleFrac1 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &massFrac0 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &massFrac1 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &delFrac= *writer.allocateManagedBuffer(numVertices);
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        ScalarField *velocityX = writer.allocateManagedBuffer(numVertices);
-        ScalarField *velocityY = writer.allocateManagedBuffer(numVertices);
-        ScalarField *velocityZ = writer.allocateManagedBuffer(numVertices);
+        ScalarField &velocityX = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &velocityY = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &velocityZ = *writer.allocateManagedBuffer(numVertices);
         //use vertiacl faces for vx and horizontal faces for vy calculation
         GlobalPosition boxSurface[numVertices];
         // initialize velocity fields
           for (int i = 0; i < numVertices; ++i)
           {
 
-              (*velocityX)[i] = 0;
+              velocityX[i] = 0;
               if (dim > 1)
               {
-                  (*velocityY)[i] = 0;
+                  velocityY[i] = 0;
               }
               if (dim > 2)
               {
-                  (*velocityZ)[i] = 0;
+                  velocityZ[i] = 0;
               }
               boxSurface[i] = Scalar(0.0); // initialize the boundary surface of the fv-boxes
           }
 #endif
         unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank =
-                writer.allocateManagedBuffer (numElements);
+        ScalarField &rank =
+                *writer.allocateManagedBuffer (numElements);
 
         FVElementGeometry fvElemGeom;
         VolumeVariables volVars;
@@ -174,7 +174,7 @@ public:
         for (; elemIt != elemEndIt; ++elemIt)
         {
             int idx = this->problem_().model().elementMapper().map(*elemIt);
-            (*rank)[idx] = this->gridView_().comm().rank();
+            rank[idx] = this->gridView_().comm().rank();
 
             fvElemGeom.update(this->gridView_(), *elemIt);
             elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
@@ -190,15 +190,15 @@ public:
                                i,
                                false);
 
-                (*pressure)[globalIdx] = volVars.pressure()*scale_;
-                (*delp)[globalIdx] = volVars.pressure()*scale_ - 1e5;
-                (*moleFrac0)[globalIdx] = volVars.moleFrac(0);
-                (*moleFrac1)[globalIdx] = volVars.moleFrac(1);
-                (*massFrac0)[globalIdx] = volVars.massFrac(0);
-                (*massFrac1)[globalIdx] = volVars.massFrac(1);
-                (*rho)[globalIdx] = volVars.density()*scale_*scale_*scale_;
-                (*mu)[globalIdx] = volVars.viscosity()*scale_;
-                (*delFrac)[globalIdx] = volVars.massFrac(1)-volVars.moleFrac(1);
+                pressure[globalIdx] = volVars.pressure()*scale_;
+                delp[globalIdx] = volVars.pressure()*scale_ - 1e5;
+                moleFrac0[globalIdx] = volVars.moleFrac(0);
+                moleFrac1[globalIdx] = volVars.moleFrac(1);
+                massFrac0[globalIdx] = volVars.massFrac(0);
+                massFrac1[globalIdx] = volVars.massFrac(1);
+                rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
+                mu[globalIdx] = volVars.viscosity()*scale_;
+                delFrac[globalIdx] = volVars.massFrac(1)-volVars.moleFrac(1);
             };
 
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
@@ -262,8 +262,8 @@ public:
                   boxSurface[vertIIdx][0] += scvfArea;
                   boxSurface[vertJIdx][0] += scvfArea;
 
-                  (*velocityX)[vertJIdx] += velocity[0];
-                  (*velocityX)[vertIIdx] += velocity[0];
+                  velocityX[vertJIdx] += velocity[0];
+                  velocityX[vertIIdx] += velocity[0];
 
               }
               if (yDir > xDir)//(fluxVars.face().normal[1] > 1e-10 || fluxVars.face().normal[1] < -1e-10)// (yDir > xDir)
@@ -281,8 +281,8 @@ public:
                   boxSurface[vertIIdx][1] += scvfArea;
                   boxSurface[vertJIdx][1] += scvfArea;
 
-                  (*velocityY)[vertJIdx] += velocity[1];
-                  (*velocityY)[vertIIdx] += velocity[1];
+                  velocityY[vertJIdx] += velocity[1];
+                  velocityY[vertIIdx] += velocity[1];
               }
           }
 #endif
@@ -297,36 +297,36 @@ public:
          int i = this->problem_().vertexMapper().map(*vIt);
 
               //use vertiacl faces for vx and horizontal faces for vy calculation
-             (*velocityX)[i] /= boxSurface[i][0];
-             (*velocityX)[i] /= scale_;
+             velocityX[i] /= boxSurface[i][0];
+             velocityX[i] /= scale_;
              if (dim >= 2)
              {
-                 (*velocityY)[i] /= boxSurface[i][1];
-                 (*velocityY)[i] /= scale_;
+                 velocityY[i] /= boxSurface[i][1];
+                 velocityY[i] /= scale_;
              }
              if (dim == 3)
              {
-                 (*velocityZ)[i] /= boxSurface[i][2];
-                 (*velocityZ)[i] /= scale_;
+                 velocityZ[i] /= boxSurface[i][2];
+                 velocityZ[i] /= scale_;
              }
         }
 #endif
-        writer.attachVertexData(*pressure, "P");
-        writer.attachVertexData(*delp, "delp");
+        writer.attachVertexData(pressure, "P");
+        writer.attachVertexData(delp, "delp");
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        writer.attachVertexData(*velocityX, "Vx");
-        writer.attachVertexData(*velocityY, "Vy");
+        writer.attachVertexData(velocityX, "Vx");
+        writer.attachVertexData(velocityY, "Vy");
         if (dim > 2)
-            writer.attachVertexData(*velocityZ, "Vz");
+            writer.attachVertexData(velocityZ, "Vz");
 #endif
-        writer.attachVertexData(*moleFrac0, "x_if");
-        writer.attachVertexData(*moleFrac1, "x_TRAIL");
-        writer.attachVertexData(*massFrac0, "X_if");
-        writer.attachVertexData(*massFrac1, "X_TRAIL");
-//        writer.attachVertexData(*delFrac, "delFrac_TRAIL");
-        writer.attachVertexData(*rho, "rho");
-        writer.attachVertexData(*mu, "mu");
-        writer.attachCellData(*rank, "process rank");
+        writer.attachVertexData(moleFrac0, "x_if");
+        writer.attachVertexData(moleFrac1, "x_TRAIL");
+        writer.attachVertexData(massFrac0, "X_if");
+        writer.attachVertexData(massFrac1, "X_TRAIL");
+//        writer.attachVertexData(delFrac, "delFrac_TRAIL");
+        writer.attachVertexData(rho, "rho");
+        writer.attachVertexData(mu, "mu");
+        writer.attachCellData(rank, "process rank");
     }
 
 };
