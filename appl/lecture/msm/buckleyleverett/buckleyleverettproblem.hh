@@ -216,10 +216,10 @@ public:
             if (this->gridView().comm().rank() == 0)
                 std::cout << "Writing result file for current time step\n";
 
-            this->resultWriter().beginTimestep(this->timeManager().time() + this->timeManager().timeStepSize(),
-                                        this->gridView());
+            this->resultWriter().beginWrite(this->timeManager().time() + this->timeManager().timeStepSize(),
+                                            this->gridView());
             this->asImp_().addOutputVtkFields();
-            this->resultWriter().endTimestep();
+            this->resultWriter().endWrite();
 //        }
     }
 

@@ -198,65 +198,65 @@ public:
     {
         if (codim_ == 0)
         {
-            ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (this->gridSize());
-            ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *pressure = writer.allocateManagedBuffer (this->gridSize());
+            ScalarSolutionType *saturation = writer.allocateManagedBuffer (this->gridSize());
 
             *pressure = this->pressure();
             *saturation = saturation_;
 
             if (pressureType_ == pw)
             {
-            writer.addCellData(pressure, "wetting pressure");
+            writer.attachCellData(*pressure, "wetting pressure");
             }
             if (pressureType_ == pn)
             {
-                writer.addCellData(pressure, "nonwetting pressure");
+                writer.attachCellData(*pressure, "nonwetting pressure");
             }
             if (pressureType_ == pglobal)
             {
-                writer.addCellData(pressure, "global pressure");
+                writer.attachCellData(*pressure, "global pressure");
             }
 
             if (saturationType_ == Sw)
             {
-            writer.addCellData(saturation, "wetting saturation");
+            writer.attachCellData(*saturation, "wetting saturation");
             }
             if (saturationType_ == Sn)
             {
-            writer.addCellData(saturation, "nonwetting saturation");
+            writer.attachCellData(*saturation, "nonwetting saturation");
             }
 
             // output  phase-dependent stuff
-            ScalarSolutionType *pC = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *pC = writer.allocateManagedBuffer (this->gridSize());
             *pC = capillaryPressure_;
-            writer.addCellData(pC, "capillary pressure");
+            writer.attachCellData(*pC, "capillary pressure");
 
-            ScalarSolutionType *densityWetting = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *densityWetting = writer.allocateManagedBuffer (this->gridSize());
             *densityWetting = density_[wPhaseIdx];
-            writer.addCellData(densityWetting, "wetting density");
+            writer.attachCellData(*densityWetting, "wetting density");
 
-            ScalarSolutionType *densityNonwetting = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *densityNonwetting = writer.allocateManagedBuffer (this->gridSize());
             *densityNonwetting = density_[nPhaseIdx];
-            writer.addCellData(densityNonwetting, "nonwetting density");
+            writer.attachCellData(*densityNonwetting, "nonwetting density");
 
-            ScalarSolutionType *viscosityWetting = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *viscosityWetting = writer.allocateManagedBuffer (this->gridSize());
             *viscosityWetting = viscosity_[wPhaseIdx];
-            writer.addCellData(viscosityWetting, "wetting viscosity");
+            writer.attachCellData(*viscosityWetting, "wetting viscosity");
 
-            ScalarSolutionType *viscosityNonwetting = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *viscosityNonwetting = writer.allocateManagedBuffer (this->gridSize());
             *viscosityNonwetting = viscosity_[nPhaseIdx];
-            writer.addCellData(viscosityNonwetting, "nonwetting viscosity");
+            writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
         }
         if (codim_ == dim)
         {
-            ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (this->gridSize());
-            ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *pressure = writer.allocateManagedBuffer (this->gridSize());
+            ScalarSolutionType *saturation = writer.allocateManagedBuffer (this->gridSize());
 
             *pressure = this->pressure();
             *saturation = saturation_;
 
-            writer.addVertexData(pressure, "pressure");
-            writer.addVertexData(saturation, "saturation");
+            writer.attachVertexData(*pressure, "pressure");
+            writer.attachVertexData(*saturation, "saturation");
         }
 
         return;

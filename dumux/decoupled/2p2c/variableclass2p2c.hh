@@ -226,67 +226,67 @@ public:
         if (codim_ == 0)
         {
             // pressure & saturation
-            ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *pressure = writer.allocateManagedBuffer (size_);
+            ScalarSolutionType *saturation = writer.allocateManagedBuffer (size_);
             *pressure = this->pressure();
             *saturation = saturation_;
             if (GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)) == GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW)
-                writer.addCellData(pressure, "pressure w_phase");
+                writer.attachCellData(*pressure, "pressure w_phase");
             else
-                writer.addCellData(pressure, "pressure nw_phase");
-            writer.addCellData(saturation, "water saturation");
+                writer.attachCellData(*pressure, "pressure nw_phase");
+            writer.attachCellData(*saturation, "water saturation");
             if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
             {
-                ScalarSolutionType *pc = writer.template createField<Scalar, 1> (size_);
+                ScalarSolutionType *pc = writer.allocateManagedBuffer (size_);
                 *pc = capillaryPressure_;
-                writer.addCellData(pc, "capillary pressure");
+                writer.attachCellData(*pc, "capillary pressure");
             }
 
             //total Concentration
-            ScalarSolutionType *totalConcentration1 = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *totalConcentration2 = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *totalConcentration1 = writer.allocateManagedBuffer (size_);
+            ScalarSolutionType *totalConcentration2 = writer.allocateManagedBuffer (size_);
             *totalConcentration1 = totalConcentration_[0];
             *totalConcentration2 = totalConcentration_[1];
-            writer.addCellData(totalConcentration1, "totalConcentration w_Comp");
-            writer.addCellData(totalConcentration2, "totalConcentration n_Comp");
+            writer.attachCellData(*totalConcentration1, "totalConcentration w_Comp");
+            writer.attachCellData(*totalConcentration2, "totalConcentration n_Comp");
 
             // numerical stuff
-            ScalarSolutionType *volErr = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *volErr = writer.allocateManagedBuffer (size_);
             *volErr = volErr_;
-            writer.addCellData(volErr, "volume Error");
+            writer.attachCellData(*volErr, "volume Error");
 
             // composition
-            ScalarSolutionType *massfraction1W = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *massfraction1NW = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *massfraction1W = writer.allocateManagedBuffer (size_);
+            ScalarSolutionType *massfraction1NW = writer.allocateManagedBuffer (size_);
             *massfraction1W = massfrac_[0];
             *massfraction1NW = massfrac_[1];
-            writer.addCellData(massfraction1W, "massfraction1 in w_phase");
-            writer.addCellData(massfraction1NW, "massfraction1NW nw_phase");
+            writer.attachCellData(*massfraction1W, "massfraction1 in w_phase");
+            writer.attachCellData(*massfraction1NW, "massfraction1NW nw_phase");
 
             // phase properties
-            ScalarSolutionType *mobilityW = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *mobilityNW = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *densityW = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *densityNW = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *mobilityW = writer.allocateManagedBuffer (size_);
+            ScalarSolutionType *mobilityNW = writer.allocateManagedBuffer (size_);
+            ScalarSolutionType *densityW = writer.allocateManagedBuffer (size_);
+            ScalarSolutionType *densityNW = writer.allocateManagedBuffer (size_);
             *mobilityW = mobility_[0];
             *mobilityNW = mobility_[1];
             *densityW = density_[0];
             *densityNW = density_[1];
-            writer.addCellData(mobilityW, "mobility w_phase");
-            writer.addCellData(mobilityNW, "mobility nw_phase");
-            writer.addCellData(densityW, "density w_phase");
-            writer.addCellData(densityNW, "density nw_phase");
+            writer.attachCellData(*mobilityW, "mobility w_phase");
+            writer.attachCellData(*mobilityNW, "mobility nw_phase");
+            writer.attachCellData(*densityW, "density w_phase");
+            writer.attachCellData(*densityNW, "density nw_phase");
         }
         if (codim_ == dim)
         {
-            ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (size_);
-            ScalarSolutionType *saturation = writer.template createField<Scalar, 1> (size_);
+            ScalarSolutionType *pressure = writer.allocateManagedBuffer (size_);
+            ScalarSolutionType *saturation = writer.allocateManagedBuffer (size_);
 
             *pressure = this->pressure();
             *saturation = saturation_;
 
-            writer.addVertexData(pressure, "pressure");
-            writer.addVertexData(saturation, "saturation");
+            writer.attachVertexData(*pressure, "pressure");
+            writer.attachVertexData(*saturation, "saturation");
         }
 
         return;

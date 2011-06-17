@@ -138,9 +138,9 @@ public:
     {
         ParentType::addOutputVtkFields(writer);
 
-//        typename Variables::ScalarSolutionType *velocityX = writer.template createField<Scalar, 1> (
+//        typename Variables::ScalarSolutionType *velocityX = writer.allocateManagedBuffer (
 //                this->problem().gridView().size(0));
-//        typename Variables::ScalarSolutionType *velocityY = writer.template createField<Scalar, 1> (
+//        typename Variables::ScalarSolutionType *velocityY = writer.allocateManagedBuffer (
 //                this->problem().gridView().size(0));
 //
 //        // compute update vector
@@ -185,8 +185,8 @@ public:
 //            (*velocityY)[globalIdx] = elementVelocity[1];
 //        }
 //
-//        writer.addCellData(velocityX, "x-velocity");
-//        writer.addCellData(velocityY, "y-velocity");
+//        writer.attachCellData(*velocityX, "x-velocity");
+//        writer.attachCellData(*velocityY, "y-velocity");
 
         return;
     }

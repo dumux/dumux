@@ -66,7 +66,7 @@ public:
             multiFileName_ += ".pvd";
         }
 
-        writerNum_ = 0;
+        curWriterNum_ = 0;
 
         commRank_ = 0;
         commSize_ = 1;
@@ -74,13 +74,11 @@ public:
         MPI_Comm_rank(MPI_COMM_WORLD, &commRank_);
         MPI_Comm_size(MPI_COMM_WORLD, &commSize_);
 #endif
-
-        wasRestarted_ = false;
     }
 
     ~VtkMultiWriter()
     {
-        endMultiFile_();
+        finishMultiFile_();
 
         if (commRank_ == 0)
             multiFile_.close();
@@ -90,27 +88,32 @@ public:
      * \brief Called when ever a new timestep or a new grid
      *        must be written.
      */
-    void beginTimestep(double t, const GridView &gridView)
+    void beginWrite(double t, const GridView &gridView)
     {
-        curGridView_ = &gridView;
-
         if (!multiFile_.is_open()) {
-            beginMultiFile_(multiFileName_);
+            startMultiFile_(multiFileName_);
         }
 
 
         curWriter_ = new VtkWriter(gridView, Dune::VTKOptions::conforming);
-        ++writerNum_;
+        ++curWriterNum_;
 
         curTime_ = t;
         curOutFileName_ = fileName_();
     }
+    
+    void beginTimestep(double t, const GridView &gridView)
+        DUNE_DEPRECATED // use beginWrite()
+    { beginWrite(t, gridView); }
 
     /*!
-     * \brief Write a vertex centered vector field to disk.
+     * \brief Allocate a managed buffer for a scalar field
+     *
+     * The buffer will be deleted automatically after the data has
+     * been written by to disk.
      */
-    template <class Scalar, int nComp>
-    Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *createField(int nEntities)
+    template <class Scalar = double, int nComp = 1>
+    Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *allocateManagedBuffer(int nEntities)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > VectorField;
 
@@ -120,51 +123,76 @@ public:
         return &(vfs->vf);
     }
 
+    template <class Scalar, int nComp>
+    DUNE_DEPRECATED // use allocateManagedBuffer() instead!
+    Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *createField(int nEntities)
+    {  return allocateManagedBuffer<Scalar, nComp>(nEntities);   }
+
     /*!
      * \brief Add a finished vertex centered vector field to the
-     *        output. The field must have been created using
-     *        createField() and may not be modified after calling
-     *        this method.
+     *        output. 
+     * \brief Add a vertex-centered quantity to the output. 
+     *
+     * If the buffer is managed by the VtkMultiWriter, it must have
+     * been created using createField() and may not be used by
+     * anywhere after calling this method. After the data is written
+     * to disk, it will be deleted automatically. 
+     *
+     * If the buffer is not managed by the MultiWriter, the buffer
+     * must exist at least until the call to endWrite()
+     * finishes. 
+     *
+     * In both cases, modifying the buffer between the call to this
+     * method and endWrite() results in _undefined behaviour_.
      */
-    template <class VectorField>
-    void addVertexData(VectorField *field, const char *name)
+    template <class DataArray>
+    void attachVertexData(DataArray &buf, const char *name, int nComps=1)
     {
-        // make sure the field is well defined
-        for (int i = 0; i < field->size(); ++i) {
-            Valgrind::CheckDefined((*field)[i]);
-
-            // set values which are too small to 0 to avoid problems
-            // with paraview
-            if (std::abs((*field)[i]) < std::numeric_limits<float>::min())
-                (*field)[i] = 0.0;
-        }
-
-        curWriter_->addVertexData(*field, name);
+        sanitizeBuffer_(buf, nComps);
+        curWriter_->addVertexData(buf, name, nComps);
     }
+
+    template <class DataArray>
+    DUNE_DEPRECATED // use attachVertexData() instead!
+    void addVertexData(DataArray *field, const char *name, int nComps=1)
+    { addManagedVertexData(*field, name, nComps); }
 
     /*!
-     * \brief Add a finished cell centered vector field to the
-     *        output. The field must have been created using
-     *        createField() and may not be modified after calling
-     *        this method.
+     * \brief Add a cell centered quantity to the output.
+     *
+     * If the buffer is managed by the VtkMultiWriter, it must have
+     * been created using createField() and may not be used by
+     * anywhere after calling this method. After the data is written
+     * to disk, it will be deleted automatically. 
+     *
+     * If the buffer is not managed by the MultiWriter, the buffer
+     * must exist at least until the call to endWrite()
+     * finishes. 
+     *
+     * In both cases, modifying the buffer between the call to this
+     * method and endWrite() results in _undefined behaviour_.
      */
     template <class VectorField>
-    void addCellData(VectorField *field, const char *name)
-    {
-#ifndef NDEBUG
-        // make sure the field is well defined
-        for (int i = 0; i < field->size(); ++i)
-            Valgrind::CheckDefined((*field)[i]);
-#endif
-        curWriter_->addCellData(*field, name);
+    void attachCellData(VectorField &buf, const char *name, int nComps = 1)
+    { 
+        sanitizeBuffer_(buf, nComps);
+
+        curWriter_->addCellData(buf, name);
     }
+
+    template <class VectorField>
+    DUNE_DEPRECATED // use attachCellData() instead
+    void addCellData(VectorField *field, const char *name, int nComps = 1)
+    { addManagedCellData(*field, name, nComps); };
 
     /*!
      * \brief Finalizes the current writer.
      *
-     * This means that everything will be written to disk.
+     * This means that everything will be written to disk, except if
+     * the onlyDiscard argument is true. In this case only all managed
+     * buffers are deleted, but no output is written.
      */
-    void endTimestep(bool onlyDiscard=false)
+    void endWrite(bool onlyDiscard = false)
     {
         if (!onlyDiscard) {
             curWriter_->write(curOutFileName_.c_str(),
@@ -196,19 +224,25 @@ public:
 
         }
         else
-            -- writerNum_;
+            -- curWriterNum_;
 
+        // discard managed buffers
         delete curWriter_;
         while (vectorFields_.begin() != vectorFields_.end()) {
             delete vectorFields_.front();
             vectorFields_.pop_front();
         }
 
-        // temporarily write the closing XML mumbo-jumbo to
-        // the mashup file so that the data set can be loaded
-        // even if the programm is aborted
-        endMultiFile_();
+        // temporarily write the closing XML mumbo-jumbo to the mashup
+        // file so that the data set can be loaded even if the
+        // simulation is aborted (or not yet finished)
+        finishMultiFile_();
     };
+
+    void endTimestep(bool onlyDiscard=false)
+        DUNE_DEPRECATED // use endWrite()
+    { endWrite(onlyDiscard); }
+
 
     /*!
      * \brief Write the multi-writer's state to a restart file.
@@ -217,7 +251,7 @@ public:
     void serialize(Restarter &res)
     {
         res.serializeSectionBegin("VTKMultiWriter");
-        res.serializeStream() << writerNum_ << "\n";
+        res.serializeStream() << curWriterNum_ << "\n";
 
         if (commRank_ == 0) {
             size_t fileLen = 0;
@@ -250,10 +284,8 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
-        wasRestarted_ = true;
-
         res.deserializeSectionBegin("VTKMultiWriter");
-        res.deserializeStream() >> writerNum_;
+        res.deserializeStream() >> curWriterNum_;
         
         if (commRank_ == 0) {
             std::string dummy;
@@ -289,7 +321,7 @@ private:
     std::string fileName_()
     {
         return (boost::format("%s-%05d")
-                %simName_%writerNum_).str();
+                %simName_%curWriterNum_).str();
     }
 
     std::string fileName_(int rank)
@@ -299,11 +331,11 @@ private:
                     %commSize_
                     %rank
                     %simName_
-                    %writerNum_).str();
+                    %curWriterNum_).str();
         }
         else {
             return (boost::format("%s-%05d")
-                    %simName_%writerNum_).str();
+                    %simName_%curWriterNum_).str();
         }
     }
 
@@ -313,13 +345,8 @@ private:
     }
 
 
-    void beginMultiFile_(const std::string &multiFileName)
+    void startMultiFile_(const std::string &multiFileName)
     {
-        // if the multi writer was deserialized from a restart file,
-        // we don't create a new multi file, but recycle the old one..
-        if (wasRestarted_)
-            return;
-
         // only the first process writes to the multi-file
         if (commRank_ == 0) {
             // generate one meta vtk-file holding the individual timesteps
@@ -334,7 +361,7 @@ private:
         }
     }
 
-    void endMultiFile_()
+    void finishMultiFile_()
     {
         // only the first process writes to the multi-file
         if (commRank_ == 0) {
@@ -345,6 +372,26 @@ private:
                 "</VTKFile>\n";
             multiFile_.seekp(pos);
             multiFile_.flush();
+        }
+    }
+
+    // make sure the field is well defined if running under valgrind
+    // and make sure that all values can be displayed by paraview
+    template <class Buffer>
+    void sanitizeBuffer_(Buffer &b, int nComps)
+    {
+        for (int i = 0; i < b.size(); ++i) {
+            for (int j = 0; j < nComps; ++j) {
+                Valgrind::CheckDefined(b[i][j]);
+
+                // set values which are too small to 0 to avoid
+                // problems with paraview
+                if (std::abs(b[i][j]) 
+                    < std::numeric_limits<float>::min())
+                {
+                    b[i][j] = 0.0;
+                }
+            }
         }
     }
 
@@ -396,11 +443,10 @@ private:
     int commSize_; // number of processes in the communicator
     int commRank_; // rank of the current process in the communicator
 
-    VtkWriter     * curWriter_;
+    VtkWriter *curWriter_;
     double curTime_;
-    const GridView* curGridView_;
     std::string curOutFileName_;
-    int writerNum_;
+    int curWriterNum_;
 
     std::list<VtkVectorFieldStoreBase_*> vectorFields_;
 };

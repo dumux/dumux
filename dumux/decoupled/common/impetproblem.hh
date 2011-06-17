@@ -533,11 +533,11 @@ public:
 
         if (!resultWriter_)
             resultWriter_ = new VtkMultiWriter(asImp_().name());
-        resultWriter_->beginTimestep(timeManager_.time() + timeManager_.timeStepSize(),
+        resultWriter_->beginWrite(timeManager_.time() + timeManager_.timeStepSize(),
                                     gridView());
         model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
-        resultWriter_->endTimestep();
+        resultWriter_->endWrite();
     }
 
     // \}

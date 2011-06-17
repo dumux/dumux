@@ -292,32 +292,32 @@ public:
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
 
-        ScalarField *Sg = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *Sl = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *pg = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *pl = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *pc = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *Sg = writer.allocateManagedBuffer (numVertices);
+        ScalarField *Sl = writer.allocateManagedBuffer (numVertices);
+        ScalarField *pg = writer.allocateManagedBuffer (numVertices);
+        ScalarField *pl = writer.allocateManagedBuffer (numVertices);
+        ScalarField *pc = writer.allocateManagedBuffer (numVertices);
         ScalarField *rhoL =
-                writer.template createField<Scalar, 1> (numVertices);
+                writer.allocateManagedBuffer (numVertices);
         ScalarField *rhoG =
-                writer.template createField<Scalar, 1> (numVertices);
+                writer.allocateManagedBuffer (numVertices);
         ScalarField *mobL =
-                writer.template createField<Scalar, 1> (numVertices);
+                writer.allocateManagedBuffer (numVertices);
         ScalarField *mobG =
-                writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *phasePresence = writer.template createField<Scalar, 1> (
+                writer.allocateManagedBuffer (numVertices);
+        ScalarField *phasePresence = writer.allocateManagedBuffer (
                 numVertices);
         ScalarField *massFrac[numPhases][numComponents];
         for (int i = 0; i < numPhases; ++i)
             for (int j = 0; j < numComponents; ++j)
-                massFrac[i][j] = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *temperature = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *poro = writer.template createField<Scalar, 1>(numVertices);
+                massFrac[i][j] = writer.allocateManagedBuffer(numVertices);
+        ScalarField *temperature = writer.allocateManagedBuffer(numVertices);
+        ScalarField *poro = writer.allocateManagedBuffer(numVertices);
 
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        ScalarField *velocityX = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *velocityY = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *velocityZ = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *velocityX = writer.allocateManagedBuffer(numVertices);
+        ScalarField *velocityY = writer.allocateManagedBuffer(numVertices);
+        ScalarField *velocityZ = writer.allocateManagedBuffer(numVertices);
 //        Scalar maxV=0.; // variable to store the maximum face velocity
 
         // initialize velocity fields
@@ -335,7 +335,7 @@ public:
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
-                writer.template createField<Scalar, 1> (numElements);
+                writer.allocateManagedBuffer (numElements);
 
         FVElementGeometry fvElemGeom;
         VolumeVariables volVars;
@@ -456,15 +456,15 @@ public:
         }
 #endif
 
-        writer.addVertexData(Sg, "Sg");
-        writer.addVertexData(Sl, "Sl");
-        writer.addVertexData(pg, "pg");
-        writer.addVertexData(pl, "pl");
-        writer.addVertexData(pc, "pc");
-        writer.addVertexData(rhoL, "rhoL");
-        writer.addVertexData(rhoG, "rhoG");
-        writer.addVertexData(mobL, "mobL");
-        writer.addVertexData(mobG, "mobG");
+        writer.attachVertexData(*Sg, "Sg");
+        writer.attachVertexData(*Sl, "Sl");
+        writer.attachVertexData(*pg, "pg");
+        writer.attachVertexData(*pl, "pl");
+        writer.attachVertexData(*pc, "pc");
+        writer.attachVertexData(*rhoL, "rhoL");
+        writer.attachVertexData(*rhoG, "rhoG");
+        writer.attachVertexData(*mobL, "mobL");
+        writer.attachVertexData(*mobG, "mobG");
         for (int i = 0; i < numPhases; ++i)
         {
             for (int j = 0; j < numComponents; ++j)
@@ -472,21 +472,21 @@ public:
                 std::string name = (boost::format("X_%s%s")
                         % ((i == lPhaseIdx) ? "l" : "g")
                         % FluidSystem::componentName(j)).str();
-                writer.addVertexData(massFrac[i][j], name.c_str());
+                writer.attachVertexData(*massFrac[i][j], name.c_str());
             }
         }
-        writer.addVertexData(poro, "porosity");
-        writer.addVertexData(temperature, "temperature");
-        writer.addVertexData(phasePresence, "phase presence");
+        writer.attachVertexData(*poro, "porosity");
+        writer.attachVertexData(*temperature, "temperature");
+        writer.attachVertexData(*phasePresence, "phase presence");
 
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        writer.addVertexData(velocityX, "Vx");
+        writer.attachVertexData(*velocityX, "Vx");
         if (dim >= 2)
-        writer.addVertexData(velocityY, "Vy");
+        writer.attachVertexData(*velocityY, "Vy");
         if (dim == 3)
-        writer.addVertexData(velocityZ, "Vz");
+        writer.attachVertexData(*velocityZ, "Vz");
 #endif
-        writer.addCellData(rank, "process rank");
+        writer.attachCellData(*rank, "process rank");
     }
 
     /*!

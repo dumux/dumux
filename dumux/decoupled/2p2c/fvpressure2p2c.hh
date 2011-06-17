@@ -195,24 +195,24 @@ public:
         Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer.template createField<double, 1> (dv_dp.size());
         *errorCorrPtr = errorCorrection;
 //        int size = subdomainPtr.size();
-        writer.addCellData(errorCorrPtr, "Error Correction");
+        writer.attachCellData(*errorCorrPtr, "Error Correction");
 
         Dune::BlockVector<Dune::FieldVector<double,1> > *dv_dpPtr = writer.template createField<double, 1> (dv_dp.size());
         *dv_dpPtr = dv_dp;
-        writer.addCellData(dv_dpPtr, "dv_dp");
+        writer.attachCellData(*dv_dpPtr, "dv_dp");
         Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC1Ptr = writer.template createField<double, 1> (dv_dp.size());
         Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC2Ptr = writer.template createField<double, 1> (dv_dp.size());
         *dV_dC1Ptr = dV_[0];
         *dV_dC2Ptr = dV_[1];
-        writer.addCellData(dV_dC1Ptr, "dV_dC1");
-        writer.addCellData(dV_dC2Ptr, "dV_dC2");
+        writer.attachCellData(*dV_dC1Ptr, "dV_dC1");
+        writer.attachCellData(*dV_dC2Ptr, "dV_dC2");
 
         Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate1 = writer.template createField<double, 1> (dv_dp.size());
         Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate2 = writer.template createField<double, 1> (dv_dp.size());
         *updEstimate1 = problem_.variables().updateEstimate()[0];
         *updEstimate2 = problem_.variables().updateEstimate()[1];
-        writer.addCellData(updEstimate1, "updEstimate comp 1");
-        writer.addCellData(updEstimate2, "updEstimate comp 2");
+        writer.attachCellData(*updEstimate1, "updEstimate comp 1");
+        writer.attachCellData(*updEstimate2, "updEstimate comp 2");
 #endif
         return;
     }
@@ -244,8 +244,8 @@ public:
                 }
                 *poroPtr = poro_;
                 *permPtr = perm_;
-                debugWriter_.addCellData(poroPtr, "porosity");
-                debugWriter_.addCellData(permPtr, "permeability");
+                debugWriter_.attachCellData(*poroPtr, "porosity");
+                debugWriter_.attachCellData(*permPtr, "permeability");
         #endif
 
         debugWriter_.endTimestep();

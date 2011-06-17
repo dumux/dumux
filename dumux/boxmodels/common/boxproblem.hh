@@ -735,10 +735,10 @@ public:
             // calculate the time _after_ the time was updated
             Scalar t = timeManager().time() + timeManager().timeStepSize();
             createResultWriter_();
-            resultWriter_->beginTimestep(t, gridView());
+            resultWriter_->beginWrite(t, gridView());
             model().addOutputVtkFields(model().curSol(), *resultWriter_);
             asImp_().addOutputVtkFields();
-            resultWriter_->endTimestep();
+            resultWriter_->endWrite();
         }
     }
 

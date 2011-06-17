@@ -180,18 +180,18 @@ public:
     void addOutputVtkFields(MultiWriter &writer)
     {
         typename Variables::ScalarSolutionType *saturation =
-                writer.template createField<Scalar, 1> (
+                writer.allocateManagedBuffer (
                         problem_.gridView().size(0));
 
         *saturation = problem_.variables().saturation();
 
         if (saturationType_ == Sw)
         {
-            writer.addCellData(saturation, "wetting saturation");
+            writer.attachCellData(*saturation, "wetting saturation");
         }
         if (saturationType_ == Sn)
         {
-            writer.addCellData(saturation, "nonwetting saturation");
+            writer.attachCellData(*saturation, "nonwetting saturation");
         }
 
         return;

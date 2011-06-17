@@ -643,9 +643,9 @@ public:
         ScalarField* delta[numEq];
         ScalarField* x[numEq];
         for (int i = 0; i < numEq; ++i) {
-            x[i] = writer.template createField<Scalar, 1>(numVertices);
-            delta[i] = writer.template createField<Scalar, 1>(numVertices);
-            def[i] = writer.template createField<Scalar, 1>(numVertices);
+            x[i] = writer.allocateManagedBuffer(numVertices);
+            delta[i] = writer.allocateManagedBuffer(numVertices);
+            def[i] = writer.allocateManagedBuffer(numVertices);
         }
 
         VertexIterator vIt = this->gridView_().template begin<dim>();
@@ -661,9 +661,9 @@ public:
         }
 
         for (int i = 0; i < numEq; ++i) {
-            writer.addVertexData(x[i], (boost::format("x_%i")%i).str().c_str());
-            writer.addVertexData(delta[i], (boost::format("delta_%i")%i).str().c_str());
-            writer.addVertexData(def[i], (boost::format("defect_%i")%i).str().c_str());
+            writer.attachVertexData(*x[i], (boost::format("x_%i")%i).str().c_str());
+            writer.attachVertexData(*delta[i], (boost::format("delta_%i")%i).str().c_str());
+            writer.attachVertexData(*def[i], (boost::format("defect_%i")%i).str().c_str());
         }
 
         asImp_().addOutputVtkFields(u, writer);
@@ -693,7 +693,7 @@ public:
         // global defect of the two auxiliary equations
         ScalarField* x[numEq];
         for (int i = 0; i < numEq; ++i) {
-            x[i] = writer.template createField<Scalar, 1>(numVertices);
+            x[i] = writer.allocateManagedBuffer(numVertices);
         }
 
         VertexIterator vIt = this->gridView_().template begin<dim>();
@@ -707,7 +707,7 @@ public:
         }
 
         for (int i = 0; i < numEq; ++i)
-            writer.addVertexData(x[i], (boost::format("primaryVar%i")%i).str().c_str());
+            writer.attachVertexData(*x[i], (boost::format("primaryVar%i")%i).str().c_str());
     }
 
     /*!

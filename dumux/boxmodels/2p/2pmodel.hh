@@ -132,21 +132,20 @@ public:
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField *pW = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *pN = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *pC = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *Sw = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *Sn = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *rhoW = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *rhoN = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *mobW = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *mobN = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *poro = writer.template createField<Scalar, 1> (numVertices);
-        ScalarField *Te = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *pW = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pN = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pC = writer.allocateManagedBuffer(numVertices);
+        ScalarField *Sw = writer.allocateManagedBuffer(numVertices);
+        ScalarField *Sn = writer.allocateManagedBuffer(numVertices);
+        ScalarField *rhoW = writer.allocateManagedBuffer(numVertices);
+        ScalarField *rhoN = writer.allocateManagedBuffer(numVertices);
+        ScalarField *mobW = writer.allocateManagedBuffer(numVertices);
+        ScalarField *mobN = writer.allocateManagedBuffer(numVertices);
+        ScalarField *poro = writer.allocateManagedBuffer(numVertices);
+        ScalarField *Te = writer.allocateManagedBuffer(numVertices);
 
         unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank =
-                writer.template createField<Scalar, 1> (numElements);
+        ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
         FVElementGeometry fvElemGeom;
         VolumeVariables volVars;
@@ -185,18 +184,18 @@ public:
             };
         }
 
-        writer.addVertexData(Sn, "Sn");
-        writer.addVertexData(Sw, "Sw");
-        writer.addVertexData(pN, "pn");
-        writer.addVertexData(pW, "pw");
-        writer.addVertexData(pC, "pc");
-        writer.addVertexData(rhoW, "rhoW");
-        writer.addVertexData(rhoN, "rhoN");
-        writer.addVertexData(mobW, "mobW");
-        writer.addVertexData(mobN, "mobN");
-        writer.addVertexData(poro, "porosity");
-        writer.addVertexData(Te, "temperature");
-        writer.addCellData(rank, "process rank");
+        writer.attachVertexData(*Sn, "Sn");
+        writer.attachVertexData(*Sw, "Sw");
+        writer.attachVertexData(*pN, "pn");
+        writer.attachVertexData(*pW, "pw");
+        writer.attachVertexData(*pC, "pc");
+        writer.attachVertexData(*rhoW, "rhoW");
+        writer.attachVertexData(*rhoN, "rhoN");
+        writer.attachVertexData(*mobW, "mobW");
+        writer.attachVertexData(*mobN, "mobN");
+        writer.attachVertexData(*poro, "porosity");
+        writer.attachVertexData(*Te, "temperature");
+        writer.attachCellData(*rank, "process rank");
     }
 };
 }

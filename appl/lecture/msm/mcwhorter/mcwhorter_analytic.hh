@@ -338,14 +338,14 @@ public:
      template<class MultiWriter>
      void addOutputVtkFields(MultiWriter &writer)
      {
-         BlockVector *analyticSolution = writer.template createField<Scalar, 1> (size_);
-         BlockVector *error = writer.template createField<Scalar, 1> (size_);
+         BlockVector *analyticSolution = writer.allocateManagedBuffer (size_);
+         BlockVector *error = writer.allocateManagedBuffer (size_);
 
          *analyticSolution = analyticSolution_;
          *error = error_;
 
-         writer.addCellData(analyticSolution, "saturation (exact solution)");
-         writer.addCellData(error, "error_");
+         writer.attachCellData(*analyticSolution, "saturation (exact solution)");
+         writer.attachCellData(*error, "error_");
 
          return;
      }

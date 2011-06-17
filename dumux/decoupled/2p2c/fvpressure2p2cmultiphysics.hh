@@ -195,25 +195,25 @@ public:
         problem().variables().addOutputVtkFields(writer);
 
         // add multiphysics stuff
-        Dune::BlockVector<Dune::FieldVector<int,1> > *subdomainPtr = writer.template createField<int, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<int,1> > *subdomainPtr = writer.template allocateManagedBuffer<int, 1> (dv_dp.size());
         *subdomainPtr = problem_.variables().subdomain();
-        writer.addCellData(subdomainPtr, "subdomain");
+        writer.attachCellData(*subdomainPtr, "subdomain");
 
 #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
         // add debug stuff
-        Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer.template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *errorCorrPtr = writer.allocateManagedBuffer(dv_dp.size());
         *errorCorrPtr = errorCorrection;
-        writer.addCellData(errorCorrPtr, "Error Correction");
+        writer.attachCellData(*errorCorrPtr, "Error Correction");
         // add debug stuff
-        Dune::BlockVector<Dune::FieldVector<double,1> > *dv_dpPtr = writer.template createField<double, 1> (dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *dv_dpPtr = writer.allocateManagedBuffer(dv_dp.size());
         *dv_dpPtr = dv_dp;
-        writer.addCellData(dv_dpPtr, "dv_dP");
-                Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC1Ptr = writer.template createField<double, 1> (dv_dp.size());
-        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC2Ptr = writer.template createField<double, 1> (dv_dp.size());
+        writer.attachCellData(*dv_dpPtr, "dv_dP");
+                Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC1Ptr = writer.allocateManagedBuffer(dv_dp.size());
+        Dune::BlockVector<Dune::FieldVector<double,1> > *dV_dC2Ptr = writer.allocateManagedBuffer(dv_dp.size());
         *dV_dC1Ptr = dV_[0];
         *dV_dC2Ptr = dV_[1];
-        writer.addCellData(dV_dC1Ptr, "dV_dC1");
-        writer.addCellData(dV_dC2Ptr, "dV_dC2");
+        writer.attachCellData(*dV_dC1Ptr, "dV_dC1");
+        writer.attachCellData(*dV_dC2Ptr, "dV_dC2");
 #endif
 
         return;

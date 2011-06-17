@@ -130,19 +130,19 @@ public:
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField *pressure = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *delp = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *moleFrac0 = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *moleFrac1 = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *massFrac0 = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *massFrac1 = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *rho = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *mu = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *delFrac= writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *pressure = writer.allocateManagedBuffer(numVertices);
+        ScalarField *delp = writer.allocateManagedBuffer(numVertices);
+        ScalarField *moleFrac0 = writer.allocateManagedBuffer(numVertices);
+        ScalarField *moleFrac1 = writer.allocateManagedBuffer(numVertices);
+        ScalarField *massFrac0 = writer.allocateManagedBuffer(numVertices);
+        ScalarField *massFrac1 = writer.allocateManagedBuffer(numVertices);
+        ScalarField *rho = writer.allocateManagedBuffer(numVertices);
+        ScalarField *mu = writer.allocateManagedBuffer(numVertices);
+        ScalarField *delFrac= writer.allocateManagedBuffer(numVertices);
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        ScalarField *velocityX = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *velocityY = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *velocityZ = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *velocityX = writer.allocateManagedBuffer(numVertices);
+        ScalarField *velocityY = writer.allocateManagedBuffer(numVertices);
+        ScalarField *velocityZ = writer.allocateManagedBuffer(numVertices);
         //use vertiacl faces for vx and horizontal faces for vy calculation
         GlobalPosition boxSurface[numVertices];
         // initialize velocity fields
@@ -163,7 +163,7 @@ public:
 #endif
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
-                writer.template createField<Scalar, 1> (numElements);
+                writer.allocateManagedBuffer (numElements);
 
         FVElementGeometry fvElemGeom;
         VolumeVariables volVars;
@@ -311,22 +311,22 @@ public:
              }
         }
 #endif
-        writer.addVertexData(pressure, "P");
-        writer.addVertexData(delp, "delp");
+        writer.attachVertexData(*pressure, "P");
+        writer.attachVertexData(*delp, "delp");
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        writer.addVertexData(velocityX, "Vx");
-        writer.addVertexData(velocityY, "Vy");
+        writer.attachVertexData(*velocityX, "Vx");
+        writer.attachVertexData(*velocityY, "Vy");
         if (dim > 2)
-            writer.addVertexData(velocityZ, "Vz");
+            writer.attachVertexData(*velocityZ, "Vz");
 #endif
-        writer.addVertexData(moleFrac0, "x_if");
-        writer.addVertexData(moleFrac1, "x_TRAIL");
-        writer.addVertexData(massFrac0, "X_if");
-        writer.addVertexData(massFrac1, "X_TRAIL");
-//        writer.addVertexData(delFrac, "delFrac_TRAIL");
-        writer.addVertexData(rho, "rho");
-        writer.addVertexData(mu, "mu");
-        writer.addCellData(rank, "process rank");
+        writer.attachVertexData(*moleFrac0, "x_if");
+        writer.attachVertexData(*moleFrac1, "x_TRAIL");
+        writer.attachVertexData(*massFrac0, "X_if");
+        writer.attachVertexData(*massFrac1, "X_TRAIL");
+//        writer.attachVertexData(*delFrac, "delFrac_TRAIL");
+        writer.attachVertexData(*rho, "rho");
+        writer.attachVertexData(*mu, "mu");
+        writer.attachCellData(*rank, "process rank");
     }
 
 };

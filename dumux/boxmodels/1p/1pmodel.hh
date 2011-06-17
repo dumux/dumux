@@ -97,11 +97,10 @@ public:
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField *p = writer.template createField<Scalar, 1> (numVertices);
+        ScalarField *p = writer.allocateManagedBuffer (numVertices);
 
         unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank =
-                writer.template createField<Scalar, 1> (numElements);
+        ScalarField *rank = writer.allocateManagedBuffer (numElements);
 
         FVElementGeometry fvElemGeom;
         VolumeVariables volVars;
@@ -132,8 +131,8 @@ public:
             };
         }
 
-        writer.addVertexData(p, "p");
-        writer.addCellData(rank, "process rank");
+        writer.attachVertexData(*p, "p");
+        writer.attachCellData(*rank, "process rank");
     }
 };
 }

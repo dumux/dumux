@@ -213,19 +213,19 @@ private:
     {
         if (codim_ == 0)
         {
-            ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *pressure = writer.allocateManagedBuffer (this->gridSize());
 
             *pressure = this->pressure();
 
-            writer.addCellData(pressure, "pressure");
+            writer.attachCellData(*pressure, "pressure");
         }
         if (codim_ == dim)
         {
-            ScalarSolutionType *pressure = writer.template createField<Scalar, 1> (this->gridSize());
+            ScalarSolutionType *pressure = writer.allocateManagedBuffer (this->gridSize());
 
             *pressure = this->pressure();
 
-            writer.addVertexData(pressure, "pressure");
+            writer.attachVertexData(*pressure, "pressure");
         }
 
         return;

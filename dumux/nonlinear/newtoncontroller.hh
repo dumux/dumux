@@ -131,8 +131,8 @@ struct NewtonConvergenceWriter
     void beginIteration(const GridView &gv)
     {
         ++ iteration_;
-        vtkMultiWriter_->beginTimestep(timeStepIndex_ + iteration_ / 100.0,
-                                       gv);
+        vtkMultiWriter_->beginWrite(timeStepIndex_ + iteration_ / 100.0,
+                                    gv);
     };
 
     void writeFields(const SolutionVector &uLastIter,
@@ -142,7 +142,7 @@ struct NewtonConvergenceWriter
     };
 
     void endIteration()
-    { vtkMultiWriter_->endTimestep(); };
+    { vtkMultiWriter_->endWrite(); };
 
     void endTimestep()
     {
