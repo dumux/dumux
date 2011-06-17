@@ -2,12 +2,14 @@
 Makefile.in
 Makefile
 .deps/
+.libs/
 aclocal*
 depcomp
 dependencies.m4
 am
 autom4*
 dumux.pc
+dumux-devel.pc
 install-sh
 libtool
 ltmain
@@ -25,15 +27,20 @@ doc/doxygen/html
 # auto-saved files
 *~
 
+# left overs from git rebase
+*.orig
+
 # object files
 *.o
+*.lo
+*.la
 
 # ignore CSV files which are usually auto generated 
 # from some simulation results
 *.csv
 
 # latex clutter from dumux handbook 
-dumux-handbook.pdf
+*.pdf
 *.aux
 *.blg
 *.log
