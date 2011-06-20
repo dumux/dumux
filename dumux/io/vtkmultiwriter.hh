@@ -59,8 +59,24 @@ class VtkMultiWriter
     typedef typename GridView::Grid Grid;
     enum { dim = GridView::dimension };
 
+#if DUNE_VERSION_NEWER_REV(GRID, 2, 0, 99)
+    // DUNE 2.1 and above
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+#else
+    // DUNE 2.0 and below
+    template<int dim>
+    struct VertexLayout {
+        bool contains (Dune::GeometryType gt) const
+        { return gt.dim() == 0; } };
+    template<int dim>
+    struct ElementLayout {
+        bool contains (Dune::GeometryType gt) const
+        { return gt.dim() == dim; } };
+    
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, VertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, ElementLayout> ElementMapper;
+#endif
 
     // this constructor won't work anymore. Please use the variant
     // below which also includes the GridView as an argument.
