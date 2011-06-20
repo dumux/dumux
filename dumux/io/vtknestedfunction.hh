@@ -27,8 +27,15 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
+#include <dune/common/version.hh>
 
+#if DUNE_VERSION_NEWER_REV(GRID, 2, 0, 99)
+// DUNE 2.1 and above
 #include <dune/grid/io/file/vtk/function.hh>
+#else
+// DUNE 2.0 and below
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+#endif
 
 namespace Dumux {
 
