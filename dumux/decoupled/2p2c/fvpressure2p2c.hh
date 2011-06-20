@@ -260,7 +260,7 @@ public:
     FVPressure2P2C(Problem& problem) :
         problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (2 * dim + 1)
                 * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()),
-                debugWriter_("debugOutput2p2c"), gravity(problem.gravity())
+                debugWriter_(problem.gridView(), "debugOutput2p2c"), gravity(problem.gravity())
     {
         if (pressureType != pw && pressureType != pn)
         {

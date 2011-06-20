@@ -532,9 +532,8 @@ public:
             std::cout << "Writing result file for current time step\n";
 
         if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
-        resultWriter_->beginWrite(timeManager_.time() + timeManager_.timeStepSize(),
-                                    gridView());
+            resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
+        resultWriter_->beginWrite(timeManager_.time() + timeManager_.timeStepSize());
         model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
         resultWriter_->endWrite();
@@ -555,14 +554,14 @@ protected:
     VtkMultiWriter& resultWriter()
     {
         if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
+            resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
         return *resultWriter_;
     }
     //! \copydoc Dumux::IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
         if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
+            resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
         return *resultWriter_;
     }
 

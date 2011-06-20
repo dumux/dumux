@@ -24,6 +24,8 @@
 #ifndef VTK_MULTI_WRITER_HH
 #define VTK_MULTI_WRITER_HH
 
+#include "vtknestedfunction.hh"
+
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 
@@ -54,10 +56,27 @@ namespace Dumux {
 template<class GridView>
 class VtkMultiWriter
 {
-public:
+    typedef typename GridView::Grid Grid;
+    enum { dim = GridView::dimension };
 
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+
+    // this constructor won't work anymore. Please use the variant
+    // below which also includes the GridView as an argument.
+    DUNE_DEPRECATED
+    VtkMultiWriter(const std::string &simName = "", 
+                   std::string multiFileName = "")
+    {}
+
+public:
     typedef Dune::VTKWriter<GridView> VtkWriter;
-    VtkMultiWriter(const std::string &simName = "", std::string multiFileName = "")
+    VtkMultiWriter(const GridView &gridView, 
+                   const std::string &simName = "", 
+                   std::string multiFileName = "")
+        : gridView_(gridView)
+        , elementMapper_(gridView)
+        , vertexMapper_(gridView)
     {
         simName_ = (simName.empty())?"sim":simName;
         multiFileName_ = multiFileName;
@@ -85,17 +104,31 @@ public:
     }
 
     /*!
+     * \brief Updates the internal data structures after mesh
+     *        refinement.
+     *
+     * If the grid changes between two calls of beginWrite(), this
+     * method _must_ be called before the second beginWrite()!
+     */
+    void gridChanged()
+    {
+        elementMapper_.update();
+        vertexMapper_.update();
+    }
+
+    /*!
      * \brief Called when ever a new timestep or a new grid
      *        must be written.
      */
-    void beginWrite(double t, const GridView &gridView)
+    void beginWrite(double t)
     {
         if (!multiFile_.is_open()) {
             startMultiFile_(multiFileName_);
         }
 
 
-        curWriter_ = new VtkWriter(gridView, Dune::VTKOptions::conforming);
+        curWriter_ = new VtkWriter(gridView_,
+                                   Dune::VTKOptions::conforming);
         ++curWriterNum_;
 
         curTime_ = t;
@@ -104,7 +137,7 @@ public:
     
     void beginTimestep(double t, const GridView &gridView)
         DUNE_DEPRECATED // use beginWrite()
-    { beginWrite(t, gridView); }
+    { gridChanged(); beginWrite(t); }
 
     /*!
      * \brief Allocate a managed buffer for a scalar field
@@ -116,10 +149,10 @@ public:
     Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *allocateManagedBuffer(int nEntities)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > VectorField;
-
-        VtkVectorFieldStoreImpl_<VectorField> *vfs =
-            new VtkVectorFieldStoreImpl_<VectorField>(nEntities);
-        vectorFields_.push_back(vfs);
+        
+        ManagedVectorField_<VectorField> *vfs =
+            new ManagedVectorField_<VectorField>(nEntities);
+        managedObjects_.push_back(vfs);
         return &(vfs->vf);
     }
 
@@ -145,11 +178,18 @@ public:
      * In both cases, modifying the buffer between the call to this
      * method and endWrite() results in _undefined behaviour_.
      */
-    template <class DataArray>
-    void attachVertexData(DataArray &buf, const char *name, int nComps=1)
+    template <class DataBuffer>
+    void attachVertexData(DataBuffer &buf, const char *name, int nComps=1)
     {
-        sanitizeBuffer_(buf, nComps);
-        curWriter_->addVertexData(buf, name, nComps);
+        typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
+        typedef Dumux::VtkNestedFunction<Grid, VertexMapper, DataBuffer> VtkFn;
+        FunctionPtr fnPtr(new VtkFn(name,
+                                    gridView_.grid(),
+                                    vertexMapper_,
+                                    buf,
+                                    /*codim=*/dim,
+                                    nComps));
+        curWriter_->addVertexData(fnPtr);
     }
 
     template <class DataArray>
@@ -172,12 +212,18 @@ public:
      * In both cases, modifying the buffer between the call to this
      * method and endWrite() results in _undefined behaviour_.
      */
-    template <class VectorField>
-    void attachCellData(VectorField &buf, const char *name, int nComps = 1)
+    template <class DataBuffer>
+    void attachCellData(DataBuffer &buf, const char *name, int nComps = 1)
     { 
-        sanitizeBuffer_(buf, nComps);
-
-        curWriter_->addCellData(buf, name);
+        typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
+        typedef Dumux::VtkNestedFunction<Grid, ElementMapper, DataBuffer> VtkFn;
+        FunctionPtr fnPtr(new VtkFn(name,
+                                    gridView_.grid(),
+                                    elementMapper_,
+                                    buf,
+                                    /*codim=*/0,
+                                    nComps));
+        curWriter_->addCellData(fnPtr);
     }
 
     template <class VectorField>
@@ -226,11 +272,11 @@ public:
         else
             -- curWriterNum_;
 
-        // discard managed buffers
+        // discard managed objects and the current VTK writer
         delete curWriter_;
-        while (vectorFields_.begin() != vectorFields_.end()) {
-            delete vectorFields_.front();
-            vectorFields_.pop_front();
+        while (managedObjects_.begin() != managedObjects_.end()) {
+            delete managedObjects_.front();
+            managedObjects_.pop_front();
         }
 
         // temporarily write the closing XML mumbo-jumbo to the mashup
@@ -377,8 +423,8 @@ private:
 
     // make sure the field is well defined if running under valgrind
     // and make sure that all values can be displayed by paraview
-    template <class Buffer>
-    void sanitizeBuffer_(Buffer &b, int nComps)
+    template <class DataBuffer>
+    void sanitizeBuffer_(DataBuffer &b, int nComps)
     {
         for (int i = 0; i < b.size(); ++i) {
             for (int j = 0; j < nComps; ++j) {
@@ -413,20 +459,20 @@ private:
 
     /** \todo Please doc me! */
 
-    class VtkVectorFieldStoreBase_
+    class ManagedObject_
     {
     public:
-        virtual ~VtkVectorFieldStoreBase_()
+        virtual ~ManagedObject_()
         {}
     };
 
     /** \todo Please doc me! */
 
     template <class VF>
-    class VtkVectorFieldStoreImpl_ : public VtkVectorFieldStoreBase_
+    class ManagedVectorField_ : public ManagedObject_
     {
     public:
-        VtkVectorFieldStoreImpl_(int size)
+        ManagedVectorField_(int size)
             : vf(size)
         { }
         VF vf;
@@ -434,7 +480,9 @@ private:
     // end hack
     ////////////////////////////////////
 
-    bool wasRestarted_;
+    const GridView gridView_;
+    ElementMapper elementMapper_;
+    VertexMapper vertexMapper_;
 
     std::string simName_;
     std::ofstream multiFile_;
@@ -448,7 +496,7 @@ private:
     std::string curOutFileName_;
     int curWriterNum_;
 
-    std::list<VtkVectorFieldStoreBase_*> vectorFields_;
+    std::list<ManagedObject_*> managedObjects_;
 };
 }
 

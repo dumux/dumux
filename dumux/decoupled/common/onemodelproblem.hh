@@ -230,8 +230,8 @@ public:
         if (gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
         if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
-        resultWriter_->beginWrite(timeManager_.time() + timeManager_.timeStepSize(), gridView());
+            resultWriter_ = new VtkMultiWriter(gridView(), asImp_().name());
+        resultWriter_->beginWrite(timeManager_.time() + timeManager_.timeStepSize());
         model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
         resultWriter_->endWrite();

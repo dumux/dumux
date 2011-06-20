@@ -735,7 +735,7 @@ public:
             // calculate the time _after_ the time was updated
             Scalar t = timeManager().time() + timeManager().timeStepSize();
             createResultWriter_();
-            resultWriter_->beginWrite(t, gridView());
+            resultWriter_->beginWrite(t);
             model().addOutputVtkFields(model().curSol(), *resultWriter_);
             asImp_().addOutputVtkFields();
             resultWriter_->endWrite();
@@ -770,7 +770,7 @@ protected:
 private:
     // makes sure that the result writer exists
     void createResultWriter_()
-    { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(asImp_().name()); };
+    { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name()); };
 
     std::string simName_; 
     const GridView gridView_;
