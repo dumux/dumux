@@ -395,14 +395,14 @@ protected:
     VtkMultiWriter& resultWriter()
     {
         if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
+            resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
         return *resultWriter_;
     }
 
     VtkMultiWriter& resultWriter() const
     {
         if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
+            resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
         return *resultWriter_;
     }
 
