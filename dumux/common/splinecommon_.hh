@@ -128,65 +128,62 @@ public:
 
     /*!
      * \brief Evaluate the spline at a given position.
+     *
+     * \param x The value on the abscissa where the spline ought to be
+     *          evaluated
+     * \param extrapolate If this parameter is set to true, the spline
+     *                    will be extended beyond its range by
+     *                    straight lines, if false calling extrapolate
+     *                    for \$f x \not [x_{min}, x_{max}]\f$ will
+     *                    cause a failed assertation.
      */
-    Scalar eval(Scalar x) const
+    Scalar eval(Scalar x, bool extrapolate=false) const
     {
-        assert(applies(x));
+        assert(extrapolate || applies(x));
 
-        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
-        // Springer, 2005, p. 109
+        // handle extrapolation
+        if (extrapolate) {
+            if (x < xMin()) {
+                Scalar m = evalDerivative(xMin(), /*segmentIdx=*/0);
+                Scalar y0 = y_(0);
+                return y0 + m*(x - xMin());
+            }
+            else if (x > xMax()) {
+                Scalar m = evalDerivative(xMax(), /*segmentIdx=*/numSamples_()-1);
+                Scalar y0 = y_(numSamples_()-1);
+                return y0 + m*(x - xMax());
+            }
+        }
 
-        int i = segmentIdx_(x);
-
-        Scalar h_i1 = h_(i + 1);
-        Scalar x_i = x - x_(i);
-        Scalar x_i1 = x_(i+1) - x;
-
-        Scalar A_i =
-            (y_(i+1) - y_(i))/h_i1
-            -
-            h_i1/6*(moment_(i+1) - moment_(i));
-        Scalar B_i = y_(i) - moment_(i)* (h_i1*h_i1) / 6;
-
-        return
-            moment_(i)* x_i1*x_i1*x_i1 / (6 * h_i1)
-            +
-            moment_(i + 1)* x_i*x_i*x_i / (6 * h_i1)
-            +
-            A_i*x_i
-            +
-            B_i;
+        return eval_(x, segmentIdx_(x));
     }
 
     /*!
      * \brief Evaluate the spline's derivative at a given position.
+     *
+     * \param x The value on the abscissa where the spline's
+     *          derivative ought to be evaluated
+     *
+     * \param extrapolate If this parameter is set to true, the spline
+     *                    will be extended beyond its range by
+     *                    straight lines, if false calling extrapolate
+     *                    for \$f x \not [x_{min}, x_{max}]\f$ will
+     *                    cause a failed assertation.
+
      */
-    Scalar evalDerivative(Scalar x) const
+     Scalar evalDerivative(Scalar x, bool extrapolate=false) const
     {
-        assert(applies(x));
-
-        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
-        // Springer, 2005, p. 109
-
-        int i = segmentIdx_(x);
-
-        Scalar h_i1 = h_(i + 1);
-        Scalar x_i = x - x_(i);
-        Scalar x_i1 = x_(i+1) - x;
-
-        Scalar A_i =
-            (y_(i+1) - y_(i))/h_i1
-            -
-            h_i1/6*(moment_(i+1) - moment_(i));
-
-        return
-            -moment_(i) * x_i1*x_i1 / (2 * h_i1)
-            +
-            moment_(i + 1) * x_i*x_i / (2 * h_i1)
-            +
-            A_i;
+        assert(extrapolate || applies(x));
+        if (extrapolate) {
+            if (x < xMin())
+                evalDerivative_(xMin(), 0);
+            else if (x > xMax())
+                evalDerivative_(xMax(), numSamples_() - 1);
+        }
+            
+        return evalDerivative_(x, segmentIdx_(x));
     }
-
+    
     /*!
      * \brief Find the intersections of the spline with a cubic
      *        polynomial in the whole intervall, throws
@@ -482,6 +479,55 @@ protected:
         // right hand side
         d[0] = 0.0;
         d[n] = 0.0;
+    }
+
+    // evaluate the spline at a given the position and given the
+    // segment index
+    Scalar eval_(Scalar x, int i) const
+    {
+        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
+        // Springer, 2005, p. 109
+        Scalar h_i1 = h_(i + 1);
+        Scalar x_i = x - x_(i);
+        Scalar x_i1 = x_(i+1) - x;
+
+        Scalar A_i =
+            (y_(i+1) - y_(i))/h_i1
+            -
+            h_i1/6*(moment_(i+1) - moment_(i));
+        Scalar B_i = y_(i) - moment_(i)* (h_i1*h_i1) / 6;
+
+        return
+            moment_(i)* x_i1*x_i1*x_i1 / (6 * h_i1)
+            +
+            moment_(i + 1)* x_i*x_i*x_i / (6 * h_i1)
+            +
+            A_i*x_i
+            +
+            B_i;
+    }
+
+    // evaluate the derivative of a spline given the actual position
+    // and the segment index
+    Scalar evalDerivative_(Scalar x, int i) const
+    {
+        // See: J. Stoer: "Numerische Mathematik 1", 9th edition,
+        // Springer, 2005, p. 109
+        Scalar h_i1 = h_(i + 1);
+        Scalar x_i = x - x_(i);
+        Scalar x_i1 = x_(i+1) - x;
+
+        Scalar A_i =
+            (y_(i+1) - y_(i))/h_i1
+            -
+            h_i1/6*(moment_(i+1) - moment_(i));
+
+        return
+            -moment_(i) * x_i1*x_i1 / (2 * h_i1)
+            +
+            moment_(i + 1) * x_i*x_i / (2 * h_i1)
+            +
+            A_i;
     }
 
 
