@@ -66,7 +66,11 @@ public:
     GridAdapt (Problem& problem, const int levelMin = 0,const int levelMax=1)
     : levelMin_(levelMin), levelMax_(levelMax), problem_(problem)
 	{
+    	if (levelMin_ < 0)
+    		Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+    		<< " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
 
+    	standardIndicator_ = true;
 	}
 
     /*!
@@ -88,18 +92,20 @@ public:
     	marked_ = coarsened_ = 0;
 
     	// prepare an indicator for refinement
-		ScalarSolutionType indicator;
-		indicator.resize(problem_.variables().gridSize());
-		indicator = -1e00;
+    	if(indicatorVector_.size()!=problem_.variables().gridSize())
+    	{
+    		indicatorVector_.resize(problem_.variables().gridSize());
+    		indicatorVector_ = -1e00;
+    	}
 
-		/**** 1) determine refining parameter  		*************/
-		if (GET_PROP_VALUE(TypeTag, PTAG(AdaptiveGrid)))
-		problem_.transportModel().indicatorSaturation(indicator, globalMin_=1e100, globalMax_=-1e100);
-		Scalar globaldelta = globalMax_- globalMin_;
-//    		globaldelta = std::max(globaldelta,0.1);
+		/**** 1) determine refining parameter if standard is used ***/
+    	// if not, the indicatorVector and refinement Bounds have to
+    	// specified by the problem through setIndicator()
+    	if(standardIndicator_)
+    		indicator();
 
 		/**** 2) mark elements according to indicator 	*********/
-		markElements(indicator, refinetol*globaldelta, coarsentol*globaldelta);
+		markElements(indicatorVector_, refineBound_, coarsenBound_);
 
 		// abort if nothing in grid is marked
 		if (marked_==0 && coarsened_ == 0)
@@ -201,10 +207,72 @@ public:
 	 */
     void setLevels(int levMin, int levMax)
     {
+    	if (levMin < 0)
+    		Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+    		<< " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
     	levelMin_ = levMin;
     	levelMax_ = levMax;
     }
+	/*!
+	 * Gets maximum refinement level
+	 *
+	 * @return levelMax_ maximum level for refinement
+	 */
+    int getMaxLevel() const
+    {
+    	return levelMax_;
+    }
+	/*!
+	 * Gets minimum refinement level
+	 *
+	 * @return levelMin_ minimum level for coarsening
+	 */
+    int getMinLevel() const
+    {
+    	return levelMin_;
+    }
+	/*!
+	 * @brief Adapter for external Refinement indicators.
+	 *
+	 * External indicators to refine/coarsen the grid can be set
+	 * from outside this container. Both indicator itsself as well as
+	 * the coarsening and refinement bounds have to be specified.
+	 * @param indicatorVector Vector holding indicator values
+	 * @param coarsenLowerBound bounding value where to be coarsened
+	 * @param refineUpperBound bounding value where to be refined
+	 */
+    const void setIndicator(const ScalarSolutionType& indicatorVector,
+    		const Scalar& coarsenLowerBound, const Scalar& refineUpperBound)
+    {
+    	// switch off usage of standard (saturation) indicator: by settting this,
+    	// the standard function indicator() called by adaptGrid() is disabled.
+    	standardIndicator_=false;
+
+    	indicatorVector_ = indicatorVector;
+		refineBound_ = refineUpperBound;
+		coarsenBound_ = coarsenLowerBound;
+    }
 private:
+	/*!
+	 * @brief Simple standard indicator.
+	 *
+	 * Mehod computes the refinement and coarsening bounds through a
+	 * standard refinement criteria.
+	 */
+    void indicator()
+    {
+    	Scalar globalMax_(0.), globalMin_(0.);
+
+		/**** determine refining parameter  		*************/
+		problem_.transportModel().indicatorSaturation(indicatorVector_, globalMin_=1e100, globalMax_=-1e100);
+		Scalar globaldelta = globalMax_- globalMin_;
+//    		globaldelta = std::max(globaldelta,0.1);
+
+		refineBound_ = refinetol*globaldelta;
+		coarsenBound_ = coarsentol*globaldelta;
+
+		return;
+    }
     /*!
      * @brief Method ensuring the refinement ratio of 2:1
      *
@@ -293,7 +361,9 @@ private:
     }
 
     // private Variables
-	Scalar globalMax_, globalMin_;
+	ScalarSolutionType indicatorVector_;
+	bool standardIndicator_;
+	Scalar refineBound_, coarsenBound_;
     int marked_, coarsened_;
     int levelMin_, levelMax_;
 
@@ -310,14 +380,18 @@ private:
 template<class TypeTag>
 class GridAdapt<TypeTag, false>
 {
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) 	Problem;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
 
 public:
     void adaptGrid()
     {};
     void setLevels(int, int)
     {};
-
+    const void setIndicator(const ScalarSolutionType&,
+    		const Scalar&, const Scalar&)
+    {};
     GridAdapt (Problem& problem)
     {}
 };
