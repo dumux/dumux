@@ -211,7 +211,9 @@ public:
     template <class DataArray>
     DUNE_DEPRECATED // use attachVertexData() instead!
     void addVertexData(DataArray *field, const char *name, int nComps=1)
-    { addManagedVertexData(*field, name, nComps); }
+    {
+      curWriter_->addVertexData(*field, name);
+    }
 
     /*!
      * \brief Add a cell centered quantity to the output.
@@ -245,7 +247,9 @@ public:
     template <class VectorField>
     DUNE_DEPRECATED // use attachCellData() instead
     void addCellData(VectorField *field, const char *name, int nComps = 1)
-    { addManagedCellData(*field, name, nComps); };
+    {
+        curWriter_->addCellData(*field, name);
+    }
 
     /*!
      * \brief Finalizes the current writer.
