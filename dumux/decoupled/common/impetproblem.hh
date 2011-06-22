@@ -25,7 +25,7 @@
 #include <dumux/io/restart.hh>
 
 #include <dumux/common/timemanager.hh>
-#include <dumux/decoupled/common/gridAdapt.hh>
+#include <dumux/decoupled/common/gridadapt.hh>
 
 /**
  * @file
