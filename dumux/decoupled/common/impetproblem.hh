@@ -533,6 +533,8 @@ public:
 
         if (!resultWriter_)
             resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
+        if (GET_PROP_VALUE(TypeTag,PTAG(AdaptiveGrid)))
+            resultWriter_->gridChanged();
         resultWriter_->beginWrite(timeManager_.time() + timeManager_.timeStepSize());
         model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
