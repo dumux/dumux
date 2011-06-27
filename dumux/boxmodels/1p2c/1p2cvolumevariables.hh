@@ -92,8 +92,8 @@ public:
                 bool isOldSol)
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
-		
-		asImp().updateTemperature_(priVars,
+        
+        asImp().updateTemperature_(priVars,
                                    element,
                                    elemGeom,
                                    scvIdx,
@@ -223,8 +223,8 @@ protected:
         temperature_ = problem.temperature(element, elemGeom, scvIdx);
     }
 
-	Scalar temperature_;     //!< Temperature within the control volume
-    Scalar porosity_;	//!< Effective porosity within the control volume
+    Scalar temperature_;     //!< Temperature within the control volume
+    Scalar porosity_;    //!< Effective porosity within the control volume
     Scalar viscosity_;
     Scalar tortuosity_;
     Vector dispersivity_;

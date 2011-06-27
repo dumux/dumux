@@ -85,8 +85,8 @@ int main(int argc, char** argv)
         // adjust fluid properties
         ////////////////////////////////////////////////////////////
         typedef GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
-		Fluid::Component::setViscosity(interfaceFluidProps.viscosity);
-		Fluid::Component::setDensity(interfaceFluidProps.density);
+        Fluid::Component::setViscosity(interfaceFluidProps.viscosity);
+        Fluid::Component::setDensity(interfaceFluidProps.density);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem

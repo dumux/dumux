@@ -64,23 +64,23 @@ public:
 
     const FieldMatrix& intrinsicPermeability (const GlobalPosition& globalPos, const Element& element) const
     {
-    	if (lenses_.size())
-    	{
-    		for (int lensnumber = 0; lensnumber != lenses_.size(); lensnumber++)
-    		{
-    			if ((lenses_[lensnumber].lowerLeft[0] < globalPos[0])
-    			  && (lenses_[lensnumber].lowerLeft[1] < globalPos[1])
-    			  && (lenses_[lensnumber].upperRight[0] > globalPos[0])
-    			  && (lenses_[lensnumber].upperRight[1] > globalPos[1]))
-    			{
-    				return lenses_[lensnumber].permeability;
-    			}
+        if (lenses_.size())
+        {
+            for (int lensnumber = 0; lensnumber != lenses_.size(); lensnumber++)
+            {
+                if ((lenses_[lensnumber].lowerLeft[0] < globalPos[0])
+                  && (lenses_[lensnumber].lowerLeft[1] < globalPos[1])
+                  && (lenses_[lensnumber].upperRight[0] > globalPos[0])
+                  && (lenses_[lensnumber].upperRight[1] > globalPos[1]))
+                {
+                    return lenses_[lensnumber].permeability;
+                }
 
 
-    		}
-    	}
-    	// Schleife über alle Linsen
-    	return permeability_;
+            }
+        }
+        // Schleife über alle Linsen
+        return permeability_;
     }
 
     double porosity(const GlobalPosition& globalPos, const Element& element) const
@@ -103,17 +103,17 @@ public:
     GroundwaterSpatialParams(const GridView& gridView)
     : permeability_(0)
     {
-    	delta_=1e-3;
-    	Dumux::InterfaceSoilProperties interfaceSoilProps("interface_groundwater.xml");
-    	porosity_ = interfaceSoilProps.porosity;
-    	permeability_[0][0] = interfaceSoilProps.permeability;
-    	permeability_[0][1] = 0;
-    	permeability_[1][0] = 0;
-    	permeability_[1][1] = interfaceSoilProps.permeability;
+        delta_=1e-3;
+        Dumux::InterfaceSoilProperties interfaceSoilProps("interface_groundwater.xml");
+        porosity_ = interfaceSoilProps.porosity;
+        permeability_[0][0] = interfaceSoilProps.permeability;
+        permeability_[0][1] = 0;
+        permeability_[1][0] = 0;
+        permeability_[1][1] = interfaceSoilProps.permeability;
 
-    	lenses_ = interfaceSoilProps.lenses;
+        lenses_ = interfaceSoilProps.lenses;
 
-    	// residual saturations
+        // residual saturations
         materialLawParams_.setSwr(0.0);
         materialLawParams_.setSnr(0.0);
 

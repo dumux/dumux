@@ -1,5 +1,5 @@
 /*****************************************************************************
- *   Copyright (C) 2010 by Benjamin Faigle					                 *
+ *   Copyright (C) 2010 by Benjamin Faigle                                     *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -41,16 +41,16 @@ template<class TypeTag, bool adaptive>
 class GridAdapt
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) 	Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))     Problem;
 
 
     //*******************************
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid                         Grid;
-    typedef typename Grid::LeafGridView 					LeafGridView;
+    typedef typename Grid::LeafGridView                     LeafGridView;
     typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
-    typedef typename GridView::IntersectionIterator 		LeafIntersectionIterator;
-    typedef typename Grid::template Codim<0>::Entity 		Entity;
+    typedef typename GridView::IntersectionIterator         LeafIntersectionIterator;
+    typedef typename Grid::template Codim<0>::Entity         Entity;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
 
     static constexpr double refinetol = 0.05;
@@ -65,13 +65,13 @@ public:
      */
     GridAdapt (Problem& problem, const int levelMin = 0,const int levelMax=1)
     : levelMin_(levelMin), levelMax_(levelMax), problem_(problem)
-	{
-    	if (levelMin_ < 0)
-    		Dune::dgrave <<  __FILE__<< ":" <<__LINE__
-    		<< " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
+    {
+        if (levelMin_ < 0)
+            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+            << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
 
-    	standardIndicator_ = true;
-	}
+        standardIndicator_ = true;
+    }
 
     /*!
      * @brief Standard method to adapt the grid
@@ -88,58 +88,58 @@ public:
      */
     void adaptGrid()
     {
-    	// reset internal counter for marked elements
-    	marked_ = coarsened_ = 0;
+        // reset internal counter for marked elements
+        marked_ = coarsened_ = 0;
 
-    	// prepare an indicator for refinement
-    	if(indicatorVector_.size()!=problem_.variables().gridSize())
-    	{
-    		indicatorVector_.resize(problem_.variables().gridSize());
-    		indicatorVector_ = -1e00;
-    	}
+        // prepare an indicator for refinement
+        if(indicatorVector_.size()!=problem_.variables().gridSize())
+        {
+            indicatorVector_.resize(problem_.variables().gridSize());
+            indicatorVector_ = -1e00;
+        }
 
-		/**** 1) determine refining parameter if standard is used ***/
-    	// if not, the indicatorVector and refinement Bounds have to
-    	// specified by the problem through setIndicator()
-    	if(standardIndicator_)
-    		indicator();
+        /**** 1) determine refining parameter if standard is used ***/
+        // if not, the indicatorVector and refinement Bounds have to
+        // specified by the problem through setIndicator()
+        if(standardIndicator_)
+            indicator();
 
-		/**** 2) mark elements according to indicator 	*********/
-		markElements(indicatorVector_, refineBound_, coarsenBound_);
+        /**** 2) mark elements according to indicator     *********/
+        markElements(indicatorVector_, refineBound_, coarsenBound_);
 
-		// abort if nothing in grid is marked
-		if (marked_==0 && coarsened_ == 0)
-			return;
-		else
-			Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
-				<< coarsened_ << " to be coarsened." << std::endl;
+        // abort if nothing in grid is marked
+        if (marked_==0 && coarsened_ == 0)
+            return;
+        else
+            Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
+                << coarsened_ << " to be coarsened." << std::endl;
 
-		/****  3) Put primary variables in a map 		*********/
-		problem_.variables().storePrimVars();
+        /****  3) Put primary variables in a map         *********/
+        problem_.variables().storePrimVars();
 
-		/****  4) Adapt Grid and size of variable vectors	*****/
-		problem_.grid().preAdapt();
-		problem_.grid().adapt();
+        /****  4) Adapt Grid and size of variable vectors    *****/
+        problem_.grid().preAdapt();
+        problem_.grid().adapt();
 
-//		forceRefineRatio(1);
+//        forceRefineRatio(1);
 
-		// update mapper to new cell idice
-		problem_.variables().elementMapper().update();
+        // update mapper to new cell idice
+        problem_.variables().elementMapper().update();
 
-		// adapt size of vectors (
-		problem_.variables().adaptVariableSize(problem_.variables().elementMapper().size());
+        // adapt size of vectors (
+        problem_.variables().adaptVariableSize(problem_.variables().elementMapper().size());
 
-		/****  5) (Re-)construct primary variables to new grid **/
-		problem_.variables().reconstructPrimVars();
-		// delete markers in grid
-		problem_.grid().postAdapt();
-		// adapt secondary variables
-		problem_.pressureModel().updateMaterialLaws();
+        /****  5) (Re-)construct primary variables to new grid **/
+        problem_.variables().reconstructPrimVars();
+        // delete markers in grid
+        problem_.grid().postAdapt();
+        // adapt secondary variables
+        problem_.pressureModel().updateMaterialLaws();
 
-		// write out new grid
+        // write out new grid
 //        Dune::VTKWriter<LeafGridView> vtkwriter(leafView);
 //        vtkwriter.write("latestgrid",Dune::VTKOptions::binaryappended);
-		return;
+        return;
     };
 
     /*!
@@ -151,127 +151,127 @@ public:
      */
     int markElements(ScalarSolutionType &indicator, const double refineThreshold, const double coarsenThreshold)
     {
-		for (LeafIterator eIt = problem_.gridView().template begin<0>();
-					eIt!=problem_.gridView().template end<0>(); ++eIt)
-		{
-			// Verfeinern?
-			if (indicator[problem_.variables().elementMapper().map(*eIt)] > refineThreshold
-					&& eIt.level()<levelMax_)
-			{
-				const Entity &entity =*eIt;
-				problem_.grid().mark( 1, entity );
-				++marked_;
+        for (LeafIterator eIt = problem_.gridView().template begin<0>();
+                    eIt!=problem_.gridView().template end<0>(); ++eIt)
+        {
+            // Verfeinern?
+            if (indicator[problem_.variables().elementMapper().map(*eIt)] > refineThreshold
+                    && eIt.level()<levelMax_)
+            {
+                const Entity &entity =*eIt;
+                problem_.grid().mark( 1, entity );
+                ++marked_;
 
-				// this also refines the neighbor elements
-				checkNeighborsRefine_(entity);
-			}
-		}
-		// coarsen
-		for (LeafIterator eIt = problem_.gridView().template begin<0>();
-					eIt!=problem_.gridView().template end<0>(); ++eIt)
-		{
-			if (indicator[problem_.variables().elementMapper().map(*eIt)] < coarsenThreshold
-					&& eIt.level()>levelMin_ && problem_.grid().getMark(*eIt) == 0)
-			{
-				// check if coarsening is possible
-				bool coarsenPossible = true;
-				LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
-				for(LeafIntersectionIterator is = problem_.gridView().ibegin(*eIt); is != isend; ++is)
-				{
-					const typename LeafIntersectionIterator::Intersection intersection = *is;
-					if(!intersection.neighbor())
-						continue;
+                // this also refines the neighbor elements
+                checkNeighborsRefine_(entity);
+            }
+        }
+        // coarsen
+        for (LeafIterator eIt = problem_.gridView().template begin<0>();
+                    eIt!=problem_.gridView().template end<0>(); ++eIt)
+        {
+            if (indicator[problem_.variables().elementMapper().map(*eIt)] < coarsenThreshold
+                    && eIt.level()>levelMin_ && problem_.grid().getMark(*eIt) == 0)
+            {
+                // check if coarsening is possible
+                bool coarsenPossible = true;
+                LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
+                for(LeafIntersectionIterator is = problem_.gridView().ibegin(*eIt); is != isend; ++is)
+                {
+                    const typename LeafIntersectionIterator::Intersection intersection = *is;
+                    if(!intersection.neighbor())
+                        continue;
 
-					const Entity &outside = *intersection.outside();
-					if ((problem_.grid().getMark(outside) > 0)
-							|| (outside.level()>eIt.level()))
-						coarsenPossible = false;
-				}
+                    const Entity &outside = *intersection.outside();
+                    if ((problem_.grid().getMark(outside) > 0)
+                            || (outside.level()>eIt.level()))
+                        coarsenPossible = false;
+                }
 
-				if(coarsenPossible)
-					{
-						problem_.grid().mark( -1, *eIt );
-						++coarsened_;
-					}
-			}
-		}
+                if(coarsenPossible)
+                    {
+                        problem_.grid().mark( -1, *eIt );
+                        ++coarsened_;
+                    }
+            }
+        }
 
-    	return marked_;
+        return marked_;
     }
 
-	/*!
-	 * Sets minimum and maximum refinement levels
-	 *
-	 * @param levMin minimum level for coarsening
-	 * @param levMax maximum level for refinement
-	 */
+    /*!
+     * Sets minimum and maximum refinement levels
+     *
+     * @param levMin minimum level for coarsening
+     * @param levMax maximum level for refinement
+     */
     void setLevels(int levMin, int levMax)
     {
-    	if (levMin < 0)
-    		Dune::dgrave <<  __FILE__<< ":" <<__LINE__
-    		<< " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
-    	levelMin_ = levMin;
-    	levelMax_ = levMax;
+        if (levMin < 0)
+            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+            << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
+        levelMin_ = levMin;
+        levelMax_ = levMax;
     }
-	/*!
-	 * Gets maximum refinement level
-	 *
-	 * @return levelMax_ maximum level for refinement
-	 */
+    /*!
+     * Gets maximum refinement level
+     *
+     * @return levelMax_ maximum level for refinement
+     */
     int getMaxLevel() const
     {
-    	return levelMax_;
+        return levelMax_;
     }
-	/*!
-	 * Gets minimum refinement level
-	 *
-	 * @return levelMin_ minimum level for coarsening
-	 */
+    /*!
+     * Gets minimum refinement level
+     *
+     * @return levelMin_ minimum level for coarsening
+     */
     int getMinLevel() const
     {
-    	return levelMin_;
+        return levelMin_;
     }
-	/*!
-	 * @brief Adapter for external Refinement indicators.
-	 *
-	 * External indicators to refine/coarsen the grid can be set
-	 * from outside this container. Both indicator itsself as well as
-	 * the coarsening and refinement bounds have to be specified.
-	 * @param indicatorVector Vector holding indicator values
-	 * @param coarsenLowerBound bounding value where to be coarsened
-	 * @param refineUpperBound bounding value where to be refined
-	 */
+    /*!
+     * @brief Adapter for external Refinement indicators.
+     *
+     * External indicators to refine/coarsen the grid can be set
+     * from outside this container. Both indicator itsself as well as
+     * the coarsening and refinement bounds have to be specified.
+     * @param indicatorVector Vector holding indicator values
+     * @param coarsenLowerBound bounding value where to be coarsened
+     * @param refineUpperBound bounding value where to be refined
+     */
     const void setIndicator(const ScalarSolutionType& indicatorVector,
-    		const Scalar& coarsenLowerBound, const Scalar& refineUpperBound)
+            const Scalar& coarsenLowerBound, const Scalar& refineUpperBound)
     {
-    	// switch off usage of standard (saturation) indicator: by settting this,
-    	// the standard function indicator() called by adaptGrid() is disabled.
-    	standardIndicator_=false;
+        // switch off usage of standard (saturation) indicator: by settting this,
+        // the standard function indicator() called by adaptGrid() is disabled.
+        standardIndicator_=false;
 
-    	indicatorVector_ = indicatorVector;
-		refineBound_ = refineUpperBound;
-		coarsenBound_ = coarsenLowerBound;
+        indicatorVector_ = indicatorVector;
+        refineBound_ = refineUpperBound;
+        coarsenBound_ = coarsenLowerBound;
     }
 private:
-	/*!
-	 * @brief Simple standard indicator.
-	 *
-	 * Mehod computes the refinement and coarsening bounds through a
-	 * standard refinement criteria.
-	 */
+    /*!
+     * @brief Simple standard indicator.
+     *
+     * Mehod computes the refinement and coarsening bounds through a
+     * standard refinement criteria.
+     */
     void indicator()
     {
-    	Scalar globalMax_(0.), globalMin_(0.);
+        Scalar globalMax_(0.), globalMin_(0.);
 
-		/**** determine refining parameter  		*************/
-		problem_.transportModel().indicatorSaturation(indicatorVector_, globalMin_=1e100, globalMax_=-1e100);
-		Scalar globaldelta = globalMax_- globalMin_;
-//    		globaldelta = std::max(globaldelta,0.1);
+        /**** determine refining parameter          *************/
+        problem_.transportModel().indicatorSaturation(indicatorVector_, globalMin_=1e100, globalMax_=-1e100);
+        Scalar globaldelta = globalMax_- globalMin_;
+//            globaldelta = std::max(globaldelta,0.1);
 
-		refineBound_ = refinetol*globaldelta;
-		coarsenBound_ = coarsentol*globaldelta;
+        refineBound_ = refinetol*globaldelta;
+        coarsenBound_ = coarsentol*globaldelta;
 
-		return;
+        return;
     }
     /*!
      * @brief Method ensuring the refinement ratio of 2:1
@@ -287,26 +287,26 @@ private:
      */
     bool checkNeighborsRefine_(const Entity &entity, int level = 1)
     {
-		// this also refines the neighbor elements
-		LeafIntersectionIterator isend = problem_.gridView().iend(entity);
-		for(LeafIntersectionIterator is = problem_.gridView().ibegin(entity); is != isend; ++is)
-		{
-			const typename LeafIntersectionIterator::Intersection intersection = *is;
-			if(!intersection.neighbor())
-				continue;
+        // this also refines the neighbor elements
+        LeafIntersectionIterator isend = problem_.gridView().iend(entity);
+        for(LeafIntersectionIterator is = problem_.gridView().ibegin(entity); is != isend; ++is)
+        {
+            const typename LeafIntersectionIterator::Intersection intersection = *is;
+            if(!intersection.neighbor())
+                continue;
 
-			const Entity &outside =*intersection.outside();
-			if ((outside.level()<levelMax_)
-					&& (outside.level()<entity.level()))
-				{
-					problem_.grid().mark(1, outside);
-					++marked_;
+            const Entity &outside =*intersection.outside();
+            if ((outside.level()<levelMax_)
+                    && (outside.level()<entity.level()))
+                {
+                    problem_.grid().mark(1, outside);
+                    ++marked_;
 
-					if(level != levelMax_)
-						checkNeighborsRefine_(outside, ++level);
-				}
-		}
-		return true;
+                    if(level != levelMax_)
+                        checkNeighborsRefine_(outside, ++level);
+                }
+        }
+        return true;
     };
 
 
@@ -317,53 +317,53 @@ private:
      * marking, then this method ensures a certain ratio.
      *
      * @param maxLevelDelta The maximum level difference (refine ratio)
-     * 			between neighbors.
+     *             between neighbors.
      */
     void forceRefineRatio(int maxLevelDelta = 1)
     {
-    	LeafGridView leafView = problem_.gridView();
-    	// delete all existing marks
-    	problem_.grid().postAdapt();
-    	bool done;
-    	do
-    	{
-    		// run through all cells
-    		done=true;
-    		for (LeafIterator it = leafView.template begin<0>();
-    					it!=leafView.template end<0>(); ++it)
-    		{
-    			// run through all neighbor-cells (intersections)
-    			LeafIntersectionIterator isend = leafView.iend(*it);
-    			for (LeafIntersectionIterator is = leafView.ibegin(*it); is!= isend; ++is)
-    			{
-    				const typename LeafIntersectionIterator::Intersection intersection = *is;
-    				if(!intersection.neighbor())
-    					continue;
+        LeafGridView leafView = problem_.gridView();
+        // delete all existing marks
+        problem_.grid().postAdapt();
+        bool done;
+        do
+        {
+            // run through all cells
+            done=true;
+            for (LeafIterator it = leafView.template begin<0>();
+                        it!=leafView.template end<0>(); ++it)
+            {
+                // run through all neighbor-cells (intersections)
+                LeafIntersectionIterator isend = leafView.iend(*it);
+                for (LeafIntersectionIterator is = leafView.ibegin(*it); is!= isend; ++is)
+                {
+                    const typename LeafIntersectionIterator::Intersection intersection = *is;
+                    if(!intersection.neighbor())
+                        continue;
 
-    				const Entity &outside =intersection.outside();
-    				if (it.level()+maxLevelDelta<outside.level())
-    						{
-    						const Entity &entity =*it;
-    						problem_.grid().mark( 1, entity );
-    						done=false;
-    						}
-    			}
-    		}
-    		if (done==false)
-    		{
-    			// adapt the grid
-    			problem_.grid().adapt();
-    			// delete marks
-    			problem_.grid().postAdapt();
-    		}
-    	}
-    	while (done!=true);
+                    const Entity &outside =intersection.outside();
+                    if (it.level()+maxLevelDelta<outside.level())
+                            {
+                            const Entity &entity =*it;
+                            problem_.grid().mark( 1, entity );
+                            done=false;
+                            }
+                }
+            }
+            if (done==false)
+            {
+                // adapt the grid
+                problem_.grid().adapt();
+                // delete marks
+                problem_.grid().postAdapt();
+            }
+        }
+        while (done!=true);
     }
 
     // private Variables
-	ScalarSolutionType indicatorVector_;
-	bool standardIndicator_;
-	Scalar refineBound_, coarsenBound_;
+    ScalarSolutionType indicatorVector_;
+    bool standardIndicator_;
+    Scalar refineBound_, coarsenBound_;
     int marked_, coarsened_;
     int levelMin_, levelMax_;
 
@@ -381,7 +381,7 @@ template<class TypeTag>
 class GridAdapt<TypeTag, false>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) 	Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))     Problem;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
 
 public:
@@ -390,7 +390,7 @@ public:
     void setLevels(int, int)
     {};
     const void setIndicator(const ScalarSolutionType&,
-    		const Scalar&, const Scalar&)
+            const Scalar&, const Scalar&)
     {};
     GridAdapt (Problem& problem)
     {}

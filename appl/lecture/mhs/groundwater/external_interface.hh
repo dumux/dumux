@@ -25,25 +25,25 @@ namespace Dumux
 
 struct Lens
 {
-	Dune::FieldMatrix<double,2,2> permeability;
-	//double permeability;
-	Dune::FieldVector<double,2> lowerLeft;
-	Dune::FieldVector<double,2> upperRight;
+    Dune::FieldMatrix<double,2,2> permeability;
+    //double permeability;
+    Dune::FieldVector<double,2> lowerLeft;
+    Dune::FieldVector<double,2> upperRight;
 };
 
 struct Source
 {
-	Dune::FieldVector<double,2> globalPos;
-	double q;
-	int index;
+    Dune::FieldVector<double,2> globalPos;
+    double q;
+    int index;
 };
 
 struct BoundaryCondition
 {
-	std::vector<bool> neumann;
-	std::vector<double> value;
-	std::vector<double> endPoint;
-	int segmentCount;
+    std::vector<bool> neumann;
+    std::vector<double> value;
+    std::vector<double> endPoint;
+    int segmentCount;
 };
 
 class InterfaceSoilProperties
@@ -115,13 +115,13 @@ public:
 
             if (reader == string("<Lens>"))
             {
-            	Lens templens;
-            	templens.permeability=0;
+                Lens templens;
+                templens.permeability=0;
 
-            	// templens füllen
-            	while (reader != string("</Lens>"))
-            	{
-            		input >> reader;
+                // templens füllen
+                while (reader != string("</Lens>"))
+                {
+                    input >> reader;
                     if (reader == string("<Permeability>"))
                     {
                         input >> reader;
@@ -148,13 +148,13 @@ public:
                         input >> reader;
                         templens.upperRight[1] = atof(reader);
                     }
-            	}
-            	//testen: ist templens gut?
-            	//an lenses-vector anhängen.
-            	lenses.push_back(templens);
+                }
+                //testen: ist templens gut?
+                //an lenses-vector anhängen.
+                lenses.push_back(templens);
                 cout << "-----> Lens: Left, Bottom, Right, Top: " << templens.lowerLeft
-                		<< " " << templens.upperRight << ", Permeability; "<<
-                		templens.permeability[0][0] << "\n";
+                        << " " << templens.upperRight << ", Permeability; "<<
+                        templens.permeability[0][0] << "\n";
             }
 
         }
@@ -162,8 +162,8 @@ public:
         permeability*=(viscosity/(density*9.81));
         for(int i=0; i< lenses.size();i++)
         {
-        	lenses[i].permeability[0][0]*=(viscosity/(density*9.81));
-        	lenses[i].permeability[1][1]*=(viscosity/(density*9.81));
+            lenses[i].permeability[0][0]*=(viscosity/(density*9.81));
+            lenses[i].permeability[1][1]*=(viscosity/(density*9.81));
         }
 
     }
@@ -235,8 +235,8 @@ class InterfaceProblemProperties
 {
 public:
     //Interface Problem Properties (IPP):
-	Dune::FieldVector<int,2> resolution;
-	double depth;
+    Dune::FieldVector<int,2> resolution;
+    double depth;
     Dune::FieldVector<double,2> size;
     std::vector <Source> sources;
     BoundaryCondition BCondition[4];
@@ -308,12 +308,12 @@ public:
             }
             if (reader == string("<Source>"))
             {
-            	Source tempSource;
-            	tempSource.q=0;
+                Source tempSource;
+                tempSource.q=0;
 
-            	while (reader != string("</Source>"))
-            	{
-            		input >> reader;
+                while (reader != string("</Source>"))
+                {
+                    input >> reader;
                     if (reader == string("<X>"))
                     {
                         input >> reader;
@@ -329,127 +329,127 @@ public:
                         input >> reader;
                         tempSource.q = atof(reader);
                     }
-            	}
-            	//an sources-vector anhängen.
-            	sources.push_back(tempSource);
+                }
+                //an sources-vector anhängen.
+                sources.push_back(tempSource);
                 cout << "-----> Sink/Source: Position: " << tempSource.globalPos
-                		<< " " << ", Q = "<< tempSource.q << "\n";
+                        << " " << ", Q = "<< tempSource.q << "\n";
             }
 
             if (reader == string("<Boundary>"))
             {
 
-            	int boundaryIndex = -1;
-            	while (boundaryIndex == -1)
-            	{
-            		input >> reader;
-    				if (reader == string("<Top/>"))
-    					boundaryIndex = 0;
-    				if (reader == string("<Bottom/>"))
-    					boundaryIndex = 1;
-    				if (reader == string("<Left/>"))
-    					boundaryIndex = 2;
-    				if (reader == string("<Right/>"))
-    					boundaryIndex = 3;
-            	}
+                int boundaryIndex = -1;
+                while (boundaryIndex == -1)
+                {
+                    input >> reader;
+                    if (reader == string("<Top/>"))
+                        boundaryIndex = 0;
+                    if (reader == string("<Bottom/>"))
+                        boundaryIndex = 1;
+                    if (reader == string("<Left/>"))
+                        boundaryIndex = 2;
+                    if (reader == string("<Right/>"))
+                        boundaryIndex = 3;
+                }
 
-				while (reader != string("</Boundary>"))
-				{
-					input >> reader;
+                while (reader != string("</Boundary>"))
+                {
+                    input >> reader;
 
-					if (reader == string("<Top/>"))
-						boundaryIndex = 0;
-					if (reader == string("<Bottom/>"))
-						boundaryIndex = 1;
-					if (reader == string("<Left/>"))
-						boundaryIndex = 2;
-					if (reader == string("<Right/>"))
-						boundaryIndex = 3;
+                    if (reader == string("<Top/>"))
+                        boundaryIndex = 0;
+                    if (reader == string("<Bottom/>"))
+                        boundaryIndex = 1;
+                    if (reader == string("<Left/>"))
+                        boundaryIndex = 2;
+                    if (reader == string("<Right/>"))
+                        boundaryIndex = 3;
 
-					if (reader == string("<Type>"))
-					{
-						input >> reader;
-						while (reader != string("</Type>"))
-						{
-							if (reader == string("neumann"))
-								BCondition[boundaryIndex].neumann.push_back(true);
-							else
-								BCondition[boundaryIndex].neumann.push_back(false);
-							input >> reader;
-						}
-					}
+                    if (reader == string("<Type>"))
+                    {
+                        input >> reader;
+                        while (reader != string("</Type>"))
+                        {
+                            if (reader == string("neumann"))
+                                BCondition[boundaryIndex].neumann.push_back(true);
+                            else
+                                BCondition[boundaryIndex].neumann.push_back(false);
+                            input >> reader;
+                        }
+                    }
 
-					if (reader == string("<Value>"))
-					{
-						input >> reader;
-						while (reader != string("</Value>"))
-						{
-							BCondition[boundaryIndex].value.push_back(atof(reader));
-							input >> reader;
-						}
-					}
+                    if (reader == string("<Value>"))
+                    {
+                        input >> reader;
+                        while (reader != string("</Value>"))
+                        {
+                            BCondition[boundaryIndex].value.push_back(atof(reader));
+                            input >> reader;
+                        }
+                    }
 
-					if (reader == string("<EndPoint>"))
-					{
-						input >> reader;
-						while (reader != string("</EndPoint>"))
-						{
-							BCondition[boundaryIndex].endPoint.push_back(atof(reader));
-							input >> reader;
-						}
-					}
-				}
+                    if (reader == string("<EndPoint>"))
+                    {
+                        input >> reader;
+                        while (reader != string("</EndPoint>"))
+                        {
+                            BCondition[boundaryIndex].endPoint.push_back(atof(reader));
+                            input >> reader;
+                        }
+                    }
+                }
 
-            	for (int i=0; i<4 ; i++)
-            	{
-            		BCondition[i].segmentCount=std::min(std::min(
-            				BCondition[i].value.size(),
-            				BCondition[i].neumann.size()),
-            				BCondition[i].endPoint.size()+1);
-            		if (!BCondition[i].segmentCount)
-            		{
-            			BCondition[i].value.resize(1);
-            			BCondition[i].value[0] = 0;
-						BCondition[i].neumann.resize(1);
-						BCondition[i].neumann[0] = true;
-						BCondition[i].endPoint.resize(0);
-						BCondition[i].segmentCount=1;
-//						std::cout << "Invalid Boundary condition in Boundary "<<i<<". Set to no-flow."<<std::endl;
-            		}
+                for (int i=0; i<4 ; i++)
+                {
+                    BCondition[i].segmentCount=std::min(std::min(
+                            BCondition[i].value.size(),
+                            BCondition[i].neumann.size()),
+                            BCondition[i].endPoint.size()+1);
+                    if (!BCondition[i].segmentCount)
+                    {
+                        BCondition[i].value.resize(1);
+                        BCondition[i].value[0] = 0;
+                        BCondition[i].neumann.resize(1);
+                        BCondition[i].neumann[0] = true;
+                        BCondition[i].endPoint.resize(0);
+                        BCondition[i].segmentCount=1;
+//                        std::cout << "Invalid Boundary condition in Boundary "<<i<<". Set to no-flow."<<std::endl;
+                    }
 
-					std::cout<< "-----> Boundary Conditions for ";
-					switch(i)
-					{
-					case 0: std::cout<< "top"; break;
-					case 1: std::cout<< "bottom"; break;
-					case 2: std::cout<< "left"; break;
-					case 3: std::cout<< "right";
-					}
-					std::cout << " Boundary:"<<std::endl;
-					for (int j=0; j<BCondition[i].segmentCount ;j++)
-					{
-						if (BCondition[i].neumann[j])
-							std::cout << "        " << "Neumann   ";
-						else
-							std::cout << "        " << "Dirichlet ";
-						std::cout << BCondition[i].value[j] <<" ";
-						if (j < BCondition[i].segmentCount-1)
-							std::cout << BCondition[i].endPoint[j];
-						std::cout << std::endl;
-					}
-            	}
-			}
+                    std::cout<< "-----> Boundary Conditions for ";
+                    switch(i)
+                    {
+                    case 0: std::cout<< "top"; break;
+                    case 1: std::cout<< "bottom"; break;
+                    case 2: std::cout<< "left"; break;
+                    case 3: std::cout<< "right";
+                    }
+                    std::cout << " Boundary:"<<std::endl;
+                    for (int j=0; j<BCondition[i].segmentCount ;j++)
+                    {
+                        if (BCondition[i].neumann[j])
+                            std::cout << "        " << "Neumann   ";
+                        else
+                            std::cout << "        " << "Dirichlet ";
+                        std::cout << BCondition[i].value[j] <<" ";
+                        if (j < BCondition[i].segmentCount-1)
+                            std::cout << BCondition[i].endPoint[j];
+                        std::cout << std::endl;
+                    }
+                }
+            }
         }
         input.close();
 
         // Calculate for each source the containing element
-		for (int sourceNumber = 0; sourceNumber != sources.size(); sourceNumber++)
-		{
-			sources[sourceNumber].index = std::floor(sources[sourceNumber].globalPos[0]
-			   * resolution[0]/size[0])
-			   + std::floor(sources[sourceNumber].globalPos[1]*resolution[1]/size[1])
-			   * resolution[0];
-		}
+        for (int sourceNumber = 0; sourceNumber != sources.size(); sourceNumber++)
+        {
+            sources[sourceNumber].index = std::floor(sources[sourceNumber].globalPos[0]
+               * resolution[0]/size[0])
+               + std::floor(sources[sourceNumber].globalPos[1]*resolution[1]/size[1])
+               * resolution[0];
+        }
     }
 
 };

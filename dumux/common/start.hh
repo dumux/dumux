@@ -288,11 +288,11 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
 //
 //
 //        double tEnd, dt;
-//        tEnd 	= inputParameters.get<double>("SimulationControl.tEnd");
-//        dt 		= inputParameters.get<double>("SimulationControl.tIni");
+//        tEnd     = inputParameters.get<double>("SimulationControl.tEnd");
+//        dt         = inputParameters.get<double>("SimulationControl.tIni");
 //
 //        const std::string dgfFileName =
-//        		inputParameters.template get<std::string>("SimulationControl.gridName", "test_inputfile");
+//                inputParameters.template get<std::string>("SimulationControl.gridName", "test_inputfile");
 //
 //        // create grid
 //        // -> load the grid from file
@@ -308,8 +308,8 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
 //        // instantiate and run the concrete problem
 //        TimeManager timeManager;
 //        Problem problem(timeManager,
-//        		gridPtr->leafView(),
-//        		inputParameters);
+//                gridPtr->leafView(),
+//                inputParameters);
 //        timeManager.init(problem, 0, dt, tEnd, !restart);
 //        if (restart)
 //            problem.restart(restartTime);

@@ -85,7 +85,7 @@ int main(int argc, char** argv)
 
         double   ddum;              /* Double dummy */
         int      idum;              /* Integer dummy. */
-	int solver = 0;
+    int solver = 0;
 
         /* -------------------------------------------------------------------- */
         /* ..  Setup Pardiso control parameters.                                */

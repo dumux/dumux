@@ -189,9 +189,9 @@ public:
      */
     void adaptVariableSize(int size)
         {
-    		pressure_.resize(size);
-    		velocity_.resize(size);
-    		potential_.resize(size);
+            pressure_.resize(size);
+            velocity_.resize(size);
+            potential_.resize(size);
         }
 private:
     void initializeGlobalVariables(Dune::FieldVector<Scalar, dim>& initialVel)
@@ -298,7 +298,7 @@ public:
 
     void setGridSize(int size)
     {
-    	gridSize_=size;
+        gridSize_=size;
     }
 
     //!Return gridView

@@ -206,7 +206,7 @@ public:
         };
 
         if (this->gridView_().comm().size() > 1)
-        	dest = this->gridView_().comm().sum(dest);
+            dest = this->gridView_().comm().sum(dest);
     }
 
     /*!
@@ -582,7 +582,7 @@ public:
         // other partition we will also set the switch flag
         // for our partition.
         if (this->gridView_().comm().size() > 1)
-        	wasSwitched = this->gridView_().comm().max(wasSwitched);
+            wasSwitched = this->gridView_().comm().max(wasSwitched);
 
         setSwitched_(wasSwitched);
     }

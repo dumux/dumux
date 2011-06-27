@@ -78,7 +78,7 @@ private:
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-	// The module to adapt grid. If adaptiveGrid is false, this model does nothing.
+    // The module to adapt grid. If adaptiveGrid is false, this model does nothing.
     typedef GridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
 
     //private!! copy constructor
@@ -123,9 +123,9 @@ public:
         transportModel_ = new TransportModel(asImp_());
         model_ = new IMPETModel(asImp_()) ;
 
-    	// create an Object to handle adaptive grids
+        // create an Object to handle adaptive grids
         if (adaptiveGrid)
-        	gridAdapt_ = new GridAdaptModel(asImp_());
+            gridAdapt_ = new GridAdaptModel(asImp_());
 
         resultWriter_ = NULL;
     }
@@ -155,10 +155,10 @@ public:
      */
     void preTimeStep()
     {
-    	// if adaptivity is used, this method adapts the grid.
-    	// if it is not used, this method does nothing.
+        // if adaptivity is used, this method adapts the grid.
+        // if it is not used, this method does nothing.
         if (adaptiveGrid)
-        	this->gridAdapt().adaptGrid();
+            this->gridAdapt().adaptGrid();
     }
 
     /*!
@@ -359,34 +359,34 @@ public:
      */
     Grid &grid()
     { 
-    	if (grid_)
-		{
-			return *grid_;
-		}
-    	else
-    		DUNE_THROW(Dune::InvalidStateException, "Grid was called in problemclass, "
-				<< "although it is not specified. Do so by using setGrid() method!");
-	}
+        if (grid_)
+        {
+            return *grid_;
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "Grid was called in problemclass, "
+                << "although it is not specified. Do so by using setGrid() method!");
+    }
     /*!
      * \brief Specifies the grid from outside the problem.
      * \param grid The grid used by the problem. 
-	*/
+    */
     void setGrid(Grid &grid)
     {
-    	grid_ = &grid;
+        grid_ = &grid;
     }
 
     /*!
      * \brief Returns adaptivity model used for the problem.
      */
     GridAdaptModel& gridAdapt()
-	{
+    {
         if (!adaptiveGrid)
-        	Dune::dgrave << "adaptivity module was called despite "
-        		<< "adaptivity is disabled in property system \n;" << adaptiveGrid;
+            Dune::dgrave << "adaptivity module was called despite "
+                << "adaptivity is disabled in property system \n;" << adaptiveGrid;
 
         return *gridAdapt_;
-	}
+    }
 
     /*!
      * \brief Returns the mapper for vertices to indices.
