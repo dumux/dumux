@@ -138,7 +138,7 @@ protected:
             uLastIter = uCurrentIter;
 
             if (ctl.verbose()) {
-                std::cout << "Assembling global jacobian";
+                std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
                 std::cout.flush();
             }
 
@@ -155,14 +155,22 @@ protected:
             // linear solve
             ///////////////
 
+            // Clear the current line using an ansi escape
+            // sequence.  for an explanation see
+            // http://en.wikipedia.org/wiki/ANSI_escape_code
+            const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
+
+            if (ctl.verbose()) {
+                std::cout << "\rSolve: M deltax^k = r";
+                std::cout << clearRemainingLine;
+                std::cout.flush();
+            }
+
             // solve the resulting linear equation system
             solveTimer.start();
+
             if (ctl.verbose()) {
-                std::cout << "\rSolve Mx = r";
-                // Clear the current line using an ansi escape
-                // sequence.  for an explanation see
-                // http://en.wikipedia.org/wiki/ANSI_escape_code
-                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
+                std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
                 std::cout << clearRemainingLine;
                 std::cout.flush();
             }
