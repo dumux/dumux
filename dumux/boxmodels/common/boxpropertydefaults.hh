@@ -176,8 +176,8 @@ public:
  */
 SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::BoxAssembler<TypeTag>);
 
-//! use central differences to calculate the jacobian by default
-SET_INT_PROP(BoxModel, NumericDifferenceMethod, 0);
+//! use forward differences to calculate the jacobian by default
+SET_INT_PROP(BoxModel, NumericDifferenceMethod, +1);
 
 //! do not use hints by default
 SET_BOOL_PROP(BoxModel, EnableHints, false);

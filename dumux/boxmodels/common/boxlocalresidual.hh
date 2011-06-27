@@ -489,7 +489,7 @@ protected:
             int i = fvElemGeom_().subContVolFace[k].i;
             int j = fvElemGeom_().subContVolFace[k].j;
 
-	    PrimaryVariables flux;
+            PrimaryVariables flux;
             Valgrind::SetUndefined(flux);
             this->asImp_().computeFlux(flux, k);
             Valgrind::CheckDefined(flux);
