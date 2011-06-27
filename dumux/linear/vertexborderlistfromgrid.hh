@@ -61,38 +61,38 @@ class VertexBorderListFromGrid : public Dune::CommDataHandleIF<VertexBorderListF
     typedef std::list<BorderIndex> BorderList;
 
 public:
-    VertexBorderListFromGrid(const GridView &gv, 
+    VertexBorderListFromGrid(const GridView &gv,
                              const VertexMapper &map)
         : gv_(gv), map_(map)
     {
-        gv.communicate(*this, 
-                       Dune::InteriorBorder_InteriorBorder_Interface, 
+        gv.communicate(*this,
+                       Dune::InteriorBorder_InteriorBorder_Interface,
                        Dune::ForwardCommunication);
     };
 
     // data handle methods
     bool contains (int dim, int codim) const
     { return dim == codim; }
-    
+
     bool fixedsize(int dim, int codim) const
     { return true; }
-    
-    template<class EntityType> 
+
+    template<class EntityType>
     size_t size(const EntityType &e) const
     { return 2; };
 
-    template<class MessageBufferImp, class EntityType> 
-    void gather(MessageBufferImp &buff, const EntityType &e) const 
-    { 
-        buff.write(gv_.comm().rank()); 
-        buff.write(map_.map(e)); 
+    template<class MessageBufferImp, class EntityType>
+    void gather(MessageBufferImp &buff, const EntityType &e) const
+    {
+        buff.write(gv_.comm().rank());
+        buff.write(map_.map(e));
     };
 
-    template<class MessageBufferImp, class EntityType> 
+    template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
         BorderIndex bIdx;
-        
+
         bIdx.localIdx = map_.map(e);
         buff.read(bIdx.peerRank);
         buff.read(bIdx.peerIdx);
@@ -103,7 +103,7 @@ public:
 
         borderList_.push_back(bIdx);
     };
-    
+
     // Access to the foreign border list.
     const BorderList &foreignBorderList() const
     { return borderList_; }

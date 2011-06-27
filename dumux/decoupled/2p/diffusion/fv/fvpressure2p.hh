@@ -882,7 +882,7 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
 
         problem_.variables().capillaryPressure(globalIdx) = MaterialLaw::pC(
             problem_.spatialParameters().materialLawParams(globalPos, *eIt), satW);
-        
+
         //determine phase pressures from primary pressure variable
         Scalar pressW = 0;
         Scalar pressNW = 0;

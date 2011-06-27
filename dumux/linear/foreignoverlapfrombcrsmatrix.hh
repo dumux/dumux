@@ -95,10 +95,10 @@ public:
         myRank_ = 0;
 #if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
-#endif        
-        
+#endif
+
         numLocal_ = A.N();
-        
+
         // calculate the border list. From this, create an initial
         // seed list of indices which are in the overlap.
         SeedList initialSeedList;
@@ -113,11 +113,11 @@ public:
         // i.e. find the distance of each row from the seed set.
         foreignOverlapByIndex_.resize(A.N());
         extendForeignOverlap_(A, initialSeedList, overlapSize);
-        
+
         updateMasterRanks_(foreignBorderList, domesticBorderList);
 
         // group foreign overlap by peer process rank
-        groupForeignOverlapByRank_(); 
+        groupForeignOverlapByRank_();
     }
 
     /*!
@@ -164,7 +164,7 @@ public:
      *        for a peer.
      */
     bool isDomesticIndexFor(ProcessRank peerRank, Index localIdx) const
-    { 
+    {
         if (!isLocal(localIdx))
             // our own remote indices do not count!
             return false;
@@ -178,14 +178,14 @@ public:
         // the index is seen by the peer
         return true;
     };
-    
+
     /*!
      * \brief Return the list of (local indices, border distance,
      *        number of processes) triples which are in the overlap of
      *        a given peer rank.
      */
-    const ForeignOverlapWithPeer &foreignOverlapWithPeer(int peerRank) const 
-    { 
+    const ForeignOverlapWithPeer &foreignOverlapWithPeer(int peerRank) const
+    {
         assert(foreignOverlapByRank_.find(peerRank) != foreignOverlapByRank_.end());
         return foreignOverlapByRank_.find(peerRank)->second;
     }
@@ -193,8 +193,8 @@ public:
     /*!
      * \brief Return the map of (peer rank, border distance) for a given local index.
      */
-    const std::map<ProcessRank, BorderDistance> &foreignOverlapByIndex(int localIdx) const 
-    { 
+    const std::map<ProcessRank, BorderDistance> &foreignOverlapByIndex(int localIdx) const
+    {
         assert(isLocal(localIdx));
         return foreignOverlapByIndex_[localIdx];
     }
@@ -205,7 +205,7 @@ public:
      */
     const PeerSet &peerSet() const
     { return peerSet_; }
-    
+
     /*!
      * \brief Returns the number local indices
      */
@@ -216,7 +216,7 @@ public:
      * \brief Returns true iff a domestic index is local
      */
     bool isLocal(int domesticIdx) const
-    { 
+    {
         return domesticIdx < numLocal();
     };
 
@@ -248,7 +248,7 @@ public:
         ForeignOverlapByRank::const_iterator endIt = foreignOverlapByRank_.end();
         for (; it != endIt; ++it) {
             std::cout << "Overlap rows(distance) for rank " << it->first << ": ";
-            
+
             ForeignOverlapWithPeer::const_iterator rowIt = it->second.begin();
             ForeignOverlapWithPeer::const_iterator rowEndIt = it->second.end();
             for (; rowIt != rowEndIt; ++rowIt) {
@@ -257,7 +257,7 @@ public:
             std::cout << "\n";
         }
     };
-    
+
 protected:
     // Calculate the set of peer processes from the initial seed list.
     void seedListToPeerSet_(const SeedList &seedList)
@@ -267,14 +267,14 @@ protected:
         for (; it != endIt; ++it)
             peerSet_.insert(std::get<1>(*it));
     }
-    
+
     // calculate the local border indices given the initial seed list
     void borderListToSeedList_(SeedList &initialSeedList, const BorderList &borderList)
     {
         BorderList::const_iterator it = borderList.begin();
         BorderList::const_iterator endIt = borderList.end();
         for (; it != endIt; ++it) {
-            initialSeedList.push_back(IndexRankDist(it->localIdx, 
+            initialSeedList.push_back(IndexRankDist(it->localIdx,
                                                     it->peerRank,
                                                     it->borderDistance));
             borderIndices_.insert(it->localIdx);
@@ -307,7 +307,7 @@ protected:
             }
             masterRank_[localIdx] = masterRank;
         }
-        
+
         // overwrite the master rank of the non-shared border indices
         isShared_.resize(numLocal_, false);
         BorderList::const_iterator it = foreignBorderList.begin();
@@ -315,7 +315,7 @@ protected:
         for (; it != endIt; ++it) {
             if (!it->isShared)
                 masterRank_[it->localIdx] = myRank_;
-            else 
+            else
                 isShared_[it->localIdx] = true;
         };
 
@@ -350,11 +350,11 @@ protected:
                 foreignOverlapByIndex_[localIdx][peerRank] = distance;
             }
             else {
-                foreignOverlapByIndex_[localIdx][peerRank] = 
+                foreignOverlapByIndex_[localIdx][peerRank] =
                     std::min(distance,
                              foreignOverlapByIndex_[localIdx][peerRank]);
-            }                
-                
+            }
+
             minOverlapDistance = std::min(minOverlapDistance, distance);
         }
 
@@ -362,7 +362,7 @@ protected:
         // finished and break the recursion
         if (minOverlapDistance >= overlapSize)
             return;
-            
+
         // find the seed list for the next overlap level using the
         // seed set for the current level
         SeedList nextSeedList;
@@ -371,7 +371,7 @@ protected:
             int rowIdx = std::get<0>(*it);
             int peerRank = std::get<1>(*it);
             int borderDist = std::get<2>(*it);
-                
+
             // find all column indies in the row. The indices of the
             // columns are the additional indices of the overlap which
             // we would like to add
@@ -380,19 +380,19 @@ protected:
             ColIterator colEndIt = A[rowIdx].end();
             for (; colIt != colEndIt; ++colIt) {
                 int newIdx = colIt.index();
-                    
+
                 // if the process is already is in the overlap of the
                 // column index, ignore this column index!
                 if (foreignOverlapByIndex_[newIdx].count(peerRank) > 0)
                     continue;
-                
+
 
                 // check whether the new index is already in the overlap
                 bool hasIndex = false;
                 typename SeedList::iterator sIt = nextSeedList.begin();
                 typename SeedList::iterator sEndIt = nextSeedList.end();
                 for (; sIt != sEndIt; ++sIt) {
-                    if (std::get<0>(*sIt) == newIdx && 
+                    if (std::get<0>(*sIt) == newIdx &&
                         std::get<1>(*sIt) == peerRank)
                     {
                         hasIndex = true;
@@ -409,13 +409,13 @@ protected:
                 nextSeedList.push_back(newTuple);
             }
         }
-        
+
         // clear the old seed list to save some memory
         seedList.clear();
-        
+
         // Perform the same excercise for the next overlap distance
         extendForeignOverlap_(A,
-                              nextSeedList, 
+                              nextSeedList,
                               overlapSize);
     };
 
@@ -430,9 +430,9 @@ protected:
         for (int i = 0; i < nIndices; ++i)
         {
             // loop over the list of processes for the current index
-            std::map<ProcessRank, BorderDistance>::const_iterator it = 
+            std::map<ProcessRank, BorderDistance>::const_iterator it =
                 foreignOverlapByIndex_[i].begin();
-            std::map<ProcessRank, BorderDistance>::const_iterator endIt = 
+            std::map<ProcessRank, BorderDistance>::const_iterator endIt =
                 foreignOverlapByIndex_[i].end();
             int nRanks = foreignOverlapByIndex_[i].size();
             for (; it != endIt; ++it)  {
@@ -468,7 +468,7 @@ protected:
 
     // stores a list of foreign overlap indices for each rank
     ForeignOverlapByRank foreignOverlapByRank_;
-    
+
     // extend of the overlap region
     int overlapSize_;
 

@@ -74,7 +74,7 @@ public:
     ~OverlappingBlockVector()
     {
     }
-    
+
     /*!
      * \brief Assign an overlapping block vector from a
      *        non-overlapping one, border entries are added.
@@ -139,7 +139,7 @@ public:
             int peerRank = *peerIt;
             receiveAddEntries_(peerRank);
         }
-        
+
         // wait until we have send everything
         waitSendFinished_();
     };
@@ -184,7 +184,7 @@ public:
         for (int i = 0; i < numDomestic; ++i) {
             (*this)[i] /= overlap_->numNonFrontProcesses(i);
         }
-        
+
         // wait until we have send everything
         waitSendFinished_();
     };
@@ -215,7 +215,7 @@ public:
             int peerRank = *peerIt;
             receiveFrontFromMaster_(peerRank);
         }
-        
+
         // wait until we have send everything
         waitSendFinished_();
     };
@@ -230,7 +230,7 @@ public:
         overlap_ = obv.overlap_;
         return *this;
     }
-    
+
     /*!
      * \brief Syncronize an overlapping block vector and take the
      *        arthmetic mean of the entry values of all processes.
@@ -269,7 +269,7 @@ public:
         };
     }
 
-    void print() const 
+    void print() const
     {
         for (int i = 0; i < this->size(); ++i) {
             std::cout << "row " << i << (overlap_->isLocal(i)?" ":"*") << ": " << (*this)[i] << "\n";
@@ -283,10 +283,10 @@ private:
         // create array for the front indices
         int numDomestic = overlap_->numDomestic();
         frontMaster_ = std::shared_ptr<std::vector<ProcessRank> >(new std::vector<ProcessRank>(numDomestic, -1));
-        
+
         typename PeerSet::const_iterator peerIt;
         typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
-        
+
         // send all indices to the peers
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
@@ -297,7 +297,7 @@ private:
             numIndicesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<int> >(new MpiBuffer<int>(1));
             indicesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
             valuesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
-            
+
             // fill the indices buffer with global indices
             MpiBuffer<RowIndex> &indicesSendBuff = *indicesSendBuff_[peerRank];
             typename DomesticOverlapWithPeer::const_iterator domIt = domesticOverlap.begin();
@@ -319,7 +319,7 @@ private:
         peerIt = overlap_->peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
+
             // receive size of overlap to peer
             int numRows;
             MpiBuffer<int> numRowsRecvBuff(1);
@@ -340,7 +340,7 @@ private:
                 int domRowIdx = overlap_->globalToDomestic(globalRowIdx);
                 indicesRecvBuff[i] = domRowIdx;
 
-                if (overlap_->isFront(domRowIdx) && 
+                if (overlap_->isFront(domRowIdx) &&
                     overlap_->isMasterOf(peerRank, domRowIdx))
                 {
                     (*frontMaster_)[domRowIdx] = peerRank;
@@ -416,7 +416,7 @@ private:
             int domRowIdx = indices[j];
             if ((*frontMaster_)[domRowIdx] != peerRank)
                 continue;
-            
+
             (*this)[domRowIdx] = values[j];
         }
     }

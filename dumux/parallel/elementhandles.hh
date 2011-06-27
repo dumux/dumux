@@ -18,14 +18,14 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 
- * 
- * \brief Provides data handles for parallel communication which 
+ * \file
+ *
+ * \brief Provides data handles for parallel communication which
  *        operate on elements
  */
 #ifndef DUMUX_CELL_HANDLES_HH
 #define DUMUX_CELL_HANDLES_HH
- 
+
 #include <dune/grid/common/datahandleif.hh>
 
 namespace Dumux
@@ -119,7 +119,7 @@ public:
 
     template<class EntityType>
     size_t size (const EntityType &e) const
-    { 
+    {
         // communicate a field type per entity
         return 1;
     }
@@ -177,7 +177,7 @@ public:
 
     template<class EntityType>
     size_t size (const EntityType &e) const
-    { 
+    {
         // communicate a field type per entity
         return 1;
     }
@@ -236,7 +236,7 @@ public:
 
     template<class EntityType>
     size_t size (const EntityType &e) const
-    { 
+    {
         // communicate a field type per entity
         return 1;
     }

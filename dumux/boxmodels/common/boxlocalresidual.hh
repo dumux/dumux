@@ -291,7 +291,7 @@ public:
         int numVerts = fvElemGeom_().numVertices;
         residual_.resize(numVerts);
         storageTerm_.resize(numVerts);
-        
+
         residual_ = 0.0;
         storageTerm_ = 0.0;
 
@@ -345,7 +345,7 @@ public:
 
 protected:
     Implementation &asImp_()
-    { 
+    {
       assert(static_cast<Implementation*>(this) != 0);
       return *static_cast<Implementation*>(this);
     }
@@ -398,7 +398,7 @@ protected:
                 Valgrind::CheckDefined(pvIdx);
                 Valgrind::CheckDefined(curPrimaryVar_(i, pvIdx));
                 Valgrind::CheckDefined(tmp[pvIdx]);
-                
+
                 this->residual_[i][eqIdx] =
                     curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
 

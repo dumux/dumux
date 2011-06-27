@@ -55,7 +55,7 @@ public:
     int numSamples() const
     { return xPos_.size(); }
 
-   
+
     ///////////////////////////////////////
     ///////////////////////////////////////
     ///////////////////////////////////////
@@ -96,7 +96,7 @@ public:
     void set(int nSamples,
              const ScalarArray &x,
              const ScalarArray &y,
-             Scalar m0, 
+             Scalar m0,
              Scalar m1)
     { setXYArrays(nSamples, x, y, m0, m1); }
 
@@ -124,16 +124,16 @@ public:
         std::copy(y.begin(), y.end(), yPos_.begin());
         makeFullSpline_(m0, m1);
     }
-    
+
     template <class ScalarContainer>
     DUNE_DEPRECATED // use setXYContainers
     void set(const ScalarContainer &x,
              const ScalarContainer &y,
-             Scalar m0, 
+             Scalar m0,
              Scalar m1)
     { setXYContainers(x, y, m0, m1); }
 
-        
+
     /*!
      * \brief Set the sampling points and the boundary slopes of a
      *        full spline using a C-style array.
@@ -147,9 +147,9 @@ public:
      * the number of sampling points must be larger than 1.
      */
     template <class PointArray>
-    void setArrayOfPoints(int nSamples, 
+    void setArrayOfPoints(int nSamples,
                           const PointArray &points,
-                          Scalar m0, 
+                          Scalar m0,
                           Scalar m1)
     {
         // a spline with no or just one sampling points? what an
@@ -168,7 +168,7 @@ public:
     DUNE_DEPRECATED // use setArrayOfPoints instead
     void set(int nSamples,
              const XYContainer &points,
-             Scalar m0, 
+             Scalar m0,
              Scalar m1)
     { setArrayOfPoints(nSamples, points, m0, m1); }
 
@@ -187,7 +187,7 @@ public:
      */
     template <class XYContainer>
     void setContainerOfPoints(const XYContainer &points,
-                              Scalar m0, 
+                              Scalar m0,
                               Scalar m1)
     {
         // a spline with no or just one sampling points? what an
@@ -209,7 +209,7 @@ public:
     template <class XYContainer>
     DUNE_DEPRECATED // use setContainerOfPoints() instead
     void set(const XYContainer &points,
-             Scalar m0, 
+             Scalar m0,
              Scalar m1)
     { setContainerOfPoints(points, m0, m1); }
 
@@ -230,7 +230,7 @@ public:
      */
     template <class XYContainer>
     void setContainerOfTuples(const XYContainer &points,
-                              Scalar m0, 
+                              Scalar m0,
                               Scalar m1)
     {
         // resize internal arrays
@@ -245,7 +245,7 @@ public:
         // make a full spline
         makeFullSpline_(m0, m1);
     }
-    
+
     ///////////////////////////////////////
     ///////////////////////////////////////
     ///////////////////////////////////////
@@ -275,7 +275,7 @@ public:
             xPos_[i] = x[i];
             yPos_[i] = y[i];
         }
-        
+
         makeNaturalSpline_();
     }
 
@@ -309,14 +309,14 @@ public:
         std::copy(y.begin(), y.end(), yPos_.begin());
         makeNaturalSpline_();
     }
-    
+
     template <class ScalarContainer>
     DUNE_DEPRECATED // use setXYContainers
     void set(const ScalarContainer &x,
              const ScalarContainer &y)
     { setXYContainers(x, y); }
 
-        
+
     /*!
      * \brief Set the sampling points of a natural spline using a
      *        C-style array.
@@ -330,7 +330,7 @@ public:
      * the number of sampling points must be larger than 1.
      */
     template <class PointArray>
-    void setArrayOfPoints(int nSamples, 
+    void setArrayOfPoints(int nSamples,
                           const PointArray &points)
     {
         // a spline with no or just one sampling points? what an
@@ -416,7 +416,7 @@ public:
         // make a natural spline
         makeNaturalSpline_();
     }
-    
+
 protected:
     /*!
      * \brief Resizes the internal vectors to store the sample points.

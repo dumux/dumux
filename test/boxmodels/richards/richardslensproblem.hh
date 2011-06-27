@@ -247,7 +247,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     using ParentType::dirichlet;
-    void dirichlet(PrimaryVariables &values, 
+    void dirichlet(PrimaryVariables &values,
                    const GlobalPosition &globalPos) const
     {
         // use initial values as boundary conditions

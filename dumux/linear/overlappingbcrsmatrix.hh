@@ -47,7 +47,7 @@ class OverlappingBCRSMatrix : public BCRSMatrix
 
 public:
     typedef Dumux::DomesticOverlapFromBCRSMatrix<BCRSMatrix> Overlap;
-    
+
 private:
     typedef typename Overlap::Index Index;
     typedef typename Overlap::Index RowIndex;
@@ -76,9 +76,9 @@ public:
     {
     };
 
-    OverlappingBCRSMatrix(const BCRSMatrix &M, 
-                          const BorderList &foreignBorderList, 
-                          const BorderList &domesticBorderList, 
+    OverlappingBCRSMatrix(const BCRSMatrix &M,
+                          const BorderList &foreignBorderList,
+                          const BorderList &domesticBorderList,
                           int overlapSize)
     {
         overlap_ = std::shared_ptr<Overlap>(new Overlap(M, foreignBorderList, domesticBorderList, overlapSize));
@@ -103,12 +103,12 @@ public:
         typename PeerSet::const_iterator peerEndIt = peerSet.end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
+
             delete rowSizesRecvBuff_[peerRank];
             delete rowIndicesRecvBuff_[peerRank];
             delete entryIndicesRecvBuff_[peerRank];
             delete entryValuesRecvBuff_[peerRank];
-            
+
             delete numRowsSendBuff_[peerRank];
             delete rowSizesSendBuff_[peerRank];
             delete rowIndicesSendBuff_[peerRank];
@@ -116,7 +116,7 @@ public:
             delete entryValuesSendBuff_[peerRank];
         }
     }
-   
+
     /*!
      * \brief Returns the domestic overlap for the process.
      */
@@ -145,11 +145,11 @@ public:
                     ++ myColIt;
                 }
                 assert(myColIt.index() == colIt.index());
-                
+
                 (*myColIt) = *colIt;
             }
         }
-        
+
         // communicate and add the contents of overlapping rows
         syncAdd_();
     }
@@ -178,7 +178,7 @@ public:
                     ++ myColIt;
                 }
                 assert(myColIt.index() == colIt.index());
-                
+
                 (*myColIt) = *colIt;
             }
         }
@@ -187,22 +187,22 @@ public:
         syncCopy_();
     }
 
-    void print() const 
+    void print() const
     {
         overlap_->print();
-        
+
         for (int i = 0; i < this->N(); ++i) {
             if (overlap_->isLocal(i))
                 std::cout << " ";
-            else 
+            else
                 std::cout << "*";
             std::cout << "row " << i << " ";
-            
+
             typedef typename BCRSMatrix::ConstColIterator ColIt;
             ColIt colIt = (*this)[i].begin();
             ColIt colEndIt = (*this)[i].end();
             for (int j = 0; j < this->M(); ++j) {
-                if (colIt != colEndIt && j == colIt.index()) { 
+                if (colIt != colEndIt && j == colIt.index()) {
                     ++colIt;
                     if (overlap_->isBorder(j))
                         std::cout << "|";
@@ -223,11 +223,11 @@ private:
     void build_(const BCRSMatrix &M)
     {
         int numDomestic = overlap_->numDomestic();
-                       
+
         // allocate the rows
         this->setSize(numDomestic, numDomestic);
         this->setBuildMode(ParentType::random);
-       
+
         // communicate the entries
         buildIndices_(M);
     }
@@ -260,7 +260,7 @@ private:
                 entries_[rowIdx].insert(colIt.index());
             }
         }
-        
+
         /////////
         // add the indices for all additional entries
         /////////
@@ -280,7 +280,7 @@ private:
             int peerRank = *peerIt;
             receiveRowIndices_(peerRank);
         }
-        
+
         // wait until all send operations are completed
         peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
@@ -318,7 +318,7 @@ private:
                 this->addindex(rowIdx, *colIdxIt);
         }
         this->endindices();
-        
+
         // free the memory occupied by the array of the matrix entries
         entries_.resize(0);
     }
@@ -329,18 +329,18 @@ private:
 #if HAVE_MPI
         // send the number of non-border entries in the matrix
         const ForeignOverlapWithPeer &peerOverlap = overlap_->foreignOverlapWithPeer(peerRank);
-        
+
         // send size of foreign overlap to peer
         int numOverlapRows = peerOverlap.size();
         numRowsSendBuff_[peerRank] = new MpiBuffer<int>(1);
         (*numRowsSendBuff_[peerRank])[0] = numOverlapRows;
         numRowsSendBuff_[peerRank]->send(peerRank);
-        
+
         rowSizesSendBuff_[peerRank] = new MpiBuffer<Index>(numOverlapRows);
         rowIndicesSendBuff_[peerRank] = new MpiBuffer<Index>(numOverlapRows);
 
         // create the row size MPI buffer
-        int numEntries = 0; 
+        int numEntries = 0;
         typename ForeignOverlapWithPeer::const_iterator it = peerOverlap.begin();
         typename ForeignOverlapWithPeer::const_iterator endIt = peerOverlap.end();
         int i = 0;
@@ -357,7 +357,7 @@ private:
                     ++ j;
                 }
             }
-            
+
             (*rowSizesSendBuff_[peerRank])[i] = j;
             (*rowIndicesSendBuff_[peerRank])[i] = overlap_->domesticToGlobal(rowIdx);
             numEntries += j;
@@ -386,7 +386,7 @@ private:
                 }
             }
         }
-        entryIndicesSendBuff_[peerRank]->send(peerRank);     
+        entryIndicesSendBuff_[peerRank]->send(peerRank);
 
         // create the send buffers for the values of the matrix
         // entries
@@ -403,7 +403,7 @@ private:
         MpiBuffer<int> numRowsRecvBuff(1);
         numRowsRecvBuff.receive(peerRank);
         numOverlapRows = numRowsRecvBuff[0];
-        
+
         // create receive buffer for the row sizes and receive them
         // from the peer
         rowIndicesRecvBuff_[peerRank] = new MpiBuffer<Index>(numOverlapRows);
@@ -417,7 +417,7 @@ private:
         for (int i = 0; i < numOverlapRows; ++ i) {
             totalIndices += (*rowSizesRecvBuff_[peerRank])[i];
         }
-        
+
         // create the buffer to store the column indices of the matrix entries
         entryIndicesRecvBuff_[peerRank] = new MpiBuffer<Index>(totalIndices);
         entryValuesRecvBuff_[peerRank] = new MpiBuffer<block_type>(totalIndices);
@@ -429,7 +429,7 @@ private:
         // domestic ones
         globalToDomesticBuff_(*rowIndicesRecvBuff_[peerRank]);
         globalToDomesticBuff_(*entryIndicesRecvBuff_[peerRank]);
-        
+
         // add the entries to the global entry map
         int k = 0;
         for (int i = 0; i < numOverlapRows; ++ i) {
@@ -452,7 +452,7 @@ private:
         typename PeerSet::const_iterator peerEndIt = peerSet.end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
+
             sendEntries_(peerRank);
         }
 
@@ -460,7 +460,7 @@ private:
         peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
+
             receiveAddEntries_(peerRank);
         }
 
@@ -483,7 +483,7 @@ private:
         typename PeerSet::const_iterator peerEndIt = peerSet.end();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
+
             sendEntries_(peerRank);
         }
 
@@ -491,7 +491,7 @@ private:
         peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
-            
+
             receiveCopyEntries_(peerRank);
         }
 
@@ -517,7 +517,7 @@ private:
         int k = 0;
         for (int i = 0; i < mpiRowIndicesSendBuff.size(); ++i) {
             Index domRowIdx = mpiRowIndicesSendBuff[i];
-            
+
             typedef typename ParentType::ConstColIterator ColIt;
             ColIt colIt = (*this)[domRowIdx].begin();
             for (int j = 0; j < mpiRowSizesSendBuff[i]; ++j) {
@@ -578,7 +578,7 @@ private:
             for (int j = 0; j < mpiRowSizesRecvBuff[i]; ++j) {
                 Index domColIdx = mpiColIndicesRecvBuff[k];
 
-                if (!overlap_->iAmMasterOf(domRowIdx) || 
+                if (!overlap_->iAmMasterOf(domRowIdx) ||
                     !overlap_->iAmMasterOf(domColIdx))
                 {
                     (*this)[domRowIdx][domColIdx] = mpiRecvBuff[k];

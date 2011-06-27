@@ -349,14 +349,14 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
     for (int i = 0; i < numSol; ++i) {
         Scalar x = sol[i];
         Scalar fOld = d + x*(c + x*(b + x*a));
-        
+
         Scalar fPrime = c + x*(2*b + x*3*a);
         if (fPrime == 0.0)
             continue;
         x -= fOld/fPrime;
-        
+
         Scalar fNew = d + x*(c + x*(b + x*a));
-        if (std::abs(fNew) < std::abs(fOld)) 
+        if (std::abs(fNew) < std::abs(fOld))
             sol[i] = x;
     };
 };

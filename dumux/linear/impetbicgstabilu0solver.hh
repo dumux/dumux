@@ -67,7 +67,7 @@ class IMPETBiCGStabILU0Solver
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    
+
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
@@ -93,7 +93,7 @@ public:
 
     /*!
      * \brief Set the structure of the linear system of equations to be solved.
-     * 
+     *
      * This method allocates space an does the necessary
      * communication before actually calling the solve() method.  As
      * long as the structure of the linear system does not change, the
@@ -106,11 +106,11 @@ public:
     };
 
     /*!
-     * \brief Actually solve the linear system of equations. 
+     * \brief Actually solve the linear system of equations.
      *
      * \return true if the residual reduction could be achieved, else false.
      */
-    bool solve(const Matrix &M, 
+    bool solve(const Matrix &M,
                Vector &x,
                const Vector &b)
     {
@@ -131,7 +131,7 @@ public:
         overlapMatrix_->assignCopy(M);
         overlapb_->assignAdd(b);
         (*overlapx_) = 0.0;
-        
+
         /*
         overlapMatrix_->print();
         overlapb_->print();
@@ -148,20 +148,20 @@ public:
         OverlappingOperator opA(*overlapMatrix_);
 
         // create the actual solver
-        Solver solver(opA, 
+        Solver solver(opA,
                       scalarProd,
-                      preCond, 
+                      preCond,
                       residReduction,
                       maxIter ,
                       verbosityLevel);
-        
+
         // run the solver
         Dune::InverseOperatorResult result;
         solver.apply(*overlapx_, *overlapb_, result);
 
         // copy the result back to the non-overlapping vector
         overlapx_->assignTo(x);
-        
+
         // return the result of the solver
         return result.converged;
     };
@@ -174,7 +174,7 @@ private:
 
         // create the overlapping Jacobian matrix
         overlapMatrix_ = new OverlappingMatrix (M,
-                                                borderListCreator.foreignBorderList(), 
+                                                borderListCreator.foreignBorderList(),
                                                 borderListCreator.domesticBorderList(),
                                                 overlapSize_);
 

@@ -171,7 +171,7 @@ struct NewtonConvergenceWriter<TypeTag, false>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-   
+
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
     NewtonConvergenceWriter(NewtonController &ctl)
@@ -224,13 +224,13 @@ class NewtonController
     enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
     enum { enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)) };
     enum { newtonWriteConvergence = GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence)) };
-    
+
     typedef NewtonConvergenceWriter<TypeTag, newtonWriteConvergence>  ConvergenceWriter;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) LinearSolver;
 
 public:
     /*!
-     * \brief 
+     * \brief
      */
     NewtonController(const Problem &problem)
         : endIterMsgStream_(std::ostringstream::out)
@@ -408,7 +408,7 @@ public:
                                                             uLastIter[i],
                                                             uNewI);
             error_ = std::max(error_, vertError);
-                              
+
         }
 
         error_ = gridView_().comm().max(error_);
@@ -556,7 +556,7 @@ public:
      * This method is called _after_ newtonEnd()
      */
     void newtonSucceed()
-    { 
+    {
         if (enableJacobianRecycling)
             model_().jacobianAssembler().setMatrixReuseable(true);
         else
@@ -593,7 +593,7 @@ public:
               return oldTimeStep*(1 + percent);
             */
             Scalar percent = (targetSteps_ - n)/targetSteps_;
-            return std::min(oldTimeStep*(1.0 + percent/1.2), 
+            return std::min(oldTimeStep*(1.0 + percent/1.2),
                             this->problem_().maxTimeStepSize());
         }
     }

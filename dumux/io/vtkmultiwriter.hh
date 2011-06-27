@@ -73,7 +73,7 @@ class VtkMultiWriter
     struct ElementLayout {
         bool contains (Dune::GeometryType gt) const
         { return gt.dim() == dim; } };
-    
+
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, VertexLayout> VertexMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, ElementLayout> ElementMapper;
 #endif
@@ -81,14 +81,14 @@ class VtkMultiWriter
     // this constructor won't work anymore. Please use the variant
     // below which also includes the GridView as an argument.
     DUNE_DEPRECATED
-    VtkMultiWriter(const std::string &simName = "", 
+    VtkMultiWriter(const std::string &simName = "",
                    std::string multiFileName = "")
     {}
 
 public:
     typedef Dune::VTKWriter<GridView> VtkWriter;
-    VtkMultiWriter(const GridView &gridView, 
-                   const std::string &simName = "", 
+    VtkMultiWriter(const GridView &gridView,
+                   const std::string &simName = "",
                    std::string multiFileName = "")
         : gridView_(gridView)
         , elementMapper_(gridView)
@@ -150,7 +150,7 @@ public:
         curTime_ = t;
         curOutFileName_ = fileName_();
     }
-    
+
     void beginTimestep(double t, const GridView &gridView)
         DUNE_DEPRECATED // use beginWrite()
     { gridChanged(); beginWrite(t); }
@@ -165,7 +165,7 @@ public:
     Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *allocateManagedBuffer(int nEntities)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > VectorField;
-        
+
         ManagedVectorField_<VectorField> *vfs =
             new ManagedVectorField_<VectorField>(nEntities);
         managedObjects_.push_back(vfs);
@@ -179,17 +179,17 @@ public:
 
     /*!
      * \brief Add a finished vertex centered vector field to the
-     *        output. 
-     * \brief Add a vertex-centered quantity to the output. 
+     *        output.
+     * \brief Add a vertex-centered quantity to the output.
      *
      * If the buffer is managed by the VtkMultiWriter, it must have
      * been created using createField() and may not be used by
      * anywhere after calling this method. After the data is written
-     * to disk, it will be deleted automatically. 
+     * to disk, it will be deleted automatically.
      *
      * If the buffer is not managed by the MultiWriter, the buffer
      * must exist at least until the call to endWrite()
-     * finishes. 
+     * finishes.
      *
      * In both cases, modifying the buffer between the call to this
      * method and endWrite() results in _undefined behaviour_.
@@ -221,18 +221,18 @@ public:
      * If the buffer is managed by the VtkMultiWriter, it must have
      * been created using createField() and may not be used by
      * anywhere after calling this method. After the data is written
-     * to disk, it will be deleted automatically. 
+     * to disk, it will be deleted automatically.
      *
      * If the buffer is not managed by the MultiWriter, the buffer
      * must exist at least until the call to endWrite()
-     * finishes. 
+     * finishes.
      *
      * In both cases, modifying the buffer between the call to this
      * method and endWrite() results in _undefined behaviour_.
      */
     template <class DataBuffer>
     void attachCellData(DataBuffer &buf, const char *name, int nComps = 1)
-    { 
+    {
         typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
         typedef Dumux::VtkNestedFunction<Grid, ElementMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
@@ -352,7 +352,7 @@ public:
     {
         res.deserializeSectionBegin("VTKMultiWriter");
         res.deserializeStream() >> curWriterNum_;
-        
+
         if (commRank_ == 0) {
             std::string dummy;
             std::getline(res.deserializeStream(), dummy);
@@ -452,7 +452,7 @@ private:
 
                 // set values which are too small to 0 to avoid
                 // problems with paraview
-                if (std::abs(b[i][j]) 
+                if (std::abs(b[i][j])
                     < std::numeric_limits<float>::min())
                 {
                     b[i][j] = 0.0;

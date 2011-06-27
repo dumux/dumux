@@ -30,8 +30,8 @@
 namespace Dumux {
 
 template <class SeqPreCond, class Overlap>
-class OverlappingPreconditioner : 
-    public Dune::Preconditioner<typename SeqPreCond::domain_type, 
+class OverlappingPreconditioner :
+    public Dune::Preconditioner<typename SeqPreCond::domain_type,
                                 typename SeqPreCond::range_type>
 {
 public:
@@ -79,7 +79,7 @@ public:
                               MPI_SHORT, // data type
                               MPI_MIN, // operation
                               MPI_COMM_WORLD); // communicator
-            } 
+            }
             catch (const Dune::Exception &e) {
                 std::cout << "Process " << overlap_->myRank()
                           << " threw exception in sequential preconditioner: " << e.what() << "\n";
@@ -98,16 +98,16 @@ public:
                 DUNE_THROW(NumericalProblem,
                            "Preconditioner threw an exception on some process.");
         }
-        else 
+        else
 #endif // HAVE_MPI
             seqPreCond_.apply(x, d);
     };
-   
+
     void post(domain_type &x)
-    {     
+    {
         seqPreCond_.post(x);
     };
-    
+
 private:
     SeqPreCond seqPreCond_;
     const Overlap *overlap_;

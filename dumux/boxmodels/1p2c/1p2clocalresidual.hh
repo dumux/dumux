@@ -135,7 +135,7 @@ public:
         else
         {
             // storage term of continuity equation- molefractions
-            //careful: molarDensity changes with moleFrac! 
+            //careful: molarDensity changes with moleFrac!
             result[contiEqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
             result[transEqIdx] +=
@@ -270,7 +270,7 @@ public:
                                 this->fvElemGeom_(),
                                 localVertexIdx);
     }
-    
+
      void evalBoundary_()
     {
         ParentType::evalBoundary_();

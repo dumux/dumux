@@ -68,12 +68,12 @@ public:
         : gv_(gv), map_(map)
     {
         forwardComm_ = true;
-        gv.communicate(*this, 
+        gv.communicate(*this,
                        Dune::InteriorBorder_All_Interface,
                        Dune::ForwardCommunication);
 
         forwardComm_ = false;
-        gv.communicate(*this, 
+        gv.communicate(*this,
                        Dune::InteriorBorder_All_Interface,
                        Dune::BackwardCommunication);
     };
@@ -81,26 +81,26 @@ public:
     // data handle methods
     bool contains (int dim, int codim) const
     { return codim == 0; }
-    
+
     bool fixedsize(int dim, int codim) const
     { return true; }
-    
-    template<class EntityType> 
+
+    template<class EntityType>
     size_t size(const EntityType &e) const
     { return 2; };
 
-    template<class MessageBufferImp, class EntityType> 
-    void gather(MessageBufferImp &buff, const EntityType &e) const 
-    { 
-        buff.write(gv_.comm().rank()); 
-        buff.write(map_.map(e)); 
+    template<class MessageBufferImp, class EntityType>
+    void gather(MessageBufferImp &buff, const EntityType &e) const
+    {
+        buff.write(gv_.comm().rank());
+        buff.write(map_.map(e));
     };
 
-    template<class MessageBufferImp, class EntityType> 
+    template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
     {
         BorderIndex bIdx;
-        
+
         bIdx.localIdx = map_.map(e);
         buff.read(bIdx.peerRank);
         buff.read(bIdx.peerIdx);
@@ -121,7 +121,7 @@ public:
             foreignBorderList_.push_back(bIdx);
         }
     };
-    
+
     // Access to the initial border list.
     const BorderList &foreignBorderList() const
     { return foreignBorderList_; }

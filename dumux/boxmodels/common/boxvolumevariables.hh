@@ -138,7 +138,7 @@ public:
      * \param pvIdx The index of the primary variable of interest
      */
     Scalar primaryVar(int pvIdx) const
-    { 
+    {
         return primaryVars_[pvIdx];
     }
 

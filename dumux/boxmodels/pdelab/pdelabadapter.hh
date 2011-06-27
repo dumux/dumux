@@ -20,7 +20,7 @@
 /*!
  * \file
  *
- * \brief This file provides wrappers which allow the Dumux box models to 
+ * \brief This file provides wrappers which allow the Dumux box models to
  *        be used with dune pdelab
  */
 #ifndef DUMUX_PDELAB_ADAPTER_HH
@@ -120,7 +120,7 @@ public:
 };
 
 // set the local operator used for submodels
-SET_PROP(BoxPDELab, LocalOperator) 
+SET_PROP(BoxPDELab, LocalOperator)
 { typedef Dumux::PDELab::BoxLocalOperator<TypeTag> type; };
 
 // set the grid operator space used for submodels

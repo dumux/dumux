@@ -19,8 +19,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Provides a vector-valued function using Dune::FieldVectors 
- *        as elements. 
+ * \brief Provides a vector-valued function using Dune::FieldVectors
+ *        as elements.
  */
 #ifndef VTK_NESTED_FUNCTION_HH
 #define VTK_NESTED_FUNCTION_HH
@@ -40,8 +40,8 @@
 namespace Dumux {
 
 /*!
- * \brief Provides a vector-valued function using Dune::FieldVectors 
- *        as elements. 
+ * \brief Provides a vector-valued function using Dune::FieldVectors
+ *        as elements.
  */
 template <class Grid, class Mapper, class Buffer>
 class VtkNestedFunction : public Dune::VTKFunction<Grid>
@@ -70,10 +70,10 @@ public:
     virtual std::string name () const
     { return name_; };
 
-    virtual int ncomps() const 
+    virtual int ncomps() const
     { return numComp_; }
 
-    virtual double evaluate(int mycomp, 
+    virtual double evaluate(int mycomp,
                             const Element &e,
                             const Dune::FieldVector< ctype, dim > &xi) const
     {
@@ -101,7 +101,7 @@ public:
                     imin = i;
                 }
             }
-            
+
             // map vertex to an index
             idx = mapper_.map(e, imin, codim_);
         }
@@ -109,7 +109,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                        "Only element and vertex based vector "
                        " fields are supported so far.");
-        
+
         double val = buf_[idx][mycomp];
         if (std::abs(val) < std::numeric_limits<float>::min())
             val = 0;

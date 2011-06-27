@@ -423,7 +423,7 @@ public:
      * \param m1 The slope of the spline at \f$x_1\f$
      */
     template <class PointArray>
-    void setArrayOfPoints(int nSamples, 
+    void setArrayOfPoints(int nSamples,
                           const PointArray &points,
                           Scalar m0,
                           Scalar m1)
@@ -433,7 +433,7 @@ public:
         set(points[0][0],
             points[1][0],
             points[0][1],
-            points[1][1], 
+            points[1][1],
             m0, m1);
     }
 
@@ -464,7 +464,7 @@ public:
         typename PointContainer::const_iterator it0 = points.begin();
         typename PointContainer::const_iterator it1 = it0;
         ++it1;
-        
+
         set((*it0)[0],
             (*it0)[1],
             (*it1)[0],
@@ -490,7 +490,7 @@ public:
         typename TupleContainer::const_iterator it0 = tuples.begin();
         typename TupleContainer::const_iterator it1 = it0;
         ++it1;
-        
+
         set(std::get<0>(*it0),
             std::get<1>(*it0),
             std::get<0>(*it1),

@@ -400,7 +400,7 @@ public:
 
         if (verbose_) {
             int numProcesses = Dune::MPIHelper::getCollectiveCommunication().size();
-            std::cout << "Simulation took " << timer.elapsed() <<" seconds on " 
+            std::cout << "Simulation took " << timer.elapsed() <<" seconds on "
                       << numProcesses << " processes.\n"
                       << "The cumulative CPU time was " << timer.elapsed()*numProcesses << " seconds.\n"
                       << "We hope that you enjoyed simulating with us\n"

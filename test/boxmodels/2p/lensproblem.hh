@@ -382,7 +382,7 @@ public:
                                                         wPhaseIdx,
                                                         temperature_,
                                                         1e5);
-   
+
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
         values[SnIdx] = 0.0;

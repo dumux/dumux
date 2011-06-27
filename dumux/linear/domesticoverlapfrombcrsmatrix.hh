@@ -56,7 +56,7 @@ class DomesticOverlapFromBCRSMatrix
 
     typedef Dumux::ForeignOverlapFromBCRSMatrix<BCRSMatrix> ForeignOverlap;
     typedef Dumux::GlobalIndices<ForeignOverlap> GlobalIndices;
-    
+
 public:
     typedef int ProcessRank;
     typedef int BorderDistance;
@@ -107,13 +107,13 @@ public:
      */
     const BorderList& borderList() const
     { return foreignOverlap_.borderList(); };
-     
+
 
     /*!
      * \brief Returns true iff a domestic index is a border index.
      */
     bool isBorder(int domesticIdx) const
-    { 
+    {
         return isLocal(domesticIdx) && foreignOverlap_.isBorder(domesticIdx);
     };
 
@@ -135,13 +135,13 @@ public:
      *        for a given peer process.
      */
     int isFrontFor(int peerRank, int domesticIdx) const
-    { 
+    {
         typedef std::map<ProcessRank, BorderDistance>::const_iterator iterator;
         iterator it = domesticOverlapByIndex_[domesticIdx].find(peerRank);
         if (it == domesticOverlapByIndex_[domesticIdx].end())
             return false; // not seen by the process
 
-        return it->second == foreignOverlap_.overlapSize(); 
+        return it->second == foreignOverlap_.overlapSize();
     };
 
     /*!
@@ -149,7 +149,7 @@ public:
      *        index and for which the index is not on the front.
      */
     int numNonFrontProcesses(int domesticIdx) const
-    { 
+    {
         int result = 0;
         if (!isFront(domesticIdx))
             ++result;
@@ -161,7 +161,7 @@ public:
             if (it->second < overlapSize())
                 ++result;
         }
-        
+
         return result;
     };
 
@@ -177,7 +177,7 @@ public:
      */
     const PeerSet &peerSet() const
     { return peerSet_; }
-    
+
 
     /*!
      * \brief Returns the foreign overlap
@@ -251,7 +251,7 @@ public:
      *        given domestic index.
      */
     bool iAmMasterOf(int domesticIdx) const
-    { 
+    {
         if (!isLocal(domesticIdx))
             return false;
         return foreignOverlap_.masterOf(domesticIdx) == myRank_;
@@ -261,7 +261,7 @@ public:
      * \brief Return true iff a given index is shared by more than one process
      */
     bool isShared(int domesticIdx) const
-    { 
+    {
         if (!isLocal(domesticIdx))
             return false;
         return foreignOverlap_.isShared(domesticIdx);
@@ -272,11 +272,11 @@ public:
      *        domestic index.
      */
     bool isMasterOf(int peerRank, int domesticIdx) const
-    { 
+    {
         if (isLocal(domesticIdx)) {
             return foreignOverlap_.masterOf(domesticIdx) == peerRank;
         };
-        
+
         // if the local index is a border index, loop over all ranks
         // for which this index is also a border index. the lowest
         // rank wins!
@@ -303,7 +303,7 @@ public:
      * \brief Returns a domestic index given a global one
      */
     Index globalToDomestic(Index globalIdx) const
-    { 
+    {
         return globalIndices_.globalToDomestic(globalIdx);
     }
 
@@ -311,10 +311,10 @@ public:
      * \brief Returns a global index given a domestic one
      */
     Index domesticToGlobal(Index domIdx) const
-    { 
+    {
         return globalIndices_.domesticToGlobal(domIdx);
     }
-    
+
 protected:
     void buildDomesticOverlap_(const BCRSMatrix &A)
     {
@@ -344,7 +344,7 @@ protected:
         PeerSet::const_iterator peerIt;
         PeerSet::const_iterator peerEndIt = foreignOverlap_.peerSet().end();
 
-        // send the overlap indices to all peer processes 
+        // send the overlap indices to all peer processes
         peerIt = foreignOverlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
@@ -357,7 +357,7 @@ protected:
             int peerRank = *peerIt;
             receiveIndicesFromPeer_(peerRank);
         };
-        
+
         // receive our overlap from the processes to all peer processes
         peerIt = foreignOverlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
@@ -367,7 +367,7 @@ protected:
     };
 
     void sendIndicesToPeer_(int peerRank)
-    {          
+    {
 #if HAVE_MPI
         const ForeignOverlapWithPeer &foreignOverlap
             = foreignOverlap_.foreignOverlapWithPeer(peerRank);
@@ -382,7 +382,7 @@ protected:
 
         // create MPI buffers
         indicesSendBuff_[peerRank] = new MpiBuffer<IndexDistanceNpeers>(numIndices);
-        
+
         // then send the additional indices themselfs
         ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
         ForeignOverlapWithPeer::const_iterator overlapEndIt = foreignOverlap.end();
@@ -399,15 +399,15 @@ protected:
                 IndexDistanceNpeers(globalIndices_.domesticToGlobal(localIdx),
                                     borderDistance,
                                     numPeers);
-            
+
             // send all peer ranks which see the given index
             peersSendBuff_[peerRank].push_back(new MpiBuffer<int>(2*numPeers));
             typename std::map<ProcessRank, BorderDistance>::const_iterator it = foreignIndexOverlap.begin();
             typename std::map<ProcessRank, BorderDistance>::const_iterator endIt = foreignIndexOverlap.end();
             for (int j = 0; it != endIt; ++it, ++j)
-            { 
-                (*peersSendBuff_[peerRank][i])[2*j + 0] = it->first; 
-                (*peersSendBuff_[peerRank][i])[2*j + 1] = it->second; 
+            {
+                (*peersSendBuff_[peerRank][i])[2*j + 0] = it->first;
+                (*peersSendBuff_[peerRank][i])[2*j + 1] = it->second;
             };
         };
 
@@ -464,7 +464,7 @@ protected:
                     domesticIdx = globalIndices_.numDomestic();
                     borderDistance_.resize(domesticIdx + 1, std::numeric_limits<int>::max());
                     domesticOverlapByIndex_.resize(domesticIdx + 1);
-                    
+
                     globalIndices_.addIndex(domesticIdx, globalIdx);
                     domesticOverlapByIndex_[domesticIdx][peerRank] = borderDistance;
                     domesticOverlapWithPeer_[peerRank].insert(domesticIdx);
@@ -473,10 +473,10 @@ protected:
                     domesticIdx = globalIndices_.globalToDomestic(globalIdx);
                 }
             }
-            else 
+            else
                 // border index
                 domesticIdx = globalIndices_.globalToDomestic(globalIdx);
-            
+
             borderDistance_[domesticIdx] = std::min(borderDistance, borderDistance_[domesticIdx]);
 
             // receive the peer ranks which see this index
@@ -501,7 +501,7 @@ protected:
     DomesticOverlapByRank domesticOverlapWithPeer_;
     DomesticOverlapByIndex domesticOverlapByIndex_;
     std::vector<int> borderDistance_;
-    
+
     std::map<ProcessRank, MpiBuffer<int>* > numIndicesSendBuff_;
     std::map<ProcessRank, MpiBuffer<IndexDistanceNpeers>* > indicesSendBuff_;
     std::map<ProcessRank, std::vector<MpiBuffer<int>*> > peersSendBuff_;

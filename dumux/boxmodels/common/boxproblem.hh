@@ -144,7 +144,7 @@ public:
      *
      * By default this the time step size is unrestricted.
      */
-    Scalar maxTimeStepSize() const 
+    Scalar maxTimeStepSize() const
     { return std::numeric_limits<Scalar>::infinity(); }
 
     /*!
@@ -772,7 +772,7 @@ private:
     void createResultWriter_()
     { if (!resultWriter_) resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name()); };
 
-    std::string simName_; 
+    std::string simName_;
     const GridView gridView_;
 
     GlobalPosition bboxMin_;

@@ -146,7 +146,7 @@ public:
 
     /*!
      * \brief Set the structure of the linear system of equations to be solved.
-     * 
+     *
      * This method allocates space an does the necessary
      * communication before actually calling the solve() method.  As
      * long as the structure of the linear system does not change, the
@@ -159,12 +159,12 @@ public:
     };
 
     /*!
-     * \brief Actually solve the linear system of equations. 
+     * \brief Actually solve the linear system of equations.
      *
      * \return true if the residual reduction could be achieved, else false.
      */
     template <class PrecBackend, class SolverBackend>
-    bool solve(const Matrix &M, 
+    bool solve(const Matrix &M,
             Vector &x,
             const Vector &b)
     {

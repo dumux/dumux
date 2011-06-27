@@ -101,14 +101,14 @@ public:
         // This requires communication via MPI.
         buildGlobalIndices_();
     }
-  
+
     /*!
      * \brief Converts a domestic index to a global one.
      */
     int domesticToGlobal(int domesticIdx) const
     {
         assert(domesticToGlobal_.find(domesticIdx) != domesticToGlobal_.end());
-        
+
         return domesticToGlobal_.find(domesticIdx)->second;
     }
 
@@ -123,7 +123,7 @@ public:
     };
 
     /*!
-     * \brief Returns the number of indices which are in the interior or 
+     * \brief Returns the number of indices which are in the interior or
      *        on the border of the current rank.
      */
     int numLocal() const
@@ -136,7 +136,7 @@ public:
      * plus its copies of indices in the overlap regions
      */
     int numDomestic() const
-    { 
+    {
         return numDomestic_;
     }
 
@@ -146,12 +146,12 @@ public:
     void addIndex(int domesticIdx, int globalIdx)
     {
         domesticToGlobal_[domesticIdx] = globalIdx;
-        globalToDomestic_[globalIdx] = domesticIdx;       
+        globalToDomestic_[globalIdx] = domesticIdx;
         numDomestic_ = domesticToGlobal_.size();
 
         assert(domesticToGlobal_.size() == globalToDomestic_.size());
     };
-    
+
     /*!
      * \brief Send a border index to a remote process.
      */
@@ -164,7 +164,7 @@ public:
         MPI_Send(sendBuff, // buff
                   2, // count
                   MPI_INT, // data type
-                  peerRank, 
+                  peerRank,
                   0, // tag
                   MPI_COMM_WORLD); // communicator
 #endif // HAVE_MPI
@@ -181,7 +181,7 @@ public:
         MPI_Recv(recvBuff, // buff
                  2, // count
                  MPI_INT, // data type
-                 peerRank, 
+                 peerRank,
                  0, // tag
                  MPI_COMM_WORLD, // communicator
                  MPI_STATUS_IGNORE); // status
@@ -199,12 +199,12 @@ public:
     { return globalToDomestic_.find(globalIdx) != globalToDomestic_.end(); };
 
     /*!
-     * \brief Prints the global indices of all domestic indices 
+     * \brief Prints the global indices of all domestic indices
      *        for debugging purposes.
      */
     void print() const
     {
-        std::cout << "(domestic index, global index, domestic->global->domestic) list for rank " << 
+        std::cout << "(domestic index, global index, domestic->global->domestic) list for rank " <<
             myRank_ << "\n";
 
         for (int domIdx = 0; domIdx < domesticToGlobal_.size(); ++ domIdx) {
@@ -215,15 +215,15 @@ public:
         };
         std::cout << "\n";
     };
-                 
-protected:   
+
+protected:
     // retrieve the offset for the indices where we are master in the
     // global index list
-    void buildGlobalIndices_() 
+    void buildGlobalIndices_()
     {
 #if HAVE_MPI
         numDomestic_ = 0;
-#else 
+#else
         numDomestic_ = foreignOverlap_.numLocal();
 #endif
 
@@ -238,7 +238,7 @@ protected:
             MPI_Recv(&domesticOffset_, // buffer
                      1, // count
                      MPI_INT, // data type
-                     myRank_ - 1, 
+                     myRank_ - 1,
                      0, // tag
                      MPI_COMM_WORLD, // communicator
                      MPI_STATUS_IGNORE);
@@ -250,11 +250,11 @@ protected:
             if (!foreignOverlap_.iAmMasterOf(i)) {
                 continue;
             }
-            
+
             addIndex(i, domesticOffset_ + numMaster);
             ++ numMaster;
         }
-        
+
         if (myRank_ < mpiSize_ - 1) {
             // send the domestic offset plus the number of master
             // indices to the process which is one rank higher
@@ -268,7 +268,7 @@ protected:
                      0, // tag
                      MPI_COMM_WORLD); // communicator
         };
-        
+
         typename PeerSet::const_iterator peerIt;
         typename PeerSet::const_iterator peerEndIt = peerSet_().end();
         // receive the border indices from the lower ranks
@@ -300,7 +300,7 @@ protected:
         }
 #endif // HAVE_MPI
     }
-    
+
     void sendBorderTo_(ProcessRank peerRank)
     {
 #if HAVE_MPI
@@ -311,7 +311,7 @@ protected:
         for (; borderIt != borderEndIt; ++borderIt) {
             int borderPeer = borderIt->peerRank;
             if (borderPeer != peerRank)
-                continue;        
+                continue;
 
             int localIdx = borderIt->localIdx;
             int peerIdx = borderIt->peerIdx;
@@ -323,7 +323,7 @@ protected:
     }
 
     void receiveBorderFrom_(ProcessRank peerRank)
-    {       
+    {
 #if HAVE_MPI
         // retrieve the global indices for which we are not master
         // from the processes with lower rank
@@ -333,7 +333,7 @@ protected:
             int borderPeer = borderIt->peerRank;
             if (borderPeer != peerRank)
                 continue;
-            
+
             if (foreignOverlap_.masterOf(borderIt->localIdx) == borderPeer) {
                 receiveBorderIndex(borderPeer);
             }
@@ -350,16 +350,16 @@ protected:
     const BorderList &domesticBorderList_() const
     { return foreignOverlap_.domesticBorderList(); }
 
-       
+
     int myRank_;
     int mpiSize_;
 
     int domesticOffset_;
     int numDomestic_;
     const ForeignOverlap &foreignOverlap_;
-    
-    GlobalToDomesticMap globalToDomestic_; 
-    DomesticToGlobalMap domesticToGlobal_; 
+
+    GlobalToDomesticMap globalToDomestic_;
+    DomesticToGlobalMap domesticToGlobal_;
 };
 
 } // namespace Dumux

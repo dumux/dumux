@@ -38,7 +38,7 @@ struct BorderIndex
 
     //! Rank of the peer process
     int peerRank;
-    
+
     //! Distance to the process border for the peer (in hops)
     int borderDistance;
 

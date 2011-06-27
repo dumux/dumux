@@ -145,7 +145,7 @@ public:
             curHints_.resize(nVerts);
             prevHints_.resize(nVerts);
             hintsUsable_.resize(nVerts);
-            std::fill(hintsUsable_.begin(), 
+            std::fill(hintsUsable_.begin(),
                       hintsUsable_.end(),
                       false);
         }
@@ -156,9 +156,9 @@ public:
     }
 
     void setHints(const Element &elem,
-                  ElementVolumeVariables &prevVolVars, 
+                  ElementVolumeVariables &prevVolVars,
                   ElementVolumeVariables &curVolVars) const
-    {        
+    {
         if (!enableHints)
             return;
 
@@ -167,7 +167,7 @@ public:
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
             int globalIdx = problem_().vertexMapper().map(elem, i, dim);
-            
+
             if (!hintsUsable_[globalIdx]) {
                 curVolVars[i].setHint(NULL);
                 prevVolVars[i].setHint(NULL);
@@ -181,7 +181,7 @@ public:
 
     void setHints(const Element &elem,
                   ElementVolumeVariables &curVolVars) const
-    {        
+    {
         if (!enableHints)
             return;
 
@@ -189,7 +189,7 @@ public:
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
             int globalIdx = problem_().vertexMapper().map(elem, i, dim);
-            
+
             if (!hintsUsable_[globalIdx])
                 curVolVars[i].setHint(NULL);
             else
@@ -205,7 +205,7 @@ public:
         prevHints_ = curHints_;
     };
 
-    void updateCurHints(const Element &elem, 
+    void updateCurHints(const Element &elem,
                         const ElementVolumeVariables &ev) const
     {
         if (!enableHints)
@@ -265,9 +265,9 @@ public:
 
         // add up the residuals on the process borders
         if (gridView().comm().size() > 1) {
-            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper> 
+            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
                 sumHandle(dest, vertexMapper());
-            gridView().communicate(sumHandle, 
+            gridView().communicate(sumHandle,
                                    Dune::InteriorBorder_InteriorBorder_Interface,
                                    Dune::ForwardCommunication);
         }
@@ -499,7 +499,7 @@ public:
         // make the current solution the previous one.
         uPrev_ = uCur_;
         prevHints_ = curHints_;
-        
+
         updatePrevHints();
     }
 
@@ -825,14 +825,14 @@ protected:
         // add up the primary variables and the volumes of the boxes
         // which cross process borders
         if (gridView().comm().size() > 1) {
-            VertexHandleSum<Dune::FieldVector<Scalar, 1>, 
+            VertexHandleSum<Dune::FieldVector<Scalar, 1>,
                 Dune::BlockVector<Dune::FieldVector<Scalar, 1> >,
                 VertexMapper> sumVolumeHandle(boxVolume_, vertexMapper());
-            gridView().communicate(sumVolumeHandle, 
+            gridView().communicate(sumVolumeHandle,
                                    Dune::InteriorBorder_InteriorBorder_Interface,
                                    Dune::ForwardCommunication);
 
-            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper> 
+            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
                 sumPVHandle(uCur_, vertexMapper());
             gridView().communicate(sumPVHandle,
                                    Dune::InteriorBorder_InteriorBorder_Interface,

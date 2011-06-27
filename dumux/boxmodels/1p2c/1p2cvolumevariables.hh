@@ -92,15 +92,15 @@ public:
                 bool isOldSol)
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
-        
+
         asImp().updateTemperature_(priVars,
                                    element,
                                    elemGeom,
                                    scvIdx,
                                    problem);
-                                   
+
         fluidState_.update(priVars, temperature_);
-        
+
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
         tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
         dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
@@ -109,7 +109,7 @@ public:
                                                  temperature_,
                                                  pressure(),
                                                  fluidState_);
-                                                 
+
         diffCoeff_ = FluidSystem::diffCoeff(phaseIdx,
                                             comp0Idx,
                                             comp1Idx,
@@ -230,7 +230,7 @@ protected:
     Vector dispersivity_;
     Scalar diffCoeff_;
     FluidState fluidState_;
-    
+
 private:
     Implementation &asImp()
     { return *static_cast<Implementation*>(this); }

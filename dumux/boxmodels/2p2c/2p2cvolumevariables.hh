@@ -135,7 +135,7 @@ public:
                 kr = MaterialLaw::krn(materialParams, saturation(lPhaseIdx));
             mobility_[phaseIdx] = kr / mu;
             Valgrind::CheckDefined(mobility_[phaseIdx]);
-            
+
             // binary diffusion coefficents
             diffCoeff_[phaseIdx] =
                 FluidSystem::diffCoeff(phaseIdx,

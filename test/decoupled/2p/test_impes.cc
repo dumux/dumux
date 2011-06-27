@@ -90,7 +90,7 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> numCells; 
+        Dune::FieldVector<int,dim> numCells;
         numCells[0] = 30;
         numCells[1] = 6;
         Dune::FieldVector<double,dim> lowerLeft;

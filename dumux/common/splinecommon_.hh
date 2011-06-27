@@ -180,10 +180,10 @@ public:
             else if (x > xMax())
                 evalDerivative_(xMax(), numSamples_() - 1);
         }
-            
+
         return evalDerivative_(x, segmentIdx_(x));
     }
-    
+
     /*!
      * \brief Find the intersections of the spline with a cubic
      *        polynomial in the whole intervall, throws
@@ -360,7 +360,7 @@ protected:
                               int numSamples)
     {
         assert(numSamples >= 2);
-        
+
         // copy sample points, make sure that the first x value is
         // smaller than the last one
 

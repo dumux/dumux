@@ -29,7 +29,7 @@ namespace Dumux {
 
 // operator that resets result to zero at constrained DOFS
 template<class OverlappingMatrix, class DomainVector, class RangeVector>
-class OverlappingOperator : 
+class OverlappingOperator :
     public Dune::AssembledLinearOperator<OverlappingMatrix,
                                          DomainVector,
                                          RangeVector>

@@ -18,14 +18,14 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 
- * 
- * \brief Provides data handles for parallel communication which 
+ * \file
+ *
+ * \brief Provides data handles for parallel communication which
  *        operate on vertices
  */
 #ifndef DUMUX_VERTEX_HANDLES_HH
 #define DUMUX_VERTEX_HANDLES_HH
- 
+
 #include <dune/grid/common/datahandleif.hh>
 
 namespace Dumux
@@ -35,12 +35,12 @@ namespace Dumux
  *        values are attached to vertices
  */
 template <class FieldType, class Container, class VertexMapper>
-class VertexHandleSum 
-    : public Dune::CommDataHandleIF< VertexHandleSum<FieldType, Container, VertexMapper>, 
+class VertexHandleSum
+    : public Dune::CommDataHandleIF< VertexHandleSum<FieldType, Container, VertexMapper>,
                                      FieldType >
 {
 public:
-    VertexHandleSum(Container &container, 
+    VertexHandleSum(Container &container,
                     const VertexMapper &mapper)
         : mapper_(mapper)
         , container_(container)
@@ -61,7 +61,7 @@ public:
 
     template<class EntityType>
     size_t size (const EntityType &e) const
-    { 
+    {
         // communicate a field type per entity
         return 1;
     }
@@ -94,11 +94,11 @@ private:
  */
 template <class FieldType, class Container, class VertexMapper>
 class VertexHandleMax
-    : public Dune::CommDataHandleIF< VertexHandleMax<FieldType, Container, VertexMapper>, 
+    : public Dune::CommDataHandleIF< VertexHandleMax<FieldType, Container, VertexMapper>,
                                      FieldType >
 {
 public:
-    VertexHandleMax(Container &container, 
+    VertexHandleMax(Container &container,
                     const VertexMapper &mapper)
         : mapper_(mapper)
         , container_(container)
@@ -119,7 +119,7 @@ public:
 
     template<class EntityType>
     size_t size (const EntityType &e) const
-    { 
+    {
         // communicate a field type per entity
         return 1;
     }
@@ -153,11 +153,11 @@ private:
  */
 template <class FieldType, class Container, class VertexMapper>
 class VertexHandleMin
-    : public Dune::CommDataHandleIF< VertexHandleMin<FieldType, Container, VertexMapper>, 
+    : public Dune::CommDataHandleIF< VertexHandleMin<FieldType, Container, VertexMapper>,
                                      FieldType >
 {
 public:
-    VertexHandleMin(Container &container, 
+    VertexHandleMin(Container &container,
                     const VertexMapper &mapper)
         : mapper_(mapper)
         , container_(container)
@@ -178,7 +178,7 @@ public:
 
     template<class EntityType>
     size_t size (const EntityType &e) const
-    { 
+    {
         // communicate a field type per entity
         return 1;
     }

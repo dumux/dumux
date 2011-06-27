@@ -35,20 +35,20 @@ public:
     typedef OverlappingBlockVector domain_type;
 
     enum { category = Dune::SolverCategory::overlapping };
-    
+
     OverlappingScalarProduct(const Overlap &overlap)
         : overlap_(overlap)
     {};
-    
+
     field_type dot(const OverlappingBlockVector &x, const OverlappingBlockVector &y)
-    { 
+    {
         field_type sum = 0;
         int n = overlap_.numLocal();
         for (int i = 0; i < n; ++i) {
             if (overlap_.iAmMasterOf(i))
                 sum += x[i]*y[i];
         };
-        
+
         // compute the global sum
         field_type sumGlobal = 0.0;
 #if HAVE_MPI
@@ -66,7 +66,7 @@ public:
     };
 
     field_type norm(const OverlappingBlockVector &x)
-    { 
+    {
         field_type tmp = dot(x, x);
         return std::sqrt(tmp);
     };

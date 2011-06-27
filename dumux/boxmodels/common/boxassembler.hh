@@ -200,7 +200,7 @@ public:
         }
 
         if (!succeeded) {
-            DUNE_THROW(NumericalProblem, 
+            DUNE_THROW(NumericalProblem,
                        "A process did not succeed in linearizing the system");
         };
 
@@ -208,20 +208,20 @@ public:
         {
             greenElems_ = gridView_().comm().sum(greenElems_);
             reassembleAccuracy_ = gridView_().comm().max(nextReassembleAccuracy_);
-            
+
             problem_().newtonController().endIterMsg()
                 << ", reassembled "
                 << totalElems_ - greenElems_ << "/" << totalElems_
                 << " (" << 100*Scalar(totalElems_ - greenElems_)/totalElems_ << "%) elems @accuracy="
                 << reassembleAccuracy_;
         }
-        
+
         // reset all vertex colors to green
         for (int i = 0; i < vertexColor_.size(); ++i) {
             vertexColor_[i] = Green;
         }
     }
-    
+
     /*!
      * \brief If Jacobian matrix recycling is enabled, this method
      *        specifies whether the next call to assemble() just
@@ -303,7 +303,7 @@ public:
         }
 
     }
-    
+
     /*!
      * \brief Force to reassemble a given vertex next time the
      *        assemble() method is called.
@@ -354,7 +354,7 @@ public:
                 // the relative tolerance
                 vertexColor_[i] = Red;
             else
-                nextReassembleAccuracy_ = 
+                nextReassembleAccuracy_ =
                     std::max(nextReassembleAccuracy_, vertexDelta_[i]);
         };
 
@@ -405,10 +405,10 @@ public:
         // the red vertex for yellow border vertices
         VertexHandleMin<EntityColor, std::vector<EntityColor>,  VertexMapper>
             minHandle(vertexColor_, vertexMapper_());
-        gridView_().communicate(minHandle, 
+        gridView_().communicate(minHandle,
                                 Dune::InteriorBorder_InteriorBorder_Interface,
                                 Dune::ForwardCommunication);
-        
+
         // Mark yellow elements
         elemIt = gridView_().template begin<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -455,7 +455,7 @@ public:
         VertexHandleMax<EntityColor, std::vector<EntityColor>,  VertexMapper>
             maxHandle(vertexColor_,
                       vertexMapper_());
-        gridView_().communicate(maxHandle, 
+        gridView_().communicate(maxHandle,
                                 Dune::InteriorBorder_InteriorBorder_Interface,
                                 Dune::ForwardCommunication);
 
@@ -559,11 +559,11 @@ private:
         for (; eIt != eEndIt; ++eIt) {
             const Element &elem = *eIt;
             int n = elem.template count<dim>();
-            
+
             // if the element is not in the interior or the process
             // border, all dofs just contain main-diagonal entries
             if (elem.partitionType() != Dune::InteriorEntity &&
-                elem.partitionType() != Dune::BorderEntity) 
+                elem.partitionType() != Dune::BorderEntity)
             {
                 for (int i = 0; i < n; ++i) {
                     int globalI = vertexMapper_().map(*eIt, i, dim);
@@ -633,7 +633,7 @@ private:
                     storageTerm_[i] = 0;
                 };
             }
-            
+
             return;
         }
 
@@ -663,7 +663,7 @@ private:
     void assemble_()
     {
         resetSystem_();
-        
+
         // if we can "recycle" the current linearization, we do it
         // here and be done with it...
         Scalar curDt = problem_().timeManager().timeStepSize();
@@ -672,7 +672,7 @@ private:
             for (int i = 0; i < numVertices; ++i) {
                 // rescale the mass term of the jacobian matrix
                 MatrixBlock &J_i_i = (*matrix_)[i][i];
-                
+
                 J_i_i -= storageJacobian_[i];
                 storageJacobian_[i] *= oldDt_/curDt;
                 J_i_i += storageJacobian_[i];
@@ -687,7 +687,7 @@ private:
                 residual_[i] = storageTerm_[i];
                 residual_[i] *= -1;
             };
-            
+
             reuseMatrix_ = false;
             oldDt_ = curDt;
             return;
@@ -695,7 +695,7 @@ private:
 
         oldDt_ = curDt;
         greenElems_ = 0;
-        
+
         // reassemble the elements...
         ElementIterator elemIt = gridView_().template begin<0>();
         ElementIterator elemEndIt = gridView_().template end<0>();
@@ -762,7 +762,7 @@ private:
         int n = elem.template count<dim>();
         for (int i=0; i < n; ++i) {
             const VertexPointer vp = elem.template subEntity<dim>(i);
-            
+
             if (vp->partitionType() == Dune::InteriorEntity ||
                 vp->partitionType() == Dune::BorderEntity)
             {
@@ -807,7 +807,7 @@ private:
 
     // attributes required for jacobian matrix recycling
     bool reuseMatrix_;
-    // The storage part of the local Jacobian 
+    // The storage part of the local Jacobian
     std::vector<MatrixBlock> storageJacobian_;
     std::vector<VectorBlock> storageTerm_;
     // time step size of last assembly
@@ -821,7 +821,7 @@ private:
 
     int totalElems_;
     int greenElems_;
-    
+
     Scalar nextReassembleAccuracy_;
     Scalar reassembleAccuracy_;
 };

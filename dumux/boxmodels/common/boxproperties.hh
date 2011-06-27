@@ -106,7 +106,7 @@ NEW_PROP_TAG(EnableTimeStepRampUp);
 NEW_PROP_TAG(NumericDifferenceMethod);
 
 /*!
- * \brief Specify whether to use the already calculated solutions as 
+ * \brief Specify whether to use the already calculated solutions as
  *        starting values of the volume variables.
  *
  * This only makes sense if the calculation of the volume variables is

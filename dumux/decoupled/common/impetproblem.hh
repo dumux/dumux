@@ -358,7 +358,7 @@ public:
      * \brief Returns the current grid which used by the problem.
      */
     Grid &grid()
-    { 
+    {
         if (grid_)
         {
             return *grid_;
@@ -369,7 +369,7 @@ public:
     }
     /*!
      * \brief Specifies the grid from outside the problem.
-     * \param grid The grid used by the problem. 
+     * \param grid The grid used by the problem.
     */
     void setGrid(Grid &grid)
     {

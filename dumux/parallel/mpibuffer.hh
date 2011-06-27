@@ -18,13 +18,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 
- * 
+ * \file
+ *
  * \brief Simplifies handling of buffers to be used in conjunction with MPI
  */
 #ifndef DUMUX_MPI_BUFFER_HH
 #define DUMUX_MPI_BUFFER_HH
- 
+
 #if HAVE_MPI
 #include <mpi.h>
 #endif
@@ -41,7 +41,7 @@ class MpiBuffer
 {
 public:
     MpiBuffer(int size)
-    { 
+    {
         data_ = new DataType[size];
         dataSize_ = size;
 
@@ -69,7 +69,7 @@ public:
             mpiDataType_ = MPI_BYTE;
             mpiDataSize_ *= sizeof(DataType);
         }
-#endif // HAVE_MPI        
+#endif // HAVE_MPI
     };
 
     ~MpiBuffer()
@@ -122,29 +122,29 @@ public:
 
 #if HAVE_MPI
     /*!
-     * \brief Returns the current MPI_Request object. 
+     * \brief Returns the current MPI_Request object.
      *
      * This object is only well defined after the send() method.
      */
     MPI_Request &request()
     { return mpiRequest_; }
     /*!
-     * \brief Returns the current MPI_Request object. 
+     * \brief Returns the current MPI_Request object.
      *
      * This object is only well defined after the send() method.
      */
     const MPI_Request &request() const
     { return mpiRequest_; }
-    
+
     /*!
-     * \brief Returns the current MPI_Status object. 
+     * \brief Returns the current MPI_Status object.
      *
      * This object is only well defined after the receive() and wait() methods.
      */
     MPI_Status &status()
     { return mpiStatus_; }
     /*!
-     * \brief Returns the current MPI_Status object. 
+     * \brief Returns the current MPI_Status object.
      *
      * This object is only well defined after the receive() and wait() methods.
      */
@@ -158,12 +158,12 @@ public:
      */
     int size() const
     { return dataSize_; }
-    
+
     /*!
      * \brief Provide access to the buffer data.
      */
     DataType &operator[](int i)
-    { 
+    {
         assert(0 <= i && i < dataSize_);
         return data_[i];
     }
@@ -172,7 +172,7 @@ public:
      * \brief Provide access to the buffer data.
      */
     const DataType &operator[](int i) const
-    { 
+    {
         assert(0 <= i && i < dataSize_);
         return data_[i];
     }

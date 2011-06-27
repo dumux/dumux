@@ -173,14 +173,14 @@ public:
 
         // set the hints for the volume variables
         model_().setHints(element, prevVolVars_, curVolVars_);
-        
+
         // update the secondary variables for the element at the last
         // and the current time levels
         prevVolVars_.update(problem_(),
                             elem_(),
                             fvElemGeom_,
                             true /* isOldSol? */);
-        
+
         curVolVars_.update(problem_(),
                            elem_(),
                            fvElemGeom_,
@@ -209,7 +209,7 @@ public:
                                                 storageDeriv,
                                                 j,
                                                 pvIdx);
-                
+
                 // update the local stiffness matrix with the current partial
                 // derivatives
                 updateLocalJacobian_(j,
@@ -531,7 +531,7 @@ protected:
     // levels
     ElementVolumeVariables prevVolVars_;
     ElementVolumeVariables curVolVars_;
-    
+
     LocalResidual localResidual_;
 
     LocalBlockMatrix A_;
