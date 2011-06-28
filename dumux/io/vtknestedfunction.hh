@@ -29,7 +29,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/common/version.hh>
 
-#if DUNE_VERSION_NEWER_REV(GRID, 2, 1, 0)
+#if DUNE_VERSION_NEWER_REV(DUNE_GRID, 2, 1, 0)
 // DUNE 2.1 and above
 #include <dune/grid/io/file/vtk/function.hh>
 #else
