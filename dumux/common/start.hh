@@ -32,9 +32,13 @@
 
 #include <dune/common/version.hh>
 
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
+#define HAVE_DUNE21 \
+    (DUNE_COMMON_VERSION_MAJOR > 2   \
+     || (DUNE_COMMON_VERSION_MAJOR == 2 && DUNE_COMMON_VERSION_MINOR >= 1))
+
+#if HAVE_DUNE21
 #include <dune/common/parametertreeparser.hh>
-#endif // DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
+#endif // HAVE_DUNE21
 
 
 namespace Dumux
@@ -234,7 +238,7 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
     return 3;
 };
 
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
+#if HAVE_DUNE21
 // requires DUNE 2.1 and above
 
 /*!
@@ -331,7 +335,7 @@ int startFromInputFile(int argc, char **argv)
 
    return 3;
 }
-#endif // DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
+#endif //HAVE_DUNE21
 
 }
 
