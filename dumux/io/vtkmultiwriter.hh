@@ -59,7 +59,7 @@ class VtkMultiWriter
     typedef typename GridView::Grid Grid;
     enum { dim = GridView::dimension };
 
-#if DUNE_VERSION_NEWER_REV(GRID, 2, 0, 99)
+#if DUNE_VERSION_NEWER_REV(GRID, 2, 1, 0)
     // DUNE 2.1 and above
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;

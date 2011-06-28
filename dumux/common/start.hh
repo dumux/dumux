@@ -29,7 +29,16 @@
 #include <dune/grid/io/file/dgfparser.hh>
 #include <dune/common/mpihelper.hh>
 #include <iostream>
-//#include <dune/common/parametertreeparser.hh>
+
+#include <dune/common/version.hh>
+
+#define HAVE_DUNE21 \
+    (DUNE_COMMON_VERSION_MAJOR > 2   \
+     || (DUNE_COMMON_VERSION_MAJOR == 2 && DUNE_COMMON_VERSION_MINOR >= 1))
+
+#if HAVE_DUNE21 //DUNE_VERSION_NEWER_REV(COMMON, 2, 0, 99)
+#include <dune/common/parametertreeparser.hh>
+#endif // DUNE_VERSION_NEWER_REV(COMMON, 2, 0, 99)
 
 
 namespace Dumux
@@ -229,10 +238,7 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
     return 3;
 };
 
-///////
-// commented out, because it does not work with dune 2.0
-///////
-#if DUNE_VERSION_NEWER_REV(GRID, 2, 0, 99)
+#if HAVE_DUNE21 //DUNE_VERSION_NEWER_REV(COMMON, 2, 0, 99)
 // requires DUNE 2.1 and above
 
 /*!
@@ -329,7 +335,7 @@ int startFromInputFile(int argc, char **argv)
 
    return 3;
 }
-#endif // DUNE_VERSION_NEWER_REV(GRID, 2, 0, 99)
+#endif // DUNE_VERSION_NEWER_REV(COMMON, 2, 0, 99)
 
 }
 
