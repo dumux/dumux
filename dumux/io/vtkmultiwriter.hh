@@ -212,7 +212,9 @@ public:
     DUNE_DEPRECATED // use attachVertexData() instead!
     void addVertexData(DataArray *field, const char *name, int nComps=1)
     {
-      curWriter_->addVertexData(*field, name);
+        // the old way to set the number of components was broken, so
+        // we always use 1.
+        attachVertexData(*field, name, /*nComps=*/1);
     }
 
     /*!
@@ -248,7 +250,9 @@ public:
     DUNE_DEPRECATED // use attachCellData() instead
     void addCellData(VectorField *field, const char *name, int nComps = 1)
     {
-        curWriter_->addCellData(*field, name);
+        // the old way to set the number of components was broken, so
+        // we always use 1.
+        attachCellData(*field, name, /*nComps=*/1);
     }
 
     /*!
