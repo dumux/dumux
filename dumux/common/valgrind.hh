@@ -68,8 +68,17 @@ namespace Valgrind
 template <class T>
 inline bool CheckDefined(const T &value)
 {
-#if HAVE_VALGRIND
+#if !defined NDEBUG && HAVE_VALGRIND
     unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
+    return tmp == 0;
+#endif
+}
+
+template <class T>
+inline bool CheckDefined(const T *value, int size)
+{
+#if !defined NDEBUG && HAVE_VALGRIND
+    unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(value, size*sizeof(T));
     return tmp == 0;
 #endif
 }
@@ -84,8 +93,16 @@ inline bool CheckDefined(const T &value)
 template <class T>
 inline void SetUndefined(const T &value)
 {
-#if HAVE_VALGRIND
+#if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_UNDEFINED(&value, sizeof(T));
+#endif
+}
+
+template <class T>
+inline void SetUndefined(const T *value, int size)
+{
+#if !defined NDEBUG && HAVE_VALGRIND
+    VALGRIND_MAKE_MEM_UNDEFINED(value, size*sizeof(T));
 #endif
 }
 
@@ -99,8 +116,16 @@ inline void SetUndefined(const T &value)
 template <class T>
 inline void SetDefined(const T &value)
 {
-#if HAVE_VALGRIND
+#if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_DEFINED(&value, sizeof(T));
+#endif
+}
+
+template <class T>
+inline void SetDefined(const T *value, int n)
+{
+#if !defined NDEBUG && HAVE_VALGRIND
+    VALGRIND_MAKE_MEM_DEFINED(value, n*sizeof(T));
 #endif
 }
 
@@ -114,8 +139,16 @@ inline void SetDefined(const T &value)
 template <class T>
 inline void SetNoAccess(const T &value)
 {
-#if HAVE_VALGRIND
+#if !defined NDEBUG && HAVE_VALGRIND
     VALGRIND_MAKE_MEM_NOACCESS(&value, sizeof(T));
+#endif
+}
+
+template <class T>
+inline void SetNoAccess(const T *value, int n)
+{
+#if !defined NDEBUG && HAVE_VALGRIND
+    VALGRIND_MAKE_MEM_NOACCESS(value, n*sizeof(T));
 #endif
 }
 
