@@ -754,15 +754,13 @@ protected:
     //! Returns the applied VTK-writer for the output
     VtkMultiWriter& resultWriter()
     {
-        if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        createResultWriter_();
         return *resultWriter_;
     }
     //! \copydoc Dumux::IMPETProblem::resultWriter()
     VtkMultiWriter& resultWriter() const
     {
-        if (!resultWriter_)
-            resultWriter_ = new VtkMultiWriter(asImp_().name());
+        createResultWriter_();
         return *resultWriter_;
     }
 
