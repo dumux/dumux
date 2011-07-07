@@ -267,7 +267,6 @@ public:
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
-#if 0
         // add diffusive flux of gas component in liquid phase
         Scalar tmp =
             - vars.porousDiffCoeff(lPhaseIdx) *
@@ -283,7 +282,6 @@ public:
             (vars.molarConcGrad(gPhaseIdx) * vars.face().normal);
         flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
         flux[contiGEqIdx] -= tmp * FluidSystem::molarMass(gCompIdx);
-#endif
     }
 
     /*!
