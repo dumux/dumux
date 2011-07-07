@@ -173,13 +173,31 @@ public:
         return;
     }
 
+    void setPressureHard(Scalar pressure, int globalIdx)
+    {
+        setPressHard_ = true;
+        pressHard_ = pressure;
+        idxPressHard_ = globalIdx;
+    }
+
+    void unsetPressureHard(int globalIdx)
+    {
+        setPressHard_ = false;
+        pressHard_ = 0.0;
+        idxPressHard_ = 0.0;
+    }
+
     //! Constructs a FVPressure1P object
     /**
      * \param problem a problem class object
      */
     FVPressure1P(Problem& problem) :
         problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (2 * dim + 1)
-                * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()), gravity(
+                * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()),
+                pressHard_(0),
+                idxPressHard_(0),
+                setPressHard_(false),
+                gravity(
                 problem.gravity())
     {
         initializeMatrix();
@@ -189,6 +207,9 @@ private:
     Problem& problem_;
     Matrix A_;
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > f_;
+    Scalar pressHard_;
+    Scalar idxPressHard_;
+    bool setPressHard_;
 protected:
     const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
 };
@@ -444,6 +465,13 @@ void FVPressure1P<TypeTag>::solve()
 
     if (verboseLevelSolver)
         std::cout << "FVPressure1P: solve for pressure" << std::endl;
+
+    if (setPressHard_)
+    {
+        A_[idxPressHard_] = 0;
+        A_[idxPressHard_][idxPressHard_] = 1;
+        f_[idxPressHard_] = pressHard_;
+    }
 
     Solver solver(problem_);
     solver.solve(A_, problem_.variables().pressure(), f_);

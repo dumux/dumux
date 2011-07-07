@@ -105,10 +105,8 @@ public:
     {
         ParentType::addOutputVtkFields(writer);
 
-        typename Variables::ScalarSolutionType *velocityX = writer.allocateManagedBuffer (
-                this->problem().gridView().size(0));
-        typename Variables::ScalarSolutionType *velocityY = writer.allocateManagedBuffer (
-                this->problem().gridView().size(0));
+        Dune::BlockVector<Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar, dim> (
+                this->problem().gridView().size(0)));
 
         // compute update vector
         ElementIterator eItEnd = this->problem().gridView().template end<0>();
@@ -149,12 +147,10 @@ public:
             jacobianT.umtv(refVelocity, elementVelocity);
             elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-            (*velocityX)[globalIdx] = elementVelocity[0];
-            (*velocityY)[globalIdx] = elementVelocity[1];
+            velocity[globalIdx] = elementVelocity;
         }
 
-        writer.attachCellData(*velocityX, "x-velocity");
-        writer.attachCellData(*velocityY, "y-velocity");
+        writer.attachCellData(velocity, "velocity");
 
         return;
     }
