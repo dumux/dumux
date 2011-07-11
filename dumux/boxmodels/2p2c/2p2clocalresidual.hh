@@ -33,11 +33,8 @@
 #include <dumux/common/math.hh>
 
 #include "2p2cproperties.hh"
-
 #include "2p2cvolumevariables.hh"
-
 #include "2p2cfluxvariables.hh"
-
 #include "2p2cnewtoncontroller.hh"
 
 #include <iostream>
@@ -121,6 +118,8 @@ protected:
 
     static constexpr Scalar mobilityUpwindAlpha =
             GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
+    static constexpr unsigned int replaceCompEqIdx =
+            GET_PROP_VALUE(TypeTag, PTAG(ReplaceCompEqIdx));
 
 public:
     /*!
@@ -174,15 +173,21 @@ public:
 
         // compute storage term of all components within all phases
         result = 0;
+
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
             {
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
                 result[eqIdx] += volVars.density(phaseIdx)
                         * volVars.saturation(phaseIdx)
                         * volVars.fluidState().massFrac(phaseIdx, compIdx);
             }
+            // this is only processed, if one component mass balance equation
+            // is replaced by a total mass balance equation
+            if (replaceCompEqIdx < numComponents)
+                result[replaceCompEqIdx] += volVars.density(phaseIdx)
+                        * volVars.saturation(phaseIdx);
         }
         result *= volVars.porosity();
     }
@@ -230,7 +235,7 @@ public:
             const VolumeVariables &dn =
                 this->curVolVars_(vars.downstreamIdx(phaseIdx));
 
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
             {
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
                 // add advective flux of current component in current
@@ -247,6 +252,7 @@ public:
                             - mobilityUpwindAlpha) * (dn.density(phaseIdx)
                             * dn.mobility(phaseIdx) * dn.fluidState().massFrac(
                             phaseIdx, compIdx));
+
                 Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
                 Valgrind::CheckDefined(up.mobility(phaseIdx));
@@ -255,6 +261,29 @@ public:
                 Valgrind::CheckDefined(dn.mobility(phaseIdx));
                 Valgrind::CheckDefined(dn.fluidState().massFrac(phaseIdx, compIdx));
             }
+            // flux of the total mass balance;
+            // this is only processed, if one component mass balance equation
+            // is replaced by a total mass balance equation
+            if (replaceCompEqIdx < numComponents)
+            {
+                // upstream vertex
+                if (mobilityUpwindAlpha > 0.0)
+                    flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx)
+                            * mobilityUpwindAlpha *
+                            (up.density(phaseIdx) * up.mobility(phaseIdx));
+                // downstream vertex
+                if (mobilityUpwindAlpha < 1.0)
+                    flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx) * (1
+                            - mobilityUpwindAlpha) * (dn.density(phaseIdx)
+                            * dn.mobility(phaseIdx));
+                Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
+                Valgrind::CheckDefined(up.density(phaseIdx));
+                Valgrind::CheckDefined(up.mobility(phaseIdx));
+                Valgrind::CheckDefined(dn.density(phaseIdx));
+                Valgrind::CheckDefined(dn.mobility(phaseIdx));
+
+            }
+
         }
     }
 
@@ -272,16 +301,22 @@ public:
             - vars.porousDiffCoeff(lPhaseIdx) *
             vars.molarDensityAtIP(lPhaseIdx) *
             (vars.molarConcGrad(lPhaseIdx) * vars.face().normal);
-        flux[contiGEqIdx] += tmp * FluidSystem::molarMass(gCompIdx);
-        flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
+        // add the diffusive fluxes only to the component mass balance
+        if (replaceCompEqIdx != contiGEqIdx)
+            flux[contiGEqIdx] += tmp * FluidSystem::molarMass(gCompIdx);
+        if (replaceCompEqIdx != contiLEqIdx)
+            flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
 
         // add diffusive flux of liquid component in gas phase
         tmp =
             - vars.porousDiffCoeff(gPhaseIdx) *
             vars.molarDensityAtIP(gPhaseIdx) *
             (vars.molarConcGrad(gPhaseIdx) * vars.face().normal);
-        flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
-        flux[contiGEqIdx] -= tmp * FluidSystem::molarMass(gCompIdx);
+        // add the diffusive fluxes only to the component mass balance
+        if (replaceCompEqIdx != contiLEqIdx)
+            flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
+        if (replaceCompEqIdx != contiGEqIdx)
+            flux[contiGEqIdx] -= tmp * FluidSystem::molarMass(gCompIdx);
     }
 
     /*!
@@ -323,6 +358,35 @@ protected:
         }
     }
 
+    /*!
+     * \brief Return the equation index of the first mass balance equation
+     *        of the component (used for loops); if one component mass balance
+     *        is replaced by the total mass balance, this is the index
+     *        of the remaining component mass balance equation.
+     */
+    constexpr unsigned int contiCompIdx1_() const {
+        switch (replaceCompEqIdx)
+        {
+            case contiLEqIdx: return contiGEqIdx;
+            case contiGEqIdx: return contiLEqIdx;
+            default:          return 0;
+        }
+    }
+
+    /*!
+     * \brief Return the equation index of the second mass balance
+     *        of the component (used for loops);
+     *        if one component mass balance is replaced by the total mass balance
+     *        (replaceCompEqIdx < 2), this index is the same as contiCompIdx1().
+     */
+    constexpr unsigned int contiCompIdx2_() const {
+        switch (replaceCompEqIdx)
+        {
+            case contiLEqIdx: return contiGEqIdx;
+            case contiGEqIdx: return contiLEqIdx;
+            default:          return numComponents-1;
+        }
+    }
 
     Implementation *asImp_()
     {

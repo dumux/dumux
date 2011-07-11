@@ -91,6 +91,9 @@ SET_INT_PROP(BoxTwoPTwoC,
              Formulation,
              TwoPTwoCFormulation::plSg);
 
+//! set as default that no component mass balance is replaced by the total mass balance
+SET_INT_PROP(BoxTwoPTwoC, ReplaceCompEqIdx, 2);
+
 /*!
  * \brief Set the property for the material law by retrieving it from
  *        the spatial parameters.

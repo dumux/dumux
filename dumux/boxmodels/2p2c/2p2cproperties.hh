@@ -61,6 +61,7 @@ NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extrac
 
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
+NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
 }
 }
 
