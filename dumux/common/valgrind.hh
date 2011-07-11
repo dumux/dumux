@@ -72,6 +72,7 @@ inline bool CheckDefined(const T &value)
     unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
     return tmp == 0;
 #endif
+    return 0;
 }
 
 template <class T>
@@ -81,6 +82,7 @@ inline bool CheckDefined(const T *value, int size)
     unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(value, size*sizeof(T));
     return tmp == 0;
 #endif
+    return 0;
 }
 
 /*!
