@@ -115,7 +115,7 @@ public:
                 << coarsened_ << " to be coarsened." << std::endl;
 
         /****  3) Put primary variables in a map         *********/
-        problem_.variables().storePrimVars();
+        problem_.variables().storePrimVars(problem_);
 
         /****  4) Adapt Grid and size of variable vectors    *****/
         problem_.grid().preAdapt();
@@ -130,7 +130,7 @@ public:
         problem_.variables().adaptVariableSize(problem_.variables().elementMapper().size());
 
         /****  5) (Re-)construct primary variables to new grid **/
-        problem_.variables().reconstructPrimVars();
+        problem_.variables().reconstructPrimVars(problem_);
         // delete markers in grid
         problem_.grid().postAdapt();
         // adapt secondary variables
@@ -218,7 +218,7 @@ public:
      *
      * @return levelMax_ maximum level for refinement
      */
-    int getMaxLevel() const
+    const int getMaxLevel() const
     {
         return levelMax_;
     }
@@ -227,7 +227,7 @@ public:
      *
      * @return levelMin_ minimum level for coarsening
      */
-    int getMinLevel() const
+    const int getMinLevel() const
     {
         return levelMin_;
     }
