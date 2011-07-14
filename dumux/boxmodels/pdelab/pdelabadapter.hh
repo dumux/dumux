@@ -66,6 +66,9 @@ NEW_PROP_TAG(ScalarGridFunctionSpace);
 //! Specifies the grid function space used for sub-problems
 NEW_PROP_TAG(GridFunctionSpace);
 
+//! Specifies the grid operator used for sub-problems
+NEW_PROP_TAG(GridOperator);
+
 //! Specifies the grid operator space used for sub-problems
 NEW_PROP_TAG(GridOperatorSpace);
 
@@ -125,6 +128,7 @@ SET_PROP(BoxPDELab, LocalOperator)
 { typedef Dumux::PDELab::BoxLocalOperator<TypeTag> type; };
 
 // set the grid operator space used for submodels
+// DEPRECATED: use GridOperator instead
 SET_PROP(BoxPDELab, GridOperatorSpace)
 {
 private:
