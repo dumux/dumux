@@ -32,9 +32,10 @@
 
 #include <dune/pdelab/backend/istlmatrixbackend.hh>
 #include <dune/pdelab/finiteelementmap/q1fem.hh>
+#include <dune/pdelab/finiteelementmap/conformingconstraints.hh>
+#include <dune/pdelab/backend/istlvectorbackend.hh>
 #include "pdelabboxistlvectorbackend.hh"
 #include "pdelabboxlocaloperator.hh"
-
 
 namespace Dumux
 {
@@ -107,7 +108,7 @@ public:
     typedef Dune::PDELab::PowerGridFunctionSpace<ScalarGridFunctionSpace, numEq, Dune::PDELab::GridFunctionSpaceBlockwiseMapper> type;
 };
 
-// set the grid functions space for the sub-models
+// set the grid function space for the sub-models
 SET_TYPE_PROP(BoxPDELab, Constraints, Dune::PDELab::NoConstraints);
 
 // set the grid functions space for the sub-models
