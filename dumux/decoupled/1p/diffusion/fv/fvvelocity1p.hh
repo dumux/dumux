@@ -150,7 +150,7 @@ public:
             velocity[globalIdx] = elementVelocity;
         }
 
-        writer.attachCellData(velocity, "velocity");
+        writer.attachCellData(velocity, "velocity", dim);
 
         return;
     }
