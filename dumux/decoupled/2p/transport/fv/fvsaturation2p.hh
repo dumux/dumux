@@ -161,7 +161,7 @@ public:
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing a CFL condition.
      */
-    virtual int update(const Scalar t, Scalar& dt,
+    int update(const Scalar t, Scalar& dt,
             RepresentationType& updateVec, bool impes);
 
     //! Sets the initial solution \f$S_0\f$.
@@ -219,7 +219,7 @@ public:
      */
 
     FVSaturation2P(Problem& problem) :
-        problem_(problem), switchNormals_(false)
+        problem_(problem), switchNormals_(false), threshold_(1e-6)
     {
         if (compressibility_ && velocityType_ == vt)
         {
@@ -269,6 +269,8 @@ private:
     static const int pressureType_ =
             GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
     bool switchNormals_;
+
+    const Scalar threshold_;
 };
 
 template<class TypeTag>
@@ -824,6 +826,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                         //add cflFlux for time-stepping
                         evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
                                 viscosityWI, viscosityNWI, factor, *isIt);
+                        break;
                     }
                     case vw:
                     {
@@ -892,6 +895,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                         //add cflFlux for time-stepping
                         evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
                                 viscosityWI, viscosityNWI, factor, *isIt);
+                        break;
                     }
                     case vw:
                     {
@@ -936,7 +940,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 break;
             }
             }
-            source = (sat > 0) ? problem_.source(globalPos, *eIt)[wPhaseIdx] / densityWI : 0.0;
+            source = problem_.source(globalPos, *eIt)[wPhaseIdx] / densityWI;
+            if (source < 0 && sat < threshold_)
+                source = 0.0;
+
             break;
         }
         case vn:
@@ -955,7 +962,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 break;
             }
             }
-            source =  (sat > 0) ? problem_.source(globalPos, *eIt)[nPhaseIdx] / densityNWI : 0.0;
+            source = problem_.source(globalPos, *eIt)[nPhaseIdx] / densityNWI;
+            if (source < 0 && sat < threshold_)
+                source = 0.0;
+
             break;
         }
         case vt:
