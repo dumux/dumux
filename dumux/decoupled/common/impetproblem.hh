@@ -252,7 +252,7 @@ public:
      * \brief Sets the current time step size [seconds].
      */
     void setTimeStepSize(Scalar dt)
-    { return timeManager_.setTimeStepSize(dt); }
+    { timeManager_.setTimeStepSize(dt); }
 
     /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
@@ -359,13 +359,12 @@ public:
      */
     Grid &grid()
     {
-        if (grid_)
+        if (!grid_)
         {
-            return *grid_;
-        }
-        else
             DUNE_THROW(Dune::InvalidStateException, "Grid was called in problemclass, "
                 << "although it is not specified. Do so by using setGrid() method!");
+        }
+        return *grid_;
     }
     /*!
      * \brief Specifies the grid from outside the problem.
