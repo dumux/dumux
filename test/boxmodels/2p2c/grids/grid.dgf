@@ -1,0 +1,13 @@
+DGF
+Interval
+0 0   % first corner 
+1000 50   % second corner
+20 1   % 24 cells in x and 16 in y direction
+#
+GridParameter
+closure NONE
+BOUNDARYDOMAIN
+default 1    % all boundaries have id 1
+#BOUNDARYDOMAIN
+# unitcube.dgf 
+
