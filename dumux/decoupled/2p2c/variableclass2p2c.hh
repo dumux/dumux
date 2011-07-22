@@ -48,7 +48,7 @@ private:
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     typedef VariableClass<TypeTag> ParentClass;
 
@@ -230,7 +230,7 @@ public:
             ScalarSolutionType *saturation = writer.allocateManagedBuffer (size_);
             *pressure = this->pressure();
             *saturation = saturation_;
-            if (GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)) == GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW)
+            if (GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)) == GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureW)
                 writer.attachCellData(*pressure, "pressure w_phase");
             else
                 writer.attachCellData(*pressure, "pressure nw_phase");
@@ -582,6 +582,11 @@ public:
     double& perimeter(int Idx)
     {
         return perimeter_[Idx][0];
+    }
+    //! Returs a reference to the perimeter vector
+    const ScalarSolutionType& perimeter() const
+    {
+        return perimeter_;
     }
     //@}
 };

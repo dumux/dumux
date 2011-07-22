@@ -80,10 +80,10 @@ SET_PROP(TestMultTwoPTwoCProblem, PressureModel)
 };
 
 SET_INT_PROP(TestMultTwoPTwoCProblem, VelocityFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityW);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::velocityW);
 
 SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureW);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureW);
 
 //// Select fluid system
 //SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
@@ -119,7 +119,7 @@ public:
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);
 SET_INT_PROP(DecoupledTwoPTwoC,
         BoundaryMobility,
-        TwoPCommonIndices<TypeTag>::satDependent);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::satDependent);
 SET_SCALAR_PROP(TestMultTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
@@ -147,7 +147,7 @@ typedef TestMultTwoPTwoCProblem<TypeTag> ThisType;
 typedef IMPETProblem2P2C<TypeTag, ThisType> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;

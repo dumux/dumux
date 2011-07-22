@@ -33,7 +33,7 @@
 #include <dune/istl/preconditioners.hh>
 
 //DUMUX includes
-#include <dumux/decoupled/common/impetproperties.hh>
+#include <dumux/decoupled/2p/2pproperties.hh>
 
 namespace Dumux
 {
@@ -50,7 +50,7 @@ template<class TypeTag>
 class DecTwoPTwoCFluidState;
 
 template <class TypeTag>
-struct TwoPCommonIndices;
+struct TwoPTwoCIndices;
 
 ////////////////////////////////
 // properties
@@ -69,7 +69,7 @@ NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(IMPET));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG ( TwoPIndices );
+NEW_PROP_TAG ( TwoPTwoCIndices );
 NEW_PROP_TAG( SpatialParameters ); //!< The type of the soil properties object
 NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
@@ -85,9 +85,9 @@ NEW_PROP_TAG( mpfa ); // Two-point flux approximation (false) or mpfa (true)
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-SET_PROP(DecoupledTwoPTwoC, TwoPIndices)
+SET_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices)
 {
-  typedef TwoPCommonIndices<TypeTag> type;
+  typedef TwoPTwoCIndices<TypeTag> type;
 };
 
 // set fluid/component information
@@ -117,15 +117,15 @@ public:
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoPTwoC,
         PressureFormulation,
-        TwoPCommonIndices<TypeTag>::pressureW);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureW);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         SaturationFormulation,
-        TwoPCommonIndices<TypeTag>::saturationW);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::saturationW);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         VelocityFormulation,
-        TwoPCommonIndices<TypeTag>::velocityW);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::velocityW);
 
 SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 {
@@ -141,7 +141,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
 
 SET_PROP_DEFAULT(BoundaryMobility)
 {
-    static const int value = TwoPCommonIndices<TypeTag>::satDependent;
+    static const int value = TwoPTwoCIndices<TypeTag>::satDependent;
 };
 SET_PROP_DEFAULT(NumDensityTransport)
 {
@@ -157,32 +157,18 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, mpfa, false);
 }
 
 /*!
- * \brief The common indices for the 2p2c are the same as for the two-phase model.
+ * \brief The common indices for the 2p2c model.
+ *
+ * The indices are all of the 2p model plus boundary condition flags
+ * distinguishing between given composition or saturation on the boundary.
  */
 template <class TypeTag>
-struct TwoPCommonIndices
+struct TwoPTwoCIndices : TwoPCommonIndices<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
 public:
-    // Formulations
-    //saturation flags
-    static const int saturationW = 0;
-    static const int saturationNW = 1;
-    //pressure flags
-    static const int pressureW = 0;
-    static const int pressureNW = 1;
-    static const int pressureGlobal = 2;
-    //velocity flags
-    static const int velocityW = 0;
-    static const int velocityNW = 1;
-    static const int velocityTotal = 2;
-
-    // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase in a phase vector
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase in a phase vector
-
     // BoundaryCondition flags
     static const int satDependent = 0;
     static const int permDependent = 1;

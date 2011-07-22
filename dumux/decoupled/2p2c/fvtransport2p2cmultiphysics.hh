@@ -60,7 +60,7 @@ class FVTransport2P2CMultiPhysics
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;

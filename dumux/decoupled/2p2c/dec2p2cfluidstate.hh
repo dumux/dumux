@@ -47,7 +47,7 @@ class DecTwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
 
 
