@@ -84,7 +84,7 @@ public:
             Scalar M0 = FluidSystem::molarMass(comp0Idx);
             Scalar M1 = FluidSystem::molarMass(comp1Idx);
             //meanMolarMass if x1_ is a massfraction
-            meanMolarMass_ = M0*M1/(M1 + (1-x1_)*(M0 - M1));
+            meanMolarMass_ = M0*M1/(M1 + x1_*(M0 - M1));
         }
         else //mole-fraction formulation
         {
