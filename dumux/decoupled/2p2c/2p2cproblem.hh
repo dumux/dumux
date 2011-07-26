@@ -45,9 +45,11 @@ namespace Dumux
  * in the specific problem.
  */
 template<class TypeTag, class Implementation>
-class IMPETProblem2P2C : public IMPETProblem<TypeTag, Implementation>
+class IMPETProblem2P2C : public IMPETProblem<TypeTag>
 {
-    typedef IMPETProblem<TypeTag, Implementation> ParentType;
+    typedef IMPETProblem<TypeTag> ParentType;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid                         Grid;
@@ -74,7 +76,42 @@ public:
      * \param gridView The grid view
      * \param verbose Output flag for the time manager.
      */
+    IMPETProblem2P2C(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView),
+        gravity_(0)
+    {
+        newSpatialParams_ = true;
+        spatialParameters_ = new SpatialParameters(gridView);
+
+        gravity_ = 0;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+            gravity_[dim - 1] = - 9.81;
+    }
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
+     * \param verbose Output flag for the time manager.
+     */
+    IMPETProblem2P2C(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
+        : ParentType(timeManager, gridView),
+        gravity_(0),spatialParameters_(&spatialParameters)
+    {
+        newSpatialParams_ = false;
+        gravity_ = 0;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+            gravity_[dim - 1] = - 9.81;
+    }
+
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param verbose Output flag for the time manager.
+     */
     IMPETProblem2P2C(const GridView &gridView, bool verbose = true)
+    DUNE_DEPRECATED // use IMPETProblem2P2C(TimeManager&, const GridView &)
         : ParentType(gridView, verbose),
         gravity_(0)
     {
@@ -93,6 +130,7 @@ public:
      * \param verbose Output flag for the time manager.
      */
     IMPETProblem2P2C(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
+    DUNE_DEPRECATED // use IMPETProblem2P2C(TimeManager&, const GridView &)
         : ParentType(gridView, verbose),
         gravity_(0),spatialParameters_(&spatialParameters)
     {

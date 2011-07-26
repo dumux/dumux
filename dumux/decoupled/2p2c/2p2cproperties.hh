@@ -90,6 +90,8 @@ SET_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices)
   typedef TwoPTwoCIndices<TypeTag> type;
 };
 
+SET_INT_PROP(DecoupledTwoP, NumEq, 2);
+
 // set fluid/component information
 SET_PROP(DecoupledTwoPTwoC, NumPhases) //!< The number of phases in the 2p model is 2
 {
@@ -163,7 +165,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, mpfa, false);
  * distinguishing between given composition or saturation on the boundary.
  */
 template <class TypeTag>
-struct TwoPTwoCIndices : TwoPCommonIndices<TypeTag>
+struct TwoPTwoCIndices : TwoPCommonIndicesDecoupled<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;

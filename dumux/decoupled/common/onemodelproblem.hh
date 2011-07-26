@@ -225,9 +225,9 @@ public:
     {}
 
     //! Write the fields current solution into an VTK output file.
-    void writeOutput()
+    void writeOutput(bool verbose = true)
     {
-        if (gridView().comm().rank() == 0)
+        if (verbose && gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
         if (!resultWriter_)
             resultWriter_ = new VtkMultiWriter(gridView(), asImp_().name());

@@ -24,7 +24,6 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
-#include <dumux/common/timemanager.hh>
 #include <dumux/decoupled/common/gridadapt.hh>
 
 /**
@@ -42,13 +41,15 @@ namespace Dumux
  *  \tparam TypeTag      problem TypeTag
  *  \tparam Implementation problem implementation
  */
-template<class TypeTag, class Implementation>
+template<class TypeTag>
 class IMPETProblem
 {
 private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef Dumux::TimeManager<TypeTag>  TimeManager;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
@@ -75,30 +76,81 @@ private:
         wetting = 0, nonwetting = 1,
         adaptiveGrid = GET_PROP_VALUE(TypeTag, PTAG(AdaptiveGrid))
     };
-    typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Intersection Intersection;
     // The module to adapt grid. If adaptiveGrid is false, this model does nothing.
     typedef GridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
+
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)
     {}
 
 public:
-
     //! Constructs an object of type IMPETProblemProblem
     /** @param gridView gridview to the grid.
      *  @param verbose verbosity.
      */
     IMPETProblem(const GridView &gridView, bool verbose = true)
+    DUNE_DEPRECATED // use IMPETProblem(TimeManager&, const GridView&)
         : gridView_(gridView),
           grid_(0),
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
-          timeManager_(verbose),
           variables_(gridView),
           outputInterval_(1)
+    {
+        // calculate the bounding box of the grid view
+        VertexIterator vIt = gridView.template begin<dim>();
+        const VertexIterator vEndIt = gridView.template end<dim>();
+        for (; vIt!=vEndIt; ++vIt) {
+            for (int i=0; i<dim; i++) {
+                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().center()[i]);
+                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
+            }
+        }
+
+#if HAVE_MPI
+        // communicate to get the bounding box of the whole domain
+        for (int i = 0; i < dim; ++i) {
+            bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
+            bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+        };
+#endif
+
+        timeManager_ = new TimeManager(verbose);
+        deleteTimeManager_ = true;
+
+        pressModel_ = new PressureModel(asImp_());
+
+        transportModel_ = new TransportModel(asImp_());
+        model_ = new IMPETModel(asImp_()) ;
+
+        // create an Object to handle adaptive grids
+        if (adaptiveGrid)
+            gridAdapt_ = new GridAdaptModel(asImp_());
+
+        resultWriter_ = NULL;
+    }
+
+    //! Constructs an object of type IMPETProblemProblem
+    /** @param gridView gridview to the grid.
+     *  @param verbose verbosity.
+     */
+    IMPETProblem(TimeManager &timeManager, const GridView &gridView)
+        : gridView_(gridView),
+          grid_(0),
+          bboxMin_(std::numeric_limits<double>::max()),
+          bboxMax_(-std::numeric_limits<double>::max()),
+          timeManager_(&timeManager),
+          variables_(gridView),
+          outputInterval_(1),
+          deleteTimeManager_(false)
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -137,6 +189,182 @@ public:
         delete transportModel_;
         delete model_;
         delete resultWriter_;
+        if (deleteTimeManager_)
+            delete timeManager_;
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param bcTypes The boundary types for the conservation equations
+     * \param intersection The intersection for which the boundary type is set
+     */
+    void boundaryTypes(BoundaryTypes &bcTypes,
+                       const Intersection &intersection) const
+    {
+        // forward it to the method which only takes the global coordinate
+        asImp_().generalBoundaryTypes(bcTypes, intersection.geometry().center());
+    }
+
+    /*!
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     *
+     * \param bcTypes The boundary types for the conservation equations
+     * \param globalPos The position of the center of the boundary intersection
+     */
+    void generalBoundaryTypes(BoundaryTypes &bcTypes,
+                       const GlobalPosition &globalPos) const
+    {
+        // Throw an exception (there is no reasonable default value
+        // for Dirichlet conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a generalBoundaryTypes() method.");
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param intersection The boundary intersection
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void dirichlet(PrimaryVariables &values,
+            const Intersection &intersection) const
+    {
+        // forward it to the method which only takes the global coordinate
+        asImp_().generalDirichlet(values, intersection.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The position of the center of the boundary intersection
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void generalDirichlet(PrimaryVariables &values,
+            const GlobalPosition &globalPos) const
+    {
+        // Throw an exception (there is no reasonable default value
+        // for Dirichlet conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem specifies that some boundary "
+                   "segments are dirichlet, but does not provide "
+                   "a generalDirichlet() method.");
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param intersection The boundary intersection
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
+     */
+    void neumann(PrimaryVariables &values,
+            const Intersection &intersection) const
+    {
+        // forward it to the interface with only the global position
+        asImp_().generalNeumann(values, intersection.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
+     * \param globalPos The position of the center of the boundary intersection
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
+     */
+    void generalNeumann(PrimaryVariables &values,
+            const GlobalPosition &globalPos) const
+    {
+        // Throw an exception (there is no reasonable default value
+        // for Neumann conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem specifies that some boundary "
+                   "segments are neumann, but does not provide "
+                   "a neumann() method.");
+    }
+
+    /*!
+     * \brief Evaluate the source term
+     *
+     * \param values The source and sink values for the conservation equations
+     * \param element The element
+     *
+     * For this method, the \a values parameter stores the rate mass
+     * generated or annihilate per volume unit. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void source(PrimaryVariables &values,
+                const Element &element) const
+    {
+        // forward to generic interface
+        asImp_().generalSource(values, element.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * \param values The source and sink values for the conservation equations
+     * \param globalPos The position of the center of the finite volume
+     *            for which the source term ought to be
+     *            specified in global coordinates
+     *
+     * For this method, the \a values parameter stores the rate mass
+     * generated or annihilate per volume unit. Positive values mean
+     * that mass is created, negative ones mean that it vanishes.
+     */
+    void generalSource(PrimaryVariables &values,
+            const GlobalPosition &globalPos) const
+    { values = Scalar(0.0);  }
+
+    /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The initial values for the primary variables
+     * \param element The element
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
+     */
+    void initial(PrimaryVariables &values,
+                 const Element &element) const
+    {
+        // forward to generic interface
+        asImp_().generalInitial(values, element.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The position of the center of the finite volume
+     *            for which the initial values ought to be
+     *            set (in global coordinates)
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void generalInitial(PrimaryVariables &values,
+            const GlobalPosition &globalPos) const
+    {
+        // Throw an exception (there is no initial condition)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a initial() method.");
     }
 
     /*!
@@ -246,13 +474,13 @@ public:
      * \brief Returns the current time step size [seconds].
      */
     Scalar timeStepSize() const
-    { return timeManager_.timeStepSize(); }
+    { return timeManager().timeStepSize(); }
 
     /*!
      * \brief Sets the current time step size [seconds].
      */
     void setTimeStepSize(Scalar dt)
-    { timeManager_.setTimeStepSize(dt); }
+    { timeManager().setTimeStepSize(dt); }
 
     /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
@@ -260,7 +488,7 @@ public:
      *        been updated.
      */
     Scalar nextTimeStepSize(Scalar dt)
-    { return timeManager_.timeStepSize();}
+    { return timeManager().timeStepSize();}
 
     /*!
      * \brief Returns the maximum allowed time step size [s]
@@ -343,7 +571,7 @@ public:
      *
      * \param newName The problem's name
      */
-    static void setName(const char *newName)
+    void setName(const char *newName)
     {
         simname_ = newName;
     }
@@ -419,11 +647,11 @@ public:
      * \brief Returns TimeManager object used by the simulation
      */
     TimeManager &timeManager()
-    { return timeManager_; }
+    { return *timeManager_; }
 
     //! \copydoc Dumux::IMPETProblem::timeManager()
     const TimeManager &timeManager() const
-    { return timeManager_; }
+    { return *timeManager_; }
 
     /*!
      * \brief Returns variables container
@@ -491,7 +719,7 @@ public:
         res.serializeBegin(asImp_());
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
-        timeManager_.serialize(res);
+        timeManager().serialize(res);
         resultWriter_->serialize(res);
         model().serialize(res);
 
@@ -512,7 +740,7 @@ public:
         res.deserializeBegin(asImp_(), t);
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
-        timeManager_.deserialize(res);
+        timeManager().deserialize(res);
         resultWriter_->deserialize(res);
         model().deserialize(res);
 
@@ -525,16 +753,16 @@ public:
     }
 
     //! Write the fields current solution into an VTK output file.
-    void writeOutput()
+    void writeOutput(bool verbose = true)
     {
-        if (gridView().comm().rank() == 0)
+        if (verbose && gridView().comm().rank() == 0)
             std::cout << "Writing result file for current time step\n";
 
         if (!resultWriter_)
             resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
         if (GET_PROP_VALUE(TypeTag,PTAG(AdaptiveGrid)))
             resultWriter_->gridChanged();
-        resultWriter_->beginWrite(timeManager_.time() + timeManager_.timeStepSize());
+        resultWriter_->beginWrite(timeManager().time() + timeManager().timeStepSize());
         model().addOutputVtkFields(*resultWriter_);
         asImp_().addOutputVtkFields();
         resultWriter_->endWrite();
@@ -567,7 +795,7 @@ protected:
     }
 
 private:
-    static std::string simname_; // a string for the name of the current simulation,
+    std::string simname_; // a string for the name of the current simulation,
                                   // which could be set by means of an program argument,
                                  // for example.
     const GridView gridView_;
@@ -577,7 +805,8 @@ private:
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
 
-    TimeManager timeManager_;
+    TimeManager *timeManager_;
+    bool deleteTimeManager_;
 
     Variables variables_;
 
@@ -589,9 +818,5 @@ private:
     int outputInterval_;
     GridAdaptModel* gridAdapt_;
 };
-// definition of the static class member simname_,
-// which is necessary because it is of type string.
-template <class TypeTag, class Implementation>
-std::string IMPETProblem<TypeTag, Implementation>::simname_="sim"; //initialized with default "sim"
 }
 #endif

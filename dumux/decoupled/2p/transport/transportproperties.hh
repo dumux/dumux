@@ -38,7 +38,7 @@ template<class TypeTag>
 class ConvectivePart;
 
 template<class TypeTag>
-class TwoPCommonIndices;
+class TwoPCommonIndicesDecoupled;
 
 template<class TypeTag>
 class FluidSystem2P;
@@ -87,13 +87,13 @@ SET_TYPE_PROP(Transport, ConvectivePart, ConvectivePart<TypeTag>);
 SET_TYPE_PROP(Transport, Variables, VariableClass2P<TypeTag>);
 SET_INT_PROP(Transport, NumPhases, 2);
 SET_INT_PROP(Transport, NumComponents, 1);
-SET_TYPE_PROP(Transport, TwoPIndices, TwoPCommonIndices<TypeTag>);
+SET_TYPE_PROP(Transport, TwoPIndices, TwoPCommonIndicesDecoupled<TypeTag>);
 SET_TYPE_PROP(Transport, FluidSystem, FluidSystem2P<TypeTag>);
 SET_TYPE_PROP(Transport, FluidState, TwoPFluidState<TypeTag>);
 SET_BOOL_PROP(Transport, EnableCompressibility, false);
-SET_INT_PROP(Transport, PressureFormulation, TwoPCommonIndices<TypeTag>::pressureW);
-SET_INT_PROP(Transport, SaturationFormulation, TwoPCommonIndices<TypeTag>::saturationW);
-SET_INT_PROP(Transport, VelocityFormulation, TwoPCommonIndices<TypeTag>::velocityTotal);
+SET_INT_PROP(Transport, PressureFormulation, TwoPCommonIndicesDecoupled<TypeTag>::pressureW);
+SET_INT_PROP(Transport, SaturationFormulation, TwoPCommonIndicesDecoupled<TypeTag>::saturationW);
+SET_INT_PROP(Transport, VelocityFormulation, TwoPCommonIndicesDecoupled<TypeTag>::velocityTotal);
 SET_TYPE_PROP(Transport, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
 SET_SCALAR_PROP(Transport, CFLFactor, 1.0);
 }

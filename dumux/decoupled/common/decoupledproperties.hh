@@ -62,16 +62,22 @@ NEW_PROP_TAG( AdaptiveGrid); //!< Defines if the grid is h-adaptive
 
 NEW_PROP_TAG( Problem); //!< The type of the problem
 NEW_PROP_TAG( Model); //!< The type of the discretizations
+NEW_PROP_TAG( NumEq ); //!< Number of equations in the system of PDEs
 NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
 NEW_PROP_TAG( NumComponents); //!< Number of components in the system
 NEW_PROP_TAG( Variables); //!< The type of the container of global variables
 NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
+NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
+NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
 }
 }
 
 #include <dumux/common/boundarytypes.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/istl/bvector.hh>
+
+#include <dumux/common/timemanager.hh>
+#include <dumux/common/boundarytypes.hh>
 
 template<class TypeTag>
 class VariableClass;
@@ -116,6 +122,7 @@ SET_PROP(DecoupledModel, SolutionTypes)
     enum
     {
         dim = GridView::dimension,
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
         numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))
     };
@@ -150,6 +157,7 @@ public:
      *
      * This defines the primary and secondary variable vectors at each degree of freedom.
      */
+    typedef Dune::FieldVector<Scalar, numEq> PrimaryVariables;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarSolution;//!<type for vector of scalars
     typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents> ComponentProperty;//!<type for vector of phase properties
     typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> PhaseProperty;//!<type for vector of phase properties
@@ -172,6 +180,19 @@ SET_PROP_DEFAULT(TransportSolutionType)
 
     public:
     typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
+};
+
+//! Set the default type for the time manager
+SET_TYPE_PROP(DecoupledModel, TimeManager, Dumux::TimeManager<TypeTag>);
+
+/*!
+ * \brief Boundary types at a single degree of freedom.
+ */
+SET_PROP(DecoupledModel, BoundaryTypes)
+{ private:
+    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
+public:
+    typedef Dumux::BoundaryTypes<numEq>  type;
 };
 
 // \}

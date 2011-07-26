@@ -30,8 +30,8 @@
  * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
 
-#ifndef DUMUX_2PPROPERTIES_HH
-#define DUMUX_2PPROPERTIES_HH
+#ifndef DUMUX_2PPROPERTIES_DECOUPLED_HH
+#define DUMUX_2PPROPERTIES_DECOUPLED_HH
 
 //Dumux-includes
 #include <dumux/decoupled/common/impetproperties.hh>
@@ -54,7 +54,7 @@ template<class TypeTag>
 class TwoPFluidState;
 
 template<class TypeTag>
-struct TwoPCommonIndices;
+struct TwoPCommonIndicesDecoupled;
 
 ////////////////////////////////
 // properties
@@ -112,37 +112,30 @@ NEW_PROP_TAG(RelaxationPreconditioner);//!< Relaxation factor for preconditioner
 // Properties
 //////////////////////////////////////////////////////////////////
 
-SET_PROP(DecoupledTwoP, NumPhases)
-//!< The number of phases in the 2p model is 2
-{
-private:
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+SET_INT_PROP(DecoupledTwoP, NumEq, 2);
 
-public:
-static const int value = FluidSystem::numPhases;
-static_assert(value == 2,
-        "Only fluid systems with 2 phases are supported by the 2p model!");
-};
+SET_INT_PROP(DecoupledTwoP, NumPhases, 2);//!< The number of phases in the 2p model is 2
+
 SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
 
 SET_PROP(DecoupledTwoP, TwoPIndices)
 {
-typedef TwoPCommonIndices<TypeTag> type;
+typedef TwoPCommonIndicesDecoupled<TypeTag> type;
 };
 
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,
     PressureFormulation,
-    TwoPCommonIndices<TypeTag>::pressureW);
+    TwoPCommonIndicesDecoupled<TypeTag>::pressureW);
 
 SET_INT_PROP(DecoupledTwoP,
     SaturationFormulation,
-    TwoPCommonIndices<TypeTag>::saturationW);
+    TwoPCommonIndicesDecoupled<TypeTag>::saturationW);
 
 SET_INT_PROP(DecoupledTwoP,
     VelocityFormulation,
-    TwoPCommonIndices<TypeTag>::velocityTotal);
+    TwoPCommonIndicesDecoupled<TypeTag>::velocityTotal);
 
 SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
 
@@ -170,12 +163,15 @@ public:
  * \brief The common indices for the two-phase model.
  */
 template <class TypeTag>
-struct TwoPCommonIndices
+struct TwoPCommonIndicesDecoupled
 {
 private:
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
 public:
+//equation idx
+static const int pressureEq = 0;
+static const int saturationEq = 1;
 // Formulations
 //saturation flags
 static const int saturationW = 0;
