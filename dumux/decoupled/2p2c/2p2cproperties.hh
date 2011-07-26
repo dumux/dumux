@@ -90,7 +90,7 @@ SET_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices)
   typedef TwoPTwoCIndices<TypeTag> type;
 };
 
-SET_INT_PROP(DecoupledTwoP, NumEq, 2);
+SET_INT_PROP(DecoupledTwoPTwoC, NumEq, 2);
 
 // set fluid/component information
 SET_PROP(DecoupledTwoPTwoC, NumPhases) //!< The number of phases in the 2p model is 2

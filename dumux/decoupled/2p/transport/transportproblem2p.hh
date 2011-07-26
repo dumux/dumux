@@ -43,13 +43,15 @@ namespace Dumux
  * @tparam Implementation The Problem implementation
  */
 template<class TypeTag, class Implementation>
-class TransportProblem2P : public OneModelProblem<TypeTag, Implementation>
+class TransportProblem2P : public OneModelProblem<TypeTag>
 {
-    typedef OneModelProblem<TypeTag, Implementation> ParentType;
+    typedef OneModelProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -77,7 +79,22 @@ public:
      * \param gridView The grid view
      */
     TransportProblem2P(const GridView &gridView)
+    DUNE_DEPRECATED // use TransportProblem2P(TimeManager&, const GridView&)
         : ParentType(gridView),
+        gravity_(0),spatialParameters_(gridView)
+    {
+        gravity_ = 0;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+            gravity_[dim - 1] = - 9.81;
+    }
+
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     */
+    TransportProblem2P(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView),
         gravity_(0),spatialParameters_(gridView)
     {
         gravity_ = 0;

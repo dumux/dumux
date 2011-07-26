@@ -85,6 +85,7 @@ NEW_PROP_TAG( CFLFactor );
 SET_TYPE_PROP(Transport, DiffusivePart, DiffusivePart<TypeTag>);
 SET_TYPE_PROP(Transport, ConvectivePart, ConvectivePart<TypeTag>);
 SET_TYPE_PROP(Transport, Variables, VariableClass2P<TypeTag>);
+SET_INT_PROP(Transport, NumEq, 1);
 SET_INT_PROP(Transport, NumPhases, 2);
 SET_INT_PROP(Transport, NumComponents, 1);
 SET_TYPE_PROP(Transport, TwoPIndices, TwoPCommonIndicesDecoupled<TypeTag>);

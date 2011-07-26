@@ -41,12 +41,14 @@ namespace Dumux
  * @tparam Implementation The Problem implementation
  */
 template<class TypeTag, class Implementation>
-class DiffusionProblem1P: public OneModelProblem<TypeTag, Implementation>
+class DiffusionProblem1P: public OneModelProblem<TypeTag>
 {
-    typedef OneModelProblem<TypeTag, Implementation> ParentType;
+    typedef OneModelProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid Grid;typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
@@ -66,8 +68,9 @@ public:
      * \param gridView The grid view
      * \param verbose Output flag for the time manager.
      */
-    DiffusionProblem1P(const GridView &gridView, bool verbose = true) :
-        ParentType(gridView, verbose), gravity_(0)
+    DiffusionProblem1P(const GridView &gridView, bool verbose = true)
+    DUNE_DEPRECATED // use DiffusionProblem1P(TimeManager&, const GridView&)
+    : ParentType(gridView, verbose), gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
         newSpatialParams_ = true;
@@ -82,8 +85,40 @@ public:
      * \param spatialParameters SpatialParameters instantiation
      * \param verbose Output flag for the time manager.
      */
-    DiffusionProblem1P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true) :
-        ParentType(gridView, verbose), gravity_(0), spatialParameters_(&spatialParameters)
+    DiffusionProblem1P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
+    DUNE_DEPRECATED // use DiffusionProblem1P(TimeManager&, const GridView&, SpatialParameters&)
+    : ParentType(gridView, verbose), gravity_(0), spatialParameters_(&spatialParameters)
+    {
+        newSpatialParams_ = false;
+        gravity_ = 0;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+            gravity_[dim - 1] = -9.81;
+    }
+
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param verbose Output flag for the time manager.
+     */
+    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView) :
+        ParentType(timeManager, gridView), gravity_(0)
+    {
+        spatialParameters_ = new SpatialParameters(gridView);
+        newSpatialParams_ = true;
+        gravity_ = 0;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+            gravity_[dim - 1] = -9.81;
+    }
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
+     * \param verbose Output flag for the time manager.
+     */
+    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters) :
+        ParentType(timeManager, gridView), gravity_(0), spatialParameters_(&spatialParameters)
     {
         newSpatialParams_ = false;
         gravity_ = 0;

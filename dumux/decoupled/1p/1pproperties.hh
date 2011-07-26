@@ -81,6 +81,8 @@ NEW_PROP_TAG( LinearSolver );//!< Type of linear solver
 // Properties
 //////////////////////////////////////////////////////////////////
 
+SET_INT_PROP(DecoupledOneP, NumEq, 1);
+
 SET_INT_PROP(DecoupledOneP, NumPhases, 1)//!< Single phase system
 ;
 SET_INT_PROP(DecoupledOneP, NumComponents, 1); //!< Each phase consists of 1 pure component
