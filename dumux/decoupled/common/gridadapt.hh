@@ -178,11 +178,10 @@ public:
                 LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
                 for(LeafIntersectionIterator is = problem_.gridView().ibegin(*eIt); is != isend; ++is)
                 {
-                    const typename LeafIntersectionIterator::Intersection intersection = *is;
-                    if(!intersection.neighbor())
+                    if(!is->neighbor())
                         continue;
 
-                    const Entity &outside = *intersection.outside();
+                    const Entity &outside = *is->outside();
                     if ((problem_.grid().getMark(outside) > 0)
                             || (outside.level()>eIt.level()))
                         coarsenPossible = false;
@@ -291,11 +290,10 @@ private:
         LeafIntersectionIterator isend = problem_.gridView().iend(entity);
         for(LeafIntersectionIterator is = problem_.gridView().ibegin(entity); is != isend; ++is)
         {
-            const typename LeafIntersectionIterator::Intersection intersection = *is;
-            if(!intersection.neighbor())
+            if(!is->neighbor())
                 continue;
 
-            const Entity &outside =*intersection.outside();
+            const Entity &outside =*is->outside();
             if ((outside.level()<levelMax_)
                     && (outside.level()<entity.level()))
                 {
