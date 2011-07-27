@@ -53,6 +53,7 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
 
         static const int dim = Grid::dimension;
@@ -104,17 +105,17 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
-
-        Problem problem(grid.leafView(), L, H);
+        TimeManager timeManager;
+        Problem problem(timeManager, grid.leafView(), L, H);
 
         // load restart file if necessarry
         if (restart)
             problem.deserialize(restartTime);
 
         // initialize the simulation
-        problem.timeManager().init(problem, 0, firstDt, tEnd, !restart);
+        timeManager.init(problem, 0, firstDt, tEnd, !restart);
         // run the simulation
-        problem.timeManager().run();
+        timeManager.run();
         return 0;
     }
     catch (Dune::Exception &e) {

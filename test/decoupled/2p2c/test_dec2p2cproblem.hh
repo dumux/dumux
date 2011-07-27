@@ -141,7 +141,7 @@ class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag, TestDecTwoPTwoCPr
 typedef TestDecTwoPTwoCProblem<TypeTag> ThisType;
 typedef IMPETProblem2P2C<TypeTag, ThisType> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
@@ -165,8 +165,8 @@ typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
-TestDecTwoPTwoCProblem(const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
-ParentType(gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
+TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
+ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
 {
     // initialize the tables of the fluid system
 //    FluidSystem::init();
