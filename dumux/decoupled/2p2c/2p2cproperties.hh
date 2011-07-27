@@ -81,7 +81,7 @@ NEW_PROP_TAG( BoundaryMobility );
 NEW_PROP_TAG( NumDensityTransport );
 NEW_PROP_TAG( FluidSystem );
 NEW_PROP_TAG( FluidState );
-NEW_PROP_TAG( mpfa ); // Two-point flux approximation (false) or mpfa (true)
+NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); // Two-point flux approximation (false) or mpfa (true)
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -154,7 +154,7 @@ SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass2P2C<TypeTag>);
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecTwoPTwoCFluidState<TypeTag>);
 
-SET_BOOL_PROP(DecoupledTwoPTwoC, mpfa, false);
+SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false);
 
 }
 
