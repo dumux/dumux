@@ -451,7 +451,7 @@ public:
             p.message(ms.str());
             throw p;
         }
-        catch (const Dune::ISTLError &e) {
+        catch (const Dune::Exception &e) {
             // make sure all processes converged
             int converged = 0;
             converged = gridView_().comm().min(converged);
