@@ -26,7 +26,11 @@
 #ifndef DUMUX_BOXLINEARSOLVER_HH
 #define DUMUX_BOXLINEARSOLVER_HH
 
-#include <dumux/common/propertysystem.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
+#include <dune/istl/superlu.hh>
+
+#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/overlappingbcrsmatrix.hh>
 #include <dumux/linear/overlappingblockvector.hh>
@@ -34,80 +38,8 @@
 #include <dumux/linear/overlappingscalarproduct.hh>
 #include <dumux/linear/overlappingoperator.hh>
 
-#include <dune/istl/solvers.hh>
-#include <dune/istl/preconditioners.hh>
-#include <dune/istl/superlu.hh>
-
-namespace Dumux {
-
-namespace Properties
+namespace Dumux
 {
-/*!
- * \brief Specifies the verbosity of the linear solver
- *
- * By default it is 0, i.e. it doesn't print anything. Setting this
- * property to 1 prints aggregated convergence rates, 2 prints the
- * convergence rate of every iteration of the scheme.
- */
-NEW_PROP_TAG(LSVerbosity);
-// the outdated name
-NEW_PROP_TAG(NewtonLinearSolverVerbosity);
-
-//! target reduction of the initial residual
-// if the deflection of the newton method is large, we do not
-// need to solve the linear approximation accurately. Assuming
-// that the initial value for the delta vector u is quite
-// close to the final value, a reduction of 6 orders of
-// magnitude in the defect should be sufficient...
-NEW_PROP_TAG(LSResidualReduction);
-
-//! maximum number of iterations of solver
-NEW_PROP_TAG(LSMaxIterations);
-
-//! relaxation parameter for the preconditioner
-NEW_PROP_TAG(PreconditionerRelaxation);
-
-//! number of preconditioner iterations per solver iteration
-NEW_PROP_TAG(PreconditionerIterations);
-
-//! restart parameter for GMRes
-NEW_PROP_TAG(GMResRestart);
-
-SET_PROP_DEFAULT(NewtonLinearSolverVerbosity)
-{public:
-    static constexpr int value = 0;
-};
-
-SET_PROP_DEFAULT(LSVerbosity)
-{public:
-    static constexpr int value = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
-};
-
-SET_PROP_DEFAULT(LSResidualReduction)
-{public:
-    static constexpr double value = 1e-6;
-};
-
-SET_PROP_DEFAULT(LSMaxIterations)
-{public:
-    static constexpr int value = 250;
-};
-
-SET_PROP_DEFAULT(PreconditionerRelaxation)
-{public:
-    static constexpr double value = 1.0;
-};
-
-SET_PROP_DEFAULT(PreconditionerIterations)
-{public:
-    static constexpr int value = 1;
-};
-
-SET_PROP_DEFAULT(GMResRestart)
-{public:
-    static constexpr int value = 10;
-};
-}
 
 /*!
  * \brief Provides a linear solver for the stabilized BiCG method with

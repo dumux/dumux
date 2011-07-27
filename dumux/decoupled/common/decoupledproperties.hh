@@ -22,6 +22,7 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
 
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
@@ -44,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all decoupled models
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel));
+NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolver));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -195,6 +196,17 @@ public:
     typedef Dumux::BoundaryTypes<numEq>  type;
 };
 
+//! set the default for the reduction of the initial residual
+SET_PROP(DecoupledModel, LSResidualReduction)
+{public:
+    static constexpr double value = 1e-13;
+};
+
+//! set the default number of maximum iterations for the linear solver
+SET_PROP(DecoupledModel, LSMaxIterations)
+{public:
+    static constexpr int value = 500;
+};
 // \}
 
 }

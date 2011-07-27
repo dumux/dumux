@@ -203,6 +203,21 @@ public:
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
 SET_TYPE_PROP(BoxModel, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
 
+// if the deflection of the newton method is large, we do not
+// need to solve the linear approximation accurately. Assuming
+// that the initial value for the delta vector u is quite
+// close to the final value, a reduction of 6 orders of
+// magnitude in the defect should be sufficient...
+SET_PROP(BoxModel, LSResidualReduction)
+{public:
+    static constexpr double value = 1e-6;
+};
+
+//! set the default number of maximum iterations for the linear solver
+SET_PROP(BoxModel, LSMaxIterations)
+{public:
+    static constexpr int value = 250;
+};
 } // namespace Properties
 } // namespace Dumux
 

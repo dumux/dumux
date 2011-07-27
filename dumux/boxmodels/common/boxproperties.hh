@@ -24,6 +24,7 @@
 #include <dumux/common/propertysystem.hh>
 
 #include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
 
 /*!
  * \file
@@ -45,7 +46,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the box-scheme
-NEW_TYPE_TAG(BoxModel, INHERITS_FROM(ImplicitModel));
+NEW_TYPE_TAG(BoxModel, INHERITS_FROM(ImplicitModel, LinearSolver));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

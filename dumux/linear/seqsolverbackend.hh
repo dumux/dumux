@@ -25,60 +25,12 @@
 #define DUMUX_SOLVER_BACKEND_HH
 
 #include <dune/istl/solvers.hh>
-#include <dumux/common/propertysystem.hh>
 #include <dune/istl/superlu.hh>
+
+#include <dumux/linear/linearsolverproperties.hh>
 
 namespace Dumux
 {
-namespace Properties
-{
-//! verbosity of the linear solver
-NEW_PROP_TAG(LSVerbosity);
-
-//! target reduction of the initial residual
-// if the deflection of the newton method is large, we do not
-// need to solve the linear approximation accurately. Assuming
-// that the initial value for the delta vector u is quite
-// close to the final value, a reduction of 6 orders of
-// magnitude in the defect should be sufficient...
-NEW_PROP_TAG(LSResidualReduction);
-
-//! maximum number of iterations of solver
-NEW_PROP_TAG(LSMaxIterations);
-
-//! relaxation parameter for the preconditioner
-NEW_PROP_TAG(PreconditionerRelaxation);
-
-//! number of preconditioner iterations per solver iteration
-NEW_PROP_TAG(PreconditionerIterations);
-
-SET_PROP_DEFAULT(LSVerbosity)
-{public:
-    static constexpr int value = 0;
-};
-
-SET_PROP_DEFAULT(LSResidualReduction)
-{public:
-    static constexpr double value = 1e-13;
-};
-
-SET_PROP_DEFAULT(LSMaxIterations)
-{public:
-    static constexpr int value = 500;
-};
-
-SET_PROP_DEFAULT(PreconditionerRelaxation)
-{public:
-    static constexpr double value = 1.0;
-};
-
-SET_PROP_DEFAULT(PreconditionerIterations)
-{public:
-    static constexpr int value = 1;
-};
-}
-
-
 
 template <class TypeTag>
 class ILU0BiCGSTABBackend
