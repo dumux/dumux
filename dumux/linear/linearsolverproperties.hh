@@ -1,0 +1,95 @@
+/*****************************************************************************
+ *   Copyright (C) 2011 by Bernd Flemisch                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Defines a type tag and some fundamental properties for
+ *        linear solvers
+ */
+#ifndef DUMUX_LINEAR_SOLVER_PROPERTIES_HH
+#define DUMUX_LINEAR_SOLVER_PROPERTIES_HH
+
+#include <dumux/common/propertysystem.hh>
+
+namespace Dumux
+{
+namespace Properties
+{
+//! Linear solver type tag for all models.
+NEW_TYPE_TAG(LinearSolver);
+
+/*!
+ * \brief Specifies the verbosity of the linear solver
+ *
+ * By default it is 0, i.e. it doesn't print anything. Setting this
+ * property to 1 prints aggregated convergence rates, 2 prints the
+ * convergence rate of every iteration of the scheme.
+ */
+NEW_PROP_TAG(LSVerbosity);
+//! the outdated name
+NEW_PROP_TAG(NewtonLinearSolverVerbosity);
+
+
+//! target reduction of the initial residual
+NEW_PROP_TAG(LSResidualReduction);
+
+//! maximum number of iterations of solver
+NEW_PROP_TAG(LSMaxIterations);
+
+//! relaxation parameter for the preconditioner
+NEW_PROP_TAG(PreconditionerRelaxation);
+
+//! number of preconditioner iterations per solver iteration
+NEW_PROP_TAG(PreconditionerIterations);
+
+//! restart parameter for GMRes
+NEW_PROP_TAG(GMResRestart);
+
+//! do not print anything by default
+SET_PROP_DEFAULT(NewtonLinearSolverVerbosity)
+{public:
+    static constexpr int value = 0;
+};
+SET_PROP_DEFAULT(LSVerbosity)
+{public:
+    static constexpr int value = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
+};
+
+//! set the preconditioner relaxation parameter to 1.0 by default
+SET_PROP_DEFAULT(PreconditionerRelaxation)
+{public:
+    static constexpr double value = 1.0;
+};
+
+//! set the preconditioner iterations to 1 by default
+SET_PROP_DEFAULT(PreconditionerIterations)
+{public:
+    static constexpr int value = 1;
+};
+
+//! set the GMRes restart parameter to 10 by default
+SET_PROP_DEFAULT(GMResRestart)
+{public:
+    static constexpr int value = 10;
+};
+} // namespace Properties
+} // namespace Dumux
+
+#endif
