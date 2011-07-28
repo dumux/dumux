@@ -165,7 +165,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrid
  * distinguishing between given composition or saturation on the boundary.
  */
 template <class TypeTag>
-struct TwoPTwoCIndices : TwoPCommonIndicesDecoupled<TypeTag>
+struct TwoPTwoCIndices : DecoupledTwoPCommonIndices<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;

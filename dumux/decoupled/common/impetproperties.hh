@@ -76,7 +76,6 @@ SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
 //Properties for linear solvers
 NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
 NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
-NEW_PROP_TAG( LinearSolver );//!< Type of the linear solver
 
 //Set defaults
 SET_SCALAR_PROP(IMPET, CFLFactor, 1);

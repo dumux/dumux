@@ -24,9 +24,6 @@
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
-
 /*!
  * \ingroup Sequential
  * \ingroup Properties
@@ -67,18 +64,17 @@ NEW_PROP_TAG( NumEq ); //!< Number of equations in the system of PDEs
 NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
 NEW_PROP_TAG( NumComponents); //!< Number of components in the system
 NEW_PROP_TAG( Variables); //!< The type of the container of global variables
-NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
 }
 }
 
-#include <dumux/common/boundarytypes.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/istl/bvector.hh>
 
 #include <dumux/common/timemanager.hh>
 #include <dumux/common/boundarytypes.hh>
+#include<dumux/common/boundaryconditions.hh>
 
 template<class TypeTag>
 class VariableClass;

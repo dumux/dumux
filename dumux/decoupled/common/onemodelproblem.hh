@@ -155,7 +155,6 @@ public:
             delete timeManager_;
     }
 
-
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
@@ -167,7 +166,7 @@ public:
                        const Intersection &intersection) const
     {
         // forward it to the method which only takes the global coordinate
-        asImp_().generalBoundaryTypes(bcTypes, intersection.geometry().center());
+        asImp_().boundaryTypesAtPos(bcTypes, intersection.geometry().center());
     }
 
     /*!
@@ -177,14 +176,14 @@ public:
      * \param bcTypes The boundary types for the conservation equations
      * \param globalPos The position of the center of the boundary intersection
      */
-    void generalBoundaryTypes(BoundaryTypes &bcTypes,
+    void boundaryTypesAtPos(BoundaryTypes &bcTypes,
                        const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
-                   "a generalBoundaryTypes() method.");
+                   "a boundaryTypesAtPos() method.");
     }
 
     /*!
@@ -200,7 +199,7 @@ public:
             const Intersection &intersection) const
     {
         // forward it to the method which only takes the global coordinate
-        asImp_().generalDirichlet(values, intersection.geometry().center());
+        asImp_().dirichletAtPos(values, intersection.geometry().center());
     }
 
     /*!
@@ -212,7 +211,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void generalDirichlet(PrimaryVariables &values,
+    void dirichletAtPos(PrimaryVariables &values,
             const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
@@ -220,7 +219,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem specifies that some boundary "
                    "segments are dirichlet, but does not provide "
-                   "a generalDirichlet() method.");
+                   "a dirichletAtPos() method.");
     }
 
     /*!
@@ -237,7 +236,7 @@ public:
             const Intersection &intersection) const
     {
         // forward it to the interface with only the global position
-        asImp_().generalNeumann(values, intersection.geometry().center());
+        asImp_().neumannAtPos(values, intersection.geometry().center());
     }
 
     /*!
@@ -250,7 +249,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void generalNeumann(PrimaryVariables &values,
+    void neumannAtPos(PrimaryVariables &values,
             const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no reasonable default value
@@ -258,7 +257,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem specifies that some boundary "
                    "segments are neumann, but does not provide "
-                   "a neumann() method.");
+                   "a neumannAtPos() method.");
     }
 
     /*!
@@ -275,7 +274,7 @@ public:
                 const Element &element) const
     {
         // forward to generic interface
-        asImp_().generalSource(values, element.geometry().center());
+        asImp_().sourceAtPos(values, element.geometry().center());
     }
 
     /*!
@@ -291,9 +290,13 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void generalSource(PrimaryVariables &values,
+    void sourceAtPos(PrimaryVariables &values,
             const GlobalPosition &globalPos) const
-    { values = Scalar(0.0);  }
+    {         // Throw an exception (there is no initial condition)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a sourceAtPos() method.");
+        }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -308,7 +311,7 @@ public:
                  const Element &element) const
     {
         // forward to generic interface
-        asImp_().generalInitial(values, element.geometry().center());
+        asImp_().initialAtPos(values, element.geometry().center());
     }
 
     /*!
@@ -321,15 +324,14 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void generalInitial(PrimaryVariables &values,
+    void initialAtPos(PrimaryVariables &values,
             const GlobalPosition &globalPos) const
     {
         // Throw an exception (there is no initial condition)
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
-                   "a initial() method.");
+                   "a initialAtPos() method.");
     }
-
 
     /*!
      * \brief Called by the Dumux::TimeManager in order to
