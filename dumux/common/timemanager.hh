@@ -64,6 +64,9 @@ class TimeManager
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+
+    TimeManager(const TimeManager&)
+    {}
 public:
 
     TimeManager(bool verbose = true)
