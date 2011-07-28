@@ -48,6 +48,8 @@ class McWhorterAnalytic
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     enum
@@ -56,7 +58,9 @@ class McWhorterAnalytic
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
@@ -128,7 +132,9 @@ public:
         snr_ = materialLawParams.Snr();
         porosity_ = problem_.spatialParameters().porosity(dummyGlobal_, dummyElement_);
         permeability_ = problem_.spatialParameters().intrinsicPermeability(dummyGlobal_, dummyElement_)[0][0];
-        sInit_ = problem_.initSat(dummyGlobal_, dummyElement_);
+        PrimaryVariables initVec;
+        problem_.initial(initVec, dummyElement_);
+        sInit_ = initVec[eqIdxSat];
         Scalar s0 =(1 - snr_ - swr_);
         time_=0;
 
@@ -142,8 +148,8 @@ public:
             satVec_[i]=satVec_[i-1]+h_;
         }
         FluidState fluidState;
-        Scalar temp = problem_.temperature(dummyGlobal_, dummyElement_);
-        Scalar press = problem_.referencePressure(dummyGlobal_, dummyElement_);
+        Scalar temp = problem_.temperature(dummyElement_);
+        Scalar press = problem_.referencePressure(dummyElement_);
         Scalar viscosityW = FluidSystem::phaseViscosity(wPhaseIdx, temp, press, fluidState);
         Scalar viscosityNW = FluidSystem::phaseViscosity(nPhaseIdx, temp, press, fluidState);
 

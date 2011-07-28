@@ -119,10 +119,9 @@ SET_SCALAR_PROP(McWhorterProblem, CFLFactor, 0.8);
 //! @brief McWhorter transport problem
 
 template<class TypeTag = TTAG(McWhorterProblem)>
-class McWhorterProblem: public IMPESProblem2P<TypeTag, McWhorterProblem<TypeTag> >
+class McWhorterProblem: public IMPESProblem2P<TypeTag>
 {
-    typedef McWhorterProblem<TypeTag> ThisType;
-    typedef IMPESProblem2P<TypeTag, ThisType> ParentType;
+    typedef IMPESProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -130,14 +129,22 @@ class McWhorterProblem: public IMPESProblem2P<TypeTag, McWhorterProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -147,17 +154,19 @@ class McWhorterProblem: public IMPESProblem2P<TypeTag, McWhorterProblem<TypeTag>
 
 public:
 
-    McWhorterProblem(const GridView &gridView,
+    McWhorterProblem(TimeManager& timeManager, const GridView &gridView,
                             const GlobalPosition lowerLeft = 0,
                             const GlobalPosition upperRight = 0,
                             const Scalar pleftbc = 2.0e5)//? initial oil pressure?
-     : ParentType(gridView),
+     : ParentType(timeManager, gridView),
        lowerLeft_(lowerLeft),
        upperRight_(upperRight),
        eps_(1e-6),
        pLeftBc_(pleftbc),
        analyticSolution_(*this)
-     {}
+     {
+        this->setOutputInterval(10);
+     }
 
     /*!
      * \brief The problem name.
@@ -187,73 +196,62 @@ public:
         analyticSolution_.addOutputVtkFields(this->resultWriter());
     }
 
-    bool shouldWriteOutput() const
-    {
-        if (this->timeManager().timeStepIndex() % 10 == 0)
-        {
-        return true;
-        }
-        return false;
-    }
-
     /*!
      * \brief Returns the temperature within the domain.
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-
-    Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
-    {return 273.15 + 10; // -> 10°C
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return 273.15 + 10; // -> 10°C
     }
 
-    Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
     {
-        return 1e5;
-    }
-     std::vector<Scalar> source (const GlobalPosition& globalPos, const Element& element)
-    {
-        return std::vector<Scalar>(2,0.0);//no source and sink terms
+        return 1e5; // -> 10°C
     }
 
-    BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
     {
-        if (globalPos[0] < eps_)//west
-        return BoundaryConditions::dirichlet;
+        values = 0;
+    }
 
-        // all other boundaries
+    void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
+    {
+            if (globalPos[0] < eps_)//west
+            {
+                bcTypes.setAllDirichlet();
+            }
+            // all other boundaries
+            else
+            {
+                bcTypes.setAllNeumann();
+            }
+    }
+
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    {
+        if (globalPos[0] < eps_)
+        {
+            values[eqIdxPress] = pLeftBc_;
+            values[eqIdxSat] = 1.0;
+        }
         else
-        return BoundaryConditions::neumann;
+        {
+            values[eqIdxPress] = pLeftBc_;
+            values[eqIdxSat] = 0.0;
+        }
     }
 
-    BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        if (globalPos[0] < eps_)// west and east
-        return Dumux::BoundaryConditions::dirichlet;
-        else
-        return Dumux::BoundaryConditions::neumann;
+        values = 0;
     }
 
-    Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void initialAtPos(PrimaryVariables &values,
+            const GlobalPosition &globalPos) const
     {
-        return pLeftBc_;
-    }
-
-    Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& intersection) const
-    {
-        if (globalPos[0] < eps_)//west
-        return 1.0;
-        else //east, north and south are Neumann
-        return 0.0;
-    }
-
-    std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
-    {
-        return std::vector<Scalar>(2,0.0);
-    }
-
-    Scalar initSat (const GlobalPosition& globalPos, const Element& element) const
-    {
-        return 0.0;
+        values = 0;
     }
 
   /*  McWhorterProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase,

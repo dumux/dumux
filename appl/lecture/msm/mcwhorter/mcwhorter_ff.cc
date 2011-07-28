@@ -30,6 +30,7 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
 
         static const int dim = Grid::dimension;
@@ -78,10 +79,11 @@ int main(int argc, char** argv)
         WettingPhase::Component::setViscosity(interfaceFluidProps.IFP_ViscosityWettingFluid);
         NonwettingPhase::Component::setViscosity(interfaceFluidProps.IFP_ViscosityNonWettingFluid);
 
-        Problem problem(grid.leafView(), lowerLeft, upperRight);
+        TimeManager timeManager;
+        Problem problem(timeManager, grid.leafView(), lowerLeft, upperRight);
 
-        problem.timeManager().init(problem, 0, dt, tEnd);
-        problem.timeManager().run();
+        timeManager.init(problem, 0, dt, tEnd);
+        timeManager.run();
 
         return 0;
 

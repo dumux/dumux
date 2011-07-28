@@ -125,10 +125,9 @@ SET_SCALAR_PROP(BuckleyLeverettProblem, CFLFactor, 0.95); //0.95
  * \ingroup DecoupledProblems
  */
 template<class TypeTag = TTAG(BuckleyLeverettProblem)>
-class BuckleyLeverettProblem: public IMPESProblem2P<TypeTag, BuckleyLeverettProblem<TypeTag> >
+class BuckleyLeverettProblem: public IMPESProblem2P<TypeTag>
 {
-    typedef BuckleyLeverettProblem<TypeTag> ThisType;
-    typedef IMPESProblem2P<TypeTag, ThisType> ParentType;
+    typedef IMPESProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -136,14 +135,22 @@ class BuckleyLeverettProblem: public IMPESProblem2P<TypeTag, BuckleyLeverettProb
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
     enum
     {
-        wetting = 0, nonwetting = 1
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -151,11 +158,11 @@ class BuckleyLeverettProblem: public IMPESProblem2P<TypeTag, BuckleyLeverettProb
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    BuckleyLeverettProblem(const GridView &gridView,
+    BuckleyLeverettProblem(TimeManager& timeManager, const GridView &gridView,
                            const GlobalPosition lowerLeft = 0,
                            const GlobalPosition upperRight = 0,
                            const Scalar pleftbc = 2e5)
-    : ParentType(gridView),
+    : ParentType(timeManager, gridView),
       lowerLeft_(lowerLeft),
       upperRight_(upperRight),
       eps_(1e-8),
@@ -208,99 +215,78 @@ public:
         analyticSolution_.addOutputVtkFields(this->resultWriter());
     }
 
-    //! Write the fields current solution into an VTK output file.
-    void writeOutput()
-    {
-//        if (this->timeManager().time() > 43.1999e6)
-//        {
-            if (this->gridView().comm().rank() == 0)
-                std::cout << "Writing result file for current time step\n";
-
-            this->resultWriter().beginWrite(this->timeManager().time() + this->timeManager().timeStepSize());
-            this->asImp_().addOutputVtkFields();
-            this->resultWriter().endWrite();
-//        }
-    }
-
     /*!
      * \brief Returns the temperature within the domain.
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     {
         return 273.15 + 10; // -> 10°C
     }
 
     // \}
 
-
-    Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
     {
-        return 1e5;
+        return 1e5; // -> 10°C
     }
 
-    std::vector<Scalar> source(const GlobalPosition& globalPos, const Element& element)
+    void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
     {
-        return std::vector<Scalar>(2, 0.0);
+        values = 0;
     }
 
-    typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
+    {
+            if (globalPos[0] < eps_)
+            {
+                bcTypes.setAllDirichlet();
+            }
+            else if (globalPos[0] > upperRight_[0] - eps_)
+            {
+                bcTypes.setNeumann(eqIdxPress);
+                bcTypes.setOutflow(eqIdxSat);
+            }
+            // all other boundaries
+            else
+            {
+                bcTypes.setAllNeumann();
+            }
+    }
+
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         if (globalPos[0] < eps_)
-            return BoundaryConditions::dirichlet;
-
-        // all other boundaries
+        {
+            values[eqIdxPress] = pLeftBc_;
+            values[eqIdxSat] = 0.8;
+        }
         else
-            return BoundaryConditions::neumann;
+        {
+            values[eqIdxPress] = pLeftBc_;
+            values[eqIdxSat] = 0.2;
+        }
     }
 
-    BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        if (globalPos[0] < eps_)
-            return Dumux::BoundaryConditions::dirichlet;
-        else if (globalPos[0] > upperRight_[0] - eps_)
-            return Dumux::BoundaryConditions::outflow;
-        else
-            return Dumux::BoundaryConditions::neumann;
-    }
-
-    Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& intersection) const
-    {
-        return pLeftBc_;
-    }
-
-    Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& intersection) const
-    {
-        if (globalPos[0] < eps_)
-        return 0.8;
-
-        // all other boundaries
-
-        else
-        return 0.2;
-    }
-
-    std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
-    {
-        std::vector<Scalar> neumannFlux(2, 0.0);
+        values = 0;
         if (globalPos[0]> upperRight_[0] - eps_)
         {
             // the volume flux should remain constant, when density is changed
             // here, we multiply by the density of the NonWetting Phase
             const Scalar referenceDensity = 1000.0;
-            neumannFlux[nonwetting] = 3e-4 * densityNonWetting_/referenceDensity;
+
+            values[nPhaseIdx] = 3e-4 * densityNonWetting_/referenceDensity;
         }
-        return neumannFlux;
     }
 
-    Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
+    void initialAtPos(PrimaryVariables &values,
+            const GlobalPosition &globalPos) const
     {
-        if (globalPos[0] < eps_)
-        return 0.8;
-
-        else
-        return 0.2;
+        values[eqIdxPress] = 0;
+        values[eqIdxSat] = 0.2;
     }
 
 private:

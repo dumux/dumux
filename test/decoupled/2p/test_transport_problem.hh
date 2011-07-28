@@ -49,7 +49,7 @@ class TestTransportProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(DecoupledModel, Transport));
+NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(DecoupledTwoP, Transport));
 
 
 // Set the grid type
@@ -123,16 +123,19 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
  * where the argument defines the simulation endtime.
  */
 template<class TypeTag = TTAG(TransportTestProblem)>
-class TestTransportProblem: public TransportProblem2P<TypeTag, TestTransportProblem<TypeTag> >
+class TestTransportProblem: public TransportProblem2P<TypeTag>
 {
-    typedef TestTransportProblem<TypeTag> ThisType;
-    typedef TransportProblem2P<TypeTag, ThisType> ParentType;
+    typedef TransportProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
 
     enum
     {
@@ -141,7 +144,7 @@ class TestTransportProblem: public TransportProblem2P<TypeTag, TestTransportProb
 
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, eqIdxSat = Indices::saturationEq
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -149,11 +152,10 @@ class TestTransportProblem: public TransportProblem2P<TypeTag, TestTransportProb
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
-    TestTransportProblem(const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
-        ParentType(gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
+    TestTransportProblem(TimeManager &timeManager, const GridView &gridView) :
+        ParentType(timeManager, gridView)
     {
         GlobalPosition vel(0);
         vel[0] = 1e-5;
@@ -186,7 +188,7 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     {
         return 273.15 + 10; // -> 10°C
     }
@@ -194,48 +196,64 @@ public:
     // \}
 
 
-    Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+    //! Returns the reference pressure for evaluation of constitutive relations
+    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
     {
         return 1e5; // -> 10°C
     }
 
-    std::vector<Scalar> source(const GlobalPosition& globalPos, const Element& element)
+    void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
     {
-        return std::vector<Scalar>(2, 0.0);
+        values = 0;
     }
 
-    BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Intersection& intersection) const
+    /*!
+    * \brief Returns the type of boundary condition.
+    *
+    *
+    * BC for saturation equation can be dirichlet (saturation), neumann (flux), or outflow.
+    */
+    void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
     {
+            if (globalPos[0] < eps_)
+            {
+                bcTypes.setAllDirichlet();
+            }
+            else if (globalPos[0] > this->bboxMax()[0] - eps_)
+            {
+                bcTypes.setAllOutflow();
+            }
+            // all other boundaries
+            else
+            {
+                bcTypes.setAllNeumann();
+            }
+    }
+
+    //! set dirichlet condition  (saturation [-])
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
+    {
+        values = 0;
         if (globalPos[0] < eps_)
-            return Dumux::BoundaryConditions::dirichlet;
-        else if (globalPos[0] > upperRight_[0] - eps_)
-            return Dumux::BoundaryConditions::outflow;
-        else
-            return Dumux::BoundaryConditions::neumann;
+        {
+            values = 1.0;
+        }
     }
 
-    Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& intersection) const
+    //! set neumann condition for phases (flux, [kg/(m^2 s)])
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        if (globalPos[0] < eps_)
-            return 1.0;
-        // all other boundaries
-        return 0.0;
+        values = 0;
     }
 
-    std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
+    //! return initial solution
+    void initialAtPos(PrimaryVariables &values,
+            const GlobalPosition &globalPos) const
     {
-        return std::vector<Scalar>(2, 0.0);
-    }
-
-    Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
-    {
-        return 0.0;
+        values = 0;
     }
 
 private:
-    GlobalPosition lowerLeft_;
-    GlobalPosition upperRight_;
-
     static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace

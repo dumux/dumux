@@ -111,8 +111,8 @@ public:
 //         std::cout<<"satVec_ = "<<satVec_<<std::endl;
 
         FluidState fluidState;
-        Scalar temp = problem_.temperature(dummyGlobal_, dummyElement_);
-        Scalar press = problem_.referencePressure(dummyGlobal_, dummyElement_);
+        Scalar temp = problem_.temperature(dummyElement_);
+        Scalar press = problem_.referencePressure(dummyElement_);
         Scalar viscosityW = FluidSystem::phaseViscosity(wPhaseIdx, temp, press, fluidState);
         Scalar viscosityNW = FluidSystem::phaseViscosity(nPhaseIdx, temp, press, fluidState);
 

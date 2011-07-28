@@ -87,6 +87,7 @@ int main(int argc, char** argv)
 
         typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), PTAG(Problem)) FVProblem;
         FVProblem fvProblem(grid.leafView(), delta);
+        fvProblem.setName("fvdiffusion");
         timer.reset();
         fvProblem.init();
         fvProblem.model().calculateVelocity();
@@ -97,6 +98,7 @@ int main(int argc, char** argv)
 
         typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), PTAG(Problem)) MPFAOProblem;
         MPFAOProblem mpfaProblem(grid.leafView(), delta);
+        mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
         mpfaProblem.init();
         mpfaProblem.model().calculateVelocity();
@@ -107,6 +109,7 @@ int main(int argc, char** argv)
 
         typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), PTAG(Problem)) MimeticProblem;
         MimeticProblem mimeticProblem(grid.leafView(), delta);
+        mimeticProblem.setName("mimeticdiffusion");
         timer.reset();
         mimeticProblem.init();
         mimeticProblem.model().calculateVelocity();

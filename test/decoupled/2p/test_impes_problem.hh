@@ -149,16 +149,17 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
  * where the argument defines the simulation endtime.
  */
 template<class TypeTag = TTAG(IMPESTestProblem)>
-class TestIMPESProblem: public IMPESProblem2P<TypeTag, TestIMPESProblem<TypeTag> >
+class TestIMPESProblem: public IMPESProblem2P<TypeTag>
 {
-typedef TestIMPESProblem<TypeTag> ThisType;
-typedef IMPESProblem2P<TypeTag, ThisType> ParentType;
+typedef IMPESProblem2P<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
 enum
 {
@@ -167,7 +168,9 @@ enum
 
 enum
 {
-    wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+    wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+    eqIdxPress = Indices::pressureEq,
+    eqIdxSat = Indices::saturationEq
 };
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -175,11 +178,13 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
 
 public:
-TestIMPESProblem(const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
-ParentType(gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
+TestIMPESProblem(TimeManager& timeManager, const GridView &gridView) :
+ParentType(timeManager, gridView)
 {
 }
 
@@ -208,7 +213,7 @@ bool shouldWriteRestartFile() const
  *
  * This problem assumes a temperature of 10 degrees Celsius.
  */
-Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
+Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 {
     return 273.15 + 10; // -> 10°C
 }
@@ -216,98 +221,88 @@ Scalar temperature(const GlobalPosition& globalPos, const Element& element) cons
 // \}
 
 //! Returns the reference pressure for evaluation of constitutive relations
-Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
     return 1e5; // -> 10°C
 }
 
-//!source term [kg/(m^3 s)]
-std::vector<Scalar> source(const GlobalPosition& globalPos, const Element& element)
+void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
 {
-    return std::vector<Scalar>(2, 0.0);
+    values = 0;
 }
 
 /*!
-* \brief Returns the type of boundary condition for the pressure equation.
+* \brief Returns the type of boundary condition.
 *
-* BC can be dirichlet (pressure) or neumann (flux).
+* BC for pressure equation can be dirichlet (pressure) or neumann (flux).
+*
+* BC for saturation equation can be dirichlet (saturation), neumann (flux), or outflow.
 */
-typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
+void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
-    if ((globalPos[0] < eps_))
-    return BoundaryConditions::dirichlet;
-    // all other boundaries
-    return BoundaryConditions::neumann;
+        if (globalPos[0] < eps_)
+        {
+            bcTypes.setAllDirichlet();
+        }
+        else if (globalPos[0] > this->bboxMax()[0] - eps_)
+        {
+            bcTypes.setNeumann(eqIdxPress);
+            bcTypes.setOutflow(eqIdxSat);
+        }
+        // all other boundaries
+        else
+        {
+            bcTypes.setAllNeumann();
+        }
 }
 
-/*!
-* \brief Returns the type of boundary condition for the saturation equation.
-*
-* BC can be dirichlet (saturation), neumann (flux), or outflow.
-*/
-BoundaryConditions::Flags bctypeSat(const GlobalPosition& globalPos, const Intersection& intersection) const
+//! set dirichlet condition  (pressure [Pa], saturation [-])
+void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
 {
-    if (globalPos[0] < eps_)
-    return Dumux::BoundaryConditions::dirichlet;
-    else if (globalPos[0] > upperRight_[0] - eps_)
-        return Dumux::BoundaryConditions::outflow;
-    else
-    return Dumux::BoundaryConditions::neumann;
-}
-
-//! return dirichlet condition  (pressure, [Pa])
-Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
+    values = 0;
     if (globalPos[0] < eps_)
     {
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
         {
-            const Element& element = *(intersection.inside());
-
-            Scalar pRef = referencePressure(globalPos, element);
-            Scalar temp = temperature(globalPos, element);
-            Scalar sat = this->variables().satElement(element);
+            Scalar pRef = referencePressureAtPos(globalPos);
+            Scalar temp = temperatureAtPos(globalPos);
+            Scalar sat = 1;
 
             FluidState fluidState;
             fluidState.update(sat, pRef, pRef, temp);
-            return (2e5 + (upperRight_[dim-1] - globalPos[dim-1]) * FluidSystem::phaseDensity(wPhaseIdx, temp, pRef, fluidState) * this->gravity().two_norm());
+            values[eqIdxPress] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * FluidSystem::phaseDensity(wPhaseIdx, temp, pRef, fluidState) * this->gravity().two_norm());
         }
         else
-        return 2e5;
+        {
+            values[eqIdxPress] = 2e5;
+        }
+        values[eqIdxSat] = 0.8;
     }
-    // all other boundaries
-    return 2e5;
-}
-
-//! return dirichlet condition  (saturation, [-])
-Scalar dirichletSat(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    if (globalPos[0] < eps_)
-    return 0.8;
-    // all other boundaries
-    return 0.2;
-}
-
-//! return neumann condition  (flux, [kg/(m^2 s)])
-std::vector<Scalar> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    std::vector<Scalar> neumannFlux(2, 0.0);
-    if (globalPos[0] > upperRight_[0] - eps_)
+    else
     {
-        neumannFlux[nPhaseIdx] = 3e-4;
+        values[eqIdxPress] = 2e5;
+        values[eqIdxSat] = 0.2;
     }
-    return neumannFlux;
 }
 
-//! initial condition for saturation
-Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
+//! set neumann condition for phases (flux, [kg/(m^2 s)])
+void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
 {
-    return 0.2;
+    values = 0;
+    if (globalPos[0] > this->bboxMax()[0] - eps_)
+    {
+        values[nPhaseIdx] = 3e-4;
+    }
+}
+//! return initial solution -> only saturation values have to be given!
+void initialAtPos(PrimaryVariables &values,
+        const GlobalPosition &globalPos) const
+{
+    values[eqIdxPress] = 0;
+    values[eqIdxSat] = 0.2;
 }
 
 private:
-GlobalPosition lowerLeft_;
-GlobalPosition upperRight_;
 
 static constexpr Scalar eps_ = 1e-6;
 };

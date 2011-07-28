@@ -431,7 +431,9 @@ public:
             uMin = std::min(uMin, approxPressure);
             uMax = std::max(uMax, approxPressure);
 
-            sumf += volume*(problem.source(global, element)[0]);
+            typename Problem::PrimaryVariables sourceVec;
+            problem.source(sourceVec, element);
+            sumf += volume*sourceVec[0];
 
             // get the absolute permeability
             Dune::FieldMatrix<double,dim,dim> K = problem.spatialParameters().intrinsicPermeability(global, element);
