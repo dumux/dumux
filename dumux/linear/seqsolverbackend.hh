@@ -377,7 +377,13 @@ public:
     static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
 
     Vector bTmp(b);
-    Dune::SuperLU<Matrix> solver(A);
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    enum {numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
+    typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
+    typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
+
+    Dune::SuperLU<ISTLMatrix> solver(A);
 
     solver.apply(x, bTmp, result_);
 
