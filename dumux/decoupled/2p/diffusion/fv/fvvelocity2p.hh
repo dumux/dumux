@@ -65,6 +65,9 @@ class FVVelocity2P: public FVPressure2P<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
      typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
@@ -86,6 +89,8 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationNW,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
     enum
     {
@@ -198,6 +203,8 @@ private:
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocity()
 {
+    BoundaryTypes bcType;
+
     // compute update vector
     ElementIterator eItEnd = this->problem().gridView().template end<0>();
     for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
@@ -416,35 +423,37 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
             // handle boundary face
             if (isIt->boundary())
             {
-                // center of face in global coordinates
-                GlobalPosition globalPosFace = isIt->geometry().center();
-
                 //get boundary type
-                BoundaryConditions::Flags bcTypeSat = this->problem().bctypeSat(globalPosFace, *isIt);
-                BoundaryConditions::Flags bcTypePress = this->problem().bctypePress(globalPosFace, *isIt);
+                this->problem().boundaryTypes(bcType, *isIt);
+                PrimaryVariables boundValues(0.0);
 
-                // distance vector between barycenters
-                Dune::FieldVector<Scalar,dimWorld> distVec = globalPosFace - globalPos;
-
-                // compute distance between cell centers
-                Scalar dist = distVec.two_norm();
-
-                //multiply with normal vector at the boundary
-                Dune::FieldVector<Scalar,dim> permeability(0);
-                permeabilityI.mv(unitOuterNormal, permeability);
-
-                Scalar satBound = 0;
-                if (bcTypeSat == BoundaryConditions::dirichlet)
+                if (bcType.isDirichlet(eqIdxPress))
                 {
-                    satBound = this->problem().dirichletSat(globalPosFace, *isIt);
-                }
-                else
-                {
-                    satBound = this->problem().variables().saturation()[globalIdxI];
-                }
+                    this->problem().dirichlet(boundValues, *isIt);
 
-                if (bcTypePress == BoundaryConditions::dirichlet)
-                {
+                    // center of face in global coordinates
+                    GlobalPosition globalPosFace = isIt->geometry().center();
+
+                    // distance vector between barycenters
+                    Dune::FieldVector<Scalar,dimWorld> distVec = globalPosFace - globalPos;
+
+                    // compute distance between cell centers
+                    Scalar dist = distVec.two_norm();
+
+                    //multiply with normal vector at the boundary
+                    Dune::FieldVector<Scalar,dim> permeability(0);
+                    permeabilityI.mv(unitOuterNormal, permeability);
+
+                    Scalar satBound = 0;
+                    if (bcType.isDirichlet(eqIdxSat))
+                    {
+                        satBound = boundValues[eqIdxSat];
+                    }
+                    else
+                    {
+                        satBound = this->problem().variables().saturation()[globalIdxI];
+                    }
+
                     //determine phase saturations from primary saturation variable
                     Scalar satW;
                     //Scalar satNW;
@@ -467,7 +476,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                         DUNE_THROW(Dune::RangeError, "saturation type not implemented");
                     }
                     }
-                    Scalar pressBound = this->problem().dirichletPress(globalPosFace, *isIt);
+                    Scalar pressBound = boundValues[eqIdxPress];
                     Scalar pcBound = MaterialLaw::pC(this->problem().spatialParameters().materialLawParams(globalPos, *eIt), satW);
 
                     //determine phase pressures from primary pressure variable
@@ -490,7 +499,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                     }
 
                     //get temperature at current position
-                    Scalar temperature = this->problem().temperature(globalPosFace, *eIt);
+                    Scalar temperature = this->problem().temperature(*eIt);
 
                     Scalar densityWBound = 0;
                     Scalar densityNWBound = 0;
@@ -509,7 +518,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                     }
                     else
                     {
-                        Scalar referencePressure =  this->problem().referencePressure(globalPos, *eIt);
+                        Scalar referencePressure =  this->problem().referencePressure(*eIt);
                         FluidState fluidState;
                         fluidState.update(satW, referencePressure, referencePressure, temperature);
                         densityWBound = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
@@ -647,14 +656,15 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                     }
                 }//end dirichlet boundary
 
-                else
+                else if (bcType.isNeumann(eqIdxPress))
                 {
-                    std::vector<Scalar> J = this->problem().neumann(globalPosFace, *isIt);
+                    this->problem().neumann(boundValues, *isIt);
+
                     Dune::FieldVector<Scalar,dimWorld> velocityW(unitOuterNormal);
                     Dune::FieldVector<Scalar,dimWorld> velocityNW(unitOuterNormal);
 
-                    velocityW *= J[wPhaseIdx];
-                    velocityNW *= J[nPhaseIdx];
+                    velocityW *= boundValues[wPhaseIdx];
+                    velocityNW *= boundValues[nPhaseIdx];
 
                     if (!this->compressibility)
                     {
@@ -697,6 +707,10 @@ void FVVelocity2P<TypeTag>::calculateVelocity()
                     }
                     }
                 }//end neumann boundary
+                else
+                {
+                    DUNE_THROW(Dune::NotImplemented, "No valid boundary condition type defined for pressure equation!");
+                }
             }//end boundary
         }// end all intersections
     }// end grid traversal

@@ -111,8 +111,8 @@ public:
         // get geometry type of face
         //Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
-        Scalar temperature = problem_.temperature(globalPos, element);
-        Scalar referencePressure = problem_.referencePressure(globalPos, element);
+        Scalar temperature = problem_.temperature(element);
+        Scalar referencePressure = problem_.referencePressure(element);
 
         //get lambda_bar = lambda_n*f_w
         Scalar mobBar = 0;

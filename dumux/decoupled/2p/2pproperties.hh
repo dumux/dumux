@@ -54,7 +54,7 @@ template<class TypeTag>
 class TwoPFluidState;
 
 template<class TypeTag>
-struct TwoPCommonIndicesDecoupled;
+struct DecoupledTwoPCommonIndices;
 
 ////////////////////////////////
 // properties
@@ -121,21 +121,21 @@ SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pur
 
 SET_PROP(DecoupledTwoP, TwoPIndices)
 {
-typedef TwoPCommonIndicesDecoupled<TypeTag> type;
+typedef DecoupledTwoPCommonIndices<TypeTag> type;
 };
 
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,
     PressureFormulation,
-    TwoPCommonIndicesDecoupled<TypeTag>::pressureW);
+    DecoupledTwoPCommonIndices<TypeTag>::pressureW);
 
 SET_INT_PROP(DecoupledTwoP,
     SaturationFormulation,
-    TwoPCommonIndicesDecoupled<TypeTag>::saturationW);
+    DecoupledTwoPCommonIndices<TypeTag>::saturationW);
 
 SET_INT_PROP(DecoupledTwoP,
     VelocityFormulation,
-    TwoPCommonIndicesDecoupled<TypeTag>::velocityTotal);
+    DecoupledTwoPCommonIndices<TypeTag>::velocityTotal);
 
 SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
 
@@ -145,17 +145,6 @@ SET_TYPE_PROP(DecoupledTwoP, FluidSystem, FluidSystem2P<TypeTag>);
 
 SET_TYPE_PROP(DecoupledTwoP, FluidState, TwoPFluidState<TypeTag>);
 
-SET_PROP_DEFAULT(LocalStiffness)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) Variables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-
-public:
-    typedef MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,Variables, Problem> type;
-};
 // \}
 }
 
@@ -163,7 +152,7 @@ public:
  * \brief The common indices for the two-phase model.
  */
 template <class TypeTag>
-struct TwoPCommonIndicesDecoupled
+struct DecoupledTwoPCommonIndices
 {
 private:
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;

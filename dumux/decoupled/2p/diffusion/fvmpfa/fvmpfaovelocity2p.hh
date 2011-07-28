@@ -51,6 +51,9 @@ template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTa
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
@@ -74,7 +77,9 @@ template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTa
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -111,6 +116,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             R[1][0] = -1;
         }
 
+    BoundaryTypes bcType;
+
     // run through all elements
     ElementIterator eItEnd = this->problem().gridView().template end<0> ();
     for (ElementIterator eIt = this->problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
@@ -124,23 +131,24 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
         GlobalPosition globalPos1 = eIt->geometry().center();
 
         // cell 1 volume
-        double volume1 = eIt->geometry().volume();
+        Scalar volume1 = eIt->geometry().volume();
 
         // cell 1 index
         int globalIdx1 = this->problem().variables().index(*eIt);
 
         // get pressure value
-        double press1 = this->problem().variables().pressure()[globalIdx1];
+        Scalar press1 = this->problem().variables().pressure()[globalIdx1];
 
         // get right hand side
-        std::vector<Scalar> source(this->problem().source(globalPos1, *eIt));
-        double q1 = source[wPhaseIdx] + source[nPhaseIdx];
+        PrimaryVariables source(0.0);
+        this->problem().source(source, *eIt);
+        Scalar q1 = source[wPhaseIdx] + source[nPhaseIdx];
 
         // get absolute permeability of cell 1
         FieldMatrix K1(this->problem().spatialParameters().intrinsicPermeability(globalPos1, *eIt));
 
         // compute total mobility of cell 1
-        double lambda1 = this->problem().variables().mobilityWetting(globalIdx1)
+        Scalar lambda1 = this->problem().variables().mobilityWetting(globalIdx1)
                     + this->problem().variables().mobilityNonwetting(globalIdx1);
 
         // this 'for' loop can be deleted since velocity is
@@ -155,7 +163,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
         Scalar densityNW = this->problem().variables().densityNonwetting(globalIdx1);
 
         // the following two variables are used to check local conservation
-        double facevol[2 * dim];
+        Scalar facevol[2 * dim];
         Dune::FieldVector<Scalar, dimWorld> unitOuterNormal[2 * dim];
 
         IntersectionIterator isItBegin = this->problem().gridView().ibegin(*eIt);
@@ -220,6 +228,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                 default:
                 {
                     DUNE_THROW(Dune::NotImplemented, "GridType can not be used with MPFAO implementation!");
+                    break;
                 }
             }
 
@@ -233,7 +242,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             int indexInInside = isIt->indexInInside();
 
             // get face volume
-            double face12vol = isIt->geometry().volume();
+            Scalar face12vol = isIt->geometry().volume();
 
             // get face volume to check if local mass conservative
             facevol[indexInInside] = isIt->geometry().volume();
@@ -258,7 +267,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             int nextindexInInside = nextisIt->indexInInside();
 
             // get face volume
-            double face13vol = nextisIt->geometry().volume();
+            Scalar face13vol = nextisIt->geometry().volume();
 
             // get outer normal vector scaled with half volume of face 'nextisIt'
             Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln3 = nextisIt->centerUnitOuterNormal();
@@ -296,7 +305,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                 int globalIdx2 = this->problem().variables().index(*outside);
 
                 // get pressure value
-                double press2 = this->problem().variables().pressure()[globalIdx2];
+                Scalar press2 = this->problem().variables().pressure()[globalIdx2];
 
                 // neighbor cell 2 geometry type
                 //Dune::GeometryType gt2 = outside->geometry().type();
@@ -308,7 +317,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                 FieldMatrix K2(this->problem().spatialParameters().intrinsicPermeability(globalPos2, *outside));
 
                 // get total mobility of neighbor cell 2
-                double lambda2 = this->problem().variables().mobilityWetting(globalIdx2)
+                Scalar lambda2 = this->problem().variables().mobilityWetting(globalIdx2)
                             + this->problem().variables().mobilityNonwetting(globalIdx2);
 
                 // 'nextisIt' is an interior face
@@ -321,7 +330,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     int globalIdx3 = this->problem().variables().index(*nextisItoutside);
 
                     // get pressure value
-                    double press3 = this->problem().variables().pressure()[globalIdx3];
+                    Scalar press3 = this->problem().variables().pressure()[globalIdx3];
 
                     // neighbor cell 3 geometry type
                     //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -334,13 +343,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             *nextisItoutside));
 
                     // get total mobility of neighbor cell 3
-                    double lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
+                    Scalar lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
                                 + this->problem().variables().mobilityNonwetting(globalIdx3);
 
                     // neighbor cell 4
                     GlobalPosition globalPos4(0);
                     FieldMatrix K4(0);
-                    double lambda4 = 0;
+                    Scalar lambda4 = 0;
                     int globalIdx4 = 0;
 
                     IntersectionIterator innerisItEnd = this->problem().gridView().iend(*outside);
@@ -378,7 +387,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         }
 
                     // get pressure value
-                    double press4 = this->problem().variables().pressure()[globalIdx4];
+                    Scalar press4 = this->problem().variables().pressure()[globalIdx4];
 
                     // computation of flux through the first half edge of 'isIt' and the flux
                     // through the second half edge of 'nextisIt'
@@ -414,7 +423,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     GlobalPosition globalPosFace24 = isIt24->geometry().center();
 
                     // get face volume
-                    double face24vol = isIt24->geometry().volume();
+                    Scalar face24vol = isIt24->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt24'
                     Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln4 = isIt24->centerUnitOuterNormal();
@@ -451,7 +460,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     GlobalPosition globalPosFace34 = isIt34->geometry().center();
 
                     // get face volume
-                    double face34vol = isIt34->geometry().volume();
+                    Scalar face34vol = isIt34->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt34'
                     Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
@@ -485,19 +494,19 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     // compute dF1, dF2, dF3, dF4 i.e., the area of quadrilateral made by normal vectors 'nu'
                     FieldVector Rnu21(0);
                     R.umv(nu21, Rnu21);
-                    double dF1 = fabs(nu11 * Rnu21);
+                    Scalar dF1 = fabs(nu11 * Rnu21);
 
                     FieldVector Rnu22(0);
                     R.umv(nu22, Rnu22);
-                    double dF2 = fabs(nu12 * Rnu22);
+                    Scalar dF2 = fabs(nu12 * Rnu22);
 
                     FieldVector Rnu23(0);
                     R.umv(nu23, Rnu23);
-                    double dF3 = fabs(nu13 * Rnu23);
+                    Scalar dF3 = fabs(nu13 * Rnu23);
 
                     FieldVector Rnu24(0);
                     R.umv(nu24, Rnu24);
-                    double dF4 = fabs(nu14 * Rnu24);
+                    Scalar dF4 = fabs(nu14 * Rnu24);
 
                     // compute components needed for flux calculation, denoted as 'g'
                     FieldVector K1nu11(0);
@@ -516,22 +525,22 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     K4.umv(nu14, K4nu14);
                     FieldVector K4nu24(0);
                     K4.umv(nu24, K4nu24);
-                    double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                    double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                    double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                    double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                    double g112 = lambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
-                    double g122 = lambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
-                    double g212 = lambda2 * (integrationOuterNormaln4 * K2nu12) / dF2;
-                    double g222 = lambda2 * (integrationOuterNormaln4 * K2nu22) / dF2;
-                    double g113 = lambda3 * (integrationOuterNormaln2 * K3nu13) / dF3;
-                    double g123 = lambda3 * (integrationOuterNormaln2 * K3nu23) / dF3;
-                    double g213 = lambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
-                    double g223 = lambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
-                    double g114 = lambda4 * (integrationOuterNormaln2 * K4nu14) / dF4;
-                    double g124 = lambda4 * (integrationOuterNormaln2 * K4nu24) / dF4;
-                    double g214 = lambda4 * (integrationOuterNormaln4 * K4nu14) / dF4;
-                    double g224 = lambda4 * (integrationOuterNormaln4 * K4nu24) / dF4;
+                    Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                    Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                    Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                    Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                    Scalar g112 = lambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
+                    Scalar g122 = lambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
+                    Scalar g212 = lambda2 * (integrationOuterNormaln4 * K2nu12) / dF2;
+                    Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22) / dF2;
+                    Scalar g113 = lambda3 * (integrationOuterNormaln2 * K3nu13) / dF3;
+                    Scalar g123 = lambda3 * (integrationOuterNormaln2 * K3nu23) / dF3;
+                    Scalar g213 = lambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
+                    Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
+                    Scalar g114 = lambda4 * (integrationOuterNormaln2 * K4nu14) / dF4;
+                    Scalar g124 = lambda4 * (integrationOuterNormaln2 * K4nu24) / dF4;
+                    Scalar g214 = lambda4 * (integrationOuterNormaln4 * K4nu14) / dF4;
+                    Scalar g224 = lambda4 * (integrationOuterNormaln4 * K4nu24) / dF4;
 
                     // compute transmissibility matrix T = CA^{-1}B+F
                     Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim> C(0), F(0), A(0), B(0);
@@ -634,31 +643,34 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     GlobalPosition globalPosFace24 = isIt24->geometry().center();
 
                     // get face volume
-                    double face24vol = isIt24->geometry().volume();
+                    Scalar face24vol = isIt24->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt24'
                     Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln4 = isIt24->centerUnitOuterNormal();
                     integrationOuterNormaln4 *= face24vol / 2.0;
 
-                    // get boundary condition for boundary face (nextisIt) center
-                    BoundaryConditions::Flags nextisItbctype = this->problem().bctypePress(globalPosFace13, *nextisIt);
+                    BoundaryTypes nextIsItBcType;
+                    this->problem().boundaryTypes(nextIsItBcType, *nextisIt);
+
+                    // get boundary condition for boundary face (isIt24) center
+                    BoundaryTypes isIt24BcType;
+                    this->problem().boundaryTypes(isIt24BcType, *isIt24);
+
+                    PrimaryVariables boundValues(0.0);
 
                     // 'nextisIt': Neumann boundary
-                    if (nextisItbctype == BoundaryConditions::neumann)
+                    if (nextIsItBcType.isNeumann(eqIdxPress))
                     {
                         // get Neumann boundary value of 'nextisIt'
-                        std::vector<Scalar> J(this->problem().neumann(globalPosFace13, *nextisIt));
-                        double J3 = (J[wPhaseIdx]/densityW + J[nPhaseIdx]/densityNW);
-
-                        // get boundary condition for boundary face (isIt24) center
-                        BoundaryConditions::Flags isIt24bctype = this->problem().bctypePress(globalPosFace24, *isIt24);
+                        this->problem().neumann(boundValues, *nextisIt);
+                        Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                         // 'isIt24': Neumann boundary
-                        if (isIt24bctype == BoundaryConditions::neumann)
+                        if (isIt24BcType.isNeumann(eqIdxPress))
                         {
                             // get neumann boundary value of 'isIt24'
-                            std::vector<Scalar> J(this->problem().neumann(globalPosFace24, *isIt24));
-                            double J4 = (J[wPhaseIdx]/densityW + J[nPhaseIdx]/densityNW);
+                            this->problem().neumann(boundValues, *isIt24);
+                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -676,11 +688,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -691,14 +703,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g112 = lambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
-                            double g122 = lambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
-                            double g212 = lambda2 * (integrationOuterNormaln4 * K2nu12) / dF2;
-                            double g222 = lambda2 * (integrationOuterNormaln4 * K2nu22) / dF2;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g112 = lambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
+                            Scalar g122 = lambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
+                            Scalar g212 = lambda2 * (integrationOuterNormaln4 * K2nu12) / dF2;
+                            Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22) / dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             Dune::FieldMatrix<Scalar, 2 * dim - 1, 2 * dim - 1> A(0);
@@ -730,7 +742,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             A.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
-                            double f1 = (g111 + g121 - g111 * T[0][0] - g121 * T[1][0]) * press1 - (g111 * T[0][1]
+                            Scalar f1 = (g111 + g121 - g111 * T[0][0] - g121 * T[1][0]) * press1 - (g111 * T[0][1]
                                     + g121 * T[1][1]) * press2 - (g111 * r[0] + g121 * r[1]);
 
                             // evaluate velocity of facet 'isIt'
@@ -740,17 +752,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         }
                         // 'isIt24': Dirichlet boundary
-                        else
+                        else if (isIt24BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value on 'isIt24'
-                            double g4 = this->problem().dirichletPress(globalPosFace24, *isIt24);
+                            this->problem().dirichlet(boundValues, *isIt24);
+                             Scalar g4 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda2 = 0;
-                            if (this->problem().bctypeSat(globalPosFace24, *isIt24) == BoundaryConditions::dirichlet)
+                            Scalar alambda2 = 0;
+                            if (isIt24BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = this->problem().dirichletSat(globalPosFace24, *isIt24);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -764,11 +777,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(globalPosFace24, *eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(globalPosFace24, *eIt);
+                                Scalar temperature = this->problem().temperature(*eIt);
+                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -807,11 +821,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -822,12 +836,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g112 = alambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
-                            double g122 = alambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g112 = alambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
+                            Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             FieldMatrix A(0), B(0);
@@ -854,7 +868,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             A.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
-                            double f1 = (g111 + g121 - g111 * T[0][0] - g121 * T[1][0]) * press1 - (g111 * T[0][1]
+                            Scalar f1 = (g111 + g121 - g111 * T[0][0] - g121 * T[1][0]) * press1 - (g111 * T[0][1]
                                     + g121 * T[1][1]) * press2 - (g111 * r[0] + g121 * r[1]);
 
                             // evaluate velocity of facet 'isIt'
@@ -865,17 +879,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         }
                     }
                     // 'nextisIt': Dirichlet boundary
-                    else
+                    else if (nextIsItBcType.isDirichlet(eqIdxPress))
                     {
                         // get Dirichlet boundary value of 'nextisIt'
-                        double g3 = this->problem().dirichletPress(globalPosFace13, *nextisIt);
+                        this->problem().dirichlet(boundValues, *nextisIt);
+                        Scalar g3 = boundValues[eqIdxPress];
 
                         // compute total mobility for Dirichlet boundary 'nextisIt'
                         //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                        double alambda1 = 0;
-                        if (this->problem().bctypeSat(globalPosFace13, *nextisIt) == BoundaryConditions::dirichlet)
+                        Scalar alambda1 = 0;
+                        if (nextIsItBcType.isDirichlet(eqIdxSat))
                         {
-                            Scalar satBound = this->problem().dirichletSat(globalPosFace13, *nextisIt);
+                            Scalar satBound = boundValues[eqIdxSat];
 
                             //determine phase saturations from primary saturation variable
                             Scalar satW = 0;
@@ -889,11 +904,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             case Sn:
                             {
                                 satW = 1 - satBound;
+                                break;
                             }
                             }
 
-                            Scalar temperature = this->problem().temperature(globalPosFace13, *eIt);
-                            Scalar referencePressure =  this->problem().referencePressure(globalPosFace13, *eIt);
+                            Scalar temperature = this->problem().temperature(*eIt);
+                            Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                             Scalar lambdaWBound = 0;
                             Scalar lambdaNWBound = 0;
@@ -916,15 +932,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             alambda1 = lambda1;
                         }
 
-                        // get boundary condition for boundary face (isIt24) center
-                        BoundaryConditions::Flags isIt24bctype = this->problem().bctypePress(globalPosFace24, *isIt24);
-
                         // 'isIt24': Neumann boundary
-                        if (isIt24bctype == BoundaryConditions::neumann)
+                        if (isIt24BcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value of 'isIt24'
-                            std::vector<Scalar> J(this->problem().neumann(globalPosFace24, *isIt24));
-                            double J4 = (J[wPhaseIdx]/densityW + J[nPhaseIdx]/densityNW);
+                            this->problem().neumann(boundValues, *isIt24);
+                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -942,11 +955,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -957,14 +970,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g112 = lambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
-                            double g122 = lambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
-                            double g212 = lambda2 * (integrationOuterNormaln4 * K2nu12) / dF2;
-                            double g222 = lambda2 * (integrationOuterNormaln4 * K2nu22) / dF2;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g112 = lambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
+                            Scalar g122 = lambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
+                            Scalar g212 = lambda2 * (integrationOuterNormaln4 * K2nu12) / dF2;
+                            Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22) / dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             FieldMatrix A(0), B(0);
@@ -991,9 +1004,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             A.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
-                            double f1 = (g111 + g121 - g111 * T[0][0]) * press1 - g111 * T[0][1] * press2 - g121 * g3
+                            Scalar f1 = (g111 + g121 - g111 * T[0][0]) * press1 - g111 * T[0][1] * press2 - g121 * g3
                                     - g111 * r[0];
-                            double f3 = (g211 + g221 - g211 * T[0][0]) * press1 - g211 * T[0][1] * press2 - g221 * g3
+                            Scalar f3 = (g211 + g221 - g211 * T[0][0]) * press1 - g211 * T[0][1] * press2 - g221 * g3
                                     - g211 * r[0];
 
                             // evaluate velocity of facet 'isIt'
@@ -1008,17 +1021,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         }
                         // 'isIt24': Dirichlet boundary
-                        else
+                        else if (isIt24BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value on 'isIt24'
-                            double g4 = this->problem().dirichletPress(globalPosFace24, *isIt24);
+                            this->problem().dirichlet(boundValues, *isIt24);
+                                Scalar g4 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda2 = 0;
-                            if (this->problem().bctypeSat(globalPosFace24, *isIt24) == BoundaryConditions::dirichlet)
+                            Scalar alambda2 = 0;
+                            if (isIt24BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = this->problem().dirichletSat(globalPosFace24, *isIt24);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1032,11 +1046,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(globalPosFace24, *eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(globalPosFace24, *eIt);
+                                Scalar temperature = this->problem().temperature(*eIt);
+                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1075,11 +1090,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1090,18 +1105,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g112 = alambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
-                            double g122 = alambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g112 = alambda2 * (integrationOuterNormaln1 * K2nu12) / dF2;
+                            Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
 
                             // compute the matrix T & vector r
                             FieldMatrix T(0);
                             FieldVector r(0);
 
-                            double coe = g111 + g112;
+                            Scalar coe = g111 + g112;
 
                             // evaluate matrix T
                             T[0][0] = g112 * (g111 + g121) / coe;
@@ -1114,8 +1129,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             r[1] = -g221 * g3 + (g3 * g211 * g121 - g4 * g211 * g122) / coe;
 
                             // use the pressure values to compute the fluxes
-                            double f1 = T[0][0] * press1 + T[0][1] * press2 + r[0];
-                            double f3 = T[1][0] * press1 + T[1][1] * press2 + r[1];
+                            Scalar f1 = T[0][0] * press1 + T[0][1] * press2 + r[0];
+                            Scalar f3 = T[1][0] * press1 + T[1][1] * press2 + r[1];
 
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
@@ -1135,14 +1150,17 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             else
             {
                 // get boundary condition for boundary face center of 'isIt'
-                BoundaryConditions::Flags isItbctype = this->problem().bctypePress(globalPosFace12, *isIt);
+                BoundaryTypes isItBcType;
+                this->problem().boundaryTypes(isItBcType, *isIt);
+
+                PrimaryVariables boundValues(0.0);
 
                 // 'isIt' is on Neumann boundary
-                if (isItbctype == BoundaryConditions::neumann)
+                if (isItBcType.isNeumann(eqIdxPress))
                 {
                     // get Neumann boundary value
-                    std::vector<Scalar> J(this->problem().neumann(globalPosFace12, *isIt));
-                    double J1 = (J[wPhaseIdx]/densityW + J[nPhaseIdx]/densityNW);
+                    this->problem().neumann(boundValues, *isIt);
+                    Scalar J1 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                     // evaluate velocity of facet 'isIt'
                     FieldVector vector1 = unitOuterNormaln1;
@@ -1153,17 +1171,19 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     if (nextisIt->boundary())
                     {
                         // get boundary condition for boundary face center of 'nextisIt'
-                        BoundaryConditions::Flags nextisItbctype = this->problem().bctypePress(globalPosFace13,
-                                *nextisIt);
+                        BoundaryTypes nextIsItBcType;
+                        this->problem().boundaryTypes(nextIsItBcType, *nextisIt);
 
-                        if (nextisItbctype == BoundaryConditions::dirichlet)
+                        if (nextIsItBcType.isDirichlet(eqIdxPress))
                         {
+                            this->problem().dirichlet(boundValues, *nextisIt);
+
                             // compute total mobility for Dirichlet boundary 'nextisIt'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda1 = 0;
-                            if (this->problem().bctypeSat(globalPosFace13, *nextisIt) == BoundaryConditions::dirichlet)
+                            Scalar alambda1 = 0;
+                            if (nextIsItBcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = this->problem().dirichletSat(globalPosFace13, *nextisIt);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1177,11 +1197,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(globalPosFace13, *eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(globalPosFace13, *eIt);
+                                Scalar temperature = this->problem().temperature(*eIt);
+                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1205,7 +1226,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             }
 
                             // get Dirichlet boundary value
-                            double g3 = this->problem().dirichletPress(globalPosFace13, *nextisIt);
+                            Scalar g3 = boundValues[eqIdxPress];
 
                             // compute normal vectors nu11,nu21;
                             FieldVector nu11(0);
@@ -1217,20 +1238,20 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
                             FieldVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
 
                             // use the pressure values to compute the fluxes
-                            double f3 = (g221 - g211 * g121 / g111) * press1 + (g211 * g121 / g111 - g221) * g3 - (g211
+                            Scalar f3 = (g221 - g211 * g121 / g111) * press1 + (g211 * g121 / g111 - g221) * g3 - (g211
                                     * (-J1) * face12vol) / (2.0 * g111);
 
                             // evaluate velocity of facet 'nextisIt'
@@ -1249,7 +1270,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         int globalIdx3 = this->problem().variables().index(*nextisItoutside);
 
                         // get pressure value
-                        double press3 = this->problem().variables().pressure()[globalIdx3];
+                        Scalar press3 = this->problem().variables().pressure()[globalIdx3];
 
                         // neighbor cell 3 geometry type
                         //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1262,7 +1283,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 *nextisItoutside));
 
                         // get total mobility of neighbor cell 3
-                        double lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
+                        Scalar lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
                                     + this->problem().variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
@@ -1294,21 +1315,22 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         GlobalPosition globalPosFace34 = isIt34->geometry().center();
 
                         // get face volume
-                        double face34vol = isIt34->geometry().volume();
+                        Scalar face34vol = isIt34->geometry().volume();
 
                         // get outer normal vector scaled with half volume of face 'isIt34'
                         Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
                         integrationOuterNormaln2 *= face34vol / 2.0;
 
                         // get boundary condition for boundary face center of 'isIt34'
-                        BoundaryConditions::Flags isIt34bctype = this->problem().bctypePress(globalPosFace34, *isIt34);
+                        BoundaryTypes isIt34BcType;
+                        this->problem().boundaryTypes(isIt34BcType, *isIt34);
 
                         // 'isIt34': Neumann boundary
-                        if (isIt34bctype == BoundaryConditions::neumann)
+                        if (isIt34BcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value
-                            std::vector<Scalar> J(this->problem().neumann(globalPosFace34, *isIt34));
-                            double J2 = (J[wPhaseIdx]/densityW + J[nPhaseIdx]/densityNW);
+                            this->problem().neumann(boundValues, *isIt34);
+                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -1326,11 +1348,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1341,14 +1363,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g113 = lambda3 * (integrationOuterNormaln2 * K3nu13) / dF3;
-                            double g123 = lambda3 * (integrationOuterNormaln2 * K3nu23) / dF3;
-                            double g213 = lambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
-                            double g223 = lambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g113 = lambda3 * (integrationOuterNormaln2 * K3nu13) / dF3;
+                            Scalar g123 = lambda3 * (integrationOuterNormaln2 * K3nu23) / dF3;
+                            Scalar g213 = lambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
+                            Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
 
                             // compute transmissibility matrix T = CA^{-1}B+F
                             Dune::FieldMatrix<Scalar, 2 * dim - 1, 2 * dim - 1> C(0), A(0);
@@ -1396,7 +1418,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             CAinv.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
-                            double f3 = T[2][0] * press1 + T[2][1] * press3 + r[2];
+                            Scalar f3 = T[2][0] * press1 + T[2][1] * press3 + r[2];
 
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
@@ -1405,17 +1427,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         }
                         // 'isIt34': Dirichlet boundary
-                        else
+                        else if (isIt34BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value
-                            double g2 = this->problem().dirichletPress(globalPosFace34, *isIt34);
+                            this->problem().dirichlet(boundValues, *isIt34);
+                            Scalar g2 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda3 = 0;
-                            if (this->problem().bctypeSat(globalPosFace34, *isIt34) == BoundaryConditions::dirichlet)
+                            Scalar alambda3 = 0;
+                            if (isIt34BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = this->problem().dirichletSat(globalPosFace34, *isIt34);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1429,11 +1452,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(globalPosFace34, *eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(globalPosFace34, *eIt);
+                                Scalar temperature = this->problem().temperature(*eIt);
+                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1472,11 +1496,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1487,12 +1511,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g213 = alambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
-                            double g223 = alambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g213 = alambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
+                            Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
 
                             // compute transmissibility matrix T = CA^{-1}B+F
                             FieldMatrix C(0), A(0), F(0), B(0);
@@ -1533,7 +1557,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             r += r1;
 
                             // use the pressure values to compute the fluxes
-                            double f3 = T[1][0] * press1 + T[1][1] * press3 + r[1];
+                            Scalar f3 = T[1][0] * press1 + T[1][1] * press3 + r[1];
 
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
@@ -1544,17 +1568,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     }
                 }
                 // 'isIt' is on Dirichlet boundary
-                else
+                else if (isItBcType.isDirichlet(eqIdxPress))
                 {
                     // get Dirichlet boundary value
-                    double g1 = this->problem().dirichletPress(globalPosFace12, *isIt);
+                    this->problem().dirichlet(boundValues, *isIt);
+                    Scalar g1 = boundValues[eqIdxPress];
 
                     // compute total mobility for Dirichlet boundary 'isIt'
                     //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                    double alambda1 = 0;
-                    if (this->problem().bctypeSat(globalPosFace12, *isIt) == BoundaryConditions::dirichlet)
+                    Scalar alambda1 = 0;
+                    if (isItBcType.isDirichlet(eqIdxSat))
                     {
-                        Scalar satBound = this->problem().dirichletSat(globalPosFace12, *isIt);
+                        Scalar satBound = boundValues[eqIdxSat];
 
                         //determine phase saturations from primary saturation variable
                         Scalar satW = 0;
@@ -1568,11 +1593,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         case Sn:
                         {
                             satW = 1 - satBound;
+                            break;
                         }
                         }
 
-                        Scalar temperature = this->problem().temperature(globalPosFace12, *eIt);
-                        Scalar referencePressure =  this->problem().referencePressure(globalPosFace12, *eIt);
+                        Scalar temperature = this->problem().temperature(*eIt);
+                        Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                         Scalar lambdaWBound = 0;
                         Scalar lambdaNWBound = 0;
@@ -1599,21 +1625,22 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     if (nextisIt->boundary())
                     {
                         // get boundary condition for boundary face (nextisIt) center
-                        BoundaryConditions::Flags nextisItbctype = this->problem().bctypePress(globalPosFace13,
-                                *nextisIt);
+                        BoundaryTypes nextIsItBcType;
+                        this->problem().boundaryTypes(nextIsItBcType, *nextisIt);
 
                         // 'nextisIt': Dirichlet boundary
-                        if (nextisItbctype == BoundaryConditions::dirichlet)
+                        if (nextIsItBcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value of 'nextisIt'
-                            double g3 = this->problem().dirichletPress(globalPosFace13, *nextisIt);
+                            this->problem().dirichlet(boundValues, *nextisIt);
+                            Scalar g3 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'nextisIt'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda1 = 0;
-                            if (this->problem().bctypeSat(globalPosFace13, *nextisIt) == BoundaryConditions::dirichlet)
+                            Scalar alambda1 = 0;
+                            if (nextIsItBcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = this->problem().dirichletSat(globalPosFace13, *nextisIt);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1627,11 +1654,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(globalPosFace13, *eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(globalPosFace13, *eIt);
+                                Scalar temperature = this->problem().temperature(*eIt);
+                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1664,27 +1692,27 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
                             FieldVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
 
                             // evaluate T1, T3, r1, r3
-                            double T1 = g111 + g121;
-                            double T3 = g211 + g221;
-                            double r1 = g111 * g1 + g121 * g3;
-                            double r3 = g211 * g1 + g221 * g3;
+                            Scalar T1 = g111 + g121;
+                            Scalar T3 = g211 + g221;
+                            Scalar r1 = g111 * g1 + g121 * g3;
+                            Scalar r3 = g211 * g1 + g221 * g3;
 
                             // use the pressure values to compute the fluxes
-                            double f1 = T1 * press1 - r1;
-                            double f3 = T3 * press1 - r3;
+                            Scalar f1 = T1 * press1 - r1;
+                            Scalar f3 = T3 * press1 - r3;
 
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
@@ -1698,11 +1726,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         }
                         // 'nextisIt': Neumann boundary
-                        else
+                        else if (nextIsItBcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value of 'nextisIt'
-                            std::vector<Scalar> J(this->problem().neumann(globalPosFace13, *nextisIt));
-                            double J3 = (J[wPhaseIdx]/densityW + J[nPhaseIdx]/densityNW);
+                            this->problem().neumann(boundValues, *nextisIt);
+                            Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21;
                             FieldVector nu11(0);
@@ -1714,24 +1742,24 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
                             FieldVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
 
                             // evaluate T, r
-                            double T = g111 - g211 * g121 / g221;
-                            double r = -T * g1 - g121 * (-J3) * nextisIt->geometry().volume() / (2.0 * g221);
+                            Scalar T = g111 - g211 * g121 / g221;
+                            Scalar r = -T * g1 - g121 * (-J3) * nextisIt->geometry().volume() / (2.0 * g221);
 
                             // use the pressure values to compute the fluxes
-                            double f1 = T * press1 + r;
+                            Scalar f1 = T * press1 + r;
 
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
@@ -1749,7 +1777,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         int globalIdx3 = this->problem().variables().index(*nextisItoutside);
 
                         // get pressure value
-                        double press3 = this->problem().variables().pressure()[globalIdx3];
+                        Scalar press3 = this->problem().variables().pressure()[globalIdx3];
 
                         // neighbor cell 3 geometry type
                         //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1762,7 +1790,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 *nextisItoutside));
 
                         // get total mobility of neighbor cell 3
-                        double lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
+                        Scalar lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
                                     + this->problem().variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
@@ -1794,27 +1822,29 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         GlobalPosition globalPosFace34 = isIt34->geometry().center();
 
                         // get face volume
-                        double face34vol = isIt34->geometry().volume();
+                        Scalar face34vol = isIt34->geometry().volume();
 
                         // get outer normal vector scaled with half volume of face 'isIt34'
                         Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
                         integrationOuterNormaln2 *= face34vol / 2.0;
 
                         // get boundary condition for boundary face (isIt34) center
-                        BoundaryConditions::Flags isIt34bctype = this->problem().bctypePress(globalPosFace34, *isIt34);
+                        BoundaryTypes isIt34BcType;
+                        this->problem().boundaryTypes(isIt34BcType, *isIt34);
 
                         // 'isIt34': Dirichlet boundary
-                        if (isIt34bctype == BoundaryConditions::dirichlet)
+                        if (isIt34BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value of 'isIt34'
-                            double g2 = this->problem().dirichletPress(globalPosFace34, *isIt34);
+                            this->problem().dirichlet(boundValues, *isIt34);
+                            Scalar g2 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt34'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda3 = 0;
-                            if (this->problem().bctypeSat(globalPosFace34, *isIt34) == BoundaryConditions::dirichlet)
+                            Scalar alambda3 = 0;
+                            if (isIt34BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = this->problem().dirichletSat(globalPosFace34, *isIt34);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1828,11 +1858,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(globalPosFace34, *eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(globalPosFace34, *eIt);
+                                Scalar temperature = this->problem().temperature(*eIt);
+                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1871,11 +1902,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1886,18 +1917,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g213 = alambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
-                            double g223 = alambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g213 = alambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
+                            Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
 
                             // compute the matrix T & vector r
                             FieldMatrix T(0);
                             FieldVector r(0);
 
-                            double coe = g221 + g223;
+                            Scalar coe = g221 + g223;
 
                             // evaluate matrix T
                             T[0][0] = g111 + g121 * (g223 - g211) / coe;
@@ -1910,8 +1941,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             r[1] = -(g1 * g211 * g223 + g2 * g221 * g213) / coe;
 
                             // use the pressure values to compute the fluxes
-                            double f1 = T[0][0] * press1 + T[0][1] * press3 + r[0];
-                            double f3 = T[1][0] * press1 + T[1][1] * press3 + r[1];
+                            Scalar f1 = T[0][0] * press1 + T[0][1] * press3 + r[0];
+                            Scalar f3 = T[1][0] * press1 + T[1][1] * press3 + r[1];
 
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
@@ -1925,11 +1956,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         }
                         // 'isIt34': Neumann boundary
-                        else
+                        else if (isIt34BcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value of 'isIt34'
-                            std::vector<Scalar> J(this->problem().neumann(globalPosFace34, *isIt34));
-                            double J2 = (J[wPhaseIdx]/densityW + J[nPhaseIdx]/densityNW);
+                            this->problem().neumann(boundValues, *isIt34);
+                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -1947,11 +1978,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1962,14 +1993,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
-                            double g113 = lambda3 * (integrationOuterNormaln2 * K3nu13) / dF3;
-                            double g123 = lambda3 * (integrationOuterNormaln2 * K3nu23) / dF3;
-                            double g213 = lambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
-                            double g223 = lambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11) / dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21) / dF1;
+                            Scalar g113 = lambda3 * (integrationOuterNormaln2 * K3nu13) / dF3;
+                            Scalar g123 = lambda3 * (integrationOuterNormaln2 * K3nu23) / dF3;
+                            Scalar g213 = lambda3 * (integrationOuterNormaln3 * K3nu13) / dF3;
+                            Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             FieldMatrix A(0), B(0);
@@ -1996,9 +2027,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             A.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
-                            double f1 = (g111 + g121 - g121 * T[1][0]) * press1 - g121 * T[1][1] * press3 - (g111 * g1
+                            Scalar f1 = (g111 + g121 - g121 * T[1][0]) * press1 - g121 * T[1][1] * press3 - (g111 * g1
                                     + g121 * r[1]);
-                            double f3 = (g211 + g221 - g221 * T[1][0]) * press1 - g221 * T[1][1] * press3 - (g211 * g1
+                            Scalar f3 = (g211 + g221 - g221 * T[1][0]) * press1 - g221 * T[1][1] * press3 - (g211 * g1
                                     + g221 * r[1]);
 
                             // evaluate velocity of facet 'isIt'
@@ -2028,7 +2059,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
         // check if local mass conservative
         if (dim == 2 && GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation)) == vt)
         {
-            double diff = fabs(this->problem().variables().velocity()[globalIdx1][0] * unitOuterNormal[0] * facevol[0]
+            Scalar diff = fabs(this->problem().variables().velocity()[globalIdx1][0] * unitOuterNormal[0] * facevol[0]
                     + this->problem().variables().velocity()[globalIdx1][1] * unitOuterNormal[1] * facevol[1]
                     + this->problem().variables().velocity()[globalIdx1][2] * unitOuterNormal[2] * facevol[2]
                     + this->problem().variables().velocity()[globalIdx1][3] * unitOuterNormal[3] * facevol[3] - q1

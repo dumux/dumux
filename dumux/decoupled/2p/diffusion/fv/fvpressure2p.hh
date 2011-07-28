@@ -75,6 +75,9 @@ template<class TypeTag> class FVPressure2P
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -86,6 +89,8 @@ template<class TypeTag> class FVPressure2P
         pglobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationNW,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
     enum
     {
@@ -341,6 +346,8 @@ void FVPressure2P<TypeTag>::assemble(bool first)
     A_ = 0;
     f_ = 0;
 
+    BoundaryTypes bcType;
+
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
@@ -357,8 +364,9 @@ void FVPressure2P<TypeTag>::assemble(bool first)
         Scalar densityWI = problem_.variables().densityWetting(globalIdxI);
         Scalar densityNWI = problem_.variables().densityNonwetting(globalIdxI);
 
-        // set right side to zero
-        std::vector<Scalar> source(problem_.source(globalPos, *eIt));
+        // set sources
+        PrimaryVariables source(0.0);
+        problem().source(source, *eIt);
         if (!compressibility)
         {
             source[wPhaseIdx] /= densityWI;
@@ -566,33 +574,34 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 // center of face in global coordinates
                 const GlobalPosition& globalPosFace = isIt->geometry().center();
 
+                problem().boundaryTypes(bcType, *isIt);
+                PrimaryVariables boundValues(0.0);
+
                 Dune::FieldVector<Scalar, dimWorld> distVec(globalPosFace - globalPos);
                 Scalar dist = distVec.two_norm();
 
-                //get boundary condition for boundary face center
-                BoundaryConditions::Flags bctype = problem_.bctypePress(globalPosFace, *isIt);
-                BoundaryConditions::Flags bcTypeSat = problem_.bctypeSat(globalPosFace, *isIt);
-
-                if (bctype == BoundaryConditions::dirichlet)
+                if (bcType.isDirichlet(eqIdxPress))
                 {
+                    problem().dirichlet(boundValues, *isIt);
+
                     //permeability vector at boundary
                     Dune::FieldVector<Scalar, dim> permeability(0);
                     permeabilityI.mv(unitOuterNormal, permeability);
 
                     //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
                     Scalar satBound;
-                    if (bcTypeSat == BoundaryConditions::dirichlet)
+                    if (bcType.isDirichlet(eqIdxSat))
                     {
-                        satBound = problem_.dirichletSat(globalPosFace, *isIt);
+                        satBound = boundValues[eqIdxSat];
                     }
                     else
                     {
                         satBound = problem_.variables().saturation()[globalIdxI];
                     }
-                    Scalar temperature = problem_.temperature(globalPosFace, *eIt);
+                    Scalar temperature = problem_.temperature(*eIt);
 
                     //get dirichlet pressure boundary condition
-                    Scalar pressBound = problem_.dirichletPress(globalPosFace, *isIt);
+                    Scalar pressBound = boundValues[eqIdxPress];
 
                     //calculate consitutive relations depending on the kind of saturation used
                     //determine phase saturations from primary saturation variable
@@ -610,6 +619,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     {
                         satW = 1 - satBound;
                         //satNW = satBound;
+                        break;
                     }
                     }
 
@@ -655,7 +665,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                     }
                     else
                     {
-                        Scalar referencePressure = problem_.referencePressure(globalPos, *eIt);
+                        Scalar referencePressure = problem_.referencePressure(*eIt);
                         FluidState fluidState;
                         fluidState.update(satW, referencePressure, referencePressure, temperature);
 
@@ -772,20 +782,25 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 }
                 //set neumann boundary condition
 
-                else
+                else if (bcType.isNeumann(eqIdxPress))
                 {
-                    std::vector<Scalar> J(problem_.neumann(globalPosFace, *isIt));
+                    problem().neumann(boundValues, *isIt);
+
                     if (!compressibility)
                     {
-                        J[wPhaseIdx] /= densityWI;
-                        J[nPhaseIdx] /= densityNWI;
+                        boundValues[wPhaseIdx] /= densityWI;
+                        boundValues[nPhaseIdx] /= densityNWI;
                     }
-                    f_[globalIdxI] -= (J[wPhaseIdx] + J[nPhaseIdx]) * faceArea;
+                    f_[globalIdxI] -= (boundValues[wPhaseIdx] + boundValues[nPhaseIdx]) * faceArea;
 
                     //Assumes that the phases flow in the same direction at the neumann boundary, which is the direction of the total flux!!!
                     //needed to determine the upwind direction in the saturation equation
-                    problem_.variables().potentialWetting(globalIdxI, isIndex) = J[wPhaseIdx];
-                    problem_.variables().potentialNonwetting(globalIdxI, isIndex) = J[nPhaseIdx];
+                    problem_.variables().potentialWetting(globalIdxI, isIndex) = boundValues[wPhaseIdx];
+                    problem_.variables().potentialNonwetting(globalIdxI, isIndex) = boundValues[nPhaseIdx];
+                }
+                else
+                {
+                    DUNE_THROW(Dune::NotImplemented, "No valid boundary condition type defined for pressure equation!");
                 }
             }
         } // end all intersections
@@ -859,7 +874,7 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
 
         int globalIdx = problem_.variables().index(*eIt);
 
-        Scalar temperature = problem_.temperature(globalPos, *eIt);
+        Scalar temperature = problem_.temperature(*eIt);
 
         //determine phase saturations from primary saturation variable
         Scalar satW = 0;
@@ -913,8 +928,8 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         }
         else
         {
-            pressW = problem_.referencePressure(globalPos, *eIt);
-            pressNW = problem_.referencePressure(globalPos, *eIt);
+            pressW = problem_.referencePressure(*eIt);
+            pressNW = problem_.referencePressure(*eIt);
             fluidState.update(satW, pressW, pressNW, temperature);
         }
 

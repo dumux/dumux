@@ -47,9 +47,13 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    typedef typename SpatialParameters::MaterialLaw MaterialLaw;typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
 
     enum
     {
@@ -57,7 +61,9 @@ private:
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
 
     enum
@@ -95,31 +101,35 @@ public:
         //        ParentType::addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, intersection, phaseIdx);
         ParentType::addFlux(parentMob, parentMob, parentVis, parentVis, flux, intersection, phaseIdx);
 
+        const Element &element = *(intersection.inside());
+
         //coordinates of cell center
-        const GlobalPosition& globalPos = intersection.inside()->geometry().center();
+        const GlobalPosition& globalPos = element.geometry().center();
 
         // cell index
-        int globalIdxI = problem_.variables().index(*(intersection.inside()));
+        int globalIdxI = problem_.variables().index(element);
 
         int indexInInside = intersection.indexInInside();
 
         // get absolute permeability
         const FieldMatrix& permeabilityI(problem_.spatialParameters().intrinsicPermeability(globalPos,
-                *(intersection.inside())));
+                element));
 
         Scalar satI = problem_.variables().saturation()[globalIdxI];
         Scalar lambdaWI = problem_.variables().mobilityWetting(globalIdxI);
         Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
 
         Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(globalPos,
-                *(intersection.inside())), satI);
+                element), satI);
 
 
         const Dune::FieldVector<Scalar, dimWorld>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
         if (intersection.neighbor())
         {
-            const GlobalPosition& globalPosNeighbor = intersection.outside()->geometry().center();
+            const Element &neighbor = *(intersection.outside());
+
+            const GlobalPosition& globalPosNeighbor = neighbor.geometry().center();
 
             // distance vector between barycenters
             Dune::FieldVector < Scalar, dimWorld > distVec = globalPosNeighbor - globalPos;
@@ -127,7 +137,7 @@ public:
             // compute distance between cell centers
             Scalar dist = distVec.two_norm();
 
-            int globalIdxJ = problem_.variables().index(*(intersection.outside()));
+            int globalIdxJ = problem_.variables().index(neighbor);
 
             //calculate potential gradients
             Scalar potentialW = 0;
@@ -141,11 +151,11 @@ public:
             Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
 
             Scalar dPcdSJ = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(globalPosNeighbor,
-                    (*intersection.outside())), satJ);
+                    neighbor), satJ);
 
             // get absolute permeability
             const FieldMatrix& permeabilityJ(problem_.spatialParameters().intrinsicPermeability(globalPos,
-                    *(intersection.outside())));
+                    neighbor));
 
             // compute vectorized permeabilities
             FieldMatrix meanPermeability(0);
@@ -190,9 +200,9 @@ public:
             }
 
             Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.outside())), std::abs(satPlus)) / viscosityW;
+                    neighbor), std::abs(satPlus)) / viscosityW;
             dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.outside())), std::abs(satMinus)) / viscosityW;
+                    neighbor), std::abs(satMinus)) / viscosityW;
             dLambdaWdS /= (dS);
 
             if (potentialNW >= 0)
@@ -215,9 +225,9 @@ public:
             }
 
             Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.outside())), satPlus) / viscosityNW;
+                    neighbor), satPlus) / viscosityNW;
             dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.outside())), satMinus) / viscosityNW;
+                    neighbor), satMinus) / viscosityNW;
             dLambdaNWdS /= (dS);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWJ);
@@ -266,7 +276,8 @@ public:
             GlobalPosition globalPosFace = intersection.geometry().center();
 
             //get boundary type
-            BoundaryConditions::Flags bcTypeSat = problem_.bctypeSat(globalPosFace, intersection);
+            BoundaryTypes bcType;
+            problem_.boundaryTypes(bcType, intersection);
 
             // distance vector between barycenters
             Dune::FieldVector < Scalar, dimWorld > distVec = globalPosFace - globalPos;
@@ -279,9 +290,11 @@ public:
             permeabilityI.mv(unitOuterNormal, permeability);
 
             Scalar satBound = 0;
-            if (bcTypeSat == BoundaryConditions::dirichlet)
+            if (bcType.isDirichlet(eqIdxSat))
             {
-                satBound = problem_.dirichletSat(globalPosFace, intersection);
+                PrimaryVariables bcValues;
+                problem_.dirichlet(bcValues, intersection);
+                satBound = bcValues[eqIdxSat];
             }
             else
             {
@@ -308,25 +321,26 @@ public:
             default:
             {
                 DUNE_THROW(Dune::RangeError, "saturation type not implemented");
+                break;
             }
             }
 
             Scalar dPcdSBound = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(globalPos,
-                    *(intersection.inside())), satBound);
+                    element), satBound);
 
             Scalar lambdaWBound = 0;
             Scalar lambdaNWBound = 0;
 
-            Scalar temperature = problem_.temperature(globalPosFace, (*intersection.inside()));
-            Scalar referencePressure = problem_.referencePressure(globalPos, (*intersection.inside()));
+            Scalar temperature = problem_.temperature(element);
+            Scalar referencePressure = problem_.referencePressure(element);
             FluidState fluidState;
             Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
             Scalar viscosityNWBound =
                     FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
             lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.inside())), satW) / viscosityWBound;
+                    element), satW) / viscosityWBound;
             lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.inside())), satW) / viscosityNWBound;
+                    element), satW) / viscosityNWBound;
 
             Scalar potentialW = 0;
             Scalar potentialNW = 0;
@@ -357,9 +371,9 @@ public:
             }
 
             Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.inside())), satPlus) / viscosityW;
+                    element), satPlus) / viscosityW;
             dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.inside())), satMinus) / viscosityW;
+                    element), satMinus) / viscosityW;
             dLambdaWdS /= (dS);
 
             if (potentialNW >= 0)
@@ -382,9 +396,9 @@ public:
             }
 
             Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.inside())), satPlus) / viscosityNW;
+                    element), satPlus) / viscosityNW;
             dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    (*intersection.inside())), satMinus) / viscosityNW;
+                    element), satMinus) / viscosityNW;
             dLambdaNWdS /= (dS);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWBound);

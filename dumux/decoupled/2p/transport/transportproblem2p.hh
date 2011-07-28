@@ -42,9 +42,10 @@ namespace Dumux
  * @tparam TypeTag The Type Tag
  * @tparam Implementation The Problem implementation
  */
-template<class TypeTag, class Implementation>
+template<class TypeTag>
 class TransportProblem2P : public OneModelProblem<TypeTag>
 {
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
     typedef OneModelProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -60,6 +61,7 @@ class TransportProblem2P : public OneModelProblem<TypeTag>
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution Solution;
 
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     enum {
         dim = Grid::dimension,
@@ -110,10 +112,52 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This method MUST be overwritten by the actual problem.
+     * \param element The element
+     *
      */
-    Scalar temperature() const
-    { return this->asImp_()->temperature(); };
+    Scalar temperature(const Element& element) const
+    {
+        return this->asImp_().temperatureAtPos(element.geometry().center());
+    }
+
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     * \param globalPos The position of the center of an element
+     *
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        // Throw an exception (there is no initial condition)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a temperatureAtPos() method.");
+    }
+
+    /*!
+     * \brief Returns the reference pressure for evaluation of constitutive relations.
+     *
+     * \param element The element
+     *
+     */
+    Scalar referencePressure(const Element& element) const
+    {
+        return this->asImp_().referencePressureAtPos(element.geometry().center());
+    }
+
+    /*!
+     * \brief Returns the reference pressure for evaluation of constitutive relations.
+     *
+     * \param globalPos The position of the center of an element
+     *
+     */
+    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
+    {
+        // Throw an exception (there is no initial condition)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a referencePressureAtPos() method.");
+    }
 
     /*!
      * \brief Returns the acceleration due to gravity.
@@ -158,6 +202,14 @@ public:
     // \}
 
 private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     GlobalPosition gravity_;
 
     // fluids and material properties

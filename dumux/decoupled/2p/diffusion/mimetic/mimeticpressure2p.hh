@@ -36,6 +36,7 @@
 // dumux environment
 #include "dumux/common/pardiso.hh"
 #include <dumux/decoupled/2p/2pproperties.hh>
+#include "mimeticproperties.hh"
 
 namespace Dumux
 {
@@ -264,8 +265,8 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
         problem_.variables().capillaryPressure(globalIdx)= MaterialLaw::pC(
                 problem_.spatialParameters().materialLawParams(globalPos, *eIt), sat);
 
-        Scalar temperature = problem_.temperature(globalPos, *eIt);
-        Scalar pressW =  problem_.referencePressure(globalPos, *eIt);
+        Scalar temperature = problem_.temperature(*eIt);
+        Scalar pressW =  problem_.referencePressure(*eIt);
         Scalar pressN = pressW;
         fluidState.update(sat, pressW, pressN, temperature);
         Scalar viscosityW = FluidSystem::phaseViscosity(wPhaseIdx, temperature, pressW, fluidState);

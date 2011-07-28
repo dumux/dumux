@@ -99,8 +99,8 @@ public:
         // get absolute permeability of cell
         FieldMatrix permeability(problem_.spatialParameters().intrinsicPermeability(globalPos,element));
 
-        Scalar temperature = problem_.temperature(globalPos, element);
-        Scalar referencePressure = problem_.referencePressure(globalPos, element);
+        Scalar temperature = problem_.temperature(element);
+        Scalar referencePressure = problem_.referencePressure(element);
         FluidState fluidState;
         fluidState.update(satI, referencePressure, referencePressure, temperature);//not for compressible flow -> thus constant
 

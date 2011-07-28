@@ -87,6 +87,11 @@ class FVSaturation2P
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+
     enum
     {
         pw = Indices::pressureW,
@@ -97,13 +102,14 @@ class FVSaturation2P
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationNW,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution RepresentationType;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
@@ -290,6 +296,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
 
     // some phase properties
     //Dune::FieldVector<Scalar, dimWorld> gravity = problem_.gravity();
+
+    BoundaryTypes bcType;
 
     // compute update vector
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
@@ -543,6 +551,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
             // handle boundary face
             if (isIt->boundary())
             {
+                //get boundary type
+                problem_.boundaryTypes(bcType, *isIt);
+                PrimaryVariables boundValues(0.0);
+
                 // center of face in global coordinates
                 GlobalPosition globalPosFace = isIt->geometry().center();
 
@@ -552,14 +564,11 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
-                //get boundary type
-                BoundaryConditions::Flags bcTypeSat = problem_.bctypeSat(
-                        globalPosFace, *isIt);
-
-                if (bcTypeSat == BoundaryConditions::dirichlet)
+                if (bcType.isDirichlet(eqIdxSat))
                 {
-                    Scalar satBound = problem_.dirichletSat(globalPosFace,
-                            *isIt);
+                    problem_.dirichlet(boundValues, *isIt);
+
+                    Scalar satBound = boundValues[eqIdxSat];
 
                     //get velocity*normalvector*facearea/(volume*porosity)
                     factor
@@ -569,10 +578,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                             = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
                                     * unitOuterNormal) * (faceArea);
 
-                    Scalar pressBound =
-                            problem_.variables().pressure()[globalIdxI];
-                    Scalar temperature = problem_.temperature(globalPosFace,
-                            *eIt);
+                    Scalar pressBound = problem_.variables().pressure()[globalIdxI];
+                    Scalar temperature = problem_.temperature(*eIt);
 
                     //determine phase saturations from primary saturation variable
                     Scalar satWI = 0;
@@ -786,8 +793,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     }
                 }//end dirichlet boundary
 
-                if (bcTypeSat == BoundaryConditions::neumann)
+                if (bcType.isNeumann(eqIdxSat))
                 {
+                    problem_.neumann(boundValues, *isIt);
+
                     //get mobilities
                     Scalar lambdaW, lambdaNW;
 
@@ -807,13 +816,13 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     {
                     case Sw:
                     {
-                        factor = problem_.neumann(globalPosFace, *isIt)[wPhaseIdx];
+                        factor = boundValues[wPhaseIdx];
                         factor /= densityWI * faceArea;
                         break;
                     }
                     case Sn:
                     {
-                        factor = problem_.neumann(globalPosFace, *isIt)[nPhaseIdx];
+                        factor = boundValues[nPhaseIdx];
                         factor /= densityNWI * faceArea;
                         break;
                     }
@@ -847,7 +856,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     }
 
                 }//end neumann boundary
-                if (bcTypeSat == BoundaryConditions::outflow)
+                if (bcType.isOutflow(eqIdxSat))
                 {
                     //get mobilities
                     Scalar lambdaW, lambdaNW;
@@ -940,7 +949,9 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 break;
             }
             }
-            source = problem_.source(globalPos, *eIt)[wPhaseIdx] / densityWI;
+            PrimaryVariables sourceVec(0.0);
+            problem_.source(sourceVec, *eIt);
+            source = sourceVec[wPhaseIdx] / densityWI;
             if (source < 0 && sat < threshold_)
                 source = 0.0;
 
@@ -962,7 +973,9 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 break;
             }
             }
-            source = problem_.source(globalPos, *eIt)[nPhaseIdx] / densityNWI;
+            PrimaryVariables sourceVec(0.0);
+            problem_.source(sourceVec, *eIt);
+            source = sourceVec[nPhaseIdx] / densityNWI;
             if (source < 0 && sat < threshold_)
                 source = 0.0;
 
@@ -970,8 +983,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         }
         case vt:
         {
-            source = problem_.source(globalPos, *eIt)[wPhaseIdx] / densityWI
-                    + problem_.source(globalPos, *eIt)[nPhaseIdx] / densityNWI;
+            PrimaryVariables sourceVec(0.0);
+            problem_.source(sourceVec, *eIt);
+            source = sourceVec[wPhaseIdx] / densityWI
+                    + sourceVec[nPhaseIdx] / densityNWI;
             break;
         }
         }
@@ -1054,9 +1069,11 @@ void FVSaturation2P<TypeTag>::initialize()
         // get global coordinate of cell center
         GlobalPosition globalPos = eIt->geometry().center();
 
+        PrimaryVariables initSol(0.0);
+        problem_.initial(initSol, *eIt);
         // initialize cell concentration
         problem_.variables().saturation()[problem_.variables().index(*eIt)]
-                = problem_.initSat(globalPos, *eIt);
+                = initSol[eqIdxSat];
     }
 
     return;
@@ -1100,8 +1117,8 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws(
             satW = 1 - sat;
         }
 
-        Scalar temperature = problem_.temperature(globalPos, *eIt);
-        Scalar referencePressure = problem_.referencePressure(globalPos, *eIt);
+        Scalar temperature = problem_.temperature(*eIt);
+        Scalar referencePressure = problem_.referencePressure(*eIt);
 
         fluidState.update(satW, referencePressure, referencePressure,
                 temperature);

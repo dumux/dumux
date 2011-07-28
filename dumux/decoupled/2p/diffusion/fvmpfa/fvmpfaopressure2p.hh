@@ -76,6 +76,9 @@ class FVMPFAOPressure2P
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridTypeIndices)) GridTypeIndices;
 
     enum
@@ -89,7 +92,9 @@ class FVMPFAOPressure2P
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -294,6 +299,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
                 default:
                 {
                     DUNE_THROW(Dune::NotImplemented, "GridType can not be used with MPFAO implementation!");
+                    break;
                 }
             }
 
@@ -385,6 +391,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
                 default:
                 {
                     DUNE_THROW(Dune::NotImplemented, "GridType can not be used with MPFAO implementation!");
+                    break;
                 }
             }
 
@@ -467,13 +474,14 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
         GlobalPosition globalPos1 = eIt->geometry().center();
 
         // cell 1 volume
-        double volume1 = eIt->geometry().volume();
+        Scalar volume1 = eIt->geometry().volume();
 
         // cell 1 index
         int globalIdx1 = problem_.variables().index(*eIt);
 
         // evaluate right hand side
-        std::vector<Scalar> source(problem_.source(globalPos1, *eIt));
+        PrimaryVariables source(0.0);
+        problem_.source(source, *eIt);
 
         //get the densities
         Scalar densityW = problem_.variables().densityWetting(globalIdx1);
@@ -485,7 +493,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
         FieldMatrix K1(problem_.spatialParameters().intrinsicPermeability(globalPos1,*eIt));
 
         //compute total mobility of cell 1
-        double lambda1 = 0;
+        Scalar lambda1 = 0;
         lambda1 = problem_.variables().mobilityWetting(globalIdx1) + problem_.variables().mobilityNonwetting(globalIdx1);
 
         // if K1 is zero, no flux through cell1
@@ -558,6 +566,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 default:
                 {
                     DUNE_THROW(Dune::NotImplemented, "GridType can not be used with MPFAO implementation!");
+                    break;
                 }
             }
 
@@ -569,7 +578,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
             globalPosFace12 = isIt->geometry().center();
 
             // get face volume
-            double face12vol = isIt->geometry().volume();
+            Scalar face12vol = isIt->geometry().volume();
 
             // get outer normal vector scaled with half volume of face 'isIt'
             Dune::FieldVector<Scalar,dimWorld> integrationOuterNormaln1
@@ -585,7 +594,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
             = nextisIt->geometry().center();
 
             // get face volume
-            double face13vol = nextisIt->geometry().volume();
+            Scalar face13vol = nextisIt->geometry().volume();
 
             // get outer normal vector scaled with half volume of face 'nextisIt'
             Dune::FieldVector<Scalar,dimWorld> integrationOuterNormaln3
@@ -632,7 +641,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 FieldMatrix K2(problem_.spatialParameters().intrinsicPermeability(globalPos2, *outside));
 
                 // get total mobility of neighbor cell 2
-                double lambda2 = 0;
+                Scalar lambda2 = 0;
                 lambda2 = problem_.variables().mobilityWetting(globalIdx2) + problem_.variables().mobilityNonwetting(globalIdx2);
 
                 // 'nextisIt' is an interior face
@@ -655,13 +664,13 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(globalPos3, *nextisItoutside));
 
                     // get total mobility of neighbor cell 3
-                    double lambda3 = 0;
+                    Scalar lambda3 = 0;
                     lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
 
                     // neighbor cell 4
                     GlobalPosition globalPos4(0);
                     FieldMatrix K4(0);
-                    double lambda4 = 0;
+                    Scalar lambda4 = 0;
                     int globalIdx4 = 0;
 
                     IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
@@ -732,7 +741,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     globalPosFace24 = isIt24->geometry().center();
 
                     // get face volume
-                    double face24vol = isIt24->geometry().volume();
+                    Scalar face24vol = isIt24->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt24'
                     Dune::FieldVector<Scalar,dimWorld> integrationOuterNormaln4
@@ -772,7 +781,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     globalPosFace34 = isIt34->geometry().center();
 
                     // get face volume
-                    double face34vol = isIt34->geometry().volume();
+                    Scalar face34vol = isIt34->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt34'
                     Dune::FieldVector<Scalar,dimWorld> integrationOuterNormaln2
@@ -808,19 +817,19 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     // compute dF1, dF2, dF3, dF4 i.e., the area of quadrilateral made by normal vectors 'nu'
                     FieldVector Rnu21(0);
                     R.umv(nu21, Rnu21);
-                    double dF1 = fabs(nu11 * Rnu21);
+                    Scalar dF1 = fabs(nu11 * Rnu21);
 
                     FieldVector Rnu22(0);
                     R.umv(nu22, Rnu22);
-                    double dF2 = fabs(nu12 * Rnu22);
+                    Scalar dF2 = fabs(nu12 * Rnu22);
 
                     FieldVector Rnu23(0);
                     R.umv(nu23, Rnu23);
-                    double dF3 = fabs(nu13 * Rnu23);
+                    Scalar dF3 = fabs(nu13 * Rnu23);
 
                     FieldVector Rnu24(0);
                     R.umv(nu24, Rnu24);
-                    double dF4 = fabs(nu14 * Rnu24);
+                    Scalar dF4 = fabs(nu14 * Rnu24);
 
                     // compute components needed for flux calculation, denoted as 'g'
                     FieldVector K1nu11(0);
@@ -839,22 +848,22 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     K4.umv(nu14, K4nu14);
                     FieldVector K4nu24(0);
                     K4.umv(nu24, K4nu24);
-                    double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                    double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                    double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                    double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                    double g112 = lambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
-                    double g122 = lambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
-                    double g212 = lambda2 * (integrationOuterNormaln4 * K2nu12)/dF2;
-                    double g222 = lambda2 * (integrationOuterNormaln4 * K2nu22)/dF2;
-                    double g113 = lambda3 * (integrationOuterNormaln2 * K3nu13)/dF3;
-                    double g123 = lambda3 * (integrationOuterNormaln2 * K3nu23)/dF3;
-                    double g213 = lambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
-                    double g223 = lambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
-                    double g114 = lambda4 * (integrationOuterNormaln2 * K4nu14)/dF4;
-                    double g124 = lambda4 * (integrationOuterNormaln2 * K4nu24)/dF4;
-                    double g214 = lambda4 * (integrationOuterNormaln4 * K4nu14)/dF4;
-                    double g224 = lambda4 * (integrationOuterNormaln4 * K4nu24)/dF4;
+                    Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                    Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                    Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                    Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                    Scalar g112 = lambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
+                    Scalar g122 = lambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
+                    Scalar g212 = lambda2 * (integrationOuterNormaln4 * K2nu12)/dF2;
+                    Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22)/dF2;
+                    Scalar g113 = lambda3 * (integrationOuterNormaln2 * K3nu13)/dF3;
+                    Scalar g123 = lambda3 * (integrationOuterNormaln2 * K3nu23)/dF3;
+                    Scalar g213 = lambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
+                    Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
+                    Scalar g114 = lambda4 * (integrationOuterNormaln2 * K4nu14)/dF4;
+                    Scalar g124 = lambda4 * (integrationOuterNormaln2 * K4nu24)/dF4;
+                    Scalar g214 = lambda4 * (integrationOuterNormaln4 * K4nu14)/dF4;
+                    Scalar g224 = lambda4 * (integrationOuterNormaln4 * K4nu24)/dF4;
 
                     // compute transmissibility matrix T = CA^{-1}B+F
                     Dune::FieldMatrix<Scalar,2*dim,2*dim> C(0), F(0), A(0), B(0);
@@ -945,7 +954,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     globalPosFace24 = isIt24->geometry().center();
 
                     // get face volume
-                    double face24vol = isIt24->geometry().volume();
+                    Scalar face24vol = isIt24->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt24'
                     Dune::FieldVector<Scalar,dimWorld> integrationOuterNormaln4
@@ -953,26 +962,28 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     integrationOuterNormaln4
                     *= face24vol/2.0;
 
-                    // get boundary condition for boundary face (nextisIt) center
-                    BoundaryConditions::Flags nextisItbctype = problem_.bctypePress(globalPosFace13, *nextisIt);
+                    BoundaryTypes nextIsItBcType;
+                    problem_.boundaryTypes(nextIsItBcType, *nextisIt);
+
+                    // get boundary condition for boundary face (isIt24) center
+                    BoundaryTypes isIt24BcType;
+                    problem_.boundaryTypes(isIt24BcType, *isIt24);
+
+                    PrimaryVariables boundValues(0.0);
 
                     // 'nextisIt': Neumann boundary
-                    if (nextisItbctype == BoundaryConditions::neumann)
+                    if (nextIsItBcType.isNeumann(eqIdxPress))
                     {
                         // get Neumann boundary value of 'nextisIt'
-                        std::vector<Scalar> J(problem_.neumann(globalPosFace13, *nextisIt));
-                        double J3 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
-
-                        // get boundary condition for boundary face (isIt24) center
-                        BoundaryConditions::Flags isIt24bctype =
-                        problem_.bctypePress(globalPosFace24, *isIt24);
+                        problem_.neumann(boundValues, *nextisIt);
+                        Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                         // 'isIt24': Neumann boundary
-                        if (isIt24bctype == BoundaryConditions::neumann)
+                        if (isIt24BcType.isNeumann(eqIdxPress))
                         {
                             // get neumann boundary value of 'isIt24'
-                            std::vector<Scalar> J(problem_.neumann(globalPosFace24, *isIt24));
-                            double J4 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt24);
+                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -990,11 +1001,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1005,14 +1016,14 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g112 = lambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
-                            double g122 = lambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
-                            double g212 = lambda2 * (integrationOuterNormaln4 * K2nu12)/dF2;
-                            double g222 = lambda2 * (integrationOuterNormaln4 * K2nu22)/dF2;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g112 = lambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
+                            Scalar g122 = lambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
+                            Scalar g212 = lambda2 * (integrationOuterNormaln4 * K2nu12)/dF2;
+                            Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22)/dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             Dune::FieldMatrix<Scalar,2*dim-1,2*dim-1> A(0);
@@ -1051,17 +1062,18 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
                         // 'isIt24': Dirichlet boundary
 
-                        else
+                        else if (isIt24BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value on 'isIt24'
-                            double g4 = problem_.dirichletPress(globalPosFace24, *isIt24);
+                            problem_.dirichlet(boundValues, *isIt24);
+                            Scalar g4 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda2 = 0;
-                            if (problem_.bctypeSat(globalPosFace24, *isIt24) == BoundaryConditions::dirichlet)
+                            Scalar alambda2 = 0;
+                            if (isIt24BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = problem_.dirichletSat(globalPosFace24, *isIt24);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1075,11 +1087,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(globalPosFace24, *eIt);
-                                Scalar referencePressure =  problem_.referencePressure(globalPosFace24, *eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1118,11 +1131,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1133,12 +1146,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g112 = alambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
-                            double g122 = alambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g112 = alambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
+                            Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             FieldMatrix A(0), B(0);
@@ -1173,17 +1186,18 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     }
                     // 'nextisIt': Dirichlet boundary
 
-                    else
+                    else if (nextIsItBcType.isDirichlet(eqIdxPress))
                     {
                         // get Dirichlet boundary value of 'nextisIt'
-                        double g3 = problem_.dirichletPress(globalPosFace13, *nextisIt);
+                        problem_.dirichlet(boundValues, *nextisIt);
+                        Scalar g3 = boundValues[eqIdxPress];
 
                         // compute total mobility for Dirichlet boundary 'nextisIt'
                         //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                        double alambda1 = 0;
-                        if (problem_.bctypeSat(globalPosFace13, *nextisIt) == BoundaryConditions::dirichlet)
+                        Scalar alambda1 = 0;
+                        if (nextIsItBcType.isDirichlet(eqIdxSat))
                         {
-                            Scalar satBound = problem_.dirichletSat(globalPosFace13, *nextisIt);
+                            Scalar satBound = boundValues[eqIdxSat];
 
                             //determine phase saturations from primary saturation variable
                             Scalar satW = 0;
@@ -1197,11 +1211,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             case Sn:
                             {
                                 satW = 1 - satBound;
+                                break;
                             }
                             }
 
-                            Scalar temperature = problem_.temperature(globalPosFace13, *eIt);
-                            Scalar referencePressure =  problem_.referencePressure(globalPosFace13, *eIt);
+                            Scalar temperature = problem_.temperature(*eIt);
+                            Scalar referencePressure =  problem_.referencePressure(*eIt);
 
 
                             Scalar lambdaWBound = 0;
@@ -1225,16 +1240,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             alambda1 = lambda1;
                         }
 
-                        // get boundary condition for boundary face (isIt24) center
-                        BoundaryConditions::Flags isIt24bctype =
-                        problem_.bctypePress(globalPosFace24, *isIt24);
-
                         // 'isIt24': Neumann boundary
-                        if (isIt24bctype == BoundaryConditions::neumann)
+                        if (isIt24BcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value of 'isIt24'
-                            std::vector<Scalar> J(problem_.neumann(globalPosFace24, *isIt24));
-                            double J4 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt24);
+                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -1252,11 +1263,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1267,14 +1278,14 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g112 = lambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
-                            double g122 = lambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
-                            double g212 = lambda2 * (integrationOuterNormaln4 * K2nu12)/dF2;
-                            double g222 = lambda2 * (integrationOuterNormaln4 * K2nu22)/dF2;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g112 = lambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
+                            Scalar g122 = lambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
+                            Scalar g212 = lambda2 * (integrationOuterNormaln4 * K2nu12)/dF2;
+                            Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22)/dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             FieldMatrix A(0), B(0);
@@ -1308,17 +1319,18 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
                         // 'isIt24': Dirichlet boundary
 
-                        else
+                        else if (isIt24BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value on 'isIt24'
-                            double g4 = problem_.dirichletPress(globalPosFace24, *isIt24);
+                            problem_.dirichlet(boundValues, *isIt24);
+                            Scalar g4 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda2 = 0;
-                            if (problem_.bctypeSat(globalPosFace24, *isIt24) == BoundaryConditions::dirichlet)
+                            Scalar alambda2 = 0;
+                            if (isIt24BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = problem_.dirichletSat(globalPosFace24, *isIt24);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1332,11 +1344,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(globalPosFace24, *eIt);
-                                Scalar referencePressure =  problem_.referencePressure(globalPosFace24, *eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1375,11 +1388,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu22(0);
                             R.umv(nu22, Rnu22);
-                            double dF2 = fabs(nu12 * Rnu22);
+                            Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1390,18 +1403,18 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K2.umv(nu12, K2nu12);
                             FieldVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g112 = alambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
-                            double g122 = alambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g112 = alambda2 * (integrationOuterNormaln1 * K2nu12)/dF2;
+                            Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
 
                             // compute the matrix T & vector r
                             FieldMatrix T(0);
                             FieldVector r(0);
 
-                            double coe = g111 + g112;
+                            Scalar coe = g111 + g112;
 
                             // evaluate matrix T
                             T[0][0] = g112 * (g111 + g121)/coe;
@@ -1425,15 +1438,17 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
             else
             {
-                // get boundary condition for boundary face center of 'isIt'
-                BoundaryConditions::Flags isItbctype = problem_.bctypePress(globalPosFace12, *isIt);
+                BoundaryTypes isItBcType;
+                problem_.boundaryTypes(isItBcType, *isIt);
+
+                PrimaryVariables boundValues(0.0);
 
                 // 'isIt' is on Neumann boundary
-                if (isItbctype == BoundaryConditions::neumann)
+                if (isItBcType.isNeumann(eqIdxPress))
                 {
                     // get Neumann boundary value
-                    std::vector<Scalar> J(problem_.neumann(globalPosFace12, *isIt));
-                    double J1 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
+                    problem_.neumann(boundValues, *isIt);
+                    Scalar J1 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                     // evaluate right hand side
                     f_[globalIdx1] -= face12vol*J1;
@@ -1442,17 +1457,19 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     if (nextisIt->boundary())
                     {
                         // get boundary condition for boundary face center of 'nextisIt'
-                        BoundaryConditions::Flags nextisItbctype =
-                        problem_.bctypePress(globalPosFace13, *nextisIt);
+                        BoundaryTypes nextIsItBcType;
+                        problem_.boundaryTypes(nextIsItBcType, *nextisIt);
 
-                        if (nextisItbctype == BoundaryConditions::dirichlet)
+                        if (nextIsItBcType.isDirichlet(eqIdxPress))
                         {
+                            problem_.dirichlet(boundValues, *nextisIt);
+
                             // compute total mobility for Dirichlet boundary 'nextisIt'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda1 = 0;
-                            if (problem_.bctypeSat(globalPosFace13, *nextisIt) == BoundaryConditions::dirichlet)
+                            Scalar alambda1 = 0;
+                            if (nextIsItBcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = problem_.dirichletSat(globalPosFace13, *nextisIt);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1466,11 +1483,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(globalPosFace13, *eIt);
-                                Scalar referencePressure =  problem_.referencePressure(globalPosFace13, *eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1494,7 +1512,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             }
 
                             // get Dirichlet boundary value
-                            double g3 = problem_.dirichletPress(globalPosFace13, *nextisIt);
+                            Scalar g3 = boundValues[eqIdxPress];
 
                             // compute normal vectors nu11,nu21;
                             FieldVector nu11(0);
@@ -1506,17 +1524,17 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
                             FieldVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
 
                             // assemble the global matrix A_ and right hand side f_
                             A_[globalIdx1][globalIdx1] += g221 - g211 * g121/g111;
@@ -1544,7 +1562,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(globalPos3, *nextisItoutside));
 
                         // get total mobility of neighbor cell 3
-                        double lambda3 = 0;
+                        Scalar lambda3 = 0;
                         lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
@@ -1576,7 +1594,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         globalPosFace34 = isIt34->geometry().center();
 
                         // get face volume
-                        double face34vol = isIt34->geometry().volume();
+                        Scalar face34vol = isIt34->geometry().volume();
 
                         // get outer normal vector scaled with half volume of face 'isIt34'
                         Dune::FieldVector<Scalar,dimWorld> integrationOuterNormaln2
@@ -1585,15 +1603,15 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         *= face34vol/2.0;
 
                         // get boundary condition for boundary face center of 'isIt34'
-                        BoundaryConditions::Flags isIt34bctype =
-                        problem_.bctypePress(globalPosFace34, *isIt34);
+                        BoundaryTypes isIt34BcType;
+                        problem_.boundaryTypes(isIt34BcType, *isIt34);
 
                         // 'isIt34': Neumann boundary
-                        if (isIt34bctype == BoundaryConditions::neumann)
+                        if (isIt34BcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value
-                            std::vector<Scalar> J(problem_.neumann(globalPosFace34, *isIt34));
-                            double J2 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt34);
+                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -1611,11 +1629,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1626,14 +1644,14 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g113 = lambda3 * (integrationOuterNormaln2 * K3nu13)/dF3;
-                            double g123 = lambda3 * (integrationOuterNormaln2 * K3nu23)/dF3;
-                            double g213 = lambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
-                            double g223 = lambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g113 = lambda3 * (integrationOuterNormaln2 * K3nu13)/dF3;
+                            Scalar g123 = lambda3 * (integrationOuterNormaln2 * K3nu23)/dF3;
+                            Scalar g213 = lambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
+                            Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
 
                             // compute transmissibility matrix T = CA^{-1}B+F
                             Dune::FieldMatrix<Scalar,2*dim-1,2*dim-1> C(0), A(0);
@@ -1688,17 +1706,18 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
                         // 'isIt34': Dirichlet boundary
 
-                        else
+                        else if (isIt34BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value
-                            double g2 = problem_.dirichletPress(globalPosFace34, *isIt34);
+                            problem_.dirichlet(boundValues, *isIt34);
+                            Scalar g2 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda3 = 0;
-                            if (problem_.bctypeSat(globalPosFace34, *isIt34) == BoundaryConditions::dirichlet)
+                            Scalar alambda3 = 0;
+                            if (isIt34BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = problem_.dirichletSat(globalPosFace34, *isIt34);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1712,11 +1731,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(globalPosFace34, *eIt);
-                                Scalar referencePressure =  problem_.referencePressure(globalPosFace34, *eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1755,11 +1775,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1770,12 +1790,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g213 = alambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
-                            double g223 = alambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
+                            Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = lambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = lambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g213 = alambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
+                            Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
 
                             // compute transmissibility matrix T = CA^{-1}B+F
                             FieldMatrix C(0), A(0), F(0), B(0);
@@ -1825,17 +1845,18 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 }
                 // 'isIt' is on Dirichlet boundary
 
-                else
+                else if (isItBcType.isDirichlet(eqIdxPress))
                 {
                     // get Dirichlet boundary value
-                    double g1 = problem_.dirichletPress(globalPosFace12, *isIt);
+                    problem_.dirichlet(boundValues, *isIt);
+                    Scalar g1 = boundValues[eqIdxPress];
 
                     // compute total mobility for Dirichlet boundary 'isIt'
                     //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                    double alambda1 = 0;
-                    if (problem_.bctypeSat(globalPosFace12, *isIt) == BoundaryConditions::dirichlet)
+                    Scalar alambda1 = 0;
+                    if (isItBcType.isDirichlet(eqIdxSat))
                     {
-                        Scalar satBound = problem_.dirichletSat(globalPosFace12, *isIt);
+                        Scalar satBound = boundValues[eqIdxSat];
 
                         //determine phase saturations from primary saturation variable
                         Scalar satW = 0;
@@ -1849,11 +1870,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         case Sn:
                         {
                             satW = 1 - satBound;
+                            break;
                         }
                         }
 
-                        Scalar temperature = problem_.temperature(globalPosFace12, *eIt);
-                        Scalar referencePressure =  problem_.referencePressure(globalPosFace12, *eIt);
+                        Scalar temperature = problem_.temperature(*eIt);
+                        Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                         Scalar lambdaWBound = 0;
                         Scalar lambdaNWBound = 0;
@@ -1879,22 +1901,23 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     // 'nextisIt' is on boundary
                     if (nextisIt->boundary())
                     {
-                        // get boundary condition for boundary face (nextisIt) center
-                        BoundaryConditions::Flags nextisItbctype
-                        = problem_.bctypePress(globalPosFace13, *nextisIt);
+                        // get boundary condition for boundary face center of 'nextisIt'
+                        BoundaryTypes nextIsItBcType;
+                        problem_.boundaryTypes(nextIsItBcType, *nextisIt);
 
                         // 'nextisIt': Dirichlet boundary
-                        if (nextisItbctype == BoundaryConditions::dirichlet)
+                        if (nextIsItBcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value of 'nextisIt'
-                            double g3 = problem_.dirichletPress(globalPosFace13, *nextisIt);
+                            problem_.dirichlet(boundValues, *nextisIt);
+                            Scalar g3 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'nextisIt'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda1 = 0;
-                            if (problem_.bctypeSat(globalPosFace13, *nextisIt) == BoundaryConditions::dirichlet)
+                            Scalar alambda1 = 0;
+                            if (nextIsItBcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = problem_.dirichletSat(globalPosFace13, *nextisIt);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -1908,11 +1931,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(globalPosFace13, *eIt);
-                                Scalar referencePressure =  problem_.referencePressure(globalPosFace13, *eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1945,7 +1969,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -1953,16 +1977,16 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             FieldVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
 
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
 
                             // evaluate T1, T3, r1, r3
-                            double T1 = g111 + g121;
-                            double T3 = g211 + g221;
-                            double r1 = g111 * g1 + g121 * g3;
-                            double r3 = g211 * g1 + g221 * g3;
+                            Scalar T1 = g111 + g121;
+                            Scalar T3 = g211 + g221;
+                            Scalar r1 = g111 * g1 + g121 * g3;
+                            Scalar r3 = g211 * g1 + g221 * g3;
 
                             // assemble matrix A_ and right hand side f_
                             A_[globalIdx1][globalIdx1] += T1 + T3;
@@ -1970,11 +1994,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
                         // 'nextisIt': Neumann boundary
 
-                        else
+                        else if (nextIsItBcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value of 'nextisIt'
-                            std::vector<Scalar> J(problem_.neumann(globalPosFace13, *nextisIt));
-                            double J3 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *nextisIt);
+                            Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21;
                             FieldVector nu11(0);
@@ -1986,21 +2010,21 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
                             FieldVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
 
                             // evaluate T, r
-                            double T = g111 - g211 * g121/g221;
-                            double r = -T * g1 - g121 * (-J3) * nextisIt->geometry().volume()/ (2.0 * g221);
+                            Scalar T = g111 - g211 * g121/g221;
+                            Scalar r = -T * g1 - g121 * (-J3) * nextisIt->geometry().volume()/ (2.0 * g221);
 
                             // assemble matrix A_ and right hand side f_
                             A_[globalIdx1][globalIdx1] += T;
@@ -2027,7 +2051,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(globalPos3, *nextisItoutside));
 
                         // get total mobility of neighbor cell 3
-                        double lambda3 = 0;
+                        Scalar lambda3 = 0;
                         lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
@@ -2059,7 +2083,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         globalPosFace34 = isIt34->geometry().center();
 
                         // get face volume
-                        double face34vol = isIt34->geometry().volume();
+                        Scalar face34vol = isIt34->geometry().volume();
 
                         // get outer normal vector scaled with half volume of face 'isIt34'
                         Dune::FieldVector<Scalar,dimWorld> integrationOuterNormaln2
@@ -2068,21 +2092,22 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         *= face34vol/2.0;
 
                         // get boundary condition for boundary face (isIt34) center
-                        BoundaryConditions::Flags isIt34bctype
-                        = problem_.bctypePress(globalPosFace34, *isIt34);
+                        BoundaryTypes isIt34BcType;
+                        problem_.boundaryTypes(isIt34BcType, *isIt34);
 
                         // 'isIt34': Dirichlet boundary
-                        if (isIt34bctype == BoundaryConditions::dirichlet)
+                        if (isIt34BcType.isDirichlet(eqIdxPress))
                         {
                             // get Dirichlet boundary value of 'isIt34'
-                            double g2 = problem_.dirichletPress(globalPosFace34, *isIt34);
+                            problem_.dirichlet(boundValues, *isIt34);
+                            Scalar g2 = boundValues[eqIdxPress];
 
                             // compute total mobility for Dirichlet boundary 'isIt34'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
-                            double alambda3 = 0;
-                            if (problem_.bctypeSat(globalPosFace34, *isIt34) == BoundaryConditions::dirichlet)
+                            Scalar alambda3 = 0;
+                            if (isIt34BcType.isDirichlet(eqIdxSat))
                             {
-                                Scalar satBound = problem_.dirichletSat(globalPosFace34, *isIt34);
+                                Scalar satBound = boundValues[eqIdxSat];
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
@@ -2096,11 +2121,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 case Sn:
                                 {
                                     satW = 1 - satBound;
+                                    break;
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(globalPosFace34, *eIt);
-                                Scalar referencePressure =  problem_.referencePressure(globalPosFace34, *eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -2139,11 +2165,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -2154,18 +2180,18 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g213 = alambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
-                            double g223 = alambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g213 = alambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
+                            Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
 
                             // compute the matrix T & vector r
                             FieldMatrix T(0);
                             FieldVector r(0);
 
-                            double coe = g221 + g223;
+                            Scalar coe = g221 + g223;
 
                             // evaluate matrix T
                             T[0][0] = g111 + g121 * (g223 - g211)/coe;
@@ -2184,11 +2210,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
                         // 'isIt34': Neumann boundary
 
-                        else
+                        else if (isIt34BcType.isNeumann(eqIdxPress))
                         {
                             // get Neumann boundary value of 'isIt34'
-                            std::vector<Scalar> J(problem_.neumann(globalPosFace34, *isIt34));
-                            double J2 = (J[wPhaseIdx]/densityW+J[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt34);
+                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -2206,11 +2232,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
                             FieldVector Rnu21(0);
                             R.umv(nu21, Rnu21);
-                            double dF1 = fabs(nu11 * Rnu21);
+                            Scalar dF1 = fabs(nu11 * Rnu21);
 
                             FieldVector Rnu23(0);
                             R.umv(nu23, Rnu23);
-                            double dF3 = fabs(nu13 * Rnu23);
+                            Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
                             FieldVector K1nu11(0);
@@ -2221,14 +2247,14 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             K3.umv(nu13, K3nu13);
                             FieldVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
-                            double g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
-                            double g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
-                            double g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
-                            double g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
-                            double g113 = lambda3 * (integrationOuterNormaln2 * K3nu13)/dF3;
-                            double g123 = lambda3 * (integrationOuterNormaln2 * K3nu23)/dF3;
-                            double g213 = lambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
-                            double g223 = lambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
+                            Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
+                            Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
+                            Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
+                            Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
+                            Scalar g113 = lambda3 * (integrationOuterNormaln2 * K3nu13)/dF3;
+                            Scalar g123 = lambda3 * (integrationOuterNormaln2 * K3nu23)/dF3;
+                            Scalar g213 = lambda3 * (integrationOuterNormaln3 * K3nu13)/dF3;
+                            Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
                             FieldMatrix A(0), B(0);
@@ -2269,7 +2295,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
     } // end grid traversal
 
 //    // get the number of nonzero terms in the matrix
-//    double num_nonzero = 0;
+//    Scalar num_nonzero = 0;
 //
 //    // determine position of matrix entries
 //    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != problem_.gridView().template end<0>(); ++eIt)
@@ -2436,8 +2462,8 @@ void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
 
         int globalIdx = problem_.variables().index(*eIt);
 
-        Scalar temperature = problem_.temperature(globalPos, *eIt);
-        Scalar referencePressure =  problem_.referencePressure(globalPos, *eIt);
+        Scalar temperature = problem_.temperature(*eIt);
+        Scalar referencePressure =  problem_.referencePressure(*eIt);
 
         //determine phase saturations from primary saturation variable
         Scalar satW = 0;

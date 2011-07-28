@@ -62,11 +62,18 @@ Template parameters are:
 - Grid a DUNE grid type
 - RT type used for return values
 */
-template<class GridView, class Scalar, class VC, class Problem>
+template<class TypeTag>
 class MimeticGroundwaterEquationLocalStiffness
 :
-public LocalStiffness<GridView, Scalar, 1>
+public LocalStiffness<TypeTag, 1>
 {
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+
     // grid types
     enum
     {
@@ -74,10 +81,15 @@ public LocalStiffness<GridView, Scalar, 1>
     };
     enum
     {
-        wetting = 0, nonwetting = 1
+        wetting = Indices::wPhaseIdx, nonwetting = Indices::nPhaseIdx,
+        eqIdxPress = Indices::pressureEq,
+        eqIdxSat = Indices::saturationEq
     };
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
 
 public:
     // define the number of components of your system, this is used outside
@@ -316,8 +328,9 @@ public:
         Pi.umv(Wc, F);
         //      std::cout << "Pi = \dim" << Pi << "c = " << c << ", F = " << F << std::endl;
 
-        std::vector<Scalar> source(problem_.source(centerGlobal,element));
-        qmean = volume*(source[wetting] + source[nonwetting]);
+        PrimaryVariables sourceVec(0.0);
+        problem_.source(sourceVec, element);
+        qmean = volume*(sourceVec[wetting] + sourceVec[nonwetting]);
     }
 
 private:
@@ -372,26 +385,32 @@ private:
         // evaluate boundary conditions via intersection iterator
         typedef typename GridView::IntersectionIterator IntersectionIterator;
 
+        BoundaryTypes bcType;
+
         IntersectionIterator endit = gridView_.iend(element);
         for (IntersectionIterator it = gridView_.ibegin(element); it!=endit; ++it)
             if (!it->neighbor())
             {
                 Dune::FieldVector<Scalar,dim> faceGlobal = it->geometry().center();
 
-                // determine boundary condition type for this face
-                typename BoundaryConditions::Flags bctypeface = problem_.bctypePress(faceGlobal, *it);
-
                 unsigned int faceIndex = it->indexInInside();
-                this->bctype[faceIndex][0] = bctypeface;
 
-                if (bctypeface == BoundaryConditions::neumann)
+                problem_.boundaryTypes(bcType, *it);
+                PrimaryVariables boundValues(0.0);
+
+                if (bcType.isNeumann(eqIdxPress))
                 {
-                    std::vector<Scalar> neumannFlux(problem_.neumann(faceGlobal, *it));
-                    Scalar J = (neumannFlux[wetting]+neumannFlux[nonwetting]);
+                    problem_.neumann(boundValues, *it);
+                    Scalar J = (boundValues[wetting]+boundValues[nonwetting]);
                     this->b[faceIndex] -= J*it->geometry().volume();
                 }
-                else if (bctypeface == BoundaryConditions::dirichlet)
-                    this->b[faceIndex] = problem_.dirichletPress(faceGlobal, *it);
+                else if (bcType.isDirichlet(eqIdxPress))
+                {
+                    problem_.dirichlet(boundValues, *it);
+                    this->b[faceIndex] = boundValues[eqIdxPress];
+
+                    this->bctype[faceIndex][0] = BoundaryConditions::dirichlet;
+                }
             }
     }
 

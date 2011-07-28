@@ -58,22 +58,23 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam GV A grid view type
-  \tparam RT The field type used in the elements of the stiffness matrix
+  \tparam GridView A grid view type
+  \tparam Scalar The field type used in the elements of the stiffness matrix
   \tparam m number of degrees of freedom per node (system size)
    */
-  template<class GV, class RT, int m>
+  template<class TypeTag, int m>
   class LocalStiffness
   {
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     // grid types
-      typedef typename GV::Grid::ctype DT;
-      typedef typename GV::template Codim<0>::Entity Entity;
-    enum {n=GV::dimension};
+      typedef typename GridView::template Codim<0>::Entity Entity;
+    enum {n=GridView::dimension};
 
   public:
     // types for matrics, vectors and boundary conditions
-    typedef Dune::FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
-    typedef Dune::FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
+    typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
+    typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
         typedef Dune::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
 
     virtual ~LocalStiffness ()
@@ -236,22 +237,24 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam GV A grid view type
-  \tparam RT The field type used in the elements of the stiffness matrix
+  \tparam GridView A grid view type
+  \tparam Scalar The field type used in the elements of the stiffness matrix
   \tparam m number of degrees of freedom per node (system size)
    */
-  template<class GV, class RT, int m>
-  class LinearLocalStiffness : public LocalStiffness<GV,RT,m>
+  template<class TypeTag, int m>
+  class LinearLocalStiffness : public LocalStiffness<TypeTag,m>
   {
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+
     // grid types
-      typedef typename GV::Grid::ctype DT;
-      typedef typename GV::template Codim<0>::Entity Entity;
-    enum {n=GV::dimension};
+      typedef typename GridView::template Codim<0>::Entity Entity;
+    enum {n=GridView::dimension};
 
   public:
     // types for matrics, vectors and boundary conditions
-      typedef Dune::FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
-      typedef Dune::FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
+      typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
+      typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
       typedef Dune::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
 
     /*! initialize local stiffness matrix */

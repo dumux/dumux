@@ -1,5 +1,7 @@
 /*****************************************************************************
- *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -17,53 +19,57 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_TRANSPORT_PROPERTIES_HH
-#define DUMUX_TRANSPORT_PROPERTIES_HH
 
 /*!
- * \ingroup Saturation2p
+ * \ingroup IMPES
  * \ingroup Properties
  */
 /*!
  * \file
- * \brief Specifies the properties for immiscible 2p transport
+ *
+ * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
+
+#ifndef DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
+#define DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
+
+//Dumux-includes
+#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
+
 namespace Dumux
 {
 
-template<class TypeTag>
-class DiffusivePart;
+////////////////////////////////
+// forward declarations
+////////////////////////////////
 
-template<class TypeTag>
-class ConvectivePart;
 
-template<class TypeTag>
-class EvalCflFluxDefault;
-
+////////////////////////////////
+// properties
+////////////////////////////////
 namespace Properties
 {
-// \{
-
 //////////////////////////////////////////////////////////////////
-// Type tags tags
+// Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(Transport);
+//! The type tag for the two-phase problems
+NEW_TYPE_TAG(Mimetic)
+;
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
+NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
 
-NEW_PROP_TAG( DiffusivePart );         //!< The type of the diffusive part in a transport equation
-NEW_PROP_TAG( ConvectivePart );        //!< The type of a convective part in a transport equation
-NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
-NEW_PROP_TAG( CFLFactor );
+SET_PROP(Mimetic, LocalStiffness)
+{
+public:
+    typedef MimeticGroundwaterEquationLocalStiffness<TypeTag> type;
+};
 
-SET_TYPE_PROP(Transport, DiffusivePart, DiffusivePart<TypeTag>);
-SET_TYPE_PROP(Transport, ConvectivePart, ConvectivePart<TypeTag>);
-SET_TYPE_PROP(Transport, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
-SET_SCALAR_PROP(Transport, CFLFactor, 1.0);
 }
 }
 

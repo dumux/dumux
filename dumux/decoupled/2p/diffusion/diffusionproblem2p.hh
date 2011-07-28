@@ -41,9 +41,10 @@ namespace Dumux
  * @tparam TypeTag The Type Tag
  * @tparam Implementation The Problem implementation
  */
-template<class TypeTag, class Implementation>
+template<class TypeTag>
 class DiffusionProblem2P: public OneModelProblem<TypeTag>
 {
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
     typedef OneModelProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -54,6 +55,8 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag>
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     enum
     {
@@ -73,40 +76,8 @@ public:
      * \param gridView The grid view
      * \param verbose Output flag for the time manager
      */
-    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView) :
-        ParentType(timeManager, gridView), gravity_(0)
-    {
-        spatialParameters_ = new SpatialParameters(gridView);
-        newSpatialParams_ = true;
-        gravity_ = 0;
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
-            gravity_[dim - 1] = -9.81;
-    }
-    /*!
-     * \brief The constructor
-     *
-     * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
-     * \param verbose Output flag for the time manager.
-     */
-    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
-    :ParentType(timeManager, gridView), gravity_(0), spatialParameters_(&spatialParameters)
-    {
-        newSpatialParams_ = false;
-        gravity_ = 0;
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
-            gravity_[dim - 1] = -9.81;
-    }
-
-    /*!
-     * \brief The constructor
-     *
-     * \param gridView The grid view
-     * \param verbose Output flag for the time manager
-     */
-    DiffusionProblem2P(const GridView &gridView, bool verbose = true)
-    DUNE_DEPRECATED // use DiffusionProblem2P(TimeManager&, const GridView&)
-    : ParentType(gridView, verbose), gravity_(0)
+    DiffusionProblem2P(const GridView &gridView)
+    : ParentType(timeManager_, gridView), gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
         newSpatialParams_ = true;
@@ -122,8 +93,7 @@ public:
      * \param verbose Output flag for the time manager.
      */
     DiffusionProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
-    DUNE_DEPRECATED // use DiffusionProblem2P(TimeManager&, const GridView&, SpatialParameters&)
-    : ParentType(gridView, verbose), gravity_(0), spatialParameters_(&spatialParameters)
+    : ParentType(timeManager_, gridView, verbose), gravity_(0), spatialParameters_(&spatialParameters)
     {
         newSpatialParams_ = false;
         gravity_ = 0;
@@ -167,13 +137,52 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This method MUST be overwritten by the actual problem.
+     * \param element The element
+     *
      */
-    Scalar temperature() const
+    Scalar temperature(const Element& element) const
     {
-        return this->asImp_()->temperature();
+        return this->asImp_().temperatureAtPos(element.geometry().center());
     }
-    ;
+
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     * \param globalPos The position of the center of an element
+     *
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        // Throw an exception (there is no initial condition)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a temperatureAtPos() method.");
+    }
+
+    /*!
+     * \brief Returns the reference pressure for evaluation of constitutive relations.
+     *
+     * \param element The element
+     *
+     */
+    Scalar referencePressure(const Element& element) const
+    {
+        return this->asImp_().referencePressureAtPos(element.geometry().center());
+    }
+
+    /*!
+     * \brief Returns the reference pressure for evaluation of constitutive relations.
+     *
+     * \param globalPos The position of the center of an element
+     *
+     */
+    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
+    {
+        // Throw an exception (there is no initial condition)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a referencePressureAtPos() method.");
+    }
 
     /*!
      * \brief Returns the acceleration due to gravity.
@@ -205,6 +214,16 @@ public:
     // \}
 
 private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
+    TimeManager timeManager_;
+
     GlobalPosition gravity_;
 
     // fluids and material properties
