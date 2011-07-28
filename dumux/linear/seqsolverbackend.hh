@@ -38,11 +38,11 @@ class ILU0BiCGSTABBackend
   typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 public:
 
-  ILU0BiCGSTABBackend(Problem& problem)
+  ILU0BiCGSTABBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
     static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
@@ -61,6 +61,8 @@ public:
     Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
 
     solver.apply(x, bTmp, result_);
+
+    return result_.converged;
   }
 
   const Dune::InverseOperatorResult& result() const
@@ -78,11 +80,11 @@ class ILU0CGBackend
   typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 public:
 
-  ILU0CGBackend(Problem& problem)
+  ILU0CGBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
     static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
@@ -101,6 +103,8 @@ public:
     Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
 
     solver.apply(x, bTmp, result_);
+
+    return result_.converged;
   }
 
   const Dune::InverseOperatorResult& result() const
@@ -121,7 +125,7 @@ public:
   {}
 
   template<class Preconditioner, class Solver, class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
     static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
@@ -140,6 +144,8 @@ public:
     Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
 
     solver.apply(x, bTmp, result_);
+
+    return result_.converged;
   }
 
   const Dune::InverseOperatorResult& result() const
@@ -158,16 +164,16 @@ class ILUnBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  ILUnBiCGSTABBackend(Problem& problem)
+  ILUnBiCGSTABBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqILUn<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -178,16 +184,16 @@ class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  SORBiCGSTABBackend(Problem& problem)
+  SORBiCGSTABBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqSOR<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -198,16 +204,16 @@ class SSORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  SSORBiCGSTABBackend(Problem& problem)
+  SSORBiCGSTABBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -218,16 +224,16 @@ class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  GSBiCGSTABBackend(Problem& problem)
+  GSBiCGSTABBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqGS<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -238,16 +244,16 @@ class JacBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  JacBiCGSTABBackend(Problem& problem)
+  JacBiCGSTABBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqJac<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::BiCGSTABSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -258,16 +264,16 @@ class ILUnCGBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  ILUnCGBackend(Problem& problem)
+  ILUnCGBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqILUn<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -278,16 +284,16 @@ class SORCGBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  SORCGBackend(Problem& problem)
+  SORCGBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqSOR<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -298,16 +304,16 @@ class SSORCGBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  SSORCGBackend(Problem& problem)
+  SSORCGBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -318,16 +324,16 @@ class GSCGBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  GSCGBackend(Problem& problem)
+  GSCGBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqGS<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -338,16 +344,16 @@ class JacCGBackend: public IterativePrecondSolverBackend<TypeTag>
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
-  JacCGBackend(Problem& problem)
+  JacCGBackend(const Problem& problem)
   {}
 
   template<class Matrix, class Vector>
-  void solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     typedef Dune::SeqJac<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::CGSolver<Vector> Solver;
 
-    ParentType::template solve<Preconditioner, Solver>(A, x, b);
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b);
   }
 };
 
@@ -364,7 +370,7 @@ public:
   {}
 
   template<class Matrix, class Vector>
-  int solve(const Matrix& A, Vector& x, const Vector& b)
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
     static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
