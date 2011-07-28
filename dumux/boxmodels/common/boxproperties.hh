@@ -46,7 +46,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the box-scheme
-NEW_TYPE_TAG(BoxModel, INHERITS_FROM(ImplicitModel, LinearSolver));
+NEW_TYPE_TAG(BoxModel, INHERITS_FROM(ImplicitModel, LinearSolverTypeTag));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -81,7 +81,6 @@ NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over bou
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(NewtonMethod);     //!< The type of the newton method
 NEW_PROP_TAG(NewtonController); //!< The type of the newton controller
-NEW_PROP_TAG(LinearSolver); //!< The type of the linear solver to be used
 
 //! Specify whether the jacobian matrix of the last iteration of a
 //! time step should be re-used as the jacobian of the first iteration

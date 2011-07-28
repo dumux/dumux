@@ -45,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all decoupled models
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolver));
+NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

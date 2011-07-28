@@ -33,7 +33,10 @@ namespace Dumux
 namespace Properties
 {
 //! Linear solver type tag for all models.
-NEW_TYPE_TAG(LinearSolver);
+NEW_TYPE_TAG(LinearSolverTypeTag);
+
+//! The type of the linear solver to be used
+NEW_PROP_TAG(LinearSolver);
 
 /*!
  * \brief Specifies the verbosity of the linear solver
