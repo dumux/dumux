@@ -40,10 +40,10 @@ namespace Dumux
  *  \tparam TypeTag The property Type Tag
  */
 template <class TypeTag>
-class DecTwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
-                                           DecTwoPTwoCFluidState<TypeTag> >
+class DecoupledTwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag,
+                            PTAG(Scalar)), DecoupledTwoPTwoCFluidState<TypeTag> >
 {
-    typedef DecTwoPTwoCFluidState<TypeTag> ThisType;
+    typedef DecoupledTwoPTwoCFluidState<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
@@ -322,6 +322,7 @@ public:
             return phasePressure_[nPhaseIdx]*moleFrac(nPhaseIdx, wCompIdx);
         else
             DUNE_THROW(Dune::NotImplemented, "component not found in fluidState!");
+        return 0;
     }
 
     /*!

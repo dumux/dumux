@@ -44,10 +44,11 @@ namespace Dumux
  * only the functions of the currently used formulation has to be specified
  * in the specific problem.
  */
-template<class TypeTag, class Implementation>
+template<class TypeTag>
 class IMPETProblem2P2C : public IMPETProblem<TypeTag>
 {
     typedef IMPETProblem<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
@@ -203,7 +204,15 @@ public:
     // \}
 
 private:
-    GlobalPosition  gravity_;
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
+    GlobalPosition gravity_;
 
     // fluids and material properties
     SpatialParameters*  spatialParameters_;

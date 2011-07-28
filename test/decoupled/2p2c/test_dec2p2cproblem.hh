@@ -53,7 +53,7 @@ class TestDecTwoPTwoCProblem;
 // Specify the properties
 namespace Properties
 {
-NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC/*, Transport*/));
+NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC));
 
 // Set the grid type
 SET_PROP(TestDecTwoPTwoCProblem, Grid)
@@ -115,7 +115,7 @@ public:
 
 // Enable gravity
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableGravity, true);
-SET_INT_PROP(DecoupledTwoPTwoC,
+SET_INT_PROP(TestDecTwoPTwoCProblem,
         BoundaryMobility,
         GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::satDependent);
 SET_SCALAR_PROP(TestDecTwoPTwoCProblem, CFLFactor, 0.8);
@@ -136,10 +136,9 @@ SET_SCALAR_PROP(TestDecTwoPTwoCProblem, CFLFactor, 0.8);
  * specified by programm arguments.
  */
 template<class TypeTag = TTAG(TestDecTwoPTwoCProblem)>
-class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag, TestDecTwoPTwoCProblem<TypeTag> >
+class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
-typedef TestDecTwoPTwoCProblem<TypeTag> ThisType;
-typedef IMPETProblem2P2C<TypeTag, ThisType> ParentType;
+typedef IMPETProblem2P2C<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;

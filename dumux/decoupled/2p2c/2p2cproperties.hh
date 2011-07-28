@@ -47,10 +47,10 @@ template<class TypeTag>
 class VariableClass2P2C;
 
 template<class TypeTag>
-class DecTwoPTwoCFluidState;
+class DecoupledTwoPTwoCFluidState;
 
 template <class TypeTag>
-struct TwoPTwoCIndices;
+struct DecoupledTwoPTwoCIndices;
 
 ////////////////////////////////
 // properties
@@ -76,7 +76,7 @@ NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the model
 NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
 NEW_PROP_TAG( EnableCompressibility);// ! Returns whether compressibility is allowed
-NEW_PROP_TAG(EnableCapillarity); //!< Returns whether capillarity is regarded
+NEW_PROP_TAG( EnableCapillarity); //!< Returns whether capillarity is regarded
 NEW_PROP_TAG( BoundaryMobility );
 NEW_PROP_TAG( NumDensityTransport );
 NEW_PROP_TAG( FluidSystem );
@@ -87,7 +87,7 @@ NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); // Two-point f
 //////////////////////////////////////////////////////////////////
 SET_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices)
 {
-  typedef TwoPTwoCIndices<TypeTag> type;
+  typedef DecoupledTwoPTwoCIndices<TypeTag> type;
 };
 
 SET_INT_PROP(DecoupledTwoPTwoC, NumEq, 2);
@@ -143,7 +143,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
 
 SET_PROP_DEFAULT(BoundaryMobility)
 {
-    static const int value = TwoPTwoCIndices<TypeTag>::satDependent;
+    static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;
 };
 SET_PROP_DEFAULT(NumDensityTransport)
 {
@@ -152,7 +152,7 @@ SET_PROP_DEFAULT(NumDensityTransport)
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass2P2C<TypeTag>);
 
-SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecTwoPTwoCFluidState<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecoupledTwoPTwoCFluidState<TypeTag>);
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false);
 
@@ -165,12 +165,16 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrid
  * distinguishing between given composition or saturation on the boundary.
  */
 template <class TypeTag>
-struct TwoPTwoCIndices : DecoupledTwoPCommonIndices<TypeTag>
+struct DecoupledTwoPTwoCIndices : DecoupledTwoPCommonIndices<TypeTag>
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
 public:
+    // Component indices
+    static const int wCompIdx = FluidSystem::wCompIdx; //!< Index of the wetting phase in a phase vector
+    static const int nCompIdx = FluidSystem::nCompIdx; //!< Index of the non-wetting phase in a phase vector
+
     // BoundaryCondition flags
     static const int satDependent = 0;
     static const int permDependent = 1;

@@ -42,7 +42,6 @@ template <class TypeTag>
 class PseudoOnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
                                            PseudoOnePTwoCFluidState<TypeTag> >
 {
-    typedef DecTwoPTwoCFluidState<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
