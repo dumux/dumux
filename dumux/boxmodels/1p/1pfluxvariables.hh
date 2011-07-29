@@ -58,6 +58,8 @@ class OnePFluxVariables
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
+
+        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -141,10 +143,9 @@ public:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementVolumeVariables &elemDat)
+                             const ElementVolumeVariables &elemVolVars)
     {
         potentialGrad_ = 0.0;
-        Scalar densityAtIP = 0.0;
 
         // calculate potential gradient
         for (int idx = 0;
@@ -156,20 +157,33 @@ private:
 
             // the pressure gradient
             Vector tmp(feGrad);
-            tmp *= elemDat[idx].pressure();
+            tmp *= elemVolVars[idx].pressure();
             potentialGrad_ += tmp;
-
-            // fluid density
-            densityAtIP +=
-                elemDat[idx].density()*face().shapeValue[idx];
         }
 
-        // correct the pressure gradients by the hydrostatic
-        // pressure due to gravity
-        Vector tmp(problem.gravity());
-        tmp *= densityAtIP;
+        ///////////////
+        // correct the pressure gradients by the gravitational acceleration
+        ///////////////
+        if (enableGravity) {
+            // estimate the gravitational acceleration at a given SCV face
+            // using the arithmetic mean
+            Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
+            g += problem.boxGravity(element, fvElemGeom_, face().j);
+            g /= 2;
 
-        potentialGrad_ -= tmp;
+            // calculate the phase density at the integration point. we
+            // only do this if the wetting phase is present in both cells
+            Scalar rhoI = elemVolVars[face().i].density();
+            Scalar rhoJ = elemVolVars[face().j].density();
+            Scalar density = (rhoI + rhoJ)/2;
+                
+            // make it a force
+            Vector f(g);
+            f *= density;
+
+            // calculate the final potential gradient
+            potentialGrad_ -= f;
+        }
     }
 
     void calculateK_(const Problem &problem,

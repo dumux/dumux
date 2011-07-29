@@ -80,6 +80,8 @@ class TwoPTwoCFluxVariables
 
         lCompIdx = Indices::lCompIdx,
         gCompIdx = Indices::gCompIdx,
+
+        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 
 public:
@@ -90,13 +92,13 @@ public:
      * \param element The finite element
      * \param elemGeom The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
-     * \param elemDat The volume variables of the current element
+     * \param elemVolVars The volume variables of the current element
      */
     TwoPTwoCFluxVariables(const Problem &problem,
                      const Element &element,
                      const FVElementGeometry &elemGeom,
                      int faceIdx,
-                     const ElementVolumeVariables &elemDat)
+                     const ElementVolumeVariables &elemVolVars)
         : fvElemGeom_(elemGeom)
     {
         scvfIdx_ = faceIdx;
@@ -109,15 +111,15 @@ public:
             molarConcGrad_[phaseIdx] = Scalar(0);
         }
 
-        calculateGradients_(problem, element, elemDat);
-        calculateVelocities_(problem, element, elemDat);
-        calculateDiffCoeffPM_(problem, element, elemDat);
+        calculateGradients_(problem, element, elemVolVars);
+        calculateVelocities_(problem, element, elemVolVars);
+        calculateDiffCoeffPM_(problem, element, elemVolVars);
     };
 
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementVolumeVariables &elemDat)
+                             const ElementVolumeVariables &elemVolVars)
     {
         // calculate gradients
         Vector tmp(0.0);
@@ -133,59 +135,64 @@ private:
             {
                 // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemDat[idx].pressure(phaseIdx);
+                tmp *= elemVolVars[idx].pressure(phaseIdx);
                 potentialGrad_[phaseIdx] += tmp;
             }
 
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().massFrac(lPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[idx].fluidState().massFrac(lPhaseIdx, gCompIdx);
             concentrationGrad_[lPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFrac(lPhaseIdx, gCompIdx);
+            tmp *= elemVolVars[idx].fluidState().moleFrac(lPhaseIdx, gCompIdx);
             molarConcGrad_[lPhaseIdx] += tmp;
 
 //            // the concentration gradient of the wetting component
 //            // in the non-wetting phase
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().massFrac(gPhaseIdx, lCompIdx);
+            tmp *= elemVolVars[idx].fluidState().massFrac(gPhaseIdx, lCompIdx);
             concentrationGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFrac(gPhaseIdx, lCompIdx);
+            tmp *= elemVolVars[idx].fluidState().moleFrac(gPhaseIdx, lCompIdx);
             molarConcGrad_[gPhaseIdx] += tmp;
         }
 
-        // correct the pressure gradients by the hydrostatic
-        // pressure due to gravity
-        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
-        {
-            int i = face().i;
-            int j = face().j;
-            Scalar fI = rhoFactor_(phaseIdx, i, elemDat);
-            Scalar fJ = rhoFactor_(phaseIdx, j, elemDat);
-            if (fI + fJ <= 0)
-                fI = fJ = 0.5; // doesn't matter because no phase is
-                               // present in both cells!
-            densityAtIP_[phaseIdx] =
-                (fI*elemDat[i].density(phaseIdx) +
-                 fJ*elemDat[j].density(phaseIdx))
-                /
-                (fI + fJ);
-            // phase density
-            molarDensityAtIP_[phaseIdx]
-                =
-                (fI*elemDat[i].molarDensity(phaseIdx) +
-                 fJ*elemDat[j].molarDensity(phaseIdx))
-                /
-                (fI + fJ);
+        ///////////////
+        // correct the pressure gradients by the gravitational acceleration
+        ///////////////
+        if (enableGravity) {
+            // estimate the gravitational acceleration at a given SCV face
+            // using the arithmetic mean
+            Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
+            g += problem.boxGravity(element, fvElemGeom_, face().j);
+            g /= 2;
 
-            tmp = problem.gravity();
-            tmp *= densityAtIP_[phaseIdx];
-
-            potentialGrad_[phaseIdx] -= tmp;
+            for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
+            {
+                // calculate the phase density at the integration point. we
+                // only do this if the wetting phase is present in both cells
+                Scalar SI = elemVolVars[face().i].saturation(phaseIdx);
+                Scalar SJ = elemVolVars[face().j].saturation(phaseIdx);
+                Scalar rhoI = elemVolVars[face().i].density(phaseIdx);
+                Scalar rhoJ = elemVolVars[face().j].density(phaseIdx);
+                Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
+                Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+                if (fI + fJ == 0)
+                    // doesn't matter because no wetting phase is present in
+                    // both cells!
+                    fI = fJ = 0.5;
+                Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
+                
+                // make gravity acceleration a force
+                Vector f(g);
+                f *= density;
+        
+                // calculate the final potential gradient
+                potentialGrad_[phaseIdx] -= f;
+            }
         }
     }
 
@@ -206,7 +213,7 @@ private:
 
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const ElementVolumeVariables &elemDat)
+                              const ElementVolumeVariables &elemVolVars)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         // multiply the pressure potential with the intrinsic
@@ -240,10 +247,10 @@ private:
 
     void calculateDiffCoeffPM_(const Problem &problem,
                                const Element &element,
-                               const ElementVolumeVariables &elemDat)
+                               const ElementVolumeVariables &elemVolVars)
     {
-        const VolumeVariables &vDat_i = elemDat[face().i];
-        const VolumeVariables &vDat_j = elemDat[face().j];
+        const VolumeVariables &vDat_i = elemVolVars[face().i];
+        const VolumeVariables &vDat_j = elemVolVars[face().j];
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {

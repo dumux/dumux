@@ -74,6 +74,8 @@ class OnePTwoCFluxVariables
         phaseIdx = Indices::phaseIdx,
         comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
+
+        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 public:
     /*
@@ -274,14 +276,14 @@ protected:
      *
      *        \param problem The considered problem file
      *        \param element The considered element of the grid
-     *        \param elemDat The parameters stored in the considered element
+     *        \param elemVolVars The parameters stored in the considered element
      */
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementVolumeVariables &elemDat)
+                             const ElementVolumeVariables &elemVolVars)
     {
-        const VolumeVariables &vVars_i = elemDat[face().i];
-        const VolumeVariables &vVars_j = elemDat[face().j];
+        const VolumeVariables &vVars_i = elemVolVars[face().i];
+        const VolumeVariables &vVars_j = elemVolVars[face().j];
 
         Vector tmp;
         //The decision of the if-statement depends on the function useTwoPointGradient(const Element &elem,
@@ -298,29 +300,29 @@ protected:
 
                 // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemDat[idx].pressure();
+                tmp *= elemVolVars[idx].pressure();
                 potentialGrad_ += tmp;
 
                 // the concentration gradient [mol/m^3/m]
                 tmp = feGrad;
-                tmp *= elemDat[idx].concentration(comp1Idx);
+                tmp *= elemVolVars[idx].concentration(comp1Idx);
                 concentrationGrad_ += tmp;
 
                 tmp = feGrad;
-                tmp *= elemDat[idx].moleFrac(comp1Idx);
+                tmp *= elemVolVars[idx].moleFrac(comp1Idx);
                 moleFracGrad_ += tmp;
 
                 tmp = feGrad;
-                tmp *= elemDat[idx].massFrac(comp1Idx);
+                tmp *= elemVolVars[idx].massFrac(comp1Idx);
                 massFracGrad_ += tmp;
                 // phase viscosity
-                viscosityAtIP_ += elemDat[idx].viscosity()*face().shapeValue[idx];
+                viscosityAtIP_ += elemVolVars[idx].viscosity()*face().shapeValue[idx];
 
                 //phase moledensity
-                molarDensityAtIP_ += elemDat[idx].molarDensity()*face().shapeValue[idx];
+                molarDensityAtIP_ += elemVolVars[idx].molarDensity()*face().shapeValue[idx];
 
                 //phase density
-                densityAtIP_ += elemDat[idx].density()*face().shapeValue[idx];
+                densityAtIP_ += elemVolVars[idx].density()*face().shapeValue[idx];
             }
         }
         else {
@@ -340,12 +342,27 @@ protected:
             moleFracGrad_ *= vVars_j.moleFrac(comp1Idx) - vVars_i.moleFrac(comp1Idx);
         }
 
-        // correct the pressure by the hydrostatic pressure due to
-        // gravity
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity))) {
-            tmp = problem.gravity();
-            tmp *= 0.5*(vVars_i.density() + vVars_j.density());
-            potentialGrad_ -= tmp;
+        ///////////////
+        // correct the pressure gradients by the gravitational acceleration
+        ///////////////
+        if (enableGravity) {
+            // calculate the phase density at the integration point. we
+            // only do this if the wetting phase is present in both cells
+            Scalar rhoI = elemVolVars[face().i].density();
+            Scalar rhoJ = elemVolVars[face().j].density();
+            Scalar density = (rhoI + rhoJ)/2;
+
+            // estimate the gravitational acceleration at a given SCV face
+            // using the arithmetic mean
+            Vector f(problem.boxGravity(element, fvElemGeom_, face().i));
+            f += problem.boxGravity(element, fvElemGeom_, face().j);
+            f /= 2;
+
+            // make it a force
+            f *= density;
+        
+            // calculate the final potential gradient
+            potentialGrad_ -= f;
         }
     }
 

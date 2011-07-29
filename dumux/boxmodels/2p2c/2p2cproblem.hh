@@ -42,19 +42,20 @@ class TwoPTwoCProblem : public BoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::Grid Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
     enum {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
     /*!
@@ -86,10 +87,33 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "The Problem must implement a temperature() method for isothermal problems!"); };
 
     /*!
-     * \brief Returns the acceleration due to gravity.
+     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
      *
-     * If the <tt>EnableGravity</tt> property is true, this means
-     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
+     * This is the box discretization specific interface. By default
+     * it just calls gravityAtPos().
+     */
+    const GlobalPosition &boxGravity(const Element &element,
+                                     const FVElementGeometry &fvGeom,
+                                     int scvIdx) const
+    { return gravityAtPos(fvGeom.subContVol[scvIdx].global); }
+
+    /*!
+     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
+     *
+     * This is discretization independent interface. By default it
+     * just calls gravity().
+     */
+    const GlobalPosition &gravityAtPos(const GlobalPosition &pos) const
+    { return gravity(); }
+
+    /*!
+     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
+     *
+     * This method is used for problems where the gravitational
+     * acceleration does not depend on the spatial position. The
+     * default behaviour is that if the <tt>EnableGravity</tt>
+     * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
+     * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */
     const GlobalPosition &gravity() const
     { return gravity_; }

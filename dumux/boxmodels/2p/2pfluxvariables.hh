@@ -61,7 +61,9 @@ class TwoPFluxVariables
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+
+        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -153,7 +155,7 @@ protected:
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const ElementVolumeVariables &elemDat)
+                             const ElementVolumeVariables &elemVolVars)
     {
         // calculate gradients
         for (int idx = 0;
@@ -168,39 +170,50 @@ private:
             {
                 // the pressure gradient
                 Vector tmp(feGrad);
-                tmp *= elemDat[idx].pressure(phase);
+                tmp *= elemVolVars[idx].pressure(phase);
                 potentialGrad_[phase] += tmp;
             }
         }
 
-        // correct the pressure gradients by the hydrostatic
-        // pressure due to gravity
-        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
-        {
-            // calculate the phase density at the integration
-            // point. for this we make sure only existing phases
-            // matter
-            Scalar SI = elemDat[face().i].saturation(phaseIdx);
-            Scalar SJ = elemDat[face().j].saturation(phaseIdx);
-            Scalar rhoI = elemDat[face().i].density(phaseIdx);
-            Scalar rhoJ = elemDat[face().j].density(phaseIdx);
-            Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
-            Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
-            if (fI + fJ <= 0.0)
-                fI = fJ = 0.5; // doesn't matter because no phase is
-                               // present in both cells!
-            Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
+        ///////////////
+        // correct the pressure gradients by the gravitational acceleration
+        ///////////////
+        if (enableGravity) {
+            // estimate the gravitational acceleration at a given SCV face
+            // using the arithmetic mean
+            Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
+            g += problem.boxGravity(element, fvElemGeom_, face().j);
+            g /= 2;
 
-            Vector tmp(problem.gravity());
-            tmp *= density;
-
-            potentialGrad_[phaseIdx] -= tmp;
+            for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
+            {
+                // calculate the phase density at the integration point. we
+                // only do this if the wetting phase is present in both cells
+                Scalar SI = elemVolVars[face().i].saturation(phaseIdx);
+                Scalar SJ = elemVolVars[face().j].saturation(phaseIdx);
+                Scalar rhoI = elemVolVars[face().i].density(phaseIdx);
+                Scalar rhoJ = elemVolVars[face().j].density(phaseIdx);
+                Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
+                Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+                if (fI + fJ == 0)
+                    // doesn't matter because no wetting phase is present in
+                    // both cells!
+                    fI = fJ = 0.5;
+                Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
+                
+                // make gravity acceleration a force
+                Vector f(g);
+                f *= density;
+        
+                // calculate the final potential gradient
+                potentialGrad_[phaseIdx] -= f;
+            }
         }
     }
 
     void calculateK_(const Problem &problem,
                      const Element &element,
-                     const ElementVolumeVariables &elemDat)
+                     const ElementVolumeVariables &elemVolVars)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
         // calculate the intrinsic permeability

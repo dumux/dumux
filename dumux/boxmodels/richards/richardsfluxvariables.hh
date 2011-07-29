@@ -52,6 +52,8 @@ class RichardsFluxVariables
     enum {
         dimWorld = GridView::dimensionworld,
 
+        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
+
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
     };
@@ -154,27 +156,35 @@ protected:
         }
 
         ///////////////
-        // correct the pressure gradients by the hydrostatic
-        // pressure due to gravity
+        // correct the pressure gradients by the gravitational acceleration
         ///////////////
+        if (enableGravity) {
+            // calculate the phase density at the integration point. we
+            // only do this if the wetting phase is present in both cells
+            Scalar SI = elemVolVars[face().i].saturation(wPhaseIdx);
+            Scalar SJ = elemVolVars[face().j].saturation(wPhaseIdx);
+            Scalar rhoI = elemVolVars[face().i].density(wPhaseIdx);
+            Scalar rhoJ = elemVolVars[face().j].density(wPhaseIdx);
+            Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
+            Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
+            if (fI + fJ == 0)
+                // doesn't matter because no wetting phase is present in
+                // both cells!
+                fI = fJ = 0.5;
+            Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
 
-        // calculate the phase density at the integration point. we
-        // only do this if the wetting phase is present in both cells
-        Scalar SI = elemVolVars[face().i].saturation(wPhaseIdx);
-        Scalar SJ = elemVolVars[face().j].saturation(wPhaseIdx);
-        Scalar rhoI = elemVolVars[face().i].density(wPhaseIdx);
-        Scalar rhoJ = elemVolVars[face().j].density(wPhaseIdx);
-        Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
-        Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
-        if (fI + fJ == 0)
-            // doesn't matter because no wetting phase is present in
-            // both cells!
-            fI = fJ = 0.5;
-        Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
+            // estimate the gravitational acceleration at a given SCV face
+            // using the arithmetic mean
+            Vector f(problem.boxGravity(element, fvElemGeom_, face().i));
+            f += problem.boxGravity(element, fvElemGeom_, face().j);
+            f /= 2;
 
-        Vector tmp(problem.gravity());
-        tmp *= density;
-        potentialGrad_ -= tmp;
+            // make it a force
+            f *= density;
+        
+            // calculate the final potential gradient
+            potentialGrad_ -= f;
+        }
     }
 
     void calculateK_(const Problem &problem,
