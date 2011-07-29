@@ -99,8 +99,8 @@ public:
      */
     template <class PrecBackend, class SolverBackend>
     bool solve(const Matrix &M,
-            Vector &x,
-            const Vector &b)
+               Vector &x,
+               const Vector &b)
     {
         int verbosity = 0;
         if (problem_.gridView().comm().rank() == 0)

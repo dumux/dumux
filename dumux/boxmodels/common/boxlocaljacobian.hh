@@ -272,6 +272,21 @@ public:
     const PrimaryVariables &storageTerm(int i) const
     { return storageTerm_[i]; }
 
+    /*!
+     * \brief Returns the epsilon value which is added and removed
+     *        from the current solution.
+     *
+     * \param scvIdx     The local index of the element's vertex for
+     *                   which the local derivative ought to be calculated.
+     * \param pvIdx      The index of the primary variable which gets varied
+     */
+    Scalar numericEpsilon(int scvIdx,
+                          int pvIdx) const
+    {
+        Scalar pv = this->curVolVars_[scvIdx].primaryVar(pvIdx);
+        return 1e-9*(std::abs(pv) + 1);
+    }
+
 protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
@@ -389,7 +404,7 @@ protected:
         VolumeVariables origVolVars(curVolVars_[scvIdx]);
 
         curVolVars_[scvIdx].setEvalPoint(&origVolVars);
-        Scalar eps = asImp_().numericEpsilon_(scvIdx, pvIdx);
+        Scalar eps = asImp_().numericEpsilon(scvIdx, pvIdx);
         Scalar delta = 0;
 
         if (numDiffMethod >= 0) {
@@ -469,21 +484,6 @@ protected:
         for (unsigned i = 0; i < dest.size(); ++i)
             Valgrind::CheckDefined(dest[i]);
 #endif
-    }
-
-    /*!
-     * \brief Returns the epsilon value which is added and removed
-     *        from the current solution.
-     *
-     * \param scvIdx     The local index of the element's vertex for
-     *                   which the local derivative ought to be calculated.
-     * \param pvIdx      The index of the primary variable which gets varied
-     */
-    Scalar numericEpsilon_(int scvIdx,
-                           int pvIdx) const
-    {
-        Scalar pv = this->curVolVars_[scvIdx].primaryVar(pvIdx);
-        return 1e-9*(std::abs(pv) + 1);
     }
 
     /*!
