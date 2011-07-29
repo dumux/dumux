@@ -142,7 +142,7 @@ protected:
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
                             const Problem &problem)
-    { temperature_ = problem.temperature(element, elemGeom, scvIdx); }
+    { temperature_ = problem.boxTemperature(element, elemGeom, scvIdx); }
 
     Scalar temperature_;
     Scalar pressure_;

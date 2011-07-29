@@ -189,12 +189,8 @@ public:
      *
      * This problem assumes a temperature of 36 degrees Celsius.
      */
-    Scalar temperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
-    {
-        return 273.15 + 36; // in [K]
-    };
+    Scalar temperature() const
+    { return 273.15 + 36; }; // in [K]
 
     // \}
 

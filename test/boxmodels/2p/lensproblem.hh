@@ -256,18 +256,10 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * \param element The element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index (SCV index)
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * This problem assumes a uniform temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
-    {
-        return temperature_;
-    };
+    Scalar temperature() const
+    { return temperature_; };
 
     // \}
 

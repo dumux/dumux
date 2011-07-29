@@ -211,7 +211,7 @@ protected:
                             int scvIdx,
                             const Problem &problem)
     {
-        temperature_ = problem.temperature(element, elemGeom, scvIdx);
+        temperature_ = problem.boxTemperature(element, elemGeom, scvIdx);
     }
 
     FluidState fluidState_;

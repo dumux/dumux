@@ -157,13 +157,8 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
-    {
-        return 273.15 + 10; // 10°C
-    };
-
+    Scalar temperature() const
+    { return 273.15 + 10; } // 10°C
     // \}
 
     /*!

@@ -188,9 +188,7 @@ public:
      * \param scvIdx The sub control volume index inside the finite
      *               volume geometry
      */
-    Scalar temperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
+    Scalar temperature() const
     { return 273.15 + 10; }; // -> 10°C
 
     /*!

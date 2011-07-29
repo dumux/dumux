@@ -39,7 +39,7 @@ template<class TypeTag>
 class TwoPTwoCProblem : public BoxProblem<TypeTag>
 {
     typedef BoxProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -79,12 +79,41 @@ public:
     // \{
 
     /*!
-     * \brief Returns the temperature within the domain.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
      *
-     * This method MUST be overwritten by the actual problem.
+     * This is the discretization specific interface for the box
+     * method. By default it just calls temperature(pos).
+     *
+     * \param element The DUNE Codim<0> enitiy which intersects with
+     *                the finite volume.
+     * \param fvGeom The finite volume geometry of the element.
+     * \param scvIdx The local index of the sub control volume inside the element
+     */
+    Scalar boxTemperature(const Element &element,
+                          const FVElementGeometry fvGeom,
+                          int scvIdx) const
+    { return asImp_().temperatureAtPos(fvGeom.subContVol[scvIdx].global); }
+    
+    /*!
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
+     *
+     * This is not specific to the discretization. By default it just
+     * calls temperature().
+     *
+     * \param pos The position in global coordinates where the temperature should be specified.
+     */
+    Scalar temperatureAtPos(const GlobalPosition &pos) const
+    { return asImp_().temperature(); }
+
+    /*!
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
+     *
+     * This is not specific to the discretization. By default it just
+     * throws an exception so it must be overloaded by the problem if
+     * no energy equation is used.
      */
     Scalar temperature() const
-    { DUNE_THROW(Dune::NotImplemented, "The Problem must implement a temperature() method for isothermal problems!"); };
+    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
@@ -95,7 +124,7 @@ public:
     const GlobalPosition &boxGravity(const Element &element,
                                      const FVElementGeometry &fvGeom,
                                      int scvIdx) const
-    { return gravityAtPos(fvGeom.subContVol[scvIdx].global); }
+    { return asImp_().gravityAtPos(fvGeom.subContVol[scvIdx].global); }
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
@@ -104,7 +133,7 @@ public:
      * just calls gravity().
      */
     const GlobalPosition &gravityAtPos(const GlobalPosition &pos) const
-    { return gravity(); }
+    { return asImp_().gravity(); }
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
@@ -134,12 +163,12 @@ public:
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
 
     //! \copydoc asImp_()
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 
     GlobalPosition gravity_;
 

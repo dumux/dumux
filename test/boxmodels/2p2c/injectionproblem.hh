@@ -200,12 +200,8 @@ public:
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
-    {
-        return temperature_;
-    };
+    Scalar temperature() const
+    { return temperature_; };
 
     // \}
 
