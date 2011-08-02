@@ -28,6 +28,8 @@
 
 #include <dumux/common/propertysystem.hh>
 
+#include <dune/common/parametertree.hh>
+
 namespace Dumux
 {
 namespace Properties
@@ -61,6 +63,9 @@ NEW_TYPE_TAG(ExplicitModel, INHERITS_FROM(NumericModel));
 //! Property to specify the type of scalar values.
 NEW_PROP_TAG(Scalar);
 
+//! Property which provides a Dune::ParameterTree.
+NEW_PROP_TAG(ParameterTree);
+
 ///////////////////////////////////
 // Default values for properties:
 //
@@ -69,6 +74,43 @@ NEW_PROP_TAG(Scalar);
 
 //! Set the default type of scalar values to double
 SET_TYPE_PROP(NumericModel, Scalar, double);
+
+//! Set the ParameterTree property
+SET_PROP(NumericModel, ParameterTree)
+{
+    typedef Dune::ParameterTree type;
+    
+    static Dune::ParameterTree &tree()
+    { 
+        if (initFinished_) {
+            DUNE_THROW(Dune::InvalidStateException,
+                       "The ParameterTree cannot be accessed after "
+                       "the initialization phase of the simulation!");
+        }
+        
+        return parameterTree_;
+    };
+
+    static void initFinished()
+    { initFinished_ = true; }
+
+
+private:
+    static Dune::ParameterTree parameterTree_;
+    static bool initFinished_;
+};
+
+// allocate space for the static parameter tree object
+template<class TypeTag>
+Dune::ParameterTree 
+    Property<TypeTag,
+             TTAG(NumericModel), 
+             PTAG(ParameterTree)>::parameterTree_;
+
+template<class TypeTag>
+bool Property<TypeTag,
+              TTAG(NumericModel), 
+              PTAG(ParameterTree)>::initFinished_ = false;
 
 } // namespace Properties
 } // namespace Dumux
