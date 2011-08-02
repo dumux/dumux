@@ -1,5 +1,7 @@
-/****************************************************************************
+/*****************************************************************************
  *   Copyright (C) 2011 by Bernd Flemisch                                    *
+ *   Copyright (C) 2011 by Markus Wolff                                      *
+ *   Copyright (C) 2011 by Klaus Mosthaf                                     *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -33,90 +35,6 @@ namespace Dumux
 {
 
 template <class TypeTag>
-class ILU0BiCGSTABBackend
-{
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-public:
-
-  ILU0BiCGSTABBackend(const Problem& problem)
-  {}
-
-  template<class Matrix, class Vector>
-  bool solve(const Matrix& A, Vector& x, const Vector& b)
-  {
-    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
-
-    Vector bTmp(b);
-
-    typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
-    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
-    Preconditioner precond(A, relaxation);
-
-    typedef Dune::MatrixAdapter<Matrix, Vector, Vector> MatrixAdapter;
-    MatrixAdapter operatorA(A);
-
-    typedef Dune::BiCGSTABSolver<Vector> Solver;
-    Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
-
-    solver.apply(x, bTmp, result_);
-
-    return result_.converged;
-  }
-
-  const Dune::InverseOperatorResult& result() const
-  {
-    return result_;
-  }
-
-private:
-  Dune::InverseOperatorResult result_;
-};
-
-template <class TypeTag>
-class ILU0CGBackend
-{
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-public:
-
-  ILU0CGBackend(const Problem& problem)
-  {}
-
-  template<class Matrix, class Vector>
-  bool solve(const Matrix& A, Vector& x, const Vector& b)
-  {
-    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
-
-    Vector bTmp(b);
-
-    typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
-    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
-    Preconditioner precond(A, relaxation);
-
-    typedef Dune::MatrixAdapter<Matrix, Vector, Vector> MatrixAdapter;
-    MatrixAdapter operatorA(A);
-
-    typedef Dune::CGSolver<Vector> Solver;
-    Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
-
-    solver.apply(x, bTmp, result_);
-
-    return result_.converged;
-  }
-
-  const Dune::InverseOperatorResult& result() const
-  {
-    return result_;
-  }
-
-private:
-  Dune::InverseOperatorResult result_;
-};
-
-template <class TypeTag>
 class IterativePrecondSolverBackend
 {
 public:
@@ -142,6 +60,31 @@ public:
     MatrixAdapter operatorA(A);
 
     Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
+
+    solver.apply(x, bTmp, result_);
+
+    return result_.converged;
+  }
+
+  // solve with RestartedGMRes (needs restartGMRes as additional argument)
+  template<class Preconditioner, class Solver, class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
+  {
+    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
+    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
+    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+
+    Vector bTmp(b);
+
+    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
+    static const int precondIter = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations));
+
+    Preconditioner precond(A, precondIter, relaxation);
+
+    typedef Dune::MatrixAdapter<Matrix, Vector, Vector> MatrixAdapter;
+    MatrixAdapter operatorA(A);
+
+    Solver solver(operatorA, precond, residReduction, restartGMRes, maxIter, verbosity);
 
     solver.apply(x, bTmp, result_);
 
@@ -354,6 +297,155 @@ public:
     typedef Dune::CGSolver<Vector> Solver;
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b);
+  }
+};
+
+template <class TypeTag>
+class SSORRestartedGMResBackend: public IterativePrecondSolverBackend<TypeTag>
+{
+  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef IterativePrecondSolverBackend<TypeTag> ParentType;
+public:
+
+  SSORRestartedGMResBackend(const Problem& problem)
+  {}
+
+  template<class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+    typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
+    typedef Dune::RestartedGMResSolver<Vector> Solver;
+    static const double restart = GET_PROP_VALUE(TypeTag, PTAG(GMResRestart));
+
+    return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
+  }
+};
+
+// base class for backend combinations of linear solvers and a ILU0 preconditioner
+template <class TypeTag>
+class ILU0SolverBackend
+{
+public:
+
+  ILU0SolverBackend()
+  {}
+
+  template<class Preconditioner, class Solver, class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
+    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
+    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+
+    Vector bTmp(b);
+
+    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
+    static const int precondIter = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations));
+
+    Preconditioner precond(A, relaxation);
+
+    typedef Dune::MatrixAdapter<Matrix, Vector, Vector> MatrixAdapter;
+    MatrixAdapter operatorA(A);
+
+    Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
+
+    solver.apply(x, bTmp, result_);
+
+    return result_.converged;
+  }
+
+  // solve with RestartedGMRes (needs restartGMRes as additional argument)
+  template<class Preconditioner, class Solver, class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
+  {
+    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
+    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
+    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+
+    Vector bTmp(b);
+
+    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
+    static const int precondIter = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations));
+
+    Preconditioner precond(A, relaxation);
+
+    typedef Dune::MatrixAdapter<Matrix, Vector, Vector> MatrixAdapter;
+    MatrixAdapter operatorA(A);
+
+    Solver solver(operatorA, precond, residReduction, restartGMRes, maxIter, verbosity);
+
+    solver.apply(x, bTmp, result_);
+
+    return result_.converged;
+  }
+
+  const Dune::InverseOperatorResult& result() const
+  {
+    return result_;
+  }
+
+private:
+  Dune::InverseOperatorResult result_;
+};
+
+template <class TypeTag>
+class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
+{
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef ILU0SolverBackend<TypeTag> ParentType;
+  public:
+
+  ILU0BiCGSTABBackend(const Problem& problem)
+  {}
+
+  template<class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+      typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::BiCGSTABSolver<Vector> Solver;
+
+      return ParentType::template solve<Preconditioner, Solver>(A, x, b);
+  }
+};
+
+template <class TypeTag>
+class ILU0CGBackend : public ILU0SolverBackend<TypeTag>
+{
+  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef ILU0SolverBackend<TypeTag> ParentType;
+public:
+
+  ILU0CGBackend(const Problem& problem)
+  {}
+
+  template<class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+      typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::CGSolver<Vector> Solver;
+
+      return ParentType::template solve<Preconditioner, Solver>(A, x, b);
+  }
+};
+
+template <class TypeTag>
+class ILU0RestartedGMResBackend : public ILU0SolverBackend<TypeTag>
+{
+  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef ILU0SolverBackend<TypeTag> ParentType;
+public:
+
+  ILU0RestartedGMResBackend(const Problem& problem)
+  {}
+
+  template<class Matrix, class Vector>
+  bool solve(const Matrix& A, Vector& x, const Vector& b)
+  {
+      typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
+      typedef Dune::RestartedGMResSolver<Vector> Solver;
+      static const double restart = GET_PROP_VALUE(TypeTag, PTAG(GMResRestart));
+
+      return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }
 };
 
