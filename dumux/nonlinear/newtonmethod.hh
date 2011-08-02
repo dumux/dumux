@@ -169,12 +169,6 @@ protected:
             // solve the resulting linear equation system
             solveTimer.start();
 
-            if (ctl.verbose()) {
-                std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
-                std::cout << clearRemainingLine;
-                std::cout.flush();
-            }
-
             // set the delta vector to zero before solving the linear system!
             deltaU = 0;
             // ask the controller to solve the linearized system
@@ -186,6 +180,12 @@ protected:
             ///////////////
             // update
             ///////////////
+            if (ctl.verbose()) {
+                std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
+                std::cout << clearRemainingLine;
+                std::cout.flush();
+            }
+
             updateTimer.start();
             // update the current solution (i.e. uOld) with the delta
             // (i.e. u). The result is stored in u
