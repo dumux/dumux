@@ -197,6 +197,8 @@ public:
     template <class DataBuffer>
     void attachVertexData(DataBuffer &buf, const char *name, int nComps=1)
     {
+        sanitizeBuffer_(buf, nComps);
+
         typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
         typedef Dumux::VtkNestedFunction<Grid, VertexMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
@@ -235,6 +237,8 @@ public:
     template <class DataBuffer>
     void attachCellData(DataBuffer &buf, const char *name, int nComps = 1)
     {
+        sanitizeBuffer_(buf, nComps);
+
         typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
         typedef Dumux::VtkNestedFunction<Grid, ElementMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
