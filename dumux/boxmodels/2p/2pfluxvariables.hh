@@ -53,6 +53,7 @@ class TwoPFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -63,7 +64,7 @@ class TwoPFluxVariables
         dimWorld = GridView::dimensionworld,
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
 
-        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
+//        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -89,7 +90,8 @@ public:
                  const FVElementGeometry &elemGeom,
                  int faceIdx,
                  const ElementVolumeVariables &elemDat)
-        : fvElemGeom_(elemGeom)
+        : fvElemGeom_(elemGeom), enableGravity_(problem.enableGravity())
+
     {
         scvfIdx_ = faceIdx;
 
@@ -178,7 +180,7 @@ private:
         ///////////////
         // correct the pressure gradients by the gravitational acceleration
         ///////////////
-        if (enableGravity) {
+        if (enableGravity_) {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
             Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
@@ -225,6 +227,8 @@ private:
                                                                 fvElemGeom_,
                                                                 face().j));
     }
+
+    const bool enableGravity_;
 };
 
 } // end namepace
