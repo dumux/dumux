@@ -471,8 +471,8 @@ public:
     Vector bTmp(b);
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    enum {numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))};
-    typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
+    enum {blockSize = GET_PROP_VALUE(TypeTag, PTAG(LSBlockSize))};
+    typedef typename Dune::FieldMatrix<Scalar, blockSize, blockSize> MatrixBlock;
     typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
 
     Dune::SuperLU<ISTLMatrix> solver(A);

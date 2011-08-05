@@ -53,6 +53,7 @@ NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag));
 //! grid, and elements, and shape functions.
 NEW_PROP_TAG( SolutionTypes);
 NEW_PROP_TAG( TransportSolutionType);
+NEW_PROP_TAG( PrimaryVariables);
 
 NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
 NEW_PROP_TAG( GridView); //!< The type of the grid view
@@ -163,6 +164,8 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, 2*dim > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 };
 
+SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables);
+
 /*!
  * \brief Default implementation for the Vector of the transportet quantity
  *
@@ -202,6 +205,12 @@ SET_PROP(DecoupledModel, LSResidualReduction)
 SET_PROP(DecoupledModel, LSMaxIterations)
 {public:
     static constexpr int value = 500;
+};
+
+//! set the default number of maximum iterations for the linear solver
+SET_PROP(DecoupledModel, LSBlockSize)
+{public:
+    static constexpr int value = 1;
 };
 // \}
 

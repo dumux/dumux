@@ -218,6 +218,13 @@ SET_PROP(BoxModel, LSMaxIterations)
 {public:
     static constexpr int value = 250;
 };
+
+//! set number of equations of the mathematical model as default
+SET_PROP_DEFAULT(LSBlockSize)
+{public:
+    static constexpr int value = GET_PROP_VALUE(TypeTag, PTAG(NumEq));
+};
+
 } // namespace Properties
 } // namespace Dumux
 

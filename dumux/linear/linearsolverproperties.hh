@@ -65,6 +65,15 @@ NEW_PROP_TAG(PreconditionerIterations);
 //! restart parameter for GMRes
 NEW_PROP_TAG(GMResRestart);
 
+//! Size of the matrix/vector blocks
+/*!
+ * The number of different types of equations which build the system of equations to solve
+ * can differ from the number of equations given by the mathematical/physical model (e.g. IMPES).
+ * Thus, the block size does not have to be equal to NumEq.
+ * (Especially important for the SuperLU solver!)
+ */
+NEW_PROP_TAG(LSBlockSize);
+
 //! do not print anything by default
 SET_PROP_DEFAULT(NewtonLinearSolverVerbosity)
 {public:
@@ -92,6 +101,7 @@ SET_PROP_DEFAULT(GMResRestart)
 {public:
     static constexpr int value = 10;
 };
+
 } // namespace Properties
 } // namespace Dumux
 
