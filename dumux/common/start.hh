@@ -256,6 +256,7 @@ int startFromInputFile(int argc, char **argv)
        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid)) Grid;
        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
+       typedef typename GET_PROP(ProblemTypeTag, PTAG(ParameterTree)) Params;
        typedef Dune::GridPtr<Grid> GridPointer;
 
        // initialize MPI, finalize is done automatically on exit
@@ -286,16 +287,24 @@ int startFromInputFile(int argc, char **argv)
        ////////////////////////////////////////////////////////////
        // Load the input parameters
        ////////////////////////////////////////////////////////////
-       Dune::ParameterTree inputParameters;
-       Dune::ParameterTreeParser::readINITree(inputFileName, inputParameters);
+       Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
+       Params::tree().report();
 
+       double tEnd = Params::tree().template get<double>("SimulationControl.tEnd", -1.0);
+       if (tEnd < 0)
+           DUNE_THROW(Dune::IOError, "no end time SimulationControl.tEnd"
+                   << " specified in parameter file " << inputFileName);
 
-       double tEnd, dt;
-       tEnd     = inputParameters.get<double>("SimulationControl.tEnd");
-       dt         = inputParameters.get<double>("SimulationControl.tIni");
+       double dt = Params::tree().template get<double>("SimulationControl.tIni", -1.0);
+       if (dt < 0)
+           DUNE_THROW(Dune::IOError, "no initial time step SimulationControl.tIni"
+                   << " specified in parameter file " << inputFileName);
 
        const std::string dgfFileName =
-               inputParameters.template get<std::string>("SimulationControl.gridName", "test_inputfile");
+               Params::tree().template get<std::string>("SimulationControl.gridName", "");
+       if (dgfFileName == "")
+           DUNE_THROW(Dune::IOError, "no DGF file name SimulationControl.gridName"
+                   << " specified in parameter file " << inputFileName);
 
        // create grid
        // -> load the grid from file
@@ -312,7 +321,7 @@ int startFromInputFile(int argc, char **argv)
        TimeManager timeManager;
        Problem problem(timeManager,
                gridPtr->leafView(),
-               inputParameters);
+               Params::tree());
        timeManager.init(problem, 0, dt, tEnd, !restart);
        if (restart)
            problem.restart(restartTime);
