@@ -97,21 +97,60 @@ public:
         int numVerts = element.template count<dim>();
         this->resize(numVerts);
 
+        int nBoundary = 0;
+        bool onBoundary[numVerts];
+        for (int i = 0; i < numVerts; ++i)
+            onBoundary[i] = false;
+
+        // loop over all intersections of the element and mark all
+        // vertices in these intersections
+        Dune::GeometryType geoType = element.geometry().type();
+        const ReferenceElement &refElem = ReferenceElements::general(geoType);
+        IntersectionIterator isIt = problem.gridView().ibegin(element);
+        IntersectionIterator isEndIt = problem.gridView().iend(element);
+        for (; isIt != isEndIt; ++isIt) {
+            if (!isIt->boundary())
+                continue; // intersection is not on grid boundary
+
+            // mark all vertices on the intersection
+            int faceIdx = isIt->indexInInside();
+            int numFaceVerts = refElem.size(faceIdx, 1, dim);
+            for (int faceVertIdx = 0;
+                 faceVertIdx < numFaceVerts;
+                 ++faceVertIdx)
+            {
+                int elemVertIdx = refElem.subEntity(faceIdx,
+                                                    1,
+                                                    faceVertIdx,
+                                                    dim);
+                if (!onBoundary[elemVertIdx]) {
+                    ++ nBoundary;
+                    onBoundary[elemVertIdx] = true;
+                }
+            }
+        }
+
         hasDirichlet_ = false;
         hasNeumann_ = false;
         hasOutflow_ = false;
+        
+        if (nBoundary == 0) {
+            for (int i = 0; i < numVerts; ++i)
+                (*this)[i].reset();
+            return;
+        }
         for (int i = 0; i < numVerts; ++i) {
             (*this)[i].reset();
 
-            if (!problem.model().onBoundary(element, i))
+            if (!onBoundary[i])
                 continue;
 
             const VertexPointer vptr = element.template subEntity<dim>(i);
             problem.boundaryTypes((*this)[i], *vptr);
 
-            hasDirichlet_   = hasDirichlet_ or (*this)[i].hasDirichlet();
-            hasNeumann_     = hasNeumann_   or (*this)[i].hasNeumann();
-            hasOutflow_     = hasOutflow_   or (*this)[i].hasOutflow();
+            hasDirichlet_ = hasDirichlet_ || (*this)[i].hasDirichlet();
+            hasNeumann_ = hasNeumann_ || (*this)[i].hasNeumann();
+            hasOutflow_ = hasOutflow_ || (*this)[i].hasOutflow();
         }
     };
 

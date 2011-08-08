@@ -126,8 +126,6 @@ public:
     {
         problemPtr_ = &prob;
 
-        updateBoundaryIndices_();
-
         int nDofs = asImp_().numDofs();
         uCur_.resize(nDofs);
         uPrev_.resize(nDofs);
@@ -716,37 +714,6 @@ public:
     const GridView &gridView() const
     { return problem_().gridView(); }
 
-    /*!
-     * \brief Returns true if the vertex with 'globalVertIdx' is
-     *        located on the grid's boundary.
-     *
-     * \param globalVertIdx The global index of the control volume's
-     *                      associated vertex
-     */
-    bool onBoundary(int globalVertIdx) const
-    { return boundaryIndices_.count(globalVertIdx) > 0; }
-
-    /*!
-     * \brief Returns true if a vertex is located on the grid's
-     *        boundary.
-     *
-     * \param vertex The DUNE Codim<dim> entity associated with the
-     *               control volume
-     */
-    bool onBoundary(const Vertex &vertex) const
-    { return onBoundary(vertexMapper().map(vertex)); }
-
-    /*!
-     * \brief Returns true if a vertex is located on the grid's
-     *        boundary.
-     *
-     * \param elem A DUNE Codim<0> entity which contains the control
-     *             volume's associated vertex.
-     * \param vIdx The local vertex index inside elem
-     */
-    bool onBoundary(const Element &elem, int vIdx) const
-    { return onBoundary(vertexMapper().map(elem, vIdx, dim)); }
-
 protected:
     /*!
      * \brief A reference to the problem on which the model is applied.
@@ -846,47 +813,6 @@ protected:
         }
     }
 
-    /*!
-     * \brief Find all indices of boundary vertices.
-     *
-     * For this we need to loop over all intersections (which is slow
-     * in general). If the DUNE grid interface would provide a
-     * onBoundary() method for entities this could be done in a much
-     * nicer way (actually this would not be necessary)
-     */
-    void updateBoundaryIndices_()
-    {
-        boundaryIndices_.clear();
-        ElementIterator eIt = gridView_().template begin<0>();
-        ElementIterator eEndIt = gridView_().template end<0>();
-        for (; eIt != eEndIt; ++eIt) {
-            Dune::GeometryType geoType = eIt->geometry().type();
-            const ReferenceElement &refElem = ReferenceElements::general(geoType);
-
-            IntersectionIterator isIt = gridView_().ibegin(*eIt);
-            IntersectionIterator isEndIt = gridView_().iend(*eIt);
-            for (; isIt != isEndIt; ++isIt) {
-                if (!isIt->boundary())
-                    continue;
-                // add all vertices on the intersection to the set of
-                // boundary vertices
-                int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElem.size(faceIdx, 1, dim);
-                for (int faceVertIdx = 0;
-                     faceVertIdx < numFaceVerts;
-                     ++faceVertIdx)
-                {
-                    int elemVertIdx = refElem.subEntity(faceIdx,
-                                                        1,
-                                                        faceVertIdx,
-                                                        dim);
-                    int globalVertIdx = vertexMapper().map(*eIt, elemVertIdx, dim);
-                    boundaryIndices_.insert(globalVertIdx);
-                }
-            }
-        }
-    }
-
     // the hint cache for the previous and the current volume
     // variables
     mutable std::vector<bool> hintsUsable_;
@@ -907,9 +833,6 @@ protected:
     // the problem we want to solve. defines the constitutive
     // relations, matxerial laws, etc.
     Problem *problemPtr_;
-
-    // the set of all indices of vertices on the boundary
-    std::set<int> boundaryIndices_;
 
     // calculates the local jacobian matrix for a given element
     LocalJacobian localJacobian_;
