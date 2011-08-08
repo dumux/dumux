@@ -71,8 +71,9 @@ inline bool CheckDefined(const T &value)
 #if !defined NDEBUG && HAVE_VALGRIND
     unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(&value, sizeof(T));
     return tmp == 0;
+#else
+    return true;
 #endif
-    return 0;
 }
 
 template <class T>
@@ -81,8 +82,9 @@ inline bool CheckDefined(const T *value, int size)
 #if !defined NDEBUG && HAVE_VALGRIND
     unsigned int tmp = VALGRIND_CHECK_MEM_IS_DEFINED(value, size*sizeof(T));
     return tmp == 0;
+#else
+    return true;
 #endif
-    return 0;
 }
 
 /*!
