@@ -189,9 +189,6 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
 
             Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
 
-            // get absolute permeability
-            FieldMatrix permeabilityI(this->problem().spatialParameters().intrinsicPermeability(globalPos, *eIt));
-
             // handle interior face
             if (isIt->neighbor())
             {
@@ -212,30 +209,18 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
-                // get absolute permeability
-                FieldMatrix permeabilityJ(this->problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
-
                 // compute vectorized permeabilities
                 FieldMatrix meanPermeability(0);
 
-//                // harmonic mean of permeability
-                for (int x = 0; x < dim; x++)
-                {
-                    meanPermeability[x][x] = 2 * permeabilityI[x][x] * permeabilityJ[x][x] / (permeabilityI[x][x]
-                            + permeabilityJ[x][x]);
-                    for (int y = 0; y < dim; y++)
-                    {
-                        if (x != y)
-                        {//use arithmetic mean for the off-diagonal entries to keep the tensor property!
-                            meanPermeability[x][y] = 0.5 * (permeabilityI[x][y] + permeabilityJ[x][y]);
-                        }
-                    }
-                }
+                this->problem().spatialParameters().meanK(meanPermeability,
+                        this->problem().spatialParameters().intrinsicPermeability(*eIt),
+                        this->problem().spatialParameters().intrinsicPermeability(*neighborPointer));
 
-                Dune::FieldVector<Scalar,dim> permeability(0);
-                meanPermeability.mv(unitOuterNormal,permeability);
+                Dune::FieldVector<Scalar, dim> permeability(0);
+                meanPermeability.mv(unitOuterNormal, permeability);
 
                 permeability/=viscosityI;
+
 //                std::cout<<"Mean Permeability / Viscosity: "<<meanPermeability<<std::endl;
 
                 Scalar pressJ = this->problem().variables().pressure()[globalIdxJ];
@@ -284,22 +269,29 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 //get boundary type
                 BoundaryConditions::Flags bcType = this->problem().bctype(globalPosFace, *isIt);
 
-                // cell center in global coordinates
-                GlobalPosition globalPos = eIt->geometry().center();
-
-                // distance vector between barycenters
-                Dune::FieldVector<Scalar,dimWorld> distVec = globalPosFace - globalPos;
-
-                // compute distance between cell centers
-                Scalar dist = distVec.two_norm();
-
-                //multiply with normal vector at the boundary
-                Dune::FieldVector<Scalar,dim> permeability(0);
-                permeabilityI.mv(unitOuterNormal, permeability);
-                permeability/=viscosityI;
-
                 if (bcType == BoundaryConditions::dirichlet)
                 {
+                    // cell center in global coordinates
+                    GlobalPosition globalPos = eIt->geometry().center();
+
+                    // distance vector between barycenters
+                    Dune::FieldVector<Scalar,dimWorld> distVec = globalPosFace - globalPos;
+
+                    // compute distance between cell centers
+                    Scalar dist = distVec.two_norm();
+
+                    //permeability vector at boundary
+                    // compute vectorized permeabilities
+                    FieldMatrix meanPermeability(0);
+
+                    this->problem().spatialParameters().meanK(meanPermeability,
+                            this->problem().spatialParameters().intrinsicPermeability(*eIt));
+
+                    //multiply with normal vector at the boundary
+                    Dune::FieldVector<Scalar,dim> permeability(0);
+                    meanPermeability.mv(unitOuterNormal, permeability);
+                    permeability/=viscosityI;
+
                     Scalar pressBound = this->problem().dirichlet(globalPosFace, *isIt);
 
                     //calculate the gravity term

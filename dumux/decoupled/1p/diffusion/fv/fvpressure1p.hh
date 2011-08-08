@@ -295,9 +295,6 @@ void FVPressure1P<TypeTag>::assemble(bool first)
 
         f_[globalIdxI] = volume * source;
 
-        // get absolute permeability
-        FieldMatrix permeabilityI(problem_.spatialParameters().intrinsicPermeability(globalPos, *eIt));
-
         int isIndex = 0;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt);
@@ -326,27 +323,14 @@ void FVPressure1P<TypeTag>::assemble(bool first)
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
-                FieldMatrix permeabilityJ = problem_.spatialParameters().intrinsicPermeability(globalPosNeighbor,
-                        *neighborPointer);
-
                 // compute vectorized permeabilities
                 FieldMatrix meanPermeability(0);
 
-                // harmonic mean of permeability
-                for (int x = 0; x < dim; x++)
-                {
-                    meanPermeability[x][x] = 2 * permeabilityI[x][x] * permeabilityJ[x][x] / (permeabilityI[x][x]
-                            + permeabilityJ[x][x]);
-                    for (int y = 0; y < dim; y++)
-                    {
-                        if (x != y)
-                        {//use arithmetic mean for the off-diagonal entries to keep the tensor property!
-                            meanPermeability[x][y] = 0.5 * (permeabilityI[x][y] + permeabilityJ[x][y]);
-                        }
-                    }
-                }
+                problem_.spatialParameters().meanK(meanPermeability,
+                        problem_.spatialParameters().intrinsicPermeability(*eIt),
+                        problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
 
-                Dune::FieldVector < Scalar, dim > permeability(0);
+                Dune::FieldVector<Scalar, dim> permeability(0);
                 meanPermeability.mv(unitOuterNormal, permeability);
 
                 permeability/=viscosityI;
@@ -413,17 +397,24 @@ void FVPressure1P<TypeTag>::assemble(bool first)
                 // center of face in global coordinates
                 const GlobalPosition& globalPosFace = isIt->geometry().center();
 
-                Dune::FieldVector < Scalar, dimWorld > distVec(globalPosFace - globalPos);
-                Scalar dist = distVec.two_norm();
-
                 //get boundary condition for boundary face center
                 BoundaryConditions::Flags bctype = problem_.bctype(globalPosFace, *isIt);
 
                 if (bctype == BoundaryConditions::dirichlet)
                 {
+                    Dune::FieldVector < Scalar, dimWorld > distVec(globalPosFace - globalPos);
+                    Scalar dist = distVec.two_norm();
+
+                    //permeability vector at boundary
+                    // compute vectorized permeabilities
+                    FieldMatrix meanPermeability(0);
+
+                    problem_.spatialParameters().meanK(meanPermeability,
+                            problem_.spatialParameters().intrinsicPermeability(*eIt));
+
                     //permeability vector at boundary
                     Dune::FieldVector < Scalar, dim > permeability(0);
-                    permeabilityI.mv(unitOuterNormal, permeability);
+                    meanPermeability.mv(unitOuterNormal, permeability);
 
                     permeability/= viscosityI;
 

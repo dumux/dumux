@@ -92,7 +92,6 @@ public:
      *  \tparam verbose Output level for Dumux::TimeManager
      */
     OneModelProblem(const GridView &gridView, bool verbose = true)
-    DUNE_DEPRECATED // use OneModelProblem(TimeManager&, const GridView&)
         : gridView_(gridView),
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
