@@ -198,6 +198,7 @@ public:
         residual_ = localResidual().residual();
         storageTerm_ = localResidual().storageTerm();
 
+        model_().updatePVWeights(elem_(), curVolVars_);
 
         // calculate the local jacobian matrix
         int numVertices = fvElemGeom_.numVertices;

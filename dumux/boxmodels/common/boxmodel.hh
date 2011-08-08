@@ -613,6 +613,17 @@ public:
     }
 
     /*!
+     * \brief Update the weights of all primary variables within an
+     *        element given the complete set of volume variables
+     *
+     * \param element The DUNE codim 0 entity
+     * \param volVars All volume variables for the element
+     */
+    void updatePVWeights(const Element &element,
+                         const ElementVolumeVariables &volVars) const
+    { };
+
+    /*!
      * \brief Add the vector fields for analysing the convergence of
      *        the newton method to the a VTK multi writer.
      *
