@@ -25,9 +25,7 @@
 #ifndef GROUNDWATER_SPATIALPARAMETERS_HH
 #define GROUNDWATER_SPATIALPARAMETERS_HH
 
-
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include <dumux/material/spatialparameters/fvspatialparameters.hh>
 
 namespace Dumux
 {
@@ -37,7 +35,7 @@ namespace Dumux
  * \brief spatial parameters for the test problem for diffusion models.
  */
 template<class TypeTag>
-class GroundwaterSpatialParams
+class GroundwaterSpatialParams: public FVSpatialParameters<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -52,17 +50,10 @@ class GroundwaterSpatialParams
     typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-    typedef LinearMaterial<Scalar>                        RawMaterialLaw;
+
 public:
-    typedef EffToAbsLaw<RawMaterialLaw>               MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
 
-    void update (Scalar saturationW, const Element& element)
-    {
-
-    }
-
-    const FieldMatrix& intrinsicPermeability (const GlobalPosition& globalPos, const Element& element) const
+    const FieldMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
     {
         if (lenses_.size())
         {
@@ -83,27 +74,14 @@ public:
         return permeability_;
     }
 
-    double porosity(const GlobalPosition& globalPos, const Element& element) const
+    double porosity(const Element& element) const
     {
         return porosity_;
     }
 
-
-    // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos, const Element &element) const
-    {
-            return materialLawParams_;
-    }
-
-    void setDelta(const double delta)
-    {
-        delta_ = delta;
-    }
-
     GroundwaterSpatialParams(const GridView& gridView)
-    : permeability_(0)
+    : FVSpatialParameters<TypeTag>(gridView), permeability_(0)
     {
-        delta_=1e-3;
         Dumux::InterfaceSoilProperties interfaceSoilProps("interface_groundwater.xml");
         porosity_ = interfaceSoilProps.porosity;
         permeability_[0][0] = interfaceSoilProps.permeability;
@@ -112,21 +90,11 @@ public:
         permeability_[1][1] = interfaceSoilProps.permeability;
 
         lenses_ = interfaceSoilProps.lenses;
-
-        // residual saturations
-        materialLawParams_.setSwr(0.0);
-        materialLawParams_.setSnr(0.0);
-
-        // parameters for the linear entry pressure function
-        materialLawParams_.setEntryPC(0);
-        materialLawParams_.setMaxPC(0);
     }
 
 private:
-    MaterialLawParams materialLawParams_;
     mutable FieldMatrix permeability_;
     Scalar porosity_;
-    double delta_;
     std::vector <Lens> lenses_;
 };
 

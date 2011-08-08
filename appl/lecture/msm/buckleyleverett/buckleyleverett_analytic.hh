@@ -95,11 +95,11 @@ public:
 
     void prepareAnalytic()
     {
-        const MaterialLawParams& materialLawParams(problem_.spatialParameters().materialLawParams(dummyGlobal_, dummyElement_));
+        const MaterialLawParams& materialLawParams(problem_.spatialParameters().materialLawParams(dummyElement_));
 
         swr_ = materialLawParams.Swr();
         snr_ = materialLawParams.Snr();
-        porosity_ = problem_.spatialParameters().porosity(dummyGlobal_, dummyElement_);
+        porosity_ = problem_.spatialParameters().porosity(dummyElement_);
 
         time_ = 0;
 

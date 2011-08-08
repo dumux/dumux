@@ -40,6 +40,26 @@
 namespace Dumux
 {
 
+//forward declaration
+template<class TypeTag>
+class LensSpatialParameters2p;
+
+namespace Properties
+{
+NEW_TYPE_TAG(LensSpatialParameters2p);
+
+SET_TYPE_PROP(LensSpatialParameters2p, SpatialParameters, LensSpatialParameters2p<TypeTag>);
+
+SET_PROP(LensSpatialParameters2p, MaterialLaw)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;
+public:
+    typedef EffToAbsLaw<EffectiveLaw> type;
+};
+}
+
 /** \todo Please doc me! */
 
 template<class TypeTag>
@@ -67,14 +87,8 @@ class LensSpatialParameters2p : public BoxSpatialParameters<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    // define the material law which is parameterized by effective
-    // saturations
-//    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
-    typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;
-
 public:
-    // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     LensSpatialParameters2p(const GridView& gridView)

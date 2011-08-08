@@ -98,10 +98,9 @@ SET_TYPE_PROP(GroundwaterProblem, Problem, Dumux::GroundwaterProblem<TTAG(Ground
  * \brief test problem for the decoupled one-phase model.
  */
 template<class TypeTag = TTAG(GroundwaterProblem)>
-class GroundwaterProblem: public DiffusionProblem1P<TypeTag, GroundwaterProblem<TypeTag> >
+class GroundwaterProblem: public DiffusionProblem1P<TypeTag>
 {
-    typedef GroundwaterProblem<TypeTag> ThisType;
-    typedef DiffusionProblem1P<TypeTag, ThisType> ParentType;
+    typedef DiffusionProblem1P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;

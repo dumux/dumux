@@ -58,9 +58,12 @@ class McWhorterAnalytic
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        eqIdxPress = Indices::pressureEq,
-        eqIdxSat = Indices::saturationEq
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
+        pressEqIdx = Indices::pressEqIdx,
+        satEqIdx = Indices::satEqIdx
     };
 
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
@@ -126,15 +129,15 @@ public:
 
     void prepareAnalytic()
     {
-        const MaterialLawParams& materialLawParams(problem_.spatialParameters().materialLawParams(dummyGlobal_, dummyElement_));
+        const MaterialLawParams& materialLawParams(problem_.spatialParameters().materialLawParams(dummyElement_));
 
         swr_ = materialLawParams.Swr();
         snr_ = materialLawParams.Snr();
-        porosity_ = problem_.spatialParameters().porosity(dummyGlobal_, dummyElement_);
-        permeability_ = problem_.spatialParameters().intrinsicPermeability(dummyGlobal_, dummyElement_)[0][0];
+        porosity_ = problem_.spatialParameters().porosity(dummyElement_);
+        permeability_ = problem_.spatialParameters().intrinsicPermeability(dummyElement_);
         PrimaryVariables initVec;
         problem_.initial(initVec, dummyElement_);
-        sInit_ = initVec[eqIdxSat];
+        sInit_ = initVec[saturationIdx];
         Scalar s0 =(1 - snr_ - swr_);
         time_=0;
 

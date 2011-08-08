@@ -32,10 +32,7 @@
 
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
-#include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
-#include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
 
 #include "buckleyleverett_spatialparams.hh"
 #include "buckleyleverett_analytic.hh"
@@ -50,12 +47,11 @@ class BuckleyLeverettProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(BuckleyLeverettProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties, Transport));
+NEW_TYPE_TAG(BuckleyLeverettProblem, INHERITS_FROM(DecoupledTwoP, Transport, BuckleyLeverettSpatialParams));
 
 // Set the grid type
 SET_PROP(BuckleyLeverettProblem, Grid)
 {
-    //    typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
 
@@ -71,20 +67,11 @@ SET_PROP(BuckleyLeverettProblem, TransportModel)
 {
     typedef Dumux::FVSaturation2P<TTAG(BuckleyLeverettProblem)> type;
 };
-SET_TYPE_PROP(BuckleyLeverettProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
-SET_TYPE_PROP(BuckleyLeverettProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
 
 SET_PROP(BuckleyLeverettProblem, PressureModel)
 {
     typedef Dumux::FVVelocity2P<TTAG(BuckleyLeverettProblem)> type;
-//    typedef Dumux::FVMPFAOVelocity2P<TTAG(BuckleyLeverettProblem)> type;
 };
-
-//SET_INT_PROP(BuckleyLeverettProblem, VelocityFormulation,
-//        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityW);
-
-//SET_INT_PROP(BuckleyLeverettProblem, PressureFormulation,
-//        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureGlobal);
 
 // Set the wetting phase
 SET_PROP(BuckleyLeverettProblem, WettingPhase)
@@ -102,17 +89,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::PseudoH2O<Scalar> > type;
-};
-
-// Set the spatial parameters
-SET_PROP(BuckleyLeverettProblem, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-public:
-    typedef Dumux::BuckleyLeverettSpatialParams<TypeTag> type;
 };
 
 // Enable gravity
@@ -147,8 +123,10 @@ class BuckleyLeverettProblem: public IMPESProblem2P<TypeTag>
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        eqIdxPress = Indices::pressureEq,
-        eqIdxSat = Indices::saturationEq
+        pWIdx = Indices::pwIdx,
+        SwIdx = Indices::SwIdx,
+        pressEqIdx = Indices::pressEqIdx,
+        satEqIdx = Indices::satEqIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -245,8 +223,8 @@ public:
             }
             else if (globalPos[0] > upperRight_[0] - eps_)
             {
-                bcTypes.setNeumann(eqIdxPress);
-                bcTypes.setOutflow(eqIdxSat);
+                bcTypes.setNeumann(pressEqIdx);
+                bcTypes.setOutflow(satEqIdx);
             }
             // all other boundaries
             else
@@ -259,13 +237,13 @@ public:
     {
         if (globalPos[0] < eps_)
         {
-            values[eqIdxPress] = pLeftBc_;
-            values[eqIdxSat] = 0.8;
+            values[pWIdx] = pLeftBc_;
+            values[SwIdx] = 0.8;
         }
         else
         {
-            values[eqIdxPress] = pLeftBc_;
-            values[eqIdxSat] = 0.2;
+            values[pWIdx] = pLeftBc_;
+            values[SwIdx] = 0.2;
         }
     }
 
@@ -285,8 +263,8 @@ public:
     void initialAtPos(PrimaryVariables &values,
             const GlobalPosition &globalPos) const
     {
-        values[eqIdxPress] = 0;
-        values[eqIdxSat] = 0.2;
+        values[pWIdx] = 0;
+        values[SwIdx] = 0.2;
     }
 
 private:

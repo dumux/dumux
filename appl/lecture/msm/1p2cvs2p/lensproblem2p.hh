@@ -49,7 +49,7 @@ class LensProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP));
+NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters2p));
 
 // Set the grid type
 SET_PROP(LensProblem, Grid)
@@ -84,12 +84,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
-};
-
-// Set the spatial parameters
-SET_PROP(LensProblem, SpatialParameters)
-{
-    typedef Dumux::LensSpatialParameters2p<TypeTag> type;
 };
 
 // Enable gravity

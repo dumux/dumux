@@ -21,7 +21,7 @@
 #ifndef MCWHORTER_SPATIALPARAMETERS_HH
 #define MCWHORTER_SPATIALPARAMETERS_HH
 
-
+#include <dumux/material/spatialparameters/fvspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -29,11 +29,35 @@
 namespace Dumux
 {
 
+//forward declaration
+template<class TypeTag>
+class McWhorterSpatialParams;
+
+namespace Properties
+{
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(McWhorterSpatialParams);
+
+// Set the spatial parameters
+SET_TYPE_PROP(McWhorterSpatialParams, SpatialParameters, Dumux::McWhorterSpatialParams<TypeTag>);
+
+// Set the material law
+SET_PROP(McWhorterSpatialParams, MaterialLaw)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
+public:
+    typedef EffToAbsLaw<RawMaterialLaw> type;
+};
+}
+
 /** \todo Please doc me! */
 
 template<class TypeTag>
-class McWhorterSpatialParams
+class McWhorterSpatialParams: public FVSpatialParameters<TypeTag>
 {
+    typedef FVSpatialParameters<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -47,37 +71,30 @@ class McWhorterSpatialParams
     typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-    typedef RegularizedBrooksCorey<Scalar>                RawMaterialLaw;
-//    typedef LinearMaterial<Scalar>                        RawMaterialLaw;
 public:
-    typedef EffToAbsLaw<RawMaterialLaw>               MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    void update (Scalar saturationW, const Element& element)
-    {
-
-    }
-
-    const FieldMatrix& intrinsicPermeability (const GlobalPosition& globalPos, const Element& element) const
+    Scalar intrinsicPermeability (const Element& element) const
     {
         return constPermeability_;
     }
 
-    double porosity(const GlobalPosition& globalPos, const Element& element) const
+    double porosity(const Element& element) const
     {
         return porosity_;
     }
 
 
     // return the brooks-corey material parameter object which depends on the position
-    const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos, const Element &element) const
+    const MaterialLawParams& materialLawParams(const Element &element) const
     {
         return materialLawParams_;
     }
 
 
     McWhorterSpatialParams(const GridView& gridView)
-    : constPermeability_(0)
+    : ParentType(gridView)
     {
         Dumux::InterfaceSoilProperties interfaceSoilProps("interface_MW.xml");
 
@@ -98,16 +115,13 @@ public:
 //        materialLawParams_.setEntryPC(0);
 //        materialLawParams_.setMaxPC(0);
 
-        for(int i = 0; i < dim; i++)
-        {
-            constPermeability_[i][i] = interfaceSoilProps.ISP_Permeability;
-        }
+            constPermeability_ = interfaceSoilProps.ISP_Permeability;
 
     }
 
 private:
     MaterialLawParams materialLawParams_;
-    FieldMatrix constPermeability_;
+    Scalar constPermeability_;
     Scalar porosity_;
 
 };

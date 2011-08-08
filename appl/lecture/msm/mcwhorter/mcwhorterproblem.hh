@@ -27,8 +27,6 @@
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
-#include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
-#include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
 #include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
 
 #include "mcwhorter_spatialparams.hh"
@@ -44,7 +42,7 @@ class McWhorterProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(McWhorterProblem, INHERITS_FROM(DecoupledTwoP, Transport));
+NEW_TYPE_TAG(McWhorterProblem, INHERITS_FROM(DecoupledTwoP, Transport, McWhorterSpatialParams));
 
 // Set the grid type
 SET_PROP(McWhorterProblem, Grid)
@@ -65,19 +63,14 @@ SET_PROP(McWhorterProblem, TransportModel)
 {
     typedef Dumux::FVSaturation2P<TTAG(McWhorterProblem)> type;
 };
-SET_TYPE_PROP(McWhorterProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
-SET_TYPE_PROP(McWhorterProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
 
 SET_PROP(McWhorterProblem, PressureModel)
 {
     typedef Dumux::FVVelocity2P<TTAG(McWhorterProblem)> type;
 };
 
-//SET_INT_PROP(McWhorterProblem, VelocityFormulation,
-//        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityW);
-
-SET_INT_PROP(McWhorterProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureNW);
+SET_INT_PROP(McWhorterProblem, Formulation,
+        DecoupledTwoPCommonIndices::pnSw);
 
 // Set the wetting phase
 SET_PROP(McWhorterProblem, WettingPhase)
@@ -95,17 +88,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::PseudoH2O<Scalar> > type;
-};
-
-// Set the spatial parameters
-SET_PROP(McWhorterProblem, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-public:
-    typedef Dumux::McWhorterSpatialParams<TypeTag> type;
 };
 
 // Disable gravity
@@ -140,9 +122,12 @@ class McWhorterProblem: public IMPESProblem2P<TypeTag>
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        eqIdxPress = Indices::pressureEq,
-        eqIdxSat = Indices::saturationEq
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        pNIdx = Indices::pnIdx,
+        SwIdx = Indices::SwIdx,
+        pressEqIdx = Indices::pressEqIdx,
+        satEqIdx = Indices::satEqIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -233,13 +218,13 @@ public:
     {
         if (globalPos[0] < eps_)
         {
-            values[eqIdxPress] = pLeftBc_;
-            values[eqIdxSat] = 1.0;
+            values[pNIdx] = pLeftBc_;
+            values[SwIdx] = 1.0;
         }
         else
         {
-            values[eqIdxPress] = pLeftBc_;
-            values[eqIdxSat] = 0.0;
+            values[pNIdx] = pLeftBc_;
+            values[SwIdx] = 0.0;
         }
     }
 

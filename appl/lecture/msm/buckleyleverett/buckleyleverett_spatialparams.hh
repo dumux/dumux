@@ -21,7 +21,7 @@
 #ifndef BUCKLEYLEVERETT_SPATIALPARAMETERS_HH
 #define BUCKLEYLEVERETT_SPATIALPARAMETERS_HH
 
-
+#include <dumux/material/spatialparameters/fvspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -29,11 +29,35 @@
 namespace Dumux
 {
 
+//forward declaration
+template<class TypeTag>
+class BuckleyLeverettSpatialParams;
+
+namespace Properties
+{
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(BuckleyLeverettSpatialParams);
+
+// Set the spatial parameters
+SET_TYPE_PROP(BuckleyLeverettSpatialParams, SpatialParameters, Dumux::BuckleyLeverettSpatialParams<TypeTag>);
+
+// Set the material law
+SET_PROP(BuckleyLeverettSpatialParams, MaterialLaw)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
+public:
+    typedef EffToAbsLaw<RawMaterialLaw> type;
+};
+}
+
 /** \todo Please doc me! */
 
 template<class TypeTag>
-class BuckleyLeverettSpatialParams
+class BuckleyLeverettSpatialParams: public FVSpatialParameters<TypeTag>
 {
+    typedef FVSpatialParameters<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -44,40 +68,32 @@ class BuckleyLeverettSpatialParams
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-    typedef RegularizedBrooksCorey<Scalar>                RawMaterialLaw;
-//    typedef LinearMaterial<Scalar>                        RawMaterialLaw;
 public:
-    typedef EffToAbsLaw<RawMaterialLaw>               MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    void update (Scalar saturationW, const Element& element)
-    {
-
-    }
-
-    const FieldMatrix& intrinsicPermeability (const GlobalPosition& globalPos, const Element& element) const
+    Scalar intrinsicPermeability(const Element &element) const
     {
         return constPermeability_;
     }
 
-    Scalar porosity(const GlobalPosition& globalPos, const Element& element) const
+    Scalar porosity(const Element &element) const
     {
         return porosity_;
     }
 
 
     // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos, const Element &element) const
+    const MaterialLawParams& materialLawParams(const Element &element) const
     {
             return materialLawParams_;
     }
 
 
     BuckleyLeverettSpatialParams(const GridView& gridView)
-    : constPermeability_(0)
+    :ParentType(gridView)
     {
         Dumux::InterfaceSoilProperties interfaceSoilProps("interface_BL.xml");
 
@@ -93,6 +109,8 @@ public:
         // Brooks-Corey shape parameters
         materialLawParams_.setLambda(interfaceSoilProps.ISP_BrooksCoreyLambda);
 
+        constPermeability_ = interfaceSoilProps.ISP_Permeability;
+
         // parameters for the linear
         // entry pressures function
 //        materialLawParams_.setEntryPC(0);
@@ -100,13 +118,12 @@ public:
 //        materialLawParams_.setEntryPC(2);
 //        materialLawParams_.setMaxPC(3);
 
-        for(int i = 0; i < dim; i++)
-            constPermeability_[i][i] = interfaceSoilProps.ISP_Permeability;
+
     }
 
 private:
     MaterialLawParams materialLawParams_;
-    FieldMatrix constPermeability_;
+    Scalar constPermeability_;
     Scalar porosity_;
 
 };
