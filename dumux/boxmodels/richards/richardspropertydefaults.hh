@@ -80,21 +80,6 @@ SET_SCALAR_PROP(BoxRichards,
 SET_TYPE_PROP(BoxRichards, RichardsIndices, Dumux::RichardsIndices);
 
 /*!
- * \brief The material law for capillary pressure and relative permeability
- *
- * By default this type is determined by retrieving it from the
- * spatial parameters.
- */
-SET_PROP(BoxRichards, MaterialLaw)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-
-public:
-    typedef typename SpatialParameters::MaterialLaw type;
-};
-
-/*!
  * \brief Set type of the parameter objects for the material law
  *
  * By default this is just retrieved from the material law.

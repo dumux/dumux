@@ -95,19 +95,6 @@ SET_INT_PROP(BoxTwoPTwoC,
 SET_INT_PROP(BoxTwoPTwoC, ReplaceCompEqIdx, 2);
 
 /*!
- * \brief Set the property for the material law by retrieving it from
- *        the spatial parameters.
- */
-SET_PROP(BoxTwoPTwoC, MaterialLaw)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-
-public:
-    typedef typename SpatialParameters::MaterialLaw type;
-};
-
-/*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */

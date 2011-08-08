@@ -78,19 +78,6 @@ SET_PROP(BoxTwoP, TwoPIndices)
 };
 
 /*!
- * \brief Set the property for the material law by retrieving it from
- *        the spatial parameters.
- */
-SET_PROP(BoxTwoP, MaterialLaw)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-
-public:
-    typedef typename SpatialParameters::MaterialLaw type;
-};
-
-/*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */

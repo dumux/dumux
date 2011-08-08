@@ -158,7 +158,7 @@ public:
                        const Vertex &vertex) const
     {
         // forward it to the method which only takes the global coordinate
-        asImp_().boundaryTypes(values, vertex.geometry().center());
+        asImp_().boundaryTypesAtPos(values, vertex.geometry().center());
     }
 
     /*!
@@ -168,7 +168,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param pos The position of the finite volume in global coordinates
      */
-    void boundaryTypes(PrimaryVariables &values,
+    void boundaryTypesAtPos(PrimaryVariables &values,
                        const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
@@ -192,7 +192,7 @@ public:
                    const Vertex &vertex) const
     {
         // forward it to the method which only takes the global coordinate
-        asImp_().dirichlet(values, vertex.geometry().center());
+        asImp_().dirichletAtPos(values, vertex.geometry().center());
     }
 
     /*!
@@ -206,7 +206,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values,
+    void dirichletAtPos(PrimaryVariables &values,
                    const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
@@ -275,7 +275,7 @@ public:
                  int boundaryFaceIdx) const
     {
         // forward it to the interface with only the global position
-        asImp_().neumann(values, fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal);
+        asImp_().neumannAtPos(values, fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal);
     }
 
     /*!
@@ -288,11 +288,15 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values,
+    void neumannAtPos(PrimaryVariables &values,
                  const GlobalPosition &pos) const
     {
-        // do nothing
-        values = 0.0;
+        // Throw an exception (there is no reasonable default value
+        // for Neumann conditions)
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem specifies that some boundary "
+                   "segments are neumann, but does not provide "
+                   "a neumannAtPos() method.");
     }
 
     /*!
@@ -342,7 +346,7 @@ public:
                 int scvIdx) const
     {
         // forward to generic interface
-        asImp_().source(values, fvElemGeom.subContVol[scvIdx].global);
+        asImp_().sourceAtPos(values, fvElemGeom.subContVol[scvIdx].global);
     }
 
     /*!
@@ -358,9 +362,13 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVariables &values,
+    void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &pos) const
-    { values = Scalar(0.0);  }
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The problem does not provide "
+                   "a sourceAtPos() method.");
+    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -379,7 +387,7 @@ public:
                  int scvIdx) const
     {
         // forward to generic interface
-        asImp_().initial(values, fvElemGeom.subContVol[scvIdx].global);
+        asImp_().initialAtPos(values, fvElemGeom.subContVol[scvIdx].global);
     }
 
     /*!
@@ -392,14 +400,14 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void initial(PrimaryVariables &values,
+    void initialAtPos(PrimaryVariables &values,
                  const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
-                   "a initial() method.");
+                   "a initialAtPos() method.");
     }
 
     /*!
@@ -725,11 +733,11 @@ public:
      * \brief Write the relavant secondar variables of the current
      *        solution into an VTK output file.
      */
-    void writeOutput()
+    void writeOutput(bool verbose = true)
     {
         // write the current result to disk
         if (asImp_().shouldWriteOutput()) {
-            if (gridView().comm().rank() == 0)
+            if (verbose && gridView().comm().rank() == 0)
                 std::cout << "Writing result file for \"" << asImp_().name() << "\"\n";
 
             // calculate the time _after_ the time was updated
