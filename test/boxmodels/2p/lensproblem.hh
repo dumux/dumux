@@ -297,7 +297,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichletAtPos(PrimaryVariables &values,
-                   const GlobalPosition &globalPos) const
+                        const GlobalPosition &globalPos) const
     {
         Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,
                                                         wPhaseIdx,
@@ -337,7 +337,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     void neumannAtPos(PrimaryVariables &values,
-                 const GlobalPosition &globalPos) const
+                      const GlobalPosition &globalPos) const
     {
         values = 0.0;
         if (onInlet_(globalPos)) {
@@ -362,7 +362,7 @@ public:
      * variables.
      */
     void initialAtPos(PrimaryVariables &values,
-                 const GlobalPosition &globalPos) const
+                      const GlobalPosition &globalPos) const
     {
         Scalar depth = this->bboxMax()[1] - globalPos[1];
         Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,

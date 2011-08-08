@@ -169,7 +169,7 @@ public:
      * \param pos The position of the finite volume in global coordinates
      */
     void boundaryTypesAtPos(PrimaryVariables &values,
-                       const GlobalPosition &pos) const
+                            const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -207,7 +207,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichletAtPos(PrimaryVariables &values,
-                   const GlobalPosition &pos) const
+                        const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
@@ -289,7 +289,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     void neumannAtPos(PrimaryVariables &values,
-                 const GlobalPosition &pos) const
+                      const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Neumann conditions)
@@ -363,7 +363,7 @@ public:
      * that mass is created, negative ones mean that it vanishes.
      */
     void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &pos) const
+                     const GlobalPosition &pos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
@@ -401,7 +401,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void initialAtPos(PrimaryVariables &values,
-                 const GlobalPosition &pos) const
+                      const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
         // for Dirichlet conditions)
