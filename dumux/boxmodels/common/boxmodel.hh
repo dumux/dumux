@@ -164,7 +164,7 @@ public:
         prevVolVars.resize(n);
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
-            int globalIdx = problem_().vertexMapper().map(elem, i, dim);
+            int globalIdx = vertexMapper().map(elem, i, dim);
 
             if (!hintsUsable_[globalIdx]) {
                 curVolVars[i].setHint(NULL);
@@ -186,7 +186,7 @@ public:
         int n = elem.template count<dim>();
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
-            int globalIdx = problem_().vertexMapper().map(elem, i, dim);
+            int globalIdx = vertexMapper().map(elem, i, dim);
 
             if (!hintsUsable_[globalIdx])
                 curVolVars[i].setHint(NULL);
@@ -210,7 +210,7 @@ public:
             return;
 
         for (int i = 0; i < ev.size(); ++i) {
-            int globalIdx = problem_().vertexMapper().map(elem, i, dim);
+            int globalIdx = vertexMapper().map(elem, i, dim);
             curHints_[globalIdx] = ev[i];
             if (!hintsUsable_[globalIdx])
                 prevHints_[globalIdx] = ev[i];
