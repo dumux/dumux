@@ -470,7 +470,13 @@ protected:
                                     scvIdx,
                                     boundaryFaceIdx,
                                     curVolVars_());
-            values *= fvElemGeom_().boundaryFace[boundaryFaceIdx].area;
+            if (!Valgrind::CheckDefined(values))
+                std::cerr << "undefined: " << values << "\n";
+            values *= 
+                fvElemGeom_().boundaryFace[boundaryFaceIdx].area
+                * problem_().spatialParameters().extrusionFactorScv(elem_(),
+                                                                    fvElemGeom_(),
+                                                                    scvIdx);
             Valgrind::CheckDefined(values);
             residual_[scvIdx] += values;
         }
@@ -492,6 +498,9 @@ protected:
             PrimaryVariables flux;
             Valgrind::SetUndefined(flux);
             this->asImp_().computeFlux(flux, k);
+            flux *= problem_().spatialParameters().extrusionFactorScvf(elem_(),
+                                                                       fvElemGeom_(),
+                                                                       k);
             Valgrind::CheckDefined(flux);
 
             // The balance equation for a finite volume is:
@@ -526,7 +535,12 @@ protected:
         // all sub control volumes
         for (int i=0; i < fvElemGeom_().numVertices; i++) {
             this->asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
-            storageTerm_[i] *= fvElemGeom_().subContVol[i].volume;
+            storageTerm_[i] *= 
+                fvElemGeom_().subContVol[i].volume
+                * problem_().spatialParameters().extrusionFactorScv(elem_(),
+                                                                    fvElemGeom_(),
+                                                                    i);
+
         }
     }
 
@@ -540,6 +554,11 @@ protected:
         // evaluate the volume terms (storage + source terms)
         for (int i=0; i < fvElemGeom_().numVertices; i++)
         {
+            Scalar extrusionFactor =
+                problem_().spatialParameters().extrusionFactorScv(elem_(),
+                                                                  fvElemGeom_(),
+                                                                  i);
+
             PrimaryVariables tmp(0);
 
             // mass balance within the element. this is the
@@ -554,13 +573,13 @@ protected:
             storageTerm_[i] -= tmp;
             storageTerm_[i] *=
                 fvElemGeom_().subContVol[i].volume
-                /
-                problem_().timeManager().timeStepSize();
+                / problem_().timeManager().timeStepSize()
+                * extrusionFactor;
             residual_[i] += storageTerm_[i];
 
             // subtract the source term from the local rate
             this->asImp_().computeSource(tmp, i);
-            tmp *= fvElemGeom_().subContVol[i].volume;
+            tmp *= fvElemGeom_().subContVol[i].volume * extrusionFactor;
             residual_[i] -= tmp;
 
             // make sure that only defined quantities were used
