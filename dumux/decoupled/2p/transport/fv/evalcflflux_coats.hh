@@ -62,8 +62,8 @@ private:
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        eqIdxPress = Indices::pressureEq,
-        eqIdxSat = Indices::saturationEq
+        eqIdxPress = Indices::pressEqIdx,
+        eqIdxSat = Indices::satEqIdx
     };
 
     enum
@@ -111,16 +111,11 @@ public:
 
         int indexInInside = intersection.indexInInside();
 
-        // get absolute permeability
-        const FieldMatrix& permeabilityI(problem_.spatialParameters().intrinsicPermeability(globalPos,
-                element));
-
         Scalar satI = problem_.variables().saturation()[globalIdxI];
         Scalar lambdaWI = problem_.variables().mobilityWetting(globalIdxI);
         Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
 
-        Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(globalPos,
-                element), satI);
+        Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(element), satI);
 
 
         const Dune::FieldVector<Scalar, dimWorld>& unitOuterNormal = intersection.centerUnitOuterNormal();
@@ -150,29 +145,14 @@ public:
             Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
             Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
 
-            Scalar dPcdSJ = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(globalPosNeighbor,
-                    neighbor), satJ);
-
-            // get absolute permeability
-            const FieldMatrix& permeabilityJ(problem_.spatialParameters().intrinsicPermeability(globalPos,
-                    neighbor));
+            Scalar dPcdSJ = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(neighbor), satJ);
 
             // compute vectorized permeabilities
             FieldMatrix meanPermeability(0);
 
-            //                // harmonic mean of permeability
-            for (int x = 0; x < dim; x++)
-            {
-                meanPermeability[x][x] = 2 * permeabilityI[x][x] * permeabilityJ[x][x] / (permeabilityI[x][x]
-                        + permeabilityJ[x][x]);
-                for (int y = 0; y < dim; y++)
-                {
-                    if (x != y)
-                    {//use arithmetic mean for the off-diagonal entries to keep the tensor property!
-                        meanPermeability[x][y] = 0.5 * (permeabilityI[x][y] + permeabilityJ[x][y]);
-                    }
-                }
-            }
+            problem_.spatialParameters().meanK(meanPermeability,
+                    problem_.spatialParameters().intrinsicPermeability(element),
+                    problem_.spatialParameters().intrinsicPermeability(neighbor));
 
             Dune::FieldVector < Scalar, dim > permeability(0);
             meanPermeability.mv(unitOuterNormal, permeability);
@@ -199,10 +179,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    neighbor), std::abs(satPlus)) / viscosityW;
-            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    neighbor), std::abs(satMinus)) / viscosityW;
+            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(neighbor), std::abs(satPlus)) / viscosityW;
+            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(neighbor), std::abs(satMinus)) / viscosityW;
             dLambdaWdS /= (dS);
 
             if (potentialNW >= 0)
@@ -224,10 +202,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    neighbor), satPlus) / viscosityNW;
-            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    neighbor), satMinus) / viscosityNW;
+            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(neighbor), satPlus) / viscosityNW;
+            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(neighbor), satMinus) / viscosityNW;
             dLambdaNWdS /= (dS);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWJ);
@@ -285,9 +261,15 @@ public:
             // compute distance between cell centers
             Scalar dist = distVec.two_norm();
 
-            //multiply with normal vector at the boundary
-            Dune::FieldVector < Scalar, dim > permeability(0);
-            permeabilityI.mv(unitOuterNormal, permeability);
+            //permeability vector at boundary
+            // compute vectorized permeabilities
+            FieldMatrix meanPermeability(0);
+
+            problem_.spatialParameters().meanK(meanPermeability,
+                    problem_.spatialParameters().intrinsicPermeability(element));
+
+            Dune::FieldVector<Scalar, dim> permeability(0);
+            meanPermeability.mv(unitOuterNormal, permeability);
 
             Scalar satBound = 0;
             if (bcType.isDirichlet(eqIdxSat))
@@ -325,8 +307,7 @@ public:
             }
             }
 
-            Scalar dPcdSBound = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(globalPos,
-                    element), satBound);
+            Scalar dPcdSBound = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(element), satBound);
 
             Scalar lambdaWBound = 0;
             Scalar lambdaNWBound = 0;
@@ -337,10 +318,8 @@ public:
             Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
             Scalar viscosityNWBound =
                     FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
-            lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    element), satW) / viscosityWBound;
-            lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    element), satW) / viscosityNWBound;
+            lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satW) / viscosityWBound;
+            lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satW) / viscosityNWBound;
 
             Scalar potentialW = 0;
             Scalar potentialNW = 0;
@@ -370,10 +349,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    element), satPlus) / viscosityW;
-            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos,
-                    element), satMinus) / viscosityW;
+            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satPlus) / viscosityW;
+            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satMinus) / viscosityW;
             dLambdaWdS /= (dS);
 
             if (potentialNW >= 0)
@@ -395,10 +372,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    element), satPlus) / viscosityNW;
-            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos,
-                    element), satMinus) / viscosityNW;
+            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satPlus) / viscosityNW;
+            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satMinus) / viscosityNW;
             dLambdaNWdS /= (dS);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWBound);

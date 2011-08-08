@@ -253,9 +253,6 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        // get global coordinate of cell center
-        GlobalPosition globalPos = eIt->geometry().center();
-
         int globalIdx = problem_.variables().index(*eIt);
 
         Scalar sat = problem_.variables().saturation()[globalIdx];
@@ -263,7 +260,7 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
         std::vector<Scalar> mobilities(2);
 
         problem_.variables().capillaryPressure(globalIdx)= MaterialLaw::pC(
-                problem_.spatialParameters().materialLawParams(globalPos, *eIt), sat);
+                problem_.spatialParameters().materialLawParams(*eIt), sat);
 
         Scalar temperature = problem_.temperature(*eIt);
         Scalar pressW =  problem_.referencePressure(*eIt);
@@ -271,9 +268,9 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
         fluidState.update(sat, pressW, pressN, temperature);
         Scalar viscosityW = FluidSystem::phaseViscosity(wPhaseIdx, temperature, pressW, fluidState);
         Scalar viscosityN = FluidSystem::phaseViscosity(nPhaseIdx, temperature, pressN, fluidState);
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, *eIt), sat)
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), sat)
                 / viscosityW;
-        Scalar mobilityN = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, *eIt), sat)
+        Scalar mobilityN = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), sat)
                 / viscosityN;
 
         // initialize mobilities

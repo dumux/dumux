@@ -74,10 +74,9 @@ public:
      * \brief The constructor
      *
      * \param gridView The grid view
-     * \param verbose Output flag for the time manager
      */
     DiffusionProblem2P(const GridView &gridView)
-    : ParentType(timeManager_, gridView), gravity_(0)
+    : ParentType(gridView), gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
         newSpatialParams_ = true;
@@ -90,10 +89,9 @@ public:
      *
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
-     * \param verbose Output flag for the time manager.
      */
-    DiffusionProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
-    : ParentType(timeManager_, gridView, verbose), gravity_(0), spatialParameters_(&spatialParameters)
+    DiffusionProblem2P(const GridView &gridView, SpatialParameters &spatialParameters)
+    : ParentType(gridView), gravity_(0), spatialParameters_(&spatialParameters)
     {
         newSpatialParams_ = false;
         gravity_ = 0;

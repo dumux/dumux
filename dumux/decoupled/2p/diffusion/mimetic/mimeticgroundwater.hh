@@ -81,9 +81,12 @@ public LocalStiffness<TypeTag, 1>
     };
     enum
     {
-        wetting = Indices::wPhaseIdx, nonwetting = Indices::nPhaseIdx,
-        eqIdxPress = Indices::pressureEq,
-        eqIdxSat = Indices::saturationEq
+        wetting = Indices::wPhaseIdx,
+        nonwetting = Indices::nPhaseIdx,
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
+        pressEqIdx = Indices::pressEqIdx,
+        satEqIdx = Indices::satEqIdx
     };
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -181,7 +184,7 @@ public:
 
         // eval diffusion tensor, ASSUMING to be constant over each cell
         Dune::FieldMatrix<Scalar,dim,dim> K(0);
-        K = problem_.spatialParameters().intrinsicPermeability(centerGlobal, element);
+        K = problem_.spatialParameters().intrinsicPermeability(element);
 
         K *= (problem_.variables().mobilityWetting(globalIdx) + problem_.variables().mobilityNonwetting(globalIdx));
 
@@ -398,16 +401,16 @@ private:
                 problem_.boundaryTypes(bcType, *it);
                 PrimaryVariables boundValues(0.0);
 
-                if (bcType.isNeumann(eqIdxPress))
+                if (bcType.isNeumann(pressEqIdx))
                 {
                     problem_.neumann(boundValues, *it);
                     Scalar J = (boundValues[wetting]+boundValues[nonwetting]);
                     this->b[faceIndex] -= J*it->geometry().volume();
                 }
-                else if (bcType.isDirichlet(eqIdxPress))
+                else if (bcType.isDirichlet(pressEqIdx))
                 {
                     problem_.dirichlet(boundValues, *it);
-                    this->b[faceIndex] = boundValues[eqIdxPress];
+                    this->b[faceIndex] = boundValues[pressureIdx];
 
                     this->bctype[faceIndex][0] = BoundaryConditions::dirichlet;
                 }

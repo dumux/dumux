@@ -80,11 +80,14 @@ public:
      *
      * \param gridView The grid view
      */
-    TransportProblem2P(const GridView &gridView)
+    TransportProblem2P(const GridView &gridView, bool verbose = true)
     DUNE_DEPRECATED // use TransportProblem2P(TimeManager&, const GridView&)
-        : ParentType(gridView),
+        : ParentType(gridView, verbose),
         gravity_(0),spatialParameters_(gridView)
     {
+        newSpatialParams_ = true;
+        spatialParameters_ = new SpatialParameters(gridView);
+
         gravity_ = 0;
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim - 1] = - 9.81;
@@ -95,13 +98,57 @@ public:
      *
      * \param gridView The grid view
      */
-    TransportProblem2P(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
-        gravity_(0),spatialParameters_(gridView)
+    TransportProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
+    DUNE_DEPRECATED // use TransportProblem2P(TimeManager&, const GridView&, SpatialParameters &spatialParameters)
+        : ParentType(gridView, verbose),
+        gravity_(0), spatialParameters_(spatialParameters)
     {
+        newSpatialParams_ = false;
+
         gravity_ = 0;
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim - 1] = - 9.81;
+    }
+
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     */
+    TransportProblem2P(TimeManager& timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView),
+        gravity_(0)
+    {
+        newSpatialParams_ = true;
+        spatialParameters_ = new SpatialParameters(gridView);
+
+        gravity_ = 0;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+            gravity_[dim - 1] = - 9.81;
+    }
+
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     */
+    TransportProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
+        : ParentType(timeManager, gridView),
+        gravity_(0),spatialParameters_(spatialParameters)
+    {
+        newSpatialParams_ = false;
+
+        gravity_ = 0;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+            gravity_[dim - 1] = - 9.81;
+    }
+
+    ~TransportProblem2P()
+    {
+        if (newSpatialParams_)
+        {
+        delete spatialParameters_;
+        }
     }
 
     /*!
@@ -172,13 +219,13 @@ public:
      * \brief Returns the spatial parameters object.
      */
     SpatialParameters &spatialParameters()
-    { return spatialParameters_; }
+    { return *spatialParameters_; }
 
     /*!
      * \brief Returns the spatial parameters object.
      */
     const SpatialParameters &spatialParameters() const
-    { return spatialParameters_; }
+    { return *spatialParameters_; }
 
     void timeIntegration()
     {
@@ -212,8 +259,9 @@ private:
 
     GlobalPosition gravity_;
 
-    // fluids and material properties
-    SpatialParameters spatialParameters_;
+    // material properties
+    SpatialParameters*  spatialParameters_;
+    bool newSpatialParams_;
 
     static constexpr Scalar cFLFactor_= GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
 };

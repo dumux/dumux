@@ -164,7 +164,7 @@ public:
      */
     Scalar temperature(const Element& element) const
     {
-        return this->asImp_().temperatureAtPos(element.geometry().center());
+        return asImp_().temperatureAtPos(element.geometry().center());
     }
 
     /*!
@@ -189,7 +189,7 @@ public:
      */
     Scalar referencePressure(const Element& element) const
     {
-        return this->asImp_().referencePressureAtPos(element.geometry().center());
+        return asImp_().referencePressureAtPos(element.geometry().center());
     }
 
     /*!

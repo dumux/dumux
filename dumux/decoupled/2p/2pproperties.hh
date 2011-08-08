@@ -36,6 +36,7 @@
 //Dumux-includes
 #include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/transport/transportproperties.hh>
+#include "2pindices.hh"
 
 namespace Dumux
 {
@@ -51,10 +52,10 @@ template<class TypeTag>
 class FluidSystem2P;
 
 template<class TypeTag>
-class TwoPFluidState;
+class DecoupledTwoPFluidState;
 
-template<class TypeTag>
-struct DecoupledTwoPCommonIndices;
+//template<class TypeTag>
+//struct DecoupledTwoPCommonIndices;
 
 ////////////////////////////////
 // properties
@@ -77,8 +78,11 @@ NEW_PROP_TAG ( TwoPIndices )
 ;
 NEW_PROP_TAG( SpatialParameters )
 ; //!< The type of the spatial parameters object
+NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
 NEW_PROP_TAG( EnableGravity)
 ; //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( Formulation);
 NEW_PROP_TAG( PressureFormulation)
 ; //!< The formulation of the model
 NEW_PROP_TAG( SaturationFormulation)
@@ -96,18 +100,6 @@ NEW_PROP_TAG( FluidSystem )//!< Defines the fluid system
 NEW_PROP_TAG( FluidState )//!< Defines the fluid state
 ;
 
-//Properties for linear solvers
-NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
-NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
-NEW_PROP_TAG( PressurePreconditioner );//!< Type of the pressure preconditioner
-NEW_PROP_TAG( PressureSolver );//!< Type of the pressure solver
-NEW_PROP_TAG( SolverParameters );//!< Container for the solver parameters
-NEW_PROP_TAG(ReductionSolver);//!< Reduction value for linear solver
-NEW_PROP_TAG(MaxIterationNumberSolver);//!< Maximum iteration number for linear solver
-NEW_PROP_TAG(IterationNumberPreconditioner);//!< Iteration number for preconditioner
-NEW_PROP_TAG(VerboseLevelSolver);//!<Verbose level of linear solver and preconditioner
-NEW_PROP_TAG(RelaxationPreconditioner);//!< Relaxation factor for preconditioner
-
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -118,24 +110,27 @@ SET_INT_PROP(DecoupledTwoP, NumPhases, 2);//!< The number of phases in the 2p mo
 
 SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
+SET_INT_PROP(DecoupledTwoP,
+    Formulation,
+    DecoupledTwoPCommonIndices::pwSw);
 
 SET_PROP(DecoupledTwoP, TwoPIndices)
 {
-typedef DecoupledTwoPCommonIndices<TypeTag> type;
+typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
 };
 
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,
     PressureFormulation,
-    DecoupledTwoPCommonIndices<TypeTag>::pressureW);
+    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureType);
 
 SET_INT_PROP(DecoupledTwoP,
     SaturationFormulation,
-    DecoupledTwoPCommonIndices<TypeTag>::saturationW);
+    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::saturationType);
 
 SET_INT_PROP(DecoupledTwoP,
     VelocityFormulation,
-    DecoupledTwoPCommonIndices<TypeTag>::velocityTotal);
+    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityDefault);
 
 SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
 
@@ -143,42 +138,23 @@ SET_TYPE_PROP(DecoupledTwoP, Variables, VariableClass2P<TypeTag>);
 
 SET_TYPE_PROP(DecoupledTwoP, FluidSystem, FluidSystem2P<TypeTag>);
 
-SET_TYPE_PROP(DecoupledTwoP, FluidState, TwoPFluidState<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoP, FluidState, DecoupledTwoPFluidState<TypeTag>);
+
+/*!
+ * \brief Set the property for the material parameters by extracting
+ *        it from the material law.
+ */
+SET_PROP(DecoupledTwoP, MaterialLawParams)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+
+public:
+    typedef typename MaterialLaw::Params type;
+};
 
 // \}
 }
-
-/*!
- * \brief The common indices for the two-phase model.
- */
-template <class TypeTag>
-struct DecoupledTwoPCommonIndices
-{
-private:
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-
-public:
-//equation idx
-static const int pressureEq = 0;
-static const int saturationEq = 1;
-// Formulations
-//saturation flags
-static const int saturationW = 0;
-static const int saturationNW = 1;
-//pressure flags
-static const int pressureW = 0;
-static const int pressureNW = 1;
-static const int pressureGlobal = 2;
-//velocity flags
-static const int velocityW = 0;
-static const int velocityNW = 1;
-static const int velocityTotal = 2;
-
-// Phase indices
-static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase in a phase vector
-static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase in a phase vector
-};
-
 
 }
 

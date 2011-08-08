@@ -86,18 +86,8 @@ public:
      */
     FieldVector operator() (const Element& element, const int indexInInside, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
     {
-        // cell geometry type
-        Dune::GeometryType gt = element.geometry().type();
-
-        // cell center in reference element
-        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-        const LocalPosition& localPos = ReferenceElements::general(gt).position(0,0);
-
         // get global coordinate of cell center
-        const GlobalPosition& globalPos = element.geometry().global(localPos);
-
-        // get absolute permeability of cell
-        FieldMatrix permeability(problem_.spatialParameters().intrinsicPermeability(globalPos,element));
+        const GlobalPosition& globalPos = element.geometry().center();
 
         IntersectionIterator isItEnd = problem_.gridView().iend(element);
         IntersectionIterator isIt = problem_.gridView().ibegin(element);
@@ -128,11 +118,13 @@ public:
         {
             FluidState fluidState;
             fluidState.update(satI, referencePressure, referencePressure, temperature);
-            mobilityWI = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, element), satI);
+            mobilityWI = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satI);
             mobilityWI /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
-            mobilityNWI = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, element), satI);
+            mobilityNWI = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satI);
             mobilityNWI /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
         }
+
+        FieldMatrix meanPermeability(0);
 
         if (isIt->neighbor())
         {
@@ -141,13 +133,8 @@ public:
 
             int globalIdxJ = problem_.variables().index(*neighborPointer);
 
-            // compute factor in neighbor
-            Dune::GeometryType neighborGT = neighborPointer->geometry().type();
-            typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-            const LocalPosition& localPosNeighbor = ReferenceElements::general(neighborGT).position(0,0);
-
             // neighbor cell center in global coordinates
-            const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+            const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
             // distance vector between barycenters
             FieldVector distVec = globalPosNeighbor - globalPos;
@@ -158,20 +145,12 @@ public:
             FieldVector unitDistVec(distVec);
             unitDistVec /= dist;
 
-            // get absolute permeability
-            FieldMatrix permeabilityJ(problem_.spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
+            // get permeability
+            problem_.spatialParameters().meanK(meanPermeability,
+                    problem_.spatialParameters().intrinsicPermeability(element),
+                    problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
 
-            // harmonic mean of permeability
-            for (int x = 0;x<dim;x++)
-            {
-                for (int y = 0; y < dim;y++)
-                {
-                    if (permeability[x][y] && permeabilityJ[x][y])
-                    {
-                        permeability[x][y]= 2*permeability[x][y]*permeabilityJ[x][y]/(permeability[x][y]+permeabilityJ[x][y]);
-                    }
-                }
-            }
+
             Scalar mobilityWJ = 0;
             Scalar mobilityNWJ = 0;
             //get lambda_bar = lambda_n*f_w
@@ -184,9 +163,9 @@ public:
             {
                 FluidState fluidState;
                 fluidState.update(satJ, referencePressure, referencePressure, temperature);
-                mobilityWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPosNeighbor, *neighborPointer), satJ);
+                mobilityWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
                 mobilityWJ /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
-                mobilityNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPosNeighbor, *neighborPointer), satJ);
+                mobilityNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
                 mobilityNWJ /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
             }
             Scalar mobilityWMean = 0.5*(mobilityWI + mobilityWJ);
@@ -195,15 +174,19 @@ public:
          }//end intersection with neighbor
         else
         {
+            // get permeability
+            problem_.spatialParameters().meanK(meanPermeability,
+                    problem_.spatialParameters().intrinsicPermeability(element));
+
             Scalar mobilityWJ = 0;
             Scalar mobilityNWJ = 0;
 
             //calculate lambda_n*f_w at the boundary
             FluidState fluidState;
             fluidState.update(satJ, referencePressure, referencePressure, temperature);
-            mobilityWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, element), satJ);
+            mobilityWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satJ);
             mobilityWJ /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
-            mobilityNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, element), satJ);
+            mobilityNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satJ);
             mobilityNWJ /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
 
             Scalar mobWMean = 0.5 * (mobilityWI + mobilityWJ);
@@ -214,7 +197,7 @@ public:
 
         // set result to K*grad(pc)
         FieldVector result(0);
-        permeability.umv(pcGradient, result);
+        meanPermeability.umv(pcGradient, result);
 
         // set result to f_w*lambda_n*K*grad(pc)
         result *= mobBar;

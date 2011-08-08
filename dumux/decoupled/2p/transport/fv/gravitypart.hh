@@ -86,18 +86,8 @@ public:
      */
     FieldVector operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const
     {
-        // cell geometry type
-        Dune::GeometryType gt = element.geometry().type();
-
-        // cell center in reference element
-        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-        const LocalPosition& localPos = ReferenceElements::general(gt).position(0,0);
-
         // get global coordinate of cell center
-        const GlobalPosition& globalPos = element.geometry().global(localPos);
-
-        // get absolute permeability of cell
-        FieldMatrix permeability(problem_.spatialParameters().intrinsicPermeability(globalPos,element));
+        const GlobalPosition& globalPos = element.geometry().center();
 
         Scalar temperature = problem_.temperature(element);
         Scalar referencePressure = problem_.referencePressure(element);
@@ -138,13 +128,15 @@ public:
         }
         else
         {
-            lambdaWI = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, element), satI);
+            lambdaWI = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satI);
             lambdaWI /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
-            lambdaNWI = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, element), satI);
+            lambdaNWI = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satI);
             lambdaNWI /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
             densityWI = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
             densityNWI = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState);
         }
+
+        FieldMatrix meanPermeability(0);
 
         if (isIt->neighbor())
         {
@@ -153,17 +145,13 @@ public:
 
             int globalIdxJ = problem_.variables().index(*neighborPointer);
 
-            // compute factor in neighbor
-            Dune::GeometryType neighborGT = neighborPointer->geometry().type();
-            typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-            const LocalPosition& localPosNeighbor = ReferenceElements::general(neighborGT).position(0,0);
-
             // neighbor cell center in global coordinates
-            const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+            const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
-            // take arithmetic average of absolute permeability
-            permeability += problem_.spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer);
-            permeability *= 0.5;
+            // get permeability
+            problem_.spatialParameters().meanK(meanPermeability,
+                    problem_.spatialParameters().intrinsicPermeability(element),
+                    problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
 
             //get lambda_bar = lambda_n*f_w
             if (preComput_)
@@ -175,9 +163,9 @@ public:
             }
             else
             {
-                lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPosNeighbor, *neighborPointer), satJ);
+                lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
                 lambdaWJ /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
-                lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPosNeighbor, *neighborPointer), satJ);
+                lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
                 lambdaNWJ /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
                 densityWJ = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
                 densityNWJ = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState);
@@ -185,10 +173,14 @@ public:
         }
         else
         {
+            // get permeability
+            problem_.spatialParameters().meanK(meanPermeability,
+                    problem_.spatialParameters().intrinsicPermeability(element));
+
             //calculate lambda_n*f_w at the boundary
-            lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, element), satJ);
+            lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satJ);
             lambdaWJ /= FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
-            lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, element), satJ);
+            lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satJ);
             lambdaNWJ /= FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
             densityWJ = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState);
             densityNWJ = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState);
@@ -196,7 +188,7 @@ public:
 
         // set result to K*grad(pc)
         FieldVector result(0);
-        permeability.umv(problem_.gravity(), result);
+        meanPermeability.umv(problem_.gravity(), result);
 
         Scalar lambdaW = (potentialW >= 0) ? lambdaWI : lambdaWJ;
         lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;

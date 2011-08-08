@@ -22,8 +22,8 @@
  *
  * \brief Determines the phase state of the immiscible sequential 2p model.
  */
-#ifndef DUMUX_2P_FLUID_STATE_HH
-#define DUMUX_2P_FLUID_STATE_HH
+#ifndef DUMUX_2P_FLUID_STATE_DECOUPLED_HH
+#define DUMUX_2P_FLUID_STATE_DECOUPLED_HH
 
 #include <dumux/material/fluidstate.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
@@ -38,10 +38,10 @@ namespace Dumux
  *        2p model.
  */
 template <class TypeTag>
-class TwoPFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
-                                           TwoPFluidState<TypeTag> >
+class DecoupledTwoPFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
+DecoupledTwoPFluidState<TypeTag> >
 {
-    typedef TwoPFluidState<TypeTag> ThisType;
+    typedef DecoupledTwoPFluidState<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 

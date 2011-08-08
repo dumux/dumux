@@ -33,7 +33,7 @@
 #include <dune/istl/preconditioners.hh>
 
 //DUMUX includes
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/2p/2pindices.hh>
 
 namespace Dumux
 {
@@ -165,7 +165,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrid
  * distinguishing between given composition or saturation on the boundary.
  */
 template <class TypeTag>
-struct DecoupledTwoPTwoCIndices : DecoupledTwoPCommonIndices<TypeTag>
+struct DecoupledTwoPTwoCIndices : DecoupledTwoPCommonIndices
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
