@@ -1,4 +1,4 @@
-SUBDIRS = pardiso propertysystem spline .
+SUBDIRS = generalproblem pardiso propertysystem spline .
 	  
 EXTRA_DIST = CMakeLists.txt
 

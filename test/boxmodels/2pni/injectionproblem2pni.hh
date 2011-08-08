@@ -51,9 +51,9 @@ class InjectionProblem2PNI;
 namespace Properties
 {
 #if !ISOTHERMAL
-NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoPNI));
+NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoPNI, InjectionSpatialParameters));
 #else
-NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoP));
+NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoP, InjectionSpatialParameters));
 #endif
 
 // Set the grid type
@@ -72,11 +72,6 @@ SET_PROP(InjectionProblem2PNI, Problem)
 {
     typedef Dumux::InjectionProblem2PNI<TypeTag> type;
 };
-
-// Set the spatial parameters. we use the same spatial parameters as the
-// 2p2c injection problem
-SET_PROP(InjectionProblem2PNI, SpatialParameters)
-{ typedef InjectionSpatialParameters<TypeTag> type; };
 
 #if 1
 // Use the same fluid system as the 2p2c injection problem
@@ -237,6 +232,12 @@ public:
     };
 #endif
 
+    void sourceAtPos(PrimaryVariables &values,
+                const GlobalPosition &globalPos) const
+    {
+        values = 0;
+    }
+
     // \}
 
     /*!
@@ -302,7 +303,6 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    using ParentType::neumann;
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvElemGeom,

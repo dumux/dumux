@@ -25,7 +25,7 @@
 #ifndef TEST_IMPES_SPATIALPARAMETERS_HH
 #define TEST_IMPES_SPATIALPARAMETERS_HH
 
-
+#include <dumux/material/spatialparameters/fvspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -33,17 +33,41 @@
 namespace Dumux
 {
 
+//forward declaration
+template<class TypeTag>
+class TestIMPESSpatialParams;
+
+namespace Properties
+{
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(TestIMPESSpatialParams);
+
+// Set the spatial parameters
+SET_TYPE_PROP(TestIMPESSpatialParams, SpatialParameters, Dumux::TestIMPESSpatialParams<TypeTag>);
+
+// Set the material law
+SET_PROP(TestIMPESSpatialParams, MaterialLaw)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
+public:
+    typedef EffToAbsLaw<RawMaterialLaw> type;
+};
+}
+
 /*!
  *
  * \ingroup IMPETtests
  * \brief spatial parameters for the sequential 2p test
  */
 template<class TypeTag>
-class TestIMPESSpatialParams
+class TestIMPESSpatialParams: public FVSpatialParameters<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef FVSpatialParameters<TypeTag> ParentType;
     typedef typename Grid::ctype CoordScalar;
 
     enum
@@ -51,40 +75,34 @@ class TestIMPESSpatialParams
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-//    typedef RegularizedBrooksCorey<Scalar>                RawMaterialLaw;
-    typedef LinearMaterial<Scalar>                        RawMaterialLaw;
 public:
-    typedef EffToAbsLaw<RawMaterialLaw>               MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    void update (Scalar saturationW, const Element& element)
-    {
 
+    Scalar intrinsicPermeability (const Element& element) const
+    {
+        return 1.0e-7;
     }
 
-    const FieldMatrix& intrinsicPermeability (const GlobalPosition& globalPos, const Element& element) const
-    {
-        return constPermeability_;
-    }
-
-    double porosity(const GlobalPosition& globalPos, const Element& element) const
+    double porosity(const Element& element) const
     {
         return 0.2;
     }
 
 
     // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos, const Element &element) const
+//    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const MaterialLawParams& materialLawParams(const Element& element) const
     {
             return materialLawParams_;
     }
 
 
     TestIMPESSpatialParams(const GridView& gridView)
-    : constPermeability_(0)
+    : ParentType(gridView)
     {
         // residual saturations
         materialLawParams_.setSwr(0.2);
@@ -92,27 +110,18 @@ public:
 
 //        // parameters for the Brooks-Corey Law
 //        // entry pressures
-//        materialLawParams_.setPe(0);
-//
+        materialLawParams_.setPe(0);
 //        // Brooks-Corey shape parameters
-//        materialLawParams_.setLambda(2);
+        materialLawParams_.setLambda(2);
 
         // parameters for the linear
         // entry pressures function
-        materialLawParams_.setEntryPC(0);
-        materialLawParams_.setMaxPC(0);
-
-        for(int i = 0; i < dim; i++)
-        {
-            constPermeability_[i][i] = 1e-7;
-        }
-
+//        materialLawParams_.setEntryPC(0);
+//        materialLawParams_.setMaxPC(0);
     }
 
 private:
     MaterialLawParams materialLawParams_;
-    FieldMatrix constPermeability_;
-
 };
 
 } // end namespace

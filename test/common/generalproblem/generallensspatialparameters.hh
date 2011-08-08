@@ -1,5 +1,5 @@
 /*****************************************************************************
- *   Copyright (C) 2010 by Markus Wolff                                      *
+ *   Copyright (C) 2011 by Markus Wolff                                      *
  *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -23,57 +23,56 @@
 /*!
  * \file
  *
- * \brief The spatial parameters for the LensProblem which uses the
- *        twophase box model
+ * \brief The spatial parameters for the GeneralLensProblem which uses the
+ *        twophase box model or twophase decoupled model
  */
-#ifndef DUMUX_LENSSPATIALPARAMETERS_HH
-#define DUMUX_LENSSPATIALPARAMETERS_HH
+#ifndef DUMUX_GENERALLENSSPATIALPARAMETERS_HH
+#define DUMUX_GENERALLENSSPATIALPARAMETERS_HH
 
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparameters/fvspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/boxmodels/2p/2pmodel.hh>
 
 namespace Dumux
 {
-
 //forward declaration
 template<class TypeTag>
-class LensSpatialParameters;
+class GeneralLensSpatialParameters;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(LensSpatialParameters);
+NEW_TYPE_TAG(GeneralLensSpatialParameters);
+
+// Property to define the spatial parameters base class -> allows switch with model switch!
+NEW_PROP_TAG(SpatialParamsBaseClass);
 
 // Set the spatial parameters
-SET_TYPE_PROP(LensSpatialParameters, SpatialParameters, Dumux::LensSpatialParameters<TypeTag>);
+SET_TYPE_PROP(GeneralLensSpatialParameters, SpatialParameters, Dumux::GeneralLensSpatialParameters<TypeTag>);
 
 // Set the material Law
-SET_PROP(LensSpatialParameters, MaterialLaw)
+SET_PROP(GeneralLensSpatialParameters, MaterialLaw)
 {
 private:
-    // define the material law which is parameterized by effective
-    // saturations
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
 public:
-    // define the material law parameterized by absolute saturations
     typedef EffToAbsLaw<EffectiveLaw> type;
 };
 }
+
 /*!
  * \ingroup TwoPBoxModel
+ * \ingroup IMPETtests
  *
  * \brief The spatial parameters for the LensProblem which uses the
- *        twophase box model
+ *        twophase box model or twophase decoupled model
  */
 template<class TypeTag>
-class LensSpatialParameters : public BoxSpatialParameters<TypeTag>
+class GeneralLensSpatialParameters : public GET_PROP_TYPE(TypeTag, PTAG(SpatialParamsBaseClass))
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParamsBaseClass)) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -90,16 +89,16 @@ class LensSpatialParameters : public BoxSpatialParameters<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+
 
 public:
-    //get the material law from the property system
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    LensSpatialParameters(const GridView& gridView)
+    GeneralLensSpatialParameters(const GridView& gridView)
         : ParentType(gridView)
     {
         // residual saturations
@@ -115,48 +114,44 @@ public:
         outerMaterialParams_.setVgAlpha(0.0037);
         outerMaterialParams_.setVgN(4.7);
 
-        // parameters for the linear law
-        // minimum and maximum pressures
- //        lensMaterialParams_.setEntryPC(0);
-//        outerMaterialParams_.setEntryPC(0);
-//        lensMaterialParams_.setMaxPC(0);
-//        outerMaterialParams_.setMaxPC(0);
-
-        lensK_ = 9.05e-12;
-        outerK_ = 4.6e-10;
+        for (int i=0; i < dim; i++)
+        {
+        lensK_[i][i] = 9.05e-12;
+        outerK_[i][i] = 4.6e-10;
+        }
     }
 
-    /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+        /*!
+     * \brief Get the intrinsic permeability tensor
      *
-     * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param globalPos The global coordinates of the finite volume
      */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvElemGeom,
-                                 int scvIdx) const
+    const FieldMatrix& intrinsicPermeabilityAtPos(
+            const GlobalPosition &globalPos) const
     {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
         if (isInLens_(globalPos))
             return lensK_;
         return outerK_;
     }
 
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+    /*!
+     * \brief Get the porosity
+     *
+     * \param globalPos The global coordinates of the finite volume
+     */
+    Scalar porosityAtPos(const GlobalPosition &globalPos) const
     { return 0.4; }
 
-    // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvElemGeom,
-                                                int scvIdx) const
-    {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
 
+    /*!
+     * \brief Get the material law parameters
+     *
+     * \param globalPos The global coordinates of the finite volume
+     *
+     * \return the parameter object for the material law which depends on the position
+     */
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
+    {
         if (isInLens_(globalPos))
             return lensMaterialParams_;
         return outerMaterialParams_;
@@ -184,8 +179,9 @@ private:
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 
-    Scalar lensK_;
-    Scalar outerK_;
+        FieldMatrix lensK_;
+        FieldMatrix outerK_;
+
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
 };

@@ -1,4 +1,5 @@
 /*****************************************************************************
+ *   Copyright (C) 2011 by Markus Wolff                                      *
  *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -26,55 +27,62 @@
  *        water saturated medium.
  */
 
-#ifndef DUMUX_LENSPROBLEM_HH
-#define DUMUX_LENSPROBLEM_HH
+#ifndef DUMUX_GENERALLENSPROBLEM_HH
+#define DUMUX_GENERALLENSPROBLEM_HH
 
+//common includes
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
 #endif
-
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/simplednapl.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
+//box model
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
-#include "lensspatialparameters.hh"
+//decoupled model
+#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
+#include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
+#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
+
+#include "generallensspatialparameters.hh"
 
 namespace Dumux
 {
 
 template <class TypeTag>
-class LensProblem;
+class GeneralLensProblem;
 
 //////////
 // Specify the properties for the lens problem
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters));
+//Set the general problem TypeTag which does not depend on the model
+NEW_TYPE_TAG(GeneralLensProblem, INHERITS_FROM(GeneralLensSpatialParameters));
+
+// Property for defining the model specific problem base class
+NEW_PROP_TAG(ProblemBaseClass);
 
 // Set the grid type
-SET_PROP(LensProblem, Grid)
+SET_PROP(GeneralLensProblem, Grid)
 {
-#if 0// HAVE_UG
-    typedef Dune::UGGrid<2> type;
-#else
+//    typedef Dune::UGGrid<2> type;
     typedef Dune::YaspGrid<2> type;
-#endif
 };
 
 // Set the problem property
-SET_PROP(LensProblem, Problem)
+SET_PROP(GeneralLensProblem, Problem)
 {
-    typedef Dumux::LensProblem<TypeTag> type;
+    typedef Dumux::GeneralLensProblem<TypeTag> type;
 };
 
 // Set the wetting phase
-SET_PROP(LensProblem, WettingPhase)
+SET_PROP(GeneralLensProblem, WettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -83,7 +91,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(LensProblem, NonwettingPhase)
+SET_PROP(GeneralLensProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -91,33 +99,68 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
 };
 
-// Enable the time step ramp up inside the newton method?
-SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, false);
-
-// Enable partial reassembly of the jacobian matrix?
-SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
-
-// Enable reuse of jacobian matrices?
-SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, true);
-
-// Write the solutions of individual newton iterations?
-SET_BOOL_PROP(LensProblem, NewtonWriteConvergence, false);
-
-// Use forward differences instead of central differences
-SET_INT_PROP(LensProblem, NumericDifferenceMethod, +1);
-
-// Linear solver settings
-SET_TYPE_PROP(LensProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
-SET_INT_PROP(LensProblem, LSVerbosity, 0);
-SET_INT_PROP(LensProblem, PreconditionerIterations, 1);
-SET_SCALAR_PROP(LensProblem, PreconditionerRelaxation, 1.0);
-
 // Enable gravity
-SET_BOOL_PROP(LensProblem, EnableGravity, true);
+SET_BOOL_PROP(GeneralLensProblem, EnableGravity, true);
+
+///////////////////////////////////////////////////
+// Box model TypeTag
+//////////////////////////////////////////////////
+
+NEW_TYPE_TAG(BoxGeneralLensProblem, INHERITS_FROM(GeneralLensProblem, BoxTwoP));
+
+
+// Set the problem property
+SET_PROP(BoxGeneralLensProblem, ProblemBaseClass)
+{
+    typedef Dumux::TwoPProblem<TypeTag> type;
+};
+
+// Set the problem property
+SET_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass)
+{
+    typedef Dumux::BoxSpatialParameters<TypeTag> type;
+};
+
+
+///////////////////////////////////////////////////
+// Deoupled model TypeTag
+//////////////////////////////////////////////////
+
+NEW_TYPE_TAG(DecoupledGeneralLensProblem, INHERITS_FROM(DecoupledTwoP, Transport, GeneralLensProblem));
+
+
+// Set the problem property
+SET_PROP(DecoupledGeneralLensProblem, ProblemBaseClass)
+{
+    typedef Dumux::IMPESProblem2P<TypeTag> type;
+};
+
+// Set the problem property
+SET_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass)
+{
+    typedef Dumux::FVSpatialParameters<TypeTag> type;
+};
+
+// Set the model properties
+SET_TYPE_PROP(DecoupledGeneralLensProblem, TransportModel, Dumux::FVSaturation2P<TTAG(DecoupledGeneralLensProblem)>);
+
+SET_PROP(DecoupledGeneralLensProblem, PressureModel)
+{
+    typedef Dumux::FVVelocity2P<TTAG(DecoupledGeneralLensProblem)> type;
+};
+
+SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
+        DecoupledTwoPCommonIndices::pwSn);
+
+SET_TYPE_PROP(DecoupledGeneralLensProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+
+SET_SCALAR_PROP(DecoupledGeneralLensProblem, CFLFactor, 1.0);
 }
 
 /*!
  * \ingroup TwoPBoxModel
+ * \ingroup IMPETtests
+ *
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  *
@@ -151,10 +194,10 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  * <tt>./test_2p 20000 250</tt>
  */
 template <class TypeTag >
-class LensProblem : public TwoPProblem<TypeTag>
+class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, PTAG(ProblemBaseClass))
 {
-    typedef LensProblem<TypeTag> ThisType;
-    typedef TwoPProblem<TypeTag> ParentType;
+    typedef GeneralLensProblem<TypeTag> ThisType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ProblemBaseClass)) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -194,8 +237,6 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -209,7 +250,7 @@ public:
      * \param lensLowerLeft Global position of the lenses lower left corner
      * \param lensUpperRight Global position of the lenses upper right corner
      */
-    LensProblem(TimeManager &timeManager,
+    GeneralLensProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 const GlobalPosition &lensLowerLeft,
                 const GlobalPosition &lensUpperRight)
@@ -217,6 +258,7 @@ public:
     {
         temperature_ = 273.15 + 20; // -> 20°C
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
+        this->timeManager().startNextEpisode(500);
     }
 
     /*!
@@ -224,40 +266,55 @@ public:
      */
     // \{
 
-    /*!
-     * \brief The problem name.
-     *
-     * This is used as a prefix for files generated by the simulation.
-     */
-    const char *name() const
-    { return "lens"; }
 
-    /*!
-     * \brief Called directly after the time integration.
-     */
-    void postTimeStep()
+    bool shouldWriteRestartFile()
     {
-        // Calculate storage terms
-        PrimaryVariables storage;
-        this->model().globalStorage(storage);
-
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0) {
-            std::cout<<"Storage: " << storage << std::endl;
-        }
+        return false;
     }
+
+    bool shouldWriteOutput() const
+    {
+        if (this->timeManager().time() < eps_ || this->timeManager().willBeFinished() || this->timeManager().episodeWillBeOver())
+        {
+            return true;
+        }
+        return false;
+    }
+
+    void episodeEnd()
+    {
+        if (!this->timeManager().willBeFinished())
+        this->timeManager().startNextEpisode(500);
+    };
 
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This problem assumes a uniform temperature of 10 degrees Celsius.
+     * \param globalPos The global coordinates
+     *
+     * This problem assumes a temperature of 10 degrees Celsius.
      */
-    Scalar temperature() const
-    { return temperature_; };
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+    {
+        return temperature_;
+    };
 
+    //! Returns the reference pressure for evaluation of constitutive relations
+    /*!
+    * \param globalPos The global coordinates
+    *
+    * Only for decoupled model -> incompressible.
+    */
+    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
+    {
+        return 1e5; // -> 10°C
+    }
 
-    void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+    //! Returns the source term
+    /*!
+    * \param globalPos The global coordinates
+    */
+    void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
     {
         values = 0;
     }
@@ -274,7 +331,7 @@ public:
      *        used for which equation on a given boundary control volume.
      *
      * \param values The boundary types for the conservation equations
-     * \param globalPos The position of the center of the finite volume
+    * \param globalPos The global coordinates of the boundary
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
             const GlobalPosition &globalPos) const
@@ -289,10 +346,10 @@ public:
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     *        boundary.
      *
      * \param values The dirichlet values for the primary variables
-     * \param globalPos The center of the finite volume which ought to be set.
+    * \param globalPos The global coordinates of the boundary
      *
      * For this method, the \a values parameter stores primary variables.
      */
@@ -331,7 +388,7 @@ public:
      *        boundary segment.
      *
      * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
-     * \param globalPos The position of the integration point of the boundary segment.
+     * \param globalPos The position of the boundary segment.
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
@@ -341,7 +398,7 @@ public:
     {
         values = 0.0;
         if (onInlet_(globalPos)) {
-            values[contiNEqIdx] = -0.04; // kg / (m * s)
+            values[nPhaseIdx] = -0.04; // kg / (m * s)
         }
     }
     // \}

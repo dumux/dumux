@@ -57,8 +57,7 @@ class TestDiffusionProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties))
-        ;
+NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties, TestDiffusionSpatialParams));
 
 // Set the grid type
 SET_PROP(DiffusionTestProblem, Grid)
@@ -66,20 +65,8 @@ SET_PROP(DiffusionTestProblem, Grid)
     typedef Dune::SGrid<2, 2> type;
 };
 
-SET_PROP(DiffusionTestProblem, PressurePreconditioner)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
-public:
-    typedef Dune::SeqILUn<Matrix, Vector, Vector> type;
-};
-
-//SET_INT_PROP(DiffusionTestProblem, VelocityFormulation,
-//        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityW);
-
-SET_INT_PROP(DiffusionTestProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureGlobal);
+SET_INT_PROP(DiffusionTestProblem, Formulation,
+        DecoupledTwoPCommonIndices::pGlobalSw);
 
 // Set the wetting phase
 SET_PROP(DiffusionTestProblem, WettingPhase)
@@ -99,35 +86,23 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
-// Set the spatial parameters
-SET_PROP(DiffusionTestProblem, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-public:
-    typedef Dumux::TestDiffusionSpatialParams<TypeTag> type;
-};
-
 // Enable gravity
 SET_BOOL_PROP(DiffusionTestProblem, EnableGravity, false);
 
 // set the types for the 2PFA FV method
 NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
-SET_INT_PROP(FVVelocity2PTestProblem, IterationNumberPreconditioner, 0);
 SET_TYPE_PROP(FVVelocity2PTestProblem, Model, Dumux::FVVelocity2P<TTAG(FVVelocity2PTestProblem)>);
 SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVVelocity2PTestProblem)>);
 
 // set the types for the MPFA-O FV method
 NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
-SET_INT_PROP(FVMPFAOVelocity2PTestProblem, IterationNumberPreconditioner, 1);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
+SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVMPFAOVelocity2PTestProblem)>);
 
 // set the types for the mimetic FD method
 NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(DiffusionTestProblem, Mimetic));
-SET_INT_PROP(MimeticPressure2PTestProblem, IterationNumberPreconditioner, 0);
 SET_TYPE_PROP(MimeticPressure2PTestProblem, Model, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
 SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(MimeticPressure2PTestProblem)>);
 }
@@ -157,9 +132,11 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        eqIdxPress = Indices::pressureEq,
-        eqIdxSat = Indices::saturationEq
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        pGlobalIdx = Indices::pGlobalIdx,
+        SwIdx = Indices::SwIdx,
+        pressEqIdx = Indices::pressEqIdx,
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -236,8 +213,8 @@ public:
     //! set dirichlet condition  (saturation [-])
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-            values[eqIdxPress] = exact(globalPos);
-            values[eqIdxSat] = 1.0;
+            values[pGlobalIdx] = exact(globalPos);
+            values[SwIdx] = 1.0;
     }
 
     //! set neumann condition for phases (flux, [kg/(m^2 s)])

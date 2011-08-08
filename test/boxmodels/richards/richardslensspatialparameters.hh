@@ -36,6 +36,32 @@
 namespace Dumux
 {
 
+//forward declaration
+template<class TypeTag>
+class RichardsLensSpatialParameters;
+
+namespace Properties
+{
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(RichardsLensSpatialParameters);
+
+// Set the spatial parameters
+SET_TYPE_PROP(RichardsLensSpatialParameters, SpatialParameters, Dumux::RichardsLensSpatialParameters<TypeTag>);
+
+// Set the material Law
+SET_PROP(RichardsLensSpatialParameters, MaterialLaw)
+{
+private:
+    // define the material law which is parameterized by effective
+    // saturations
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+public:
+    // define the material law parameterized by absolute saturations
+    typedef EffToAbsLaw<EffectiveLaw> type;
+};
+}
+
 /*!
  * \ingroup RichardsModel
  * \brief The spatial parameters for the RichardsLensProblem
@@ -59,17 +85,9 @@ class RichardsLensSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    // define the material law which is parameterized by effective
-    // saturations
-    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
-
 public:
-    /*!
-     * \brief The material law to be used.
-     *
-     * This problem uses the RegularizedVanGenuchten material law.
-     */
-    typedef EffToAbsLaw<EffectiveLaw> MaterialLaw;
+    //get the material law from the property system
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     //! The parameters of the material law to be used
     typedef typename MaterialLaw::Params MaterialLawParams;
 

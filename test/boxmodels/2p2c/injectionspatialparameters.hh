@@ -36,6 +36,32 @@
 namespace Dumux
 {
 
+//forward declaration
+template<class TypeTag>
+class InjectionSpatialParameters;
+
+namespace Properties
+{
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(InjectionSpatialParameters);
+
+// Set the spatial parameters
+SET_TYPE_PROP(InjectionSpatialParameters, SpatialParameters, Dumux::InjectionSpatialParameters<TypeTag>);
+
+// Set the material Law
+SET_PROP(InjectionSpatialParameters, MaterialLaw)
+{
+private:
+    // define the material law which is parameterized by effective
+    // saturations
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
+public:
+    // define the material law parameterized by absolute saturations
+    typedef EffToAbsLaw<EffMaterialLaw> type;
+};
+}
+
 /*!
  * \ingroup TwoPTwoCModel
  *
@@ -75,10 +101,8 @@ class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-    //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
-    typedef EffToAbsLaw<EffMaterialLaw> MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     /*!

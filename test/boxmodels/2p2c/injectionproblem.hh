@@ -50,7 +50,7 @@ class InjectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC));
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC, InjectionSpatialParameters));
 
 // Set the grid type
 SET_PROP(InjectionProblem, Grid)
@@ -71,11 +71,6 @@ SET_PROP(InjectionProblem,
     //typedef Dumux::Brine_CO2_System<TypeTag, Dumux::IFP::CO2Tables> type;
     typedef Dumux::H2O_N2_System<TypeTag> type;
 };
-
-// Set the spatial parameters
-SET_TYPE_PROP(InjectionProblem,
-              SpatialParameters,
-              Dumux::InjectionSpatialParameters<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(InjectionProblem, EnableGravity, true);
@@ -203,6 +198,12 @@ public:
     Scalar temperature() const
     { return temperature_; };
 
+    void sourceAtPos(PrimaryVariables &values,
+                const GlobalPosition &globalPos) const
+    {
+        values = 0;
+    }
+
     // \}
 
     /*!
@@ -257,7 +258,6 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    using ParentType::neumann;
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvElemGeom,

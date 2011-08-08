@@ -49,7 +49,7 @@ class RichardsLensProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards));
+NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards, RichardsLensSpatialParameters));
 
 // Set the grid type. Use UG if available, else SGrid
 #if HAVE_UG
@@ -71,10 +71,6 @@ private:
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
-
-// Set the spatial parameters
-SET_PROP(RichardsLensProblem, SpatialParameters)
-{ typedef Dumux::RichardsLensSpatialParameters<TypeTag> type; };
 
 // Enable gravity?
 SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
@@ -208,6 +204,12 @@ public:
                              int scvIdx) const
     { return pnRef_; };
 
+    void sourceAtPos(PrimaryVariables &values,
+                const GlobalPosition &globalPos) const
+    {
+        values = 0;
+    }
+
     // \}
 
     /*!
@@ -222,8 +224,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param vertex The vertex for which the boundary type is set
      */
-    using ParentType::boundaryTypes;
-    void boundaryTypes(BoundaryTypes &values,
+    void boundaryTypesAtPos(BoundaryTypes &values,
                        const GlobalPosition &globalPos) const
     {
         if (onLeftBoundary_(globalPos) ||
@@ -244,8 +245,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    using ParentType::dirichlet;
-    void dirichlet(PrimaryVariables &values,
+    void dirichletAtPos(PrimaryVariables &values,
                    const GlobalPosition &globalPos) const
     {
         // use initial values as boundary conditions
@@ -269,8 +269,7 @@ public:
      * \param boundaryFaceIdx The index of the boundary face of the
      *                        finite volume geometry
      */
-    using ParentType::neumann;
-    void neumann(PrimaryVariables &values,
+    void neumannAtPos(PrimaryVariables &values,
                  const GlobalPosition &globalPos) const
     {
         values = 0.0;
@@ -298,8 +297,7 @@ public:
      * \param scvIdx The sub control volume index of the finite
      *               volume geometry
      */
-    using ParentType::initial;
-    void initial(PrimaryVariables &values,
+    void initialAtPos(PrimaryVariables &values,
                  const GlobalPosition &pos) const
     { initial_(values, pos); };
 

@@ -37,18 +37,16 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/oil.hh>
-#include <dumux/linear/impetbicgstabilu0solver.hh>
 
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
 #include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
 
 #include "test_impes_spatialparams.hh"
 
-//#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
+#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
 
 namespace Dumux
 {
@@ -61,7 +59,7 @@ class TestIMPESProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties, Transport));
+NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(DecoupledTwoP, Transport, TestIMPESSpatialParams));
 
 // Set the grid type
 SET_PROP(IMPESTestProblem, Grid)
@@ -71,32 +69,22 @@ SET_PROP(IMPESTestProblem, Grid)
 };
 
 // Set the problem property
-SET_PROP(IMPESTestProblem, Problem)
-{
-public:
-    typedef Dumux::TestIMPESProblem<TTAG(IMPESTestProblem)> type;
-};
+SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::TestIMPESProblem<TTAG(IMPESTestProblem)>);
 
 // Set the model properties
-SET_PROP(IMPESTestProblem, TransportModel)
-{
-    typedef Dumux::FVSaturation2P<TTAG(IMPESTestProblem)> type;
-};
+SET_TYPE_PROP(IMPESTestProblem, TransportModel, Dumux::FVSaturation2P<TTAG(IMPESTestProblem)>);
+
 SET_TYPE_PROP(IMPESTestProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
 SET_TYPE_PROP(IMPESTestProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
-SET_TYPE_PROP(IMPESTestProblem, LinearSolver, Dumux::IMPETBiCGStabILU0Solver<TypeTag>);
 
 SET_PROP(IMPESTestProblem, PressureModel)
 {
     typedef Dumux::FVVelocity2P<TTAG(IMPESTestProblem)> type;
-//    typedef Dumux::FVMPFAOVelocity2P<TTAG(IMPESTestProblem)> type;
 };
 
-//SET_INT_PROP(IMPESTestProblem, VelocityFormulation,
-//        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityW);
+//SET_INT_PROP(IMPESTestProblem, Formulation,
+//        DecoupledTwoPCommonIndices::pnSn);
 
-//SET_INT_PROP(IMPESTestProblem, PressureFormulation,
-//        GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureGlobal);
 
 // Set the wetting phase
 SET_PROP(IMPESTestProblem, WettingPhase)
@@ -116,21 +104,10 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-// Set the spatial parameters
-SET_PROP(IMPESTestProblem, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-public:
-    typedef Dumux::TestIMPESSpatialParams<TypeTag> type;
-};
-
 // Enable gravity
 SET_BOOL_PROP(IMPESTestProblem, EnableGravity, false);
 
-//SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
 SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
 }
@@ -169,8 +146,10 @@ enum
 enum
 {
     wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-    eqIdxPress = Indices::pressureEq,
-    eqIdxSat = Indices::saturationEq
+    pWIdx = Indices::pwIdx,
+    SwIdx = Indices::SwIdx,
+    eqIdxPress = Indices::pressEqIdx,
+    eqIdxSat = Indices::satEqIdx
 };
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -183,7 +162,7 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
 
 public:
-TestIMPESProblem(TimeManager& timeManager, const GridView &gridView) :
+TestIMPESProblem(TimeManager &timeManager, const GridView &gridView) :
 ParentType(timeManager, gridView)
 {
 }
@@ -213,7 +192,7 @@ bool shouldWriteRestartFile() const
  *
  * This problem assumes a temperature of 10 degrees Celsius.
  */
-Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+Scalar temperature(const Element& element) const
 {
     return 273.15 + 10; // -> 10°C
 }
@@ -221,12 +200,12 @@ Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 // \}
 
 //! Returns the reference pressure for evaluation of constitutive relations
-Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
+Scalar referencePressure(const Element& element) const
 {
     return 1e5; // -> 10°C
 }
 
-void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
+void source(PrimaryVariables &values,const Element& element) const
 {
     values = 0;
 }
@@ -270,18 +249,18 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
 
             FluidState fluidState;
             fluidState.update(sat, pRef, pRef, temp);
-            values[eqIdxPress] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * FluidSystem::phaseDensity(wPhaseIdx, temp, pRef, fluidState) * this->gravity().two_norm());
+            values[pWIdx] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * FluidSystem::phaseDensity(wPhaseIdx, temp, pRef, fluidState) * this->gravity().two_norm());
         }
         else
         {
-            values[eqIdxPress] = 2e5;
+            values[pWIdx] = 2e5;
         }
-        values[eqIdxSat] = 0.8;
+        values[SwIdx] = 0.8;
     }
     else
     {
-        values[eqIdxPress] = 2e5;
-        values[eqIdxSat] = 0.2;
+        values[pWIdx] = 2e5;
+        values[SwIdx] = 0.2;
     }
 }
 
@@ -295,11 +274,11 @@ void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) con
     }
 }
 //! return initial solution -> only saturation values have to be given!
-void initialAtPos(PrimaryVariables &values,
-        const GlobalPosition &globalPos) const
+void initial(PrimaryVariables &values,
+        const Element& element) const
 {
-    values[eqIdxPress] = 0;
-    values[eqIdxSat] = 0.2;
+    values[pWIdx] = 0;
+    values[SwIdx] = 0.2;
 }
 
 private:

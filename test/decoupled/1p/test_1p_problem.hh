@@ -38,7 +38,7 @@
 #include <dumux/decoupled/1p/diffusion/diffusionproblem1p.hh>
 #include <dumux/decoupled/1p/diffusion/fv/fvvelocity1p.hh>
 
-#include "test_diffusion_spatialparams.hh"
+#include "test_1p_spatialparams.hh"
 
 namespace Dumux
 {
@@ -77,7 +77,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
 public:
-    typedef Dumux::TestDiffusionSpatialParams<TypeTag> type;
+    typedef Dumux::TestOnePSpatialParams<TypeTag> type;
 };
 
 // Enable gravity
@@ -89,6 +89,8 @@ SET_TYPE_PROP(TestProblemOneP, Model, Dumux::FVVelocity1P<TypeTag>);
 //Set the problem
 SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TTAG(TestProblemOneP)>);
 
+
+SET_INT_PROP(TestProblemOneP, LSVerbosity, 1);
 }
 
 /*!
@@ -97,10 +99,9 @@ SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TTAG(TestProblemO
  * \brief test problem for the decoupled one-phase model.
  */
 template<class TypeTag = TTAG(TestProblemOneP)>
-class TestProblemOneP: public DiffusionProblem1P<TypeTag, TestProblemOneP<TypeTag> >
+class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 {
-    typedef TestProblemOneP<TypeTag> ThisType;
-    typedef DiffusionProblem1P<TypeTag, ThisType> ParentType;
+    typedef DiffusionProblem1P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;

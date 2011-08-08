@@ -49,7 +49,7 @@ class TestTransportProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(DecoupledTwoP, Transport));
+NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(DecoupledTwoP, Transport, TestTransportSpatialParams));
 
 
 // Set the grid type
@@ -89,16 +89,8 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
 };
 
-// Set the spatial parameters
-SET_PROP(TransportTestProblem, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-public:
-    typedef Dumux::TestTransportSpatialParams<TypeTag> type;
-};
+SET_INT_PROP(TransportTestProblem, VelocityFormulation,
+        DecoupledTwoPCommonIndices::velocityTotal);
 
 // Disable gravity
 SET_BOOL_PROP(TransportTestProblem, EnableGravity, false);
@@ -144,7 +136,8 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
 
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, eqIdxSat = Indices::saturationEq
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        satEqIdx = Indices::satEqIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

@@ -161,6 +161,12 @@ public:
     { return 273.15 + 10; } // 10°C
     // \}
 
+    void sourceAtPos(PrimaryVariables &values,
+                const GlobalPosition &globalPos) const
+    {
+        values = 0;
+    }
+
     /*!
      * \name Boundary conditions
      */

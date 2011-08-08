@@ -229,7 +229,6 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    using ParentType::neumann;
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvElemGeom,
@@ -268,8 +267,7 @@ public:
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      */
-    using ParentType::source;
-    void source(PrimaryVariables &values,
+    void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
         values = Scalar(0.0);

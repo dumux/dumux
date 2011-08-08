@@ -436,7 +436,7 @@ public:
             sumf += volume*sourceVec[0];
 
             // get the absolute permeability
-            Dune::FieldMatrix<double,dim,dim> K = problem.spatialParameters().intrinsicPermeability(global, element);
+            Dune::FieldMatrix<double,dim,dim> K = problem.spatialParameters().intrinsicPermeability(element);
 
             int isIdx = -1;
             Dune::FieldVector<Scalar,2*dim> fluxVector;

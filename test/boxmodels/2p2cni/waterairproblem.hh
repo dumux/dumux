@@ -46,7 +46,7 @@ class WaterAirProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI));
+NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI, WaterAirSpatialParameters));
 
 // Set the grid type
 SET_PROP(WaterAirProblem, Grid)
@@ -62,11 +62,6 @@ SET_PROP(WaterAirProblem, Problem)
 
 // Set the wetting phase
 SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::H2O_N2_System<TypeTag>);
-
-// Set the spatial parameters
-SET_TYPE_PROP(WaterAirProblem,
-              SpatialParameters,
-              Dumux::WaterAirSpatialParameters<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
@@ -204,6 +199,12 @@ public:
     };
 #endif
 
+    void sourceAtPos(PrimaryVariables &values,
+                const GlobalPosition &globalPos) const
+    {
+        values = 0;
+    }
+
     // \}
 
     /*!
@@ -262,7 +263,6 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    using ParentType::neumann;
     void neumann(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvElemGeom,
