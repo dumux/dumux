@@ -32,6 +32,7 @@
 
 #include "2pproperties.hh"
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
 namespace Dumux
@@ -90,8 +91,7 @@ public:
                  const FVElementGeometry &elemGeom,
                  int faceIdx,
                  const ElementVolumeVariables &elemDat)
-        : fvElemGeom_(elemGeom), enableGravity_(problem.enableGravity())
-
+        : fvElemGeom_(elemGeom)
     {
         scvfIdx_ = faceIdx;
 
@@ -180,7 +180,8 @@ private:
         ///////////////
         // correct the pressure gradients by the gravitational acceleration
         ///////////////
-        if (enableGravity_) {
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
             Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
@@ -227,8 +228,6 @@ private:
                                                                 fvElemGeom_,
                                                                 face().j));
     }
-
-    const bool enableGravity_;
 };
 
 } // end namepace
