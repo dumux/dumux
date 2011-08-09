@@ -64,8 +64,6 @@ class TwoPFluxVariables
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-
-//        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;

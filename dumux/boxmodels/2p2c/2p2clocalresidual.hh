@@ -116,12 +116,21 @@ protected:
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
-    static constexpr Scalar mobilityUpwindAlpha =
-            GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
     static constexpr unsigned int replaceCompEqIdx =
             GET_PROP_VALUE(TypeTag, PTAG(ReplaceCompEqIdx));
 
 public:
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
+    TwoPTwoCLocalResidual()
+    {
+        // retrieve the upwind weight for the mobility. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindAlpha);
+    };
+
     /*!
      * \brief Evaluate the storage term of the current solution in a
      *        single phase.
@@ -240,16 +249,16 @@ public:
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
                 // add advective flux of current component in current
                 // phase
-                if (mobilityUpwindAlpha > 0.0)
+                if (mobilityUpwindAlpha_ > 0.0)
                     // upstream vertex
                     flux[eqIdx] += vars.KmvpNormal(phaseIdx)
-                            * mobilityUpwindAlpha * (up.density(phaseIdx)
+                            * mobilityUpwindAlpha_ * (up.density(phaseIdx)
                             * up.mobility(phaseIdx) * up.fluidState().massFrac(
                             phaseIdx, compIdx));
-                if (mobilityUpwindAlpha < 1.0)
+                if (mobilityUpwindAlpha_ < 1.0)
                     // downstream vertex
                     flux[eqIdx] += vars.KmvpNormal(phaseIdx) * (1
-                            - mobilityUpwindAlpha) * (dn.density(phaseIdx)
+                            - mobilityUpwindAlpha_) * (dn.density(phaseIdx)
                             * dn.mobility(phaseIdx) * dn.fluidState().massFrac(
                             phaseIdx, compIdx));
 
@@ -267,14 +276,14 @@ public:
             if (replaceCompEqIdx < numComponents)
             {
                 // upstream vertex
-                if (mobilityUpwindAlpha > 0.0)
+                if (mobilityUpwindAlpha_ > 0.0)
                     flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx)
-                            * mobilityUpwindAlpha *
+                            * mobilityUpwindAlpha_ *
                             (up.density(phaseIdx) * up.mobility(phaseIdx));
                 // downstream vertex
-                if (mobilityUpwindAlpha < 1.0)
+                if (mobilityUpwindAlpha_ < 1.0)
                     flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx) * (1
-                            - mobilityUpwindAlpha) * (dn.density(phaseIdx)
+                            - mobilityUpwindAlpha_) * (dn.density(phaseIdx)
                             * dn.mobility(phaseIdx));
                 Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
@@ -397,6 +406,8 @@ protected:
         return static_cast<const Implementation *> (this);
     }
 
+private:
+    Scalar mobilityUpwindAlpha_;
 };
 
 } // end namepace

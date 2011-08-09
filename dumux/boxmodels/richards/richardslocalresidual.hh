@@ -63,9 +63,19 @@ class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
-    static constexpr Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
 
 public:
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
+    RichardsLocalResidual()
+    {
+        // retrieve the upwind weight for the mobility. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindAlpha);
+    };
+
     /*!
      * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub control
@@ -132,9 +142,9 @@ public:
         flux[contiEqIdx] =
             normalFlux
             *
-            ((    mobilityUpwindAlpha)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx)
+            ((    mobilityUpwindAlpha_)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx)
              +
-             (1 - mobilityUpwindAlpha)*dn.density(wPhaseIdx)*dn.mobility(wPhaseIdx));
+             (1 - mobilityUpwindAlpha_)*dn.density(wPhaseIdx)*dn.mobility(wPhaseIdx));
     }
 
     /*!
@@ -153,6 +163,9 @@ public:
                                      scvIdx,
                                      this->curVolVars_());
     }
+
+private:
+    Scalar mobilityUpwindAlpha_;
 };
 
 };

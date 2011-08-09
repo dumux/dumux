@@ -105,14 +105,18 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     };
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<dim>::Iterator     VertexIterator;
-    static constexpr Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
     const Scalar scale_;
 public:
     OnePTwoCBoxModel():
         scale_(GET_PROP_VALUE(TypeTag, PTAG(Scaling)))
-    {}
+    {
+        // retrieve the upwind weight for the mobility. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        upwindAlpha_ = GET_PARAM(TypeTag, Scalar, UpwindAlpha);
+    }
 
     /*!
      * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
@@ -255,8 +259,8 @@ public:
                   velocity = fluxVars.face().normal;
                   velocity *= tmp;
                   velocity /= scvfArea;
-                  velocity *= (upwindAlpha / up.viscosity() +
-                             (1 - upwindAlpha)/ dn.viscosity());
+                  velocity *= (upwindAlpha_ / up.viscosity() +
+                             (1 - upwindAlpha_)/ dn.viscosity());
 
                   // add surface area for weighting purposes
                   boxSurface[vertIIdx][0] += scvfArea;
@@ -274,8 +278,8 @@ public:
                   velocity = fluxVars.face().normal;
                   velocity *= tmp;
                   velocity /= scvfArea;
-                  velocity *= (upwindAlpha / up.viscosity() +
-                           (1 - upwindAlpha)/ dn.viscosity());
+                  velocity *= (upwindAlpha_ / up.viscosity() +
+                           (1 - upwindAlpha_)/ dn.viscosity());
 
                   // add surface area for weighting purposes
                   boxSurface[vertIIdx][1] += scvfArea;
@@ -329,6 +333,8 @@ public:
         writer.attachCellData(rank, "process rank");
     }
 
+private:
+    Scalar upwindAlpha_;
 };
 }
 

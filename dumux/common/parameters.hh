@@ -27,6 +27,8 @@
 #ifndef DUMUX_PARAMETERS_HH
 #define DUMUX_PARAMETERS_HH
 
+#include <dune/common/parametertree.hh>
+
 #include "propertysystem.hh"
 
 #define GET_PARAM(TypeTag, ParamType, ParamName)                         \
@@ -51,7 +53,7 @@ public:
     static const ParamType &get(const char *name)
     {
         static ParamType defaultValue = GET_PROP_VALUE(TypeTag, PropTag);
-        static ParamType value = Params::tree().get(name, defaultValue);
+        static ParamType value = Params::tree().template get<ParamType>(name, defaultValue);
         return value;
     }
 };

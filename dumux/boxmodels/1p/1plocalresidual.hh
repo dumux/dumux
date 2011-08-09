@@ -72,8 +72,6 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
         pressureIdx = Indices::pressureIdx,
     };
 
-    static constexpr Scalar upwindWeight = GET_PROP_VALUE(TypeTag, PTAG(UpwindWeight));
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
@@ -82,6 +80,16 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
 
 public:
 
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
+    OnePLocalResidual()
+    {
+        // retrieve the upwind weight for the mobility. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        upwindWeight_ = GET_PARAM(TypeTag, Scalar, UpwindWeight);
+    };
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -132,9 +140,9 @@ public:
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
         flux[pressureIdx] =
-            ((    upwindWeight)*(up.density()/up.viscosity())
+            ((    upwindWeight_)*(up.density()/up.viscosity())
              +
-             (1 - upwindWeight)*(dn.density()/dn.viscosity()))
+             (1 - upwindWeight_)*(dn.density()/dn.viscosity()))
             *
             normalFlux;
     }
@@ -169,6 +177,8 @@ private:
 
     const ThisType &asImp_() const
     { return *static_cast<const ThisType *>(this); }
+
+    Scalar upwindWeight_;
 };
 
 };

@@ -26,9 +26,10 @@
 #ifndef DUMUX_BASIC_PROPERTIES_HH
 #define DUMUX_BASIC_PROPERTIES_HH
 
-#include <dumux/common/propertysystem.hh>
-
 #include <dune/common/parametertree.hh>
+
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux
 {

@@ -94,7 +94,6 @@ protected:
         transEqIdx = Indices::transEqIdx,
     };
 
-    static constexpr Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
     static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -104,6 +103,17 @@ protected:
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
 public:
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
+    OnePTwoCLocalResidual()
+    {
+        // retrieve the upwind weight for the mobility. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        upwindAlpha_ = GET_PARAM(TypeTag, Scalar, UpwindAlpha);
+    };
+
     /*!
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a finite volume.
@@ -191,16 +201,16 @@ public:
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
             flux[contiEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((     upwindAlpha)*up.density()/up.viscosity()
+               ((     upwindAlpha_)*up.density()/up.viscosity()
                 +
-                ((1 - upwindAlpha)*dn.density()/dn.viscosity()));
+                ((1 - upwindAlpha_)*dn.density()/dn.viscosity()));
 
             // advective flux of the second component - massfraction
             flux[transEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((    upwindAlpha)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
+               ((    upwindAlpha_)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
                 +
-                (1 - upwindAlpha)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
+                (1 - upwindAlpha_)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
         }
         else
         {
@@ -208,16 +218,16 @@ public:
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
             flux[contiEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((     upwindAlpha)*up.molarDensity()/up.viscosity()
+               ((     upwindAlpha_)*up.molarDensity()/up.viscosity()
                 +
-                ((1 - upwindAlpha)*dn.molarDensity()/dn.viscosity()));
+                ((1 - upwindAlpha_)*dn.molarDensity()/dn.viscosity()));
 
             // advective flux of the second component -molefraction
             flux[transEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((    upwindAlpha)*up.molarDensity() * up.moleFrac(comp1Idx)/up.viscosity()
+               ((    upwindAlpha_)*up.molarDensity() * up.moleFrac(comp1Idx)/up.viscosity()
                 +
-                (1 - upwindAlpha)*dn.molarDensity() * dn.moleFrac(comp1Idx)/dn.viscosity());
+                (1 - upwindAlpha_)*dn.molarDensity() * dn.moleFrac(comp1Idx)/dn.viscosity());
         }
 
     }
@@ -501,6 +511,9 @@ protected:
     { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const
     { return static_cast<const Implementation *> (this); }
+
+private:
+    Scalar upwindAlpha_;
 };
 
 }

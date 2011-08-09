@@ -150,9 +150,6 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    static constexpr Scalar mobilityUpwindAlpha =
-        GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
-
 public:
     /*!
      * \brief Initialize the static data with the initial solution.
@@ -183,6 +180,8 @@ public:
             staticVertexDat_[globalIdx].oldPhasePresence
                 = staticVertexDat_[globalIdx].phasePresence;
         }
+
+        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, bool, MobilityUpwindAlpha);
     }
 
     /*!
@@ -415,7 +414,7 @@ public:
                     const VolumeVariables &up = elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
                     const VolumeVariables &down = elemVolVars[fluxDat.downstreamIdx(phaseIdx)];
                     Scalar scvfArea = fluxDat.face().normal.two_norm(); //get surface area to weight velocity at the IP with the surface area
-                    velocity[phaseIdx] *= (mobilityUpwindAlpha*up.mobility(phaseIdx) + (1-mobilityUpwindAlpha)*down.mobility(phaseIdx))* scvfArea;
+                    velocity[phaseIdx] *= (mobilityUpwindAlpha_*up.mobility(phaseIdx) + (1-mobilityUpwindAlpha_)*down.mobility(phaseIdx))* scvfArea;
 
                     int vertIIdx = this->problem_().vertexMapper().map(*elemIt,
                                                                        fluxDat.face().i,
@@ -744,6 +743,7 @@ protected:
     // parameters given in constructor
     std::vector<StaticVars> staticVertexDat_;
     bool switchFlag_;
+    Scalar mobilityUpwindAlpha_;
 };
 
 }

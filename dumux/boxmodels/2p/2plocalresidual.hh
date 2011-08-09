@@ -83,22 +83,20 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
-    Scalar mobilityUpwindAlpha_;
-        
-
 public:
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
     TwoPLocalResidual()
     {
         // retrieve the upwind weight for the mobility. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        mobilityUpwindAlpha_ = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
-        mobilityUpwindAlpha_ = Params::tree().get("MobilityUpwindAlpha", mobilityUpwindAlpha_);
+        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindAlpha);
     };
 
     /*!
@@ -236,6 +234,10 @@ protected:
     {
         return static_cast<const Implementation *> (this);
     }
+
+private:
+    Scalar mobilityUpwindAlpha_;
+
 };
 
 }

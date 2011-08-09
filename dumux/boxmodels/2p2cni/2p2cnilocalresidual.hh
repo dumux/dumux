@@ -81,9 +81,18 @@ class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    static constexpr Scalar mobilityUpwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(MobilityUpwindAlpha));
-
 public:
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
+    TwoPTwoCNILocalResidual()
+    {
+        // retrieve the upwind weight for the mobility. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindAlpha);
+    };
+
     /*!
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -148,12 +157,12 @@ public:
 
             flux[energyEqIdx] +=
                 fluxData.KmvpNormal(phase) * (
-                    mobilityUpwindAlpha * // upstream vertex
+                    mobilityUpwindAlpha_ * // upstream vertex
                     (  up.density(phase) *
                        up.mobility(phase) *
                        up.enthalpy(phase))
                     +
-                    (1-mobilityUpwindAlpha) * // downstream vertex
+                    (1-mobilityUpwindAlpha_) * // downstream vertex
                     (  dn.density(phase) *
                        dn.mobility(phase) *
                        dn.enthalpy(phase)) );
@@ -179,6 +188,10 @@ public:
         flux[temperatureIdx] +=
             fluxData.normalMatrixHeatFlux();
     }
+
+private:
+    Scalar mobilityUpwindAlpha_;
+
 };
 
 }

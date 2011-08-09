@@ -55,7 +55,6 @@ class TwoPProblem : public BoxProblem<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
     /*!
@@ -75,8 +74,7 @@ public:
         spatialParameters_ = new SpatialParameters(gridView);
 
         gravity_ = 0;
-        enableGravity_ = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity));
-        enableGravity_ = Params::tree().get("EnableGravity", enableGravity_);
+        enableGravity_ = GET_PARAM(TypeTag, bool, EnableGravity);
         if (enableGravity_)
             gravity_[dim-1]  = -9.81;
     }
@@ -98,8 +96,7 @@ public:
     {
         newSpatialParams_ = false;
         gravity_ = 0;
-        enableGravity_ = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity));
-        enableGravity_ = Params::tree().get("EnableGravity", enableGravity_);
+        enableGravity_ = GET_PARAM(TypeTag, bool, EnableGravity);
         if (enableGravity_)
             gravity_[dim-1]  = -9.81;
     }
@@ -183,12 +180,6 @@ public:
      */
     const GlobalPosition &gravity() const
     { return gravity_; }
-
-    /*!
-     * \brief Check whether gravity is enabled.
-     */
-    const bool enableGravity() const
-    { return enableGravity_; }
 
     /*!
      * \brief Returns the spatial parameters object.

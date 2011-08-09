@@ -379,7 +379,7 @@ protected:
      */
     void evalDirichlet_()
     {
-        PrimaryVariables tmp;
+        PrimaryVariables tmp(0);
         for (int i = 0; i < fvElemGeom_().numVertices; ++i) {
             const BoundaryTypes &bcTypes = bcTypes_(i);
             if (! bcTypes.hasDirichlet())
