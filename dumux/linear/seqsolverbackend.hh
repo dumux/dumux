@@ -463,10 +463,6 @@ public:
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
-
     Vector bTmp(b);
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
