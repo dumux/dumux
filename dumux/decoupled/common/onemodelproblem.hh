@@ -598,14 +598,6 @@ public:
     // \}
 
 protected:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \brief \copybrief Dumux::OneModelProblem::asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
-
     VtkMultiWriter& resultWriter()
     {
         if (!resultWriter_)
@@ -621,6 +613,14 @@ protected:
     }
 
 private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \brief \copybrief Dumux::OneModelProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     std::string simname_; // a string for the name of the current simulation,
                                   // which could be set by means of an program argument,
                                  // for example.

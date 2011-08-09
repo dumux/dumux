@@ -106,6 +106,9 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -147,7 +150,7 @@ public:
     *
     * This problem assumes a temperature of 10 degrees Celsius.
     */
-    Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
+    Scalar temperature(const Element& element) const
     {
         return 273.15 + 10; // -> 10°C
     }
@@ -155,13 +158,13 @@ public:
     // \}
 
     //! Returns the reference pressure for evaluation of constitutive relations
-    Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+    Scalar referencePressure(const Element& element) const
     {
         return 1e5; // -> 10°C
     }
 
     //!source term [kg/(m^3 s)]
-    Scalar source(const GlobalPosition& globalPos, const Element& element)
+    void sourceAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
         {
         double pi = 4.0*atan(1.0);
         double rt = globalPos[0]*globalPos[0]+globalPos[1]*globalPos[1];
@@ -174,9 +177,7 @@ public:
         + cos(pi*globalPos[0])*sin(pi*globalPos[1])*pi*(1.0 - 3.0*delta_)*globalPos[0]
                                                                                     + cos(pi*globalPos[1])*sin(pi*globalPos[0])*pi*(1.0 - 3.0*delta_)*globalPos[1]
                                                                                                                                                                 + cos(pi*globalPos[1])*cos(pi*globalPos[0])*2.0*pi*pi*(1.0 - delta_)*globalPos[0]*globalPos[1];
-        Scalar result=(f0 + 2.0*(globalPos[0]*(kxx*ux + kxy*uy) + globalPos[1]*(kxy*ux + kyy*uy)))/rt;
-
-        return (result);
+        values = (f0 + 2.0*(globalPos[0]*(kxx*ux + kxy*uy) + globalPos[1]*(kxy*ux + kyy*uy)))/rt;
         }
 
     /*!
@@ -184,21 +185,24 @@ public:
     *
     * BC can be dirichlet (pressure) or neumann (flux).
     */
-    typename BoundaryConditions::Flags bctype(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void boundaryTypes(BoundaryTypes &bcType,
+            const Intersection& intersection) const
     {
-        return BoundaryConditions::dirichlet;
+        bcType.setAllDirichlet();
     }
 
     //! return dirichlet condition  (pressure, [Pa])
-    Scalar dirichlet(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void dirichletAtPos(PrimaryVariables &values,
+                        const GlobalPosition &globalPos) const
     {
-        return (exact(globalPos));
+        values = exact(globalPos);
     }
 
+
     //! return neumann condition  (flux, [kg/(m^2 s)])
-    Scalar neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void neumann(PrimaryVariables &values, const Intersection& intersection) const
         {
-        return 0.0;
+        values = 0;
         }
 
 private:

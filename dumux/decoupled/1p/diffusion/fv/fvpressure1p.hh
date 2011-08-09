@@ -21,11 +21,6 @@
 #ifndef DUMUX_FVPRESSURE1P_HH
 #define DUMUX_FVPRESSURE1P_HH
 
-// dune environent:
-#include <dune/istl/bvector.hh>
-#include <dune/istl/operators.hh>
-#include <dune/istl/solvers.hh>
-#include <dune/istl/preconditioners.hh>
 
 // dumux environment
 #include "dumux/common/pardiso.hh"
@@ -66,9 +61,17 @@ template<class TypeTag> class FVPressure1P
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
+
+    enum
+    {
+        pressEqIdx = 0,// only one equation!
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -77,7 +80,6 @@ template<class TypeTag> class FVPressure1P
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
@@ -272,6 +274,8 @@ void FVPressure1P<TypeTag>::assemble(bool first)
     A_ = 0;
     f_ = 0;
 
+    BoundaryTypes bcType;
+
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
@@ -284,16 +288,18 @@ void FVPressure1P<TypeTag>::assemble(bool first)
         // cell volume, assume linear map here
         Scalar volume = eIt->geometry().volume();
 
-        Scalar temperatureI = problem_.temperature(globalPos, *eIt);
-        Scalar referencePressI = problem_.referencePressure(globalPos, *eIt);
+        Scalar temperatureI = problem_.temperature(*eIt);
+        Scalar referencePressI = problem_.referencePressure(*eIt);
 
         Scalar densityI = Fluid::density(temperatureI, referencePressI);
         Scalar viscosityI = Fluid::viscosity(temperatureI, referencePressI);
 
         // set right side to zero
-        Scalar source = problem_.source(globalPos, *eIt) / densityI;
+        PrimaryVariables source(0.0);
+        problem_.source(source, *eIt);
+        source /= densityI;
 
-        f_[globalIdxI] = volume * source;
+        f_[globalIdxI] = source *= volume;
 
         int isIndex = 0;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
@@ -335,8 +341,8 @@ void FVPressure1P<TypeTag>::assemble(bool first)
 
                 permeability/=viscosityI;
 
-                Scalar temperatureJ = problem_.temperature(globalPosNeighbor, *neighborPointer);
-                Scalar referencePressJ = problem_.referencePressure(globalPosNeighbor, *neighborPointer);
+                Scalar temperatureJ = problem_.temperature(*neighborPointer);
+                Scalar referencePressJ = problem_.referencePressure(*neighborPointer);
 
                 Scalar densityJ = Fluid::density(temperatureJ, referencePressJ);
 
@@ -392,16 +398,19 @@ void FVPressure1P<TypeTag>::assemble(bool first)
 
             // boundary face
 
-            else
+            else if (isIt->boundary())
             {
                 // center of face in global coordinates
                 const GlobalPosition& globalPosFace = isIt->geometry().center();
 
                 //get boundary condition for boundary face center
-                BoundaryConditions::Flags bctype = problem_.bctype(globalPosFace, *isIt);
+                problem_.boundaryTypes(bcType, *isIt);
+                PrimaryVariables boundValues(0.0);
 
-                if (bctype == BoundaryConditions::dirichlet)
+                if (bcType.isDirichlet(pressEqIdx))
                 {
+                    problem_.dirichlet(boundValues, *isIt);
+
                     Dune::FieldVector < Scalar, dimWorld > distVec(globalPosFace - globalPos);
                     Scalar dist = distVec.two_norm();
 
@@ -419,7 +428,7 @@ void FVPressure1P<TypeTag>::assemble(bool first)
                     permeability/= viscosityI;
 
                     //get dirichlet pressure boundary condition
-                    Scalar pressBound = problem_.dirichlet(globalPosFace, *isIt);
+                    Scalar pressBound = boundValues;
 
                     //calculate current matrix entry
                     Scalar entry = ((permeability * unitOuterNormal) / dist) * faceArea;
@@ -434,9 +443,10 @@ void FVPressure1P<TypeTag>::assemble(bool first)
                 }
                 //set neumann boundary condition
 
-                else
+                else if (bcType.isNeumann(pressEqIdx))
                 {
-                    Scalar J = problem_.neumann(globalPosFace, *isIt) / densityI;
+                    problem_.neumann(boundValues, *isIt);
+                    Scalar J = boundValues /= densityI;
 
                     f_[globalIdxI] -= J * faceArea;
                 }

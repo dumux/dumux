@@ -105,6 +105,9 @@ class GroundwaterProblem: public DiffusionProblem1P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -149,7 +152,7 @@ public:
     *
     * This problem assumes a temperature of 10 degrees Celsius.
     */
-    Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
+    Scalar temperature(const Element& element) const
     {
         return 273.15 + 10; // -> 10°C
     }
@@ -157,23 +160,22 @@ public:
     // \}
 
     //! Returns the reference pressure for evaluation of constitutive relations
-    Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+    Scalar referencePressure(const Element& element) const
     {
         return 1e5; // -> 10°C
     }
 
     //!source term [kg/(m^3 s)] (or in 2D [kg/(m^2 s)]).
-    Scalar source(const GlobalPosition& globalPos, const Element& element)
+    void source(PrimaryVariables& values, const Element& element) const
     {
-        Scalar q=0;
+        values = 0;
         Scalar density=Fluid::density(0,0);
         for (int sourceNumber = 0; sourceNumber != problemProps_.sources.size(); sourceNumber++)
         {
             Source source = problemProps_.sources[sourceNumber];
             if (this->variables().index(element) == source.index)
-                q+=source.q*density/element.geometry().volume()/problemProps_.depth;
+                values += source.q*density/element.geometry().volume()/problemProps_.depth;
         }
-        return q;
     }
 
     /*!
@@ -181,7 +183,8 @@ public:
     *
     * BC can be dirichlet (pressure) or neumann (flux).
     */
-    typename BoundaryConditions::Flags bctype(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void boundaryTypesAtPos(BoundaryTypes &bcType,
+            const GlobalPosition& globalPos) const
     {
         double coordinate=0;
         int boundaryIndex=0;
@@ -214,19 +217,21 @@ public:
             if (coordinate< problemProps_.BCondition[boundaryIndex].endPoint[segmentCount])
             {
                 if (problemProps_.BCondition[boundaryIndex].neumann[segmentCount])
-                    return BoundaryConditions::neumann;
+                    bcType.setAllNeumann();
                 else
-                    return BoundaryConditions::dirichlet;
+                    bcType.setAllDirichlet();
             }
         }
         if (problemProps_.BCondition[boundaryIndex].neumann[problemProps_.BCondition[boundaryIndex].segmentCount-1])
-            return BoundaryConditions::neumann;
+            bcType.setAllNeumann();
         else
-            return BoundaryConditions::dirichlet;
+            bcType.setAllDirichlet();
     }
 
+
     //! return dirichlet condition  (pressure, [Pa])
-    Scalar dirichlet(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void dirichletAtPos(PrimaryVariables &values,
+                        const GlobalPosition &globalPos) const
     {
         double coordinate=0;
         int boundaryIndex=0;
@@ -258,10 +263,10 @@ public:
         {
             if (coordinate< problemProps_.BCondition[boundaryIndex].endPoint[segmentCount])
             {
-                return problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)*9.81;
+                values = problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)*9.81;
             }
         }
-        return problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]*Fluid::density(0,0)*9.81;
+        values = problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]*Fluid::density(0,0)*9.81;
 
 
 //        return 2e5;
@@ -269,7 +274,7 @@ public:
     }
 
     //! return neumann condition  (flux, [kg/(m^2 s)])
-    Scalar neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         double coordinate=0;
         int boundaryIndex=0;
@@ -301,11 +306,11 @@ public:
         {
             if (coordinate< problemProps_.BCondition[boundaryIndex].endPoint[segmentCount])
             {
-                return problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)
+                values = problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)
                     *(-1);
             }
         }
-        return problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]
+        values = problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]
                    *Fluid::density(0,0)*(-1);
 
 
@@ -448,6 +453,7 @@ public:
                         << std::setw(11)<< std::setprecision(6) << v_x<<" "
                         << std::setw(11)<< std::setprecision(6) << v_y <<std::endl;
             }
+            break;
         }
         }
     }

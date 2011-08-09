@@ -207,7 +207,6 @@ public:
     // \}
 
 private:
-private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
