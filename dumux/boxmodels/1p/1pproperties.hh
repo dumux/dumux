@@ -26,8 +26,6 @@
 #ifndef DUMUX_1P_PROPERTIES_DATA_HH
 #define DUMUX_1P_PROPERTIES_DATA_HH
 
-#define OnePModel
-
 #include <dumux/boxmodels/common/boxproperties.hh>
 
 namespace Dumux

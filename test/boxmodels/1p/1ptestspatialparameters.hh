@@ -26,7 +26,7 @@
 #ifndef DUMUX_1P_TEST_SPATIALPARAMETERS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMETERS_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparameters/boxspatialparameters1p.hh>
 
 namespace Dumux
 {
@@ -38,9 +38,9 @@ namespace Dumux
  *        1p box model
  */
 template<class TypeTag>
-class OnePTestSpatialParameters : public BoxSpatialParameters<TypeTag>
+class OnePTestSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParametersOneP<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;

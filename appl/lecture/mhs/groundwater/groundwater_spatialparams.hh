@@ -25,7 +25,7 @@
 #ifndef GROUNDWATER_SPATIALPARAMETERS_HH
 #define GROUNDWATER_SPATIALPARAMETERS_HH
 
-#include <dumux/material/spatialparameters/fvspatialparameters.hh>
+#include <dumux/material/spatialparameters/fvspatialparameters1p.hh>
 
 namespace Dumux
 {
@@ -35,7 +35,7 @@ namespace Dumux
  * \brief spatial parameters for the test problem for diffusion models.
  */
 template<class TypeTag>
-class GroundwaterSpatialParams: public FVSpatialParameters<TypeTag>
+class GroundwaterSpatialParams: public FVSpatialParametersOneP<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -80,7 +80,7 @@ public:
     }
 
     GroundwaterSpatialParams(const GridView& gridView)
-    : FVSpatialParameters<TypeTag>(gridView), permeability_(0)
+    : FVSpatialParametersOneP<TypeTag>(gridView), permeability_(0)
     {
         Dumux::InterfaceSoilProperties interfaceSoilProps("interface_groundwater.xml");
         porosity_ = interfaceSoilProps.porosity;

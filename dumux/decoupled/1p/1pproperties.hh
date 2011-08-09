@@ -30,8 +30,6 @@
 #ifndef DUMUX_1PPROPERTIES_HH
 #define DUMUX_1PPROPERTIES_HH
 
-#define OnePModel
-
 //Dune-includes
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>

@@ -23,7 +23,7 @@
 #ifndef DUMUX_LENSSPATIALPARAMETERS_1P2C_HH
 #define DUMUX_LENSSPATIALPARAMETERS_1P2C_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparameters/boxspatialparameters1p.hh>
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
 /**
@@ -38,9 +38,9 @@ namespace Dumux
 /** \todo Please doc me! */
 
 template<class TypeTag>
-class LensSpatialParameters1p2c : public BoxSpatialParameters<TypeTag>
+class LensSpatialParameters1p2c : public BoxSpatialParametersOneP<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParametersOneP<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

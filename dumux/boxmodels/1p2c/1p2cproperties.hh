@@ -29,7 +29,6 @@
 #ifndef DUMUX_1P2C_PROPERTIES_HH
 #define DUMUX_1P2C_PROPERTIES_HH
 
-#define OnePModel
 
 #include<dumux/boxmodels/common/boxproperties.hh>
 

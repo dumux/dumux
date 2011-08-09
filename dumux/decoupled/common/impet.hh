@@ -54,7 +54,7 @@ template<class TypeTag> class IMPET
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Parameters;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
@@ -67,14 +67,11 @@ template<class TypeTag> class IMPET
 
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
 public:
     typedef typename SolutionTypes::ScalarSolution SolutionType;
 
     //! Set initial solution and initialize parameters
-    virtual void initialize()
+    void initialize()
     {
         //initial values of transported quantity
         problem.transportModel().initialize();

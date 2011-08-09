@@ -25,7 +25,7 @@
 #ifndef TEST_1P_SPATIALPARAMETERS_HH
 #define TEST_1P_SPATIALPARAMETERS_HH
 
-#include <dumux/material/spatialparameters/fvspatialparameters.hh>
+#include <dumux/material/spatialparameters/fvspatialparameters1p.hh>
 
 namespace Dumux
 {
@@ -35,9 +35,9 @@ namespace Dumux
  * \brief spatial parameters for the test problem for 1-p diffusion models.
  */
 template<class TypeTag>
-class TestOnePSpatialParams: public FVSpatialParameters<TypeTag>
+class TestOnePSpatialParams: public FVSpatialParametersOneP<TypeTag>
 {
-    typedef FVSpatialParameters<TypeTag> ParentType;
+    typedef FVSpatialParametersOneP<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

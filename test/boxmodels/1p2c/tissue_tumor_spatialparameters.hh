@@ -27,7 +27,7 @@
 #ifndef DUMUX_TISSUE_TUMOR_SPATIAL_PARAMETERS_HH
 #define DUMUX_TISSUE_TUMOR_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparameters/boxspatialparameters1p.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -42,9 +42,9 @@ namespace Dumux
  *        tissue-tumor problem
  */
 template<class TypeTag>
-class TissueTumorSpatialParameters : public BoxSpatialParameters<TypeTag>
+class TissueTumorSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParametersOneP<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
