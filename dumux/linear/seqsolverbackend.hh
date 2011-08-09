@@ -340,7 +340,6 @@ public:
     Vector bTmp(b);
 
     static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
-    static const int precondIter = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations));
 
     Preconditioner precond(A, relaxation);
 
