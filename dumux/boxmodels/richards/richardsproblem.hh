@@ -75,7 +75,7 @@ public:
           gravity_(0), spatialParams_(gridView)
     {
         gravity_ = 0;
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
             gravity_[dim-1]  = -9.81;
     }
 

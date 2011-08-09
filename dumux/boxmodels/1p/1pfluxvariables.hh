@@ -58,8 +58,6 @@ class OnePFluxVariables
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-
-        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -164,7 +162,7 @@ private:
         ///////////////
         // correct the pressure gradients by the gravitational acceleration
         ///////////////
-        if (enableGravity) {
+        if (GET_PARAM(TypeTag, bool, EnableGravity)) {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
             Vector g(problem.boxGravity(element, fvElemGeom_, face().i));

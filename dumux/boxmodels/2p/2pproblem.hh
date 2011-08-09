@@ -73,9 +73,7 @@ public:
         newSpatialParams_ = true;
         spatialParameters_ = new SpatialParameters(gridView);
 
-        gravity_ = 0;
-        enableGravity_ = GET_PARAM(TypeTag, bool, EnableGravity);
-        if (enableGravity_)
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
             gravity_[dim-1]  = -9.81;
     }
 
@@ -95,9 +93,8 @@ public:
         gravity_(0)
     {
         newSpatialParams_ = false;
-        gravity_ = 0;
-        enableGravity_ = GET_PARAM(TypeTag, bool, EnableGravity);
-        if (enableGravity_)
+
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
             gravity_[dim-1]  = -9.81;
     }
 
@@ -208,7 +205,6 @@ private:
     // fluids and material properties
     SpatialParameters*  spatialParameters_;
     bool newSpatialParams_;
-    bool enableGravity_;
 };
 
 }

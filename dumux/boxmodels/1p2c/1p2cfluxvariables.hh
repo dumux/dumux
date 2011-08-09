@@ -74,8 +74,6 @@ class OnePTwoCFluxVariables
         phaseIdx = Indices::phaseIdx,
         comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
-
-        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 public:
     /*
@@ -345,7 +343,7 @@ protected:
         ///////////////
         // correct the pressure gradients by the gravitational acceleration
         ///////////////
-        if (enableGravity) {
+        if (GET_PARAM(TypeTag, bool, EnableGravity)) {
             // calculate the phase density at the integration point. we
             // only do this if the wetting phase is present in both cells
             Scalar rhoI = elemVolVars[face().i].density();

@@ -80,8 +80,6 @@ class TwoPTwoCFluxVariables
 
         lCompIdx = Indices::lCompIdx,
         gCompIdx = Indices::gCompIdx,
-
-        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
     };
 
 public:
@@ -163,7 +161,7 @@ private:
         ///////////////
         // correct the pressure gradients by the gravitational acceleration
         ///////////////
-        if (enableGravity) {
+        if (GET_PARAM(TypeTag, bool, EnableGravity)) {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
             Vector g(problem.boxGravity(element, fvElemGeom_, face().i));

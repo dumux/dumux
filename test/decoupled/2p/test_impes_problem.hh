@@ -241,7 +241,7 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     values = 0;
     if (globalPos[0] < eps_)
     {
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
         {
             Scalar pRef = referencePressureAtPos(globalPos);
             Scalar temp = temperatureAtPos(globalPos);

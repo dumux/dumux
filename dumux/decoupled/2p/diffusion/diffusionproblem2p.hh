@@ -81,7 +81,7 @@ public:
         spatialParameters_ = new SpatialParameters(gridView);
         newSpatialParams_ = true;
         gravity_ = 0;
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
             gravity_[dim - 1] = -9.81;
     }
     /*!
@@ -95,7 +95,7 @@ public:
     {
         newSpatialParams_ = false;
         gravity_ = 0;
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
             gravity_[dim - 1] = -9.81;
     }
 
