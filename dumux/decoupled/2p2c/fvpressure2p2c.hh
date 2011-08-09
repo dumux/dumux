@@ -262,6 +262,8 @@ public:
                 * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()),
                 debugWriter_(problem.gridView(), "debugOutput2p2c"), gravity(problem.gravity())
     {
+        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+
         if (pressureType != pw && pressureType != pn)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
@@ -297,7 +299,7 @@ private:
     typename SolutionTypes::ScalarSolution errorCorrection;  //debug output
 protected:
     const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
-    static constexpr Scalar cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor)); //!< determines the CFLfactor
+    Scalar cFLFactor_; //!< determines the CFLfactor
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     static constexpr int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));     //!< gives kind of saturation used (\f$ 0 = S_w \f$, \f$ 1 = S_n \f$)
 };

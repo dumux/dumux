@@ -85,6 +85,8 @@ public:
         : ParentType(gridView, verbose),
         gravity_(0),spatialParameters_(gridView)
     {
+        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+
         newSpatialParams_ = true;
         spatialParameters_ = new SpatialParameters(gridView);
 
@@ -103,6 +105,8 @@ public:
         : ParentType(gridView, verbose),
         gravity_(0), spatialParameters_(spatialParameters)
     {
+        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+
         newSpatialParams_ = false;
 
         gravity_ = 0;
@@ -119,6 +123,8 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0)
     {
+        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+
         newSpatialParams_ = true;
         spatialParameters_ = new SpatialParameters(gridView);
 
@@ -136,6 +142,8 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0),spatialParameters_(spatialParameters)
     {
+        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+
         newSpatialParams_ = false;
 
         gravity_ = 0;
@@ -263,7 +271,7 @@ private:
     SpatialParameters*  spatialParameters_;
     bool newSpatialParams_;
 
-    static constexpr Scalar cFLFactor_= GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
+    Scalar cFLFactor_;
 };
 
 }

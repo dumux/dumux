@@ -209,7 +209,7 @@ public:
     IMPET(Problem& prob) :
         problem(prob)
     {
-        cFLFactor_ = GET_PROP_VALUE(TypeTag, PTAG(CFLFactor));
+        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
         iterFlag_ = GET_PROP_VALUE(TypeTag, PTAG(IterationFlag));
         nIter_ = GET_PROP_VALUE(TypeTag, PTAG(IterationNumber));
         maxDefect_ = GET_PROP_VALUE(TypeTag, PTAG(MaximumDefect));

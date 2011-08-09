@@ -557,7 +557,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         }
     } // end grid traversal
     if(impes)
-        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PROP_VALUE(TypeTag, PTAG(CFLFactor))<< std::endl;
+        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PARAM(TypeTag, Scalar, CFLFactor)<< std::endl;
 
     return;
     }
