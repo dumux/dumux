@@ -954,8 +954,6 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         //initialize fractional flow functions
         problem_.variables().fracFlowFuncWetting(globalIdx) = mobilityW / (mobilityW + mobilityNW);
         problem_.variables().fracFlowFuncNonwetting(globalIdx) = mobilityNW / (mobilityW + mobilityNW);
-
-        problem_.spatialParameters().update(satW, *eIt);
     }
     return;
 }

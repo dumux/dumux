@@ -1131,8 +1131,6 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws(
                         / (problem_.variables().mobilityWetting(globalIdx)
                                 + problem_.variables().mobilityNonwetting(
                                         globalIdx));
-
-        problem_.spatialParameters().update(satW, *eIt);
     }
     return;
 }

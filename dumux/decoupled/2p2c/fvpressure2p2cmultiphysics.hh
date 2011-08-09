@@ -1131,8 +1131,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
             problem().variables().densityNonwetting(globalIdx)
                     = FluidSystem::phaseDensity(nPhaseIdx, temperature_, pressure[nPhaseIdx], fluidState);
 
-            problem().spatialParameters().update(fluidState.saturation(wPhaseIdx), *eIt);
-
             // determine volume mismatch between actual fluid volume and pore volume
             Scalar sumConc = (problem().variables().totalConcentration(globalIdx, wCompIdx)
                     + problem().variables().totalConcentration(globalIdx, nCompIdx));
