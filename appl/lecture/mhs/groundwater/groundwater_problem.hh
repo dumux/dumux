@@ -220,6 +220,7 @@ public:
                     bcType.setAllNeumann();
                 else
                     bcType.setAllDirichlet();
+                return;
             }
         }
         if (problemProps_.BCondition[boundaryIndex].neumann[problemProps_.BCondition[boundaryIndex].segmentCount-1])
@@ -264,6 +265,7 @@ public:
             if (coordinate< problemProps_.BCondition[boundaryIndex].endPoint[segmentCount])
             {
                 values = problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)*9.81;
+                return;
             }
         }
         values = problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]*Fluid::density(0,0)*9.81;
@@ -308,6 +310,7 @@ public:
             {
                 values = problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)
                     *(-1);
+                return;
             }
         }
         values = problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]
