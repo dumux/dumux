@@ -2425,7 +2425,7 @@ void FVMPFAOPressure2P<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
 
-    int verboseLevelSolver = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
+    int verboseLevelSolver = GET_PARAM(TypeTag, int, LSVerbosity);
 
     if (verboseLevelSolver)
         std::cout << "FVMPFAOPressure2P: solve for pressure" << std::endl;

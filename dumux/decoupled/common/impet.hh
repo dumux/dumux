@@ -210,10 +210,10 @@ public:
         problem(prob)
     {
         cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
-        iterFlag_ = GET_PROP_VALUE(TypeTag, PTAG(IterationFlag));
-        nIter_ = GET_PROP_VALUE(TypeTag, PTAG(IterationNumber));
-        maxDefect_ = GET_PROP_VALUE(TypeTag, PTAG(MaximumDefect));
-        omega_ = GET_PROP_VALUE(TypeTag, PTAG(RelaxationFactor));
+        iterFlag_ = GET_PARAM(TypeTag, int, IterationFlag);
+        nIter_ = GET_PARAM(TypeTag, int, IterationNumber);
+        maxDefect_ = GET_PARAM(TypeTag, Scalar, MaximumDefect);
+        omega_ = GET_PARAM(TypeTag, Scalar, RelaxationFactor);
     }
 
 protected:

@@ -78,9 +78,6 @@ class BoxModel
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        enableJacobianRecycling  = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)),
-        enableHints = GET_PROP_VALUE(TypeTag, PTAG(EnableHints)),
-
         dim = GridView::dimension
     };
 
@@ -101,8 +98,6 @@ class BoxModel
     typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
-    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
-
     // copying a model is not a good idea
     BoxModel(const BoxModel &);
 
@@ -111,7 +106,9 @@ public:
      * \brief The constructor.
      */
     BoxModel()
-    { }
+    {
+        enableHints_ = GET_PARAM(TypeTag, bool, EnableHints);
+    }
 
     ~BoxModel()
     { delete jacAsm_;  }
@@ -138,7 +135,7 @@ public:
         asImp_().applyInitialSolution_();
 
         // resize the hint vectors
-        if (enableHints) {
+        if (enableHints_) {
             int nVerts = gridView_().size(dim);
             curHints_.resize(nVerts);
             prevHints_.resize(nVerts);
@@ -157,7 +154,7 @@ public:
                   ElementVolumeVariables &prevVolVars,
                   ElementVolumeVariables &curVolVars) const
     {
-        if (!enableHints)
+        if (!enableHints_)
             return;
 
         int n = elem.template count<dim>();
@@ -180,7 +177,7 @@ public:
     void setHints(const Element &elem,
                   ElementVolumeVariables &curVolVars) const
     {
-        if (!enableHints)
+        if (!enableHints_)
             return;
 
         int n = elem.template count<dim>();
@@ -197,7 +194,7 @@ public:
 
     void updatePrevHints()
     {
-        if (!enableHints)
+        if (!enableHints_)
             return;
 
         prevHints_ = curHints_;
@@ -206,7 +203,7 @@ public:
     void updateCurHints(const Element &elem,
                         const ElementVolumeVariables &ev) const
     {
-        if (!enableHints)
+        if (!enableHints_)
             return;
 
         for (int i = 0; i < ev.size(); ++i) {
@@ -857,6 +854,9 @@ protected:
     SolutionVector uPrev_;
 
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
+
+private:
+    bool enableHints_;
 };
 }
 

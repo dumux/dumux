@@ -61,12 +61,12 @@ class TwoPTwoCNewtonController : public NewtonController<TypeTag>
         switchIdx = Indices::switchIdx
     };
 
-    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
-
 public:
     TwoPTwoCNewtonController(const Problem &problem)
         : ParentType(problem)
     {
+        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
+
         this->setRelTolerance(1e-7);
         this->setTargetSteps(9);
         this->setMaxSteps(18);
@@ -116,7 +116,7 @@ public:
 
         // compute the vertex and element colors for partial
         // reassembly
-        if (enablePartialReassemble) {
+        if (enablePartialReassemble_) {
             Scalar reassembleTol = Dumux::geometricMean(this->error_, 0.1*this->tolerance_);
             reassembleTol = std::max(reassembleTol, 0.1*this->tolerance_);
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
@@ -143,7 +143,7 @@ public:
             return false;
 
         return ParentType::newtonConverged();
-    };
+    }
 
 private:
     void lineSearchUpdate_(SolutionVector &uCurrentIter,
@@ -173,7 +173,9 @@ private:
            // try with a smaller update
            lambda /= 2;
        }
-    };
+    }
+
+    bool enablePartialReassemble_;
 
 };
 }

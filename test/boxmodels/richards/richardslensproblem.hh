@@ -79,7 +79,7 @@ SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
 SET_BOOL_PROP(RichardsLensProblem, EnablePartialReassemble, true);
 
 // Use forward diffferences to approximate the Jacobian matrix
-SET_BOOL_PROP(RichardsLensProblem, NumericDifferenceMethod, +1);
+SET_INT_PROP(RichardsLensProblem, NumericDifferenceMethod, +1);
 
 // Write the intermediate results of the newton method?
 SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);

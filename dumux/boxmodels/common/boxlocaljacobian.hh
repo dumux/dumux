@@ -88,9 +88,6 @@ private:
         Red = JacobianAssembler::Red,
         Yellow = JacobianAssembler::Yellow,
         Green = JacobianAssembler::Green,
-
-        numDiffMethod = GET_PROP_VALUE(TypeTag,
-                                       PTAG(NumericDifferenceMethod)),
     };
 
 
@@ -127,7 +124,10 @@ private:
 
 public:
     BoxLocalJacobian()
-    { Valgrind::SetUndefined(problemPtr_); }
+    {
+        numericDifferenceMethod_ = GET_PARAM(TypeTag, int, NumericDifferenceMethod);
+        Valgrind::SetUndefined(problemPtr_);
+    }
 
 
     /*!
@@ -408,7 +408,7 @@ protected:
         Scalar eps = asImp_().numericEpsilon(scvIdx, pvIdx);
         Scalar delta = 0;
 
-        if (numDiffMethod >= 0) {
+        if (numericDifferenceMethod_ >= 0) {
             // we are not using backward differences, i.e. we need to
             // calculate f(x + \epsilon)
 
@@ -442,7 +442,7 @@ protected:
         }
 
 
-        if (numDiffMethod <= 0) {
+        if (numericDifferenceMethod_ <= 0) {
             // we are not using forward differences, i.e. we don't
             // need to calculate f(x - \epsilon)
 
@@ -540,6 +540,8 @@ protected:
 
     ElementSolutionVector residual_;
     ElementSolutionVector storageTerm_;
+
+    int numericDifferenceMethod_;
 };
 }
 

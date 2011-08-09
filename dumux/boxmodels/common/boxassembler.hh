@@ -68,9 +68,6 @@ class BoxAssembler
     typedef Matrix RepresentationType;
 
     enum {
-        enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)),
-        enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)),
-
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
     };
 
@@ -116,6 +113,9 @@ public:
 
     BoxAssembler()
     {
+        enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
+        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
+
         problemPtr_ = 0;
         matrix_ = 0;
 
@@ -159,7 +159,7 @@ public:
         // initialize the storage part of the Jacobian matrix. Since
         // we only need this if Jacobian matrix recycling is enabled,
         // we do not waste space if it is disabled
-        if (enableJacobianRecycling) {
+        if (enableJacobianRecycling_) {
             storageJacobian_.resize(numVerts);
             storageTerm_.resize(numVerts);
         }
@@ -167,7 +167,7 @@ public:
         totalElems_ = gridView_().comm().sum(numElems);
 
         // initialize data needed for partial reassembly
-        if (enablePartialReassemble) {
+        if (enablePartialReassemble_) {
             vertexColor_.resize(numVerts);
             vertexDelta_.resize(numVerts);
             elementColor_.resize(numElems);
@@ -183,7 +183,7 @@ public:
      */
     void assemble()
     {
-        bool printReassembleStatistics = enablePartialReassemble && !reuseMatrix_;
+        bool printReassembleStatistics = enablePartialReassemble_ && !reuseMatrix_;
         int succeeded;
         try {
             assemble_();
@@ -231,7 +231,7 @@ public:
      */
     void setMatrixReuseable(bool yesno = true)
     {
-        if (enableJacobianRecycling)
+        if (enableJacobianRecycling_)
             reuseMatrix_ = yesno;
     }
 
@@ -247,7 +247,7 @@ public:
 
         // do not use partial reassembly for the next iteration
         nextReassembleAccuracy_ = 0.0;
-        if (enablePartialReassemble) {
+        if (enablePartialReassemble_) {
             std::fill(vertexColor_.begin(),
                       vertexColor_.end(),
                       Red);
@@ -283,7 +283,7 @@ public:
     void updateDiscrepancy(const SolutionVector &u,
                            const SolutionVector &uDelta)
     {
-        if (!enablePartialReassemble)
+        if (!enablePartialReassemble_)
             return;
 
         // update the vector with the distances of the current
@@ -339,7 +339,7 @@ public:
      */
     void computeColors(Scalar relTol)
     {
-        if (!enablePartialReassemble)
+        if (!enablePartialReassemble_)
             return;
 
         ElementIterator elemIt = gridView_().template begin<0>();
@@ -483,7 +483,7 @@ public:
      */
     int vertexColor(const Element &element, int vertIdx) const
     {
-        if (!enablePartialReassemble)
+        if (!enablePartialReassemble_)
             return Red; // reassemble unconditionally!
 
         int globalIdx = vertexMapper_().map(element, vertIdx, dim);
@@ -497,7 +497,7 @@ public:
      */
     int vertexColor(int globalVertIdx) const
     {
-        if (!enablePartialReassemble)
+        if (!enablePartialReassemble_)
             return Red; // reassemble unconditionally!
         return vertexColor_[globalVertIdx];
     }
@@ -509,7 +509,7 @@ public:
      */
     int elementColor(const Element &element) const
     {
-        if (!enablePartialReassemble)
+        if (!enablePartialReassemble_)
             return Red; // reassemble unconditionally!
 
         int globalIdx = elementMapper_().map(element);
@@ -523,7 +523,7 @@ public:
      */
     int elementColor(int globalElementIdx) const
     {
-        if (!enablePartialReassemble)
+        if (!enablePartialReassemble_)
             return Red; // reassemble unconditionally!
         return elementColor_[globalElementIdx];
     }
@@ -620,13 +620,13 @@ private:
         // always reset the right hand side.
         residual_ = 0.0;
 
-        if (!enablePartialReassemble) {
+        if (!enablePartialReassemble_) {
             // If partial reassembly of the jacobian is not enabled,
             // we can just reset everything!
             (*matrix_) = 0;
 
             // reset the parts needed for Jacobian recycling
-            if (enableJacobianRecycling) {
+            if (enableJacobianRecycling_) {
                 int numVertices = matrix_->N();
                 for (int i=0; i < numVertices; ++ i) {
                     storageJacobian_[i] = 0;
@@ -644,7 +644,7 @@ private:
                           // already below the treshold
 
             // reset the parts needed for Jacobian recycling
-            if (enableJacobianRecycling) {
+            if (enableJacobianRecycling_) {
                 storageJacobian_[rowIdx] = 0;
                 storageTerm_[rowIdx] = 0;
             }
@@ -716,7 +716,7 @@ private:
     // assemble a non-ghost element
     void assembleElement_(const Element &elem)
     {
-        if (enablePartialReassemble) {
+        if (enablePartialReassemble_) {
             int globalElemIdx = model_().elementMapper().map(elem);
             if (elementColor_[globalElemIdx] == Green) {
                 ++greenElems_;
@@ -736,7 +736,7 @@ private:
             }
 
             residual_[globI] += model_().localJacobian().residual(i);
-            if (enableJacobianRecycling) {
+            if (enableJacobianRecycling_) {
                 // save the flux term and the jacobian of the
                 // storage term in case we can reuse the current
                 // linearization...
@@ -824,6 +824,9 @@ private:
 
     Scalar nextReassembleAccuracy_;
     Scalar reassembleAccuracy_;
+
+    bool enableJacobianRecycling_;
+    bool enablePartialReassemble_;
 };
 
 } // namespace Dumux

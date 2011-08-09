@@ -45,14 +45,14 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
 
     Vector bTmp(b);
 
-    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
-    static const int precondIter = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations));
+    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
+    const int precondIter = GET_PARAM(TypeTag, int, PreconditionerIterations);
 
     Preconditioner precond(A, precondIter, relaxation);
 
@@ -70,14 +70,14 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
 
     Vector bTmp(b);
 
-    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
-    static const int precondIter = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations));
+    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
+    const int precondIter = GET_PARAM(TypeTag, int, PreconditionerIterations);
 
     Preconditioner precond(A, precondIter, relaxation);
 
@@ -315,7 +315,7 @@ public:
   {
     typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::RestartedGMResSolver<Vector> Solver;
-    static const double restart = GET_PROP_VALUE(TypeTag, PTAG(GMResRestart));
+    const int restart = GET_PARAM(TypeTag, int, GMResRestart);
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }
@@ -333,13 +333,13 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
 
     Vector bTmp(b);
 
-    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
+    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
 
     Preconditioner precond(A, relaxation);
 
@@ -357,14 +357,14 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-    static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-    static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
 
     Vector bTmp(b);
 
-    static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
-    static const int precondIter = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations));
+    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
+    const int precondIter = GET_PARAM(TypeTag, int, PreconditionerIterations);
 
     Preconditioner precond(A, relaxation);
 
@@ -442,7 +442,7 @@ public:
   {
       typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
       typedef Dune::RestartedGMResSolver<Vector> Solver;
-      static const double restart = GET_PROP_VALUE(TypeTag, PTAG(GMResRestart));
+      const int restart = GET_PARAM(TypeTag, int, GMResRestart);
 
       return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }

@@ -764,7 +764,7 @@ public:
 
         if (!resultWriter_)
             resultWriter_ = new VtkMultiWriter(gridView_, asImp_().name());
-        if (GET_PROP_VALUE(TypeTag,PTAG(AdaptiveGrid)))
+        if (adaptiveGrid)
             resultWriter_->gridChanged();
         resultWriter_->beginWrite(timeManager().time() + timeManager().timeStepSize());
         model().addOutputVtkFields(*resultWriter_);

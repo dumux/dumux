@@ -60,8 +60,6 @@ class RichardsNewtonController : public NewtonController<TypeTag>
         pwIdx = Indices::pwIdx,
     };
 
-    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
-
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
@@ -71,7 +69,9 @@ public:
      */
     RichardsNewtonController(const Problem &problem)
         : ParentType(problem)
-    { };
+    {
+        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
+    }
 
     /*!
      * \brief Update the current solution of the newton method
@@ -93,7 +93,7 @@ public:
 
         // compute the vertex and element colors for partial
         // reassembly
-        if (enablePartialReassemble) {
+        if (enablePartialReassemble_) {
             Scalar reassembleTol = Dumux::geometricMean(this->error_, 0.1*this->tolerance_);
             reassembleTol = std::max(reassembleTol, 0.1*this->tolerance_);
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
@@ -168,7 +168,9 @@ private:
            // try with a smaller update
            lambda /= 2;
        }
-    };
+    }
+
+    bool enablePartialReassemble_;
 };
 }
 

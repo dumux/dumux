@@ -104,9 +104,9 @@ public:
     {
         int verbosity = 0;
         if (problem_.gridView().comm().rank() == 0)
-            verbosity = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-        static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-        static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
+            verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
+        const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
+        const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
 
         if (!overlapMatrix_) {
             // make sure that the overlapping matrix and block vectors
@@ -196,7 +196,7 @@ public:
 
     template <class Matrix>
     PrecNoIterBackend(Matrix& A)
-    : imp_(A, GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation)))
+    : imp_(A, GET_PARAM(TypeTag, double, PreconditionerRelaxation))
     {}
 
     Imp& imp()
@@ -217,8 +217,8 @@ public:
     template <class Matrix>
     PrecIterBackend(Matrix& A)
     : imp_(A,
-           GET_PROP_VALUE(TypeTag, PTAG(PreconditionerIterations)),
-           GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation)))
+           GET_PARAM(TypeTag, int, PreconditionerIterations),
+           GET_PARAM(TypeTag, double, PreconditionerRelaxation))
     {}
 
     Imp& imp()

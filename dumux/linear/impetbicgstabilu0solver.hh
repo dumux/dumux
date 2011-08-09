@@ -114,10 +114,10 @@ public:
                Vector &x,
                const Vector &b)
     {
-        int verbosityLevel = GET_PROP_VALUE(TypeTag, PTAG(LSVerbosity));
-        static const int maxIter = GET_PROP_VALUE(TypeTag, PTAG(LSMaxIterations));
-        static const double residReduction = GET_PROP_VALUE(TypeTag, PTAG(LSResidualReduction));
-        static const double relaxation = GET_PROP_VALUE(TypeTag, PTAG(PreconditionerRelaxation));
+        int verbosityLevel = GET_PARAM(TypeTag, int, LSVerbosity);
+        const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
+        const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
+        const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
 
         if (!overlapMatrix_) {
             // make sure that the overlapping matrix and block vectors

@@ -220,12 +220,9 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
-    enum { enableTimeStepRampUp = GET_PROP_VALUE(TypeTag, PTAG(EnableTimeStepRampUp)) };
-    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)) };
-    enum { enableJacobianRecycling = GET_PROP_VALUE(TypeTag, PTAG(EnableJacobianRecycling)) };
     enum { newtonWriteConvergence = GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence)) };
-
     typedef NewtonConvergenceWriter<TypeTag, newtonWriteConvergence>  ConvergenceWriter;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) LinearSolver;
 
 public:
@@ -237,13 +234,17 @@ public:
         , convergenceWriter_(asImp_())
         , linearSolver_(problem)
     {
+        enableTimeStepRampUp_ = GET_PARAM(TypeTag, bool, EnableTimeStepRampUp);
+        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
+        enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
+
         verbose_ = true;
         numSteps_ = 0;
 
         this->setRelTolerance(1e-8);
         this->rampUpSteps_ = 0;
 
-        if (enableTimeStepRampUp) {
+        if (enableTimeStepRampUp_) {
             this->rampUpSteps_ = 9;
 
             // the ramp-up steps are not counting
@@ -301,7 +302,7 @@ public:
      *        ramp-up.
      */
     Scalar rampUpSteps() const
-    { return enableTimeStepRampUp?rampUpSteps_:0; }
+    { return enableTimeStepRampUp_?rampUpSteps_:0; }
 
     /*!
      * \brief Returns whether the time-step ramp-up is still happening
@@ -354,7 +355,7 @@ public:
         numSteps_ = 0;
 
         dtInitial_ = timeManager_().timeStepSize();
-        if (enableTimeStepRampUp) {
+        if (enableTimeStepRampUp_) {
             rampUpDelta_ =
                 timeManager_().timeStepSize()
                 /
@@ -489,7 +490,7 @@ public:
 
         // compute the vertex and element colors for partial
         // reassembly
-        if (enablePartialReassemble) {
+        if (enablePartialReassemble_) {
             Scalar minReasmTol = 0.1*tolerance_;
             Scalar tmp = Dumux::geometricMean(error_, minReasmTol);
             Scalar reassembleTol = Dumux::geometricMean(error_, tmp);
@@ -557,7 +558,7 @@ public:
      */
     void newtonSucceed()
     {
-        if (enableJacobianRecycling)
+        if (enableJacobianRecycling_)
             model_().jacobianAssembler().setMatrixReuseable(true);
         else
             model_().jacobianAssembler().reassembleAll();
@@ -573,7 +574,7 @@ public:
      */
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
-        if (enableTimeStepRampUp)
+        if (enableTimeStepRampUp_)
             return oldTimeStep;
 
         Scalar n = numSteps_;
@@ -721,6 +722,11 @@ protected:
 
     // the linear solver
     LinearSolver linearSolver_;
+
+private:
+    bool enableTimeStepRampUp_;
+    bool enablePartialReassemble_;
+    bool enableJacobianRecycling_;
 };
 } // namespace Dumux
 
