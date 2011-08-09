@@ -60,7 +60,7 @@ class DecoupledTwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(Typ
     };
 
 public:
-    enum {     numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+    enum {  numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
             numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),};
 
 public:
@@ -78,19 +78,19 @@ public:
      * - comparison with Z1 to determine phase presence => phase mass fractions
      * - round off fluid properties
      * \param Z1 Feed mass fraction: Mass of comp1 per total mass \f$\mathrm{[-]}\f$
-     * \param pw Pressure of the wetting phase \f$\mathrm{[Pa]}\f$
+     * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param poro Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
-    void update(Scalar Z1, Scalar pw, Scalar poro, Scalar temperature)
+    void update(Scalar Z1, Dune::FieldVector<Scalar, numPhases> phasePressure, Scalar poro, Scalar temperature)
     {
         if (pressureType == Indices::pressureGlobal)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported in fluidState!");
         }
         else
-        phasePressure_[wPhaseIdx] = pw;
-        phasePressure_[nPhaseIdx] = pw;        // as long as capillary pressure is neglected
+        phasePressure_[wPhaseIdx] = phasePressure[wPhaseIdx];
+        phasePressure_[nPhaseIdx] = phasePressure[nPhaseIdx];
         temperature_=temperature;
 
 
@@ -129,7 +129,7 @@ public:
             massfrac_[nPhaseIdx][wCompIdx] = Z1; // hence, assign complete mass soluted into nPhase
             massfrac_[wPhaseIdx][wCompIdx] = 1.;
         }
-        else     // (Z1 >= Xw1) => no nPhase
+        else    // (Z1 >= Xw1) => no nPhase
         {
             nu_[nPhaseIdx] = 0; // no second phase
             massfrac_[wPhaseIdx][wCompIdx] = Z1;
@@ -142,9 +142,6 @@ public:
 
         // complete phase mass fractions
         nu_[wPhaseIdx] = 1. - nu_[nPhaseIdx];
-
-//        // let FluidSystem compute partial pressures
-//        FluidSystem::computePartialPressures(temperature_, phasePressure_[nPhaseIdx], *this);
 
         // get densities with correct composition
         density_[wPhaseIdx] = FluidSystem::phaseDensity(wPhaseIdx,
@@ -174,26 +171,26 @@ public:
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - round off fluid properties
      * \param sat Saturation of phase 1 \f$\mathrm{[-]}\f$
-     * \param pw Pressure of the wetting phase \f$\mathrm{[Pa]}\f$
+     * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param poro Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
-    void satFlash(Scalar sat, Scalar pw, Scalar poro, Scalar temperature)
+    void satFlash(Scalar sat, Dune::FieldVector<Scalar, numPhases> phasePressure, Scalar poro, Scalar temperature)
     {
         if (pressureType == Indices::pressureGlobal)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported in fluidState!");
         }
-//        else  if (sat <= 0. || sat >= 1.)
-//            Dune::dinfo << "saturation initial and boundary conditions set to zero or one!"
-//                << " assuming fully saturated compositional conditions" << std::endl;
+        else  if (sat <= 0. || sat >= 1.)
+            Dune::dinfo << "saturation initial and boundary conditions set to zero or one!"
+                << " assuming fully saturated compositional conditions" << std::endl;
 
         // assign values
         Sw_ = sat;
-        phasePressure_[wPhaseIdx] = pw;
-        phasePressure_[nPhaseIdx] = pw;        // as long as capillary pressure is neglected
+        phasePressure_[wPhaseIdx] = phasePressure[wPhaseIdx];
+        phasePressure_[nPhaseIdx] = phasePressure[nPhaseIdx];
         temperature_=temperature;
-        nu_[nPhaseIdx] = nu_[wPhaseIdx] = NAN;    //in contrast to the standard update() method, satflash() does not calculate nu.
+        nu_[nPhaseIdx] = nu_[wPhaseIdx] = NAN;  //in contrast to the standard update() method, satflash() does not calculate nu.
 
 
         //mole equilibrium ratios K for in case wPhase is reference phase
@@ -278,7 +275,7 @@ public:
     Scalar moleFrac(int phaseIdx, int compIdx) const
     {
         // as the moass fractions are calculated, it is used to determine the mole fractions
-        double moleFrac_ = ( massfrac_[phaseIdx][compIdx] / FluidSystem::molarMass(compIdx) );    // = moles of compIdx
+        double moleFrac_ = ( massfrac_[phaseIdx][compIdx] / FluidSystem::molarMass(compIdx) );  // = moles of compIdx
         moleFrac_ /= ( massfrac_[phaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
                        + massfrac_[phaseIdx][nCompIdx] / FluidSystem::molarMass(nCompIdx) );    // /= total moles in phase
         return moleFrac_;
@@ -322,7 +319,6 @@ public:
             return phasePressure_[nPhaseIdx]*moleFrac(nPhaseIdx, wCompIdx);
         else
             DUNE_THROW(Dune::NotImplemented, "component not found in fluidState!");
-        return 0;
     }
 
     /*!

@@ -61,14 +61,12 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-
-//! The type tag for the two-phase problems
+//! The type tag for the compositional two-phase problems
 NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(IMPET));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
 NEW_PROP_TAG ( TwoPTwoCIndices );
 NEW_PROP_TAG( SpatialParameters ); //!< The type of the soil properties object
 NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
@@ -85,10 +83,7 @@ NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); // Two-point f
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-SET_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices)
-{
-  typedef DecoupledTwoPTwoCIndices<TypeTag> type;
-};
+SET_TYPE_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices,DecoupledTwoPTwoCIndices<TypeTag>);
 
 SET_INT_PROP(DecoupledTwoPTwoC, NumEq, 2);
 

@@ -172,6 +172,7 @@ public:
 TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
 ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
 {
+    this->setOutputInterval(10);
     // initialize the tables of the fluid system
 //    FluidSystem::init();
 }

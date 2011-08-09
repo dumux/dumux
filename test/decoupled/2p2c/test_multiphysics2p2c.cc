@@ -101,6 +101,7 @@ int main(int argc, char** argv)
         Dune::FieldVector<double ,dim> L(0);
         Dune::FieldVector<double,dim> H(10);
         Grid grid(N,L,H);
+        grid.loadBalance();
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem

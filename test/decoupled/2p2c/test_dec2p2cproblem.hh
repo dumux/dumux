@@ -79,11 +79,8 @@ SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
     typedef Dumux::FVPressure2P2C<TTAG(TestDecTwoPTwoCProblem)> type;
 };
 
-SET_INT_PROP(TestDecTwoPTwoCProblem, VelocityFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::velocityW);
-
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureW);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureNW);
 
 
 // Select fluid system
@@ -91,6 +88,9 @@ SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
 {
     typedef Dumux::H2O_N2_System<TypeTag> type;
 };
+// Select fluid system
+SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
+
 
 // Select water formulation
 SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, PTAG(DefaultComponents))
