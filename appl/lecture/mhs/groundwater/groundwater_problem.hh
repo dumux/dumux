@@ -33,7 +33,6 @@
 #include <dune/grid/sgrid.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
-//#include <dumux/material/components/unit.hh>
 #include "pseudoh2o.hh"
 
 #include <dumux/decoupled/1p/diffusion/diffusionproblem1p.hh>
@@ -43,6 +42,20 @@
 
 namespace Dumux
 {
+
+struct Source
+{
+	Dune::FieldVector<double,2> globalPos;
+	double q;
+	int index;
+};
+
+struct BoundarySegment
+{
+	double from, to;
+	bool neumann;
+	double value;
+};
 
 template<class TypeTag>
 class GroundwaterProblem;
@@ -121,11 +134,79 @@ class GroundwaterProblem: public DiffusionProblem1P<TypeTag>
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
 public:
-    GroundwaterProblem(const GridView &gridView, Dumux::InterfaceProblemProperties interfaceProbProps) :
-        ParentType(gridView), problemProps_(interfaceProbProps)
+    GroundwaterProblem(const GridView &gridView, Dune::ParameterTree& inputParameters) :
+        ParentType(gridView), inputParameters_(inputParameters)
     {
 //        this->spatialParameters().setDelta(delta_);
+    	this->spatialParameters().setInput(inputParameters);
 
+    	// Write inputParameters into private variables
+        Dune::FieldVector<int,2> resolution = inputParameters.get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
+        GlobalPosition size = inputParameters.get<GlobalPosition>("Geometry.domainSize");
+
+        // Read sources
+    	std::vector<double> sources = inputParameters.get<std::vector<double>>("Source.sources");
+		int NumberOfSources = std::trunc(sources.size()/3);
+
+		for (int sourceCount=0; sourceCount<NumberOfSources ; sourceCount++)
+		{
+			Source tempSource;
+			tempSource.globalPos[0]=sources[sourceCount*3];
+			tempSource.globalPos[1]=sources[sourceCount*3+1];
+			tempSource.q=sources[sourceCount*3+2];
+
+			tempSource.index = std::floor(tempSource.globalPos[0]
+			   * resolution[0]/size[0])
+			   + std::floor(tempSource.globalPos[1]*resolution[1]/size[1])
+			   * resolution[0];
+			sources_.push_back(tempSource);
+		}
+
+		// Read Boundary Conditions
+    	std::vector<double> BC = inputParameters.get<std::vector<double>>("BoundaryConditions.left");
+		int NumberOfSegments = std::trunc(BC.size()/4);
+		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+		{
+			BoundarySegment tempSegment;
+			tempSegment.from = BC[segmentCount*4];
+			tempSegment.to = BC[segmentCount*4+1];
+			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+			tempSegment.value = BC[segmentCount*4+3];
+			boundaryConditions_[2].push_back(tempSegment);
+		}
+    	BC = inputParameters.get<std::vector<double>>("BoundaryConditions.right");
+		NumberOfSegments = std::trunc(BC.size()/4);
+		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+		{
+			BoundarySegment tempSegment;
+			tempSegment.from = BC[segmentCount*4];
+			tempSegment.to = BC[segmentCount*4+1];
+			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+			tempSegment.value = BC[segmentCount*4+3];
+			boundaryConditions_[3].push_back(tempSegment);
+		}
+    	BC = inputParameters.get<std::vector<double>>("BoundaryConditions.bottom");
+		NumberOfSegments = std::trunc(BC.size()/4);
+		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+		{
+			BoundarySegment tempSegment;
+			tempSegment.from = BC[segmentCount*4];
+			tempSegment.to = BC[segmentCount*4+1];
+			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+			tempSegment.value = BC[segmentCount*4+3];
+			boundaryConditions_[1].push_back(tempSegment);
+		}
+    	BC = inputParameters.get<std::vector<double>>("BoundaryConditions.top");
+		NumberOfSegments = std::trunc(BC.size()/4);
+		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+		{
+			BoundarySegment tempSegment;
+			tempSegment.from = BC[segmentCount*4];
+			tempSegment.to = BC[segmentCount*4+1];
+			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+			tempSegment.value = BC[segmentCount*4+3];
+			boundaryConditions_[0].push_back(tempSegment);
+		}
 
     }
 
@@ -170,11 +251,11 @@ public:
     {
         values = 0;
         Scalar density=Fluid::density(0,0);
-        for (int sourceNumber = 0; sourceNumber != problemProps_.sources.size(); sourceNumber++)
+   		Scalar depth = inputParameters_.get<double>("Geometry.depth");
+		for (int sourceCount = 0; sourceCount != sources_.size(); sourceCount++)
         {
-            Source source = problemProps_.sources[sourceNumber];
-            if (this->variables().index(element) == source.index)
-                values += source.q*density/element.geometry().volume()/problemProps_.depth;
+			if (this->variables().index(element) == sources_[sourceCount].index)
+				values+=sources_[sourceCount].q*density/element.geometry().volume()/depth;
         }
     }
 
@@ -186,6 +267,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &bcType,
             const GlobalPosition& globalPos) const
     {
+       	GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -200,33 +282,32 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=1;
         }
-        if (globalPos[0]> problemProps_.size[0] -0.0001)
+        if (globalPos[0]> size[0] -0.0001)
         {
             //Right boundary
             coordinate=globalPos[1];
             boundaryIndex=3;
         }
-        if (globalPos[1]> problemProps_.size[1] -0.0001)
+        if (globalPos[1]> size[1] -0.0001)
         {
             //Top boundary
             coordinate=globalPos[0];
             boundaryIndex=0;
         }
-        for (int segmentCount=0; segmentCount<problemProps_.BCondition[boundaryIndex].segmentCount-1;segmentCount++)
+
+    	for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
         {
-            if (coordinate< problemProps_.BCondition[boundaryIndex].endPoint[segmentCount])
-            {
-                if (problemProps_.BCondition[boundaryIndex].neumann[segmentCount])
+    		if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
+    				(coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
+    		{
+    			if (boundaryConditions_[boundaryIndex][segmentCount].neumann)
                     bcType.setAllNeumann();
                 else
                     bcType.setAllDirichlet();
                 return;
             }
         }
-        if (problemProps_.BCondition[boundaryIndex].neumann[problemProps_.BCondition[boundaryIndex].segmentCount-1])
-            bcType.setAllNeumann();
-        else
-            bcType.setAllDirichlet();
+        bcType.setAllNeumann();
     }
 
 
@@ -234,6 +315,7 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
+      	GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -248,36 +330,35 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=1;
         }
-        if (globalPos[0]> problemProps_.size[0] -0.0001)
+        if (globalPos[0]> size[0] -0.0001)
         {
             //Right boundary
             coordinate=globalPos[1];
             boundaryIndex=3;
         }
-        if (globalPos[1]> problemProps_.size[1] -0.0001)
+        if (globalPos[1]> size[1] -0.0001)
         {
             //Top boundary
             coordinate=globalPos[0];
             boundaryIndex=0;
         }
-        for (int segmentCount=0; segmentCount<problemProps_.BCondition[boundaryIndex].segmentCount-1;segmentCount++)
-        {
-            if (coordinate< problemProps_.BCondition[boundaryIndex].endPoint[segmentCount])
-            {
-                values = problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)*9.81;
+
+    	for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
+    	{
+    		if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
+    				(coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
+    		{
+                values = boundaryConditions_[boundaryIndex][segmentCount].value*Fluid::density(0,0)*9.81;
                 return;
             }
         }
-        values = problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]*Fluid::density(0,0)*9.81;
-
-
-//        return 2e5;
-//        return (exact(globalPos));
+        values = 0;
     }
 
     //! return neumann condition  (flux, [kg/(m^2 s)])
     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
+    	GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");    
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -292,173 +373,188 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=1;
         }
-        if (globalPos[0]> problemProps_.size[0] -0.0001)
+        if (globalPos[0]> size[0] -0.0001)
         {
             //Right boundary
             coordinate=globalPos[1];
             boundaryIndex=3;
         }
-        if (globalPos[1]> problemProps_.size[1] -0.0001)
+        if (globalPos[1]> size[1] -0.0001)
         {
             //Top boundary
             coordinate=globalPos[0];
             boundaryIndex=0;
         }
-        for (int segmentCount=0; segmentCount<problemProps_.BCondition[boundaryIndex].segmentCount-1;segmentCount++)
-        {
-            if (coordinate< problemProps_.BCondition[boundaryIndex].endPoint[segmentCount])
-            {
-                values = problemProps_.BCondition[boundaryIndex].value[segmentCount]*Fluid::density(0,0)
-                    *(-1);
+        
+    	for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
+    	{
+    		if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
+    				(coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
+    		{
+                values = boundaryConditions_[boundaryIndex][segmentCount].value*Fluid::density(0,0)*(-1);
                 return;
             }
         }
-        values = problemProps_.BCondition[boundaryIndex].value[problemProps_.BCondition[boundaryIndex].segmentCount-1]
-                   *Fluid::density(0,0)*(-1);
-
-
-//        if (globalPos[1]>0.999 && globalPos[0]>0.5)
-//            return 1;
-//        return 0.0;
+        values = 0;
     }
 
     void writeOutput()
     { //Achtung: Quick und dirty:
-        //        ViPWriter vipWriter(*this, problemProps_.resolution[0], problemProps_.resolution[1]);
-        switch(problemProps_.plotMode)
-        {
-        case 0: //grid-plot (colors only)
-        {
-            std::ofstream dataFile;
-            dataFile.open("output.vgf");
-            dataFile << "Gridplot" << std::endl;
-            dataFile << "## This is an DuMuX output for the NumLab Grafics driver. \n";
-            dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
-            // the following specifies necessary information for the numLab grafical ouptut
-            dataFile << "# x-range 0 "<< problemProps_.size[0] << "\n" ;
-            dataFile << "# y-range 0 "<< problemProps_.size[1] << "\n" ;
-            dataFile << "# x-count " << problemProps_.resolution[0] << "\n" ;
-            dataFile << "# y-count " << problemProps_.resolution[1] << "\n" ;
-            dataFile << "# min-color 255 0 0\n";
-            dataFile << "# max-color 0 0 255\n";
+//    	switch(problemProps_.plotMode)
+//    	{
+//    	case 0: //grid-plot (colors only)
+//		{
+        Dune::FieldVector<int,2> resolution = inputParameters_.get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
+        GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");
+	
+	Scalar zmax, zmin;
+	zmax=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
+	zmin=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
 
-            dataFile << "# time 0 \n" ;
+	for (int i=0; i< resolution[0]*resolution[1]; i++)
+	{
+		Scalar currentHead= this->variables().pressure()[i]/(Fluid::density(0,0)*9.81);
+		zmax = std::max(currentHead,zmax);
+		zmin = std::min(currentHead,zmin);			
+	}
 
-            dataFile << "# label piezometric head \n";
+	std::ofstream dataFile;
+	dataFile.open("dumux-out.vgfc");
+	dataFile << "Gridplot" << std::endl;
+	dataFile << "## This is an DuMuX output for the NumLab Grafics driver. \n";
+	dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
+	// the following specifies necessary information for the numLab grafical ouptut
+	dataFile << "# x-range 0 "<< size[0] << "\n" ;
+	dataFile << "# y-range 0 "<< size[1] << "\n" ;
+	dataFile << "# x-count " << resolution[0] << "\n" ;
+	dataFile << "# y-count " << resolution[1] << "\n" ;
+	if ((zmax-zmin)/zmax>0.01)
+		dataFile << "# scale 1 1 "<< sqrt(size[0]*size[1])/(zmax-zmin) << "\n";
+	else
+		dataFile << "# scale 1 1 1\n";
+
+	dataFile << "# min-color 255 0 0\n";
+	dataFile << "# max-color 0 0 255\n";
+	dataFile << "# time 0 \n" ;
+	dataFile << "# label piezometric head \n";
 
 
-//            for (int i=problemProps_.resolution[1]-1; i>=0; i--)
-            for (int i=0; i< problemProps_.resolution[1]; i++)
-            {
-                for (int j=problemProps_.resolution[0]-1; j>=0; j--)
-                {
-                    int currentIdx = i*problemProps_.resolution[0]+j;
-                    dataFile << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81);
-                    if(j != 0) // all but last entry
-                            dataFile << " ";
-                    else // write the last entry
-                        dataFile << "\n";
-                }
-            }
-            dataFile.close();
-        }
-        break;
-        case 1: //Piecewise constant with 3d-plotter
-        {
-            std::ofstream dataFile;
-            dataFile.open("output.dat");
+//			for (int i=problemProps_.resolution[1]-1; i>=0; i--)
+	for (int i=0; i< resolution[1]; i++)
+	{
+		for (int j=0; j<resolution[0]; j++)
+		{
+			int currentIdx = i*resolution[0]+j;
+			dataFile << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81);
+			if(j != resolution[0]-1) // all but last entry
+				dataFile << " ";
+			else // write the last entry
+				dataFile << "\n";
+		}
+	}
+	dataFile.close();
+//		}
+//		break;
+//		case 1: //Piecewise constant with 3d-plotter
+//		{
+//    		std::ofstream dataFile;
+//    		dataFile.open("output.dat");
+//
+//    	    ElementIterator eItEnd = this->gridView().template end<0> ();
+//    	    for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+//    	    {
+//    	    	//Aktuell gibts noch probleme mit der Skalierung.
+//    	    	int cellIndex = this->variables().index(*eIt);
+//    	        dataFile << eIt->geometry().corner(0)[0] << " "
+//    	                 << -1*eIt->geometry().corner(0)[1] << " "
+//    	                 << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
+//    	        		 << eIt->geometry().corner(1)[0] << " "
+//    	                 << -1*eIt->geometry().corner(1)[1] << " "
+//    	                 << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
+//    	        		 << eIt->geometry().corner(2)[0] << " "
+//    	                 << -1*eIt->geometry().corner(2)[1] << " "
+//    	                 << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<<std::endl;
+//
+//    	        dataFile << eIt->geometry().corner(3)[0] << " "
+//    	                 << -1*eIt->geometry().corner(3)[1] << " "
+//    	                 << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
+//    	        		 << eIt->geometry().corner(1)[0] << " "
+//    	                 << -1*eIt->geometry().corner(1)[1] << " "
+//    	                 << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
+//    	        		 << eIt->geometry().corner(2)[0] << " "
+//    	                 << -1*eIt->geometry().corner(2)[1] << " "
+//    	                 << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<<std::endl;
+//    	    }
+//		}
+//		break;
+//		case 2: //Interpolate between cell centers
+//		{
+//    		std::ofstream dataFile;
+//    		dataFile.open("interpolate.dat");
+//
+//			for (int i=0; i< resolution[1]-1; i++)
+//			{
+//				for (int j=0; j< resolution[0]-1; j++)
+//				{
+//					int currentIdx = i*resolution[0]+j;
+//					double dx=size[0]/resolution[0];
+//					double dy=size[1]/resolution[1];
+//
+//	    	        dataFile << dx*(j+0.5) << " "
+//	    	                 << -dy*(i+0.5) << " "
+//	    	                 << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81)<< " "
+//	    	        		 << dx*(j+1.5) << " "
+//	    	                 << -dy*(i+0.5) << " "
+//	    	                 << this->variables().pressure()[currentIdx+1]/(Fluid::density(0,0)*9.81)<< " "
+//	    	        		 << dx*(j+1.5) << " "
+//	    	                 << -dy*(i+1.5) << " "
+//	    	                 << this->variables().pressure()[currentIdx+1+resolution[0]]/(Fluid::density(0,0)*9.81)<<std::endl;
+//
+//	    	        dataFile << dx*(j+0.5) << " "
+//	    	                 << -dy*(i+0.5) << " "
+//	    	                 << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81)<< " "
+//	    	        		 << dx*(j+0.5) << " "
+//	    	                 << -dy*(i+1.5) << " "
+//	    	                 << this->variables().pressure()[currentIdx+resolution[0]]/(Fluid::density(0,0)*9.81)<< " "
+//	    	        		 << dx*(j+1.5) << " "
+//	    	                 << -dy*(i+1.5) << " "
+//	    	                 << this->variables().pressure()[currentIdx+1+resolution[0]]/(Fluid::density(0,0)*9.81)<<std::endl;
+//				}
+//			}
+//			dataFile.close();
+//		}
+//		break;
+//		default:
+//		{
+	    	//Textoutput:
+	std::cout << "         x          y          h           v_x           v_y"<<std::endl;
+	std::cout << "------------------------------------------------------------"<<std::endl;
 
-            ElementIterator eItEnd = this->gridView().template end<0> ();
-            for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-            {
-                //Aktuell gibts noch probleme mit der Skalierung.
-                int cellIndex = this->variables().index(*eIt);
-                dataFile << eIt->geometry().corner(0)[0] << " "
-                         << -1*eIt->geometry().corner(0)[1] << " "
-                         << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
-                         << eIt->geometry().corner(1)[0] << " "
-                         << -1*eIt->geometry().corner(1)[1] << " "
-                         << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
-                         << eIt->geometry().corner(2)[0] << " "
-                         << -1*eIt->geometry().corner(2)[1] << " "
-                         << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<<std::endl;
+    	ElementIterator eItEnd = this->gridView().template end<0> ();
+	for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+	{
+		int cellIndex = this->variables().index(*eIt);
+	    	double v_x,v_y,piezo,x,y;
+	    	v_x= (this->variables().velocity()[cellIndex][0][0]+this->variables().velocity()[cellIndex][1][0])/2;
+	    	v_y= (this->variables().velocity()[cellIndex][2][1]+this->variables().velocity()[cellIndex][3][1])/2;
 
-                dataFile << eIt->geometry().corner(3)[0] << " "
-                         << -1*eIt->geometry().corner(3)[1] << " "
-                         << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
-                         << eIt->geometry().corner(1)[0] << " "
-                         << -1*eIt->geometry().corner(1)[1] << " "
-                         << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<< " "
-                         << eIt->geometry().corner(2)[0] << " "
-                         << -1*eIt->geometry().corner(2)[1] << " "
-                         << this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81)<<std::endl;
-            }
-        }
-        break;
-        case 2: //Interpolate between cell centers
-        {
-            std::ofstream dataFile;
-            dataFile.open("interpolate.dat");
+	    	if (std::abs(v_x)<1e-17)
+	    		v_x=0;
+	    	if (std::abs(v_y)<1e-17)
+	    		v_y=0;
+	    	piezo=this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81);
+	    	x = eIt->geometry().center()[0];
+	    	y = eIt->geometry().center()[1];
 
-            for (int i=0; i< problemProps_.resolution[1]-1; i++)
-            {
-                for (int j=0; j< problemProps_.resolution[0]-1; j++)
-                {
-                    int currentIdx = i*problemProps_.resolution[0]+j;
-                    double dx=problemProps_.size[0]/problemProps_.resolution[0];
-                    double dy=problemProps_.size[1]/problemProps_.resolution[1];
-
-                    dataFile << dx*(j+0.5) << " "
-                             << -dy*(i+0.5) << " "
-                             << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81)<< " "
-                             << dx*(j+1.5) << " "
-                             << -dy*(i+0.5) << " "
-                             << this->variables().pressure()[currentIdx+1]/(Fluid::density(0,0)*9.81)<< " "
-                             << dx*(j+1.5) << " "
-                             << -dy*(i+1.5) << " "
-                             << this->variables().pressure()[currentIdx+1+problemProps_.resolution[0]]/(Fluid::density(0,0)*9.81)<<std::endl;
-
-                    dataFile << dx*(j+0.5) << " "
-                             << -dy*(i+0.5) << " "
-                             << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81)<< " "
-                             << dx*(j+0.5) << " "
-                             << -dy*(i+1.5) << " "
-                             << this->variables().pressure()[currentIdx+problemProps_.resolution[0]]/(Fluid::density(0,0)*9.81)<< " "
-                             << dx*(j+1.5) << " "
-                             << -dy*(i+1.5) << " "
-                             << this->variables().pressure()[currentIdx+1+problemProps_.resolution[0]]/(Fluid::density(0,0)*9.81)<<std::endl;
-                }
-            }
-            dataFile.close();
-        }
-        break;
-        default:
-        {
-            //Textoutput:
-            std::cout << "x, y, piezometric head, v_x, v_y"<<std::endl;
-            ElementIterator eItEnd = this->gridView().template end<0> ();
-            for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-            {
-                int cellIndex = this->variables().index(*eIt);
-                double v_x,v_y,piezo;
-                v_x= (this->variables().velocity()[cellIndex][0][0]+this->variables().velocity()[cellIndex][1][0])/2;
-                v_y= (this->variables().velocity()[cellIndex][2][1]+this->variables().velocity()[cellIndex][3][1])/2;
-
-                if (std::abs(v_x)<1e-17)
-                    v_x=0;
-                if (std::abs(v_y)<1e-17)
-                    v_y=0;
-                piezo=this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81);
-
-                std::cout << std::setw(10)<< eIt->geometry().center()[0]<<" "
-                        << std::setw(10)<< eIt->geometry().center()[1]<<" "
-                        << std::setw(10) <<std::setprecision(6) << piezo<<" "
-                        << std::setw(11)<< std::setprecision(6) << v_x<<" "
-                        << std::setw(11)<< std::setprecision(6) << v_y <<std::endl;
-            }
-            break;
-        }
-        }
+	    	printf("%10.4g %10.4g %10.4g %13.4g %13.4g\n",x,y,piezo,v_x,v_y);
+//		        std::cout << std::setw(10)<< eIt->geometry().center()[0]<<" "
+//		        		<< std::setw(10)<< eIt->geometry().center()[1]<<" "
+//		        		<< std::setw(10) <<std::setprecision(6) << piezo<<" "
+//		        		<< std::setw(11)<< std::setprecision(6) << v_x<<" "
+//		        		<< std::setw(11)<< std::setprecision(6) << v_y <<std::endl;
+	}
+//		}
+//    	}
     }
 
 private:
@@ -479,7 +575,9 @@ private:
         return grad;
         }
 
-    Dumux::InterfaceProblemProperties problemProps_;
+    std::vector<Source> sources_;
+    Dune::ParameterTree inputParameters_;
+    std::vector<BoundarySegment> boundaryConditions_[4];
 };
 } //end namespace
 

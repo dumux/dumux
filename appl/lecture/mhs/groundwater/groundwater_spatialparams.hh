@@ -30,6 +30,15 @@
 namespace Dumux
 {
 
+struct Lens
+{
+	Dune::FieldMatrix<double,2,2> permeability;
+	//double permeability;
+	Dune::FieldVector<double,2> lowerLeft;
+	Dune::FieldVector<double,2> upperRight;
+};
+
+
 /*!
  * \ingroup IMPETtests
  * \brief spatial parameters for the test problem for diffusion models.
@@ -59,8 +68,8 @@ public:
         {
             for (int lensnumber = 0; lensnumber != lenses_.size(); lensnumber++)
             {
-                if ((lenses_[lensnumber].lowerLeft[0] < globalPos[0])
-                  && (lenses_[lensnumber].lowerLeft[1] < globalPos[1])
+                if ((lenses_[lensnumber].lowerLeft[0] <= globalPos[0])
+                  && (lenses_[lensnumber].lowerLeft[1] <= globalPos[1])
                   && (lenses_[lensnumber].upperRight[0] > globalPos[0])
                   && (lenses_[lensnumber].upperRight[1] > globalPos[1]))
                 {
@@ -82,19 +91,46 @@ public:
     GroundwaterSpatialParams(const GridView& gridView)
     : FVSpatialParametersOneP<TypeTag>(gridView), permeability_(0)
     {
-        Dumux::InterfaceSoilProperties interfaceSoilProps("interface_groundwater.xml");
-        porosity_ = interfaceSoilProps.porosity;
-        permeability_[0][0] = interfaceSoilProps.permeability;
-        permeability_[0][1] = 0;
-        permeability_[1][0] = 0;
-        permeability_[1][1] = interfaceSoilProps.permeability;
+    	delta_=1e-3;
+		porosity_ = 0.2;
+    }
 
-        lenses_ = interfaceSoilProps.lenses;
+    void setInput(Dune::ParameterTree& inputParameters)
+    {
+//    	Scalar permFactor = inputParameters.get<double>("Fluid.viscosity")
+//    			/(inputParameters.get<double>("Fluid.density")*9.81);
+    	Scalar permFactor = 0.001/(1000*9.81);
+
+    	permeability_[0][0] = inputParameters.get<double>("SpatialParameters.permeability")*permFactor;
+		permeability_[1][1] = permeability_[0][0];
+		permeability_[0][1] = 0;
+		permeability_[1][0] = 0;
+
+		//Lenses:
+
+		std::vector<double> lenses = inputParameters.get<std::vector<double>>("SpatialParameters.lenses");
+		int NumberOfLenses = std::trunc(lenses.size()/5);
+
+		for (int lensCount=0; lensCount<NumberOfLenses ; lensCount++)
+		{
+			Lens tempLens;
+			tempLens.lowerLeft[0]=lenses[lensCount*5];
+			tempLens.upperRight[0]=lenses[lensCount*5+1];
+			tempLens.lowerLeft[1]=lenses[lensCount*5+2];
+			tempLens.upperRight[1]=lenses[lensCount*5+3];
+			tempLens.permeability[0][0]=lenses[lensCount*5+4]*permFactor;
+			tempLens.permeability[1][1] = tempLens.permeability[0][0];
+			tempLens.permeability[0][1] = 0;
+			tempLens.permeability[1][0] = 0;
+			lenses_.push_back(tempLens);
+		}
+
     }
 
 private:
     mutable FieldMatrix permeability_;
     Scalar porosity_;
+    double delta_;
     std::vector <Lens> lenses_;
 };
 

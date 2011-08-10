@@ -28,12 +28,12 @@
 #include "config.h"
 #include <iostream>
 #include <boost/format.hpp>
+#include <dune/common/parametertreeparser.hh>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/gridinfo.hh>
 
-#include "external_interface.hh"
 #include "groundwater_problem.hh"
 
 ////////////////////////
@@ -41,7 +41,7 @@
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s #refine [delta]\n")%progname;
+    std::cout << boost::format("usage: %s #inputFileName\n")%progname;
     exit(1);
 }
 
@@ -60,39 +60,57 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // parse the command line arguments
         ////////////////////////////////////////////////////////////
-//        if (argc != 2 && argc != 3)
-//            usage(argv[0]);
-//
-//        int numRefine;
-//        std::istringstream(argv[1]) >> numRefine;
+        if (argc != 2)
+            usage(argv[0]);
 
-
+        std::string inputFileName;
+        inputFileName = argv[1];
 
         ////////////////////////////////////////////////////////////
         // Read Input file
         ////////////////////////////////////////////////////////////
 
-        Dumux::InterfaceProblemProperties interfaceProbProps("interface_groundwater.xml");
-        Dumux::InterfaceFluidProperties interfaceFluidProps("interface_groundwater.xml");
+        Dune::ParameterTree inputParameters;
+        Dune::ParameterTreeParser::readINITree(inputFileName, inputParameters);
+
+        Dune::FieldVector<int,2> N = inputParameters.get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
+        GlobalPosition H = inputParameters.get<GlobalPosition>("Geometry.domainSize");
+
+        if (N[0]*N[1]>10000)
+        {
+        	std::cout << "Number of cells exceeds limit. Choose less than 10000 cells!\n";
+        	exit(2);
+        }
+
+        if (N[0]<2 || N[1]<2)
+        {
+			std::cout << "Number of cells too low. Choose at least 2 cell in each direction!\n";
+			exit(2);
+
+        }
 
         ////////////////////////////////////////////////////////////
         // create the grid
         ////////////////////////////////////////////////////////////
         GlobalPosition L(0.0);
-        Grid grid(interfaceProbProps.resolution,L,interfaceProbProps.size);
+        Grid grid(N,L,H);
 
         ////////////////////////////////////////////////////////////
         // adjust fluid properties
         ////////////////////////////////////////////////////////////
         typedef GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
-        Fluid::Component::setViscosity(interfaceFluidProps.viscosity);
-        Fluid::Component::setDensity(interfaceFluidProps.density);
+		Fluid::Component::setViscosity(0.001);
+		Fluid::Component::setDensity(1000);
+
+//      Fluid::Component::setViscosity(inputParameters.get<double>("Fluid.viscosity"));
+//		Fluid::Component::setDensity(inputParameters.get<double>("Fluid.density"));
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
+
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-        Problem problem(grid.leafView(), interfaceProbProps);
+        Problem problem(grid.leafView(), inputParameters);
         problem.init();
         problem.writeOutput();
 
