@@ -58,7 +58,7 @@ class GroundwaterSpatialParams: public FVSpatialParametersOneP<TypeTag>
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
-
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
 
@@ -95,20 +95,20 @@ public:
 		porosity_ = 0.2;
     }
 
-    void setInput(Dune::ParameterTree& inputParameters)
+    void setParameters()
     {
-//    	Scalar permFactor = inputParameters.get<double>("Fluid.viscosity")
-//    			/(inputParameters.get<double>("Fluid.density")*9.81);
+//    	Scalar permFactor = Params::tree().get<double>("Fluid.viscosity")
+//    			/(Params::tree().get<double>("Fluid.density")*9.81);
     	Scalar permFactor = 0.001/(1000*9.81);
 
-    	permeability_[0][0] = inputParameters.get<double>("SpatialParameters.permeability")*permFactor;
+    	permeability_[0][0] = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
 		permeability_[1][1] = permeability_[0][0];
 		permeability_[0][1] = 0;
 		permeability_[1][0] = 0;
 
 		//Lenses:
 
-		std::vector<double> lenses = inputParameters.get<std::vector<double>>("SpatialParameters.lenses");
+		std::vector<double> lenses = Params::tree().template get<std::vector<double>>("SpatialParameters.lenses");
 		int NumberOfLenses = std::trunc(lenses.size()/5);
 
 		for (int lensCount=0; lensCount<NumberOfLenses ; lensCount++)

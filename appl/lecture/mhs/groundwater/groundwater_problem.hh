@@ -132,20 +132,21 @@ class GroundwaterProblem: public DiffusionProblem1P<TypeTag>
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
-    GroundwaterProblem(const GridView &gridView, Dune::ParameterTree& inputParameters) :
-        ParentType(gridView), inputParameters_(inputParameters)
+    GroundwaterProblem(const GridView &gridView) :
+        ParentType(gridView)
     {
 //        this->spatialParameters().setDelta(delta_);
-    	this->spatialParameters().setInput(inputParameters);
+    	this->spatialParameters().setParameters();
 
-    	// Write inputParameters into private variables
-        Dune::FieldVector<int,2> resolution = inputParameters.get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
-        GlobalPosition size = inputParameters.get<GlobalPosition>("Geometry.domainSize");
+    	// Write input parameters into private variables
+        Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
+        GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
 
         // Read sources
-    	std::vector<double> sources = inputParameters.get<std::vector<double>>("Source.sources");
+    	std::vector<double> sources = Params::tree().template get<std::vector<double> >("Source.sources");
 		int NumberOfSources = std::trunc(sources.size()/3);
 
 		for (int sourceCount=0; sourceCount<NumberOfSources ; sourceCount++)
@@ -163,7 +164,7 @@ public:
 		}
 
 		// Read Boundary Conditions
-    	std::vector<double> BC = inputParameters.get<std::vector<double>>("BoundaryConditions.left");
+    	std::vector<double> BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.left");
 		int NumberOfSegments = std::trunc(BC.size()/4);
 		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
 		{
@@ -174,7 +175,7 @@ public:
 			tempSegment.value = BC[segmentCount*4+3];
 			boundaryConditions_[2].push_back(tempSegment);
 		}
-    	BC = inputParameters.get<std::vector<double>>("BoundaryConditions.right");
+    	BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.right");
 		NumberOfSegments = std::trunc(BC.size()/4);
 		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
 		{
@@ -185,7 +186,7 @@ public:
 			tempSegment.value = BC[segmentCount*4+3];
 			boundaryConditions_[3].push_back(tempSegment);
 		}
-    	BC = inputParameters.get<std::vector<double>>("BoundaryConditions.bottom");
+    	BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.bottom");
 		NumberOfSegments = std::trunc(BC.size()/4);
 		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
 		{
@@ -196,7 +197,7 @@ public:
 			tempSegment.value = BC[segmentCount*4+3];
 			boundaryConditions_[1].push_back(tempSegment);
 		}
-    	BC = inputParameters.get<std::vector<double>>("BoundaryConditions.top");
+    	BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.top");
 		NumberOfSegments = std::trunc(BC.size()/4);
 		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
 		{
@@ -251,7 +252,7 @@ public:
     {
         values = 0;
         Scalar density=Fluid::density(0,0);
-   		Scalar depth = inputParameters_.get<double>("Geometry.depth");
+   		Scalar depth = Params::tree().template get<double>("Geometry.depth");
 		for (int sourceCount = 0; sourceCount != sources_.size(); sourceCount++)
         {
 			if (this->variables().index(element) == sources_[sourceCount].index)
@@ -267,7 +268,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &bcType,
             const GlobalPosition& globalPos) const
     {
-       	GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");
+       	GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -315,7 +316,7 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
-      	GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");
+      	GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -358,7 +359,7 @@ public:
     //! return neumann condition  (flux, [kg/(m^2 s)])
     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-    	GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");    
+    	GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -404,8 +405,8 @@ public:
 //    	{
 //    	case 0: //grid-plot (colors only)
 //		{
-        Dune::FieldVector<int,2> resolution = inputParameters_.get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
-        GlobalPosition size = inputParameters_.get<GlobalPosition>("Geometry.domainSize");
+        Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
+        GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
 	
 	Scalar zmax, zmin;
 	zmax=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
@@ -576,7 +577,6 @@ private:
         }
 
     std::vector<Source> sources_;
-    Dune::ParameterTree inputParameters_;
     std::vector<BoundarySegment> boundaryConditions_[4];
 };
 } //end namespace

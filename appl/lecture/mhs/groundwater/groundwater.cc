@@ -53,6 +53,7 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         static const int dim = Grid::dimension;
         typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+        typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -70,11 +71,10 @@ int main(int argc, char** argv)
         // Read Input file
         ////////////////////////////////////////////////////////////
 
-        Dune::ParameterTree inputParameters;
-        Dune::ParameterTreeParser::readINITree(inputFileName, inputParameters);
+        Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
 
-        Dune::FieldVector<int,2> N = inputParameters.get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
-        GlobalPosition H = inputParameters.get<GlobalPosition>("Geometry.domainSize");
+        Dune::FieldVector<int,2> N = Params::tree().get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
+        GlobalPosition H = Params::tree().get<GlobalPosition>("Geometry.domainSize");
 
         if (N[0]*N[1]>10000)
         {
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
 
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-        Problem problem(grid.leafView(), inputParameters);
+        Problem problem(grid.leafView());
         problem.init();
         problem.writeOutput();
 
