@@ -143,7 +143,8 @@ public:
 
     	// Write input parameters into private variables
         Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
-        GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
+        domainSize_ = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
+        geometryDepth_ = Params::tree().template get<double>("Geometry.depth");
 
         // Read sources
     	std::vector<double> sources = Params::tree().template get<std::vector<double> >("Source.sources");
@@ -157,8 +158,8 @@ public:
 			tempSource.q=sources[sourceCount*3+2];
 
 			tempSource.index = std::floor(tempSource.globalPos[0]
-			   * resolution[0]/size[0])
-			   + std::floor(tempSource.globalPos[1]*resolution[1]/size[1])
+			   * resolution[0]/domainSize_[0])
+			   + std::floor(tempSource.globalPos[1]*resolution[1]/domainSize_[1])
 			   * resolution[0];
 			sources_.push_back(tempSource);
 		}
@@ -252,11 +253,10 @@ public:
     {
         values = 0;
         Scalar density=Fluid::density(0,0);
-   		Scalar depth = Params::tree().template get<double>("Geometry.depth");
 		for (int sourceCount = 0; sourceCount != sources_.size(); sourceCount++)
         {
 			if (this->variables().index(element) == sources_[sourceCount].index)
-				values+=sources_[sourceCount].q*density/element.geometry().volume()/depth;
+				values+=sources_[sourceCount].q*density/element.geometry().volume()/geometryDepth_;
         }
     }
 
@@ -268,7 +268,6 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &bcType,
             const GlobalPosition& globalPos) const
     {
-       	GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -283,13 +282,13 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=1;
         }
-        if (globalPos[0]> size[0] -0.0001)
+        if (globalPos[0]> domainSize_[0] -0.0001)
         {
             //Right boundary
             coordinate=globalPos[1];
             boundaryIndex=3;
         }
-        if (globalPos[1]> size[1] -0.0001)
+        if (globalPos[1]> domainSize_[1] -0.0001)
         {
             //Top boundary
             coordinate=globalPos[0];
@@ -316,7 +315,6 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
-      	GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -331,13 +329,13 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=1;
         }
-        if (globalPos[0]> size[0] -0.0001)
+        if (globalPos[0]> domainSize_[0] -0.0001)
         {
             //Right boundary
             coordinate=globalPos[1];
             boundaryIndex=3;
         }
-        if (globalPos[1]> size[1] -0.0001)
+        if (globalPos[1]> domainSize_[1] -0.0001)
         {
             //Top boundary
             coordinate=globalPos[0];
@@ -359,7 +357,6 @@ public:
     //! return neumann condition  (flux, [kg/(m^2 s)])
     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-    	GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         double coordinate=0;
         int boundaryIndex=0;
         if (globalPos[0]<0.0001)
@@ -374,13 +371,13 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=1;
         }
-        if (globalPos[0]> size[0] -0.0001)
+        if (globalPos[0]> domainSize_[0] -0.0001)
         {
             //Right boundary
             coordinate=globalPos[1];
             boundaryIndex=3;
         }
-        if (globalPos[1]> size[1] -0.0001)
+        if (globalPos[1]> domainSize_[1] -0.0001)
         {
             //Top boundary
             coordinate=globalPos[0];
@@ -406,7 +403,6 @@ public:
 //    	case 0: //grid-plot (colors only)
 //		{
         Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
-        GlobalPosition size = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
 	
 	Scalar zmax, zmin;
 	zmax=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
@@ -425,12 +421,12 @@ public:
 	dataFile << "## This is an DuMuX output for the NumLab Grafics driver. \n";
 	dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
 	// the following specifies necessary information for the numLab grafical ouptut
-	dataFile << "# x-range 0 "<< size[0] << "\n" ;
-	dataFile << "# y-range 0 "<< size[1] << "\n" ;
+	dataFile << "# x-range 0 "<< domainSize_[0] << "\n" ;
+	dataFile << "# y-range 0 "<< domainSize_[1] << "\n" ;
 	dataFile << "# x-count " << resolution[0] << "\n" ;
 	dataFile << "# y-count " << resolution[1] << "\n" ;
 	if ((zmax-zmin)/zmax>0.01)
-		dataFile << "# scale 1 1 "<< sqrt(size[0]*size[1])/(zmax-zmin) << "\n";
+		dataFile << "# scale 1 1 "<< sqrt(domainSize_[0]*domainSize_[1])/(zmax-zmin) << "\n";
 	else
 		dataFile << "# scale 1 1 1\n";
 
@@ -498,8 +494,8 @@ public:
 //				for (int j=0; j< resolution[0]-1; j++)
 //				{
 //					int currentIdx = i*resolution[0]+j;
-//					double dx=size[0]/resolution[0];
-//					double dy=size[1]/resolution[1];
+//					double dx=domainSize_[0]/resolution[0];
+//					double dy=domainSize_[1]/resolution[1];
 //
 //	    	        dataFile << dx*(j+0.5) << " "
 //	    	                 << -dy*(i+0.5) << " "
@@ -578,6 +574,8 @@ private:
 
     std::vector<Source> sources_;
     std::vector<BoundarySegment> boundaryConditions_[4];
+    GlobalPosition domainSize_;
+    double geometryDepth_;
 };
 } //end namespace
 
