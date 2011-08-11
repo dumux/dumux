@@ -93,21 +93,15 @@ public:
     {
     	delta_=1e-3;
 		porosity_ = 0.2;
-    }
 
-    void setParameters()
-    {
-//    	Scalar permFactor = Params::tree().get<double>("Fluid.viscosity")
-//    			/(Params::tree().get<double>("Fluid.density")*9.81);
-    	Scalar permFactor = 0.001/(1000*9.81);
+		Scalar permFactor = 0.001/(1000*9.81);
 
-    	permeability_[0][0] = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
+		permeability_[0][0] = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
 		permeability_[1][1] = permeability_[0][0];
 		permeability_[0][1] = 0;
 		permeability_[1][0] = 0;
 
 		//Lenses:
-
 		std::vector<double> lenses = Params::tree().template get<std::vector<double>>("SpatialParameters.lenses");
 		int NumberOfLenses = std::trunc(lenses.size()/5);
 
@@ -124,7 +118,6 @@ public:
 			tempLens.permeability[1][0] = 0;
 			lenses_.push_back(tempLens);
 		}
-
     }
 
 private:
