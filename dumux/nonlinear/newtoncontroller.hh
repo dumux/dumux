@@ -84,6 +84,22 @@ NEW_PROP_TAG(EnablePartialReassemble);
  */
 NEW_PROP_TAG(NewtonUseLineSearch);
 
+//! the value below which convergence is declared
+NEW_PROP_TAG(NewtonRelTolerance);
+
+/*!
+ * \brief The number of iterations at which the Newton method
+ *        should aim at.
+ *
+ * This is used to control the time step size. The heuristic used
+ * is to scale the last time step size by the deviation of the
+ * number of iterations used from the target steps.
+ */
+NEW_PROP_TAG(NewtonTargetSteps);
+
+//! Number of maximum iterations for the Newton method.
+NEW_PROP_TAG(NewtonMaxSteps);
+
 SET_PROP_DEFAULT(NewtonWriteConvergence)
 {public:
     static const bool value = false;
@@ -93,7 +109,23 @@ SET_PROP_DEFAULT(NewtonUseLineSearch)
 {public:
     static const bool value = false;
 };
+
+SET_PROP_DEFAULT(NewtonRelTolerance)
+{public:
+  static const double value = 1e-8;
 };
+
+SET_PROP_DEFAULT(NewtonTargetSteps)
+{public:
+    static const int value = 10;
+};
+
+SET_PROP_DEFAULT(NewtonMaxSteps)
+{public:
+    static const int value = 18;
+};
+
+}
 
 //! \cond INTERNAL
 /*!
@@ -238,23 +270,17 @@ public:
         enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
 
+        tolerance_ = GET_PARAM(TypeTag, Scalar, NewtonRelTolerance);
+        targetSteps_ = GET_PARAM(TypeTag, int, NewtonTargetSteps);
+        maxSteps_ = GET_PARAM(TypeTag, int, NewtonMaxSteps);
+
         verbose_ = true;
         numSteps_ = 0;
 
-        this->setRelTolerance(1e-8);
-        this->rampUpSteps_ = 0;
-
-        if (enableTimeStepRampUp_) {
+        if (enableTimeStepRampUp_)
             this->rampUpSteps_ = 9;
-
-            // the ramp-up steps are not counting
-            this->setTargetSteps(10);
-            this->setMaxSteps(12);
-        }
-        else {
-            this->setTargetSteps(10);
-            this->setMaxSteps(18);
-        }
+        else
+            this->rampUpSteps_ = 0;
     };
 
     /*!
