@@ -46,9 +46,6 @@ NEW_PROP_TAG(LinearSolver);
  * convergence rate of every iteration of the scheme.
  */
 NEW_PROP_TAG(LSVerbosity);
-//! the outdated name
-NEW_PROP_TAG(NewtonLinearSolverVerbosity);
-
 
 //! target reduction of the initial residual
 NEW_PROP_TAG(LSResidualReduction);
@@ -74,14 +71,9 @@ NEW_PROP_TAG(GMResRestart);
  */
 NEW_PROP_TAG(LSBlockSize);
 
-//! do not print anything by default
-SET_PROP_DEFAULT(NewtonLinearSolverVerbosity)
-{public:
-    static constexpr int value = 0;
-};
 SET_PROP_DEFAULT(LSVerbosity)
 {public:
-    static constexpr int value = GET_PROP_VALUE(TypeTag, PTAG(NewtonLinearSolverVerbosity));
+    static constexpr int value = 0;
 };
 
 //! set the preconditioner relaxation parameter to 1.0 by default
