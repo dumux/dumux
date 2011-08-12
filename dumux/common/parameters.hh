@@ -29,6 +29,8 @@
 
 #include <dune/common/parametertree.hh>
 
+#include <sstream>
+
 #include "propertysystem.hh"
 
 #define GET_PARAM(TypeTag, ParamType, ParamName)                         \
@@ -52,8 +54,27 @@ class Param
 public:
     static const ParamType &get(const char *name)
     {
-        static ParamType defaultValue = GET_PROP_VALUE(TypeTag, PropTag);
+        static const ParamType &value = retrieve_(name);
+        return value;
+    }
+
+private:
+    static const ParamType &retrieve_(const char *name)
+    {   
+        ParamType defaultValue = GET_PROP_VALUE(TypeTag, PropTag);
         static ParamType value = Params::tree().template get<ParamType>(name, defaultValue);
+
+        Dune::ParameterTree &rt = Params::tree().sub("RunTimeParams");
+        Dune::ParameterTree &ct = Params::tree().sub("DefaultParams");
+        if (Params::tree().hasKey(name)) {
+            rt[name] = Params::tree()[name];
+        }
+        else {
+            std::string s;
+            std::ostringstream oss(s);
+            oss << defaultValue;
+            ct[name] = oss.str();
+        }
         return value;
     }
 };
