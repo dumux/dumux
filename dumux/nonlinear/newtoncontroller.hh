@@ -85,8 +85,20 @@ NEW_PROP_TAG(EnablePartialReassemble);
  */
 NEW_PROP_TAG(NewtonUseLineSearch);
 
-//! the value below which convergence is declared
+//! indicate whether the relative error should be used
+NEW_PROP_TAG(NewtonEnableRelativeCriterion);
+
+//! the value for the relative error below which convergence is declared
 NEW_PROP_TAG(NewtonRelTolerance);
+
+//! indicate whether the absolute error should be used
+NEW_PROP_TAG(NewtonEnableAbsoluteCriterion);
+
+//! the value for the absolute error reduction below which convergence is declared
+NEW_PROP_TAG(NewtonAbsTolerance);
+
+//! indicate whether both of the criterions should be satisfied to declare convergence
+NEW_PROP_TAG(NewtonSatisfyAbsAndRel);
 
 /*!
  * \brief The number of iterations at which the Newton method
@@ -101,12 +113,18 @@ NEW_PROP_TAG(NewtonTargetSteps);
 //! Number of maximum iterations for the Newton method.
 NEW_PROP_TAG(NewtonMaxSteps);
 
+// set default values
 SET_TYPE_PROP(NewtonMethod, NewtonController, Dumux::NewtonController<TypeTag>);
 SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
 SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
+SET_BOOL_PROP(NewtonMethod, NewtonEnableRelativeCriterion, true);
+SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteCriterion, false);
+SET_BOOL_PROP(NewtonMethod, NewtonSatisfyAbsAndRel, false);
 SET_SCALAR_PROP(NewtonMethod, NewtonRelTolerance, 1e-8);
+SET_SCALAR_PROP(NewtonMethod, NewtonAbsTolerance, 1e-5);
 SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
 SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
+
 }
 
 /*!
@@ -150,7 +168,18 @@ public:
         enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
 
+        useLineSearch_ = GET_PARAM(TypeTag, bool, NewtonUseLineSearch);
+        enableRelativeCriterion_ = GET_PARAM(TypeTag, bool, NewtonEnableRelativeCriterion);
+        enableAbsoluteCriterion_ = GET_PARAM(TypeTag, bool, NewtonEnableAbsoluteCriterion);
+        satisfyAbsAndRel_ = GET_PARAM(TypeTag, bool, NewtonSatisfyAbsAndRel);
+        if (!enableRelativeCriterion_ && !enableAbsoluteCriterion_)
+        {
+            DUNE_THROW(Dune::NotImplemented, "at least one of NewtonEnableRelativeCriterion or "
+                    << "NewtonEnableAbsoluteCriterion has to be set to true");
+        }
+
         setRelTolerance(GET_PARAM(TypeTag, Scalar, NewtonRelTolerance));
+        setAbsTolerance(GET_PARAM(TypeTag, Scalar, NewtonAbsTolerance));
         setTargetSteps(GET_PARAM(TypeTag, int, NewtonTargetSteps));
         setMaxSteps(GET_PARAM(TypeTag, int, NewtonMaxSteps));
         
@@ -175,6 +204,15 @@ public:
      */
     void setRelTolerance(Scalar tolerance)
     { tolerance_ = tolerance; }
+
+    /*!
+     * \brief Set the maximum acceptable residual norm reduction.
+     *
+     * \param tolerance The maximum reduction of the residual norm
+     *                  at which the scheme is considered finished
+     */
+    void setAbsTolerance(Scalar tolerance)
+    { absoluteTolerance_ = tolerance; }
 
     /*!
      * \brief Set the number of iterations at which the Newton method
@@ -215,7 +253,10 @@ public:
             // relative error was reduced by a factor of at least 4,
             // we proceed even if we are above the maximum number of
             // steps
-            return error_*4.0 < lastError_;
+            if (enableRelativeCriterion_)
+                return error_*4.0 < lastError_;
+            else
+                return absoluteError_*4.0 < lastAbsoluteError_;
         }
 
         return true;
@@ -227,7 +268,26 @@ public:
      */
     bool newtonConverged() const
     {
-        return error_ <= tolerance_;
+        if (enableRelativeCriterion_ && !enableAbsoluteCriterion_)
+        {
+            return error_ <= tolerance_;
+        }
+        else if (!enableRelativeCriterion_ && enableAbsoluteCriterion_)
+        {
+            return absoluteError_ <= absoluteTolerance_;
+        }
+        else if (satisfyAbsAndRel_)
+        {
+            return error_ <= tolerance_
+                    && absoluteError_ <= absoluteTolerance_;
+        }
+        else
+        {
+            return error_ <= tolerance_
+                    || absoluteError_ <= absoluteTolerance_;
+        }
+
+        return false;
     }
 
     /*!
@@ -250,7 +310,10 @@ public:
      * \brief Indidicates the beginning of a newton iteration.
      */
     void newtonBeginStep()
-    { lastError_ = error_; }
+    {
+        lastError_ = error_;
+        lastAbsoluteError_ = absoluteError_;
+    }
 
     /*!
      * \brief Returns the number of steps done since newtonBegin() was
@@ -306,6 +369,15 @@ public:
                            const SolutionVector &b)
     {
         try {
+            if (numSteps_ == 0)
+            {
+                Scalar norm2 = b.two_norm2();
+                norm2 = gridView_().comm().sum(norm2);
+
+                initialAbsoluteError_ = std::sqrt(norm2);
+                lastAbsoluteError_ = initialAbsoluteError_;
+            }
+
             int converged = linearSolver_.solve(A, x, b);
 
             // make sure all processes converged
@@ -362,21 +434,36 @@ public:
     {
         writeConvergence_(uLastIter, deltaU);
 
-        newtonUpdateRelError(uLastIter, deltaU);
+        if (enableRelativeCriterion_ || enablePartialReassemble_)
+            newtonUpdateRelError(uLastIter, deltaU);
 
-        // compute the vertex and element colors for partial
-        // reassembly
+        // compute the vertex and element colors for partial reassembly
         if (enablePartialReassemble_) {
-            Scalar minReasmTol = 0.1*tolerance_;
-            Scalar tmp = Dumux::geometricMean(error_, minReasmTol);
-            Scalar reassembleTol = Dumux::geometricMean(error_, tmp);
+            Scalar minReasmTol, tmp, reassembleTol;
+            minReasmTol = 0.1*tolerance_;
+            tmp = Dumux::geometricMean(error_, minReasmTol);
+            reassembleTol = Dumux::geometricMean(error_, tmp);
             reassembleTol = std::max(reassembleTol, minReasmTol);
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
 
-        uCurrentIter = uLastIter;
-        uCurrentIter -= deltaU;
+        if (useLineSearch_)
+        {
+            lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
+        }
+        else {
+            uCurrentIter = uLastIter;
+            uCurrentIter -= deltaU;
+
+            if (enableAbsoluteCriterion_)
+            {
+                SolutionVector tmp(uLastIter);
+                absoluteError_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                absoluteError_ /= initialAbsoluteError_;
+            }
+        }
+
     }
 
     /*!
@@ -390,10 +477,16 @@ public:
     {
         ++numSteps_;
 
-        Scalar realError = error_;
         if (verbose())
-            std::cout << "\rNewton iteration " << numSteps_ << " done: "
-                      << "error=" << realError << endIterMsg().str() << "\n";
+        {
+            std::cout << "\rNewton iteration " << numSteps_ << " done";
+            if (enableRelativeCriterion_)
+                std::cout << ", relative error = " << error_;
+            if (enableAbsoluteCriterion_)
+                std::cout << ", absolute error = " << absoluteError_;
+            std::cout << endIterMsg().str() << "\n";
+        }
+
         endIterMsgStream_.str("");
     }
 
@@ -553,6 +646,32 @@ protected:
         }
     };
 
+    void lineSearchUpdate_(SolutionVector &uCurrentIter,
+                           const SolutionVector &uLastIter,
+                           const SolutionVector &deltaU)
+    {
+       Scalar lambda = 1.0;
+       SolutionVector tmp(uLastIter);
+
+       while (true) {
+           uCurrentIter = deltaU;
+           uCurrentIter *= -lambda;
+           uCurrentIter += uLastIter;
+
+           // calculate the residual of the current solution
+           absoluteError_ = this->method().model().globalResidual(tmp, uCurrentIter);
+           absoluteError_ /= initialAbsoluteError_;
+
+           if (absoluteError_ < lastAbsoluteError_ || lambda <= 0.125) {
+               this->endIterMsg() << ", defect " << lastAbsoluteError_ << "->"  << absoluteError_ << "@lambda=" << lambda;
+               return;
+           }
+
+           // try with a smaller update
+           lambda /= 2.0;
+       }
+    }
+
     std::ostringstream endIterMsgStream_;
 
     NewtonMethod *method_;
@@ -560,11 +679,18 @@ protected:
 
     ConvergenceWriter convergenceWriter_;
 
+    // relative errors and tolerance
     Scalar error_;
     Scalar lastError_;
     Scalar tolerance_;
 
-    // optimal number of iterations we want to achive
+    // absolute errors and tolerance
+    Scalar absoluteError_;
+    Scalar lastAbsoluteError_;
+    Scalar initialAbsoluteError_;
+    Scalar absoluteTolerance_;
+
+    // optimal number of iterations we want to achieve
     int targetSteps_;
     // maximum number of iterations we do before giving up
     int maxSteps_;
@@ -577,6 +703,10 @@ protected:
 private:
     bool enablePartialReassemble_;
     bool enableJacobianRecycling_;
+    bool useLineSearch_;
+    bool enableRelativeCriterion_;
+    bool enableAbsoluteCriterion_;
+    bool satisfyAbsAndRel_;
 };
 } // namespace Dumux
 

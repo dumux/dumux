@@ -39,12 +39,11 @@ namespace Dumux {
 template <class TypeTag>
 class RichardsNewtonController : public NewtonController<TypeTag>
 {
-    typedef RichardsNewtonController<TypeTag> ThisType;
     typedef NewtonController<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -54,14 +53,9 @@ class RichardsNewtonController : public NewtonController<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         dim = GridView::dimension,
-
         pwIdx = Indices::pwIdx,
     };
-
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
 public:
     /*!
@@ -69,9 +63,7 @@ public:
      */
     RichardsNewtonController(const Problem &problem)
         : ParentType(problem)
-    {
-        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
-    }
+    {}
 
     /*!
      * \brief Update the current solution of the newton method
@@ -88,25 +80,10 @@ public:
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        this->writeConvergence_(uLastIter, deltaU);
-        this->newtonUpdateRelError(uLastIter, deltaU);
+        ParentType::newtonUpdate(uCurrentIter, uLastIter, deltaU);
 
-        // compute the vertex and element colors for partial
-        // reassembly
-        if (enablePartialReassemble_) {
-            Scalar reassembleTol = Dumux::geometricMean(this->error_, 0.1*this->tolerance_);
-            reassembleTol = std::max(reassembleTol, 0.1*this->tolerance_);
-            this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
-            this->model_().jacobianAssembler().computeColors(reassembleTol);
-        }
-
-        if (GET_PROP_VALUE(TypeTag, PTAG(NewtonUseLineSearch)))
-            lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
-        else {
-            // update the solution vector
-            uCurrentIter = uLastIter;
-            uCurrentIter -= deltaU;
-
+        if (!GET_PARAM(TypeTag, bool, NewtonUseLineSearch))
+        {
             // clamp saturation change to at most 20% per iteration
             FVElementGeometry fvElemGeom;
             const GridView &gv = this->problem_().gridView();
@@ -141,36 +118,6 @@ public:
             }
         }
     }
-
-private:
-    void lineSearchUpdate_(SolutionVector &uCurrentIter,
-                           const SolutionVector &uLastIter,
-                           const SolutionVector &deltaU)
-    {
-       Scalar lambda = 1.0;
-       Scalar globDef;
-       SolutionVector tmp(uLastIter);
-       Scalar oldGlobDef = this->model_().globalResidual(tmp, uLastIter);
-
-       while (true) {
-           uCurrentIter = deltaU;
-           uCurrentIter *= -lambda;
-           uCurrentIter += uLastIter;
-
-           // calculate the residual of the current solution
-           globDef = this->model_().globalResidual(tmp, uCurrentIter);
-
-           if (globDef < oldGlobDef || lambda <= 1.0/64) {
-               this->endIterMsg() << ", defect " << oldGlobDef << "->"  << globDef << "@lambda=" << lambda;
-               return;
-           }
-
-           // try with a smaller update
-           lambda /= 2;
-       }
-    }
-
-    bool enablePartialReassemble_;
 };
 }
 

@@ -33,6 +33,7 @@
 #include <dumux/nonlinear/newtoncontroller.hh>
 
 namespace Dumux {
+
 /*!
  * \ingroup TwoPTwoCModel
  * \brief A 2p2c specific controller for the newton solver.
@@ -45,33 +46,13 @@ template <class TypeTag>
 class TwoPTwoCNewtonController : public NewtonController<TypeTag>
 {
     typedef NewtonController<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) Implementation;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-
-    enum {
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx
-    };
 
 public:
     TwoPTwoCNewtonController(const Problem &problem)
         : ParentType(problem)
-    {
-        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
-
-        this->setRelTolerance(1e-7);
-        this->setTargetSteps(9);
-        this->setMaxSteps(18);
-    };
-
+    {}
 
     /*!
      * \brief
@@ -91,48 +72,6 @@ public:
     }
 
     /*!
-     * \brief Update the current solution function with a delta vector.
-     *
-     * The error estimates required for the newtonConverged() and
-     * newtonProceed() methods should be updated here.
-     *
-     * Different update strategies, such as line search and chopped
-     * updates can be implemented. The default behaviour is just to
-     * subtract deltaU from uLastIter.
-     *
-     * \param uCurrentIter The solution after the current Newton iteration
-     * \param uLastIter The solution after the last Newton iteration
-     * \param deltaU The delta as calculated from solving the linear
-     *               system of equations. This parameter also stores
-     *               the updated solution.
-     */
-    void newtonUpdate(SolutionVector &uCurrentIter,
-                      const SolutionVector &uLastIter,
-                      const SolutionVector &deltaU)
-    {
-        this->writeConvergence_(uLastIter, deltaU);
-
-        this->newtonUpdateRelError(uLastIter, deltaU);
-
-        // compute the vertex and element colors for partial
-        // reassembly
-        if (enablePartialReassemble_) {
-            Scalar reassembleTol = Dumux::geometricMean(this->error_, 0.1*this->tolerance_);
-            reassembleTol = std::max(reassembleTol, 0.1*this->tolerance_);
-            this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
-            this->model_().jacobianAssembler().computeColors(reassembleTol);
-        }
-
-        if (GET_PROP_VALUE(TypeTag, PTAG(NewtonUseLineSearch)))
-            lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
-        else {
-            uCurrentIter = uLastIter;
-            uCurrentIter -= deltaU;
-        }
-    }
-
-
-    /*!
      * \brief
      * Returns true if the current solution can be considered to
      * be accurate enough
@@ -144,39 +83,6 @@ public:
 
         return ParentType::newtonConverged();
     }
-
-private:
-    void lineSearchUpdate_(SolutionVector &uCurrentIter,
-                           const SolutionVector &uLastIter,
-                           const SolutionVector &deltaU)
-    {
-       Scalar lambda = 1.0;
-       Scalar globDef;
-
-       // calculate the residual of the current solution
-       SolutionVector tmp(uLastIter);
-       Scalar oldGlobDef = this->method().model().globalResidual(tmp, uLastIter);
-
-       while (true) {
-           uCurrentIter = deltaU;
-           uCurrentIter *= -lambda;
-           uCurrentIter += uLastIter;
-
-           // calculate the residual of the current solution
-           globDef = this->method().model().globalResidual(tmp, uCurrentIter);
-
-           if (globDef < oldGlobDef || lambda <= 1.0/8) {
-               this->endIterMsg() << ", defect " << oldGlobDef << "->"  << globDef << "@lambda=" << lambda;
-               return;
-           }
-
-           // try with a smaller update
-           lambda /= 2;
-       }
-    }
-
-    bool enablePartialReassemble_;
-
 };
 }
 

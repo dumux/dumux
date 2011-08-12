@@ -267,13 +267,6 @@ public:
                                    Dune::ForwardCommunication);
         }
 
-        /*
-        Scalar result = 0;
-        for (int i = 0; i < (*tmp).size(); ++i) {
-            for (int j = 0; j < numEq; ++j)
-                result += std::abs((*tmp)[i][j]);
-        }
-        */
         return std::sqrt(result2);
     }
 
