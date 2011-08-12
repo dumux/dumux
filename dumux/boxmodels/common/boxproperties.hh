@@ -25,6 +25,7 @@
 
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
 
 /*!
  * \file
@@ -46,7 +47,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the box-scheme
-NEW_TYPE_TAG(BoxModel, INHERITS_FROM(ImplicitModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(BoxModel, INHERITS_FROM(NewtonMethod, LinearSolverTypeTag, ImplicitModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

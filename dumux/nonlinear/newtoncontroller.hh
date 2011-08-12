@@ -37,8 +37,13 @@
 
 #include <dumux/linear/boxlinearsolver.hh>
 
+#include "newtonconvergencewriter.hh"
+
 namespace Dumux
 {
+template <class TypeTag>
+class NewtonController;
+
 namespace Properties
 {
 //! Specifies the implementation of the Newton controller
@@ -96,132 +101,13 @@ NEW_PROP_TAG(NewtonTargetSteps);
 //! Number of maximum iterations for the Newton method.
 NEW_PROP_TAG(NewtonMaxSteps);
 
-SET_PROP_DEFAULT(NewtonWriteConvergence)
-{public:
-    static const bool value = false;
-};
-
-SET_PROP_DEFAULT(NewtonUseLineSearch)
-{public:
-    static const bool value = false;
-};
-
-SET_PROP_DEFAULT(NewtonRelTolerance)
-{public:
-  static const double value = 1e-8;
-};
-
-SET_PROP_DEFAULT(NewtonTargetSteps)
-{public:
-    static const int value = 10;
-};
-
-SET_PROP_DEFAULT(NewtonMaxSteps)
-{public:
-    static const int value = 18;
-};
-
+SET_TYPE_PROP(NewtonMethod, NewtonController, Dumux::NewtonController<TypeTag>);
+SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
+SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
+SET_SCALAR_PROP(NewtonMethod, NewtonRelTolerance, 1e-8);
+SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
+SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
 }
-
-//! \cond INTERNAL
-/*!
- * \brief Writes the intermediate solutions during
- *        the Newton scheme
- */
-template <class TypeTag, bool enable>
-struct NewtonConvergenceWriter
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
-
-    typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
-
-    NewtonConvergenceWriter(NewtonController &ctl)
-        : ctl_(ctl)
-    {
-        timeStepIndex_ = 0;
-        iteration_ = 0;
-        vtkMultiWriter_ = 0;
-    }
-
-    ~NewtonConvergenceWriter()
-    { delete vtkMultiWriter_; };
-
-    void beginTimestep()
-    {
-        ++timeStepIndex_;
-        iteration_ = 0;
-    };
-
-    void beginIteration(const GridView &gv)
-    {
-        ++ iteration_;
-        if (!vtkMultiWriter_)
-            vtkMultiWriter_ = new VtkMultiWriter(gv, "convergence");
-        vtkMultiWriter_->beginWrite(timeStepIndex_ + iteration_ / 100.0);
-    };
-
-    void writeFields(const SolutionVector &uLastIter,
-                     const SolutionVector &deltaU)
-    {
-        ctl_.method().model().addConvergenceVtkFields(*vtkMultiWriter_, uLastIter, deltaU);
-    };
-
-    void endIteration()
-    { vtkMultiWriter_->endWrite(); };
-
-    void endTimestep()
-    {
-        ++timeStepIndex_;
-        iteration_ = 0;
-    };
-
-private:
-    int timeStepIndex_;
-    int iteration_;
-    VtkMultiWriter *vtkMultiWriter_;
-    NewtonController &ctl_;
-};
-
-/*!
- * \brief Writes the intermediate solutions during
- *        the Newton scheme.
- *
- * This is the dummy specialization for the case where we don't want
- * to do anything.
- */
-template <class TypeTag>
-struct NewtonConvergenceWriter<TypeTag, false>
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-
-    typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
-
-    NewtonConvergenceWriter(NewtonController &ctl)
-    {};
-
-    void beginTimestep()
-    { };
-
-    void beginIteration(const GridView &gv)
-    { };
-
-    void writeFields(const SolutionVector &uLastIter,
-                     const SolutionVector &deltaU)
-    { };
-
-    void endIteration()
-    { };
-
-    void endTimestep()
-    { };
-};
-//! \endcond
 
 /*!
  * \brief A reference implementation of a newton controller specific
@@ -248,8 +134,7 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
-    enum { newtonWriteConvergence = GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence)) };
-    typedef NewtonConvergenceWriter<TypeTag, newtonWriteConvergence>  ConvergenceWriter;
+    typedef NewtonConvergenceWriter<TypeTag> ConvergenceWriter;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) LinearSolver;
 
@@ -265,16 +150,12 @@ public:
         enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
 
-        tolerance_ = GET_PARAM(TypeTag, Scalar, NewtonRelTolerance);
-        targetSteps_ = GET_PARAM(TypeTag, int, NewtonTargetSteps);
-        maxSteps_ = GET_PARAM(TypeTag, int, NewtonMaxSteps);
-
+        setRelTolerance(GET_PARAM(TypeTag, Scalar, NewtonRelTolerance));
+        setTargetSteps(GET_PARAM(TypeTag, int, NewtonTargetSteps));
+        setMaxSteps(GET_PARAM(TypeTag, int, NewtonMaxSteps));
+        
         verbose_ = true;
         numSteps_ = 0;
-
-        this->setRelTolerance(1e-8);
-        this->setTargetSteps(10);
-        this->setMaxSteps(18);
     };
 
     /*!
@@ -361,7 +242,8 @@ public:
         method_ = &method;
         numSteps_ = 0;
 
-        convergenceWriter_.beginTimestep();
+        if (GET_PARAM(TypeTag, bool, NewtonWriteConvergence))
+            convergenceWriter_.beginTimestep();
     }
 
     /*!
@@ -521,7 +403,8 @@ public:
      */
     void newtonEnd()
     {
-        convergenceWriter_.endTimestep();
+        if (GET_PARAM(TypeTag, bool, NewtonWriteConvergence))
+            convergenceWriter_.endTimestep();
     }
 
     /*!
@@ -663,11 +546,12 @@ protected:
     void writeConvergence_(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
-        convergenceWriter_.beginIteration(this->gridView_());
-        convergenceWriter_.writeFields(uLastIter, deltaU);
-        convergenceWriter_.endIteration();
+        if (GET_PARAM(TypeTag, bool, NewtonWriteConvergence)) {
+            convergenceWriter_.beginIteration(this->gridView_());
+            convergenceWriter_.writeFields(uLastIter, deltaU);
+            convergenceWriter_.endIteration();
+        }
     };
-
 
     std::ostringstream endIterMsgStream_;
 

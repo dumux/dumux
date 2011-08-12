@@ -40,6 +40,9 @@ namespace Dumux
 // forward declaration of property tags
 namespace Properties
 {
+// create a new type tag for models which apply the newton method
+NEW_TYPE_TAG(NewtonMethod);
+
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(Model);
