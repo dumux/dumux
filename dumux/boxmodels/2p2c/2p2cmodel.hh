@@ -17,13 +17,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
  *
  * \brief Adaption of the BOX scheme to the two-phase two-component flow model.
  */
-
 #ifndef DUMUX_2P2C_MODEL_HH
 #define DUMUX_2P2C_MODEL_HH
 
@@ -181,7 +179,7 @@ public:
                 = staticVertexDat_[globalIdx].phasePresence;
         }
 
-        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, bool, MobilityUpwindAlpha);
+        massUpwindWeight_ = GET_PARAM(TypeTag, bool, MassUpwindWeight);
     }
 
     /*!
@@ -414,7 +412,7 @@ public:
                     const VolumeVariables &up = elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
                     const VolumeVariables &down = elemVolVars[fluxDat.downstreamIdx(phaseIdx)];
                     Scalar scvfArea = fluxDat.face().normal.two_norm(); //get surface area to weight velocity at the IP with the surface area
-                    velocity[phaseIdx] *= (mobilityUpwindAlpha_*up.mobility(phaseIdx) + (1-mobilityUpwindAlpha_)*down.mobility(phaseIdx))* scvfArea;
+                    velocity[phaseIdx] *= (massUpwindWeight_*up.mobility(phaseIdx) + (1-massUpwindWeight_)*down.mobility(phaseIdx))* scvfArea;
 
                     int vertIIdx = this->problem_().vertexMapper().map(*elemIt,
                                                                        fluxDat.face().i,
@@ -743,7 +741,7 @@ protected:
     // parameters given in constructor
     std::vector<StaticVars> staticVertexDat_;
     bool switchFlag_;
-    Scalar mobilityUpwindAlpha_;
+    Scalar massUpwindWeight_;
 };
 
 }

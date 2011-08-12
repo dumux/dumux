@@ -68,8 +68,8 @@ SET_TYPE_PROP(BoxTwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
 //! the FluxVariables property
 SET_TYPE_PROP(BoxTwoP, FluxVariables, TwoPFluxVariables<TypeTag>);
 
-//! the upwind factor for the mobility.
-SET_SCALAR_PROP(BoxTwoP, MobilityUpwindAlpha, 1.0);
+//! the upwind weight for the mass conservation equations.
+SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
 SET_PROP(BoxTwoP, TwoPIndices)

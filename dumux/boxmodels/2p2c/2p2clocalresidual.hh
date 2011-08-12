@@ -125,10 +125,10 @@ public:
      */
     TwoPTwoCLocalResidual()
     {
-        // retrieve the upwind weight for the mobility. Use the value
+        // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindAlpha);
+        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
     };
 
     /*!
@@ -249,16 +249,16 @@ public:
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
                 // add advective flux of current component in current
                 // phase
-                if (mobilityUpwindAlpha_ > 0.0)
+                if (massUpwindWeight_ > 0.0)
                     // upstream vertex
                     flux[eqIdx] += vars.KmvpNormal(phaseIdx)
-                            * mobilityUpwindAlpha_ * (up.density(phaseIdx)
+                            * massUpwindWeight_ * (up.density(phaseIdx)
                             * up.mobility(phaseIdx) * up.fluidState().massFrac(
                             phaseIdx, compIdx));
-                if (mobilityUpwindAlpha_ < 1.0)
+                if (massUpwindWeight_ < 1.0)
                     // downstream vertex
                     flux[eqIdx] += vars.KmvpNormal(phaseIdx) * (1
-                            - mobilityUpwindAlpha_) * (dn.density(phaseIdx)
+                            - massUpwindWeight_) * (dn.density(phaseIdx)
                             * dn.mobility(phaseIdx) * dn.fluidState().massFrac(
                             phaseIdx, compIdx));
 
@@ -276,14 +276,14 @@ public:
             if (replaceCompEqIdx < numComponents)
             {
                 // upstream vertex
-                if (mobilityUpwindAlpha_ > 0.0)
+                if (massUpwindWeight_ > 0.0)
                     flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx)
-                            * mobilityUpwindAlpha_ *
+                            * massUpwindWeight_ *
                             (up.density(phaseIdx) * up.mobility(phaseIdx));
                 // downstream vertex
-                if (mobilityUpwindAlpha_ < 1.0)
+                if (massUpwindWeight_ < 1.0)
                     flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx) * (1
-                            - mobilityUpwindAlpha_) * (dn.density(phaseIdx)
+                            - massUpwindWeight_) * (dn.density(phaseIdx)
                             * dn.mobility(phaseIdx));
                 Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
@@ -407,7 +407,7 @@ protected:
     }
 
 private:
-    Scalar mobilityUpwindAlpha_;
+    Scalar massUpwindWeight_;
 };
 
 } // end namepace

@@ -112,7 +112,7 @@ public:
     OnePTwoCBoxModel():
         scale_(GET_PROP_VALUE(TypeTag, PTAG(Scaling)))
     {
-        // retrieve the upwind weight for the mobility. Use the value
+        // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
         upwindAlpha_ = GET_PARAM(TypeTag, Scalar, UpwindAlpha);

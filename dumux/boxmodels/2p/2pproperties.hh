@@ -56,7 +56,7 @@ NEW_TYPE_TAG(BoxTwoP, INHERITS_FROM(BoxModel));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
+NEW_PROP_TAG(MassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
 NEW_PROP_TAG(TwoPIndices); //!< Enumerations for the 2p models
 NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object

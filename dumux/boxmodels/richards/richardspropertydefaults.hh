@@ -71,9 +71,9 @@ SET_TYPE_PROP(BoxRichards, FluxVariables, RichardsFluxVariables<TypeTag>);
 //! The class of the newton controller
 SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
 
-//! The weight of the upwind vertex when looking at the mobility
+//! The upwind weight for the mass conservation equations
 SET_SCALAR_PROP(BoxRichards,
-                MobilityUpwindAlpha,
+                MassUpwindWeight,
                 1.0);
 
 //! The class with all index definitions for the model

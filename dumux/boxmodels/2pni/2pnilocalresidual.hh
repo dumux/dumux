@@ -86,10 +86,10 @@ public:
      */
     TwoPNILocalResidual()
     {
-        // retrieve the upwind weight for the mobility. Use the value
+        // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        mobilityUpwindAlpha_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindAlpha);
+        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
     };
 
     /*!
@@ -164,12 +164,12 @@ public:
             flux[energyEqIdx] +=
                 normalFlux
                 *
-                ((    mobilityUpwindAlpha_)*
+                ((    massUpwindWeight_)*
                  up.density(phaseIdx)*
                  up.mobility(phaseIdx)*
                  up.enthalpy(phaseIdx)
                  +
-                 (1 - mobilityUpwindAlpha_)*
+                 (1 - massUpwindWeight_)*
                  dn.density(phaseIdx)*
                  dn.mobility(phaseIdx)*
                  dn.enthalpy(phaseIdx));
@@ -195,7 +195,7 @@ public:
     }
 
 private:
-    Scalar mobilityUpwindAlpha_;
+    Scalar massUpwindWeight_;
 
 };
 
