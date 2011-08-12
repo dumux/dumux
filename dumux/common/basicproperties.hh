@@ -67,6 +67,9 @@ NEW_PROP_TAG(Scalar);
 //! Property which provides a Dune::ParameterTree.
 NEW_PROP_TAG(ParameterTree);
 
+//! Property which defines the group that is queried for parameters by default
+NEW_PROP_TAG(ModelParameterGroup);
+
 ///////////////////////////////////
 // Default values for properties:
 //
@@ -112,6 +115,10 @@ template<class TypeTag>
 bool Property<TypeTag,
               TTAG(NumericModel), 
               PTAG(ParameterTree)>::initFinished_ = false;
+
+// use the global group as default for the model's parameter group 
+SET_PROP(NumericModel, ModelParameterGroup) 
+{ static const char *value() { return ""; }; };
 
 } // namespace Properties
 } // namespace Dumux
