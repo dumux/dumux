@@ -115,7 +115,7 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        upwindAlpha_ = GET_PARAM(TypeTag, Scalar, UpwindAlpha);
+        upwindWeight_ = GET_PARAM(TypeTag, Scalar, UpwindWeight);
     }
 
     /*!
@@ -259,8 +259,8 @@ public:
                   velocity = fluxVars.face().normal;
                   velocity *= tmp;
                   velocity /= scvfArea;
-                  velocity *= (upwindAlpha_ / up.viscosity() +
-                             (1 - upwindAlpha_)/ dn.viscosity());
+                  velocity *= (upwindWeight_ / up.viscosity() +
+                             (1 - upwindWeight_)/ dn.viscosity());
 
                   // add surface area for weighting purposes
                   boxSurface[vertIIdx][0] += scvfArea;
@@ -278,8 +278,8 @@ public:
                   velocity = fluxVars.face().normal;
                   velocity *= tmp;
                   velocity /= scvfArea;
-                  velocity *= (upwindAlpha_ / up.viscosity() +
-                           (1 - upwindAlpha_)/ dn.viscosity());
+                  velocity *= (upwindWeight_ / up.viscosity() +
+                           (1 - upwindWeight_)/ dn.viscosity());
 
                   // add surface area for weighting purposes
                   boxSurface[vertIIdx][1] += scvfArea;
@@ -334,7 +334,7 @@ public:
     }
 
 private:
-    Scalar upwindAlpha_;
+    Scalar upwindWeight_;
 };
 }
 

@@ -57,7 +57,7 @@ NEW_PROP_TAG(NumComponents);   //!< Number of fluid components in the system
 NEW_PROP_TAG(OnePTwoCIndices); //!< Enumerations for the 1p2c models
 NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
-NEW_PROP_TAG(UpwindAlpha);   //!< The default value of the upwind parameter
+NEW_PROP_TAG(UpwindWeight);   //!< The default value of the upwind weight
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(Scaling); //!Defines Scaling of the model

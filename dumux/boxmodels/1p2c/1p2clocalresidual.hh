@@ -111,7 +111,7 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        upwindAlpha_ = GET_PARAM(TypeTag, Scalar, UpwindAlpha);
+        upwindWeight_ = GET_PARAM(TypeTag, Scalar, UpwindWeight);
     };
 
     /*!
@@ -201,16 +201,16 @@ public:
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
             flux[contiEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((     upwindAlpha_)*up.density()/up.viscosity()
+               ((     upwindWeight_)*up.density()/up.viscosity()
                 +
-                ((1 - upwindAlpha_)*dn.density()/dn.viscosity()));
+                ((1 - upwindWeight_)*dn.density()/dn.viscosity()));
 
             // advective flux of the second component - massfraction
             flux[transEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((    upwindAlpha_)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
+               ((    upwindWeight_)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
                 +
-                (1 - upwindAlpha_)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
+                (1 - upwindWeight_)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
         }
         else
         {
@@ -218,16 +218,16 @@ public:
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
             flux[contiEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((     upwindAlpha_)*up.molarDensity()/up.viscosity()
+               ((     upwindWeight_)*up.molarDensity()/up.viscosity()
                 +
-                ((1 - upwindAlpha_)*dn.molarDensity()/dn.viscosity()));
+                ((1 - upwindWeight_)*dn.molarDensity()/dn.viscosity()));
 
             // advective flux of the second component -molefraction
             flux[transEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((    upwindAlpha_)*up.molarDensity() * up.moleFrac(comp1Idx)/up.viscosity()
+               ((    upwindWeight_)*up.molarDensity() * up.moleFrac(comp1Idx)/up.viscosity()
                 +
-                (1 - upwindAlpha_)*dn.molarDensity() * dn.moleFrac(comp1Idx)/dn.viscosity());
+                (1 - upwindWeight_)*dn.molarDensity() * dn.moleFrac(comp1Idx)/dn.viscosity());
         }
 
     }
@@ -513,7 +513,7 @@ protected:
     { return static_cast<const Implementation *> (this); }
 
 private:
-    Scalar upwindAlpha_;
+    Scalar upwindWeight_;
 };
 
 }
