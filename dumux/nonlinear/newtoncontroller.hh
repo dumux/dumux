@@ -569,8 +569,7 @@ public:
         }
         else {
             Scalar percent = Scalar(targetSteps_ - numSteps_)/targetSteps_;
-            return std::min(oldTimeStep*(1.0 + percent/1.2),
-                            this->problem_().maxTimeStepSize());
+            return oldTimeStep*(1.0 + percent/1.2);
         }
     }
 

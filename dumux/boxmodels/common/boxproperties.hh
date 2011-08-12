@@ -93,6 +93,13 @@ NEW_PROP_TAG(EnableJacobianRecycling);
 NEW_PROP_TAG(EnablePartialReassemble);
 
 /*!
+ * \brief Specify the maximum size of a time integration [s].
+ *
+ * The default is to not limit the step size.
+ */
+NEW_PROP_TAG(MaxTimeStepSize);
+
+/*!
  * \brief Specify which kind of method should be used to numerically
  * calculate the partial derivatives of the residual.
  *

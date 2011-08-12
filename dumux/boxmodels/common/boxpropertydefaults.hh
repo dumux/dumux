@@ -41,6 +41,8 @@
 
 #include "boxproperties.hh"
 
+#include <limits>
+
 namespace Dumux {
 
 namespace Properties {
@@ -175,6 +177,15 @@ public:
  * \brief Assembler for the global jacobian matrix.
  */
 SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::BoxAssembler<TypeTag>);
+
+//! use an unlimited time step size by default
+#if 0
+// requires GCC 4.6 and above to call the constexpr function of
+// numeric_limits
+SET_SCALAR_PROP(BoxModel, MaxTimeStepSize, std::numeric_limits<Scalar>::infinity());
+#else
+SET_SCALAR_PROP(BoxModel, MaxTimeStepSize, 1e100);
+#endif
 
 //! use forward differences to calculate the jacobian by default
 SET_INT_PROP(BoxModel, NumericDifferenceMethod, +1);

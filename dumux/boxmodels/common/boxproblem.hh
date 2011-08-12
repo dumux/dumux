@@ -140,14 +140,6 @@ public:
     }
 
     /*!
-     * \brief Returns the maximum allowed time step size [s]
-     *
-     * By default this the time step size is unrestricted.
-     */
-    Scalar maxTimeStepSize() const
-    { return std::numeric_limits<Scalar>::infinity(); }
-
-    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
@@ -494,7 +486,10 @@ public:
      * \param dt The current time step size
      */
     Scalar nextTimeStepSize(Scalar dt)
-    { return newtonCtl_.suggestTimeStepSize(dt); };
+    { 
+        return std::min(GET_PARAM(TypeTag, Scalar, MaxTimeStepSize),
+                        newtonCtl_.suggestTimeStepSize(dt));
+    };
 
     /*!
      * \brief Returns true if a restart file should be written to

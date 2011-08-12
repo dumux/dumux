@@ -194,6 +194,7 @@ public:
         //infiltrationStartTime_= interfaceProbProps.IPP_InfiltrationStartTime;
         infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
         infiltrationEndTime_= interfaceProbProps.IPP_InfiltrationEndTime;
+        maxTimeStepSize_ = interfaceProbProps.IPP_MaxTimeStepSize;
     }
 
     /*!
@@ -377,6 +378,18 @@ public:
     }
     // \}
 
+    /*!
+     * \brief Specify the next time step size after a successful time integration
+     */
+    Scalar nextTimeStepSize(Scalar dt)
+    { 
+#warning REMOVE THIS METHOD AFTER CONVERTING THE PROBLEM TO THE GET_PARAM MECHANISM
+        // (there is a MaxTimeStepSize runtime parameter)
+
+        return std::min(maxTimeStepSize_,
+                        this->newtonController().suggestTimeStepSize(dt));
+    };
+
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
@@ -414,6 +427,7 @@ private:
     Scalar infiltrationRate_;
     Scalar infiltrationStartTime_;
     Scalar infiltrationEndTime_;
+    Scalar maxTimeStepSize_;
 };
 } //end namespace
 

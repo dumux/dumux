@@ -37,7 +37,6 @@
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
 #include <water_contaminant.hh>
-#include "lens_1p2cnewtoncontroller.hh"
 #include "lensspatialparameters1p2c.hh"
 
 namespace Dumux
@@ -86,12 +85,6 @@ SET_PROP(LensProblem, SpatialParameters)
 SET_BOOL_PROP(LensProblem, UseMoles, true);
 // Enable gravity
 SET_BOOL_PROP(LensProblem, EnableGravity, false);
-
-// Set specific Newton controller
-SET_PROP(LensProblem, NewtonController)
-{
-    typedef Dumux::LensOnePTwoCNewtonController<TypeTag> type;
-};
 }
 
 /*!
@@ -182,6 +175,7 @@ public:
         infiltrationRate_ = interfaceProbProps.IPP_InfiltrationRate;
         infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
         infiltrationEndTime_= interfaceProbProps.IPP_InfiltrationEndTime;
+        maxTimeStepSize_ = interfaceProbProps.IPP_MaxTimeStepSize;
     }
 
     /*!
@@ -346,6 +340,18 @@ public:
     }
     // \}
 
+    /*!
+     * \brief Specify the next time step size after a successful time integration
+     */
+    Scalar nextTimeStepSize(Scalar dt)
+    { 
+#warning REMOVE THIS METHOD AFTER CONVERTING THE PROBLEM TO THE GET_PARAM MECHANISM
+        // (there is a MaxTimeStepSize runtime parameter)
+
+        return std::min(maxTimeStepSize_,
+                        this->newtonController().suggestTimeStepSize(dt));
+    };
+
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
@@ -385,6 +391,7 @@ private:
     Scalar infiltrationRate_;
     Scalar infiltrationStartTime_;
     Scalar infiltrationEndTime_;
+    Scalar maxTimeStepSize_;
 };
 } //end namespace
 
