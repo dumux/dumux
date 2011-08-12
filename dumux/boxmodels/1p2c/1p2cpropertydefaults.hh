@@ -80,8 +80,6 @@ SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, Dumux::OnePTwoCIndices<0>);
 SET_BOOL_PROP(BoxOnePTwoC, EnableJacobianRecycling, true);
 // enable partial reassembling by default
 SET_BOOL_PROP(BoxOnePTwoC, EnablePartialReassemble, true);
-// enable time-step ramp up by default
-SET_BOOL_PROP(BoxOnePTwoC, EnableTimeStepRampUp, false);
 
 }
 // \}

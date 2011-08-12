@@ -143,8 +143,6 @@ public:
 SET_BOOL_PROP(BoxTwoPTwoC, EnableJacobianRecycling, true);
 // enable partial reassembling by default
 SET_BOOL_PROP(BoxTwoPTwoC, EnablePartialReassemble, true);
-// enable time-step ramp up by default
-SET_BOOL_PROP(BoxTwoPTwoC, EnableTimeStepRampUp, false);
 
 //
 }

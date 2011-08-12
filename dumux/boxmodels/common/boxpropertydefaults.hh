@@ -186,8 +186,6 @@ SET_BOOL_PROP(BoxModel, EnableHints, false);
 SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);
 // disable partial reassembling by default
 SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
-// disable time-step ramp up by default
-SET_BOOL_PROP(BoxModel, EnableTimeStepRampUp, false);
 
 //! Set the type of a global jacobian matrix from the solution types
 SET_PROP(BoxModel, JacobianMatrix)

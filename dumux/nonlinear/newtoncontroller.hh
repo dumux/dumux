@@ -66,10 +66,6 @@ NEW_PROP_TAG(TimeManager);
 //! gets written out to disk for every newton iteration (default is false)
 NEW_PROP_TAG(NewtonWriteConvergence);
 
-//! Specifies whether time step size should be increased during the
-//! Newton methods first few iterations
-NEW_PROP_TAG(EnableTimeStepRampUp);
-
 //! Specifies whether the Jacobian matrix should only be reassembled
 //! if the current solution deviates too much from the evaluation point
 NEW_PROP_TAG(EnablePartialReassemble);
@@ -266,7 +262,6 @@ public:
         , convergenceWriter_(asImp_())
         , linearSolver_(problem)
     {
-        enableTimeStepRampUp_ = GET_PARAM(TypeTag, bool, EnableTimeStepRampUp);
         enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
 
@@ -277,10 +272,9 @@ public:
         verbose_ = true;
         numSteps_ = 0;
 
-        if (enableTimeStepRampUp_)
-            this->rampUpSteps_ = 9;
-        else
-            this->rampUpSteps_ = 0;
+        this->setRelTolerance(1e-8);
+        this->setTargetSteps(10);
+        this->setMaxSteps(18);
     };
 
     /*!
@@ -324,31 +318,18 @@ public:
     { maxSteps_ = maxSteps; }
 
     /*!
-     * \brief Returns the number of iterations used for the time step
-     *        ramp-up.
-     */
-    Scalar rampUpSteps() const
-    { return enableTimeStepRampUp_?rampUpSteps_:0; }
-
-    /*!
-     * \brief Returns whether the time-step ramp-up is still happening
-     */
-    bool inRampUp() const
-    { return numSteps_ < rampUpSteps(); }
-
-    /*!
      * \brief Returns true if another iteration should be done.
      *
      * \param uCurrentIter The solution of the current newton iteration
      */
     bool newtonProceed(const SolutionVector &uCurrentIter)
     {
-        if (numSteps_ < rampUpSteps() + 2)
+        if (numSteps_ < 2)
             return true; // we always do at least two iterations
         else if (asImp_().newtonConverged()) {
             return false; // we are below the desired tolerance
         }
-        else if (numSteps_ >= rampUpSteps() + maxSteps_) {
+        else if (numSteps_ >= maxSteps_) {
             // we have exceeded the allowed number of steps.  if the
             // relative error was reduced by a factor of at least 4,
             // we proceed even if we are above the maximum number of
@@ -379,19 +360,6 @@ public:
     {
         method_ = &method;
         numSteps_ = 0;
-
-        dtInitial_ = timeManager_().timeStepSize();
-        if (enableTimeStepRampUp_) {
-            rampUpDelta_ =
-                timeManager_().timeStepSize()
-                /
-                rampUpSteps()
-                *
-                2;
-
-            // reduce initial time step size for ramp-up.
-            timeManager_().setTimeStepSize(rampUpDelta_);
-        }
 
         convergenceWriter_.beginTimestep();
     }
@@ -541,15 +509,6 @@ public:
         ++numSteps_;
 
         Scalar realError = error_;
-        if (inRampUp() && error_ < 1.0) {
-            // change time step size
-            Scalar dt = timeManager_().timeStepSize();
-            dt += rampUpDelta_;
-            timeManager_().setTimeStepSize(dt);
-
-            endIterMsg() << ", dt=" << timeManager_().timeStepSize() << ", ddt=" << rampUpDelta_;
-        }
-
         if (verbose())
             std::cout << "\rNewton iteration " << numSteps_ << " done: "
                       << "error=" << realError << endIterMsg().str() << "\n";
@@ -573,7 +532,6 @@ public:
     void newtonFail()
     {
         model_().jacobianAssembler().reassembleAll();
-        timeManager_().setTimeStepSize(dtInitial_);
         numSteps_ = targetSteps_*2;
     }
 
@@ -600,26 +558,17 @@ public:
      */
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
-        if (enableTimeStepRampUp_)
-            return oldTimeStep;
-
-        Scalar n = numSteps_;
-        n -= rampUpSteps();
-
         // be agressive reducing the timestep size but
         // conservative when increasing it. the rationale is
         // that we want to avoid failing in the next newton
         // iteration which would require another linearization
         // of the problem.
-        if (n > targetSteps_) {
-            Scalar percent = (n - targetSteps_)/targetSteps_;
+        if (numSteps_ > targetSteps_) {
+            Scalar percent = Scalar(numSteps_ - targetSteps_)/targetSteps_;
             return oldTimeStep/(1.0 + percent);
         }
         else {
-            /*Scalar percent = (Scalar(1))/targetSteps_;
-              return oldTimeStep*(1 + percent);
-            */
-            Scalar percent = (targetSteps_ - n)/targetSteps_;
+            Scalar percent = Scalar(targetSteps_ - numSteps_)/targetSteps_;
             return std::min(oldTimeStep*(1.0 + percent/1.2),
                             this->problem_().maxTimeStepSize());
         }
@@ -732,13 +681,6 @@ protected:
     Scalar lastError_;
     Scalar tolerance_;
 
-    // number of iterations for the time-step ramp-up
-    Scalar rampUpSteps_;
-    // the increase of the time step size during the rampup
-    Scalar rampUpDelta_;
-
-    Scalar dtInitial_; // initial time step size
-
     // optimal number of iterations we want to achive
     int targetSteps_;
     // maximum number of iterations we do before giving up
@@ -750,7 +692,6 @@ protected:
     LinearSolver linearSolver_;
 
 private:
-    bool enableTimeStepRampUp_;
     bool enablePartialReassemble_;
     bool enableJacobianRecycling_;
 };

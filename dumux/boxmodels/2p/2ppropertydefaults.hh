@@ -98,8 +98,6 @@ SET_TYPE_PROP(BoxTwoP, FluidState, TwoPFluidState<TypeTag>);
 SET_BOOL_PROP(BoxTwoP, EnableJacobianRecycling, true);
 // enable partial reassembling by default
 SET_BOOL_PROP(BoxTwoP, EnablePartialReassemble, true);
-// enable time-step ramp up by default
-SET_BOOL_PROP(BoxTwoP, EnableTimeStepRampUp, false);
 
 }
 //

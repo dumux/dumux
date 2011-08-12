@@ -91,9 +91,6 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
 };
 
-// Enable the time step ramp up inside the newton method?
-SET_BOOL_PROP(LensProblem, EnableTimeStepRampUp, false);
-
 // Enable partial reassembly of the jacobian matrix?
 SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
 

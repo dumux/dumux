@@ -92,10 +92,6 @@ NEW_PROP_TAG(EnableJacobianRecycling);
 //! tolerance
 NEW_PROP_TAG(EnablePartialReassemble);
 
-//! Specify whether the time step should be increased in between
-//! newton iterations to achive larger time step sizes
-NEW_PROP_TAG(EnableTimeStepRampUp);
-
 /*!
  * \brief Specify which kind of method should be used to numerically
  * calculate the partial derivatives of the residual.
