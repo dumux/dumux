@@ -352,8 +352,9 @@ public:
         problem_(problem), analyticSolution_(0), error_(0), elementVolume_(0), size_(problem.gridView().size(0)), vTot_(totalVelocity), dummyElement_(
                 *(problem_.gridView().template begin<0> ())), dummyGlobal_(GlobalPosition(1))
     {
-        initializeAnalytic();
-        prepareAnalytic();
+    	initializeAnalytic();
+    	prepareAnalytic();
+
     }
 
 protected:

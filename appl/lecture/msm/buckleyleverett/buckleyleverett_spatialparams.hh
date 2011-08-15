@@ -69,6 +69,7 @@ class BuckleyLeverettSpatialParams: public FVSpatialParameters<TypeTag>
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
@@ -95,30 +96,16 @@ public:
     BuckleyLeverettSpatialParams(const GridView& gridView)
     :ParentType(gridView)
     {
-        Dumux::InterfaceSoilProperties interfaceSoilProps("interface_BL.xml");
+    	Scalar permFactor = 0.001/(1000*9.81);
 
-        // residual saturations
-        materialLawParams_.setSwr(interfaceSoilProps.ISP_ResidualSaturationWetting);
-        materialLawParams_.setSnr(interfaceSoilProps.ISP_ResidualSaturationNonWetting);
+    	constPermeability_ = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
+		//Lenses:
+    	materialLawParams_.setSwr(Params::tree().template get<double>("SpatialParameters.swr"));
+    	materialLawParams_.setSnr(Params::tree().template get<double>("SpatialParameters.snr"));
+    	materialLawParams_.setPe(Params::tree().template get<double>("SpatialParameters.pe"));
+    	materialLawParams_.setLambda(Params::tree().template get<double>("SpatialParameters.lambda"));
 
-        porosity_ = interfaceSoilProps.ISP_Porosity;
-
-        // parameters for the Brooks-Corey Law
-        // entry pressures
-        materialLawParams_.setPe(interfaceSoilProps.ISP_BrooksCoreyEntryPressure);
-        // Brooks-Corey shape parameters
-        materialLawParams_.setLambda(interfaceSoilProps.ISP_BrooksCoreyLambda);
-
-        constPermeability_ = interfaceSoilProps.ISP_Permeability;
-
-        // parameters for the linear
-        // entry pressures function
-//        materialLawParams_.setEntryPC(0);
-//        materialLawParams_.setMaxPC(0);
-//        materialLawParams_.setEntryPC(2);
-//        materialLawParams_.setMaxPC(3);
-
-
+    	porosity_ = Params::tree().template get<double>("SpatialParameters.porosity");
     }
 
 private:
