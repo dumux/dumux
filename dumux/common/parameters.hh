@@ -70,6 +70,40 @@ NEW_PROP_TAG(ModelParameterGroup);
 } // namespace Properties
 
 namespace Parameters {
+
+template <class TypeTag>
+void findUnusedKeys_(std::list<std::string> &unusedParams, 
+                     const Dune::ParameterTree &tree,
+                     const std::string prefix="")
+{
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+    const Dune::ParameterTree &rt = Params::runTimeParams();
+
+    // loop over all keys of the current tree
+    const Dune::ParameterTree::KeyVector &keys = 
+        tree.getValueKeys();
+    for (int i = 0; i < keys.size(); ++i) {
+        std::string canonicalName = prefix + keys[i];
+
+        // check whether the key was accessed
+        if (rt.hasKey(canonicalName))
+            continue;
+        unusedParams.push_back(canonicalName);
+    }
+
+    // loop over all subtrees
+    const Dune::ParameterTree::KeyVector &subKeys = 
+        tree.getSubKeys();
+    for (int i = 0; i < subKeys.size(); ++i) {
+        std::string newPrefix = prefix + subKeys[i] + ".";
+
+        findUnusedKeys_<TypeTag>(unusedParams, 
+                                 tree.sub(subKeys[i]),
+                                 newPrefix);
+    }
+    
+}
+
 template <class TypeTag>
 void print(std::ostream &os = std::cout)
 {
@@ -89,16 +123,7 @@ void print(std::ostream &os = std::cout)
     ct.report(os);
 
     std::list<std::string> unusedParams;
-    int n = 0;
-    const Dune::ParameterTree::KeyVector &keys = 
-        Params::tree().getValueKeys();
-    for (int i = 0; i < keys.size(); ++i) {
-        // check wheter the key was accessed
-        if (rt.hasKey(keys[i]))
-            continue;
-        ++n;
-        unusedParams.push_back(keys[i]);
-    }
+    findUnusedKeys_<TypeTag>(unusedParams, tree);
 
     if (unusedParams.size() > 0) {
         os << "###############################\n";
@@ -154,7 +179,7 @@ private:
     static const ParamType &retrieve_(const char *groupOrParamName, const char *paramNameOrNil = 0)
     {   
         const char *paramName, *groupName;
-        if (paramNameOrNil) {
+        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
             groupName = groupOrParamName;
             paramName = paramNameOrNil;
         }
@@ -172,7 +197,7 @@ private:
         // [Newton]
         // WriteConvergence = true
         std::string finalName(paramName);
-        if (groupName) {
+        if (groupName && strlen(groupName) > 0) {
             finalName.insert(0, ".");
             finalName.insert(0, groupName);
         }
@@ -189,7 +214,7 @@ private:
             finalName.insert(0, ".");
             finalName.insert(0, modelParamGroup);
         }
-        
+
         // retrieve actual parameter from the parameter tree
         ParamType defaultValue = GET_PROP_VALUE(TypeTag, PropTag);
         static ParamType value = Params::tree().template get<ParamType>(finalName, defaultValue);
