@@ -86,6 +86,7 @@ class LensSpatialParameters2p : public BoxSpatialParameters<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
@@ -96,21 +97,20 @@ public:
           lensK_(0),
           outerK_(0)
     {
-        Dumux::InterfaceSoilProperties interfaceSoilProps("interface2p.xml");
+        lensPorosity_ = Params::tree().template get<double>("Soil.FinePorosity");
+        outerPorosity_ = Params::tree().template get<double>("Soil.CoarsePorosity");
 
-        lensPorosity_ = interfaceSoilProps.ISP_FinePorosity;
-        outerPorosity_ = interfaceSoilProps.ISP_CoarsePorosity;
-
-        for(int i = 0; i < dim; i++){
-            lensK_[i][i] = interfaceSoilProps.ISP_FinePermeability;
-            outerK_[i][i] = interfaceSoilProps.ISP_CoarsePermeability;
+        for(int i = 0; i < dim; i++)
+        {
+            lensK_[i][i] = Params::tree().template get<double>("Soil.FinePermeability");
+            outerK_[i][i] = Params::tree().template get<double>("Soil.CoarsePermeability");
         }
 
         // residual saturations
-        lensMaterialParams_.setSwr(interfaceSoilProps.ISP_FineResidualSaturationWetting);
-        lensMaterialParams_.setSnr(interfaceSoilProps.ISP_FineResidualSaturationNonWetting);
-        outerMaterialParams_.setSwr(interfaceSoilProps.ISP_CoarseResidualSaturationWetting);
-        outerMaterialParams_.setSnr(interfaceSoilProps.ISP_CoarseResidualSaturationNonWetting);
+        lensMaterialParams_.setSwr(Params::tree().template get<double>("Soil.FineResidualSaturationWetting"));
+        lensMaterialParams_.setSnr(Params::tree().template get<double>("Soil.FineResidualSaturationNonWetting"));
+        outerMaterialParams_.setSwr(Params::tree().template get<double>("Soil.CoarseResidualSaturationWetting"));
+        outerMaterialParams_.setSnr(Params::tree().template get<double>("Soil.CoarseResidualSaturationNonWetting"));
 
         // parameters for the Van Genuchten law
         // alpha and n
@@ -120,10 +120,10 @@ public:
 //        outerMaterialParams_.setVgN(4.7);
 
         // parameters for the Brooks-Corey law
-        lensMaterialParams_.setPe(interfaceSoilProps.ISP_FineBrooksCoreyEntryPressure);
-        lensMaterialParams_.setLambda(interfaceSoilProps.ISP_FineBrooksCoreyLambda);
-        outerMaterialParams_.setPe(interfaceSoilProps.ISP_CoarseBrooksCoreyEntryPressure);
-        outerMaterialParams_.setLambda(interfaceSoilProps.ISP_CoarseBrooksCoreyLambda);
+        lensMaterialParams_.setPe(Params::tree().template get<double>("Soil.FineBrooksCoreyEntryPressure"));
+        lensMaterialParams_.setLambda(Params::tree().template get<double>("Soil.FineBrooksCoreyLambda"));
+        outerMaterialParams_.setPe(Params::tree().template get<double>("Soil.CoarseBrooksCoreyEntryPressure"));
+        outerMaterialParams_.setLambda(Params::tree().template get<double>("Soil.CoarseBrooksCoreyLambda"));
 
         // parameters for the linear law
         // minimum and maximum pressures

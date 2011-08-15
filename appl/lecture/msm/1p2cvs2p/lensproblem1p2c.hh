@@ -28,7 +28,6 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
-#include "external_interface.hh"
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/simplednapl.hh>
@@ -150,6 +149,7 @@ class LensProblem : public OnePTwoCBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
     LensProblem(TimeManager &timeManager,
@@ -162,20 +162,14 @@ public:
     {
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
 
-        bboxMin_[0] = lowerLeft[0];
-        bboxMin_[1] = lowerLeft[1];
-        bboxMax_[0] = upperRight[0];
-        bboxMax_[1] = upperRight[1];
+        bboxMin_ = lowerLeft;
+        bboxMax_ = upperRight;
 
-        //load interface-file
-        Dumux::InterfaceProblemProperties interfaceProbProps("interface1p2c.xml");
-
-        upperPressure_ = interfaceProbProps.IPP_UpperPressure;
-        lowerPressure_ = interfaceProbProps.IPP_LowerPressure;
-        infiltrationRate_ = interfaceProbProps.IPP_InfiltrationRate;
+        upperPressure_ = Params::tree().template get<double>("Boundary.UpperPressure");
+        lowerPressure_ = Params::tree().template get<double>("Boundary.LowerPressure");
+        infiltrationRate_ = Params::tree().template get<double>("Boundary.InfiltrationRate");
         infiltrationStartTime_= 1.0e-9;//The infiltrations starts always after the first time step!
-        infiltrationEndTime_= interfaceProbProps.IPP_InfiltrationEndTime;
-        maxTimeStepSize_ = interfaceProbProps.IPP_MaxTimeStepSize;
+        infiltrationEndTime_= Params::tree().template get<double>("Boundary.InfiltrationEndTime");
     }
 
     /*!
@@ -191,11 +185,8 @@ public:
     const char *name() const
     {
         std::string simName = "lens-1p2c_run";
-        Dumux::InterfaceProblemProperties interfaceProbProps("interface1p2c.xml");
-        Scalar simNum =  interfaceProbProps.IPP_SimulationNumber;
-
-        return (str(boost::format("%s-%02d")
-                    %simName%simNum).c_str());
+        return (str(boost::format("%s")
+                    %simName).c_str());
     }
 
     /*!
@@ -340,17 +331,6 @@ public:
     }
     // \}
 
-    /*!
-     * \brief Specify the next time step size after a successful time integration
-     */
-    Scalar nextTimeStepSize(Scalar dt)
-    { 
-#warning REMOVE THIS METHOD AFTER CONVERTING THE PROBLEM TO THE GET_PARAM MECHANISM
-        // (there is a MaxTimeStepSize runtime parameter)
-
-        return std::min(maxTimeStepSize_,
-                        this->newtonController().suggestTimeStepSize(dt));
-    };
 
 private:
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
@@ -391,7 +371,6 @@ private:
     Scalar infiltrationRate_;
     Scalar infiltrationStartTime_;
     Scalar infiltrationEndTime_;
-    Scalar maxTimeStepSize_;
 };
 } //end namespace
 

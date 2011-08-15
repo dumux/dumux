@@ -25,6 +25,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridinfo.hh>
+#include <dune/common/parametertreeparser.hh>
 
 #include <dune/common/mpihelper.hh>
 
@@ -110,7 +111,7 @@ public:
 
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s [--restart restartTime] tEnd dt\n")%progname;
+    std::cout << boost::format("usage: %s InputFileName\n")%progname;
     exit(1);
 };
 
@@ -123,6 +124,7 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
         typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
+        typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
         static const int dim = Grid::dimension;
 
@@ -132,28 +134,17 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // parse the command line arguments
         ////////////////////////////////////////////////////////////
-        if (argc < 3)
+        if (argc != 2)
             usage(argv[0]);
 
-        // deal with the restart stuff
-        int argPos = 1;
-        bool restart = false;
-        double restartTime = 0;
-        if (std::string("--restart") == argv[argPos]) {
-            restart = true;
-            ++argPos;
+        std::string inputFileName;
+        inputFileName = argv[1];
 
-            std::istringstream(argv[argPos++]) >> restartTime;
-        }
+        Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
 
-        if (argc - argPos != 2) {
-            usage(argv[0]);
-        }
-
-        // read the initial time step and the end time
         double tEnd, dt;
-        std::istringstream(argv[argPos++]) >> tEnd;
-        std::istringstream(argv[argPos++]) >> dt;
+        tEnd = Params::tree().get<double>("tEnd");
+        dt = Params::tree().get<double>("dt");
 
         ////////////////////////////////////////////////////////////
         // create the grid
@@ -182,9 +173,9 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         TimeManager timeManager;
         Problem problem(timeManager, grid->leafView(), lowerLeft, upperRight, lowerLeftLens, upperRightLens);
-        timeManager.init(problem, 0, dt, tEnd, !restart);
-        if (restart)
-            problem.restart(restartTime);
+        timeManager.init(problem, 0, dt, tEnd);
+//        if (restart)
+//            problem.restart(restartTime);
         timeManager.run();
         return 0;
     }

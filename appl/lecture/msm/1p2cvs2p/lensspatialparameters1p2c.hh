@@ -62,6 +62,7 @@ class LensSpatialParameters1p2c : public BoxSpatialParametersOneP<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 
 public:
@@ -71,19 +72,17 @@ public:
           lensK_(0),
           outerK_(0)
     {
-        Dumux::InterfaceSoilProperties interfaceSoilProps("interface1p2c.xml");
-
-        lensPorosity_ = interfaceSoilProps.ISP_FinePorosity;
-        outerPorosity_ = interfaceSoilProps.ISP_CoarsePorosity;
+        lensPorosity_ = Params::tree().template get<double>("Soil.FinePermeability");
+        outerPorosity_ = Params::tree().template get<double>("Soil.CoarsePermeability");
 
         longitudinalDispersivity_ = 1.0e-5;
         transverseDispersivity_ = 1.0e-6;
     //Remark: The example is very bad. The numerical diffusion is very high, so that the dispersion/diffusion coefficients nearly do not have any influence.
 
-
-        for(int i = 0; i < dim; i++){
-            lensK_[i][i] = interfaceSoilProps.ISP_FinePermeability;
-            outerK_[i][i] = interfaceSoilProps.ISP_CoarsePermeability;
+        for(int i = 0; i < dim; i++)
+        {
+            lensK_[i][i] = Params::tree().template get<double>("Soil.FinePermeability");;
+            outerK_[i][i] = Params::tree().template get<double>("Soil.CoarsePermeability");
         }
     }
 

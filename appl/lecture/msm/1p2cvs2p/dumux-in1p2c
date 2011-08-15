@@ -1,0 +1,16 @@
+MaxTimeStepSize = 500
+tEnd = 50000
+dt = 100
+
+[Soil]
+FinePermeability = 3.1e-11
+CoarsePermeability = 5.89912e-11
+FinePorosity = 0.4
+CoarsePorosity = 0.5
+
+[Boundary]
+UpperPressure = 1.1e5
+LowerPressure = 1.0e5
+InfiltrationRate = 0.5
+InfiltrationEndTime = 20000
+
