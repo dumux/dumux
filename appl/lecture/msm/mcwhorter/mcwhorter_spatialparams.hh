@@ -70,6 +70,7 @@ class McWhorterSpatialParams: public FVSpatialParameters<TypeTag>
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
@@ -96,28 +97,17 @@ public:
     McWhorterSpatialParams(const GridView& gridView)
     : ParentType(gridView)
     {
-        Dumux::InterfaceSoilProperties interfaceSoilProps("interface_MW.xml");
+        materialLawParams_.setSwr(Params::tree().template get<double>("soil.ResidualSaturationWetting"));
+        materialLawParams_.setSnr(Params::tree().template get<double>("soil.ResidualSaturationNonWetting"));
 
-        // residual saturations
-        materialLawParams_.setSwr(interfaceSoilProps.ISP_ResidualSaturationWetting);
-        materialLawParams_.setSnr(interfaceSoilProps.ISP_ResidualSaturationNonWetting);
+        porosity_ = Params::tree().template get<double>("soil.porosity");
 
-        porosity_ = interfaceSoilProps.ISP_Porosity;
+        materialLawParams_.setPe(Params::tree().template get<double>("soil.BrooksCoreyEntryPressure"));
+        materialLawParams_.setLambda(Params::tree().template get<double>("soil.BrooksCoreyLambda"));
 
-//        // parameters for the Brooks-Corey Law
-//        // entry pressures
-        materialLawParams_.setPe(interfaceSoilProps.ISP_BrooksCoreyEntryPressure);
-//        // Brooks-Corey shape parameters
-        materialLawParams_.setLambda(interfaceSoilProps.ISP_BrooksCoreyLambda);
-
-        // parameters for the linear
-        // entry pressures function
-//        materialLawParams_.setEntryPC(0);
-//        materialLawParams_.setMaxPC(0);
-
-            constPermeability_ = interfaceSoilProps.ISP_Permeability;
-
+        constPermeability_ = Params::tree().template get<double>("soil.permeability");
     }
+
 
 private:
     MaterialLawParams materialLawParams_;

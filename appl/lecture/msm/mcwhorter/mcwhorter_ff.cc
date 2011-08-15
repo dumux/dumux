@@ -18,9 +18,14 @@
 #include <iomanip>
 
 #include <dune/grid/common/gridinfo.hh>
-#include "external_interface.hh"
+#include <dune/common/parametertreeparser.hh>
 #include "mcwhorterproblem.hh"
 
+void usage(const char *progname)
+{
+    std::cout << boost::format("usage: %s InputFileName\n")%progname;
+    exit(1);
+}
 
 int main(int argc, char** argv)
 {
@@ -32,15 +37,31 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
         typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
+        typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
         static const int dim = Grid::dimension;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
-        //load interface-file
-         Dumux::InterfaceProblemProperties interfaceProbProps("interface_MW.xml");
-         double discretizationLength = interfaceProbProps.IPP_DiscretizationLength;
+        ////////////////////////////////////////////////////////////
+        // parse the command line arguments
+        ////////////////////////////////////////////////////////////
+        if (argc != 2)
+            usage(argv[0]);
+
+        std::string inputFileName;
+        inputFileName = argv[1];
+
+        ////////////////////////////////////////////////////////////
+        // Read Input file
+        ////////////////////////////////////////////////////////////
+
+        Dune::ParameterTree inputParameters;
+        Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
+
+        double discretizationLength = Params::tree().get<double>("problem.DiscretizationLength");
+
          int cellNumber = static_cast<int>(2/discretizationLength);
 
         // define the problem dimensions
@@ -48,17 +69,11 @@ int main(int argc, char** argv)
         Dune::FieldVector<Scalar, dim> upperRight(2.0);
 //        UpperRight[1] = 1;
         Dune::FieldVector<int, dim> cellNumbers(cellNumber);
-//        cellNumbers[0] = 26;
-        if (argc != 2)
-        {
-            std::cout << "usage: tEnd" << std::endl;
-            return 0;
-        }
-        std::string arg1(argv[1]);
-        std::istringstream is1(arg1);
-        double tEnd;
-        is1 >> tEnd;
+        cellNumbers[0] = 26;
+
+        double tEnd = Params::tree().get<double>("problem.tEnd");
         double dt = tEnd;
+
         // create a grid object
         typedef Dune::SGrid<dim, dim> GridType;
         typedef GridType::LeafGridView GridView;
@@ -72,12 +87,11 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
 
-        Dumux::InterfaceFluidProperties interfaceFluidProps("interface_MW.xml");
         typedef GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
         typedef GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
 
-        WettingPhase::Component::setViscosity(interfaceFluidProps.IFP_ViscosityWettingFluid);
-        NonwettingPhase::Component::setViscosity(interfaceFluidProps.IFP_ViscosityNonWettingFluid);
+        WettingPhase::Component::setViscosity(Params::tree().get<double>("fluid.viscosityW"));
+        NonwettingPhase::Component::setViscosity(Params::tree().get<double>("fluid.viscosityNW"));
 
         TimeManager timeManager;
         Problem problem(timeManager, grid.leafView(), lowerLeft, upperRight);

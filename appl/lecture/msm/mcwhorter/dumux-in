@@ -1,0 +1,24 @@
+[soil]
+
+permeability = 1e-10
+porosity = 0.4
+
+BrooksCoreyLambda = 2.0
+BrooksCoreyEntryPressure = 5000
+MinCapillaryPressure = 5000
+MaxCapillaryPressure = 8000
+
+ResidualSaturationWetting = 0.
+ResidualSaturationNonWetting = 0.
+
+
+[fluid]
+densityW = 1e3 
+densityNW = 1e3 
+viscosityW = 1e-3 
+viscosityNW = 1e-3 
+
+
+[problem]
+DiscretizationLength = 0.05
+tEnd = 1000
