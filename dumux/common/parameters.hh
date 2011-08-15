@@ -33,6 +33,7 @@
 
 #include <sstream>
 #include <list>
+#include <unordered_map>
 
 /*!
  * \brief Retrieve a runtime parameter which _does_ have a default value taken from
@@ -52,14 +53,35 @@
  * // is taken from the property NewtonWriteConvergence
  * GET_PARAM(TypeTag, bool, Newton, WriteConvergence);
  */
-#define GET_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...) \
-    Dumux::Parameters::Param<TypeTag, PTAG(ParamNameOrGroupName ## __VA_ARGS__), ParamType> \
-    :: get(#ParamNameOrGroupName, Dumux::Parameters::getString_(#__VA_ARGS__))
+#define GET_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...)         \
+    Dumux::Parameters::Param<TypeTag>                                    \
+    ::template get<ParamType, PTAG(ParamNameOrGroupName ## __VA_ARGS__)> \
+    (#ParamType,                                                         \
+     #ParamNameOrGroupName,                                              \
+     Dumux::Parameters::getString_(#__VA_ARGS__))
 
-// retrieve a parameter which does _not_ have a default value taken
-// from the dumux property system
-//#define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamName) 
-//    Dumux::Parameters::RunTimeParam<TypeTag, ParamType>::get(#ParamName)
+/*!
+ * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
+ *        the Dumux property system.
+ *
+ * If the macro is called with four argument the third argument is
+ * group name
+ *
+ * Examples:
+ *
+ * // -> retrieves global integer value NumberOfCellsX
+ * GET_RUNTIME_PARAM(TypeTag, int, NumberOfCellsX);
+ *
+ * // -> retrieves global integer value NumberOfCellsX which is
+ * // located int the parameter group "Geometry"
+ * GET_RUNTIME_PARAM(TypeTag, int, Geometry, NumberOfCellsX);
+ */
+#define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...) \
+    Dumux::Parameters::Param<TypeTag>                                   \
+    ::template getRuntime<ParamType>                                    \
+    (#ParamType,                                                        \
+     #ParamNameOrGroupName,                                             \
+     Dumux::Parameters::getString_(#__VA_ARGS__))
 
 namespace Dumux
 {
@@ -139,18 +161,53 @@ void print(std::ostream &os = std::cout)
 const char *getString_(const char *foo = 0)
 { return foo; }
 
-template <class TypeTag, 
-          class PropTag,
-          class ParamType> 
+template <class TypeTag> 
 class Param
 {
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 public:
-    static const ParamType &get(const char *groupOrParamName, const char *paramNameOrNil = 0)
+    template <class ParamType, class PropTag>
+    static const ParamType &get(const char *paramTypeName,
+                                const char *groupOrParamName, 
+                                const char *paramNameOrNil = 0)
     {
 #ifndef NDEBUG
+        // make sure that the parameter is used consistently. since
+        // this is potentially quite expensive, it is only done if
+        // debugging code is not explicitly turned off.
         const char *paramName, *groupName;
-        if (paramNameOrNil) {
+        std::string propertyName;
+        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
+            groupName = groupOrParamName;
+            paramName = paramNameOrNil;
+            propertyName  = groupName;
+            propertyName += paramName;
+        }
+        else {
+            groupName = "";
+            paramName = groupOrParamName;
+            propertyName = paramName;
+        }
+
+        check_(propertyName, paramTypeName, groupName, paramName);
+#endif
+
+        static const ParamType &value = retrieve_<ParamType, PropTag>(groupOrParamName, paramNameOrNil);
+        return value;
+    }
+
+    template <class ParamType>
+    static const ParamType &getRuntime(const char *paramTypeName,
+                                       const char *groupOrParamName, 
+                                       const char *paramNameOrNil = 0)
+    {
+#ifndef NDEBUG
+        // make sure that the parameter is used consistently. since
+        // this is potentially quite expensive, it is only done if
+        // debugging code is not explicitly turned off.
+        const char *paramName, *groupName;
+        static const std::string propertyName("");
+        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
             groupName = groupOrParamName;
             paramName = paramNameOrNil;
         }
@@ -158,24 +215,73 @@ public:
             groupName = "";
             paramName = groupOrParamName;
         }
-        // make sure that a property is only the default for a single
-        // parameter, i.e. that a property is not used for multiple
-        // parameters
-        static std::string fixedGroupName = groupName;
-        if (fixedGroupName != groupName)
-        {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "Conflicting prefixes for parameter '" << paramName
-                       << "': '" << fixedGroupName
-                       << "' and '" << groupName << "'.");
-        }
+
+        check_(propertyName, paramTypeName, groupName, paramName);
 #endif
 
-        static const ParamType &value = retrieve_(groupOrParamName, paramNameOrNil);
+        static const ParamType &value = retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
         return value;
     }
 
 private:
+    static void check_(const std::string &propertyName, 
+                       const char *paramTypeName, 
+                       const char *groupName, 
+                       const char *paramName)
+    {
+        struct Blubb {
+            std::string propertyName;
+            std::string paramTypeName;
+            std::string groupName;
+            
+            Blubb &operator=(const Blubb &b)
+            { 
+                propertyName = b.propertyName;
+                paramTypeName = b.paramTypeName;
+                groupName = b.groupName;
+                return *this;
+            };
+        };
+        typedef std::unordered_map<std::string, Blubb> StaticData;
+        static StaticData staticData;
+
+        typename StaticData::iterator it = staticData.find(paramName);
+        Blubb *b;
+        if (it == staticData.end())
+        {
+            Blubb a;
+            a.propertyName = propertyName;
+            a.paramTypeName = paramTypeName;
+            a.groupName = groupName;
+            staticData[paramName] = a;
+            b = &staticData[paramName];
+        }
+        else
+            b = &(it->second);
+        
+        if (b->groupName != groupName) {
+            DUNE_THROW(Dune::InvalidStateException,
+                       "GET_*_PARAM for parameter '" << paramName
+                       << "' called for at least two different groups ('" 
+                       << b->groupName << "' and '" << groupName << "')");
+        }
+
+        if (b->propertyName != propertyName) {
+            DUNE_THROW(Dune::InvalidStateException,
+                       "GET_*_PARAM for parameter '" << paramName
+                       << "' called for at least two different properties ('" 
+                       << b->propertyName << "' and '" << propertyName << "')");
+        }
+
+        if (b->paramTypeName != paramTypeName) {
+            DUNE_THROW(Dune::InvalidStateException,
+                       "GET_*_PARAM for parameter '" << paramName << "' in group '"
+                       << groupName << "' called with at least two different types (" 
+                       << b->paramTypeName << " and " << paramTypeName << ")");
+        }
+    }
+    
+    template <class ParamType, class PropTag>
     static const ParamType &retrieve_(const char *groupOrParamName, const char *paramNameOrNil = 0)
     {   
         const char *paramName, *groupName;
@@ -234,30 +340,61 @@ private:
         }
         return value;
     }
-};
 
-template <class TypeTag, 
-          class ParamType> 
-class RunTimeParam
-{
-    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
-
-public:
-    static const ParamType &get(const char *name)
-    {
-        static const ParamType &value = retrieve_(name);
-        return value;
-    }
-
-private:
-    static const ParamType &retrieve_(const char *name)
+    template <class ParamType>
+    static const ParamType &retrieveRuntime_(const char *groupOrParamName, const char *paramNameOrNil = 0)
     {   
-        static ParamType value = Params::tree().template get<ParamType>(name);
-
-        Dune::ParameterTree &rt = Params::tree().sub("RunTimeParams");
-        if (Params::tree().hasKey(name)) {
-            rt[name] = Params::tree()[name];
+        const char *paramName, *groupName;
+        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
+            groupName = groupOrParamName;
+            paramName = paramNameOrNil;
         }
+        else {
+            groupName = 0;
+            paramName = groupOrParamName;
+        }
+
+        // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
+        // and 'WriteConvergence' becomes 'Newton.WriteConvergence'
+        // with the default value specified by the
+        // 'NewtonWriteConvergence' property. in an INI file this
+        // would look like:
+        //
+        // [Newton]
+        // WriteConvergence = true
+        std::string finalName(paramName);
+        if (groupName && strlen(groupName) > 0) {
+            finalName.insert(0, ".");
+            finalName.insert(0, groupName);
+        }
+
+        std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value());
+        // prefix the parameter with the parameter group of the
+        // model. this allows things like sub-model specific parameters like
+        //
+        // [Stokes.Newton]
+        // WriteConvergence = false
+        // [Darcy.Newton]
+        // WriteConvergence = true
+        if (modelParamGroup.size()) {
+            finalName.insert(0, ".");
+            finalName.insert(0, modelParamGroup);
+        }
+
+        // retrieve actual parameter from the parameter tree
+        if (Params::tree().hasKey(finalName)) {
+            DUNE_THROW(Dune::InvalidStateException,
+                       "Mandatory parameter '" << finalName
+                       << "' was not specified.");
+        }
+
+        ParamType defaultValue;
+        static ParamType value = Params::tree().template get<ParamType>(finalName, defaultValue);
+
+        // remember whether the parameter was taken from the parameter
+        // tree or the default from the property system was taken.
+        Dune::ParameterTree &rt = Params::runTimeParams();
+        rt[finalName] = Params::tree()[finalName];
 
         return value;
     }
