@@ -144,7 +144,7 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
-
+    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -284,6 +284,7 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
+        bool velocityOutput = GET_PROP_VALUE(TypeTag, PTAG(EnableVelocityOutput));
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
@@ -311,22 +312,20 @@ public:
                 massFrac[i][j] = writer.allocateManagedBuffer (numVertices);
         ScalarField *temperature = writer.allocateManagedBuffer(numVertices);
         ScalarField *poro = writer.allocateManagedBuffer(numVertices);
+        ScalarField *cellNum =writer.allocateManagedBuffer (numVertices);
+        VectorField *velocityG = writer.template allocateManagedBuffer <Scalar, dim> (numVertices);
+        VectorField *velocityL = writer.template allocateManagedBuffer <Scalar, dim> (numVertices);
 
-#ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        VectorField *velocityG = writer.template allocateManagedBuffer <Scalar,dim> (numVertices);
-        VectorField *velocityL = writer.template allocateManagedBuffer <Scalar,dim> (numVertices);
-
-        // initialize velocity fields
-        Scalar boxSurface[numVertices];
-        for (int i = 0; i < numVertices; ++i)
+        if(velocityOutput) // check if velocity output is demanded
         {
+            // initialize velocity fields
+            for (int i = 0; i < numVertices; ++i)
             {
-                (*velocityG)[i] = 0.;
-                (*velocityL)[i] = 0.;
+            	(*velocityG)[i] = Scalar(0);
+            	(*velocityL)[i] = Scalar(0);
+            	(*cellNum)[i] = Scalar(0.0);
             }
-            boxSurface[i] = 0.0; // initialize the boundary surface of the fv-boxes
         }
-#endif
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
@@ -339,7 +338,11 @@ public:
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
-            int idx = this->problem_().elementMapper().map(*elemIt);
+#warning "currently, velocity output only works for cubes and is set to false for simplices"
+        	if(elemIt->geometry().type().isCube() == false){
+        		velocityOutput = false;
+        	}
+            int idx = this->elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
             fvElemGeom.update(this->gridView_(), *elemIt);
 
@@ -376,82 +379,128 @@ public:
                 (*temperature)[globalIdx] = volVars.temperature();
                 (*phasePresence)[globalIdx]
                     = staticVertexDat_[globalIdx].phasePresence;
+                if(velocityOutput)
+                {
+                    (*cellNum)[globalIdx] += 1;
+                }
             };
 
-#ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-            // In the box method, the velocity is evaluated on the FE-Grid. However, to get an
-            // average apparent velocity at the vertex, all contributing velocities have to be interpolated.
-            GlobalPosition velocity[numPhases];
-            for (int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
-                velocity[phaseIdx] = 0.;
-
-            ElementVolumeVariables elemVolVars;
-
-            elemVolVars.update(this->problem_(),
-                               *elemIt,
-                               fvElemGeom,
-                               false /* isOldSol? */);
-
-            // loop over the faces
-            for (int faceIdx = 0; faceIdx< fvElemGeom.numEdges; faceIdx++)
+            if(velocityOutput)
             {
-                //prepare the flux calculations (set up and prepare geometry, FE gradients)
-                FluxVariables fluxDat(this->problem_(),
-                                      *elemIt,
-                                      fvElemGeom,
-                                      faceIdx,
-                                      elemVolVars);
+                // calculate vertex velocities
+                GlobalPosition tmpVelocity[numPhases];
 
-                // loop over the phases
-                for (int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
+                for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 {
-                    // get darcy velocity
-                    velocity[phaseIdx] = fluxDat.Kmvp(phaseIdx); // mind the sign: vDarcy = kf grad p
+                 tmpVelocity[phaseIdx]  = Scalar(0.0);
+                }
 
-                    // up+downstream mobility
-                    const VolumeVariables &up = elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
-                    const VolumeVariables &down = elemVolVars[fluxDat.downstreamIdx(phaseIdx)];
-                    Scalar scvfArea = fluxDat.face().normal.two_norm(); //get surface area to weight velocity at the IP with the surface area
-                    velocity[phaseIdx] *= (massUpwindWeight_*up.mobility(phaseIdx) + (1-massUpwindWeight_)*down.mobility(phaseIdx))* scvfArea;
+                typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > SCVVelocities;
+                SCVVelocities scvVelocityL(8), scvVelocityG(8);
 
-                    int vertIIdx = this->problem_().vertexMapper().map(*elemIt,
-                                                                       fluxDat.face().i,
-                                                                       dim);
-                    int vertJIdx = this->problem_().vertexMapper().map(*elemIt,
-                                                                       fluxDat.face().j,
-                                                                       dim);
-                    // add surface area for weighting purposes
-                    boxSurface[vertIIdx] += scvfArea;
-                    boxSurface[vertJIdx] += scvfArea;
+                scvVelocityL = 0;
+                scvVelocityG = 0;
+                
+        		ElementVolumeVariables elemVolVars;
+        		
+        		elemVolVars.update(this->problem_(),
+                	              *elemIt,
+                    	          fvElemGeom,
+                        	      false /* oldSol? */);
+        		
+                for (int faceIdx = 0; faceIdx< fvElemGeom.numEdges; faceIdx++)
+                {
 
-                    // Add velocity to upstream and downstream vertex.
-                    // Beware: velocity has to be substracted because of the (wrong) sign of vDarcy
-                    if (phaseIdx == gPhaseIdx)
+                    FluxVariables fluxDat(this->problem_(),
+                                  *elemIt,
+                                  fvElemGeom,
+                                  faceIdx,
+                                  elemVolVars);
+
+                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     {
-                        (*velocityG)[vertIIdx] -= velocity[gPhaseIdx];
-                        (*velocityG)[vertJIdx] -= velocity[gPhaseIdx];
-                    }
-                    else if (phaseIdx == lPhaseIdx)
-                    {
-                        (*velocityL)[vertIIdx] -= velocity[lPhaseIdx];
-                        (*velocityL)[vertJIdx] -= velocity[lPhaseIdx];
-                    }
-                    else
-                        DUNE_THROW(Dune::IOError,
-                                   "Velocity not implemented for more than 2 phases");
+
+     					// data attached to upstream and the downstream vertices
+                        // of the current phase
+                        const VolumeVariables up =
+                            elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
+                        const VolumeVariables dn =
+                            elemVolVars[fluxDat.downstreamIdx(phaseIdx)];
+
+                      // local position of integration point
+                      const Dune::FieldVector<Scalar, dim>& localPosIP = fvElemGeom.subContVolFace[faceIdx].ipLocal;
+
+                      // Transformation of the global normal vector to normal vector in the reference element
+                      const Dune::FieldMatrix<Scalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
+                      const GlobalPosition globalNormal = fluxDat.face().normal;
+
+                      GlobalPosition localNormal(0);
+                      jacobianT1.mv(globalNormal, localNormal);
+                  	  // note only works for cubes
+                      const Scalar localArea = pow(2,-(dim-1));
+
+                      localNormal /= localNormal.two_norm();
+
+                      // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
+                      // face in the reference element.
+                      massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+                      PhasesVector q;
+                      q[phaseIdx] = fluxDat.KmvpNormal(phaseIdx)
+                                		   * (massUpwindWeight_
+                                		   * up.mobility(phaseIdx)
+                                		   + (1- massUpwindWeight_)
+                                		   * dn.mobility(phaseIdx)) / localArea;
+
+                      // transform the normal Darcy velocity into a vector
+                      tmpVelocity[phaseIdx] = localNormal;
+                      tmpVelocity[phaseIdx] *= q[phaseIdx];
+
+                      if(phaseIdx == lPhaseIdx){
+                      scvVelocityL[fluxDat.face().i] += tmpVelocity[phaseIdx];
+                      scvVelocityL[fluxDat.face().j] += tmpVelocity[phaseIdx];
+                      }
+                      else if(phaseIdx == gPhaseIdx){
+                      scvVelocityG[fluxDat.face().i] += tmpVelocity[phaseIdx];
+                      scvVelocityG[fluxDat.face().j] += tmpVelocity[phaseIdx];
+                      }
+                   }
+                }
+
+                typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+                const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(elemIt->geometry().type()).position(0,
+                        0);
+
+     			// get the transposed Jacobian of the element mapping
+                const Dune::FieldMatrix<Scalar, dim, dim> jacobianT2 = elemIt->geometry().jacobianTransposed(localPos);
+
+                // transform vertex velocities from local to global coordinates
+    			for (int i = 0; i < numVerts; ++i)
+                {
+                	int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                    // calculate the subcontrolvolume velocity by the Piola transformation
+                    Dune::FieldVector<Scalar, dim> scvVelocity(0);
+
+                    jacobianT2.mtv(scvVelocityL[i], scvVelocity);
+                    scvVelocity /= elemIt->geometry().integrationElement(localPos);
+                	// add up the wetting phase subcontrolvolume velocities for each vertex
+                	(*velocityL)[globalIdx] += scvVelocity;
+
+                    jacobianT2.mtv(scvVelocityG[i], scvVelocity);
+                    scvVelocity /= elemIt->geometry().integrationElement(localPos);
+                	// add up the nonwetting phase subcontrolvolume velocities for each vertex
+                	(*velocityG)[globalIdx] += scvVelocity;
                 }
             }
-#endif
         }
+            if(velocityOutput)
+            {
+                // divide the vertex velocities by the number of adjacent scvs i.e. cells
+    	        for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
+    	        (*velocityL)[globalIdx] /= (*cellNum)[globalIdx];
+    	        (*velocityG)[globalIdx] /= (*cellNum)[globalIdx];
+    	        }
+            }
 
-#ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        // normalize the velocities at the vertices
-        for (int i = 0; i < numVertices; ++i)
-        {
-            (*velocityG)[i] /= boxSurface[i];
-            (*velocityL)[i] /= boxSurface[i];
-        }
-#endif
 
         writer.attachVertexData(*Sg,     "Sg");
         writer.attachVertexData(*Sl,     "Sl");
@@ -476,10 +525,11 @@ public:
         writer.attachVertexData(*temperature,    "temperature");
         writer.attachVertexData(*phasePresence,  "phase presence");
 
-#ifdef VELOCITY_OUTPUT // check if velocity output is demanded
-        writer.attachVertexData(*velocityG,  "velG", dim);
-        writer.attachVertexData(*velocityL,  "velL", dim);
-#endif
+        if(velocityOutput) // check if velocity output is demanded
+        {
+        	writer.attachVertexData(*velocityL,  "velocityL", dim);
+        	writer.attachVertexData(*velocityG,  "velocityG", dim);
+        }
         writer.attachCellData(*rank, "process rank");
     }
 
@@ -738,6 +788,7 @@ protected:
         return phasePresence != newPhasePresence;
     }
 
+private:
     // parameters given in constructor
     std::vector<StaticVars> staticVertexDat_;
     bool switchFlag_;

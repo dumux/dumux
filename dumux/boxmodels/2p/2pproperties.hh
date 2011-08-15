@@ -66,8 +66,7 @@ NEW_PROP_TAG(WettingPhase); //!< The wetting phase for two-phase models
 NEW_PROP_TAG(NonwettingPhase); //!< The non-wetting phase for two-phase models
 NEW_PROP_TAG(FluidSystem); //!<The fluid systems including the information about the phases
 NEW_PROP_TAG(FluidState); //!<The phases state
-
-//
+NEW_PROP_TAG(EnableVelocityOutput); //!< Returns whether vertex velocity vectors are written into the vtk output
 }
 
 }
