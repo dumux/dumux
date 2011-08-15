@@ -104,7 +104,7 @@ public:
         }
 #endif
 
-        static const ParamType &value = retrieve_(paramName, groupName);
+        static const ParamType &value = retrieve_(groupOrParamName, paramNameOrNil);
         return value;
     }
 
@@ -117,7 +117,7 @@ private:
             paramName = paramNameOrNil;
         }
         else {
-            groupName = "";
+            groupName = 0;
             paramName = groupOrParamName;
         }
 
@@ -130,12 +130,11 @@ private:
         // [Newton]
         // WriteConvergence = true
         std::string finalName(paramName);
-        int groupNameLen = strlen(groupName);
-        if (groupNameLen) {
+        if (groupName) {
             finalName.insert(0, ".");
             finalName.insert(0, groupName);
         }
-        
+
         std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value());
         // prefix the parameter with the parameter group of the
         // model. this allows things like sub-model specific parameters like
