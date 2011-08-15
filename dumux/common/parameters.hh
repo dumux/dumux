@@ -27,11 +27,12 @@
 #ifndef DUMUX_PARAMETERS_HH
 #define DUMUX_PARAMETERS_HH
 
+#include "propertysystem.hh"
+
 #include <dune/common/parametertree.hh>
 
 #include <sstream>
-
-#include "propertysystem.hh"
+#include <list>
 
 /*!
  * \brief Retrieve a runtime parameter which _does_ have a default value taken from
@@ -69,6 +70,47 @@ NEW_PROP_TAG(ModelParameterGroup);
 } // namespace Properties
 
 namespace Parameters {
+template <class TypeTag>
+void print(std::ostream &os = std::cout)
+{
+    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+
+    const Dune::ParameterTree &tree = Params::tree();
+    const Dune::ParameterTree &rt = Params::runTimeParams();
+    const Dune::ParameterTree &ct = Params::compileTimeParams();
+
+    os << "###############################\n";
+    os << "# Run-time parameters:\n";
+    os << "###############################\n";
+    rt.report(os);
+    os << "###############################\n";
+    os << "# Compile-time parameters:\n";
+    os << "###############################\n";
+    ct.report(os);
+
+    std::list<std::string> unusedParams;
+    int n = 0;
+    const Dune::ParameterTree::KeyVector &keys = 
+        Params::tree().getValueKeys();
+    for (int i = 0; i < keys.size(); ++i) {
+        // check wheter the key was accessed
+        if (rt.hasKey(keys[i]))
+            continue;
+        ++n;
+        unusedParams.push_back(keys[i]);
+    }
+
+    if (unusedParams.size() > 0) {
+        os << "###############################\n";
+        os << "# UNUSED PARAMETERS:\n";
+        os << "###############################\n";
+        std::list<std::string>::const_iterator it = unusedParams.begin();
+        for (; it != unusedParams.end(); ++it) {
+            os << *it << " = \"" << tree.get(*it, "") << "\"\n";
+        };
+    }
+};
+
 const char *getString_(const char *foo = 0)
 { return foo; }
 
@@ -154,8 +196,8 @@ private:
 
         // remember whether the parameter was taken from the parameter
         // tree or the default from the property system was taken.
-        Dune::ParameterTree &rt = Params::tree().sub("RunTimeParams");
-        Dune::ParameterTree &ct = Params::tree().sub("DefaultParams");
+        Dune::ParameterTree &rt = Params::runTimeParams();
+        Dune::ParameterTree &ct = Params::compileTimeParams();
         if (Params::tree().hasKey(finalName)) {
             rt[finalName] = Params::tree()[finalName];
         }

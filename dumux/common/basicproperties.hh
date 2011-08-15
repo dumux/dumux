@@ -86,35 +86,23 @@ SET_PROP(NumericModel, ParameterTree)
     
     static Dune::ParameterTree &tree()
     { 
-        if (initFinished_) {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "The ParameterTree cannot be accessed after "
-                       "the initialization phase of the simulation!");
-        }
-        
-        return parameterTree_;
+        static Dune::ParameterTree obj_;
+        return obj_;
     };
 
-    static void initFinished()
-    { initFinished_ = true; }
+    static Dune::ParameterTree &compileTimeParams()
+    { 
+        static Dune::ParameterTree obj_;
+        return obj_;
+    };
 
 
-private:
-    static Dune::ParameterTree parameterTree_;
-    static bool initFinished_;
+    static Dune::ParameterTree &runTimeParams()
+    { 
+        static Dune::ParameterTree obj_;
+        return obj_;
+    };
 };
-
-// allocate space for the static parameter tree object
-template<class TypeTag>
-Dune::ParameterTree 
-    Property<TypeTag,
-             TTAG(NumericModel), 
-             PTAG(ParameterTree)>::parameterTree_;
-
-template<class TypeTag>
-bool Property<TypeTag,
-              TTAG(NumericModel), 
-              PTAG(ParameterTree)>::initFinished_ = false;
 
 // use the global group as default for the model's parameter group 
 SET_PROP(NumericModel, ModelParameterGroup) 
