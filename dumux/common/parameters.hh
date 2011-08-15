@@ -33,17 +33,31 @@
 
 #include "propertysystem.hh"
 
-// retrieve a parameter which _does_ have a default value taken from
-// the dumux property system. the optional last argument is the group
-// name which must be the prefix to the property name which provides
-// the default value for the parameter.
-#define GET_PARAM(TypeTag, ParamType, ParamName, ...)      \
-    Dumux::Parameters::Param<TypeTag, PTAG(__VA_ARGS__ ## ParamName), ParamType> \
-    :: get(#ParamName, Dumux::Parameters::getGroupName_(#__VA_ARGS__))
+/*!
+ * \brief Retrieve a runtime parameter which _does_ have a default value taken from
+ *        the Dumux property system.
+ *
+ * If the macro is called with four argument the third argument is
+ * group name which must be the prefix to the property name which
+ * provides the default value for the parameter
+ *
+ * Examples:
+ *
+ * // -> retrieves scalar value UpwindWeight, default
+ * // is taken from the property UpwindWeight
+ * GET_PARAM(TypeTag, Scalar, UpwindWeight);
+ *
+ * // -> retrieves Boolean value Newton.WriteConvergence, default
+ * // is taken from the property NewtonWriteConvergence
+ * GET_PARAM(TypeTag, bool, Newton, WriteConvergence);
+ */
+#define GET_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...) \
+    Dumux::Parameters::Param<TypeTag, PTAG(ParamNameOrGroupName ## __VA_ARGS__), ParamType> \
+    :: get(#ParamNameOrGroupName, Dumux::Parameters::getString_(#__VA_ARGS__))
 
 // retrieve a parameter which does _not_ have a default value taken
 // from the dumux property system
-//#define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamName)              \
+//#define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamName) 
 //    Dumux::Parameters::RunTimeParam<TypeTag, ParamType>::get(#ParamName)
 
 namespace Dumux
@@ -55,9 +69,8 @@ NEW_PROP_TAG(ModelParameterGroup);
 } // namespace Properties
 
 namespace Parameters {
-
-const char *getGroupName_(const char *group = "")
-{ return group; }
+const char *getString_(const char *foo = 0)
+{ return foo; }
 
 template <class TypeTag, 
           class PropTag,
@@ -66,9 +79,18 @@ class Param
 {
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 public:
-    static const ParamType &get(const char *paramName, const char *groupName = "")
+    static const ParamType &get(const char *groupOrParamName, const char *paramNameOrNil = 0)
     {
 #ifndef NDEBUG
+        const char *paramName, *groupName;
+        if (paramNameOrNil) {
+            groupName = groupOrParamName;
+            paramName = paramNameOrNil;
+        }
+        else {
+            groupName = "";
+            paramName = groupOrParamName;
+        }
         // make sure that a property is only the default for a single
         // parameter, i.e. that a property is not used for multiple
         // parameters
@@ -87,8 +109,18 @@ public:
     }
 
 private:
-    static const ParamType &retrieve_(const char *paramName, const char *groupName)
+    static const ParamType &retrieve_(const char *groupOrParamName, const char *paramNameOrNil = 0)
     {   
+        const char *paramName, *groupName;
+        if (paramNameOrNil) {
+            groupName = groupOrParamName;
+            paramName = paramNameOrNil;
+        }
+        else {
+            groupName = "";
+            paramName = groupOrParamName;
+        }
+
         // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
         // and 'WriteConvergence' becomes 'Newton.WriteConvergence'
         // with the default value specified by the
