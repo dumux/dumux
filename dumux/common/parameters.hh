@@ -219,8 +219,7 @@ public:
         check_(propertyName, paramTypeName, groupName, paramName);
 #endif
 
-        static const ParamType &value = retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
-        return value;
+        return retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
     }
 
 private:
@@ -302,10 +301,10 @@ private:
         //
         // [Newton]
         // WriteConvergence = true
-        std::string finalName(paramName);
+        std::string canonicalName(paramName);
         if (groupName && strlen(groupName) > 0) {
-            finalName.insert(0, ".");
-            finalName.insert(0, groupName);
+            canonicalName.insert(0, ".");
+            canonicalName.insert(0, groupName);
         }
 
         std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value());
@@ -317,26 +316,26 @@ private:
         // [Darcy.Newton]
         // WriteConvergence = true
         if (modelParamGroup.size()) {
-            finalName.insert(0, ".");
-            finalName.insert(0, modelParamGroup);
+            canonicalName.insert(0, ".");
+            canonicalName.insert(0, modelParamGroup);
         }
 
         // retrieve actual parameter from the parameter tree
         ParamType defaultValue = GET_PROP_VALUE(TypeTag, PropTag);
-        static ParamType value = Params::tree().template get<ParamType>(finalName, defaultValue);
+        static ParamType value = Params::tree().template get<ParamType>(canonicalName, defaultValue);
 
         // remember whether the parameter was taken from the parameter
         // tree or the default from the property system was taken.
         Dune::ParameterTree &rt = Params::runTimeParams();
         Dune::ParameterTree &ct = Params::compileTimeParams();
-        if (Params::tree().hasKey(finalName)) {
-            rt[finalName] = Params::tree()[finalName];
+        if (Params::tree().hasKey(canonicalName)) {
+            rt[canonicalName] = Params::tree()[canonicalName];
         }
         else {
             std::string s;
             std::ostringstream oss(s);
             oss << defaultValue;
-            ct[finalName] = oss.str();
+            ct[canonicalName] = oss.str();
         }
         return value;
     }
@@ -345,13 +344,28 @@ private:
     static const ParamType &retrieveRuntime_(const char *groupOrParamName, const char *paramNameOrNil = 0)
     {   
         const char *paramName, *groupName;
-        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
+        if (paramNameOrNil && paramNameOrNil[0] != '\0') {
             groupName = groupOrParamName;
             paramName = paramNameOrNil;
         }
         else {
             groupName = 0;
             paramName = groupOrParamName;
+        }
+
+        static std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value());
+
+        std::string canonicalName(modelParamGroup);
+        
+        // prefix the parameter with the parameter group of the
+        // model. this allows things like sub-model specific parameters like
+        //
+        // [Stokes.Newton]
+        // WriteConvergence = false
+        // [Darcy.Newton]
+        // WriteConvergence = true
+        if (modelParamGroup.size()) {
+            canonicalName.push_back('.');
         }
 
         // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
@@ -362,41 +376,39 @@ private:
         //
         // [Newton]
         // WriteConvergence = true
-        std::string finalName(paramName);
-        if (groupName && strlen(groupName) > 0) {
-            finalName.insert(0, ".");
-            finalName.insert(0, groupName);
+        if (groupName && groupName[0] != '\0') {
+            canonicalName.append(groupName);
+            canonicalName.push_back('.');
         }
 
-        std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value());
-        // prefix the parameter with the parameter group of the
-        // model. this allows things like sub-model specific parameters like
-        //
-        // [Stokes.Newton]
-        // WriteConvergence = false
-        // [Darcy.Newton]
-        // WriteConvergence = true
-        if (modelParamGroup.size()) {
-            finalName.insert(0, ".");
-            finalName.insert(0, modelParamGroup);
-        }
+        // append the name of the parameter
+        canonicalName.append(paramName);
+
+        // cache parameters using a hash_map (Dune::Parameter tree is slow!)
+        typedef std::unordered_map<std::string, ParamType> ParamCache;
+        static ParamCache paramCache;
+        const typename ParamCache::iterator &it = paramCache.find(canonicalName);
+        if (it != paramCache.end())
+            return it->second;
 
         // retrieve actual parameter from the parameter tree
-        if (!Params::tree().hasKey(finalName)) {
+        if (!Params::tree().hasKey(canonicalName)) {
             DUNE_THROW(Dune::InvalidStateException,
-                       "Mandatory parameter '" << finalName
+                       "Mandatory parameter '" << canonicalName
                        << "' was not specified.");
         }
 
+        // update the cache
         ParamType defaultValue;
-        static ParamType value = Params::tree().template get<ParamType>(finalName, defaultValue);
+        ParamType value = Params::tree().template get<ParamType>(canonicalName, defaultValue);
+        paramCache[canonicalName] = value;
 
         // remember whether the parameter was taken from the parameter
         // tree or the default from the property system was taken.
         Dune::ParameterTree &rt = Params::runTimeParams();
-        rt[finalName] = Params::tree()[finalName];
+        rt[canonicalName] = value;
 
-        return value;
+        return paramCache[canonicalName];
     }
 };
 
