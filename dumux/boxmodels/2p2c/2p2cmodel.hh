@@ -788,7 +788,7 @@ protected:
         return phasePresence != newPhasePresence;
     }
 
-private:
+protected:
     // parameters given in constructor
     std::vector<StaticVars> staticVertexDat_;
     bool switchFlag_;
