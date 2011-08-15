@@ -382,7 +382,7 @@ private:
         }
 
         // retrieve actual parameter from the parameter tree
-        if (Params::tree().hasKey(finalName)) {
+        if (!Params::tree().hasKey(finalName)) {
             DUNE_THROW(Dune::InvalidStateException,
                        "Mandatory parameter '" << finalName
                        << "' was not specified.");
