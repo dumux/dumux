@@ -51,13 +51,9 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(TransportTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
         typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
-
-        static const int dim = Grid::dimension;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
