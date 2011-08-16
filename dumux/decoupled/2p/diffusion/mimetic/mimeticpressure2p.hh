@@ -150,6 +150,7 @@ public:
     void initialize(bool solveTwice = true)
     {
         updateMaterialLaws();
+        pressTrace_ = 0; f_ = 0;
         assemble(true);
         solve();
         postprocess();
@@ -239,7 +240,7 @@ void MimeticPressure2P<TypeTag>::solve()
     std::cout << "MimeticPressure2P: solve for pressure" << std::endl;
 
     Solver solver(problem_);
-    solver.solve(*A_, problem_.variables().pressure(), f_);
+    solver.solve(*A_, pressTrace_, f_);
     return;
 }
 
