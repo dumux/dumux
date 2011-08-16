@@ -179,7 +179,7 @@ public:
                 = staticVertexDat_[globalIdx].phasePresence;
         }
 
-        massUpwindWeight_ = GET_PARAM(TypeTag, bool, MassUpwindWeight);
+        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
     }
 
     /*!

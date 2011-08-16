@@ -78,7 +78,7 @@ public:
         catch (Dumux::NumericalProblem &e)
         {
             std::cout << "rank " << this->problem_().gridView().comm().rank()
-                      << " caught an exception while assembling:" << e.what()
+                      << " caught an exception while updating:" << e.what()
                       << "\n";
             succeeded = 0;
             succeeded = this->problem_().gridView().comm().min(succeeded);
