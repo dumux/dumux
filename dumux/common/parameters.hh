@@ -54,8 +54,9 @@
  * GET_PARAM(TypeTag, bool, Newton, WriteConvergence);
  */
 #define GET_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...)         \
-    Dumux::Parameters::Param<TypeTag>                                    \
-    ::template get<ParamType, PTAG(ParamNameOrGroupName ## __VA_ARGS__)> \
+    Dumux::Parameters::get<TypeTag,                                     \
+                           ParamType,                                   \
+                           PTAG(ParamNameOrGroupName ## __VA_ARGS__)>   \
     (#ParamType,                                                         \
      #ParamNameOrGroupName,                                              \
      Dumux::Parameters::getString_(#__VA_ARGS__))
@@ -77,11 +78,11 @@
  * GET_RUNTIME_PARAM(TypeTag, int, Geometry, NumberOfCellsX);
  */
 #define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...) \
-    Dumux::Parameters::Param<TypeTag>                                   \
-    ::template getRuntime<ParamType>                                    \
-    (#ParamType,                                                        \
-     #ParamNameOrGroupName,                                             \
-     Dumux::Parameters::getString_(#__VA_ARGS__))
+        Dumux::Parameters::getRuntime<TypeTag,                          \
+                                      ParamType>                        \
+     (#ParamType,                                                       \
+      #ParamNameOrGroupName,                                            \
+      Dumux::Parameters::getString_(#__VA_ARGS__))
 
 namespace Dumux
 {
@@ -411,6 +412,26 @@ private:
         return paramCache[canonicalName];
     }
 };
+
+template <class TypeTag, class ParamType, class PropTag>
+const ParamType &get(const char *paramTypeName,
+                     const char *paramOrGroupName,
+                     const char *paramNameOrNil = 0)
+{
+    return Param<TypeTag>::template get<ParamType, PropTag>(paramTypeName,
+                                                            paramOrGroupName,
+                                                            paramNameOrNil);
+}
+
+template <class TypeTag, class ParamType>
+const ParamType &getRuntime(const char *paramTypeName,
+                            const char *paramOrGroupName,
+                            const char *paramNameOrNil = 0)
+{
+    return Param<TypeTag>::template getRuntime<ParamType>(paramTypeName,
+                                                          paramOrGroupName,
+                                                          paramNameOrNil);
+}
 
 } // namespace Parameters
 
