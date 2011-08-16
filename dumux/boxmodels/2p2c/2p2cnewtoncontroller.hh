@@ -66,9 +66,28 @@ public:
     void newtonEndStep(SolutionVector &uCurrentIter,
                        const SolutionVector &uLastIter)
     {
-        // call the method of the base class
-        this->method().model().updateStaticData(uCurrentIter, uLastIter);
-        ParentType::newtonEndStep(uCurrentIter, uLastIter);
+        int succeeded;
+        try {
+            // call the method of the base class
+            this->method().model().updateStaticData(uCurrentIter, uLastIter);
+            ParentType::newtonEndStep(uCurrentIter, uLastIter);
+
+            succeeded = 1;
+            succeeded = this->problem_().gridView().comm().min(succeeded);
+        }
+        catch (Dumux::NumericalProblem &e)
+        {
+            std::cout << "rank " << this->problem_().gridView().comm().rank()
+                      << " caught an exception while assembling:" << e.what()
+                      << "\n";
+            succeeded = 0;
+            succeeded = this->problem_().gridView().comm().min(succeeded);
+        }
+
+        if (!succeeded) {
+            DUNE_THROW(NumericalProblem,
+                       "A process did not succeed in linearizing the system");
+        };
     }
 
     /*!
