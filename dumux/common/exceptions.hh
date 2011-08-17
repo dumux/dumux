@@ -49,7 +49,28 @@ public:
     // constructor with error message
     NumericalProblem(const std::string &s)
     { this->message(s); }
- };
-}
+};
+
+/*!
+ * \brief Exception thrown if a run-time parameter is not specified correctly.
+ */
+class ParameterException : public Dune::Exception
+{
+public:
+    // copy constructor
+    ParameterException(const ParameterException &v)
+        : Dune::Exception(v)
+    {}
+
+    // default constructor
+    ParameterException()
+    {}
+
+    // constructor with error message
+    ParameterException(const std::string &s)
+    { this->message(s); }
+};
+
+} // namespace Dumux
 
 #endif

@@ -27,7 +27,8 @@
 #ifndef DUMUX_PARAMETERS_HH
 #define DUMUX_PARAMETERS_HH
 
-#include "propertysystem.hh"
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/exceptions.hh>
 
 #include <dune/common/parametertree.hh>
 
@@ -57,8 +58,7 @@
     Dumux::Parameters::get<TypeTag,                                     \
                            ParamType,                                   \
                            PTAG(ParamNameOrGroupName ## __VA_ARGS__)>   \
-    (#ParamType,                                                         \
-     #ParamNameOrGroupName,                                              \
+    (#ParamNameOrGroupName,                                              \
      Dumux::Parameters::getString_(#__VA_ARGS__))
 
 /*!
@@ -80,8 +80,7 @@
 #define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...) \
         Dumux::Parameters::getRuntime<TypeTag,                          \
                                       ParamType>                        \
-     (#ParamType,                                                       \
-      #ParamNameOrGroupName,                                            \
+     (#ParamNameOrGroupName,                                            \
       Dumux::Parameters::getString_(#__VA_ARGS__))
 
 namespace Dumux
@@ -168,8 +167,7 @@ class Param
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 public:
     template <class ParamType, class PropTag>
-    static const ParamType &get(const char *paramTypeName,
-                                const char *groupOrParamName, 
+    static const ParamType &get(const char *groupOrParamName, 
                                 const char *paramNameOrNil = 0)
     {
 #ifndef NDEBUG
@@ -190,7 +188,7 @@ public:
             propertyName = paramName;
         }
 
-        check_(propertyName, paramTypeName, groupName, paramName);
+        check_<ParamType>(propertyName, groupName, paramName);
 #endif
 
         static const ParamType &value = retrieve_<ParamType, PropTag>(groupOrParamName, paramNameOrNil);
@@ -198,8 +196,7 @@ public:
     }
 
     template <class ParamType>
-    static const ParamType &getRuntime(const char *paramTypeName,
-                                       const char *groupOrParamName, 
+    static const ParamType &getRuntime(const char *groupOrParamName, 
                                        const char *paramNameOrNil = 0)
     {
 #ifndef NDEBUG
@@ -217,18 +214,20 @@ public:
             paramName = groupOrParamName;
         }
 
-        check_(propertyName, paramTypeName, groupName, paramName);
+        check_<ParamType>(propertyName, groupName, paramName);
 #endif
 
         return retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
     }
 
 private:
+    template <class ParamType>
     static void check_(const std::string &propertyName, 
-                       const char *paramTypeName, 
                        const char *groupName, 
                        const char *paramName)
     {
+        const std::string &paramTypeName = 
+            Dune::className<ParamType>();
         struct Blubb {
             std::string propertyName;
             std::string paramTypeName;
@@ -394,9 +393,9 @@ private:
 
         // retrieve actual parameter from the parameter tree
         if (!Params::tree().hasKey(canonicalName)) {
-            DUNE_THROW(Dune::InvalidStateException,
+            DUNE_THROW(Dumux::ParameterException,
                        "Mandatory parameter '" << canonicalName
-                       << "' was not specified.");
+                       << "' was not specified");
         }
 
         // update the cache
@@ -407,29 +406,25 @@ private:
         // remember whether the parameter was taken from the parameter
         // tree or the default from the property system was taken.
         Dune::ParameterTree &rt = Params::runTimeParams();
-        rt[canonicalName] = value;
+        rt[canonicalName] = Params::tree()[canonicalName];
 
         return paramCache[canonicalName];
     }
 };
 
 template <class TypeTag, class ParamType, class PropTag>
-const ParamType &get(const char *paramTypeName,
-                     const char *paramOrGroupName,
+const ParamType &get(const char *paramOrGroupName,
                      const char *paramNameOrNil = 0)
 {
-    return Param<TypeTag>::template get<ParamType, PropTag>(paramTypeName,
-                                                            paramOrGroupName,
+    return Param<TypeTag>::template get<ParamType, PropTag>(paramOrGroupName,
                                                             paramNameOrNil);
 }
 
 template <class TypeTag, class ParamType>
-const ParamType &getRuntime(const char *paramTypeName,
-                            const char *paramOrGroupName,
+const ParamType &getRuntime(const char *paramOrGroupName,
                             const char *paramNameOrNil = 0)
 {
-    return Param<TypeTag>::template getRuntime<ParamType>(paramTypeName,
-                                                          paramOrGroupName,
+    return Param<TypeTag>::template getRuntime<ParamType>(paramOrGroupName,
                                                           paramNameOrNil);
 }
 
