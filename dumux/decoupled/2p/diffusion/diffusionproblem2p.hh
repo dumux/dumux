@@ -220,8 +220,6 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    TimeManager timeManager_;
-
     GlobalPosition gravity_;
 
     // fluids and material properties
