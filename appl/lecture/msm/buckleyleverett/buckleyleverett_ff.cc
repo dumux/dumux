@@ -92,7 +92,8 @@ int main(int argc, char** argv)
         upperRight[1] = 75;
 
         int cellNumberX = static_cast<int>(300/discretizationLength);
-        int cellNumberY = static_cast<int>(75/discretizationLength);
+//        int cellNumberY = static_cast<int>(75/discretizationLength);
+        int cellNumberY = 1;
 
         Dune::FieldVector<int, dim> cellNumbers(cellNumberX);
         cellNumbers[1] = cellNumberY;

@@ -22,6 +22,8 @@
 #ifndef DUMUX_BUCKLEYLEVERETTPROBLEM_HH
 #define DUMUX_BUCKLEYLEVERETTPROBLEM_HH
 
+//#include <fstream>
+
 #include <dune/grid/sgrid.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -133,6 +135,8 @@ class BuckleyLeverettProblem: public IMPESProblem2P<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
@@ -151,23 +155,9 @@ public:
         densityNonWetting_ = Params::tree().template get<double>("Fluid.densityNW");
 
         //Write header for ViPLab-Outputfile
-    	double discretizationLength = Params::tree().template get<double>("Geometry.discretizationLength");
-    	int cellNumberX = static_cast<int>(300/discretizationLength);
-		int cellNumberY = static_cast<int>(75/discretizationLength);
-
     	std::ofstream dataFile;
-		dataFile.open("dumux-out.vgfc");
-		dataFile << "Gridplot" << std::endl;
-		dataFile << "## This is a DuMuX output for the ViPLab Graphics driver. \n";
-		dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
-		dataFile << "# x-range 0 "<< 300 << "\n" ;
-		dataFile << "# y-range 0 "<< 75 << "\n" ;
-		dataFile << "# x-count " << cellNumberX << "\n" ;
-		dataFile << "# y-count " << cellNumberY << "\n" ;
-		dataFile << "# scale 1 1 1\n";
+		dataFile.open("vipplot.vgf");
 
-		dataFile << "# min-color 255 0 0\n";
-		dataFile << "# max-color 0 0 255\n";
 		dataFile.close();
 
     }
@@ -286,57 +276,49 @@ public:
 
 
     //Override outputfunction for ViPLab-Output
-//    void writeOutput()
-//    {
-//
-//    	//Todo: Diese Funktion weiterschreiben.
-//    	std::cout<<"Writing output for time step.\n";
-//
-//		std::ofstream dataFile;
-//		dataFile.open("dumux-out.vgfc");
-//
-//		dataFile << "# time 0 \n" ;
-//		dataFile << "# label piezometric head \n";
-//
-//		for (int i=0; i< resolution[1]; i++)
-//		{
-//			for (int j=0; j<resolution[0]; j++)
-//			{
-//				int currentIdx = i*resolution[0]+j;
-//				dataFile << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81);
-//				if(j != resolution[0]-1) // all but last entry
-//					dataFile << " ";
-//				else // write the last entry
-//					dataFile << "\n";
-//			}
-//		}
-////		dataFile.close();
-////
-////		//Textoutput:
-////		std::cout << "         x          y          h           v_x           v_y"<<std::endl;
-////		std::cout << "------------------------------------------------------------"<<std::endl;
-////
-////			ElementIterator eItEnd = this->gridView().template end<0> ();
-////		for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-////		{
-////			int cellIndex = this->variables().index(*eIt);
-////				double v_x,v_y,piezo,x,y;
-////				v_x= (this->variables().velocity()[cellIndex][0][0]+this->variables().velocity()[cellIndex][1][0])/2;
-////				v_y= (this->variables().velocity()[cellIndex][2][1]+this->variables().velocity()[cellIndex][3][1])/2;
-////
-////				if (std::abs(v_x)<1e-17)
-////					v_x=0;
-////				if (std::abs(v_y)<1e-17)
-////					v_y=0;
-////				piezo=this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81);
-////				x = eIt->geometry().center()[0];
-////				y = eIt->geometry().center()[1];
-////
-////				printf("%10.4g %10.4g %10.4g %13.4g %13.4g\n",x,y,piezo,v_x,v_y);
-////		}
-//
-//
-//    }
+    void writeOutput()
+    {
+    	double time = this->timeManager().time();
+    	if (time < 0)
+    		return;
+
+    	std::ofstream dataFile;
+		dataFile.open("vipplot.vgf", std::fstream::app);
+
+    	std::cout<<"Writing output for time step.\n";
+
+    	if (time  > 0)
+    		dataFile << "# newframe\n";
+
+		dataFile << "# title Buckley-Leverett-Problem\n";
+		dataFile << "# x-label x\n";
+		dataFile << "# y-label Saturation\n";
+		dataFile << "# color 0 0 0\n";
+//		dataFile << "# symbol none";
+//		dataFile << "# linestyle solid";
+		ElementIterator eItEnd = this->gridView().template end<0>();
+	    for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+	    {
+	    	int currentIdx = this->variables().index(*eIt);
+	    	Scalar sat = this->variables().saturation()[currentIdx];
+	    	Scalar leftPos = eIt->geometry().corner(0)[0];
+	    	Scalar rightPos = eIt->geometry().corner(1)[0];
+	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
+	    }
+
+		dataFile << "# color 0 0 255\n";
+		for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+	    {
+	    	int currentIdx = this->variables().index(*eIt);
+	    	Scalar sat = analyticSolution_.AnalyticSolution()[currentIdx];
+	    	Scalar leftPos = eIt->geometry().corner(0)[0];
+	    	Scalar rightPos = eIt->geometry().corner(1)[0];
+	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
+	    }
+
+		dataFile << "# legend Numerical Solution, Analytic Solution\n";
+		dataFile.close();
+    }
 
 private:
     GlobalPosition lowerLeft_;

@@ -331,6 +331,11 @@ public:
         updateExSol();
     }
 
+    BlockVector AnalyticSolution() const
+    {
+    	return analyticSolution_;
+    }
+
     //Write saturation and pressure into file
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
