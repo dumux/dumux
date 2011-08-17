@@ -192,7 +192,7 @@ private:
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //! vector holding next subdomain
 
 protected:
-    const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
+    const GlobalPosition& gravity; //!< vector including the gravity constant
     Scalar cFLFactor_; //!< determines the CFLfactor
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     Dune::Timer timer_;
@@ -293,7 +293,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             // get normal vector
-            Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+            const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
 
             // get face volume
             Scalar faceArea = isIt->geometry().volume();
@@ -310,12 +310,12 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 const GlobalPosition& globalPosNeighbor = geoNeighbor.center();
 
                 // distance vector between barycenters
-                Dune::FieldVector<Scalar, dimWorld> distVec = globalPosNeighbor - globalPos;
+                GlobalPosition distVec = globalPosNeighbor - globalPos;
 
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
-                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                GlobalPosition unitDistVec(distVec);
                 unitDistVec /= dist;
 
                 FieldMatrix permeabilityJ
@@ -578,9 +578,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 const GlobalPosition& globalPosFace = isIt->geometry().center();
 
                 // geometrical information
-                Dune::FieldVector<Scalar, dimWorld> distVec(globalPosFace - globalPos);
+                GlobalPosition distVec(globalPosFace - globalPos);
                 Scalar dist = distVec.two_norm();
-                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                GlobalPosition unitDistVec(distVec);
                 unitDistVec /= dist;
 
                 //get boundary condition for boundary face center

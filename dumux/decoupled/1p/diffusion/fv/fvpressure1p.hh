@@ -213,7 +213,7 @@ private:
     Scalar idxPressHard_;
     bool setPressHard_;
 protected:
-    const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
+    const GlobalPosition& gravity; //!< vector including the gravity constant
 };
 
 //!initializes the matrix to store the system of equations

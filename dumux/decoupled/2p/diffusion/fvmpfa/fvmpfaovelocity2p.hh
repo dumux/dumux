@@ -167,7 +167,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
         // the following two variables are used to check local conservation
         Scalar facevol[2 * dim];
-        Dune::FieldVector<Scalar, dimWorld> unitOuterNormal[2 * dim];
+        GlobalPosition unitOuterNormal[2 * dim];
 
         IntersectionIterator isItBegin = this->problem().gridView().ibegin(*eIt);
         IntersectionIterator isItEnd = this->problem().gridView().iend(*eIt);
@@ -251,11 +251,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             facevol[indexInInside] = isIt->geometry().volume();
 
             // get outer normal vector scaled with half volume of face 'isIt'
-            Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln1 = isIt->centerUnitOuterNormal();
+            GlobalPosition integrationOuterNormaln1 = isIt->centerUnitOuterNormal();
             integrationOuterNormaln1 *= face12vol / 2.0;
 
             // get unit outer normal vector of face 'isIt'
-            Dune::FieldVector<Scalar, dimWorld> unitOuterNormaln1 = isIt->centerUnitOuterNormal();
+            const GlobalPosition& unitOuterNormaln1 = isIt->centerUnitOuterNormal();
 
             // get unit outer normal vector of face 'isIt' to check if local mass conservative
             unitOuterNormal[indexInInside] = unitOuterNormaln1;
@@ -273,11 +273,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             Scalar face13vol = nextisIt->geometry().volume();
 
             // get outer normal vector scaled with half volume of face 'nextisIt'
-            Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln3 = nextisIt->centerUnitOuterNormal();
+            GlobalPosition integrationOuterNormaln3 = nextisIt->centerUnitOuterNormal();
             integrationOuterNormaln3 *= face13vol / 2.0;
 
             // get unit outer normal vector of face 'nextisIt'
-            Dune::FieldVector<Scalar, dimWorld> unitOuterNormaln3 = nextisIt->centerUnitOuterNormal();
+            const GlobalPosition& unitOuterNormaln3 = nextisIt->centerUnitOuterNormal();
 
             // get the intersection node /bar^{x_3} between 'isIt' and 'nextisIt', denoted as 'corner1234'
             // initialization of corner1234
@@ -427,7 +427,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     Scalar face24vol = isIt24->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt24'
-                    Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln4 = isIt24->centerUnitOuterNormal();
+                    GlobalPosition integrationOuterNormaln4 = isIt24->centerUnitOuterNormal();
                     integrationOuterNormaln4 *= face24vol / 2.0;
 
                     // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
@@ -464,7 +464,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     Scalar face34vol = isIt34->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt34'
-                    Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
+                    GlobalPosition integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
                     integrationOuterNormaln2 *= face34vol / 2.0;
 
                     // compute normal vectors nu11,nu21; nu12, nu22; nu13, nu23; nu14, nu24;
@@ -647,7 +647,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     Scalar face24vol = isIt24->geometry().volume();
 
                     // get outer normal vector scaled with half volume of face 'isIt24'
-                    Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln4 = isIt24->centerUnitOuterNormal();
+                    GlobalPosition integrationOuterNormaln4 = isIt24->centerUnitOuterNormal();
                     integrationOuterNormaln4 *= face24vol / 2.0;
 
                     BoundaryTypes nextIsItBcType;
@@ -1318,7 +1318,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         Scalar face34vol = isIt34->geometry().volume();
 
                         // get outer normal vector scaled with half volume of face 'isIt34'
-                        Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
+                        GlobalPosition integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
                         integrationOuterNormaln2 *= face34vol / 2.0;
 
                         // get boundary condition for boundary face center of 'isIt34'
@@ -1824,7 +1824,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         Scalar face34vol = isIt34->geometry().volume();
 
                         // get outer normal vector scaled with half volume of face 'isIt34'
-                        Dune::FieldVector<Scalar, dimWorld> integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
+                        GlobalPosition integrationOuterNormaln2 = isIt34->centerUnitOuterNormal();
                         integrationOuterNormaln2 *= face34vol / 2.0;
 
                         // get boundary condition for boundary face (isIt34) center

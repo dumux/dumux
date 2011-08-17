@@ -152,7 +152,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     int restrictingCell = -1;
 
     // some phase properties
-    Dune::FieldVector<Scalar, dimWorld> gravity_ = problem_.gravity();
+    const GlobalPosition& gravity_ = problem_.gravity();
 
     // compute update vector
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
@@ -205,7 +205,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
             for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
-                Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+                GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
                 if (switchNormals)
                     unitOuterNormal *= -1.0;
 
@@ -234,11 +234,11 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                     const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
                     // distance vector between barycenters
-                    Dune::FieldVector<Scalar, dimWorld> distVec = globalPosNeighbor - globalPos;
+                    GlobalPosition distVec = globalPosNeighbor - globalPos;
                     // compute distance between cell centers
                     Scalar dist = distVec.two_norm();
 
-                    Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                    GlobalPosition unitDistVec(distVec);
                     unitDistVec /= dist;
 
                     // get saturation and concentration value at neighbor cell center
@@ -336,11 +336,11 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                     GlobalPosition globalPos = entityGeo.center();
 
                     // distance vector between barycenters
-                    Dune::FieldVector<Scalar, dimWorld> distVec = globalPosFace - globalPos;
+                    GlobalPosition distVec = globalPosFace - globalPos;
                     // compute distance between cell centers
                     Scalar dist = distVec.two_norm();
 
-                    Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                    GlobalPosition unitDistVec(distVec);
                     unitDistVec /= dist;
 
                     //instantiate a fluid state

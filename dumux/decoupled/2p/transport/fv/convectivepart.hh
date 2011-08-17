@@ -68,9 +68,9 @@ public:
      *  @param[in] satJ           saturation of neighbor element
      *  \return     convective term of an advection-diffusion equation
      */
-    Dune::FieldVector<Scalar, dimWorld> operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const
+    GlobalPosition operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const
     {
-        Dune::FieldVector<Scalar, dimWorld> trivial(0);
+        GlobalPosition trivial(0);
         return trivial;
     }
 

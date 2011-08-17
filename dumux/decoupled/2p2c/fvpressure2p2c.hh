@@ -538,7 +538,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
         for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             // get normal vector
-            Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+            const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
 
             // get face volume
             Scalar faceArea = isIt->geometry().volume();
@@ -554,12 +554,12 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                 const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
                 // distance vector between barycenters
-                Dune::FieldVector<Scalar, dimWorld> distVec = globalPosNeighbor - globalPos;
+                GlobalPosition distVec = globalPosNeighbor - globalPos;
 
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
-                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                GlobalPosition unitDistVec(distVec);
                 unitDistVec /= dist;
 
                 FieldMatrix permeabilityJ
@@ -754,9 +754,9 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                 const GlobalPosition& globalPosFace = isIt->geometry().center();
 
                 // geometrical information
-                Dune::FieldVector<Scalar, dimWorld> distVec(globalPosFace - globalPos);
+                GlobalPosition distVec(globalPosFace - globalPos);
                 Scalar dist = distVec.two_norm();
-                Dune::FieldVector<Scalar, dimWorld> unitDistVec(distVec);
+                GlobalPosition unitDistVec(distVec);
                 unitDistVec /= dist;
 
                 //get boundary condition for boundary face center

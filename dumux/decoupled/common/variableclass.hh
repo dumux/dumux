@@ -168,7 +168,7 @@ public:
                     // local number of facet
                     int indexInInside = isIt->indexInInside();
 
-                    Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+                    const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
 
                     for (int i = 0; i < numPhase; i++) {potential_[globalIdxI][indexInInside][i] = initialPot * unitOuterNormal;}
                 }

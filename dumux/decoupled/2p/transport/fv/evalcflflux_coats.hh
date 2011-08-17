@@ -118,7 +118,7 @@ public:
         Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(element), satI);
 
 
-        const Dune::FieldVector<Scalar, dimWorld>& unitOuterNormal = intersection.centerUnitOuterNormal();
+        const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
 
         if (intersection.neighbor())
         {
