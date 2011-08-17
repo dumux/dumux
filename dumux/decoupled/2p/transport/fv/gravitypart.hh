@@ -86,9 +86,6 @@ public:
      */
     FieldVector operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const
     {
-        // get global coordinate of cell center
-        const GlobalPosition& globalPos = element.geometry().center();
-
         Scalar temperature = problem_.temperature(element);
         Scalar referencePressure = problem_.referencePressure(element);
         FluidState fluidState;
@@ -144,9 +141,6 @@ public:
             ElementPointer neighborPointer = isIt->outside();
 
             int globalIdxJ = problem_.variables().index(*neighborPointer);
-
-            // neighbor cell center in global coordinates
-            const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
             // get permeability
             problem_.spatialParameters().meanK(meanPermeability,

@@ -278,7 +278,7 @@ private:
     Matrix A_;
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > f_;
 protected:
-    const Dune::FieldVector<Scalar, dimWorld>& gravity; //!< vector including the gravity constant
+    const GlobalPosition& gravity; //!< vector including the gravity constant
     static const bool compressibility = GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
     static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
     static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
@@ -386,7 +386,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
 
 
             // get normal vector
-            Dune::FieldVector<Scalar, dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+            const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
 
             // get face volume
             Scalar faceArea = isIt->geometry().volume();
@@ -402,7 +402,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
                 // distance vector between barycenters
-                Dune::FieldVector<Scalar, dimWorld> distVec = globalPosNeighbor - globalPos;
+                GlobalPosition distVec = globalPosNeighbor - globalPos;
 
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
@@ -558,7 +558,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
                 problem().boundaryTypes(bcType, *isIt);
                 PrimaryVariables boundValues(0.0);
 
-                Dune::FieldVector<Scalar, dimWorld> distVec(globalPosFace - globalPos);
+                GlobalPosition distVec(globalPosFace - globalPos);
                 Scalar dist = distVec.two_norm();
 
                 if (bcType.isDirichlet(eqIdxPress))
@@ -856,9 +856,6 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
     ElementIterator eItEnd = problem_.gridView().template end<0> ();
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
-        // get global coordinate of cell center
-        GlobalPosition globalPos = eIt->geometry().center();
-
         int globalIdx = problem_.variables().index(*eIt);
 
         Scalar temperature = problem_.temperature(*eIt);

@@ -1071,7 +1071,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 	// iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     ElementIterator eIt = problem_.gridView().template begin<0>();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (; eIt != eItEnd; ++eIt)
     {
         // get global coordinate of cell center
         GlobalPosition globalPos = eIt->geometry().center();

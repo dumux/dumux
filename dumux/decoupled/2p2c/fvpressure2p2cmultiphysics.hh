@@ -307,7 +307,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
                 // gemotry info of neighbor
                 const typename ElementIterator::Entity::Geometry &geoNeighbor = neighborPointer->geometry();
-                Dune::GeometryType neighborGT = geoNeighbor.type();
                 const GlobalPosition& globalPosNeighbor = geoNeighbor.center();
 
                 // distance vector between barycenters

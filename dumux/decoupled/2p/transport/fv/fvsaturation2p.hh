@@ -298,7 +298,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
     updateVec = 0;
 
     // some phase properties
-    //Dune::FieldVector<Scalar, dimWorld> gravity = problem_.gravity();
+    //const GlobalPosition& gravity = problem_.gravity();
 
     BoundaryTypes bcType;
 
@@ -314,7 +314,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         }
 #endif
         //
-        GlobalPosition globalPos = eIt->geometry().center();
+        const GlobalPosition& globalPos = eIt->geometry().center();
 
         // cell volume, assume linear map here
         Scalar volume = eIt->geometry().volume();
@@ -347,8 +347,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
             // local number of facet
             int isIndex = isIt->indexInInside();
 
-            Dune::FieldVector<Scalar, dimWorld> unitOuterNormal =
-                    isIt->centerUnitOuterNormal();
+            GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals_)
                 unitOuterNormal *= -1.0;
 
@@ -369,8 +368,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                         neighborPointer->geometry().center();
 
                 // distance vector between barycenters
-                Dune::FieldVector<Scalar, dimWorld> distVec = globalPosNeighbor
-                        - globalPos;
+                GlobalPosition distVec = globalPosNeighbor - globalPos;
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
@@ -474,8 +472,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                             globalIdxJ);
 
                     // calculate the saturation gradient
-                    Dune::FieldVector<Scalar, dimWorld> pcGradient =
-                            unitOuterNormal;
+                    GlobalPosition pcGradient = unitOuterNormal;
                     pcGradient *= (pcI - pcJ) / dist;
 
                     // get the diffusive part
@@ -559,11 +556,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 PrimaryVariables boundValues(0.0);
 
                 // center of face in global coordinates
-                GlobalPosition globalPosFace = isIt->geometry().center();
+                const GlobalPosition& globalPosFace = isIt->geometry().center();
 
                 // distance vector between barycenters
-                Dune::FieldVector<Scalar, dimWorld> distVec = globalPosFace
-                        - globalPos;
+                GlobalPosition distVec = globalPosFace - globalPos;
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
@@ -708,8 +704,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                                 globalIdxI);
 
                         // calculate the saturation gradient
-                        Dune::FieldVector<Scalar, dimWorld> pcGradient =
-                                unitOuterNormal;
+                        GlobalPosition pcGradient = unitOuterNormal;
                         pcGradient *= (pcI - pcBound) / dist;
 
                         // get the diffusive part -> give 1-sat because sat = S_n and lambda = lambda(S_w) and pc = pc(S_w)
@@ -1038,9 +1033,6 @@ void FVSaturation2P<TypeTag>::initialize()
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt
             != eItEnd; ++eIt)
     {
-        // get global coordinate of cell center
-        GlobalPosition globalPos = eIt->geometry().center();
-
         PrimaryVariables initSol(0.0);
         problem_.initial(initSol, *eIt);
         // initialize cell concentration
@@ -1063,9 +1055,6 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws(
     for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt
             != eItEnd; ++eIt)
     {
-        // get global coordinate of cell center
-        GlobalPosition globalPos = eIt->geometry().center();
-
         int globalIdx = problem_.variables().index(*eIt);
 
         Scalar sat = 0;

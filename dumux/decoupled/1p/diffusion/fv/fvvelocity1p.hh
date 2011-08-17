@@ -175,9 +175,6 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        //
-        GlobalPosition globalPos = eIt->geometry().center();
-
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
 
@@ -199,7 +196,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
             // local number of facet
             int isIndex = isIt->indexInInside();
 
-            Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
+            const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
 
             // handle interior face
             if (isIt->neighbor())
@@ -216,7 +213,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
                 // distance vector between barycenters
-                Dune::FieldVector<Scalar,dimWorld> distVec = globalPosNeighbor - globalPos;
+                GlobalPosition distVec = globalPosNeighbor - globalPos;
 
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
@@ -261,10 +258,10 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 density = (potential == 0.) ? 0.5 * (densityI + densityJ) : density;
 
                 //calculate the gravity term
-                Dune::FieldVector<Scalar,dimWorld> velocity(permeability);
+                GlobalPosition velocity(permeability);
                 velocity *= (pressI - pressJ)/dist;
 
-                Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
+                GlobalPosition gravityTerm(unitOuterNormal);
                 gravityTerm *= (this->gravity*permeability)*density;
 
                 //store velocities
@@ -276,7 +273,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
             else if (isIt->boundary())
             {
                 // center of face in global coordinates
-                GlobalPosition globalPosFace = isIt->geometry().center();
+                const GlobalPosition& globalPosFace = isIt->geometry().center();
 
                 //get boundary type
                 problem_.boundaryTypes(bcType, *isIt);
@@ -287,10 +284,10 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                     problem_.dirichlet(boundValues, *isIt);
 
                     // cell center in global coordinates
-                    GlobalPosition globalPos = eIt->geometry().center();
+                    const GlobalPosition& globalPos = eIt->geometry().center();
 
                     // distance vector between barycenters
-                    Dune::FieldVector<Scalar,dimWorld> distVec = globalPosFace - globalPos;
+                    GlobalPosition distVec = globalPosFace - globalPos;
 
                     // compute distance between cell centers
                     Scalar dist = distVec.two_norm();
@@ -310,10 +307,10 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                     Scalar pressBound = boundValues;
 
                     //calculate the gravity term
-                    Dune::FieldVector<Scalar,dimWorld> velocity(permeability);
+                    GlobalPosition velocity(permeability);
                     velocity *= (pressI - pressBound)/dist;
 
-                    Dune::FieldVector<Scalar,dimWorld> gravityTerm(unitOuterNormal);
+                    GlobalPosition gravityTerm(unitOuterNormal);
                     gravityTerm *= (this->gravity*permeability)*densityI;
 
                     problem_.variables().velocity()[globalIdxI][isIndex] = (velocity + gravityTerm);
@@ -323,7 +320,7 @@ void FVVelocity1P<TypeTag>::calculateVelocity()
                 else
                 {
                     problem_.neumann(boundValues, *isIt);
-                    Dune::FieldVector<Scalar,dimWorld> velocity(unitOuterNormal);
+                    GlobalPosition velocity(unitOuterNormal);
 
                     velocity *= boundValues[pressEqIdx]/densityI;
 

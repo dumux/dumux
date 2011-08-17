@@ -172,7 +172,6 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
         {
             // cell geometry type
             const typename ElementIterator::Entity::Geometry &entityGeo = eIt->geometry();
-            Dune::GeometryType gt = entityGeo.type();
 
             // get position
             GlobalPosition globalPos = entityGeo.center();
@@ -227,7 +226,6 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
                     // compute factor in neighbor
                     const typename ElementIterator::Entity::Geometry &entityGeo = eIt->geometry();
-                    Dune::GeometryType neighborGT = neighborPointer->geometry().type();
 
                     // cell center in global coordinates
                     const GlobalPosition& globalPos = entityGeo.center();

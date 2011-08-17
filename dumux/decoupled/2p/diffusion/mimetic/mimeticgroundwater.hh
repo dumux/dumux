@@ -178,7 +178,7 @@ public:
         this->setcurrentsize(numFaces);
 
         // get global coordinate of cell center
-        Dune::FieldVector<Scalar,dim> centerGlobal = element.geometry().center();
+        const Dune::FieldVector<Scalar,dim>& centerGlobal = element.geometry().center();
 
         int globalIdx = problem_.variables().index(element);
 
@@ -205,11 +205,11 @@ public:
             // local number of facet
             i = it->indexInInside();
 
-            Dune::FieldVector<Scalar,dim> faceGlobal = it->geometry().center();
+            const Dune::FieldVector<Scalar,dim>& faceGlobal = it->geometry().center();
             faceVol[i] = it->geometry().volume();
 
             // get normal vector
-            Dune::FieldVector<Scalar,dim> unitOuterNormal = it->centerUnitOuterNormal();
+            const Dune::FieldVector<Scalar,dim>& unitOuterNormal = it->centerUnitOuterNormal();
 
             N[i] = unitOuterNormal;
 
@@ -394,8 +394,6 @@ private:
         for (IntersectionIterator it = gridView_.ibegin(element); it!=endit; ++it)
             if (!it->neighbor())
             {
-                Dune::FieldVector<Scalar,dim> faceGlobal = it->geometry().center();
-
                 unsigned int faceIndex = it->indexInInside();
 
                 problem_.boundaryTypes(bcType, *it);
