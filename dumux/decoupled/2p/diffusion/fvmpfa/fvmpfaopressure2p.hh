@@ -18,8 +18,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUNE_FVMPFAOPRESSURE2P_HH
-#define DUNE_FVMPFAOPRESSURE2P_HH
+#ifndef DUMUX_FVMPFAOPRESSURE2P_HH
+#define DUMUX_FVMPFAOPRESSURE2P_HH
 
 // dune environent:
 #include <dune/istl/bvector.hh>
@@ -2425,7 +2425,7 @@ void FVMPFAOPressure2P<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
 
-    int verboseLevelSolver = GET_PARAM(TypeTag, int, LSVerbosity);
+    int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
 
     if (verboseLevelSolver)
         std::cout << "FVMPFAOPressure2P: solve for pressure" << std::endl;

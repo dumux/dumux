@@ -196,19 +196,19 @@ public:
 };
 
 //! set the default for the reduction of the initial residual
-SET_PROP(DecoupledModel, LSResidualReduction)
+SET_PROP(DecoupledModel, LinearSolverResidualReduction)
 {public:
     static constexpr double value = 1e-13;
 };
 
 //! set the default number of maximum iterations for the linear solver
-SET_PROP(DecoupledModel, LSMaxIterations)
+SET_PROP(DecoupledModel, LinearSolverMaxIterations)
 {public:
     static constexpr int value = 500;
 };
 
 //! set the default number of maximum iterations for the linear solver
-SET_PROP(DecoupledModel, LSBlockSize)
+SET_PROP(DecoupledModel, LinearSolverBlockSize)
 {public:
     static constexpr int value = 1;
 };

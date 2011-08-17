@@ -105,7 +105,7 @@ SET_INT_PROP(LensProblem, NumericDifferenceMethod, +1);
 
 // Linear solver settings
 SET_TYPE_PROP(LensProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
-SET_INT_PROP(LensProblem, LSVerbosity, 0);
+SET_INT_PROP(LensProblem, LinearSolverVerbosity, 0);
 SET_INT_PROP(LensProblem, PreconditionerIterations, 1);
 SET_SCALAR_PROP(LensProblem, PreconditionerRelaxation, 1.0);
 

@@ -25,8 +25,8 @@
  *
  * \brief Properties for the MPFA-O method.
  */
-#ifndef DUNE_MPFAOPROPERTIES_HH
-#define DUNE_MPFAOPROPERTIES_HH
+#ifndef DUMUX_MPFAOPROPERTIES_HH
+#define DUMUX_MPFAOPROPERTIES_HH
 
 // dumux environment
 #include <dumux/decoupled/2p/2pproperties.hh>

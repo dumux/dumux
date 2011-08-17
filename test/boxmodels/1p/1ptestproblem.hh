@@ -76,7 +76,7 @@ SET_PROP(OnePTestProblem, SpatialParameters)
 
 // Linear solver settings
 SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxCGILU0Solver<TypeTag> );
-SET_INT_PROP(OnePTestProblem, LSVerbosity, 1);
+SET_INT_PROP(OnePTestProblem, LinearSolverVerbosity, 1);
 SET_INT_PROP(OnePTestProblem, PreconditionerIterations, 1);
 SET_SCALAR_PROP(OnePTestProblem, PreconditionerRelaxation, 1.0);
 

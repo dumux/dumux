@@ -90,7 +90,7 @@ SET_TYPE_PROP(TestProblemOneP, Model, Dumux::FVVelocity1P<TypeTag>);
 SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TTAG(TestProblemOneP)>);
 
 
-SET_INT_PROP(TestProblemOneP, LSVerbosity, 1);
+SET_INT_PROP(TestProblemOneP, LinearSolverVerbosity, 1);
 }
 
 /*!

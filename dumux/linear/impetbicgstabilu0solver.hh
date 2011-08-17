@@ -45,9 +45,9 @@ NEW_PROP_TAG(PressureCoefficientMatrix);
 NEW_PROP_TAG(PressureRHSVector);
 NEW_PROP_TAG(SolutionTypes);
 NEW_PROP_TAG(GridView);
-NEW_PROP_TAG(LSVerbosity);
-NEW_PROP_TAG(LSMaxIterations);
-NEW_PROP_TAG(LSResidualReduction);
+NEW_PROP_TAG(LinearSolverVerbosity);
+NEW_PROP_TAG(LinearSolverMaxIterations);
+NEW_PROP_TAG(LinearSolverResidualReduction);
 NEW_PROP_TAG(PreconditionerRelaxation);
 }
 
@@ -114,9 +114,9 @@ public:
                Vector &x,
                const Vector &b)
     {
-        int verbosityLevel = GET_PARAM(TypeTag, int, LSVerbosity);
-        const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
-        const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
+        int verbosityLevel = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+        const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
+        const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
         const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
 
         if (!overlapMatrix_) {

@@ -45,13 +45,13 @@ NEW_PROP_TAG(LinearSolver);
  * property to 1 prints aggregated convergence rates, 2 prints the
  * convergence rate of every iteration of the scheme.
  */
-NEW_PROP_TAG(LSVerbosity);
+NEW_PROP_TAG(LinearSolverVerbosity);
 
 //! target reduction of the initial residual
-NEW_PROP_TAG(LSResidualReduction);
+NEW_PROP_TAG(LinearSolverResidualReduction);
 
 //! maximum number of iterations of solver
-NEW_PROP_TAG(LSMaxIterations);
+NEW_PROP_TAG(LinearSolverMaxIterations);
 
 //! relaxation parameter for the preconditioner
 NEW_PROP_TAG(PreconditionerRelaxation);
@@ -69,9 +69,9 @@ NEW_PROP_TAG(GMResRestart);
  * Thus, the block size does not have to be equal to NumEq.
  * (Especially important for the SuperLU solver!)
  */
-NEW_PROP_TAG(LSBlockSize);
+NEW_PROP_TAG(LinearSolverBlockSize);
 
-SET_PROP_DEFAULT(LSVerbosity)
+SET_PROP_DEFAULT(LinearSolverVerbosity)
 {public:
     static constexpr int value = 0;
 };

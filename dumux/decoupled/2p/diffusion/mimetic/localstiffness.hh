@@ -12,8 +12,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUNE_LOCALSTIFFNESS_HH
-#define DUNE_LOCALSTIFFNESS_HH
+#ifndef DUMUX_LOCAL_STIFFNESS_HH
+#define DUMUX_LOCAL_STIFFNESS_HH
 
 #include<iostream>
 #include<vector>

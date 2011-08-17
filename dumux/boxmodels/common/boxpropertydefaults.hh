@@ -217,19 +217,19 @@ SET_TYPE_PROP(BoxModel, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
 // that the initial value for the delta vector u is quite
 // close to the final value, a reduction of 6 orders of
 // magnitude in the defect should be sufficient...
-SET_PROP(BoxModel, LSResidualReduction)
+SET_PROP(BoxModel, LinearSolverResidualReduction)
 {public:
     static constexpr double value = 1e-6;
 };
 
 //! set the default number of maximum iterations for the linear solver
-SET_PROP(BoxModel, LSMaxIterations)
+SET_PROP(BoxModel, LinearSolverMaxIterations)
 {public:
     static constexpr int value = 250;
 };
 
 //! set number of equations of the mathematical model as default
-SET_PROP_DEFAULT(LSBlockSize)
+SET_PROP_DEFAULT(LinearSolverBlockSize)
 {public:
     static constexpr int value = GET_PROP_VALUE(TypeTag, PTAG(NumEq));
 };

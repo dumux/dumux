@@ -19,8 +19,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 
-#ifndef DUNE_MPFAOVELOCITY2P_HH
-#define DUNE_MPFAOVELOCITY2P_HH
+#ifndef DUMUX_MPFAOVELOCITY2P_HH
+#define DUMUX_MPFAOVELOCITY2P_HH
 
 #include "dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaopressure2p.hh"
 

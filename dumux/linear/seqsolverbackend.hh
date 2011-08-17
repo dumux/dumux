@@ -45,9 +45,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
+    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
@@ -70,9 +70,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
+    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
@@ -333,9 +333,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
+    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
@@ -357,9 +357,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LSVerbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LSMaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LSResidualReduction);
+    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
@@ -466,7 +466,7 @@ public:
     Vector bTmp(b);
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    enum {blockSize = GET_PROP_VALUE(TypeTag, PTAG(LSBlockSize))};
+    enum {blockSize = GET_PROP_VALUE(TypeTag, PTAG(LinearSolverBlockSize))};
     typedef typename Dune::FieldMatrix<Scalar, blockSize, blockSize> MatrixBlock;
     typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
 
