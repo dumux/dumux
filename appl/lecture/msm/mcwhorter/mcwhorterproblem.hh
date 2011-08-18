@@ -264,7 +264,9 @@ public:
 		dataFile << "# title Mc Whorther Problem\n";
 		dataFile << "# x-label x\n";
 		dataFile << "# y-label Saturation\n";
-		dataFile << "# color 0 0 0\n";
+		dataFile << "# color 0 0 255\n";
+		dataFile << "# x-range -0.1 2.1\n";
+		dataFile << "# y-range 0 1\n";
 //		dataFile << "# symbol none";
 //		dataFile << "# linestyle solid";
 		ElementIterator eItEnd = this->gridView().template end<0>();
@@ -277,7 +279,7 @@ public:
 	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
 	    }
 
-		dataFile << "# color 0 0 255\n";
+		dataFile << "# color 255 0 0\n";
 		for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
 	    {
 	    	int currentIdx = this->variables().index(*eIt);
@@ -286,7 +288,7 @@ public:
 	    	Scalar rightPos = eIt->geometry().corner(1)[0];
 	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
 	    }
-		dataFile << "# legend Numerical Solution, Analytic Solution\n";
+		dataFile << "# legend Numerical Solution,Analytic Solution\n";
 		dataFile.close();
     }
 

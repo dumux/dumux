@@ -80,7 +80,7 @@ int main(int argc, char** argv)
 
         // grid reference
         GridType grid(cellNumbers,lowerLeft,upperRight);
-        Dune::gridinfo(grid);
+//        Dune::gridinfo(grid);
 
 
         ////////////////////////////////////////////////////////////
