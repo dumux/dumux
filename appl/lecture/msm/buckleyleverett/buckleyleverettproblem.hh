@@ -136,7 +136,6 @@ class BuckleyLeverettProblem: public IMPESProblem2P<TypeTag>
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
@@ -157,9 +156,7 @@ public:
         //Write header for ViPLab-Outputfile
     	std::ofstream dataFile;
 		dataFile.open("vipplot.vgf");
-
 		dataFile.close();
-
     }
 
 
@@ -293,7 +290,9 @@ public:
 		dataFile << "# title Buckley-Leverett-Problem\n";
 		dataFile << "# x-label x\n";
 		dataFile << "# y-label Saturation\n";
-		dataFile << "# color 0 0 0\n";
+		dataFile << "# color 0 0 255\n";
+		dataFile << "# x-range -10 310\n";
+		dataFile << "# y-range 0 1\n";
 //		dataFile << "# symbol none";
 //		dataFile << "# linestyle solid";
 		ElementIterator eItEnd = this->gridView().template end<0>();
@@ -306,7 +305,7 @@ public:
 	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
 	    }
 
-		dataFile << "# color 0 0 255\n";
+		dataFile << "# color 255 0 0\n";
 		for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
 	    {
 	    	int currentIdx = this->variables().index(*eIt);
@@ -316,7 +315,7 @@ public:
 	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
 	    }
 
-		dataFile << "# legend Numerical Solution, Analytic Solution\n";
+		dataFile << "# legend Numerical Solution,Analytic Solution\n";
 		dataFile.close();
     }
 

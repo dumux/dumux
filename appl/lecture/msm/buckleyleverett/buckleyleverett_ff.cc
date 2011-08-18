@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
         // create a grid object
         Grid grid(cellNumbers, lowerLeft, upperRight);
-        Dune::gridinfo(grid);
+//        Dune::gridinfo(grid);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
