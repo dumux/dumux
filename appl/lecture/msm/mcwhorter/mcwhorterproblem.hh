@@ -134,6 +134,7 @@ class McWhorterProblem: public IMPESProblem2P<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
@@ -152,6 +153,11 @@ public:
        analyticSolution_(*this)
      {
         this->setOutputInterval(10);
+
+        //Write header for ViPLab-Outputfile
+    	std::ofstream dataFile;
+		dataFile.open("vipplot.vgf");
+		dataFile.close();
      }
 
     /*!
@@ -239,6 +245,51 @@ public:
     {
         values = 0;
     }
+
+    //Override outputfunction for ViPLab-Output
+    void writeOutput()
+    {
+    	double time = this->timeManager().time();
+    	if (time < 0)
+    		return;
+
+    	std::ofstream dataFile;
+		dataFile.open("vipplot.vgf", std::fstream::app);
+
+    	std::cout<<"Writing output for time step.\n";
+
+    	if (time  > 0)
+    		dataFile << "# newframe\n";
+
+		dataFile << "# title Mc Whorther Problem\n";
+		dataFile << "# x-label x\n";
+		dataFile << "# y-label Saturation\n";
+		dataFile << "# color 0 0 0\n";
+//		dataFile << "# symbol none";
+//		dataFile << "# linestyle solid";
+		ElementIterator eItEnd = this->gridView().template end<0>();
+	    for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+	    {
+	    	int currentIdx = this->variables().index(*eIt);
+	    	Scalar sat = this->variables().saturation()[currentIdx];
+	    	Scalar leftPos = eIt->geometry().corner(0)[0];
+	    	Scalar rightPos = eIt->geometry().corner(1)[0];
+	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
+	    }
+
+		dataFile << "# color 0 0 255\n";
+		for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+	    {
+	    	int currentIdx = this->variables().index(*eIt);
+	    	Scalar sat = analyticSolution_.AnalyticSolution()[currentIdx];
+	    	Scalar leftPos = eIt->geometry().corner(0)[0];
+	    	Scalar rightPos = eIt->geometry().corner(1)[0];
+	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
+	    }
+		dataFile << "# legend Numerical Solution, Analytic Solution\n";
+		dataFile.close();
+    }
+
 
   /*  McWhorterProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase,
             Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>&),
