@@ -82,8 +82,11 @@ SET_PROP(LensProblem, SpatialParameters)
 
 // Define whether mole(true) or mass(false) fractions are used
 SET_BOOL_PROP(LensProblem, UseMoles, true);
-// Enable gravity
+// Disable gravity
 SET_BOOL_PROP(LensProblem, EnableGravity, false);
+
+// Disable Jacobian recycling
+SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
 }
 
 /*!
@@ -214,18 +217,17 @@ public:
      * \param vertex The vertex on the boundary for which the
      *               conditions needs to be specified
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
+    void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
         if (onUpperBoundary_(globalPos) || onLowerBoundary_(globalPos))
             values.setAllDirichlet();
         else
             values.setAllNeumann();
+
         if (onInlet_(globalPos))
             values.setNeumann(transEqIdx);
-        if (onLowerBoundary_(globalPos))
-            values.setNeumann(transEqIdx);
+//        if (onLowerBoundary_(globalPos))
+//            values.setNeumann(transEqIdx);
     }
 
     /*!
@@ -237,11 +239,15 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
-        if (onUpperBoundary_(globalPos))
+//    	if (onInlet_(globalPos) && this->timeManager().time() <= infiltrationEndTime_)
+//    	{
+//    		values[pressureIdx] = upperPressure_;
+//    		values[x1Idx] =0.8;
+//    	}
+//    	else
+    		if (onUpperBoundary_(globalPos))
         {
             values[pressureIdx] = upperPressure_;
             values[x1Idx] = 0.0;
@@ -262,21 +268,11 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &isIt,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
         values = 0.0;
-
         const Scalar& time = this->timeManager().time();
-
-        if (time >= infiltrationStartTime_ && time <= infiltrationEndTime_)
+        if (time <= infiltrationEndTime_ && infiltrationStartTime_ <= time)
         {
             if (onInlet_(globalPos))
                 values[transEqIdx] = -infiltrationRate_;
@@ -297,10 +293,7 @@ public:
      * generated or annihilate per volume unit. Positive values mean
      * that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &,
-                int subControlVolumeIdx) const
+    void sourceAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
         values = Scalar(0.0);
     }
@@ -311,14 +304,8 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initial(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
+    void initialAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
         // no contaminant, hydrostatic pressure
         const Scalar depth = this->bboxMax()[1] - globalPos[1];
         const Scalar height = this->bboxMax()[1] - this->bboxMin()[1];

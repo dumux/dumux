@@ -1,11 +1,11 @@
-MaxTimeStepSize = 500
-tEnd = 50000
-dt = 100
+MaxTimeStepSize = 4000
+tEnd = 64000
+dt = 1000
 
 [Soil]
-FinePermeability = 3.1e-11
+FinePermeability = 0.3e-11
 CoarsePermeability = 5.89912e-11
-FinePorosity = 0.4
+FinePorosity = 0.5
 CoarsePorosity = 0.5
 
 [Boundary]

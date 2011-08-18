@@ -72,8 +72,8 @@ public:
           lensK_(0),
           outerK_(0)
     {
-        lensPorosity_ = Params::tree().template get<double>("Soil.FinePermeability");
-        outerPorosity_ = Params::tree().template get<double>("Soil.CoarsePermeability");
+        lensPorosity_ = Params::tree().template get<double>("Soil.FinePorosity");
+        outerPorosity_ = Params::tree().template get<double>("Soil.CoarsePorosity");
 
         longitudinalDispersivity_ = 1.0e-5;
         transverseDispersivity_ = 1.0e-6;
