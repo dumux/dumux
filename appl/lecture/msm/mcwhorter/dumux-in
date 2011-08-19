@@ -20,5 +20,5 @@ viscosityNW = 1e-3
 
 
 [problem]
-DiscretizationLength = 0.05
+DiscretizationLength = 0.08
 tEnd = 1000

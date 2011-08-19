@@ -69,7 +69,7 @@ int main(int argc, char** argv)
         Dune::FieldVector<Scalar, dim> upperRight(2.0);
 //        UpperRight[1] = 1;
         Dune::FieldVector<int, dim> cellNumbers(cellNumber);
-        cellNumbers[0] = 26;
+//        cellNumbers[0] = 26;
 
         double tEnd = Params::tree().get<double>("problem.tEnd");
         double dt = tEnd;
