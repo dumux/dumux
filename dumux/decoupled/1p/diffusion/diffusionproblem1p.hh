@@ -73,7 +73,7 @@ public:
      * \param verbose Output flag for the time manager.
      */
     DiffusionProblem1P(const GridView &gridView)
-    : ParentType(gridView), gravity_(0)
+    : ParentType(gridView, false), gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
         newSpatialParams_ = true;
@@ -89,7 +89,7 @@ public:
      * \param verbose Output flag for the time manager.
      */
     DiffusionProblem1P(const GridView &gridView, SpatialParameters &spatialParameters)
-    : ParentType(gridView), gravity_(0), spatialParameters_(&spatialParameters)
+    : ParentType(gridView, false), gravity_(0), spatialParameters_(&spatialParameters)
     {
         newSpatialParams_ = false;
         gravity_ = 0;

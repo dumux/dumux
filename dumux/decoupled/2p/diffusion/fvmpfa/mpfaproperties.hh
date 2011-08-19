@@ -29,7 +29,7 @@
 #define DUMUX_MPFAOPROPERTIES_HH
 
 // dumux environment
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/common/basicproperties.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/alugrid.hh>
@@ -89,6 +89,9 @@ NEW_TYPE_TAG(MPFAProperties);
 
 NEW_PROP_TAG( GridTypeIndices );
 NEW_PROP_TAG( GridImplementation ); //returns kind of grid implementation
+
+//forward declaration
+NEW_PROP_TAG( Grid );
 
 SET_PROP(MPFAProperties, GridImplementation)
 {

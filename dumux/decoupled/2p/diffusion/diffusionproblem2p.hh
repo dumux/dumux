@@ -75,8 +75,37 @@ public:
      *
      * \param gridView The grid view
      */
+    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView)
+    : ParentType(timeManager, gridView), gravity_(0)
+    {
+        spatialParameters_ = new SpatialParameters(gridView);
+        newSpatialParams_ = true;
+        gravity_ = 0;
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
+            gravity_[dim - 1] = -9.81;
+    }
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
+     */
+    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
+    : ParentType(timeManager, gridView), gravity_(0), spatialParameters_(&spatialParameters)
+    {
+        newSpatialParams_ = false;
+        gravity_ = 0;
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
+            gravity_[dim - 1] = -9.81;
+    }
+
+    /*!
+     * \brief The constructor
+     *
+     * \param gridView The grid view
+     */
     DiffusionProblem2P(const GridView &gridView)
-    : ParentType(gridView), gravity_(0)
+    : ParentType(gridView, false), gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
         newSpatialParams_ = true;
@@ -91,7 +120,7 @@ public:
      * \param spatialParameters SpatialParameters instantiation
      */
     DiffusionProblem2P(const GridView &gridView, SpatialParameters &spatialParameters)
-    : ParentType(gridView), gravity_(0), spatialParameters_(&spatialParameters)
+    : ParentType(gridView, false), gravity_(0), spatialParameters_(&spatialParameters)
     {
         newSpatialParams_ = false;
         gravity_ = 0;
