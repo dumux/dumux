@@ -76,6 +76,8 @@ AC_DEFUN([DUMUX_CHECKS],
   else
      DUNE_ADD_SUMMARY_ENTRY([Valgrind client requests],["no"])
   fi
+  
+  DUMUX_CHECK_QUAD
 
   # check whether the constexpr keyword is present
   AC_REQUIRE([CONSTEXPR_CHECK])
