@@ -30,7 +30,10 @@
 
 #include <iostream>
 #include <cmath>
+
+extern "C" {
 #include <quadmath.h>
+}
 
 typedef __float128 quad;
 
