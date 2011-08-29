@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <limits>
 
 extern "C" {
 #include <quadmath.h>
@@ -39,6 +40,59 @@ typedef __float128 quad;
 
 namespace std
 {
+
+// provide the numeric limits for the quad precision type
+template <>
+class numeric_limits<quad>
+{
+public:
+    static constexpr bool is_specialized = true;
+
+    static constexpr quad min() throw() 
+    { return FLT128_MIN; }
+    static constexpr quad max() throw()
+    { return FLT128_MAX; }
+        
+    // number of bits in mantissa
+    static constexpr int  digits = FLT128_MANT_DIG;
+    // number of decimal digits
+    static constexpr int  digits10 = FLT128_DIG;
+    static constexpr bool is_signed = true;
+    static constexpr bool is_integer = false;
+    static constexpr bool is_exact = false;
+    static constexpr int radix = 0;
+    static constexpr quad epsilon() throw()
+    { return FLT128_EPSILON; }
+    static constexpr quad round_error() throw()
+    { return 0.5; }
+    
+    static constexpr int min_exponent = FLT128_MIN_EXP;
+    static constexpr int min_exponent10 = FLT128_MIN_10_EXP;
+    static constexpr int max_exponent = FLT128_MAX_EXP;
+    static constexpr int max_exponent10 = FLT128_MAX_10_EXP;
+    
+    static constexpr bool has_infinity = true;
+    static constexpr bool has_quiet_NaN = true;
+    static constexpr bool has_signaling_NaN = true;
+    static constexpr float_denorm_style has_denorm = denorm_present;
+    static constexpr bool has_denorm_loss = false;
+    static constexpr quad infinity() throw()
+    { return __builtin_huge_valq(); };
+    static constexpr quad quiet_NaN() throw()
+    { return __builtin_nan(""); }
+    static constexpr quad signaling_NaN() throw()
+    { return __builtin_nans(""); }
+    static constexpr quad denorm_min() throw()
+    { return FLT128_DENORM_MIN; }
+    
+    static constexpr bool is_iec559 = true;
+    static constexpr bool is_bounded = true;
+    static constexpr bool is_modulo = false;
+    
+    static constexpr bool traps = std::numeric_limits<double>::traps;
+    static constexpr bool tinyness_before = std::numeric_limits<double>::tinyness_before;
+    static constexpr float_round_style round_style = round_to_nearest;
+};
 
 inline std::ostream& operator<<(std::ostream& os, const quad &val)
 {
