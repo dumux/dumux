@@ -1,5 +1,6 @@
 SUBDIRS = 1p \
-	  2p  \
+	  2p \
+	  2padaptive \
 	  2p2c
 
 EXTRA_DIST = CMakeLists.txt
