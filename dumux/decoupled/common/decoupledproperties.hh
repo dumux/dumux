@@ -104,6 +104,17 @@ SET_BOOL_PROP(DecoupledModel, AdaptiveGrid, false);
 //! Use the parent VariableClass
 SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);
 
+NEW_PROP_TAG(MaxIntersections);   //!< maximum number of intersections per element
+SET_PROP_DEFAULT(MaxIntersections)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    static const int dim = Grid::dimension;
+public:
+    typedef int type;
+    static const int value = 2*dim;
+};
+
 /*!
  * \brief Specifies the types which are assoicated with a solution.
  *
@@ -122,7 +133,8 @@ SET_PROP(DecoupledModel, SolutionTypes)
         dim = GridView::dimension,
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))
+        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+        maxIntersections = GET_PROP_VALUE(TypeTag, PTAG(MaxIntersections))
     };
 
     template<int dim>
@@ -160,8 +172,8 @@ public:
     typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents> ComponentProperty;//!<type for vector of phase properties
     typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> PhaseProperty;//!<type for vector of phase properties
     typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> FluidProperty;//!<type for vector of fluid properties: Vector[element][phase]
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, 2*dim > > PhasePropertyElemFace;//!<type for vector of vectors (of size 2 x dimension) of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, 2*dim > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
+    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, maxIntersections > > PhasePropertyElemFace;//!<type for vector of vectors (of size 2 x dimension) of scalars
+    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 };
 
 SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables);
