@@ -50,6 +50,7 @@ struct DecoupledTwoPCommonIndices
     // Phase indices
     static const int wPhaseIdx = 0; //!< Index of the wetting phase in a phase vector
     static const int nPhaseIdx = 1; //!< Index of the non-wetting phase in a phase vector
+    static const int totalPhaseIdx = 2; //!< Index of the total phase (wetting + nonwetting)
 
     //saturation flags
     static const int saturationW = 0;
