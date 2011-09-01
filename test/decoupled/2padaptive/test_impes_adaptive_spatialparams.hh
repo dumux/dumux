@@ -22,8 +22,8 @@
  *
  * \brief spatial parameters for the sequential 2p test
  */
-#ifndef TEST_IMPES_SPATIALPARAMETERS_HH
-#define TEST_IMPES_SPATIALPARAMETERS_HH
+#ifndef TEST_IMPES_ADAPTIVE_SPATIALPARAMETERS_HH
+#define TEST_IMPES_ADAPTIVE_SPATIALPARAMETERS_HH
 
 #include <dumux/material/spatialparameters/fvspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -35,18 +35,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class TestIMPESSpatialParams;
+class TestIMPESAdaptiveSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TestIMPESSpatialParams);
+NEW_TYPE_TAG(TestIMPESAdaptiveSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestIMPESSpatialParams, SpatialParameters, Dumux::TestIMPESSpatialParams<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptiveSpatialParams, SpatialParameters, Dumux::TestIMPESAdaptiveSpatialParams<TypeTag>);
 
 // Set the material law
-SET_PROP(TestIMPESSpatialParams, MaterialLaw)
+SET_PROP(TestIMPESAdaptiveSpatialParams, MaterialLaw)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -62,7 +62,7 @@ public:
  * \brief spatial parameters for the sequential 2p test
  */
 template<class TypeTag>
-class TestIMPESSpatialParams: public FVSpatialParameters<TypeTag>
+class TestIMPESAdaptiveSpatialParams: public FVSpatialParameters<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -101,7 +101,7 @@ public:
     }
 
 
-    TestIMPESSpatialParams(const GridView& gridView)
+    TestIMPESAdaptiveSpatialParams(const GridView& gridView)
     : ParentType(gridView)
     {
         // residual saturations

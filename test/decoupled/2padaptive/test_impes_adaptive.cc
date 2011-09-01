@@ -33,6 +33,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
+#include <dune/common/parametertreeparser.hh>
 
 #include <iostream>
 #include <boost/format.hpp>
@@ -43,21 +44,26 @@
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s [--restart restartTime] tEnd\n")%progname;
+    std::cout << boost::format("usage: %s [--restart restartTime] InputFileName\n")%progname;
     exit(1);
 }
 
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(IMPESTestProblem) TypeTag;
+        typedef TTAG(TestIMPESAdaptiveProblem) TypeTag;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
         typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
+        typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
-        static const int dim = Grid::dimension;
+        //todo: diese zwei Zeile nach dem testen entfernen
+        typedef GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+        typedef typename GridView::Codim<0>::Iterator ElementLeafIterator;
+
+//        static const int dim = Grid::dimension;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -83,32 +89,50 @@ int main(int argc, char** argv)
             usage(argv[0]);
         }
 
+
+        std::string inputFileName;
+        inputFileName = argv[argPos++];
+
+
+        ////////////////////////////////////////////////////////////
+        // Read Input file and create grid
+        ////////////////////////////////////////////////////////////
+
+        Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
+
+        std::string fileName = Params::tree().get<std::string>("gridFile");
+        Dune::GridPtr<Grid> gridPtr(fileName);
+
+
+        gridPtr->globalRefine(Params::tree().get<int>("levelInit"));
+
         // read the initial time step and the end time
         double tEnd, dt;
-        std::istringstream(argv[argPos++]) >> tEnd;
+        tEnd = Params::tree().get<double>("tEnd");
         dt = tEnd;
 
-        ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> numCells;
-        numCells[0] = 30;
-        numCells[1] = 6;
-        Dune::FieldVector<double,dim> lowerLeft;
-        lowerLeft[0] = 0;
-        lowerLeft[1] = 0;
-        Dune::FieldVector<double,dim> upperRight;
-        upperRight[0] = 300;
-        upperRight[1] = 60;
-        Dune::FieldVector<bool,dim> periodic(false);
+//		std::cout << "size before adapt: " << gridPtr->leafView().size(0) << std::endl;
+////		Einzelne Zellen verfeinern: links
+//		for (ElementLeafIterator it=gridPtr->leafView().begin<0>();
+//				it!=gridPtr->leafView().end<0>(); ++it)
+//		{
+//			if ((it->geometry().corner(0)[0]>=100))
+//			{
+//			gridPtr->mark(1,*it);
+//			}
+//		}
+//
+//		gridPtr->preAdapt();
+//		gridPtr->adapt();
+//		gridPtr->postAdapt();
+//
+//		std::cout << "size after first adapt: " << gridPtr->leafView().size(0) << std::endl;
 
-        Grid grid(Dune::MPIHelper::getCommunicator(), upperRight, numCells, periodic, /*overlap=*/1);
-        grid.loadBalance();
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         TimeManager timeManager;
-        Problem problem(timeManager, grid.leafView());
+        Problem problem(timeManager, *gridPtr);
 
         // load restart file if necessarry
         if (restart)

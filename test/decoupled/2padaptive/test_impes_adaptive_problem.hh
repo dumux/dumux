@@ -24,22 +24,23 @@
  *
  * \brief test problem for the sequential 2p model
  */
-#ifndef DUMUX_TEST_IMPES_PROBLEM_HH
-#define DUMUX_TEST_IMPES_PROBLEM_HH
+#ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
+#define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
 #endif
 
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
+//#include <dune/grid/yaspgrid.hh>
+//#include <dune/grid/sgrid.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/oil.hh>
 
-#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
+#include <dumux/decoupled/2p/impes/impesproblem2padaptive.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2padaptive.hh>
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
 #include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
@@ -52,42 +53,41 @@ namespace Dumux
 {
 
 template<class TypeTag>
-class TestIMPESProblem;
+class TestIMPESAdaptiveProblem;
 
 //////////
 // Specify the properties
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(DecoupledTwoP, Transport, TestIMPESSpatialParams));
+NEW_TYPE_TAG(TestIMPESAdaptiveProblem, INHERITS_FROM(DecoupledTwoP, Transport, TestIMPESAdaptiveSpatialParams));
 
 // Set the grid type
-SET_PROP(IMPESTestProblem, Grid)
+SET_PROP(TestIMPESAdaptiveProblem, Grid)
 {
-    typedef Dune::YaspGrid<2> type;
-    //typedef Dune::SGrid<2, 2> type;
+	typedef Dune::UGGrid<2> type;
 };
 
 // Set the problem property
-SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::TestIMPESProblem<TTAG(IMPESTestProblem)>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, Dumux::TestIMPESAdaptiveProblem<TTAG(TestIMPESAdaptiveProblem)>);
 
 // Set the model properties
-SET_TYPE_PROP(IMPESTestProblem, TransportModel, Dumux::FVSaturation2P<TTAG(IMPESTestProblem)>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, TransportModel, Dumux::FVSaturation2P<TTAG(TestIMPESAdaptiveProblem)>);
 
-SET_TYPE_PROP(IMPESTestProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
-SET_TYPE_PROP(IMPESTestProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
 
-SET_PROP(IMPESTestProblem, PressureModel)
+SET_PROP(TestIMPESAdaptiveProblem, PressureModel)
 {
-    typedef Dumux::FVVelocity2P<TTAG(IMPESTestProblem)> type;
+    typedef Dumux::FVVelocity2Padaptive<TTAG(TestIMPESAdaptiveProblem)> type;
 };
 
-//SET_INT_PROP(IMPESTestProblem, Formulation,
+//SET_INT_PROP(TestIMPESAdaptiveProblem, Formulation,
 //        DecoupledTwoPCommonIndices::pnSn);
 
 
 // Set the wetting phase
-SET_PROP(IMPESTestProblem, WettingPhase)
+SET_PROP(TestIMPESAdaptiveProblem, WettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -96,7 +96,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(IMPESTestProblem, NonwettingPhase)
+SET_PROP(TestIMPESAdaptiveProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -105,11 +105,13 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(IMPESTestProblem, EnableGravity, false);
+SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableGravity, false);
 
-SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
-SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
+SET_SCALAR_PROP(TestIMPESAdaptiveProblem, CFLFactor, 0.95);
+
+SET_INT_PROP(TestIMPESAdaptiveProblem, MaxIntersections, 8);
 }
 
 /*!
@@ -125,10 +127,11 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
  * <tt>./test_impes 1e8</tt>,
  * where the argument defines the simulation endtime.
  */
-template<class TypeTag = TTAG(IMPESTestProblem)>
-class TestIMPESProblem: public IMPESProblem2P<TypeTag>
+template<class TypeTag = TTAG(TestIMPESAdaptiveProblem)>
+class TestIMPESAdaptiveProblem: public IMPESProblem2Padaptive<TypeTag>
 {
-typedef IMPESProblem2P<TypeTag> ParentType;
+typedef IMPESProblem2Padaptive<TypeTag> ParentType;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
@@ -162,9 +165,10 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
 
 public:
-TestIMPESProblem(TimeManager &timeManager, const GridView &gridView) :
-ParentType(timeManager, gridView)
+TestIMPESAdaptiveProblem(TimeManager &timeManager, Grid &grid) :
+ParentType(timeManager, grid)
 {
+this->setOutputInterval(10);
 }
 
 /*!
@@ -179,7 +183,7 @@ ParentType(timeManager, gridView)
  */
 const char *name() const
 {
-    return "test2p";
+    return "output2padaptive";
 }
 
 bool shouldWriteRestartFile() const
@@ -192,7 +196,7 @@ bool shouldWriteRestartFile() const
  *
  * This problem assumes a temperature of 10 degrees Celsius.
  */
-Scalar temperature(const Element& element) const
+Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 {
     return 273.15 + 10; // -> 10°C
 }
@@ -200,7 +204,7 @@ Scalar temperature(const Element& element) const
 // \}
 
 //! Returns the reference pressure for evaluation of constitutive relations
-Scalar referencePressure(const Element& element) const
+Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
     return 1e5; // -> 10°C
 }

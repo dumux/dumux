@@ -262,6 +262,29 @@ public:
         return;
     }
 
+    ////////////////////////////////////////
+    // Adapt variable size of all variables
+    ////////////////////////////////////////
+
+    void adaptVariableSize2p(int size)
+     {
+         //resize to grid size
+   	     this->setGridSize(size);
+         for (int i=0; i<2; i++) //for both phases
+         {
+         density_[i].resize(size);
+         viscosity_[i].resize(size);
+         mobility_[i].resize(size);
+         fracFlowFunc_[i].resize(size);
+         }
+         velocitySecondPhase_.resize(size);
+         saturation_.resize(size);
+         capillaryPressure_.resize(size);
+         volumecorrection_.resize(size);
+         this->adaptVariableSize(size); //Also adapt pressure, velocity and potential
+     }
+
+
     ////////////////////////////////////////////////////////////
     // functions returning the vectors of the primary variables
     ////////////////////////////////////////////////////////////

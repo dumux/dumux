@@ -340,12 +340,14 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
 
         // run through all intersections with neighbors and boundary
+        int isIndex = -1;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt
                 != isItEnd; ++isIt)
         {
             // local number of facet
-            int isIndex = isIt->indexInInside();
+        	isIndex++;
+//            int isIndex = isIt->indexInInside();
 
             GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals_)
@@ -370,7 +372,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 // distance vector between barycenters
                 GlobalPosition distVec = globalPosNeighbor - globalPos;
                 // compute distance between cell centers
-                Scalar dist = distVec.two_norm();
+                Scalar dist = distVec * unitOuterNormal;
+//                Scalar dist = distVec.two_norm();
 
                 //get phase potentials
                 Scalar potentialW = problem_.variables().potentialWetting(
@@ -385,10 +388,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
 
                 //get velocity*normalvector*facearea/(volume*porosity)
                 factor = (problem_.variables().velocity()[globalIdxI][isIndex]
-                        * unitOuterNormal) * (faceArea);
+                        * unitOuterNormal) * faceArea;
                 factorSecondPhase
                         = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
-                                * unitOuterNormal) * (faceArea);
+                                * unitOuterNormal) * faceArea;
 
                 Scalar lambdaW = 0;
                 Scalar lambdaNW = 0;
@@ -561,7 +564,8 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 // distance vector between barycenters
                 GlobalPosition distVec = globalPosFace - globalPos;
                 // compute distance between cell centers
-                Scalar dist = distVec.two_norm();
+                Scalar dist = distVec * unitOuterNormal;
+//                Scalar dist = distVec.two_norm();
 
                 if (bcType.isDirichlet(satEqIdx))
                 {
@@ -572,10 +576,10 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     //get velocity*normalvector*facearea/(volume*porosity)
                     factor
                             = (problem_.variables().velocity()[globalIdxI][isIndex]
-                                    * unitOuterNormal) * (faceArea);
+                                    * unitOuterNormal) * faceArea;
                     factorSecondPhase
                             = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
-                                    * unitOuterNormal) * (faceArea);
+                                    * unitOuterNormal) * faceArea;
 
                     Scalar pressBound = problem_.variables().pressure()[globalIdxI];
                     Scalar temperature = problem_.temperature(*eIt);
@@ -886,7 +890,7 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                                     * unitOuterNormal) * faceArea;
                     factorSecondPhase
                             = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
-                                    * unitOuterNormal) * (faceArea);
+                                    * unitOuterNormal) * faceArea;
 
                     if (velocityType_ == vt)
                     {
