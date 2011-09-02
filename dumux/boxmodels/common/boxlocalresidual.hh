@@ -537,10 +537,7 @@ protected:
             this->asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
             storageTerm_[i] *= 
                 fvElemGeom_().subContVol[i].volume
-                * problem_().spatialParameters().extrusionFactorScv(elem_(),
-                                                                    fvElemGeom_(),
-                                                                    i);
-
+                * curVolVars_(i).extrusionFactor();
         }
     }
 
@@ -555,9 +552,7 @@ protected:
         for (int i=0; i < fvElemGeom_().numVertices; i++)
         {
             Scalar extrusionFactor =
-                problem_().spatialParameters().extrusionFactorScv(elem_(),
-                                                                  fvElemGeom_(),
-                                                                  i);
+                curVolVars_(i).extrusionFactor();
 
             PrimaryVariables tmp(0);
 
