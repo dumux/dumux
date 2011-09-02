@@ -135,7 +135,10 @@ public:
         Vector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(),
                                             tmpVec);
-        Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
+        Scalar normalFlux = 0;
+        for (int i = 0; i < Vector::size; ++i)
+            normalFlux += tmpVec[i]*fluxVars.face().normal[i];
+        normalFlux *= -1;
 
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
