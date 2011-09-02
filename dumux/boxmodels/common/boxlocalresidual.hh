@@ -474,9 +474,7 @@ protected:
                 std::cerr << "undefined: " << values << "\n";
             values *= 
                 fvElemGeom_().boundaryFace[boundaryFaceIdx].area
-                * problem_().spatialParameters().extrusionFactorScv(elem_(),
-                                                                    fvElemGeom_(),
-                                                                    scvIdx);
+                * curVolVars_(scvIdx).extrusionFactor();
             Valgrind::CheckDefined(values);
             residual_[scvIdx] += values;
         }
@@ -498,9 +496,11 @@ protected:
             PrimaryVariables flux;
             Valgrind::SetUndefined(flux);
             this->asImp_().computeFlux(flux, k);
-            flux *= problem_().spatialParameters().extrusionFactorScvf(elem_(),
-                                                                       fvElemGeom_(),
-                                                                       k);
+            Scalar extrusionFactor =
+                (curVolVars_(i).extrusionFactor()
+                 + curVolVars_(j).extrusionFactor())
+                / 2;
+            flux *= extrusionFactor;
             Valgrind::CheckDefined(flux);
 
             // The balance equation for a finite volume is:

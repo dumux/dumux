@@ -403,6 +403,35 @@ public:
     }
 
     /*!
+     * \brief Return how much the domain is extruded at a given sub-control volume.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    Scalar boxExtrusionFactor(const Element &element,
+                              const FVElementGeometry &fvElemGeom,
+                              int scvIdx) const
+    {
+        // forward to generic interface
+        return asImp_().extrusionFactorAtPos(fvElemGeom.subContVol[scvIdx].global);
+    }
+
+    /*!
+     * \brief Return how much the domain is extruded at a given position.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    Scalar extrusionFactorAtPos(const GlobalPosition &pos) const
+    { return 1.0; }
+
+    /*!
      * \brief If model coupling is used, this updates the parameters
      *        required to calculate the coupling fluxes between the
      *        sub-models.

@@ -60,6 +60,7 @@ public:
     {
         evalPoint_ = 0;
         primaryVars_ = v.primaryVars_;
+        extrusionFactor_ = v.extrusionFactor_;
     };
 
     /*!
@@ -69,6 +70,7 @@ public:
     {
         evalPoint_ = 0;
         primaryVars_ = v.primaryVars_;
+        extrusionFactor_ = v.extrusionFactor_;
 
         return *this;
     };
@@ -124,6 +126,7 @@ public:
     {
         Valgrind::CheckDefined(priVars);
         primaryVars_ = priVars;
+        extrusionFactor_ = problem.boxExtrusionFactor(element, elemGeom, scvIdx);
     }
 
     /*!
@@ -141,6 +144,18 @@ public:
     {
         return primaryVars_[pvIdx];
     }
+
+    /*!
+     * \brief Return how much the sub-control volume is extruded.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    Scalar extrusionFactor() const
+    { return extrusionFactor_; }
 
     /*!
      * \brief If running in valgrind this makes sure that all
@@ -166,6 +181,7 @@ protected:
     const Implementation *evalPoint_;
 
     PrimaryVariables primaryVars_;
+    Scalar extrusionFactor_;
 };
 
 } // end namepace

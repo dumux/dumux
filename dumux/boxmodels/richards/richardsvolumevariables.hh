@@ -203,7 +203,6 @@ public:
     Scalar capillaryPressure() const
     { return fluidState_.capillaryPressure(); }
 
-
 protected:
     void updateTemperature_(const PrimaryVariables &priVars,
                             const Element &element,
