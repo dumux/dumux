@@ -102,7 +102,7 @@ public:
                     Scalar pN = std::max(this->problem_().referencePressure(*eIt, fvElemGeom, i),
                                          pW + pcMin);
                     Scalar pcOld = pN - pW;
-                    Scalar SwOld = std::max(0.0, MaterialLaw::Sw(mp, pcOld));
+                    Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::Sw(mp, pcOld));
 
                     // convert into minimum and maximum wetting phase
                     // pressures

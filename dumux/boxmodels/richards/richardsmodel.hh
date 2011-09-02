@@ -150,21 +150,21 @@ public:
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
-        ScalarField *pW = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pN = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pC = writer.allocateManagedBuffer (numVertices);
-        ScalarField *Sw = writer.allocateManagedBuffer (numVertices);
-        ScalarField *Sn = writer.allocateManagedBuffer (numVertices);
-        ScalarField *rhoW = writer.allocateManagedBuffer (numVertices);
-        ScalarField *rhoN = writer.allocateManagedBuffer (numVertices);
-        ScalarField *mobW = writer.allocateManagedBuffer (numVertices);
-        ScalarField *mobN = writer.allocateManagedBuffer (numVertices);
-        ScalarField *poro = writer.allocateManagedBuffer (numVertices);
-        ScalarField *Te = writer.allocateManagedBuffer (numVertices);
+        ScalarField *pW = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pN = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pC = writer.allocateManagedBuffer(numVertices);
+        ScalarField *Sw = writer.allocateManagedBuffer(numVertices);
+        ScalarField *Sn = writer.allocateManagedBuffer(numVertices);
+        ScalarField *rhoW = writer.allocateManagedBuffer(numVertices);
+        ScalarField *rhoN = writer.allocateManagedBuffer(numVertices);
+        ScalarField *mobW = writer.allocateManagedBuffer(numVertices);
+        ScalarField *mobN = writer.allocateManagedBuffer(numVertices);
+        ScalarField *poro = writer.allocateManagedBuffer(numVertices);
+        ScalarField *Te = writer.allocateManagedBuffer(numVertices);
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank =
