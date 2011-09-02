@@ -264,7 +264,10 @@ protected:
             calculateK_(problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_));
             ScalarGradient Kmvp;
             K_.mv(potentialGrad_, Kmvp);
-            KmvpNormal_ = - (Kmvp*boundaryFace_->normal);
+            KmvpNormal_ = 0;
+            for (int i = 0; i < dim; ++i) 
+                KmvpNormal_ = Kmvp[i]*boundaryFace_->normal[i];
+            KmvpNormal_ *= -1;
 
             const VolumeVariables &vertDat = elemDat[scvIdx_];
 

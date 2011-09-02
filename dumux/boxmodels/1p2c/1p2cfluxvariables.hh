@@ -62,7 +62,9 @@ class OnePTwoCFluxVariables
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
-
+    
+    typedef typename GridView::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
@@ -325,8 +327,10 @@ protected:
         }
         else {
             // use two-point gradients
-            tmp = element.geometry().corner(face().i);
-            tmp -= element.geometry().corner(face().j);
+            const GlobalPosition &posI = element.geometry().corner(face().i);
+            const GlobalPosition &posJ = element.geometry().corner(face().j);
+            for (int i = 0; i < Vector::size; ++ i)
+                tmp[i] = posI[i] - posJ[i];
             Scalar dist = tmp.two_norm();
 
             tmp = face().normal;
@@ -398,11 +402,14 @@ protected:
       *        \param elemDat The parameters stored in the considered element
       */
     void calculateVelocities_(const Problem &problem,
-                                  const Element &element,
-                                  const ElementVolumeVariables &elemDat)
+                              const Element &element,
+                              const ElementVolumeVariables &elemDat)
     {
         K_.mv(potentialGrad_, Kmvp_);
-        KmvpNormal_ = - (Kmvp_ * face().normal);
+        KmvpNormal_ = 0;
+        for (int i = 0; i < Vector::size; ++i)
+            KmvpNormal_ += Kmvp_[i] * face().normal[i];
+        KmvpNormal_ *= -1;
 
         // set the upstream and downstream vertices
         upstreamIdx_ = face().i;

@@ -247,18 +247,24 @@ public:
         if(!useMoles)
         {
             // diffusive flux of the second component - massfraction
-            tmp = - fluxVars.porousDiffCoeff() * fluxVars.densityAtIP()*
-              (fluxVars.massFracGrad(comp1Idx) * fluxVars.face().normal);
+            tmp = 0;
+            for (int i = 0; i < Vector::size; ++ i)
+                tmp += fluxVars.massFracGrad(comp1Idx)[i]*fluxVars.face().normal[i];
+            tmp *= -1;
+            tmp *= fluxVars.porousDiffCoeff() * fluxVars.densityAtIP();
 
             flux[transEqIdx] += tmp;// * FluidSystem::molarMass(comp1Idx);
         }
         else
         {
             // diffusive flux of the second component - molefraction
-            tmp = - fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP()*
-               (fluxVars.moleFracGrad(comp1Idx) * fluxVars.face().normal);
-
-            // dispersive flux of second component - molefraction
+            tmp = 0;
+            for (int i = 0; i < Vector::size; ++ i)
+                tmp += fluxVars.moleFracGrad(comp1Idx)[i]*fluxVars.face().normal[i];
+            tmp *= -1;
+            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP();
+                
+                // dispersive flux of second component - molefraction
 //            Vector normalDisp;
 //            fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
 //            tmp -= fluxVars.molarDensityAtIP()*
@@ -437,8 +443,12 @@ protected:
                                         *vertVars.fluidState().massFrac(phaseIdx, comp1Idx);
 
                        // diffusive flux of comp1 component in phase0
-                       Scalar tmp = -boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP()
-                                        *(boundaryVars.massFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
+                       Scalar tmp = 0;
+                       for (int i = 0; i < Vector::size; ++ i)
+                           tmp += boundaryVars.massFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
+                       tmp *= -1;
+                       
+                       tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP();
                        flux[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
                    }
                    else //use molefractions
@@ -448,8 +458,12 @@ protected:
                                        *vertVars.fluidState().moleFrac(phaseIdx, comp1Idx);
 
                        // diffusive flux of comp1 component in phase0
-                       Scalar tmp = -boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP()
-                                        *(boundaryVars.moleFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
+                       Scalar tmp = 0;
+                       for (int i = 0; i < Vector::size; ++ i)
+                           tmp += boundaryVars.moleFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
+                       tmp *= -1;
+
+                       tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP();
                        flux[transEqIdx] += tmp;
                    }
                }
