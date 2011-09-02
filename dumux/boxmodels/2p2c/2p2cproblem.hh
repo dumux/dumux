@@ -54,7 +54,9 @@ class TwoPTwoCProblem : public BoxProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GridView::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> Vector;
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
@@ -121,7 +123,7 @@ public:
      * This is the box discretization specific interface. By default
      * it just calls gravityAtPos().
      */
-    const GlobalPosition &boxGravity(const Element &element,
+    const Vector &boxGravity(const Element &element,
                                      const FVElementGeometry &fvGeom,
                                      int scvIdx) const
     { return asImp_().gravityAtPos(fvGeom.subContVol[scvIdx].global); }
@@ -132,7 +134,7 @@ public:
      * This is discretization independent interface. By default it
      * just calls gravity().
      */
-    const GlobalPosition &gravityAtPos(const GlobalPosition &pos) const
+    const Vector &gravityAtPos(const GlobalPosition &pos) const
     { return asImp_().gravity(); }
 
     /*!
@@ -144,7 +146,7 @@ public:
      * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */
-    const GlobalPosition &gravity() const
+    const Vector &gravity() const
     { return gravity_; }
 
     /*!
@@ -170,7 +172,7 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    GlobalPosition gravity_;
+    Vector gravity_;
 
     // spatial parameters
     SpatialParameters spatialParams_;

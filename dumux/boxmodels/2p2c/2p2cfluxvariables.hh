@@ -70,8 +70,8 @@ class TwoPTwoCFluxVariables
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldVector<Scalar, dim> Vector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     enum {
@@ -227,7 +227,10 @@ private:
                                                                     fvElemGeom_,
                                                                     face().j));
             K.mv(potentialGrad_[phaseIdx], Kmvp_[phaseIdx]);
-            KmvpNormal_[phaseIdx] = - (Kmvp_[phaseIdx] * face().normal);
+            KmvpNormal_[phaseIdx] = 0;
+            for (int i = 0; i < Vector::size; ++i)
+                KmvpNormal_[phaseIdx] += Kmvp_[phaseIdx][i] * face().normal[i];
+            KmvpNormal_[phaseIdx] *= -1;
         }
 
         // set the upstream and downstream vertices

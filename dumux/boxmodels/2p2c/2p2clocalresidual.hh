@@ -306,10 +306,13 @@ public:
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp =
-            - vars.porousDiffCoeff(lPhaseIdx) *
-            vars.molarDensityAtIP(lPhaseIdx) *
-            (vars.molarConcGrad(lPhaseIdx) * vars.face().normal);
+        Scalar tmp = 0;
+        for (int i = 0; i < dim; ++i)
+            tmp += vars.molarConcGrad(lPhaseIdx)[i] * vars.face().normal[i];
+        tmp *= -1;
+        tmp *= 
+            vars.porousDiffCoeff(lPhaseIdx) *
+            vars.molarDensityAtIP(lPhaseIdx);
         // add the diffusive fluxes only to the component mass balance
         if (replaceCompEqIdx != contiGEqIdx)
             flux[contiGEqIdx] += tmp * FluidSystem::molarMass(gCompIdx);
@@ -317,10 +320,13 @@ public:
             flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
 
         // add diffusive flux of liquid component in gas phase
-        tmp =
-            - vars.porousDiffCoeff(gPhaseIdx) *
-            vars.molarDensityAtIP(gPhaseIdx) *
-            (vars.molarConcGrad(gPhaseIdx) * vars.face().normal);
+        tmp = 0;
+        for (int i = 0; i < dim; ++i)
+            tmp += vars.molarConcGrad(gPhaseIdx)[i] * vars.face().normal[i];
+        tmp *= -1;
+        tmp *= 
+            vars.porousDiffCoeff(gPhaseIdx) *
+            vars.molarDensityAtIP(gPhaseIdx);
         // add the diffusive fluxes only to the component mass balance
         if (replaceCompEqIdx != contiLEqIdx)
             flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);

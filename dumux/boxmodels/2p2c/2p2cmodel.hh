@@ -140,6 +140,7 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
         formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation))
     };
 
+    typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -285,36 +286,31 @@ public:
                             MultiWriter &writer)
     {
         bool velocityOutput = GET_PROP_VALUE(TypeTag, PTAG(EnableVelocityOutput));
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
 
-        ScalarField *Sg    = writer.allocateManagedBuffer (numVertices);
-        ScalarField *Sl    = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pg    = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pl    = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pc    = writer.allocateManagedBuffer (numVertices);
-        ScalarField *rhoL  =
-            writer.allocateManagedBuffer (numVertices);
-        ScalarField *rhoG =
-            writer.allocateManagedBuffer (numVertices);
-        ScalarField *mobL =
-            writer.allocateManagedBuffer (numVertices);
-        ScalarField *mobG =
-            writer.allocateManagedBuffer (numVertices);
-        ScalarField *phasePresence =
-            writer.allocateManagedBuffer (numVertices);
+        ScalarField *Sg    = writer.allocateManagedBuffer(numVertices);
+        ScalarField *Sl    = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pg    = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pl    = writer.allocateManagedBuffer(numVertices);
+        ScalarField *pc    = writer.allocateManagedBuffer(numVertices);
+        ScalarField *rhoL  = writer.allocateManagedBuffer(numVertices);
+        ScalarField *rhoG  = writer.allocateManagedBuffer(numVertices);
+        ScalarField *mobL  = writer.allocateManagedBuffer(numVertices);
+        ScalarField *mobG = writer.allocateManagedBuffer(numVertices);
+        ScalarField *phasePresence = writer.allocateManagedBuffer(numVertices);
         ScalarField *massFrac[numPhases][numComponents];
         for (int i = 0; i < numPhases; ++i)
             for (int j = 0; j < numComponents; ++j)
-                massFrac[i][j] = writer.allocateManagedBuffer (numVertices);
+                massFrac[i][j] = writer.allocateManagedBuffer(numVertices);
         ScalarField *temperature = writer.allocateManagedBuffer(numVertices);
         ScalarField *poro = writer.allocateManagedBuffer(numVertices);
         ScalarField *cellNum =writer.allocateManagedBuffer (numVertices);
-        VectorField *velocityG = writer.template allocateManagedBuffer <Scalar, dim> (numVertices);
-        VectorField *velocityL = writer.template allocateManagedBuffer <Scalar, dim> (numVertices);
+        VectorField *velocityG = writer.template allocateManagedBuffer<double, dim>(numVertices);
+        VectorField *velocityL = writer.template allocateManagedBuffer<double, dim>(numVertices);
 
         if(velocityOutput) // check if velocity output is demanded
         {
@@ -431,7 +427,7 @@ public:
                       const Dune::FieldVector<Scalar, dim>& localPosIP = fvElemGeom.subContVolFace[faceIdx].ipLocal;
 
                       // Transformation of the global normal vector to normal vector in the reference element
-                      const Dune::FieldMatrix<Scalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
+                      const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
                       const GlobalPosition globalNormal = fluxDat.face().normal;
 
                       GlobalPosition localNormal(0);
@@ -467,18 +463,18 @@ public:
                 }
 
                 typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-                const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(elemIt->geometry().type()).position(0,
-                        0);
+                const Dune::FieldVector<Scalar, dim>& localPos = 
+                    ReferenceElements::general(elemIt->geometry().type()).position(0, 0);
 
      			// get the transposed Jacobian of the element mapping
-                const Dune::FieldMatrix<Scalar, dim, dim> jacobianT2 = elemIt->geometry().jacobianTransposed(localPos);
+                const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT2 = elemIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
     			for (int i = 0; i < numVerts; ++i)
                 {
                 	int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
                     // calculate the subcontrolvolume velocity by the Piola transformation
-                    Dune::FieldVector<Scalar, dim> scvVelocity(0);
+                    Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocityL[i], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);

@@ -24,9 +24,8 @@
  *
  * \brief Definition of a problem, where air is injected under a low permeable layer.
  */
-
-#ifndef DUMUX_INJECTIONPROBLEM_HH
-#define DUMUX_INJECTIONPROBLEM_HH
+#ifndef DUMUX_INJECTION_PROBLEM_HH
+#define DUMUX_INJECTION_PROBLEM_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
@@ -40,7 +39,6 @@
 //#include <appl/co2/ifp/ifpco2tables.hh>
 
 #include "injectionspatialparameters.hh"
-
 
 namespace Dumux
 {
@@ -65,8 +63,7 @@ SET_PROP(InjectionProblem, Problem)
 };
 
 // Set fluid configuration
-SET_PROP(InjectionProblem,
-              FluidSystem)
+SET_PROP(InjectionProblem, FluidSystem)
 {
     //typedef Dumux::Brine_CO2_System<TypeTag, Dumux::IFP::CO2Tables> type;
     typedef Dumux::H2O_N2_System<TypeTag> type;
