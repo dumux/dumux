@@ -19,8 +19,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_LENSPROBLEM1P2C_HH
-#define DUMUX_LENSPROBLEM1P2C_HH
+#ifndef DUMUX_LENS_PROBLEM_1P2C_HH
+#define DUMUX_LENS_PROBLEM_1P2C_HH
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -42,17 +42,17 @@ namespace Dumux
 {
 
 template <class TypeTag>
-class LensProblem;
+class LensProblem1p2c;
 
 //////////
 // Specify the properties for the lens problem
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxOnePTwoC));
+NEW_TYPE_TAG(LensProblem1p2c, INHERITS_FROM(BoxOnePTwoC));
 
 // Set the grid type
-SET_PROP(LensProblem, Grid)
+SET_PROP(LensProblem1p2c, Grid)
 {
 #if HAVE_UG
     typedef Dune::UGGrid<2> type;
@@ -63,30 +63,30 @@ SET_PROP(LensProblem, Grid)
 };
 
 // Set the problem property
-SET_PROP(LensProblem, Problem)
+SET_PROP(LensProblem1p2c, Problem)
 {
-    typedef Dumux::LensProblem<TypeTag> type;
+    typedef Dumux::LensProblem1p2c<TypeTag> type;
 };
 
 // Set fluid configuration
-SET_PROP(LensProblem, FluidSystem)
+SET_PROP(LensProblem1p2c, FluidSystem)
 {
     typedef Dumux::WaterContaminant<TypeTag> type;
 };
 
 // Set the spatial parameters
-SET_PROP(LensProblem, SpatialParameters)
+SET_PROP(LensProblem1p2c, SpatialParameters)
 {
     typedef Dumux::LensSpatialParameters1p2c<TypeTag> type;
 };
 
 // Define whether mole(true) or mass(false) fractions are used
-SET_BOOL_PROP(LensProblem, UseMoles, true);
+SET_BOOL_PROP(LensProblem1p2c, UseMoles, true);
 // Disable gravity
-SET_BOOL_PROP(LensProblem, EnableGravity, false);
+SET_BOOL_PROP(LensProblem1p2c, EnableGravity, false);
 
 // Disable Jacobian recycling
-SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
+SET_BOOL_PROP(LensProblem1p2c, EnableJacobianRecycling, false);
 }
 
 /*!
@@ -118,9 +118,9 @@ SET_BOOL_PROP(LensProblem, EnableJacobianRecycling, false);
  * <tt>./lens_1p2c 30000 100</tt>
  */
 template <class TypeTag >
-class LensProblem : public OnePTwoCBoxProblem<TypeTag>
+class LensProblem1p2c : public OnePTwoCBoxProblem<TypeTag>
 {
-    typedef LensProblem<TypeTag> ThisType;
+    typedef LensProblem1p2c<TypeTag> ThisType;
     typedef OnePTwoCBoxProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
@@ -156,12 +156,12 @@ class LensProblem : public OnePTwoCBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
 public:
-    LensProblem(TimeManager &timeManager,
-                const GridView &gridView,
-                const GlobalPosition &lowerLeft,
-                const GlobalPosition &upperRight,
-                const GlobalPosition &lensLowerLeft,
-                const GlobalPosition &lensUpperRight)
+    LensProblem1p2c(TimeManager &timeManager,
+                    const GridView &gridView,
+                    const GlobalPosition &lowerLeft,
+                    const GlobalPosition &upperRight,
+                    const GlobalPosition &lensLowerLeft,
+                    const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
@@ -403,7 +403,7 @@ private:
             && lambda > (bboxMax_[0] - 0.55*width)/width;
     }
 
-    static const Scalar eps_ = 3e-6;
+    static constexpr Scalar eps_ = 3e-6;
     GlobalPosition bboxMin_;
     GlobalPosition bboxMax_;
 

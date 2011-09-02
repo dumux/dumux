@@ -19,8 +19,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_LENSPROBLEM2P_HH
-#define DUMUX_LENSPROBLEM2P_HH
+#ifndef DUMUX_LENSPROBLEM_2P_HH
+#define DUMUX_LENSPROBLEM_2P_HH
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -41,17 +41,17 @@ namespace Dumux
 {
 
 template <class TypeTag>
-class LensProblem;
+class LensProblem2p;
 
 //////////
 // Specify the properties for the lens problem
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters2p));
+NEW_TYPE_TAG(LensProblem2p, INHERITS_FROM(BoxTwoP, LensSpatialParameters2p));
 
 // Set the grid type
-SET_PROP(LensProblem, Grid)
+SET_PROP(LensProblem2p, Grid)
 {
 #if HAVE_UG
     typedef Dune::UGGrid<2> type;
@@ -62,13 +62,13 @@ SET_PROP(LensProblem, Grid)
 };
 
 // Set the problem property
-SET_PROP(LensProblem, Problem)
+SET_PROP(LensProblem2p, Problem)
 {
-    typedef Dumux::LensProblem<TypeTag> type;
+    typedef Dumux::LensProblem2p<TypeTag> type;
 };
 
 // Set the wetting phase
-SET_PROP(LensProblem, WettingPhase)
+SET_PROP(LensProblem2p, WettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -77,7 +77,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(LensProblem, NonwettingPhase)
+SET_PROP(LensProblem2p, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -86,7 +86,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(LensProblem, EnableGravity, false);
+SET_BOOL_PROP(LensProblem2p, EnableGravity, false);
 }
 
 /*!
@@ -121,9 +121,9 @@ SET_BOOL_PROP(LensProblem, EnableGravity, false);
  * <tt>./lens_2p 50000 100</tt>
  */
 template <class TypeTag >
-class LensProblem : public TwoPProblem<TypeTag>
+class LensProblem2p : public TwoPProblem<TypeTag>
 {
-    typedef LensProblem<TypeTag> ThisType;
+    typedef LensProblem2p<TypeTag> ThisType;
     typedef TwoPProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
@@ -171,12 +171,12 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
 public:
-    LensProblem(TimeManager &timeManager,
-                const GridView &gridView,
-                const GlobalPosition &lowerLeft,
-                const GlobalPosition &upperRight,
-                const GlobalPosition &lensLowerLeft,
-                const GlobalPosition &lensUpperRight)
+    LensProblem2p(TimeManager &timeManager,
+                  const GridView &gridView,
+                  const GlobalPosition &lowerLeft,
+                  const GlobalPosition &upperRight,
+                  const GlobalPosition &lensLowerLeft,
+                  const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);

@@ -118,7 +118,7 @@ void usage(const char *progname)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(LensProblem) TypeTag;
+        typedef TTAG(LensProblem2p) TypeTag;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;

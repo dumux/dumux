@@ -58,7 +58,7 @@ class LensSpatialParameters1p2c : public BoxSpatialParametersOneP<TypeTag>
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<CoordScalar,dimWorld,dimWorld> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> Tensor;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -95,9 +95,9 @@ public:
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
-    const FieldMatrix& intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvElemGeom,
-                                 int scvIdx) const
+    const Tensor& intrinsicPermeability(const Element &element,
+                                        const FVElementGeometry &fvElemGeom,
+                                        int scvIdx) const
     {
         const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
         if (isInLens_(globalPos))
@@ -176,8 +176,8 @@ private:
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 
-    FieldMatrix lensK_;
-    FieldMatrix outerK_;
+    Tensor lensK_;
+    Tensor outerK_;
     Scalar lensPorosity_;
     Scalar outerPorosity_;
     Scalar longitudinalDispersivity_;
