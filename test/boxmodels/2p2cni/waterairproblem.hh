@@ -24,8 +24,8 @@
  * \brief Non-isothermal gas injection problem where a gas (e.g. air)
  *        is injected into a fully water saturated medium.
  */
-#ifndef DUMUX_WATERAIRPROBLEM_HH
-#define DUMUX_WATERAIRPROBLEM_HH
+#ifndef DUMUX_WATER_AIR_PROBLEM_HH
+#define DUMUX_WATER_AIR_PROBLEM_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
