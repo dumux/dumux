@@ -26,8 +26,8 @@
  *        passes a high temperature area.
  */
 
-#ifndef DUMUX_INJECTIONPROBLEM2PNI_HH
-#define DUMUX_INJECTIONPROBLEM2PNI_HH
+#ifndef DUMUX_INJECTION_PROBLEM_2PNI_HH
+#define DUMUX_INJECTION_PROBLEM_2PNI_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
