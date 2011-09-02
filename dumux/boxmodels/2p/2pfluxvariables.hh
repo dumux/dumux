@@ -71,8 +71,8 @@ class TwoPFluxVariables
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
 public:
     /*

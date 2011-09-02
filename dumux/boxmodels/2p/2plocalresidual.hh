@@ -171,7 +171,10 @@ public:
             // (the minus comes from the Darcy law which states that
             // the flux is from high to low pressure potentials.)
             fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx), tmpVec);
-            Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
+            Scalar normalFlux = 0;
+            for (int i = 0; i < Vector::size; ++i)
+                normalFlux += tmpVec[i]*fluxVars.face().normal[i];
+            normalFlux *= -1;
 
             // data attached to upstream and the downstream vertices
             // of the current phase

@@ -26,8 +26,8 @@
  * \brief The spatial parameters for the LensProblem which uses the
  *        twophase box model
  */
-#ifndef DUMUX_LENSSPATIALPARAMETERS_HH
-#define DUMUX_LENSSPATIALPARAMETERS_HH
+#ifndef DUMUX_LENS_SPATIAL_PARAMETERS_HH
+#define DUMUX_LENS_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>

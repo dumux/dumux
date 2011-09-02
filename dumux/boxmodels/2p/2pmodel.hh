@@ -110,6 +110,7 @@ class TwoPModel : public BoxModel<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::ctype CoordScalar;
 
 public:
     /*!
@@ -139,8 +140,8 @@ public:
                             MultiWriter &writer)
     {
         bool velocityOutput = GET_PROP_VALUE(TypeTag, PTAG(EnableVelocityOutput));
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
@@ -156,8 +157,8 @@ public:
         ScalarField *poro = writer.allocateManagedBuffer(numVertices);
         ScalarField *Te = writer.allocateManagedBuffer(numVertices);
         ScalarField *cellNum =writer.allocateManagedBuffer (numVertices);
-        VectorField *velocityN = writer.template allocateManagedBuffer <Scalar, dim> (numVertices);
-        VectorField *velocityW = writer.template allocateManagedBuffer <Scalar, dim> (numVertices);
+        VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numVertices);
+        VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numVertices);
 
         if(velocityOutput) // check if velocity output is demanded
         {
@@ -271,7 +272,7 @@ public:
                       const Dune::FieldVector<Scalar, dim>& localPosIP = fvElemGeom.subContVolFace[faceIdx].ipLocal;
 
                       // Transformation of the global normal vector to normal vector in the reference element
-                      const Dune::FieldMatrix<Scalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
+                      const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
 
                       GlobalPosition localNormal(0);
                       jacobianT1.mv(globalNormal, localNormal);
@@ -305,18 +306,19 @@ public:
                    }
                 }
                 typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-                const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(elemIt->geometry().type()).position(0,
-                        0);
+                const Dune::FieldVector<Scalar, dim> &localPos 
+                    = ReferenceElements::general(elemIt->geometry().type()).position(0, 0);
 
      			// get the transposed Jacobian of the element mapping
-                const Dune::FieldMatrix<Scalar, dim, dim> jacobianT2 = elemIt->geometry().jacobianTransposed(localPos);
+                const Dune::FieldMatrix<CoordScalar, dim, dim> &jacobianT2
+                    = elemIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
     			for (int i = 0; i < numVerts; ++i)
                 {
                 	int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
                     // calculate the subcontrolvolume velocity by the Piola transformation
-                    Dune::FieldVector<Scalar, dim> scvVelocity(0);
+                    Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocityW[i], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);
