@@ -706,7 +706,7 @@ public:
 
             // calculate the shape function gradients
             //typedef Dune::FieldVector< Dune::FieldVector< CoordScalar, dim >, 1 > ShapeJacobian;
-            typedef Dune::FieldVector< CoordScalar, 1 > ShapeValue;
+            typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
             std::vector<ShapeJacobian> localJac;
             std::vector<ShapeValue>    shapeVal;
             localFiniteElement.localBasis().evaluateJacobian(subContVolFace[k].ipLocal, localJac);
@@ -762,7 +762,7 @@ public:
                     boundaryFace[bfIdx].normal = it->unitOuterNormal(localDimM1);
                     boundaryFace[bfIdx].normal *= boundaryFace[bfIdx].area;
 
-                    typedef Dune::FieldVector< CoordScalar, 1 > ShapeValue;
+                    typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
                     std::vector<ShapeJacobian> localJac;
                     std::vector<ShapeValue>    shapeVal;
                     localFiniteElement.localBasis().evaluateJacobian(boundaryFace[bfIdx].ipLocal, localJac);

@@ -401,7 +401,7 @@ public:
             //Scalar weight = asImp_().primaryVarWeight(vertexIdx, j);
             //Scalar eqErr = std::abs(pv1[j] - pv2[j])*weight;
             Scalar eqErr = std::abs(pv1[j] - pv2[j]);
-            eqErr /= std::max(1.0, std::abs(pv1[j] + pv2[j])/2);
+            eqErr /= std::max<Scalar>(1.0, std::abs(pv1[j] + pv2[j])/2);
 
             result = std::max(result, eqErr);
         }
@@ -628,7 +628,7 @@ public:
                                  const SolutionVector &u,
                                  const SolutionVector &deltaU)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
         SolutionVector globalResid(u);
         asImp_().globalResidual(globalResid, u);

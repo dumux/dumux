@@ -42,7 +42,7 @@ public:
 
     field_type dot(const OverlappingBlockVector &x, const OverlappingBlockVector &y)
     {
-        field_type sum = 0;
+        double sum = 0;
         int n = overlap_.numLocal();
         for (int i = 0; i < n; ++i) {
             if (overlap_.iAmMasterOf(i))
@@ -50,7 +50,7 @@ public:
         };
 
         // compute the global sum
-        field_type sumGlobal = 0.0;
+        double sumGlobal = 0.0;
 #if HAVE_MPI
         MPI_Allreduce(&sum, // source buffer
                       &sumGlobal, // destination buffer
@@ -65,9 +65,9 @@ public:
         return sumGlobal;
     };
 
-    field_type norm(const OverlappingBlockVector &x)
+    double norm(const OverlappingBlockVector &x)
     {
-        field_type tmp = dot(x, x);
+        double tmp = dot(x, x);
         return std::sqrt(tmp);
     };
 
