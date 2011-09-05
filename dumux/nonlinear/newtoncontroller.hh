@@ -68,7 +68,7 @@ NEW_PROP_TAG(VertexMapper);
 NEW_PROP_TAG(TimeManager);
 
 //! specifies whether the convergence rate and the global residual
-//! gets written out to disk for every newton iteration (default is false)
+//! gets written out to disk for every Newton iteration (default is false)
 NEW_PROP_TAG(NewtonWriteConvergence);
 
 //! Specifies whether the Jacobian matrix should only be reassembled
@@ -79,7 +79,7 @@ NEW_PROP_TAG(EnablePartialReassemble);
  * \brief Specifies whether the update should be done using the line search
  *        method instead of the plain Newton method.
  *
- * Whether this property has any effect depends on wether the line
+ * Whether this property has any effect depends on whether the line
  * search method is implemented for the actual model's Newton
  * controller's update() method. By default line search is not used.
  */
@@ -97,15 +97,15 @@ NEW_PROP_TAG(NewtonEnableAbsoluteCriterion);
 //! the value for the absolute error reduction below which convergence is declared
 NEW_PROP_TAG(NewtonAbsTolerance);
 
-//! indicate whether both of the criterions should be satisfied to declare convergence
+//! indicate whether both of the criteria should be satisfied to declare convergence
 NEW_PROP_TAG(NewtonSatisfyAbsAndRel);
 
 /*!
  * \brief The number of iterations at which the Newton method
  *        should aim at.
  *
- * This is used to control the time step size. The heuristic used
- * is to scale the last time step size by the deviation of the
+ * This is used to control the time-step size. The heuristic used
+ * is to scale the last time-step size by the deviation of the
  * number of iterations used from the target steps.
  */
 NEW_PROP_TAG(NewtonTargetSteps);
@@ -128,7 +128,7 @@ SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
 }
 
 /*!
- * \brief A reference implementation of a newton controller specific
+ * \brief A reference implementation of a Newton controller specific
  *        for the box scheme.
  *
  * If you want to specialize only some methods but are happy with the
@@ -218,8 +218,8 @@ public:
      * \brief Set the number of iterations at which the Newton method
      *        should aim at.
      *
-     * This is used to control the time step size. The heuristic used
-     * is to scale the last time step size by the deviation of the
+     * This is used to control the time-step size. The heuristic used
+     * is to scale the last time-step size by the deviation of the
      * number of iterations used from the target steps.
      *
      * \param targetSteps Number of iterations which are considered "optimal"
@@ -239,7 +239,7 @@ public:
     /*!
      * \brief Returns true if another iteration should be done.
      *
-     * \param uCurrentIter The solution of the current newton iteration
+     * \param uCurrentIter The solution of the current Newton iteration
      */
     bool newtonProceed(const SolutionVector &uCurrentIter)
     {
@@ -263,7 +263,7 @@ public:
     }
 
     /*!
-     * \brief Returns true iff the error of the solution is below the
+     * \brief Returns true if the error of the solution is below the
      *        tolerance.
      */
     bool newtonConverged() const
@@ -291,7 +291,7 @@ public:
     }
 
     /*!
-     * \brief Called before the newton method is applied to an
+     * \brief Called before the Newton method is applied to an
      *        non-linear system of equations.
      *
      * \param method The object where the NewtonMethod is executed
@@ -307,7 +307,7 @@ public:
     }
 
     /*!
-     * \brief Indidicates the beginning of a newton iteration.
+     * \brief Indicates the beginning of a Newton iteration.
      */
     void newtonBeginStep()
     {
@@ -418,7 +418,7 @@ public:
      * newtonProceed() methods should be updated inside this method.
      *
      * Different update strategies, such as line search and chopped
-     * updates can be implemented. The default behaviour is just to
+     * updates can be implemented. The default behavior is just to
      * subtract deltaU from uLastIter, i.e.
      * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
@@ -467,7 +467,7 @@ public:
     }
 
     /*!
-     * \brief Indicates that one newton iteration was finished.
+     * \brief Indicates that one Newton iteration was finished.
      *
      * \param uCurrentIter The solution after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
@@ -501,7 +501,7 @@ public:
     }
 
     /*!
-     * \brief Called if the newton method broke down.
+     * \brief Called if the Newton method broke down.
      *
      * This method is called _after_ newtonEnd()
      */
@@ -512,7 +512,7 @@ public:
     }
 
     /*!
-     * \brief Called when the newton method was sucessful.
+     * \brief Called when the Newton method was successful.
      *
      * This method is called _after_ newtonEnd()
      */
@@ -525,18 +525,18 @@ public:
     }
 
     /*!
-     * \brief Suggest a new time stepsize based on the old time step
+     * \brief Suggest a new time-step size based on the old time-step
      *        size.
      *
-     * The default behaviour is to suggest the old time step size
+     * The default behavior is to suggest the old time-step size
      * scaled by the ratio between the target iterations and the
-     * iterations required to actually solve the last time step.
+     * iterations required to actually solve the last time-step.
      */
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
-        // be agressive reducing the timestep size but
+        // be aggressive reducing the time-step size but
         // conservative when increasing it. the rationale is
-        // that we want to avoid failing in the next newton
+        // that we want to avoid failing in the next Newton
         // iteration which would require another linearization
         // of the problem.
         if (numSteps_ > targetSteps_) {
@@ -550,14 +550,14 @@ public:
     }
 
     /*!
-     * \brief Returns a reference to the current newton method
+     * \brief Returns a reference to the current Newton method
      *        which is controlled by this controller.
      */
     NewtonMethod &method()
     { return *method_; }
 
     /*!
-     * \brief Returns a reference to the current newton method
+     * \brief Returns a reference to the current Newton method
      *        which is controlled by this controller.
      */
     const NewtonMethod &method() const
@@ -567,13 +567,13 @@ public:
     { return endIterMsgStream_; }
 
     /*!
-     * \brief Specifies if the newton method ought to be chatty.
+     * \brief Specifies if the Newton method ought to be chatty.
      */
     void setVerbose(bool val)
     { verbose_ = val; }
 
     /*!
-     * \brief Returns true iff the newton method ought to be chatty.
+     * \brief Returns true if the Newton method ought to be chatty.
      */
     bool verbose() const
     { return verbose_ && gridView_().comm().rank() == 0; }
@@ -627,7 +627,7 @@ protected:
     const Model &model_() const
     { return problem_().model(); }
 
-    // returns the actual implementation for the cotroller we do
+    // returns the actual implementation for the controller we do
     // it this way in order to allow "poor man's virtual methods",
     // i.e. methods of subclasses which can be called by the base
     // class.
