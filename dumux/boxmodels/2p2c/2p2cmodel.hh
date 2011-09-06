@@ -163,6 +163,19 @@ public:
 
         setSwitched_(false);
 
+        // check, if velocity output can be used (works only for cubes so far)
+        velocityOutput_ = GET_PARAM(TypeTag, bool, EnableVelocityOutput);
+        ElementIterator elemIt = this->gridView_().template begin<0>();
+        ElementIterator elemEndIt = this->gridView_().template end<0>();
+        for (; elemIt != elemEndIt; ++elemIt)
+        {
+            if(elemIt->geometry().type().isCube() == false){
+                velocityOutput_ = false;
+            };
+        };
+        if (velocityOutput_ != GET_PARAM(TypeTag, bool, EnableVelocityOutput))
+            std::cout << "ATTENTION: Velocity output only works for cubes and is set to false for simplices\n";
+
         VertexIterator it = this->gridView_().template begin<dim> ();
         const VertexIterator &endit = this->gridView_().template end<dim> ();
         for (; it != endit; ++it)
@@ -285,7 +298,6 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        bool velocityOutput = GET_PROP_VALUE(TypeTag, PTAG(EnableVelocityOutput));
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
 
@@ -312,7 +324,7 @@ public:
         VectorField *velocityG = writer.template allocateManagedBuffer<double, dim>(numVertices);
         VectorField *velocityL = writer.template allocateManagedBuffer<double, dim>(numVertices);
 
-        if(velocityOutput) // check if velocity output is demanded
+        if(velocityOutput_) // check if velocity output is demanded
         {
             // initialize velocity fields
             for (int i = 0; i < numVertices; ++i)
@@ -334,10 +346,6 @@ public:
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
-#warning "currently, velocity output only works for cubes and is set to false for simplices"
-        	if(elemIt->geometry().type().isCube() == false){
-        		velocityOutput = false;
-        	}
             int idx = this->elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
             fvElemGeom.update(this->gridView_(), *elemIt);
@@ -375,13 +383,13 @@ public:
                 (*temperature)[globalIdx] = volVars.temperature();
                 (*phasePresence)[globalIdx]
                     = staticVertexDat_[globalIdx].phasePresence;
-                if(velocityOutput)
+                if(velocityOutput_)
                 {
                     (*cellNum)[globalIdx] += 1;
                 }
             };
 
-            if(velocityOutput)
+            if(velocityOutput_)
             {
                 // calculate vertex velocities
                 GlobalPosition tmpVelocity[numPhases];
@@ -488,7 +496,7 @@ public:
                 }
             }
         }
-            if(velocityOutput)
+            if(velocityOutput_)
             {
                 // divide the vertex velocities by the number of adjacent scvs i.e. cells
     	        for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
@@ -521,7 +529,7 @@ public:
         writer.attachVertexData(*temperature,    "temperature");
         writer.attachVertexData(*phasePresence,  "phase presence");
 
-        if(velocityOutput) // check if velocity output is demanded
+        if(velocityOutput_) // check if velocity output is demanded
         {
         	writer.attachVertexData(*velocityL,  "velocityL", dim);
         	writer.attachVertexData(*velocityG,  "velocityG", dim);
@@ -788,6 +796,7 @@ protected:
     // parameters given in constructor
     std::vector<StaticVars> staticVertexDat_;
     bool switchFlag_;
+    bool velocityOutput_;
     Scalar massUpwindWeight_;
 };
 

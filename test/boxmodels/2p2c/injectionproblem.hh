@@ -74,6 +74,7 @@ SET_BOOL_PROP(InjectionProblem, EnableGravity, true);
 
 SET_BOOL_PROP(InjectionProblem, EnableJacobianRecycling, true);
 SET_BOOL_PROP(InjectionProblem, EnablePartialReassemble, true);
+SET_BOOL_PROP(InjectionProblem, EnableVelocityOutput, false);
 }
 
 
