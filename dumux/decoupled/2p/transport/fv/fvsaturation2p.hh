@@ -340,14 +340,14 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
 
         // run through all intersections with neighbors and boundary
-        int isIndex = -1;
+//        int isIndex = -1;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt
                 != isItEnd; ++isIt)
         {
             // local number of facet
-        	isIndex++;
-//            int isIndex = isIt->indexInInside();
+//        	isIndex++;
+            int isIndex = isIt->indexInInside();
 
             GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals_)
