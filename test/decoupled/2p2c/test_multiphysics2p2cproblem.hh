@@ -79,11 +79,8 @@ SET_PROP(TestMultTwoPTwoCProblem, PressureModel)
     typedef Dumux::FVPressure2P2CMultiPhysics<TTAG(TestMultTwoPTwoCProblem)> type;
 };
 
-SET_INT_PROP(TestMultTwoPTwoCProblem, VelocityFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::velocityW);
-
 SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureW);
+        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureNW);
 
 //// Select fluid system
 //SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
@@ -117,6 +114,7 @@ public:
 
 // Enable gravity
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);
+SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(DecoupledTwoPTwoC,
         BoundaryMobility,
         GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::satDependent);
@@ -136,7 +134,7 @@ SET_SCALAR_PROP(TestMultTwoPTwoCProblem, CFLFactor, 0.8);
  * description in the pressure module)
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_dec2p2c</tt>
+ * <tt>./test_multiphyiscs2p2c</tt>
  * Optionally, simulation endtime and first timestep size can be
  * specified by programm arguments.
  */
@@ -150,6 +148,10 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+
+// boundary typedefs
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
 enum
 {
@@ -172,7 +174,9 @@ public:
 TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
 ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
 {
+    // Specifies how many time-steps are done before output will be written.
     this->setOutputInterval(10);
+
     // initialize the tables of the fluid system
 //    FluidSystem::init();
 }
@@ -200,91 +204,82 @@ bool shouldWriteRestartFile() const
 //! Returns the temperature within the domain.
 /*! This problem assumes a temperature of 10 degrees Celsius.
  */
-Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
+Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 {
     return 273.15 + 10; // -> 10°C
 }
 
 // \}
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::referencePressure()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::referencePressureAtPos()
  */
-Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
     return 1e6;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::bcTypePress()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryTypesAtPos()
  */
-typename BoundaryConditions::Flags bcTypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
+void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
     if (globalPos[0] > 10-1E-6 || globalPos[0] < 1e-6)
-        return BoundaryConditions::dirichlet;
-    // all other boundaries
-    return BoundaryConditions::neumann;
+        bcTypes.setAllDirichlet();
+    else
+        // all other boundaries
+        bcTypes.setAllNeumann();
 }
-/*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::bcTypeTransport()
- */
-typename BoundaryConditions::Flags bcTypeTransport(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    return bcTypePress(globalPos, intersection);
-}
-/*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::bcFormulation()
- */
-BoundaryConditions2p2c::Flags bcFormulation(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    return BoundaryConditions2p2c::concentration;
-}
-/*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletPress()
- */
-Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    const Element& element = *(intersection.inside());
 
-    Scalar pRef = referencePressure(globalPos, element);
-    Scalar temp = temperature(globalPos, element);
+/*!
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryFormulation()
+ */
+const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
+{
+    bcFormulation = Indices::BoundaryFormulation::concentration;
+}
+/*!
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletAtPos()
+ */
+void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos) const
+{
+    Scalar pRef = referencePressureAtPos(globalPos);
+    Scalar temp = temperatureAtPos(globalPos);
 
-    // all other boundaries
-    return (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
+    // Dirichlet for pressure equation
+    bcValues[Indices::pressureEqIdx] = (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
             : (2e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1]);
+
+    // Dirichlet values for transport equations
+    bcValues[Indices::contiWEqIdx] = 1.;
+    bcValues[Indices::contiNEqIdx] = 1.- bcValues[Indices::contiWEqIdx];
+
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletTransport()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::neumannAtPos()
  */
-Scalar dirichletTransport(const GlobalPosition& globalPos, const Intersection& intersection) const
+void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
-    return 1.;
-}
-/*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::neumann()
- */
-Dune::FieldVector<Scalar,2> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    Dune::FieldVector<Scalar,2> neumannFlux(0.0);
+    neumannValues[Indices::contiNEqIdx] = 0.;
+    neumannValues[Indices::contiWEqIdx] = 0.;
 //    if (globalPos[1] < 15 && globalPos[1]> 5)
 //    {
-//        neumannFlux[nPhaseIdx] = -0.015;
+//        neumannValues[Indices::contiNEqIdx] = -0.015;
 //    }
-    return neumannFlux;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::source()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()
  */
-Dune::FieldVector<Scalar,2> source(const GlobalPosition& globalPos, const Element& element)
+void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
-    Dune::FieldVector<Scalar,2> q_(0);
-        if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1) q_[1] = 0.0001;
-    return q_;
+    sourceValues[Indices::contiWEqIdx]=0.;
+    if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1)
+        sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initFormulation()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::initialFormulation()
  */
-const BoundaryConditions2p2c::Flags initFormulation (const GlobalPosition& globalPos, const Element& element) const
+const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
-    return BoundaryConditions2p2c::concentration;
+    initialFormulation = Indices::BoundaryFormulation::concentration;
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::initSat()

@@ -25,8 +25,7 @@
 #define DUMUX_IMPETPROBLEM_2P2C_HH
 
 #include "boundaryconditions2p2c.hh"
-#include <dumux/decoupled/common/impet.hh>
-#include <dumux/decoupled/common/impetproblem.hh>
+#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p2c/variableclass2p2c.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
 
@@ -45,9 +44,9 @@ namespace Dumux
  * in the specific problem.
  */
 template<class TypeTag>
-class IMPETProblem2P2C : public IMPETProblem<TypeTag>
+class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
 {
-    typedef IMPETProblem<TypeTag> ParentType;
+    typedef IMPESProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
@@ -59,7 +58,6 @@ class IMPETProblem2P2C : public IMPETProblem<TypeTag>
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem))            FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))    SpatialParameters;
 
 
@@ -78,16 +76,8 @@ public:
      * \param verbose Output flag for the time manager.
      */
     IMPETProblem2P2C(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
-        gravity_(0)
-    {
-        newSpatialParams_ = true;
-        spatialParameters_ = new SpatialParameters(gridView);
-
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
+        : ParentType(timeManager, gridView)
+    { }
     /*!
      * \brief The constructor
      *
@@ -96,14 +86,8 @@ public:
      * \param verbose Output flag for the time manager.
      */
     IMPETProblem2P2C(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
-        : ParentType(timeManager, gridView),
-        gravity_(0),spatialParameters_(&spatialParameters)
-    {
-        newSpatialParams_ = false;
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
+        : ParentType(timeManager, gridView, spatialParameters)
+    { }
 
     /*!
      * \brief The constructor
@@ -113,16 +97,8 @@ public:
      */
     IMPETProblem2P2C(const GridView &gridView, bool verbose = true)
     DUNE_DEPRECATED // use IMPETProblem2P2C(TimeManager&, const GridView &)
-        : ParentType(gridView, verbose),
-        gravity_(0)
-    {
-        newSpatialParams_ = true;
-        spatialParameters_ = new SpatialParameters(gridView);
-
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
+        : ParentType(gridView, verbose)
+    { }
     /*!
      * \brief The constructor
      *
@@ -132,38 +108,57 @@ public:
      */
     IMPETProblem2P2C(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
     DUNE_DEPRECATED // use IMPETProblem2P2C(TimeManager&, const GridView &)
-        : ParentType(gridView, verbose),
-        gravity_(0),spatialParameters_(&spatialParameters)
-    {
-        newSpatialParams_ = false;
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
+        : ParentType(gridView, spatialParameters, verbose)
+    { }
 
     virtual ~IMPETProblem2P2C()
-    {
-        if (newSpatialParams_)
-        {
-        delete spatialParameters_;
-        }
-    }
+    { }
     /*!
      * \name Problem parameters
      */
     // \{
-
-    /*!
-     * \copydoc Dumux::IMPESProblem2P::temperature()
+    //! Saturation initial condition (dimensionless)
+    /*! The problem is initialized with the following saturation. Both
+     * phases are assumed to contain an equilibrium concentration of the
+     * correspondingly other component.
+     * \param element The element.
      */
-    Scalar temperature() const
-    { return this->asImp_()->temperature(); };
-
-    /*!
-     * \copydoc Dumux::IMPESProblem2P::gravity()
+    Scalar initSat(const Element& element) const
+    {
+        return asImp_().initSatAtPos(element.geometry().center());
+    }
+    //! Saturation initial condition (dimensionless) at given position
+    /*! Has to be provided if initSat() is not used in the specific problem.
+     *  \param globalPos The global position.
      */
-    const GlobalPosition &gravity() const
-    { return gravity_; }
+    Scalar initSatAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "please specify initial saturation in the problem"
+                                            " using an initSatAtPos() method!");
+        return NAN;
+    }
+
+    //! Concentration initial condition (dimensionless)
+    /*! The problem is initialized with the following concentration.
+     */
+    Scalar initConcentration(const Element& element) const
+    {
+        return asImp_().initConcentrationAtPos(element.geometry().center());
+    }
+    //! Concentration initial condition (dimensionless)
+    /*! Has to be provided if initConcentration() is not used in the specific problem.
+     *  \param globalPos The global position.
+     */
+    Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "please specify initial Concentration in the problem"
+                                            " using an initConcentrationAtPos() method!");
+        return NAN;
+    }
+    // \}
+    /*!
+     * \name Deprecated Problem parameters
+     */
 
     //! Saturation initial condition (dimensionless)
     /*! The problem is initialized with the following saturation. Both
@@ -171,6 +166,7 @@ public:
      * correspondingly other component.
      */
     Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
+    DUNE_DEPRECATED // use initSat(const Element& element)
     {
         DUNE_THROW(Dune::NotImplemented, "please specify initial saturation in the problem!");
         return NAN;
@@ -179,28 +175,11 @@ public:
     /*! The problem is initialized with the following concentration.
      */
     Scalar initConcentration(const GlobalPosition& globalPos, const Element& element) const
+    DUNE_DEPRECATED // use initConcentration(const Element& element)
     {
         DUNE_THROW(Dune::NotImplemented, "please specify initial Concentration in the problem!");
         return NAN;
     }
-    // \}
-
-    /*!
-     * \name Access functions
-     */
-    // \{
-    /*!
-     * \copydoc Dumux::IMPESProblem2P::spatialParameters()
-     */
-    SpatialParameters &spatialParameters()
-    { return *spatialParameters_; }
-
-    /*!
-     * \copydoc Dumux::IMPESProblem2P::spatialParameters()
-     */
-    const SpatialParameters &spatialParameters() const
-    { return *spatialParameters_; }
-
     // \}
 
 private:
@@ -211,12 +190,6 @@ private:
     //! \copydoc Dumux::IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
-
-    GlobalPosition gravity_;
-
-    // fluids and material properties
-    SpatialParameters*  spatialParameters_;
-    bool newSpatialParams_;
 };
 
 }

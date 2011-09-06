@@ -85,7 +85,7 @@ NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); // Two-point f
 //////////////////////////////////////////////////////////////////
 SET_TYPE_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices,DecoupledTwoPTwoCIndices<TypeTag>);
 
-SET_INT_PROP(DecoupledTwoPTwoC, NumEq, 2);
+SET_INT_PROP(DecoupledTwoPTwoC, NumEq, 3);
 
 // set fluid/component information
 SET_PROP(DecoupledTwoPTwoC, NumPhases) //!< The number of phases in the 2p model is 2
@@ -167,8 +167,22 @@ private:
 
 public:
     // Component indices
-    static const int wCompIdx = FluidSystem::wCompIdx; //!< Index of the wetting phase in a phase vector
-    static const int nCompIdx = FluidSystem::nCompIdx; //!< Index of the non-wetting phase in a phase vector
+    static const int wCompIdx = FluidSystem::wPhaseIdx; //!< Component index equals phase index
+    static const int nCompIdx = FluidSystem::nPhaseIdx; //!< Component index equals phase index
+
+    // Equation indices
+    static const int pressureEqIdx = 0;
+    static const int transportEqOffset = pressureEqIdx + 1; //!< Offset to access transport (mass conservation -) equations
+    static const int contiWEqIdx = transportEqOffset + wCompIdx; //!< Index of the wetting component transport equation
+    static const int contiNEqIdx = transportEqOffset + nCompIdx; //!< Index of the nonwetting component transport equation
+
+    //! Type of value on the Boundary
+    enum BoundaryFormulation
+        {
+            saturation=-1,
+            concentration=-2,
+        };
+
 
     // BoundaryCondition flags
     static const int satDependent = 0;

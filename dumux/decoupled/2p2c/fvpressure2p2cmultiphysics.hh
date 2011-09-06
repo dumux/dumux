@@ -104,10 +104,11 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     // convenience shortcuts for Vectors/Matrices
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+
 
 //! Access functions to the current problem object
     Problem& problem()
@@ -248,11 +249,12 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         Scalar densityNWI = problem().variables().densityNonwetting(globalIdxI);
 
         /****************implement sources and sinks************************/
-        Dune::FieldVector<Scalar,2> source(problem().source(globalPos, *eIt));
+        PrimaryVariables source(NAN);
+        problem().source(source, *eIt);
         if(first || problem().variables().subdomain(globalIdxI) == 1)
         {
-                source[wPhaseIdx] /= densityWI;
-                source[nPhaseIdx] /= densityNWI;
+                source[Indices::contiWEqIdx] /= densityWI;
+                source[Indices::contiNEqIdx] /= densityNWI;
         }
         else
         {
@@ -263,10 +265,10 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 							problem().variables().dv(globalIdxI, nPhaseIdx),
 							problem().variables().dv_dp(globalIdxI));
 
-				source[wPhaseIdx] *= problem().variables().dv(globalIdxI, wPhaseIdx);		// note: dV_[i][1] = dv_dC1 = dV/dm1
-				source[nPhaseIdx] *= problem().variables().dv(globalIdxI, nPhaseIdx);
+				source[Indices::contiWEqIdx] *= problem().variables().dv(globalIdxI, wPhaseIdx);		// note: dV_[i][1] = dv_dC1 = dV/dm1
+				source[Indices::contiNEqIdx] *= problem().variables().dv(globalIdxI, nPhaseIdx);
         }
-        this->f_[globalIdxI] = volume * (source[wPhaseIdx] + source[nPhaseIdx]);
+        this->f_[globalIdxI] = volume * (source[Indices::contiWEqIdx] + source[Indices::contiNEqIdx]);
         /********************************************************************/
 
         // get absolute permeability
@@ -584,14 +586,15 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 unitDistVec /= dist;
 
                 //get boundary condition for boundary face center
-                BoundaryConditions::Flags bctype = problem().bcTypePress(globalPosFace, *isIt);
+                typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) bcType;
+                problem().boundaryTypes(bcType, *isIt);
 
                 // prepare pressure boundary condition
                 PhaseVector pressBC(0.);
                 Scalar pcBound (0.);
 
                 /**********         Dirichlet Boundary        *************/
-                if (bctype == BoundaryConditions::dirichlet)
+                if (bcType.isDirichlet(Indices::pressureEqIdx))
                 {
                     //permeability vector at boundary
                     Dune::FieldVector<Scalar, dim> permeability(0);
@@ -600,13 +603,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     // create a fluid state for the boundary
                     FluidState BCfluidState;
 
-                    Scalar temperatureBC = problem().temperature(globalPosFace, *eIt);
+                    //read boundary values
+                    PrimaryVariables primaryVariablesOnBoundary(NAN);
+                    problem().dirichlet(primaryVariablesOnBoundary, *isIt);
+                    Scalar temperatureBC = problem().temperatureAtPos(globalPosFace);
 
                     if (first)
                     {
                         Scalar lambda = lambdaWI+lambdaNWI;
                         this->A_[globalIdxI][globalIdxI] += lambda * faceArea * (permeability * unitOuterNormal) / (dist);
-                        Scalar pressBC = problem().dirichletPress(globalPosFace, *isIt);
+                        Scalar pressBC = primaryVariablesOnBoundary[Indices::pressureEqIdx];
                         this->f_[globalIdxI] += lambda * faceArea * pressBC * (permeability * unitOuterNormal) / (dist);
                         rightEntry = (fractionalWI * densityWI
                                              + fractionalNWI * densityNWI)
@@ -655,6 +661,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                             lambdaNWBound = MaterialLaw::krn(
                                     problem().spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityNWBound;
+                            break;
                             }
                         }
 
@@ -681,34 +688,19 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                         case pw:
                             {
                                 potentialW = (unitOuterNormal * distVec) *
-                                        (problem().variables().pressure()[globalIdxI] - problem().dirichletPress(globalPosFace, *isIt)) / (dist * dist);
+                                        (problem().variables().pressure()[globalIdxI] - pressBC[wPhaseIdx]) / (dist * dist);
                                 potentialNW = (unitOuterNormal * distVec) *
                                         (problem().variables().pressure()[globalIdxI] + pcI
-                                                - problem().dirichletPress(globalPosFace, *isIt) - pcBound) / (dist * dist);
+                                                - pressBC[wPhaseIdx] - pcBound) / (dist * dist);
                                 break;
                             }
                         case pn:
                             {
                                 potentialW = (unitOuterNormal * distVec) * (problem().variables().pressure()[globalIdxI] - pcI -
-                                        problem().dirichletPress(globalPosFace, *isIt) + pcBound)
+                                        pressBC[nPhaseIdx] + pcBound)
                                         / (dist * dist);
                                 potentialNW = (unitOuterNormal * distVec) * (problem().variables().pressure()[globalIdxI] -
-                                        problem().dirichletPress(globalPosFace, *isIt)) / (dist * dist);
-                                break;
-                            }
-                        case pglobal:
-                            {
-                                Scalar fractionalWBound = lambdaWBound / (lambdaWBound + lambdaNWBound);
-                                Scalar fractionalNWBound = lambdaNWBound / (lambdaWBound + lambdaNWBound);
-                                Scalar fMeanW = 0.5 * (fractionalWI + fractionalWBound);
-                                Scalar fMeanNW = 0.5 * (fractionalNWI + fractionalNWBound);
-
-                                potentialW = (unitOuterNormal * distVec)
-                                     * (problem().variables().pressure()[globalIdxI] - problem().dirichletPress(globalPosFace, *isIt)
-                                              - fMeanNW * (pcI - pcBound)) / (dist * dist);
-                                potentialNW = (unitOuterNormal * distVec)
-                                        * (problem().variables().pressure()[globalIdxI] - problem().dirichletPress(globalPosFace, *isIt)
-                                              + fMeanW * (pcI - pcBound)) / (dist * dist);
+                                        pressBC[nPhaseIdx]) / (dist * dist);
                                 break;
                             }
                         }
@@ -821,7 +813,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
                         // set diagonal entry and right hand side entry
                         this->A_[globalIdxI][globalIdxI] += entry;
-                        this->f_[globalIdxI] += entry * problem().dirichletPress(globalPosFace, *isIt);
+                        this->f_[globalIdxI] += entry * primaryVariablesOnBoundary[Indices::pressureEqIdx];
                         this->f_[globalIdxI] -= rightEntry * (unitOuterNormal * unitDistVec);
                     }    //end of if(first) ... else{...
                 }   // end dirichlet
@@ -831,7 +823,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                  **********************************/
                 else
                 {
-                    Dune::FieldVector<Scalar,2> J = problem().neumann(globalPosFace, *isIt);
+                    PrimaryVariables J(NAN);
+                    problem().neumann(J, *isIt);
                     if (first || problem().variables().subdomain(globalIdxI)==1)
                     {
                         J[wPhaseIdx] /= densityWI;
@@ -868,7 +861,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 if(problem().variables().saturation(globalIdxI)==1)  //only w-phase
                 {
                     Scalar v_w_ = 1. / FluidSystem::phaseDensity(wPhaseIdx,
-                                                        problem().temperature(globalPos, *eIt),
+                                                        problem().temperatureAtPos(globalPos),
                                                         p_, pseudoFluidState);
                     problem().variables().dv_dp(globalIdxI) = (problem().variables().totalConcentration(globalIdxI, wCompIdx)
                             + problem().variables().totalConcentration(globalIdxI, nCompIdx))
@@ -878,7 +871,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     {
                         p_ -= 2*incp;
                         Scalar v_w_ = 1. / FluidSystem::phaseDensity(wPhaseIdx,
-                                                    problem().temperature(globalPos, *eIt),
+                                                    problem().temperatureAtPos(globalPos),
                                                     p_, pseudoFluidState);
                         problem().variables().dv_dp(globalIdxI) = (problem().variables().totalConcentration(globalIdxI, wCompIdx)
                                                     + problem().variables().totalConcentration(globalIdxI, nCompIdx))
@@ -888,7 +881,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 if(problem().variables().saturation(globalIdxI)==0.)  //only nw-phase
                 {
                     Scalar v_n_ = 1. / FluidSystem::phaseDensity(nPhaseIdx,
-                                                        problem().temperature(globalPos, *eIt),
+                                                        problem().temperatureAtPos(globalPos),
                                                         p_, pseudoFluidState);
                     problem().variables().dv_dp(globalIdxI) = (problem().variables().totalConcentration(globalIdxI, wCompIdx)
                             + problem().variables().totalConcentration(globalIdxI, nCompIdx))
@@ -898,7 +891,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     {
                         p_ -= 2*incp;
                         Scalar v_n_ = 1. / FluidSystem::phaseDensity(nPhaseIdx,
-                                                            problem().temperature(globalPos, *eIt),
+                                                            problem().temperatureAtPos(globalPos),
                                                             p_, pseudoFluidState);
                         problem().variables().dv_dp(globalIdxI) = (problem().variables().totalConcentration(globalIdxI, wCompIdx)
                                 + problem().variables().totalConcentration(globalIdxI, nCompIdx))
@@ -985,7 +978,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
 
         int globalIdx = problem().variables().index(*eIt);
 
-        Scalar temperature_ = problem().temperature(globalPos, *eIt);
+        Scalar temperature_ = problem().temperatureAtPos(globalPos);
         // reset volErr
         problem().variables().volErr()[globalIdx] = 0;
 
@@ -1086,7 +1079,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
                     oldPc = pc;
                     //update with better pressures
                     fluidState.update(Z1, pressure, problem().spatialParameters().porosity(globalPos, *eIt),
-                                        problem().temperature(globalPos, *eIt));
+                                        problem().temperatureAtPos(globalPos));
                     pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPos, *eIt),
                                         fluidState.saturation(wPhaseIdx));
                     // TODO: get right criterion, do output for evaluation

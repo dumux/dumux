@@ -93,9 +93,9 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
@@ -347,9 +347,10 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                     FluidState BCfluidState;
 
                     //get boundary type
-                    BoundaryConditions::Flags bcTypeTransport_ = problem_.bcTypeTransport(globalPosFace, *isIt);
+                    typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) bcTypes;
+                    problem_.boundaryTypes(bcTypes, *isIt);
 
-                    if (bcTypeTransport_ == BoundaryConditions::dirichlet)
+                    if (bcTypes.isDirichlet(Indices::contiWEqIdx)) // if contiWEq is Dirichlet, so is contiNEq
                     {
                         //get dirichlet pressure boundary condition
                         PhaseVector pressBound(0.);
@@ -368,10 +369,10 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                         Scalar densityWBound = BCfluidState.density(wPhaseIdx);
                         Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
                         Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
-                                                                             problem_.temperature(globalPosFace, *eIt),
+                                                                             problem_.temperatureAtPos(globalPosFace),
                                                                              pressBound[wPhaseIdx], BCfluidState);
                         Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
-                                                                             problem_.temperature(globalPosFace, *eIt),
+                                                                             problem_.temperatureAtPos(globalPosFace),
                                                                              pressBound[wPhaseIdx], BCfluidState);
                         if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
                              pcBound = BCfluidState.capillaryPressure();
@@ -390,19 +391,19 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                             case pw:
                             {
                                 potentialW = (K * unitOuterNormal) *
-                                        (pressI - problem_.dirichletPress(globalPosFace, *isIt)) / dist;
+                                        (pressI - pressBound[wPhaseIdx]) / dist;
                                 potentialNW = (K * unitOuterNormal) *
-                                        (pressI + pcI - problem_.dirichletPress(globalPosFace, *isIt) - pcBound)
+                                        (pressI + pcI - pressBound[wPhaseIdx] - pcBound)
                                         / dist;
                                 break;
                             }
                             case pn:
                             {
                                 potentialW = (K * unitOuterNormal) *
-                                        (pressI - pcI - problem_.dirichletPress(globalPosFace, *isIt) + pcBound)
+                                        (pressI - pcI - pressBound[nPhaseIdx] + pcBound)
                                         / dist;
                                 potentialNW = (K * unitOuterNormal) *
-                                        (pressI - problem_.dirichletPress(globalPosFace, *isIt)) / dist;
+                                        (pressI - pressBound[nPhaseIdx]) / dist;
                                 break;
                             }
                         }
@@ -460,13 +461,13 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                             + velocityJIn * (1. - Xn1Bound) * densityNWBound
                             - velocityIJn * (1. - Xn1_I) * densityNWI ;
                     }//end dirichlet boundary
-
-                    if (bcTypeTransport_ == BoundaryConditions::neumann)
+                    else if (bcTypes.isDirichlet(Indices::contiWEqIdx))
                     {
                         // Convention: outflow => positive sign : has to be subtracted from update vec
-                        Dune::FieldVector<Scalar,2> J = problem_.neumann(globalPosFace, *isIt);
-                        updFactor[wCompIdx] = - J[0] * faceArea / volume;
-                        updFactor[nCompIdx] = - J[1] * faceArea / volume;
+                        PrimaryVariables J(NAN);
+                        problem_.neumann(J, *isIt);
+                        updFactor[wCompIdx] = - J[Indices::contiWEqIdx] * faceArea / volume;
+                        updFactor[nCompIdx] = - J[Indices::contiNEqIdx] * faceArea / volume;
 
                         // for timestep control
                         #define cflIgnoresNeumann
@@ -508,9 +509,10 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             /************************************
              *     Handle source term
              ***********************************/
-            Dune::FieldVector<double,2> q = problem_.source(globalPos, *eIt);
-            updateVec[wCompIdx][globalIdxI] += q[wCompIdx];
-            updateVec[nCompIdx][globalIdxI] += q[nCompIdx];
+            PrimaryVariables q(NAN);
+            problem_.source(q, *eIt);
+            updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
+            updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
 
             // account for porosity
             sumfactorin = std::max(sumfactorin,sumfactorout)

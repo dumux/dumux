@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         double restartTime = 0;
         // deal with start parameters
         double tEnd= 3e3;
-        double firstDt = 1e3;
+        double firstDt = 200;
         if (argc != 1)
         {
             // deal with the restart stuff

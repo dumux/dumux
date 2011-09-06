@@ -74,6 +74,7 @@ template<class TypeTag> class FVPressure2P2C
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
@@ -93,7 +94,8 @@ template<class TypeTag> class FVPressure2P2C
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
+        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
+        contiWEqIdx = Indices::contiWEqIdx, contiNEqIdx = Indices::contiNEqIdx
     };
 
     // typedefs to abbreviate several dune classes...
@@ -104,10 +106,10 @@ template<class TypeTag> class FVPressure2P2C
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     // convenience shortcuts for Vectors/Matrices
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
@@ -493,11 +495,12 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
         Scalar densityNWI = problem_.variables().densityNonwetting(globalIdxI);
 
         /****************implement sources and sinks************************/
-        Dune::FieldVector<Scalar,2> source(problem_.source(globalPos, *eIt));
+        PrimaryVariables source(NAN);
+        problem_.source(source, *eIt);
         if(first)
         {
-                source[wPhaseIdx] /= densityWI;
-                source[nPhaseIdx] /= densityNWI;
+                source[contiWEqIdx] /= densityWI;
+                source[contiNEqIdx] /= densityNWI;
         }
         else
         {
@@ -508,10 +511,10 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 							problem_.variables().dv(globalIdxI, nPhaseIdx),
 							problem_.variables().dv_dp(globalIdxI));
 
-				source[wPhaseIdx] *= problem_.variables().dv(globalIdxI, wPhaseIdx);		// note: dV_[i][1] = dv_dC1 = dV/dm1
-				source[nPhaseIdx] *= problem_.variables().dv(globalIdxI, nPhaseIdx);
+				source[contiWEqIdx] *= problem_.variables().dv(globalIdxI, wPhaseIdx);		// note: dV_[i][1] = dv_dC1 = dV/dm1
+				source[contiNEqIdx] *= problem_.variables().dv(globalIdxI, nPhaseIdx);
         }
-		f_[globalIdxI] = volume * (source[wPhaseIdx] + source[nPhaseIdx]);
+		f_[globalIdxI] = volume * (source[contiWEqIdx] + source[contiNEqIdx]);
         /***********************************/
 
 		// get absolute permeability
@@ -760,14 +763,15 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                 unitDistVec /= dist;
 
                 //get boundary condition for boundary face center
-                BoundaryConditions::Flags bctype = problem_.bcTypePress(globalPosFace, *isIt);
+                BoundaryTypes bcType;
+                problem_.boundaryTypes(bcType, *isIt);
 
                 // prepare pressure boundary condition
                 PhaseVector pressBC(0.);
                 Scalar pcBound (0.);
 
                 /**********         Dirichlet Boundary        *************/
-                if (bctype == BoundaryConditions::dirichlet)
+                if (bcType.isDirichlet(Indices::pressureEqIdx))
                 {
                     //permeability vector at boundary
                     Dune::FieldVector<Scalar, dim> permeability(0);
@@ -776,13 +780,16 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                 	// create a fluid state for the boundary
                 	FluidState BCfluidState;
 
-                    Scalar temperatureBC = problem_.temperature(globalPosFace, *eIt);
+                    Scalar temperatureBC = problem_.temperatureAtPos(globalPosFace);
+                    //read boundary values
+                    PrimaryVariables primaryVariablesOnBoundary(NAN);
+                    problem_.dirichlet(primaryVariablesOnBoundary, *isIt);
 
                     if (first)
                     {
                     	Scalar lambda = lambdaWI+lambdaNWI;
                         A_[globalIdxI][globalIdxI] += lambda * faceArea * (permeability * unitOuterNormal) / (dist);
-                        Scalar pressBC = problem_.dirichletPress(globalPosFace, *isIt);
+                        Scalar pressBC = primaryVariablesOnBoundary[Indices::pressureEqIdx];
                         f_[globalIdxI] += lambda * faceArea * pressBC * (permeability * unitOuterNormal) / (dist);
                         Scalar rightentry = (fractionalWI * densityWI
                                              + fractionalNWI * densityNWI)
@@ -863,19 +870,19 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                                 case pw:
                                 {
                                     potentialW = (unitOuterNormal * distVec) *
-                                            (problem_.variables().pressure()[globalIdxI] - problem_.dirichletPress(globalPosFace, *isIt)) / (dist * dist);
+                                            (problem_.variables().pressure()[globalIdxI] - pressBC[wPhaseIdx]) / (dist * dist);
                                     potentialNW = (unitOuterNormal * distVec) *
                                             (problem_.variables().pressure()[globalIdxI] + pcI
-                                                    - problem_.dirichletPress(globalPosFace, *isIt) - pcBound) / (dist * dist);
+                                                    - pressBC[wPhaseIdx] - pcBound) / (dist * dist);
                                     break;
                                 }
                                 case pn:
                                 {
                                     potentialW = (unitOuterNormal * distVec) * (problem_.variables().pressure()[globalIdxI] - pcI -
-                                            problem_.dirichletPress(globalPosFace, *isIt) + pcBound)
+                                            pressBC[nPhaseIdx] + pcBound)
                                             / (dist * dist);
                                     potentialNW = (unitOuterNormal * distVec) * (problem_.variables().pressure()[globalIdxI] -
-                                            problem_.dirichletPress(globalPosFace, *isIt)) / (dist * dist);
+                                            pressBC[nPhaseIdx]) / (dist * dist);
                                     break;
                                 }
                             }
@@ -956,7 +963,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 
                         // set diagonal entry and right hand side entry
                         A_[globalIdxI][globalIdxI] += entry;
-                        f_[globalIdxI] += entry * problem_.dirichletPress(globalPosFace, *isIt);
+                        f_[globalIdxI] += entry * primaryVariablesOnBoundary[Indices::pressureEqIdx];
                         f_[globalIdxI] -= rightEntry * (unitOuterNormal * unitDistVec);
                     }	//end of if(first) ... else{...
                 }   // end dirichlet
@@ -964,22 +971,25 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                 /**********************************
                  * set neumann boundary condition
                  **********************************/
-                else
+                else if(bcType.isNeumann(Indices::pressureEqIdx))
                 {
-                	Dune::FieldVector<Scalar,2> J = problem_.neumann(globalPosFace, *isIt);
+                	PrimaryVariables J(NAN);
+                	problem_.neumann(J, *isIt);
 					if (first)
 					{
-						J[wPhaseIdx] /= densityWI;
-						J[nPhaseIdx] /= densityNWI;
+						J[contiWEqIdx] /= densityWI;
+						J[contiNEqIdx] /= densityNWI;
 					}
 					else
 					{
-						J[wPhaseIdx] *= dv_dC1;
-						J[nPhaseIdx] *= dv_dC2;
+						J[contiWEqIdx] *= dv_dC1;
+						J[contiNEqIdx] *= dv_dC2;
 					}
 
-                    f_[globalIdxI] -= (J[wPhaseIdx] + J[nPhaseIdx]) * faceArea;
+                    f_[globalIdxI] -= (J[contiWEqIdx] + J[contiNEqIdx]) * faceArea;
                 }
+                else
+                    DUNE_THROW(Dune::NotImplemented, "Boundary Condition neither Dirichlet nor Neumann!");
             }
         } // end all intersections
 //        printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
@@ -1080,26 +1090,27 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
         int globalIdx = problem_.variables().index(*eIt);
 
         // get the temperature
-        Scalar temperature_ = problem_.temperature(globalPos, *eIt);
+        Scalar temperature_ = problem_.temperatureAtPos(globalPos);
 
         // initial conditions
 		PhaseVector pressure(0.);
 		Scalar sat_0=0.;
 
-        BoundaryConditions2p2c::Flags ictype = problem_.initFormulation(globalPos, *eIt);            // get type of initial condition
+		typename Indices::BoundaryFormulation icFormulation;
+		problem_.initialFormulation(icFormulation, *eIt);            // get type of initial condition
 
         if(!compositional) //means that we do the first approximate guess without compositions
         {
 			// phase pressures are unknown, so start with an exemplary
-        	Scalar exemplaryPressure = problem_.referencePressure(globalPos, *eIt);
+        	Scalar exemplaryPressure = problem_.referencePressure(*eIt);
 			pressure[wPhaseIdx] = pressure[nPhaseIdx] = problem_.variables().pressure()[globalIdx] = exemplaryPressure;
 			problem_.variables().capillaryPressure(globalIdx) = 0.;
-			if (ictype == BoundaryConditions2p2c::saturation)  // saturation initial condition
+			if (icFormulation == Indices::BoundaryFormulation::saturation)  // saturation initial condition
 			{
 				sat_0 = problem_.initSat(globalPos, *eIt);
 				fluidState.satFlash(sat_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
 			}
-			else if (ictype == BoundaryConditions2p2c::concentration) // concentration initial condition
+			else if (icFormulation == Indices::BoundaryFormulation::concentration) // concentration initial condition
 			{
 				Scalar Z1_0 = problem_.initConcentration(globalPos, *eIt);
 				fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
@@ -1107,7 +1118,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
         }
         else if(compositional)	//means we regard compositional effects since we know an estimate pressure field
         {
-			if (ictype == Dumux::BoundaryConditions2p2c::saturation)  // saturation initial condition
+			if (icFormulation == Indices::BoundaryFormulation::saturation)  // saturation initial condition
 			{
 			    //get saturation, determine pc
 				sat_0 = problem_.initSat(globalPos, *eIt);
@@ -1139,7 +1150,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 
 				fluidState.satFlash(sat_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
 			}
-			else if (ictype == Dumux::BoundaryConditions2p2c::concentration) // concentration initial condition
+			else if (icFormulation == Indices::BoundaryFormulation::concentration) // concentration initial condition
 			{
 				Scalar Z1_0 = problem_.initConcentration(globalPos, *eIt);
 				// If total concentrations are given at the boundary, saturation is unknown.
@@ -1176,7 +1187,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 		                Scalar oldPc = pc;
 		                //update with better pressures
 		                fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt),
-		                                    problem_.temperature(globalPos, *eIt));
+		                                    problem_.temperatureAtPos(globalPos));
 		                pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPos, *eIt),
 		                                    fluidState.saturation(wPhaseIdx));
 		                // TODO: get right criterion, do output for evaluation
@@ -1254,7 +1265,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 
         int globalIdx = problem_.variables().index(*eIt);
 
-        Scalar temperature_ = problem_.temperature(globalPos, *eIt);
+        Scalar temperature_ = problem_.temperatureAtPos(globalPos);
         // reset volume error
         problem_.variables().volErr()[globalIdx] = 0;
 
@@ -1345,7 +1356,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
                 oldPc = pc;
                 //update with better pressures
                 fluidState.update(Z1, pressure, problem_.spatialParameters().porosity(globalPos, *eIt),
-                                    problem_.temperature(globalPos, *eIt));
+                                    problem_.temperatureAtPos(globalPos));
                 pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPos, *eIt),
                                     fluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
@@ -1437,7 +1448,7 @@ void FVPressure2P2C<TypeTag>::volumeDerivatives(GlobalPosition globalPos, Elemen
     int globalIdx = problem_.variables().index(*ep);
 
     // get cell temperature
-    Scalar temperature_ = problem_.temperature(globalPos, *ep);
+    Scalar temperature_ = problem_.temperatureAtPos(globalPos);
 
     // initialize an Fluid state for the update
     FluidState updFluidState;
@@ -1535,7 +1546,8 @@ void FVPressure2P2C<TypeTag>::volumeDerivatives(GlobalPosition globalPos, Elemen
     //check routines if derivatives are meaningful
     if (isnan(dv_dC1) || isinf(dv_dC1) || isnan(dv_dC2) || isinf(dv_dC2)|| isnan(dv_dp) || isinf(dv_dp))
     {
-        DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
+        std::cout << "blubbbber";
+//        DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
     }
 }
 

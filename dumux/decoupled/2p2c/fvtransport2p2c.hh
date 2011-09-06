@@ -55,6 +55,7 @@ class FVTransport2P2C
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
@@ -88,9 +89,9 @@ class FVTransport2P2C
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
@@ -123,27 +124,7 @@ public:
      */
     FVTransport2P2C(Problem& problem) :
         problem_(problem), switchNormals(false)
-    {
-        const int velocityType = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility)) && velocityType == vt)
-        {
-            DUNE_THROW(Dune::NotImplemented,
-                    "Total velocity - global pressure - model cannot be used with compressible fluids!");
-        }
-        const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
-        if (saturationType != Sw && saturationType != Sn)
-        {
-            DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
-        }
-        if (pressureType != pw && pressureType != pn && pressureType != pglobal)
-        {
-            DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
-        }
-        if (velocityType != vw && velocityType != vn && velocityType != vt)
-        {
-            DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
-        }
-    }
+    {  }
 
     ~FVTransport2P2C()
     {
@@ -393,10 +374,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 FluidState BCfluidState;
 
                 //get boundary type
-                BoundaryConditions::Flags bcTypeTransport_ = problem_.bcTypeTransport(globalPosFace, *isIt);
+                BoundaryTypes bcTypes;
+                problem_.boundaryTypes(bcTypes, *isIt);
 
                 /**********         Dirichlet Boundary        *************/
-                if (bcTypeTransport_ == BoundaryConditions::dirichlet)
+                if (bcTypes.isDirichlet(Indices::contiWEqIdx)) // if contiWEq is Dirichlet, so is contiNEq
                 {
                     //get dirichlet pressure boundary condition
                     PhaseVector pressBound(0.);
@@ -415,10 +397,10 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     Scalar densityWBound = BCfluidState.density(wPhaseIdx);
 					Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
 					Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
-																		problem_.temperature(globalPosFace, *eIt),
+																		problem_.temperatureAtPos(globalPosFace),
 																		pressBound[wPhaseIdx], BCfluidState);
 					Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
-																		problem_.temperature(globalPosFace, *eIt),
+																		problem_.temperatureAtPos(globalPosFace),
 																		pressBound[wPhaseIdx], BCfluidState);
 			        if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
 			            pcBound = BCfluidState.capillaryPressure();
@@ -436,19 +418,19 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                         case pw:
                         {
                             potentialW = (K * unitOuterNormal) *
-                                    (pressI - problem_.dirichletPress(globalPosFace, *isIt)) / dist;
+                                    (pressI - pressBound[wPhaseIdx]) / dist;
                             potentialNW = (K * unitOuterNormal) *
-                                    (pressI + pcI - problem_.dirichletPress(globalPosFace, *isIt) - pcBound)
+                                    (pressI + pcI - pressBound[wPhaseIdx] - pcBound)
                                     / dist;
                             break;
                         }
                         case pn:
                         {
                             potentialW = (K * unitOuterNormal) *
-                                    (pressI - pcI - problem_.dirichletPress(globalPosFace, *isIt) + pcBound)
+                                    (pressI - pcI - pressBound[nPhaseIdx] + pcBound)
                                     / dist;
                             potentialNW = (K * unitOuterNormal) *
-                                    (pressI - problem_.dirichletPress(globalPosFace, *isIt)) / dist;
+                                    (pressI - pressBound[nPhaseIdx]) / dist;
                             break;
                         }
                     }
@@ -505,13 +487,13 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                         + velocityJIn * (1. - Xn1Bound) * densityNWBound
                         - velocityIJn * (1. - Xn1_I) * densityNWI ;
                 }//end dirichlet boundary
-
-                if (bcTypeTransport_ == BoundaryConditions::neumann)
+                else if (bcTypes.isDirichlet(Indices::contiWEqIdx))
                 {
                     // Convention: outflow => positive sign : has to be subtracted from update vec
-                    Dune::FieldVector<Scalar,2> J = problem_.neumann(globalPosFace, *isIt);
-                    updFactor[wCompIdx] = - J[0] * faceArea / volume;
-                    updFactor[nCompIdx] = - J[1] * faceArea / volume;
+                    PrimaryVariables J(NAN);
+                    problem_.neumann(J, *isIt);
+                    updFactor[wCompIdx] = - J[Indices::contiWEqIdx] * faceArea / volume;
+                    updFactor[nCompIdx] = - J[Indices::contiNEqIdx] * faceArea / volume;
 
                     // for timestep control
 					#define cflIgnoresNeumann
@@ -548,12 +530,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
         }// end all intersections
 
-        /************************************
-         * 	Handle source term
-         ***********************************/
-        Dune::FieldVector<double,2> q = problem_.source(globalPos, *eIt);
-        updateVec[wCompIdx][globalIdxI] += q[wCompIdx];
-        updateVec[nCompIdx][globalIdxI] += q[nCompIdx];
+        /*********** 	Handle source term     ***************/
+        PrimaryVariables q(NAN);
+        problem_.source(q, *eIt);
+        updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
+        updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
@@ -591,10 +572,15 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                                             PhaseVector &pressBound)
 {
     // read boundary values
-    BoundaryConditions2p2c::Flags bctype = problem_.bcFormulation(globalPosFace, *isIt);
-    if (bctype == BoundaryConditions2p2c::saturation)
+    PrimaryVariables primaryVariablesOnBoundary(0.);
+    problem_.dirichlet(primaryVariablesOnBoundary, *isIt);
+
+    // read boundary type
+    typename Indices::BoundaryFormulation bcType;
+    problem_.boundaryFormulation(bcType, *isIt);
+    if (bcType == Indices::BoundaryFormulation::saturation)
     {
-        Scalar satBound = problem_.dirichletTransport(globalPosFace, *isIt);
+        Scalar satBound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
         if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
         {
             Scalar pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPosFace, *eIt),
@@ -603,33 +589,33 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
             {
             case pw:
             {
-                pressBound[wPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt);
-                pressBound[nPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt) + pcBound;
+                pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
+                pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx] + pcBound;
                 break;
             }
             case pn:
             {
-                pressBound[wPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt) - pcBound;
-                pressBound[nPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt);
+                pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx] - pcBound;
+                pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
                 break;
             }
             }
         }
         else // capillarity neglected
-            pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt);
+            pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
 
 
         BCfluidState.satFlash(satBound, pressBound, problem_.spatialParameters().porosity(globalPosFace, *eIt),
-                            problem_.temperature(globalPosFace, *eIt));
+                            problem_.temperatureAtPos(globalPosFace));
 
     }
-    if (bctype == BoundaryConditions2p2c::concentration)
+    else if (bcType == Indices::BoundaryFormulation::concentration)
     {
         // saturation and hence pc and hence corresponding pressure unknown
-        pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt);
-        Scalar Z1Bound = problem_.dirichletTransport(globalPosFace, *isIt);
+        pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
+        Scalar Z1Bound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
         BCfluidState.update(Z1Bound, pressBound, problem_.spatialParameters().porosity(globalPosFace, *eIt),
-                            problem_.temperature(globalPosFace, *eIt));
+                            problem_.temperatureAtPos(globalPosFace));
 
         if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
         {
@@ -644,14 +630,14 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 {
                 case pw:
                 {
-                    pressBound[wPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt);
-                    pressBound[nPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt) + pcBound;
+                    pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
+                    pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx] + pcBound;
                     break;
                 }
                 case pn:
                 {
-                    pressBound[wPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt) - pcBound;
-                    pressBound[nPhaseIdx] = problem_.dirichletPress(globalPosFace, *isIt);
+                    pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx] - pcBound;
+                    pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
                     break;
                 }
                 }
@@ -660,7 +646,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 Scalar oldPc = pcBound;
                 //update with better pressures
                 BCfluidState.update(Z1Bound, pressBound, problem_.spatialParameters().porosity(globalPosFace, *eIt),
-                                    problem_.temperature(globalPosFace, *eIt));
+                                    problem_.temperatureAtPos(globalPosFace));
                 pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPosFace, *eIt),
                         BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
@@ -670,6 +656,8 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
             }
         }
     }
+    else
+        DUNE_THROW(Dune::NotImplemented, "Boundary Formulation neither Concentration nor Saturation??");
 }
 
 }

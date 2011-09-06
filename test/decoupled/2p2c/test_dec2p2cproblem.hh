@@ -82,7 +82,6 @@ SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
         GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureNW);
 
-
 // Select fluid system
 SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
 {
@@ -115,6 +114,7 @@ public:
 
 // Enable gravity
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableGravity, true);
+SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestDecTwoPTwoCProblem,
         BoundaryMobility,
         GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::satDependent);
@@ -145,6 +145,10 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+
+// boundary typedefs
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
 enum
 {
@@ -193,8 +197,9 @@ bool shouldWriteRestartFile() const
 
 //! Returns the temperature within the domain.
 /*! This problem assumes a temperature of 10 degrees Celsius.
+ * \param globalPos The global Position
  */
-Scalar temperature(const GlobalPosition& globalPos, const Element& element) const
+Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 {
     return 273.15 + 10; // -> 10°C
 }
@@ -204,94 +209,110 @@ Scalar temperature(const GlobalPosition& globalPos, const Element& element) cons
  /*This pressure is used in order to calculate the material properties
  * at the beginning of the initialization routine. It should lie within
  * a reasonable pressure range for the current problem.
+ * \param globalPos The global Position
  */
-Scalar referencePressure(const GlobalPosition& globalPos, const Element& element) const
+Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
     return 1e6;
 }
-//! Type of pressure boundary condition.
-/*! Defines the type the boundary condition for the pressure equation,
- *  either pressure (dirichlet) or flux (neumann).
+//! Type of boundary condition.
+/*! Defines the type the boundary condition for the conservation equation,
+ *  e.g. Dirichlet or Neumann. The Pressure equation is acessed via
+ *  Indices::pressureEqIdx, while the transport (or mass conservation -)
+ *  equations are reached with Indices::contiWEqIdx and Indices::contiNEqIdx
+ *
+ * \param bcTypes The boundary types for the conservation equations
+ * \param globalPos The global Position
  */
-typename BoundaryConditions::Flags bcTypePress(const GlobalPosition& globalPos, const Intersection& intersection) const
+void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
     if (globalPos[0] > 10-1E-6 || globalPos[0] < 1e-6)
-        return BoundaryConditions::dirichlet;
-    // all other boundaries
-    return BoundaryConditions::neumann;
+        bcTypes.setAllDirichlet();
+    else
+        // all other boundaries
+        bcTypes.setAllNeumann();
 }
-//! Type of Transport boundary condition.
-/*! Defines the type the boundary condition for the transport equation,
- *  either saturation (dirichlet) or flux (neumann).
- */
-typename BoundaryConditions::Flags bcTypeTransport(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    return bcTypePress(globalPos, intersection);
-}
+
 //! Flag for the type of Dirichlet conditions
 /*! The Dirichlet BCs can be specified by a given concentration (mass of
  * a component per total mass inside the control volume) or by means
  * of a saturation.
+ *
+ * \param bcFormulation The boundary formulation for the conservation equations.
+ * \param intersection The intersection on the boundary.
  */
-BoundaryConditions2p2c::Flags bcFormulation(const GlobalPosition& globalPos, const Intersection& intersection) const
+const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
-    return BoundaryConditions2p2c::concentration;
+    bcFormulation = Indices::BoundaryFormulation::concentration;
 }
-//! Value for dirichlet pressure boundary condition \f$ [Pa] \f$.
-/*! In case of a dirichlet BC for the pressure equation, the pressure
- *  have to be defined on boundaries.
+//! Values for dirichlet boundary condition \f$ [Pa] \f$ for pressure and \f$ \frac{mass}{totalmass} \f$ or \f$ S_{\alpha} \f$ for transport.
+/*! In case of a dirichlet BC, values for all primary variables have to be set. In the sequential 2p2c model, a pressure
+ * is required for the pressure equation and component fractions for the transport equations. Although one BC for the two
+ * transport equations can be deduced by the other, it is seperately defined for consistency reasons with other models.
+ * Depending on the boundary Formulation, either saturation or total mass fractions can be defined.
+ *
+ * \param bcValues Vector holding values for all equations (pressure and transport).
+ * \param globalPos The global Position
  */
-Scalar dirichletPress(const GlobalPosition& globalPos, const Intersection& intersection) const
+void dirichletAtPos(PrimaryVariables &bcValues ,const GlobalPosition& globalPos) const
 {
-    const Element& element = *(intersection.inside());
+    Scalar pRef = referencePressureAtPos(globalPos);
+    Scalar temp = temperatureAtPos(globalPos);
 
-    Scalar pRef = referencePressure(globalPos, element);
-    Scalar temp = temperature(globalPos, element);
-
-    // all other boundaries
-    return (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
+    // Dirichlet for pressure equation
+    bcValues[Indices::pressureEqIdx] = (globalPos[0] < 1e-6) ? (2.5e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1])
             : (2e5 - FluidSystem::H2O::liquidDensity(temp, pRef) * this->gravity()[dim-1]);
+
+    // Dirichlet values for transport equations
+    bcValues[Indices::contiWEqIdx] = 1.;
+    bcValues[Indices::contiNEqIdx] = 1.- bcValues[Indices::contiWEqIdx];
+
 }
-//! Value for transport dirichlet boundary condition (dimensionless).
-/*! In case of a dirichlet BC for the transport equation,
- *  has to be defined on boundaries.
- */
-Scalar dirichletTransport(const GlobalPosition& globalPos, const Intersection& intersection) const
-{
-    return 1.;
-}
-//! Value for pressure neumann boundary condition \f$ [\frac{kg}{m^3 \cdot s}] \f$.
+
+//! Value for neumann boundary condition \f$ [\frac{kg}{m^3 \cdot s}] \f$.
 /*! In case of a neumann boundary condition, the flux of matter
- *  is returned as a vector.
+ *  is returned. Both pressure and transport module regard the neumann-bc values
+ *  with the tranport (mass conservation -) equation indices. So the first entry
+ *  of the vector is superflous.
+ *  An influx into the domain has negative sign.
+ *
+ * \param neumannValues Vector holding values for all equations (pressure and transport).
+ * \param globalPos The global Position
  */
-Dune::FieldVector<Scalar,2> neumann(const GlobalPosition& globalPos, const Intersection& intersection) const
+void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
-    Dune::FieldVector<Scalar,2> neumannFlux(0.0);
+    neumannValues[Indices::contiNEqIdx] =0.;
+    neumannValues[Indices::contiWEqIdx] =0.;
 //    if (globalPos[1] < 15 && globalPos[1]> 5)
 //    {
-//        neumannFlux[nPhaseIdx] = -0.015;
+//        neumannValues[Indices::contiNEqIdx] = -0.015;
 //    }
-    return neumannFlux;
 }
 //! Source of mass \f$ [\frac{kg}{m^3 \cdot s}] \f$
 /*! Evaluate the source term for all phases within a given
  *  volume. The method returns the mass generated (positive) or
  *  annihilated (negative) per volume unit.
+ *  Both pressure and transport module regard the neumann-bc values
+ *  with the tranport (mass conservation -) equation indices. So the first entry
+ *  of the vector is superflous.
+ *
+ * \param sourceValues Vector holding values for all equations (pressure and transport).
+ * \param globalPos The global Position
  */
-Dune::FieldVector<Scalar,2> source(const GlobalPosition& globalPos, const Element& element)
+void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
-    Dune::FieldVector<Scalar,2> q_(0);
-        if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1) q_[1] = 0.0001;
-    return q_;
+    sourceValues[Indices::contiWEqIdx]=0.;
+    if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1)
+        sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
 //! Flag for the type of initial conditions
 /*! The problem can be initialized by a given concentration (mass of
  * a component per total mass inside the control volume) or by means
  * of a saturation.
  */
-const BoundaryConditions2p2c::Flags initFormulation (const GlobalPosition& globalPos, const Element& element) const
+const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
-    return BoundaryConditions2p2c::concentration;
+    initialFormulation = Indices::BoundaryFormulation::concentration;
 }
 //! Saturation initial condition (dimensionless)
 /*! The problem is initialized with the following saturation. Both

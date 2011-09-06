@@ -100,7 +100,7 @@ public:
         // entry pressures function
 
         materialLawParams_.setEntryPC(0);
-        materialLawParams_.setMaxPC(0);
+        materialLawParams_.setMaxPC(10000);
 
         for(int i = 0; i < dim; i++)
         {
