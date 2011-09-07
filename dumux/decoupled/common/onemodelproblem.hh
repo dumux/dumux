@@ -385,7 +385,7 @@ public:
      * \brief Sets the current time step size [seconds].
      */
     void setTimeStepSize(Scalar dt)
-    { return timeManager().setTimeStepSize(dt); }
+    { timeManager().setTimeStepSize(dt); }
 
     /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
