@@ -461,7 +461,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                             + velocityJIn * (1. - Xn1Bound) * densityNWBound
                             - velocityIJn * (1. - Xn1_I) * densityNWI ;
                     }//end dirichlet boundary
-                    else if (bcTypes.isDirichlet(Indices::contiWEqIdx))
+                    else if (bcTypes.isNeumann(Indices::contiWEqIdx))
                     {
                         // Convention: outflow => positive sign : has to be subtracted from update vec
                         PrimaryVariables J(NAN);

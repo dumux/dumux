@@ -48,8 +48,8 @@ class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
 {
     typedef IMPESProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::Grid                         Grid;
@@ -190,6 +190,30 @@ private:
     //! \copydoc Dumux::IMPETProblem::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
+
+protected:
+    //! Sets entries of the primary variable vector to zero
+    //
+    void setZero(typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) &values, const int equation = -1) const
+    {
+        if (equation == Indices::pressureEqIdx)
+        {
+            values[Indices::pressureEqIdx] = 0.;
+        }
+        else if(equation == Indices::contiNEqIdx or Indices::contiWEqIdx)
+        {
+            values[Indices::contiNEqIdx] =0.;
+            values[Indices::contiWEqIdx] =0.;
+        }
+        else if (equation == -1)
+        {
+            values[Indices::pressureEqIdx] = 0.;
+            values[Indices::contiNEqIdx] =0.;
+            values[Indices::contiWEqIdx] =0.;
+        }
+        else
+            DUNE_THROW(Dune::InvalidStateException, "vector of primary variables can not be set properly");
+    }
 };
 
 }

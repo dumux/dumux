@@ -93,6 +93,9 @@ class FVTransport2P2C
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
+    //! Acess function for the current problem
+    Problem& problem()
+    {return problem_;};
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
 
@@ -169,11 +172,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
     int restrictingCell = -1;
 
     // some phase properties
-    const GlobalPosition& gravity_ = problem_.gravity();
+    const GlobalPosition& gravity_ = problem().gravity();
 
     // compute update vector
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
 #if HAVE_MPI
         if (eIt->partitionType() != Dune::InteriorEntity)
@@ -183,7 +186,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 #endif
 
         // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        int globalIdxI = problem().variables().index(*eIt);
 
         // get position
         GlobalPosition globalPos = eIt->geometry().center();
@@ -192,40 +195,40 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         Scalar volume = eIt->geometry().volume();
 
         // get values of cell I
-        Scalar pressI = problem_.variables().pressure()[globalIdxI];
-        Scalar pcI = problem_.variables().capillaryPressure(globalIdxI);
-        Dune::FieldMatrix<Scalar,dim,dim> K_I(problem_.spatialParameters().intrinsicPermeability(globalPos, *eIt));
+        Scalar pressI = problem().variables().pressure()[globalIdxI];
+        Scalar pcI = problem().variables().capillaryPressure(globalIdxI);
+        Dune::FieldMatrix<Scalar,dim,dim> K_I(problem().spatialParameters().intrinsicPermeability(globalPos, *eIt));
 
-        Scalar SwmobI = std::max((problem_.variables().saturation(globalIdxI)
-                                - problem_.spatialParameters().materialLawParams(globalPos, *eIt).Swr())
+        Scalar SwmobI = std::max((problem().variables().saturation(globalIdxI)
+                                - problem().spatialParameters().materialLawParams(globalPos, *eIt).Swr())
                                 , 1e-2);
-        Scalar SnmobI = std::max((1. - problem_.variables().saturation(globalIdxI)
-                                    - problem_.spatialParameters().materialLawParams(globalPos, *eIt).Snr())
+        Scalar SnmobI = std::max((1. - problem().variables().saturation(globalIdxI)
+                                    - problem().spatialParameters().materialLawParams(globalPos, *eIt).Snr())
                                 , 1e-2);
 
 
-        double Xw1_I = problem_.variables().wet_X1(globalIdxI);
-        double Xn1_I = problem_.variables().nonwet_X1(globalIdxI);
+        double Xw1_I = problem().variables().wet_X1(globalIdxI);
+        double Xn1_I = problem().variables().nonwet_X1(globalIdxI);
 
         Scalar densityWI (0.), densityNWI(0.);
         if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
         {
-            densityWI= problem_.variables().numericalDensity(globalIdxI, wPhaseIdx);
-            densityNWI = problem_.variables().numericalDensity(globalIdxI, nPhaseIdx);
+            densityWI= problem().variables().numericalDensity(globalIdxI, wPhaseIdx);
+            densityNWI = problem().variables().numericalDensity(globalIdxI, nPhaseIdx);
 
         }
         else
         {
-            densityWI= problem_.variables().densityWetting(globalIdxI);
-            densityNWI = problem_.variables().densityNonwetting(globalIdxI);
+            densityWI= problem().variables().densityWetting(globalIdxI);
+            densityNWI = problem().variables().densityNonwetting(globalIdxI);
         }
         // some variables for time step calculation
         double sumfactorin = 0;
         double sumfactorout = 0;
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals)
@@ -244,7 +247,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
             {
                 // access neighbor
                 ElementPointer neighborPointer = isIt->outside();
-                int globalIdxJ = problem_.variables().index(*neighborPointer);
+                int globalIdxJ = problem().variables().index(*neighborPointer);
 
                 // cell center in global coordinates
                 const GlobalPosition& globalPos = eIt->geometry().center();
@@ -261,34 +264,34 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 unitDistVec /= dist;
 
                 // get saturation and concentration value at neighbor cell center
-                double Xw1_J = problem_.variables().wet_X1(globalIdxJ);
-                double Xn1_J = problem_.variables().nonwet_X1(globalIdxJ);
+                double Xw1_J = problem().variables().wet_X1(globalIdxJ);
+                double Xn1_J = problem().variables().nonwet_X1(globalIdxJ);
 
                 // phase densities in neighbor
                 Scalar densityWJ (0.), densityNWJ(0.);
                 if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
                 {
-                    densityWJ = problem_.variables().numericalDensity(globalIdxJ, wPhaseIdx);
-                    densityNWJ = problem_.variables().numericalDensity(globalIdxJ, nPhaseIdx);
+                    densityWJ = problem().variables().numericalDensity(globalIdxJ, wPhaseIdx);
+                    densityNWJ = problem().variables().numericalDensity(globalIdxJ, nPhaseIdx);
                 }
                 else
                 {
-                    densityWJ = problem_.variables().densityWetting(globalIdxJ);
-                    densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
+                    densityWJ = problem().variables().densityWetting(globalIdxJ);
+                    densityNWJ = problem().variables().densityNonwetting(globalIdxJ);
                 }
 
                 // average phase densities with central weighting
                 double densityW_mean = (densityWI + densityWJ) * 0.5;
                 double densityNW_mean = (densityNWI + densityNWJ) * 0.5;
 
-                double pressJ = problem_.variables().pressure()[globalIdxJ];
-                Scalar pcJ = problem_.variables().capillaryPressure(globalIdxJ);
+                double pressJ = problem().variables().pressure()[globalIdxJ];
+                Scalar pcJ = problem().variables().capillaryPressure(globalIdxJ);
 
                 // compute mean permeability
                 Dune::FieldMatrix<Scalar,dim,dim> meanK_(0.);
                 Dumux::harmonicMeanMatrix(meanK_,
                 		K_I,
-						problem_.spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
+						problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
                 Dune::FieldVector<Scalar,dim> K(0);
                 meanK_.umv(unitDistVec,K);
 
@@ -315,14 +318,14 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 // upwind mobility
                 double lambdaW, lambdaNW;
                 if (potentialW >= 0.)
-                    lambdaW = problem_.variables().mobilityWetting(globalIdxI);
+                    lambdaW = problem().variables().mobilityWetting(globalIdxI);
                 else
-                    lambdaW = problem_.variables().mobilityWetting(globalIdxJ);
+                    lambdaW = problem().variables().mobilityWetting(globalIdxJ);
 
                 if (potentialNW >= 0.)
-                    lambdaNW = problem_.variables().mobilityNonwetting(globalIdxI);
+                    lambdaNW = problem().variables().mobilityNonwetting(globalIdxI);
                 else
-                    lambdaNW = problem_.variables().mobilityNonwetting(globalIdxJ);
+                    lambdaNW = problem().variables().mobilityNonwetting(globalIdxJ);
 
                 // calculate and standardized velocity
                 double velocityJIw = std::max((-lambdaW * potentialW) * faceArea / volume, 0.0);
@@ -375,7 +378,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
                 //get boundary type
                 BoundaryTypes bcTypes;
-                problem_.boundaryTypes(bcTypes, *isIt);
+                problem().boundaryTypes(bcTypes, *isIt);
 
                 /**********         Dirichlet Boundary        *************/
                 if (bcTypes.isDirichlet(Indices::contiWEqIdx)) // if contiWEq is Dirichlet, so is contiNEq
@@ -397,10 +400,10 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     Scalar densityWBound = BCfluidState.density(wPhaseIdx);
 					Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
 					Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
-																		problem_.temperatureAtPos(globalPosFace),
+																		problem().temperatureAtPos(globalPosFace),
 																		pressBound[wPhaseIdx], BCfluidState);
 					Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
-																		problem_.temperatureAtPos(globalPosFace),
+																		problem().temperatureAtPos(globalPosFace),
 																		pressBound[wPhaseIdx], BCfluidState);
 			        if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
 			            pcBound = BCfluidState.capillaryPressure();
@@ -440,25 +443,25 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     // do upwinding for lambdas
                     double lambdaW, lambdaNW;
                     if (potentialW >= 0.)
-                        lambdaW = problem_.variables().mobilityWetting(globalIdxI);
+                        lambdaW = problem().variables().mobilityWetting(globalIdxI);
                     else
                         {
                         if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
                             lambdaW = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
                         else
                             lambdaW = MaterialLaw::krw(
-                                    problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
+                                    problem().spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityWBound;
                         }
                     if (potentialNW >= 0.)
-                        lambdaNW = problem_.variables().mobilityNonwetting(globalIdxI);
+                        lambdaNW = problem().variables().mobilityNonwetting(globalIdxI);
                     else
                         {
                         if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
                             lambdaNW = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
                         else
                             lambdaNW = MaterialLaw::krn(
-                                    problem_.spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
+                                    problem().spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityNWBound;
                         }
                     // calculate and standardized velocity
@@ -487,11 +490,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                         + velocityJIn * (1. - Xn1Bound) * densityNWBound
                         - velocityIJn * (1. - Xn1_I) * densityNWI ;
                 }//end dirichlet boundary
-                else if (bcTypes.isDirichlet(Indices::contiWEqIdx))
+                else if (bcTypes.isNeumann(Indices::contiWEqIdx))
                 {
                     // Convention: outflow => positive sign : has to be subtracted from update vec
                     PrimaryVariables J(NAN);
-                    problem_.neumann(J, *isIt);
+                    problem().neumann(J, *isIt);
                     updFactor[wCompIdx] = - J[Indices::contiWEqIdx] * faceArea / volume;
                     updFactor[nCompIdx] = - J[Indices::contiNEqIdx] * faceArea / volume;
 
@@ -517,8 +520,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
             }//end boundary
             // correct update Factor by volume error
             #ifdef errorInTransport
-            updFactor[wCompIdx] *= (1+problem_.variables().volErr(globalIdxI));
-            updFactor[nCompIdx] *= (1+problem_.variables().volErr(globalIdxI));
+            updFactor[wCompIdx] *= (1+problem().variables().volErr(globalIdxI));
+            updFactor[nCompIdx] *= (1+problem().variables().volErr(globalIdxI));
             #endif
             // add to update vector
             updateVec[wCompIdx][globalIdxI] += updFactor[wCompIdx];
@@ -532,13 +535,13 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
         /*********** 	Handle source term     ***************/
         PrimaryVariables q(NAN);
-        problem_.source(q, *eIt);
+        problem().source(q, *eIt);
         updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
         updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
-						/ problem_.spatialParameters().porosity(globalPos, *eIt);
+						/ problem().spatialParameters().porosity(globalPos, *eIt);
 
         if ( 1./sumfactorin < dt)
         {
@@ -573,17 +576,17 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
 {
     // read boundary values
     PrimaryVariables primaryVariablesOnBoundary(0.);
-    problem_.dirichlet(primaryVariablesOnBoundary, *isIt);
+    problem().dirichlet(primaryVariablesOnBoundary, *isIt);
 
     // read boundary type
     typename Indices::BoundaryFormulation bcType;
-    problem_.boundaryFormulation(bcType, *isIt);
+    problem().boundaryFormulation(bcType, *isIt);
     if (bcType == Indices::BoundaryFormulation::saturation)
     {
         Scalar satBound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
         if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
         {
-            Scalar pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPosFace, *eIt),
+            Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
                     satBound);
             switch (pressureType)
             {
@@ -605,8 +608,8 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
             pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
 
 
-        BCfluidState.satFlash(satBound, pressBound, problem_.spatialParameters().porosity(globalPosFace, *eIt),
-                            problem_.temperatureAtPos(globalPosFace));
+        BCfluidState.satFlash(satBound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
+                            problem().temperatureAtPos(globalPosFace));
 
     }
     else if (bcType == Indices::BoundaryFormulation::concentration)
@@ -614,12 +617,12 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         // saturation and hence pc and hence corresponding pressure unknown
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
         Scalar Z1Bound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
-        BCfluidState.update(Z1Bound, pressBound, problem_.spatialParameters().porosity(globalPosFace, *eIt),
-                            problem_.temperatureAtPos(globalPosFace));
+        BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
+                            problem().temperatureAtPos(globalPosFace));
 
         if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
         {
-            Scalar pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPosFace, *eIt),
+            Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
                     BCfluidState.saturation(wPhaseIdx));
             int maxiter = 3;
             //start iteration loop
@@ -645,9 +648,9 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 //store old pc
                 Scalar oldPc = pcBound;
                 //update with better pressures
-                BCfluidState.update(Z1Bound, pressBound, problem_.spatialParameters().porosity(globalPosFace, *eIt),
-                                    problem_.temperatureAtPos(globalPosFace));
-                pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPosFace, *eIt),
+                BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
+                                    problem().temperatureAtPos(globalPosFace));
+                pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
                         BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
                 //converge criterion
