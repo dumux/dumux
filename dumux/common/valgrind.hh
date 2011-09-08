@@ -37,13 +37,19 @@
 // do not do valgrind client requests for gcc < 4.5 (old GCCs do not
 // support anonymous template arguments which results in errors inside
 // the BoundaryTypes class)
-#define SetUndefined(a) foo();
-#define SetDefined(a) foo();
-#define CheckDefined(a) foo();
-#define SetNoAccess(a) foo();
 namespace Valgrind
 {
-inline bool foo() { return true; }; // dummy function
+template <class T>
+inline bool SetUndefined(const T& t) { return true; }
+
+template <class T>
+inline bool SetDefined(const T& t) { return true; }
+
+template <class T>
+inline bool CheckDefined(const T& t) { return true; }
+
+template <class T>
+inline bool SetNoAccess(const T& t) { return true; }
 }
 
 #else

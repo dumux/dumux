@@ -221,6 +221,20 @@ public:
     }
 
 private:
+    struct Blubb {
+        std::string propertyName;
+        std::string paramTypeName;
+        std::string groupName;
+
+        Blubb &operator=(const Blubb &b)
+        {
+            propertyName = b.propertyName;
+            paramTypeName = b.paramTypeName;
+            groupName = b.groupName;
+            return *this;
+        };
+    };
+
     template <class ParamType>
     static void check_(const std::string &propertyName, 
                        const char *groupName, 
@@ -228,19 +242,6 @@ private:
     {
         const std::string &paramTypeName = 
             Dune::className<ParamType>();
-        struct Blubb {
-            std::string propertyName;
-            std::string paramTypeName;
-            std::string groupName;
-            
-            Blubb &operator=(const Blubb &b)
-            { 
-                propertyName = b.propertyName;
-                paramTypeName = b.paramTypeName;
-                groupName = b.groupName;
-                return *this;
-            };
-        };
         typedef std::unordered_map<std::string, Blubb> StaticData;
         static StaticData staticData;
 
