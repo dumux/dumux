@@ -109,9 +109,8 @@ public:
         problem_(problem), switchNormals(false)
     {}
 
-    ~FVTransport2P2CMultiPhysics()
-    {
-    }
+    virtual ~FVTransport2P2CMultiPhysics()
+    {     }
 
 protected:
     Problem& problem_;

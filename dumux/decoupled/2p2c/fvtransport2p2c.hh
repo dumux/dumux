@@ -129,7 +129,7 @@ public:
         problem_(problem), switchNormals(false)
     {  }
 
-    ~FVTransport2P2C()
+    virtual ~FVTransport2P2C()
     {
     }
 

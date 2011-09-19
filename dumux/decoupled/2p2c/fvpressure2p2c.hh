@@ -1101,12 +1101,12 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 			problem().variables().capillaryPressure(globalIdx) = 0.;
 			if (icFormulation == Indices::BoundaryFormulation::saturation)  // saturation initial condition
 			{
-				sat_0 = problem().initSat(globalPos, *eIt);
+				sat_0 = problem().initSat(*eIt);
 				fluidState.satFlash(sat_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
 			}
 			else if (icFormulation == Indices::BoundaryFormulation::concentration) // concentration initial condition
 			{
-				Scalar Z1_0 = problem().initConcentration(globalPos, *eIt);
+				Scalar Z1_0 = problem().initConcentration(*eIt);
 				fluidState.update(Z1_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
 			}
         }
@@ -1115,7 +1115,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 			if (icFormulation == Indices::BoundaryFormulation::saturation)  // saturation initial condition
 			{
 			    //get saturation, determine pc
-				sat_0 = problem().initSat(globalPos, *eIt);
+				sat_0 = problem().initSat(*eIt);
 		        if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
 		        {
                     problem().variables().capillaryPressure(globalIdx)
@@ -1146,7 +1146,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 			}
 			else if (icFormulation == Indices::BoundaryFormulation::concentration) // concentration initial condition
 			{
-				Scalar Z1_0 = problem().initConcentration(globalPos, *eIt);
+				Scalar Z1_0 = problem().initConcentration(*eIt);
 				// If total concentrations are given at the boundary, saturation is unknown.
 				// This may affect pc and hence p_alpha and hence again saturation -> iteration.
 
@@ -1200,7 +1200,6 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 		            pressure[wPhaseIdx] = pressure[nPhaseIdx]
 		                = problem().variables().pressure()[globalIdx];
 		            fluidState.update(Z1_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
-
 		        }
 			} //end conc initial condition
         } //end compositional

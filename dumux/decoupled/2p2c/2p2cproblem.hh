@@ -140,6 +140,7 @@ public:
 
     //! Concentration initial condition (dimensionless)
     /*! The problem is initialized with the following concentration.
+     * \param element The element.
      */
     Scalar initConcentration(const Element& element) const
     {
