@@ -313,6 +313,9 @@ public:
      */
     void markVertexRed(int globalVertIdx)
     {
+        if (!enablePartialReassemble_)
+            return;
+
         vertexColor_[globalVertIdx] = Red;
     }
 
