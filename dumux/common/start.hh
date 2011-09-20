@@ -87,21 +87,21 @@ void printUsageInputFile(const char *progname)
  * \brief Provides a default main function for simulations requiring
  *        only a single DGF file as their grid specification.
  *
- * \tparam ProblemTypeTag  The type tag of the problem which needs to be solved
+ * \tparam TypeTag  The type tag of the problem which needs to be solved
  *
  * \param argc  The 'argc' argument of the main function
  * \param argv  The 'argv' argument of the main function
  */
-template <class ProblemTypeTag>
+template <class TypeTag>
 int startFromDGF(int argc, char **argv)
 {
 #ifdef NDEBUG
     try {
 #endif
 
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid)) Grid;
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
-        typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::GridPtr<Grid> GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
@@ -146,6 +146,10 @@ int startFromDGF(int argc, char **argv)
         TimeManager timeManager;
         Problem problem(timeManager, gridPtr->leafView());
         timeManager.init(problem, 0, dt, tEnd, !restart);
+
+        // print all properties
+        Dumux::Properties::print<TypeTag>();
+
         if (restart)
             problem.restart(restartTime);
         timeManager.run();
@@ -170,7 +174,7 @@ int startFromDGF(int argc, char **argv)
  *        create the grid themselves but do not require any other
  *        parameters.
  *
- * \tparam ProblemTypeTag  The type tag of the problem which needs to be solved
+ * \tparam TypeTag  The type tag of the problem which needs to be solved
  *
  * \param grid  The grid used by the simulation
  * \param argc  The 'argc' argument of the main function
@@ -216,6 +220,10 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
         TimeManager timeManager;
         Problem problem(timeManager, grid.leafView());
         timeManager.init(problem, 0, dt, tEnd, !restart);
+
+        // print all properties
+        Dumux::Properties::print<TypeTag>();
+
         if (restart)
             problem.restart(restartTime);
         timeManager.run();
@@ -241,22 +249,22 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
  * \brief Provides a default main function for simulations requiring
  *        only a single DGF file as their grid specification.
  *
- * \tparam ProblemTypeTag  The type tag of the problem which needs to be solved
+ * \tparam TypeTag  The type tag of the problem which needs to be solved
  *
  * \param argc  The 'argc' argument of the main function
  * \param argv  The 'argv' argument of the main function
  */
-template <class ProblemTypeTag>
+template <class TypeTag>
 int startFromInputFile(int argc, char **argv)
 {
 #ifdef NDEBUG
    try {
 #endif
 
-       typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Grid)) Grid;
-       typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(Problem)) Problem;
-       typedef typename GET_PROP_TYPE(ProblemTypeTag, PTAG(TimeManager)) TimeManager;
-       typedef typename GET_PROP(ProblemTypeTag, PTAG(ParameterTree)) Params;
+       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+       typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+       typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
        typedef Dune::GridPtr<Grid> GridPointer;
 
        // initialize MPI, finalize is done automatically on exit
@@ -323,6 +331,10 @@ int startFromInputFile(int argc, char **argv)
                gridPtr->leafView(),
                Params::tree());
        timeManager.init(problem, 0, dt, tEnd, !restart);
+       
+       // print all properties
+       Dumux::Properties::print<TypeTag>();
+
        if (restart)
            problem.restart(restartTime);
        timeManager.run();

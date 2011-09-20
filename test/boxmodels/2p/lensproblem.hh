@@ -58,14 +58,11 @@ namespace Properties
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters));
 
 // Set the grid type
-SET_PROP(LensProblem, Grid)
-{
 #if 0// HAVE_UG
-    typedef Dune::UGGrid<2> type;
+SET_TYPE_PROP(LensProblem, Grid, Dune::UGGrid<2>);
 #else
-    typedef Dune::YaspGrid<2> type;
+SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
 #endif
-};
 
 // Set the problem property
 SET_PROP(LensProblem, Problem)

@@ -36,16 +36,19 @@ namespace Properties {
 ///////////////////
 // Define some hierarchy of type tags:
 //
-//  CompactCar --- Sedan -_
-//                         \.
-//                          +- Pickup ---_
-//                         /              \.
-//  Truck ----------------^                \.
-//  Tank ---------------------------------- HummerH1
+//  Vehicle -- CompactCar -- Sedan -_
+//     \                            \.
+//      \                            +- Pickup ---_
+//       \                          /              \.
+//        +-- Truck ---------------^                \.
+//         \                                         \.
+//          +- Tank ----------------------------------+- HummerH1
 ///////////////////
-NEW_TYPE_TAG(CompactCar);
-NEW_TYPE_TAG(Truck);
-NEW_TYPE_TAG(Tank);
+NEW_TYPE_TAG(Vehicle);
+
+NEW_TYPE_TAG(CompactCar, INHERITS_FROM(Vehicle));
+NEW_TYPE_TAG(Truck, INHERITS_FROM(Vehicle));
+NEW_TYPE_TAG(Tank, INHERITS_FROM(Vehicle));
 
 NEW_TYPE_TAG(Sedan, INHERITS_FROM(CompactCar));
 NEW_TYPE_TAG(Pickup, INHERITS_FROM(Sedan, Truck));
@@ -65,8 +68,7 @@ NEW_PROP_TAG(Payload); // [t]
 
 ///////////////////
 // Make the AutomaticTransmission default to false
-SET_PROP_DEFAULT(AutomaticTransmission)
-{ static const bool value = false; };
+SET_BOOL_PROP(Vehicle, AutomaticTransmission, false);
 
 ///////////////////
 // Define some values for the properties on the type tags:
@@ -178,6 +180,10 @@ int main()
     std::cout << "---------------------------------------\n";
     std::cout << "-- Diagnostic messages\n";
     std::cout << "---------------------------------------\n";
+
+    std::cout << "---- All properties for Sedan ---\n";
+    Dumux::Properties::print<TTAG(Sedan)>();
+
     std::cout << "---- Message for (HummerH1, CanonCaliber) ---\n"
               << PROP_DIAGNOSTIC(TTAG(HummerH1), PTAG(CanonCaliber));
     std::cout << "---- Message for (HummerH1, GasUsage) ---\n"

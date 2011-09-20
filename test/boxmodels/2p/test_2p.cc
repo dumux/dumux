@@ -25,7 +25,6 @@
  * \brief test for the two-phase box model
  */
 #include "config.h"
-
 #define CUBES 1
 
 #include "lensproblem.hh"
@@ -160,6 +159,9 @@ int main(int argc, char** argv)
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
 
         static const int dim = Grid::dimension;
+
+        // print all properties
+        Dumux::Properties::print<TypeTag>();
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
