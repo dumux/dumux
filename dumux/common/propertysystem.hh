@@ -267,7 +267,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
     struct PropertyUnset<TTAG(EffTypeTagName),                  \
                          PTAG(PropTagName) >;                   \
     PROP_INFO_(EffTypeTagName,                                  \
-               /*kind=*/"unset",                                \
+               /*kind=*/"withdraw",                             \
                PropTagName,                                     \
                /*value=*/"<none>")                              \
     template <>                                                 \
@@ -283,7 +283,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  */
 #define SET_INT_PROP(EffTypeTagName, PropTagName, Value)        \
     SET_PROP_(EffTypeTagName,                                   \
-              /*kind=*/"integer",                               \
+              /*kind=*/"int   ",                                   \
               PropTagName,                                      \
               /*value=*/#Value)                                 \
     {                                                           \
@@ -298,7 +298,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  */
 #define SET_BOOL_PROP(EffTypeTagName, PropTagName, Value)       \
     SET_PROP_(EffTypeTagName,                                   \
-              /*kind=*/"boolean",                               \
+              /*kind=*/"bool  ",                                \
               PropTagName,                                      \
               /*value=*/#Value)                                 \
     {                                                           \
@@ -313,7 +313,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  */
 #define SET_TYPE_PROP(EffTypeTagName, PropTagName, Type)        \
     SET_PROP_(EffTypeTagName,                                   \
-              /*kind=*/"type",                                  \
+              /*kind=*/"type  ",                                \
               PropTagName,                                      \
               /*value=*/#Type)                                  \
     {                                                           \
@@ -866,8 +866,8 @@ inline bool getDiagnostic_(const std::string &typeTagName,
     if (key) {
         result = indent;
         result +=
-            key->propertyKind() + " property '"
-            + key->propertyName() + "' defined on '"
+            key->propertyKind() + " "
+            + key->propertyName() + " defined on '"
             + canonicalTypeTagNameToName_(key->effTypeTagName()) + "' at "
             + key->fileDefined() + ":" + boost::lexical_cast<std::string>(key->lineDefined()) + "\n";
         return true;
@@ -880,7 +880,7 @@ inline bool getDiagnostic_(const std::string &typeTagName,
     std::string newIndent = indent + "  ";
     for (; ttagIt != children.end(); ++ttagIt) {
         if (getDiagnostic_(*ttagIt, propTagName, result, newIndent)) {
-            result.insert(0, indent + "Inherited from '" + canonicalTypeTagNameToName_(typeTagName) + "'\n");
+            result.insert(0, indent + "Inherited from " + canonicalTypeTagNameToName_(typeTagName) + "\n");
             return true;
         }
     }
@@ -909,8 +909,8 @@ const std::string getDiagnostic(std::string propTagName)
             const PropertyRegistryKey &key = it->second;
             if (key.propertyName() != propTagName)
                 continue; // property already printed
-            result = "default property '" + key.propertyName()
-                + "' defined at " + key.fileDefined()
+            result = "fallback " + key.propertyName()
+                + " defined " + key.fileDefined()
                 + ":" + boost::lexical_cast<std::string>(key.lineDefined())
                 + "\n";
         };
@@ -935,10 +935,10 @@ void print(std::ostream &os = std::cout)
         const PropertyRegistryKey &key = it->second;
         if (printedProps.count(key.propertyName()) > 0)
             continue; // property already printed
-        os << "  default property '" << key.propertyName()
-           << "' defined at " << key.fileDefined()
+        os << "  default " << key.propertyName()
+           << " (" << key.fileDefined()
            << ":" << key.lineDefined()
-           << "\n";
+           << ")\n";
         printedProps.insert(key.propertyName());
     };
 }
@@ -949,27 +949,32 @@ inline void print_(const std::string &typeTagName,
                    std::set<std::string> &printedProperties)
 {
     if (indent == "")
-        os << indent << "Properties defined for '" << canonicalTypeTagNameToName_(typeTagName) << "':\n";
+        os << indent << "Properties for " << canonicalTypeTagNameToName_(typeTagName) << ":";
     else
-        os << indent << "Inherited from '" << canonicalTypeTagNameToName_(typeTagName) << "':\n";
+        os << indent << "Inherited from " << canonicalTypeTagNameToName_(typeTagName) << ":";
     const PropertyRegistry::KeyList &keys =
         PropertyRegistry::getKeys(typeTagName);
     PropertyRegistry::KeyList::const_iterator it = keys.begin();
+    bool somethingPrinted = false;
     for (; it != keys.end(); ++it) {
         const PropertyRegistryKey &key = it->second;
         if (printedProperties.count(key.propertyName()) > 0)
             continue; // property already printed
-        
+        if (!somethingPrinted) {
+            os << "\n";
+            somethingPrinted = true;
+        }
         os << indent << "  " 
-           << key.propertyKind() << " property '" << key.propertyName() << "'";
+           << key.propertyKind() << " " << key.propertyName();
         if (key.propertyKind() != "opaque")
             os << " = '" << key.propertyValue() << "'";
-        os << " defined at " << key.fileDefined()
+        os << " (" << key.fileDefined()
            << ":" << key.lineDefined()
-           << "\n";
+           << ")\n";
         printedProperties.insert(key.propertyName());
     };
-
+    if (!somethingPrinted)
+        os << indent << "(none)\n";
     // print properties defined on children
     typedef TypeTagRegistry::ChildrenList ChildrenList;
     const ChildrenList &children = TypeTagRegistry::children(typeTagName);
