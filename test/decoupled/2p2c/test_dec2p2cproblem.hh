@@ -144,7 +144,6 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
 // boundary typedefs
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
@@ -165,7 +164,6 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
 TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
@@ -302,6 +300,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
     sourceValues[Indices::contiWEqIdx]=0.;
+    sourceValues[Indices::contiNEqIdx]=0.;
     if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1)
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
@@ -314,19 +313,10 @@ const void initialFormulation(typename Indices::BoundaryFormulation &initialForm
 {
     initialFormulation = Indices::BoundaryFormulation::concentration;
 }
-//! Saturation initial condition (dimensionless)
-/*! The problem is initialized with the following saturation. Both
- * phases are assumed to contain an equilibrium concentration of the
- * correspondingly other component.
- */
-Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
-{
-    return 1;
-}
 //! Concentration initial condition (dimensionless)
 /*! The problem is initialized with the following concentration.
  */
-Scalar initConcentration(const GlobalPosition& globalPos, const Element& element) const
+Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 {
     return 1;
 }

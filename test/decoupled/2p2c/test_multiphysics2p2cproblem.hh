@@ -282,16 +282,9 @@ const void initialFormulation(typename Indices::BoundaryFormulation &initialForm
     initialFormulation = Indices::BoundaryFormulation::concentration;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initSat()
- */
-Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
-{
-    return 1;
-}
-/*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentration()
  */
-Scalar initConcentration(const GlobalPosition& globalPos, const Element& element) const
+Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 {
     return 1;
 }
