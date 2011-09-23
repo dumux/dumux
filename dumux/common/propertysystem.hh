@@ -66,7 +66,7 @@ namespace Properties
 {
 #if !defined NO_PROPERTY_INTROSPECTION
 //! Internal macro which is only required if the property introspection is enabled
-#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, PropValue)    \
+#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, ...)    \
     template <>                                                         \
     struct PropertyInfo<TTAG(EffTypeTagName), PTAG(PropTagName)>        \
     {                                                                   \
@@ -75,7 +75,7 @@ namespace Properties
             /*effTypeTagName=*/ Dune::className<TTAG(EffTypeTagName)>(), \
             /*kind=*/PropKind,                                          \
             /*name=*/#PropTagName,                                      \
-            /*value=*/PropValue,                                        \
+            /*value=*/#__VA_ARGS__,                                      \
             /*file=*/__FILE__,                                          \
             /*line=*/__LINE__);                                         \
         PropertyRegistry::addKey(key);                                  \
@@ -106,7 +106,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
 //! Internal macro which is only required if the property introspection is enabled
 //!
 //! Don't do anything if introspection is disabled
-#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, PropValue)
+#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, ...)
 #define TTAG_INFO_(EffTypeTagName, ...)
 #endif
 
@@ -196,7 +196,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
     struct DefaultProperty<TypeTag, PTAG(PropTagName) >
 
 //! Internal macro
-#define SET_PROP_(EffTypeTagName, PropKind, PropTagName, PropValue) \
+#define SET_PROP_(EffTypeTagName, PropKind, PropTagName, ...)       \
     template <class TypeTag>                                        \
     struct Property<TypeTag,                                        \
                     TTAG(EffTypeTagName),                           \
@@ -204,7 +204,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
     PROP_INFO_(EffTypeTagName,                                      \
                /*kind=*/PropKind,                                   \
                PropTagName,                                         \
-               /*value=*/PropValue)                                 \
+               /*value=*/__VA_ARGS__)                               \
     template <class TypeTag>                                        \
     struct Property<TypeTag, \
                     TTAG(EffTypeTagName), \
@@ -269,7 +269,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
     PROP_INFO_(EffTypeTagName,                                  \
                /*kind=*/"withdraw",                             \
                PropTagName,                                     \
-               /*value=*/"<none>")                              \
+               /*value=*/<none>)                                \
     template <>                                                 \
     struct PropertyUnset<TTAG(EffTypeTagName),                  \
                          PTAG(PropTagName) >                    \
@@ -281,14 +281,14 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_INT_PROP(EffTypeTagName, PropTagName, Value)        \
+#define SET_INT_PROP(EffTypeTagName, PropTagName, Value, ...)   \
     SET_PROP_(EffTypeTagName,                                   \
-              /*kind=*/"int   ",                                   \
+              /*kind=*/"int   ",                                \
               PropTagName,                                      \
-              /*value=*/#Value)                                 \
+              /*value=*/Value, ##__VA_ARGS__)                   \
     {                                                           \
         typedef int type;                                       \
-        static constexpr int value = Value;                     \
+        static constexpr int value = Value, ##__VA_ARGS__;      \
     }
 
 /*!
@@ -296,14 +296,14 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_BOOL_PROP(EffTypeTagName, PropTagName, Value)       \
+#define SET_BOOL_PROP(EffTypeTagName, PropTagName, Value, ...)  \
     SET_PROP_(EffTypeTagName,                                   \
               /*kind=*/"bool  ",                                \
               PropTagName,                                      \
-              /*value=*/#Value)                                 \
+              /*value=*/Value, ##__VA_ARGS__)                   \
     {                                                           \
         typedef bool type;                                      \
-        static constexpr bool value = Value;                    \
+        static constexpr bool value = Value, ##__VA_ARGS__;     \
     }
 
 /*!
@@ -311,13 +311,13 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *
  * The type can be accessed by the 'type' attribute.
  */
-#define SET_TYPE_PROP(EffTypeTagName, PropTagName, Type)        \
+#define SET_TYPE_PROP(EffTypeTagName, PropTagName, Type, ...)   \
     SET_PROP_(EffTypeTagName,                                   \
               /*kind=*/"type  ",                                \
               PropTagName,                                      \
-              /*value=*/#Type)                                  \
+              /*value=*/Type, __VA_ARGS__)                      \
     {                                                           \
-        typedef Type type;                                      \
+        typedef Type, ##__VA_ARGS__ type;                       \
     }
 
 /*!
@@ -974,7 +974,7 @@ inline void print_(const std::string &typeTagName,
         printedProperties.insert(key.propertyName());
     };
     if (!somethingPrinted)
-        os << indent << "(none)\n";
+        os << " (none)\n";
     // print properties defined on children
     typedef TypeTagRegistry::ChildrenList ChildrenList;
     const ChildrenList &children = TypeTagRegistry::children(typeTagName);
