@@ -56,9 +56,7 @@ class TwoPTwoCBoundaryVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
-    enum {
-        dim = GridView::dimension,
-    };
+    enum { dim = GridView::dimension };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> VelocityVector;
@@ -71,13 +69,13 @@ class TwoPTwoCBoundaryVariables
 
     enum {
         lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx,
-
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        gPhaseIdx = Indices::gPhaseIdx
     };
+    enum {
+        lCompIdx = Indices::lCompIdx,
+        gCompIdx = Indices::gCompIdx
+    };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
 
 public:
     TwoPTwoCBoundaryVariables(const Problem &problem,
@@ -86,7 +84,8 @@ public:
                      int boundaryFaceIdx,
                      const ElementVolumeVariables &elemDat,
                      int scvIdx)
-        : fvElemGeom_(elemGeom), scvIdx_(scvIdx)
+        : fvElemGeom_(elemGeom),
+          scvIdx_(scvIdx)
     {
         boundaryFace_ = &fvElemGeom_.boundaryFace[boundaryFaceIdx];
 
@@ -97,6 +96,8 @@ public:
             potentialGrad_[phaseIdx] = Scalar(0);
             concentrationGrad_[phaseIdx] = Scalar(0);
             molarConcGrad_[phaseIdx] = Scalar(0);
+            KmvpNormal_[phaseIdx] = Scalar(0);
+            porousDiffCoeff_[phaseIdx] = Scalar(0);
         }
 
         calculateBoundaryValues_(problem, element, elemDat);
@@ -197,9 +198,12 @@ protected:
 
         for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
         {
-            tmp = problem.gravity();
-            tmp *= densityAtIP_[phaseIdx];
+            if (GET_PARAM(TypeTag, bool, EnableGravity)) {
+                tmp = problem.gravity();
+                tmp *= densityAtIP_[phaseIdx];
+            }
 
+            // calculate the potential gradient
             potentialGrad_[phaseIdx] -= tmp;
 
             Scalar k = problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_);
