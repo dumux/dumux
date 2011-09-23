@@ -72,23 +72,17 @@ SET_TYPE_PROP(BoxTwoP, FluxVariables, TwoPFluxVariables<TypeTag>);
 SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
-SET_PROP(BoxTwoP, TwoPIndices)
-{
-    typedef TwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
-};
+SET_TYPE_PROP(BoxTwoP, 
+              TwoPIndices, 
+              TwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_PROP(BoxTwoP, MaterialLawParams)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-
-public:
-    typedef typename MaterialLaw::Params type;
-};
+SET_TYPE_PROP(BoxTwoP, 
+              MaterialLawParams, 
+              typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))::Params);
 
 SET_TYPE_PROP(BoxTwoP, FluidSystem, FluidSystem2P<TypeTag>);
 

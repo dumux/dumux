@@ -65,10 +65,7 @@ SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_PROP(LensProblem, Problem)
-{
-    typedef Dumux::LensProblem<TypeTag> type;
-};
+SET_TYPE_PROP(LensProblem, Problem, Dumux::LensProblem<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(LensProblem, WettingPhase)

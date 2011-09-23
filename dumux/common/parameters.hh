@@ -308,7 +308,7 @@ private:
             canonicalName.insert(0, groupName);
         }
 
-        std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value());
+        std::string modelParamGroup(GET_PROP_VALUE(TypeTag, PTAG(ModelParameterGroup)));
         // prefix the parameter with the parameter group of the
         // model. this allows things like sub-model specific parameters like
         //
