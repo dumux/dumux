@@ -327,17 +327,36 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  * use this macro, the property tag "Scalar" needs to be defined for
  * the real type tag.
  */
-#define SET_SCALAR_PROP(EffTypeTagName, PropTagName, Value)             \
+#define SET_SCALAR_PROP(EffTypeTagName, PropTagName, ...)               \
     SET_PROP_(EffTypeTagName,                                           \
               /*kind=*/"scalar",                                        \
               PropTagName,                                              \
-              /*value=*/#Value)                                         \
+              /*value=*/__VA_ARGS__)                                    \
     {                                                                   \
         typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;   \
     public:                                                             \
         typedef Scalar type;                                            \
-        static constexpr Scalar value = Value;                          \
+        static constexpr Scalar value = __VA_ARGS__;                    \
     }
+
+/*!
+ * \brief Set a property to a simple constant string value.
+ *
+ * The constant can be accessed by the 'value' attribute and is of
+ * type std::string.
+ */
+#define SET_STRING_PROP(EffTypeTagName, PropTagName, ...)               \
+    SET_PROP_(EffTypeTagName,                                           \
+              /*kind=*/"string",                                        \
+              PropTagName,                                              \
+              /*value=*/__VA_ARGS__)                                    \
+    {                                                                   \
+    public:                                                             \
+        typedef std::string type;                                       \
+        static const std::string value;                                 \
+    };                                                                  \
+    template <class TypeTag>                                            \
+    const std::string Property<TypeTag, TTAG(EffTypeTagName), PTAG(PropTagName)>::value(__VA_ARGS__);
 
 /*!
  * \brief Get the property for a type tag.
@@ -968,9 +987,9 @@ inline void print_(const std::string &typeTagName,
            << key.propertyKind() << " " << key.propertyName();
         if (key.propertyKind() != "opaque")
             os << " = '" << key.propertyValue() << "'";
-        os << " (" << key.fileDefined()
+        os << " defined at " << key.fileDefined()
            << ":" << key.lineDefined()
-           << ")\n";
+           << "\n";
         printedProperties.insert(key.propertyName());
     };
     if (!somethingPrinted)
