@@ -32,6 +32,7 @@
 
 #include <dune/common/parametertree.hh>
 
+#include <iostream>
 #include <sstream>
 #include <list>
 #include <unordered_map>
@@ -354,7 +355,7 @@ private:
             paramName = groupOrParamName;
         }
 
-        static std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value());
+        static std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value);
 
         std::string canonicalName(modelParamGroup);
         
