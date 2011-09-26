@@ -62,10 +62,10 @@ public:
         diffCoeffL_[0] = 0.0;
         for (int compIdx = 1; compIdx < numComponents; ++compIdx) {
             diffCoeffL_[compIdx] =
-                FluidSystem::binaryDiffCoeff(mutParams,
-                                             lPhaseIdx,
-                                             0,
-                                             compIdx);
+                FluidSystem::computeBinaryDiffCoeff(mutParams,
+                                                    lPhaseIdx,
+                                                    0,
+                                                    compIdx);
         }
         Valgrind::CheckDefined(diffCoeffL_);
 
@@ -74,11 +74,11 @@ public:
             diffCoeffG_[compIIdx][compIIdx] = 0;
             for (int compJIdx = compIIdx + 1; compJIdx < numComponents; ++compJIdx) {
                 diffCoeffG_[compIIdx][compJIdx] =
-                    FluidSystem::binaryDiffCoeff(mutParams,
-                                                 gPhaseIdx,
-                                                 compIIdx,
-                                                 compJIdx);
-
+                    FluidSystem::computeBinaryDiffCoeff(mutParams,
+                                                        gPhaseIdx,
+                                                        compIIdx,
+                                                        compJIdx);
+                
                 // fill the symmetric part of the diffusion coefficent
                 // matrix
                 diffCoeffG_[compJIdx][compIIdx] = diffCoeffG_[compIIdx][compJIdx];
