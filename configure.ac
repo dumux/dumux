@@ -29,6 +29,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/2p2cni/Makefile 
     dumux/boxmodels/2pni/Makefile 
     dumux/boxmodels/common/Makefile 
+    dumux/boxmodels/MpNc/Makefile 
     dumux/boxmodels/richards/Makefile 
     dumux/common/Makefile 
     dumux/decoupled/Makefile
@@ -50,9 +51,14 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/binarycoefficients/Makefile 
     dumux/material/components/Makefile 
     dumux/material/components/iapws/Makefile 
+    dumux/material/constraintsolvers/Makefile 
+    dumux/material/eos/Makefile 
     dumux/material/fluidmatrixinteractions/Makefile 
     dumux/material/fluidmatrixinteractions/2p/Makefile 
+    dumux/material/fluidmatrixinteractions/Mp/Makefile 
+    dumux/material/fluidstates/Makefile 
     dumux/material/fluidsystems/Makefile 
+    dumux/material/new_fluidsystems/Makefile 
     dumux/material/spatialparameters/Makefile 
     dumux/nonlinear/Makefile 
     m4/Makefile
@@ -64,6 +70,7 @@ AC_CONFIG_FILES([dumux.pc
     test/boxmodels/1p2c/Makefile 
     test/boxmodels/2p2c/Makefile
     test/boxmodels/2p2cni/Makefile
+    test/boxmodels/MpNc/Makefile
     test/boxmodels/richards/Makefile  
     test/common/Makefile
     test/common/generalproblem/Makefile
