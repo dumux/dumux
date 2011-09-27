@@ -24,6 +24,7 @@
 #ifndef DUMUX_GIRDADAPT_HH
 #define DUMUX_GIRDADAPT_HH
 
+
 namespace Dumux
 {
 
@@ -114,11 +115,15 @@ public:
             Dune::dinfo << marked_ << " cells have been marked_ to be refined, "
                 << coarsened_ << " to be coarsened." << std::endl;
 
+        /****  2b) Do pre-adaption step    *****/
+        problem_.grid().preAdapt();
+        problem_.preAdapt();
+
         /****  3) Put primary variables in a map         *********/
         problem_.variables().storePrimVars(problem_);
 
         /****  4) Adapt Grid and size of variable vectors    *****/
-        problem_.grid().preAdapt();
+//        problem_.grid().preAdapt();
         problem_.grid().adapt();
 
 //        forceRefineRatio(1);

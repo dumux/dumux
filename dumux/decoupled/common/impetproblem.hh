@@ -191,6 +191,8 @@ public:
         delete resultWriter_;
         if (deleteTimeManager_)
             delete timeManager_;
+        if (adaptiveGrid)
+            delete gridAdapt_;
     }
 
     /*!
@@ -617,6 +619,13 @@ public:
                 << "adaptivity is disabled in property system \n;" << adaptiveGrid;
 
         return *gridAdapt_;
+    }
+
+    void preAdapt()
+    {
+        if (!adaptiveGrid)
+            Dune::dgrave << "adaptivity functionality was called despite "
+                << "adaptivity is disabled in property system \n;" << adaptiveGrid;
     }
 
     /*!

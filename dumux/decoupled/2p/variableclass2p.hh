@@ -52,7 +52,7 @@ private:
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
-    typedef VariableClass<TypeTag> ParentClass;
+    typedef VariableClass<TypeTag> ParentType;
 
     enum
     {
@@ -266,7 +266,7 @@ public:
     // Adapt variable size of all variables
     ////////////////////////////////////////
 
-    void adaptVariableSize2p(int size)
+    void adaptVariableSize(int size)
      {
          //resize to grid size
    	     this->setGridSize(size);
@@ -281,7 +281,7 @@ public:
          saturation_.resize(size);
          capillaryPressure_.resize(size);
          volumecorrection_.resize(size);
-         this->adaptVariableSize(size); //Also adapt pressure, velocity and potential
+         ParentType::adaptVariableSize(size); //Also adapt pressure, velocity and potential
      }
 
 
@@ -581,12 +581,12 @@ public:
      */
     Dune::FieldVector<Scalar, 1>& satElement(const Element& element)
     {
-        return saturation_[this->elementMapper().map(element)];;
+        return saturation_[this->elementMapper().map(element)];
     }
 
     const Dune::FieldVector<Scalar, 1>& satElement(const Element& element) const
     {
-        return saturation_[this->elementMapper().map(element)];;
+        return saturation_[this->elementMapper().map(element)];
     }
 
     //! Get velocity at given element face

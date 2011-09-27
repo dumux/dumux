@@ -170,7 +170,7 @@ public:
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing a CFL condition.
      */
-    int update(const Scalar t, Scalar& dt,
+    void update(const Scalar t, Scalar& dt,
             RepresentationType& updateVec, bool impes);
 
     //! Sets the initial solution \f$S_0\f$.
@@ -205,6 +205,8 @@ public:
 
         return;
     }
+
+    void indicatorSaturation(RepresentationType &indicator, Scalar &globalMin, Scalar &globalMax);
 
     // serialization methods
     //! Function needed for restart option.
@@ -282,8 +284,55 @@ private:
     const Scalar threshold_;
 };
 
+/*!
+ * \name Methods for adaptive refinement / coarsening of grids
+ */
+// \{
+/*!
+ * Indicator for grid refinement: saturation gradient
+ */
 template<class TypeTag>
-int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
+void FVSaturation2P<TypeTag>::indicatorSaturation(RepresentationType &indicator, Scalar &globalMin, Scalar &globalMax)
+{
+    // 1) calculate Indicator -> min, maxvalues
+    // Schleife über alle Leaf-Elemente
+    for (ElementIterator it = problem_.gridView().template begin<0>();
+        it!=problem_.gridView().template end<0>(); ++it)
+    {
+        // Bestimme maximale und minimale Sättigung
+        // Index des aktuellen Leaf-Elements
+        int indexi = problem_.variables().index(*it);
+        globalMin = std::min(problem_.variables().saturation()[indexi][0], globalMin);
+        globalMax = std::max(problem_.variables().saturation()[indexi][0], globalMax);
+
+        // Berechne Verfeinerungsindikator an allen Zellen
+        IntersectionIterator isend = problem_.gridView().iend(*it);
+        for (IntersectionIterator is = problem_.gridView().ibegin(*it); is!= isend; ++is)
+        {
+            const typename IntersectionIterator::Intersection &intersection =*is;
+            // Steige aus, falls es sich nicht um einen Nachbarn handelt
+            if ( !intersection.neighbor() )
+                continue ;
+
+            // Greife auf Nachbarn zu
+            const Element &outside =*intersection.outside();
+            int indexj = problem_.variables().index( outside );
+
+            // Jede Intersection nur von einer Seite betrachten
+            if ( it.level() > outside.level() ||
+                    (it.level() == outside.level() && indexi<indexj) )
+            {
+
+                Scalar localdelta = std::abs(problem_.variables().saturation()[indexi][0] - problem_.variables().saturation()[indexj][0]);
+                indicator[indexi][0] = std::max(indicator[indexi][0], localdelta);
+                indicator[indexj][0] = std::max(indicator[indexj][0], localdelta);
+            }
+        }
+    }
+}
+
+template<class TypeTag>
+void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         RepresentationType& updateVec, bool impes = false)
 {
     if (!impes)
@@ -340,13 +389,11 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
 
         // run through all intersections with neighbors and boundary
-//        int isIndex = -1;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt
                 != isItEnd; ++isIt)
         {
-            // local number of facet
-//        	isIndex++;
+            // local number of faces
             int isIndex = isIt->indexInInside();
 
             GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
@@ -1025,8 +1072,6 @@ int FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         problem_.variables().volumecorrection(globalIdxI)
                 = updateVec[globalIdxI];
     } // end grid traversal
-
-    return 0;
 }
 
 template<class TypeTag>

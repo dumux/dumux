@@ -242,6 +242,10 @@ private:
 template<class TypeTag>
 void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 {
+    //reset velocity
+    this->problem().variables().velocity() = Dune::FieldVector<Scalar, dimWorld>(0.0);
+    this->problem().variables().velocitySecondPhase() = Dune::FieldVector<Scalar, dimWorld>(0.0);
+
     BoundaryTypes bcType;
 
     // compute update vector
@@ -270,14 +274,16 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
         Scalar densityNWI = this->problem().variables().densityNonwetting(globalIdxI);
 
         // run through all intersections with neighbors and boundary
-        int isIndex = -1;
+//        int isIndex = -1;
         IntersectionIterator isItEnd = this->problem().gridView().iend(*eIt);
         for (IntersectionIterator
                 isIt = this->problem().gridView().ibegin(*eIt); isIt
                 !=isItEnd; ++isIt)
         {
             // local number of facet
-        	isIndex++;
+//        	isIndex++;
+
+            int isIndex = isIt->indexInInside();
 
             Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
 
@@ -457,15 +463,17 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 					// GlobalIdxK, the index of the third cell
 					// for efficienty this is done in one IntersectionIterator-Loop
 
+					Scalar areaWeight = 0;
+
 					// Intersectioniterator around cell J
-					int isIndexJ = -1;
+//					int isIndexJ = -1;
 					IntersectionIterator isItEndJ = this->problem().gridView().iend(*neighborPointer);
 
 					for (IntersectionIterator isItJ = this->problem().gridView().ibegin(*neighborPointer); isItJ != isItEndJ; ++isItJ)
 					{
 						// increase isIndexJJ, if it is not found yet
 						if (!foundIJ)
-							isIndexJ++;
+//							isIndexJ++;
 						if (isItJ->neighbor())
 						{
 							ElementPointer neighborPointer2 = isItJ->outside();
@@ -474,6 +482,7 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 							if (this->problem().variables().index(*neighborPointer2)==globalIdxI)
 							{
 								foundIJ=true;
+								areaWeight = isItJ->geometry().volume();
 							}
 							else
 							{
@@ -499,6 +508,10 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 						}
 						if (foundIJ && foundK) break;
 					}
+
+					int isIndexJ = isIt->indexInOutside();
+					areaWeight /= isIt->geometry().volume();
+//					areaWeight = 1.0;
 
 					// neighbor cell center in global coordinates
 					const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
@@ -723,16 +736,28 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 					{
 						case vw:
 						{
-							this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW;
-							this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+						    Dune::FieldVector<Scalar,dimWorld> vel(velocityW);
+						    vel*=areaWeight;
+							this->problem().variables().velocity()[globalIdxI][isIndex] += vel;
+						    vel = velocityNW;
+						    vel*=areaWeight;
+							this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += vel;
+//                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW;
+//                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
 							this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityW;
 							this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityNW;
 							break;
 						}
 						case vn:
 						{
-							this->problem().variables().velocity()[globalIdxI][isIndex] = velocityNW;
-							this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                            Dune::FieldVector<Scalar,dimWorld> vel(velocityNW);
+                            vel*=areaWeight;
+							this->problem().variables().velocity()[globalIdxI][isIndex] += (vel);
+                            vel = velocityW;
+                            vel*=areaWeight;
+							this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel);
+//                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityNW;
+//                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
 							this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityNW;
 							this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityW;
 							break;
@@ -743,8 +768,13 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 							{
 								case pw:
 								{
-									this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
-									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+								    Dune::FieldVector<Scalar,dimWorld> vel(velocityW);
+								    vel+=velocityNW;
+									this->problem().variables().velocity()[globalIdxI][isIndex] += (vel *=areaWeight);
+									vel = velocityNW;
+									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel*=areaWeight);
+//                                    this->problem().variables().velocity()[globalIdxI][isIndex] = (velocityW+velocityNW);
+//                                    this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
 									this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityW + velocityNW;
 									this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityNW;
 
@@ -752,8 +782,13 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 								}
 								case pn:
 								{
-									this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW + velocityNW;
-									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+                                    Dune::FieldVector<Scalar,dimWorld> vel(velocityW);
+                                    vel+=velocityNW;
+									this->problem().variables().velocity()[globalIdxI][isIndex] += (vel *=areaWeight);
+									vel = velocityW;
+									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel*=areaWeight);
+//								                                      this->problem().variables().velocity()[globalIdxI][isIndex] = (velocityW+velocityNW);
+//								                                      this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
 									this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityW + velocityNW;
 									this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityW;
 									break;
