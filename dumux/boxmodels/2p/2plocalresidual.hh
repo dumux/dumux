@@ -82,7 +82,7 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVariables)) ElementVariables;
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
@@ -107,23 +107,26 @@ public:
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &result, 
+                        const ElementVariables &elemVars,
+                        int scvIdx,
+                        int historyIdx) const
     {
-        // if flag usePrevSol is set, the solution from the previous
-        // time step is used, otherwise the current solution is
-        // used. The secondary variables are used accordingly.  This
-        // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        // retrieve the volume variables for the SCV at the specified
+        // point in time
+        const VolumeVariables &volVars = elemVars.volVars(scvIdx, historyIdx);
 
         // wetting phase mass
-        result[contiWEqIdx] = vertDat.density(wPhaseIdx) * vertDat.porosity()
-                * vertDat.saturation(wPhaseIdx);
+        result[contiWEqIdx] = 
+            volVars.density(wPhaseIdx)
+            * volVars.porosity()
+            * volVars.saturation(wPhaseIdx);
 
         // non-wetting phase mass
-        result[contiNEqIdx] = vertDat.density(nPhaseIdx) * vertDat.porosity()
-                * vertDat.saturation(nPhaseIdx);
+        result[contiNEqIdx] = 
+            volVars.density(nPhaseIdx)
+            * volVars.porosity()
+            * volVars.saturation(nPhaseIdx);
     }
 
     /*!
@@ -133,16 +136,13 @@ public:
      * \param flux The flux over the SCV (sub-control-volume) face for each phase
      * \param faceIdx The index of the SCV face
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx) const
+    void computeFlux(PrimaryVariables &flux,
+                     const ElementVariables &elemVars,
+                     int scvfIdx) const
     {
-        FluxVariables vars(this->problem_(),
-                           this->elem_(),
-                           this->fvElemGeom_(),
-                           faceIdx,
-                           this->curVolVars_());
         flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, vars);
-        asImp_()->computeDiffusiveFlux(flux, vars);
+        asImp_()->computeAdvectiveFlux(flux, elemVars, scvfIdx);
+        asImp_()->computeDiffusiveFlux(flux, elemVars, scvfIdx);
     }
 
     /*!
@@ -155,31 +155,40 @@ public:
      * This method is called by compute flux and is mainly there for
      * derived models to ease adding equations selectively.
      */
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, 
+                              const ElementVariables &elemVars,
+                              int scvfIdx) const
     {
+        const FluxVariables &fluxVars = elemVars.fluxVars(scvfIdx);
+        const FluxVariables &evalPointFluxVars = elemVars.evalPointFluxVars(scvfIdx);
+
         ////////
         // advective fluxes of all components in all phases
         ////////
         Vector tmpVec;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // calculate the flux in the normal direction of the
+            // data attached to upstream and the downstream vertices
+            // of the current phase. The upstream decision has to be
+            // made using the evaluation point and *not* the current
+            // solution. (although the actual secondary variables must
+            // obviously come from the current solution.)
+            int upIdx = evalPointFluxVars.upstreamIdx(phaseIdx);
+            int dnIdx = evalPointFluxVars.downstreamIdx(phaseIdx);
+            const VolumeVariables &up = elemVars.volVars(upIdx, /*historyIdx=*/0);
+            const VolumeVariables &dn = elemVars.volVars(dnIdx, /*historyIdx=*/0);
+
+            // retrieve the 'velocity' in the normal direction of the
             // current sub control volume face:
             //
-            // v = - (K grad p) * n
+            // v_\alpha := - (K grad p) * n
             //
-            // (the minus comes from the Darcy law which states that
-            // the flux is from high to low pressure potentials.)
-            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx), tmpVec);
-            Scalar normalFlux = 0;
-            for (int i = 0; i < Vector::size; ++i)
-                normalFlux += tmpVec[i]*fluxVars.face().normal[i];
-            normalFlux *= -1;
-
-            // data attached to upstream and the downstream vertices
-            // of the current phase
-            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
-            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+            // note that v_\alpha is *not* equivalent to the Darcy
+            // velocity because the relative permebility is not
+            // included. Its purpose is to make the upwind decision,
+            // i.e. to decide whether the flow goes from sub control
+            // volume i to j or vice versa.
+            Scalar normalFlux = fluxVars.normalFlux(phaseIdx);
 
             // add advective flux of current component in current
             // phase
@@ -204,10 +213,11 @@ public:
      * non-isothermal two-phase models to calculate diffusive heat
      * fluxes
      */
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxData) const
+    void computeDiffusiveFlux(PrimaryVariables &flux, 
+                              const ElementVariables &elemVars,
+                              int scvfIdx) const
     {
-        // diffusive fluxes
-        flux += 0.0;
+        // no diffusive fluxes for immiscible models
     }
 
     /*!
@@ -217,14 +227,12 @@ public:
      * \param localVertexIdx The index of the SCV
      *
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx) const
+    void computeSource(PrimaryVariables &values,
+                       const ElementVariables &elemVars,
+                       int scvIdx) const
     {
         // retrieve the source term intrinsic to the problem
-        this->problem_().boxSDSource(q,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
-                                     localVertexIdx,
-                                     this->curVolVars_());
+        elemVars.problem().source(values, elemVars, scvIdx);
     }
 
 

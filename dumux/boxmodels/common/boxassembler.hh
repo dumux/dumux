@@ -113,9 +113,6 @@ public:
 
     BoxAssembler()
     {
-        enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
-        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
-
         problemPtr_ = 0;
         matrix_ = 0;
 
@@ -159,7 +156,7 @@ public:
         // initialize the storage part of the Jacobian matrix. Since
         // we only need this if Jacobian matrix recycling is enabled,
         // we do not waste space if it is disabled
-        if (enableJacobianRecycling_) {
+        if (enableJacobianRecycling_()) {
             storageJacobian_.resize(numVerts);
             storageTerm_.resize(numVerts);
         }
@@ -167,7 +164,7 @@ public:
         totalElems_ = gridView_().comm().sum(numElems);
 
         // initialize data needed for partial reassembly
-        if (enablePartialReassemble_) {
+        if (enablePartialReassemble_()) {
             vertexColor_.resize(numVerts);
             vertexDelta_.resize(numVerts);
             elementColor_.resize(numElems);
@@ -176,14 +173,14 @@ public:
     }
 
     /*!
-     * \brief Assemble the local jacobian of the problem.
+     * \brief Assemble the global Jacobian of the residual and the residual for the current solution.
      *
      * The current state of affairs (esp. the previous and the current
      * solutions) is represented by the model object.
      */
     void assemble()
     {
-        bool printReassembleStatistics = enablePartialReassemble_ && !reuseMatrix_;
+        bool printReassembleStatistics = enablePartialReassemble_() && !reuseMatrix_;
         int succeeded;
         try {
             assemble_();
@@ -231,7 +228,7 @@ public:
      */
     void setMatrixReuseable(bool yesno = true)
     {
-        if (enableJacobianRecycling_)
+        if (enableJacobianRecycling_())
             reuseMatrix_ = yesno;
     }
 
@@ -247,7 +244,7 @@ public:
 
         // do not use partial reassembly for the next iteration
         nextReassembleAccuracy_ = 0.0;
-        if (enablePartialReassemble_) {
+        if (enablePartialReassemble_()) {
             std::fill(vertexColor_.begin(),
                       vertexColor_.end(),
                       Red);
@@ -283,7 +280,7 @@ public:
     void updateDiscrepancy(const SolutionVector &u,
                            const SolutionVector &uDelta)
     {
-        if (!enablePartialReassemble_)
+        if (!enablePartialReassemble_())
             return;
 
         // update the vector with the distances of the current
@@ -342,7 +339,7 @@ public:
      */
     void computeColors(Scalar relTol)
     {
-        if (!enablePartialReassemble_)
+        if (!enablePartialReassemble_())
             return;
 
         ElementIterator elemIt = gridView_().template begin<0>();
@@ -486,7 +483,7 @@ public:
      */
     int vertexColor(const Element &element, int vertIdx) const
     {
-        if (!enablePartialReassemble_)
+        if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
 
         int globalIdx = vertexMapper_().map(element, vertIdx, dim);
@@ -500,7 +497,7 @@ public:
      */
     int vertexColor(int globalVertIdx) const
     {
-        if (!enablePartialReassemble_)
+        if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
         return vertexColor_[globalVertIdx];
     }
@@ -512,7 +509,7 @@ public:
      */
     int elementColor(const Element &element) const
     {
-        if (!enablePartialReassemble_)
+        if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
 
         int globalIdx = elementMapper_().map(element);
@@ -526,7 +523,7 @@ public:
      */
     int elementColor(int globalElementIdx) const
     {
-        if (!enablePartialReassemble_)
+        if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
         return elementColor_[globalElementIdx];
     }
@@ -543,8 +540,27 @@ public:
     const SolutionVector& residual() const
     { return residual_; }
 
-
 private:
+    static bool enableJacobianRecycling_()
+    { return GET_PARAM(TypeTag, bool, EnableJacobianRecycling); }
+    static bool enablePartialReassemble_()
+    { return GET_PARAM(TypeTag, bool, EnablePartialReassemble); }
+
+    Problem &problem_()
+    { return *problemPtr_; }
+    const Problem &problem_() const
+    { return *problemPtr_; }
+    const Model &model_() const
+    { return problem_().model(); }
+    Model &model_()
+    { return problem_().model(); }
+    const GridView &gridView_() const
+    { return problem_().gridView(); }
+    const VertexMapper &vertexMapper_() const
+    { return problem_().vertexMapper(); }
+    const ElementMapper &elementMapper_() const
+    { return problem_().elementMapper(); }
+
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
@@ -623,7 +639,7 @@ private:
         // always reset the right hand side.
         residual_ = 0.0;
 
-        if (!enablePartialReassemble_) {
+        if (!enablePartialReassemble_()) {
             // If partial reassembly of the jacobian is not enabled,
             // we can just reset everything!
             (*matrix_) = 0;
@@ -740,21 +756,20 @@ private:
 
             residual_[globI] += model_().localJacobian().residual(i);
             if (enableJacobianRecycling_) {
-                // save the flux term and the jacobian of the
-                // storage term in case we can reuse the current
-                // linearization...
+                // save storage term and its Jacobian in case we can
+                // reuse the current linearization...
                 storageJacobian_[globI] +=
-                    model_().localJacobian().storageJacobian(i);
+                    model_().localJacobian().jacobianStorage(i);
 
                 storageTerm_[globI] +=
-                    model_().localJacobian().storageTerm(i);
+                    model_().localJacobian().residualStorage(i);
             }
 
             // update the jacobian matrix
             for (int j=0; j < numVertices; ++ j) {
                 int globJ = vertexMapper_().map(elem, j, dim);
                 (*matrix_)[globI][globJ] +=
-                    model_().localJacobian().mat(i,j);
+                    model_().localJacobian().jacobian(i, j);
             }
         }
     }
@@ -785,22 +800,6 @@ private:
         }
     }
 
-
-    Problem &problem_()
-    { return *problemPtr_; }
-    const Problem &problem_() const
-    { return *problemPtr_; }
-    const Model &model_() const
-    { return problem_().model(); }
-    Model &model_()
-    { return problem_().model(); }
-    const GridView &gridView_() const
-    { return problem_().gridView(); }
-    const VertexMapper &vertexMapper_() const
-    { return problem_().vertexMapper(); }
-    const ElementMapper &elementMapper_() const
-    { return problem_().elementMapper(); }
-
     Problem *problemPtr_;
 
     // the jacobian matrix
@@ -827,9 +826,6 @@ private:
 
     Scalar nextReassembleAccuracy_;
     Scalar reassembleAccuracy_;
-
-    bool enableJacobianRecycling_;
-    bool enablePartialReassemble_;
 };
 
 } // namespace Dumux

@@ -56,6 +56,8 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVariables)) ElementVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     enum {
@@ -89,28 +91,26 @@ public:
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
-                const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &elemGeom,
+                const ElementVariables &elemVars,
                 int scvIdx,
-                bool isOldSol)
+                int historyIdx)
     {
         ParentType::update(priVars,
-                           problem,
-                           element,
-                           elemGeom,
+                           elemVars,
                            scvIdx,
-                           isOldSol);
+                           historyIdx);
 
         asImp().updateTemperature_(priVars,
-                                   element,
-                                   elemGeom,
+                                   elemVars,
                                    scvIdx,
-                                   problem);
+                                   historyIdx);
 
-        // material law parameters
+        const SpatialParameters &spatialParams = 
+            elemVars.problem().spatialParameters();
+
+        // material law parameters       
         const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            spatialParams.materialLawParams(elemVars, scvIdx);
 
         Scalar p[numPhases];
         Scalar Sn;
@@ -147,9 +147,7 @@ public:
                                         fluidState_);
 
         // porosity
-        porosity_ = problem.spatialParameters().porosity(element,
-                                                         elemGeom,
-                                                         scvIdx);
+        porosity_ = spatialParams.porosity(elemVars, scvIdx);
     }
 
     /*!
@@ -218,12 +216,12 @@ public:
 
 protected:
     void updateTemperature_(const PrimaryVariables &priVars,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
+                            const ElementVariables &elemVars,
                             int scvIdx,
-                            const Problem &problem)
+                            int historyIdx)
     {
-        temperature_ = problem.boxTemperature(element, elemGeom, scvIdx);
+        temperature_ = 
+            elemVars.problem().temperature(elemVars, scvIdx);
     }
 
     FluidState fluidState_;

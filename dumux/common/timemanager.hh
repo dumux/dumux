@@ -379,7 +379,7 @@ public:
             if (verbose_) {
                 std::cout <<
                     boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
-                    %timeStepIndex()%timer.elapsed()%time()%dt;
+                    %timeStepIndex()%double(timer.elapsed())%double(time())%double(dt);
             }
 
             // write restart file if mandated by the problem

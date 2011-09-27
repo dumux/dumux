@@ -60,7 +60,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVariables)) ElementVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
@@ -140,6 +140,28 @@ public:
     }
 
     /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param context The local context. Only the element() and the fvElemGeom() methods are valid at this point
+     * \param localIdx The local index of the entity neighboring the Dirichlet boundary.
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    template <class Context>
+    DUNE_DEPRECATED
+    void boundaryTypes(BoundaryTypes &values,
+                       const Context &context,
+                       int localIdx) const
+    {
+        const auto vPtr = context.element().template subEntity<dim>(localIdx);
+
+        // forward it to the method which only takes the global coordinate
+        asImp_().boundaryTypes(values, *vPtr);
+   }
+    
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
@@ -170,6 +192,27 @@ public:
                    "a boundaryTypes() method.");
     }
 
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param context The local context. Only the element() and the fvElemGeom() methods are valid at this point
+     * \param localIdx The local index of the entity neighboring the Dirichlet boundary.
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    template <class Context>
+    DUNE_DEPRECATED
+    void dirichlet(PrimaryVariables &values,
+                   const Context &context,
+                   int localIdx) const
+    {
+        const auto vPtr = context.element().template subEntity<dim>(localIdx);
+        
+        // forward it to the method which only takes the global coordinate
+        asImp_().dirichlet(values, *vPtr);
+    }
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
@@ -180,6 +223,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
+    DUNE_DEPRECATED
     void dirichlet(PrimaryVariables &values,
                    const Vertex &vertex) const
     {
@@ -198,6 +242,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
+    DUNE_DEPRECATED
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &pos) const
     {
@@ -208,6 +253,25 @@ public:
                    "segments are dirichlet, but does not provide "
                    "a dirichlet() method.");
     }
+
+    template <class Context>
+    DUNE_DEPRECATED
+    // if you get an deprecated warning here, please use context
+    // objects to specify your problem!
+    void neumann(PrimaryVariables &priVars,
+                 const Context &context,
+                 const Intersection &is,
+                 int localIdx,
+                 int boundaryIndex) const
+    {
+        return asImp_().boxSDNeumann(priVars,
+                                     context.element(),
+                                     context.fvElemGeom(),
+                                     is,
+                                     localIdx,
+                                     boundaryIndex,
+                                     context);
+    };
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
@@ -234,7 +298,8 @@ public:
                       const Intersection &is,
                       int scvIdx,
                       int boundaryFaceIdx,
-                      const ElementVolumeVariables &elemVolVars) const
+                      const ElementVariables &elemVars) const
+        DUNE_DEPRECATED
     {
         // forward it to the interface without the volume variables
         asImp_().neumann(values,
@@ -265,6 +330,7 @@ public:
                  const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
+        DUNE_DEPRECATED
     {
         // forward it to the interface with only the global position
         asImp_().neumannAtPos(values, fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal);
@@ -282,6 +348,7 @@ public:
      */
     void neumannAtPos(PrimaryVariables &values,
                       const GlobalPosition &pos) const
+        DUNE_DEPRECATED
     {
         // Throw an exception (there is no reasonable default value
         // for Neumann conditions)
@@ -290,6 +357,21 @@ public:
                    "segments are neumann, but does not provide "
                    "a neumannAtPos() method.");
     }
+
+    template <class Context>
+    // if you get an deprecated warning here, please use context
+    // objects to specify your problem!
+    DUNE_DEPRECATED
+    void source(PrimaryVariables &priVars,
+                const Context &context,
+                int localIdx) const
+    {
+        return asImp_().boxSDSource(priVars,
+                                    context.element(),
+                                    context.fvElemGeom(),
+                                    localIdx,
+                                    context);
+    };
 
     /*!
      * \brief Evaluate the source term for all phases within a given
@@ -313,10 +395,11 @@ public:
                      const Element &element,
                      const FVElementGeometry &fvElemGeom,
                      int scvIdx,
-                     const ElementVolumeVariables &elemVolVars) const
+                     const ElementVariables &elemVars) const
+        DUNE_DEPRECATED
     {
         // forward to solution independent, box specific interface
-        asImp_().source(values, element, fvElemGeom, scvIdx);
+        asImp_().source(values, elemVars, scvIdx);
     }
 
     /*!
@@ -336,6 +419,7 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvElemGeom,
                 int scvIdx) const
+        DUNE_DEPRECATED
     {
         // forward to generic interface
         asImp_().sourceAtPos(values, fvElemGeom.subContVol[scvIdx].global);
@@ -356,6 +440,7 @@ public:
      */
     void sourceAtPos(PrimaryVariables &values,
                      const GlobalPosition &pos) const
+        DUNE_DEPRECATED
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
@@ -411,6 +496,28 @@ public:
      * thought as pipes with a cross section of 1 m^2 and 2D problems
      * are assumed to extend 1 m to the back.
      */
+    template <class Context>
+    // if you get an deprecated warning here, please use context
+    // objects to specify your problem!
+    DUNE_DEPRECATED
+    Scalar extrusionFactor(const Context &context,
+                           int localIdx) const
+    {
+        return asImp_().boxExtrusionFactor(context.element(),
+                                           context.fvElemGeom(),
+                                           localIdx);
+    };
+
+    /*!
+     * \brief Return how much the domain is extruded at a given sub-control volume.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    DUNE_DEPRECATED
     Scalar boxExtrusionFactor(const Element &element,
                               const FVElementGeometry &fvElemGeom,
                               int scvIdx) const
@@ -768,7 +875,7 @@ public:
             Scalar t = timeManager().time() + timeManager().timeStepSize();
             createResultWriter_();
             resultWriter_->beginWrite(t);
-            model().addOutputVtkFields(model().curSol(), *resultWriter_);
+            model().addOutputVtkFields(model().solution(/*historyIdx=*/0), *resultWriter_);
             asImp_().addOutputVtkFields();
             resultWriter_->endWrite();
         }

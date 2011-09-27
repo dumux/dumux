@@ -114,6 +114,26 @@ public:
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
      *
+     * \param context Container for the volume variables, element,
+     *                fvElementGeometry, etc 
+     * \param localIdx The local index of the sub control volume inside
+     *                 the element
+     */
+    template <class Context>
+    // if you get an deprecated warning here, please use context
+    // objects to specify your problem!
+    DUNE_DEPRECATED
+    Scalar temperature(const Context &context,
+                       int localIdx) const
+    {
+        return asImp_().boxTemperature(context.element(),
+                                       context.fvElemGeom(),
+                                       localIdx);                             
+    };
+
+    /*!
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
+     *
      * This is the discretization specific interface for the box
      * method. By default it just calls temperature(pos).
      *
@@ -125,6 +145,7 @@ public:
     Scalar boxTemperature(const Element &element,
                           const FVElementGeometry fvGeom,
                           int scvIdx) const
+        DUNE_DEPRECATED // use context objects!
     { return asImp_().temperatureAtPos(fvGeom.subContVol[scvIdx].global); }
     
     /*!
@@ -136,6 +157,7 @@ public:
      * \param pos The position in global coordinates where the temperature should be specified.
      */
     Scalar temperatureAtPos(const GlobalPosition &pos) const
+        DUNE_DEPRECATED // use context objects!
     { return asImp_().temperature(); }
 
     /*!
@@ -146,7 +168,29 @@ public:
      * no energy equation is used.
      */
     Scalar temperature() const
+        DUNE_DEPRECATED // use context objects!
     { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
+
+
+    /*!
+     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
+     *
+     * \param context Container for the volume variables, element,
+     *                fvElementGeometry, etc 
+     * \param localIdx The local index of the sub control volume inside
+     *                 the element
+     */
+    template <class Context>
+    // if you get an deprecated warning here, please use context
+    // objects to specify your problem!
+    DUNE_DEPRECATED
+    const Vector &gravity(const Context &context,
+                          int localIdx) const
+    {
+        return asImp_().boxGravity(context.element(),
+                                   context.fvElemGeom(),
+                                   localIdx);
+    };
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
@@ -155,8 +199,9 @@ public:
      * it just calls gravityAtPos().
      */
     const Vector &boxGravity(const Element &element,
-                                     const FVElementGeometry &fvGeom,
-                                     int scvIdx) const
+                             const FVElementGeometry &fvGeom,
+                             int scvIdx) const
+        DUNE_DEPRECATED // use context objects!
     { return asImp_().gravityAtPos(fvGeom.subContVol[scvIdx].global); }
 
     /*!

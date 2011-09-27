@@ -116,7 +116,7 @@ public:
 protected:
     bool execute_(NewtonController &ctl)
     {
-        SolutionVector &uCurrentIter = model().curSol();
+        SolutionVector &uCurrentIter = model().solution(/*historyIdx=*/0);
         SolutionVector uLastIter(uCurrentIter);
         SolutionVector deltaU(uCurrentIter);
 
