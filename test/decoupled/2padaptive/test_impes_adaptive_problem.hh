@@ -44,6 +44,7 @@
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
 #include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
+#include <dumux/decoupled/2p/variableclass2p_gridadapt.hh>
 
 #include "test_impes_adaptive_spatialparams.hh"
 
@@ -104,8 +105,14 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
+SET_PROP(TestIMPESAdaptiveProblem, Variables)
+{
+    typedef Dumux::VariableClass2PGridAdapt<TypeTag> type;
+};
+
 // Enable gravity
 SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableGravity, false);
+SET_BOOL_PROP(TestIMPESAdaptiveProblem, AdaptiveGrid, true);
 
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
@@ -128,9 +135,10 @@ SET_INT_PROP(TestIMPESAdaptiveProblem, MaxIntersections, 8);
  * where the argument defines the simulation endtime.
  */
 template<class TypeTag = TTAG(TestIMPESAdaptiveProblem)>
-class TestIMPESAdaptiveProblem: public IMPESProblem2Padaptive<TypeTag>
+class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>//IMPESProblem2Padaptive<TypeTag>
 {
-typedef IMPESProblem2Padaptive<TypeTag> ParentType;
+//typedef IMPESProblem2Padaptive<TypeTag> ParentType;
+typedef IMPESProblem2P<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
@@ -165,8 +173,8 @@ typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
 
 public:
-TestIMPESAdaptiveProblem(TimeManager &timeManager, Grid &grid) :
-ParentType(timeManager, grid)
+TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
+ParentType(timeManager, gridView)
 {
 this->setOutputInterval(10);
 }

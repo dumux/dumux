@@ -132,7 +132,9 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         TimeManager timeManager;
-        Problem problem(timeManager, *gridPtr);
+        Problem problem(timeManager, gridPtr->leafView());
+        problem.setGrid(*gridPtr);
+        problem.gridAdapt().setLevels(Params::tree().get<int>("levelMin"), Params::tree().get<int>("levelMax"));
 
         // load restart file if necessarry
         if (restart)
