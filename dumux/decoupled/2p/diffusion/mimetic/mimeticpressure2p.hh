@@ -287,17 +287,33 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::calculateVelocity()
 {
-    // ASSUMES axiparallel grids in 2D
-    for (int i = 0; i < problem_.gridView().size(0); i++)
+//    // ASSUMES axiparallel grids in 2D
+//    for (int i = 0; i < problem_.gridView().size(0); i++)
+//    {
+//        problem_.variables().velocity()[i][j][0] = -normalVelocity_[i][j];
+//        problem_.variables().velocity()[i][j][1] = 0;
+//        problem_.variables().velocity()[i][j][0] = normalVelocity_[i][j];
+//        problem_.variables().velocity()[i][j][1] = 0;
+//        problem_.variables().velocity()[i][j][0] = 0;
+//        problem_.variables().velocity()[i][j][1] = -normalVelocity_[i][j];
+//        problem_.variables().velocity()[i][j][0] = 0;
+//        problem_.variables().velocity()[i][j][1] = normalVelocity_[i][j];
+//    }
+    // iterate through leaf grid an evaluate c0 at cell center
+    const ElementIterator &eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        problem_.variables().velocity()[i][0][0] = -normalVelocity_[i][0];
-        problem_.variables().velocity()[i][0][1] = 0;
-        problem_.variables().velocity()[i][1][0] = normalVelocity_[i][1];
-        problem_.variables().velocity()[i][1][1] = 0;
-        problem_.variables().velocity()[i][2][0] = 0;
-        problem_.variables().velocity()[i][2][1] = -normalVelocity_[i][2];
-        problem_.variables().velocity()[i][3][0] = 0;
-        problem_.variables().velocity()[i][3][1] = normalVelocity_[i][3];
+        int globalIdx = problem_.variables().index(*eIt);
+        IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt);
+        const IntersectionIterator &isItEnd = problem_.gridView().template iend(*eIt);
+        for (; isIt != isItEnd; ++isIt)
+        {
+            int idxInInside = isIt->indexInInside();
+            problem_.variables().velocity()[globalIdx][idxInInside] = isIt->centerUnitOuterNormal();
+            problem_.variables().velocity()[globalIdx][idxInInside] *= normalVelocity_[globalIdx][idxInInside];
+            problem_.variables().potentialWetting(globalIdx, idxInInside) = normalVelocity_[globalIdx][idxInInside];
+            problem_.variables().potentialNonwetting(globalIdx, idxInInside) = normalVelocity_[globalIdx][idxInInside];
+        }
     }
 //    printvector(std::cout, problem_.variables().velocity(), "velocity", "row", 4, 1, 3);
     return;
