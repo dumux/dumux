@@ -67,8 +67,8 @@ public:
 
     double norm(const OverlappingBlockVector &x)
     {
-        field_type tmp = std::sqrt(dot(x, x));
-        return tmp;
+        double tmp = dot(x, x);
+        return std::sqrt(tmp);
     };
 
 private:

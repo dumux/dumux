@@ -93,7 +93,7 @@ class TwoPModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVariables)) ElementVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
 
     enum {
@@ -122,11 +122,8 @@ public:
      */
     Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
     {
-        if (Indices::pressureIdx == pvIdx) {
-            Scalar absPv = 
-                std::abs(this->solution(/*historyIdx=*/1)[globalVertexIdx][pvIdx]);
-            return std::min(10.0/absPv, 1.0);
-        }
+        if (Indices::pressureIdx == pvIdx)
+            return std::min(10.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
         return 1;
     }
 
@@ -176,7 +173,9 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        ElementVariables elemVars(this->problem_());
+        FVElementGeometry fvElemGeom;
+        VolumeVariables volVars;
+        ElementVolumeVariables elemVolVars;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         ElementIterator elemEndIt = this->gridView_().template end<0>();
@@ -189,14 +188,19 @@ public:
             int idx = this->elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
 
-            elemVars.updateFVElemGeom(*elemIt);
-            elemVars.updateScvVars(/*historyIdx=*/0);
+            fvElemGeom.update(this->gridView_(), *elemIt);
 
-            for (int scvIdx = 0; scvIdx < elemVars.numScv(); ++scvIdx)
+            int numVerts = elemIt->template count<dim> ();
+            for (int i = 0; i < numVerts; ++i)
             {
-                int globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
+                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                volVars.update(sol[globalIdx],
+                               this->problem_(),
+                               *elemIt,
+                               fvElemGeom,
+                               i,
+                               false);
 
-                const VolumeVariables &volVars = elemVars.volVars(scvIdx, /*historyIdx=*/0);
                 (*pW)[globalIdx] = volVars.pressure(wPhaseIdx);
                 (*pN)[globalIdx] = volVars.pressure(nPhaseIdx);
                 (*pC)[globalIdx] = volVars.capillaryPressure();
@@ -214,7 +218,6 @@ public:
                 }
             };
             
-#if 0
             if(velocityOutput)
             {
                 // calculate vertex velocities
@@ -270,7 +273,6 @@ public:
 
                       // Transformation of the global normal vector to normal vector in the reference element
                       const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
-                          elemIt->geometry().jacobianTransposed(localPosIP);
 
                       GlobalPosition localNormal(0);
                       jacobianT1.mv(globalNormal, localNormal);
@@ -329,9 +331,7 @@ public:
                     (*velocityN)[globalIdx] += scvVelocity;
                 }
             }
-#endif
         }
-#if 0
             if(velocityOutput)
             {
             	// divide the vertex velocities by the number of adjacent scvs i.e. cells
@@ -340,7 +340,7 @@ public:
     	        (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
     	        }
             }
-#endif
+
         writer.attachVertexData(*Sn, "Sn");
         writer.attachVertexData(*Sw, "Sw");
         writer.attachVertexData(*pN, "pn");
@@ -352,13 +352,11 @@ public:
         writer.attachVertexData(*mobN, "mobN");
         writer.attachVertexData(*poro, "porosity");
         writer.attachVertexData(*Te, "temperature");
-#if 0
         if(velocityOutput) // check if velocity output is demanded
         {
         	writer.attachVertexData(*velocityW,  "velocityW", dim);
         	writer.attachVertexData(*velocityN,  "velocityN", dim);
         }
-#endif
         writer.attachCellData(*rank, "process rank");
     }
 };

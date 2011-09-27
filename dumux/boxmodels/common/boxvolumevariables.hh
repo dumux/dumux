@@ -49,7 +49,6 @@ class BoxVolumeVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVariables)) ElementVariables;
 
 public:
     // default constructor
@@ -119,13 +118,15 @@ public:
      *       phase state in the 2p2c model)
      */
     void update(const PrimaryVariables &priVars,
-                const ElementVariables &elemVars,
+                const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &elemGeom,
                 int scvIdx,
-                int historyIdx)
+                bool isOldSol)
     {
         Valgrind::CheckDefined(priVars);
         primaryVars_ = priVars;
-        extrusionFactor_ = elemVars.problem().extrusionFactor(elemVars, scvIdx);
+        extrusionFactor_ = problem.boxExtrusionFactor(element, elemGeom, scvIdx);
     }
 
     /*!

@@ -30,7 +30,6 @@
 #ifndef DUMUX_BOX_LOCAL_JACOBIAN_HH
 #define DUMUX_BOX_LOCAL_JACOBIAN_HH
 
-#include <dune/istl/bvector.hh>
 #include <dune/istl/matrix.hh>
 
 #include "boxelementboundarytypes.hh"
@@ -78,12 +77,17 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
+
+        Red = JacobianAssembler::Red,
+        Yellow = JacobianAssembler::Yellow,
+        Green = JacobianAssembler::Green,
     };
 
 
@@ -109,29 +113,22 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVariables)) ElementVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
 
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
     typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
-
-    typedef Dune::FieldVector<Scalar, numEq> VectorBlock;
-    typedef Dune::BlockVector<VectorBlock> LocalBlockVector;
-    typedef Dune::BlockVector<MatrixBlock> LocalStorageMatrix;
 
     // copying a local jacobian is not a good idea
     BoxLocalJacobian(const BoxLocalJacobian &);
 
 public:
     BoxLocalJacobian()
-    { 
-        internalElemVars_ = 0;
+    {
+        numericDifferenceMethod_ = GET_PARAM(TypeTag, int, NumericDifferenceMethod);
+        Valgrind::SetUndefined(problemPtr_);
     }
 
-    ~BoxLocalJacobian()
-    {
-        delete internalElemVars_;
-    }
 
     /*!
      * \brief Initialize the local Jacobian object.
@@ -142,66 +139,139 @@ public:
      * \param prob The problem which we want to simulate.
      */
     void init(Problem &prob)
-    { 
+    {
         problemPtr_ = &prob;
-        modelPtr_ = &prob.model();
-        internalElemVars_ = new ElementVariables(prob);
+        localResidual_.init(prob);
+
+        // assume quadrilinears as elements with most vertices
+        A_.setSize(2<<dim, 2<<dim);
+        storageJacobian_.resize(2<<dim);
     }
 
     /*!
      * \brief Assemble an element's local Jacobian matrix of the
      *        defect.
      *
-     * This assembles the 'grad f(x^k)' and 'f(x^k)' part of the newton update
+     * \param element The DUNE Codim<0> entity which we look at.
      */
     void assemble(const Element &element)
     {
-        internalElemVars_->updateAll(element);
+        // set the current grid element and update the element's
+        // finite volume geometry
+        elemPtr_ = &element;
+        fvElemGeom_.update(gridView_(), element);
+        reset_();
 
-        assemble(*internalElemVars_);
+        bcTypes_.update(problem_(), elem_(), fvElemGeom_);
+
+        // this is pretty much a HACK because the internal state of
+        // the problem is not supposed to be changed during the
+        // evaluation of the residual. (Reasons: It is a violation of
+        // abstraction, makes everything more prone to errors and is
+        // not thread save.) The real solution are context objects!
+        problem_().updateCouplingParams(elem_());
+
+        // set the hints for the volume variables
+        model_().setHints(element, prevVolVars_, curVolVars_);
+
+        // update the secondary variables for the element at the last
+        // and the current time levels
+        prevVolVars_.update(problem_(),
+                            elem_(),
+                            fvElemGeom_,
+                            true /* isOldSol? */);
+
+        curVolVars_.update(problem_(),
+                           elem_(),
+                           fvElemGeom_,
+                           false /* isOldSol? */);
+
+        // update the hints of the model
+        model_().updateCurHints(element, curVolVars_);
+
+        // calculate the local residual
+        localResidual().eval(elem_(),
+                             fvElemGeom_,
+                             prevVolVars_,
+                             curVolVars_,
+                             bcTypes_);
+        residual_ = localResidual().residual();
+        storageTerm_ = localResidual().storageTerm();
+
+        model_().updatePVWeights(elem_(), curVolVars_);
+
+        // calculate the local jacobian matrix
+        int numVertices = fvElemGeom_.numVertices;
+        ElementSolutionVector partialDeriv(numVertices);
+        PrimaryVariables storageDeriv;
+        for (int j = 0; j < numVertices; j++) {
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++) {
+                asImp_().evalPartialDerivative_(partialDeriv,
+                                                storageDeriv,
+                                                j,
+                                                pvIdx);
+
+                // update the local stiffness matrix with the current partial
+                // derivatives
+                updateLocalJacobian_(j,
+                                     pvIdx,
+                                     partialDeriv,
+                                     storageDeriv);
+            }
+        }
     }
 
     /*!
-     * \brief Assemble an element's local Jacobian matrix of the
-     *        defect, given all secondary variables for the element.
-     *
-     * After calling this method the ElementVariables are in undefined
-     * state, so do not use it anymore!
+     * \brief Returns a reference to the object which calculates the
+     *        local residual.
      */
-    void assemble(ElementVariables &elemVars)
-    {        
-        // update the weights of the primary variables using the
-        // current element variables
-        model_().updatePVWeights(elemVars);
-        
-        resize_(elemVars);
-        reset_(elemVars);
-       
-        // calculate the local residual
-        localResidual_.eval(residual_, residualStorage_, elemVars);
+    const LocalResidual &localResidual() const
+    { return localResidual_; }
 
-        // save all flux variables calculated using the unmodified
-        // primary variables. This automatically makes these flux
-        // variables the evaluation point.
-        elemVars.saveScvfVars();
+    /*!
+     * \brief Returns a reference to the object which calculates the
+     *        local residual.
+     */
+    LocalResidual &localResidual()
+    { return localResidual_; }
 
-        // calculate the local jacobian matrix
-        int numScv = elemVars.numScv();
-        for (int scvIdx = 0; scvIdx < numScv; scvIdx++) {
-            for (int pvIdx = 0; pvIdx < numEq; pvIdx++) {
-                asImp_().evalPartialDerivative_(elemVars,
-                                                scvIdx,
-                                                pvIdx);
+    /*!
+     * \brief Returns the Jacobian of the equations at vertex i to the
+     *        primary variables at vertex j.
+     *
+     * \param i The local vertex (or sub-control volume) index on which
+     *          the equations are defined
+     * \param j The local vertex (or sub-control volume) index which holds
+     *          primary variables
+     */
+    const MatrixBlock &mat(int i, int j) const
+    { return A_[i][j]; }
 
-                // update the local stiffness matrix with the current
-                // partial derivatives
-                updateLocalJacobian_(elemVars, scvIdx, pvIdx);
-            }
-        }
+    /*!
+     * \brief Returns the Jacobian of the storage term at vertex i.
+     *
+     * \param i The local vertex (or sub-control volume) index
+     */
+    const MatrixBlock &storageJacobian(int i) const
+    { return storageJacobian_[i]; }
 
-        // restore flux variables. 
-        //elemVars.restoreScvfVars(); // not necessary
-    }
+    /*!
+     * \brief Returns the residual of the equations at vertex i.
+     *
+     * \param i The local vertex (or sub-control volume) index on which
+     *          the equations are defined
+     */
+    const PrimaryVariables &residual(int i) const
+    { return residual_[i]; }
+
+    /*!
+     * \brief Returns the storage term for vertex i.
+     *
+     * \param i The local vertex (or sub-control volume) index on which
+     *          the equations are defined
+     */
+    const PrimaryVariables &storageTerm(int i) const
+    { return storageTerm_[i]; }
 
     /*!
      * \brief Returns the epsilon value which is added and removed
@@ -211,8 +281,7 @@ public:
      *                   which the local derivative ought to be calculated.
      * \param pvIdx      The index of the primary variable which gets varied
      */
-    Scalar numericEpsilon(const ElementVariables &elemVars, 
-                          int scvIdx,
+    Scalar numericEpsilon(int scvIdx,
                           int pvIdx) const
     {
         // define the base epsilon as the geometric mean of 1 and the
@@ -222,53 +291,12 @@ public:
         static const Scalar baseEps 
             = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(),
                                            1.0);
-        
+
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
-        Scalar pv = elemVars.volVars(scvIdx, /*historyIdx=*/0).primaryVar(pvIdx);
+        Scalar pv = this->curVolVars_[scvIdx].primaryVar(pvIdx);
         return baseEps*(std::abs(pv) + 1);
     }
-
-    /*!
-     * \brief Return reference to the local residual.
-     */
-    LocalResidual &localResidual()
-    { return localResidual_; }
-    const LocalResidual &localResidual() const
-    { return localResidual_; }
-
-    /*!
-     * \brief Returns the local Jacobian matrix of the residual of a sub-control volume.
-     *
-     * \param domainScvIdx The local index of the sub control volume which contains the independents
-     * \param rangeScvIdx The local index of the sub control volume which contains the local residual
-     */
-    const MatrixBlock &jacobian(int domainScvIdx, int rangeScvIdx) const
-    { return jacobian_[domainScvIdx][rangeScvIdx]; }
-
-    /*!
-     * \brief Returns the local Jacobian matrix the storage term of a sub-control volume.
-     *
-     * \param scvIdx The local index of sub control volume
-     */
-    const MatrixBlock &jacobianStorage(int scvIdx) const
-    { return jacobianStorage_[scvIdx]; }
-
-    /*!
-     * \brief Returns the local residual of a sub-control volume.
-     *
-     * \param scvIdx The local index of the sub control volume
-     */
-    const VectorBlock &residual(int scvIdx) const
-    { return residual_[scvIdx]; }
-
-    /*!
-     * \brief Returns the local storage term of a sub-control volume.
-     *
-     * \param scvIdx The local index of the sub control volume
-     */
-    const VectorBlock &residualStorage(int scvIdx) const
-    { return residualStorage_[scvIdx]; }
 
 protected:
     Implementation &asImp_()
@@ -276,48 +304,58 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+    /*!
+     * \brief Returns a reference to the problem.
+     */
     const Problem &problem_() const
-    { return *problemPtr_; }
-    const Model &model_() const
-    { return *modelPtr_; }
-
-    /*!
-     * \brief Returns the numeric difference method which is applied.
-     */
-    static int numericDifferenceMethod_() 
-    { return GET_PARAM(TypeTag, int, NumericDifferenceMethod); }
-
-    /*!
-     * \brief Resize all internal attributes to the size of the
-     *        element.
-     */
-    void resize_(const ElementVariables &elemVars)
     {
-        int n = elemVars.numScv();
-
-        jacobian_.setSize(n, n);
-        jacobianStorage_.resize(n);
-        
-        residual_.resize(n);
-        residualStorage_.resize(n);
-        
-        derivResidual_.resize(n);
-        derivStorage_.resize(n);
+        Valgrind::CheckDefined(problemPtr_);
+        return *problemPtr_;
     };
 
     /*!
-     * \brief Reset the all relevant internal attributes to 0
+     * \brief Returns a reference to the grid view.
      */
-    void reset_(const ElementVariables &elemVars)
-    {
-        int numScv = elemVars.numScv();
-        for (int i = 0; i < numScv; ++ i) {
-            residual_[i] = 0.0;
-            residualStorage_[i] = 0.0;
+    const GridView &gridView_() const
+    { return problem_().gridView(); }
 
-            jacobianStorage_[i] = 0.0;
-            for (int j = 0; j < numScv; ++ j) {
-                jacobian_[i][j] = 0.0;
+    /*!
+     * \brief Returns a reference to the element.
+     */
+    const Element &elem_() const
+    {
+        Valgrind::CheckDefined(elemPtr_);
+        return *elemPtr_;
+    };
+
+    /*!
+     * \brief Returns a reference to the model.
+     */
+    const Model &model_() const
+    { return problem_().model(); };
+
+    /*!
+     * \brief Returns a reference to the jacobian assembler.
+     */
+    const JacobianAssembler &jacAsm_() const
+    { return model_().jacobianAssembler(); }
+
+    /*!
+     * \brief Returns a reference to the vertex mapper.
+     */
+    const VertexMapper &vertexMapper_() const
+    { return problem_().vertexMapper(); };
+
+    /*!
+     * \brief Reset the local jacobian matrix to 0
+     */
+    void reset_()
+    {
+        int n = elem_().template count<dim>();
+        for (int i = 0; i < n; ++ i) {
+            storageJacobian_[i] = 0.0;
+            for (int j = 0; j < n; ++ j) {
+                A_[i][j] = 0.0;
             }
         }
     }
@@ -366,19 +404,21 @@ protected:
      *              for which the partial derivative ought to be
      *              calculated
      */
-    void evalPartialDerivative_(ElementVariables &elemVars,
+    void evalPartialDerivative_(ElementSolutionVector &dest,
+                                PrimaryVariables &destStorage,
                                 int scvIdx,
                                 int pvIdx)
     {
-        // save all quantities which depend on the specified primary
-        // variable at the given sub control volume
-        elemVars.saveScvVars(scvIdx);
+        int globalIdx = vertexMapper_().map(elem_(), scvIdx, dim);
 
-        PrimaryVariables priVars(elemVars.volVars(scvIdx, /*historyIdx=*/0).primaryVars());
-        Scalar eps = asImp_().numericEpsilon(elemVars, scvIdx, pvIdx);
+        PrimaryVariables priVars(model_().curSol()[globalIdx]);
+        VolumeVariables origVolVars(curVolVars_[scvIdx]);
+
+        curVolVars_[scvIdx].setEvalPoint(&origVolVars);
+        Scalar eps = asImp_().numericEpsilon(scvIdx, pvIdx);
         Scalar delta = 0;
 
-        if (numericDifferenceMethod_() >= 0) {
+        if (numericDifferenceMethod_ >= 0) {
             // we are not using backward differences, i.e. we need to
             // calculate f(x + \epsilon)
 
@@ -387,19 +427,32 @@ protected:
             delta += eps;
 
             // calculate the residual
-            elemVars.updateScvVars(priVars, scvIdx, /*historyIdx=*/0);
-            elemVars.updateAllScvfVars();
-            localResidual_.eval(derivResidual_, derivStorage_, elemVars);
+            curVolVars_[scvIdx].update(priVars,
+                                       problem_(),
+                                       elem_(),
+                                       fvElemGeom_,
+                                       scvIdx,
+                                       false);
+            localResidual().eval(elem_(),
+                                 fvElemGeom_,
+                                 prevVolVars_,
+                                 curVolVars_,
+                                 bcTypes_);
+
+            // store the residual and the storage term
+            dest = localResidual().residual();
+            destStorage = localResidual().storageTerm()[scvIdx];
         }
         else {
             // we are using backward differences, i.e. we don't need
             // to calculate f(x + \epsilon) and we can recycle the
             // (already calculated) residual f(x)
-            derivResidual_ = residual_;
-            derivStorage_[scvIdx] = residualStorage_[scvIdx];
+            dest = residual_;
+            destStorage = storageTerm_[scvIdx];
         }
 
-        if (numericDifferenceMethod_() <= 0) {
+
+        if (numericDifferenceMethod_ <= 0) {
             // we are not using forward differences, i.e. we don't
             // need to calculate f(x - \epsilon)
 
@@ -407,35 +460,40 @@ protected:
             priVars[pvIdx] -= delta + eps;
             delta += eps;
 
-            // calculate residual again, this time we use the local
-            // residual's internal storage.
-            elemVars.updateScvVars(priVars, scvIdx, /*historyIdx=*/0);
-            elemVars.updateAllScvfVars();
-            localResidual_.eval(elemVars);
-            
-            derivResidual_ -= localResidual_.residual();
-            derivStorage_[scvIdx] -= localResidual_.storageTerm()[scvIdx];
+            // calculate residual again
+            curVolVars_[scvIdx].update(priVars,
+                                       problem_(),
+                                       elem_(),
+                                       fvElemGeom_,
+                                       scvIdx,
+                                       false);
+            localResidual().eval(elem_(),
+                                 fvElemGeom_,
+                                 prevVolVars_,
+                                 curVolVars_,
+                                 bcTypes_);
+            dest -= localResidual().residual();
+            destStorage -= localResidual().storageTerm()[scvIdx];
         }
         else {
             // we are using forward differences, i.e. we don't need to
             // calculate f(x - \epsilon) and we can recycle the
             // (already calculated) residual f(x)
-            derivResidual_ -= residual_;
-            derivStorage_[scvIdx] -= residualStorage_[scvIdx];
+            dest -= residual_;
+            destStorage -= storageTerm_[scvIdx];
         }
 
         // divide difference in residuals by the magnitude of the
         // deflections between the two function evaluation
-        derivResidual_ /= delta;
-        derivStorage_[scvIdx] /= delta;
+        dest /= delta;
+        destStorage /= delta;
 
-        // restore the original state of the element's volume
-        // variables
-        elemVars.restoreScvVars(scvIdx);
+        // restore the original state of the element's volume variables
+        curVolVars_[scvIdx] = origVolVars;
 
-#ifndef NDEBUG
-        for (unsigned i = 0; i < derivResidual_.size(); ++i)
-            Valgrind::CheckDefined(derivResidual_[i]);
+#if HAVE_VALGRIND
+        for (unsigned i = 0; i < dest.size(); ++i)
+            Valgrind::CheckDefined(dest[i]);
 #endif
     }
 
@@ -444,44 +502,56 @@ protected:
      *        partial derivatives of all equations in regard to the
      *        primary variable 'pvIdx' at vertex 'scvIdx' .
      */
-    void updateLocalJacobian_(const ElementVariables &elemVars,
-                              int scvIdx,
-                              int pvIdx)
+    void updateLocalJacobian_(int scvIdx,
+                              int pvIdx,
+                              const ElementSolutionVector &deriv,
+                              const PrimaryVariables &storageDeriv)
     {
         // store the derivative of the storage term
         for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
-            jacobianStorage_[scvIdx][eqIdx][pvIdx] = derivStorage_[scvIdx][eqIdx];
+            storageJacobian_[scvIdx][eqIdx][pvIdx] = storageDeriv[eqIdx];
         }
 
-        int numScv = elemVars.numScv();
-        for (int eqScvIdx = 0; eqScvIdx < numScv; eqScvIdx++)
+        for (int i = 0; i < fvElemGeom_.numVertices; i++)
         {
+            if (jacAsm_().vertexColor(elem_(), i) == Green) {
+                // Green vertices are not to be changed!
+                continue;
+            }
+
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
-                // A[eqScvIdx][scvIdx][eqIdx][pvIdx] is the rate of
-                // change of the residual of equation 'eqIdx' at
-                // vertex 'eqScvIdx' depending on the primary variable
-                // 'pvIdx' at vertex 'scvIdx'.
-                jacobian_[eqScvIdx][scvIdx][eqIdx][pvIdx] = derivResidual_[eqScvIdx][eqIdx];
-                Valgrind::CheckDefined(jacobian_[eqScvIdx][scvIdx][eqIdx][pvIdx]);
+                // A[i][scvIdx][eqIdx][pvIdx] is the rate of change of
+                // the residual of equation 'eqIdx' at vertex 'i'
+                // depending on the primary variable 'pvIdx' at vertex
+                // 'scvIdx'.
+                this->A_[i][scvIdx][eqIdx][pvIdx] = deriv[i][eqIdx];
+                Valgrind::CheckDefined(this->A_[i][scvIdx][eqIdx][pvIdx]);
             }
         }
     }
 
+    const Element *elemPtr_;
+    FVElementGeometry fvElemGeom_;
+
+    ElementBoundaryTypes bcTypes_;
+
+    // The problem we would like to solve
     Problem *problemPtr_;
-    Model *modelPtr_;
 
-    ElementVariables *internalElemVars_;
-
-    LocalBlockMatrix jacobian_;
-    LocalStorageMatrix jacobianStorage_;
-
-    LocalBlockVector residual_;
-    LocalBlockVector residualStorage_;
-
-    LocalBlockVector derivResidual_;
-    LocalBlockVector derivStorage_;
+    // secondary variables at the previous and at the current time
+    // levels
+    ElementVolumeVariables prevVolVars_;
+    ElementVolumeVariables curVolVars_;
 
     LocalResidual localResidual_;
+
+    LocalBlockMatrix A_;
+    std::vector<MatrixBlock> storageJacobian_;
+
+    ElementSolutionVector residual_;
+    ElementSolutionVector storageTerm_;
+
+    int numericDifferenceMethod_;
 };
 }
 

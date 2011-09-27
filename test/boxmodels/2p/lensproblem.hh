@@ -25,10 +25,9 @@
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  */
+
 #ifndef DUMUX_LENSPROBLEM_HH
 #define DUMUX_LENSPROBLEM_HH
-
-//#include <dumux/common/quad.hh>
 
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -57,8 +56,6 @@ class LensProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters));
-
-//SET_TYPE_PROP(LensProblem, Scalar, quad);
 
 // Set the grid type
 #if 0// HAVE_UG
@@ -246,7 +243,6 @@ public:
      *
      * This problem assumes a uniform temperature of 10 degrees Celsius.
      */
-    using ParentType::temperature;
     Scalar temperature() const
     { return temperature_; };
 

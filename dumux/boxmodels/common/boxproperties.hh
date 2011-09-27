@@ -74,7 +74,7 @@ NEW_PROP_TAG(SolutionVector); //!< Vector containing all primary variable vector
 NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a sub-control volume
 
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
-NEW_PROP_TAG(ElementVariables); //!< The secondary variables of all sub-control volumes in an element
+NEW_PROP_TAG(ElementVolumeVariables); //!< The secondary variables of all sub-control volumes in an element
 NEW_PROP_TAG(FluxVariables); //!< Data required to calculate a flux over a face
 NEW_PROP_TAG(BoundaryVariables); //!< Data required to calculate fluxes over boundary faces (outflow)
 
@@ -121,15 +121,12 @@ NEW_PROP_TAG(EnableHints);
 
 // mappers from local to global indices
 
-//! mapper for vertices
+//! maper for vertices
 NEW_PROP_TAG(VertexMapper);
-//! mapper for elements
+//! maper for elements
 NEW_PROP_TAG(ElementMapper);
-//! mapper for degrees of freedom
+//! maper for degrees of freedom
 NEW_PROP_TAG(DofMapper);
-
-//! The history size required by the time discretization
-NEW_PROP_TAG(TimeDiscHistorySize);
 }
 }
 
