@@ -178,8 +178,6 @@ public:
     FVPressure2P2CMultiPhysics(Problem& problem) : FVPressure2P2C<TypeTag>(problem),
             gravity(problem.gravity()), timer_(false)
     {
-        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
-
         // resize multiphysics part
         problem.variables().subdomain().resize(problem.variables().gridSize());
         nextSubdomain.resize(problem.variables().gridSize());
@@ -194,7 +192,6 @@ private:
 
 protected:
     const GlobalPosition& gravity; //!< vector including the gravity constant
-    Scalar cFLFactor_; //!< determines the CFLfactor
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     Dune::Timer timer_;
 };
@@ -915,11 +912,11 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         // if damping is not done, the solution method gets unstable!
         problem().variables().volErr()[globalIdxI] /= timestep_;
         Scalar erri = fabs(problem().variables().volErr()[globalIdxI]);
-        Scalar x_lo = 0.2;
-        Scalar x_mi = 0.9;
-        Scalar fac  = 0.5;
+        Scalar x_lo = this->ErrorTermLowerBound_;
+        Scalar x_mi = this->ErrorTermUpperBound_;
+        Scalar fac  = this->ErrorTermFactor_;
         if (pressureType == pw)
-            fac = 0.1;
+            fac = 0.1*this->ErrorTermFactor_;
         Scalar lofac = 0.;
 //            lofac/=fac;
         Scalar hifac = 0.;

@@ -77,6 +77,9 @@ NEW_PROP_TAG( EnableCompressibility);// ! Returns whether compressibility is all
 NEW_PROP_TAG( EnableCapillarity); //!< Returns whether capillarity is regarded
 NEW_PROP_TAG( BoundaryMobility );
 NEW_PROP_TAG( NumDensityTransport );
+NEW_PROP_TAG( ErrorTermFactor );
+NEW_PROP_TAG( ErrorTermLowerBound );
+NEW_PROP_TAG( ErrorTermUpperBound );
 NEW_PROP_TAG( FluidSystem );
 NEW_PROP_TAG( FluidState );
 NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); // Two-point flux approximation (false) or mpfa (true)
@@ -151,6 +154,9 @@ SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecoupledTwoPTwoCFluidState<TypeTag
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false);
 
+SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermFactor, 0.5);
+SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermLowerBound, 0.2);
+SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermUpperBound, 0.9);
 }
 
 /*!

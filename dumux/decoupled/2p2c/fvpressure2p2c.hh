@@ -275,7 +275,9 @@ public:
                 * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()),
                 debugWriter_(problem.gridView(),"debugOutput2p2c")
     {
-        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+        ErrorTermFactor_ = GET_PARAM(TypeTag, Scalar, ErrorTermFactor);
+        ErrorTermLowerBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermLowerBound);
+        ErrorTermUpperBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermUpperBound);
 
         if (pressureType != pw && pressureType != pn)
         {
@@ -293,7 +295,9 @@ protected:
     // debug
     Dumux::VtkMultiWriter<GridView> debugWriter_;
 
-    Scalar cFLFactor_; //!< determines the CFLfactor
+    Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
+    Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
+    Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 };
 
@@ -1007,11 +1011,11 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
         // if damping is not done, the solution method gets unstable!
         problem().variables().volErr()[globalIdxI] /= timestep_;
         Scalar erri = fabs(problem().variables().volErr()[globalIdxI]);
-        Scalar x_lo = 0.2;
-        Scalar x_mi = 0.9;
-        Scalar fac  = 0.5;
+        Scalar x_lo = ErrorTermLowerBound_;
+        Scalar x_mi = ErrorTermUpperBound_;
+        Scalar fac  = ErrorTermFactor_;
         if (pressureType == pw)
-            fac = 0.05;
+            fac = 0.1*ErrorTermFactor_;
         Scalar lofac = 0.;
         Scalar hifac = 0.;
 
