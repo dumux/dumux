@@ -54,9 +54,6 @@ class GridAdapt
     typedef typename Grid::template Codim<0>::Entity         Entity;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
 
-    static constexpr double refinetol = 0.05;
-    static constexpr double coarsentol = 0.001;
-
 public:
     /*!
      * Constructor for h-adaptive simulations (adaptive grids)
@@ -72,6 +69,8 @@ public:
             << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
 
         standardIndicator_ = true;
+        refinetol_ = 0.05;
+        coarsentol_ = 0.001;
     }
 
     /*!
@@ -218,6 +217,24 @@ public:
         levelMax_ = levMax;
     }
     /*!
+     * Sets minimum and maximum refinement tolerances
+     *
+     * @param coarsentol minimum tolerance when to coarsen
+     * @param refinetol maximum tolerance when to refine
+     */
+    void setTolerance(Scalar coarsentol, Scalar refinetol)
+    {
+        if (coarsentol < 0. or refinetol < 0. )
+            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+            << " :  Tolerance levels out of meaningful bounds! "<< std::endl;
+        if (coarsentol > refinetol )
+            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+            << " :  Check tolerance levels: coarsentol > refinetol! "<< std::endl;
+
+        coarsentol_ = coarsentol;
+        refinetol_ = refinetol;
+    }
+    /*!
      * Gets maximum refinement level
      *
      * @return levelMax_ maximum level for refinement
@@ -272,8 +289,8 @@ private:
         Scalar globaldelta = globalMax_- globalMin_;
 //            globaldelta = std::max(globaldelta,0.1);
 
-        refineBound_ = refinetol*globaldelta;
-        coarsenBound_ = coarsentol*globaldelta;
+        refineBound_ = refinetol_*globaldelta;
+        coarsenBound_ = coarsentol_*globaldelta;
 
         return;
     }
@@ -369,6 +386,8 @@ private:
     Scalar refineBound_, coarsenBound_;
     int marked_, coarsened_;
     int levelMin_, levelMax_;
+    Scalar refinetol_;
+    Scalar coarsentol_;
 
     Problem& problem_;
 };
@@ -391,6 +410,8 @@ public:
     void adaptGrid()
     {};
     void setLevels(int, int)
+    {};
+    void setTolerance(int, int)
     {};
     const void setIndicator(const ScalarSolutionType&,
             const Scalar&, const Scalar&)
