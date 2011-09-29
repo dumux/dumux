@@ -79,6 +79,10 @@ AC_DEFUN([DUMUX_CHECKS],
   
   DUMUX_CHECK_QUAD
 
+  # Add the DUMUX_DEPRECATED* macros. TODO: remove after we depend on
+  # a DUNE version which provides the DUNE_DEPRECATED_MSG macro!
+  DUMUX_CHECKDEPRECATED
+
   # check whether the constexpr keyword is present
   AC_REQUIRE([CONSTEXPR_CHECK])
   # define constexpr as const if it is not available. this is quite a HACK!
