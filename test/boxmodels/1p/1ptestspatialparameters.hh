@@ -67,11 +67,19 @@ public:
                                  int scvIdx) const
     { return 1e-10; }
 
+    /* \brief Define the porosity.
+   *
+   * \param element The finite element
+   * \param fvElemGeom The finite volume geometry
+   * \param scvIdx The local index of the sub-control volume where
+   */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     { return 0.4; }
 };
+
+
 
 } // end namespace
 #endif

@@ -266,7 +266,7 @@ protected:
             K_.mv(potentialGrad_, Kmvp);
             KmvpNormal_ = 0;
             for (int i = 0; i < dim; ++i) 
-                KmvpNormal_ = Kmvp[i]*boundaryFace_->normal[i];
+                KmvpNormal_ += Kmvp[i]*boundaryFace_->normal[i];
             KmvpNormal_ *= -1;
 
             const VolumeVariables &vertDat = elemDat[scvIdx_];
