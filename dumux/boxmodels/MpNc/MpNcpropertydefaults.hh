@@ -194,8 +194,8 @@ SET_PROP(BoxMPNC, MPNCVtkCustomModule)
 { typedef MPNCVtkWriterModule<TypeTag> type; };
 
 
-//!< Should the averaging of velocities be done in the problem? (By default in the output)
-SET_BOOL_PROP(BoxMPNC, VelocityAveragingInProblem, false);
+//!< Should the averaging of velocities be done in the Model? (By default in the output)
+SET_BOOL_PROP(BoxMPNC, VelocityAveragingInModel, false);
 
 //! Specify what to add to the VTK output by default
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddPorosity, true);

@@ -49,7 +49,7 @@ NEW_PROP_TAG(MPNCVtkMassModule); //!< Vtk writer module for writing the mass rel
 NEW_PROP_TAG(MPNCVtkEnergyModule); //!< Vtk writer module for writing the energy related quantities into the VTK output file
 NEW_PROP_TAG(MPNCVtkCustomModule); //!< Vtk writer module for writing the user-specified quantities into the VTK output file
 
-NEW_PROP_TAG(VelocityAveragingInProblem);//!< Should the averaging of velocities be done in the problem?
+NEW_PROP_TAG(VelocityAveragingInModel);//!< Should the averaging of velocities be done in the model?
 
 //! specify which quantities are written to the vtk output files
 NEW_PROP_TAG(MPNCVtkAddPorosity);
