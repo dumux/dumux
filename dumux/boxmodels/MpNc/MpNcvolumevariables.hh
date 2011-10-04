@@ -230,8 +230,16 @@ public:
         EnergyVolumeVariables::checkDefined();
         ParentType::checkDefined();
 
-        // specific interfacial area, well also all the dimensionless numbers :-)
-        IAVolumeVariables::update(mutParams,
+
+        // assign the fluid state to be stored (needed in the next update)
+        fluidState_.assign(mutParams);
+        fluidState_.checkDefined();
+
+        // specific interfacial area,
+        // well also all the dimensionless numbers :-)
+        // well, also the mass transfer rate
+        IAVolumeVariables::update(*this,
+                                  mutParams,
                                   priVars,
                                   problem,
                                   element,
@@ -239,9 +247,6 @@ public:
                                   scvIdx);
         IAVolumeVariables::checkDefined();
 
-        // assign the fluid state to be stored
-        fluidState_.assign(mutParams);
-        fluidState_.checkDefined();
         ParentType::checkDefined();
 
         checkDefined();
