@@ -19,7 +19,6 @@ GXX_OPTS=" \
 
 CONFIGURE_FLAGS="\
   CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
-  --enable-dunedevel \
   --enable-documentation \
   --disable-parallel \
   --disable-mpiruntest"
