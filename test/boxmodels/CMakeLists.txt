@@ -7,5 +7,6 @@ add_subdirectory("2p")
 add_subdirectory("2pni")
 add_subdirectory("2p2c")
 add_subdirectory("2p2cni")
+add_subdirectory("MpNc")
 add_subdirectory("richards")
 
