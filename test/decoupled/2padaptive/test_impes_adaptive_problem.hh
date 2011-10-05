@@ -39,7 +39,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/oil.hh>
 
-#include <dumux/decoupled/2p/impes/impesproblem2padaptive.hh>
+#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2padaptive.hh>
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
