@@ -53,6 +53,7 @@ class MPNCVolumeVariablesIA
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -61,7 +62,8 @@ public:
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      */
     template <class MutableParams>
-    void update(const MutableParams & mutParams,
+    void update(const VolumeVariables & volVars,
+                const MutableParams & mutParams,
                 const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element & element,
