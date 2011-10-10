@@ -313,7 +313,7 @@ public:
      */
     void markVertexRed(int globalVertIdx)
     {
-        if (!enablePartialReassemble_)
+        if (!enablePartialReassemble_())
             return;
 
         vertexColor_[globalVertIdx] = Red;
@@ -629,7 +629,7 @@ private:
             (*matrix_) = 0;
 
             // reset the parts needed for Jacobian recycling
-            if (enableJacobianRecycling_) {
+            if (enableJacobianRecycling_()) {
                 int numVertices = matrix_->N();
                 for (int i=0; i < numVertices; ++ i) {
                     storageJacobian_[i] = 0;
@@ -647,7 +647,7 @@ private:
                           // already below the treshold
 
             // reset the parts needed for Jacobian recycling
-            if (enableJacobianRecycling_) {
+            if (enableJacobianRecycling_()) {
                 storageJacobian_[rowIdx] = 0;
                 storageTerm_[rowIdx] = 0;
             }
@@ -719,7 +719,7 @@ private:
     // assemble a non-ghost element
     void assembleElement_(const Element &elem)
     {
-        if (enablePartialReassemble_) {
+        if (enablePartialReassemble_()) {
             int globalElemIdx = model_().elementMapper().map(elem);
             if (elementColor_[globalElemIdx] == Green) {
                 ++greenElems_;
@@ -739,7 +739,7 @@ private:
             }
 
             residual_[globI] += model_().localJacobian().residual(i);
-            if (enableJacobianRecycling_) {
+            if (enableJacobianRecycling_()) {
                 // save the flux term and the jacobian of the
                 // storage term in case we can reuse the current
                 // linearization...
