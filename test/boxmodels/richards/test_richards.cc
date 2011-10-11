@@ -62,12 +62,12 @@ int main(int argc, char** argv)
         // deal with the restart stuff
         int argPos = 1;
         bool restart = false;
-        double restartTime = 0;
+        double startTime = 0;
         if (std::string("--restart") == argv[argPos]) {
             restart = true;
             ++argPos;
 
-            std::istringstream(argv[argPos++]) >> restartTime;
+            std::istringstream(argv[argPos++]) >> startTime;
         }
 
         if (argc - argPos != 3) {
@@ -97,9 +97,7 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         TimeManager timeManager;
         Problem problem(timeManager, gridPtr->leafView(), lowerLeftLens, upperRightLens);
-        timeManager.init(problem, 0, dt, tEnd, !restart);
-        if (restart)
-            problem.restart(restartTime);
+        timeManager.init(problem, startTime, dt, tEnd, restart);
         timeManager.run();
         return 0;
     }

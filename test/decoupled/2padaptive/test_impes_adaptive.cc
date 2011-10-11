@@ -77,12 +77,12 @@ int main(int argc, char** argv)
         // deal with the restart stuff
         int argPos = 1;
         bool restart = false;
-        double restartTime = 0;
+        double startTime = 0;
         if (std::string("--restart") == argv[argPos]) {
             restart = true;
             ++argPos;
 
-            std::istringstream(argv[argPos++]) >> restartTime;
+            std::istringstream(argv[argPos++]) >> startTime;
         }
 
         if (argc - argPos != 1) {
@@ -136,11 +136,7 @@ int main(int argc, char** argv)
         problem.setGrid(*gridPtr);
         problem.gridAdapt().setLevels(Params::tree().get<int>("levelMin"), Params::tree().get<int>("levelMax"));
 
-        // load restart file if necessarry
-        if (restart)
-            problem.deserialize(restartTime);
-
-        timeManager.init(problem, 0, dt, tEnd, !restart);
+        timeManager.init(problem, startTime, dt, tEnd, !restart);
         timeManager.run();
         return 0;
     }

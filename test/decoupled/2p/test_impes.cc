@@ -110,11 +110,8 @@ int main(int argc, char** argv)
         TimeManager timeManager;
         Problem problem(timeManager, grid.leafView());
 
-        // load restart file if necessarry
-        if (restart)
-            problem.deserialize(restartTime);
-
-        timeManager.init(problem, 0, dt, tEnd, !restart);
+        // use restart file if necessarry
+        timeManager.init(problem, restartTime, dt, tEnd, restart);
         timeManager.run();
         return 0;
     }

@@ -114,12 +114,12 @@ int startFromDGF(int argc, char **argv)
         // deal with the restart stuff
         int argIdx = 1;
         bool restart = false;
-        double restartTime = 0;
+        double startTime = 0;
         if (std::string("--restart") == argv[argIdx]) {
             restart = true;
             ++argIdx;
 
-            std::istringstream(argv[argIdx++]) >> restartTime;
+            std::istringstream(argv[argIdx++]) >> startTime;
         }
 
         if (argc - argIdx != 3) {
@@ -145,13 +145,11 @@ int startFromDGF(int argc, char **argv)
         // instantiate and run the concrete problem
         TimeManager timeManager;
         Problem problem(timeManager, gridPtr->leafView());
-        timeManager.init(problem, 0, dt, tEnd, !restart);
+        timeManager.init(problem, startTime, dt, tEnd, restart);
 
         // print all properties
         Dumux::Properties::print<TypeTag>();
 
-        if (restart)
-            problem.restart(restartTime);
         timeManager.run();
         return 0;
 
@@ -200,12 +198,12 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
         // deal with the restart stuff
         int argIdx = 1;
         bool restart = false;
-        double restartTime = 0;
+        double startTime = 0;
         if (std::string("--restart") == argv[argIdx]) {
             restart = true;
             ++argIdx;
 
-            std::istringstream(argv[argIdx++]) >> restartTime;
+            std::istringstream(argv[argIdx++]) >> startTime;
         }
 
         if (argc - argIdx != 2) {
@@ -219,13 +217,11 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
         // instantiate and run the concrete problem
         TimeManager timeManager;
         Problem problem(timeManager, grid.leafView());
-        timeManager.init(problem, 0, dt, tEnd, !restart);
+        timeManager.init(problem, startTime, dt, tEnd, restart);
 
         // print all properties
         Dumux::Properties::print<TypeTag>();
 
-        if (restart)
-            problem.restart(restartTime);
         timeManager.run();
         return 0;
 
@@ -277,12 +273,12 @@ int startFromInputFile(int argc, char **argv)
        // deal with the restart stuff
        int argIdx = 1;
        bool restart = false;
-       double restartTime = 0;
+       double startTime = 0;
        if (std::string("--restart") == argv[argIdx]) {
            restart = true;
            ++argIdx;
 
-           std::istringstream(argv[argIdx++]) >> restartTime;
+           std::istringstream(argv[argIdx++]) >> startTime;
        }
 
        if (argc - argIdx != 1) {
@@ -330,13 +326,11 @@ int startFromInputFile(int argc, char **argv)
        Problem problem(timeManager,
                gridPtr->leafView(),
                Params::tree());
-       timeManager.init(problem, 0, dt, tEnd, !restart);
+       timeManager.init(problem, startTime, dt, tEnd, restart);
        
        // print all properties
        Dumux::Properties::print<TypeTag>();
 
-       if (restart)
-           problem.restart(restartTime);
        timeManager.run();
        return 0;
 

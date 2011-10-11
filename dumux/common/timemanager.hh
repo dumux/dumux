@@ -100,14 +100,13 @@ public:
      * \param tStart The start time \f$\mathrm{[s]}\f$ of the simulation (typically 0)
      * \param dtInitial The initial time step size \f$\mathrm{[s]}\f$
      * \param tEnd The time at which the simulation is finished \f$\mathrm{[s]}\f$
-     * \param writeInitialSol Specifies whether the initial condition
-     *                        should be written to disk
+     * \param restart Specifies whether the initial condition should be written to disk
      */
     void init(Problem &problem,
               Scalar tStart,
               Scalar dtInitial,
               Scalar tEnd,
-              bool writeInitialSol = true)
+              bool restart = false)
     {
         problem_ = &problem;
         time_ = tStart;
@@ -120,12 +119,17 @@ public:
         // initialize the problem
         problem_->init();
 
-        // write initial condition (if requested)
-        if (writeInitialSol) {
+        // restart problem if necessary
+        if(restart)
+            problem_->restart(tStart);
+        else
+        {
+            // write initial condition (if problem is not restarted)
             time_ -= timeStepSize_;
             problem_->writeOutput();
             time_ += timeStepSize_;
         }
+
     }
 
     /*!

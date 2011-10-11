@@ -67,7 +67,7 @@ int main(int argc, char** argv)
         // deal with the restart stuff
         int argPos = 1;
         bool restart = false;
-        double restartTime = 0;
+        double startTime = 0;
         // deal with start parameters
         double tEnd= 3e3;
         double firstDt = 200;
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
                 restart = true;
                 ++argPos;
 
-                std::istringstream(argv[argPos++]) >> restartTime;
+                std::istringstream(argv[argPos++]) >> startTime;
             }
             if (argc - argPos == 2)
             {
@@ -109,12 +109,8 @@ int main(int argc, char** argv)
         TimeManager timeManager;
         Problem problem(timeManager, grid.leafView(), L, H);
 
-        // load restart file if necessarry
-        if (restart)
-            problem.deserialize(restartTime);
-
         // initialize the simulation
-        timeManager.init(problem, 0, firstDt, tEnd, !restart);
+        timeManager.init(problem, startTime, firstDt, tEnd, !restart);
         // run the simulation
         timeManager.run();
         return 0;

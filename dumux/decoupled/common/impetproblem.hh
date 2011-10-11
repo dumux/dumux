@@ -733,7 +733,7 @@ public:
         std::cerr << "Serialize to file " << res.fileName() << "\n";
 
         timeManager().serialize(res);
-        resultWriter_->serialize(res);
+        resultWriter().serialize(res);
         model().serialize(res);
 
         res.serializeEnd();
@@ -744,21 +744,25 @@ public:
      *        from disk.
      *
      * It is the inverse of the serialize() method.
+     * @param tRestart Restart time
      */
-    void deserialize(double t)
+    void restart(double tRestart)
     {
         typedef Dumux::Restart Restarter;
 
         Restarter res;
-        res.deserializeBegin(asImp_(), t);
+        res.deserializeBegin(asImp_(), tRestart);
         std::cerr << "Deserialize from file " << res.fileName() << "\n";
 
         timeManager().deserialize(res);
-        resultWriter_->deserialize(res);
+        resultWriter().deserialize(res);
         model().deserialize(res);
 
         res.deserializeEnd();
     };
+    //! Use restart() function instead!
+    void deserialize(double tRestart) DUNE_DEPRECATED
+    { restart(tRestart);}
     // \}
 
     void addOutputVtkFields()

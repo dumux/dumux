@@ -74,7 +74,6 @@ int main(int argc, char** argv)
         if (argc < 4)
             usage(argv[0]);
 
-        // deal with the restart stuff
         int argPos = 1;
         bool useBoxModel = false;
         bool useDecoupledModel = false;
@@ -133,7 +132,7 @@ int main(int argc, char** argv)
             BoxTimeManager timeManager;
             Dumux::GeneralLensProblem<BoxTypeTag> problem(timeManager, grid->leafView(), lowerLeftLens, upperRightLens);
             problem.setName("generallens_box");
-            timeManager.init(problem, 0, dt, tEnd, true);
+            timeManager.init(problem, 0, dt, tEnd, false);
             timeManager.run();
             return 0;
         }
@@ -142,7 +141,7 @@ int main(int argc, char** argv)
             DecoupledTimeManager timeManager;
             Dumux::GeneralLensProblem<DecoupledTypeTag> problem(timeManager, grid->leafView(), lowerLeftLens, upperRightLens);
             problem.setName("generallens_decoupled");
-            timeManager.init(problem, 0, dt, tEnd, true);
+            timeManager.init(problem, 0, dt, tEnd, false);
             timeManager.run();
             return 0;
         }
