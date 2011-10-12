@@ -160,7 +160,7 @@ public:
      * \param values The boundary types for the conservation equations
      * \param pos The position of the finite volume in global coordinates
      */
-    void boundaryTypesAtPos(PrimaryVariables &values,
+    void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &pos) const
     {
         // Throw an exception (there is no reasonable default value
