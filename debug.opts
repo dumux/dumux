@@ -17,6 +17,9 @@ GXX_OPTS=" \
     -fstrict-overflow \
     -g"
 
+# do not write a file .dune.resume to the home directory
+RESUME_FILE=/dev/null
+
 CONFIGURE_FLAGS="\
   CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
   --enable-documentation \

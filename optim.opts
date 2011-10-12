@@ -18,6 +18,9 @@ GXX_OPTS=" \
     -march=native \
     -DNDEBUG=1"
 
+# do not write a file .dune.resume to the home directory
+RESUME_FILE=/dev/null
+
 # configure flags 
 CONFIGURE_FLAGS=" \
   CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
