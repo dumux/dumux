@@ -51,15 +51,15 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/binarycoefficients/Makefile 
     dumux/material/components/Makefile 
     dumux/material/components/iapws/Makefile 
-    dumux/material/constraintsolvers/Makefile 
-    dumux/material/eos/Makefile 
     dumux/material/fluidmatrixinteractions/Makefile 
     dumux/material/fluidmatrixinteractions/2p/Makefile 
     dumux/material/fluidmatrixinteractions/Mp/Makefile 
-    dumux/material/fluidstates/Makefile 
-    dumux/material/fluidsystems/Makefile 
-    dumux/material/new_fluidsystems/Makefile 
     dumux/material/spatialparameters/Makefile 
+    dumux/material/fluidsystems/Makefile 
+    dumux/material/MpNcfluidstates/Makefile 
+    dumux/material/MpNcfluidsystems/Makefile 
+    dumux/material/MpNcconstraintsolvers/Makefile 
+    dumux/material/MpNceos/Makefile 
     dumux/nonlinear/Makefile 
     m4/Makefile
     test/Makefile

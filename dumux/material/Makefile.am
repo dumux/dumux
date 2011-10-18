@@ -1,4 +1,13 @@
-SUBDIRS = binarycoefficients components fluidmatrixinteractions fluidsystems spatialparameters
+SUBDIRS = \
+	  MpNcconstraintsolvers \
+	  MpNceos \
+	  MpNcfluidstates \
+	  MpNcfluidsystems \
+	  binarycoefficients \
+	  components \
+	  fluidmatrixinteractions \
+	  fluidsystems \
+	  spatialparameters
 
 materialdir = $(includedir)/dumux/material
 material_HEADERS = *.hh
