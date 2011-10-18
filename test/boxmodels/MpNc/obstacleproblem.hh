@@ -55,7 +55,7 @@
 #include <dumux/material/fluidsystems/h2o_h2_n2_o2_system.hh>
 */
 
-#include <dumux/material/new_fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
 
 #include "obstaclespatialparameters.hh"
 
