@@ -1,4 +1,5 @@
 /*****************************************************************************
+ *   Copyright (C) 2011 by Katherina Baber
  *   Copyright (C) 2008-2009 by Onur Dogan                                   *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
@@ -92,8 +93,8 @@ public:
     {
         scvfIdx_ = faceIdx;
 
-        calculateGradients_(problem, element, elemDat);
         calculateK_(problem, element);
+        calculateGradients_(problem, element, elemDat);
     };
 
 

@@ -30,8 +30,8 @@
 #include <dumux/boxmodels/common/boxlocalresidual.hh>
 
 #include "1pvolumevariables.hh"
-
 #include "1pfluxvariables.hh"
+#include "1pproperties.hh"
 
 namespace Dumux
 {
@@ -46,23 +46,17 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
     typedef OnePLocalResidual<TypeTag> ThisType;
     typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
         pressureIdx = Indices::pressureIdx,
     };
@@ -70,6 +64,7 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
@@ -126,10 +121,10 @@ public:
                                this->fvElemGeom_(),
                                faceIdx,
                                this->curVolVars_());
-
         Vector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(),
                                             tmpVec);
+
         Scalar normalFlux = 0;
         for (int i = 0; i < Vector::size; ++i)
             normalFlux += tmpVec[i]*fluxVars.face().normal[i];
