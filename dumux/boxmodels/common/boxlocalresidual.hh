@@ -387,6 +387,7 @@ protected:
 
             // ask the problem for the dirichlet values
             const VertexPointer vPtr = elem_().template subEntity<dim>(i);
+            Valgrind::SetUndefined(tmp);
             asImp_().problem_().dirichlet(tmp, *vPtr);
 
             // set the dirichlet conditions
@@ -395,8 +396,6 @@ protected:
                     continue;
                 int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                 assert(0 <= pvIdx && pvIdx < numEq);
-                Valgrind::CheckDefined(pvIdx);
-                Valgrind::CheckDefined(curPrimaryVar_(i, pvIdx));
                 Valgrind::CheckDefined(tmp[pvIdx]);
 
                 this->residual_[i][eqIdx] =
@@ -463,6 +462,7 @@ protected:
 
         // deal with neumann boundaries
         if (bcTypes.hasNeumann()) {
+            Valgrind::SetUndefined(values);
             problem_().boxSDNeumann(values,
                                     elem_(),
                                     fvElemGeom_(),
@@ -470,8 +470,6 @@ protected:
                                     scvIdx,
                                     boundaryFaceIdx,
                                     curVolVars_());
-            if (!Valgrind::CheckDefined(values))
-                std::cerr << "undefined: " << values << "\n";
             values *= 
                 fvElemGeom_().boundaryFace[boundaryFaceIdx].area
                 * curVolVars_(scvIdx).extrusionFactor();
@@ -494,14 +492,16 @@ protected:
             int j = fvElemGeom_().subContVolFace[k].j;
 
             PrimaryVariables flux;
+            
             Valgrind::SetUndefined(flux);
             this->asImp_().computeFlux(flux, k);
+            Valgrind::CheckDefined(flux);
+
             Scalar extrusionFactor =
                 (curVolVars_(i).extrusionFactor()
                  + curVolVars_(j).extrusionFactor())
                 / 2;
             flux *= extrusionFactor;
-            Valgrind::CheckDefined(flux);
 
             // The balance equation for a finite volume is:
             //
@@ -534,10 +534,12 @@ protected:
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
         for (int i=0; i < fvElemGeom_().numVertices; i++) {
+            Valgrind::SetUndefined(storageTerm_[i]);
             this->asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
             storageTerm_[i] *= 
                 fvElemGeom_().subContVol[i].volume
                 * curVolVars_(i).extrusionFactor();
+            Valgrind::CheckDefined(storageTerm_[i]);
         }
     }
 
@@ -554,7 +556,7 @@ protected:
             Scalar extrusionFactor =
                 curVolVars_(i).extrusionFactor();
 
-            PrimaryVariables tmp(0);
+            PrimaryVariables tmp;
 
             // mass balance within the element. this is the
             // $\frac{m}{\partial t}$ term if using implicit
@@ -562,8 +564,12 @@ protected:
             //
             // TODO (?): we might need a more explicit way for
             // doing the time discretization...
+            Valgrind::SetUndefined(storageTerm_[i]);
+            Valgrind::SetUndefined(tmp);
             this->asImp_().computeStorage(storageTerm_[i], i, false);
             this->asImp_().computeStorage(tmp, i, true);
+            Valgrind::CheckDefined(storageTerm_[i]);
+            Valgrind::CheckDefined(tmp);
 
             storageTerm_[i] -= tmp;
             storageTerm_[i] *=
@@ -573,7 +579,9 @@ protected:
             residual_[i] += storageTerm_[i];
 
             // subtract the source term from the local rate
+            Valgrind::SetUndefined(tmp);
             this->asImp_().computeSource(tmp, i);
+            Valgrind::CheckDefined(tmp);
             tmp *= fvElemGeom_().subContVol[i].volume * extrusionFactor;
             residual_[i] -= tmp;
 
