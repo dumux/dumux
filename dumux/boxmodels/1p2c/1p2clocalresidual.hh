@@ -1,4 +1,5 @@
 /*****************************************************************************
+ *   Copyright (C) 2011 by Katherina Baber                                   *
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
@@ -60,7 +61,6 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
     typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -176,12 +176,12 @@ public:
     }
 
     /*!
-         * \brief Evaluates the advective mass flux of all components over
-         *        a face of a subcontrol volume.
-         *
-         * \param flux The advective flux over the sub-control-volume face for each component
-         * \param vars The flux variables at the current SCV
-         */
+     * \brief Evaluates the advective mass flux of all components over
+     *        a face of a subcontrol volume.
+     *
+     * \param flux The advective flux over the sub-control-volume face for each component
+     * \param vars The flux variables at the current SCV
+     */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         ////////
@@ -189,10 +189,10 @@ public:
         ////////
 
         // data attached to upstream and the downstream vertices
-       // of the current phase
-       const VolumeVariables &up =
+        // of the current phase
+        const VolumeVariables &up =
            this->curVolVars_(fluxVars.upstreamIdx());
-       const VolumeVariables &dn =
+        const VolumeVariables &dn =
            this->curVolVars_(fluxVars.downstreamIdx());
 
         if(!useMoles)
@@ -233,12 +233,12 @@ public:
     }
 
     /*!
-         * \brief Adds the diffusive mass flux of all components over
-         *        a face of a subcontrol volume.
-         *
-         * \param flux The diffusive flux over the sub-control-volume face for each component
-         * \param vars The flux variables at the current SCV
-         */
+     * \brief Adds the diffusive mass flux of all components over
+     *        a face of a subcontrol volume.
+     *
+     * \param flux The diffusive flux over the sub-control-volume face for each component
+     * \param vars The flux variables at the current SCV
+     */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         Scalar tmp(0);
@@ -273,6 +273,7 @@ public:
            flux[transEqIdx] += tmp;
         }
     }
+
     /*!
      * \brief Calculate the source term of the equation
      *        \param q The source/sink in the SCV for each component
@@ -287,239 +288,142 @@ public:
                                 localVertexIdx);
     }
 
+    /*!
+     * \brief Evaluate Neuman, Outflow and Dirichlet conditions.
+     *
+     */
      void evalBoundary_()
     {
-        ParentType::evalBoundary_();
+        if (this->bcTypes_().hasNeumann())
+            this->evalNeumann_();
 
         if (this->bcTypes_().hasOutflow())
-       {
-           evalOutflow_();
-       }
+            evalOutflow_();
 
-        typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-        typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-        const ReferenceElement &refElem = ReferenceElements::general(this->elem_().geometry().type());
-
-        // loop over vertices of the element
-        for (int idx = 0; idx < this->fvElemGeom_().numVertices; idx++)
-        {
-            // consider only SCVs on the boundary
-            if (this->fvElemGeom_().subContVol[idx].inner)
-                continue;
-            int numberOfOuterFaces = 0;
-
-            // evaluate boundary conditions for the intersections of
-            // the current element
-            IntersectionIterator isIt = this->gridView_().ibegin(this->elem_());
-            const IntersectionIterator &endIt = this->gridView_().iend(this->elem_());
-            for (; isIt != endIt; ++isIt)
-            {
-                // handle only intersections on the boundary
-                if (!isIt->boundary())
-                    continue;
-
-                // assemble the boundary for all vertices of the current face
-                const int faceIdx = isIt->indexInInside();
-                const int numFaceVertices = refElem.size(faceIdx, 1, dim);
-
-                // loop over the single vertices on the current face
-                for (int faceVertIdx = 0; faceVertIdx < numFaceVertices; ++faceVertIdx)
-                {
-                    const int elemVertIdx = refElem.subEntity(faceIdx, 1, faceVertIdx, dim);
-                    // only evaluate, if we consider the same face vertex as in the outer
-                    // loop over the element vertices
-                    if (elemVertIdx != idx)
-                        continue;
-
-                    if (boundaryHasCoupling_(this->bcTypes_(idx)))
-                    {
-                        const int boundaryFaceIdx = this->fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
-
-                        asImp_()->evalCouplingVertex_(isIt, elemVertIdx, boundaryFaceIdx);
-                    }
-
-                    // count the number of outer faces to determine, if we are on
-                    // a corner point and if an interpolation should be done
-                    numberOfOuterFaces++;
-                }
-            } // end loop over intersections
-
-            if (numberOfOuterFaces == 2 && this->fvElemGeom_().numVertices == 4)
-                // do interpolation at corners of the grid
-                interpolateCornerPoints_(idx);
-        } // end loop over vertices
+        if (this->bcTypes_().hasDirichlet())
+            this->evalDirichlet_();
     }
 
 protected:
      /*!
-         * \brief Add all Outflow boundary conditions to the local
-         *        residual.
-         */
-        void evalOutflow_()
+      * \brief Add all Outflow boundary conditions to the local
+      *        residual.
+      */
+    void evalOutflow_()
+    {
+        Dune::GeometryType geoType = this->elem_().geometry().type();
+
+        typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
+        typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
+        const ReferenceElement &refElem = ReferenceElements::general(geoType);
+
+        IntersectionIterator isIt = this->gridView_().ibegin(this->elem_());
+        const IntersectionIterator &endIt = this->gridView_().iend(this->elem_());
+        for (; isIt != endIt; ++isIt)
         {
-            Dune::GeometryType geoType = this->elem_().geometry().type();
+            // handle only faces on the boundary
+            if (!isIt->boundary())
+                continue;
 
-            typedef typename Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-            typedef typename Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
-            const ReferenceElement &refElem = ReferenceElements::general(geoType);
-
-            IntersectionIterator isIt = this->gridView_().ibegin(this->elem_());
-            const IntersectionIterator &endIt = this->gridView_().iend(this->elem_());
-            for (; isIt != endIt; ++isIt)
+            // Assemble the boundary for all vertices of the current
+            // face
+            int faceIdx = isIt->indexInInside();
+            int numFaceVerts = refElem.size(faceIdx, 1, dim);
+            for (int faceVertIdx = 0;
+                 faceVertIdx < numFaceVerts;
+                 ++faceVertIdx)
             {
-                // handle only faces on the boundary
-                if (!isIt->boundary())
-                    continue;
+                int elemVertIdx = refElem.subEntity(faceIdx,
+                                                    1,
+                                                    faceVertIdx,
+                                                    dim);
 
-                // Assemble the boundary for all vertices of the current
-                // face
-                int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElem.size(faceIdx, 1, dim);
-                for (int faceVertIdx = 0;
-                     faceVertIdx < numFaceVerts;
-                     ++faceVertIdx)
-                {
-                    int elemVertIdx = refElem.subEntity(faceIdx,
-                                                        1,
-                                                        faceVertIdx,
-                                                        dim);
+                int boundaryFaceIdx =
+                    this->fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
 
-                    int boundaryFaceIdx =
-                        this->fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
-
-                    // add the residual of all vertices of the boundary
-                    // segment
-                    evalOutflowSegment_(isIt,
-                                        elemVertIdx,
-                                        boundaryFaceIdx);
-                }
+                // add the residual of all vertices of the boundary
+                // segment
+                evalOutflowSegment_(isIt,
+                                    elemVertIdx,
+                                    boundaryFaceIdx);
             }
         }
+    }
 
-        /*!
-        * \brief Add Outflow boundary conditions for a single sub-control
-        *        volume face to the local residual.
-        */
-       void evalOutflowSegment_(const IntersectionIterator &isIt,
-                                int scvIdx,
-                                int boundaryFaceIdx)
-       {
-           // temporary vector to store the neumann boundary fluxes
-           PrimaryVariables flux(0.0);
-           const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
+    /*!
+    * \brief Add Outflow boundary conditions for a single sub-control
+    *        volume face to the local residual.
+    */
+    void evalOutflowSegment_(const IntersectionIterator &isIt,
+                            int scvIdx,
+                            int boundaryFaceIdx)
+    {
+        // temporary vector to store the neumann boundary fluxes
+        PrimaryVariables flux(0.0);
+        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
-           // deal with neumann boundaries
-           if (bcTypes.hasOutflow())
-           {
-               const BoundaryVariables boundaryVars(this->problem_(),
-                                                    this->elem_(),
-                                                    this->fvElemGeom_(),
-                                                    boundaryFaceIdx,
-                                                    this->curVolVars_(),
-                                                    scvIdx);
+        // deal with neumann boundaries
+        if (bcTypes.hasOutflow())
+        {
+            const BoundaryVariables boundaryVars(this->problem_(),
+                                                this->elem_(),
+                                                this->fvElemGeom_(),
+                                                boundaryFaceIdx,
+                                                this->curVolVars_(),
+                                                scvIdx);
 
-               const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
+            const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
 
-               // mass balance
-               if (bcTypes.isOutflow(contiEqIdx))
-               {
-                   if(!useMoles) //use massfractions
-                   {
-                       flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity();
-                   }
-                   else //use molefractions
-                   {
-                       flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity();
-                   }
-               }
+            // mass balance
+            if (bcTypes.isOutflow(contiEqIdx))
+            {
+                if(!useMoles) //use massfractions
+                {
+                   flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity();
+                }
+                else //use molefractions
+                {
+                   flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity();
+                }
+            }
 
-               // component transport
-               if (bcTypes.isOutflow(transEqIdx))
-               {
-                   if(!useMoles)//use massfractions
-                   {
-                       // advective flux
-                       flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
-                                        *vertVars.fluidState().massFrac(phaseIdx, comp1Idx);
+            // component transport
+            if (bcTypes.isOutflow(transEqIdx))
+            {
+                if(!useMoles)//use massfractions
+                {
+                    // advective flux
+                    flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
+                                    *vertVars.fluidState().massFrac(phaseIdx, comp1Idx);
 
-                       // diffusive flux of comp1 component in phase0
-                       Scalar tmp = 0;
-                       for (int i = 0; i < Vector::size; ++ i)
-                           tmp += boundaryVars.massFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
-                       tmp *= -1;
-                       
-                       tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP();
-                       flux[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
-                   }
-                   else //use molefractions
-                   {
-                       // advective flux
-                       flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
-                                       *vertVars.fluidState().moleFrac(phaseIdx, comp1Idx);
+                    // diffusive flux of comp1 component in phase0
+                    Scalar tmp = 0;
+                    for (int i = 0; i < Vector::size; ++ i)
+                       tmp += boundaryVars.massFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
+                    tmp *= -1;
 
-                       // diffusive flux of comp1 component in phase0
-                       Scalar tmp = 0;
-                       for (int i = 0; i < Vector::size; ++ i)
-                           tmp += boundaryVars.moleFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
-                       tmp *= -1;
+                    tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP();
+                    flux[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
+                }
+                else //use molefractions
+                {
+                    // advective flux
+                    flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
+                                   *vertVars.fluidState().moleFrac(phaseIdx, comp1Idx);
 
-                       tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP();
-                       flux[transEqIdx] += tmp;
-                   }
-               }
+                    // diffusive flux of comp1 component in phase0
+                    Scalar tmp = 0;
+                    for (int i = 0; i < Vector::size; ++ i)
+                       tmp += boundaryVars.moleFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
+                    tmp *= -1;
 
-               this->residual_[scvIdx] += flux;
-           }
-       }
-
-     void evalCouplingVertex_(const IntersectionIterator &isIt,
-                            const int scvIdx,
-                            const int boundaryFaceIdx)
-     {
-         const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
-         // set pressure as part of the momentum coupling
-         if (this->bcTypes_(scvIdx).isCouplingOutflow(contiEqIdx))
-         {
-             this->residual_[scvIdx][contiEqIdx] = volVars.pressure();
-         }
-
-         if (this->bcTypes_(scvIdx).isCouplingOutflow(transEqIdx))
-         {
-             if(!useMoles)
-                 this->residual_[scvIdx][transEqIdx] = volVars.fluidState().massFrac(phaseIdx, comp1Idx);
-             else
-                 this->residual_[scvIdx][transEqIdx] = volVars.fluidState().moleFrac(phaseIdx, comp1Idx);
-         }
-     }
-
-     /*!
-          * \brief Interpolate the corner points of the grid.
-          */
-         void interpolateCornerPoints_(const int idx)
-         {
-     //        for (int eqnIdx=0; eqnIdx<numEq; ++eqnIdx)
-     //        {
-     //            //do not interpolate in case of Beavers-Joseph or Dirichlet condition for coupling interface
-     //            if (boundaryHasCoupling_(this->bcTypes_(idx)))
-     //                continue;
-     //
-     //            this->residual_[idx][eqnIdx] = this->curPrimaryVars_(0)[eqnIdx]+this->curPrimaryVars_(3)[eqnIdx]
-     //                                                -this->curPrimaryVars_(1)[eqnIdx]-this->curPrimaryVars_(2)[eqnIdx];
-     //        }
-         }
-
-     /*!
-          * \brief Check if one of the boundary conditions is coupling.
-          */
-     bool boundaryHasCoupling_(const BoundaryTypes& bcTypes) const
-     {
-         bool hasCoupling = false;
-         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-             if (bcTypes.isCouplingInflow(eqIdx) || bcTypes.isCouplingOutflow(eqIdx))
-                 hasCoupling = true;
-
-         return hasCoupling;
-     }
+                    tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP();
+                    flux[transEqIdx] += tmp;
+                }
+            }
+            this->residual_[scvIdx] += flux;
+        }
+    }
 
     Implementation *asImp_()
     { return static_cast<Implementation *> (this); }

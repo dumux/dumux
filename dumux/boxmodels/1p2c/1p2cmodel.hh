@@ -84,10 +84,8 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     typedef OnePTwoCBoxModel<TypeTag> ThisType;
     typedef BoxModel<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -95,8 +93,6 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
     enum {
@@ -104,13 +100,10 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
         dimWorld = GridView::dimensionworld
     };
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef typename GridView::template Codim<dim>::Iterator     VertexIterator;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
-    const Scalar scale_;
 public:
-    OnePTwoCBoxModel():
-        scale_(GET_PROP_VALUE(TypeTag, PTAG(Scaling)))
+    OnePTwoCBoxModel()
     {
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
@@ -194,14 +187,14 @@ public:
                                i,
                                false);
 
-                pressure[globalIdx] = volVars.pressure()*scale_;
-                delp[globalIdx] = volVars.pressure()*scale_ - 1e5;
+                pressure[globalIdx] = volVars.pressure();
+                delp[globalIdx] = volVars.pressure() - 1e5;
                 moleFrac0[globalIdx] = volVars.moleFrac(0);
                 moleFrac1[globalIdx] = volVars.moleFrac(1);
                 massFrac0[globalIdx] = volVars.massFrac(0);
                 massFrac1[globalIdx] = volVars.massFrac(1);
-                rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
-                mu[globalIdx] = volVars.viscosity()*scale_;
+                rho[globalIdx] = volVars.density();
+                mu[globalIdx] = volVars.viscosity();
                 delFrac[globalIdx] = volVars.massFrac(1)-volVars.moleFrac(1);
             };
 
@@ -302,16 +295,13 @@ public:
 
               //use vertiacl faces for vx and horizontal faces for vy calculation
              velocityX[i] /= boxSurface[i][0];
-             velocityX[i] /= scale_;
              if (dim >= 2)
              {
                  velocityY[i] /= boxSurface[i][1];
-                 velocityY[i] /= scale_;
              }
              if (dim == 3)
              {
                  velocityZ[i] /= boxSurface[i][2];
-                 velocityZ[i] /= scale_;
              }
         }
 #endif

@@ -88,6 +88,8 @@ public:
     {
         boundaryFace_ = &fvElemGeom_.boundaryFace[boundaryFaceIdx];
 
+            pressureAtBIP_ = Scalar(0);
+            massFractionAtBIP_ = Scalar(0);
             densityAtIP_ = Scalar(0);
             viscosityAtIP_ = Scalar(0);
             molarDensityAtIP_ = Scalar(0);
@@ -120,6 +122,20 @@ public:
      */
     Scalar porousDiffCoeff() const
     { return porousDiffCoeff_; };
+
+    /*!
+     * \brief Return pressure \f$\mathrm{[Pa]}\f$ of a phase at the integration
+     *        point.
+     */
+    Scalar pressureAtBIP() const
+    { return pressureAtBIP_; }
+
+    /*!
+     * \brief Return massFraction \f$\mathrm{[-]}\f$ of component 1 at the integration
+     *        point.
+     */
+    Scalar massFractionAtBIP() const
+    { return massFractionAtBIP_; }
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
@@ -231,12 +247,17 @@ protected:
             // FE gradient at vertex idx
             const ScalarGradient& feGrad = boundaryFace_->grad[idx];
 
+            pressureAtBIP_ += elemDat[idx].pressure() *
+                             boundaryFace_->shapeValue[idx];
+
             // compute sum of pressure gradients for each phase
                 // the pressure gradient
                 tmp = feGrad;
                 tmp *= elemDat[idx].pressure();
                 potentialGrad_ += tmp;
 
+            massFractionAtBIP_ += elemDat[idx].massFrac(comp1Idx) *
+                            boundaryFace_->shapeValue[idx];
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
@@ -250,6 +271,7 @@ protected:
             tmp = feGrad;
             tmp *= elemDat[idx].fluidState().massFrac(phaseIdx, comp1Idx);
             massFracGrad_ += tmp;
+
 
             densityAtIP_ += elemDat[idx].density()*boundaryFace_->shapeValue[idx];
             viscosityAtIP_ += elemDat[idx].viscosity()*boundaryFace_->shapeValue[idx];
@@ -285,7 +307,9 @@ protected:
     ScalarGradient moleFracGrad_;
     ScalarGradient massFracGrad_;
 
-    // density of each face at the integration point
+    // quanitities at the integration point
+    Scalar pressureAtBIP_;
+    Scalar massFractionAtBIP_;
     Scalar densityAtIP_;
     Scalar viscosityAtIP_;
     Scalar molarDensityAtIP_;
