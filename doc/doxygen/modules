@@ -4,6 +4,14 @@
  * \brief This file contains all module definitions for the doxygen documentation.
  */
 
+/****************** Common ******************/ 
+/*!
+ * \defgroup Properties Property System
+ */
+/*! 
+ * \defgroup SimControl Simulation Supervision
+ */
+
 /****************** Sequential ******************/ 
 /*!
  * \defgroup Sequential Sequential Scheme: IMPET (Implicit Pressure Explicit Transport)
@@ -70,7 +78,65 @@
 	 * \ingroup Sequential
 	 * \defgroup IMPETbc Boundary Conditions for IMPET problems
 	 */
-	 
+
+/*	 
+./dumux/common/propertysystem.hh: * \defgroup Properties Property System
+*/
+
+/****************** Fully Implicit ******************/
+/*!
+ * \defgroup BoxModel The core infrastructure of the box scheme
+ */
+	/*!
+ 	 * \ingroup BoxModel
+ 	 * \defgroup BoxModels Physical models and problems which use the box scheme
+ 	 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup OnePBoxModel One-phase box model
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup OnePTwoCBoxModel One-phase Two-component box model
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPBoxModel Two-phase box model
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPTwoCModel Two-phase two-component box model
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component box model
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component box model
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup MPNCModel M-phase N-component box model
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup RichardsModel Richards box model
+		 */
+
+		/*!
+		 * \ingroup BoxProblems
+		 * \defgroup MPNCProblems Two-phase three-component box problems
+		 */
+
+
+
+
+
+
+
+
+
 /****************** Material ******************/
 /*!
  * \defgroup Material Material Properties and Laws

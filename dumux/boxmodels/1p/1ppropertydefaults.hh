@@ -37,7 +37,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup OnePBoxModel
+ * \ingroup OnePBoxModel
  */
 // \{
 

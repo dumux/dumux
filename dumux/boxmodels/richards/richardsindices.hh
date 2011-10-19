@@ -28,7 +28,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup RichardsModel
+ * \ingroup RichardsModel
  */
 // \{
 

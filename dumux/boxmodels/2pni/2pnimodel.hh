@@ -31,11 +31,6 @@
 namespace Dumux {
 
 /*!
- * \ingroup BoxModels
- * \defgroup TwoPNIBoxModel Non-isothermal two-phase box model
- */
-
-/*!
  * \ingroup TwoPNIBoxModel
  * \brief Adaption of the BOX scheme to the non-isothermal twophase flow model.
  *

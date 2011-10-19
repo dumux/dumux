@@ -38,7 +38,7 @@ namespace Dumux
 namespace Properties
 {
 /*!
- * \addtogroup BoxModel
+ * \ingroup BoxModel
  */
 // \{
 

@@ -37,11 +37,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxModels
- * \defgroup OnePBoxModel One-phase box model
- */
-
-/*!
  * \ingroup OnePBoxModel
  * \brief Adaption of the BOX scheme to the single phase isothermal flow model.
  *

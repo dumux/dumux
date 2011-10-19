@@ -40,15 +40,6 @@ namespace Dumux
 {
 
 /*!
- * \defgroup BoxModel The core infrastructure of the box scheme
- */
-/*!
- * \ingroup BoxModel
- * \defgroup BoxModels Physical models and problems which use the box scheme
- */
-
-
-/*!
  * \ingroup BoxModel
  *
  * \brief The base class for the vertex centered finite volume

@@ -32,7 +32,7 @@
 namespace Dumux
 {
 /*!
- * \addtogroup OnePTwoCBoxModel
+ * \ingroup OnePTwoCBoxModel
  */
 // \{
 

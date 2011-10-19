@@ -21,8 +21,7 @@
  * \file
  * \brief Provides the magic behind the DuMuX property system.
  *
- * \defgroup Properties Property System
- *
+ * \ingroup Properties
  * Properties allow to associate arbitrary data types to
  * identifiers. A property is always defined on a pair (TypeTag,
  * PropertyTag) where TypeTag is the identifier for the object the

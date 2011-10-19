@@ -30,16 +30,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxProblems
- * \defgroup MPNCProblems Two-phase three-component box problems
- */
-
-/*!
- * \ingroup BoxModels
- * \defgroup MPNCModel Two-phase three-component box model
- */
-
-/*!
  * \ingroup MPNCModel
  *
  * \brief A VTK writer module which adheres to the required API but

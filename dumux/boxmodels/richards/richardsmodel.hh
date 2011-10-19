@@ -35,11 +35,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxModels
- * \defgroup RichardsModel Richards box model
- */
-
-/*!
  * \ingroup RichardsModel
  *
  * \brief This model implements a variant of the Richards equation for

@@ -41,11 +41,6 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BoxModels
- * \defgroup OnePTwoCBoxModel One-phase Two-component box model
- */
-
-/*!
  * \ingroup OnePTwoCBoxModel
  * \brief Adaption of the BOX scheme to the one-phase two-component flow model.
  *

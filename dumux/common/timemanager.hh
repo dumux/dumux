@@ -40,7 +40,7 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Problem);
 }
 /*!
- * \addtogroup SimControl Simulation Supervision
+ * \ingroup SimControl
  */
 
 /*!

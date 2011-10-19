@@ -42,7 +42,7 @@ namespace Dumux
 namespace Properties
 {
 /*!
- * \addtogroup ModelCoupling
+ * \ingroup ModelCoupling
  */
 // \{
 
