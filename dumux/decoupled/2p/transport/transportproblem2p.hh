@@ -36,7 +36,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Saturation2p
- * \ingroup IMPESproblems
+ * \ingroup IMPETproblems
  * \brief  Base class for a decoupled 2-phase transport problem
  *
  * @tparam TypeTag The Type Tag

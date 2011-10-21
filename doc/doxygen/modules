@@ -6,11 +6,139 @@
 
 /****************** Common ******************/ 
 /*!
- * \defgroup Properties Property System
+ * \defgroup Common Common Infrastucture
  */
-/*! 
- * \defgroup SimControl Simulation Supervision
+	/*!
+	 * \ingroup Common
+	 * \defgroup Properties Property System
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup SimControl Time Manager
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup Newton Newton Solver
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup Linear Linear Solver Backends
+	 */
+
+/****************** Material ******************/
+/*!
+ * \defgroup Material Material Properties and Laws
  */
+	/*!
+	 * \ingroup Material
+	 * \defgroup Components Components
+	 */
+		/*!
+		 * \ingroup Components
+		 * \defgroup IAPWS IAPWS
+		 */
+	/*!
+	 * \ingroup Material
+	 * \defgroup Binarycoefficients Binary Coefficients
+	 */
+	/*!
+	 * \ingroup Material
+	 * \defgroup Fluidsystems Fluid Systems
+	 */
+	/*!
+	 * \ingroup Material
+	 * \defgroup SpatialParameters Spatial Parameters
+	 */
+	/*!
+	 * \ingroup Material
+	 *  \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
+	 */
+		/*!
+		 * \ingroup fluidmatrixinteractions
+		 *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix Interactions
+		 */
+		 /*!
+		 * \ingroup fluidmatrixinteractions
+		 *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix Interactions 
+		 */
+
+/****************** Fully Implicit ******************/
+/*!
+ * \defgroup BoxModel Fully Implicit Box Scheme
+ */
+	/*!
+ 	 * \ingroup BoxModel
+ 	 * \defgroup BoxModels Models
+ 	 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup OnePBoxModel One-phase
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup OnePTwoCBoxModel One-phase Two-component
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPBoxModel Two-phase 
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPNIModel Non-isothermal two-phase
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPTwoCModel Two-phase two-component
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup MPNCModel M-phase N-component
+		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup RichardsModel Richards
+		 */
+
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxBaseProblems Base Problems
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxVolumeVariables Volume Variables
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxFluxVariables Flux Variables
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxLocalResidual Local Residual
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxLocalJacobian Local Jacobian
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxBoundaryTypes Boundary Types
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxIndices Indices
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxProperties Properties
+	 */
+	/*!
+	 * \ingroup BoxModel
+	 * \defgroup BoxTestProblems Test Problems
+	 */
 
 /****************** Sequential ******************/ 
 /*!
@@ -19,11 +147,11 @@
  
 	/*!
 	 * \ingroup Sequential
-	 * \defgroup IMPET IMPET Models and Base Problems
+	 * \defgroup IMPET Models
 	 */	 
 		/*!
 		 * \ingroup IMPET
-		 * \defgroup OnePhase Single Phase Model (Finite-Volume)
+		 * \defgroup OnePhase Single Phase (FV)
 		 */ 
 		/*!
 		 * \ingroup IMPET
@@ -31,7 +159,7 @@
 		 */		 
 			/*!
 			 * \ingroup IMPES
-			 * \defgroup Pressure2p Immiscible pressure equation
+			 * \defgroup Pressure2p Immiscible Pressure Equation
 			 */
 			 	/*!
 			 	* \ingroup Pressure2p
@@ -43,14 +171,8 @@
 			 	*/	
 			/*!
 			 * \ingroup IMPES
-			 * \defgroup Saturation2p Immiscible saturation transport
+			 * \defgroup Saturation2p Immiscible Saturation Transport
 			 */
-
-		/*!
-		 * \ingroup IMPET
-		 * \defgroup IMPESproblems IMPES Base Problems
-		 */
-			 
 		/*!
 		 * \ingroup IMPET
 		 * \defgroup IMPEC Miscible IMPEC
@@ -63,118 +185,16 @@
 			 * \ingroup IMPEC
 			 * \defgroup multiphysics Multiphysics Compositional Models
 			 */
-
-		/*!
-		 * \ingroup IMPET
-		 * \defgroup IMPECproblems IMPEC Base Problems
-		 */
-		
 	/*!
 	 * \ingroup Sequential
-	 * \defgroup IMPETtests Test Problems for all IMPET models
+	 * \defgroup IMPETproblems Base Problems
 	 */
-	
 	/*!
 	 * \ingroup Sequential
-	 * \defgroup IMPETbc Boundary Conditions for IMPET problems
+	 * \defgroup IMPETbc Boundary Conditions
+	 */
+	/*!
+	 * \ingroup Sequential
+	 * \defgroup IMPETtests Test Problems
 	 */
 
-/*	 
-./dumux/common/propertysystem.hh: * \defgroup Properties Property System
-*/
-
-/****************** Fully Implicit ******************/
-/*!
- * \defgroup BoxModel The core infrastructure of the box scheme
- */
-	/*!
- 	 * \ingroup BoxModel
- 	 * \defgroup BoxModels Physical models and problems which use the box scheme
- 	 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup OnePBoxModel One-phase box model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup OnePTwoCBoxModel One-phase Two-component box model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPBoxModel Two-phase box model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPTwoCModel Two-phase two-component box model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component box model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component box model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup MPNCModel M-phase N-component box model
-		 */
-		/*!
-		 * \ingroup BoxModels
-		 * \defgroup RichardsModel Richards box model
-		 */
-
-		/*!
-		 * \ingroup BoxProblems
-		 * \defgroup MPNCProblems Two-phase three-component box problems
-		 */
-
-
-
-
-
-
-
-
-
-/****************** Material ******************/
-/*!
- * \defgroup Material Material Properties and Laws
- */
-
-	/*!
-	 * \ingroup Material
-	 * \defgroup Binarycoefficients Binary Coefficients
-	 */
-	 
-	/*!
-	 * \ingroup Material
-	 * \defgroup Components Components
-	 */
-	
-		/*!
-		 * \ingroup Components
-		 * \defgroup IAPWS IAPWS
-		 */
-
-	/*!
-	 * \ingroup Material
-	 *  \defgroup fluidmatrixinteractions Fluid-Matrix--Interactions
-	 */
-		/*!
-		 * \ingroup fluidmatrixinteractions
-		 *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix--Interactions
-		 */
-		 /*!
-		 * \ingroup fluidmatrixinteractions
-		 *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix--Interactions 
-		 */
-	/*!
-	 * \ingroup Material
-	 * \defgroup Fluidsystems Fluidsystems
-	 */
- 
-	/*!
-	 * \ingroup Material
-	 * \defgroup SpatialParameters Spatial parameters
-	 */

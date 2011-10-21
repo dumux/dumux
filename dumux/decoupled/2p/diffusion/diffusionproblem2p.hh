@@ -34,7 +34,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPESproblems
+ * \ingroup IMPETproblems
  * \ingroup Pressure2p
  * \brief  Base class for stationary sequential 2-phase problems
  *

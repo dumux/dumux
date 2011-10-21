@@ -34,7 +34,7 @@ namespace Dumux
 {
 /*!
  * \ingroup IMPEC
- * \ingroup IMPECproblems
+ * \ingroup IMPETproblems
  * \brief  Base class for all compositional 2-phase problems which use an impet algorithm
  *
  * Differs from .../2p/impes/impesproblem2p.hh in the includes
