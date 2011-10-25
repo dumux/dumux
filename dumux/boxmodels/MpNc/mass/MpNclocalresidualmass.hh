@@ -335,9 +335,23 @@ public:
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars)
     {
+    static_assert(not enableKineticEnergy,
+                      "In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. "
+                      "It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. "
+                      "Therefore, kineticEnergy and no kinetic mass does not fit (yet).");
+
         // mass transfer is not considered in this mass module
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             source[conti0EqIdx + compIdx] = 0.0;
+
+
+        PrimaryVariables tmp(0);
+        // Similar to the compute Flux, the energy residual needs to be called from the
+        // mass residual.
+        EnergyResid::computeSource(tmp,
+                                   volVars);
+        source += tmp;
+        Valgrind::CheckDefined(source);
     };
 };
 

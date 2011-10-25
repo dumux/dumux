@@ -186,11 +186,17 @@ public:
         PrimaryVariables tmp(0);
         MassResid::computeSource(tmp, volVars);
         source += tmp;
-
-        tmp = 0.;
-        EnergyResid::computeSource(tmp, volVars);
-        source += tmp;
         Valgrind::CheckDefined(source);
+
+        /*
+         *      EnergyResid also called in the MassResid
+         *      1) Makes some sense because energy is also carried by mass
+         *      2) The mass transfer between the phases is needed.
+         */
+//        tmp = 0.;
+//        EnergyResid::computeSource(tmp, volVars);
+//        source += tmp;
+//        Valgrind::CheckDefined(source);
      };
 
 

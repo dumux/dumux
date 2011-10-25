@@ -65,7 +65,7 @@ public:
         numPhases;
 
     /*!
-     * \brief The number of primary variables / equations of the erngy module.
+     * \brief The number of primary variables / equations of the energy module.
      */
     static const int NumPrimaryEnergyVars =
         EnergyIndices::NumPrimaryVars ;
