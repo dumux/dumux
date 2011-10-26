@@ -68,7 +68,7 @@ public:
      * \param press1p Pressure value for present phase \f$\mathrm{[Pa]}\f$
      * \param satW Saturation of the wetting phase \f$\mathrm{[-]}\f$
      */
-    void update(Scalar Z1,Scalar press1p, Scalar satW)
+    void update(const Scalar& Z1,const Scalar& press1p,const Scalar& satW)
     {
         Sw_ = satW;
         pressure1p_=press1p;
@@ -77,14 +77,25 @@ public:
         {
             massfracX1_[wPhaseIdx] = Z1;
             massfracX1_[nPhaseIdx] = 0.;
+
+            molefracx1_[wPhaseIdx] = Z1 / FluidSystem::molarMass(0);
+            molefracx1_[wPhaseIdx] /= ( Z1 / FluidSystem::molarMass(0)
+                           + (1.-Z1) / FluidSystem::molarMass(1));
+            molefracx1_[nPhaseIdx] = 0.;
         }
         else if (satW == 0.)
         {
             massfracX1_[wPhaseIdx] = 0.;
             massfracX1_[nPhaseIdx] = Z1;
+
+            // interested in nComp => 1-X1
+            molefracx1_[nPhaseIdx] = ( Z1 / FluidSystem::molarMass(0) );   // = moles of compIdx
+            molefracx1_[nPhaseIdx] /= (Z1/ FluidSystem::molarMass(0)
+                           + (1.-Z1) / FluidSystem::molarMass(1) );    // /= total moles in phase
+            molefracx1_[nPhaseIdx] = 0.;
         }
         else
-            Dune::dgrave << "Twophase conditions in simple-phase flash! Saturation is " << satW << std::endl;
+            Dune::dgrave << "Twophase conditions in single-phase flash! Saturation is " << satW << std::endl;
 
         return;
     }
@@ -130,26 +141,16 @@ public:
      */
     Scalar moleFrac(int phaseIdx, int compIdx) const
     {
-        double moleFrac_(0.);
-        // as the mass fractions are calculated, these are used to determine the mole fractions
-        if (compIdx == wPhaseIdx)   //only interested in wComp => X1
-        {
-            moleFrac_ = ( massfracX1_[phaseIdx] / FluidSystem::molarMass(compIdx) );    // = moles of compIdx
-            moleFrac_ /= ( massfracX1_[phaseIdx] / FluidSystem::molarMass(0)
-                           + (1.-massfracX1_[phaseIdx]) / FluidSystem::molarMass(1) );    // /= total moles in phase
-        }
-        else    // interested in nComp => 1-X1
-        {
-            moleFrac_ = ( (1.-massfracX1_[phaseIdx]) / FluidSystem::molarMass(compIdx) );   // = moles of compIdx
-            moleFrac_ /= ((1.- massfracX1_[phaseIdx] )/ FluidSystem::molarMass(0)
-                           + massfracX1_[phaseIdx] / FluidSystem::molarMass(1) );    // /= total moles in phase
-        }
-        return moleFrac_;
+        if (compIdx == wPhaseIdx)
+            return molefracx1_[phaseIdx];
+        else
+            return 1.-molefracx1_[phaseIdx];
     }
     //@}
 
 public:
     Scalar massfracX1_[numPhases];
+    Scalar molefracx1_[numPhases];
     Scalar Sw_;
     Scalar pressure1p_;
 };

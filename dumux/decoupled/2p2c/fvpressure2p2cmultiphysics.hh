@@ -93,7 +93,8 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
+        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
+        contiWEqIdx = Indices::contiWEqIdx, contiNEqIdx = Indices::contiNEqIdx
     };
 
     // typedefs to abbreviate several dune classes...
@@ -824,16 +825,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     problem().neumann(J, *isIt);
                     if (first || problem().variables().subdomain(globalIdxI)==1)
                     {
-                        J[wPhaseIdx] /= densityWI;
-                        J[nPhaseIdx] /= densityNWI;
+                        J[contiWEqIdx] /= densityWI;
+                        J[contiNEqIdx] /= densityNWI;
                     }
                     else
                     {
-                        J[wPhaseIdx] *= dv_dC1;
-                        J[nPhaseIdx] *= dv_dC2;
+                        J[contiWEqIdx] *= dv_dC1;
+                        J[contiNEqIdx] *= dv_dC2;
                     }
 
-                    this->f_[globalIdxI] -= (J[wPhaseIdx] + J[nPhaseIdx]) * faceArea;
+                    this->f_[globalIdxI] -= (J[contiWEqIdx] + J[contiNEqIdx]) * faceArea;
                 }
                 /*************************************************/
             }

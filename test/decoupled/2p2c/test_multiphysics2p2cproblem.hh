@@ -270,7 +270,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
  */
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
-    sourceValues[Indices::contiWEqIdx]=0.;
+    setZero(sourceValues);
     if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1)
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
