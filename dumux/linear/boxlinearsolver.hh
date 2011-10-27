@@ -231,6 +231,9 @@ private:
     Imp imp_;
 };
 
+/*!
+ * \brief A standard solver backend.
+ */
 template <class TypeTag, class Imp>
 class StandardSolverBackend
 {
@@ -253,6 +256,9 @@ private:
     Imp imp_;
 };
 
+/*!
+ * \brief Backend for an ILU0-preconditioned BiCGSTAB solver.
+ */
 template <class TypeTag>
 class BoxBiCGStabILU0Solver : public BoxLinearSolver<TypeTag>
 {
@@ -281,6 +287,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for an SOR-preconditioned BiCGSTAB solver.
+ */
 template <class TypeTag>
 class BoxBiCGStabSORSolver : public BoxLinearSolver<TypeTag>
 {
@@ -309,6 +318,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for an SSOR-preconditioned BiCGSTAB solver.
+ */
 template <class TypeTag>
 class BoxBiCGStabSSORSolver : public BoxLinearSolver<TypeTag>
 {
@@ -337,6 +349,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for a Jacobi-preconditioned BiCGSTAB solver.
+ */
 template <class TypeTag>
 class BoxBiCGStabJacSolver : public BoxLinearSolver<TypeTag>
 {
@@ -365,6 +380,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for a Gauss-Seidel-preconditioned BiCGSTAB solver.
+ */
 template <class TypeTag>
 class BoxBiCGStabGSSolver : public BoxLinearSolver<TypeTag>
 {
@@ -393,6 +411,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for an ILU0-preconditioned CG solver.
+ */
 template <class TypeTag>
 class BoxCGILU0Solver : public BoxLinearSolver<TypeTag>
 {
@@ -421,6 +442,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for an SOR-preconditioned CG solver.
+ */
 template <class TypeTag>
 class BoxCGSORSolver : public BoxLinearSolver<TypeTag>
 {
@@ -449,6 +473,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for an SSOR-preconditioned CG solver.
+ */
 template <class TypeTag>
 class BoxCGSSORSolver : public BoxLinearSolver<TypeTag>
 {
@@ -477,6 +504,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for a Jacobi-preconditioned CG solver.
+ */
 template <class TypeTag>
 class BoxCGJacSolver : public BoxLinearSolver<TypeTag>
 {
@@ -505,6 +535,9 @@ public:
     }
 };
 
+/*!
+ * \brief Backend for a Gauss-Seidel-preconditioned CG solver.
+ */
 template <class TypeTag>
 class BoxCGGSSolver : public BoxLinearSolver<TypeTag>
 {

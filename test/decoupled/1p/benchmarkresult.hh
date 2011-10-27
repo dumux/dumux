@@ -21,7 +21,7 @@
  * \file
  *
  * \ingroup IMPETtests
- * \brief Calculate errors for a FVCA5 benchmark problem.
+ * \brief Calculate errors for a benchmark problem.
  */
 #ifndef DUMUX_BENCHMARKRESULT_HH
 #define DUMUX_BENCHMARKRESULT_HH
@@ -30,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \brief calculate errors for a FVCA5 benchmark problem
+ * \brief calculate errors for a benchmark problem
  */
 struct BenchmarkResult
 {

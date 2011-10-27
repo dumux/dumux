@@ -20,14 +20,16 @@
 /*!
  * \file
  *
- * \brief Represents a single index intersecting with the process
- *        boundary.
+ * \brief A single index intersecting with the process boundary.
  */
 #ifndef DUMUX_BORDER_INDEX_HH
 #define DUMUX_BORDER_INDEX_HH
 
 namespace Dumux {
 
+/*!
+ * \brief A single index intersecting with the process boundary.
+ */
 struct BorderIndex
 {
     //! Index of the entity for the local process
