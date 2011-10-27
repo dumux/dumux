@@ -70,7 +70,6 @@ public:
      * \brief The constructor
      *
      * \param gridView The grid view
-     * \param verbose Output flag for the time manager.
      */
     DiffusionProblem1P(const GridView &gridView)
     : ParentType(gridView, false), gravity_(0)
@@ -86,7 +85,6 @@ public:
      *
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
-     * \param verbose Output flag for the time manager.
      */
     DiffusionProblem1P(const GridView &gridView, SpatialParameters &spatialParameters)
     : ParentType(gridView, false), gravity_(0), spatialParameters_(&spatialParameters)

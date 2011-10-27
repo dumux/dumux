@@ -92,7 +92,8 @@ public LocalStiffness<TypeTag, 1>
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
 public:
     // define the number of components of your system, this is used outside

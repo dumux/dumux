@@ -107,7 +107,8 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
 }
 
 /*!
- * \ingroup TwoPNIBoxModel
+ * \ingroup TwoPNIModel
+ * \ingroup BoxTestProblems
  * \brief Nonisothermal gas injection problem where a gas (e.g. air) is injected into a fully
  *        water saturated medium. During buoyancy driven upward migration the gas
  *        passes a high temperature area.
@@ -128,7 +129,7 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
  * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
  * a geothermal temperature gradient of 0.03 K/m are applied.
  *
- * This problem uses the \ref TwoPNIBoxModel.
+ * This problem uses the \ref TwoPNIModel.
  *
  * This problem should typically be simulated for 300000 seconds.
  * A good choice for the initial time step size is 1000 seconds.

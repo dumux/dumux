@@ -34,6 +34,7 @@ namespace Dumux
 
 /*!
  * \ingroup RichardsModel
+ * \ingroup BoxFluxVariables
  * \brief Calculates and stores the data which is required to
  *        calculate the flux of fluid over a face of a finite volume.
  */

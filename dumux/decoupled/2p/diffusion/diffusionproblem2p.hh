@@ -73,6 +73,7 @@ public:
     /*!
      * \brief The constructor
      *
+     * \param timeManager the time manager
      * \param gridView The grid view
      */
     DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView)
@@ -87,6 +88,7 @@ public:
     /*!
      * \brief The constructor
      *
+     * \param timeManager the time manager
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
      */

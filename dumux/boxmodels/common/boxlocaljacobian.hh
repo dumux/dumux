@@ -33,6 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxModel
+ * \ingroup BoxLocalJacobian
  * \brief Calculates the Jacobian of the local residual for box models
  *
  * The default behavior is to use numeric differentiation, i.e.
@@ -391,6 +392,7 @@ protected:
      *
      * \param dest The vector storing the partial derivatives of all
      *              equations
+     * \param destStorage the mass matrix contributions
      * \param scvIdx The sub-control volume index of the current
      *               finite element for which the partial derivative
      *               ought to be calculated

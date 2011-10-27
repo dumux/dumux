@@ -146,7 +146,8 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     TestDiffusionProblem(const GridView &gridView, const double delta = 1.0) :
         ParentType(gridView), delta_(delta)

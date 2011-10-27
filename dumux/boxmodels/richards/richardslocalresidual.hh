@@ -36,6 +36,7 @@ namespace Dumux
 {
 /*!
  * \ingroup RichardsModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the residual for the Richards box model.
  */
 template<class TypeTag>

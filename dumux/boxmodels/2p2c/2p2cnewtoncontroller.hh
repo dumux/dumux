@@ -35,6 +35,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup Newton
  * \ingroup TwoPTwoCModel
  * \brief A 2p2c specific controller for the newton solver.
  *
@@ -59,7 +60,7 @@ public:
      * Suggest a new time step size based either on the number of newton
      * iterations required or on the variable switch
      *
-     * \param u The current global solution vector
+     * \param uCurrentIter The current global solution vector
      * \param uLastIter The previous global solution vector
      *
      */

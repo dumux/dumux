@@ -33,12 +33,11 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup TwoPTwoCNIModel
- */
 // \{
 
 /*!
+ * \ingroup TwoPTwoCNIModel
+ * \ingroup BoxIndices
  * \brief Enumerations for the non-isothermal 2-phase 2-component model
  *
  * \tparam formulation The formulation, either pwSn or pnSw.

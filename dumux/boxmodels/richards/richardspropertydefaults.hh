@@ -18,6 +18,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup RichardsModel
  * \file
  *
  * \brief Contains the default definitions for the properties required
@@ -40,9 +43,6 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup RichardsModel
- */
 // \{
 
 namespace Properties {

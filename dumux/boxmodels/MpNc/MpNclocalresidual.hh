@@ -33,6 +33,8 @@
 namespace Dumux
 {
 /*!
+ * \ingroup MPNCModel
+ * \ingroup BoxLocalResidual
  * \brief two-phase, N-component specific details needed to
  *        approximately calculate the local defect in the BOX scheme.
  *

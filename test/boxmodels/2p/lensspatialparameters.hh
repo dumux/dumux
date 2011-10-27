@@ -66,7 +66,7 @@ public:
 }
 /*!
  * \ingroup TwoPBoxModel
- *
+ * \ingroup BoxTestProblems
  * \brief The spatial parameters for the LensProblem which uses the
  *        twophase box model
  */
@@ -127,13 +127,12 @@ public:
     }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Intrinsic permability
      *
-     * \param element The current finite element
+     * \param element The current element
      * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param scvIdx The index of the sub-control volume.
+     * \return Intrinsic permeability
      */
     Scalar intrinsicPermeability(const Element &element,
                                  const FVElementGeometry &fvElemGeom,
@@ -145,12 +144,27 @@ public:
         return outerK_;
     }
 
+    /*!
+     * \brief Porosity
+     *
+     * \param element The current element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume.
+     * \return Porosity
+     */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     { return 0.4; }
 
-    // return the parameter object for the Brooks-Corey material law which depends on the position
+    /*!
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     *
+     * \param element The current element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume.
+     * \return the material parameters object
+     */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const

@@ -33,7 +33,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup OnePTwoCProblems
+ * \ingroup OnePTwoCBoxModel
+ * \ingroup BoxBaseProblems
  * \brief Base class for all problems which use the single-phase, two-component box model
  *
  */

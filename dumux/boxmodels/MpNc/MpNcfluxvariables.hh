@@ -40,6 +40,8 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup MPNCModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate all fluxes of components over a face of a finite
  *        volume for the two-phase, three-component model.
@@ -120,11 +122,9 @@ public:
      *  Of course, in the setting of a finite volume scheme, the velocities are
      *  on the faces rather than in the volume. Therefore, the velocity
      *
-     * \param problem The problem object
-     * \param element The current element
-     * \param elemGeom The finite-volume geometry in the box scheme
-     * \param scvIdx The local index of the SCV (sub-control volume)
-     * \param isOldSol Evaluate function with solution of current or previous time step
+     * \param vDarcy the resulting Darcy velocity
+     * \param elemVolVars element volume variables
+     * \param phaseIdx phase index
      */
     void computeDarcy(Vector & vDarcy,
                       const ElementVolumeVariables &elemVolVars,

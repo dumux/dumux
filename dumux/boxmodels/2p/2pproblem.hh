@@ -31,6 +31,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup BoxBaseProblems
  * \ingroup TwoPBoxModel
  * \brief Base class for all problems which use the two-phase box model
  */

@@ -28,7 +28,6 @@
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
  *
- * \ingroup OnePTwoCBoxModel
  */
 #ifndef DUMUX_1P2C_FLUX_VARIABLES_HH
 #define DUMUX_1P2C_FLUX_VARIABLES_HH
@@ -41,6 +40,8 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup OnePTwoCBoxModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate the fluxes of the fluid phases over a face of a
  *        finite volume for the one-phase, two-component model.

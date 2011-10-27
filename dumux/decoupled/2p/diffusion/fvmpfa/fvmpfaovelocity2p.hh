@@ -52,7 +52,8 @@ template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTa
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;

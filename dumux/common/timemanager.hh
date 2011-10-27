@@ -39,9 +39,6 @@ namespace Properties
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Problem);
 }
-/*!
- * \ingroup SimControl
- */
 
 /*!
  * \ingroup SimControl
@@ -260,6 +257,7 @@ public:
      *
      * \param tStart Time when the episode began \f$\mathrm{[s]}\f$
      * \param len    Length of the episode \f$\mathrm{[s]}\f$
+     * \param description descriptive name of the episode
      */
     void startNextEpisode(Scalar tStart,
                           Scalar len,

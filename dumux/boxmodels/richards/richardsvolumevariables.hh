@@ -34,6 +34,7 @@ namespace Dumux
 
 /*!
  * \ingroup RichardsModel
+ * \ingroup BoxVolumeVariables
  * \brief Volume averaged quantities required by the Richards model.
  *
  * This contains the quantities which are are constant within a finite

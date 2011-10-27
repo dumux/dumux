@@ -28,8 +28,8 @@
 
 namespace Dumux
 {
-//! \cond INTERNAL
 /*!
+ * \ingroup Newton
  * \brief Writes the intermediate solutions during
  *        the Newton scheme
  */

@@ -28,12 +28,11 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup OnePBoxModel
- */
 // \{
 
 /*!
+ * \ingroup OnePBoxModel
+ * \ingroup BoxIndices
  * \brief Indices for the one-phase model.
  */
 struct OnePIndices

@@ -37,6 +37,7 @@ namespace Dumux
 {
 /*!
  * \ingroup OnePBoxModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the one-phase box model.
  */

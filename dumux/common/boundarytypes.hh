@@ -32,6 +32,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup BC
  * \brief Class to specify the type of a boundary.
  */
 template <int numEq>

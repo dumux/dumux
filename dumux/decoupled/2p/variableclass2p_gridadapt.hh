@@ -111,8 +111,6 @@ public:
     //! Constructs a VariableClass object
     /**
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     *  @param initialSat initial value for the saturation (only necessary if only diffusion part is solved)
-     *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
 
     VariableClass2PGridAdapt(const GridView& gridView) :

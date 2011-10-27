@@ -63,7 +63,9 @@ public:
 SET_PROP(OnePTestProblem, Grid)
 {
     //typedef Dune::SGrid<2, 2> type;
-    typedef Dune::YaspGrid<2> type;
+    //typedef Dune::YaspGrid<2> type;
+  //typedef Dune::UGGrid<2> type;
+  typedef Dune::ALUSimplexGrid<2,2> type;
 };
 
 // Set the problem property
@@ -86,6 +88,7 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
 
 /*!
  * \ingroup OnePBoxModel
+ * \ingroup BoxTestProblems
  * \brief Air flow in porous media
  *
  * The domain is box shaped. All sides are closed (Neumann 0 boundary)

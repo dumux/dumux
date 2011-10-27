@@ -39,6 +39,14 @@
 
 #include <dumux/material/MpNcconstraintsolvers/compositionfromfugacities.hh>
 
+
+/*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup BoxMpNcModel
+ * \file
+ * \brief  Default properties for the Mp-Nc box model.
+ */
 namespace Dumux
 {
 namespace Properties

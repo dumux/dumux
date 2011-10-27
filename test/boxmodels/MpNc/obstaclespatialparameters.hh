@@ -74,6 +74,8 @@ public:
 }
 
 /**
+ * \ingroup MPNCModel
+ * \ingroup BoxTestProblems
  * \brief Definition of the spatial params properties for the obstacle problem
  *
  */
@@ -151,7 +153,7 @@ public:
      * \brief Update the spatial parameters with the flow solution
      *        after a timestep.
      *
-     * \TODO call parameters
+     * \param globalSol The current solution vector
      */
     void update(const SolutionVector &globalSol)
     {
@@ -177,7 +179,6 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the soil
      *
-     * \param vDat        The data defined on the sub-control volume
      * \param element     The finite element
      * \param fvElemGeom  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume where
@@ -207,19 +208,19 @@ public:
         return 790. ;  // specific heat capacity of granite [J / (kg K)]
     }
 
-    /*!
-     * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
-     *        rock matrix based on the temperature gradient \f$[K / m]\f$
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param heatFlux    The result vector
-     * \param tempGrad    The temperature gradient
-     * \param element     The current finite element
-     * \param fvElemGeom  The finite volume geometry of the current element
-     * \param scvfIdx     The local index of the sub-control volume face where
-     *                    the matrix heat flux should be calculated
-     */
+//    /* IF COMMENTING IN, PUT A ! FOR DOXYGEN
+//     * \brief Calculate the heat flux \f$[W/m^2]\f$ through the
+//     *        rock matrix based on the temperature gradient \f$[K / m]\f$
+//     *
+//     * This is only required for non-isothermal models.
+//     *
+//     * \param heatFlux    The result vector
+//     * \param tempGrad    The temperature gradient
+//     * \param element     The current finite element
+//     * \param fvElemGeom  The finite volume geometry of the current element
+//     * \param scvfIdx     The local index of the sub-control volume face where
+//     *                    the matrix heat flux should be calculated
+//     */
 //    void matrixHeatFlux(Vector &heatFlux,
 //                        const FluxVariables &fluxDat,
 //                        const ElementVolumeVariables &vDat,
@@ -252,7 +253,14 @@ public:
 //        heatFlux *= -heatCond;
 //    }
 
-    // return the brooks-corey context depending on the position
+    /*!
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     *
+     * \param element The current element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume.
+     * \return the material parameters object
+     */
     const MaterialLawParams& materialLawParams(const Element &element,
                                                 const FVElementGeometry &fvElemGeom,
                                                 int scvIdx) const

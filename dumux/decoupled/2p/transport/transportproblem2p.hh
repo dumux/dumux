@@ -79,6 +79,7 @@ public:
      * \brief The constructor
      *
      * \param gridView The grid view
+     * \param verbose Output flag for the time manager.
      */
     TransportProblem2P(const GridView &gridView, bool verbose = true)
     DUNE_DEPRECATED // use TransportProblem2P(TimeManager&, const GridView&)
@@ -99,6 +100,8 @@ public:
      * \brief The constructor
      *
      * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
+     * \param verbose Output flag for the time manager.
      */
     TransportProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
     DUNE_DEPRECATED // use TransportProblem2P(TimeManager&, const GridView&, SpatialParameters &spatialParameters)
@@ -117,6 +120,7 @@ public:
     /*!
      * \brief The constructor
      *
+     * \param timeManager The time manager
      * \param gridView The grid view
      */
     TransportProblem2P(TimeManager& timeManager, const GridView &gridView)
@@ -136,7 +140,9 @@ public:
     /*!
      * \brief The constructor
      *
+     * \param timeManager The time manager
      * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
      */
     TransportProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
         : ParentType(timeManager, gridView),

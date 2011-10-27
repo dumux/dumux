@@ -21,6 +21,7 @@
 
 /*!
  * \ingroup MPFA2p
+ * \ingroup Properties
  * \file
  *
  * \brief Properties for the MPFA-O method.

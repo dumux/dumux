@@ -36,6 +36,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise caculation of the residual matrix for models
  *        based on the box scheme .
  *

@@ -33,6 +33,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup Math
  * \brief Calculate the harmonic mean of two scalar values.
  *
  * \param x The first input value
@@ -47,6 +48,7 @@ Scalar harmonicMean(Scalar x, Scalar y)
 }
 
 /*!
+ * \ingroup Math
  * \brief Calculate the geometric mean of two scalar values.
  *
  * \param x The first input value
@@ -61,6 +63,7 @@ Scalar geometricMean(Scalar x, Scalar y)
 }
 
 /*!
+ * \ingroup Math
  * \brief Calculate the harmonic mean of a fixed-size matrix.
  *
  * This is done by calculating the harmonic mean for each entry
@@ -89,6 +92,7 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 }
 
 /*!
+ * \ingroup Math
  * \brief Invert a linear polynomial analytically
  *
  * The polynomial is defined as
@@ -114,6 +118,7 @@ int invertLinearPolynomial(SolContainer &sol,
 }
 
 /*!
+ * \ingroup Math
  * \brief Invert a quadratic polynomial analytically
  *
  * The polynomial is defined as
@@ -154,6 +159,7 @@ int invertQuadraticPolynomial(SolContainer &sol,
 }
 
 /*!
+ * \ingroup Math
  * \brief Invert a cubic polynomial analytically
  *
  * The polynomial is defined as
@@ -362,6 +368,7 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
 };
 
 /*!
+ * \ingroup Math
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -387,6 +394,7 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
+ * \ingroup Math
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -412,6 +420,7 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
+ * \ingroup Math
  * \brief Comparison of three position vectors
  *
  * Compares an current position vector with two reference vector, and returns true
@@ -441,6 +450,7 @@ bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
 
 
 /*!
+ * \ingroup Math
  * \brief Evaluates the Antoine equation used to calculate the vapour
  *        pressure of various liquids.
  *

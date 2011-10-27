@@ -34,6 +34,8 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup BoxModel
+ * \ingroup BoxVolumeVariables
  * \brief Base class for the model specific class which provides
  *        access to all volume averaged quantities.
  */

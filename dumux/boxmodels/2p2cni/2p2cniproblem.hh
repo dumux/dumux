@@ -32,6 +32,7 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCNIModel
+ * \ingroup BoxBaseProblems
  * \brief Base class for all problems which use the non-isothermal
  *         two-phase, two-component box model.
  */

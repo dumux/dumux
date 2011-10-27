@@ -29,12 +29,11 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup TwoPNIBoxModel
- */
 // \{
 
 /*!
+ * \ingroup TwoPNIModel
+ * \ingroup BoxIndices
  * \brief Enumerations for the non-isothermal two-phase model
  */
 template <int PVOffset = 0>

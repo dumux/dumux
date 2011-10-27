@@ -12,6 +12,14 @@
 	 * \ingroup Common
 	 * \defgroup Properties Property System
 	 */
+	/*!
+	 * \ingroup Common
+	 * \defgroup Parameter Parameters
+	 */
+	/*!
+	 * \ingroup Common
+	 * \defgroup Start Starting the Simulation
+	 */
 	/*! 
 	 * \ingroup Common
 	 * \defgroup SimControl Time Manager
@@ -23,6 +31,26 @@
 	/*! 
 	 * \ingroup Common
 	 * \defgroup Linear Linear Solver Backends
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup BC Boundary Conditions
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup Valgrind Valgrind
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup Exception Exceptions
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup Spline Splines
+	 */
+	/*! 
+	 * \ingroup Common
+	 * \defgroup Math Elementary Math Functions
 	 */
 
 /****************** Material ******************/

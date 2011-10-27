@@ -30,6 +30,7 @@
 
 namespace Dumux {
 /*!
+ * \ingroup Exception
  * \brief Exception thrown if a fixable numerical problem occurs.
  *
  * (e.g. time step too big, etc.)
@@ -52,6 +53,7 @@ public:
 };
 
 /*!
+ * \ingroup Exception
  * \brief Exception thrown if a run-time parameter is not specified correctly.
  */
 class ParameterException : public Dune::Exception

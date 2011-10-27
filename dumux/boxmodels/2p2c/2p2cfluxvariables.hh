@@ -26,9 +26,6 @@
  *          all fluxes of components over a face of a finite volume for
  *          the two-phase, two-component model.
  */
-/*!
- * \ingroup TwoPTwoCModel
- */
 #ifndef DUMUX_2P2C_FLUX_VARIABLES_HH
 #define DUMUX_2P2C_FLUX_VARIABLES_HH
 
@@ -39,6 +36,8 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup TwoPTwoCModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate all fluxes of components over a face of a finite
  *        volume for the two-phase, two-component model.

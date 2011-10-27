@@ -40,6 +40,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePBoxModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate the flux of the fluid over a face of a
  *        finite volume for the one-phase model.

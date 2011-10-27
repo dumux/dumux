@@ -20,10 +20,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
  *  \ingroup TwoPNIBoxModel
- */
-
-/*!
  * \file
  *
  * \brief Defines the properties required for the non-isotherm two-phase BOX model.

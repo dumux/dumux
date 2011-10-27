@@ -29,7 +29,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup RichardsProblems
+ * \ingroup RichardsModel
+ * \ingroup BoxBaseProblems
  * \brief Base class for all problems which use the two-phase box model
  *
  * For a description of the Richards model, see Dumux::RichardsModel

@@ -150,6 +150,7 @@ private:
 };
 
 /*!
+ * \ingroup Newton
  * \brief A MpNc specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is

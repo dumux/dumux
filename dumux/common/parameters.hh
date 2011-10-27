@@ -18,6 +18,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Parameter
  * \file
  *
  * \brief The infrastructure to retrieve run-time parameters from
@@ -38,6 +39,7 @@
 #include <unordered_map>
 
 /*!
+ * \ingroup Parameter
  * \brief Retrieve a runtime parameter which _does_ have a default value taken from
  *        the Dumux property system.
  *
@@ -63,6 +65,7 @@
      Dumux::Parameters::getString_(#__VA_ARGS__))
 
 /*!
+ * \ingroup Parameter
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
@@ -127,6 +130,10 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
     
 }
 
+/*!
+ * \ingroup Parameter
+ * \brief Print the run- and compile-time parameters.
+ */
 template <class TypeTag>
 void print(std::ostream &os = std::cout)
 {

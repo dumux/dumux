@@ -80,6 +80,7 @@ SET_BOOL_PROP(InjectionProblem, EnableVelocityOutput, false);
 
 /*!
  * \ingroup TwoPTwoCModel
+ * \ingroup BoxTestProblems
  * \brief Problem where air is injected under a low permeable layer in a depth of 800m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately
@@ -183,10 +184,6 @@ public:
 
     /*!
      * \brief Returns the temperature within the domain.
-     *
-     * \param element The element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index (SCV index)
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */

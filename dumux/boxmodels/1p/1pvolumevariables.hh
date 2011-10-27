@@ -34,6 +34,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePBoxModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the one-phase model.
  */

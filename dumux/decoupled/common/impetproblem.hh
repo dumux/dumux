@@ -138,10 +138,10 @@ public:
         resultWriter_ = NULL;
     }
 
-    //! Constructs an object of type IMPETProblemProblem
-    /** @param gridView gridview to the grid.
-     *  @param verbose verbosity.
-     */
+  /*! \brief Constructs an object of type IMPETProblemProblem
+   * \param timeManager The time manager
+   * \param gridView gridview to the grid.
+   */
     IMPETProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView),
           grid_(0),

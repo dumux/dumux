@@ -76,8 +76,8 @@ public:
     /*!
      * \brief The constructor
      *
+     * \param timeManager The time manager
      * \param gridView The grid view
-     * \param verbose Output flag for the time manager.
      */
     IMPESProblem2P(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView),
@@ -93,9 +93,9 @@ public:
     /*!
      * \brief The constructor
      *
+     * \param timeManager The time manager
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
-     * \param verbose Output flag for the time manager.
      */
     IMPESProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
         : ParentType(timeManager, gridView),

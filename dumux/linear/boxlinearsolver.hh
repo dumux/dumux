@@ -44,6 +44,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Linear
  * \brief Provides a linear solver for the stabilized BiCG method with
  *        an ILU-0 preconditioner.
  *

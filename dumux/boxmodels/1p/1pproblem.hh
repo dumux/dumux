@@ -31,7 +31,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup OnePProblems
+ * \ingroup OnePBoxModel
+ * \ingroup BoxBaseProblems
  * \brief Base class for all problems which use the single-phase box model
  *
  */

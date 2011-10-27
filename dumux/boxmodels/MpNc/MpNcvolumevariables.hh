@@ -39,6 +39,8 @@
 namespace Dumux
 {
 /*!
+ * \ingroup MPNCModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the M-phase, N-component model.
  */

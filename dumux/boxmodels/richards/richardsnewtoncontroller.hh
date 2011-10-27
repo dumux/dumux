@@ -31,6 +31,7 @@
 
 namespace Dumux {
 /*!
+ * \ingroup Newton
  * \brief A Richards model specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is

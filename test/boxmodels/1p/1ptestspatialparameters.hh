@@ -33,6 +33,7 @@ namespace Dumux
 
 /*!
  * \ingroup OnePBoxModel
+ * \ingroup BoxTestProblems
  *
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
@@ -67,7 +68,7 @@ public:
                                  int scvIdx) const
     { return 1e-10; }
 
-    /* \brief Define the porosity.
+    /*! \brief Define the porosity.
    *
    * \param element The finite element
    * \param fvElemGeom The finite volume geometry

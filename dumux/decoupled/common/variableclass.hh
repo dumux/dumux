@@ -185,7 +185,6 @@ public:
     /*! Method that change the size of the vectors for h-adaptive simulations.
      *
      *\param size Size of the current (refined and coarsened) grid
-     *\param onlyPressure resizes only pressure vector (for compositional models)
      */
     void adaptVariableSize(int size)
         {

@@ -21,8 +21,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \ingroup OnePTwoCBoxModel
  * \brief Quantities required by the single-phase, two-component box
  *        model defined on a vertex.
  */
@@ -37,6 +35,8 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup OnePTwoCBoxModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the single-phase, two-component model.
  */

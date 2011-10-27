@@ -31,6 +31,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup Spline
  * \brief A 3rd order polynomial spline.
 
  * This class implements a spline \f$s(x)\f$ for which, given \f$n\f$ sampling
@@ -75,8 +76,7 @@ public:
     /*!
      * \brief Convenience constructor for a full spline
      *
-     * \param x An array containing the \f$x\f$ values of the spline's sampling points
-     * \param y An array containing the \f$y\f$ values of the spline's sampling points
+     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
      */
     template <class PointArray>
     Spline(const PointArray &points)
@@ -160,7 +160,7 @@ public:
      * \brief Convenience constructor for a natural spline
      *
      * \param nSamples The number of sampling points (must be > 2)
-     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
      */
     template <class PointArray>
     Spline(int nSamples,
@@ -182,8 +182,6 @@ public:
      * \brief Convenience constructor for a natural spline
      *
      * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points (must have a size() method)
-     * \param m0 The slope of the spline at \f$x_0\f$
-     * \param m1 The slope of the spline at \f$x_n\f$
      */
     template <class PointContainer>
     Spline(const PointContainer &points)
@@ -362,6 +360,7 @@ public:
      * \brief Set the sampling points and the boundary slopes of the
      *        spline.
      *
+     * \param nSamples The number of sampling points (must be >= 2)
      * \param x An array containing the \f$x\f$ values of the sampling points
      * \param y An array containing the \f$y\f$ values of the sampling points
      * \param m0 The slope of the spline at \f$x_0\f$
@@ -418,6 +417,7 @@ public:
      * \brief Set the sampling points and the boundary slopes of the
      *        spline.
      *
+     * \param nSamples The number of sampling points (must be >= 2)
      * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
      * \param m0 The slope of the spline at \f$x_0\f$
      * \param m1 The slope of the spline at \f$x_1\f$
@@ -476,7 +476,7 @@ public:
      * \brief Set the sampling points and the boundary slopes from an
      *        STL-like container of tuples.
      *
-     * \param points An array of \f$(x,y)\f$ tuples of the spline's sampling points
+     * \param tuples An array of \f$(x,y)\f$ tuples of the spline's sampling points
      * \param m0 The slope of the spline at \f$x_0\f$
      * \param m1 The slope of the spline at \f$x_1\f$
      */

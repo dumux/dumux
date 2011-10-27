@@ -42,6 +42,7 @@ namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCNIModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase two-component box model.
  */

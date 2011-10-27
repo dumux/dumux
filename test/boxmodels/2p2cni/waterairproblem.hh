@@ -75,8 +75,8 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
 
 
 /*!
- * \ingroup TwoPTwoCNIBoxModel
- *
+ * \ingroup TwoPTwoCNIModel
+ * \ingroup BoxTestProblems
  * \brief Non-isothermal gas injection problem where a gas (e.g. air)
  *        is injected into a fully water saturated medium. During
  *        buoyancy driven upward migration the gas passes a high

@@ -84,6 +84,7 @@ void printUsageInputFile(const char *progname)
 }
 
 /*!
+ * \ingroup Start
  * \brief Provides a default main function for simulations requiring
  *        only a single DGF file as their grid specification.
  *
@@ -168,6 +169,7 @@ int startFromDGF(int argc, char **argv)
 
 
 /*!
+ * \ingroup Start
  * \brief Provides a default main function for simulations which
  *        create the grid themselves but do not require any other
  *        parameters.
@@ -242,6 +244,7 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
 // requires DUNE 2.1 and above
 
 /*!
+ * \ingroup Start
  * \brief Provides a default main function for simulations requiring
  *        only a single DGF file as their grid specification.
  *

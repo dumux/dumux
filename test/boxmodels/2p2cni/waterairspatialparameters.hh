@@ -62,7 +62,7 @@ public:
 
 /*!
  * \ingroup TwoPTwoCNIModel
- *
+ * \ingroup BoxTestProblems
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>

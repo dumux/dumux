@@ -95,6 +95,18 @@ public:
             eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, eg.edgeCoord[1], eg.elementGlobal, eg.edgeCoord[2]);
             eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, eg.edgeCoord[0], eg.elementGlobal, eg.edgeCoord[3]);
             eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, eg.edgeCoord[3], eg.elementGlobal, eg.edgeCoord[1]);
+	    /*	    if (std::abs(eg.subContVol[1].global[0] - 0.5) < 1e-6
+		&& std::abs(eg.subContVol[1].global[1] - 0.5) < 1e-6)
+	      {
+		eg.subContVol[0].volume *= 1.5;
+		eg.subContVol[1].volume *= 0.5;
+	      }
+	    if (std::abs(eg.subContVol[0].global[0] - 0.5) < 1e-6
+		&& std::abs(eg.subContVol[0].global[1] - 0.5) < 1e-6)
+	      {
+		eg.subContVol[0].volume *= 0.5;
+		eg.subContVol[1].volume *= 1.5;
+		}*/
             break;
         default:
             DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim << ", numVertices = " << numVertices);
@@ -680,6 +692,29 @@ public:
                 if (subContVolFace[k].normal * diffVec < 0)
                     subContVolFace[k].normal *= -1;
 
+		/*		if (std::abs(subContVol[1].global[0] - 0.5) < 1e-6
+		    && std::abs(subContVol[1].global[1] - 0.5) < 1e-6
+		    && i == 0 && j == 1)
+		  {
+		    subContVolFace[k].ipLocal[0] = 0.75;
+		    subContVolFace[k].ipLocal[1] = 0.25;
+		    double area = subContVolFace[k].normal.two_norm();
+		    subContVolFace[k].normal[0] = 1.0;
+		    subContVolFace[k].normal[1] = 1.0;
+		    subContVolFace[k].normal *= area;
+		  }
+		if (std::abs(subContVol[0].global[0] - 0.5) < 1e-6
+		    && std::abs(subContVol[0].global[1] - 0.5) < 1e-6
+		    && i == 0 && j == 1)
+		  {
+		    subContVolFace[k].ipLocal[0] = 0.25;
+		    subContVolFace[k].ipLocal[1] = 0.25;
+		    double area = subContVolFace[k].normal.two_norm();
+		    subContVolFace[k].normal[0] = 1.0;
+		    subContVolFace[k].normal[1] = -1.0;
+		    subContVolFace[k].normal *= area;
+		  }
+		*/
             }
             else if (dim==3) {
                 int leftFace;
@@ -718,7 +753,42 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
+	std::vector<bool> isHanging(numVertices, false);
         IntersectionIterator endit = gridView.iend(e);
+        for (IntersectionIterator it = gridView.ibegin(e); it != endit; ++it)
+	  if (!it->boundary())
+	    {
+                int face = it->indexInInside();
+		    std::cout << "Element " << geometry.center() 
+			      << ": face " << face << std::endl; 
+                int numVerticesOfFace = referenceElement.size(face, 1, dim);
+                for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
+                {
+                    int vertInElement = referenceElement.subEntity(face, 1, vertInFace, dim);
+		    FV local = referenceElement.position(vertInElement, dim);
+		    FV global = geometry.global(local);
+		    FV localInNeighbor = it->outside()->geometry().local(global);
+		    typedef Dune::FieldVector<Scalar, 1> ShapeValue;
+                    std::vector<ShapeValue> shapeValues;
+                    localFiniteElement.localBasis().evaluateFunction(localInNeighbor, shapeValues);
+
+		    std::cout << "Element " << geometry.center() 
+			      << ": node " << vertInElement << std::endl; 
+		    for (int node = 0; node < numVertices; node++)
+		      {
+			std::cout << "Shape value [" << node << "] = " << shapeValues[node] << std::endl; 
+			if (shapeValues[node][0] > 1e-6 && shapeValues[node][0] < 1.0-1e-6)
+			  {
+			    isHanging[vertInElement] = true;
+			    std::cout << "Element " << geometry.center() 
+				      << ": node " << vertInElement 
+				      << " is hanging w.r.t. element " << it->outside()->geometry().center()
+				      << std::endl;
+			  }
+		      }
+		}
+	    }
+
         for (IntersectionIterator it = gridView.ibegin(e); it != endit; ++it)
             if (it->boundary())
             {

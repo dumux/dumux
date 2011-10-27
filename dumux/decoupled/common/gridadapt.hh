@@ -52,7 +52,8 @@ class GridAdapt
     typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
     typedef typename GridView::IntersectionIterator         LeafIntersectionIterator;
     typedef typename Grid::template Codim<0>::Entity         Entity;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 public:
     /*!
@@ -404,7 +405,8 @@ class GridAdapt<TypeTag, false>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))     Problem;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 public:
     void adaptGrid()

@@ -64,7 +64,7 @@ public:
 
 /*!
  * \ingroup TwoPTwoCModel
- *
+ * \ingroup BoxTestProblems
  * \brief Definition of the spatial parameters for the injection
  *        problem which uses the isothermal 2p2c box model
  */

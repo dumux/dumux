@@ -34,6 +34,10 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup Linear
+ * \brief A general solver backend allowing arbitrary preconditioners and solvers.
+ */
 template <class TypeTag>
 class IterativePrecondSolverBackend
 {
@@ -100,6 +104,10 @@ private:
   Dune::InverseOperatorResult result_;
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential ILUn-preconditioned BiCSTAB solver.
+ */
 template <class TypeTag>
 class ILUnBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -120,6 +128,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential SOR-preconditioned BiCSTAB solver.
+ */
 template <class TypeTag>
 class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -140,6 +152,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential SSOR-preconditioned BiCSTAB solver.
+ */
 template <class TypeTag>
 class SSORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -160,6 +176,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential GS-preconditioned BiCSTAB solver.
+ */
 template <class TypeTag>
 class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -180,6 +200,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential Jacobi-preconditioned BiCSTAB solver.
+ */
 template <class TypeTag>
 class JacBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -200,6 +224,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential ILUn-preconditioned CG solver.
+ */
 template <class TypeTag>
 class ILUnCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -220,6 +248,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential SOR-preconditioned CG solver.
+ */
 template <class TypeTag>
 class SORCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -240,6 +272,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential SSOR-preconditioned CG solver.
+ */
 template <class TypeTag>
 class SSORCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -260,6 +296,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential GS-preconditioned CG solver.
+ */
 template <class TypeTag>
 class GSCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -280,6 +320,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential Jacobi-preconditioned CG solver.
+ */
 template <class TypeTag>
 class JacCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -300,6 +344,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential SSOR-preconditioned GMRes solver.
+ */
 template <class TypeTag>
 class SSORRestartedGMResBackend: public IterativePrecondSolverBackend<TypeTag>
 {
@@ -321,7 +369,10 @@ public:
   }
 };
 
-// base class for backend combinations of linear solvers and a ILU0 preconditioner
+/*!
+ * \ingroup Linear
+ * \brief Base class for backend combinations of linear solvers and a ILU0 preconditioner
+ */
 template <class TypeTag>
 class ILU0SolverBackend
 {
@@ -387,6 +438,10 @@ private:
   Dune::InverseOperatorResult result_;
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential ILU0-preconditioned BiCGSTAB solver.
+ */
 template <class TypeTag>
 class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
 {
@@ -407,6 +462,10 @@ class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential ILU0-preconditioned CG solver.
+ */
 template <class TypeTag>
 class ILU0CGBackend : public ILU0SolverBackend<TypeTag>
 {
@@ -427,6 +486,10 @@ public:
   }
 };
 
+/*!
+ * \ingroup Linear
+ * \brief Sequential ILU0-preconditioned GMRes solver.
+ */
 template <class TypeTag>
 class ILU0RestartedGMResBackend : public ILU0SolverBackend<TypeTag>
 {

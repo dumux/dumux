@@ -19,6 +19,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup OnePBoxModel
  * \file
  *
  * \brief Defines the properties required for the one-phase BOX model.
@@ -36,9 +39,6 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup OnePBoxModel
- */
 // \{
 
 ///////////////////////////////////////////////////////////////////////////

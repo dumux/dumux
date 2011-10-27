@@ -23,7 +23,6 @@
 /**
 * @file
 * @brief  Definition of boundary condition types, extend if necessary
-* @author Peter Bastian
 */
 namespace Dumux
 {

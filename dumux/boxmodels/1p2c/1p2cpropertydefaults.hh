@@ -20,6 +20,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup OnePTwoCBoxModel
  * \file
  *
  * \brief Defines some default values for the properties of the the
@@ -40,9 +43,6 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup OnePTwoCBoxModel
- */
 // \{
 namespace Properties
 {

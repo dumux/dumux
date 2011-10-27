@@ -33,7 +33,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup MPNCProblems
+ * \ingroup MPNCModel
+ * \ingroup BoxBaseProblems
  * \brief  Base class for all problems which use the two-phase, three-component box model
  *
  * \todo Please doc me more!

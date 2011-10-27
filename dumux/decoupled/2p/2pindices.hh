@@ -29,8 +29,7 @@
 namespace Dumux
 {
 /*!
- *  * \ingroup IMPES
- * \ingroup Properties
+ * \ingroup IMPES
  */
 // \{
 

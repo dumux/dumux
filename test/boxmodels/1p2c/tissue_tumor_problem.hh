@@ -87,6 +87,7 @@ SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
 
 /*!
  * \ingroup OnePTwoCBoxModel
+ * \ingroup BoxTestProblems
  *
  * \brief Definition of a problem, where the distribution of a therapeutic agent
  *         within pulmonary tissue is described

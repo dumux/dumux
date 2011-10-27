@@ -418,28 +418,31 @@ public:
         return density_[nPhaseIdx][Idx][0];
     }
 
-    //! Returns numerical phase density (current mass/volume, not from EOS)
-    /*! \param Idx Element index
-     * \param phaseIdx Index of the phase */
+    /*! \brief Returns numerical phase density (current mass/volume, not from EOS)
+     * \param Idx Element index
+     * \param phaseIdx Index of the phase 
+     */
     Scalar& numericalDensity(int Idx, int phaseIdx)
     {
         return numericalDensity_[phaseIdx][Idx][0];
     }
-    //! \copydoc Dumux::VariableClass2P2C::numericalDensity()
-     /*! \param phaseIdx Index of the phase */
+
+    /*! \brief Returns numerical phase density (current mass/volume, not from EOS)
+     * \param phaseIdx Index of the phase 
+     */
     const ScalarSolutionType& numericalDensity(int phaseIdx) const
     {
         return numericalDensity_[phaseIdx];
     }
 
-    //! Returns correction term for volume mismatch $\varepsilon = \frac{v_t - \phi}{\Delta t}$
+    //! Returns correction term for volume mismatch \f$\varepsilon = \frac{v_t - \phi}{\Delta t}\f$
     /*! \param Idx Element index*/
     Scalar& errorCorrection(int Idx)
     {
         return errorCorrection_[Idx][0];
     }
-    //! Returns correction term vector for volume mismatch $\varepsilon$
-     /*! \param phaseIdx Index of the phase */
+
+    //! Returns correction term vector for volume mismatch \f$\varepsilon\f$
     const ScalarSolutionType& errorCorrection() const
     {
         return errorCorrection_;

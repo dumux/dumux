@@ -36,6 +36,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoxModel
+ * \ingroup BoxBoundaryTypes
  *
  * \brief This class stores an array of BoundaryTypes objects
  */

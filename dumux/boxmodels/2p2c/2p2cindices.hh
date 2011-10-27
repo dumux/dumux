@@ -28,12 +28,11 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup TwoPTwoCModel
- */
 // \{
 
 /*!
+ * \ingroup TwoPTwoCModel
+ * \ingroup BoxIndices
  * \brief Enumerates the formulations which the 2p2c model accepts.
  */
 struct TwoPTwoCFormulation

@@ -310,10 +310,10 @@ public:
         return 1e5; // -> 10°C
     }
 
-    //! Returns the source term
-    /*!
-    * \param globalPos The global coordinates
-    */
+    /*! \brief Returns the source term
+     * \param values return values
+     * \param globalPos The global coordinates
+     */
     void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
     {
         values = 0;

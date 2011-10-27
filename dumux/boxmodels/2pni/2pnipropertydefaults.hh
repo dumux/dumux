@@ -20,9 +20,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
  *  \ingroup TwoPNIBoxModel
- */
-/*!
  * \file
  *
  * \brief Defines the default values for most of the properties

@@ -87,6 +87,7 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 
 /*!
  * \ingroup RichardsModel
+ * \ingroup BoxTestProblems
  *
  * \brief A water infiltration problem with a low-permeability lens
  *        embedded into a high- permeability domain which uses the
@@ -177,12 +178,6 @@ public:
      * \brief Returns the temperature [K] within a finite volume
      *
      * This problem assumes a temperature of 10 degrees Celsius.
-     *
-     * \param element The DUNE Codim<0> entity which intersects with
-     *                the finite volume in question
-     * \param fvElemGeom The finite volume geometry of the element
-     * \param scvIdx The sub control volume index inside the finite
-     *               volume geometry
      */
     Scalar temperature() const
     { return 273.15 + 10; }; // -> 10°C
@@ -222,7 +217,7 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param values The boundary types for the conservation equations
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The position for which the boundary type is set
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
                        const GlobalPosition &globalPos) const
@@ -241,7 +236,7 @@ public:
      *        boundary segment.
      *
      * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex for which the boundary type is set
+     * \param globalPos The position for which the Dirichlet value is set
      *
      * For this method, the \a values parameter stores primary variables.
      */
@@ -260,14 +255,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      *
      * \param values The neumann values for the conservation equations
-     * \param element The DUNE Codim<0> entity which intersects with
-     *                the finite volume in question
-     * \param fvElemGeom The finite volume geometry of the element
-     * \param is The DUNE boundary intersection of the boundary segment
-     * \param scvIdx The sub control volume index of the finite
-     *               volume geometry
-     * \param boundaryFaceIdx The index of the boundary face of the
-     *                        finite volume geometry
+     * \param globalPos The position for which the Neumann value is set
      */
     void neumannAtPos(PrimaryVariables &values,
                  const GlobalPosition &globalPos) const
@@ -291,11 +279,7 @@ public:
      * variables.
      *
      * \param values Storage for all primary variables of the initial condition
-     * \param element The DUNE Codim<0> entity which intersects with
-     *                the finite volume in question
-     * \param fvElemGeom The finite volume geometry of the element
-     * \param scvIdx The sub control volume index of the finite
-     *               volume geometry
+     * \param pos The position for which the boundary type is set
      */
     void initialAtPos(PrimaryVariables &values,
                  const GlobalPosition &pos) const

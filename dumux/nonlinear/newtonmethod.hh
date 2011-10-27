@@ -52,6 +52,7 @@ NEW_PROP_TAG(JacobianAssembler);
 };
 
 /*!
+ * \ingroup Newton
  * \brief The algorithmic part of the multi dimensional newton method.
  *
  * In order to use the method you need a NewtonController.

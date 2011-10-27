@@ -41,7 +41,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPNIBoxModel
+ * \ingroup TwoPNIModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the non-isothermal two-phase box model.
  */

@@ -21,8 +21,6 @@
  *****************************************************************************/
 /**
  * \file
- * \ingroup TwoPTwoNBoxProblems
- *
  * \brief Problem where water and gas is injected by means of a
  *        dirchlet condition on the lower right of the domain which have to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
@@ -124,7 +122,8 @@ SET_INT_PROP(ObstacleProblem, NumericDifferenceMethod, +1);
 
 
 /*!
- * \ingroup TwoPBoxProblems
+ * \ingroup MPNCModel
+ * \ingroup BoxTestProblems
  * \brief Problem where liquid water is injected by means of a
  *        dirchlet condition on the lower right of the domain which have to go
  *        around an obstacle with \f$10^3\f$ lower permeability.

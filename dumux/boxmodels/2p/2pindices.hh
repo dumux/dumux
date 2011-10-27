@@ -29,12 +29,11 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup TwoPBoxModel
- */
 // \{
 
 /*!
+ * \ingroup TwoPBoxModel
+ * \ingroup BoxIndices
  * \brief The common indices for the isothermal two-phase model.
  */
 struct TwoPCommonIndices

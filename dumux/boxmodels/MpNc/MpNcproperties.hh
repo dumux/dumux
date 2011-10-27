@@ -22,6 +22,13 @@
 
 #include <dumux/boxmodels/common/boxproperties.hh>
 
+/*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup BoxMpNcModel
+ * \file
+ * \brief  Defines the properties required for the Mp-Nc box model.
+ */
 namespace Dumux
 {
 namespace Properties

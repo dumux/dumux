@@ -43,6 +43,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */

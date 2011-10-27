@@ -64,6 +64,7 @@ public:
 
 /*!
  * \ingroup RichardsModel
+ * \ingroup BoxTestProblems
  * \brief The spatial parameters for the RichardsLensProblem
  */
 template<class TypeTag>

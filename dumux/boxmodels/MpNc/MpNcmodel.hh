@@ -82,7 +82,7 @@ namespace Dumux
  * \f[ x_{g\kappa} = \frac{\beta_kappa x_{l\kappa}}{\sum_{i=1}^N x_{l\kappa} \beta_kappa} \f]
  *
  * Additionally two auxiliary conditions are used to keep the solution physical.
- * \TODO: describe NCP approach
+ * \todo describe NCP approach
  */
 template<class TypeTag>
 class MPNCModel : public BoxModel<TypeTag>

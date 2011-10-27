@@ -32,7 +32,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPNIBoxModel
+ * \ingroup TwoPNIModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the non-isothermal two-phase model.
  */

@@ -27,12 +27,11 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup RichardsModel
- */
 // \{
 
 /*!
+ * \ingroup RichardsModel
+ * \ingroup BoxIndices
  * \brief Index names for the Richards model.
  */
 struct RichardsIndices

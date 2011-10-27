@@ -38,7 +38,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPNIBoxModel
+ * \ingroup TwoPNIModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate all fluxes (mass and energy) of all phases over a
  *        face of a finite volume for the non-isothermal two-phase model.

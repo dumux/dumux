@@ -61,6 +61,7 @@ inline bool SetNoAccess(const T& t) { return true; }
 namespace Valgrind
 {
 /*!
+ * \ingroup Valgrind
  * \brief Make valgrind complain if the object occupied by an object
  *        is undefined.
  *
@@ -94,6 +95,7 @@ inline bool CheckDefined(const T *value, int size)
 }
 
 /*!
+ * \ingroup Valgrind
  * \brief Make the memory on which an object resides undefined.
  *
  * \tparam T The type of the object which ought to be set to undefined
@@ -117,6 +119,7 @@ inline void SetUndefined(const T *value, int size)
 }
 
 /*!
+ * \ingroup Valgrind
  * \brief Make the memory on which an object resides defined.
  *
  * \tparam T The type of the object which valgrind should consider as defined
@@ -140,6 +143,7 @@ inline void SetDefined(const T *value, int n)
 }
 
 /*!
+ * \ingroup Valgrind
  * \brief Make valgrind complain if an object's memory is accessed.
  *
  * \tparam T The type of the object which valgrind should complain if accessed

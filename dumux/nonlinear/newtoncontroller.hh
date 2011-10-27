@@ -128,6 +128,7 @@ SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
 }
 
 /*!
+ * \ingroup Newton
  * \brief A reference implementation of a Newton controller specific
  *        for the box scheme.
  *

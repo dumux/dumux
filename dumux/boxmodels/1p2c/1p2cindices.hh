@@ -31,12 +31,11 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup OnePTwoCBoxModel
- */
 // \{
 
 /*!
+ * \ingroup OnePTwoCBoxModel
+ * \ingroup BoxIndices
  * \brief The indices for the isothermal single-phase, two-component model.
  */
 template <int PVOffset = 0>

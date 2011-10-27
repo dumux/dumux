@@ -28,6 +28,9 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup BoxModel
  * \file
  * \brief Specify the shape functions, operator assemblers, etc
  *        used for the BoxModel.

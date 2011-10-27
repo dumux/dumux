@@ -282,7 +282,7 @@ const void initialFormulation(typename Indices::BoundaryFormulation &initialForm
     initialFormulation = Indices::BoundaryFormulation::concentration;
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentration()
+ * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentrationAtPos()
  */
 Scalar initConcentrationAtPos(const GlobalPosition& globalPos) const
 {

@@ -47,7 +47,7 @@ namespace Dumux
 /*!
  *
  * \ingroup OnePTwoCBoxModel
- *
+ * \ingroup BoxLocalResidual
  * \brief Calculate the local Jacobian for the single-phase,
  *        two-component model in the BOX scheme.
  *
@@ -180,7 +180,7 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
@@ -237,7 +237,7 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      */
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
