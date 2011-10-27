@@ -1,25 +1,8 @@
 DGF
-%Interval
-%0 0   % first corner 
-%1 1   % second corner
-%10 10 % cells in x and y direction 
-%#
-
-Vertex 
-0 0
-1 0
-0 1 
-1 1 
-1 0.5 
-0.5 1
-0 0.5
-0.5 0.5  
-#
-
-Cube 
-0 1 6 4
-6 7 2 5
-7 4 5 3
+Interval
+0 0   % first corner 
+1 1   % second corner
+10 10 % cells in x and y direction 
 #
 
 BOUNDARYDOMAIN
