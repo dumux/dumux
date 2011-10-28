@@ -348,8 +348,12 @@ public:
         PrimaryVariables tmp(0);
         // Similar to the compute Flux, the energy residual needs to be called from the
         // mass residual.
+        ComponentVector dummy[numPhases];
+            for (int iDummy =0; iDummy <numPhases; ++iDummy)
+                dummy[iDummy] = 0.;
         EnergyResid::computeSource(tmp,
-                                   volVars);
+                                   volVars,
+                                   dummy);
         source += tmp;
         Valgrind::CheckDefined(source);
     };

@@ -120,8 +120,11 @@ public:
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
+        storage =0;
+
         // compute mass and energy storage terms
         MassResid::computeStorage(storage, volVars);
+        Valgrind::CheckDefined(storage);
         EnergyResid::computeStorage(storage, volVars);
         Valgrind::CheckDefined(storage);
     }

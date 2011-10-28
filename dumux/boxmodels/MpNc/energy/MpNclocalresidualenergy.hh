@@ -95,11 +95,13 @@ public:
     }
 
     static void computeSource(PrimaryVariables &result,
-                              const VolumeVariables &volVars)
+                              const VolumeVariables &volVars,
+                              const ComponentVector componentIntoPhaseMassTransfer[numPhases])
     {
         // do nothing, we're isothermal!
     }
 };
+
 
 template <class TypeTag>
 class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticenergyTransfer=*/false>
@@ -218,7 +220,8 @@ public:
 
 
     static void computeSource(PrimaryVariables &result,
-                              const VolumeVariables &volVars)
+                              const VolumeVariables &volVars,
+                              const ComponentVector componentIntoPhaseMassTransfer[numPhases])
     {
         result[energyEqIdx] = 0.0;
     }
