@@ -214,7 +214,7 @@ SET_BOOL_PROP(BoxMPNC, MPNCVtkAddVarPressures, false);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddVelocities, false);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddDensities, true);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMobilities, true);
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMeanMolarMass, false);
+SET_BOOL_PROP(BoxMPNC, MPNCVtkAddAverageMolarMass, false);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMassFractions, false);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMoleFractions, true);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMolarities, false);

@@ -129,18 +129,17 @@ class MPNCVolumeVariablesDiffusion<TypeTag, false>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename FluidSystem::MutableParameters MutableParameters;
 
 public:
     MPNCVolumeVariablesDiffusion()
     {}
 
-    void update(MutableParameters &mutParams,
-        const VolumeVariables &volVars,
+    template <class FluidState, class ParameterCache>
+    void update(FluidState &fluidState,
+                ParameterCache &paramCache,
+                const VolumeVariables &volVars,
                 const Problem &problem)
-    {
-    };
+    { };
 
     Scalar diffCoeffL(int compIdx) const
     { return 0; };

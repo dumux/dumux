@@ -90,7 +90,6 @@ class MPNCVolumeVariables
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-
 public:
     //! The return type of the fluidState() method
     typedef typename MassVolumeVariables::FluidState FluidState;
@@ -124,8 +123,9 @@ public:
                            elemGeom,
                            scvIdx,
                            isOldSol);
+        ParentType::checkDefined();
 
-        typename FluidSystem::MutableParameters mutParams;
+        typename FluidSystem::ParameterCache paramCache;
 
         /////////////
         // set the phase saturations
@@ -133,24 +133,21 @@ public:
         Scalar sumSat = 0;
         for (int i = 0; i < numPhases - 1; ++i) {
             sumSat += priVars[S0Idx + i];
-            mutParams.setSaturation(i, priVars[S0Idx + i]);
+            fluidState_.setSaturation(i, priVars[S0Idx + i]);
         }
         Valgrind::CheckDefined(sumSat);
-        mutParams.setSaturation(numPhases - 1, 1.0 - sumSat);
+        fluidState_.setSaturation(numPhases - 1, 1.0 - sumSat);
 
         /////////////
         // set the fluid phase temperatures
         /////////////
-        // update the temperature part of the energy module
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx){
-            Scalar T = EnergyVolumeVariables::getTemperature(priVars,
-                                                             element,
-                                                             elemGeom,
-                                                             scvIdx,
-                                                             problem,
-                                                             phaseIdx);
-            mutParams.setTemperature(phaseIdx, T);
-        }
+        EnergyVolumeVariables::updateTemperatures(fluidState_,
+                                                  paramCache,
+                                                  priVars,
+                                                  element,
+                                                  elemGeom,
+                                                  scvIdx,
+                                                  problem);
 
         /////////////
         // set the phase pressures
@@ -161,16 +158,17 @@ public:
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
         // capillary pressures
         Scalar capPress[numPhases];
-        MaterialLaw::capillaryPressures(capPress, materialParams, mutParams);
+        MaterialLaw::capillaryPressures(capPress, materialParams, fluidState_);
         // add to the pressure of the first fluid phase
         Scalar p0 = priVars[p0Idx];
         for (int i = 0; i < numPhases; ++ i)
-            mutParams.setPressure(i, p0 - capPress[0] + capPress[i]);
+            fluidState_.setPressure(i, p0 - capPress[0] + capPress[i]);
 
         /////////////
         // set the fluid compositions
         /////////////
-        MassVolumeVariables::update(mutParams,
+        MassVolumeVariables::update(fluidState_,
+                                    paramCache,
                                     priVars,
                                     hint_,
                                     problem,
@@ -178,7 +176,6 @@ public:
                                     elemGeom,
                                     scvIdx);
         MassVolumeVariables::checkDefined();
-        ParentType::checkDefined();
 
         /////////////
         // Porosity
@@ -189,7 +186,6 @@ public:
                                                          elemGeom,
                                                          scvIdx);
         Valgrind::CheckDefined(porosity_);
-        ParentType::checkDefined();
 
         /////////////
         // Phase mobilities
@@ -198,31 +194,30 @@ public:
         // relative permeabilities
         MaterialLaw::relativePermeabilities(relativePermeability_,
                                             materialParams, 
-                                            mutParams);
+                                            fluidState_);
 
         // dynamic viscosities
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // viscosities
-            Scalar mu = FluidSystem::computeViscosity(mutParams, phaseIdx);
-            mutParams.setViscosity(phaseIdx, mu);
+            Scalar mu = FluidSystem::viscosity(fluidState_, paramCache, phaseIdx);
+            fluidState_.setViscosity(phaseIdx, mu);
         }
-        ParentType::checkDefined();
 
         /////////////
         // diffusion
         /////////////
 
         // update the diffusion part of the volume data
-        DiffusionVolumeVariables::update(mutParams, *this, problem);
+        DiffusionVolumeVariables::update(fluidState_, paramCache, *this, problem);
         DiffusionVolumeVariables::checkDefined();
-        ParentType::checkDefined();
 
         /////////////
         // energy
         /////////////
 
         // update the remaining parts of the energy module
-        EnergyVolumeVariables::update(mutParams,
+        EnergyVolumeVariables::update(fluidState_,
+                                      paramCache,
                                       priVars,
                                       element,
                                       elemGeom,
@@ -230,18 +225,16 @@ public:
                                       problem);
 
         EnergyVolumeVariables::checkDefined();
-        ParentType::checkDefined();
 
-
-        // assign the fluid state to be stored (needed in the next update)
-        fluidState_.assign(mutParams);
+        // make sure the quantities in the fluid state are well-defined
         fluidState_.checkDefined();
 
         // specific interfacial area,
         // well also all the dimensionless numbers :-)
         // well, also the mass transfer rate
         IAVolumeVariables::update(*this,
-                                  mutParams,
+                                  fluidState_,
+                                  paramCache,
                                   priVars,
                                   problem,
                                   element,
@@ -249,11 +242,7 @@ public:
                                   scvIdx);
         IAVolumeVariables::checkDefined();
 
-        ParentType::checkDefined();
-
         checkDefined();
-
-        ParentType::checkDefined();
     }
 
     /*!
@@ -330,7 +319,7 @@ public:
         // difference of sum of mole fractions in the phase from 100%
         Scalar a = 1;
         for (int i = 0; i < numComponents; ++i)
-            a -= fluidState.moleFrac(phaseIdx, i);
+            a -= fluidState.moleFraction(phaseIdx, i);
         return a;
     }
 

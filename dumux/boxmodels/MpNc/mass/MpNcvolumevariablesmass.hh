@@ -60,7 +60,8 @@ class MPNCVolumeVariablesMass
     enum { fug0Idx = Indices::fug0Idx };
 
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
-
+    
+    typedef typename FluidSystem::ParameterCache ParameterCache;
 public:
     /*!
      * \brief The fluid state which is used by the volume variables to
@@ -75,11 +76,10 @@ public:
      * \brief Update composition of all phases in the mutable
      *        parameters from the primary variables.
      */
-    template <class MutableParams>
-    void update(MutableParams &mutParams,
+    void update(FluidState &fs,
+                ParameterCache &paramCache,
                 const PrimaryVariables &priVars,
                 const VolumeVariables *hint,
-
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
@@ -97,10 +97,10 @@ public:
                 Scalar x_ij = 1.0/numComponents;
                 if (hint)
                     // use the hint for the initial mole fraction!
-                    x_ij = hint->fluidState().moleFrac(phaseIdx, compIdx);
+                    x_ij = hint->fluidState().moleFraction(phaseIdx, compIdx);
 
                 // set initial guess of the component's mole fraction
-                mutParams.setMoleFrac(phaseIdx,
+                fs.setMoleFraction(phaseIdx,
                                       compIdx,
                                       x_ij);
 
@@ -111,18 +111,18 @@ public:
             if (!hint)
                 // if no hint was given, we ask the constraint solver
                 // to make an initial guess
-                CompositionFromFugacitiesSolver::guessInitial(mutParams, phaseIdx, fug);
-            CompositionFromFugacitiesSolver::solve(mutParams, phaseIdx, fug);
+                CompositionFromFugacitiesSolver::guessInitial(fs, paramCache, phaseIdx, fug);
+            CompositionFromFugacitiesSolver::solve(fs, paramCache, phaseIdx, fug);
 
             /*
               std::cout << "final composition: " << FluidSystem::phaseName(phaseIdx) << "="
-              << mutParams.moleFrac(phaseIdx, 0) << " "
-              << mutParams.moleFrac(phaseIdx, 1) << " "
-              << mutParams.moleFrac(phaseIdx, 2) << " "
-              << mutParams.moleFrac(phaseIdx, 3) << " "
-              << mutParams.moleFrac(phaseIdx, 4) << " "
-              << mutParams.moleFrac(phaseIdx, 5) << " "
-              << mutParams.moleFrac(phaseIdx, 6) << "\n";
+              << fs.moleFrac(phaseIdx, 0) << " "
+              << fs.moleFrac(phaseIdx, 1) << " "
+              << fs.moleFrac(phaseIdx, 2) << " "
+              << fs.moleFrac(phaseIdx, 3) << " "
+              << fs.moleFrac(phaseIdx, 4) << " "
+              << fs.moleFrac(phaseIdx, 5) << " "
+              << fs.moleFrac(phaseIdx, 6) << "\n";
             */
 
         }

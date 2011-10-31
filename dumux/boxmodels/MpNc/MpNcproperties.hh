@@ -67,7 +67,7 @@ NEW_PROP_TAG(MPNCVtkAddVarPressures);
 NEW_PROP_TAG(MPNCVtkAddVelocities);
 NEW_PROP_TAG(MPNCVtkAddDensities);
 NEW_PROP_TAG(MPNCVtkAddMobilities);
-NEW_PROP_TAG(MPNCVtkAddMeanMolarMass);
+NEW_PROP_TAG(MPNCVtkAddAverageMolarMass);
 NEW_PROP_TAG(MPNCVtkAddMassFractions);
 NEW_PROP_TAG(MPNCVtkAddMoleFractions);
 NEW_PROP_TAG(MPNCVtkAddMolarities);

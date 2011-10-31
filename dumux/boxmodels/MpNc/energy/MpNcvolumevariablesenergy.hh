@@ -27,6 +27,8 @@
 #ifndef DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
 
+#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
+
 namespace Dumux
 {
 /*!
@@ -57,19 +59,24 @@ class MPNCVolumeVariablesEnergy
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
     //typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCEnergyIndices)) EnergyIndices;
 
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename FluidSystem::ParameterCache ParameterCache; 
+    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+    
 public:
     /*!
      * \brief Update the temperature of the sub-control volume.
      */
-    Scalar getTemperature(const PrimaryVariables &sol,
-                          const Element &element,
-                          const FVElementGeometry &elemGeom,
-                          int scvIdx,
-                          const Problem &problem,
-                          const int temperatureIdx) const
+    void updateTemperatures(FluidState &fs,
+                            ParameterCache &paramCache,
+                            const PrimaryVariables &sol,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem) const
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        Scalar T = problem.boxTemperature(element, elemGeom, scvIdx);
+        fs.setTemperature(T);
     }
 
 
@@ -79,26 +86,15 @@ public:
      *
      * Since we are isothermal, we don't need to do anything!
      */
-    template <class MutableParams>
-    void update(MutableParams &mutParams,
+    void update(FluidState &fs,
+                ParameterCache &paramCache,
                 const PrimaryVariables &sol,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
                 int scvIdx,
                 const Problem &problem)
     {
-        temperature_ = problem.boxTemperature(element, elemGeom, scvIdx);
-
-        // set the fluid temperatures
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            mutParams.setTemperature(phaseIdx, temperature_);
     }
-
-    /*!
-     * \brief Return the temperature of any given phase [K]
-     */
-    Scalar temperature(int phaseIdx = 0) const
-    { return temperature_; }
 
     /*!
      * \brief If running under valgrind this produces an error message
@@ -106,12 +102,7 @@ public:
      */
     void checkDefined() const
     {
-        Valgrind::CheckDefined(temperature_);
     }
-
-protected:
-    Scalar temperature_;
-
 };
 
 /*!
@@ -130,7 +121,6 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
@@ -139,28 +129,33 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     enum { numEnergyEqs     = Indices::NumPrimaryEnergyVars};
     enum { temperature0Idx = Indices::temperatureIdx };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename FluidSystem::ParameterCache ParameterCache; 
+    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+    
 public:
     /*!
      * \brief Update the temperature of the sub-control volume.
      */
-    Scalar getTemperature(const PrimaryVariables &sol,
-                          const Element &element,
-                          const FVElementGeometry &elemGeom,
-                          int scvIdx,
-                          const Problem &problem,
-                          const int dummy) const
+    void updateTemperatures(FluidState &fs,
+                            ParameterCache &paramCache,
+                            const PrimaryVariables &sol,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem) const
     {
         // retrieve temperature from solution vector
-        return sol[temperatureIdx];
+        Scalar T = sol[temperatureIdx];
+        fs.setTemperature(T);
     }
 
     /*!
      * \brief Update the enthalpy and the internal energy for a given
      *        control volume.
      */
-    template <class MutableParams>
-    void update(MutableParams &mutParams,
-                const PrimaryVariables &sol,
+    void update(FluidState &fs,
+                ParameterCache &paramCache,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
                 int scvIdx,
@@ -168,24 +163,20 @@ public:
     {
         Valgrind::SetUndefined(*this);
 
-        // set the fluid temperatures
-        temperature_ = sol[temperature0Idx];
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            mutParams.setTemperature(phaseIdx, temperature_);
-
+        // heat capacities of the fluids plus the porous medium
         heatCapacity_ =
             problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
 
         soilDensity_ =
-                problem.spatialParameters().soilDensity(element, elemGeom, scvIdx);
+            problem.spatialParameters().soilDensity(element, elemGeom, scvIdx);
         Valgrind::CheckDefined(soilDensity_);
 
         // set the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            Scalar h =
-                FluidSystem::computeEnthalpy(mutParams, phaseIdx);
-            mutParams.setEnthalpy(phaseIdx, h);
+            Scalar u =
+                FluidSystem::internalEnergy(fs, paramCache, phaseIdx);
+            fs.setInternalEnergy(phaseIdx, u);
         }
     }
 
@@ -195,13 +186,6 @@ public:
      */
     Scalar heatCapacity() const
     { return heatCapacity_; };
-
-    /*!
-     * \brief Returns the temperature in fluid / solid phase(s)
-     *        the sub-control volume.
-     */
-    Scalar temperature(int phaseIdx = 0) const
-    { return temperature_; }
 
     /*!
      * \brief Returns the total density of the given soil [kg / m^3] in
@@ -218,13 +202,11 @@ public:
     {
         Valgrind::CheckDefined(heatCapacity_);
         Valgrind::CheckDefined(soilDensity_);
-        Valgrind::CheckDefined(temperature_);
     };
 
 protected:
     Scalar heatCapacity_;
     Scalar soilDensity_;
-    Scalar temperature_;
 };
 
 } // end namepace

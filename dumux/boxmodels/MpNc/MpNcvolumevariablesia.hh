@@ -61,9 +61,10 @@ public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      */
-    template <class MutableParams>
+    template <class FluidState, class ParameterCache>
     void update(const VolumeVariables & volVars,
-                const MutableParams & mutParams,
+                const FluidState &fluidState,
+                const ParameterCache &paramCache,
                 const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element & element,

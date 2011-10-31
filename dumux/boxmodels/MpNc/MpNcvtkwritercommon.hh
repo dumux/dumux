@@ -85,7 +85,7 @@ public:
         velocityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddVelocities);
         densityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddDensities);
         mobilityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMobilities);
-        meanMolarMassOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMeanMolarMass);
+        averageMolarMassOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddAverageMolarMass);
         massFracOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMassFractions);
         moleFracOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMoleFractions);
         molarityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMolarities);
@@ -116,7 +116,7 @@ public:
         if (pressureOutput_) this->resizePhaseBuffer_(pressure_);
         if (densityOutput_) this->resizePhaseBuffer_(density_);
         if (mobilityOutput_) this->resizePhaseBuffer_(mobility_);
-        if (meanMolarMassOutput_) this->resizePhaseBuffer_(meanMolarMass_);
+        if (averageMolarMassOutput_) this->resizePhaseBuffer_(averageMolarMass_);
 
         if (moleFracOutput_) this->resizePhaseComponentBuffer_(moleFrac_);
         if (massFracOutput_) this->resizePhaseComponentBuffer_(massFrac_);
@@ -154,10 +154,10 @@ public:
                 if (pressureOutput_) pressure_[phaseIdx][I] = volVars.fluidState().pressure(phaseIdx);
                 if (densityOutput_) density_[phaseIdx][I] = volVars.fluidState().density(phaseIdx);
                 if (mobilityOutput_) mobility_[phaseIdx][I] = volVars.mobility(phaseIdx);
-                if (meanMolarMassOutput_) meanMolarMass_[phaseIdx][I] = volVars.fluidState().meanMolarMass(phaseIdx);
+                if (averageMolarMassOutput_) averageMolarMass_[phaseIdx][I] = volVars.fluidState().averageMolarMass(phaseIdx);
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    if (moleFracOutput_) moleFrac_[phaseIdx][compIdx][I] = volVars.fluidState().moleFrac(phaseIdx, compIdx);
-                    if (massFracOutput_) massFrac_[phaseIdx][compIdx][I] = volVars.fluidState().massFrac(phaseIdx, compIdx);
+                    if (moleFracOutput_) moleFrac_[phaseIdx][compIdx][I] = volVars.fluidState().moleFraction(phaseIdx, compIdx);
+                    if (massFracOutput_) massFrac_[phaseIdx][compIdx][I] = volVars.fluidState().massFraction(phaseIdx, compIdx);
                     if (molarityOutput_) molarity_[phaseIdx][compIdx][I] = volVars.fluidState().molarity(phaseIdx, compIdx);
                 }
             }
@@ -213,8 +213,8 @@ public:
         if (densityOutput_)
             this->commitPhaseBuffer_(writer, "rho_%s", density_);
 
-        if (meanMolarMassOutput_)
-            this->commitPhaseBuffer_(writer, "M_%s", meanMolarMass_);
+        if (averageMolarMassOutput_)
+            this->commitPhaseBuffer_(writer, "M_%s", averageMolarMass_);
 
         if (mobilityOutput_)
             this->commitPhaseBuffer_(writer, "lambda_%s", mobility_);
@@ -263,13 +263,13 @@ private:
     bool massFracOutput_;
     bool moleFracOutput_;
     bool molarityOutput_;
-    bool meanMolarMassOutput_;
+    bool averageMolarMassOutput_;
 
     PhaseBuffer saturation_;
     PhaseBuffer pressure_;
     PhaseBuffer density_;
     PhaseBuffer mobility_;
-    PhaseBuffer meanMolarMass_;
+    PhaseBuffer averageMolarMass_;
 
     PhaseVelocityField velocity_;
     ScalarBuffer boxSurface_;
