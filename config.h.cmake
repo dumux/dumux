@@ -44,6 +44,10 @@
 #cmakedefine HAVE_MALLOC_H 1
 #cmakedefine HAVE_VALGRIND 1
 
+#define DUMUX_DEPRECATED __attribute__((deprecated))
+#define DUMUX_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+
 #define DUNE_DEPRECATED __attribute__((deprecated))
+#define DUNE_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
 
 #endif // CONFIG_H
