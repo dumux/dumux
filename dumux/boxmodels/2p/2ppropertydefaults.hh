@@ -77,16 +77,16 @@ SET_TYPE_PROP(BoxTwoP, FluxVariables, TwoPFluxVariables<TypeTag>);
 SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
-SET_TYPE_PROP(BoxTwoP, 
-              TwoPIndices, 
+SET_TYPE_PROP(BoxTwoP,
+              TwoPIndices,
               TwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_TYPE_PROP(BoxTwoP, 
-              MaterialLawParams, 
+SET_TYPE_PROP(BoxTwoP,
+              MaterialLawParams,
               typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))::Params);
 
 SET_PROP(BoxTwoP, WettingPhase)
@@ -110,7 +110,7 @@ SET_PROP(BoxTwoP, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
 
 public:
-    typedef Dumux::TwoPImmiscibleFluidSystem<Scalar, 
+    typedef Dumux::TwoPImmiscibleFluidSystem<Scalar,
                                              WettingPhase,
                                              NonWettingPhase> type;
 };

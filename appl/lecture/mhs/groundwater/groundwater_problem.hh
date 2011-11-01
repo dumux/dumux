@@ -382,7 +382,7 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=0;
         }
-        
+
         for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
         {
             if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
@@ -398,7 +398,7 @@ public:
     void writeOutput()
     {
         Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
-    
+
     Scalar zmax, zmin;
     zmax=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
     zmin=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
@@ -407,7 +407,7 @@ public:
     {
         Scalar currentHead= this->variables().pressure()[i]/(Fluid::density(0,0)*9.81);
         zmax = std::max(currentHead,zmax);
-        zmin = std::min(currentHead,zmin);            
+        zmin = std::min(currentHead,zmin);
     }
 
         std::ofstream dataFile;
@@ -446,7 +446,7 @@ public:
         //Textoutput:
         std::cout << "         x          y          h           v_x           v_y"<<std::endl;
         std::cout << "------------------------------------------------------------"<<std::endl;
-    
+
         ElementIterator eItEnd = this->gridView().template end<0> ();
         for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
         {

@@ -277,7 +277,7 @@ public:
     bool shouldWriteOutput() const
     {
         if (this->timeManager().time() < eps_ ||
-            this->timeManager().willBeFinished() || 
+            this->timeManager().willBeFinished() ||
             this->timeManager().episodeWillBeOver())
         {
             return true;

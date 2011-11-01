@@ -152,9 +152,9 @@ public:
      *  \param phaseIdx The phase index
      */
     Scalar enthalpy(int phaseIdx) const
-    { 
+    {
         return internalEnergy_[phaseIdx]
-            + this->fluidState().pressure(phaseIdx) 
+            + this->fluidState().pressure(phaseIdx)
             / this->fluidState().density(phaseIdx); };
 
     /*!

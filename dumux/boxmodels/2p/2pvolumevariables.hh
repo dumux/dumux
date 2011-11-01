@@ -132,7 +132,7 @@ public:
 
         typename FluidSystem::ParameterCache paramCache;
         fluidState_.update(paramCache, Sn, p[wPhaseIdx], p[nPhaseIdx], temperature_);
-        
+
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, 1 - Sn)
             /

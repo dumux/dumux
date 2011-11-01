@@ -100,7 +100,7 @@ public:
             int I = this->problem_.vertexMapper().map(elem, i, dim);
             const VolumeVariables &volVars = elemVolVars[i];
 
-            if (temperatureOutput_) 
+            if (temperatureOutput_)
                 temperature_[I] = volVars.fluidState().temperature(0);
         }
     }
@@ -164,7 +164,7 @@ public:
     {
         temperatureOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddTemperatures);
         enthalpyOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddEnthalpies);
-        internalEnergyOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddInternalEnergies);       
+        internalEnergyOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddInternalEnergies);
     }
 
     /*!
@@ -195,9 +195,9 @@ public:
 
             if (temperatureOutput_) temperature_[I] = volVars.fluidState().temperature(0);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-                if (enthalpyOutput_) 
+                if (enthalpyOutput_)
                     enthalpy_[phaseIdx][I] = volVars.fluidState().temperature(phaseIdx);
-                if (internalEnergyOutput_) 
+                if (internalEnergyOutput_)
                     internalEnergy_[phaseIdx][I] = volVars.fluidState().internalEnergy(phaseIdx);
             }
         }

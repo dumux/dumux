@@ -263,7 +263,7 @@ public:
                 tmp += fluxVars.moleFracGrad(comp1Idx)[i]*fluxVars.face().normal[i];
             tmp *= -1;
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP();
-                
+
                 // dispersive flux of second component - molefraction
 //            Vector normalDisp;
 //            fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);

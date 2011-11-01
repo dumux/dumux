@@ -471,7 +471,7 @@ protected:
                                     scvIdx,
                                     boundaryFaceIdx,
                                     curVolVars_());
-            values *= 
+            values *=
                 fvElemGeom_().boundaryFace[boundaryFaceIdx].area
                 * curVolVars_(scvIdx).extrusionFactor();
             Valgrind::CheckDefined(values);
@@ -493,7 +493,7 @@ protected:
             int j = fvElemGeom_().subContVolFace[k].j;
 
             PrimaryVariables flux;
-            
+
             Valgrind::SetUndefined(flux);
             this->asImp_().computeFlux(flux, k);
             Valgrind::CheckDefined(flux);
@@ -537,7 +537,7 @@ protected:
         for (int i=0; i < fvElemGeom_().numVertices; i++) {
             Valgrind::SetUndefined(storageTerm_[i]);
             this->asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
-            storageTerm_[i] *= 
+            storageTerm_[i] *=
                 fvElemGeom_().subContVol[i].volume
                 * curVolVars_(i).extrusionFactor();
             Valgrind::CheckDefined(storageTerm_[i]);

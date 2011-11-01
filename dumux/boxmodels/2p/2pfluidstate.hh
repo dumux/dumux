@@ -74,7 +74,7 @@ public:
         phasePressure_[nPhaseIdx] = pressN;
         temperature_ = temperature;
         paramCache.updateAll(*this);
-        
+
         density_[wPhaseIdx] = FluidSystem::density(*this, paramCache, wPhaseIdx);
         density_[nPhaseIdx] = FluidSystem::density(*this, paramCache, nPhaseIdx);
     }

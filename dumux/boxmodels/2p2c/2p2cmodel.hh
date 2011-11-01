@@ -399,14 +399,14 @@ public:
 
                 scvVelocityL = 0;
                 scvVelocityG = 0;
-                
+
                 ElementVolumeVariables elemVolVars;
-                
+
                 elemVolVars.update(this->problem_(),
                                   *elemIt,
                                   fvElemGeom,
                                   false /* oldSol? */);
-                
+
                 for (int faceIdx = 0; faceIdx< fvElemGeom.numEdges; faceIdx++)
                 {
 
@@ -466,7 +466,7 @@ public:
                 }
 
                 typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-                const Dune::FieldVector<Scalar, dim>& localPos = 
+                const Dune::FieldVector<Scalar, dim>& localPos =
                     ReferenceElements::general(elemIt->geometry().type()).position(0, 0);
 
                  // get the transposed Jacobian of the element mapping

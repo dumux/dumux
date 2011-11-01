@@ -168,7 +168,7 @@ class ObstacleProblem
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-        
+
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
         numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
@@ -242,7 +242,7 @@ public:
                            << " timestep divisions. dt="
                            << this->timeManager().timeStepSize());
 
-            if (this->model().update(this->newtonMethod(), 
+            if (this->model().update(this->newtonMethod(),
                                      this->newtonController()))
             {
                 // sucessfull update. remember time step size
@@ -254,7 +254,7 @@ public:
             if (i > 0 && this->gridView().comm().rank() == 0)
                 std::cout << "Newton solver did not converge. Retrying with time step of "
                           << this->timeManager().timeStepSize() << "sec\n";
-            
+
             // update failed
             Scalar dt = this->timeManager().timeStepSize();
             Scalar nextDt = dt / 2;
@@ -268,7 +268,7 @@ public:
             if (!this->model().update(this->newtonMethod(),
                                       this->newtonController()))
                 break;
-            
+
             // sucessfull update. increase time step size
             successDt = this->timeManager().timeStepSize();
             Scalar nextDt = successDt*1.25;
@@ -281,7 +281,7 @@ public:
             std::cout.flush();
             this->model().updateFailed();
         }
-        
+
         // do a last update with the largest successful time step
         this->newtonController().setVerbose(true);
         this->timeManager().setTimeStepSize(successDt);
@@ -289,7 +289,7 @@ public:
         this->model().update(this->newtonMethod(), this->newtonController());
 #endif
     }
-    
+
     /*!
      * \brief Called directly after the time integration.
      */
@@ -301,8 +301,8 @@ public:
             this->model().globalPhaseStorage(phaseStorage, phaseIdx);
 
             if (this->gridView().comm().rank() == 0) {
-                std::cout 
-                    <<"Storage in " 
+                std::cout
+                    <<"Storage in "
                     << FluidSystem::phaseName(phaseIdx)
                     << "Phase: ["
                     << phaseStorage
@@ -311,16 +311,16 @@ public:
             }
         }
 
-        // Calculate total storage terms 
+        // Calculate total storage terms
         PrimaryVariables storage;
         this->model().globalStorage(storage);
-   
+
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
-            std::cout 
+            std::cout
                 <<"Storage total: [" << storage << "]"
                 << "\n";
-        }        
+        }
     }
 
     /*!
@@ -444,12 +444,12 @@ public:
     /*!
      * \brief Write a restart file?
      */
-    bool shouldWriteRestartFile() const 
+    bool shouldWriteRestartFile() const
     {
         return ParentType::shouldWriteRestartFile();
     }
 
-    
+
 #if USE_2P2C
     /*!
      * \brief Return the initial phase state inside a control volume.
@@ -502,13 +502,13 @@ private:
             xl[FluidSystem::N2Idx]      = 0.0;
             beta[FluidSystem::H2OIdx]   = FluidSystem::H2O::vaporPressure(temperature_);
             beta[FluidSystem::N2Idx]    = Dumux::BinaryCoeff::H2O_N2::henry(temperature_);
-            
+
             // assign the primary variables
             for (int i = 0; i < numComponents; ++i)
                 values[fug0Idx + i] = xl[i]*beta[i];
 
             for (int i = 0; i < numPhases - 1; ++i)
-                values[S0Idx + i] = S[i]; 
+                values[S0Idx + i] = S[i];
 
             values[p0Idx] = p[0];
         }
@@ -523,18 +523,18 @@ private:
 
             p[lPhaseIdx] = pg;
             p[gPhaseIdx] = pg;
-            
-            
+
+
             xg[FluidSystem::H2OIdx] = 0.01;
             xg[FluidSystem::N2Idx] = 0.99;
-            
+
 
             // assign the primary variables
             for (int i = 0; i < numComponents; ++i)
                 values[fug0Idx + i] = xg[i]*pg;
 
             for (int i = 0; i < numPhases - 1; ++i)
-                values[S0Idx + i] = S[i]; 
+                values[S0Idx + i] = S[i];
 
             values[p0Idx] = p[0];
         }

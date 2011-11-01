@@ -96,7 +96,7 @@ public:
                           const FVElementGeometry fvGeom,
                           int scvIdx) const
     { return asImp_().temperatureAtPos(fvGeom.subContVol[scvIdx].global); }
-    
+
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
      *
