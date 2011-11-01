@@ -241,7 +241,7 @@ public:
             values.setAllNeumann();
 
         if (onInlet_(globalPos))
-        	values.setAllNeumann();
+            values.setAllNeumann();
     }
 
     /*!

@@ -90,17 +90,17 @@ private:
     // TODO: Doc me! Besseren Namen finden!
     struct RestrictedValue
     {
-    	Scalar saturation;
-    	Scalar press;
-    	Scalar volCorr;
-    	int count;
-    	RestrictedValue()
-    	{
-    	    saturation = 0.;
-    		press = 0.;
-    		count = 0;
+        Scalar saturation;
+        Scalar press;
+        Scalar volCorr;
+        int count;
+        RestrictedValue()
+        {
+            saturation = 0.;
+            press = 0.;
+            count = 0;
             volCorr = 0;
-    	}
+        }
     };
 
     const Grid& grid_;
@@ -114,7 +114,7 @@ public:
      */
 
     VariableClass2PGridAdapt(const GridView& gridView) :
-            	VariableClass2P<TypeTag> (gridView), grid_(gridView.grid()), restrictionmap_(grid_,0) //codim 0 map
+                VariableClass2P<TypeTag> (gridView), grid_(gridView.grid()), restrictionmap_(grid_,0) //codim 0 map
     {}
 
 
@@ -128,40 +128,40 @@ public:
      */
     void storePrimVars(const Problem& problem)
     {
-		// loop over all levels of the grid
-		for (int level=grid_.maxLevel(); level>=0; level--)
-		{
-			//get grid view on level grid
-			LevelGridView levelView = grid_.levelView(level);
-			for (LevelIterator it = levelView.template begin<0>();
-					it!=levelView.template end<0>(); ++it)
-			{
-			    //get your map entry
-			    RestrictedValue &rv = restrictionmap_[*it];
+        // loop over all levels of the grid
+        for (int level=grid_.maxLevel(); level>=0; level--)
+        {
+            //get grid view on level grid
+            LevelGridView levelView = grid_.levelView(level);
+            for (LevelIterator it = levelView.template begin<0>();
+                    it!=levelView.template end<0>(); ++it)
+            {
+                //get your map entry
+                RestrictedValue &rv = restrictionmap_[*it];
 
-				// put your value in the map
-				if (it->isLeaf())
-				{
-	                // get index
-	                int indexI = this->index(*it);
+                // put your value in the map
+                if (it->isLeaf())
+                {
+                    // get index
+                    int indexI = this->index(*it);
 
-					rv.saturation = this->saturation()[indexI][0];
-					rv.press = this->pressure()[indexI][0];
-					rv.volCorr = this->volumecorrection(indexI);
-					rv.count = 1;
-				}
-				//Average in father
-				if (it.level()>0)
-				{
-					ElementPointer epFather = it->father();
-					RestrictedValue& rvf = restrictionmap_[*epFather];
-					rvf.saturation += rv.saturation/rv.count;
-					rvf.press += rv.press/rv.count;
-					rvf.volCorr += rv.volCorr/rv.count;
-					rvf.count += 1;
-				}
-			}
-		}
+                    rv.saturation = this->saturation()[indexI][0];
+                    rv.press = this->pressure()[indexI][0];
+                    rv.volCorr = this->volumecorrection(indexI);
+                    rv.count = 1;
+                }
+                //Average in father
+                if (it.level()>0)
+                {
+                    ElementPointer epFather = it->father();
+                    RestrictedValue& rvf = restrictionmap_[*epFather];
+                    rvf.saturation += rv.saturation/rv.count;
+                    rvf.press += rv.press/rv.count;
+                    rvf.volCorr += rv.volCorr/rv.count;
+                    rvf.count += 1;
+                }
+            }
+        }
     }
 
     /*!
@@ -176,53 +176,53 @@ public:
     {
         restrictionmap_.reserve();
 
-		for (int level=0; level<=grid_.maxLevel(); level++)
-		{
-			LevelGridView levelView = grid_.levelView(level);
-			for (LevelIterator it = levelView.template begin <0>();
-					it!=levelView.template end <0>(); ++it)
-			{
-		        if (!it->isNew())
-		        {
-					//entry is in map, write in leaf
-					if (it->isLeaf())
-					{
-					    RestrictedValue &rv = restrictionmap_[*it];
-						int newIdxI = this->index(*it);
-						this->saturation()[newIdxI][0] = rv.saturation/rv.count;
-						this->pressure()[newIdxI][0] = rv.press/rv.count;
-						this->volumecorrection(newIdxI) = rv.volCorr/rv.count;
-					}
-				}
-				else
-				{
-					// value is not in map, interpolate from father element
-					if (it.level()>0)
-					{
-						ElementPointer ep = it->father();
-						RestrictedValue& rvf = restrictionmap_[*ep];
-						if (it->isLeaf())
-						{
-							int newIdxI = this->index(*it);
-							this->saturation()[newIdxI][0] = rvf.saturation/rvf.count;
-							this->pressure()[newIdxI][0] = rvf.press/rvf.count;
-							this->volumecorrection(newIdxI) = rvf.volCorr/rvf.count;
-						}
-						else
-						{
-							//create new entry
-							RestrictedValue& rv = restrictionmap_[*it];
-							rv.saturation =rvf.saturation/rvf.count;
-							rv.press =rvf.press/rvf.count;
-							rv.volCorr =rvf.volCorr/rvf.count;
-							rv.count = 1;
-						}
-					}
-				}
-			}
-		}
-    	// reset entries in restrictionmap
-    	restrictionmap_.clear();
+        for (int level=0; level<=grid_.maxLevel(); level++)
+        {
+            LevelGridView levelView = grid_.levelView(level);
+            for (LevelIterator it = levelView.template begin <0>();
+                    it!=levelView.template end <0>(); ++it)
+            {
+                if (!it->isNew())
+                {
+                    //entry is in map, write in leaf
+                    if (it->isLeaf())
+                    {
+                        RestrictedValue &rv = restrictionmap_[*it];
+                        int newIdxI = this->index(*it);
+                        this->saturation()[newIdxI][0] = rv.saturation/rv.count;
+                        this->pressure()[newIdxI][0] = rv.press/rv.count;
+                        this->volumecorrection(newIdxI) = rv.volCorr/rv.count;
+                    }
+                }
+                else
+                {
+                    // value is not in map, interpolate from father element
+                    if (it.level()>0)
+                    {
+                        ElementPointer ep = it->father();
+                        RestrictedValue& rvf = restrictionmap_[*ep];
+                        if (it->isLeaf())
+                        {
+                            int newIdxI = this->index(*it);
+                            this->saturation()[newIdxI][0] = rvf.saturation/rvf.count;
+                            this->pressure()[newIdxI][0] = rvf.press/rvf.count;
+                            this->volumecorrection(newIdxI) = rvf.volCorr/rvf.count;
+                        }
+                        else
+                        {
+                            //create new entry
+                            RestrictedValue& rv = restrictionmap_[*it];
+                            rv.saturation =rvf.saturation/rvf.count;
+                            rv.press =rvf.press/rvf.count;
+                            rv.volCorr =rvf.volCorr/rvf.count;
+                            rv.count = 1;
+                        }
+                    }
+                }
+            }
+        }
+        // reset entries in restrictionmap
+        restrictionmap_.clear();
     }
 };
 }

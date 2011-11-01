@@ -269,7 +269,7 @@ public:
     void adaptVariableSize(int size)
      {
          //resize to grid size
-   	     this->setGridSize(size);
+            this->setGridSize(size);
          for (int i=0; i<2; i++) //for both phases
          {
          density_[i].resize(size);

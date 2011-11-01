@@ -96,16 +96,16 @@ public:
     BuckleyLeverettSpatialParams(const GridView& gridView)
     :ParentType(gridView)
     {
-    	Scalar permFactor = 0.001/(1000*9.81);
+        Scalar permFactor = 0.001/(1000*9.81);
 
-    	constPermeability_ = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
-		//Lenses:
-    	materialLawParams_.setSwr(Params::tree().template get<double>("SpatialParameters.swr"));
-    	materialLawParams_.setSnr(Params::tree().template get<double>("SpatialParameters.snr"));
-    	materialLawParams_.setPe(Params::tree().template get<double>("SpatialParameters.pe"));
-    	materialLawParams_.setLambda(Params::tree().template get<double>("SpatialParameters.lambda"));
+        constPermeability_ = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
+        //Lenses:
+        materialLawParams_.setSwr(Params::tree().template get<double>("SpatialParameters.swr"));
+        materialLawParams_.setSnr(Params::tree().template get<double>("SpatialParameters.snr"));
+        materialLawParams_.setPe(Params::tree().template get<double>("SpatialParameters.pe"));
+        materialLawParams_.setLambda(Params::tree().template get<double>("SpatialParameters.lambda"));
 
-    	porosity_ = Params::tree().template get<double>("SpatialParameters.porosity");
+        porosity_ = Params::tree().template get<double>("SpatialParameters.porosity");
     }
 
 private:
