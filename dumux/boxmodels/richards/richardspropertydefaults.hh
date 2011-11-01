@@ -98,7 +98,7 @@ public:
  *
  * By default this uses the immiscible twophase fluid system. The
  * actual fluids used are specified using in the problem definition by
- * the WettingPhase and NonwettingPhase properties. Be aware that
+ * the WettingPhase and NonWettingPhase properties. Be aware that
  * using different fluid systems in conjunction with the Richards
  * model only makes very limited sense.
  */
@@ -113,7 +113,7 @@ SET_TYPE_PROP(BoxRichards, FluidSystem, FluidSystem2P<TypeTag>);
  * if the viscosity of the liquid phase is _much_ lower than the
  * viscosity of the wetting phase.
  */
-SET_PROP(BoxRichards, NonwettingPhase)
+SET_PROP(BoxRichards, NonWettingPhase)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef GasPhase<Scalar, N2<Scalar> > type;

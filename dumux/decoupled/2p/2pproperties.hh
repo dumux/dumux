@@ -93,7 +93,7 @@ NEW_PROP_TAG( EnableCompressibility)
 ;// !< Returns whether compressibility is allowed
 NEW_PROP_TAG( WettingPhase)
 ; //!< The wetting phase for two-phase models
-NEW_PROP_TAG( NonwettingPhase)
+NEW_PROP_TAG( NonWettingPhase)
 ; //!< The non-wetting phase for two-phase models
 NEW_PROP_TAG( FluidSystem )//!< Defines the fluid system
 ;

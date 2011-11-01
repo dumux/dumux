@@ -77,7 +77,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(LensProblem2p, NonwettingPhase)
+SET_PROP(LensProblem2p, NonWettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

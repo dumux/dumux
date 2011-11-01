@@ -180,7 +180,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
-    { return fluidState_.phasePressure(phaseIdx); }
+    { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Returns temperature inside the sub-control volume.
