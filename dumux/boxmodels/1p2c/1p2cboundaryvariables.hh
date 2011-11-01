@@ -287,7 +287,7 @@ protected:
             ScalarGradient Kmvp;
             K_.mv(potentialGrad_, Kmvp);
             KmvpNormal_ = 0;
-            for (int i = 0; i < dim; ++i)
+            for (int i = 0; i < dim; ++i) 
                 KmvpNormal_ += Kmvp[i]*boundaryFace_->normal[i];
             KmvpNormal_ *= -1;
 

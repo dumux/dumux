@@ -120,7 +120,7 @@ public:
         fineK_ = 1e-15;
 
         // the porosity
-        porosity_ = 0.3;
+        porosity_ = 0.3;        
 
         // residual saturations
         fineMaterialParams_.setSwr(0.0);
@@ -134,7 +134,7 @@ public:
         coarseMaterialParams_.setEntryPC(0.0);
         fineMaterialParams_.setMaxPC(0.0);
         coarseMaterialParams_.setMaxPC(0.0);
-
+        
         /*
         // entry pressures for Brooks-Corey
         fineMaterialParams_.setPe(5e3);

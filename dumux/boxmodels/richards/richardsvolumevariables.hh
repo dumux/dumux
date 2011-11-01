@@ -90,8 +90,6 @@ public:
                 int scvIdx,
                 bool isOldSol)
     {
-        assert(!FluidSystem::isLiquid(nPhaseIdx));
-
         ParentType::update(priVars,
                            problem,
                            element,
@@ -111,9 +109,18 @@ public:
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
         fluidState_.update(pnRef, materialParams, priVars, temperature_);
 
-        relativePermeabilityWetting_ =
-            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
-
+        mobility_[wPhaseIdx] =
+            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx)) /
+            FluidSystem::phaseViscosity(wPhaseIdx,
+                                        temperature(),
+                                        fluidState_.phasePressure(wPhaseIdx),
+                                        fluidState_);
+        mobility_[nPhaseIdx] =
+            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx)) /
+            FluidSystem::phaseViscosity(nPhaseIdx,
+                                        temperature(),
+                                        fluidState_.phasePressure(wPhaseIdx),
+                                        fluidState_);
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
     }
 
@@ -160,7 +167,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar pressure(int phaseIdx) const
-    { return fluidState_.pressure(phaseIdx); }
+    { return fluidState_.phasePressure(phaseIdx); }
 
     /*!
      * \brief Returns average temperature \f$\mathrm{[K]}\f$ inside the control volume.
@@ -184,23 +191,8 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar mobility(int phaseIdx) const
-    { 
-        return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx);
-    }
+    { return mobility_[phaseIdx]; }
 
-    /*!
-     * \brief Returns relative permeability [-] of a given phase within
-     *        the control volume.
-     *
-     * \param phaseIdx The index of the fluid phase
-     */
-    Scalar relativePermeability(int phaseIdx) const
-    { 
-        if (phaseIdx == wPhaseIdx)
-            return relativePermeabilityWetting_;
-        return 1;
-    }
- 
     /*!
      * \brief Returns the effective capillary pressure \f$\mathrm{[Pa]}\f$ within the
      *        control volume.
@@ -223,7 +215,8 @@ protected:
     }
 
     FluidState fluidState_;
-    Scalar relativePermeabilityWetting_;
+
+    Scalar mobility_[numPhases];
     Scalar porosity_;
     Scalar temperature_;
 };

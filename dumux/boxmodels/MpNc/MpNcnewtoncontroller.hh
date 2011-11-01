@@ -193,7 +193,7 @@ class MPNCNewtonController : public NewtonController<TypeTag>
 public:
     MPNCNewtonController(const Problem &problem)
         : ParentType(problem)
-    {
+    { 
         enableChop_ = GET_PARAM(TypeTag, bool, Newton, EnableChop);
         Dune::FMatrixPrecision<>::set_singular_limit(1e-35);
     };

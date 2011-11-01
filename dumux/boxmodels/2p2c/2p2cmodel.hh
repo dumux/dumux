@@ -324,9 +324,9 @@ public:
             // initialize velocity fields
             for (int i = 0; i < numVertices; ++i)
             {
-                (*velocityG)[i] = Scalar(0);
-                (*velocityL)[i] = Scalar(0);
-                (*cellNum)[i] = Scalar(0.0);
+            	(*velocityG)[i] = Scalar(0);
+            	(*velocityL)[i] = Scalar(0);
+            	(*cellNum)[i] = Scalar(0.0);
             }
         }
 
@@ -399,14 +399,14 @@ public:
 
                 scvVelocityL = 0;
                 scvVelocityG = 0;
-
-                ElementVolumeVariables elemVolVars;
-
-                elemVolVars.update(this->problem_(),
-                                  *elemIt,
-                                  fvElemGeom,
-                                  false /* oldSol? */);
-
+                
+        		ElementVolumeVariables elemVolVars;
+        		
+        		elemVolVars.update(this->problem_(),
+                	              *elemIt,
+                    	          fvElemGeom,
+                        	      false /* oldSol? */);
+        		
                 for (int faceIdx = 0; faceIdx< fvElemGeom.numEdges; faceIdx++)
                 {
 
@@ -419,7 +419,7 @@ public:
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     {
 
-                         // data attached to upstream and the downstream vertices
+     					// data attached to upstream and the downstream vertices
                         // of the current phase
                         const VolumeVariables up =
                             elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
@@ -435,7 +435,7 @@ public:
 
                       GlobalPosition localNormal(0);
                       jacobianT1.mv(globalNormal, localNormal);
-                        // note only works for cubes
+                  	  // note only works for cubes
                       const Scalar localArea = pow(2,-(dim-1));
 
                       localNormal /= localNormal.two_norm();
@@ -445,10 +445,10 @@ public:
                       massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
                       PhasesVector q;
                       q[phaseIdx] = fluxDat.KmvpNormal(phaseIdx)
-                                           * (massUpwindWeight_
-                                           * up.mobility(phaseIdx)
-                                           + (1- massUpwindWeight_)
-                                           * dn.mobility(phaseIdx)) / localArea;
+                                		   * (massUpwindWeight_
+                                		   * up.mobility(phaseIdx)
+                                		   + (1- massUpwindWeight_)
+                                		   * dn.mobility(phaseIdx)) / localArea;
 
                       // transform the normal Darcy velocity into a vector
                       tmpVelocity[phaseIdx] = localNormal;
@@ -466,38 +466,38 @@ public:
                 }
 
                 typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-                const Dune::FieldVector<Scalar, dim>& localPos =
+                const Dune::FieldVector<Scalar, dim>& localPos = 
                     ReferenceElements::general(elemIt->geometry().type()).position(0, 0);
 
-                 // get the transposed Jacobian of the element mapping
+     			// get the transposed Jacobian of the element mapping
                 const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT2 = elemIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
-                for (int i = 0; i < numVerts; ++i)
+    			for (int i = 0; i < numVerts; ++i)
                 {
-                    int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                	int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
                     // calculate the subcontrolvolume velocity by the Piola transformation
                     Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocityL[i], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);
-                    // add up the wetting phase subcontrolvolume velocities for each vertex
-                    (*velocityL)[globalIdx] += scvVelocity;
+                	// add up the wetting phase subcontrolvolume velocities for each vertex
+                	(*velocityL)[globalIdx] += scvVelocity;
 
                     jacobianT2.mtv(scvVelocityG[i], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);
-                    // add up the nonwetting phase subcontrolvolume velocities for each vertex
-                    (*velocityG)[globalIdx] += scvVelocity;
+                	// add up the nonwetting phase subcontrolvolume velocities for each vertex
+                	(*velocityG)[globalIdx] += scvVelocity;
                 }
             }
         }
             if(velocityOutput_)
             {
                 // divide the vertex velocities by the number of adjacent scvs i.e. cells
-                for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
-                (*velocityL)[globalIdx] /= (*cellNum)[globalIdx];
-                (*velocityG)[globalIdx] /= (*cellNum)[globalIdx];
-                }
+    	        for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
+    	        (*velocityL)[globalIdx] /= (*cellNum)[globalIdx];
+    	        (*velocityG)[globalIdx] /= (*cellNum)[globalIdx];
+    	        }
             }
 
 
@@ -526,8 +526,8 @@ public:
 
         if(velocityOutput_) // check if velocity output is demanded
         {
-            writer.attachVertexData(*velocityL,  "velocityL", dim);
-            writer.attachVertexData(*velocityG,  "velocityG", dim);
+        	writer.attachVertexData(*velocityL,  "velocityL", dim);
+        	writer.attachVertexData(*velocityG,  "velocityG", dim);
         }
         writer.attachCellData(*rank, "process rank");
     }

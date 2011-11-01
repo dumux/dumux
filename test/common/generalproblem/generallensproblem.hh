@@ -91,7 +91,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(GeneralLensProblem, NonWettingPhase)
+SET_PROP(GeneralLensProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -203,8 +203,6 @@ class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, PTAG(ProblemBaseClass))
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
     typedef TwoPFluidState<TypeTag> FluidState;
 
     enum {
@@ -253,9 +251,9 @@ public:
      * \param lensUpperRight Global position of the lenses upper right corner
      */
     GeneralLensProblem(TimeManager &timeManager,
-                       const GridView &gridView,
-                       const GlobalPosition &lensLowerLeft,
-                       const GlobalPosition &lensUpperRight)
+                const GridView &gridView,
+                const GlobalPosition &lensLowerLeft,
+                const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
         temperature_ = 273.15 + 20; // -> 20°C
@@ -276,9 +274,7 @@ public:
 
     bool shouldWriteOutput() const
     {
-        if (this->timeManager().time() < eps_ ||
-            this->timeManager().willBeFinished() ||
-            this->timeManager().episodeWillBeOver())
+        if (this->timeManager().time() < eps_ || this->timeManager().willBeFinished() || this->timeManager().episodeWillBeOver())
         {
             return true;
         }
@@ -338,7 +334,7 @@ public:
     * \param globalPos The global coordinates of the boundary
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+            const GlobalPosition &globalPos) const
     {
         if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) {
             values.setAllDirichlet();
@@ -358,9 +354,12 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichletAtPos(PrimaryVariables &values,
-                        const GlobalPosition &globalPos) const
+                   const GlobalPosition &globalPos) const
     {
-        Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);
+        Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,
+                                                        wPhaseIdx,
+                                                        temperature_,
+                                                        1e5);
 
         if (onLeftBoundary_(globalPos))
         {
@@ -395,7 +394,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     void neumannAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+                 const GlobalPosition &globalPos) const
     {
         values = 0.0;
         if (onInlet_(globalPos)) {
@@ -420,10 +419,13 @@ public:
      * variables.
      */
     void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+                 const GlobalPosition &globalPos) const
     {
         Scalar depth = this->bboxMax()[1] - globalPos[1];
-        Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);
+        Scalar densityW = FluidSystem::componentDensity(wPhaseIdx,
+                                                        wPhaseIdx,
+                                                        temperature_,
+                                                        1e5);
 
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;

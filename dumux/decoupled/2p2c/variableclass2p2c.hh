@@ -420,7 +420,7 @@ public:
 
     /*! \brief Returns numerical phase density (current mass/volume, not from EOS)
      * \param Idx Element index
-     * \param phaseIdx Index of the phase
+     * \param phaseIdx Index of the phase 
      */
     Scalar& numericalDensity(int Idx, int phaseIdx)
     {
@@ -428,7 +428,7 @@ public:
     }
 
     /*! \brief Returns numerical phase density (current mass/volume, not from EOS)
-     * \param phaseIdx Index of the phase
+     * \param phaseIdx Index of the phase 
      */
     const ScalarSolutionType& numericalDensity(int phaseIdx) const
     {

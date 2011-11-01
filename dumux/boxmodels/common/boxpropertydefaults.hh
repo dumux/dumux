@@ -61,7 +61,7 @@ SET_TYPE_PROP(BoxModel, TimeManager, Dumux::TimeManager<TypeTag>);
 //////////////////////////////////////////////////////////////////
 
 //! Use the leaf grid view if not defined otherwise
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(BoxModel, 
               GridView,
               typename GET_PROP_TYPE(TypeTag, PTAG(Grid))::LeafGridView);
 
@@ -79,13 +79,13 @@ SET_TYPE_PROP(BoxModel, NewtonController, Dumux::NewtonController<TypeTag>);
 
 //! Mapper for the grid view's vertices.
 SET_TYPE_PROP(BoxModel,
-              VertexMapper,
+              VertexMapper, 
               Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, PTAG(GridView)),
                                                         Dune::MCMGVertexLayout>);
 
 //! Mapper for the grid view's elements.
 SET_TYPE_PROP(BoxModel,
-              ElementMapper,
+              ElementMapper, 
               Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, PTAG(GridView)),
                                                         Dune::MCMGElementLayout>);
 
@@ -98,22 +98,22 @@ SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
 /*!
  * \brief The type of a solution for the whole grid at a fixed time.
  */
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(BoxModel, 
               SolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables))>);
 
 /*!
  * \brief The type of a solution for a whole element.
  */
-SET_TYPE_PROP(BoxModel,
+SET_TYPE_PROP(BoxModel, 
               ElementSolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables))>);
 
 /*!
  * \brief A vector of primary variables.
  */
-SET_TYPE_PROP(BoxModel,
-              PrimaryVariables,
+SET_TYPE_PROP(BoxModel, 
+              PrimaryVariables, 
               Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
                                 GET_PROP_VALUE(TypeTag, PTAG(NumEq))>);
 
@@ -132,8 +132,8 @@ SET_TYPE_PROP(BoxModel, ElementVolumeVariables, Dumux::BoxElementVolumeVariables
 /*!
  * \brief Boundary types at a single degree of freedom.
  */
-SET_TYPE_PROP(BoxModel,
-              BoundaryTypes,
+SET_TYPE_PROP(BoxModel, 
+              BoundaryTypes, 
               Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, PTAG(NumEq))>);
 
 /*!

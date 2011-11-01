@@ -176,7 +176,7 @@ private:
             Scalar rhoI = elemVolVars[face().i].density();
             Scalar rhoJ = elemVolVars[face().j].density();
             Scalar density = (rhoI + rhoJ)/2;
-
+                
             // make it a force
             Vector f(g);
             f *= density;

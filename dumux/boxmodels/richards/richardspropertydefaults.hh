@@ -38,8 +38,8 @@
 #include "richardsproperties.hh"
 #include "richardsnewtoncontroller.hh"
 
-#include <dumux/material/components/nullcomponent.hh>
-#include <dumux/material/MpNcfluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/fluidsystems/2p_system.hh>
+#include <dumux/material/components/n2.hh>
 
 namespace Dumux
 {
@@ -94,56 +94,29 @@ public:
 };
 
 /*!
- * \brief The wetting phase used.
- *
- * By default we use the null-phase, i.e. this has to be defined by
- * the problem for the program to work. Please be aware that you
- * should be careful to use the Richards model in conjunction with
- * liquid non-wetting phases. This is only meaningful if the viscosity
- * of the liquid phase is _much_ lower than the viscosity of the
- * wetting phase.
- */
-SET_PROP(BoxRichards, WettingPhase)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
-};
-
-/*!
- * \brief The wetting phase used.
- *
- * By default we use the null-phase, i.e. this has to be defined by
- * the problem for the program to work. This doed not need to be
- * specified by the problem for the Richards model to work because the
- * Richards model does not conserve the non-wetting phase.
- */
-SET_PROP(BoxRichards, NonWettingPhase)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-public:
-    typedef Dumux::GasPhase<Scalar, Dumux::NullComponent<Scalar> > type;
-};
-
-/*!
  *\brief The fluid system used by the model.
  *
  * By default this uses the immiscible twophase fluid system. The
  * actual fluids used are specified using in the problem definition by
- * the WettingPhase and NonWettingPhase properties. Be aware that
+ * the WettingPhase and NonwettingPhase properties. Be aware that
  * using different fluid systems in conjunction with the Richards
  * model only makes very limited sense.
  */
-SET_PROP(BoxRichards, FluidSystem)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
+SET_TYPE_PROP(BoxRichards, FluidSystem, FluidSystem2P<TypeTag>);
 
-public:
-    typedef Dumux::TwoPImmiscibleFluidSystem<Scalar,
-                                             WettingPhase,
-                                             NonWettingPhase> type;
+/*!
+ * \brief The non-wetting phase used.
+ *
+ * By default we use gaseous nitrogen as non-wetting phase. Please be
+ * aware that you should be careful to use the Richards model in
+ * conjunction with liquid non-wetting phases. This is only meaningful
+ * if the viscosity of the liquid phase is _much_ lower than the
+ * viscosity of the wetting phase.
+ */
+SET_PROP(BoxRichards, NonwettingPhase)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef GasPhase<Scalar, N2<Scalar> > type;
 };
 
 //! The fluid state class

@@ -311,7 +311,7 @@ public:
         for (int i = 0; i < dim; ++i)
             tmp += vars.molarConcGrad(lPhaseIdx)[i] * vars.face().normal[i];
         tmp *= -1;
-        tmp *=
+        tmp *= 
             vars.porousDiffCoeff(lPhaseIdx) *
             vars.molarDensityAtIP(lPhaseIdx);
         // add the diffusive fluxes only to the component mass balance
@@ -325,7 +325,7 @@ public:
         for (int i = 0; i < dim; ++i)
             tmp += vars.molarConcGrad(gPhaseIdx)[i] * vars.face().normal[i];
         tmp *= -1;
-        tmp *=
+        tmp *= 
             vars.porousDiffCoeff(gPhaseIdx) *
             vars.molarDensityAtIP(gPhaseIdx);
         // add the diffusive fluxes only to the component mass balance

@@ -345,7 +345,7 @@ public:
 
     BlockVector AnalyticSolution() const
     {
-        return analyticSolution_;
+    	return analyticSolution_;
     }
 
     //Write saturation and pressure into file

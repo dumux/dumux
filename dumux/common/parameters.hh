@@ -98,7 +98,7 @@ NEW_PROP_TAG(ModelParameterGroup);
 namespace Parameters {
 
 template <class TypeTag>
-void findUnusedKeys_(std::list<std::string> &unusedParams,
+void findUnusedKeys_(std::list<std::string> &unusedParams, 
                      const Dune::ParameterTree &tree,
                      const std::string prefix="")
 {
@@ -106,7 +106,7 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
     const Dune::ParameterTree &rt = Params::runTimeParams();
 
     // loop over all keys of the current tree
-    const Dune::ParameterTree::KeyVector &keys =
+    const Dune::ParameterTree::KeyVector &keys = 
         tree.getValueKeys();
     for (int i = 0; i < keys.size(); ++i) {
         std::string canonicalName = prefix + keys[i];
@@ -118,16 +118,16 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
     }
 
     // loop over all subtrees
-    const Dune::ParameterTree::KeyVector &subKeys =
+    const Dune::ParameterTree::KeyVector &subKeys = 
         tree.getSubKeys();
     for (int i = 0; i < subKeys.size(); ++i) {
         std::string newPrefix = prefix + subKeys[i] + ".";
 
-        findUnusedKeys_<TypeTag>(unusedParams,
+        findUnusedKeys_<TypeTag>(unusedParams, 
                                  tree.sub(subKeys[i]),
                                  newPrefix);
     }
-
+    
 }
 
 /*!
@@ -169,13 +169,13 @@ void print(std::ostream &os = std::cout)
 const char *getString_(const char *foo = 0)
 { return foo; }
 
-template <class TypeTag>
+template <class TypeTag> 
 class Param
 {
     typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 public:
     template <class ParamType, class PropTag>
-    static const ParamType &get(const char *groupOrParamName,
+    static const ParamType &get(const char *groupOrParamName, 
                                 const char *paramNameOrNil = 0)
     {
 #ifndef NDEBUG
@@ -204,7 +204,7 @@ public:
     }
 
     template <class ParamType>
-    static const ParamType &getRuntime(const char *groupOrParamName,
+    static const ParamType &getRuntime(const char *groupOrParamName, 
                                        const char *paramNameOrNil = 0)
     {
 #ifndef NDEBUG
@@ -244,11 +244,11 @@ private:
     };
 
     template <class ParamType>
-    static void check_(const std::string &propertyName,
-                       const char *groupName,
+    static void check_(const std::string &propertyName, 
+                       const char *groupName, 
                        const char *paramName)
     {
-        const std::string &paramTypeName =
+        const std::string &paramTypeName = 
             Dune::className<ParamType>();
         typedef std::unordered_map<std::string, Blubb> StaticData;
         static StaticData staticData;
@@ -266,32 +266,32 @@ private:
         }
         else
             b = &(it->second);
-
+        
         if (b->groupName != groupName) {
             DUNE_THROW(Dune::InvalidStateException,
                        "GET_*_PARAM for parameter '" << paramName
-                       << "' called for at least two different groups ('"
+                       << "' called for at least two different groups ('" 
                        << b->groupName << "' and '" << groupName << "')");
         }
 
         if (b->propertyName != propertyName) {
             DUNE_THROW(Dune::InvalidStateException,
                        "GET_*_PARAM for parameter '" << paramName
-                       << "' called for at least two different properties ('"
+                       << "' called for at least two different properties ('" 
                        << b->propertyName << "' and '" << propertyName << "')");
         }
 
         if (b->paramTypeName != paramTypeName) {
             DUNE_THROW(Dune::InvalidStateException,
                        "GET_*_PARAM for parameter '" << paramName << "' in group '"
-                       << groupName << "' called with at least two different types ("
+                       << groupName << "' called with at least two different types (" 
                        << b->paramTypeName << " and " << paramTypeName << ")");
         }
     }
-
+    
     template <class ParamType, class PropTag>
     static const ParamType &retrieve_(const char *groupOrParamName, const char *paramNameOrNil = 0)
-    {
+    {   
         const char *paramName, *groupName;
         if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
             groupName = groupOrParamName;
@@ -351,7 +351,7 @@ private:
 
     template <class ParamType>
     static const ParamType &retrieveRuntime_(const char *groupOrParamName, const char *paramNameOrNil = 0)
-    {
+    {   
         const char *paramName, *groupName;
         if (paramNameOrNil && paramNameOrNil[0] != '\0') {
             groupName = groupOrParamName;
@@ -365,7 +365,7 @@ private:
         static std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value);
 
         std::string canonicalName(modelParamGroup);
-
+        
         // prefix the parameter with the parameter group of the
         // model. this allows things like sub-model specific parameters like
         //

@@ -56,7 +56,7 @@ class OnePTwoCBoxProblem : public BoxProblem<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
-
+    
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> Vector;
@@ -98,7 +98,7 @@ public:
                           const FVElementGeometry fvGeom,
                           int scvIdx) const
     { return asImp_().temperatureAtPos(fvGeom.subContVol[scvIdx].global); }
-
+    
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
      *

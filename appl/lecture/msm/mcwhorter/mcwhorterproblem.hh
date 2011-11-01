@@ -82,7 +82,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(McWhorterProblem, NonWettingPhase)
+SET_PROP(McWhorterProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -155,9 +155,9 @@ public:
         this->setOutputInterval(10);
 
         //Write header for ViPLab-Outputfile
-        std::ofstream dataFile;
-        dataFile.open("vipplot.vgf");
-        dataFile.close();
+    	std::ofstream dataFile;
+		dataFile.open("vipplot.vgf");
+		dataFile.close();
      }
 
     /*!
@@ -249,64 +249,64 @@ public:
     //Override outputfunction for ViPLab-Output
     void writeOutput()
     {
-        double time = this->timeManager().time();
-        if (time < 0)
-            return;
+    	double time = this->timeManager().time();
+    	if (time < 0)
+    		return;
 
         double discretizationLength = Params::tree().template get<double>("problem.DiscretizationLength");
-        int cellNumberX = static_cast<int>(2/discretizationLength);
-        discretizationLength = 2.0/cellNumberX; //Might be slightly different from the input parameter
+		int cellNumberX = static_cast<int>(2/discretizationLength);
+		discretizationLength = 2.0/cellNumberX; //Might be slightly different from the input parameter
 
-        std::ofstream dataFile;
-        dataFile.open("vipplot.vgf", std::fstream::app);
+    	std::ofstream dataFile;
+		dataFile.open("vipplot.vgf", std::fstream::app);
 
-        std::cout<<"Writing output for time step.\n";
+    	std::cout<<"Writing output for time step.\n";
 
-        if (time  > 0)
-            dataFile << "# newframe\n";
+    	if (time  > 0)
+    		dataFile << "# newframe\n";
 
-        dataFile << "# title Mc Whorther Problem\n";
-        dataFile << "# x-label x\n";
-        dataFile << "# y-label Saturation\n";
-        dataFile << "# x-range -0.1 2.1\n";
-        dataFile << "# y-range 0 1\n";
+		dataFile << "# title Mc Whorther Problem\n";
+		dataFile << "# x-label x\n";
+		dataFile << "# y-label Saturation\n";
+		dataFile << "# x-range -0.1 2.1\n";
+		dataFile << "# y-range 0 1\n";
 
-        dataFile << "# color 0 0 255\n";
+		dataFile << "# color 0 0 255\n";
 
-        Scalar curSat = this->variables().saturation()[0];
+		Scalar curSat = this->variables().saturation()[0];
 
-        // Draw first piece separately, as no vertical line is needed
-        dataFile << 0 << " " << curSat << " "
-                 << discretizationLength << " " << curSat <<std::endl;
-        for (int i=1; i < cellNumberX; i++)
-        {
-            // Vertical Line
-            dataFile << i*discretizationLength << " "
-                     << curSat << " ";
-            curSat = this->variables().saturation()[i];
-            dataFile << i*discretizationLength << " " << curSat << std::endl;
-            //Horizontal Line
-            dataFile << i*discretizationLength << " " << curSat << " "
-                     << (i+1)*discretizationLength << " " << curSat << std::endl;
-        }
-        dataFile << "# color 255 0 0\n";
+		// Draw first piece separately, as no vertical line is needed
+		dataFile << 0 << " " << curSat << " "
+		         << discretizationLength << " " << curSat <<std::endl;
+		for (int i=1; i < cellNumberX; i++)
+		{
+			// Vertical Line
+			dataFile << i*discretizationLength << " "
+					 << curSat << " ";
+			curSat = this->variables().saturation()[i];
+			dataFile << i*discretizationLength << " " << curSat << std::endl;
+			//Horizontal Line
+			dataFile << i*discretizationLength << " " << curSat << " "
+					 << (i+1)*discretizationLength << " " << curSat << std::endl;
+		}
+		dataFile << "# color 255 0 0\n";
 
-        curSat = analyticSolution_.AnalyticSolution()[0];
-        dataFile << 0 << " " << curSat << " "
-                 << discretizationLength << " " << curSat <<std::endl;
-        for (int i=1; i < cellNumberX; i++)
-        {
-            // Vertical Line
-            dataFile << i*discretizationLength << " "
-                     << curSat << " ";
-            curSat = analyticSolution_.AnalyticSolution()[i];
-            dataFile << i*discretizationLength << " " << curSat << std::endl;
-            //Horizontal Line
-            dataFile << i*discretizationLength << " " << curSat << " "
-                     << (i+1)*discretizationLength << " " << curSat << std::endl;
-        }
-        dataFile << "# legend Numerical Solution,Analytic Solution\n";
-        dataFile.close();
+		curSat = analyticSolution_.AnalyticSolution()[0];
+		dataFile << 0 << " " << curSat << " "
+				 << discretizationLength << " " << curSat <<std::endl;
+		for (int i=1; i < cellNumberX; i++)
+		{
+			// Vertical Line
+			dataFile << i*discretizationLength << " "
+					 << curSat << " ";
+			curSat = analyticSolution_.AnalyticSolution()[i];
+			dataFile << i*discretizationLength << " " << curSat << std::endl;
+			//Horizontal Line
+			dataFile << i*discretizationLength << " " << curSat << " "
+					 << (i+1)*discretizationLength << " " << curSat << std::endl;
+		}
+		dataFile << "# legend Numerical Solution,Analytic Solution\n";
+		dataFile.close();
     }
 
 

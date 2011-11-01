@@ -180,7 +180,7 @@ protected:
 
             // make it a force
             f *= density;
-
+        
             // calculate the final potential gradient
             potentialGrad_ -= f;
         }

@@ -183,7 +183,7 @@ public:
         setAbsTolerance(GET_PARAM(TypeTag, Scalar, Newton, AbsTolerance));
         setTargetSteps(GET_PARAM(TypeTag, int, Newton, TargetSteps));
         setMaxSteps(GET_PARAM(TypeTag, int, Newton, MaxSteps));
-
+        
         verbose_ = true;
         numSteps_ = 0;
     };

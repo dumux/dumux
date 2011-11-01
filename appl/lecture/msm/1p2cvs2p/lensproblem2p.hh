@@ -77,7 +77,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(LensProblem2p, NonWettingPhase)
+SET_PROP(LensProblem2p, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -241,7 +241,7 @@ public:
             values.setAllNeumann();
 
         if (onInlet_(globalPos))
-            values.setAllNeumann();
+        	values.setAllNeumann();
     }
 
     /*!

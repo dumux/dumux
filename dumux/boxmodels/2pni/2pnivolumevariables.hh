@@ -92,19 +92,21 @@ public:
                            scvIdx,
                            isOldSol);
 
-        typename FluidSystem::ParameterCache paramCache;
-        // TODO: this calculates the cached parameters a second time
-        // and is thus inefficient!
-        paramCache.updateAll(this->fluidState());
-
-        // the internal energies
+        // the internal energies and the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            enthalpy_[phaseIdx] =
+                FluidSystem::phaseEnthalpy(phaseIdx,
+                                      this->fluidState().temperature(),
+                                      this->fluidState().phasePressure(phaseIdx),
+                                      this->fluidState());
             internalEnergy_[phaseIdx] =
-                FluidSystem::internalEnergy(this->fluidState(),
-                                            paramCache,
-                                            phaseIdx);
+                FluidSystem::phaseInternalEnergy(phaseIdx,
+                                            this->fluidState().temperature(),
+                                            this->fluidState().phasePressure(phaseIdx),
+                                            this->fluidState());
         }
         Valgrind::CheckDefined(internalEnergy_);
+        Valgrind::CheckDefined(enthalpy_);
     }
 
     /*!
@@ -152,10 +154,7 @@ public:
      *  \param phaseIdx The phase index
      */
     Scalar enthalpy(int phaseIdx) const
-    {
-        return internalEnergy_[phaseIdx]
-            + this->fluidState().pressure(phaseIdx)
-            / this->fluidState().density(phaseIdx); };
+    { return enthalpy_[phaseIdx]; };
 
     /*!
      * \brief Returns the total heat capacity \f$\mathrm{[J/K*m^3]}\f$ of the rock matrix in
@@ -166,6 +165,7 @@ public:
 
 protected:
     Scalar internalEnergy_[numPhases];
+    Scalar enthalpy_[numPhases];
     Scalar heatCapacity_;
 };
 

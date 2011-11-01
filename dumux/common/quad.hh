@@ -48,11 +48,11 @@ class numeric_limits<quad>
 public:
     static constexpr bool is_specialized = true;
 
-    static constexpr quad min() throw()
+    static constexpr quad min() throw() 
     { return FLT128_MIN; }
     static constexpr quad max() throw()
     { return FLT128_MAX; }
-
+        
     // number of bits in mantissa
     static constexpr int  digits = FLT128_MANT_DIG;
     // number of decimal digits
@@ -65,12 +65,12 @@ public:
     { return FLT128_EPSILON; }
     static constexpr quad round_error() throw()
     { return 0.5; }
-
+    
     static constexpr int min_exponent = FLT128_MIN_EXP;
     static constexpr int min_exponent10 = FLT128_MIN_10_EXP;
     static constexpr int max_exponent = FLT128_MAX_EXP;
     static constexpr int max_exponent10 = FLT128_MAX_10_EXP;
-
+    
     static constexpr bool has_infinity = true;
     static constexpr bool has_quiet_NaN = true;
     static constexpr bool has_signaling_NaN = true;
@@ -84,11 +84,11 @@ public:
     { return __builtin_nans(""); }
     static constexpr quad denorm_min() throw()
     { return FLT128_DENORM_MIN; }
-
+    
     static constexpr bool is_iec559 = true;
     static constexpr bool is_bounded = true;
     static constexpr bool is_modulo = false;
-
+    
     static constexpr bool traps = std::numeric_limits<double>::traps;
     static constexpr bool tinyness_before = std::numeric_limits<double>::tinyness_before;
     static constexpr float_round_style round_style = round_to_nearest;
@@ -136,6 +136,6 @@ inline bool isinf(quad val)
 { return isinfq(val); };
 
 } // namespace std
-
+        
 
 #endif // DUMUX_QUAD_HH

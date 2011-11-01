@@ -32,10 +32,10 @@ namespace Dumux
 
 struct Lens
 {
-    Dune::FieldMatrix<double,2,2> permeability;
-    //double permeability;
-    Dune::FieldVector<double,2> lowerLeft;
-    Dune::FieldVector<double,2> upperRight;
+	Dune::FieldMatrix<double,2,2> permeability;
+	//double permeability;
+	Dune::FieldVector<double,2> lowerLeft;
+	Dune::FieldVector<double,2> upperRight;
 };
 
 
@@ -91,33 +91,33 @@ public:
     GroundwaterSpatialParams(const GridView& gridView)
     : FVSpatialParametersOneP<TypeTag>(gridView), permeability_(0)
     {
-        delta_=1e-3;
-        porosity_ = 0.2;
+    	delta_=1e-3;
+		porosity_ = 0.2;
 
-        Scalar permFactor = 0.001/(1000*9.81);
+		Scalar permFactor = 0.001/(1000*9.81);
 
-        permeability_[0][0] = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
-        permeability_[1][1] = permeability_[0][0];
-        permeability_[0][1] = 0;
-        permeability_[1][0] = 0;
+		permeability_[0][0] = Params::tree().template get<double>("SpatialParameters.permeability")*permFactor;
+		permeability_[1][1] = permeability_[0][0];
+		permeability_[0][1] = 0;
+		permeability_[1][0] = 0;
 
-        //Lenses:
-        std::vector<double> lenses = Params::tree().template get<std::vector<double>>("SpatialParameters.lenses");
-        int NumberOfLenses = std::trunc(lenses.size()/5);
+		//Lenses:
+		std::vector<double> lenses = Params::tree().template get<std::vector<double>>("SpatialParameters.lenses");
+		int NumberOfLenses = std::trunc(lenses.size()/5);
 
-        for (int lensCount=0; lensCount<NumberOfLenses ; lensCount++)
-        {
-            Lens tempLens;
-            tempLens.lowerLeft[0]=lenses[lensCount*5];
-            tempLens.upperRight[0]=lenses[lensCount*5+1];
-            tempLens.lowerLeft[1]=lenses[lensCount*5+2];
-            tempLens.upperRight[1]=lenses[lensCount*5+3];
-            tempLens.permeability[0][0]=lenses[lensCount*5+4]*permFactor;
-            tempLens.permeability[1][1] = tempLens.permeability[0][0];
-            tempLens.permeability[0][1] = 0;
-            tempLens.permeability[1][0] = 0;
-            lenses_.push_back(tempLens);
-        }
+		for (int lensCount=0; lensCount<NumberOfLenses ; lensCount++)
+		{
+			Lens tempLens;
+			tempLens.lowerLeft[0]=lenses[lensCount*5];
+			tempLens.upperRight[0]=lenses[lensCount*5+1];
+			tempLens.lowerLeft[1]=lenses[lensCount*5+2];
+			tempLens.upperRight[1]=lenses[lensCount*5+3];
+			tempLens.permeability[0][0]=lenses[lensCount*5+4]*permFactor;
+			tempLens.permeability[1][1] = tempLens.permeability[0][0];
+			tempLens.permeability[0][1] = 0;
+			tempLens.permeability[1][0] = 0;
+			lenses_.push_back(tempLens);
+		}
     }
 
 private:

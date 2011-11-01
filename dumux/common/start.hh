@@ -330,7 +330,7 @@ int startFromInputFile(int argc, char **argv)
                gridPtr->leafView(),
                Params::tree());
        timeManager.init(problem, startTime, dt, tEnd, restart);
-
+       
        // print all properties
        Dumux::Properties::print<TypeTag>();
 

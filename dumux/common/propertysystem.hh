@@ -484,7 +484,7 @@ public:
     { return propertyKind_; }
     const std::string &propertyName() const
     { return propertyName_; }
-    const std::string &propertyValue() const
+    const std::string &propertyValue() const 
     { return propertyValue_; }
     const std::string &fileDefined() const
     { return fileDefined_; }
@@ -532,12 +532,12 @@ class TypeTagRegistry
 public:
     typedef std::list<std::string> ChildrenList;
     typedef std::map<std::string, ChildrenList> ChildrenListMap;
-
+    
     template <class TypeTag,
-              class Child1 = void,
-              class Child2 = void,
-              class Child3 = void,
-              class Child4 = void,
+              class Child1 = void, 
+              class Child2 = void, 
+              class Child3 = void, 
+              class Child4 = void, 
               class Child5 = void>
     static void addChildren()
     {
@@ -558,7 +558,7 @@ public:
     {
         return keys_[typeTagName];
     };
-
+    
 private:
     static ChildrenListMap keys_;
 };
@@ -858,7 +858,7 @@ struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 5>
 
 #if !defined NO_PROPERTY_INTROSPECTION
 std::string canonicalTypeTagNameToName_(const std::string &canonicalName)
-{
+{ 
     std::string result(canonicalName);
     result.replace(0, strlen("Dumux::Properties::TTag::"), "");
     return result;
@@ -880,7 +880,7 @@ inline bool getDiagnostic_(const std::string &typeTagName,
             break;
         };
     }
-
+    
     if (key) {
         result = indent;
         result +=
@@ -917,7 +917,7 @@ const std::string getDiagnostic(std::string propTagName)
     int n = propTagName.length();
     propTagName.replace(n - 1, 1, "");
     //TypeTagName.replace(0, strlen("Dumux::Properties::TTag::"), "");
-
+    
     if (!getDiagnostic_(TypeTagName, propTagName, result, "")) {
         // check whether the property is a default property
         const PropertyRegistry::KeyList &keys =
@@ -982,7 +982,7 @@ inline void print_(const std::string &typeTagName,
             os << "\n";
             somethingPrinted = true;
         }
-        os << indent << "  "
+        os << indent << "  " 
            << key.propertyKind() << " " << key.propertyName();
         if (key.propertyKind() != "opaque")
             os << " = '" << key.propertyValue() << "'";

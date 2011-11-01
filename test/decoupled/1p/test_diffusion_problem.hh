@@ -78,7 +78,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(DiffusionTestProblem, NonWettingPhase)
+SET_PROP(DiffusionTestProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

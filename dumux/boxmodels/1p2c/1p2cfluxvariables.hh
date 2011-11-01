@@ -63,7 +63,7 @@ class OnePTwoCFluxVariables
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
-
+    
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
@@ -363,7 +363,7 @@ protected:
 
             // make it a force
             f *= density;
-
+        
             // calculate the final potential gradient
             potentialGrad_ -= f;
         }

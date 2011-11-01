@@ -134,7 +134,7 @@ public:
         hasDirichlet_ = false;
         hasNeumann_ = false;
         hasOutflow_ = false;
-
+        
         if (nBoundary == 0) {
             for (int i = 0; i < numVerts; ++i)
                 (*this)[i].reset();

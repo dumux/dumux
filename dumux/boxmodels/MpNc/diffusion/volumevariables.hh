@@ -78,7 +78,7 @@ public:
                                                         gPhaseIdx,
                                                         compIIdx,
                                                         compJIdx);
-
+                
                 // fill the symmetric part of the diffusion coefficent
                 // matrix
                 diffCoeffG_[compJIdx][compIIdx] = diffCoeffG_[compIIdx][compJIdx];
