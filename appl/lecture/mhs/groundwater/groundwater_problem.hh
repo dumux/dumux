@@ -141,7 +141,7 @@ public:
 //        this->spatialParameters().setDelta(delta_);
 
     	// Write input parameters into private variables
-        Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
+        //Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
         domainSize_ = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         geometryDepth_ = Params::tree().template get<double>("Geometry.depth");
         resolution_ = Params::tree().template get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");

@@ -37,6 +37,11 @@
 #include "2pvolumevariables.hh"
 #include "2pfluidstate.hh"
 #include "2pproperties.hh"
+
+#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/components/nullcomponent.hh>
+
 #include <dumux/material/MpNcfluidsystems/2pimmisciblefluidsystem.hh>
 
 namespace Dumux
@@ -83,6 +88,20 @@ SET_TYPE_PROP(BoxTwoP,
 SET_TYPE_PROP(BoxTwoP, 
               MaterialLawParams, 
               typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))::Params);
+
+SET_PROP(BoxTwoP, WettingPhase)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+};
+
+SET_PROP(BoxTwoP, NonWettingPhase)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+};
 
 SET_PROP(BoxTwoP, FluidSystem)
 { private:
