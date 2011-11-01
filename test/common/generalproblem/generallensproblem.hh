@@ -253,9 +253,9 @@ public:
      * \param lensUpperRight Global position of the lenses upper right corner
      */
     GeneralLensProblem(TimeManager &timeManager,
-                const GridView &gridView,
-                const GlobalPosition &lensLowerLeft,
-                const GlobalPosition &lensUpperRight)
+                       const GridView &gridView,
+                       const GlobalPosition &lensLowerLeft,
+                       const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
         temperature_ = 273.15 + 20; // -> 20°C
@@ -276,7 +276,9 @@ public:
 
     bool shouldWriteOutput() const
     {
-        if (this->timeManager().time() < eps_ || this->timeManager().willBeFinished() || this->timeManager().episodeWillBeOver())
+        if (this->timeManager().time() < eps_ ||
+            this->timeManager().willBeFinished() || 
+            this->timeManager().episodeWillBeOver())
         {
             return true;
         }
@@ -336,7 +338,7 @@ public:
     * \param globalPos The global coordinates of the boundary
      */
     void boundaryTypesAtPos(BoundaryTypes &values,
-            const GlobalPosition &globalPos) const
+                            const GlobalPosition &globalPos) const
     {
         if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) {
             values.setAllDirichlet();
@@ -356,7 +358,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     void dirichletAtPos(PrimaryVariables &values,
-                   const GlobalPosition &globalPos) const
+                        const GlobalPosition &globalPos) const
     {
         Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);
 
@@ -393,7 +395,7 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     void neumannAtPos(PrimaryVariables &values,
-                 const GlobalPosition &globalPos) const
+                      const GlobalPosition &globalPos) const
     {
         values = 0.0;
         if (onInlet_(globalPos)) {
@@ -418,7 +420,7 @@ public:
      * variables.
      */
     void initialAtPos(PrimaryVariables &values,
-                 const GlobalPosition &globalPos) const
+                      const GlobalPosition &globalPos) const
     {
         Scalar depth = this->bboxMax()[1] - globalPos[1];
         Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);

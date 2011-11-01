@@ -126,8 +126,7 @@ public:
      *
      * \param globalPos The global coordinates of the finite volume
      */
-    const FieldMatrix& intrinsicPermeabilityAtPos(
-            const GlobalPosition &globalPos) const
+    const FieldMatrix& intrinsicPermeabilityAtPos(const GlobalPosition &globalPos) const
     {
         if (isInLens_(globalPos))
             return lensK_;
@@ -179,8 +178,8 @@ private:
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 
-        FieldMatrix lensK_;
-        FieldMatrix outerK_;
+    FieldMatrix lensK_;
+    FieldMatrix outerK_;
 
     MaterialLawParams lensMaterialParams_;
     MaterialLawParams outerMaterialParams_;
