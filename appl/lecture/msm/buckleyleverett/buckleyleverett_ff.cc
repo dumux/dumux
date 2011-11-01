@@ -110,13 +110,13 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
 
         typedef GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
 
         WettingPhase::Component::setViscosity(Params::tree().get<double>("Fluid.viscosityW"));
-        NonwettingPhase::Component::setViscosity(Params::tree().get<double>("Fluid.viscosityNW"));
+        NonWettingPhase::Component::setViscosity(Params::tree().get<double>("Fluid.viscosityNW"));
 
         WettingPhase::Component::setDensity(Params::tree().get<double>("Fluid.densityW"));
-        NonwettingPhase::Component::setDensity(Params::tree().get<double>("Fluid.densityNW"));
+        NonWettingPhase::Component::setDensity(Params::tree().get<double>("Fluid.densityNW"));
 
         TimeManager timeManager;
         Problem problem(timeManager, grid.leafView(), lowerLeft, upperRight);
