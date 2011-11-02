@@ -123,7 +123,8 @@ public:
         {
             // write initial condition (if problem is not restarted)
             time_ -= timeStepSize_;
-            problem_->writeOutput();
+            if (problem_->shouldWriteOutput())
+                problem_->writeOutput();
             time_ += timeStepSize_;
         }
 
