@@ -516,7 +516,7 @@ public:
     {
         return
             timeManager().timeStepIndex() > 0 &&
-            (timeManager().timeStepIndex() % int(5*outputInterval_) == 0);
+            (timeManager().timeStepIndex() % int(100*outputInterval_) == 0);
     }
 
     /*!
@@ -525,7 +525,7 @@ public:
      * The default is 1 -> Output every time step
      */
     void setOutputInterval(int interval)
-    { outputInterval_ = interval; }
+    { outputInterval_ = std::max(interval, 1); }
 
     /*!
      * \brief Returns true if the current solution should be written to
@@ -622,6 +622,13 @@ public:
     }
 
     void preAdapt()
+    {
+        if (!adaptiveGrid)
+            Dune::dgrave << "adaptivity functionality was called despite "
+                << "adaptivity is disabled in property system \n;" << adaptiveGrid;
+    }
+
+    void postAdapt()
     {
         if (!adaptiveGrid)
             Dune::dgrave << "adaptivity functionality was called despite "
