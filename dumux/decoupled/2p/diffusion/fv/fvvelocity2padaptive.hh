@@ -153,87 +153,87 @@ public:
     {
         ParentType::addOutputVtkFields(writer);
 
-//        Dune::BlockVector<Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar, dim> (
-//                this->problem().gridView().size(0)));
-//        Dune::BlockVector<Dune::FieldVector<Scalar, dim> > &velocitySecondPhase = *(writer.template allocateManagedBuffer<Scalar, dim> (
-//                this->problem().gridView().size(0)));
-//
-//        // compute update vector
-//        ElementIterator eItEnd = this->problem().gridView().template end<0>();
-//        for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
-//        {
-//            // cell index
-//            int globalIdx = this->problem().variables().index(*eIt);
-//
-//            Dune::FieldVector<Scalar, 2*dim> fluxW(0);
-//            Dune::FieldVector<Scalar, 2*dim> fluxNW(0);
-//            // run through all intersections with neighbors and boundary
-//            IntersectionIterator
-//            isItEnd = this->problem().gridView().iend(*eIt);
-//            for (IntersectionIterator
-//                    isIt = this->problem().gridView().ibegin(*eIt); isIt
-//                    !=isItEnd; ++isIt)
-//            {
-//                int isIndex = isIt->indexInInside();
-//
-//                fluxW[isIndex] = isIt->geometry().volume() * (isIt->centerUnitOuterNormal() * this->problem().variables().velocityElementFace(*eIt, isIndex));
-//                fluxNW[isIndex] = isIt->geometry().volume() * (isIt->centerUnitOuterNormal() * this->problem().variables().velocitySecondPhase()[this->problem().variables().index(*eIt)][isIndex]);
-//            }
-//
-//            Dune::FieldVector<Scalar, dim> refVelocity(0);
-//            refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
-//            refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
-//
-//            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0,
-//                    0);
-//
-//            // get the transposed Jacobian of the element mapping
-//            const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
-//            FieldMatrix jacobianT(jacobianInv);
-//            jacobianT.invert();
-//
-//            // calculate the element velocity by the Piola transformation
-//            Dune::FieldVector<Scalar, dim> elementVelocity(0);
-//            jacobianT.umtv(refVelocity, elementVelocity);
-//            elementVelocity /= eIt->geometry().integrationElement(localPos);
-//
-//            velocity[globalIdx] = elementVelocity;
-//
-//            refVelocity = 0;
-//            refVelocity[0] = 0.5 * (fluxNW[1] - fluxNW[0]);
-//            refVelocity[1] = 0.5 * (fluxNW[3] - fluxNW[2]);
-//
-//            // calculate the element velocity by the Piola transformation
-//            elementVelocity = 0;
-//            jacobianT.umtv(refVelocity, elementVelocity);
-//            elementVelocity /= eIt->geometry().integrationElement(localPos);
-//
-//            velocitySecondPhase[globalIdx] = elementVelocity;
-//        }
-//
-//        //switch velocities
-//        switch (velocityType_)
-//        {
-//        case vw:
-//        {
-//            writer.attachCellData(velocity, "wetting-velocity", dim);
-//            writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
-//            break;
-//        }
-//        case vn:
-//        {
-//            writer.attachCellData(velocity, "non-wetting-velocity", dim);
-//            writer.attachCellData(velocitySecondPhase, "wetting-velocity", dim);
-//            break;
-//        }
-//        case vt:
-//        {
-//            writer.attachCellData(velocity, "total velocity", dim);
-//            break;
-//        }
-//        }
-//
-//        return;
+        Dune::BlockVector<Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar, dim> (
+                this->problem().gridView().size(0)));
+        Dune::BlockVector<Dune::FieldVector<Scalar, dim> > &velocitySecondPhase = *(writer.template allocateManagedBuffer<Scalar, dim> (
+                this->problem().gridView().size(0)));
+
+        // compute update vector
+        ElementIterator eItEnd = this->problem().gridView().template end<0>();
+        for (ElementIterator eIt = this->problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        {
+            // cell index
+            int globalIdx = this->problem().variables().index(*eIt);
+
+            Dune::FieldVector<Scalar, 2*dim> fluxW(0);
+            Dune::FieldVector<Scalar, 2*dim> fluxNW(0);
+            // run through all intersections with neighbors and boundary
+            IntersectionIterator
+            isItEnd = this->problem().gridView().iend(*eIt);
+            for (IntersectionIterator
+                    isIt = this->problem().gridView().ibegin(*eIt); isIt
+                    !=isItEnd; ++isIt)
+            {
+                int isIndex = isIt->indexInInside();
+
+                fluxW[isIndex] = isIt->geometry().volume() * (isIt->centerUnitOuterNormal() * this->problem().variables().velocityElementFace(*eIt, isIndex));
+                fluxNW[isIndex] = isIt->geometry().volume() * (isIt->centerUnitOuterNormal() * this->problem().variables().velocitySecondPhase()[this->problem().variables().index(*eIt)][isIndex]);
+            }
+
+            Dune::FieldVector<Scalar, dim> refVelocity(0);
+            refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
+            refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
+
+            const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElementContainer::general(eIt->geometry().type()).position(0,
+                    0);
+
+            // get the transposed Jacobian of the element mapping
+            const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
+            FieldMatrix jacobianT(jacobianInv);
+            jacobianT.invert();
+
+            // calculate the element velocity by the Piola transformation
+            Dune::FieldVector<Scalar, dim> elementVelocity(0);
+            jacobianT.umtv(refVelocity, elementVelocity);
+            elementVelocity /= eIt->geometry().integrationElement(localPos);
+
+            velocity[globalIdx] = elementVelocity;
+
+            refVelocity = 0;
+            refVelocity[0] = 0.5 * (fluxNW[1] - fluxNW[0]);
+            refVelocity[1] = 0.5 * (fluxNW[3] - fluxNW[2]);
+
+            // calculate the element velocity by the Piola transformation
+            elementVelocity = 0;
+            jacobianT.umtv(refVelocity, elementVelocity);
+            elementVelocity /= eIt->geometry().integrationElement(localPos);
+
+            velocitySecondPhase[globalIdx] = elementVelocity;
+        }
+
+        //switch velocities
+        switch (velocityType_)
+        {
+        case vw:
+        {
+            writer.attachCellData(velocity, "wetting-velocity", dim);
+            writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
+            break;
+        }
+        case vn:
+        {
+            writer.attachCellData(velocity, "non-wetting-velocity", dim);
+            writer.attachCellData(velocitySecondPhase, "wetting-velocity", dim);
+            break;
+        }
+        case vt:
+        {
+            writer.attachCellData(velocity, "total velocity", dim);
+            break;
+        }
+        }
+
+        return;
     }
 
 private:
@@ -275,15 +275,12 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
         Scalar densityNWI = this->problem().variables().densityNonwetting(globalIdxI);
 
         // run through all intersections with neighbors and boundary
-//        int isIndex = -1;
         IntersectionIterator isItEnd = this->problem().gridView().iend(*eIt);
         for (IntersectionIterator
                 isIt = this->problem().gridView().ibegin(*eIt); isIt
                 !=isItEnd; ++isIt)
         {
             // local number of facet
-//        	isIndex++;
-
             int isIndex = isIt->indexInInside();
 
             Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->centerUnitOuterNormal();
@@ -464,17 +461,10 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 					// GlobalIdxK, the index of the third cell
 					// for efficienty this is done in one IntersectionIterator-Loop
 
-					Scalar areaWeight = 0;
-
 					// Intersectioniterator around cell J
-//					int isIndexJ = -1;
 					IntersectionIterator isItEndJ = this->problem().gridView().iend(*neighborPointer);
-
 					for (IntersectionIterator isItJ = this->problem().gridView().ibegin(*neighborPointer); isItJ != isItEndJ; ++isItJ)
 					{
-						// increase isIndexJJ, if it is not found yet
-						if (!foundIJ)
-//							isIndexJ++;
 						if (isItJ->neighbor())
 						{
 							ElementPointer neighborPointer2 = isItJ->outside();
@@ -483,7 +473,6 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 							if (this->problem().variables().index(*neighborPointer2)==globalIdxI)
 							{
 								foundIJ=true;
-								areaWeight = isItJ->geometry().volume();
 							}
 							else
 							{
@@ -511,8 +500,6 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 					}
 
 					int isIndexJ = isIt->indexInOutside();
-					areaWeight /= isIt->geometry().volume();
-//					areaWeight = 1.0;
 
 					// neighbor cell center in global coordinates
 					const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
@@ -738,13 +725,11 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 						case vw:
 						{
 						    Dune::FieldVector<Scalar,dimWorld> vel(velocityW);
-						    vel*=areaWeight;
+						    vel*=0.5;//0.5 -> only one hanging node per face!
 							this->problem().variables().velocity()[globalIdxI][isIndex] += vel;
 						    vel = velocityNW;
-						    vel*=areaWeight;
+						    vel*=0.5;
 							this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += vel;
-//                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityW;
-//                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
 							this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityW;
 							this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityNW;
 							break;
@@ -752,13 +737,11 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 						case vn:
 						{
                             Dune::FieldVector<Scalar,dimWorld> vel(velocityNW);
-                            vel*=areaWeight;
+                            vel*=0.5;
 							this->problem().variables().velocity()[globalIdxI][isIndex] += (vel);
                             vel = velocityW;
-                            vel*=areaWeight;
+                            vel*=0.5;
 							this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel);
-//                            this->problem().variables().velocity()[globalIdxI][isIndex] = velocityNW;
-//                            this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
 							this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityNW;
 							this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityW;
 							break;
@@ -771,11 +754,9 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 								{
 								    Dune::FieldVector<Scalar,dimWorld> vel(velocityW);
 								    vel+=velocityNW;
-									this->problem().variables().velocity()[globalIdxI][isIndex] += (vel *=areaWeight);
+									this->problem().variables().velocity()[globalIdxI][isIndex] += (vel *=0.5);
 									vel = velocityNW;
-									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel*=areaWeight);
-//                                    this->problem().variables().velocity()[globalIdxI][isIndex] = (velocityW+velocityNW);
-//                                    this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityNW;
+									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel*=0.5);
 									this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityW + velocityNW;
 									this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityNW;
 
@@ -785,11 +766,9 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity()
 								{
                                     Dune::FieldVector<Scalar,dimWorld> vel(velocityW);
                                     vel+=velocityNW;
-									this->problem().variables().velocity()[globalIdxI][isIndex] += (vel *=areaWeight);
+									this->problem().variables().velocity()[globalIdxI][isIndex] += (vel *=0.5);
 									vel = velocityW;
-									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel*=areaWeight);
-//								                                      this->problem().variables().velocity()[globalIdxI][isIndex] = (velocityW+velocityNW);
-//								                                      this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] = velocityW;
+									this->problem().variables().velocitySecondPhase()[globalIdxI][isIndex] += (vel*=0.5);
 									this->problem().variables().velocity()[globalIdxJ][isIndexJ] = velocityW + velocityNW;
 									this->problem().variables().velocitySecondPhase()[globalIdxJ][isIndexJ] = velocityW;
 									break;

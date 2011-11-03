@@ -392,11 +392,10 @@ void FVPressure2Padaptive<TypeTag>::assemble(bool first)
         Scalar fractionalNWI = problem_.variables().fracFlowFuncNonwetting(globalIdxI);
         Scalar pcI = problem_.variables().capillaryPressure(globalIdxI);
 
-        int isIndex = -1;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
-            isIndex++;
+            int isIndex = isIt->indexInInside();
 
             // get normal vector
             const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
@@ -572,14 +571,10 @@ void FVPressure2Padaptive<TypeTag>::assemble(bool first)
 					// for efficienty this is done in one IntersectionIterator-Loop
 
 					// Intersectioniterator around cell J
-					int isIndexJ = -1;
 					IntersectionIterator isItEndJ = this->problem().gridView().iend(*neighborPointer);
 
 					for (IntersectionIterator isItJ = this->problem().gridView().ibegin(*neighborPointer); isItJ != isItEndJ; ++isItJ)
 					{
-						// increase isIndexJ, if it is not found yet
-						if (!foundIJ)
-							isIndexJ++;
 						if (isItJ->neighbor())
 						{
 							ElementPointer neighborPointer2 = isItJ->outside();
@@ -613,6 +608,8 @@ void FVPressure2Padaptive<TypeTag>::assemble(bool first)
 						}
 						if (foundIJ && foundK) break;
 					}
+
+                    int isIndexJ = isIt->indexInOutside();
 
 					// neighbor cell center in global coordinates
 					const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
