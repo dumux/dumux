@@ -190,7 +190,9 @@ public:
         {
             pressure_.resize(size);
             velocity_.resize(size);
+            velocity_ = Dune::FieldVector<Scalar, dim>(0);
             potential_.resize(size);
+            potential_ = Dune::FieldVector<Scalar, dim>(0);
         }
 private:
     void initializeGlobalVariables(Dune::FieldVector<Scalar, dim>& initialVel)
@@ -261,6 +263,16 @@ public:
     DimVecElemFaceType& velocity()
     {
         return velocity_;
+    }
+
+    const PhasePropertyElemFaceType& potential() const
+    {
+        return potential_;
+    }
+
+    PhasePropertyElemFaceType& potential()
+    {
+        return potential_;
     }
 
     //! Return vector of wetting phase potential gradients
