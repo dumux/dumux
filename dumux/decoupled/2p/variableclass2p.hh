@@ -278,6 +278,7 @@ public:
          fracFlowFunc_[i].resize(size);
          }
          velocitySecondPhase_.resize(size);
+         velocitySecondPhase_ = Dune::FieldVector<Scalar, dim>(0);
          saturation_.resize(size);
          capillaryPressure_.resize(size);
          volumecorrection_.resize(size);
