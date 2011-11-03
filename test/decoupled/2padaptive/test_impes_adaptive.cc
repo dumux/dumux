@@ -30,6 +30,7 @@
 #include "test_impes_adaptive_problem.hh"
 
 #include <dune/grid/common/gridinfo.hh>
+#include <dune/grid/utility/structuredgridfactory.hh>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
@@ -48,6 +49,14 @@ void usage(const char *progname)
     exit(1);
 }
 
+#if !HAVE_UG
+#warning "You need to have an UGGrid installed to run this test"
+int main()
+{
+    std::cerr << "You need to have an UGGrid installed to run this test\n";
+    return 1;
+}
+#else
 int main(int argc, char** argv)
 {
     try {
@@ -58,6 +67,8 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
         typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+
+        static const int dim = Grid::dimension;
 
         //todo: diese zwei Zeile nach dem testen entfernen
         typedef GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -93,50 +104,38 @@ int main(int argc, char** argv)
         std::string inputFileName;
         inputFileName = argv[argPos++];
 
-
         ////////////////////////////////////////////////////////////
         // Read Input file and create grid
         ////////////////////////////////////////////////////////////
 
         Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
 
-        std::string fileName = Params::tree().get<std::string>("gridFile");
-        Dune::GridPtr<Grid> gridPtr(fileName);
+        Dune::array< unsigned int, dim > numberOfCells;
+        numberOfCells[0] = 30;
+        numberOfCells[1] = 1;
+        Dune::FieldVector<double, dim> lowerLeftCorner(0);
+        Dune::FieldVector<double, dim> domainSize(300);
+        domainSize[1] = 10;
 
+        Dune::shared_ptr<Grid> grid(Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeftCorner, domainSize, numberOfCells));
+        grid->setClosureType(Grid::ClosureType::NONE);
 
-        gridPtr->globalRefine(Params::tree().get<int>("levelInit"));
+        grid->globalRefine(Params::tree().get<int>("levelInit"));
 
         // read the initial time step and the end time
         double tEnd, dt;
         tEnd = Params::tree().get<double>("tEnd");
         dt = tEnd;
 
-//		std::cout << "size before adapt: " << gridPtr->leafView().size(0) << std::endl;
-////		Einzelne Zellen verfeinern: links
-//		for (ElementLeafIterator it=gridPtr->leafView().begin<0>();
-//				it!=gridPtr->leafView().end<0>(); ++it)
-//		{
-//			if ((it->geometry().corner(0)[0]>=100))
-//			{
-//			gridPtr->mark(1,*it);
-//			}
-//		}
-//
-//		gridPtr->preAdapt();
-//		gridPtr->adapt();
-//		gridPtr->postAdapt();
-//
-//		std::cout << "size after first adapt: " << gridPtr->leafView().size(0) << std::endl;
-
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         TimeManager timeManager;
-        Problem problem(timeManager, gridPtr->leafView());
-        problem.setGrid(*gridPtr);
+        Problem problem(timeManager, grid->leafView());
+        problem.setGrid(*grid);
         problem.gridAdapt().setLevels(Params::tree().get<int>("levelMin"), Params::tree().get<int>("levelMax"));
 
-        timeManager.init(problem, startTime, dt, tEnd, !restart);
+        timeManager.init(problem, startTime, dt, tEnd, restart);
         timeManager.run();
         return 0;
     }
@@ -150,3 +149,4 @@ int main(int argc, char** argv)
 
     return 3;
 }
+#endif

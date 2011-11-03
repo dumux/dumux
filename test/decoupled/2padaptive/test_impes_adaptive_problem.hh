@@ -117,8 +117,6 @@ SET_BOOL_PROP(TestIMPESAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
 SET_SCALAR_PROP(TestIMPESAdaptiveProblem, CFLFactor, 0.95);
-
-SET_INT_PROP(TestIMPESAdaptiveProblem, MaxIntersections, 8);
 }
 
 /*!

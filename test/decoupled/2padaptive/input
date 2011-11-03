@@ -1,5 +1,4 @@
-gridFile = grids/refinegrid.dgf
-tEnd = 100000000
+tEnd = 10000000
 levelInit =4 
 levelMin =0 
 levelMax =4 
