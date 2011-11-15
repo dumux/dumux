@@ -169,6 +169,7 @@ public:
 
             // convert to real concentrations
             phaseConcentration_[gPhaseIdx] = 1.0;
+            sumMoleFrac_[gPhaseIdx] = sumMoleFrac_[lPhaseIdx] = 1.0;
             Scalar rhog = FluidSystem::phaseDensity(gPhaseIdx,
                                                     temperature_,
                                                     phasePressure_[gPhaseIdx],
@@ -176,7 +177,7 @@ public:
             phaseConcentration_[gPhaseIdx] = rhog / avgMolarMass_[gPhaseIdx];
             concentration_[gPhaseIdx][lCompIdx] *= phaseConcentration_[gPhaseIdx];
             concentration_[gPhaseIdx][gCompIdx] *= phaseConcentration_[gPhaseIdx];
-
+            
             // tell the fluid system to calculate the composition of
             // the remaining phases
             FluidSystem::computeEquilibrium(*this, gPhaseIdx);
@@ -201,6 +202,7 @@ public:
 
             // convert to real concentrations
             phaseConcentration_[lPhaseIdx] = 1.0;
+            sumMoleFrac_[gPhaseIdx] = sumMoleFrac_[lPhaseIdx] = 1.0;
             Scalar rhol = FluidSystem::phaseDensity(lPhaseIdx,
                                                     temperature_,
                                                     phasePressure_[lPhaseIdx],
@@ -240,8 +242,11 @@ public:
         phasePressure_[phaseIdx] = compo.pressure();
 
         phaseConcentration_[phaseIdx] = compo.phaseConcentration();
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        sumMoleFrac_[phaseIdx] = 0.0;
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            sumMoleFrac_[phaseIdx] += compo.moleFrac(compIdx);
             concentration_[phaseIdx][compIdx] = compo.concentration(compIdx);
+        }
     };
 
     /*!
@@ -266,6 +271,7 @@ public:
     Scalar moleFrac(int phaseIdx, int compIdx) const
     {
         return
+            sumMoleFrac_[phaseIdx]*
             concentration_[phaseIdx][compIdx]/
             phaseConcentration_[phaseIdx];
     }
@@ -356,6 +362,7 @@ public:
 
 public:
     Scalar concentration_[numPhases][numComponents];
+    Scalar sumMoleFrac_[numPhases];
     Scalar phaseConcentration_[numPhases];
     Scalar avgMolarMass_[numPhases];
     Scalar phasePressure_[numPhases];
