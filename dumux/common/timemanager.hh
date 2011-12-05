@@ -176,6 +176,12 @@ public:
     { endTime_ = t; }
 
     /*!
+     * \brief Returns the current wall time (cpu time).
+     */
+    double wallTime() const
+    {  return timer_.elapsed(); }
+
+    /*!
      * \brief Set the current time step size to a given value.
      *
      * If the step size would exceed the length of the current
@@ -352,8 +358,7 @@ public:
      */
     void run()
     {
-        Dune::Timer timer;
-        timer.reset();
+        timer_.reset();
 
         // do the time steps
         while (!finished())
@@ -382,7 +387,7 @@ public:
             if (verbose_) {
                 std::cout <<
                     boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
-                    %timeStepIndex()%timer.elapsed()%time()%dt;
+                    %timeStepIndex()%timer_.elapsed()%time()%dt;
             }
 
             // write restart file if mandated by the problem
@@ -406,9 +411,9 @@ public:
 
         if (verbose_) {
             int numProcesses = Dune::MPIHelper::getCollectiveCommunication().size();
-            std::cout << "Simulation took " << timer.elapsed() <<" seconds on "
+            std::cout << "Simulation took " << timer_.elapsed() <<" seconds on "
                       << numProcesses << " processes.\n"
-                      << "The cumulative CPU time was " << timer.elapsed()*numProcesses << " seconds.\n"
+                      << "The cumulative CPU time was " << timer_.elapsed()*numProcesses << " seconds.\n"
                       << "We hope that you enjoyed simulating with us\n"
                       << "and that you will choose us next time, too.\n";
         }
@@ -467,6 +472,7 @@ private:
     Scalar episodeLength_;
     std::string episodeDescription_;
 
+    Dune::Timer timer_;
     Scalar time_;
     Scalar endTime_;
 
