@@ -325,8 +325,7 @@ protected:
             if (!isIt->boundary())
                 continue;
 
-            // Assemble the boundary for all vertices of the current
-            // face
+            // Assemble the boundary for all vertices of the current face
             int faceIdx = isIt->indexInInside();
             int numFaceVerts = refElem.size(faceIdx, 1, dim);
             for (int faceVertIdx = 0;
@@ -359,9 +358,7 @@ protected:
                             int boundaryFaceIdx)
     {
         // temporary vector to store the neumann boundary fluxes
-        PrimaryVariables flux(0.0);
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-
         // deal with neumann boundaries
         if (bcTypes.hasOutflow())
         {
@@ -372,56 +369,72 @@ protected:
                                                 this->curVolVars_(),
                                                 scvIdx);
 
-            const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
+            //calculate outflow fluxes
+            PrimaryVariables values(0.0);
+            asImp_()->computeOutflowValues_(values, boundaryVars, scvIdx, boundaryFaceIdx);
+            Valgrind::CheckDefined(values);
 
-            // mass balance
-            if (bcTypes.isOutflow(contiEqIdx))
+            for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
             {
-                if(!useMoles) //use massfractions
-                {
-                   flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity();
-                }
-                else //use molefractions
-                {
-                   flux[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity();
-                }
+                if (!bcTypes.isOutflow(equationIdx) )
+                    continue;
+                // deduce outflow
+                this->residual_[scvIdx][equationIdx] += values[equationIdx];
             }
+        }
+    }
 
-            // component transport
-            if (bcTypes.isOutflow(transEqIdx))
-            {
-                if(!useMoles)//use massfractions
-                {
-                    // advective flux
-                    flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
-                                    *vertVars.fluidState().massFrac(phaseIdx, comp1Idx);
+    /*!
+     * \brief Compute the fluxes at the outflow boundaries
+     */
+    void computeOutflowValues_(PrimaryVariables &values,
+                              const BoundaryVariables &boundaryVars,
+                              const int scvIdx,
+                              const int boundaryFaceIdx)
 
-                    // diffusive flux of comp1 component in phase0
-                    Scalar tmp = 0;
-                    for (int i = 0; i < Vector::size; ++ i)
-                       tmp += boundaryVars.massFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
-                    tmp *= -1;
+    {
+        const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
 
-                    tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP();
-                    flux[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
-                }
-                else //use molefractions
-                {
-                    // advective flux
-                    flux[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
-                                   *vertVars.fluidState().moleFrac(phaseIdx, comp1Idx);
+        // mass balance
+        if(!useMoles) //use massfractions
+        {
+           values[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity();
+        }
+        else //use molefractions
+        {
+           values[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity();
+        }
 
-                    // diffusive flux of comp1 component in phase0
-                    Scalar tmp = 0;
-                    for (int i = 0; i < Vector::size; ++ i)
-                       tmp += boundaryVars.moleFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
-                    tmp *= -1;
+        // component transport
+        if(!useMoles)//use massfractions
+        {
+            // advective flux
+            values[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
+                            *vertVars.fluidState().massFrac(phaseIdx, comp1Idx);
 
-                    tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP();
-                    flux[transEqIdx] += tmp;
-                }
-            }
-            this->residual_[scvIdx] += flux;
+            // diffusive flux of comp1 component in phase0
+            Scalar tmp = 0;
+            for (int i = 0; i < Vector::size; ++ i)
+               tmp += boundaryVars.massFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
+            tmp *= -1;
+
+            tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP();
+            values[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
+        }
+        else //use molefractions
+        {
+            // advective flux
+            values[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
+                           *vertVars.fluidState().moleFrac(phaseIdx, comp1Idx);
+
+            // diffusive flux of comp1 component in phase0
+            Scalar tmp = 0;
+            for (int i = 0; i < Vector::size; ++ i)
+               tmp += boundaryVars.moleFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
+            tmp *= -1;
+
+            tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP();
+            values[transEqIdx] += tmp;
         }
     }
 
