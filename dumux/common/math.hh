@@ -471,6 +471,32 @@ Scalar antoine(Scalar temperature,
     return std::exp(ln10*(A - B/(C + temperature)));
 }
 
+/*!
+ * \brief cross product of two vectors in three-dimensional Euclidean space
+ *
+ * \param vec1 The first vector
+ * \param vec2 The second vector
+ */
+template <class Scalar, int dim>
+Dune::FieldVector<Scalar, dim> crossProduct(const Dune::FieldVector<Scalar, dim> &vec1,
+              const Dune::FieldVector<Scalar, dim> &vec2)
+{
+    Dune::FieldVector<Scalar, dim> result(0);
+
+    if (dim == 3)
+    {
+        result[0] = vec1[1]*vec2[2]-vec1[2]*vec2[1];
+        result[1] = vec1[2]*vec2[0]-vec1[0]*vec2[2];
+        result[2] = vec1[0]*vec2[1]-vec1[1]*vec2[0];
+    }
+    else
+    {
+        DUNE_THROW(Dune::NotImplemented, "Cross product is so far only supported for three dimensions!");
+    }
+
+    return result;
+}
+
 }
 
 
