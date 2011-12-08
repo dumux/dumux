@@ -332,9 +332,11 @@ public:
         Pi.umv(Wc, F);
         //      std::cout << "Pi = \dim" << Pi << "c = " << c << ", F = " << F << std::endl;
 
+        Scalar densityW = problem_.variables().densityWetting(globalIdx);
+        Scalar densityNW = problem_.variables().densityNonwetting(globalIdx);
         PrimaryVariables sourceVec(0.0);
         problem_.source(sourceVec, element);
-        qmean = volume*(sourceVec[wetting] + sourceVec[nonwetting]);
+        qmean = volume*(sourceVec[wetting]/densityW + sourceVec[nonwetting]/densityNW);
     }
 
 private:
@@ -402,8 +404,12 @@ private:
 
                 if (bcType.isNeumann(pressEqIdx))
                 {
+                    int globalIdx = problem_.variables().index(element);
+                    Scalar densityW = problem_.variables().densityWetting(globalIdx);
+                    Scalar densityNW = problem_.variables().densityNonwetting(globalIdx);
+
                     problem_.neumann(boundValues, *it);
-                    Scalar J = (boundValues[wetting]+boundValues[nonwetting]);
+                    Scalar J = (boundValues[wetting]/densityW + boundValues[nonwetting]/densityNW);
                     this->b[faceIndex] -= J*it->geometry().volume();
                 }
                 else if (bcType.isDirichlet(pressEqIdx))
