@@ -274,12 +274,23 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
         Scalar mobilityN = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), sat)
                 / viscosityN;
 
+        Scalar densityW = FluidSystem::phaseDensity(wPhaseIdx, temperature, pressW, fluidState);
+        Scalar densityN = FluidSystem::phaseDensity(nPhaseIdx, temperature, pressN, fluidState);
+
         // initialize mobilities
         problem_.variables().mobilityWetting(globalIdx)= mobilityW;
         problem_.variables().mobilityNonwetting(globalIdx)= mobilityN;
         Scalar mobilityT = mobilityW + mobilityN;
         problem_.variables().fracFlowFuncWetting(globalIdx)= mobilityW/mobilityT;
         problem_.variables().fracFlowFuncNonwetting(globalIdx)= mobilityN/mobilityT;
+
+        // initialize densities
+        problem_.variables().densityWetting(globalIdx) = densityW;
+        problem_.variables().densityNonwetting(globalIdx) = densityN;
+
+        // initialize viscosities
+        problem_.variables().viscosityWetting(globalIdx) = viscosityW;
+        problem_.variables().viscosityNonwetting(globalIdx) = viscosityN;
     }
     return;
 }
