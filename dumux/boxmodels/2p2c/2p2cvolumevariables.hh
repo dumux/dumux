@@ -118,33 +118,28 @@ public:
         int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
 
         // calculate phase state
-        fluidState_.update(priVars, materialParams, temperature(), phasePresence);
+        typename FluidSystem::ParameterCache paramCache;
+        fluidState_.update(paramCache, priVars, materialParams, phasePresence);
         Valgrind::CheckDefined(fluidState_);
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            // Mobilities
-            const Scalar mu =
-                FluidSystem::phaseViscosity(phaseIdx,
-                                            fluidState().temperature(),
-                                            fluidState().phasePressure(phaseIdx),
-                                            fluidState());
+            // relative permeabilities
             Scalar kr;
             if (phaseIdx == lPhaseIdx)
                 kr = MaterialLaw::krw(materialParams, saturation(lPhaseIdx));
             else // ATTENTION: krn requires the liquid saturation
                 // as parameter!
                 kr = MaterialLaw::krn(materialParams, saturation(lPhaseIdx));
-            mobility_[phaseIdx] = kr / mu;
-            Valgrind::CheckDefined(mobility_[phaseIdx]);
-
+            relativePermeability_[phaseIdx] = kr;
+            Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
+            
             // binary diffusion coefficents
             diffCoeff_[phaseIdx] =
-                FluidSystem::diffCoeff(phaseIdx,
-                                       lCompIdx,
-                                       gCompIdx,
-                                       fluidState_.temperature(),
-                                       fluidState_.phasePressure(phaseIdx),
-                                       fluidState_);
+                FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                        paramCache,
+                                                        phaseIdx,
+                                                        lCompIdx,
+                                                        gCompIdx);
             Valgrind::CheckDefined(diffCoeff_[phaseIdx]);
         }
 
@@ -195,7 +190,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
-    { return fluidState_.phasePressure(phaseIdx); }
+    { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Returns temperature inside the sub-control volume.
@@ -205,7 +200,18 @@ public:
      * identical.
      */
     Scalar temperature() const
-    { return temperature_; }
+    { return fluidState_.temperature(/*phaseIdx=*/0); }
+
+    /*!
+     * \brief Returns the relative permeability of a given phase within
+     *        the control volume.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar relativePermeability(int phaseIdx) const
+    {
+        return relativePermeability_[phaseIdx];
+    }
 
     /*!
      * \brief Returns the effective mobility of a given phase within
@@ -215,7 +221,7 @@ public:
      */
     Scalar mobility(int phaseIdx) const
     {
-        return mobility_[phaseIdx];
+        return relativePermeability_[phaseIdx]/fluidState_.viscosity(phaseIdx);
     }
 
     /*!
@@ -238,19 +244,17 @@ public:
 
 
 protected:
-
     void updateTemperature_(const PrimaryVariables &priVars,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
                             const Problem &problem)
     {
-        temperature_ = problem.boxTemperature(element, elemGeom, scvIdx);
+        fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
     }
 
-    Scalar temperature_;     //!< Temperature within the control volume
     Scalar porosity_;        //!< Effective porosity within the control volume
-    Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
+    Scalar relativePermeability_[numPhases];  //!< Relative permeability within the control volume
     Scalar diffCoeff_[numPhases]; //!< Binary diffusion coefficients for the phases
     FluidState fluidState_;
 
@@ -260,6 +264,8 @@ private:
 
     const Implementation &asImp() const
     { return *static_cast<const Implementation*>(this); }
+
+    
 };
 
 } // end namepace

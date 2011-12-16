@@ -33,7 +33,7 @@
 
 #include <dumux/boxmodels/2p2c/2p2cmodel.hh>
 
-#include <dumux/material/fluidsystems/h2o_n2_system.hh>
+#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
 
 //#include <dumux/material/fluidsystems/brine_co2_system.hh>
 //#include <appl/co2/ifp/ifpco2tables.hh>
@@ -64,9 +64,12 @@ SET_PROP(InjectionProblem, Problem)
 
 // Set fluid configuration
 SET_PROP(InjectionProblem, FluidSystem)
-{
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     //typedef Dumux::Brine_CO2_System<TypeTag, Dumux::IFP::CO2Tables> type;
-    typedef Dumux::H2O_N2_System<TypeTag> type;
+
+public:
+    typedef Dumux::H2ON2FluidSystem<Scalar> type;
 };
 
 // Enable gravity
@@ -148,7 +151,12 @@ public:
         : ParentType(timeManager, gridView)
     {
         // initialize the tables of the fluid system
-        FluidSystem::init();
+        FluidSystem::init(/*Tmin=*/temperature_ - 1.0,
+                          /*Tmax=*/temperature_ + 1.0,
+                          /*nT=*/3,
+                          /*pmin=*/1e5 + 1000*depthBOR_/1.2,
+                          /*pmax=*/1e5 + 1000*depthBOR_*1.2,
+                          /*np=*/1000);
     }
 
     /*!

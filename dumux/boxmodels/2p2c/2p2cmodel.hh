@@ -368,8 +368,7 @@ public:
                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                     {
                         (*massFrac[phaseIdx][compIdx])[globalIdx]
-                            = volVars.fluidState().massFrac(phaseIdx,
-                                                            compIdx);
+                            = volVars.fluidState().massFraction(phaseIdx, compIdx);
 
                         Valgrind::CheckDefined(
                                                (*massFrac[phaseIdx][compIdx])[globalIdx][0]);
@@ -698,8 +697,8 @@ protected:
         if (phasePresence == gPhaseOnly)
         {
             // calculate mole fraction in the hypothetic liquid phase
-            Scalar xll = volVars.fluidState().moleFrac(lPhaseIdx, lCompIdx);
-            Scalar xlg = volVars.fluidState().moleFrac(lPhaseIdx, gCompIdx);
+            Scalar xll = volVars.fluidState().moleFraction(lPhaseIdx, lCompIdx);
+            Scalar xlg = volVars.fluidState().moleFraction(lPhaseIdx, gCompIdx);
 
             Scalar xlMax = 1.0;
             if (xll + xlg > xlMax)
@@ -726,8 +725,8 @@ protected:
         {
             // calculate fractions of the partial pressures in the
             // hypothetic gas phase
-            Scalar xgl = volVars.fluidState().moleFrac(gPhaseIdx, lCompIdx);
-            Scalar xgg = volVars.fluidState().moleFrac(gPhaseIdx, gCompIdx);
+            Scalar xgl = volVars.fluidState().moleFraction(gPhaseIdx, lCompIdx);
+            Scalar xgg = volVars.fluidState().moleFraction(gPhaseIdx, gCompIdx);
 
             Scalar xgMax = 1.0;
             if (xgl + xgg > xgMax)
@@ -766,7 +765,7 @@ protected:
                 newPhasePresence = lPhaseOnly;
 
                 globalSol[globalIdx][switchIdx]
-                    = volVars.fluidState().massFrac(lPhaseIdx, gCompIdx);
+                    = volVars.fluidState().massFraction(lPhaseIdx, gCompIdx);
             }
             else if (volVars.saturation(lPhaseIdx) <= Smin)
             {
@@ -778,7 +777,7 @@ protected:
                 newPhasePresence = gPhaseOnly;
 
                 globalSol[globalIdx][switchIdx]
-                    = volVars.fluidState().massFrac(gPhaseIdx, lCompIdx);
+                    = volVars.fluidState().massFraction(gPhaseIdx, lCompIdx);
             }
         }
 

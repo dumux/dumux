@@ -191,13 +191,14 @@ public:
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
                 result[eqIdx] += volVars.density(phaseIdx)
                         * volVars.saturation(phaseIdx)
-                        * volVars.fluidState().massFrac(phaseIdx, compIdx);
+                        * volVars.fluidState().massFraction(phaseIdx, compIdx);
             }
             // this is only processed, if one component mass balance equation
             // is replaced by a total mass balance equation
             if (replaceCompEqIdx < numComponents)
-                result[replaceCompEqIdx] += volVars.density(phaseIdx)
-                        * volVars.saturation(phaseIdx);
+                result[replaceCompEqIdx] += 
+                    volVars.density(phaseIdx)
+                    * volVars.saturation(phaseIdx);
         }
         result *= volVars.porosity();
     }
@@ -252,24 +253,28 @@ public:
                 // phase
                 if (massUpwindWeight_ > 0.0)
                     // upstream vertex
-                    flux[eqIdx] += vars.KmvpNormal(phaseIdx)
-                            * massUpwindWeight_ * (up.density(phaseIdx)
-                            * up.mobility(phaseIdx) * up.fluidState().massFrac(
-                            phaseIdx, compIdx));
+                    flux[eqIdx] +=
+                        vars.KmvpNormal(phaseIdx)
+                        * massUpwindWeight_
+                        * up.density(phaseIdx)
+                        * up.mobility(phaseIdx)
+                        * up.fluidState().massFraction(phaseIdx, compIdx);
                 if (massUpwindWeight_ < 1.0)
                     // downstream vertex
-                    flux[eqIdx] += vars.KmvpNormal(phaseIdx) * (1
-                            - massUpwindWeight_) * (dn.density(phaseIdx)
-                            * dn.mobility(phaseIdx) * dn.fluidState().massFrac(
-                            phaseIdx, compIdx));
+                    flux[eqIdx] += 
+                        vars.KmvpNormal(phaseIdx)
+                        * (1 - massUpwindWeight_) 
+                        * dn.density(phaseIdx)
+                        * dn.mobility(phaseIdx) 
+                        * dn.fluidState().massFraction(phaseIdx, compIdx);
 
                 Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
                 Valgrind::CheckDefined(up.mobility(phaseIdx));
-                Valgrind::CheckDefined(up.fluidState().massFrac(phaseIdx, compIdx));
+                Valgrind::CheckDefined(up.fluidState().massFraction(phaseIdx, compIdx));
                 Valgrind::CheckDefined(dn.density(phaseIdx));
                 Valgrind::CheckDefined(dn.mobility(phaseIdx));
-                Valgrind::CheckDefined(dn.fluidState().massFrac(phaseIdx, compIdx));
+                Valgrind::CheckDefined(dn.fluidState().massFraction(phaseIdx, compIdx));
             }
             // flux of the total mass balance;
             // this is only processed, if one component mass balance equation
@@ -278,14 +283,18 @@ public:
             {
                 // upstream vertex
                 if (massUpwindWeight_ > 0.0)
-                    flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx)
-                            * massUpwindWeight_ *
-                            (up.density(phaseIdx) * up.mobility(phaseIdx));
+                    flux[replaceCompEqIdx] +=
+                        vars.KmvpNormal(phaseIdx)
+                        * massUpwindWeight_
+                        * up.density(phaseIdx)
+                        * up.mobility(phaseIdx);
                 // downstream vertex
                 if (massUpwindWeight_ < 1.0)
-                    flux[replaceCompEqIdx] += vars.KmvpNormal(phaseIdx) * (1
-                            - massUpwindWeight_) * (dn.density(phaseIdx)
-                            * dn.mobility(phaseIdx));
+                    flux[replaceCompEqIdx] += 
+                        vars.KmvpNormal(phaseIdx) 
+                        * (1 - massUpwindWeight_)
+                        * dn.density(phaseIdx)
+                        * dn.mobility(phaseIdx);
                 Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
                 Valgrind::CheckDefined(up.mobility(phaseIdx));
@@ -366,7 +375,7 @@ protected:
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
                 result[eqIdx] += volVars.density(phaseIdx)
                     * volVars.saturation(phaseIdx)
-                    * volVars.fluidState().massFrac(phaseIdx, compIdx);
+                    * volVars.fluidState().massFraction(phaseIdx, compIdx);
             }
 
             result *= volVars.porosity();

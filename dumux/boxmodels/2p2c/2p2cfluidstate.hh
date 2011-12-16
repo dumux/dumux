@@ -25,11 +25,14 @@
  * \brief Calculates the phase state from the primary variables in the
  *        2p2c model.
  */
-#ifndef DUMUX_2P2C_PHASE_STATE_HH
-#define DUMUX_2P2C_PHASE_STATE_HH
+#ifndef DUMUX_2P2C_FLUID_STATE_HH
+#define DUMUX_2P2C_FLUID_STATE_HH
 
 #include "2p2cproperties.hh"
 #include "2p2cindices.hh"
+
+#include <dumux/material/MpNcconstraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/MpNcconstraintsolvers/misciblemultiphasecomposition.hh>
 
 #include <dumux/material/fluidstate.hh>
 
@@ -41,8 +44,7 @@ namespace Dumux
  *        2p2c model.
  */
 template <class TypeTag>
-class TwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
-                                             TwoPTwoCFluidState<TypeTag> >
+class TwoPTwoCFluidState
 {
     typedef TwoPTwoCFluidState<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -81,10 +83,12 @@ class TwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTA
         pgSl = TwoPTwoCFormulation::pgSl
     };
 
+    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
+    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+
 public:
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
-    enum { numSolvents = 1 };
 
     /*!
      * \brief Update the phase state from the primary variables.
@@ -94,22 +98,20 @@ public:
      * \param temperature The temperature
      * \param phasePresence Stands either for nonwetting phase, wetting phase or both phases
      */
-    void update(const PrimaryVariables &primaryVars,
+    template <class ParameterCache>
+    void update(ParameterCache &paramCache,
+                const PrimaryVariables &primaryVars,
                 const MaterialLawParams &pcParams,
-                Scalar temperature,
                 int phasePresence)
     {
         Valgrind::CheckDefined(primaryVars);
-
-        Valgrind::SetUndefined(concentration_);
-        Valgrind::SetUndefined(phaseConcentration_);
-        Valgrind::SetUndefined(avgMolarMass_);
-        Valgrind::SetUndefined(phasePressure_);
-        Valgrind::SetUndefined(temperature_);
-        Valgrind::SetUndefined(Sg_);
-
-        temperature_ = temperature;
         Valgrind::CheckDefined(temperature_);
+
+        Valgrind::SetUndefined(moleFraction_);
+        Valgrind::SetUndefined(density_);
+        Valgrind::SetUndefined(avgMolarMass_);
+        Valgrind::SetUndefined(pressure_);
+        Valgrind::SetUndefined(Sg_);
 
         // extract non-wetting phase pressure
         if (phasePresence == gPhaseOnly)
@@ -132,122 +134,90 @@ public:
 
         // extract the pressures
         if (formulation == plSg) {
-            phasePressure_[lPhaseIdx] = primaryVars[pressureIdx];
-            phasePressure_[gPhaseIdx] = phasePressure_[lPhaseIdx] + pC;
+            pressure_[lPhaseIdx] = primaryVars[pressureIdx];
+            pressure_[gPhaseIdx] = pressure_[lPhaseIdx] + pC;
         }
         else if (formulation == pgSl) {
-            phasePressure_[gPhaseIdx] = primaryVars[pressureIdx];
-            phasePressure_[lPhaseIdx] = phasePressure_[gPhaseIdx] - pC;
+            pressure_[gPhaseIdx] = primaryVars[pressureIdx];
+            pressure_[lPhaseIdx] = pressure_[gPhaseIdx] - pC;
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
-        Valgrind::CheckDefined(phasePressure_);
+        Valgrind::CheckDefined(pressure_);
 
         // now comes the tricky part: calculate phase composition
         if (phasePresence == bothPhases) {
             // both phases are present, phase composition results from
-            // the gas <-> liquid equilibrium.
-            FluidSystem::computeEquilibrium(*this, -1);
+            // the gas <-> liquid equilibrium. This is the job of the
+            // "MiscibleMultiPhaseComposition" constraint solver
+            MiscibleMultiPhaseComposition::solve(*this,
+                                                 paramCache,
+                                                 /*setViscosity=*/true,
+                                                 /*setInternalEnergy=*/false);
+            
         }
         else if (phasePresence == gPhaseOnly) {
             // only the gas phase is present, gas phase composition is
             // stored explicitly.
 
             // extract _mass_ (!) fractions in the gas phase, misuse
-            // the concentration_ array for temporary storage
-            concentration_[gPhaseIdx][lCompIdx] = primaryVars[switchIdx];
-            concentration_[gPhaseIdx][gCompIdx] = 1 - concentration_[gPhaseIdx][lCompIdx];
+            // the moleFraction_ array for temporary storage
+            moleFraction_[gPhaseIdx][lCompIdx] = primaryVars[switchIdx];
+            moleFraction_[gPhaseIdx][gCompIdx] = 1 - moleFraction_[gPhaseIdx][lCompIdx];
 
             // calculate average molar mass of the gas phase
             Scalar M1 = FluidSystem::molarMass(lCompIdx);
             Scalar M2 = FluidSystem::molarMass(gCompIdx);
-            Scalar X2 = concentration_[gPhaseIdx][gCompIdx]; // mass fraction of solvent in gas
+            Scalar X2 = moleFraction_[gPhaseIdx][gCompIdx]; // mass fraction of solvent in gas
             avgMolarMass_[gPhaseIdx] = M1*M2/(M2 + X2*(M1 - M2));
 
             // convert mass to mole fractions
-            concentration_[gPhaseIdx][lCompIdx] *= avgMolarMass_[gPhaseIdx]/M1;
-            concentration_[gPhaseIdx][gCompIdx] *= avgMolarMass_[gPhaseIdx]/M2;
+            moleFraction_[gPhaseIdx][lCompIdx] *= avgMolarMass_[gPhaseIdx]/M1;
+            moleFraction_[gPhaseIdx][gCompIdx] *= avgMolarMass_[gPhaseIdx]/M2;
 
-            // convert to real concentrations
-            phaseConcentration_[gPhaseIdx] = 1.0;
-            sumMoleFrac_[gPhaseIdx] = sumMoleFrac_[lPhaseIdx] = 1.0;
-            Scalar rhog = FluidSystem::phaseDensity(gPhaseIdx,
-                                                    temperature_,
-                                                    phasePressure_[gPhaseIdx],
-                                                    *this);
-            phaseConcentration_[gPhaseIdx] = rhog / avgMolarMass_[gPhaseIdx];
-            concentration_[gPhaseIdx][lCompIdx] *= phaseConcentration_[gPhaseIdx];
-            concentration_[gPhaseIdx][gCompIdx] *= phaseConcentration_[gPhaseIdx];
-            
-            // tell the fluid system to calculate the composition of
-            // the remaining phases
-            FluidSystem::computeEquilibrium(*this, gPhaseIdx);
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(*this, 
+                                             paramCache,
+                                             gPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
         }
         else if (phasePresence == lPhaseOnly) {
             // only the gas phase is present, liquid phase composition is
             // stored explicitly.
 
             // extract _mass_ (!) fractions in the liquid phase, misuse
-            // the concentration_ array for temporary storage
-            concentration_[lPhaseIdx][gCompIdx] = primaryVars[switchIdx];
-            concentration_[lPhaseIdx][lCompIdx] = 1 - concentration_[lPhaseIdx][gCompIdx];
+            // the moleFraction_ array for temporary storage
+            moleFraction_[lPhaseIdx][gCompIdx] = primaryVars[switchIdx];
+            moleFraction_[lPhaseIdx][lCompIdx] = 1 - moleFraction_[lPhaseIdx][gCompIdx];
 
             Scalar M1 = FluidSystem::molarMass(lCompIdx);
             Scalar M2 = FluidSystem::molarMass(gCompIdx);
-            Scalar X2 = concentration_[lPhaseIdx][gCompIdx]; // mass fraction of solvent in gas
+            Scalar X2 = moleFraction_[lPhaseIdx][gCompIdx]; // mass fraction of solvent in gas
             avgMolarMass_[lPhaseIdx] = M1*M2/(M2 + X2*(M1 - M2));
 
             // convert mass to mole fractions
-            concentration_[lPhaseIdx][lCompIdx] *= avgMolarMass_[lPhaseIdx]/M1;
-            concentration_[lPhaseIdx][gCompIdx] *= avgMolarMass_[lPhaseIdx]/M2;
+            moleFraction_[lPhaseIdx][lCompIdx] *= avgMolarMass_[lPhaseIdx]/M1;
+            moleFraction_[lPhaseIdx][gCompIdx] *= avgMolarMass_[lPhaseIdx]/M2;
 
-            // convert to real concentrations
-            phaseConcentration_[lPhaseIdx] = 1.0;
-            sumMoleFrac_[gPhaseIdx] = sumMoleFrac_[lPhaseIdx] = 1.0;
-            Scalar rhol = FluidSystem::phaseDensity(lPhaseIdx,
-                                                    temperature_,
-                                                    phasePressure_[lPhaseIdx],
-                                                    *this);
-            phaseConcentration_[lPhaseIdx] = rhol / avgMolarMass_[lPhaseIdx];
-            concentration_[lPhaseIdx][lCompIdx] *= phaseConcentration_[lPhaseIdx];
-            concentration_[lPhaseIdx][gCompIdx] *= phaseConcentration_[lPhaseIdx];
-
-            // tell the fluid system to calculate the composition of
-            // the remaining phases
-            FluidSystem::computeEquilibrium(*this, lPhaseIdx);
+            // calculate the composition of the remaining phases. this
+            // is the job of the "ComputeFromReferencePhase"
+            // constraint solver
+            ComputeFromReferencePhase::solve(*this, 
+                                             paramCache,
+                                             lPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
         }
 
-        Valgrind::CheckDefined(concentration_);
-        Valgrind::CheckDefined(phaseConcentration_);
+        Valgrind::CheckDefined(moleFraction_);
+        Valgrind::CheckDefined(density_);
         Valgrind::CheckDefined(avgMolarMass_);
-        Valgrind::CheckDefined(phasePressure_);
+        Valgrind::CheckDefined(pressure_);
         Valgrind::CheckDefined(temperature_);
         Valgrind::CheckDefined(Sg_);
     }
-
-public:
-    /*!
-     * \brief Retrieves the phase composition and pressure from a
-     *        phase composition class.
-     *
-     * \param phaseIdx The phase index
-     * \param compo The index of the component
-     *
-     * This method is called by the fluid system's
-     * computeEquilibrium()
-     */
-    template <class PhaseCompo>
-    void assignPhase(int phaseIdx, const PhaseCompo &compo)
-    {
-        avgMolarMass_[phaseIdx] = compo.meanMolarMass();
-        phasePressure_[phaseIdx] = compo.pressure();
-
-        phaseConcentration_[phaseIdx] = compo.phaseConcentration();
-        sumMoleFrac_[phaseIdx] = 0.0;
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-            sumMoleFrac_[phaseIdx] += compo.moleFrac(compIdx);
-            concentration_[phaseIdx][compIdx] = compo.concentration(compIdx);
-        }
-    };
 
     /*!
      * \brief Returns the saturation of a phase.
@@ -263,38 +233,22 @@ public:
     };
 
     /*!
-     * \brief Returns the mole fraction of a component in a fluid phase.
-     *
-     * \param phaseIdx The phase index
-     * \param compIdx The index of the component
-     */
-    Scalar moleFrac(int phaseIdx, int compIdx) const
-    {
-        return
-            sumMoleFrac_[phaseIdx]*
-            concentration_[phaseIdx][compIdx]/
-            phaseConcentration_[phaseIdx];
-    }
-
-    /*!
      * \brief Returns the molar density of a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The phase index
-     *
-     * This is equivalent to the sum of all molar component concentrations.
      */
-    Scalar phaseConcentration(int phaseIdx) const
-    { return phaseConcentration_[phaseIdx]; };
+    Scalar molarDensity(int phaseIdx) const
+    { return density_[phaseIdx]/avgMolarMass_[phaseIdx]; };
 
     /*!
-     * \brief Returns the molar concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
+     * \brief Returns the molar molarity of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The phase index
      * \param compIdx The index of the component
      *
      */
-    Scalar concentration(int phaseIdx, int compIdx) const
-    { return concentration_[phaseIdx][compIdx]; };
+    Scalar molarity(int phaseIdx, int compIdx) const
+    { return molarDensity(phaseIdx)*moleFraction(phaseIdx, compIdx); };
 
     /*!
      * \brief Returns the mass fraction of a component in a phase.
@@ -303,11 +257,23 @@ public:
      * \param compIdx The index of the component
      *
      */
-    Scalar massFrac(int phaseIdx, int compIdx) const
+    Scalar massFraction(int phaseIdx, int compIdx) const
     {
         return
-            moleFrac(phaseIdx, compIdx) *
-            FluidSystem::molarMass(compIdx)/avgMolarMass_[phaseIdx];
+            moleFraction(phaseIdx, compIdx) 
+            * FluidSystem::molarMass(compIdx)
+            / avgMolarMass_[phaseIdx];
+    }
+
+    /*!
+     * \brief Returns the mole fraction of a component in a fluid phase.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The index of the component
+     */
+    Scalar moleFraction(int phaseIdx, int compIdx) const
+    {
+        return moleFraction_[phaseIdx][compIdx];
     }
 
     /*!
@@ -316,7 +282,15 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar density(int phaseIdx) const
-    { return phaseConcentration_[phaseIdx]*avgMolarMass_[phaseIdx]; }
+    { return density_[phaseIdx]; }
+
+    /*!
+     * \brief Returns the dynamic viscosity of a phase \f$\mathrm{[Pa s]}\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar viscosity(int phaseIdx) const
+    { return viscosity_[phaseIdx]; }
 
     /*!
      * \brief Returns mean molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
@@ -334,22 +308,26 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar phasePressure(int phaseIdx) const
-    { return phasePressure_[phaseIdx]; }
+    Scalar pressure(int phaseIdx) const
+    { return pressure_[phaseIdx]; }
 
     /*!
-     * \brief Return the fugacity of a component \f$\mathrm{[Pa]}\f$.
-     *
-     * \param compIdx The index of the component
+     * \brief The fugacity of a component in a phase [Pa]
      */
-    Scalar fugacity(int compIdx) const
-    { return moleFrac(gPhaseIdx, compIdx)*phasePressure(gPhaseIdx); };
+    Scalar fugacity(int phaseIdx, int compIdx) const
+    { return fugacityCoefficient(phaseIdx, compIdx)*moleFraction(phaseIdx, compIdx)*pressure(phaseIdx); }
+
+    /*!
+     * \brief The fugacity coefficient of a component in a phase [Pa]
+     */
+    Scalar fugacityCoefficient(int phaseIdx, int compIdx) const
+    { return fugacityCoefficient_[phaseIdx][compIdx]; }
 
     /*!
      * \brief Returns the capillary pressure \f$\mathrm{[Pa]}\f$
      */
     Scalar capillaryPressure() const
-    { return phasePressure_[gPhaseIdx] - phasePressure_[lPhaseIdx]; }
+    { return pressure_[gPhaseIdx] - pressure_[lPhaseIdx]; }
 
     /*!
      * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
@@ -360,12 +338,72 @@ public:
     Scalar temperature() const
     { return temperature_; };
 
+    /*!
+     * \brief Returns the temperature of a fluid phases \f$\mathrm{[K]}\f$.
+     *
+     * Note that we assume thermodynamic equilibrium, so all fluids
+     * and the rock matrix exhibit the same temperature.
+     */
+    Scalar temperature(int phaseIdx) const
+    { return temperature_; };
+
+    /*!
+     * \brief Set the mole fraction of a component in a phase []
+     */
+    void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
+    { moleFraction_[phaseIdx][compIdx] = value; }
+
+    /*!
+     * \brief Set the fugacity of a component in a phase []
+     */
+    void setFugacityCoefficient(int phaseIdx, int compIdx, Scalar value)
+    { fugacityCoefficient_[phaseIdx][compIdx] = value; }
+
+    /*!
+     * \brief Set the density of a phase [kg / m^3]
+     */
+    void setDensity(int phaseIdx, Scalar value)
+    { density_[phaseIdx] = value; }
+
+    /*!
+     * \brief Set the temperature of *all* phases [K]
+     */
+    void setTemperature(Scalar value)
+    { temperature_ = value; }
+
+    /*!
+     * \brief Set the specific internal energy of a phase [J/m^3]
+     */
+    void setInternalEnergy(int phaseIdx, Scalar value)
+    { internalEnergy_[phaseIdx] = value; }
+
+    /*!
+     * \brief Set the dynamic viscosity of a phase [Pa s]
+     */
+    void setViscosity(int phaseIdx, Scalar value)
+    { viscosity_[phaseIdx] = value; }
+
+    /*!
+     * \brief Calculatate the mean molar mass of a phase given that
+     *        all mole fractions have been set
+     */
+    void updateAverageMolarMass(int phaseIdx)
+    {
+        avgMolarMass_[phaseIdx] = 0;
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            avgMolarMass_[phaseIdx] += moleFraction_[phaseIdx][compIdx]*FluidSystem::molarMass(compIdx);
+        }
+        Valgrind::CheckDefined(avgMolarMass_[phaseIdx]);
+    }
+
 public:
-    Scalar concentration_[numPhases][numComponents];
-    Scalar sumMoleFrac_[numPhases];
-    Scalar phaseConcentration_[numPhases];
+    Scalar moleFraction_[numPhases][numComponents];
+    Scalar fugacityCoefficient_[numPhases][numComponents];
+    Scalar internalEnergy_[numPhases];
+    Scalar density_[numPhases];
+    Scalar viscosity_[numPhases];
     Scalar avgMolarMass_[numPhases];
-    Scalar phasePressure_[numPhases];
+    Scalar pressure_[numPhases];
     Scalar temperature_;
     Scalar Sg_;
 };

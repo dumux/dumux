@@ -175,7 +175,7 @@ public:
      * identical.
      */
     Scalar temperature() const
-    { return temperature_; }
+    { return fluidState.temperature(/*phaseIdx=*/0); }
 
     /*!
      * \brief Returns the effective mobility of a given phase within
@@ -205,12 +205,11 @@ protected:
                             int scvIdx,
                             const Problem &problem)
     {
-        temperature_ = problem.boxTemperature(element, elemGeom, scvIdx);
+        fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
     }
 
     FluidState fluidState_;
     Scalar porosity_;
-    Scalar temperature_;
 
     Scalar capillaryPressure_;
     Scalar mobility_[numPhases];
