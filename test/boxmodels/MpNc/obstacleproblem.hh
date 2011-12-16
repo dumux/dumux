@@ -67,7 +67,7 @@ SET_PROP(ObstacleProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 public:
-    typedef Dumux::H2ON2FluidSystem<Scalar> type;
+    typedef Dumux::H2ON2FluidSystem<Scalar, /*useComplexRelations=*/false> type;
 };
 //              Dumux::Simple_H2O_N2_TCE_System<TypeTag> );
 //Dumux::H2O_N2_System<TypeTag> );
