@@ -619,12 +619,12 @@ private:
     // only be erased partially!
     void resetSystem_()
     {
+        // always reset the right hand side.
+        residual_ = 0.0;
+
         // do not do anything if we can re-use the current linearization
         if (reuseMatrix_)
             return;
-
-        // always reset the right hand side.
-        residual_ = 0.0;
 
         if (!enablePartialReassemble_()) {
             // If partial reassembly of the jacobian is not enabled,
