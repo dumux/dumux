@@ -124,7 +124,7 @@ protected:
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,
-                       int vertIdx,
+                       int scvIdx,
                        bool isOldSol)
     {
         // copmute and set the internal energies of the fluid phases
