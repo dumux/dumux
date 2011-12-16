@@ -242,47 +242,6 @@ public:
 				  scvIdx);
         IAVolumeVariables::checkDefined();
         checkDefined();
-
-
-#warning "HACK for testing the NCP flash calculation!"
-#if 0
-        FluidState foo;
-        foo.assign(fluidState_);
-        
-        typedef Dumux::NcpFlash<Scalar, FluidSystem> NcpFlash;
-        typedef typename NcpFlash::ComponentVector ComponentVector;
-        ComponentVector globalMolarities(0.0);
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                globalMolarities[compIdx] += 
-                    fluidState_.saturation(phaseIdx)
-                    * fluidState_.molarity(phaseIdx, compIdx);
-
-        NcpFlash::guessInitial(foo, paramCache, globalMolarities);
-        NcpFlash::template solve<MaterialLaw>(foo, paramCache, materialParams, globalMolarities);
-        
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            if (foo.pressure(phaseIdx) == fluidState_.pressure(phaseIdx))
-                continue;
-            Scalar error = 1 - fluidState_.pressure(phaseIdx)/foo.pressure(phaseIdx);
-            if (std::abs(error) > 1e-6) {
-                std::cout << "pressure error phase " << phaseIdx << ": " << foo.pressure(phaseIdx) << " vs " << fluidState_.pressure(phaseIdx) << " error=" << 1 - fluidState_.pressure(phaseIdx)/foo.pressure(phaseIdx) << "\n";
-                std::cout << "x_0: " << fluidState_.moleFraction(0, 0) << " vs " << foo.moleFraction(0, 0) << "\n";
-                std::cout << "x_1: " << fluidState_.moleFraction(0, 1) << " vs " << foo.moleFraction(0, 1) << "\n";
-            }
-        };
-
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            if (foo.saturation(phaseIdx) == fluidState_.saturation(phaseIdx))
-                continue;
-
-            Scalar error = 1 - (1 + fluidState_.saturation(phaseIdx))/(1 + foo.saturation(phaseIdx));
-            if (std::abs(error) > 1e-6)
-                std::cout << "saturation error phase " << phaseIdx << ": " << foo.saturation(phaseIdx) << " vs " << fluidState_.saturation(phaseIdx) << " error=" << 1 - fluidState_.saturation(phaseIdx)/foo.saturation(phaseIdx) << "\n";
-        };
-        
-        //exit(1);
-#endif
     }
 
     /*!

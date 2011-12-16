@@ -39,7 +39,7 @@
 
 #include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
 #include <dumux/material/MpNcconstraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
+#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
 
 #include "obstaclespatialparameters.hh"
 
@@ -354,8 +354,8 @@ private:
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-        typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> EquilibriumFluidState;
-        EquilibriumFluidState fs;
+        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> CompositionalFluidState;
+        CompositionalFluidState fs;
 
         int refPhaseIdx;
         int otherPhaseIdx;
