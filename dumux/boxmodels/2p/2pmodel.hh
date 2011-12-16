@@ -155,6 +155,7 @@ public:
 
         typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
         typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState);
         fluidState.setViscosity(wPhaseIdx,
                 FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
         fluidState.setViscosity(nPhaseIdx,

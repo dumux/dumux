@@ -1,6 +1,6 @@
 /*****************************************************************************
- *   Copyright (C) 2008 by Bernd Flemisch                                    *
- *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2011 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2011 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -35,7 +35,6 @@
 
 namespace Dumux
 {
-
 /*!
  * \ingroup TwoPBoxModel
  * \ingroup BoxVolumeVariables
@@ -115,17 +114,13 @@ public:
 
         Model::completeFluidState(priVars, materialParams, fluidState_);
 
-        capillaryPressure_ = fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
-
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
-            /
-            fluidState_.viscosity(wPhaseIdx);
+            / fluidState_.viscosity(wPhaseIdx);
 
         mobility_[nPhaseIdx] =
             MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
-            /
-            fluidState_.viscosity(nPhaseIdx);
+            / fluidState_.viscosity(nPhaseIdx);
 
         // porosity
         porosity_ = problem.spatialParameters().porosity(element,
@@ -167,6 +162,12 @@ public:
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
+     * \brief Returns the capillary pressure within the control volume [Pa].
+     */
+    Scalar capillaryPressure() const
+    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
+
+    /*!
      * \brief Returns temperature inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
@@ -186,12 +187,6 @@ public:
     { return mobility_[phaseIdx]; }
 
     /*!
-     * \brief Returns the effective capillary pressure within the control volume.
-     */
-    Scalar capillaryPressure() const
-    { return capillaryPressure_; }
-
-    /*!
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
@@ -209,8 +204,6 @@ protected:
 
     FluidState fluidState_;
     Scalar porosity_;
-
-    Scalar capillaryPressure_;
     Scalar mobility_[numPhases];
 
 private:
