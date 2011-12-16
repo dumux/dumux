@@ -60,6 +60,7 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
     enum { temperatureIdx = Indices::temperatureIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
@@ -94,6 +95,23 @@ protected:
     // this method gets called by the parent class. since this method
     // is protected, we are friends with our parent..
     friend class TwoPVolumeVariables<TypeTag>;
+
+    static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx)
+    {
+        return priVars[Indices::temperatureIdx];
+    }
+
+    template<class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            int phaseIdx)
+    {
+        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+    }
 
     /*!
      * \brief Called by update() to compute the energy related quantities

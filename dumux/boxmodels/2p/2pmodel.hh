@@ -76,7 +76,6 @@ class TwoPModel : public BoxModel<TypeTag>
     typedef TwoPModel<TypeTag> ThisType;
     typedef BoxModel<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -126,62 +125,16 @@ public:
         return 1;
     }
 
-    template <class PrimaryVariables, class Problem, class Element, class ElementGeometry, class FluidState>
+    template <class PrimaryVariables, class Problem, class Element, class FluidState>
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const ElementGeometry& elementGeometry,
+                                   const FVElementGeometry& elementGeometry,
                                    int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
-                                                elementGeometry, scvIdx);
-        fluidState.setTemperature(t);
-
-        // material law parameters
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-        const typename MaterialLaw::Params &materialParams =
-            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
-
-
-        if (int(formulation) == pwSn) {
-            Scalar Sn = primaryVariables[saturationIdx];
-            fluidState.setSaturation(nPhaseIdx, Sn);
-            fluidState.setSaturation(wPhaseIdx, 1 - Sn);
-
-            Scalar pW = primaryVariables[pressureIdx];
-            fluidState.setPressure(wPhaseIdx, pW);
-            fluidState.setPressure(nPhaseIdx,
-                                   pW + MaterialLaw::pC(materialParams, 1 - Sn));
-        }
-        else if (int(formulation) == pnSw) {
-            Scalar Sw = primaryVariables[saturationIdx];
-            fluidState.setSaturation(wPhaseIdx, Sw);
-            fluidState.setSaturation(nPhaseIdx, 1 - Sw);
-
-            Scalar pN = primaryVariables[pressureIdx];
-            fluidState.setPressure(nPhaseIdx, pN);
-            fluidState.setPressure(wPhaseIdx,
-                                   pN - MaterialLaw::pC(materialParams, Sw));
-        }
-
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState);
-
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            // compute and set the viscosity
-            Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-            fluidState.setViscosity(phaseIdx, mu);
-
-            // compute and set the density
-            Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
-            fluidState.setDensity(phaseIdx, rho);
-
-            // compute and set the enthalpy
-            Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
-            fluidState.setEnthalpy(phaseIdx, h);
-        }
+      VolumeVariables::completeFluidState(primaryVariables, problem, element, 
+					  elementGeometry, scvIdx, fluidState);
     }
 
     /*!
@@ -415,24 +368,6 @@ public:
             writer.attachVertexData(*velocityN,  "velocityN", dim);
         }
         writer.attachCellData(*rank, "process rank");
-    }
-private:
-    template<class PrimaryVariables, class Problem, class Element, class FVElementGeometry>
-    static Scalar temperature_(const PrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx)
-    {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
-    }
-
-    template<class FluidState, class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            int phaseIdx)
-    {
-        return 0;
     }
 };
 }

@@ -102,7 +102,7 @@ public:
                            scvIdx,
                            isOldSol);
 
-        Model::completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
 
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
@@ -122,6 +122,63 @@ public:
 
         // energy related quantities not belonging to the fluid state
         asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+    }
+
+    static void completeFluidState(const PrimaryVariables& priVars,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& elemGeom,
+                                   int scvIdx,
+                                   FluidState& fluidState)
+    {
+        Scalar t = Implementation::temperature_(priVars, problem, element,
+                                                elemGeom, scvIdx);
+        fluidState.setTemperature(t);
+
+        // material law parameters
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+        const typename MaterialLaw::Params &materialParams =
+            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+
+
+        if (int(formulation) == pwSn) {
+            Scalar Sn = priVars[saturationIdx];
+            fluidState.setSaturation(nPhaseIdx, Sn);
+            fluidState.setSaturation(wPhaseIdx, 1 - Sn);
+
+            Scalar pW = priVars[pressureIdx];
+            fluidState.setPressure(wPhaseIdx, pW);
+            fluidState.setPressure(nPhaseIdx,
+                                   pW + MaterialLaw::pC(materialParams, 1 - Sn));
+        }
+        else if (int(formulation) == pnSw) {
+            Scalar Sw = priVars[saturationIdx];
+            fluidState.setSaturation(wPhaseIdx, Sw);
+            fluidState.setSaturation(nPhaseIdx, 1 - Sw);
+
+            Scalar pN = priVars[pressureIdx];
+            fluidState.setPressure(nPhaseIdx, pN);
+            fluidState.setPressure(wPhaseIdx,
+                                   pN - MaterialLaw::pC(materialParams, Sw));
+        }
+
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState);
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            // compute and set the viscosity
+            Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            fluidState.setViscosity(phaseIdx, mu);
+
+            // compute and set the density
+            Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            fluidState.setDensity(phaseIdx, rho);
+
+            // compute and set the enthalpy
+            Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+            fluidState.setEnthalpy(phaseIdx, h);
+        }
     }
 
     /*!
@@ -189,6 +246,23 @@ public:
     { return porosity_; }
 
 protected:
+    static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx)
+    {
+        return problem.boxTemperature(element, elemGeom, scvIdx);
+    }
+
+    template<class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            int phaseIdx)
+    {
+        return 0;
+    }
+
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
