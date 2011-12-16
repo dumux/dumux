@@ -516,7 +516,7 @@ public:
      * \param dt The current time step size
      */
     Scalar nextTimeStepSize(Scalar dt)
-    { 
+    {
         return std::min(GET_PARAM(TypeTag, Scalar, MaxTimeStepSize),
                         newtonCtl_.suggestTimeStepSize(dt));
     };

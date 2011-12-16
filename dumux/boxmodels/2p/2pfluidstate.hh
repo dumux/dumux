@@ -66,20 +66,17 @@ public:
      * \param pressN The pressure of the nonwetting phase
      * \param temperature The temperature
      */
-    void update(Scalar Sn, Scalar pressW, Scalar pressN, Scalar temperature)
+    template <class ParameterCache>
+    void update(ParameterCache &paramCache, Scalar Sn, Scalar pressW, Scalar pressN, Scalar temperature)
     {
         Sn_ = Sn;
         phasePressure_[wPhaseIdx] = pressW;
         phasePressure_[nPhaseIdx] = pressN;
-        temperature_=temperature;
-        density_[wPhaseIdx] = FluidSystem::phaseDensity(wPhaseIdx,
-                                                        temperature,
-                                                        pressW,
-                                                        *this);
-        density_[nPhaseIdx] = FluidSystem::phaseDensity(nPhaseIdx,
-                                                        temperature,
-                                                        pressN,
-                                                        *this);
+        temperature_ = temperature;
+        paramCache.updateAll(*this);
+
+        density_[wPhaseIdx] = FluidSystem::density(*this, paramCache, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(*this, paramCache, nPhaseIdx);
     }
 
     /*!
@@ -173,7 +170,7 @@ public:
      *
      *  \param phaseIdx The index of the fluid phase
      */
-    Scalar phasePressure(int phaseIdx) const
+    Scalar pressure(int phaseIdx) const
     { return phasePressure_[phaseIdx]; }
 
     /*!
@@ -183,7 +180,13 @@ public:
     { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
 
     /*!
-     * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
+     * \brief Returns the temperature of a fluids \f$\mathrm{[K]}\f$.
+     */
+    Scalar temperature(int phaseIdx) const
+    { return temperature_; };
+
+    /*!
+     * \brief Returns the temperature of all fluids \f$\mathrm{[K]}\f$.
      *
      * Note that we assume thermodynamic equilibrium, so all fluids
      * and the rock matrix exhibit the same temperature.

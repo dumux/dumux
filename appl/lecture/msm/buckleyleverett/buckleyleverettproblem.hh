@@ -85,7 +85,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(BuckleyLeverettProblem, NonwettingPhase)
+SET_PROP(BuckleyLeverettProblem, NonWettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -154,9 +154,9 @@ public:
         densityNonWetting_ = Params::tree().template get<double>("Fluid.densityNW");
 
         //Write header for ViPLab-Outputfile
-    	std::ofstream dataFile;
-		dataFile.open("vipplot.vgf");
-		dataFile.close();
+        std::ofstream dataFile;
+        dataFile.open("vipplot.vgf");
+        dataFile.close();
     }
 
 
@@ -275,85 +275,85 @@ public:
     //Override outputfunction for ViPLab-Output
     void writeOutput()
     {
-    	double time = this->timeManager().time();
-    	if (time < 0)
-    		return;
+        double time = this->timeManager().time();
+        if (time < 0)
+            return;
 
         double discretizationLength = Params::tree().template get<double>("Geometry.discretizationLength");
-		int cellNumberX = static_cast<int>(300/discretizationLength);
-		discretizationLength = 300/cellNumberX; //Might be slightly different from the input parameter
+        int cellNumberX = static_cast<int>(300/discretizationLength);
+        discretizationLength = 300/cellNumberX; //Might be slightly different from the input parameter
 
-    	std::ofstream dataFile;
-		dataFile.open("vipplot.vgf", std::fstream::app);
+        std::ofstream dataFile;
+        dataFile.open("vipplot.vgf", std::fstream::app);
 
-    	std::cout<<"Writing output for time step.\n";
+        std::cout<<"Writing output for time step.\n";
 
-    	if (time  > 0)
-    		dataFile << "# newframe\n";
+        if (time  > 0)
+            dataFile << "# newframe\n";
 
-		dataFile << "# title Buckley-Leverett-Problem\n";
-		dataFile << "# x-label x\n";
-		dataFile << "# y-label Saturation\n";
-		dataFile << "# x-range -10 310\n";
-		dataFile << "# y-range 0 1\n";
+        dataFile << "# title Buckley-Leverett-Problem\n";
+        dataFile << "# x-label x\n";
+        dataFile << "# y-label Saturation\n";
+        dataFile << "# x-range -10 310\n";
+        dataFile << "# y-range 0 1\n";
 
-		dataFile << "# color 0 0 255\n";
+        dataFile << "# color 0 0 255\n";
 
-		Scalar curSat = this->variables().saturation()[0];
+        Scalar curSat = this->variables().saturation()[0];
 
-		// Draw first piece separately, as no vertical line is needed
-		dataFile << 0 << " " << curSat << " "
-		         << discretizationLength << " " << curSat <<std::endl;
-		for (int i=1; i < cellNumberX; i++)
-		{
-			// Vertical Line
-			dataFile << i*discretizationLength << " "
-					 << curSat << " ";
-			curSat = this->variables().saturation()[i];
-			dataFile << i*discretizationLength << " " << curSat << std::endl;
-			//Horizontal Line
-			dataFile << i*discretizationLength << " " << curSat << " "
-					 << (i+1)*discretizationLength << " " << curSat << std::endl;
-		}
-		dataFile << "# color 255 0 0\n";
+        // Draw first piece separately, as no vertical line is needed
+        dataFile << 0 << " " << curSat << " "
+                 << discretizationLength << " " << curSat <<std::endl;
+        for (int i=1; i < cellNumberX; i++)
+        {
+            // Vertical Line
+            dataFile << i*discretizationLength << " "
+                     << curSat << " ";
+            curSat = this->variables().saturation()[i];
+            dataFile << i*discretizationLength << " " << curSat << std::endl;
+            //Horizontal Line
+            dataFile << i*discretizationLength << " " << curSat << " "
+                     << (i+1)*discretizationLength << " " << curSat << std::endl;
+        }
+        dataFile << "# color 255 0 0\n";
 
-		curSat = analyticSolution_.AnalyticSolution()[0];
+        curSat = analyticSolution_.AnalyticSolution()[0];
 
-		dataFile << 0 << " " << curSat << " "
-				 << discretizationLength << " " << curSat <<std::endl;
-		for (int i=1; i < cellNumberX; i++)
-		{
-			// Vertical Line
-			dataFile << i*discretizationLength << " "
-					 << curSat << " ";
-			curSat = analyticSolution_.AnalyticSolution()[i];
-			dataFile << i*discretizationLength << " " << curSat << std::endl;
-			//Horizontal Line
-			dataFile << i*discretizationLength << " " << curSat << " "
-					 << (i+1)*discretizationLength << " " << curSat << std::endl;
-		}
-//		ElementIterator eItEnd = this->gridView().template end<0>();
-//	    for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
-//	    {
-//	    	int currentIdx = this->variables().index(*eIt);
-//	    	Scalar sat = this->variables().saturation()[currentIdx];
-//	    	Scalar leftPos = eIt->geometry().corner(0)[0];
-//	    	Scalar rightPos = eIt->geometry().corner(1)[0];
-//	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
-//	    }
+        dataFile << 0 << " " << curSat << " "
+                 << discretizationLength << " " << curSat <<std::endl;
+        for (int i=1; i < cellNumberX; i++)
+        {
+            // Vertical Line
+            dataFile << i*discretizationLength << " "
+                     << curSat << " ";
+            curSat = analyticSolution_.AnalyticSolution()[i];
+            dataFile << i*discretizationLength << " " << curSat << std::endl;
+            //Horizontal Line
+            dataFile << i*discretizationLength << " " << curSat << " "
+                     << (i+1)*discretizationLength << " " << curSat << std::endl;
+        }
+//        ElementIterator eItEnd = this->gridView().template end<0>();
+//        for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+//        {
+//            int currentIdx = this->variables().index(*eIt);
+//            Scalar sat = this->variables().saturation()[currentIdx];
+//            Scalar leftPos = eIt->geometry().corner(0)[0];
+//            Scalar rightPos = eIt->geometry().corner(1)[0];
+//            dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
+//        }
 
 
-//		for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
-//	    {
-//	    	int currentIdx = this->variables().index(*eIt);
-//	    	Scalar sat = analyticSolution_.AnalyticSolution()[currentIdx];
-//	    	Scalar leftPos = eIt->geometry().corner(0)[0];
-//	    	Scalar rightPos = eIt->geometry().corner(1)[0];
-//	    	dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
-//	    }
+//        for (ElementIterator eIt = this->gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+//        {
+//            int currentIdx = this->variables().index(*eIt);
+//            Scalar sat = analyticSolution_.AnalyticSolution()[currentIdx];
+//            Scalar leftPos = eIt->geometry().corner(0)[0];
+//            Scalar rightPos = eIt->geometry().corner(1)[0];
+//            dataFile << leftPos <<" "<<sat<<" "<<rightPos<<" "<<sat<<"\n";
+//        }
 
-		dataFile << "# legend Numerical Solution,Analytic Solution\n";
-		dataFile.close();
+        dataFile << "# legend Numerical Solution,Analytic Solution\n";
+        dataFile.close();
     }
 
 private:

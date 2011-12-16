@@ -83,8 +83,8 @@ class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     enum {
-        lPhaseIdx = FluidSystem::wPhaseIdx,
-        gPhaseIdx = FluidSystem::nPhaseIdx,
+        lPhaseIdx = FluidSystem::lPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx,
     };
 
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;

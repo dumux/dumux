@@ -342,12 +342,12 @@ void FVPressure2Padaptive<TypeTag>::initializeMatrix()
 template<class TypeTag>
 void FVPressure2Padaptive<TypeTag>::assemble(bool first)
 {
-	updateMaterialLaws();
-	// Adapt size of matrix A_ and Vector f_
-	{int size = problem_.variables().gridSize();
-	A_.setSize(size,size);
-	f_.resize(size);}
-	initializeMatrix(); // define non-zero entries in matrix
+    updateMaterialLaws();
+    // Adapt size of matrix A_ and Vector f_
+    {int size = problem_.variables().gridSize();
+    A_.setSize(size,size);
+    f_.resize(size);}
+    initializeMatrix(); // define non-zero entries in matrix
 
     // initialization: set matrix A_ to zero
     A_ = 0;
@@ -392,10 +392,11 @@ void FVPressure2Padaptive<TypeTag>::assemble(bool first)
         Scalar fractionalNWI = problem_.variables().fracFlowFuncNonwetting(globalIdxI);
         Scalar pcI = problem_.variables().capillaryPressure(globalIdxI);
 
+        int isIndex = -1;
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
-            int isIndex = isIt->indexInInside();
+            isIndex++;
 
             // get normal vector
             const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
@@ -413,406 +414,408 @@ void FVPressure2Padaptive<TypeTag>::assemble(bool first)
                 // "normal" case: neighbor has same level
                 if (neighborPointer->level()==eIt.level())
                 {
-					// neighbor cell center in global coordinates
-					const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+                    // neighbor cell center in global coordinates
+                    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
-					// distance vector between barycenters
-					GlobalPosition distVec = globalPosNeighbor - globalPos;
+                    // distance vector between barycenters
+                    GlobalPosition distVec = globalPosNeighbor - globalPos;
 
-					// compute distance between cell centers
-//					Scalar dist = distVec.two_norm();
-					Scalar dist = distVec*unitOuterNormal;
+                    // compute distance between cell centers
+//                    Scalar dist = distVec.two_norm();
+                    Scalar dist = distVec*unitOuterNormal;
 
-					// compute vectorized permeabilities
-					FieldMatrix meanPermeability(0);
+                    // compute vectorized permeabilities
+                    FieldMatrix meanPermeability(0);
 
-					problem_.spatialParameters().meanK(meanPermeability,
-							problem_.spatialParameters().intrinsicPermeability(*eIt),
-							problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
+                    problem_.spatialParameters().meanK(meanPermeability,
+                            problem_.spatialParameters().intrinsicPermeability(*eIt),
+                            problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
 
-					Dune::FieldVector<Scalar, dim> permeability(0);
-					meanPermeability.mv(unitOuterNormal, permeability);
+                    Dune::FieldVector<Scalar, dim> permeability(0);
+                    meanPermeability.mv(unitOuterNormal, permeability);
 
-					// get mobilities and fractional flow factors
-					Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
-					Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
-					Scalar fractionalWJ = problem_.variables().fracFlowFuncWetting(globalIdxJ);
-					Scalar fractionalNWJ = problem_.variables().fracFlowFuncNonwetting(globalIdxJ);
-					Scalar densityWJ = problem_.variables().densityWetting(globalIdxJ);
-					Scalar densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
+                    // get mobilities and fractional flow factors
+                    Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
+                    Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
+                    Scalar fractionalWJ = problem_.variables().fracFlowFuncWetting(globalIdxJ);
+                    Scalar fractionalNWJ = problem_.variables().fracFlowFuncNonwetting(globalIdxJ);
+                    Scalar densityWJ = problem_.variables().densityWetting(globalIdxJ);
+                    Scalar densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
 
-					Scalar pcJ = problem_.variables().capillaryPressure(globalIdxJ);
+                    Scalar pcJ = problem_.variables().capillaryPressure(globalIdxJ);
 
-					Scalar rhoMeanW = 0.5 * (densityWI + densityWJ);
-					Scalar rhoMeanNW = 0.5 * (densityNWI + densityNWJ);
-					Scalar fMeanW = 0.5 * (fractionalWI + fractionalWJ);
-					Scalar fMeanNW = 0.5 * (fractionalNWI + fractionalNWJ);
+                    Scalar rhoMeanW = 0.5 * (densityWI + densityWJ);
+                    Scalar rhoMeanNW = 0.5 * (densityNWI + densityNWJ);
+                    Scalar fMeanW = 0.5 * (fractionalWI + fractionalWJ);
+                    Scalar fMeanNW = 0.5 * (fractionalNWI + fractionalNWJ);
 
-					// update diagonal entry
-					Scalar entry;
+                    // update diagonal entry
+                    Scalar entry;
 
-					//calculate potential gradients
-					Scalar potentialW = 0;
-					Scalar potentialNW = 0;
+                    //calculate potential gradients
+                    Scalar potentialW = 0;
+                    Scalar potentialNW = 0;
 
-					Scalar densityW = 0;
-					Scalar densityNW = 0;
+                    Scalar densityW = 0;
+                    Scalar densityNW = 0;
 
-					//if we are at the very first iteration we can't calculate phase potentials
-					if (!first)
-					{
-						// After grid adaption, the potentials from the previous time step
-						// can not be used for upwinding. The mean values is assumed instead.
-						densityW = rhoMeanW;
-						densityNW = rhoMeanNW;
+                    //if we are at the very first iteration we can't calculate phase potentials
+                    if (!first)
+                    {
+                        // After grid adaption, the potentials from the previous time step
+                        // can not be used for upwinding. The mean values is assumed instead.
+                        densityW = rhoMeanW;
+                        densityNW = rhoMeanNW;
 
-						switch (pressureType)
-						{
-						case pw:
-						{
-							potentialW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]);
-							potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] + pcI
-									- pcJ);
-							break;
-						}
-						case pn:
-						{
-							potentialW
-									= (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] - pcI + pcJ);
-							potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]);
-							break;
-						}
-						case pglobal:
-						{
-							potentialW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] - fMeanNW
-									* (pcI - pcJ));
-							potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] + fMeanW
-									* (pcI - pcJ));
-							break;
-						}
-						}
+                        switch (pressureType)
+                        {
+                        case pw:
+                        {
+                            potentialW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]);
+                            potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] + pcI
+                                    - pcJ);
+                            break;
+                        }
+                        case pn:
+                        {
+                            potentialW
+                                    = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] - pcI + pcJ);
+                            potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ]);
+                            break;
+                        }
+                        case pglobal:
+                        {
+                            potentialW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] - fMeanNW
+                                    * (pcI - pcJ));
+                            potentialNW = (problem_.variables().pressure()[globalIdxI] - problem_.variables().pressure()[globalIdxJ] + fMeanW
+                                    * (pcI - pcJ));
+                            break;
+                        }
+                        }
 
-						potentialW += densityW * (distVec * gravity);
-						potentialNW += densityNW * (distVec * gravity);
+                        potentialW += densityW * (distVec * gravity);
+                        potentialNW += densityNW * (distVec * gravity);
 
-						//store potentials for further calculations (velocity, saturation, ...)
-						problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;
-						problem_.variables().potentialNonwetting(globalIdxI, isIndex) = potentialNW;
-					}
+                        //store potentials for further calculations (velocity, saturation, ...)
+                        problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialW;
+                        problem_.variables().potentialNonwetting(globalIdxI, isIndex) = potentialNW;
+                    }
 
-					//do the upwinding of the mobility depending on the phase potentials
-					Scalar lambdaW = (potentialW > 0.) ? lambdaWI : lambdaWJ;
-					lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
-					Scalar lambdaNW = (potentialNW > 0) ? lambdaNWI : lambdaNWJ;
-					lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNW;
+                    //do the upwinding of the mobility depending on the phase potentials
+                    Scalar lambdaW = (potentialW > 0.) ? lambdaWI : lambdaWJ;
+                    lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+                    Scalar lambdaNW = (potentialNW > 0) ? lambdaNWI : lambdaNWJ;
+                    lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNW;
 
-					densityW = (potentialW > 0.) ? densityWI : densityWJ;
-					densityNW = (potentialNW > 0.) ? densityNWI : densityNWJ;
+                    densityW = (potentialW > 0.) ? densityWI : densityWJ;
+                    densityNW = (potentialNW > 0.) ? densityNWI : densityNWJ;
 
-					densityW = (potentialW == 0) ? rhoMeanW : densityW;
-					densityNW = (potentialNW == 0) ? rhoMeanNW : densityNW;
+                    densityW = (potentialW == 0) ? rhoMeanW : densityW;
+                    densityNW = (potentialNW == 0) ? rhoMeanNW : densityNW;
 
-					//calculate current matrix entry
-					entry = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
+                    //calculate current matrix entry
+                    entry = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
 
-					//calculate right hand side
-					Scalar rightEntry = (lambdaW * densityW + lambdaNW * densityNW) * (permeability * gravity) * faceArea;
+                    //calculate right hand side
+                    Scalar rightEntry = (lambdaW * densityW + lambdaNW * densityNW) * (permeability * gravity) * faceArea;
 
-					switch (pressureType)
-					{
-					case pw:
-					{
-						// calculate capillary pressure gradient
-						Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
-						pCGradient *= (pcI - pcJ) / dist;
+                    switch (pressureType)
+                    {
+                    case pw:
+                    {
+                        // calculate capillary pressure gradient
+                        Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
+                        pCGradient *= (pcI - pcJ) / dist;
 
-						//add capillary pressure term to right hand side
-						rightEntry += 0.5 * (lambdaNWI + lambdaNWJ) * (permeability * pCGradient) * faceArea;
-						break;
-					}
-					case pn:
-					{
-						// calculate capillary pressure gradient
-						Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
-						pCGradient *= (pcI - pcJ) / dist;
+                        //add capillary pressure term to right hand side
+                        rightEntry += 0.5 * (lambdaNWI + lambdaNWJ) * (permeability * pCGradient) * faceArea;
+                        break;
+                    }
+                    case pn:
+                    {
+                        // calculate capillary pressure gradient
+                        Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
+                        pCGradient *= (pcI - pcJ) / dist;
 
-						//add capillary pressure term to right hand side
-						rightEntry -= 0.5 * (lambdaWI + lambdaWJ) * (permeability * pCGradient) * faceArea;
-						break;
-					}
-					}
+                        //add capillary pressure term to right hand side
+                        rightEntry -= 0.5 * (lambdaWI + lambdaWJ) * (permeability * pCGradient) * faceArea;
+                        break;
+                    }
+                    }
 
-					//set right hand side
-					f_[globalIdxI] -= rightEntry;
+                    //set right hand side
+                    f_[globalIdxI] -= rightEntry;
 
-					// set diagonal entry
-					A_[globalIdxI][globalIdxI] += entry;
+                    // set diagonal entry
+                    A_[globalIdxI][globalIdxI] += entry;
 
-					// set off-diagonal entry
-					A_[globalIdxI][globalIdxJ] -= entry;
+                    // set off-diagonal entry
+                    A_[globalIdxI][globalIdxJ] -= entry;
 
                 } // end of case "neighbor has same level"
 
                 // hanging node situation: neighbor has higher level
                 if (neighborPointer->level()==eIt.level()+1)
                 {
-                	// Count number of hanging nodes
-					// nodecount counts each hanging node twice, we have to divide by 2 in the end
-					// not really necessary
-					nodecount++;
+                    // Count number of hanging nodes
+                    // nodecount counts each hanging node twice, we have to divide by 2 in the end
+                    // not really necessary
+                    nodecount++;
 
-					int globalIdxK = 0;
-					ElementPointer thirdCellPointer = isIt->outside();
-					bool foundK=false;
-					bool foundIJ=false;
-					// We are looking for two things:
-					// IsIndexJ, the index of the interface from the neighbor-cell point of view
-					// GlobalIdxK, the index of the third cell
-					// for efficienty this is done in one IntersectionIterator-Loop
+                    int globalIdxK = 0;
+                    ElementPointer thirdCellPointer = isIt->outside();
+                    bool foundK=false;
+                    bool foundIJ=false;
+                    // We are looking for two things:
+                    // IsIndexJ, the index of the interface from the neighbor-cell point of view
+                    // GlobalIdxK, the index of the third cell
+                    // for efficienty this is done in one IntersectionIterator-Loop
 
-					// Intersectioniterator around cell J
-					IntersectionIterator isItEndJ = this->problem().gridView().iend(*neighborPointer);
+                    // Intersectioniterator around cell J
+                    int isIndexJ = -1;
+                    IntersectionIterator isItEndJ = this->problem().gridView().iend(*neighborPointer);
 
-					for (IntersectionIterator isItJ = this->problem().gridView().ibegin(*neighborPointer); isItJ != isItEndJ; ++isItJ)
-					{
-						if (isItJ->neighbor())
-						{
-							ElementPointer neighborPointer2 = isItJ->outside();
+                    for (IntersectionIterator isItJ = this->problem().gridView().ibegin(*neighborPointer); isItJ != isItEndJ; ++isItJ)
+                    {
+                        // increase isIndexJ, if it is not found yet
+                        if (!foundIJ)
+                            isIndexJ++;
+                        if (isItJ->neighbor())
+                        {
+                            ElementPointer neighborPointer2 = isItJ->outside();
 
-							// Neighbor of neighbor is Cell I?
-							if (this->problem().variables().index(*neighborPointer2)==globalIdxI)
-							{
-								foundIJ=true;
-							}
-							else
-							{
-								if (neighborPointer2->level()==eIt.level()+1)
-								{
-									// To verify, we found the correct Cell K, we check
-									// - is level(K)=level(J)?
-									// - is distance(IJ)=distance(IK)?
-									// - K is neighbor of J.
-									const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
-									const GlobalPosition& globalPosThirdCell = neighborPointer2->geometry().center();
-									Dune::FieldVector<Scalar, dimWorld> distVecIJ = globalPosNeighbor - globalPos;
-									Dune::FieldVector<Scalar, dimWorld> distVecIK = globalPosThirdCell - globalPos;
-									if (((distVecIK.two_norm()-distVecIJ.two_norm()))/distVecIJ.two_norm() < 0.001)
-									{
-										globalIdxK= this->problem().variables().index(*neighborPointer2);
-										thirdCellPointer = neighborPointer2;
-										foundK=true;
-									}
+                            // Neighbor of neighbor is Cell I?
+                            if (this->problem().variables().index(*neighborPointer2)==globalIdxI)
+                            {
+                                foundIJ=true;
+                            }
+                            else
+                            {
+                                if (neighborPointer2->level()==eIt.level()+1)
+                                {
+                                    // To verify, we found the correct Cell K, we check
+                                    // - is level(K)=level(J)?
+                                    // - is distance(IJ)=distance(IK)?
+                                    // - K is neighbor of J.
+                                    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+                                    const GlobalPosition& globalPosThirdCell = neighborPointer2->geometry().center();
+                                    Dune::FieldVector<Scalar, dimWorld> distVecIJ = globalPosNeighbor - globalPos;
+                                    Dune::FieldVector<Scalar, dimWorld> distVecIK = globalPosThirdCell - globalPos;
+                                    if (((distVecIK.two_norm()-distVecIJ.two_norm()))/distVecIJ.two_norm() < 0.001)
+                                    {
+                                        globalIdxK= this->problem().variables().index(*neighborPointer2);
+                                        thirdCellPointer = neighborPointer2;
+                                        foundK=true;
+                                    }
 
-								}
-							}
-						}
-						if (foundIJ && foundK) break;
-					}
+                                }
+                            }
+                        }
+                        if (foundIJ && foundK) break;
+                    }
 
-                    int isIndexJ = isIt->indexInOutside();
+                    // neighbor cell center in global coordinates
+                    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+//                    const GlobalPosition& globalPosThirdCell = thirdCellPointer->geometry().center();
+                    const GlobalPosition& globalPosInterface = isIt->geometry().center();
 
-					// neighbor cell center in global coordinates
-					const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
-//					const GlobalPosition& globalPosThirdCell = thirdCellPointer->geometry().center();
-					const GlobalPosition& globalPosInterface = isIt->geometry().center();
+                    Dune::FieldVector<Scalar,dimWorld> distVec = globalPosInterface - globalPos;
+                    Scalar lI= distVec*unitOuterNormal;
+                    distVec = globalPosNeighbor - globalPosInterface;
+                    Scalar lJ= distVec*unitOuterNormal;
+                    Scalar l=lI+lJ;
 
-					Dune::FieldVector<Scalar,dimWorld> distVec = globalPosInterface - globalPos;
-					Scalar lI= distVec*unitOuterNormal;
-					distVec = globalPosNeighbor - globalPosInterface;
-					Scalar lJ= distVec*unitOuterNormal;
-					Scalar l=lI+lJ;
+                    FieldMatrix permeabilityI(0);
+                    FieldMatrix permeabilityJ(0);
+                    FieldMatrix permeabilityK(0);
 
-					FieldMatrix permeabilityI(0);
-					FieldMatrix permeabilityJ(0);
-					FieldMatrix permeabilityK(0);
+                    problem_.spatialParameters().meanK(permeabilityI,
+                            problem_.spatialParameters().intrinsicPermeability(*eIt));
+                    problem_.spatialParameters().meanK(permeabilityJ,
+                            problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
+                    problem_.spatialParameters().meanK(permeabilityK,
+                            problem_.spatialParameters().intrinsicPermeability(*thirdCellPointer));
 
-					problem_.spatialParameters().meanK(permeabilityI,
-							problem_.spatialParameters().intrinsicPermeability(*eIt));
-					problem_.spatialParameters().meanK(permeabilityJ,
-							problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
-					problem_.spatialParameters().meanK(permeabilityK,
-							problem_.spatialParameters().intrinsicPermeability(*thirdCellPointer));
+                    // Calculate permeablity component normal to interface
+                    Scalar kI, kJ, kK, kMean, ng;
+                    Dune::FieldVector<Scalar, dim> permI(0);
+                    Dune::FieldVector<Scalar, dim> permJ(0);
+                    Dune::FieldVector<Scalar, dim> permK(0);
 
-					// Calculate permeablity component normal to interface
-					Scalar kI, kJ, kK, kMean, ng;
-					Dune::FieldVector<Scalar, dim> permI(0);
-					Dune::FieldVector<Scalar, dim> permJ(0);
-					Dune::FieldVector<Scalar, dim> permK(0);
+                    permeabilityI.mv(unitOuterNormal, permI);
+                    permeabilityJ.mv(unitOuterNormal, permJ);
+                    permeabilityK.mv(unitOuterNormal, permK);
 
-					permeabilityI.mv(unitOuterNormal, permI);
-					permeabilityJ.mv(unitOuterNormal, permJ);
-					permeabilityK.mv(unitOuterNormal, permK);
+                    // kI,kJ,kK=(n^T)Kn
+                    kI=unitOuterNormal*permI;
+                    kJ=unitOuterNormal*permJ;
+                    kK=unitOuterNormal*permK;
 
-					// kI,kJ,kK=(n^T)Kn
-					kI=unitOuterNormal*permI;
-					kJ=unitOuterNormal*permJ;
-					kK=unitOuterNormal*permK;
+                    // See Diplomarbeit Michael Sinsbeck
+                    kMean=kI*kJ*kK*l/(kJ*kK*lI+kI*(kJ+kK)/2*lJ);
 
-					// See Diplomarbeit Michael Sinsbeck
-					kMean=kI*kJ*kK*l/(kJ*kK*lI+kI*(kJ+kK)/2*lJ);
+                    ng=this->gravity*unitOuterNormal;
 
-					ng=this->gravity*unitOuterNormal;
+                    // get mobilities
+                    // fractional flow function is not evaluated, since we do not use p_global
+                    Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
+                    Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
+                    Scalar densityWJ = problem_.variables().densityWetting(globalIdxJ);
+                    Scalar densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
+                    Scalar fractionalWJ = problem_.variables().fracFlowFuncWetting(globalIdxJ);
+                    Scalar fractionalNWJ = problem_.variables().fracFlowFuncNonwetting(globalIdxJ);
 
-					// get mobilities
-					// fractional flow function is not evaluated, since we do not use p_global
-					Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
-					Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
-					Scalar densityWJ = problem_.variables().densityWetting(globalIdxJ);
-					Scalar densityNWJ = problem_.variables().densityNonwetting(globalIdxJ);
-					Scalar fractionalWJ = problem_.variables().fracFlowFuncWetting(globalIdxJ);
-					Scalar fractionalNWJ = problem_.variables().fracFlowFuncNonwetting(globalIdxJ);
+//                    Scalar lambdaWK = problem_.variables().mobilityWetting(globalIdxK);
+//                    Scalar lambdaNWK = problem_.variables().mobilityNonwetting(globalIdxK);
+                    Scalar densityWK = problem_.variables().densityWetting(globalIdxK);
+                    Scalar densityNWK = problem_.variables().densityNonwetting(globalIdxK);
+                    Scalar fractionalWK = problem_.variables().fracFlowFuncWetting(globalIdxK);
+                    Scalar fractionalNWK = problem_.variables().fracFlowFuncNonwetting(globalIdxK);
 
-//					Scalar lambdaWK = problem_.variables().mobilityWetting(globalIdxK);
-//					Scalar lambdaNWK = problem_.variables().mobilityNonwetting(globalIdxK);
-					Scalar densityWK = problem_.variables().densityWetting(globalIdxK);
-					Scalar densityNWK = problem_.variables().densityNonwetting(globalIdxK);
-					Scalar fractionalWK = problem_.variables().fracFlowFuncWetting(globalIdxK);
-					Scalar fractionalNWK = problem_.variables().fracFlowFuncNonwetting(globalIdxK);
+                    Scalar pcJ = problem_.variables().capillaryPressure(globalIdxJ);
+                    Scalar pcK = problem_.variables().capillaryPressure(globalIdxK);
+                    Scalar pcJK=(pcJ+pcK)/2;
 
-					Scalar pcJ = problem_.variables().capillaryPressure(globalIdxJ);
-					Scalar pcK = problem_.variables().capillaryPressure(globalIdxK);
-					Scalar pcJK=(pcJ+pcK)/2;
+                    // Potentials from previous time step are not available.
+                    // Instead, calculate mean density, then find potentials,
+                    // then upwind density.
+                    // pressure from previous time step might also be incorrect.
 
-					// Potentials from previous time step are not available.
-					// Instead, calculate mean density, then find potentials,
-					// then upwind density.
-					// pressure from previous time step might also be incorrect.
+                    Scalar rhoMeanWIJ = (lJ*densityWI + lI*densityWJ)/l;
+                    Scalar rhoMeanNWIJ = (lJ*densityNWI + lI*densityNWJ)/l;
+                    Scalar rhoMeanWIK = (lJ*densityWI + lI*densityWK)/l;
+                    Scalar rhoMeanNWIK = (lJ*densityNWI + lI*densityNWK)/l;
 
-					Scalar rhoMeanWIJ = (lJ*densityWI + lI*densityWJ)/l;
-					Scalar rhoMeanNWIJ = (lJ*densityNWI + lI*densityNWJ)/l;
-					Scalar rhoMeanWIK = (lJ*densityWI + lI*densityWK)/l;
-					Scalar rhoMeanNWIK = (lJ*densityNWI + lI*densityNWK)/l;
+                    Scalar densityWIJ = 0;
+                    Scalar densityNWIJ = 0;
+                    Scalar densityWIK = 0;
+                    Scalar densityNWIK = 0;
 
-					Scalar densityWIJ = 0;
-					Scalar densityNWIJ = 0;
-					Scalar densityWIK = 0;
-					Scalar densityNWIK = 0;
+                    Scalar fMeanWIJ = (lJ*fractionalWI+lI*fractionalWJ)/l;
+                    Scalar fMeanNWIJ = (lJ*fractionalNWI+lI*fractionalNWJ)/l;
+                    Scalar fMeanWIK = (lJ*fractionalWI+lI*fractionalWK)/l;
+                    Scalar fMeanNWIK = (lJ*fractionalNWI+lI*fractionalNWK)/l;
 
-					Scalar fMeanWIJ = (lJ*fractionalWI+lI*fractionalWJ)/l;
-					Scalar fMeanNWIJ = (lJ*fractionalNWI+lI*fractionalNWJ)/l;
-					Scalar fMeanWIK = (lJ*fractionalWI+lI*fractionalWK)/l;
-					Scalar fMeanNWIK = (lJ*fractionalNWI+lI*fractionalNWK)/l;
+                    Scalar potentialWIJ = 0;
+                    Scalar potentialNWIJ = 0;
+                    Scalar potentialWIK = 0;
+                    Scalar potentialNWIK = 0;
 
-					Scalar potentialWIJ = 0;
-					Scalar potentialNWIJ = 0;
-					Scalar potentialWIK = 0;
-					Scalar potentialNWIK = 0;
+                    //if we are at the very first iteration we can't calculate phase potentials
+                    if (!first)
+                    {
+                        // potentials from previous time step no available.
+                        densityWIJ = rhoMeanWIJ;
+                        densityNWIJ = rhoMeanNWIJ;
+                        densityWIK = rhoMeanWIK;
+                        densityNWIK = rhoMeanNWIK;
 
-					//if we are at the very first iteration we can't calculate phase potentials
-					if (!first)
-					{
-						// potentials from previous time step no available.
-						densityWIJ = rhoMeanWIJ;
-						densityNWIJ = rhoMeanNWIJ;
-						densityWIK = rhoMeanWIK;
-						densityNWIK = rhoMeanNWIK;
+                        // Old pressure field
+                        Scalar pressI=problem_.variables().pressure()[globalIdxI];
+                        Scalar pressJ=problem_.variables().pressure()[globalIdxJ];
+                        Scalar pressK=problem_.variables().pressure()[globalIdxK];
+                        Scalar pressJK=(pressJ+pressK)/2;
+                        Scalar pcJK=(pcJ+pcK)/2;
 
-						// Old pressure field
-						Scalar pressI=problem_.variables().pressure()[globalIdxI];
-						Scalar pressJ=problem_.variables().pressure()[globalIdxJ];
-						Scalar pressK=problem_.variables().pressure()[globalIdxK];
-						Scalar pressJK=(pressJ+pressK)/2;
-						Scalar pcJK=(pcJ+pcK)/2;
+                        switch (pressureType)
+                        {
+                            case pw:
+                            {
+                                potentialWIJ = (pressI-pressJK)/l+
+                                        (densityWIJ-lJ/l*(kI+kK)/kI*(densityWIK-densityWIJ)/2)*ng;
+                                potentialNWIJ = (pressI+pcI-(pressJK+pcJK))/l+
+                                        (densityNWIJ-lJ/l*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2)*ng;
+                                potentialWIK = (pressI-pressJK)/l+
+                                        (densityWIK-lJ/l*(kI+kK)/kI*(densityWIJ-densityWIK)/2)*ng;
+                                potentialNWIK = (pressI+pcI-(pressJK+pcJK))/l+
+                                        (densityNWIK-lJ/l*(kI+kK)/kI*(densityNWIJ-densityNWIK)/2)*ng;
+                                break;
+                            }
+                            case pn:
+                            {
+                                potentialWIJ = (pressI-pcI-(pressJK-pcJK))/l+
+                                        (densityWIJ-lJ/l*(kI+kK)/kI*(densityWIK-densityWIJ)/2)*ng;
+                                potentialNWIJ = (pressI-pressJK)/l+
+                                        (densityNWIJ-lJ/l*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2)*ng;
+                                potentialWIK = (pressI-pcI-(pressJK-pcJK))/l+
+                                        (densityWIK-lJ/l*(kI+kK)/kI*(densityWIJ-densityWIK)/2)*ng;
+                                potentialNWIK = (pressI-pressJK)/l+
+                                        (densityNWIK-lJ/l*(kI+kK)/kI*(densityNWIJ-densityNWIK)/2)*ng;
+                                break;
+                            }
+                            case pglobal:
+                            {
+                                potentialWIJ = (pressI-fMeanNWIJ*pcI-(pressJK-fMeanNWIJ*pcJK))/l+
+                                        (densityWIJ-lJ/l*(kI+kK)/kI*(densityWIK-densityWIJ)/2)*ng;
+                                potentialNWIJ = (pressI+fMeanWIJ*pcI-(pressJK+fMeanWIJ*pcJK))/l+
+                                        (densityNWIJ-lJ/l*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2)*ng;
+                                potentialWIK = (pressI-fMeanNWIK*pcI-(pressJK-fMeanNWIK*pcJK))/l+
+                                        (densityWIK-lJ/l*(kI+kK)/kI*(densityWIJ-densityWIK)/2)*ng;
+                                potentialNWIK = (pressI+fMeanWIK*pcI-(pressJK+fMeanWIK*pcJK))/l+
+                                        (densityNWIK-lJ/l*(kI+kK)/kI*(densityNWIJ-densityNWIK)/2)*ng;
+                                break;
+                            }
+                        }
 
-						switch (pressureType)
-						{
-							case pw:
-							{
-								potentialWIJ = (pressI-pressJK)/l+
-										(densityWIJ-lJ/l*(kI+kK)/kI*(densityWIK-densityWIJ)/2)*ng;
-								potentialNWIJ = (pressI+pcI-(pressJK+pcJK))/l+
-										(densityNWIJ-lJ/l*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2)*ng;
-								potentialWIK = (pressI-pressJK)/l+
-										(densityWIK-lJ/l*(kI+kK)/kI*(densityWIJ-densityWIK)/2)*ng;
-								potentialNWIK = (pressI+pcI-(pressJK+pcJK))/l+
-										(densityNWIK-lJ/l*(kI+kK)/kI*(densityNWIJ-densityNWIK)/2)*ng;
-								break;
-							}
-							case pn:
-							{
-								potentialWIJ = (pressI-pcI-(pressJK-pcJK))/l+
-										(densityWIJ-lJ/l*(kI+kK)/kI*(densityWIK-densityWIJ)/2)*ng;
-								potentialNWIJ = (pressI-pressJK)/l+
-										(densityNWIJ-lJ/l*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2)*ng;
-								potentialWIK = (pressI-pcI-(pressJK-pcJK))/l+
-										(densityWIK-lJ/l*(kI+kK)/kI*(densityWIJ-densityWIK)/2)*ng;
-								potentialNWIK = (pressI-pressJK)/l+
-										(densityNWIK-lJ/l*(kI+kK)/kI*(densityNWIJ-densityNWIK)/2)*ng;
-								break;
-							}
-							case pglobal:
-							{
-								potentialWIJ = (pressI-fMeanNWIJ*pcI-(pressJK-fMeanNWIJ*pcJK))/l+
-										(densityWIJ-lJ/l*(kI+kK)/kI*(densityWIK-densityWIJ)/2)*ng;
-								potentialNWIJ = (pressI+fMeanWIJ*pcI-(pressJK+fMeanWIJ*pcJK))/l+
-										(densityNWIJ-lJ/l*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2)*ng;
-								potentialWIK = (pressI-fMeanNWIK*pcI-(pressJK-fMeanNWIK*pcJK))/l+
-										(densityWIK-lJ/l*(kI+kK)/kI*(densityWIJ-densityWIK)/2)*ng;
-								potentialNWIK = (pressI+fMeanWIK*pcI-(pressJK+fMeanWIK*pcJK))/l+
-										(densityNWIK-lJ/l*(kI+kK)/kI*(densityNWIJ-densityNWIK)/2)*ng;
-								break;
-							}
-						}
+                        //store potentials for further calculations (velocity, saturation, ...)
 
-						//store potentials for further calculations (velocity, saturation, ...)
+                        problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialWIJ;
+                        problem_.variables().potentialNonwetting(globalIdxI, isIndex) = potentialNWIJ;
+                        problem_.variables().potentialWetting(globalIdxJ, isIndexJ) = -potentialWIJ;
+                        problem_.variables().potentialNonwetting(globalIdxJ, isIndexJ) = -potentialNWIJ;
+                    }
 
-						problem_.variables().potentialWetting(globalIdxI, isIndex) = potentialWIJ;
-						problem_.variables().potentialNonwetting(globalIdxI, isIndex) = potentialNWIJ;
-						problem_.variables().potentialWetting(globalIdxJ, isIndexJ) = -potentialWIJ;
-						problem_.variables().potentialNonwetting(globalIdxJ, isIndexJ) = -potentialNWIJ;
-					}
+                    //do the upwinding of the mobility depending on the phase potentials
+                    Scalar lambdaWIJ = (potentialWIJ > 0.) ? lambdaWI : lambdaWJ;
+                    lambdaWIJ = (potentialWIJ == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
+                    Scalar lambdaNWIJ = (potentialNWIJ > 0) ? lambdaNWI : lambdaNWJ;
+                    lambdaNWIJ = (potentialNWIJ == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNWIJ;
+                    densityWIJ = (potentialWIJ > 0.) ? densityWI : densityWJ;
+                    densityNWIJ = (potentialNWIJ > 0.) ? densityNWI : densityNWJ;
+                    densityWIJ = (potentialWIJ == 0) ? rhoMeanWIJ : densityWIJ;
+                    densityNWIJ = (potentialNWIJ == 0) ? rhoMeanNWIJ : densityNWIJ;
 
-					//do the upwinding of the mobility depending on the phase potentials
-					Scalar lambdaWIJ = (potentialWIJ > 0.) ? lambdaWI : lambdaWJ;
-					lambdaWIJ = (potentialWIJ == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaWIJ;
-					Scalar lambdaNWIJ = (potentialNWIJ > 0) ? lambdaNWI : lambdaNWJ;
-					lambdaNWIJ = (potentialNWIJ == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNWIJ;
-					densityWIJ = (potentialWIJ > 0.) ? densityWI : densityWJ;
-					densityNWIJ = (potentialNWIJ > 0.) ? densityNWI : densityNWJ;
-					densityWIJ = (potentialWIJ == 0) ? rhoMeanWIJ : densityWIJ;
-					densityNWIJ = (potentialNWIJ == 0) ? rhoMeanNWIJ : densityNWIJ;
-
-					densityWIK = (potentialWIK > 0.) ? densityWI : densityWK;
-					densityNWIK = (potentialNWIK > 0.) ? densityNWI : densityNWK;
-					densityWIK = (potentialWIK == 0) ? rhoMeanWIK : densityWIK;
-					densityNWIK = (potentialNWIK == 0) ? rhoMeanNWIK : densityNWIK;
+                    densityWIK = (potentialWIK > 0.) ? densityWI : densityWK;
+                    densityNWIK = (potentialNWIK > 0.) ? densityNWI : densityNWK;
+                    densityWIK = (potentialWIK == 0) ? rhoMeanWIK : densityWIK;
+                    densityNWIK = (potentialNWIK == 0) ? rhoMeanNWIK : densityNWIK;
 
 
-					// update diagonal entry and right hand side
+                    // update diagonal entry and right hand side
 
-					Scalar entry;
-					Scalar rightEntry;
+                    Scalar entry;
+                    Scalar rightEntry;
 
-					entry = (lambdaWIJ + lambdaNWIJ)*kMean/l*faceArea;
-					rightEntry  = faceArea*lambdaWIJ*kMean*ng*((densityWIJ)-(lJ/l)*(kI+kK)/kI*(densityWIK-densityWIJ)/2);
-					rightEntry += faceArea*lambdaNWIJ*kMean*ng*((densityNWIJ)-(lJ/l)*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2);
+                    entry = (lambdaWIJ + lambdaNWIJ)*kMean/l*faceArea;
+                    rightEntry  = faceArea*lambdaWIJ*kMean*ng*((densityWIJ)-(lJ/l)*(kI+kK)/kI*(densityWIK-densityWIJ)/2);
+                    rightEntry += faceArea*lambdaNWIJ*kMean*ng*((densityNWIJ)-(lJ/l)*(kI+kK)/kI*(densityNWIK-densityNWIJ)/2);
 
-					switch (pressureType)
-					{
-						case pw:
-						{
-							rightEntry += faceArea*lambdaNWIJ*kMean*(pcJK-pcI)/l;
-							break;
-						}
-						case pn:
-						{
-							rightEntry -= faceArea*lambdaWIJ*kMean*(pcJK-pcI)/l;
-							break;
-						}
-					}
+                    switch (pressureType)
+                    {
+                        case pw:
+                        {
+                            rightEntry += faceArea*lambdaNWIJ*kMean*(pcJK-pcI)/l;
+                            break;
+                        }
+                        case pn:
+                        {
+                            rightEntry -= faceArea*lambdaWIJ*kMean*(pcJK-pcI)/l;
+                            break;
+                        }
+                    }
 
-					f_[globalIdxI] -= rightEntry;
-					f_[globalIdxJ] += rightEntry;
+                    f_[globalIdxI] -= rightEntry;
+                    f_[globalIdxJ] += rightEntry;
 
-					// set diagonal entry
-					A_[globalIdxI][globalIdxI] += entry;
-					A_[globalIdxI][globalIdxJ] -= 0.5*entry;
-					A_[globalIdxI][globalIdxK] -= 0.5*entry;
+                    // set diagonal entry
+                    A_[globalIdxI][globalIdxI] += entry;
+                    A_[globalIdxI][globalIdxJ] -= 0.5*entry;
+                    A_[globalIdxI][globalIdxK] -= 0.5*entry;
 
-					// set off-diagonal entry
-					A_[globalIdxJ][globalIdxI] -= entry;
-					A_[globalIdxJ][globalIdxJ] += 0.5*entry;
-					A_[globalIdxJ][globalIdxK] += 0.5*entry;
+                    // set off-diagonal entry
+                    A_[globalIdxJ][globalIdxI] -= entry;
+                    A_[globalIdxJ][globalIdxJ] += 0.5*entry;
+                    A_[globalIdxJ][globalIdxK] += 0.5*entry;
 
                 }
             }
@@ -951,11 +954,11 @@ void FVPressure2Padaptive<TypeTag>::assemble(bool first)
 
                     if (!first)
                     {
-                    	// Comment: In the non-adaptive case, one can upwind the density using the
-                    	// old potential. Here, we use the mean density instead.
-                    	// For the incompressible case, it does not make a difference, anyway.
-						densityW = rhoMeanW;
-						densityNW = rhoMeanNW;
+                        // Comment: In the non-adaptive case, one can upwind the density using the
+                        // old potential. Here, we use the mean density instead.
+                        // For the incompressible case, it does not make a difference, anyway.
+                        densityW = rhoMeanW;
+                        densityNW = rhoMeanNW;
 
                         //calculate potential gradient
                         switch (pressureType)

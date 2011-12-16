@@ -84,28 +84,28 @@ SET_TYPE_PROP(NumericModel, Scalar, double);
 SET_PROP(NumericModel, ParameterTree)
 {
     typedef Dune::ParameterTree type;
-    
+
     static Dune::ParameterTree &tree()
-    { 
+    {
         static Dune::ParameterTree obj_;
         return obj_;
     };
 
     static Dune::ParameterTree &compileTimeParams()
-    { 
+    {
         static Dune::ParameterTree obj_;
         return obj_;
     };
 
 
     static Dune::ParameterTree &runTimeParams()
-    { 
+    {
         static Dune::ParameterTree obj_;
         return obj_;
     };
 };
 
-// use the global group as default for the model's parameter group 
+// use the global group as default for the model's parameter group
 SET_STRING_PROP(NumericModel, ModelParameterGroup, "");
 
 } // namespace Properties

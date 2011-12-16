@@ -60,9 +60,9 @@ class MPNCVolumeVariablesEnergy
     //typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCEnergyIndices)) EnergyIndices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename FluidSystem::ParameterCache ParameterCache; 
+    typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
-    
+
 public:
     /*!
      * \brief Update the temperature of the sub-control volume.
@@ -130,9 +130,9 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     enum { temperature0Idx = Indices::temperatureIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename FluidSystem::ParameterCache ParameterCache; 
+    typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
-    
+
 public:
     /*!
      * \brief Update the temperature of the sub-control volume.

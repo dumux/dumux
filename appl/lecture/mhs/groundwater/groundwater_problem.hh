@@ -45,16 +45,16 @@ namespace Dumux
 
 struct Source
 {
-	Dune::FieldVector<double,2> globalPos;
-	double q;
-	int index;
+    Dune::FieldVector<double,2> globalPos;
+    double q;
+    int index;
 };
 
 struct BoundarySegment
 {
-	double from, to;
-	bool neumann;
-	double value;
+    double from, to;
+    bool neumann;
+    double value;
 };
 
 template<class TypeTag>
@@ -140,74 +140,74 @@ public:
     {
 //        this->spatialParameters().setDelta(delta_);
 
-    	// Write input parameters into private variables
-        Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
+        // Write input parameters into private variables
+        //Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
         domainSize_ = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         geometryDepth_ = Params::tree().template get<double>("Geometry.depth");
         resolution_ = Params::tree().template get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
 
         // Read sources
-    	std::vector<double> sources = Params::tree().template get<std::vector<double> >("Source.sources");
-		int NumberOfSources = std::trunc(sources.size()/3);
+        std::vector<double> sources = Params::tree().template get<std::vector<double> >("Source.sources");
+        int NumberOfSources = std::trunc(sources.size()/3);
 
-		for (int sourceCount=0; sourceCount<NumberOfSources ; sourceCount++)
-		{
-			Source tempSource;
-			tempSource.globalPos[0]=sources[sourceCount*3];
-			tempSource.globalPos[1]=sources[sourceCount*3+1];
-			tempSource.q=sources[sourceCount*3+2];
-			tempSource.index = std::floor(tempSource.globalPos[0]
-			   * resolution_[0]/domainSize_[0])
-			   + std::floor(tempSource.globalPos[1]*resolution_[1]/domainSize_[1])
-			   * resolution_[0];
-			sources_.push_back(tempSource);
-		}
+        for (int sourceCount=0; sourceCount<NumberOfSources ; sourceCount++)
+        {
+            Source tempSource;
+            tempSource.globalPos[0]=sources[sourceCount*3];
+            tempSource.globalPos[1]=sources[sourceCount*3+1];
+            tempSource.q=sources[sourceCount*3+2];
+            tempSource.index = std::floor(tempSource.globalPos[0]
+               * resolution_[0]/domainSize_[0])
+               + std::floor(tempSource.globalPos[1]*resolution_[1]/domainSize_[1])
+               * resolution_[0];
+            sources_.push_back(tempSource);
+        }
 
-		// Read Boundary Conditions
-    	std::vector<double> BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.left");
-		int NumberOfSegments = std::trunc(BC.size()/4);
-		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
-		{
-			BoundarySegment tempSegment;
-			tempSegment.from = BC[segmentCount*4];
-			tempSegment.to = BC[segmentCount*4+1];
-			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
-			tempSegment.value = BC[segmentCount*4+3];
-			boundaryConditions_[2].push_back(tempSegment);
-		}
-    	BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.right");
-		NumberOfSegments = std::trunc(BC.size()/4);
-		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
-		{
-			BoundarySegment tempSegment;
-			tempSegment.from = BC[segmentCount*4];
-			tempSegment.to = BC[segmentCount*4+1];
-			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
-			tempSegment.value = BC[segmentCount*4+3];
-			boundaryConditions_[3].push_back(tempSegment);
-		}
-    	BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.bottom");
-		NumberOfSegments = std::trunc(BC.size()/4);
-		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
-		{
-			BoundarySegment tempSegment;
-			tempSegment.from = BC[segmentCount*4];
-			tempSegment.to = BC[segmentCount*4+1];
-			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
-			tempSegment.value = BC[segmentCount*4+3];
-			boundaryConditions_[1].push_back(tempSegment);
-		}
-    	BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.top");
-		NumberOfSegments = std::trunc(BC.size()/4);
-		for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
-		{
-			BoundarySegment tempSegment;
-			tempSegment.from = BC[segmentCount*4];
-			tempSegment.to = BC[segmentCount*4+1];
-			tempSegment.neumann = (BC[segmentCount*4+2]!=0);
-			tempSegment.value = BC[segmentCount*4+3];
-			boundaryConditions_[0].push_back(tempSegment);
-		}
+        // Read Boundary Conditions
+        std::vector<double> BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.left");
+        int NumberOfSegments = std::trunc(BC.size()/4);
+        for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+        {
+            BoundarySegment tempSegment;
+            tempSegment.from = BC[segmentCount*4];
+            tempSegment.to = BC[segmentCount*4+1];
+            tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+            tempSegment.value = BC[segmentCount*4+3];
+            boundaryConditions_[2].push_back(tempSegment);
+        }
+        BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.right");
+        NumberOfSegments = std::trunc(BC.size()/4);
+        for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+        {
+            BoundarySegment tempSegment;
+            tempSegment.from = BC[segmentCount*4];
+            tempSegment.to = BC[segmentCount*4+1];
+            tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+            tempSegment.value = BC[segmentCount*4+3];
+            boundaryConditions_[3].push_back(tempSegment);
+        }
+        BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.bottom");
+        NumberOfSegments = std::trunc(BC.size()/4);
+        for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+        {
+            BoundarySegment tempSegment;
+            tempSegment.from = BC[segmentCount*4];
+            tempSegment.to = BC[segmentCount*4+1];
+            tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+            tempSegment.value = BC[segmentCount*4+3];
+            boundaryConditions_[1].push_back(tempSegment);
+        }
+        BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.top");
+        NumberOfSegments = std::trunc(BC.size()/4);
+        for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
+        {
+            BoundarySegment tempSegment;
+            tempSegment.from = BC[segmentCount*4];
+            tempSegment.to = BC[segmentCount*4+1];
+            tempSegment.neumann = (BC[segmentCount*4+2]!=0);
+            tempSegment.value = BC[segmentCount*4+3];
+            boundaryConditions_[0].push_back(tempSegment);
+        }
     }
 
     /*!
@@ -251,10 +251,10 @@ public:
     {
         values = 0;
         Scalar density=Fluid::density(0,0);
-		for (int sourceCount = 0; sourceCount != sources_.size(); sourceCount++)
+        for (int sourceCount = 0; sourceCount != sources_.size(); sourceCount++)
         {
-			if (this->variables().index(element) == sources_[sourceCount].index)
-				values+=sources_[sourceCount].q*density/element.geometry().volume()/geometryDepth_;
+            if (this->variables().index(element) == sources_[sourceCount].index)
+                values+=sources_[sourceCount].q*density/element.geometry().volume()/geometryDepth_;
         }
     }
 
@@ -293,12 +293,12 @@ public:
             boundaryIndex=0;
         }
 
-    	for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
+        for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
         {
-    		if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
-    				(coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
-    		{
-    			if (boundaryConditions_[boundaryIndex][segmentCount].neumann)
+            if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
+                    (coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
+            {
+                if (boundaryConditions_[boundaryIndex][segmentCount].neumann)
                     bcType.setAllNeumann();
                 else
                     bcType.setAllDirichlet();
@@ -341,11 +341,11 @@ public:
             boundaryIndex=0;
         }
 
-    	for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
-    	{
-    		if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
-    				(coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
-    		{
+        for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
+        {
+            if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
+                    (coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
+            {
                 values = boundaryConditions_[boundaryIndex][segmentCount].value*Fluid::density(0,0)*9.81;
                 return;
             }
@@ -382,12 +382,12 @@ public:
             coordinate=globalPos[0];
             boundaryIndex=0;
         }
-        
-    	for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
-    	{
-    		if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
-    				(coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
-    		{
+
+        for (int segmentCount=0; segmentCount<boundaryConditions_[boundaryIndex].size();segmentCount++)
+        {
+            if ((boundaryConditions_[boundaryIndex][segmentCount].from < coordinate) &&
+                    (coordinate < boundaryConditions_[boundaryIndex][segmentCount].to))
+            {
                 values = boundaryConditions_[boundaryIndex][segmentCount].value*Fluid::density(0,0)*(-1);
                 return;
             }
@@ -398,73 +398,73 @@ public:
     void writeOutput()
     {
         Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
-	
-	Scalar zmax, zmin;
-	zmax=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
-	zmin=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
 
-	for (int i=0; i< resolution[0]*resolution[1]; i++)
-	{
-		Scalar currentHead= this->variables().pressure()[i]/(Fluid::density(0,0)*9.81);
-		zmax = std::max(currentHead,zmax);
-		zmin = std::min(currentHead,zmin);			
-	}
+    Scalar zmax, zmin;
+    zmax=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
+    zmin=this->variables().pressure()[0]/(Fluid::density(0,0)*9.81);
 
-		std::ofstream dataFile;
-		dataFile.open("dumux-out.vgfc");
-		dataFile << "Gridplot" << std::endl;
-		dataFile << "## This is a DuMuX output for the ViPLab Graphics driver. \n";
-		dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
-		dataFile << "# x-range 0 "<< domainSize_[0] << "\n" ;
-		dataFile << "# y-range 0 "<< domainSize_[1] << "\n" ;
-		dataFile << "# x-count " << resolution_[0] << "\n" ;
-		dataFile << "# y-count " << resolution_[1] << "\n" ;
-		if ((zmax-zmin)/zmax>0.01)
-			dataFile << "# scale 1 1 "<< sqrt(domainSize_[0]*domainSize_[1])/(zmax-zmin) << "\n";
-		else
-			dataFile << "# scale 1 1 1\n";
+    for (int i=0; i< resolution[0]*resolution[1]; i++)
+    {
+        Scalar currentHead= this->variables().pressure()[i]/(Fluid::density(0,0)*9.81);
+        zmax = std::max(currentHead,zmax);
+        zmin = std::min(currentHead,zmin);
+    }
 
-		dataFile << "# min-color 255 0 0\n";
-		dataFile << "# max-color 0 0 255\n";
-		dataFile << "# time 0 \n" ;
-		dataFile << "# label piezometric head \n";
+        std::ofstream dataFile;
+        dataFile.open("dumux-out.vgfc");
+        dataFile << "Gridplot" << std::endl;
+        dataFile << "## This is a DuMuX output for the ViPLab Graphics driver. \n";
+        dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
+        dataFile << "# x-range 0 "<< domainSize_[0] << "\n" ;
+        dataFile << "# y-range 0 "<< domainSize_[1] << "\n" ;
+        dataFile << "# x-count " << resolution_[0] << "\n" ;
+        dataFile << "# y-count " << resolution_[1] << "\n" ;
+        if ((zmax-zmin)/zmax>0.01)
+            dataFile << "# scale 1 1 "<< sqrt(domainSize_[0]*domainSize_[1])/(zmax-zmin) << "\n";
+        else
+            dataFile << "# scale 1 1 1\n";
 
-		for (int i=0; i< resolution_[1]; i++)
-		{
-			for (int j=0; j<resolution_[0]; j++)
-			{
-				int currentIdx = i*resolution_[0]+j;
-				dataFile << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81);
-				if(j != resolution_[0]-1) // all but last entry
-					dataFile << " ";
-				else // write the last entry
-					dataFile << "\n";
-			}
-		}
-		dataFile.close();
+        dataFile << "# min-color 255 0 0\n";
+        dataFile << "# max-color 0 0 255\n";
+        dataFile << "# time 0 \n" ;
+        dataFile << "# label piezometric head \n";
 
-		//Textoutput:
-		std::cout << "         x          y          h           v_x           v_y"<<std::endl;
-		std::cout << "------------------------------------------------------------"<<std::endl;
-	
-		ElementIterator eItEnd = this->gridView().template end<0> ();
-		for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-		{
-			int cellIndex = this->variables().index(*eIt);
-				double v_x,v_y,piezo,x,y;
-				v_x= (this->variables().velocity()[cellIndex][0][0]+this->variables().velocity()[cellIndex][1][0])/2;
-				v_y= (this->variables().velocity()[cellIndex][2][1]+this->variables().velocity()[cellIndex][3][1])/2;
+        for (int i=0; i< resolution_[1]; i++)
+        {
+            for (int j=0; j<resolution_[0]; j++)
+            {
+                int currentIdx = i*resolution_[0]+j;
+                dataFile << this->variables().pressure()[currentIdx]/(Fluid::density(0,0)*9.81);
+                if(j != resolution_[0]-1) // all but last entry
+                    dataFile << " ";
+                else // write the last entry
+                    dataFile << "\n";
+            }
+        }
+        dataFile.close();
 
-				if (std::abs(v_x)<1e-17)
-					v_x=0;
-				if (std::abs(v_y)<1e-17)
-					v_y=0;
-				piezo=this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81);
-				x = eIt->geometry().center()[0];
-				y = eIt->geometry().center()[1];
+        //Textoutput:
+        std::cout << "         x          y          h           v_x           v_y"<<std::endl;
+        std::cout << "------------------------------------------------------------"<<std::endl;
 
-				printf("%10.4g %10.4g %10.4g %13.4g %13.4g\n",x,y,piezo,v_x,v_y);
-		}
+        ElementIterator eItEnd = this->gridView().template end<0> ();
+        for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+        {
+            int cellIndex = this->variables().index(*eIt);
+                double v_x,v_y,piezo,x,y;
+                v_x= (this->variables().velocity()[cellIndex][0][0]+this->variables().velocity()[cellIndex][1][0])/2;
+                v_y= (this->variables().velocity()[cellIndex][2][1]+this->variables().velocity()[cellIndex][3][1])/2;
+
+                if (std::abs(v_x)<1e-17)
+                    v_x=0;
+                if (std::abs(v_y)<1e-17)
+                    v_y=0;
+                piezo=this->variables().pressure()[cellIndex]/(Fluid::density(0,0)*9.81);
+                x = eIt->geometry().center()[0];
+                y = eIt->geometry().center()[1];
+
+                printf("%10.4g %10.4g %10.4g %13.4g %13.4g\n",x,y,piezo,v_x,v_y);
+        }
     }
 
 private:

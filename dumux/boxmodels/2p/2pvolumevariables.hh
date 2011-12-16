@@ -130,22 +130,18 @@ public:
                 MaterialLaw::pC(materialParams, 1 - Sn);
         }
 
-        fluidState_.update(Sn, p[wPhaseIdx], p[nPhaseIdx], temperature_);
+        typename FluidSystem::ParameterCache paramCache;
+        fluidState_.update(paramCache, Sn, p[wPhaseIdx], p[nPhaseIdx], temperature_);
 
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, 1 - Sn)
             /
-            FluidSystem::phaseViscosity(wPhaseIdx,
-                                        temperature_,
-                                        p[wPhaseIdx],
-                                        fluidState_);
+            FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx);
+
         mobility_[nPhaseIdx] =
             MaterialLaw::krn(materialParams, 1 - Sn)
             /
-            FluidSystem::phaseViscosity(nPhaseIdx,
-                                        temperature_,
-                                        p[nPhaseIdx],
-                                        fluidState_);
+            FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx);
 
         // porosity
         porosity_ = problem.spatialParameters().porosity(element,
@@ -184,7 +180,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar pressure(int phaseIdx) const
-    { return fluidState_.phasePressure(phaseIdx); }
+    { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Returns temperature inside the sub-control volume.

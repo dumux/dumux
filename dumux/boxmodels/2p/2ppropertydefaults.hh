@@ -37,7 +37,12 @@
 #include "2pvolumevariables.hh"
 #include "2pfluidstate.hh"
 #include "2pproperties.hh"
-#include <dumux/material/fluidsystems/2p_system.hh>
+
+#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/components/nullcomponent.hh>
+
+#include <dumux/material/MpNcfluidsystems/2pimmisciblefluidsystem.hh>
 
 namespace Dumux
 {
@@ -72,19 +77,43 @@ SET_TYPE_PROP(BoxTwoP, FluxVariables, TwoPFluxVariables<TypeTag>);
 SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
-SET_TYPE_PROP(BoxTwoP, 
-              TwoPIndices, 
+SET_TYPE_PROP(BoxTwoP,
+              TwoPIndices,
               TwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_TYPE_PROP(BoxTwoP, 
-              MaterialLawParams, 
+SET_TYPE_PROP(BoxTwoP,
+              MaterialLawParams,
               typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))::Params);
 
-SET_TYPE_PROP(BoxTwoP, FluidSystem, FluidSystem2P<TypeTag>);
+SET_PROP(BoxTwoP, WettingPhase)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+};
+
+SET_PROP(BoxTwoP, NonWettingPhase)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+};
+
+SET_PROP(BoxTwoP, FluidSystem)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
+
+public:
+    typedef Dumux::TwoPImmiscibleFluidSystem<Scalar,
+                                             WettingPhase,
+                                             NonWettingPhase> type;
+};
 
 SET_TYPE_PROP(BoxTwoP, FluidState, TwoPFluidState<TypeTag>);
 

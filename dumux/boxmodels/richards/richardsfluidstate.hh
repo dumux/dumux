@@ -74,19 +74,16 @@ public:
                 Scalar temperature)
     {
         Scalar minPc = MaterialLaw::pC(matParams, 1.0);
-        phasePressure_[wPhaseIdx] = priVars[pwIdx];
-        phasePressure_[nPhaseIdx] = std::max(pnRef, priVars[pwIdx] + minPc);
+        pressure_[wPhaseIdx] = priVars[pwIdx];
+        pressure_[nPhaseIdx] = std::max(pnRef, priVars[pwIdx] + minPc);
         Sn_ = 1.0 - MaterialLaw::Sw(matParams, capillaryPressure());
 
         temperature_=temperature;
-        density_[wPhaseIdx] = FluidSystem::phaseDensity(wPhaseIdx,
-                                                        temperature,
-                                                        phasePressure_[wPhaseIdx],
-                                                        *this);
-        density_[nPhaseIdx] = FluidSystem::phaseDensity(nPhaseIdx,
-                                                        temperature,
-                                                        phasePressure_[nPhaseIdx],
-                                                        *this);
+        
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(*this);
+        densityWetting_ = FluidSystem::density(*this, paramCache, wPhaseIdx);
+        viscosityWetting_ = FluidSystem::viscosity(*this, paramCache, wPhaseIdx);
     }
 
     /*!
@@ -108,7 +105,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      * \param compIdx The index of the chemical species
      */
-    Scalar massFrac(int phaseIdx, int compIdx) const
+    Scalar massFraction(int phaseIdx, int compIdx) const
     {
         if (compIdx == phaseIdx)
             return 1.0;
@@ -121,35 +118,34 @@ public:
      * \param phaseIdx The index of the fluid phase
      * \param compIdx The index of the chemical species
      */
-    Scalar moleFrac(int phaseIdx, int compIdx) const
+    Scalar moleFraction(int phaseIdx, int compIdx) const
     {
-        return massFrac(phaseIdx, compIdx);
+        return massFraction(phaseIdx, compIdx);
     }
 
     /*!
-     * \brief Returns the total concentration of a phase \f$\mathrm{[mol/m^3]}\f$.
-     *
-     * This is equivalent to the sum of all component concentrations.
-     *
-     * \param phaseIdx The index of the fluid phase
-     */
-    Scalar phaseConcentration(int phaseIdx) const
-    {
-        return density_[phaseIdx]/FluidSystem::molarMass(phaseIdx);
-    };
-
-    /*!
-     * \brief Returns the concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
+     * \brief Returns the molar density of a phase \f$\mathrm{[mol/m^3]}\f$.
      *
      * \param phaseIdx The index of the fluid phase
      * \param compIdx The index of the chemical species
      */
-    Scalar concentration(int phaseIdx, int compIdx) const
+    Scalar molarDensity(int phaseIdx, int compIdx) const
     {
-        if (phaseIdx == compIdx)
-            return phaseConcentration(phaseIdx);
-        return 0;
+        return density(phaseIdx)/FluidSystem::molarMass(compIdx);
     };
+
+    /*!
+     * \brief Returns the molar density of a phase \f$\mathrm{[mol/m^3]}\f$.
+     *
+     * \param phaseIdx The index of the fluid phase
+     * \param compIdx The index of the chemical species
+     */
+    Scalar molarity(int phaseIdx, int compIdx) const
+    {
+        if (phaseIdx != compIdx)
+            return 0;
+        return molarDensity(phaseIdx);
+    }
 
     /*!
      * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
@@ -157,7 +153,23 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar density(int phaseIdx) const
-    { return density_[phaseIdx]; }
+    { 
+        if (phaseIdx == wPhaseIdx)
+            return densityWetting_;
+        return 1e-10;
+    }
+
+    /*!
+     * \brief Returns the dynamic viscosity of a phase [Pa s].
+     *
+     * \param phaseIdx The index of the fluid phase
+     */
+    Scalar viscosity(int phaseIdx) const
+    {
+        if (phaseIdx == wPhaseIdx)
+            return viscosityWetting_;
+        return 1e-20; // something quite small
+    }
 
     /*!
      * \brief Returns mean molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
@@ -175,11 +187,11 @@ public:
      *
      * \param compIdx The index of the chemical species
      */
-    Scalar partialPressure(int compIdx) const
+    Scalar fugacity(int compIdx) const
     {
         if (compIdx == wPhaseIdx)
             return 0;
-        return phasePressure_[nPhaseIdx];
+        return pressure_[nPhaseIdx];
     }
 
     /*!
@@ -187,14 +199,20 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar phasePressure(int phaseIdx) const
-    { return phasePressure_[phaseIdx]; }
+    Scalar pressure(int phaseIdx) const
+    { return pressure_[phaseIdx]; }
 
     /*!
      * \brief Returns the capillary pressure \f$\mathrm{[Pa]}\f$
      */
     Scalar capillaryPressure() const
-    { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
+    { return pressure_[nPhaseIdx] - pressure_[wPhaseIdx]; }
+
+    /*!
+     * \brief Returns the temperature a single fluid \f$\mathrm{[K]}\f$.
+     */
+    Scalar temperature(int phaseIdx) const
+    { return temperature_; };
 
     /*!
      * \brief Returns the temperature of the fluids \f$\mathrm{[K]}\f$.
@@ -206,8 +224,9 @@ public:
     { return temperature_; };
 
 public:
-    Scalar density_[numPhases];
-    Scalar phasePressure_[numPhases];
+    Scalar pressure_[numPhases];
+    Scalar densityWetting_;
+    Scalar viscosityWetting_;
     Scalar temperature_;
     Scalar Sn_;
 };

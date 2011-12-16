@@ -155,9 +155,9 @@ public:
             // initialize velocity fields
             for (int i = 0; i < numVertices; ++i)
             {
-            	(*velocityN)[i] = Scalar(0);
-            	(*velocityW)[i] = Scalar(0);
-            	(*cellNum)[i] = Scalar(0.0);
+                (*velocityN)[i] = Scalar(0);
+                (*velocityW)[i] = Scalar(0);
+                (*cellNum)[i] = Scalar(0.0);
             }
         }
         unsigned numElements = this->gridView_().size(0);
@@ -172,9 +172,9 @@ public:
         for (; elemIt != elemEndIt; ++elemIt)
         {
 #warning "currently, velocity output only works for cubes and is set to false for simplices"
-        	if(elemIt->geometry().type().isCube() == false){
-        		velocityOutput = false;
-        	}
+            if(elemIt->geometry().type().isCube() == false){
+                velocityOutput = false;
+            }
             int idx = this->elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
 
@@ -207,7 +207,7 @@ public:
                     (*cellNum)[globalIdx] += 1;
                 }
             };
-            
+
             if(velocityOutput)
             {
                 // calculate vertex velocities
@@ -223,14 +223,14 @@ public:
 
                 scvVelocityW = 0;
                 scvVelocityN = 0;
-                
-        		ElementVolumeVariables elemVolVars;
-        		
-        		elemVolVars.update(this->problem_(),
-                	              *elemIt,
-                    	          fvElemGeom,
-                        	      false /* oldSol? */);
-        		
+
+                ElementVolumeVariables elemVolVars;
+
+                elemVolVars.update(this->problem_(),
+                                  *elemIt,
+                                  fvElemGeom,
+                                  false /* oldSol? */);
+
                 for (int faceIdx = 0; faceIdx< fvElemGeom.numEdges; faceIdx++)
                 {
 
@@ -243,7 +243,7 @@ public:
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     {
 
-     					// data attached to upstream and the downstream vertices
+                         // data attached to upstream and the downstream vertices
                         // of the current phase
                         const VolumeVariables up =
                             elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
@@ -266,7 +266,7 @@ public:
 
                       GlobalPosition localNormal(0);
                       jacobianT1.mv(globalNormal, localNormal);
-                  	  // note only works for cubes
+                        // note only works for cubes
                       const Scalar localArea = pow(2,-(dim-1));
 
                       localNormal /= localNormal.two_norm();
@@ -276,10 +276,10 @@ public:
                       const Scalar massUpwindWeight = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
                       PhasesVector q;
                       q[phaseIdx] = normalFlux
-                                		   * (massUpwindWeight
-                                		   * up.mobility(phaseIdx)
-                                		   + (1- massUpwindWeight)
-                                		   * dn.mobility(phaseIdx)) / localArea;
+                                           * (massUpwindWeight
+                                           * up.mobility(phaseIdx)
+                                           + (1- massUpwindWeight)
+                                           * dn.mobility(phaseIdx)) / localArea;
 
                       // transform the normal Darcy velocity into a vector
                       tmpVelocity[phaseIdx] = localNormal;
@@ -296,24 +296,24 @@ public:
                    }
                 }
                 typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
-                const Dune::FieldVector<Scalar, dim> &localPos 
+                const Dune::FieldVector<Scalar, dim> &localPos
                     = ReferenceElements::general(elemIt->geometry().type()).position(0, 0);
 
-     			// get the transposed Jacobian of the element mapping
+                 // get the transposed Jacobian of the element mapping
                 const Dune::FieldMatrix<CoordScalar, dim, dim> &jacobianT2
                     = elemIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
-    			for (int i = 0; i < numVerts; ++i)
+                for (int i = 0; i < numVerts; ++i)
                 {
-                	int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                    int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
                     // calculate the subcontrolvolume velocity by the Piola transformation
                     Dune::FieldVector<CoordScalar, dim> scvVelocity(0);
 
                     jacobianT2.mtv(scvVelocityW[i], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);
                     // add up the wetting phase subcontrolvolume velocities for each vertex
-                	(*velocityW)[globalIdx] += scvVelocity;
+                    (*velocityW)[globalIdx] += scvVelocity;
 
                     jacobianT2.mtv(scvVelocityN[i], scvVelocity);
                     scvVelocity /= elemIt->geometry().integrationElement(localPos);
@@ -324,11 +324,11 @@ public:
         }
             if(velocityOutput)
             {
-            	// divide the vertex velocities by the number of adjacent scvs i.e. cells
-    	        for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
-    	        (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
-    	        (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
-    	        }
+                // divide the vertex velocities by the number of adjacent scvs i.e. cells
+                for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
+                (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
+                (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
+                }
             }
 
         writer.attachVertexData(*Sn, "Sn");
@@ -344,8 +344,8 @@ public:
         writer.attachVertexData(*Te, "temperature");
         if(velocityOutput) // check if velocity output is demanded
         {
-        	writer.attachVertexData(*velocityW,  "velocityW", dim);
-        	writer.attachVertexData(*velocityN,  "velocityN", dim);
+            writer.attachVertexData(*velocityW,  "velocityW", dim);
+            writer.attachVertexData(*velocityN,  "velocityN", dim);
         }
         writer.attachCellData(*rank, "process rank");
     }

@@ -194,7 +194,7 @@ public:
 
         // relative permeabilities
         MaterialLaw::relativePermeabilities(relativePermeability_,
-                                            materialParams, 
+                                            materialParams,
                                             fluidState_);
 
         // dynamic viscosities

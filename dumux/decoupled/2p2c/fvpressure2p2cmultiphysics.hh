@@ -256,15 +256,15 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         }
         else
         {
-		        // derivatives of the fluid volume with respect to concentration of components, or pressure
-				if (problem().variables().dv(globalIdxI, wPhaseIdx) == 0)
-					this->volumeDerivatives(globalPos, *eIt,
-							problem().variables().dv(globalIdxI, wPhaseIdx),
-							problem().variables().dv(globalIdxI, nPhaseIdx),
-							problem().variables().dv_dp(globalIdxI));
+                // derivatives of the fluid volume with respect to concentration of components, or pressure
+                if (problem().variables().dv(globalIdxI, wPhaseIdx) == 0)
+                    this->volumeDerivatives(globalPos, *eIt,
+                            problem().variables().dv(globalIdxI, wPhaseIdx),
+                            problem().variables().dv(globalIdxI, nPhaseIdx),
+                            problem().variables().dv_dp(globalIdxI));
 
-				source[Indices::contiWEqIdx] *= problem().variables().dv(globalIdxI, wPhaseIdx);		// note: dV_[i][1] = dv_dC1 = dV/dm1
-				source[Indices::contiNEqIdx] *= problem().variables().dv(globalIdxI, nPhaseIdx);
+                source[Indices::contiWEqIdx] *= problem().variables().dv(globalIdxI, wPhaseIdx);        // note: dV_[i][1] = dv_dC1 = dV/dm1
+                source[Indices::contiNEqIdx] *= problem().variables().dv(globalIdxI, nPhaseIdx);
         }
         this->f_[globalIdxI] = volume * (source[Indices::contiWEqIdx] + source[Indices::contiNEqIdx]);
         /********************************************************************/
@@ -408,19 +408,19 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                     {
                         // determine volume derivatives
                         if (problem().variables().dv(globalIdxJ, wPhaseIdx) == 0)
-                    	this->volumeDerivatives(globalPosNeighbor, *neighborPointer,
-                    			problem().variables().dv(globalIdxJ, wPhaseIdx),
-                    			problem().variables().dv(globalIdxJ, nPhaseIdx),
-                    			problem().variables().dv_dp(globalIdxJ));
+                        this->volumeDerivatives(globalPosNeighbor, *neighborPointer,
+                                problem().variables().dv(globalIdxJ, wPhaseIdx),
+                                problem().variables().dv(globalIdxJ, nPhaseIdx),
+                                problem().variables().dv_dp(globalIdxJ));
                     dv_dC1 = (problem().variables().dv(globalIdxJ, wPhaseIdx)
-                    			+ problem().variables().dv(globalIdxI, wPhaseIdx)) / 2; // dV/dm1= dV/dC^1
+                                + problem().variables().dv(globalIdxI, wPhaseIdx)) / 2; // dV/dm1= dV/dC^1
                     dv_dC2 = (problem().variables().dv(globalIdxJ, nPhaseIdx)
-                    			+ problem().variables().dv(globalIdxI, nPhaseIdx)) / 2;
+                                + problem().variables().dv(globalIdxI, nPhaseIdx)) / 2;
 
                     graddv_dC1 = (problem().variables().dv(globalIdxJ, wPhaseIdx)
-                    						+ problem().variables().dv(globalIdxI, wPhaseIdx)) / dist;
+                                            + problem().variables().dv(globalIdxI, wPhaseIdx)) / dist;
                     graddv_dC2 = (problem().variables().dv(globalIdxJ, nPhaseIdx)
-                    						+ problem().variables().dv(globalIdxI, nPhaseIdx)) / dist;
+                                            + problem().variables().dv(globalIdxI, nPhaseIdx)) / dist;
                     }
                     else
                     {
@@ -570,7 +570,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
             /************* boundary face ************************/
             else
             {
-            	// get volume derivatives inside the cell
+                // get volume derivatives inside the cell
                 dv_dC1 = problem().variables().dv(globalIdxI, wCompIdx);
                 dv_dC2 = problem().variables().dv(globalIdxI, nCompIdx);
 
@@ -927,13 +927,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
         {
             if (erri <= x_mi * maxErr)
                 this->f_[globalIdxI] +=
-                		problem().variables().errorCorrection(globalIdxI) =
-                				fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxErr)
+                        problem().variables().errorCorrection(globalIdxI) =
+                                fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxErr)
                                     * problem().variables().volErr()[globalIdxI] * volume;
             else
                 this->f_[globalIdxI] +=
-                		problem().variables().errorCorrection(globalIdxI) =
-                				fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr)
+                        problem().variables().errorCorrection(globalIdxI) =
+                                fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr)
                                     * problem().variables().volErr()[globalIdxI] * volume;
         }
     } // end grid traversal

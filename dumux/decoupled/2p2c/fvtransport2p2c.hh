@@ -290,8 +290,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                 // compute mean permeability
                 Dune::FieldMatrix<Scalar,dim,dim> meanK_(0.);
                 Dumux::harmonicMeanMatrix(meanK_,
-                		K_I,
-						problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
+                        K_I,
+                        problem().spatialParameters().intrinsicPermeability(globalPosNeighbor, *neighborPointer));
                 Dune::FieldVector<Scalar,dim> K(0);
                 meanK_.umv(unitDistVec,K);
 
@@ -355,7 +355,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
             }
 
             /******************************************
-             * 	Boundary Face
+             *     Boundary Face
              ******************************************/
             if (isIt->boundary())
             {
@@ -398,15 +398,15 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     Scalar Xw1Bound = BCfluidState.massFrac(wPhaseIdx, wCompIdx);
                     Scalar Xn1Bound = BCfluidState.massFrac(nPhaseIdx, wCompIdx);
                     Scalar densityWBound = BCfluidState.density(wPhaseIdx);
-					Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
-					Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
-																		problem().temperatureAtPos(globalPosFace),
-																		pressBound[wPhaseIdx], BCfluidState);
-					Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
-																		problem().temperatureAtPos(globalPosFace),
-																		pressBound[wPhaseIdx], BCfluidState);
-			        if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
-			            pcBound = BCfluidState.capillaryPressure();
+                    Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
+                    Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
+                                                                        problem().temperatureAtPos(globalPosFace),
+                                                                        pressBound[wPhaseIdx], BCfluidState);
+                    Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
+                                                                        problem().temperatureAtPos(globalPosFace),
+                                                                        pressBound[wPhaseIdx], BCfluidState);
+                    if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+                        pcBound = BCfluidState.capillaryPressure();
                     // average
                     double densityW_mean = (densityWI + densityWBound) / 2;
                     double densityNW_mean = (densityNWI + densityNWBound) / 2;
@@ -499,23 +499,23 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     updFactor[nCompIdx] = - J[Indices::contiNEqIdx] * faceArea / volume;
 
                     // for timestep control
-					#define cflIgnoresNeumann
-					#ifdef cflIgnoresNeumann
+                    #define cflIgnoresNeumann
+                    #ifdef cflIgnoresNeumann
                     factor[0] = 0;
                     factor[1] = 0;
-					#else
+                    #else
                     double inflow = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;
                     if (inflow>0)
-						{
-                    	factor[0] = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;	// =factor in
-                    	factor[1] = -(updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI);	// =factor out
-						}
+                        {
+                        factor[0] = updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW;    // =factor in
+                        factor[1] = -(updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI);    // =factor out
+                        }
                     else
                     {
-                    	factor[0] = -(updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW);	// =factor in
-                    	factor[1] = updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI;	// =factor out
+                        factor[0] = -(updFactor[wCompIdx] / densityW + updFactor[nCompIdx] / densityNW);    // =factor in
+                        factor[1] = updFactor[wCompIdx] / densityW /SwmobI + updFactor[nCompIdx] / densityNW / SnmobI;    // =factor out
                     }
-					#endif
+                    #endif
                 }//end neumann boundary
             }//end boundary
             // correct update Factor by volume error
@@ -533,7 +533,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
         }// end all intersections
 
-        /*********** 	Handle source term     ***************/
+        /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
         problem().source(q, *eIt);
         updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
@@ -541,7 +541,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
-						/ problem().spatialParameters().porosity(globalPos, *eIt);
+                        / problem().spatialParameters().porosity(globalPos, *eIt);
 
         if ( 1./sumfactorin < dt)
         {

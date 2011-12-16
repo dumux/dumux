@@ -181,17 +181,17 @@ public:
 
         // Write header for output file
         std::ofstream dataFile;
-		dataFile.open("dumux-out.vgfc");
-//		dataFile << "Gridplot" << std::endl;
-		dataFile << "## This is a DuMuX output for the ViPLab graphics driver. \n";
-		dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
-		dataFile << "# x-range " << this->bboxMin()[0] << " " << this->bboxMax()[0] << "\n" ;
-		dataFile << "# y-range " << this->bboxMin()[1] << " " << this->bboxMax()[1] << "\n" ;
-		dataFile << "# x-count " << resX_+1 << "\n" ;
-		dataFile << "# y-count " << resY_+1 << "\n" ;
-//		dataFile << "# min-color 0 0 0\n";
-//		dataFile << "# max-color 255 255 255\n";
-		dataFile.close();
+        dataFile.open("dumux-out.vgfc");
+//        dataFile << "Gridplot" << std::endl;
+        dataFile << "## This is a DuMuX output for the ViPLab graphics driver. \n";
+        dataFile << "## This output file was generated at " << __TIME__ <<", "<< __DATE__<< "\n";
+        dataFile << "# x-range " << this->bboxMin()[0] << " " << this->bboxMax()[0] << "\n" ;
+        dataFile << "# y-range " << this->bboxMin()[1] << " " << this->bboxMax()[1] << "\n" ;
+        dataFile << "# x-count " << resX_+1 << "\n" ;
+        dataFile << "# y-count " << resY_+1 << "\n" ;
+//        dataFile << "# min-color 0 0 0\n";
+//        dataFile << "# max-color 255 255 255\n";
+        dataFile.close();
     }
 
     /*!
@@ -260,13 +260,13 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-//    	if (onInlet_(globalPos) && this->timeManager().time() <= infiltrationEndTime_)
-//    	{
-//    		values[pressureIdx] = upperPressure_;
-//    		values[x1Idx] =0.8;
-//    	}
-//    	else
-    		if (onUpperBoundary_(globalPos))
+//        if (onInlet_(globalPos) && this->timeManager().time() <= infiltrationEndTime_)
+//        {
+//            values[pressureIdx] = upperPressure_;
+//            values[x1Idx] =0.8;
+//        }
+//        else
+            if (onUpperBoundary_(globalPos))
         {
             values[pressureIdx] = upperPressure_;
             values[x1Idx] = 0.0;
@@ -340,36 +340,36 @@ public:
 //
     void writeOutput()
     {
-    	//todo: Das hier ist noch nicht fertig.
+        //todo: Das hier ist noch nicht fertig.
 
-    	Scalar time = this->timeManager().time();
-    	if (time<0)
-    		return;
-    	SolutionVector &sol = this->model().curSol();
+        Scalar time = this->timeManager().time();
+        if (time<0)
+            return;
+        SolutionVector &sol = this->model().curSol();
 
         std::ofstream dataFile;
-		dataFile.open("dumux-out.vgfc", std::fstream::app);
+        dataFile.open("dumux-out.vgfc", std::fstream::app);
 
-		dataFile << "# time "<< time <<"\n" ;
-		dataFile << "# label Concentration \n";
-		dataFile << "# min-color 0 0 0\n";
-		dataFile << "# max-color 255 255 255\n";
+        dataFile << "# time "<< time <<"\n" ;
+        dataFile << "# label Concentration \n";
+        dataFile << "# min-color 0 0 0\n";
+        dataFile << "# max-color 255 255 255\n";
 
-		for (int j=0; j < resY_+1; j++)
-		{
-			for (int i=0; i < resX_+1; i++)
-			{
-				int currentIdx = i*(resY_+1)+j;
-				dataFile << sol[currentIdx][x1Idx];
-				if(i != resX_) // all but last entry
-					dataFile << " ";
-				else // write the last entry
-				{
-					dataFile << "\n";
-				}
-			}
-		}
-		dataFile.close();
+        for (int j=0; j < resY_+1; j++)
+        {
+            for (int i=0; i < resX_+1; i++)
+            {
+                int currentIdx = i*(resY_+1)+j;
+                dataFile << sol[currentIdx][x1Idx];
+                if(i != resX_) // all but last entry
+                    dataFile << " ";
+                else // write the last entry
+                {
+                    dataFile << "\n";
+                }
+            }
+        }
+        dataFile.close();
     }
 
 

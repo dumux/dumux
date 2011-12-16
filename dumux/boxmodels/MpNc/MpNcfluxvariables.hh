@@ -108,7 +108,7 @@ public:
         diffusionDat_.update(problem, element, elemGeom, scvfIdx, elemVolVars);
 
         extrusionFactor_ =
-            (elemVolVars[face().i].extrusionFactor() 
+            (elemVolVars[face().i].extrusionFactor()
              + elemVolVars[face().j].extrusionFactor()) / 2;
     }
 
@@ -266,11 +266,11 @@ private:
                     // both cells!
                     fI = fJ = 0.5;
                 Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
-                
+
                 // make gravity acceleration a force
                 Vector f(g);
                 f *= density;
-        
+
                 // calculate the final potential gradient
                 potentialGrad_[phaseIdx] -= f;
             }

@@ -66,7 +66,7 @@ NEW_TYPE_TAG(TestIMPESAdaptiveProblem, INHERITS_FROM(DecoupledTwoP, Transport, T
 // Set the grid type
 SET_PROP(TestIMPESAdaptiveProblem, Grid)
 {
-	typedef Dune::UGGrid<2> type;
+    typedef Dune::UGGrid<2> type;
 };
 
 // Set the problem property
@@ -97,7 +97,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(TestIMPESAdaptiveProblem, NonwettingPhase)
+SET_PROP(TestIMPESAdaptiveProblem, NonWettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

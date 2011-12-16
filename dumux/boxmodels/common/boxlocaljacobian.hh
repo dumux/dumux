@@ -284,7 +284,7 @@ public:
         // resolution of the scalar type. E.g. for standard 64 bit
         // floating point values, the resolution is about 10^-16 and
         // the base epsilon is thus approximately 10^-8.
-        static const Scalar baseEps 
+        static const Scalar baseEps
             = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(),
                                            1.0);
 

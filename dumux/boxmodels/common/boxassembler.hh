@@ -21,7 +21,7 @@
 /*!
  * \file
  *
- * \brief An assembler for the Jacobian matrix based on PDELab.
+ * \brief An assembler for the global Jacobian matrix for models using the box discretization.
  */
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
@@ -35,7 +35,7 @@
 namespace Dumux {
 
 /*!
- * \brief An assembler for the Jacobian matrix based on PDELab.
+ * \brief An assembler for the global Jacobian matrix for models using the box discretization.
  */
 template<class TypeTag>
 class BoxAssembler

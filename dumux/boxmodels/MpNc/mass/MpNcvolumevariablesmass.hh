@@ -60,7 +60,7 @@ class MPNCVolumeVariablesMass
     enum { fug0Idx = Indices::fug0Idx };
 
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    
+
     typedef typename FluidSystem::ParameterCache ParameterCache;
 public:
     /*!
