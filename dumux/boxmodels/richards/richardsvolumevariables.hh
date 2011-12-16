@@ -102,49 +102,58 @@ public:
                            scvIdx,
                            isOldSol);
 
-        asImp_().updateTemperature_(priVars,
-                                    element,
-                                    elemGeom,
-                                    scvIdx,
-                                    problem);
-        
+	completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+
         //////////
-        // specify the fluid state
+        // specify the other parameters
         //////////
+        const MaterialLawParams &matParams =
+            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+        relativePermeabilityWetting_ = MaterialLaw::krw(matParams, 
+							fluidState_.saturation(wPhaseIdx));
+
+        porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
+
+        // energy related quantities not contained in the fluid state
+        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+    }
+    
+    static void completeFluidState(const PrimaryVariables& priVars,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& elemGeom,
+                                   int scvIdx,
+                                   FluidState& fluidState)
+    {
+        // temperature
+        Scalar t = Implementation::temperature_(priVars, problem, element,
+                                                elemGeom, scvIdx);
+        fluidState.setTemperature(t);
 
         // pressures
         Scalar pnRef = problem.referencePressure(element, elemGeom, scvIdx);
         const MaterialLawParams &matParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
         Scalar minPc = MaterialLaw::pC(matParams, 1.0);
-        fluidState_.setPressure(wPhaseIdx, priVars[pwIdx]);
-        fluidState_.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
+        fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
+        fluidState.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
 
         // saturations
-        Scalar Sw = MaterialLaw::Sw(matParams, capillaryPressure());
-        fluidState_.setSaturation(wPhaseIdx, Sw);
-        fluidState_.setSaturation(nPhaseIdx, 1 - Sw);
+        Scalar Sw = MaterialLaw::Sw(matParams, fluidState.pressure(nPhaseIdx)
+				              - fluidState.pressure(wPhaseIdx));
+        fluidState.setSaturation(wPhaseIdx, Sw);
+        fluidState.setSaturation(nPhaseIdx, 1 - Sw);
 
         // density and viscosity
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState_);
-        fluidState_.setDensity(wPhaseIdx, FluidSystem::density(fluidState_, paramCache, wPhaseIdx));
-        fluidState_.setDensity(nPhaseIdx, 1e-10);
+        paramCache.updateAll(fluidState);
+        fluidState.setDensity(wPhaseIdx, FluidSystem::density(fluidState, paramCache, wPhaseIdx));
+        fluidState.setDensity(nPhaseIdx, 1e-10);
 
-        fluidState_.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx));
-        fluidState_.setViscosity(nPhaseIdx, 1e-10);
-        
-        //////////
-        // specify the other parameters
-        //////////
-        relativePermeabilityWetting_ = MaterialLaw::krw(matParams, Sw);
-
-        porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
-
-        // energy related quantities
-        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
+        fluidState.setViscosity(nPhaseIdx, 1e-10);        
     }
-    
+
     /*!
      * \brief Return the fluid configuration at the given primary
      *        variables
@@ -248,21 +257,19 @@ public:
     { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
 
 protected:
-    void updateTemperature_(const PrimaryVariables &priVars,
+    static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
+                            int scvIdx)
     {
-        fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
+        return problem.boxTemperature(element, elemGeom, scvIdx);
     }
 
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    template <class ParameterCache>
-    void updateEnergy_(ParameterCache &paramCache,
-                       const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,

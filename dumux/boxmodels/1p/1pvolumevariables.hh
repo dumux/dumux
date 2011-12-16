@@ -89,36 +89,43 @@ public:
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
-        // set the phase temperature and pressure
-        asImp_().updateTemperature_(priVars,
-                                    element,
-                                    elemGeom,
-                                    scvIdx,
-                                    problem);
-        fluidState_.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
-
-        // saturation in a single phase is always 1 and thus redundant
-        // to set. But since we use the fluid state shared by the
-        // immiscible multi-phase models, so we have to set it here...
-        fluidState_.setSaturation(/*phaseIdx=*/0, 1.0);
-        
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
-
-        Scalar value = FluidSystem::density(fluidState_, paramCache,  /*phaseIdx=*/0);
-        fluidState_.setDensity(/*phaseIdx=*/0, value);
-
-        value = FluidSystem::viscosity(fluidState_, paramCache,  /*phaseIdx=*/0);
-        fluidState_.setViscosity(/*phaseIdx=*/0, value);
-
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
         // porosity
         porosity_ = problem.spatialParameters().porosity(element,
                                                          elemGeom,
                                                          scvIdx);
 
-        // energy related quantities
-        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        // energy related quantities not contained in the fluid state
+        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
     };
+
+    static void completeFluidState(const PrimaryVariables& priVars,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& elemGeom,
+                                   int scvIdx,
+                                   FluidState& fluidState)
+    {
+        Scalar t = Implementation::temperature_(priVars, problem, element,
+                                                elemGeom, scvIdx);
+        fluidState.setTemperature(t);
+
+        fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
+
+        // saturation in a single phase is always 1 and thus redundant
+        // to set. But since we use the fluid state shared by the
+        // immiscible multi-phase models, so we have to set it here...
+        fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
+        
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
+
+        Scalar value = FluidSystem::density(fluidState, paramCache,  /*phaseIdx=*/0);
+        fluidState.setDensity(/*phaseIdx=*/0, value);
+
+        value = FluidSystem::viscosity(fluidState, paramCache,  /*phaseIdx=*/0);
+        fluidState.setViscosity(/*phaseIdx=*/0, value);
+    }
 
     /*!
      * \brief Returns temperature inside the sub-control volume.
@@ -164,19 +171,19 @@ public:
     { return fluidState_; }
     
 protected:
-    void updateTemperature_(const PrimaryVariables &priVars,
+    static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
-    { fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx)); }
+                            int scvIdx)
+    {
+        return problem.boxTemperature(element, elemGeom, scvIdx);
+    }
 
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    template <class ParameterCache>
-    void updateEnergy_(ParameterCache &paramCache,
-                       const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,

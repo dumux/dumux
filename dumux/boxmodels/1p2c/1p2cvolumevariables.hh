@@ -99,13 +99,45 @@ public:
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
-        asImp_().updateTemperature_(priVars,
-                                   element,
-                                   elemGeom,
-                                   scvIdx,
-                                   problem);
+	completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
 
-        fluidState_.setPressure(/*phaseIdx=*/0, priVars[pressureIdx]);
+        porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
+        tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
+        dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
+
+	// Second instance of a parameter cache.
+        // Could be avoided if diffusion coefficients also 
+	// became part of the fluid state.
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
+        
+        diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                             paramCache,
+                                                             phaseIdx,
+                                                             comp0Idx,
+                                                             comp1Idx);
+
+        Valgrind::CheckDefined(porosity_);
+        Valgrind::CheckDefined(tortuosity_);
+        Valgrind::CheckDefined(dispersivity_);
+        Valgrind::CheckDefined(diffCoeff_);
+        
+        // energy related quantities not contained in the fluid state
+        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+    }
+
+    static void completeFluidState(const PrimaryVariables& priVars,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& elemGeom,
+                                   int scvIdx,
+                                   FluidState& fluidState)
+    {
+        Scalar t = Implementation::temperature_(priVars, problem, element,
+                                                elemGeom, scvIdx);
+        fluidState.setTemperature(t);
+
+        fluidState.setPressure(/*phaseIdx=*/0, priVars[pressureIdx]);
 
         Scalar x1 = priVars[x1Idx]; //mole or mass fraction of component 1
         if(!useMoles) //mass-fraction formulation
@@ -118,35 +150,17 @@ public:
             
             x1 *= meanMolarMass/M1;
         }
-        fluidState_.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/0, 1 - x1);
-        fluidState_.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/1, x1);
+        fluidState.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/0, 1 - x1);
+        fluidState.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/1, x1);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
+        paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
         
         Scalar value;
-        value = FluidSystem::density(fluidState_, paramCache, /*phaseIdx=*/0);
-        fluidState_.setDensity(/*phaseIdx=*/0, value);
-        value = FluidSystem::viscosity(fluidState_, paramCache, /*phaseIdx=*/0);
-        fluidState_.setViscosity(/*phaseIdx=*/0, value);
-
-        porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
-        tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
-        dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
-
-        diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                             paramCache,
-                                                             phaseIdx,
-                                                             comp0Idx,
-                                                             comp1Idx);
-
-        Valgrind::CheckDefined(porosity_);
-        Valgrind::CheckDefined(tortuosity_);
-        Valgrind::CheckDefined(dispersivity_);
-        Valgrind::CheckDefined(diffCoeff_);
-        
-        // energy related quantities
-        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
+        fluidState.setDensity(/*phaseIdx=*/0, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
+        fluidState.setViscosity(/*phaseIdx=*/0, value);
     }
 
     /*!
@@ -236,21 +250,19 @@ public:
     { return porosity_; }
 
 protected:
-    void updateTemperature_(const PrimaryVariables &priVars,
+    static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
+                            int scvIdx)
     {
-        fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
+        return problem.boxTemperature(element, elemGeom, scvIdx);
     }
 
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    template <class ParameterCache>
-    void updateEnergy_(ParameterCache &paramCache,
-                       const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,

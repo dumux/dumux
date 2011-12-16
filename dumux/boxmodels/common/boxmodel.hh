@@ -706,6 +706,17 @@ public:
     const GridView &gridView() const
     { return problem_().gridView(); }
 
+    template <class FluidState>
+    static void completeFluidState(const PrimaryVariables& primaryVariables,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& elementGeometry,
+                                   int scvIdx,
+                                   FluidState& fluidState)
+    {
+      VolumeVariables::completeFluidState(primaryVariables, problem, element, 
+					  elementGeometry, scvIdx, fluidState);
+    }
 protected:
     /*!
      * \brief A reference to the problem on which the model is applied.

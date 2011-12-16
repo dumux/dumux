@@ -125,18 +125,6 @@ public:
         return 1;
     }
 
-    template <class PrimaryVariables, class Problem, class Element, class FluidState>
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& elementGeometry,
-                                   int scvIdx,
-                                   FluidState& fluidState)
-    {
-      VolumeVariables::completeFluidState(primaryVariables, problem, element, 
-					  elementGeometry, scvIdx, fluidState);
-    }
-
     /*!
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
