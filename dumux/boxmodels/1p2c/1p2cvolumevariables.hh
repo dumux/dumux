@@ -27,9 +27,9 @@
 #ifndef DUMUX_1P2C_VOLUME_VARIABLES_HH
 #define DUMUX_1P2C_VOLUME_VARIABLES_HH
 
-#include "1p2cfluidstate.hh"
-
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
+
+#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
 
 namespace Dumux
 {
@@ -65,15 +65,21 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
 
+        pressureIdx = Indices::pressureIdx,
+        x1Idx = Indices::x1Idx,
+
         contiEqIdx = Indices::contiEqIdx,
         transEqIdx = Indices::transEqIdx
     };
 
-    typedef OnePTwoCFluidState<TypeTag> FluidState;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dimWorld> Vector;
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
 
 public:
+    //! The type returned by the fluidState() method
+    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+
     /*!
      * \brief Update all quantities for a given control volume.
      *
@@ -93,13 +99,37 @@ public:
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
-        asImp().updateTemperature_(priVars,
+        asImp_().updateTemperature_(priVars,
                                    element,
                                    elemGeom,
                                    scvIdx,
                                    problem);
+
+        fluidState_.setPressure(/*phaseIdx=*/0, priVars[pressureIdx]);
+
+        Scalar x1 = priVars[x1Idx]; //mole or mass fraction of component 1
+        if(!useMoles) //mass-fraction formulation
+        {
+            // convert mass to mole fractions
+            Scalar M0 = FluidSystem::molarMass(comp0Idx);
+            Scalar M1 = FluidSystem::molarMass(comp1Idx);
+            //meanMolarMass if x1_ is a massfraction
+            Scalar meanMolarMass = M0*M1/(M1 + x1*(M0 - M1));
+            
+            x1 *= meanMolarMass/M1;
+        }
+        fluidState_.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/0, 1 - x1);
+        fluidState_.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/1, x1);
+        fluidState_.updateAverageMolarMass(/*phaseIdx=*/0);
+
         typename FluidSystem::ParameterCache paramCache;
-        fluidState_.update(paramCache, priVars);
+        paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
+        
+        Scalar value;
+        value = FluidSystem::density(fluidState_, paramCache, /*phaseIdx=*/0);
+        fluidState_.setDensity(/*phaseIdx=*/0, value);
+        value = FluidSystem::viscosity(fluidState_, paramCache, /*phaseIdx=*/0);
+        fluidState_.setViscosity(/*phaseIdx=*/0, value);
 
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
         tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
@@ -115,6 +145,9 @@ public:
         Valgrind::CheckDefined(tortuosity_);
         Valgrind::CheckDefined(dispersivity_);
         Valgrind::CheckDefined(diffCoeff_);
+        
+        // energy related quantities
+        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
     }
 
     /*!
@@ -213,6 +246,19 @@ protected:
         fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
     }
 
+    /*!
+     * \brief Called by update() to compute the energy related quantities
+     */
+    template <class ParameterCache>
+    void updateEnergy_(ParameterCache &paramCache,
+                       const PrimaryVariables &sol,
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int vertIdx,
+                       bool isOldSol)
+    { }
+    
     Scalar porosity_;    //!< Effective porosity within the control volume
     Scalar tortuosity_;
     Vector dispersivity_;
@@ -220,10 +266,10 @@ protected:
     FluidState fluidState_;
 
 private:
-    Implementation &asImp()
+    Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
-    const Implementation &asImp() const
+    const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
 
