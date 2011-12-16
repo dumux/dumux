@@ -57,14 +57,13 @@ SET_PROP(InjectionProblem, Problem)
 };
 
 // Set fluid configuration
-SET_TYPE_PROP(InjectionProblem, FluidSystem, Dumux::H2ON2FluidSystem<TypeTag>);
-//SET_PROP(InjectionProblem, FluidSystem)
-//{ private:
-//    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-//    static const bool useComplexRelations = true;
-//public:
-//    typedef Dumux::H2ON2FluidSystem<Scalar, useComplexRelations> type;
-//};
+SET_PROP(InjectionProblem, FluidSystem)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    static const bool useComplexRelations = false;
+public:
+    typedef Dumux::H2ON2FluidSystem<Scalar, useComplexRelations> type;
+};
 
 // Enable gravity
 SET_BOOL_PROP(InjectionProblem, EnableGravity, true);
