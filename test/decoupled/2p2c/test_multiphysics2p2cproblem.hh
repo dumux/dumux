@@ -115,9 +115,9 @@ public:
 // Enable gravity
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
-SET_INT_PROP(DecoupledTwoPTwoC,
-        BoundaryMobility,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::satDependent);
+SET_INT_PROP(TestMultTwoPTwoCProblem,
+             BoundaryMobility,
+             GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::satDependent);
 SET_SCALAR_PROP(TestMultTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
