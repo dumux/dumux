@@ -375,8 +375,8 @@ private:
             fs.setPressure(lPhaseIdx, 2e5);
 
             // set the liquid composition to pure water
-            fs.setMoleFraction(lPhaseIdx, N2Idx, 1.0);
-            fs.setMoleFraction(lPhaseIdx, H2OIdx, 0.0);
+            fs.setMoleFraction(lPhaseIdx, N2Idx, 0.0);
+            fs.setMoleFraction(lPhaseIdx, H2OIdx, 1.0);
         }
         else {
             // elsewhere, only gas
