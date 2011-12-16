@@ -205,7 +205,6 @@ class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, PTAG(ProblemBaseClass))
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
-    typedef TwoPFluidState<TypeTag> FluidState;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),

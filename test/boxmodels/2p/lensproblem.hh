@@ -154,8 +154,6 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
 
-    typedef TwoPFluidState<TypeTag> FluidState;
-
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 

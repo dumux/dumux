@@ -130,7 +130,6 @@ class LensProblem2p : public TwoPProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef TwoPFluidState<TypeTag> FluidState;
 
     enum
     {
