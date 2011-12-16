@@ -78,14 +78,7 @@ SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);
 SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);
 
 //! The fluid system to use by default
-SET_PROP(BoxOneP, FluidSystem)
-{ private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    
-public:
-    typedef FluidSystems::OneP<Scalar, Fluid> type;
-};
+SET_TYPE_PROP(BoxOneP, FluidSystem, OneP<TypeTag>);
 
 SET_PROP(BoxOneP, Fluid)
 { private:

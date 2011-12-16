@@ -41,7 +41,7 @@
 #include <dumux/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/basefluidsystem.hh>
-
+#include <dumux/common/basicproperties.hh>
 #include <assert.h>
 
 namespace Dumux
@@ -50,7 +50,7 @@ namespace FluidSystems
 {
 
 /*!
- * \brief A fluid system with one phase and an arbitrary number of components.
+ * \brief A fluid system with one phase and two components.
  */
 template <class Scalar>
 class WaterContaminant
@@ -357,6 +357,18 @@ public:
 };
 
 } // end namepace
+
+/*!
+ * \brief A pure single-phase fluid system.
+ *
+ * This is an adapter to use Dumux::WaterContaminantFluidSystem<TypeTag>, as is
+ * done with most other classes in Dumux and all template parameters
+ * are usually defined in the property system anyhow.
+ */
+template<class TypeTag>
+class WaterContaminantFluidSystem
+: public FluidSystems::WaterContaminant<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>
+{};
 } // end namepace
 
 #endif

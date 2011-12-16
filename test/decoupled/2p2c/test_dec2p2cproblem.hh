@@ -38,7 +38,7 @@
 
 // fluid properties
 //#include <dumux/material/old_fluidsystems/simple_h2o_n2_system.hh>
-#include <dumux/material/old_fluidsystems/h2o_n2_system.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
@@ -87,7 +87,7 @@ SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
 // Select fluid system
 SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
 {
-    typedef Dumux::H2O_N2_System<TypeTag> type;
+    typedef Dumux::H2ON2FluidSystem<TypeTag> type;
 };
 // Select fluid system
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
