@@ -102,17 +102,10 @@ public:
                            scvIdx,
                            isOldSol);
 
-        asImp_().updateTemperature_(priVars,
-                                    element,
-                                    elemGeom,
-                                    scvIdx,
-                                    problem);
-        
-        // material law parameters
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
 
-        Model::completeFluidState(priVars, materialParams, fluidState_);
+        Model::completeFluidState(priVars, problem, element, elemGeom, scvIdx, materialParams, fluidState_);
 
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
@@ -127,15 +120,8 @@ public:
                                                          elemGeom,
                                                          scvIdx);
 
-
-#warning "TODO: it would be nice to avoid creating the parameter cache a second time here," \
-    " but that requires to abandon/modify model.completeFluidState()."  \
-    " (alternatively a completeFluidState() method can be introduced in the 2pni model.)"
-        typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState_);
-
-        // energy related quantities
-        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        // energy related quantities not belonging to the fluid state
+        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
     }
 
     /*!
@@ -203,21 +189,10 @@ public:
     { return porosity_; }
 
 protected:
-    void updateTemperature_(const PrimaryVariables &priVars,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
-    {
-        fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
-    }
-
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    template <class ParameterCache>
-    void updateEnergy_(ParameterCache &paramCache,
-                       const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,

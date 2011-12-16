@@ -96,44 +96,15 @@ protected:
     friend class TwoPVolumeVariables<TypeTag>;
 
     /*!
-     * \brief Update the temperature for a given control volume.
-     *
-     * \param priVars The local primary variable vector
-     * \param element The current element
-     * \param elemGeom The finite-volume geometry in the box scheme
-     * \param scvIdx The local index of the SCV (sub-control volume)
-     * \param problem The problem object
-     *
-     */
-    void updateTemperature_(const PrimaryVariables &priVars,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
-    {
-        // retrieve temperature from primary variables
-        this->fluidState_.setTemperature(priVars[temperatureIdx]);
-    }
-    
-    /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    template <class ParameterCache>
-    void updateEnergy_(ParameterCache &paramCache,
-                       const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,
                        int scvIdx,
                        bool isOldSol)
     {
-        // copmute and set the internal energies of the fluid phases
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            Scalar h = FluidSystem::enthalpy(this->fluidState_, paramCache, phaseIdx);
-
-            this->fluidState_.setEnthalpy(phaseIdx, h);
-        }
-
         // copmute and set the heat capacity of the solid phase
         heatCapacity_ = problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);

@@ -69,6 +69,28 @@ namespace Dumux {
 template<class TypeTag>
 class TwoPNIModel: public TwoPModel<TypeTag>
 {
+    friend class TwoPModel<TypeTag>;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+
+    template<class PrimaryVariables, class Problem, class Element, class FVElementGeometry>
+    static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx)
+    {
+        return priVars[Indices::temperatureIdx];
+    }
+
+    template<class FluidState, class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            int phaseIdx)
+    {
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+    }
 };
 
 }
