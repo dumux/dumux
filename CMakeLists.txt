@@ -181,6 +181,10 @@ add_subdirectory("test")
 add_subdirectory("tutorial")
 ##############
 
+# copy the testing script
+make_directory(util)
+file(COPY util/runTest.sh DESTINATION util/runTest.sh)
+
 # set up CTest 
 ENABLE_TESTING()
 INCLUDE(CTest)
