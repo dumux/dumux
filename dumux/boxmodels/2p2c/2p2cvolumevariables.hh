@@ -120,7 +120,6 @@ public:
         // calculate phase state
         typename FluidSystem::ParameterCache paramCache;
         fluidState_.update(paramCache, priVars, materialParams, phasePresence);
-        Valgrind::CheckDefined(fluidState_);
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // relative permeabilities
