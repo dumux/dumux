@@ -78,7 +78,7 @@ SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);
 SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);
 
 //! The fluid system to use by default
-SET_TYPE_PROP(BoxOneP, FluidSystem, OneP<TypeTag>);
+SET_TYPE_PROP(BoxOneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
 
 SET_PROP(BoxOneP, Fluid)
 { private:
