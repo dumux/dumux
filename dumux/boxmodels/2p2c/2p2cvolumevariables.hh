@@ -36,7 +36,11 @@
 #include <iostream>
 
 #include "2p2cproperties.hh"
-#include "2p2cfluidstate.hh"
+#include "2p2cindices.hh"
+
+#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
+#include <dumux/material/MpNcconstraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/MpNcconstraintsolvers/misciblemultiphasecomposition.hh>
 
 namespace Dumux
 {
@@ -67,7 +71,7 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         dim = GridView::dimension,
 
         numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
+        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
         lCompIdx = Indices::lCompIdx,
         gCompIdx = Indices::gCompIdx,
@@ -76,10 +80,35 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         gPhaseIdx = Indices::gPhaseIdx
     };
 
+    // present phases
+    enum {
+        lPhaseOnly = Indices::lPhaseOnly,
+        gPhaseOnly = Indices::gPhaseOnly,
+        bothPhases = Indices::bothPhases
+    };
+
+    // formulations
+    enum {
+        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
+        plSg = TwoPTwoCFormulation::plSg,
+        pgSl = TwoPTwoCFormulation::pgSl
+    };
+
+    // primary variable indices
+    enum {
+        switchIdx = Indices::switchIdx,
+        pressureIdx = Indices::pressureIdx,
+    };
+
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef TwoPTwoCFluidState<TypeTag> FluidState;
+
+    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
+    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
 public:
+    //! The type of the object returned by the fluidState() method
+    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+
     /*!
      * \brief Update all quantities for a given control volume.
      *
@@ -110,17 +139,125 @@ public:
                                     scvIdx,
                                     problem);
 
-        // capillary pressure parameters
-        const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
-
         int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
         int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
+        
+        /////////////
+        // set the saturations
+        /////////////
+        Scalar Sg;
+        if (phasePresence == gPhaseOnly)
+            Sg = 1.0;
+        else if (phasePresence == lPhaseOnly) {
+            Sg = 0.0;
+        }
+        else if (phasePresence == bothPhases) {
+            if (formulation == plSg)
+                Sg = priVars[switchIdx];
+            else if (formulation == pgSl)
+                Sg = 1.0 - priVars[switchIdx];
+            else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        fluidState_.setSaturation(lPhaseIdx, 1 - Sg);
+        fluidState_.setSaturation(gPhaseIdx, Sg);
+        
+        /////////////
+        // set the pressures of the fluid phases
+        /////////////
 
-        // calculate phase state
+        // calculate capillary pressure
+        const MaterialLawParams &materialParams =
+            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+        Scalar pC = MaterialLaw::pC(materialParams, 1 - Sg);
+
+        if (formulation == plSg) {
+            fluidState_.setPressure(lPhaseIdx, priVars[pressureIdx]);
+            fluidState_.setPressure(gPhaseIdx, priVars[pressureIdx] + pC);
+        }
+        else if (formulation == pgSl) {
+            fluidState_.setPressure(gPhaseIdx, priVars[pressureIdx]);
+            fluidState_.setPressure(lPhaseIdx, priVars[pressureIdx] - pC);
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+
+        /////////////
+        // calculate the phase compositions
+        /////////////
         typename FluidSystem::ParameterCache paramCache;
-        fluidState_.update(paramCache, priVars, materialParams, phasePresence);
 
+        // now comes the tricky part: calculate phase compositions
+        if (phasePresence == bothPhases) {
+            // both phases are present, phase compositions are a
+            // result of the the gas <-> liquid equilibrium. This is
+            // the job of the "MiscibleMultiPhaseComposition"
+            // constraint solver
+            MiscibleMultiPhaseComposition::solve(fluidState_,
+                                                 paramCache,
+                                                 /*setViscosity=*/true,
+                                                 /*setInternalEnergy=*/false);
+            
+        }
+        else if (phasePresence == gPhaseOnly) {
+            // only the gas phase is present, i.e. gas phase
+            // composition is stored explicitly.
+
+            // extract _mass_ fractions in the gas phase
+            Scalar massFractionG[numComponents];
+            massFractionG[lCompIdx] = priVars[switchIdx];
+            massFractionG[gCompIdx] = 1 - massFractionG[lCompIdx];
+
+            // calculate average molar mass of the gas phase
+            Scalar M1 = FluidSystem::molarMass(lCompIdx);
+            Scalar M2 = FluidSystem::molarMass(gCompIdx);
+            Scalar X2 = massFractionG[gCompIdx];
+            Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+            
+            // convert mass to mole fractions and set the fluid state
+            fluidState_.setMoleFraction(gPhaseIdx, lCompIdx, massFractionG[lCompIdx]*avgMolarMass/M1);
+            fluidState_.setMoleFraction(gPhaseIdx, gCompIdx, massFractionG[gCompIdx]*avgMolarMass/M2);
+            
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState_, 
+                                             paramCache,
+                                             gPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
+        }
+        else if (phasePresence == lPhaseOnly) {
+            // only the liquid phase is present, i.e. liquid phase
+            // composition is stored explicitly.
+
+            // extract _mass_ fractions in the gas phase
+            Scalar massFractionL[numComponents];
+            massFractionL[gCompIdx] = priVars[switchIdx];
+            massFractionL[lCompIdx] = 1 - massFractionL[gCompIdx];
+
+            // calculate average molar mass of the gas phase
+            Scalar M1 = FluidSystem::molarMass(lCompIdx);
+            Scalar M2 = FluidSystem::molarMass(gCompIdx);
+            Scalar X2 = massFractionL[gCompIdx];
+            Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
+            
+            // convert mass to mole fractions and set the fluid state
+            fluidState_.setMoleFraction(lPhaseIdx, lCompIdx, massFractionL[lCompIdx]*avgMolarMass/M1);
+            fluidState_.setMoleFraction(lPhaseIdx, gCompIdx, massFractionL[gCompIdx]*avgMolarMass/M2);
+            
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState_, 
+                                             paramCache,
+                                             lPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
+        }
+        
+        /////////////
+        // calculate the remaining quantities
+        /////////////
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // relative permeabilities
             Scalar kr;
@@ -230,7 +367,7 @@ public:
      * \brief Returns the effective capillary pressure within the control volume.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.capillaryPressure(); }
+    { return fluidState_.pressure(gPhaseIdx) - fluidState_.pressure(lPhaseIdx); }
 
     /*!
      * \brief Returns the average porosity within the control volume.
