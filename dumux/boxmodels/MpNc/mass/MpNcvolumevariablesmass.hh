@@ -25,8 +25,7 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
 
-#include <dumux/material/MpNcfluidstates/nonequilibriumfluidstate.hh>
-#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
+#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
 
 namespace Dumux
 {
@@ -70,7 +69,7 @@ public:
      * If chemical equilibrium is assumed, we use the fluid state
      * which saves some memory.
      */
-    typedef EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+    typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
     /*!
      * \brief Update composition of all phases in the mutable

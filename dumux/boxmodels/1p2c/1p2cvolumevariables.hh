@@ -29,7 +29,7 @@
 
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
 
-#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
+#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
 
 namespace Dumux
 {
@@ -78,7 +78,7 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 
 public:
     //! The type returned by the fluidState() method
-    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume.

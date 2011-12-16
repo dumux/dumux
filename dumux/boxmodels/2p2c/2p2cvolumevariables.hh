@@ -38,7 +38,7 @@
 #include "2p2cproperties.hh"
 #include "2p2cindices.hh"
 
-#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
+#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
 #include <dumux/material/MpNcconstraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/MpNcconstraintsolvers/misciblemultiphasecomposition.hh>
 
@@ -107,7 +107,7 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 
 public:
     //! The type of the object returned by the fluidState() method
-    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
     /*!
      * \brief Update all quantities for a given control volume.

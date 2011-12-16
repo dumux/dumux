@@ -27,7 +27,7 @@
 #ifndef DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
 
-#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
+#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
 
 namespace Dumux
 {
@@ -61,7 +61,7 @@ class MPNCVolumeVariablesEnergy
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
 public:
     /*!
@@ -130,7 +130,7 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> FluidState;
+    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
 public:
     /*!
