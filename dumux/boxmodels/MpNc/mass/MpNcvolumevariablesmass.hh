@@ -25,7 +25,7 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
 
-#include <dumux/material/MpNcfluidstates/genericfluidstate.hh>
+#include <dumux/material/MpNcfluidstates/nonequilibriumfluidstate.hh>
 #include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
 
 namespace Dumux

@@ -85,8 +85,8 @@ public:
 
         for (int phase = 0; phase < numPhases; ++phase) {
             for (int comp = 0; comp < numComponents; ++comp) {
-                moleFrac_[phase][comp]  = vDat[i].fluidState().moleFrac(phase, comp);
-                moleFrac_[phase][comp] += vDat[j].fluidState().moleFrac(phase, comp);
+                moleFrac_[phase][comp]  = vDat[i].fluidState().moleFraction(phase, comp);
+                moleFrac_[phase][comp] += vDat[j].fluidState().moleFraction(phase, comp);
                 moleFrac_[phase][comp] /= 2;
             }
         }
@@ -105,8 +105,8 @@ public:
                 moleFracGrad_[phaseIdx][compIdx] = normal;
                 moleFracGrad_[phaseIdx][compIdx]
                     *=
-                    (vDat[j].fluidState().moleFrac(phaseIdx, compIdx) -
-                     vDat[i].fluidState().moleFrac(phaseIdx, compIdx))
+                    (vDat[j].fluidState().moleFraction(phaseIdx, compIdx) -
+                     vDat[i].fluidState().moleFraction(phaseIdx, compIdx))
                     / dist;
             }
         }

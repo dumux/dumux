@@ -42,8 +42,6 @@ class MPNCVolumeVariablesDiffusion
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
 
-    typedef typename FluidSystem::MutableParameters MutableParameters;
-
     enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
     enum { lPhaseIdx = FluidSystem::lPhaseIdx };
     enum { gPhaseIdx = FluidSystem::gPhaseIdx };
@@ -52,7 +50,9 @@ public:
     MPNCVolumeVariablesDiffusion()
     {}
 
-    void update(MutableParameters &mutParams,
+    template <class FluidState, class ParameterCache>
+    void update(FluidState &fluidState,
+                ParameterCache &paramCache,
                 const VolumeVariables &volVars,
                 const Problem &problem)
     {
@@ -62,10 +62,11 @@ public:
         diffCoeffL_[0] = 0.0;
         for (int compIdx = 1; compIdx < numComponents; ++compIdx) {
             diffCoeffL_[compIdx] =
-                FluidSystem::computeBinaryDiffCoeff(mutParams,
-                                                    lPhaseIdx,
-                                                    0,
-                                                    compIdx);
+                FluidSystem::binaryDiffusionCoefficient(fluidState,
+                                                        paramCache,
+                                                        lPhaseIdx,
+                                                        0,
+                                                        compIdx);
         }
         Valgrind::CheckDefined(diffCoeffL_);
 
@@ -74,8 +75,8 @@ public:
             diffCoeffG_[compIIdx][compIIdx] = 0;
             for (int compJIdx = compIIdx + 1; compJIdx < numComponents; ++compJIdx) {
                 diffCoeffG_[compIIdx][compJIdx] =
-                    FluidSystem::computeBinaryDiffCoeff(mutParams,
-                                                        gPhaseIdx,
+                        FluidSystem::binaryDiffusionCoefficient(fluidState,
+                                                                paramCache,                                                        gPhaseIdx,
                                                         compIIdx,
                                                         compJIdx);
                 

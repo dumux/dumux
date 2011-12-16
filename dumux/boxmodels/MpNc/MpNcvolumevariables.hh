@@ -148,6 +148,7 @@ public:
                                                   elemGeom,
                                                   scvIdx,
                                                   problem);
+        EnergyVolumeVariables::checkDefinedTemp();
 
         /////////////
         // set the phase pressures
@@ -223,7 +224,6 @@ public:
                                       elemGeom,
                                       scvIdx,
                                       problem);
-
         EnergyVolumeVariables::checkDefined();
 
         // make sure the quantities in the fluid state are well-defined
@@ -232,14 +232,14 @@ public:
         // specific interfacial area,
         // well also all the dimensionless numbers :-)
         // well, also the mass transfer rate
-        IAVolumeVariables::update(*this,
-                                  fluidState_,
-                                  paramCache,
-                                  priVars,
-                                  problem,
-                                  element,
-                                  elemGeom,
-                                  scvIdx);
+	IAVolumeVariables::update(*this,
+				  fluidState_,
+				  paramCache,
+				  priVars,
+				  problem,
+				  element,
+				  elemGeom,
+				  scvIdx);
         IAVolumeVariables::checkDefined();
 
         checkDefined();
