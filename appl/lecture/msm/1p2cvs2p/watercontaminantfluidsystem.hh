@@ -38,7 +38,7 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
-#include <dumux/material/MpNcfluidsystems/nullparametercache.hh>
+#include <dumux/material/MpNcfluidsystems/basefluidsystem.hh>
 
 namespace Dumux
 {
@@ -47,8 +47,10 @@ namespace Dumux
  */
 template <class Scalar>
 class WaterContaminantFluidSystem
+: public BaseFluidSystem<Scalar, WaterContaminantFluidSystem<Scalar> >
 {
     typedef WaterContaminantFluidSystem<Scalar> ThisType;
+    typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
     //! The type of parameter cache objects
@@ -169,12 +171,11 @@ public:
      * \brief Calculate the density [kg/m^3] of a fluid phase
      *
      * \param fluidState An abitrary fluid state
-     * \param paramCache The fluid system's parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      */
+    using Base::density;
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
-                          const ParameterCache &paramCache,
                           int phaseIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
@@ -186,12 +187,11 @@ public:
      * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
      *
      * \param fluidState An abitrary fluid state
-     * \param paramCache The fluid system's parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      */
+    using Base::viscosity;
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
-                            const ParameterCache &paramCache,
                             int phaseIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
@@ -209,6 +209,7 @@ public:
      *
      * \f[ f_\kappa = \phi_\kappa * x_{\kappa} \f]
      */
+    using Base::fugacityCoefficient;
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
                                       int phaseIdx,
@@ -239,13 +240,12 @@ public:
      * pressure and temperature.
      *
      * \param fluidState An abitrary fluid state
-     * \param paramCache The fluid system's parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
+    using Base::diffusionCoefficient;
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
-                                       const ParameterCache &paramCache,
                                        int phaseIdx,
                                        int compIdx)
     {
@@ -259,14 +259,13 @@ public:
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
      * \param fluidState An abitrary fluid state
-     * \param paramCache The fluid system's parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIIdx The index of the first component to consider
      * \param compJIdx The index of the second component to consider
      */
+    using Base::binaryDiffusionCoefficient;
     template <class FluidState>
     static Scalar binaryDiffusionCoefficient(const FluidState &fluidState,
-                                             const ParameterCache &paramCache,
                                              int phaseIdx,
                                              int compIIdx,
                                              int compJIdx)
@@ -287,12 +286,11 @@ public:
      *        enthalpy of solution for this system. ...
      *
      * \param fluidState An abitrary fluid state
-     * \param paramCache The fluid system's parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      */
+    using Base::enthalpy;
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
-                           const ParameterCache &paramCache,
                            int phaseIdx)
     {
         // TODO!
@@ -307,12 +305,11 @@ public:
      * http://en.wikipedia.org/wiki/List_of_thermal_conductivities
      *
      * \param fluidState An abitrary fluid state
-     * \param paramCache The fluid system's parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      */
+    using Base::thermalConductivity;
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
-                                      const ParameterCache &paramCache,
                                       int phaseIdx)
     {
         // TODO!
@@ -324,12 +321,11 @@ public:
      *        \f$\mathrm{[J/kg]}\f$.
      *
      * \param fluidState An abitrary fluid state
-     * \param paramCache The fluid system's parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      */
+    using Base::heatCapacity;
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
-                               const ParameterCache &paramCache,
                                int phaseIdx)
     {
         // TODO!
