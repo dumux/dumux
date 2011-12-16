@@ -1,23 +1,13 @@
 AC_DEFUN([DUMUX_CHECK_QUAD],
 [
-AC_ARG_WITH([quad],
-  AS_HELP_STRING([--with-quad@<:@=yes|no@:>@], [enable quad-precision floating point math (default is no)]),
-  [
-        if test "$withval" = "no"; then
-	   want_quad="no"
-        elif test "$withval" = "yes"; then
-           want_quad="yes"
-        else
-           want_quad="no"
-        fi
-  ],
-  [want_quad="no"])
+  AC_ARG_ENABLE(quad,
+    AS_HELP_STRING([--enable-quad], [provide quad-precision floating point math]))
 
   # store old values
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LIBS="$LIBS"
 
-  if test "x$want_quad" = "xyes"; then
+  if test "$enable_quad" = "yes"; then
     QUADMATH_LIB_PATH=""
     QUADMATH_INCLUDE_PATH=""
 
@@ -52,13 +42,14 @@ AC_ARG_WITH([quad],
     DUNE_PKG_CPPFLAGS="$DUNE_PKG_CPPFLAGS $QUAD_CPPFLAGS"
 
     AC_DEFINE([HAVE_QUAD],1,[Are quad-precision floating point values usable?])
+    AH_BOTTOM([#include <dumux/common/quad.hh>])
     with_quad="yes"
   else
     with_quad="no"
   fi
 
   # tell automake
-  AM_CONDITIONAL(QUAD, test "x$HAVE_QUAD" = "x1")
+  AM_CONDITIONAL(QUAD, test "$HAVE_QUAD" = "1")
 
   # restore variables
   LDFLAGS="$ac_save_LDFLAGS"

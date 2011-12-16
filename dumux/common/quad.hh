@@ -23,16 +23,14 @@
  * \brief This file provides the infrastructure to use quad-precision
  *        floating point values in the numerical models.
  */
-#ifndef DUMUX_QUAD_HH
+#if !defined DUMUX_QUAD_HH && HAVE_QUAD
 #define DUMUX_QUAD_HH
-
-#if ! HAVE_QUAD
-#error "Quad precision floating point values must be enabled to use this file"
-#endif
 
 #include <iostream>
 #include <cmath>
 #include <limits>
+
+#include <dune/common/deprecated.hh>
 
 extern "C" {
 #include <quadmath.h>
@@ -112,6 +110,12 @@ inline std::istream& operator>>(std::istream& is, quad &val)
 inline quad abs(quad val)
 { return (val < 0)?-val:val; }
 
+inline quad floor(quad val)
+{ return floorq(val); }
+
+inline quad ceil(quad val)
+{ return ceilq(val); }
+
 inline quad max(quad a, quad b)
 { return (a>b)?a:b; };
 
@@ -128,6 +132,21 @@ inline quad pow(quad base, ExpType exp)
 inline quad exp(quad val)
 { return expq(val); };
 
+inline quad sin(quad val)
+{ return sinq(val); };
+
+inline quad cos(quad val)
+{ return cosq(val); };
+
+inline quad tan(quad val)
+{ return tanq(val); };
+
+inline quad atan(quad val)
+{ return atanq(val); };
+
+inline quad atan2(quad a, quad b)
+{ return atan2q(a, b); };
+
 inline bool isfinite(quad val)
 { return !isnanq(val) && !isinfq(val); };
 
@@ -139,5 +158,64 @@ inline bool isinf(quad val)
 
 } // namespace std
 
+// this is a hack so that Dune's classname.hh does not get
+// included. this is required because GCC 4.6 and earlier does not
+// generate a type_info structure for __float128 which causes the
+// linker to fail.
+#define DUNE_CLASSNAME_HH
+
+#include <cstdlib>
+#include <string>
+#include <typeinfo>
+
+#if defined(__GNUC__) && ! defined(__clang__)
+#include <cxxabi.h>
+#endif // #ifdef __GNUC__
+
+namespace Dune
+{
+template <class T>
+class ClassNameHelper_
+{ public:
+    static std::string name()
+    { 
+        std::string className = typeid( T ).name();
+#if defined(__GNUC__) && ! defined(__clang__)
+        int status;
+        char *demangled = abi::__cxa_demangle( className.c_str(), 0, 0, &status );
+        if( demangled )
+        {
+          className = demangled;
+          std::free( demangled );
+        }
+#endif // #ifdef __GNUC__
+        return className;
+    }
+};
+
+#if HAVE_QUAD
+// specialize for quad precision floating point values to avoid
+// needing a type_info structure
+template <>
+class ClassNameHelper_<__float128>
+{ public:
+    static std::string name()
+    { return "quad"; }
+};
+#endif
+
+template <class T>
+std::string className()
+{
+    return ClassNameHelper_<T>::name();
+};
+
+template <class T>
+std::string className(const T &t)
+{
+    return ClassNameHelper_<T>::name();
+};
+
+};
 
 #endif // DUMUX_QUAD_HH
