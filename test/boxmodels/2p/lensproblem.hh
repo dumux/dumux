@@ -69,7 +69,7 @@ SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(LensProblem, Problem, Dumux::LensProblem<TypeTag>);
 
-#if 0
+#if 1
 // Set the wetting phase
 SET_PROP(LensProblem, WettingPhase)
 {
@@ -89,7 +89,7 @@ public:
 };
 #else
 // OR: set the fluid system
-SET_TYPE_PROP(LensProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>);
+SET_TYPE_PROP(LensProblem, FluidSystem, H2ON2FluidSystem<TypeTag>);
 #endif
 
 // Enable partial reassembly of the jacobian matrix?
@@ -300,7 +300,12 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
-        Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);
+        typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+
+        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
         if (onLeftBoundary_(globalPos))
         {
@@ -363,7 +368,13 @@ public:
                       const GlobalPosition &globalPos) const
     {
         Scalar depth = this->bboxMax()[1] - globalPos[1];
-        Scalar densityW = WettingPhase::density(temperature_, /*pressure=*/1e5);
+
+        typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+
+        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
