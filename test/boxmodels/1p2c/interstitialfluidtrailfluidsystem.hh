@@ -113,6 +113,21 @@ public:
         return true;
     }
 
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
+     *        be compressible.
+     *
+     * Compressible means that the partial derivative of the density
+     * to the fluid pressure is always larger than zero.
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static bool isCompressible(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        return false;
+    };
+
     /****************************************
      * Component related static parameters
      ****************************************/
