@@ -817,13 +817,13 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         Scalar lambdaNWBound = 0.;
 
                         Scalar densityWBound =
-                            FluidSystem::phaseDensity(wPhaseIdx, temperatureBC, pressBC[wPhaseIdx], BCfluidState);
+                            FluidSystem::density(BCfluidState, wPhaseIdx);
                         Scalar densityNWBound =
-                            FluidSystem::phaseDensity(nPhaseIdx, temperatureBC, pressBC[nPhaseIdx], BCfluidState);
+                            FluidSystem::density(BCfluidState, nPhaseIdx);
                         Scalar viscosityWBound =
-                            FluidSystem::phaseViscosity(wPhaseIdx, temperatureBC, pressBC[wPhaseIdx], BCfluidState);
+                            FluidSystem::viscosity(BCfluidState, wPhaseIdx);
                         Scalar viscosityNWBound =
-                            FluidSystem::phaseViscosity(nPhaseIdx, temperatureBC, pressBC[nPhaseIdx], BCfluidState);
+                            FluidSystem::viscosity(BCfluidState, nPhaseIdx);
 
                         // mobility at the boundary
                         switch (GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility)))
@@ -905,8 +905,8 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         else
                         {
                             densityW = densityWBound;
-                            dV_w = (dv_dC1 * BCfluidState.massFrac(wPhaseIdx, wCompIdx)
-                                     + dv_dC2 * BCfluidState.massFrac(wPhaseIdx, nCompIdx));
+                            dV_w = (dv_dC1 * BCfluidState.massFraction(wPhaseIdx, wCompIdx)
+                                     + dv_dC2 * BCfluidState.massFraction(wPhaseIdx, nCompIdx));
                             dV_w *= densityW;
                             lambdaW = lambdaWBound;
                         }
@@ -920,8 +920,8 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         else
                         {
                             densityNW = densityNWBound;
-                            dV_n = (dv_dC1 * BCfluidState.massFrac(nPhaseIdx, wCompIdx)
-                                    + dv_dC2 * BCfluidState.massFrac(nPhaseIdx, nCompIdx));
+                            dV_n = (dv_dC1 * BCfluidState.massFraction(nPhaseIdx, wCompIdx)
+                                    + dv_dC2 * BCfluidState.massFraction(nPhaseIdx, nCompIdx));
                             dV_n *= densityNW;
                             lambdaNW = lambdaNWBound;
                         }
@@ -1211,17 +1211,17 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
         } //end compositional
 
         // initialize densities
-        problem().variables().densityWetting(globalIdx) = FluidSystem::phaseDensity(wPhaseIdx, temperature_, pressure[wPhaseIdx], fluidState);
-        problem().variables().densityNonwetting(globalIdx) = FluidSystem::phaseDensity(nPhaseIdx, temperature_, pressure[nPhaseIdx], fluidState);
+        problem().variables().densityWetting(globalIdx) = FluidSystem::density(fluidState, wPhaseIdx);
+        problem().variables().densityNonwetting(globalIdx) = FluidSystem::density(fluidState, nPhaseIdx);
 
         // initialize mass fractions
-        problem().variables().wet_X1(globalIdx) = fluidState.massFrac(wPhaseIdx, wCompIdx);
-        problem().variables().nonwet_X1(globalIdx) = fluidState.massFrac(nPhaseIdx, wCompIdx);
+        problem().variables().wet_X1(globalIdx) = fluidState.massFraction(wPhaseIdx, wCompIdx);
+        problem().variables().nonwet_X1(globalIdx) = fluidState.massFraction(nPhaseIdx, wCompIdx);
 
 
         // initialize viscosities
-        problem().variables().viscosityWetting(globalIdx) = FluidSystem::phaseViscosity(wPhaseIdx, temperature_, pressure[wPhaseIdx], fluidState);
-        problem().variables().viscosityNonwetting(globalIdx) = FluidSystem::phaseViscosity(nPhaseIdx, temperature_, pressure[nPhaseIdx], fluidState);
+        problem().variables().viscosityWetting(globalIdx) = FluidSystem::viscosity(fluidState, wPhaseIdx);
+        problem().variables().viscosityNonwetting(globalIdx) = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
         // initialize mobilities
         problem().variables().mobilityWetting(globalIdx) = MaterialLaw::krw(problem().spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(wPhaseIdx))
@@ -1375,9 +1375,9 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 
         // initialize viscosities
         problem().variables().viscosityWetting(globalIdx)
-                = FluidSystem::phaseViscosity(wPhaseIdx, temperature_, pressure[wPhaseIdx], fluidState);
+                = FluidSystem::viscosity(fluidState, wPhaseIdx);
         problem().variables().viscosityNonwetting(globalIdx)
-                = FluidSystem::phaseViscosity(nPhaseIdx, temperature_, pressure[nPhaseIdx], fluidState);
+                = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
         // initialize mobilities
         problem().variables().mobilityWetting(globalIdx) =
@@ -1388,14 +1388,14 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
                     / problem().variables().viscosityNonwetting(globalIdx);
 
         // initialize mass fractions
-        problem().variables().wet_X1(globalIdx) = fluidState.massFrac(wPhaseIdx, wCompIdx);
-        problem().variables().nonwet_X1(globalIdx) = fluidState.massFrac(nPhaseIdx, wCompIdx);
+        problem().variables().wet_X1(globalIdx) = fluidState.massFraction(wPhaseIdx, wCompIdx);
+        problem().variables().nonwet_X1(globalIdx) = fluidState.massFraction(nPhaseIdx, wCompIdx);
 
         // initialize densities
         problem().variables().densityWetting(globalIdx)
-                = FluidSystem::phaseDensity(wPhaseIdx, temperature_, pressure[wPhaseIdx], fluidState);
+                = FluidSystem::density(fluidState, wPhaseIdx);
         problem().variables().densityNonwetting(globalIdx)
-                = FluidSystem::phaseDensity(nPhaseIdx, temperature_, pressure[nPhaseIdx], fluidState);
+                = FluidSystem::density(fluidState, nPhaseIdx);
 
         // determine volume mismatch between actual fluid volume and pore volume
         Scalar sumConc = (problem().variables().totalConcentration(globalIdx, wCompIdx)
@@ -1503,8 +1503,8 @@ void FVPressure2P2C<TypeTag>::volumeDerivatives(GlobalPosition globalPos, Elemen
     Scalar Z1 = m1 / (m1 + m2);
     updFluidState.update(Z1,
             p_, problem().spatialParameters().porosity(globalPos, *ep), temperature_);
-    Scalar v_w_ = 1. / FluidSystem::phaseDensity(wPhaseIdx, temperature_, p_[wPhaseIdx], updFluidState);
-    Scalar v_g_ = 1. / FluidSystem::phaseDensity(nPhaseIdx, temperature_, p_[nPhaseIdx], updFluidState);
+    Scalar v_w_ = 1. / FluidSystem::density(updFluidState, wPhaseIdx);
+    Scalar v_g_ = 1. / FluidSystem::density(updFluidState, nPhaseIdx);
     dv_dp = ((m1+m2) * (nuw1 * v_w_ + (1-nuw1) * v_g_) - volalt) /incp;
     if (dv_dp>0)
     {
@@ -1514,8 +1514,8 @@ void FVPressure2P2C<TypeTag>::volumeDerivatives(GlobalPosition globalPos, Elemen
         p_ -= 2*incp;
         updFluidState.update(Z1,
                     p_, problem().spatialParameters().porosity(globalPos, *ep), temperature_);
-        Scalar v_w_ = 1. / FluidSystem::phaseDensity(wPhaseIdx, temperature_, p_[wPhaseIdx], updFluidState);
-        Scalar v_g_ = 1. / FluidSystem::phaseDensity(nPhaseIdx, temperature_, p_[nPhaseIdx], updFluidState);
+        Scalar v_w_ = 1. / FluidSystem::density(updFluidState, wPhaseIdx);
+        Scalar v_g_ = 1. / FluidSystem::density(updFluidState, nPhaseIdx);
         dv_dp = ((m1+m2) * (nuw1 * v_w_ + (1-nuw1) * v_g_) - volalt) /-incp;
         // dV_dp > 0 is unphysical: Try inverse increment for secant
         if (dv_dp>0)

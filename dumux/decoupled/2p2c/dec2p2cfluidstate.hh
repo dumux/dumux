@@ -97,9 +97,9 @@ public:
 
 
         //mole equilibrium ratios K for in case wPhase is reference phase
-        double k1 = FluidSystem::activityCoeff(wPhaseIdx, wCompIdx, temperature_, phasePressure_[nPhaseIdx], *this)
+        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx)
                     / phasePressure_[nPhaseIdx];    // = p^wComp_vap / p_n
-        double k2 = FluidSystem::activityCoeff(wPhaseIdx, nCompIdx, temperature_, phasePressure_[nPhaseIdx], *this)
+        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx)
                     / phasePressure_[nPhaseIdx];    // = H^nComp_w / p_n
 
         // get mole fraction from equilibrium konstants
@@ -146,14 +146,8 @@ public:
         nu_[wPhaseIdx] = 1. - nu_[nPhaseIdx];
 
         // get densities with correct composition
-        density_[wPhaseIdx] = FluidSystem::phaseDensity(wPhaseIdx,
-                                                        temperature,
-                                                        phasePressure_[wPhaseIdx],
-                                                        *this);
-        density_[nPhaseIdx] = FluidSystem::phaseDensity(nPhaseIdx,
-                                                        temperature,
-                                                        phasePressure_[nPhaseIdx],
-                                                        *this);
+        density_[wPhaseIdx] = FluidSystem::density(*this, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(*this, nPhaseIdx);
 
         Sw_ = (nu_[wPhaseIdx]) / density_[wPhaseIdx];
         Sw_ /= (nu_[wPhaseIdx]/density_[wPhaseIdx] + nu_[nPhaseIdx]/density_[nPhaseIdx]);
@@ -196,9 +190,9 @@ public:
 
 
         //mole equilibrium ratios K for in case wPhase is reference phase
-        double k1 = FluidSystem::activityCoeff(wPhaseIdx, wCompIdx, temperature_, phasePressure_[nPhaseIdx], *this)
+        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx)
                     / phasePressure_[nPhaseIdx];
-        double k2 = FluidSystem::activityCoeff(wPhaseIdx, nCompIdx, temperature_, phasePressure_[nPhaseIdx], *this)
+        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx)
                     / phasePressure_[nPhaseIdx];
 
         // get mole fraction from equilibrium konstants
@@ -222,14 +216,8 @@ public:
         equilRatio_[wPhaseIdx][nCompIdx] = equilRatio_[wPhaseIdx][wCompIdx] = 1.;
 
         // get densities with correct composition
-        density_[wPhaseIdx] = FluidSystem::phaseDensity(wPhaseIdx,
-                                                        temperature,
-                                                        phasePressure_[wPhaseIdx],
-                                                        *this);
-        density_[nPhaseIdx] = FluidSystem::phaseDensity(nPhaseIdx,
-                                                        temperature,
-                                                        phasePressure_[nPhaseIdx],
-                                                        *this);
+        density_[wPhaseIdx] = FluidSystem::density(*this, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(*this, nPhaseIdx);
 
         massConcentration_[wCompIdx] =
                 poro * (massfrac_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
@@ -262,7 +250,7 @@ public:
      * \param phaseIdx the index of the phase
      * \param compIdx the index of the component
      */
-    Scalar massFrac(int phaseIdx, int compIdx) const
+    Scalar massFraction(int phaseIdx, int compIdx) const
     {
         return massfrac_[phaseIdx][compIdx];
 
@@ -274,7 +262,7 @@ public:
      * \param phaseIdx the index of the phase
      * \param compIdx the index of the component
      */
-    Scalar moleFrac(int phaseIdx, int compIdx) const
+    Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         // as the moass fractions are calculated, it is used to determine the mole fractions
         double moleFrac_ = ( massfrac_[phaseIdx][compIdx] / FluidSystem::molarMass(compIdx) );  // = moles of compIdx
@@ -328,7 +316,7 @@ public:
      *
      * \param phaseIdx the index of the phase
      */
-    Scalar phasePressure(int phaseIdx) const
+    Scalar pressure(int phaseIdx) const
     { return phasePressure_[phaseIdx]; }
 
     /*!
@@ -343,7 +331,7 @@ public:
      * Note that we assume thermodynamic equilibrium, so all fluids
      * and the rock matrix exhibit the same temperature.
      */
-    Scalar temperature() const
+    Scalar temperature(int phaseIdx) const
     { return temperature_; };
 
     /*!

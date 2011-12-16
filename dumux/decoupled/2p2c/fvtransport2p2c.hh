@@ -397,16 +397,12 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                                     pressBound);
 
                     // determine fluid properties at the boundary
-                    Scalar Xw1Bound = BCfluidState.massFrac(wPhaseIdx, wCompIdx);
-                    Scalar Xn1Bound = BCfluidState.massFrac(nPhaseIdx, wCompIdx);
+                    Scalar Xw1Bound = BCfluidState.massFraction(wPhaseIdx, wCompIdx);
+                    Scalar Xn1Bound = BCfluidState.massFraction(nPhaseIdx, wCompIdx);
                     Scalar densityWBound = BCfluidState.density(wPhaseIdx);
                     Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
-                    Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx,
-                                                                        problem().temperatureAtPos(globalPosFace),
-                                                                        pressBound[wPhaseIdx], BCfluidState);
-                    Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx,
-                                                                        problem().temperatureAtPos(globalPosFace),
-                                                                        pressBound[wPhaseIdx], BCfluidState);
+                    Scalar viscosityWBound = FluidSystem::viscosity(BCfluidState, wPhaseIdx);
+                    Scalar viscosityNWBound = FluidSystem::viscosity(BCfluidState, nPhaseIdx);
                     if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
                         pcBound = BCfluidState.capillaryPressure();
                     // average
