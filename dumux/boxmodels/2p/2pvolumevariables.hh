@@ -102,10 +102,10 @@ public:
                            scvIdx,
                            isOldSol);
 
+        Model::completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
-
-        Model::completeFluidState(priVars, problem, element, elemGeom, scvIdx, materialParams, fluidState_);
 
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))

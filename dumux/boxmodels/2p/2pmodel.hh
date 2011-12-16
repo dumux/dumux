@@ -126,13 +126,12 @@ public:
         return 1;
     }
 
-    template <class PrimaryVariables, class Problem, class Element, class ElementGeometry, class MaterialParams, class FluidState>
+    template <class PrimaryVariables, class Problem, class Element, class ElementGeometry, class FluidState>
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
                                    const ElementGeometry& elementGeometry,
                                    int scvIdx,
-                                   const MaterialParams& materialParams,
                                    FluidState& fluidState)
     {
         Scalar t = Implementation::temperature_(primaryVariables, problem, element,
@@ -141,6 +140,9 @@ public:
 
         // material law parameters
         typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+        const typename MaterialLaw::Params &materialParams =
+            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
+
 
         if (int(formulation) == pwSn) {
             Scalar Sn = primaryVariables[saturationIdx];
