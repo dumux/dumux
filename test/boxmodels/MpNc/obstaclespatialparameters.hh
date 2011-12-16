@@ -27,13 +27,9 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#if USE_2P2C
-#include <dumux/boxmodels/2p2c/2p2cmodel.hh>
-#else
 #include <dumux/boxmodels/MpNc/MpNcmodel.hh>
 #include <dumux/material/fluidmatrixinteractions/Mp/Mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/Mp/2padapter.hh>
-#endif
 
 namespace Dumux
 {
@@ -65,11 +61,7 @@ private:
         typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
         typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
 public:
-#if USE_2P2C
-    typedef TwoPMaterialLaw type;
-#else
     typedef TwoPAdapter<lPhaseIdx, TwoPMaterialLaw> type;
-#endif
 };
 }
 
@@ -261,11 +253,8 @@ public:
      * \param scvIdx The index of the sub-control volume.
      * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvElemGeom,
-                                                int scvIdx) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &pos) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
             return fineMaterialParams_;
         else

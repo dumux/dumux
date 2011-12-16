@@ -29,31 +29,17 @@
 #ifndef DUMUX_OBSTACLEPROBLEM_HH
 #define DUMUX_OBSTACLEPROBLEM_HH
 
-#define USE_2P2C 0
-#define OBSTACLE_FIND_CONVERGENCE_RADIUS 0
-
 #include <dune/common/parametertreeparser.hh>
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#if USE_2P2C
-#include <dumux/boxmodels/2p2c/2p2cmodel.hh>
-#else
 #include <dumux/boxmodels/MpNc/MpNcmodel.hh>
-#endif
-
-/*
-#include <dumux/material/fluidsystems/simple_h2o_n2_system.hh>
-#include <dumux/material/fluidsystems/simple_h2o_n2_tce_system.hh>
-#include <dumux/material/fluidsystems/h2o_n2_system.hh>
-#include <dumux/material/fluidsystems/h2o_n2_o2_system.hh>
-#include <dumux/material/fluidsystems/h2o_h2_o2_system.hh>
-#include <dumux/material/fluidsystems/h2o_h2_n2_o2_system.hh>
-*/
 
 #include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/MpNcconstraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/MpNcfluidstates/equilibriumfluidstate.hh>
 
 #include "obstaclespatialparameters.hh"
 
@@ -65,11 +51,7 @@ class ObstacleProblem;
 
 namespace Properties
 {
-#if USE_2P2C
-NEW_TYPE_TAG(ObstacleProblem, INHERITS_FROM(BoxTwoPTwoC, ObstacleSpatialParameters));
-#else
 NEW_TYPE_TAG(ObstacleProblem, INHERITS_FROM(BoxMPNC, ObstacleSpatialParameters));
-#endif
 
 // Set the grid type
 SET_TYPE_PROP(ObstacleProblem, Grid, Dune::YaspGrid<2>);
@@ -90,7 +72,6 @@ public:
 //              Dumux::Simple_H2O_N2_TCE_System<TypeTag> );
 //Dumux::H2O_N2_System<TypeTag> );
 
-#if ! USE_2P2C
 // Enable smooth upwinding?
 SET_BOOL_PROP(ObstacleProblem, EnableSmoothUpwinding, false);
 
@@ -99,7 +80,6 @@ SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, false);
 
 // Use the chopped Newton method?
 SET_BOOL_PROP(ObstacleProblem, NewtonEnableChop, true);
-#endif
 
 // Enable gravity
 SET_BOOL_PROP(ObstacleProblem, EnableGravity, true);
@@ -144,18 +124,10 @@ SET_INT_PROP(ObstacleProblem, NumericDifferenceMethod, +1);
  */
 template <class TypeTag>
 class ObstacleProblem
-#if USE_2P2C
-    : public TwoPTwoCProblem<TypeTag>
-#else
     : public MPNCProblem<TypeTag>
-#endif
 {
-    typedef ObstacleProblem<TypeTag>             ThisType;
-#if USE_2P2C
-    typedef TwoPTwoCProblem<TypeTag> ParentType;
-#else
+    typedef ObstacleProblem<TypeTag> ThisType;
     typedef MPNCProblem<TypeTag> ParentType;
-#endif
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -163,6 +135,8 @@ class ObstacleProblem
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
 
     enum {
         // Grid and world dimension
@@ -173,8 +147,10 @@ class ObstacleProblem
         numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
         gPhaseIdx = FluidSystem::gPhaseIdx,
-        //oPhaseIdx = FluidSystem::oPhaseIdx,
         lPhaseIdx = FluidSystem::lPhaseIdx,
+
+        H2OIdx = FluidSystem::H2OIdx,
+        N2Idx = FluidSystem::N2Idx,
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -184,12 +160,10 @@ class ObstacleProblem
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
 
+    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
-#if USE_2P2C
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-
-#else // ! USE_2P2C
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
     enum {
@@ -197,7 +171,7 @@ class ObstacleProblem
         S0Idx = Indices::S0Idx,
         p0Idx = Indices::p0Idx,
     };
-#endif // USE_2P2C
+
 public:
     ObstacleProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
@@ -208,86 +182,12 @@ public:
         Scalar Tmin = temperature_ - 1.0;
         Scalar Tmax = temperature_ + 1.0;
         int nT = 10;
+
         Scalar pmin = 0.75 * 1e5;
         Scalar pmax = 1.25 * 2e5;
         int np = 1000;
+
         FluidSystem::init(Tmin, Tmax, nT, pmin, pmax, np);
-    }
-
-    /*!
-     * \brief Called by Dumux::TimeManager in order to do a time
-     *        integration on the model.
-     */
-    void timeIntegration()
-    {
-#if !OBSTACLE_FIND_CONVERGENCE_RADIUS
-        if (GET_PROP_VALUE(TypeTag, PTAG(NewtonWriteConvergence)))
-            this->newtonController().setMaxSteps(40);
-        ParentType::timeIntegration();
-#else
-        std::cout << "Finding convergence radius\n";
-        this->newtonController().setVerbose(false);
-        this->newtonController().setMaxSteps(40);
-        this->newtonController().setTargetSteps(20);
-        Scalar successDt = 0.0;
-        const int maxFails = 10;
-        for (int i = 0; true; ++i) {
-            std::cout << "Try dt of " << this->timeManager().timeStepSize() << "\n";
-            std::cout.flush();
-
-            if (i == maxFails && this->gridView().comm().rank() == 0)
-                DUNE_THROW(Dune::MathError,
-                           "Newton solver didn't converge after "
-                           << maxFails
-                           << " timestep divisions. dt="
-                           << this->timeManager().timeStepSize());
-
-            if (this->model().update(this->newtonMethod(),
-                                     this->newtonController()))
-            {
-                // sucessfull update. remember time step size
-                successDt = this->timeManager().timeStepSize();
-                this->model().updateFailed();
-                break;
-            }
-
-            if (i > 0 && this->gridView().comm().rank() == 0)
-                std::cout << "Newton solver did not converge. Retrying with time step of "
-                          << this->timeManager().timeStepSize() << "sec\n";
-
-            // update failed
-            Scalar dt = this->timeManager().timeStepSize();
-            Scalar nextDt = dt / 2;
-            this->timeManager().setTimeStepSize(nextDt);
-            std::cout << "Failed for dt=" << dt << ". Try with half dt of " << nextDt << "\n";
-        }
-
-        // increase time step until the update fails
-        while (true)
-        {
-            if (!this->model().update(this->newtonMethod(),
-                                      this->newtonController()))
-                break;
-
-            // sucessfull update. increase time step size
-            successDt = this->timeManager().timeStepSize();
-            Scalar nextDt = successDt*1.25;
-            this->timeManager().setTimeStepSize(nextDt);
-            if (this->timeManager().timeStepSize() < nextDt) {
-                std::cout << "End of simulation reached!\n";
-                break;
-            };
-            std::cout << "Increase dt to " << nextDt << "\n";
-            std::cout.flush();
-            this->model().updateFailed();
-        }
-
-        // do a last update with the largest successful time step
-        this->newtonController().setVerbose(true);
-        this->timeManager().setTimeStepSize(successDt);
-        std::cout << "Convergence radius is " << successDt << "\n";
-        this->model().update(this->newtonMethod(), this->newtonController());
-#endif
     }
 
     /*!
@@ -339,7 +239,7 @@ public:
     /*!
      * \brief Returns the temperature [K] within the domain.
      */
-    Scalar temperature() const
+    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     { return temperature_; };
 
     // \}
@@ -449,96 +349,88 @@ public:
         return ParentType::shouldWriteRestartFile();
     }
 
-
-#if USE_2P2C
-    /*!
-     * \brief Return the initial phase state inside a control volume.
-     */
-   int initialPhasePresence(const Vertex &vert,
-                             int &globalIdx,
-                             const GlobalPosition &globalPos) const
-    {
-        if (onInlet_(globalPos))
-            return Indices::lPhaseOnly;
-        else
-            return Indices::gPhaseOnly;
-    };
-#endif
-
 private:
     // the internal method for the initial condition
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-        Scalar pg;
-        if (onInlet_(globalPos))
-            pg = 2e5;
-        else
-            pg = 1e5;
+        typedef Dumux::EquilibriumFluidState<Scalar, FluidSystem> EquilibriumFluidState;
+        EquilibriumFluidState fs;
 
+        int refPhaseIdx;
+        int otherPhaseIdx;
 
-#if USE_2P2C
-        values[Indices::plIdx] = pg;
-
-        if (onInlet_(globalPos))
-            values[Indices::SgOrXIdx] = 0.0; // X^a_w
-        else
-            values[Indices::SgOrXIdx] = 0.0; // X^w_g
-#else
+        // set the fluid temperatures
+        fs.setTemperature(this->temperatureAtPos(globalPos));
+            
         if (onInlet_(globalPos)) {
-            // only liquid
-            Scalar S[numPhases];
-            Scalar p[numPhases];
-            Scalar xl[numComponents];
-            Scalar beta[numComponents];
+            // only liquid on inlet
+            refPhaseIdx = lPhaseIdx;
+            otherPhaseIdx = gPhaseIdx;
+            
+            // set liquid saturation
+            fs.setSaturation(lPhaseIdx, 1.0);
+            
+            // set pressure of the liquid phase
+            fs.setPressure(lPhaseIdx, 2e5);
 
-            p[gPhaseIdx] = pg;
-            p[lPhaseIdx] = pg;
-
-            S[lPhaseIdx] = 1.0;
-            S[gPhaseIdx] = 0.0;
-
-            xl[FluidSystem::H2OIdx]     = 1.0;
-            xl[FluidSystem::N2Idx]      = 0.0;
-            beta[FluidSystem::H2OIdx]   = FluidSystem::H2O::vaporPressure(temperature_);
-            beta[FluidSystem::N2Idx]    = Dumux::BinaryCoeff::H2O_N2::henry(temperature_);
-
-            // assign the primary variables
-            for (int i = 0; i < numComponents; ++i)
-                values[fug0Idx + i] = xl[i]*beta[i];
-
-            for (int i = 0; i < numPhases - 1; ++i)
-                values[S0Idx + i] = S[i];
-
-            values[p0Idx] = p[0];
+            // set the liquid composition to pure water
+            fs.setMoleFraction(lPhaseIdx, N2Idx, 1.0);
+            fs.setMoleFraction(lPhaseIdx, H2OIdx, 0.0);
         }
         else {
-            // only gas
-            Scalar S[numPhases];
-            Scalar xg[numComponents];
-            Scalar p[numPhases];
+            // elsewhere, only gas
+            refPhaseIdx = gPhaseIdx;
+            otherPhaseIdx = lPhaseIdx;
 
-            S[lPhaseIdx] = 0.0;
-            S[gPhaseIdx] = 1.0;
+            // set gas saturation
+            fs.setSaturation(gPhaseIdx, 1.0);
+            
+            // set pressure of the gas phase
+            fs.setPressure(gPhaseIdx, 1e5);
 
-            p[lPhaseIdx] = pg;
-            p[gPhaseIdx] = pg;
+            // set the gas composition to 99% nitrogen and 1% steam
+            fs.setMoleFraction(gPhaseIdx, N2Idx, 0.99);
+            fs.setMoleFraction(gPhaseIdx, H2OIdx, 0.01);
+        };
+        
+        // set the other saturation
+        fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
+        // calulate the capillary pressure
+        const MaterialLawParams &matParams = 
+            this->spatialParameters().materialLawParamsAtPos(globalPos);
+        PhaseVector pC;
+        MaterialLaw::capillaryPressures(pC, matParams, fs);
+        fs.setPressure(otherPhaseIdx, 
+                       fs.pressure(refPhaseIdx)
+                       + (pC[otherPhaseIdx] - pC[refPhaseIdx]));
+        
+        // make the fluid state consistent with local thermodynamic
+        // equilibrium
+        typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
-            xg[FluidSystem::H2OIdx] = 0.01;
-            xg[FluidSystem::N2Idx] = 0.99;
+        typename FluidSystem::ParameterCache paramCache;
+        ComputeFromReferencePhase::solve(fs, 
+                                         paramCache, 
+                                         refPhaseIdx,
+                                         /*setViscosity=*/false,
+                                         /*setEnthalpy=*/false);
 
+        ///////////
+        // assign the primary variables
+        ///////////
 
-            // assign the primary variables
-            for (int i = 0; i < numComponents; ++i)
-                values[fug0Idx + i] = xg[i]*pg;
+        // all N component fugacities
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            values[fug0Idx + compIdx] = fs.fugacity(refPhaseIdx, compIdx);
 
-            for (int i = 0; i < numPhases - 1; ++i)
-                values[S0Idx + i] = S[i];
+        // first M - 1 saturations
+        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
+            values[S0Idx + phaseIdx] = fs.saturation(phaseIdx);
 
-            values[p0Idx] = p[0];
-        }
-#endif // USE_2P2C
+        // first pressure
+        values[p0Idx] = fs.pressure(/*phaseIdx=*/0);
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
