@@ -37,6 +37,12 @@
 #include "1pfluxvariables.hh"
 #include "1pindices.hh"
 
+#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/components/nullcomponent.hh>
+
+#include <dumux/material/MpNcfluidsystems/1pfluidsystem.hh>
+
 namespace Dumux
 {
 // \{
@@ -68,6 +74,23 @@ SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
 SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);
+
+//! The fluid system to use by default
+SET_PROP(BoxOneP, FluidSystem)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    
+public:
+    typedef OnePFluidSystem<Scalar, Fluid> type;
+};
+
+SET_PROP(BoxOneP, Fluid)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+};
 
 // \}
 };

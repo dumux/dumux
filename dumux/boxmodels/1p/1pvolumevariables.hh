@@ -29,6 +29,8 @@
 #include "1pproperties.hh"
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
 
+#include <dumux/material/MpNcfluidstates/immisciblefluidstate.hh>
+
 namespace Dumux
 {
 
@@ -42,13 +44,13 @@ template <class TypeTag>
 class OnePVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -59,12 +61,15 @@ class OnePVolumeVariables : public BoxVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
+    //! Type of the fluid state
+    typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> FluidState;
+
     /*!
      * \brief Update all quantities for a given control volume.
      *
@@ -84,20 +89,35 @@ public:
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
-        this->asImp_().updateTemperature_(priVars,
-                                          element,
-                                          elemGeom,
-                                          scvIdx,
-                                          problem);
+        // set the phase temperature and pressure
+        asImp_().updateTemperature_(priVars,
+                                    element,
+                                    elemGeom,
+                                    scvIdx,
+                                    problem);
+        fluidState_.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
 
-        pressure_ = priVars[Indices::pressureIdx];
-        density_ = Fluid::density(temperature(), pressure());
-        viscosity_ = Fluid::viscosity(temperature(), pressure());
+        // saturation in a single phase is always 1 and thus redundant
+        // to set. But since we use the fluid state shared by the
+        // immiscible multi-phase models, so we have to set it here...
+        fluidState_.setSaturation(/*phaseIdx=*/0, 1.0);
+        
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
+
+        Scalar value = FluidSystem::density(fluidState_, paramCache,  /*phaseIdx=*/0);
+        fluidState_.setDensity(/*phaseIdx=*/0, value);
+
+        value = FluidSystem::viscosity(fluidState_, paramCache,  /*phaseIdx=*/0);
+        fluidState_.setViscosity(/*phaseIdx=*/0, value);
 
         // porosity
         porosity_ = problem.spatialParameters().porosity(element,
                                                          elemGeom,
                                                          scvIdx);
+
+        // energy related quantities
+        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
     };
 
     /*!
@@ -108,28 +128,28 @@ public:
      * identical.
      */
     Scalar temperature() const
-    { return temperature_; }
+    { return fluidState_.temperature(); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.
      */
     Scalar pressure() const
-    { return pressure_; }
+    { return fluidState_.pressure(/*phaseIdx=*/0); }
 
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
      */
     Scalar density() const
-    { return density_; }
+    { return fluidState_.density(/*phaseIdx=*/0); }
 
     /*!
      * \brief Returns the dynamic viscosity of the fluid within the
      *        control volume.
      */
     Scalar viscosity() const
-    { return viscosity_; }
+    { return fluidState_.viscosity(/*phaseIdx=*/0); }
 
     /*!
      * \brief Returns the average porosity within the control volume.
@@ -137,19 +157,42 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
+    /*!
+     * \brief Returns the fluid state of the control volume.
+     */
+    const FluidState &fluidState() const
+    { return fluidState_; }
+    
 protected:
     void updateTemperature_(const PrimaryVariables &priVars,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
                             const Problem &problem)
-    { temperature_ = problem.boxTemperature(element, elemGeom, scvIdx); }
+    { fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx)); }
 
-    Scalar temperature_;
-    Scalar pressure_;
-    Scalar density_;
-    Scalar viscosity_;
+    /*!
+     * \brief Called by update() to compute the energy related quantities
+     */
+    template <class ParameterCache>
+    void updateEnergy_(ParameterCache &paramCache,
+                       const PrimaryVariables &sol,
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int vertIdx,
+                       bool isOldSol)
+    { }
+
+    FluidState fluidState_;
     Scalar porosity_;
+
+private:
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
 };
 
 }

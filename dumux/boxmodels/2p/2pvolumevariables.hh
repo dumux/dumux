@@ -102,12 +102,12 @@ public:
                            scvIdx,
                            isOldSol);
 
-        asImp().updateTemperature_(priVars,
-                                   element,
-                                   elemGeom,
-                                   scvIdx,
-                                   problem);
-
+        asImp_().updateTemperature_(priVars,
+                                    element,
+                                    elemGeom,
+                                    scvIdx,
+                                    problem);
+        
         // material law parameters
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
@@ -126,6 +126,16 @@ public:
         porosity_ = problem.spatialParameters().porosity(element,
                                                          elemGeom,
                                                          scvIdx);
+
+
+#warning "TODO: it would be nice to avoid creating the parameter cache a second time here," \
+    " but that requires to abandon/modify model.completeFluidState()."  \
+    " (alternatively a completeFluidState() method can be introduced in the 2pni model.)"
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState_);
+
+        // energy related quantities
+        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
     }
 
     /*!
@@ -202,15 +212,28 @@ protected:
         fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
     }
 
+    /*!
+     * \brief Called by update() to compute the energy related quantities
+     */
+    template <class ParameterCache>
+    void updateEnergy_(ParameterCache &paramCache,
+                       const PrimaryVariables &sol,
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int vertIdx,
+                       bool isOldSol)
+    { }
+
     FluidState fluidState_;
     Scalar porosity_;
     Scalar mobility_[numPhases];
 
 private:
-    Implementation &asImp()
+    Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
-    const Implementation &asImp() const
+    const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
 

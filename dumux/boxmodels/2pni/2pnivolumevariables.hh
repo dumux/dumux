@@ -65,76 +65,6 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \brief Update all quantities for a given control volume.
-     *
-     * \param priVars The local primary variable vector
-     * \param problem The problem object
-     * \param element The current element
-     * \param elemGeom The finite-volume geometry in the box scheme
-     * \param scvIdx The local index of the SCV (sub-control volume)
-     * \param isOldSol Evaluate function with solution of current or previous time step
-     *
-     */
-    void update(const PrimaryVariables &priVars,
-                const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
-                bool isOldSol)
-    {
-        typedef Indices I;
-
-        // vertex update data for the mass balance
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           elemGeom,
-                           scvIdx,
-                           isOldSol);
-
-        typename FluidSystem::ParameterCache paramCache;
-        // TODO: this calculates the cached parameters a second time
-        // and is thus inefficient!
-        paramCache.updateAll(this->fluidState());
-
-        // the internal energies
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            internalEnergy_[phaseIdx] =
-                FluidSystem::internalEnergy(this->fluidState(),
-                                            paramCache,
-                                            phaseIdx);
-        }
-        Valgrind::CheckDefined(internalEnergy_);
-    }
-
-    /*!
-        * \brief Update the temperature for a given control volume.
-        *
-        * \param priVars The local primary variable vector
-        * \param element The current element
-        * \param elemGeom The finite-volume geometry in the box scheme
-        * \param scvIdx The local index of the SCV (sub-control volume)
-        * \param problem The problem object
-        *
-        */
-
-    // this method gets called by the parent class
-    void updateTemperature_(const PrimaryVariables &priVars,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
-    {
-        // retrieve temperature from primary variables
-        this->fluidState_.setTemperature(priVars[temperatureIdx]);
-
-        heatCapacity_ =
-            problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
-
-        Valgrind::CheckDefined(heatCapacity_);
-    }
-
-    /*!
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
      *
@@ -142,7 +72,7 @@ public:
      *
      */
     Scalar internalEnergy(int phaseIdx) const
-    { return internalEnergy_[phaseIdx]; };
+    { return this->fluidState_.internalEnergy(phaseIdx); };
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
@@ -151,10 +81,7 @@ public:
      *  \param phaseIdx The phase index
      */
     Scalar enthalpy(int phaseIdx) const
-    {
-        return internalEnergy_[phaseIdx]
-            + this->fluidState().pressure(phaseIdx)
-            / this->fluidState().density(phaseIdx); };
+    { return this->fluidState_.enthalpy(phaseIdx); };
 
     /*!
      * \brief Returns the total heat capacity \f$\mathrm{[J/K*m^3]}\f$ of the rock matrix in
@@ -164,7 +91,54 @@ public:
     { return heatCapacity_; };
 
 protected:
-    Scalar internalEnergy_[numPhases];
+    // this method gets called by the parent class. since this method
+    // is protected, we are friends with our parent..
+    friend class TwoPVolumeVariables<TypeTag>;
+
+    /*!
+     * \brief Update the temperature for a given control volume.
+     *
+     * \param priVars The local primary variable vector
+     * \param element The current element
+     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param scvIdx The local index of the SCV (sub-control volume)
+     * \param problem The problem object
+     *
+     */
+    void updateTemperature_(const PrimaryVariables &priVars,
+                            const Element &element,
+                            const FVElementGeometry &elemGeom,
+                            int scvIdx,
+                            const Problem &problem)
+    {
+        // retrieve temperature from primary variables
+        this->fluidState_.setTemperature(priVars[temperatureIdx]);
+    }
+    
+    /*!
+     * \brief Called by update() to compute the energy related quantities
+     */
+    template <class ParameterCache>
+    void updateEnergy_(ParameterCache &paramCache,
+                       const PrimaryVariables &sol,
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int vertIdx,
+                       bool isOldSol)
+    {
+        // copmute and set the internal energies of the fluid phases
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            Scalar u = FluidSystem::internalEnergy(this->fluidState_, paramCache, phaseIdx);
+
+            this->fluidState_.setInternalEnergy(phaseIdx, u);
+        }
+
+        // copmute and set the heat capacity of the solid phase
+        heatCapacity_ = problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
+        Valgrind::CheckDefined(heatCapacity_);
+    }
+
     Scalar heatCapacity_;
 };
 

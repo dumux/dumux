@@ -266,8 +266,7 @@ protected:
                        const FVElementGeometry &elemGeom,
                        int vertIdx,
                        bool isOldSol)
-    {
-    }
+    { }
 
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar relativePermeability_[numPhases];  //!< Relative permeability within the control volume
