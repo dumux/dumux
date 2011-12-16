@@ -110,7 +110,7 @@ int main(int argc, char** argv)
         Problem problem(timeManager, grid.leafView(), L, H);
 
         // initialize the simulation
-        timeManager.init(problem, startTime, firstDt, tEnd, !restart);
+        timeManager.init(problem, startTime, firstDt, tEnd, restart);
         // run the simulation
         timeManager.run();
         return 0;

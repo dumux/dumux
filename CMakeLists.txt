@@ -249,11 +249,36 @@ add_test(test_richards \
          10)
 add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
 add_test(test_spline test/common/spline/test_spline)
-add_test(test_diffusion test/decoupled/1p/test_diffusion 1)
-add_test(test_dec1p test/decoupled/1p/test_dec1p 3)
-add_test(test_transport test/decoupled/2p/test_transport test/decoupled/2p/grids/test_transport.dgf 1)
-add_test(test_impes test/decoupled/2p/test_impes 1)
-add_test(test_dec2p2c test/decoupled/2p2c/test_dec2p2c)
+add_test(test_diffusion \
+         util/runTest.sh \
+         test/decoupled/1p/diffusion-reference.vtu \
+         test/decoupled/1p/mimeticdiffusion-00001.vtu \
+         test/decoupled/1p/test_diffusion \
+         3)
+add_test(test_dec1p \
+         util/runTest.sh \
+         test/decoupled/1p/test_1p-reference.vtu \
+         test/decoupled/1p/test_1p-00001.vtu \
+         test/decoupled/1p/test_dec1p 
+         3)
+add_test(test_transport \
+         util/runTest.sh \
+         test/decoupled/2p/test_transport-reference.vtu \
+         test/decoupled/2p/test_transport-00006.vtu \
+         test/decoupled/2p/test_transport \
+         test/decoupled/2p/grids/test_transport.dgf \
+         1e4)
+add_test(test_impes \
+         util/runTest.sh \
+         test/decoupled/2p/test_impes-reference.vtu \
+         test/decoupled/2p/test_impes-00013.vtu \
+         test/decoupled/2p/test_impes \
+         1e7)
+add_test(test_dec2p2c \
+         util/runTest.sh \
+         test/decoupled/2p/test_dec2p2c-reference.vtu \
+         test/decoupled/2p/test_dec2p2c-00021.vtu \
+         test/decoupled/2p2c/test_dec2p2c)
 add_test(test_multiphysics2p2c test/decoupled/2p2c/test_multiphysics2p2c)
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)

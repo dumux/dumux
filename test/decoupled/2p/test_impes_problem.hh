@@ -180,7 +180,7 @@ ParentType(timeManager, gridView)
  */
 const char *name() const
 {
-    return "test2p";
+    return "test_impes";
 }
 
 bool shouldWriteRestartFile() const
