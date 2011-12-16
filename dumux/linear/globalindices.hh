@@ -58,7 +58,7 @@ class GlobalIndices
     typedef Index DomesticIndex;
     typedef std::pair<DomesticIndex, ProcessRank> IndexRank;
     typedef std::pair<PeerIndex, BorderDistance> IndexDistance;
-    typedef std::tuple<Index, BorderDistance, int>  IndexDistanceNpeers;
+    typedef std::tr1::tuple<Index, BorderDistance, int>  IndexDistanceNpeers;
     typedef std::list<IndexRank> SeedList;
     typedef std::pair<ProcessRank, int> ProcessDistance;
 

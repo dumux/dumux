@@ -39,17 +39,13 @@
 // the BoundaryTypes class)
 namespace Valgrind
 {
-template <class T>
-inline bool SetUndefined(const T& t) { return true; }
+bool boolBlubb() { return true; };
+void voidBlubb() { };
 
-template <class T>
-inline bool SetDefined(const T& t) { return true; }
-
-template <class T>
-inline bool CheckDefined(const T& t) { return true; }
-
-template <class T>
-inline bool SetNoAccess(const T& t) { return true; }
+#define SetUndefined(t) voidBlubb()
+#define SetDefined(t) voidBlubb()
+#define CheckDefined(t) boolBlubb()
+#define SetNoAccess(t) voidBlubb()
 }
 
 #else

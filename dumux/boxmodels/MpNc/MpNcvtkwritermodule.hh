@@ -25,7 +25,7 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dune/istl/bvector.hh>
 
-#include <array>
+#include <tr1/array>
 
 namespace Dumux
 {
@@ -60,13 +60,13 @@ class MPNCVtkWriterModule
 
 public:
     typedef std::vector<Dune::FieldVector<Scalar, 1> > ScalarBuffer;
-    typedef std::array<ScalarBuffer, numPhases> PhaseBuffer;
-    typedef std::array<ScalarBuffer, numComponents> ComponentBuffer;
-    typedef std::array<ComponentBuffer,  numPhases> PhaseComponentBuffer;
+    typedef std::tr1::array<ScalarBuffer, numPhases> PhaseBuffer;
+    typedef std::tr1::array<ScalarBuffer, numComponents> ComponentBuffer;
+    typedef std::tr1::array<ComponentBuffer,  numPhases> PhaseComponentBuffer;
 
 //    typedef Dune::FieldVector<Scalar, dim> VelocityVector;
 //    typedef Dune::BlockVector<VelocityVector> VelocityField;
-//    typedef std::array<VelocityField, numPhases> PhaseVelocityField;
+//    typedef std::tr1::array<VelocityField, numPhases> PhaseVelocityField;
 
     MPNCVtkWriterModule(const Problem &problem)
         : problem_(problem)

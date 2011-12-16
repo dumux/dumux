@@ -29,7 +29,7 @@
 #include <mpi.h>
 #endif
 
-#include <type_traits>
+#include <tr1/type_traits>
 
 namespace Dumux
 {

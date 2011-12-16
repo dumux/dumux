@@ -29,6 +29,7 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <tr1/tuple>
 #include <algorithm>
 #include <iostream>
 #include <assert.h>
@@ -368,7 +369,7 @@ protected:
         ListIterator it = srcBegin;
         ++it;
         bool reverse = false;
-        if (std::get<0>(*srcBegin) > std::get<0>(*it))
+        if (std::tr1::get<0>(*srcBegin) > std::tr1::get<0>(*it))
             reverse = true;
         --it;
 
@@ -377,8 +378,8 @@ protected:
             int idx = i;
             if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = std::get<0>(*it);
-            destY[i] = std::get<1>(*it);
+            destX[i] = std::tr1::get<0>(*it);
+            destY[i] = std::tr1::get<1>(*it);
         }
     };
 

@@ -64,7 +64,7 @@ public:
     typedef Index PeerIndex;
     typedef Index LocalIndex;
     typedef std::pair<LocalIndex, ProcessRank> IndexRank;
-    typedef std::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
+    typedef std::tr1::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
     typedef std::list<IndexRank> SeedList;
 
     typedef std::set<ProcessRank> PeerSet;
@@ -387,8 +387,8 @@ protected:
         ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
         ForeignOverlapWithPeer::const_iterator overlapEndIt = foreignOverlap.end();
         for (int i = 0; overlapIt != overlapEndIt; ++overlapIt, ++i) {
-            int localIdx = std::get<0>(*overlapIt);
-            int borderDistance = std::get<1>(*overlapIt);
+            int localIdx = std::tr1::get<0>(*overlapIt);
+            int borderDistance = std::tr1::get<1>(*overlapIt);
 
             const std::map<ProcessRank, BorderDistance> &foreignIndexOverlap
                 = foreignOverlap_.foreignOverlapByIndex(localIdx);
@@ -451,9 +451,9 @@ protected:
         MpiBuffer<IndexDistanceNpeers> recvBuff(numIndices);
         recvBuff.receive(peerRank);
         for (int i = 0; i < numIndices; ++i) {
-            int globalIdx = std::get<0>(recvBuff[i]);
-            int borderDistance = std::get<1>(recvBuff[i]);
-            int numPeers = std::get<2>(recvBuff[i]);
+            int globalIdx = std::tr1::get<0>(recvBuff[i]);
+            int borderDistance = std::tr1::get<1>(recvBuff[i]);
+            int numPeers = std::tr1::get<2>(recvBuff[i]);
 
             int domesticIdx;
             if (borderDistance > 0) {

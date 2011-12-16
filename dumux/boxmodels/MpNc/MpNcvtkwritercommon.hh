@@ -72,7 +72,7 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> VelocityVector;
     typedef Dune::BlockVector<VelocityVector> VelocityField;
     typedef VelocityField VectorField;
-    typedef std::array<VelocityField, numPhases> PhaseVelocityField;
+    typedef std::tr1::array<VelocityField, numPhases> PhaseVelocityField;
 
 public:
     MPNCVtkWriterCommon(const Problem &problem)

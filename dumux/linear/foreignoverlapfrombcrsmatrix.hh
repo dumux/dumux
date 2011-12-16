@@ -68,8 +68,8 @@ public:
     typedef Index PeerIndex;
     typedef Index LocalIndex;
     typedef std::pair<LocalIndex, ProcessRank> IndexRank;
-    typedef std::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;
-    typedef std::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
+    typedef std::tr1::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;
+    typedef std::tr1::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
     typedef std::list<IndexRankDist> SeedList;
 
     typedef std::set<ProcessRank> PeerSet;
@@ -252,7 +252,7 @@ public:
             ForeignOverlapWithPeer::const_iterator rowIt = it->second.begin();
             ForeignOverlapWithPeer::const_iterator rowEndIt = it->second.end();
             for (; rowIt != rowEndIt; ++rowIt) {
-                std::cout << std::get<0>(*rowIt) << "(" << std::get<1>(*rowIt) << ") ";
+	        std::cout << std::tr1::get<0>(*rowIt) << "(" << std::tr1::get<1>(*rowIt) << ") ";
             };
             std::cout << "\n";
         }
@@ -265,7 +265,7 @@ protected:
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it)
-            peerSet_.insert(std::get<1>(*it));
+            peerSet_.insert(std::tr1::get<1>(*it));
     }
 
     // calculate the local border indices given the initial seed list
@@ -343,9 +343,9 @@ protected:
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it) {
-            int localIdx = std::get<0>(*it);
-            int peerRank = std::get<1>(*it);
-            int distance = std::get<2>(*it);
+            int localIdx = std::tr1::get<0>(*it);
+            int peerRank = std::tr1::get<1>(*it);
+            int distance = std::tr1::get<2>(*it);
             if (foreignOverlapByIndex_[localIdx].count(peerRank) == 0) {
                 foreignOverlapByIndex_[localIdx][peerRank] = distance;
             }
@@ -368,9 +368,9 @@ protected:
         SeedList nextSeedList;
         it = seedList.begin();
         for (; it != endIt; ++it) {
-            int rowIdx = std::get<0>(*it);
-            int peerRank = std::get<1>(*it);
-            int borderDist = std::get<2>(*it);
+            int rowIdx = std::tr1::get<0>(*it);
+            int peerRank = std::tr1::get<1>(*it);
+            int borderDist = std::tr1::get<2>(*it);
 
             // find all column indies in the row. The indices of the
             // columns are the additional indices of the overlap which
@@ -392,11 +392,11 @@ protected:
                 typename SeedList::iterator sIt = nextSeedList.begin();
                 typename SeedList::iterator sEndIt = nextSeedList.end();
                 for (; sIt != sEndIt; ++sIt) {
-                    if (std::get<0>(*sIt) == newIdx &&
-                        std::get<1>(*sIt) == peerRank)
+                    if (std::tr1::get<0>(*sIt) == newIdx &&
+                        std::tr1::get<1>(*sIt) == peerRank)
                     {
                         hasIndex = true;
-                        std::get<2>(*sIt) = std::min(std::get<2>(*sIt), borderDist + 1);
+                        std::tr1::get<2>(*sIt) = std::min(std::tr1::get<2>(*sIt), borderDist + 1);
                         break;
                     }
                 }

@@ -36,7 +36,7 @@
 #include <iostream>
 #include <sstream>
 #include <list>
-#include <unordered_map>
+#include <tr1/unordered_map>
 
 /*!
  * \ingroup Parameter
@@ -250,7 +250,7 @@ private:
     {
         const std::string &paramTypeName =
             Dune::className<ParamType>();
-        typedef std::unordered_map<std::string, Blubb> StaticData;
+        typedef std::tr1::unordered_map<std::string, Blubb> StaticData;
         static StaticData staticData;
 
         typename StaticData::iterator it = staticData.find(paramName);
@@ -394,7 +394,7 @@ private:
         canonicalName.append(paramName);
 
         // cache parameters using a hash_map (Dune::Parameter tree is slow!)
-        typedef std::unordered_map<std::string, ParamType> ParamCache;
+        typedef std::tr1::unordered_map<std::string, ParamType> ParamCache;
         static ParamCache paramCache;
         const typename ParamCache::iterator &it = paramCache.find(canonicalName);
         if (it != paramCache.end())

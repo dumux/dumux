@@ -161,7 +161,7 @@ public:
      * The buffer will be deleted automatically after the data has
      * been written by to disk.
      */
-    template <class Scalar = double, int nComp = 1>
+    template <class Scalar, int nComp>
     Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *allocateManagedBuffer(int nEntities)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > VectorField;
@@ -171,6 +171,15 @@ public:
         managedObjects_.push_back(vfs);
         return &(vfs->vf);
     }
+
+    // todo: remove these two functions as soon as we depend on a
+    //       contemporary compilers which support default template
+    //       arguments for function templates
+    template <class Scalar>
+    Dune::BlockVector<Dune::FieldVector<Scalar, 1> > *allocateManagedBuffer(int nEntities)
+    { return allocateManagedBuffer<Scalar, 1>(nEntities); }
+    Dune::BlockVector<Dune::FieldVector<double, 1> > *allocateManagedBuffer(int nEntities)
+    { return allocateManagedBuffer<double, 1>(nEntities); }
 
     template <class Scalar, int nComp>
     DUNE_DEPRECATED // use allocateManagedBuffer() instead!

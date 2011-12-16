@@ -33,6 +33,7 @@
 #include <dune/grid/sgrid.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <tr1/cmath>
 #include "pseudoh2o.hh"
 
 #include <dumux/decoupled/1p/diffusion/diffusionproblem1p.hh>
@@ -144,11 +145,11 @@ public:
         //Dune::FieldVector<int,2> resolution = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
         domainSize_ = Params::tree().template get<GlobalPosition>("Geometry.domainSize");
         geometryDepth_ = Params::tree().template get<double>("Geometry.depth");
-        resolution_ = Params::tree().template get<Dune::FieldVector<int,2>>("Geometry.numberOfCells");
+        resolution_ = Params::tree().template get<Dune::FieldVector<int,2> >("Geometry.numberOfCells");
 
         // Read sources
         std::vector<double> sources = Params::tree().template get<std::vector<double> >("Source.sources");
-        int NumberOfSources = std::trunc(sources.size()/3);
+        int NumberOfSources = std::tr1::trunc(sources.size()/3);
 
         for (int sourceCount=0; sourceCount<NumberOfSources ; sourceCount++)
         {
@@ -165,7 +166,7 @@ public:
 
         // Read Boundary Conditions
         std::vector<double> BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.left");
-        int NumberOfSegments = std::trunc(BC.size()/4);
+        int NumberOfSegments = std::tr1::trunc(BC.size()/4);
         for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
         {
             BoundarySegment tempSegment;
@@ -176,7 +177,7 @@ public:
             boundaryConditions_[2].push_back(tempSegment);
         }
         BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.right");
-        NumberOfSegments = std::trunc(BC.size()/4);
+        NumberOfSegments = std::tr1::trunc(BC.size()/4);
         for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
         {
             BoundarySegment tempSegment;
@@ -187,7 +188,7 @@ public:
             boundaryConditions_[3].push_back(tempSegment);
         }
         BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.bottom");
-        NumberOfSegments = std::trunc(BC.size()/4);
+        NumberOfSegments = std::tr1::trunc(BC.size()/4);
         for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
         {
             BoundarySegment tempSegment;
@@ -198,7 +199,7 @@ public:
             boundaryConditions_[1].push_back(tempSegment);
         }
         BC = Params::tree().template get<std::vector<double> >("BoundaryConditions.top");
-        NumberOfSegments = std::trunc(BC.size()/4);
+        NumberOfSegments = std::tr1::trunc(BC.size()/4);
         for (int segmentCount=0; segmentCount<NumberOfSegments ; segmentCount++)
         {
             BoundarySegment tempSegment;

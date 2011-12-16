@@ -27,6 +27,18 @@
  */
 #include "config.h"
 
+#if !HAVE_UG
+#warning "You need to have an UGGrid installed to run this test"
+
+#include <iostream>
+
+int main()
+{
+    std::cerr << "You need to have an UGGrid installed to run this test\n";
+    return 1;
+}
+#else
+
 #include "test_impes_adaptive_problem.hh"
 
 #include <dune/grid/common/gridinfo.hh>
@@ -49,14 +61,6 @@ void usage(const char *progname)
     exit(1);
 }
 
-#if !HAVE_UG
-#warning "You need to have an UGGrid installed to run this test"
-int main()
-{
-    std::cerr << "You need to have an UGGrid installed to run this test\n";
-    return 1;
-}
-#else
 int main(int argc, char** argv)
 {
     try {

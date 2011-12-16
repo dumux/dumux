@@ -1103,12 +1103,12 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
             Scalar exemplaryPressure = problem().referencePressure(*eIt);
             pressure[wPhaseIdx] = pressure[nPhaseIdx] = problem().variables().pressure()[globalIdx] = exemplaryPressure;
             problem().variables().capillaryPressure(globalIdx) = 0.;
-            if (icFormulation == Indices::BoundaryFormulation::saturation)  // saturation initial condition
+            if (icFormulation == Indices::saturation)  // saturation initial condition
             {
                 sat_0 = problem().initSat(*eIt);
                 fluidState.satFlash(sat_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
             }
-            else if (icFormulation == Indices::BoundaryFormulation::concentration) // concentration initial condition
+            else if (icFormulation == Indices::concentration) // concentration initial condition
             {
                 Scalar Z1_0 = problem().initConcentration(*eIt);
                 fluidState.update(Z1_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
@@ -1116,7 +1116,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
         }
         else if(compositional)    //means we regard compositional effects since we know an estimate pressure field
         {
-            if (icFormulation == Indices::BoundaryFormulation::saturation)  // saturation initial condition
+            if (icFormulation == Indices::saturation)  // saturation initial condition
             {
                 //get saturation, determine pc
                 sat_0 = problem().initSat(*eIt);
@@ -1148,7 +1148,7 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 
                 fluidState.satFlash(sat_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
             }
-            else if (icFormulation == Indices::BoundaryFormulation::concentration) // concentration initial condition
+            else if (icFormulation == Indices::concentration) // concentration initial condition
             {
                 Scalar Z1_0 = problem().initConcentration(*eIt);
                 // If total concentrations are given at the boundary, saturation is unknown.

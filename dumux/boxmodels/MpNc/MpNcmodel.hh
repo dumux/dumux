@@ -24,7 +24,7 @@
 #include "MpNcvtkwriter.hh"
 
 #include <dumux/boxmodels/common/boxmodel.hh>
-#include <array>
+#include <tr1/array>
 
 namespace Dumux
 {

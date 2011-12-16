@@ -102,8 +102,8 @@ public:
         permeability_[1][0] = 0;
 
         //Lenses:
-        std::vector<double> lenses = Params::tree().template get<std::vector<double>>("SpatialParameters.lenses");
-        int NumberOfLenses = std::trunc(lenses.size()/5);
+        std::vector<double> lenses = Params::tree().template get<std::vector<double> >("SpatialParameters.lenses");
+        int NumberOfLenses = std::tr1::trunc(lenses.size()/5);
 
         for (int lensCount=0; lensCount<NumberOfLenses ; lensCount++)
         {

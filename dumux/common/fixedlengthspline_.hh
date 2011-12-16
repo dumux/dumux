@@ -228,8 +228,8 @@ public:
         typename XYContainer::const_iterator it = points.begin();
         typename XYContainer::const_iterator endIt = points.end();
         for (int i = 0; it != endIt; ++i, ++it) {
-            xPos_[i] = std::get<0>(*it);
-            yPos_[i] = std::get<1>(*it);
+            xPos_[i] = std::tr1::get<0>(*it);
+            yPos_[i] = std::tr1::get<1>(*it);
         }
 
         // make a full spline
@@ -392,8 +392,8 @@ public:
         typename XYContainer::const_iterator it = points.begin();
         typename XYContainer::const_iterator endIt = points.end();
         for (int i = 0; it != endIt; ++i, ++it) {
-            xPos_[i] = std::get<0>(*it);
-            yPos_[i] = std::get<1>(*it);
+            xPos_[i] = std::tr1::get<0>(*it);
+            yPos_[i] = std::tr1::get<1>(*it);
         }
 
         // make a natural spline

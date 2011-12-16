@@ -581,7 +581,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     // read boundary type
     typename Indices::BoundaryFormulation bcType;
     problem().boundaryFormulation(bcType, *isIt);
-    if (bcType == Indices::BoundaryFormulation::saturation)
+    if (bcType == Indices::saturation)
     {
         Scalar satBound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
         if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
@@ -612,7 +612,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                             problem().temperatureAtPos(globalPosFace));
 
     }
-    else if (bcType == Indices::BoundaryFormulation::concentration)
+    else if (bcType == Indices::concentration)
     {
         // saturation and hence pc and hence corresponding pressure unknown
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];

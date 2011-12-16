@@ -241,7 +241,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
  */
 const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
-    bcFormulation = Indices::BoundaryFormulation::concentration;
+    bcFormulation = Indices::concentration;
 }
 //! Values for dirichlet boundary condition \f$ [Pa] \f$ for pressure and \f$ \frac{mass}{totalmass} \f$ or \f$ S_{\alpha} \f$ for transport.
 /*! In case of a dirichlet BC, values for all primary variables have to be set. In the sequential 2p2c model, a pressure
@@ -311,7 +311,7 @@ void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos
  */
 const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
-    initialFormulation = Indices::BoundaryFormulation::concentration;
+    initialFormulation = Indices::concentration;
 }
 //! Concentration initial condition (dimensionless)
 /*! The problem is initialized with the following concentration.

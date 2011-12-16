@@ -234,7 +234,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
  */
 const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
-    bcFormulation = Indices::BoundaryFormulation::concentration;
+    bcFormulation = Indices::concentration;
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletAtPos()
@@ -279,7 +279,7 @@ void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos
  */
 const void initialFormulation(typename Indices::BoundaryFormulation &initialFormulation, const Element& element) const
 {
-    initialFormulation = Indices::BoundaryFormulation::concentration;
+    initialFormulation = Indices::concentration;
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::initConcentrationAtPos()

@@ -569,11 +569,11 @@ public:
     typedef std::map<std::string, ChildrenList> ChildrenListMap;
 
     template <class TypeTag,
-              class Child1 = void,
-              class Child2 = void,
-              class Child3 = void,
-              class Child4 = void,
-              class Child5 = void>
+              class Child1,
+              class Child2,
+              class Child3,
+              class Child4,
+              class Child5>
     static void addChildren()
     {
         std::string typeTagName = Dune::className<TypeTag>();
@@ -588,6 +588,26 @@ public:
         if (typeid(Child5) != typeid(void))
             keys_[typeTagName].push_front(Dune::className<Child5>());
     };
+
+    template <class TypeTag>
+    static void addChildren()
+    { addChildren<TypeTag, void, void, void, void, void>(); }
+
+    template <class TypeTag, class Child1>
+    static void addChildren()
+    { addChildren<TypeTag, Child1, void, void, void, void>(); }
+
+    template <class TypeTag, class Child1, class Child2>
+    static void addChildren()
+    { addChildren<TypeTag, Child1, Child2, void, void, void>(); }
+
+    template <class TypeTag, class Child1, class Child2, class Child3>
+    static void addChildren()
+    { addChildren<TypeTag, Child1, Child2, Child3, void, void>(); }
+
+    template <class TypeTag, class Child1, class Child2, class Child3, class Child4>
+    static void addChildren()
+    { addChildren<TypeTag, Child1, Child2, Child3, Child4, void>(); }
 
     static const ChildrenList &children(const std::string &typeTagName)
     {

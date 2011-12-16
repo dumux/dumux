@@ -436,14 +436,14 @@ private:
         }
     }
 
-    std::shared_ptr<std::vector<ProcessRank> > frontMaster_;
+    std::tr1::shared_ptr<std::vector<ProcessRank> > frontMaster_;
 
-    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > numIndicesSendBuff_;
-    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesSendBuff_;
-    std::map<ProcessRank, std::shared_ptr<MpiBuffer<RowIndex> > > indicesRecvBuff_;
+    std::map<ProcessRank, std::tr1::shared_ptr<MpiBuffer<RowIndex> > > numIndicesSendBuff_;
+    std::map<ProcessRank, std::tr1::shared_ptr<MpiBuffer<RowIndex> > > indicesSendBuff_;
+    std::map<ProcessRank, std::tr1::shared_ptr<MpiBuffer<RowIndex> > > indicesRecvBuff_;
 
-    std::map<ProcessRank, std::shared_ptr<MpiBuffer<FieldVector> > > valuesSendBuff_;
-    std::map<ProcessRank, std::shared_ptr<MpiBuffer<FieldVector> > > valuesRecvBuff_;
+    std::map<ProcessRank, std::tr1::shared_ptr<MpiBuffer<FieldVector> > > valuesSendBuff_;
+    std::map<ProcessRank, std::tr1::shared_ptr<MpiBuffer<FieldVector> > > valuesRecvBuff_;
 
     const Overlap *overlap_;
 };

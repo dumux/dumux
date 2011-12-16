@@ -27,9 +27,7 @@
 #ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
-#if HAVE_UG
 #include <dune/grid/uggrid.hh>
-#endif
 
 //#include <dune/grid/yaspgrid.hh>
 //#include <dune/grid/sgrid.hh>

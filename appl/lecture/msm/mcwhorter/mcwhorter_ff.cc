@@ -37,7 +37,7 @@ int main(int argc, char** argv)
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
         typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
-        typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+        typedef GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
 
         static const int dim = Grid::dimension;
 

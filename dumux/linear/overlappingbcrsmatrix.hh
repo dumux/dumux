@@ -37,6 +37,7 @@
 #include <set>
 #include <map>
 #include <memory>
+#include <tr1/memory>
 
 namespace Dumux {
 
@@ -81,7 +82,7 @@ public:
                           const BorderList &domesticBorderList,
                           int overlapSize)
     {
-        overlap_ = std::shared_ptr<Overlap>(new Overlap(M, foreignBorderList, domesticBorderList, overlapSize));
+        overlap_ = std::tr1::shared_ptr<Overlap>(new Overlap(M, foreignBorderList, domesticBorderList, overlapSize));
         myRank_ = 0;
 #if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
@@ -599,7 +600,7 @@ private:
 
     int myRank_;
     Entries entries_;
-    std::shared_ptr<Overlap> overlap_;
+    std::tr1::shared_ptr<Overlap> overlap_;
 
     std::map<ProcessRank, MpiBuffer<int>* > rowSizesRecvBuff_;
     std::map<ProcessRank, MpiBuffer<int>* > rowIndicesRecvBuff_;
