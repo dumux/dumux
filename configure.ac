@@ -84,6 +84,7 @@ AC_CONFIG_FILES([dumux.pc
     test/decoupled/2p2c/Makefile
     test/material/Makefile
     test/material/tabulation/Makefile
+    test/material/ncpflash/Makefile
     tutorial/Makefile
 ])
 
