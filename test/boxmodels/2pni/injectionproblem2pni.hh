@@ -75,7 +75,7 @@ SET_PROP(InjectionProblem2PNI, Problem)
 
 #if 1
 // Use the same fluid system as the 2p2c injection problem
-SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, H2ON2FluidSystem<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>);
+SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, H2ON2FluidSystem<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)), false>);
 #else
 // Set the wetting phase
 SET_PROP(InjectionProblem2PNI, WettingPhase)
