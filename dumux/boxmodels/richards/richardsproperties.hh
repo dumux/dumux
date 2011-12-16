@@ -58,7 +58,6 @@ NEW_PROP_TAG(MaterialLawParams); //!< The type of the parameter object for the m
 NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the Richards model
 NEW_PROP_TAG(WettingPhase); //!< Fluid which represents the wetting phase
 NEW_PROP_TAG(NonWettingPhase); //!< Fluid which represents the non-wetting phase
-NEW_PROP_TAG(FluidState); //!< The fluid state to be used for the Richards model
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 // \}

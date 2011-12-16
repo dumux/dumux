@@ -34,7 +34,6 @@
 #include "richardsindices.hh"
 #include "richardsfluxvariables.hh"
 #include "richardsvolumevariables.hh"
-#include "richardsfluidstate.hh"
 #include "richardsproperties.hh"
 #include "richardsnewtoncontroller.hh"
 
@@ -145,9 +144,6 @@ public:
                                              WettingPhase,
                                              NonWettingPhase> type;
 };
-
-//! The fluid state class
-SET_TYPE_PROP(BoxRichards, FluidState, RichardsFluidState<TypeTag>);
 
 // \}
 };

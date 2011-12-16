@@ -27,7 +27,8 @@
 #define DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 
 #include "richardsproperties.hh"
-#include "richardsfluidstate.hh"
+
+#include <dumux/material/MpNcfluidstates/immisciblefluidstate.hh>
 
 namespace Dumux
 {
@@ -50,7 +51,6 @@ class RichardsVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -70,6 +70,9 @@ class RichardsVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
+    //! The type returned by the fluidState() method
+    typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> FluidState;
+
     /*!
      * \brief Update all quantities for a given control volume.
      *
@@ -99,23 +102,55 @@ public:
                            scvIdx,
                            isOldSol);
 
-        this->asImp_().updateTemperature_(priVars,
-                                          element,
-                                          elemGeom,
-                                          scvIdx,
-                                          problem);
+        asImp_().updateTemperature_(priVars,
+                                    element,
+                                    elemGeom,
+                                    scvIdx,
+                                    problem);
+        
+        //////////
+        // specify the fluid state
+        //////////
 
-        // material law parameters
+        // pressures
         Scalar pnRef = problem.referencePressure(element, elemGeom, scvIdx);
-        const MaterialLawParams &materialParams =
+        const MaterialLawParams &matParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
-        fluidState_.update(pnRef, materialParams, priVars, temperature_);
+        Scalar minPc = MaterialLaw::pC(matParams, 1.0);
+        fluidState_.setPressure(wPhaseIdx, priVars[pwIdx]);
+        fluidState_.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
 
-        relativePermeabilityWetting_ =
-            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
+        // saturations
+        Scalar Sw = MaterialLaw::Sw(matParams, capillaryPressure());
+        fluidState_.setSaturation(wPhaseIdx, Sw);
+        fluidState_.setSaturation(nPhaseIdx, 1 - Sw);
+
+        // density and viscosity
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState_);
+        fluidState_.setDensity(wPhaseIdx, FluidSystem::density(fluidState_, paramCache, wPhaseIdx));
+        fluidState_.setDensity(nPhaseIdx, 1e-10);
+
+        fluidState_.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx));
+        fluidState_.setViscosity(nPhaseIdx, 1e-10);
+        
+        //////////
+        // specify the other parameters
+        //////////
+        relativePermeabilityWetting_ = MaterialLaw::krw(matParams, Sw);
 
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
+
+        // energy related quantities
+        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
     }
+    
+    /*!
+     * \brief Return the fluid configuration at the given primary
+     *        variables
+     */
+    const FluidState &fluidState() const
+    { return fluidState_; }
 
     /*!
      * \brief Returns the average porosity [] within the control volume.
@@ -210,7 +245,7 @@ public:
      * \f[ p_c = p_n - p_w \f]
      */
     Scalar capillaryPressure() const
-    { return fluidState_.capillaryPressure(); }
+    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
 
 protected:
     void updateTemperature_(const PrimaryVariables &priVars,
@@ -219,13 +254,32 @@ protected:
                             int scvIdx,
                             const Problem &problem)
     {
-        temperature_ = problem.boxTemperature(element, elemGeom, scvIdx);
+        fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
     }
+
+    /*!
+     * \brief Called by update() to compute the energy related quantities
+     */
+    template <class ParameterCache>
+    void updateEnergy_(ParameterCache &paramCache,
+                       const PrimaryVariables &sol,
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int vertIdx,
+                       bool isOldSol)
+    { }
 
     FluidState fluidState_;
     Scalar relativePermeabilityWetting_;
     Scalar porosity_;
-    Scalar temperature_;
+
+private:
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
 };
 
 }
