@@ -33,9 +33,12 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/basefluidsystem.hh>
-#include <dumux/common/basicproperties.hh>
 
 #include <assert.h>
+
+#ifdef DUMUX_PROPERTIES_HH
+#include <dumux/common/basicproperties.hh>
+#endif
 
 namespace Dumux
 {
@@ -362,6 +365,7 @@ public:
 
 } // end namepace
 
+#ifdef DUMUX_PROPERTIES_HH
 /*!
  * \brief A pure single-phase fluid system.
  *
@@ -373,6 +377,7 @@ template<class TypeTag>
 class InterstitialFluidTrailFluidSystem
 : public FluidSystems::InterstitialFluidTrail<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>
 {};
+#endif
 } // end namepace
 
 #endif

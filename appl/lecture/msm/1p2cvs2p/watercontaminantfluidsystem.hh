@@ -41,8 +41,11 @@
 #include <dumux/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/basefluidsystem.hh>
-#include <dumux/common/basicproperties.hh>
 #include <assert.h>
+
+#ifdef DUMUX_PROPERTIES_HH
+#include <dumux/common/basicproperties.hh>
+#endif
 
 namespace Dumux
 {
@@ -358,6 +361,7 @@ public:
 
 } // end namepace
 
+#ifdef DUMUX_PROPERTIES_HH
 /*!
  * \brief A pure single-phase fluid system.
  *
@@ -369,6 +373,8 @@ template<class TypeTag>
 class WaterContaminantFluidSystem
 : public FluidSystems::WaterContaminant<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>
 {};
+#endif
+
 } // end namepace
 
 #endif
