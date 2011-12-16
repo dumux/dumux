@@ -132,6 +132,9 @@ inline quad pow(quad base, ExpType exp)
 inline quad exp(quad val)
 { return expq(val); };
 
+inline quad log(quad val)
+{ return logq(val); };
+
 inline quad sin(quad val)
 { return sinq(val); };
 
