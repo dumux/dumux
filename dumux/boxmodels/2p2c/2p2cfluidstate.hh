@@ -293,6 +293,22 @@ public:
     { return viscosity_[phaseIdx]; }
 
     /*!
+     * \brief Returns the specific internal energy of a phase \f$\mathrm{[J/kg]}\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar internalEnergy(int phaseIdx) const
+    { return internalEnergy_[phaseIdx]; }
+
+    /*!
+     * \brief Returns the specific enthalpy of a phase \f$\mathrm{[J/kg]}\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar enthalpy(int phaseIdx) const
+    { return internalEnergy_[phaseIdx] + pressure_[phaseIdx]/density_[phaseIdx]; }
+
+    /*!
      * \brief Returns mean molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
      *
      * \param phaseIdx The phase index

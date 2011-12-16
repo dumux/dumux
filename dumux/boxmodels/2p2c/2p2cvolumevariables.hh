@@ -104,11 +104,11 @@ public:
                            scvIdx,
                            isOldSol);
 
-        asImp().updateTemperature_(priVars,
-                                   element,
-                                   elemGeom,
-                                   scvIdx,
-                                   problem);
+        asImp_().updateTemperature_(priVars,
+                                    element,
+                                    elemGeom,
+                                    scvIdx,
+                                    problem);
 
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
@@ -147,7 +147,10 @@ public:
                                                          elemGeom,
                                                          scvIdx);
         Valgrind::CheckDefined(porosity_);
-   }
+        
+        // energy related quantities
+        asImp_().updateEnergy_(paramCache, priVars, problem, element, elemGeom, scvIdx, isOldSol);
+    }
 
     /*!
      * \brief Returns the phase state for the control-volume.
@@ -252,16 +255,30 @@ protected:
         fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
     }
 
+    /*!
+     * \brief Called by update() to compute the energy related quantities
+     */
+    template <class ParameterCache>
+    void updateEnergy_(ParameterCache &paramCache,
+                       const PrimaryVariables &sol,
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int vertIdx,
+                       bool isOldSol)
+    {
+    }
+
     Scalar porosity_;        //!< Effective porosity within the control volume
     Scalar relativePermeability_[numPhases];  //!< Relative permeability within the control volume
     Scalar diffCoeff_[numPhases]; //!< Binary diffusion coefficients for the phases
     FluidState fluidState_;
 
 private:
-    Implementation &asImp()
+    Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
-    const Implementation &asImp() const
+    const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
     

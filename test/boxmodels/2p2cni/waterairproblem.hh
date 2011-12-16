@@ -31,7 +31,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/h2o_n2_system.hh>
+#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
 
 #include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
 
@@ -61,7 +61,7 @@ SET_PROP(WaterAirProblem, Problem)
 };
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::H2O_N2_System<TypeTag>);
+SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::H2ON2FluidSystem<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>);
 
 // Enable gravity
 SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);

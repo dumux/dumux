@@ -71,55 +71,13 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \brief Update all quantities for a given control volume.
-     *
-     * \param sol The solution primary variables
-     * \param problem The problem
-     * \param element The element
-     * \param elemGeom Evaluate function with solution of current or previous time step
-     * \param vertIdx The local index of the SCV (sub-control volume)
-     * \param isOldSol Evaluate function with solution of current or previous time step
-     */
-    void update(const PrimaryVariables &sol,
-                const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &elemGeom,
-                int vertIdx,
-                bool isOldSol)
-    {
-        // vertex update data for the mass balance
-        ParentType::update(sol,
-                           problem,
-                           element,
-                           elemGeom,
-                           vertIdx,
-                           isOldSol);
-
-        // the internal energies and the enthalpies
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            enthalpy_[phaseIdx] =
-                FluidSystem::phaseEnthalpy(phaseIdx,
-                                           this->fluidState().temperature(),
-                                           this->fluidState().phasePressure(phaseIdx),
-                                           this->fluidState());
-            internalEnergy_[phaseIdx] =
-                FluidSystem::phaseInternalEnergy(phaseIdx,
-                                                 this->fluidState().temperature(),
-                                                 this->fluidState().phasePressure(phaseIdx),
-                                                 this->fluidState());
-        }
-        Valgrind::CheckDefined(internalEnergy_);
-        Valgrind::CheckDefined(enthalpy_);
-    };
-
-    /*!
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
      *
      * \param phaseIdx The phase index
      */
     Scalar internalEnergy(int phaseIdx) const
-    { return internalEnergy_[phaseIdx]; };
+    { return this->fluidState_.internalEnergy(phaseIdx); };
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
@@ -128,7 +86,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar enthalpy(int phaseIdx) const
-    { return enthalpy_[phaseIdx]; };
+    { return this->fluidState_.enthalpy(phaseIdx); };
 
     /*!
      * \brief Returns the total heat capacity \f$\mathrm{[J/(K*m^3]}\f$ of the rock matrix in
@@ -141,6 +99,8 @@ protected:
     // this method gets called by the parent class. since this method
     // is protected, we are friends with our parent..
     friend class TwoPTwoCVolumeVariables<TypeTag>;
+    
+    // set the fluid state's temperature
     void updateTemperature_(const PrimaryVariables &sol,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
@@ -148,17 +108,40 @@ protected:
                             const Problem &problem)
     {
         // retrieve temperature from solution vector
-        this->temperature_ = sol[temperatureIdx];
-
-        heatCapacity_ =
-            problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
-
-        Valgrind::CheckDefined(this->temperature_);
-        Valgrind::CheckDefined(heatCapacity_);
+        this->fluidState_.setTemperature(sol[temperatureIdx]);
     }
 
-    Scalar internalEnergy_[numPhases];
-    Scalar enthalpy_[numPhases];
+    /*!
+     * \brief Update all quantities for a given control volume.
+     *
+     * \param sol The solution primary variables
+     * \param problem The problem
+     * \param element The element
+     * \param elemGeom Evaluate function with solution of current or previous time step
+     * \param scvIdx The local index of the SCV (sub-control volume)
+     * \param isOldSol Evaluate function with solution of current or previous time step
+     */
+    template <class ParameterCache>
+    void updateEnergy_(ParameterCache &paramCache,
+                      const PrimaryVariables &sol,
+                      const Problem &problem,
+                      const Element &element,
+                      const FVElementGeometry &elemGeom,
+                      int scvIdx,
+                      bool isOldSol)
+    {
+        // copmute and set the internal energies of the fluid phases
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            Scalar u = FluidSystem::internalEnergy(this->fluidState_, paramCache, phaseIdx);
+
+            this->fluidState_.setInternalEnergy(phaseIdx, u);
+        }
+
+        // copmute and set the heat capacity of the solid phase
+        heatCapacity_ = problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
+        Valgrind::CheckDefined(heatCapacity_);
+    };
+
     Scalar heatCapacity_;
 };
 
