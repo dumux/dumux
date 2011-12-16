@@ -139,11 +139,11 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true);
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
 
 
-SET_PROP_DEFAULT(BoundaryMobility)
+SET_PROP(DecoupledTwoPTwoC, BoundaryMobility)
 {
     static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;
 };
-SET_PROP_DEFAULT(NumDensityTransport)
+SET_PROP(DecoupledTwoPTwoC, NumDensityTransport)
 {
     static const bool value = false;
 };
