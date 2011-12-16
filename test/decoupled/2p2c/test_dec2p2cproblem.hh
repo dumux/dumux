@@ -36,13 +36,13 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
 
-// fluid properties
-//#include <dumux/material/old_fluidsystems/simple_h2o_n2_system.hh>
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
-
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
+
+// fluid properties
+//#include <dumux/material/old_fluidsystems/simple_h2o_n2_system.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 #include <dumux/linear/impetbicgstabilu0solver.hh>
