@@ -126,12 +126,11 @@ public:
                             const Problem &problem)
     {
         // retrieve temperature from primary variables
-        this->temperature_ = priVars[temperatureIdx];
+        this->fluidState_.setTemperature(priVars[temperatureIdx]);
 
         heatCapacity_ =
             problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
 
-        Valgrind::CheckDefined(this->temperature_);
         Valgrind::CheckDefined(heatCapacity_);
     }
 

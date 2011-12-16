@@ -108,7 +108,6 @@ public:
                                    elemGeom,
                                    scvIdx,
                                    problem);
-        fluidState_.setTemperature(temperature_);
 
         // material law parameters
         const MaterialLawParams &materialParams =
@@ -175,7 +174,7 @@ public:
      * identical.
      */
     Scalar temperature() const
-    { return fluidState.temperature(/*phaseIdx=*/0); }
+    { return fluidState_.temperature(/*phaseIdx=*/0); }
 
     /*!
      * \brief Returns the effective mobility of a given phase within
