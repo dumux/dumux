@@ -37,7 +37,7 @@
 #include <dune/grid/sgrid.hh>
 
 // fluid properties
-//#include <dumux/material/fluidsystems/brine_co2_system.hh>
+//#include <dumux/material/old_fluidsystems/brine_co2_system.hh>
 #include <dumux/material/old_fluidsystems/h2o_n2_system.hh>
 
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>

@@ -84,7 +84,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(McWhorterProblem, NonWettingPhase)
+SET_PROP(McWhorterProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

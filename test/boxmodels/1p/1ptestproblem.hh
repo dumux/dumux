@@ -64,7 +64,7 @@ public:
 // Set the grid type
 SET_PROP(OnePTestProblem, Grid)
 {
-    typedef Dune::SGrid<2, 2> type;
+    typedef Dune::SGrid<3, 3> type;
     //typedef Dune::YaspGrid<2> type;
   //typedef Dune::UGGrid<2> type;
   //typedef Dune::ALUSimplexGrid<2,2> type;

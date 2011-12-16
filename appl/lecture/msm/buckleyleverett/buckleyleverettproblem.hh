@@ -87,7 +87,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(BuckleyLeverettProblem, NonWettingPhase)
+SET_PROP(BuckleyLeverettProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

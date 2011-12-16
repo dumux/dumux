@@ -80,7 +80,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(LensProblem, NonWettingPhase)
+SET_PROP(LensProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -160,7 +160,7 @@ class LensProblem : public TwoPProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),

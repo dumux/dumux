@@ -119,7 +119,7 @@ public:
  * specified by the problem for the Richards model to work because the
  * Richards model does not conserve the non-wetting phase.
  */
-SET_PROP(BoxRichards, NonWettingPhase)
+SET_PROP(BoxRichards, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 public:
@@ -131,7 +131,7 @@ public:
  *
  * By default this uses the immiscible twophase fluid system. The
  * actual fluids used are specified using in the problem definition by
- * the WettingPhase and NonWettingPhase properties. Be aware that
+ * the WettingPhase and NonwettingPhase properties. Be aware that
  * using different fluid systems in conjunction with the Richards
  * model only makes very limited sense.
  */
@@ -139,12 +139,12 @@ SET_PROP(BoxRichards, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
 
 public:
     typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,
                                                 WettingPhase,
-                                                NonWettingPhase> type;
+                                                NonwettingPhase> type;
 };
 
 // \}

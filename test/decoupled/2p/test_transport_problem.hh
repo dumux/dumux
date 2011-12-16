@@ -83,7 +83,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(TransportTestProblem, NonWettingPhase)
+SET_PROP(TransportTestProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;

@@ -59,7 +59,7 @@ NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (by de
 NEW_PROP_TAG(MaterialLawParams); //!< The type of the parameter object for the material law (by default extracted from the spatial parameters)
 NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the Richards model
 NEW_PROP_TAG(WettingPhase); //!< Fluid which represents the wetting phase
-NEW_PROP_TAG(NonWettingPhase); //!< Fluid which represents the non-wetting phase
+NEW_PROP_TAG(NonwettingPhase); //!< Fluid which represents the non-wetting phase
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 // \}

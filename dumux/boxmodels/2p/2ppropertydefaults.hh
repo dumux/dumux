@@ -98,7 +98,7 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
-SET_PROP(BoxTwoP, NonWettingPhase)
+SET_PROP(BoxTwoP, NonwettingPhase)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 public:
@@ -109,12 +109,12 @@ SET_PROP(BoxTwoP, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
 
 public:
     typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,
                                                 WettingPhase,
-                                                NonWettingPhase> type;
+                                                NonwettingPhase> type;
 };
 
 SET_PROP(BoxTwoP, FluidState)

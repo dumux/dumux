@@ -89,7 +89,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(InjectionProblem2PNI, NonWettingPhase)
+SET_PROP(InjectionProblem2PNI, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
