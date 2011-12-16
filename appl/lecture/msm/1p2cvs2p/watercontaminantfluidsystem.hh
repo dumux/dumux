@@ -27,8 +27,6 @@
 #ifndef DUMUX_WATER_CONTAMINANT_FLUID_SYSTEM_HH
 #define DUMUX_WATER_CONTAMINANT_FLUID_SYSTEM_HH
 
-#include <dumux/material/MpNcfluidstates/genericfluidstate.hh>
-
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/n2.hh>
@@ -36,7 +34,6 @@
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
-#include <dumux/material/MpNcfluidstates/genericfluidstate.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
