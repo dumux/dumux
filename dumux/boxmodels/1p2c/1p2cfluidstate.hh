@@ -28,8 +28,6 @@
 
 #include "1p2cproperties.hh"
 
-#include <dumux/material/fluidstate.hh>
-
 namespace Dumux
 {
 /*!
@@ -37,8 +35,7 @@ namespace Dumux
  *        1p2c model.
  */
 template <class TypeTag>
-class OnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
-                                             OnePTwoCFluidState<TypeTag> >
+class OnePTwoCFluidState
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
@@ -67,16 +64,15 @@ public:
      * \brief Update the phase state from the primary variables.
      *
      * \param primaryVars The primary variables
-     * \param temperature The temperature in Kelvin
      */
-    void update(const PrimaryVariables &primaryVars,
-                Scalar temperature)
+    template <class ParameterCache>
+    void update(ParameterCache &paramCache,
+                const PrimaryVariables &primaryVars)
     {
         Valgrind::CheckDefined(primaryVars);
+        Valgrind::CheckDefined(temperature_);
 
-        temperature_ = temperature;
-
-        phasePressure_ =  primaryVars[pressureIdx];
+        pressure_ =  primaryVars[pressureIdx];
         x1_ = primaryVars[x1Idx]; //mole or mass fraction of component 1
 
         if(!useMoles) //mass-fraction formulation
@@ -94,15 +90,17 @@ public:
             (x1_    )*FluidSystem::molarMass(comp1Idx);
         }
 
-        density_ = FluidSystem::phaseDensity(phaseIdx, temperature_, phasePressure_, *this);
-        molarDensity_ = density_ / meanMolarMass_;
+        paramCache.updatePhase(*this, /*phaseIdx=*/0);
+        
+        density_ = FluidSystem::density(*this, paramCache, /*phaseIdx=*/0);
+        viscosity_ = FluidSystem::viscosity(*this, paramCache, /*phaseIdx=*/0);
 
         Valgrind::CheckDefined(x1_);
-        Valgrind::CheckDefined(phasePressure_);
+        Valgrind::CheckDefined(pressure_);
         Valgrind::CheckDefined(density_);
+        Valgrind::CheckDefined(viscosity_);
         Valgrind::CheckDefined(meanMolarMass_);
         Valgrind::CheckDefined(temperature_);
-        Valgrind::CheckDefined(*this);
     }
 
     /*!
@@ -111,11 +109,8 @@ public:
      * \param phaseIndex The index of the considered phase
      * \param compIdx The index of the considered component
      */
-    Scalar moleFrac(int phaseIndex, int compIdx) const
+    Scalar moleFraction(int phaseIndex, int compIdx) const
     {
-        // we are a single phase model!
-        if (phaseIndex != phaseIdx) return 0.0;
-
         if(!useMoles) //mass-fraction formulation
         {
             ///if x1_ is a massfraction
@@ -142,38 +137,13 @@ public:
     }
 
     /*!
-     * \brief Returns the total concentration of a phase \f$\mathrm{[mol/m^3]}\f$.
-     *
-     * This is equivalent to the sum of all component concentrations.
-     * \param phaseIndex The index of the considered phase
-     */
-    Scalar phaseConcentration(int phaseIndex) const
-    {
-        if (phaseIndex != phaseIdx)
-            return 0;
-        return density_/meanMolarMass_;
-    };
-
-    /*!
-     * \brief Returns the concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
-     *
-     * \param phaseIndex The index of the considered phase
-     * \param compIdx The index of the considered component
-     */
-    Scalar concentration(int phaseIndex, int compIdx) const
-    { return phaseConcentration(phaseIndex)*moleFrac(phaseIndex, compIdx); };
-
-
-    /*!
      * \brief Returns the mass fraction of a component in a phase.
      *
      * \param phaseIndex The index of the considered phase
      * \param compIdx The index of the considered component
      */
-    Scalar massFrac(int phaseIndex, int compIdx) const
+    Scalar massFraction(int phaseIndex, int compIdx) const
     {
-        if (phaseIndex != phaseIdx)
-            return 0;
         if(!useMoles)
         {
             //if x1_ is a mass fraction
@@ -187,7 +157,7 @@ public:
         {
             //if x1_ is a molefraction
             return
-                moleFrac(phaseIndex, compIdx)*
+                moleFraction(phaseIndex, compIdx)*
                 FluidSystem::molarMass(compIdx)
                 / meanMolarMass_;
         }
@@ -201,10 +171,16 @@ public:
      */
     Scalar density(int phaseIndex) const
     {
-        if (phaseIndex != phaseIdx)
-            return 0;
         return density_;
     }
+
+    /*!
+     * \brief Returns the dynamic viscosity of a phase \f$\mathrm{[Pa s]}\f$.
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar viscosity(int phaseIdx) const
+    { return viscosity_; }
 
     /*!
      * \brief Returns the molar density of a phase \f$\mathrm{[mole/m^3]}\f$.
@@ -214,10 +190,17 @@ public:
      */
     Scalar molarDensity(int phaseIndex) const
     {
-        if (phaseIndex != phaseIdx)
-            return 0;
-        return molarDensity_;
+        return density_/meanMolarMass_;
     }
+
+    /*!
+     * \brief Returns the molar concentration of a component in a phase \f$\mathrm{[mol/m^3]}\f$.
+     *
+     * \param phaseIndex The index of the considered phase
+     * \param compIdx The index of the considered component
+     */
+    Scalar molarity(int phaseIndex, int compIdx) const
+    { return molarDensity(phaseIndex)*moleFraction(phaseIndex, compIdx); };
 
     /*!
      * \brief Returns mean molar mass of a phase \f$\mathrm{[kg/mol]}\f$.
@@ -227,10 +210,8 @@ public:
      *
      * \param phaseIndex The index of the considered phase
      */
-    Scalar meanMolarMass(int phaseIndex) const
+    Scalar averageMolarMass(int phaseIndex) const
     {
-        if (phaseIndex != phaseIdx)
-            return 0;
         return meanMolarMass_;
     };
 
@@ -239,9 +220,9 @@ public:
      *
      * \param phaseIndex The index of the considered phase
      */
-    Scalar phasePressure(int phaseIndex) const
+    Scalar pressure(int phaseIndex) const
     {
-        return phasePressure_;
+        return pressure_;
     }
 
     /*!
@@ -253,11 +234,17 @@ public:
     Scalar temperature() const
     { return temperature_; };
 
+    /*!
+     * \brief Set the temperature of *all* phases [K]
+     */
+    void setTemperature(Scalar value)
+    { temperature_ = value; }
+
 public:
     Scalar x1_;
-    Scalar phasePressure_;
+    Scalar pressure_;
     Scalar density_;
-    Scalar molarDensity_;
+    Scalar viscosity_;
     Scalar meanMolarMass_;
     Scalar temperature_;
 };

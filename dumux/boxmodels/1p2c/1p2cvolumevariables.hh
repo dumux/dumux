@@ -1,6 +1,6 @@
 /*****************************************************************************
+ *   Copyright (C) 2009-2011 by Andreas Lauser                               *
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
- *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -98,32 +98,23 @@ public:
                                    elemGeom,
                                    scvIdx,
                                    problem);
-
-        fluidState_.update(priVars, temperature_);
+        typename FluidSystem::ParameterCache paramCache;
+        fluidState_.update(paramCache, priVars);
 
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
         tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
         dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
 
-        viscosity_ = FluidSystem::phaseViscosity(phaseIdx,
-                                                 temperature_,
-                                                 pressure(),
-                                                 fluidState_);
-
-        diffCoeff_ = FluidSystem::diffCoeff(phaseIdx,
-                                            comp0Idx,
-                                            comp1Idx,
-                                            temperature_,
-                                            pressure(),
-                                            *this);
+        diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_,
+                                                             paramCache,
+                                                             phaseIdx,
+                                                             comp0Idx,
+                                                             comp1Idx);
 
         Valgrind::CheckDefined(porosity_);
-        Valgrind::CheckDefined(viscosity_);
         Valgrind::CheckDefined(tortuosity_);
         Valgrind::CheckDefined(dispersivity_);
         Valgrind::CheckDefined(diffCoeff_);
-        Valgrind::CheckDefined(fluidState_);
-        Valgrind::CheckDefined(*this);
     }
 
     /*!
@@ -147,29 +138,29 @@ public:
      *
      * \param compIdx The index of the component
      */
-    Scalar moleFrac(int compIdx) const
-    { return fluidState_.moleFrac(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
+    Scalar moleFraction(int compIdx) const
+    { return fluidState_.moleFraction(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
      * \brief Returns mass fraction of a component in the phase
      * \param compIdx The index of the component
      */
-    Scalar massFrac(int compIdx) const
-    { return fluidState_.massFrac(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
+    Scalar massFraction(int compIdx) const
+    { return fluidState_.massFraction(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
      * \brief Returns concentration of a component in the phase
      * \param compIdx The index of the component
      */
-    Scalar concentration(int compIdx) const
-    { return fluidState_.concentration(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
+    Scalar molarity(int compIdx) const
+    { return fluidState_.molarity(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.
      */
     Scalar pressure() const
-    { return fluidState_.phasePressure(phaseIdx); }
+    { return fluidState_.pressure(phaseIdx); }
 
     /*!
      * \brief Returns the binary diffusion coefficient in the fluid
@@ -197,14 +188,14 @@ public:
      * identical.
      */
     Scalar temperature() const
-    { return temperature_; }
+    { return fluidState_.temperature(/*phaseIdx=*/0); }
 
     /*!
      * \brief Returns the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of a given phase
      *        within the control volume.
      */
     Scalar viscosity() const
-    { return viscosity_; }
+    { return fluidState_.viscosity(/*phaseIdx=*/0); }
 
     /*!
      * \brief Returns the average porosity within the control volume.
@@ -213,19 +204,16 @@ public:
     { return porosity_; }
 
 protected:
-
     void updateTemperature_(const PrimaryVariables &priVars,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
                             int scvIdx,
                             const Problem &problem)
     {
-        temperature_ = problem.boxTemperature(element, elemGeom, scvIdx);
+        fluidState_.setTemperature(problem.boxTemperature(element, elemGeom, scvIdx));
     }
 
-    Scalar temperature_;     //!< Temperature within the control volume
     Scalar porosity_;    //!< Effective porosity within the control volume
-    Scalar viscosity_;
     Scalar tortuosity_;
     Vector dispersivity_;
     Scalar diffCoeff_;

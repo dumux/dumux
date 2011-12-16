@@ -184,99 +184,99 @@ public:
 
                 pressure[globalIdx] = volVars.pressure();
                 delp[globalIdx] = volVars.pressure() - 1e5;
-                moleFrac0[globalIdx] = volVars.moleFrac(0);
-                moleFrac1[globalIdx] = volVars.moleFrac(1);
-                massFrac0[globalIdx] = volVars.massFrac(0);
-                massFrac1[globalIdx] = volVars.massFrac(1);
+                moleFrac0[globalIdx] = volVars.moleFraction(0);
+                moleFrac1[globalIdx] = volVars.moleFraction(1);
+                massFrac0[globalIdx] = volVars.massFraction(0);
+                massFrac1[globalIdx] = volVars.massFraction(1);
                 rho[globalIdx] = volVars.density();
                 mu[globalIdx] = volVars.viscosity();
-                delFrac[globalIdx] = volVars.massFrac(1)-volVars.moleFrac(1);
+                delFrac[globalIdx] = volVars.massFraction(1)-volVars.moleFraction(1);
             };
 
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
             // In the box method, the velocity is evaluated on the FE-Grid. However, to get an
-          // average apparent velocity at the vertex, all contributing velocities have to be interpolated.
-          GlobalPosition velocity;
+            // average apparent velocity at the vertex, all contributing velocities have to be interpolated.
+            GlobalPosition velocity;
 
-          ElementVolumeVariables elemVolVars;
-          elemVolVars.update(this->problem_(),
-                             *elemIt,
-                             fvElemGeom,
-                             false /* isOldSol? */);
-          // loop over the phases
-          for (int faceIdx = 0; faceIdx < fvElemGeom.numEdges; faceIdx++)
-          {
-              velocity = 0.0;
-              //prepare the flux calculations (set up and prepare geometry, FE gradients)
-              FluxVariables fluxVars(this->problem_(),
-                              *elemIt,
-                              fvElemGeom,
-                              faceIdx,
-                              elemVolVars);
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(this->problem_(),
+                               *elemIt,
+                               fvElemGeom,
+                               false /* isOldSol? */);
+            // loop over the phases
+            for (int faceIdx = 0; faceIdx < fvElemGeom.numEdges; faceIdx++)
+            {
+                velocity = 0.0;
+                //prepare the flux calculations (set up and prepare geometry, FE gradients)
+                FluxVariables fluxVars(this->problem_(),
+                                       *elemIt,
+                                       fvElemGeom,
+                                       faceIdx,
+                                       elemVolVars);
 
-               //use vertiacl faces for vx and horizontal faces for vy calculation
-              GlobalPosition xVector(0), yVector(0);
-              xVector[0] = 1; yVector[1] = 1;
+                //use vertiacl faces for vx and horizontal faces for vy calculation
+                GlobalPosition xVector(0), yVector(0);
+                xVector[0] = 1; yVector[1] = 1;
 
-              Dune::SeqScalarProduct<GlobalPosition> sp;
+                Dune::SeqScalarProduct<GlobalPosition> sp;
 
-              Scalar xDir = std::abs(sp.dot(fluxVars.face().normal, xVector));
-              Scalar yDir = std::abs(sp.dot(fluxVars.face().normal, yVector));
+                Scalar xDir = std::abs(sp.dot(fluxVars.face().normal, xVector));
+                Scalar yDir = std::abs(sp.dot(fluxVars.face().normal, yVector));
 
-              // up+downstream node
-              const VolumeVariables &up =
-                      elemVolVars[fluxVars.upstreamIdx()];
-              const VolumeVariables &dn =
-                      elemVolVars[fluxVars.downstreamIdx()];
+                // up+downstream node
+                const VolumeVariables &up =
+                    elemVolVars[fluxVars.upstreamIdx()];
+                const VolumeVariables &dn =
+                    elemVolVars[fluxVars.downstreamIdx()];
 
-              //get surface area to weight velocity at the IP with the surface area
-              Scalar scvfArea = fluxVars.face().normal.two_norm();
+                //get surface area to weight velocity at the IP with the surface area
+                Scalar scvfArea = fluxVars.face().normal.two_norm();
 
-              int vertIIdx = this->problem_().vertexMapper().map(
-                   *elemIt, fluxVars.face().i, dim);
-              int vertJIdx = this->problem_().vertexMapper().map(
-                   *elemIt, fluxVars.face().j, dim);
+                int vertIIdx = this->problem_().vertexMapper().map(
+                    *elemIt, fluxVars.face().i, dim);
+                int vertJIdx = this->problem_().vertexMapper().map(
+                    *elemIt, fluxVars.face().j, dim);
 
-              //use vertical faces (horizontal noraml vector) to calculate vx
-              //in case of heterogeneities it seams to be better to define intrinisc permeability elementwise
-              if(xDir > yDir)//(fluxVars.face().normal[0] > 1e-10 || fluxVars.face().normal[0] < -1e-10)// (xDir > yDir)
-              {
-                  // get darcy velocity
-                  //calculate (v n) n/A
-                  Scalar tmp = fluxVars.KmvpNormal();
-                  velocity = fluxVars.face().normal;
-                  velocity *= tmp;
-                  velocity /= scvfArea;
-                  velocity *= (upwindWeight_ / up.viscosity() +
-                             (1 - upwindWeight_)/ dn.viscosity());
+                //use vertical faces (horizontal noraml vector) to calculate vx
+                //in case of heterogeneities it seams to be better to define intrinisc permeability elementwise
+                if(xDir > yDir)//(fluxVars.face().normal[0] > 1e-10 || fluxVars.face().normal[0] < -1e-10)// (xDir > yDir)
+                {
+                    // get darcy velocity
+                    //calculate (v n) n/A
+                    Scalar tmp = fluxVars.KmvpNormal();
+                    velocity = fluxVars.face().normal;
+                    velocity *= tmp;
+                    velocity /= scvfArea;
+                    velocity *= (upwindWeight_ / up.viscosity() +
+                                 (1 - upwindWeight_)/ dn.viscosity());
 
-                  // add surface area for weighting purposes
-                  boxSurface[vertIIdx][0] += scvfArea;
-                  boxSurface[vertJIdx][0] += scvfArea;
+                    // add surface area for weighting purposes
+                    boxSurface[vertIIdx][0] += scvfArea;
+                    boxSurface[vertJIdx][0] += scvfArea;
 
-                  velocityX[vertJIdx] += velocity[0];
-                  velocityX[vertIIdx] += velocity[0];
+                    velocityX[vertJIdx] += velocity[0];
+                    velocityX[vertIIdx] += velocity[0];
 
-              }
-              if (yDir > xDir)//(fluxVars.face().normal[1] > 1e-10 || fluxVars.face().normal[1] < -1e-10)// (yDir > xDir)
-              {
-                  // get darcy velocity
-                  //calculate (v n) n/A
-                  Scalar tmp = fluxVars.KmvpNormal();
-                  velocity = fluxVars.face().normal;
-                  velocity *= tmp;
-                  velocity /= scvfArea;
-                  velocity *= (upwindWeight_ / up.viscosity() +
-                           (1 - upwindWeight_)/ dn.viscosity());
+                }
+                if (yDir > xDir)//(fluxVars.face().normal[1] > 1e-10 || fluxVars.face().normal[1] < -1e-10)// (yDir > xDir)
+                {
+                    // get darcy velocity
+                    //calculate (v n) n/A
+                    Scalar tmp = fluxVars.KmvpNormal();
+                    velocity = fluxVars.face().normal;
+                    velocity *= tmp;
+                    velocity /= scvfArea;
+                    velocity *= (upwindWeight_ / up.viscosity() +
+                                 (1 - upwindWeight_)/ dn.viscosity());
 
-                  // add surface area for weighting purposes
-                  boxSurface[vertIIdx][1] += scvfArea;
-                  boxSurface[vertJIdx][1] += scvfArea;
+                    // add surface area for weighting purposes
+                    boxSurface[vertIIdx][1] += scvfArea;
+                    boxSurface[vertJIdx][1] += scvfArea;
 
-                  velocityY[vertJIdx] += velocity[1];
-                  velocityY[vertIIdx] += velocity[1];
-              }
-          }
+                    velocityY[vertJIdx] += velocity[1];
+                    velocityY[vertIIdx] += velocity[1];
+                }
+            }
 #endif
         }
 #ifdef VELOCITY_OUTPUT
@@ -286,18 +286,18 @@ public:
         const VertexIterator vEndIt = this->gridView_().template end<dim>();
         for (; vIt!=vEndIt; ++vIt)
         {
-         int i = this->problem_().vertexMapper().map(*vIt);
+            int i = this->problem_().vertexMapper().map(*vIt);
 
-              //use vertiacl faces for vx and horizontal faces for vy calculation
-             velocityX[i] /= boxSurface[i][0];
-             if (dim >= 2)
-             {
-                 velocityY[i] /= boxSurface[i][1];
-             }
-             if (dim == 3)
-             {
-                 velocityZ[i] /= boxSurface[i][2];
-             }
+            //use vertiacl faces for vx and horizontal faces for vy calculation
+            velocityX[i] /= boxSurface[i][0];
+            if (dim >= 2)
+            {
+                velocityY[i] /= boxSurface[i][1];
+            }
+            if (dim == 3)
+            {
+                velocityZ[i] /= boxSurface[i][2];
+            }
         }
 #endif
         writer.attachVertexData(pressure, "P");

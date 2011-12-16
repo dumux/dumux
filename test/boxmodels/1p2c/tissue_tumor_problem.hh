@@ -34,9 +34,9 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/isfluid_trail_system.hh>
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
+#include "interstitialfluidtrailfluidsystem.hh"
 #include "tissue_tumor_spatialparameters.hh"
 
 namespace Dumux
@@ -68,8 +68,10 @@ SET_PROP(TissueTumorProblem, Problem)
 
 // Set fluid configuration
 SET_PROP(TissueTumorProblem, FluidSystem)
-{
-    typedef Dumux::ISFluid_Trail_System<TypeTag> type;
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:    
+    typedef Dumux::InterstitialFluidTrailFluidSystem<Scalar> type;
 };
 
 // Set the spatial parameters
@@ -158,7 +160,7 @@ public:
         : ParentType(timeManager, gridView)
     {
         // calculate the injection volume
-        //totalInjectionVolume_ = 0;
+        totalInjectionVolume_ = 0;
         FVElementGeometry fvGeom;
         ElementIterator elemIt = gridView.template begin<0>();
         const ElementIterator endIt = gridView.template end<0>();
@@ -269,9 +271,10 @@ public:
      * mean that it vanishes.
      */
     void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+                     const GlobalPosition &globalPos) const
     {
         values = Scalar(0.0);
+
         if (inInjectionVolume_(globalPos)) {
             // total volumetric injection rate in ml/h
             Scalar injRateVol = 0.1;

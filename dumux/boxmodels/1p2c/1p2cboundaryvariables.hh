@@ -256,20 +256,21 @@ protected:
                 tmp *= elemDat[idx].pressure();
                 potentialGrad_ += tmp;
 
-            massFractionAtBIP_ += elemDat[idx].massFrac(comp1Idx) *
-                            boundaryFace_->shapeValue[idx];
+            massFractionAtBIP_ += 
+                elemDat[idx].massFraction(comp1Idx)
+                * boundaryFace_->shapeValue[idx];
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().concentration(phaseIdx, comp1Idx);
+            tmp *= elemDat[idx].fluidState().molarity(phaseIdx, comp1Idx);
             concentrationGrad_ += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFrac(phaseIdx, comp1Idx);
+            tmp *= elemDat[idx].fluidState().moleFraction(phaseIdx, comp1Idx);
             moleFracGrad_ += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().massFrac(phaseIdx, comp1Idx);
+            tmp *= elemDat[idx].fluidState().massFraction(phaseIdx, comp1Idx);
             massFracGrad_ += tmp;
 
 
@@ -277,30 +278,30 @@ protected:
             viscosityAtIP_ += elemDat[idx].viscosity()*boundaryFace_->shapeValue[idx];
             molarDensityAtIP_ += elemDat[idx].molarDensity()*boundaryFace_->shapeValue[idx];
         }
+        
+        tmp = problem.gravity();
+        tmp *= densityAtIP_;
 
-            tmp = problem.gravity();
-            tmp *= densityAtIP_;
-
-            potentialGrad_ -= tmp;
-
-            calculateK_(problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_));
-            ScalarGradient Kmvp;
-            K_.mv(potentialGrad_, Kmvp);
-            KmvpNormal_ = 0;
-            for (int i = 0; i < dim; ++i)
-                KmvpNormal_ += Kmvp[i]*boundaryFace_->normal[i];
-            KmvpNormal_ *= -1;
-
-            const VolumeVariables &vertDat = elemDat[scvIdx_];
-
-            Scalar tau = problem.spatialParameters().tortuosity(element, fvElemGeom_, scvIdx_);
-
-            porousDiffCoeff_ = vertDat.porosity()*tau*vertDat.diffCoeff();
+        potentialGrad_ -= tmp;
+        
+        calculateK_(problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_));
+        ScalarGradient Kmvp;
+        K_.mv(potentialGrad_, Kmvp);
+        KmvpNormal_ = 0;
+        for (int i = 0; i < dim; ++i)
+            KmvpNormal_ += Kmvp[i]*boundaryFace_->normal[i];
+        KmvpNormal_ *= -1;
+        
+        const VolumeVariables &vertDat = elemDat[scvIdx_];
+        
+        Scalar tau = problem.spatialParameters().tortuosity(element, fvElemGeom_, scvIdx_);
+        
+        porousDiffCoeff_ = vertDat.porosity()*tau*vertDat.diffCoeff();
     }
-
+    
     const FVElementGeometry &fvElemGeom_;
     const BoundaryFace *boundaryFace_;
-
+    
     // gradients
     ScalarGradient potentialGrad_;
     ScalarGradient concentrationGrad_;

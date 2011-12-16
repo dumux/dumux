@@ -306,15 +306,15 @@ protected:
 
                 // the concentration gradient [mol/m^3/m]
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].concentration(comp1Idx);
+                tmp *= elemVolVars[idx].molarity(comp1Idx);
                 concentrationGrad_ += tmp;
 
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].moleFrac(comp1Idx);
+                tmp *= elemVolVars[idx].moleFraction(comp1Idx);
                 moleFracGrad_ += tmp;
 
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].massFrac(comp1Idx);
+                tmp *= elemVolVars[idx].massFraction(comp1Idx);
                 massFracGrad_ += tmp;
                 // phase viscosity
                 viscosityAtIP_ += elemVolVars[idx].viscosity()*face().shapeValue[idx];
@@ -340,9 +340,9 @@ protected:
             potentialGrad_ = tmp;
             potentialGrad_ *= vVars_j.pressure() - vVars_i.pressure();
             concentrationGrad_ = tmp;
-            concentrationGrad_ *= vVars_j.concentration(comp1Idx) - vVars_i.concentration(comp1Idx);
+            concentrationGrad_ *= vVars_j.molarity(comp1Idx) - vVars_i.molarity(comp1Idx);
             moleFracGrad_ = tmp;
-            moleFracGrad_ *= vVars_j.moleFrac(comp1Idx) - vVars_i.moleFrac(comp1Idx);
+            moleFracGrad_ *= vVars_j.moleFraction(comp1Idx) - vVars_i.moleFraction(comp1Idx);
         }
 
         ///////////////
