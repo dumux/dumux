@@ -73,28 +73,16 @@ NEW_PROP_TAG(GMResRestart);
  */
 NEW_PROP_TAG(LinearSolverBlockSize);
 
-SET_PROP_DEFAULT(LinearSolverVerbosity)
-{public:
-    static constexpr int value = 0;
-};
+SET_INT_PROP(LinearSolverTypeTag, LinearSolverVerbosity, 0);
 
 //! set the preconditioner relaxation parameter to 1.0 by default
-SET_PROP_DEFAULT(PreconditionerRelaxation)
-{public:
-    static constexpr double value = 1.0;
-};
+SET_SCALAR_PROP(LinearSolverTypeTag, PreconditionerRelaxation, 1.0);
 
 //! set the preconditioner iterations to 1 by default
-SET_PROP_DEFAULT(PreconditionerIterations)
-{public:
-    static constexpr int value = 1;
-};
+SET_INT_PROP(LinearSolverTypeTag, PreconditionerIterations, 1);
 
 //! set the GMRes restart parameter to 10 by default
-SET_PROP_DEFAULT(GMResRestart)
-{public:
-    static constexpr int value = 10;
-};
+SET_INT_PROP(LinearSolverTypeTag, GMResRestart, 10);
 
 } // namespace Properties
 } // namespace Dumux
