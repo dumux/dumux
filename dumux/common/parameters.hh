@@ -60,7 +60,7 @@
 #define GET_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...)         \
     Dumux::Parameters::get<TypeTag,                                     \
                            ParamType,                                   \
-                           PTAG(ParamNameOrGroupName ## __VA_ARGS__)>   \
+                           PTAG_(ParamNameOrGroupName ## __VA_ARGS__)>   \
     (#ParamNameOrGroupName,                                              \
      Dumux::Parameters::getString_(#__VA_ARGS__))
 
@@ -330,7 +330,7 @@ private:
         }
 
         // retrieve actual parameter from the parameter tree
-        ParamType defaultValue = GET_PROP_VALUE(TypeTag, PropTag);
+        ParamType defaultValue = GET_PROP_VALUE_(TypeTag, PropTag);
         static ParamType value = Params::tree().template get<ParamType>(canonicalName, defaultValue);
 
         // remember whether the parameter was taken from the parameter

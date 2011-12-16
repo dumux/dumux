@@ -64,17 +64,18 @@ namespace Dumux
 namespace Properties
 {
 #if !defined NO_PROPERTY_INTROSPECTION
+
 //! Internal macro which is only required if the property introspection is enabled
-#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, ...)    \
+#define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, ...)          \
     template <>                                                         \
-    struct PropertyInfo<TTAG(EffTypeTagName), PTAG(PropTagName)>        \
+    struct PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>       \
     {                                                                   \
     static int init() {                                                 \
         PropertyRegistryKey key(                                        \
             /*effTypeTagName=*/ Dune::className<TTAG(EffTypeTagName)>(), \
             /*kind=*/PropKind,                                          \
             /*name=*/#PropTagName,                                      \
-            /*value=*/#__VA_ARGS__,                                      \
+            /*value=*/#__VA_ARGS__,                                     \
             /*file=*/__FILE__,                                          \
             /*line=*/__LINE__);                                         \
         PropertyRegistry::addKey(key);                                  \
@@ -82,8 +83,30 @@ namespace Properties
     };                                                                  \
     static int foo;                                                     \
     };                                                                  \
-int PropertyInfo<TTAG(EffTypeTagName), PTAG(PropTagName)>::foo =        \
-    PropertyInfo<TTAG(EffTypeTagName), PTAG(PropTagName)>::init();
+    int PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::foo =   \
+    PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();
+
+#define PROP_INFO_DEPRECATED_(DeprecationMsg, EffTypeTagName, PropKind, PropTagName, ...) \
+    template <>                                                         \
+    struct PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>       \
+    {                                                                   \
+    static int init() {                                                 \
+        PropertyRegistryKey key(                                        \
+            /*effTypeTagName=*/ Dune::className<TTAG(EffTypeTagName)>(), \
+            /*kind=*/PropKind,                                          \
+            /*name=*/#PropTagName,                                      \
+            /*value=*/#__VA_ARGS__,                                     \
+            /*file=*/__FILE__,                                          \
+            /*line=*/__LINE__);                                         \
+        PropertyRegistry::addKey(key);                                  \
+        int blubb = foo; /* <- trigger deprecation message */           \
+        blubb = blubb;                                                  \
+        return 0;                                                       \
+    };                                                                  \
+    static DUMUX_DEPRECATED_MSG(DeprecationMsg) int foo;                \
+    };                                                                  \
+    int PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::foo =   \
+    PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();
 
 #define FA_TTAG_(TypeTagName, ...) TTAG(TypeTagName)
 
@@ -119,7 +142,12 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
 /*!
  * \brief Makes a type out of a property tag name
  */
-#define PTAG(PropTagName) ::Dumux::Properties::PTag::PropTagName
+#define PTAG(PropTagName) PropTagName
+
+/*!
+ * \brief Makes a type out of a property tag name
+ */
+#define PTAG_(PropTagName) ::Dumux::Properties::PTag::PropTagName
 
 /*!
  * \brief Define a new type tag.
@@ -186,20 +214,21 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  */
 #define SET_PROP_DEFAULT(PropTagName) \
     template <class TypeTag>                                            \
-    struct DefaultProperty<TypeTag, PTAG(PropTagName)>;                 \
-    PROP_INFO_(__Default,                                               \
-               /*kind=*/"<opaque>",                                     \
-               PropTagName,                                             \
-               /*value=*/"<opaque>")                                    \
+    struct DefaultProperty<TypeTag, PTAG_(PropTagName)>;                 \
+    PROP_INFO_DEPRECATED_("Default properties are deprecated and will be removed in the future", \
+                          __Default,                                    \
+                          /*kind=*/"<opaque>",                          \
+                          PropTagName,                                  \
+                          /*value=*/"<opaque>")                         \
     template <class TypeTag>                                            \
-    struct DefaultProperty<TypeTag, PTAG(PropTagName) >
+    struct DefaultProperty<TypeTag, PTAG_(PropTagName) >
 
 //! Internal macro
 #define SET_PROP_(EffTypeTagName, PropKind, PropTagName, ...)       \
     template <class TypeTag>                                        \
     struct Property<TypeTag,                                        \
                     TTAG(EffTypeTagName),                           \
-                    PTAG(PropTagName)>;                             \
+                    PTAG_(PropTagName)>;                            \
     PROP_INFO_(EffTypeTagName,                                      \
                /*kind=*/PropKind,                                   \
                PropTagName,                                         \
@@ -207,7 +236,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
     template <class TypeTag>                                        \
     struct Property<TypeTag, \
                     TTAG(EffTypeTagName), \
-                    PTAG(PropTagName) >
+                    PTAG_(PropTagName) >
 
 /*!
  * \brief Set a property for a specific type tag.
@@ -240,7 +269,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
     template <class TypeTag>                                    \
     struct Property<TypeTag,                                    \
                     TTAG(EffTypeTagName),                       \
-                    PTAG(PropTagName)>;                         \
+                    PTAG_(PropTagName)>;                        \
     PROP_INFO_(EffTypeTagName,                                  \
                /*kind=*/"opaque",                               \
                PropTagName,                                     \
@@ -248,7 +277,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
     template <class TypeTag>                                    \
     struct Property<TypeTag, \
                     TTAG(EffTypeTagName), \
-                    PTAG(PropTagName) >
+                    PTAG_(PropTagName) >
 
 /*!
  * \brief Explicitly unset a property for a type tag.
@@ -264,14 +293,14 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
 #define UNSET_PROP(EffTypeTagName, PropTagName)                 \
     template <>                                                 \
     struct PropertyUnset<TTAG(EffTypeTagName),                  \
-                         PTAG(PropTagName) >;                   \
+                         PTAG_(PropTagName) >;                  \
     PROP_INFO_(EffTypeTagName,                                  \
                /*kind=*/"withdraw",                             \
                PropTagName,                                     \
                /*value=*/<none>)                                \
     template <>                                                 \
     struct PropertyUnset<TTAG(EffTypeTagName),                  \
-                         PTAG(PropTagName) >                    \
+                         PTAG_(PropTagName) >                   \
         : public PropertyExplicitlyUnset                        \
         {}
 
@@ -332,7 +361,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
               PropTagName,                                              \
               /*value=*/__VA_ARGS__)                                    \
     {                                                                   \
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;   \
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;         \
     public:                                                             \
         typedef Scalar type;                                            \
         static constexpr Scalar value = __VA_ARGS__;                    \
@@ -355,7 +384,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
         static const std::string value;                                 \
     };                                                                  \
     template <class TypeTag>                                            \
-    const std::string Property<TypeTag, TTAG(EffTypeTagName), PTAG(PropTagName)>::value(__VA_ARGS__);
+    const std::string Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::value(__VA_ARGS__);
 
 /*!
  * \brief Get the property for a type tag.
@@ -364,7 +393,9 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  * type (including the property itself), GET_PROP must be preceeded by
  * the 'typename' keyword.
  */
-#define GET_PROP(TypeTag, PropTag) \
+#define GET_PROP(TypeTag, PropTagName) \
+    ::Dumux::Properties::GetProperty<TypeTag, PTAG_(PropTagName)>::p
+#define GET_PROP_(TypeTag, PropTag) \
     ::Dumux::Properties::GetProperty<TypeTag, PropTag>::p
 
 /*!
@@ -374,7 +405,9 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  * PropTag) :: value.  If the property doesn't have an attribute named
  * 'value', this yields a compiler error.
  */
-#define GET_PROP_VALUE(TypeTag, PropTag) \
+#define GET_PROP_VALUE(TypeTag, PropTagName)                            \
+    ::Dumux::Properties::GetProperty<TypeTag, PTAG_(PropTagName)>::p::value
+#define GET_PROP_VALUE_(TypeTag, PropTag)                               \
     ::Dumux::Properties::GetProperty<TypeTag, PropTag>::p::value
 
 /*!
@@ -385,7 +418,9 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  * 'type', this yields a compiler error. Also, if you use this macro
  * within a template, it must be preceeded by the 'typename' keyword.
  */
-#define GET_PROP_TYPE(TypeTag, PropTag) \
+#define GET_PROP_TYPE(TypeTag, PropTagName) \
+    ::Dumux::Properties::GetProperty<TypeTag, PTAG_(PropTagName)>::p::type
+#define GET_PROP_TYPE_(TypeTag, PropTag) \
     ::Dumux::Properties::GetProperty<TypeTag, PropTag>::p::type
 
 #if !defined NO_PROPERTY_INTROSPECTION
@@ -421,7 +456,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *    std::cout << PROP_DIAGNOSTIC(FooBarTypeTag, blabbPropTag) << "\n";
  * };
  */
-#define PROP_DIAGNOSTIC(TypeTag, PropTag) "Property introspection disabled by NO_PROPERTY_INTROSPECTION"
+#define PROP_DIAGNOSTIC(TypeTag, PropTagName) "Property introspection disabled by NO_PROPERTY_INTROSPECTION"
 #endif
 
 
