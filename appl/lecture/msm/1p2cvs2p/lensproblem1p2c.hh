@@ -35,7 +35,7 @@
 
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
-#include <water_contaminant.hh>
+#include "watercontaminantfluidsystem.hh"
 #include "lensspatialparameters1p2c.hh"
 
 namespace Dumux
@@ -70,8 +70,10 @@ SET_PROP(LensProblem1p2c, Problem)
 
 // Set fluid configuration
 SET_PROP(LensProblem1p2c, FluidSystem)
-{
-    typedef Dumux::WaterContaminant<TypeTag> type;
+{private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+public:
+    typedef Dumux::WaterContaminantFluidSystem<Scalar> type;
 };
 
 // Set the spatial parameters
