@@ -105,7 +105,7 @@ SET_BOOL_PROP(DecoupledModel, AdaptiveGrid, false);
 SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);
 
 NEW_PROP_TAG(MaxIntersections);   //!< maximum number of intersections per element
-SET_PROP_DEFAULT(MaxIntersections)
+SET_PROP(DecoupledModel, MaxIntersections)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
@@ -185,7 +185,7 @@ SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, PTAG
  * immiscible 2p system, this would represent a vector holding the saturation
  * of one phase.
  */
-SET_PROP_DEFAULT(TransportSolutionType)
+SET_PROP(DecoupledModel, TransportSolutionType)
 {
     private:
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionType;
