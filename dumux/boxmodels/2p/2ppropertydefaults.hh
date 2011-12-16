@@ -35,7 +35,6 @@
 #include "2pindices.hh"
 #include "2pfluxvariables.hh"
 #include "2pvolumevariables.hh"
-#include "2pfluidstate.hh"
 #include "2pproperties.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -43,6 +42,7 @@
 #include <dumux/material/components/nullcomponent.hh>
 
 #include <dumux/material/MpNcfluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/MpNcfluidstates/immisciblefluidstate.hh>
 
 namespace Dumux
 {
@@ -115,7 +115,14 @@ public:
                                              NonWettingPhase> type;
 };
 
-SET_TYPE_PROP(BoxTwoP, FluidState, TwoPFluidState<TypeTag>);
+SET_PROP(BoxTwoP, FluidState)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+public:
+    typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+};
 
 // enable jacobian matrix recycling by default
 SET_BOOL_PROP(BoxTwoP, EnableJacobianRecycling, true);

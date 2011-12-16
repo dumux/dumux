@@ -28,7 +28,6 @@
 #define DUMUX_2P_VOLUME_VARIABLES_HH
 
 #include "2pproperties.hh"
-#include "2pfluidstate.hh"
 
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
 
@@ -53,11 +52,13 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
@@ -76,7 +77,6 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef TwoPFluidState<TypeTag> FluidState;
 
 public:
     /*!
@@ -108,40 +108,25 @@ public:
                                    elemGeom,
                                    scvIdx,
                                    problem);
+        fluidState_.setTemperature(temperature_);
 
         // material law parameters
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
 
-        Scalar p[numPhases];
-        Scalar Sn;
-        if (int(formulation) == pwSn) {
-            Sn = priVars[saturationIdx];
-            p[wPhaseIdx] = priVars[pressureIdx];
-            p[nPhaseIdx] =
-                p[wPhaseIdx] +
-                MaterialLaw::pC(materialParams, 1 - Sn);
-        }
-        else if (int(formulation) == pnSw) {
-            Sn = 1 - priVars[saturationIdx];
-            p[nPhaseIdx] = priVars[pressureIdx];
-            p[wPhaseIdx] =
-                p[nPhaseIdx] -
-                MaterialLaw::pC(materialParams, 1 - Sn);
-        }
+        Model::completeFluidState(priVars, materialParams, fluidState_);
 
-        typename FluidSystem::ParameterCache paramCache;
-        fluidState_.update(paramCache, Sn, p[wPhaseIdx], p[nPhaseIdx], temperature_);
+        capillaryPressure_ = fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
 
         mobility_[wPhaseIdx] =
-            MaterialLaw::krw(materialParams, 1 - Sn)
+            MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
             /
-            FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx);
+            fluidState_.viscosity(wPhaseIdx);
 
         mobility_[nPhaseIdx] =
-            MaterialLaw::krn(materialParams, 1 - Sn)
+            MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
             /
-            FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx);
+            fluidState_.viscosity(nPhaseIdx);
 
         // porosity
         porosity_ = problem.spatialParameters().porosity(element,
@@ -205,7 +190,7 @@ public:
      * \brief Returns the effective capillary pressure within the control volume.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.capillaryPressure(); }
+    { return capillaryPressure_; }
 
     /*!
      * \brief Returns the average porosity within the control volume.
@@ -227,6 +212,7 @@ protected:
     Scalar porosity_;
     Scalar temperature_;
 
+    Scalar capillaryPressure_;
     Scalar mobility_[numPhases];
 
 private:

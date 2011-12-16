@@ -94,6 +94,14 @@ class TwoPModel : public BoxModel<TypeTag>
 
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx,
+
+        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
+
+        pwSn = Indices::pwSn,
+        pnSw = Indices::pnSw,
+
+        pressureIdx = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
     };
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -115,6 +123,47 @@ public:
         if (Indices::pressureIdx == pvIdx)
             return std::min(10.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
         return 1;
+    }
+
+    template <class PrimaryVariables, class MaterialParams, class FluidState>
+    static void completeFluidState(const PrimaryVariables& primaryVariables,
+                                   const MaterialParams& materialParams,
+                                   FluidState& fluidState)
+    {
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+
+        if (int(formulation) == pwSn) {
+            Scalar Sn = primaryVariables[saturationIdx];
+            fluidState.setSaturation(nPhaseIdx, Sn);
+            fluidState.setSaturation(wPhaseIdx, 1 - Sn);
+
+            Scalar pW = primaryVariables[pressureIdx];
+            fluidState.setPressure(wPhaseIdx, pW);
+            fluidState.setPressure(nPhaseIdx,
+                                   pW + MaterialLaw::pC(materialParams, 1 - Sn));
+        }
+        else if (int(formulation) == pnSw) {
+            Scalar Sw = primaryVariables[saturationIdx];
+            fluidState.setSaturation(wPhaseIdx, Sw);
+            fluidState.setSaturation(nPhaseIdx, 1 - Sw);
+
+            Scalar pN = primaryVariables[pressureIdx];
+            fluidState.setPressure(nPhaseIdx, pN);
+            fluidState.setPressure(wPhaseIdx,
+                                   pN - MaterialLaw::pC(materialParams, Sw));
+        }
+
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+        typename FluidSystem::ParameterCache paramCache;
+        fluidState.setViscosity(wPhaseIdx,
+                FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
+        fluidState.setViscosity(nPhaseIdx,
+                FluidSystem::viscosity(fluidState, paramCache, nPhaseIdx));
+
+        fluidState.setDensity(wPhaseIdx,
+                FluidSystem::density(fluidState, paramCache, wPhaseIdx));
+        fluidState.setDensity(nPhaseIdx,
+                FluidSystem::density(fluidState, paramCache, nPhaseIdx));
     }
 
     /*!
