@@ -99,6 +99,7 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     enum {
         // Grid and world dimension
@@ -115,8 +116,12 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
         lCompIdx = Indices::lCompIdx,
         gCompIdx = Indices::gCompIdx,
 
-        contiLEqIdx = Indices::contiLEqIdx,
-        contiGEqIdx = Indices::contiGEqIdx,
+        H2OIdx = FluidSystem::H2OIdx,
+        N2Idx = FluidSystem::N2Idx,
+        
+        conti0EqIdx = Indices::conti0EqIdx,
+        contiH2OEqIdx = conti0EqIdx + H2OIdx,
+        contiN2EqIdx = conti0EqIdx + N2Idx,
     };
 
 
@@ -129,7 +134,6 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -144,13 +148,13 @@ public:
         : ParentType(timeManager, gridView)
     {
         // initialize the tables of the fluid system
-        FluidSystem::init();
-//        FluidSystem::init(/*Tmin=*/temperature_ - 1.0,
-//                          /*Tmax=*/temperature_ + 1.0,
-//                          /*nT=*/3,
-//                          /*pmin=*/1e5 + 1000*depthBOR_/1.2,
-//                          /*pmax=*/1e5 + 1000*depthBOR_*1.2,
-//                          /*np=*/1000);
+        //FluidSystem::init();
+        FluidSystem::init(/*Tmin=*/temperature_ - 1.0,
+                          /*Tmax=*/temperature_ + 1.0,
+                          /*nT=*/3,
+                          /*pmin=*/1e5 + 1000*depthBOR_/1.2,
+                          /*pmax=*/1e5 + 1000*depthBOR_*1.2,
+                          /*np=*/200);
     }
 
     /*!
@@ -263,7 +267,7 @@ public:
 
         values = 0;
         if (globalPos[1] < 15 && globalPos[1] > 5) {
-            values[contiGEqIdx] = -1e-3; // kg/(s*m^2)
+            values[contiN2EqIdx] = -1e-3; // kg/(s*m^2)
         }
     }
 
@@ -316,10 +320,18 @@ private:
     {
         Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 
-        values[Indices::plIdx] = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);
-        values[Indices::SgOrXIdx] =
-            values[Indices::plIdx]*0.95/
-            BinaryCoeff::H2O_N2::henry(temperature_);
+        Scalar pl = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);
+        Scalar moleFracLiquidN2 = pl*0.95/BinaryCoeff::H2O_N2::henry(temperature_);
+        Scalar moleFracLiquidH2O = 1.0 - moleFracLiquidN2;
+
+        Scalar meanM =
+            FluidSystem::molarMass(H2OIdx)*moleFracLiquidH2O +
+            FluidSystem::molarMass(N2Idx)*moleFracLiquidN2;
+
+        Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(N2Idx)/meanM;
+        
+        values[Indices::pressureIdx] = pl;
+        values[Indices::switchIdx] = massFracLiquidN2;
     }
 
     static constexpr Scalar temperature_ = 273.15 + 40; // [K]

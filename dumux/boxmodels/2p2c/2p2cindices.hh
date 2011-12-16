@@ -78,8 +78,9 @@ public:
     static const int SgOrXIdx = switchIdx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component in the only phase
 
     // equation indices
-    static const int contiLEqIdx = PVOffset + lCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
-    static const int contiGEqIdx = PVOffset + gCompIdx; //!< Index of the mass conservation equation for the gas' primary component
+    static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
+    static const int DUMUX_DEPRECATED_MSG("use conti0EqIdx + componentIdx instead") contiLEqIdx = conti0EqIdx + lCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
+    static const int DUMUX_DEPRECATED_MSG("use conti0EqIdx + componentIdx instead") contiGEqIdx = conti0EqIdx + gCompIdx; //!< Index of the mass conservation equation for the gas' primary component
 };
 
 /*!
