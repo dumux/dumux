@@ -139,10 +139,10 @@ public:
         {
             // storage term of continuity equation - massfractions
             result[contiEqIdx] +=
-                volVars.density()*volVars.porosity();
+                volVars.fluidState().density(/*phaseIdx*/0)*volVars.porosity();
             //storage term of the transport equation - massfractions
             result[transEqIdx] +=
-                volVars.density() * volVars.massFrac(comp1Idx) * volVars.porosity();
+                volVars.fluidState().density(/*phaseIdx*/0) * volVars.fluidState().massFraction(/*phaseIdx*/0, comp1Idx) * volVars.porosity();
         }
         else
         {
@@ -151,7 +151,7 @@ public:
             result[contiEqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
             result[transEqIdx] +=
-                volVars.molarDensity()*volVars.moleFrac(comp1Idx) *
+                volVars.fluidState().molarDensity(/*phaseIdx*/0)*volVars.fluidState().moleFraction(/*phaseIdx*/0, comp1Idx) *
                 volVars.porosity();
         }
 
@@ -210,9 +210,9 @@ public:
             // advective flux of the second component - massfraction
             flux[transEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((    upwindWeight_)*up.density() * up.massFrac(comp1Idx)/up.viscosity()
+                ((    upwindWeight_)*up.fluidState().density(/*phaseIdx=*/0) * up.fluidState().massFraction(/*phaseIdx=*/0, comp1Idx)/up.viscosity()
                 +
-                (1 - upwindWeight_)*dn.density()*dn.massFrac(comp1Idx)/dn.viscosity());
+                 (1 - upwindWeight_)*dn.fluidState().density(/*phaseIdx=*/0)*dn.fluidState().massFraction(/*phaseIdx=*/0, comp1Idx)/dn.viscosity());
         }
         else
         {
@@ -227,9 +227,9 @@ public:
             // advective flux of the second component -molefraction
             flux[transEqIdx] +=
                fluxVars.KmvpNormal() *
-               ((    upwindWeight_)*up.molarDensity() * up.moleFrac(comp1Idx)/up.viscosity()
-                +
-                (1 - upwindWeight_)*dn.molarDensity() * dn.moleFrac(comp1Idx)/dn.viscosity());
+                ((    upwindWeight_)*up.molarDensity() * up.fluidState().moleFraction(/*phaseIdx=*/0, comp1Idx)/up.viscosity()
+                 +
+                 (1 - upwindWeight_)*dn.molarDensity() * dn.fluidState().moleFraction(/*phaseIdx=*/0, comp1Idx)/dn.viscosity());
         }
 
     }
@@ -411,8 +411,9 @@ protected:
         if(!useMoles)//use massfractions
         {
             // advective flux
-            values[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
-                            *vertVars.fluidState().massFrac(phaseIdx, comp1Idx);
+            values[transEqIdx]+= 
+                boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
+                *vertVars.fluidState().massFraction(phaseIdx, comp1Idx);
 
             // diffusive flux of comp1 component in phase0
             Scalar tmp = 0;
@@ -426,8 +427,9 @@ protected:
         else //use molefractions
         {
             // advective flux
-            values[transEqIdx]+= boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
-                           *vertVars.fluidState().moleFrac(phaseIdx, comp1Idx);
+            values[transEqIdx]+= 
+                boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
+                *vertVars.fluidState().moleFraction(phaseIdx, comp1Idx);
 
             // diffusive flux of comp1 component in phase0
             Scalar tmp = 0;

@@ -151,7 +151,6 @@ public:
                                                   elemGeom,
                                                   scvIdx,
                                                   problem);
-        EnergyVolumeVariables::checkDefinedTemp();
 
         /////////////
         // set the phase pressures
