@@ -82,7 +82,7 @@ SET_PROP(BoxOneP, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     
 public:
-    typedef OnePFluidSystem<Scalar, Fluid> type;
+    typedef FluidSystems::OneP<Scalar, Fluid> type;
 };
 
 SET_PROP(BoxOneP, Fluid)

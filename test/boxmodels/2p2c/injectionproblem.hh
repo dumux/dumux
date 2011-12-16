@@ -62,7 +62,7 @@ SET_PROP(InjectionProblem, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     static const bool useComplexRelations = false;
 public:
-    typedef Dumux::H2ON2FluidSystem<Scalar, useComplexRelations> type;
+    typedef Dumux::FluidSystems::H2ON2<Scalar, useComplexRelations> type;
 };
 
 // Enable gravity

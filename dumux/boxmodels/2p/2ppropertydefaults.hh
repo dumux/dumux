@@ -110,9 +110,9 @@ SET_PROP(BoxTwoP, FluidSystem)
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonWettingPhase)) NonWettingPhase;
 
 public:
-    typedef Dumux::TwoPImmiscibleFluidSystem<Scalar,
-                                             WettingPhase,
-                                             NonWettingPhase> type;
+    typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,
+                                                WettingPhase,
+                                                NonWettingPhase> type;
 };
 
 SET_PROP(BoxTwoP, FluidState)

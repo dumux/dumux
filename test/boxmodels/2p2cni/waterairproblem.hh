@@ -61,7 +61,7 @@ SET_PROP(WaterAirProblem, Problem)
 };
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::H2ON2FluidSystem<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)), false>);
+SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)), false>);
 
 // Enable gravity
 SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);

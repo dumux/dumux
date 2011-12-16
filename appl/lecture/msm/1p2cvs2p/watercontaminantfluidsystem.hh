@@ -42,14 +42,17 @@
 
 namespace Dumux
 {
+namespace FluidSystems
+{
+
 /*!
  * \brief A fluid system with one phase and an arbitrary number of components.
  */
 template <class Scalar>
-class WaterContaminantFluidSystem
-: public BaseFluidSystem<Scalar, WaterContaminantFluidSystem<Scalar> >
+class WaterContaminant
+: public BaseFluidSystem<Scalar, WaterContaminant<Scalar> >
 {
-    typedef WaterContaminantFluidSystem<Scalar> ThisType;
+    typedef WaterContaminant<Scalar> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
@@ -349,6 +352,7 @@ public:
 
 };
 
+} // end namepace
 } // end namepace
 
 #endif

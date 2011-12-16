@@ -34,6 +34,8 @@
 
 namespace Dumux
 {
+namespace FluidSystems
+{
 
 /*!
  * \ingroup Fluidsystems
@@ -47,10 +49,10 @@ namespace Dumux
  * used in conjunction the 1p2c model.
  */
 template <class Scalar>
-class InterstitialFluidTrailFluidSystem
-: public BaseFluidSystem<Scalar, InterstitialFluidTrailFluidSystem<Scalar> >
+class InterstitialFluidTrail
+: public BaseFluidSystem<Scalar, InterstitialFluidTrail<Scalar> >
 {
-    typedef InterstitialFluidTrailFluidSystem<Scalar> ThisType;
+    typedef InterstitialFluidTrail<Scalar> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
@@ -353,6 +355,7 @@ public:
     };
 };
 
+} // end namepace
 } // end namepace
 
 #endif

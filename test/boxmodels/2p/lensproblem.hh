@@ -87,7 +87,7 @@ public:
 };
 #else
 // OR: set the fluid system
-SET_TYPE_PROP(LensProblem, FluidSystem, H2ON2FluidSystem<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>);
+SET_TYPE_PROP(LensProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>);
 #endif
 
 // Enable partial reassembly of the jacobian matrix?

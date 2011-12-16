@@ -73,7 +73,7 @@ SET_PROP(LensProblem1p2c, FluidSystem)
 {private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 public:
-    typedef Dumux::WaterContaminantFluidSystem<Scalar> type;
+    typedef Dumux::FluidSystems::WaterContaminant<Scalar> type;
 };
 
 // Set the spatial parameters
