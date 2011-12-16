@@ -85,6 +85,7 @@ AC_CONFIG_FILES([dumux.pc
     test/material/Makefile
     test/material/tabulation/Makefile
     test/material/ncpflash/Makefile
+    test/material/fluidsystems/Makefile
     tutorial/Makefile
 ])
 

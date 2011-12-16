@@ -279,7 +279,9 @@ add_test(test_dec2p2c \
          test/decoupled/2p/test_dec2p2c-reference.vtu \
          test/decoupled/2p/test_dec2p2c-00021.vtu \
          test/decoupled/2p2c/test_dec2p2c)
-add_test(test_multiphysics2p2c test/decoupled/2p2c/test_multiphysics2p2c)
+add_test(test_fluidsystems test/material/fluidsystems/test_fluidsystems)
+add_test(test_fluidsystems test/material/ncpflash/test_ncpflash)
+add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 

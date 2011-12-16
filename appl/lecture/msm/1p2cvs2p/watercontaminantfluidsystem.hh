@@ -40,6 +40,8 @@
 
 #include <dumux/material/fluidsystems/basefluidsystem.hh>
 
+#include <assert.h>
+
 namespace Dumux
 {
 namespace FluidSystems
