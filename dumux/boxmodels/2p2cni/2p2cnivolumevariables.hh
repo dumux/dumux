@@ -60,6 +60,7 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename ParentType::FluidState FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
@@ -100,15 +101,21 @@ protected:
     // is protected, we are friends with our parent..
     friend class TwoPTwoCVolumeVariables<TypeTag>;
     
-    // set the fluid state's temperature
-    void updateTemperature_(const PrimaryVariables &sol,
+    static Scalar temperature_(const PrimaryVariables &priVars,
+                            const Problem& problem,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
-                            int scvIdx,
-                            const Problem &problem)
+                            int scvIdx)
     {
-        // retrieve temperature from solution vector
-        this->fluidState_.setTemperature(sol[temperatureIdx]);
+        return priVars[temperatureIdx];
+    }
+
+    template<class ParameterCache>
+    static Scalar enthalpy_(const FluidState& fluidState,
+                            const ParameterCache& paramCache,
+                            int phaseIdx)
+    {
+        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
     }
 
     /*!
@@ -121,22 +128,13 @@ protected:
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
-    template <class ParameterCache>
-    void updateEnergy_(ParameterCache &paramCache,
-                      const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &sol,
                       const Problem &problem,
                       const Element &element,
                       const FVElementGeometry &elemGeom,
                       int scvIdx,
                       bool isOldSol)
     {
-        // copmute and set the internal energies of the fluid phases
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            Scalar h = FluidSystem::enthalpy(this->fluidState_, paramCache, phaseIdx);
-
-            this->fluidState_.setEnthalpy(phaseIdx, h);
-        }
-
         // copmute and set the heat capacity of the solid phase
         heatCapacity_ = problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
