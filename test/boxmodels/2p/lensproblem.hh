@@ -38,8 +38,9 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/simplednapl.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/boxmodels/2p/2pmodel.hh>
+
+#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
 
 #include "lensspatialparameters.hh"
 
@@ -66,6 +67,7 @@ SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(LensProblem, Problem, Dumux::LensProblem<TypeTag>);
 
+#if 1
 // Set the wetting phase
 SET_PROP(LensProblem, WettingPhase)
 {
@@ -83,6 +85,10 @@ private:
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
 };
+#else
+// OR: set the fluid system
+SET_TYPE_PROP(LensProblem, FluidSystem, H2ON2FluidSystem<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>);
+#endif
 
 // Enable partial reassembly of the jacobian matrix?
 SET_BOOL_PROP(LensProblem, EnablePartialReassemble, true);
