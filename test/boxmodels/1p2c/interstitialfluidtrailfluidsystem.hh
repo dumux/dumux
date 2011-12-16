@@ -30,7 +30,7 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/material/MpNcfluidsystems/basefluidsystem.hh>
+#include <dumux/material/fluidsystems/basefluidsystem.hh>
 
 namespace Dumux
 {

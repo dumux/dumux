@@ -28,7 +28,7 @@
 
 #include "richardsproperties.hh"
 
-#include <dumux/material/MpNcfluidstates/immisciblefluidstate.hh>
+#include <dumux/material/fluidstates/immisciblefluidstate.hh>
 
 namespace Dumux
 {

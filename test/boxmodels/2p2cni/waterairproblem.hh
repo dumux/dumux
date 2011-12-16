@@ -31,7 +31,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
 

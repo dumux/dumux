@@ -27,7 +27,7 @@
 #ifndef DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_ENERGY_VOLUME_VARIABLES_HH
 
-#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 namespace Dumux
 {

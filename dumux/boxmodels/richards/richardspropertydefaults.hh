@@ -38,7 +38,7 @@
 #include "richardsnewtoncontroller.hh"
 
 #include <dumux/material/components/nullcomponent.hh>
-#include <dumux/material/MpNcfluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 
 namespace Dumux
 {

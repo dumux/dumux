@@ -38,9 +38,9 @@
 #include "2p2cproperties.hh"
 #include "2p2cindices.hh"
 
-#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
-#include <dumux/material/MpNcconstraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/MpNcconstraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 namespace Dumux
 {

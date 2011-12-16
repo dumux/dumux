@@ -29,7 +29,7 @@
 
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
 
-#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 namespace Dumux
 {

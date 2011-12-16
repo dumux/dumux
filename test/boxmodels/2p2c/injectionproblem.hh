@@ -33,7 +33,7 @@
 
 #include <dumux/boxmodels/2p2c/2p2cmodel.hh>
 
-#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 //#include <dumux/material/fluidsystems/brine_co2_system.hh>
 //#include <appl/co2/ifp/ifpco2tables.hh>

@@ -41,8 +41,8 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
 
-#include <dumux/material/MpNcfluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/MpNcfluidstates/immisciblefluidstate.hh>
+#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/fluidstates/immisciblefluidstate.hh>
 
 namespace Dumux
 {

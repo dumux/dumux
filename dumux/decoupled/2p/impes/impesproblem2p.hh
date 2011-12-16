@@ -29,7 +29,7 @@
 #include <dumux/decoupled/common/impet.hh>
 #include <dumux/decoupled/common/impetproblem.hh>
 #include <dumux/decoupled/2p/variableclass2p.hh>
-#include <dumux/material/fluidsystems/2p_system.hh>
+#include <dumux/material/old_fluidsystems/2p_system.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 

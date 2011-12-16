@@ -37,9 +37,9 @@
 
 #include <dumux/boxmodels/MpNc/MpNcmodel.hh>
 
-#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
-#include <dumux/material/MpNcconstraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/MpNcfluidstates/compositionalfluidstate.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 #include "obstaclespatialparameters.hh"
 

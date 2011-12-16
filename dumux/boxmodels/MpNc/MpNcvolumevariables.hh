@@ -35,7 +35,7 @@
 #include "MpNcvolumevariablesia.hh"
 
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
-#include <dumux/material/MpNcconstraintsolvers/ncpflash.hh>
+#include <dumux/material/constraintsolvers/ncpflash.hh>
 
 namespace Dumux
 {

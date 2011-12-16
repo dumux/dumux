@@ -40,7 +40,7 @@
 #include <dumux/material/components/simplednapl.hh>
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
-#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include "lensspatialparameters.hh"
 

@@ -22,7 +22,7 @@
 #define DUMUX_MPNC_LOCAL_RESIDUAL_MASS_HH
 
 #include <dune/common/fvector.hh>
-#include <dumux/material/MpNcconstraintsolvers/compositionfromfugacities.hh>
+#include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 
 #include "../diffusion/diffusion.hh"
 

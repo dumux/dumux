@@ -29,7 +29,7 @@
 #include "1pproperties.hh"
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
 
-#include <dumux/material/MpNcfluidstates/immisciblefluidstate.hh>
+#include <dumux/material/fluidstates/immisciblefluidstate.hh>
 
 namespace Dumux
 {

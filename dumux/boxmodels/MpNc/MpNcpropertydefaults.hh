@@ -37,7 +37,7 @@
 #include "mass/MpNcvtkwritermass.hh"
 #include "energy/MpNcvtkwriterenergy.hh"
 
-#include <dumux/material/MpNcconstraintsolvers/compositionfromfugacities.hh>
+#include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 
 
 /*!

@@ -35,7 +35,7 @@
 
 #include <dumux/boxmodels/2pni/2pnimodel.hh>
 
-#include <dumux/material/MpNcfluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 // use the same spatial parameters as the injection problem of the
 // 2p2c test program
