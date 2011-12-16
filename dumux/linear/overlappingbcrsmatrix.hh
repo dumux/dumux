@@ -346,7 +346,7 @@ private:
         typename ForeignOverlapWithPeer::const_iterator endIt = peerOverlap.end();
         int i = 0;
         for (; it != endIt; ++it, ++i) {
-            int rowIdx = std::get<0>(*it);
+            int rowIdx = std::tr1::get<0>(*it);
             assert(overlap_->isDomesticIndexFor(peerRank, rowIdx));
 
             typedef typename BCRSMatrix::ConstColIterator ColIt;
@@ -374,7 +374,7 @@ private:
         i = 0;
         it = peerOverlap.begin();
         for (; it != endIt; ++it) {
-            int rowIdx = std::get<0>(*it);
+            int rowIdx = std::tr1::get<0>(*it);
             assert(overlap_->isDomesticIndexFor(peerRank, rowIdx));
 
             typedef typename BCRSMatrix::ConstColIterator ColIt;

@@ -282,7 +282,7 @@ private:
 #if HAVE_MPI
         // create array for the front indices
         int numDomestic = overlap_->numDomestic();
-        frontMaster_ = std::shared_ptr<std::vector<ProcessRank> >(new std::vector<ProcessRank>(numDomestic, -1));
+        frontMaster_ = std::tr1::shared_ptr<std::vector<ProcessRank> >(new std::vector<ProcessRank>(numDomestic, -1));
 
         typename PeerSet::const_iterator peerIt;
         typename PeerSet::const_iterator peerEndIt = overlap_->peerSet().end();
@@ -294,9 +294,9 @@ private:
 
             const DomesticOverlapWithPeer &domesticOverlap = overlap_->domesticOverlapWithPeer(peerRank);
             int numEntries = domesticOverlap.size();
-            numIndicesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<int> >(new MpiBuffer<int>(1));
-            indicesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
-            valuesSendBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
+            numIndicesSendBuff_[peerRank] = std::tr1::shared_ptr<MpiBuffer<int> >(new MpiBuffer<int>(1));
+            indicesSendBuff_[peerRank] = std::tr1::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numEntries));
+            valuesSendBuff_[peerRank] = std::tr1::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numEntries));
 
             // fill the indices buffer with global indices
             MpiBuffer<RowIndex> &indicesSendBuff = *indicesSendBuff_[peerRank];
@@ -327,8 +327,8 @@ private:
             numRows = numRowsRecvBuff[0];
 
             // then, create the MPI buffers
-            indicesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numRows));
-            valuesRecvBuff_[peerRank] = std::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numRows));
+            indicesRecvBuff_[peerRank] = std::tr1::shared_ptr<MpiBuffer<RowIndex> >(new MpiBuffer<RowIndex>(numRows));
+            valuesRecvBuff_[peerRank] = std::tr1::shared_ptr<MpiBuffer<FieldVector> >(new MpiBuffer<FieldVector>(numRows));
             MpiBuffer<RowIndex> &indicesRecvBuff = *indicesRecvBuff_[peerRank];
 
             // next, receive the actual indices
