@@ -120,7 +120,6 @@ public:
         }
         fluidState_.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/0, 1 - x1);
         fluidState_.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/1, x1);
-        fluidState_.updateAverageMolarMass(/*phaseIdx=*/0);
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);

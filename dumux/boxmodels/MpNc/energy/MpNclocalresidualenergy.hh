@@ -142,7 +142,7 @@ public:
 
         // heat stored in the rock matrix
         result[energyEqIdx] +=
-            volVars.temperature()
+            volVars.fluidState().temperature(/*phaseIdx=*/0)
             * volVars.soilDensity()
             * (1.0 - volVars.porosity())
             * volVars.heatCapacity();

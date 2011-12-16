@@ -112,7 +112,7 @@ public:
         for (int scvIdx = 0; scvIdx < fvElemGeom.numVertices; scvIdx++)
         {
             tmp = fvElemGeom.subContVolFace[scvfIdx].grad[scvIdx];
-            tmp *= elemVolVars[scvIdx].temperature();
+            tmp *= elemVolVars[scvIdx].fluidState().temperature(/*phaseIdx=*/0);
             temperatureGradient += tmp;
         }
 
@@ -121,14 +121,16 @@ public:
 
 
         lambdaPm_ = lumpedLambdaPm(problem,
+                                   element,
                                     fvElemGeom,
                                     scvfIdx,
                                     elemVolVars) ;
 
     }
 
-     Scalar lumpedLambdaPm(const Problem & problem,
-                              const FVElementGeometry & fvElemGeom,
+    Scalar lumpedLambdaPm(const Problem &problem,
+                          const Element &element,
+                           const FVElementGeometry & fvElemGeom,
                            int faceIdx,
                            const ElementVolumeVariables & elemVolVars)
     {
@@ -136,38 +138,46 @@ public:
          const int i = fvElemGeom.subContVolFace[faceIdx].i;
          const int j = fvElemGeom.subContVolFace[faceIdx].j;
 
-         const Scalar Sli = elemVolVars[i].fluidState().saturation(lPhaseIdx);
-         const Scalar Slj = elemVolVars[j].fluidState().saturation(lPhaseIdx);
+         typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables))::FluidState FluidState;
+         const FluidState &fsI = elemVolVars[i].fluidState();
+         const FluidState &fsJ = elemVolVars[j].fluidState();
+         const Scalar Sli = fsI.saturation(lPhaseIdx);
+         const Scalar Slj = fsJ.saturation(lPhaseIdx);
+
+         typename FluidSystem::ParameterCache paramCacheI, paramCacheJ;
+         paramCacheI.updateAll(fsI);
+         paramCacheJ.updateAll(fsJ);
 
          const Scalar Sl = std::max<Scalar>(0.0, 0.5*(Sli + Slj));
 
-        //        const Scalar lambdaDry = 0.583; // W / (K m) // works, orig
-        //        const Scalar lambdaWet = 1.13; // W / (K m) // works, orig
-
-        const typename FluidSystem::MutableParameters mutParams; //dummy
-        const Scalar lambdaDry = 0.5 * (problem.spatialParameters().soilThermalConductivity() + FluidSystem::thermalConductivity(mutParams, gPhaseIdx) ); // W / (K m)
-        const Scalar lambdaWet = 0.5 * (problem.spatialParameters().soilThermalConductivity() + FluidSystem::thermalConductivity(mutParams, lPhaseIdx)) ; // W / (K m)
-
-        // the heat conductivity of the matrix. in general this is a
-        // tensorial value, but we assume isotropic heat conductivity.
-        // This is the Sommerton approach with lambdaDry =
-        // lambdaSn100%.  Taken from: H. Class: "Theorie und
-        // numerische Modellierung nichtisothermer Mehrphasenprozesse
-        // in NAPL-kontaminierten poroesen Medien", PhD Thesis, University of
-        // Stuttgart, Institute of Hydraulic Engineering, p. 57
-
-        Scalar result;
-        if (Sl < 0.1) {
-            // regularization
-            Dumux::Spline<Scalar> sp(0, 0.1, // x1, x2
-                                    0, sqrt(0.1), // y1, y2
-                                    5*0.5/sqrt(0.1), 0.5/sqrt(0.1)); // m1, m2
-            result = lambdaDry + sp.eval(Sl)*(lambdaWet - lambdaDry);
-        }
-        else
-            result = lambdaDry + std::sqrt(Sl)*(lambdaWet - lambdaDry);
-
-        return result;
+         //        const Scalar lambdaDry = 0.583; // W / (K m) // works, orig
+         //        const Scalar lambdaWet = 1.13; // W / (K m) // works, orig
+         
+         Scalar lambdaSoilI = problem.spatialParameters().soilThermalConductivity(element, fvElemGeom, i);
+         Scalar lambdaSoilJ = problem.spatialParameters().soilThermalConductivity(element, fvElemGeom, i);
+         const Scalar lambdaDry = 0.5 * (lambdaSoilI + FluidSystem::thermalConductivity(fsI, paramCacheI, gPhaseIdx)); // W / (K m)
+         const Scalar lambdaWet = 0.5 * (lambdaSoilJ + FluidSystem::thermalConductivity(fsJ, paramCacheJ, lPhaseIdx)) ; // W / (K m)
+         
+         // the heat conductivity of the matrix. in general this is a
+         // tensorial value, but we assume isotropic heat conductivity.
+         // This is the Sommerton approach with lambdaDry =
+         // lambdaSn100%.  Taken from: H. Class: "Theorie und
+         // numerische Modellierung nichtisothermer Mehrphasenprozesse
+         // in NAPL-kontaminierten poroesen Medien", PhD Thesis, University of
+         // Stuttgart, Institute of Hydraulic Engineering, p. 57
+         
+         Scalar result;
+         if (Sl < 0.1) {
+             // regularization
+             Dumux::Spline<Scalar> sp(0, 0.1, // x1, x2
+                                      0, sqrt(0.1), // y1, y2
+                                      5*0.5/sqrt(0.1), 0.5/sqrt(0.1)); // m1, m2
+             result = lambdaDry + sp.eval(Sl)*(lambdaWet - lambdaDry);
+         }
+         else
+             result = lambdaDry + std::sqrt(Sl)*(lambdaWet - lambdaDry);
+         
+         return result;
     }
 
     /*!

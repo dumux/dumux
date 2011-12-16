@@ -301,13 +301,13 @@ public:
      * \param phaseIdx  for which phase to give back the heat capacity
      */
     template <class FluidState>
-    static Scalar internalEnergy(const FluidState &fluidState,
+    static Scalar enthalpy(const FluidState &fluidState,
                                  const ParameterCache &paramCache,
                                  int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
-        DUNE_THROW(Dune::NotImplemented, "Internal energies");
+        DUNE_THROW(Dune::NotImplemented, "Enthalpies");
     };
 
     /*!

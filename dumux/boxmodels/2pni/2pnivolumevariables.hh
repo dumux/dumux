@@ -129,9 +129,9 @@ protected:
     {
         // copmute and set the internal energies of the fluid phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            Scalar u = FluidSystem::internalEnergy(this->fluidState_, paramCache, phaseIdx);
+            Scalar h = FluidSystem::enthalpy(this->fluidState_, paramCache, phaseIdx);
 
-            this->fluidState_.setInternalEnergy(phaseIdx, u);
+            this->fluidState_.setEnthalpy(phaseIdx, h);
         }
 
         // copmute and set the heat capacity of the solid phase

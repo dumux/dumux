@@ -282,7 +282,7 @@ public:
 
     /*!
      * \brief Given a phase's composition, temperature, pressure and
-     *        density, calculate its specific internal energy [J/kg].
+     *        density, calculate its specific enthalpy [J/kg].
      *
      *  \todo This fluid system neglects the contribution of
      *        gas-molecules in the liquid phase. This contribution is
@@ -294,12 +294,12 @@ public:
      * \param phaseIdx The index of the fluid phase to consider
      */
     template <class FluidState>
-    static Scalar internalEnergy(const FluidState &fluidState,
-                                 const ParameterCache &paramCache,
-                                 int phaseIdx)
+    static Scalar enthalpy(const FluidState &fluidState,
+                           const ParameterCache &paramCache,
+                           int phaseIdx)
     {
         // TODO!
-        DUNE_THROW(Dune::NotImplemented, "Internal energies!");
+        DUNE_THROW(Dune::NotImplemented, "Enthalpy");
     };
 
     /*!
@@ -319,7 +319,7 @@ public:
                                       int phaseIdx)
     {
         // TODO!
-        DUNE_THROW(Dune::NotImplemented, "Thermal conductivity!");
+        DUNE_THROW(Dune::NotImplemented, "Thermal conductivity");
     }
     
       /*!
@@ -336,7 +336,7 @@ public:
                                int phaseIdx)
     {
         // TODO!
-        DUNE_THROW(Dune::NotImplemented, "Heat capacity!");
+        DUNE_THROW(Dune::NotImplemented, "Heat capacity");
     }
 
 };

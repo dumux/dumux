@@ -88,7 +88,6 @@ public:
      */
     void update(FluidState &fs,
                 ParameterCache &paramCache,
-                const PrimaryVariables &sol,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
                 int scvIdx,
@@ -174,9 +173,8 @@ public:
 
         // set the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            Scalar u =
-                FluidSystem::internalEnergy(fs, paramCache, phaseIdx);
-            fs.setInternalEnergy(phaseIdx, u);
+            Scalar h = FluidSystem::enthalpy(fs, paramCache, phaseIdx);
+            fs.setEnthalpy(phaseIdx, h);
         }
     }
 

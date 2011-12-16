@@ -219,7 +219,6 @@ public:
         // update the remaining parts of the energy module
         EnergyVolumeVariables::update(fluidState_,
                                       paramCache,
-                                      priVars,
                                       element,
                                       elemGeom,
                                       scvIdx,

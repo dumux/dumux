@@ -272,16 +272,16 @@ public:
             return coarseMaterialParams_;
     }
 
-    const Scalar & soilDensity(const Element &element,
-                                const FVElementGeometry &fvElemGeom,
-                                int scvIdx) const
+    Scalar soilDensity(const Element &element,
+                       const FVElementGeometry &fvElemGeom,
+                       int scvIdx) const
     {
         return 2700. ; // density of granite [kg/m^3]
     }
 
-    const Scalar & soilThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvElemGeom,
-                                    int scvIdx) const
+    Scalar soilThermalConductivity(const Element &element,
+                                   const FVElementGeometry &fvElemGeom,
+                                   int scvIdx) const
     {
         return 2.8; // conductivity of granite [W / (m K ) ]
     }
