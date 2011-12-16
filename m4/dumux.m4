@@ -15,7 +15,7 @@ AC_DEFUN([DUMUX_CHECKS],
   AC_CHECK_HEADER([valgrind/memcheck.h], 
                   [HAVE_VALGRIND_H="1"],
                   AC_MSG_WARN([valgrind/memcheck.h not found]))
-  AS_IF([test "x$HAVE_VALGRIND_H" = "x1"],[
+  AS_IF([test "$HAVE_VALGRIND_H" = "1"],[
     AC_DEFINE(HAVE_VALGRIND, 1, [Define whether the valgrind header files for client requests are present.])
     ])
   if test "$HAVE_VALGRIND_H" == "1"; then
@@ -65,20 +65,11 @@ AC_DEFUN([DUMUX_CHECKS],
   DUNE_ADD_SUMMARY_ENTRY([Build DuMuX handbook],[$build_handbook])
 ])
 
-AC_DEFUN([DUMUX_CHECK_ALL],
-[
-DUNE_CHECK_ALL
-])
-
-AC_DEFUN([DUMUX_SUMMARY_ALL],
-[
-DUNE_SUMMARY_ALL
-])
-
 # DUMUX_CHECK_MODULES(NAME, HEADER, SYMBOL)
 #
-# THIS IS JUST A COPY OF THE DUNE_CHECK_MODULES MACRO WITH THE REQUIREMENT THAT
-# THE HEADER RESIDES IN THE 'dune' SUB-DIRECTORY REMOVED!
+# THIS MACRO IS JUST A COPY OF DUNE_CHECK_MODULES WITH THE REQUIREMENT THAT ALL
+# HEADERS MUST RESIDE IN $MODULE_ROOT/dune REMOVED. REMOVE THIS MACRO AS SOON AS DUNE
+# DOES NOT FEATURE THIS BUG ANYMORE.
 #
 # Generic check for dune modules.  This macro should not be used directly, but
 # in the modules m4/{module}.m4 in the {MODULE}_CHECK_MODULE macro.  The
@@ -90,7 +81,7 @@ DUNE_SUMMARY_ALL
 #        value must be known when autoconf runs, so shell variables in the
 #        value are not permissible.
 #
-# HEADER Header to check for.  The check will really be for <{HEADER}>,
+# HEADER Header to check for.  The check will really be for <dune/{HEADER}>,
 #        so the header must reside within a directory called "dune".
 #
 # SYMBOL Symbol to check for in the module's library.  If this argument is
@@ -248,15 +239,20 @@ AC_DEFUN([DUMUX_CHECK_MODULES],[
   ##  
   ## check for an arbitrary header
   ##
-  AC_CHECK_HEADER([_dune_header],
-    [HAVE_[]_DUNE_MODULE=1],
-    [HAVE_[]_DUNE_MODULE=0
-     AS_IF([test -n "$_DUNE_MODULE[]_ROOT"],[
-       AC_MSG_WARN([$_DUNE_MODULE[]_ROOT does not seem to contain a valid _dune_name (_dune_header not found)])
-     ])
-    ]
-  )
+  AC_CHECK_HEADER([dune/[]_dune_header],
+    [HAVE_[]_DUNE_MODULE=1; DUNE_[]_HEADER_PREFIX="dune/"],
+    [HAVE_[]_DUNE_MODULE=0])
 
+  AS_IF([test "$HAVE_[]_DUNE_MODULE" != "1"],[
+    AC_CHECK_HEADER([[]_dune_header],
+      [HAVE_[]_DUNE_MODULE=1; DUNE_[]_HEADER_PREFIX=""],
+      [HAVE_[]_DUNE_MODULE=0])
+  ])    
+
+  AS_IF([test "$HAVE_[]_DUNE_MODULE" != "1"],[
+    AC_MSG_WARN([$_DUNE_MODULE[]_ROOT does not seem to contain a valid _dune_name (dune/[]_dune_header not found)])
+  ])
+  
   ##
   ## check for lib (if lib name was provided)
   ##
@@ -282,7 +278,7 @@ AC_DEFUN([DUMUX_CHECK_MODULES],[
         AC_MSG_CHECKING([for lib[]_dune_lib])
 
         AC_TRY_LINK(dnl
-          [#]include<_dune_header>,
+          [#]include<$DUNE_[]_HEADER_PREFIX/[]_dune_header>,
           _dune_symbol,
           [
             AC_MSG_RESULT([yes])

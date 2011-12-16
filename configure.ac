@@ -4,7 +4,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([dumux/common/spline.hh])
 AM_CONFIG_HEADER([config.h])
 
-DUMUX_CHECK_ALL
+DUNE_CHECK_ALL
 
 AC_CONFIG_FILES([dumux.pc
     Makefile
@@ -98,4 +98,4 @@ LIBS="$DUNE_LIBS $ALL_PKG_LIBS"
 AC_OUTPUT
 
 # finally print the summary information
-DUMUX_SUMMARY_ALL
+DUNE_SUMMARY_ALL
