@@ -25,7 +25,7 @@
 #ifndef DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 #define DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 
-#include <dumux/material/fluidstate.hh>
+#include <dumux/material/old_fluidsystems/fluidstate.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
 
 namespace Dumux
