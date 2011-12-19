@@ -180,7 +180,7 @@ public:
     /*!
      * \brief Returns the current wall time (cpu time).
      */
-    Scalar wallTime() const
+    double wallTime() const
     {  return timer_.elapsed(); }
 
     /*!
