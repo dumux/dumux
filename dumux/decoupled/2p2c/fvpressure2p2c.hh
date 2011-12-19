@@ -51,7 +51,7 @@ namespace Dumux
  *  Isothermal conditions and local thermodynamic
  *  equilibrium are assumed.  Gravity is included.
  *  \f[
-         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{alpha} \bf{v}_{\alpha}\right)
+         c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
           = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
  *  \f]
  *  where \f$\bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
@@ -786,7 +786,6 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                     // create a fluid state for the boundary
                     FluidState BCfluidState;
 
-                    Scalar temperatureBC = problem().temperatureAtPos(globalPosFace);
                     //read boundary values
                     PrimaryVariables primaryVariablesOnBoundary(NAN);
                     problem().dirichlet(primaryVariablesOnBoundary, *isIt);

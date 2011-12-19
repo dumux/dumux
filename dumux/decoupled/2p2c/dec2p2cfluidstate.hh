@@ -27,7 +27,6 @@
 #ifndef DUMUX_DEC2P2C_FLUID_STATE_HH
 #define DUMUX_DEC2P2C_FLUID_STATE_HH
 
-#include <dumux/material/old_fluidsystems/fluidstate.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
 
 namespace Dumux
@@ -42,8 +41,7 @@ namespace Dumux
  *  \tparam TypeTag The property Type Tag
  */
 template <class TypeTag>
-class DecoupledTwoPTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag,
-                            PTAG(Scalar)), DecoupledTwoPTwoCFluidState<TypeTag> >
+class DecoupledTwoPTwoCFluidState
 {
     typedef DecoupledTwoPTwoCFluidState<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
@@ -97,50 +95,64 @@ public:
 
 
         //mole equilibrium ratios K for in case wPhase is reference phase
-        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx)
-                    / phasePressure_[nPhaseIdx];    // = p^wComp_vap / p_n
-        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx)
-                    / phasePressure_[nPhaseIdx];    // = H^nComp_w / p_n
+        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx);    // = p^wComp_vap
+        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx);    // = H^nComp_w
 
         // get mole fraction from equilibrium konstants
-        Scalar xw1 = (1. - k2) / (k1 -k2);
-        Scalar xn1 = xw1 * k1;
+        moleFraction_[wPhaseIdx][wCompIdx] = (1. - k2) / (k1 -k2);
+        moleFraction_[nPhaseIdx][wCompIdx] = moleFraction_[wPhaseIdx][wCompIdx] * k1;
 
 
         // transform mole to mass fractions
-        massfrac_[wPhaseIdx][wCompIdx] = xw1 * FluidSystem::molarMass(wCompIdx)
-            / ( xw1 * FluidSystem::molarMass(wCompIdx) + (1.-xw1) * FluidSystem::molarMass(nCompIdx) );
-        massfrac_[nPhaseIdx][wCompIdx] = xn1 * FluidSystem::molarMass(wCompIdx)
-            / ( xn1 * FluidSystem::molarMass(wCompIdx) + (1.-xn1) * FluidSystem::molarMass(nCompIdx) );
+        massFraction_[wPhaseIdx][wCompIdx] = moleFraction_[wPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx)
+            / ( moleFraction_[wPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx) + (1.-moleFraction_[wPhaseIdx][wCompIdx]) * FluidSystem::molarMass(nCompIdx) );
+        massFraction_[nPhaseIdx][wCompIdx] = moleFraction_[nPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx)
+            / ( moleFraction_[nPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx) + (1.-moleFraction_[nPhaseIdx][wCompIdx]) * FluidSystem::molarMass(nCompIdx) );
 
 
         //mass equilibrium ratios
-        equilRatio_[nPhaseIdx][wCompIdx] = massfrac_[nPhaseIdx][wCompIdx] / massfrac_[wPhaseIdx][wCompIdx];     // = Xn1 / Xw1 = K1
-        equilRatio_[nPhaseIdx][nCompIdx] = (1.-massfrac_[nPhaseIdx][wCompIdx])/ (1.-massfrac_[wPhaseIdx][wCompIdx]); // =(1.-Xn1) / (1.-Xw1)     = K2
+        equilRatio_[nPhaseIdx][wCompIdx] = massFraction_[nPhaseIdx][wCompIdx] / massFraction_[wPhaseIdx][wCompIdx];     // = Xn1 / Xw1 = K1
+        equilRatio_[nPhaseIdx][nCompIdx] = (1.-massFraction_[nPhaseIdx][wCompIdx])/ (1.-massFraction_[wPhaseIdx][wCompIdx]); // =(1.-Xn1) / (1.-Xw1)     = K2
         equilRatio_[wPhaseIdx][nCompIdx] = equilRatio_[wPhaseIdx][wCompIdx] = 1.;
 
         // phase fraction of nPhase [mass/totalmass]
         nu_[nPhaseIdx] = 0;
 
         // check if there is enough of component 1 to form a phase
-        if (Z1 > massfrac_[nPhaseIdx][wCompIdx] && Z1 < massfrac_[wPhaseIdx][wCompIdx])
+        if (Z1 > massFraction_[nPhaseIdx][wCompIdx] && Z1 < massFraction_[wPhaseIdx][wCompIdx])
             nu_[nPhaseIdx] = -((equilRatio_[nPhaseIdx][wCompIdx]-1)*Z1 + (equilRatio_[nPhaseIdx][nCompIdx]-1)*(1-Z1)) / (equilRatio_[nPhaseIdx][wCompIdx]-1) / (equilRatio_[nPhaseIdx][nCompIdx] -1);
-        else if (Z1 <= massfrac_[nPhaseIdx][wCompIdx]) // too little wComp to form a phase
+        else if (Z1 <= massFraction_[nPhaseIdx][wCompIdx]) // too little wComp to form a phase
         {
             nu_[nPhaseIdx] = 1; // only nPhase
-            massfrac_[nPhaseIdx][wCompIdx] = Z1; // hence, assign complete mass soluted into nPhase
-            massfrac_[wPhaseIdx][wCompIdx] = 1.;
+            massFraction_[nPhaseIdx][wCompIdx] = Z1; // hence, assign complete mass soluted into nPhase
+            // store as moleFractions
+            moleFraction_[nPhaseIdx][wCompIdx] = ( massFraction_[nPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx) );  // = moles of compIdx
+            moleFraction_[nPhaseIdx][wCompIdx] /= ( massFraction_[nPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
+                           + massFraction_[nPhaseIdx][nCompIdx] / FluidSystem::molarMass(nCompIdx) );    // /= total moles in phase
+
+            // corresponding phase
+            massFraction_[wPhaseIdx][wCompIdx] = 1.;
+            moleFraction_[wPhaseIdx][wCompIdx] = 1.;
         }
         else    // (Z1 >= Xw1) => no nPhase
         {
             nu_[nPhaseIdx] = 0; // no second phase
-            massfrac_[wPhaseIdx][wCompIdx] = Z1;
-            massfrac_[nPhaseIdx][wCompIdx] = 0.;
+            massFraction_[wPhaseIdx][wCompIdx] = Z1;
+            // store as moleFractions
+            moleFraction_[wPhaseIdx][wCompIdx] = ( massFraction_[wPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx) );  // = moles of compIdx
+            moleFraction_[wPhaseIdx][wCompIdx] /= ( massFraction_[wPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
+                           + massFraction_[wPhaseIdx][nCompIdx] / FluidSystem::molarMass(nCompIdx) );    // /= total moles in phase
+
+            massFraction_[nPhaseIdx][wCompIdx] = 0.;
+            moleFraction_[nPhaseIdx][wCompIdx] = 0.;
         }
 
         // complete array of mass fractions
-        massfrac_[wPhaseIdx][nCompIdx] = 1. - massfrac_[wPhaseIdx][wCompIdx];
-        massfrac_[nPhaseIdx][nCompIdx] = 1. - massfrac_[nPhaseIdx][wCompIdx];
+        massFraction_[wPhaseIdx][nCompIdx] = 1. - massFraction_[wPhaseIdx][wCompIdx];
+        massFraction_[nPhaseIdx][nCompIdx] = 1. - massFraction_[nPhaseIdx][wCompIdx];
+        // complete array of mole fractions
+        moleFraction_[wPhaseIdx][nCompIdx] = 1. - moleFraction_[wPhaseIdx][wCompIdx];
+        moleFraction_[nPhaseIdx][nCompIdx] = 1. - moleFraction_[nPhaseIdx][wCompIdx];
 
         // complete phase mass fractions
         nu_[wPhaseIdx] = 1. - nu_[nPhaseIdx];
@@ -153,11 +165,11 @@ public:
         Sw_ /= (nu_[wPhaseIdx]/density_[wPhaseIdx] + nu_[nPhaseIdx]/density_[nPhaseIdx]);
 
         massConcentration_[wCompIdx] =
-                poro * (massfrac_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massfrac_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
+                poro * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
+                        + massFraction_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
         massConcentration_[nCompIdx] =
-                poro * (massfrac_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massfrac_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
+                poro * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
+                        + massFraction_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
     }
 
     //! a flash routine for 2p2c if the saturation instead of total concentration is known.
@@ -196,23 +208,26 @@ public:
                     / phasePressure_[nPhaseIdx];
 
         // get mole fraction from equilibrium konstants
-        Scalar xw1 = (1. - k2) / (k1 -k2);
-        Scalar xn1 = xw1 * k1;
+        moleFraction_[wPhaseIdx][wCompIdx] = (1. - k2) / (k1 -k2);
+        moleFraction_[nPhaseIdx][wCompIdx] = moleFraction_[wPhaseIdx][wCompIdx] * k1;
 
 
         // transform mole to mass fractions
-        massfrac_[wPhaseIdx][wCompIdx] = xw1 * FluidSystem::molarMass(wCompIdx)
-            / ( xw1 * FluidSystem::molarMass(wCompIdx) + (1.-xw1) * FluidSystem::molarMass(nCompIdx) );
-        massfrac_[nPhaseIdx][wCompIdx] = xn1 * FluidSystem::molarMass(wCompIdx)
-            / ( xn1 * FluidSystem::molarMass(wCompIdx) + (1.-xn1) * FluidSystem::molarMass(nCompIdx) );
+        massFraction_[wPhaseIdx][wCompIdx] = moleFraction_[wPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx)
+            / ( moleFraction_[wPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx) + (1.-moleFraction_[wPhaseIdx][wCompIdx]) * FluidSystem::molarMass(nCompIdx) );
+        massFraction_[nPhaseIdx][wCompIdx] = moleFraction_[nPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx)
+            / ( moleFraction_[nPhaseIdx][wCompIdx] * FluidSystem::molarMass(wCompIdx) + (1.-moleFraction_[nPhaseIdx][wCompIdx]) * FluidSystem::molarMass(nCompIdx) );
 
         // complete array of mass fractions
-        massfrac_[wPhaseIdx][nCompIdx] = 1. - massfrac_[wPhaseIdx][wCompIdx];
-        massfrac_[nPhaseIdx][nCompIdx] = 1. - massfrac_[nPhaseIdx][wCompIdx];
+        massFraction_[wPhaseIdx][nCompIdx] = 1. - massFraction_[wPhaseIdx][wCompIdx];
+        massFraction_[nPhaseIdx][nCompIdx] = 1. - massFraction_[nPhaseIdx][wCompIdx];
+        // complete array of mole fractions
+        moleFraction_[wPhaseIdx][nCompIdx] = 1. - moleFraction_[wPhaseIdx][wCompIdx];
+        moleFraction_[nPhaseIdx][nCompIdx] = 1. - moleFraction_[nPhaseIdx][wCompIdx];
 
         //mass equilibrium ratios
-        equilRatio_[nPhaseIdx][wCompIdx] = massfrac_[nPhaseIdx][wCompIdx] / massfrac_[wPhaseIdx][wCompIdx];     // = Xn1 / Xw1 = K1
-        equilRatio_[nPhaseIdx][nCompIdx] = (1.-massfrac_[nPhaseIdx][wCompIdx])/ (1.-massfrac_[wPhaseIdx][wCompIdx]); // =(1.-Xn1) / (1.-Xw1)     = K2
+        equilRatio_[nPhaseIdx][wCompIdx] = massFraction_[nPhaseIdx][wCompIdx] / massFraction_[wPhaseIdx][wCompIdx];     // = Xn1 / Xw1 = K1
+        equilRatio_[nPhaseIdx][nCompIdx] = (1.-massFraction_[nPhaseIdx][wCompIdx])/ (1.-massFraction_[wPhaseIdx][wCompIdx]); // =(1.-Xn1) / (1.-Xw1)     = K2
         equilRatio_[wPhaseIdx][nCompIdx] = equilRatio_[wPhaseIdx][wCompIdx] = 1.;
 
         // get densities with correct composition
@@ -220,11 +235,11 @@ public:
         density_[nPhaseIdx] = FluidSystem::density(*this, nPhaseIdx);
 
         massConcentration_[wCompIdx] =
-                poro * (massfrac_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massfrac_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
+                poro * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
+                        + massFraction_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
         massConcentration_[nCompIdx] =
-                poro * (massfrac_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massfrac_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
+                poro * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
+                        + massFraction_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
     }
     //@}
     /*!
@@ -252,7 +267,7 @@ public:
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
-        return massfrac_[phaseIdx][compIdx];
+        return massFraction_[phaseIdx][compIdx];
 
     }
 
@@ -264,11 +279,7 @@ public:
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
-        // as the moass fractions are calculated, it is used to determine the mole fractions
-        double moleFrac_ = ( massfrac_[phaseIdx][compIdx] / FluidSystem::molarMass(compIdx) );  // = moles of compIdx
-        moleFrac_ /= ( massfrac_[phaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
-                       + massfrac_[phaseIdx][nCompIdx] / FluidSystem::molarMass(nCompIdx) );    // /= total moles in phase
-        return moleFrac_;
+        return moleFraction_[phaseIdx][compIdx];
     }
 
     /*!
@@ -335,6 +346,24 @@ public:
     { return temperature_; };
 
     /*!
+     * \brief Return the average molar mass of a phase.
+     *
+     * This is the sum of all molar masses times their respective mole
+     * fractions in the phase.
+     *
+     * Unit: \f$\mathrm{[kg/m^3]}\f$
+     */
+    Scalar averageMolarMass(int phaseIdx) const
+    {
+        Scalar averageMolarMass = 0;
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            averageMolarMass += moleFraction_[phaseIdx][compIdx]*FluidSystem::molarMass(compIdx);
+        }
+        return averageMolarMass;
+    }
+
+    /*!
      * \brief Returns the phase mass fraction. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
      *
      * \param phaseIdx the index of the phase
@@ -353,14 +382,17 @@ public:
     //@}
 
 private:
-    Scalar density_[numPhases];
     Scalar massConcentration_[numComponents];
-    Scalar massfrac_[numPhases][numComponents];
-    Scalar equilRatio_[numPhases][numComponents];
     Scalar phasePressure_[numPhases];
     Scalar temperature_;
+
     Scalar Sw_;
     Scalar nu_[numPhases]; //phase mass fraction
+    Scalar density_[numPhases];
+    Scalar massFraction_[numPhases][numComponents];
+    Scalar moleFraction_[numPhases][numComponents];
+    Scalar equilRatio_[numPhases][numComponents];
+    Scalar averageMolarMass_[numPhases];
 };
 
 } // end namepace

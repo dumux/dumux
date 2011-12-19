@@ -36,13 +36,12 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
 
-// fluid properties
-//#include <dumux/material/old_fluidsystems/brine_co2_system.hh>
-#include <dumux/material/old_fluidsystems/h2o_n2_system.hh>
-
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2cmultiphysics.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2cmultiphysics.hh>
+// fluid properties
+//#include <dumux/material/fluidsystems/brine_co2_system.hh>
+#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 
@@ -92,16 +91,16 @@ SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
 // Select fluid system
 SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
 {
-    typedef Dumux::H2O_N2_System<TypeTag> type;
+    typedef Dumux::H2ON2FluidSystem<TypeTag> type;
 };
 
-// Select water formulation
-SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, PTAG(DefaultComponents))
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-//    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
-        typedef Dumux::H2O<Scalar> H2O;
-};
+//// Select water formulation
+//SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, PTAG(DefaultComponents))
+//{
+//    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+////    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
+//        typedef Dumux::H2O<Scalar> H2O;
+//};
 
 // Set the soil properties
 SET_PROP(TestMultTwoPTwoCProblem, SpatialParameters)
