@@ -3,7 +3,6 @@
 ################################
 
 Module: dumux
-Version: 2.0
+Version: 2.1-svn
 Maintainer: bernd@iws.uni-stuttgart.de
-Depends: dune-grid (>= 2.0) dune-localfunctions  (>= 2.0) dune-istl  (>= 2.0)
-#Suggests: dune-pdelab
+Depends: dune-grid (>= 2.1) dune-localfunctions  (>= 2.1) dune-istl  (>= 2.1)
