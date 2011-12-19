@@ -6,7 +6,7 @@ EXTRA_DIST = dune.module \
              CONTRIBUTORS INSTALL.cmake LICENSE \ 
              debug.opts optim.opts 
 
-SUBDIRS = appl doc dumux m4 test tutorial
+SUBDIRS = doc dumux m4 test tutorial
 
 if BUILD_DOCS
 # TODO: set up documentation tree automatically

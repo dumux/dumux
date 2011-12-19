@@ -1,4 +1,0 @@
-SUBDIRS = msm \
-mhs
-
-include $(top_srcdir)/am/global-rules

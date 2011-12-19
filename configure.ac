@@ -8,14 +8,6 @@ DUNE_CHECK_ALL
 
 AC_CONFIG_FILES([dumux.pc
     Makefile
-    appl/Makefile
-    appl/lecture/Makefile
-    appl/lecture/mhs/Makefile
-    appl/lecture/mhs/groundwater/Makefile
-    appl/lecture/msm/Makefile
-    appl/lecture/msm/1p2cvs2p/Makefile
-    appl/lecture/msm/buckleyleverett/Makefile
-    appl/lecture/msm/mcwhorter/Makefile
     doc/Makefile 
     doc/doxygen/Makefile 
     doc/doxygen/Doxyfile
