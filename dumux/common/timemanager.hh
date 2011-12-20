@@ -28,8 +28,6 @@
 
 #include <dumux/common/propertysystem.hh>
 
-#include <boost/format.hpp>
-
 #include <dune/common/timer.hh>
 #include <dune/common/mpihelper.hh>
 
@@ -387,9 +385,12 @@ public:
             ++timeStepIdx_;
 
             if (verbose_) {
-                std::cout <<
-                    boost::format("Time step %d done. Wall time:%.4g, time:%.4g, time step size:%.4g\n")
-                    %timeStepIndex()%timer_.elapsed()%time()%dt;
+                std::cout 
+                    << "Time step "<<timeStepIndex()<<" done. "
+                    << "Wall time:"<<timer_.elapsed()
+                    <<", time:"<<time()
+                    <<", time step size:"<<dt
+                    <<"\n";
             }
 
             // write restart file if mandated by the problem

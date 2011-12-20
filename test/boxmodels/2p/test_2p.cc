@@ -37,7 +37,6 @@
 #include <dune/common/mpihelper.hh>
 
 #include <iostream>
-#include <boost/format.hpp>
 
 //! \cond INTERNAL
 ////////////////////////
@@ -144,7 +143,7 @@ public:
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s [--restart restartTime] tEnd dt\n")%progname;
+    std::cout << "usage: " << progname << " [--restart restartTime] tEnd dt\n";
     exit(1);
 }
 

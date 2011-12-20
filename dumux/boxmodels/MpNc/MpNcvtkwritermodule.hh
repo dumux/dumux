@@ -29,6 +29,8 @@
 
 #include <tr1/array>
 
+#include <stdio.h>
+
 namespace Dumux
 {
 /*!
@@ -203,15 +205,14 @@ protected:
                             PhaseBuffer &buffer,
                             bool vertexCentered = true)
     {
+        char name[512];
         for (int i = 0; i < numPhases; ++i) {
-            std::string phaseName = FluidSystem::phaseName(i);
-            std::string name;
-            name = (boost::format(pattern)%phaseName).str();
+            snprintf(name, 512, pattern, FluidSystem::phaseName(i));
 
             if (vertexCentered)
-                writer.attachVertexData(buffer[i], name.c_str(), 1);
+                writer.attachVertexData(buffer[i], name, 1);
             else
-                writer.attachCellData(buffer[i], name.c_str(), 1);
+                writer.attachCellData(buffer[i], name, 1);
         }
     }
 
@@ -224,15 +225,14 @@ protected:
                                 ComponentBuffer &buffer,
                                 bool vertexCentered = true)
     {
+        char name[512];
         for (int i = 0; i < numComponents; ++i) {
-            std::string compName = FluidSystem::componentName(i);
-            std::string name;
-            name = (boost::format(pattern)%compName).str();
+            snprintf(name, 512, pattern, FluidSystem::componentName(i));
 
             if (vertexCentered)
-                writer.attachVertexData(buffer[i], name.c_str(), 1);
+                writer.attachVertexData(buffer[i], name, 1);
             else
-                writer.attachCellData(buffer[i], name.c_str(), 1);
+                writer.attachCellData(buffer[i], name, 1);
         }
     }
 
@@ -245,12 +245,12 @@ protected:
                                      PhaseComponentBuffer &buffer,
                                      bool vertexCentered = true)
     {
+        char name[512];
         for (int i= 0; i < numPhases; ++i) {
-            std::string phaseName = FluidSystem::phaseName(i);
             for (int j = 0; j < numComponents; ++j) {
-                std::string compName = FluidSystem::componentName(j);
-                std::string name;
-                name = (boost::format(pattern)%phaseName%compName).str();
+                snprintf(name, 512, pattern, 
+                         FluidSystem::phaseName(i),
+                         FluidSystem::componentName(j));
 
                 if (vertexCentered)
                     writer.attachVertexData(buffer[i][j], name.c_str(), 1);

@@ -37,7 +37,6 @@
 #include <dune/common/mpihelper.hh>
 
 #include <iostream>
-#include <boost/format.hpp>
 
 
 ////////////////////////
@@ -45,7 +44,7 @@
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s --box/--decoupled tEnd dt [refineLevel]\n")%progname;
+    std::cout << "usage: " << progname << " --box/--decoupled tEnd dt [refineLevel]\n";
     exit(1);
 }
 

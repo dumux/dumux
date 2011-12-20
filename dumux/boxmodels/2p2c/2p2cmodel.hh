@@ -515,10 +515,9 @@ public:
         {
             for (int j = 0; j < numComponents; ++j)
             {
-                std::string name = (boost::format("X_%s%s")
-                                    % ((i == lPhaseIdx) ? "l" : "g")
-                                    % FluidSystem::componentName(j)).str();
-                writer.attachVertexData(*massFrac[i][j], name.c_str());
+                std::ostringstream oss;
+                oss << "X_" << FluidSystem::phaseName(i) << "^" << FluidSystem::componentName(j);
+                writer.attachVertexData(*massFrac[i][j], oss.str());
             }
         }
         writer.attachVertexData(*poro, "porosity");

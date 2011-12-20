@@ -653,9 +653,13 @@ public:
         }
 
         for (int i = 0; i < numEq; ++i) {
-            writer.attachVertexData(*x[i], (boost::format("x_%i")%i).str().c_str());
-            writer.attachVertexData(*delta[i], (boost::format("delta_%i")%i).str().c_str());
-            writer.attachVertexData(*def[i], (boost::format("defect_%i")%i).str().c_str());
+            std::ostringstream oss;
+            oss << "x_" << i;
+            writer.attachVertexData(*x[i], oss.str());
+            oss.clear(); oss << "delta_" << i;
+            writer.attachVertexData(*delta[i], oss.str());
+            oss.clear(); oss << "defect_" << i;
+            writer.attachVertexData(*def[i], oss.str());
         }
 
         asImp_().addOutputVtkFields(u, writer);
@@ -698,8 +702,11 @@ public:
             }
         }
 
-        for (int i = 0; i < numEq; ++i)
-            writer.attachVertexData(*x[i], (boost::format("primaryVar%i")%i).str().c_str());
+        for (int i = 0; i < numEq; ++i) {
+            std::ostringstream oss;
+            oss << "primaryVar_" << i;
+            writer.attachVertexData(*x[i], oss.str());
+        }
     }
 
     /*!

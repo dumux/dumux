@@ -244,11 +244,10 @@ public:
                 for (int i = 0; i < nVerts; ++i)
                     velocity_[phaseIdx][i] /= boxSurface_[i];
                 // commit the phase velocity
-                std::string name;
-                const char *phaseName = FluidSystem::phaseName(phaseIdx);
-                name = (boost::format("velocity_%s")%phaseName).str();
+                std::ostringstream oss;
+                oss << "velocity_" << FluidSystem::phaseName(phaseIdx);
                 writer.attachVertexData(velocity_[phaseIdx],
-                                        name.c_str(),
+                                        oss.str(),
                                         dim);
             }
         }

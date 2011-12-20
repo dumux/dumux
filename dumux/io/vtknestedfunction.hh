@@ -39,6 +39,8 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #endif
 
+#include <string>
+
 namespace Dumux {
 
 /*!
@@ -53,7 +55,7 @@ class VtkNestedFunction : public Dune::VTKFunction<Grid>
     typedef typename Grid::template Codim<0>::Entity Element;
 
 public:
-    VtkNestedFunction(const char *name,
+    VtkNestedFunction(std::string name,
                       const Grid &grid,
                       const Mapper &mapper,
                       const Buffer &buf,

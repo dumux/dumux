@@ -29,7 +29,6 @@
  */
 #include "config.h"
 #include <iostream>
-#include <boost/format.hpp>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
@@ -43,7 +42,7 @@
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s #refine [delta]\n")%progname;
+    std::cout << "usage: " << progname << " #refine [delta]\n";
     exit(1);
 }
 

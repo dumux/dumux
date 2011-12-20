@@ -37,14 +37,13 @@
 #include <dune/common/mpihelper.hh>
 
 #include <iostream>
-#include <boost/format.hpp>
 
 ////////////////////////
 // the main function
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s [--restart restartTime] tEnd firstDt\n")%progname;
+    std::cout << "usage: " << progname << " [--restart restartTime] tEnd firstDt\n";
     exit(1);
 }
 

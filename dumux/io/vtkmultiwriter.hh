@@ -35,8 +35,6 @@
 
 #include <dumux/common/valgrind.hh>
 
-#include <boost/format.hpp>
-
 #if HAVE_MPI
 #include <mpi.h>
 #endif
@@ -206,7 +204,7 @@ public:
      * method and endWrite() results in _undefined behaviour_.
      */
     template <class DataBuffer>
-    void attachVertexData(DataBuffer &buf, const char *name, int nComps=1)
+    void attachVertexData(DataBuffer &buf, std::string name, int nComps=1)
     {
         sanitizeBuffer_(buf, nComps);
 
@@ -223,7 +221,7 @@ public:
 
     template <class DataArray>
     DUNE_DEPRECATED // use attachVertexData() instead!
-    void addVertexData(DataArray *field, const char *name, int nComps=1)
+    void addVertexData(DataArray *field, std::string name, int nComps=1)
     {
         // the old way to set the number of components was broken, so
         // we always use 1.
@@ -246,7 +244,7 @@ public:
      * method and endWrite() results in _undefined behaviour_.
      */
     template <class DataBuffer>
-    void attachCellData(DataBuffer &buf, const char *name, int nComps = 1)
+    void attachCellData(DataBuffer &buf, std::string name, int nComps = 1)
     {
         sanitizeBuffer_(buf, nComps);
 
@@ -263,7 +261,7 @@ public:
 
     template <class VectorField>
     DUNE_DEPRECATED // use attachCellData() instead
-    void addCellData(VectorField *field, const char *name, int nComps = 1)
+    void addCellData(VectorField *field, std::string name, int nComps = 1)
     {
         // the old way to set the number of components was broken, so
         // we always use 1.
@@ -405,22 +403,27 @@ public:
 private:
     std::string fileName_()
     {
-        return (boost::format("%s-%05d")
-                %simName_%curWriterNum_).str();
+        std::ostringstream oss;
+        oss << simName_ << "-" << std::setw(5) << std::setfill('0') << curWriterNum_;
+        return oss.str();
     }
 
     std::string fileName_(int rank)
     {
         if (commSize_ > 1) {
-            return (boost::format("s%04d:p%04d:%s-%05d")
-                    %commSize_
-                    %rank
-                    %simName_
-                    %curWriterNum_).str();
+            std::ostringstream oss;
+            oss << "s" << std::setw(4) << std::setfill('0') << commSize_
+                << ":p" << rank
+                << ":" << simName_ << "-"
+                << std::setw(5) << curWriterNum_;
+            return oss.str();
+
+            return oss.str();
         }
         else {
-            return (boost::format("%s-%05d")
-                    %simName_%curWriterNum_).str();
+            std::ostringstream oss;
+            oss << simName_ << "-" << std::setw(5) << std::setfill('0') << curWriterNum_;
+            return oss.str();
         }
     }
 

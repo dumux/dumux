@@ -24,6 +24,8 @@ AC_DEFUN([DUMUX_CHECKS],
      DUNE_ADD_SUMMARY_ENTRY([Valgrind client requests],["no"])
   fi
   
+  # check for the availablility of quadruple precision floating point
+  # math and enable it if requested.
   DUMUX_CHECK_QUAD
 
   # Add the DUMUX_DEPRECATED* macros. TODO: remove after we depend on
@@ -36,14 +38,6 @@ AC_DEFUN([DUMUX_CHECKS],
   if test "x$HAVE_CONSTEXPR" != "xyes"; then
       AC_DEFINE(constexpr, const, ['set 'constexpr' to 'const' if constexpr is not supported])
   fi
-
-  # the Boost c++ template libraries
-  AX_BOOST_BASE([1.33.1])
-
-  # check whether pardiso is installed (this is already in dune-common
-  # so we only use the results.)
-  # SET_PARDISO
-  DUNE_ADD_SUMMARY_ENTRY([Pardiso],[$acx_pardiso_ok])
 
   # Add the latex and handbook status to the summary
   have_latex=no

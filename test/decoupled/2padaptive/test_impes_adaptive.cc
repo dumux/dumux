@@ -51,7 +51,6 @@ int main()
 #include <dune/common/parametertreeparser.hh>
 
 #include <iostream>
-#include <boost/format.hpp>
 
 
 ////////////////////////
@@ -59,7 +58,7 @@ int main()
 ////////////////////////
 void usage(const char *progname)
 {
-    std::cout << boost::format("usage: %s [--restart restartTime] InputFileName\n")%progname;
+    std::cout << "usage: " << progname << " [--restart restartTime] InputFileName\n";
     exit(1);
 }
 

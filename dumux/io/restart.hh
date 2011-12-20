@@ -30,8 +30,6 @@
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 
-#include <boost/format.hpp>
-
 #include <list>
 #include <string>
 #include <iostream>
@@ -57,20 +55,15 @@ class Restart {
         int numCPUs = gridView.comm().size();
         int rank = gridView.comm().rank();
 
-        return
-            (boost::format("DuMux restart file: "
-                           "gridName='%s' "
-                           "numCPUs=%d "
-                           "myRank=%d "
-                           "numElements=%d "
-                           "numEdges=%d "
-                           "numVertices=%d")
-             %gridName
-             %numCPUs
-             %rank
-             %numElements
-             %numEdges
-             %numVertices).str();
+        std::ostringstream oss;
+        oss << "DuMux restart file: "
+            << "gridName='"<<gridName<<"' "
+            << "numCPUs="<<numCPUs<<" "
+            << "myRank="<<rank<<" "
+            << "numElements="<<numElements<<" "
+            << "numEdges="<<numEdges<<" "
+            << "numVertices="<<numVertices;
+        return oss.str();
     }
 
     //! \brief Return the restart file name.
@@ -80,10 +73,9 @@ class Restart {
                                               double t)
     {
         int rank = gridView.comm().rank();
-        return (boost::format("%s_time=%.3lf_rank=%05d.drs")
-                %simName
-                %t
-                %rank).str();
+        std::ostringstream oss;
+        oss << simName<<"_time="<<t<<"_rank="<<rank<<".drs";
+        return oss.str();
     };
 
 
@@ -144,7 +136,9 @@ public:
     void serializeEntities(Serializer &serializer,
                            const GridView &gridView)
     {
-        std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
+        std::ostringstream oss;
+        oss << "Entities: Codim " << codim;
+        std::string cookie = oss.str();
         serializeSectionBegin(cookie);
 
         // write element data
@@ -257,7 +251,9 @@ public:
     void deserializeEntities(Deserializer &deserializer,
                              const GridView &gridView)
     {
-        std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
+        std::ostringstream oss;
+        oss << "Entities: Codim " << codim;
+        std::string cookie = oss.str();
         deserializeSectionBegin(cookie);
 
         std::string curLine;
