@@ -201,7 +201,15 @@ file(COPY test/decoupled/2p2c/test_dec2p2c-reference.vtu DESTINATION test/decoup
 # set up CTest 
 ENABLE_TESTING()
 INCLUDE(CTest)
-ADD_TEST(test_1p util/runTest.sh test/boxmodels/1p/1ptest-reference.vtu 1ptest-00002.vtu test/boxmodels/1p/test_1p test/boxmodels/1p/grids/test_1p_2d.dgf 1 1)
+add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
+add_test(test_generalproblem test/common/generalproblem/test_generalproblem_2p)
+add_test(test_spline test/common/spline/test_spline)
+
+add_test(test_fluidsystems test/material/fluidsystems/test_fluidsystems)
+add_test(test_ncpflash test/material/ncpflash/test_ncpflash)
+add_test(test_tabulation test/material/tabulation/test_tabulation)
+
+add_test(test_1p util/runTest.sh test/boxmodels/1p/1ptest-reference.vtu 1ptest-00002.vtu test/boxmodels/1p/test_1p test/boxmodels/1p/grids/test_1p_2d.dgf 1 1)
 add_test(test_1p2c util/runTest.sh test/boxmodels/1p2c/tissue-reference.vtu tissue-00003.vtu test/boxmodels/1p2c/test_1p2c test/boxmodels/1p2c/grids/test_1p2c.dgf 2e3 1e3)
 add_test(test_2p util/runTest.sh test/boxmodels/2p/lens-reference.vtu lens-00010.vtu test/boxmodels/2p/test_2p 3000 250)
 add_test(test_2pni util/runTest.sh test/boxmodels/2pni/injection2pni-reference.vtu injection2pni-00009.vtu test/boxmodels/2pni/test_2pni test/boxmodels/2pni/grids/test_2pni.dgf 1e4 250)
@@ -209,15 +217,13 @@ add_test(test_2p2c util/runTest.sh test/boxmodels/2p2c/injection-reference.vtu i
 add_test(test_2p2cni util/runTest.sh test/boxmodels/2p2cni/waterair-reference.vtu waterair-00011.vtu test/boxmodels/2p2cni/test_2p2cni test/boxmodels/2p2cni/grids/test_2p2cni.dgf 1e4 250)
 add_test(test_MpNc util/runTest.sh test/boxmodels/MpNc/obstacle-reference.vtu obstacle-00011.vtu test/boxmodels/MpNc/test_MpNc test/boxmodels/MpNc/grids/obstacle_24x16.dgf 1e4 250)
 add_test(test_richards util/runTest.sh test/boxmodels/richards/richardslens-reference.vtu richardslens-00009.vtu test/boxmodels/richards/test_richards test/boxmodels/richards/grids/richardslens.dgf 100 10)
-add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
-add_test(test_spline test/common/spline/test_spline)
+
 add_test(test_diffusion util/runTest.sh test/decoupled/1p/diffusion-reference.vtu mimeticdiffusion-00001.vtu test/decoupled/1p/test_diffusion 3)
 add_test(test_dec1p util/runTest.sh test/decoupled/1p/test_1p-reference.vtu test_1p-00001.vtu test/decoupled/1p/test_dec1p 3)
 add_test(test_transport util/runTest.sh test/decoupled/2p/test_transport-reference.vtu test_transport-00006.vtu test/decoupled/2p/test_transport test/decoupled/2p/grids/test_transport.dgf 1e4)
 add_test(test_impes util/runTest.sh test/decoupled/2p/test_impes-reference.vtu test_impes-00013.vtu test/decoupled/2p/test_impes 1e7)
 add_test(test_dec2p2c util/runTest.sh test/decoupled/2p2c/test_dec2p2c-reference.vtu test_dec2p2c-00021.vtu test/decoupled/2p2c/test_dec2p2c)
-add_test(test_fluidsystems test/material/fluidsystems/test_fluidsystems)
-add_test(test_fluidsystems test/material/ncpflash/test_ncpflash)
+
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
