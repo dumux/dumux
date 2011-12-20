@@ -21,10 +21,8 @@ following DUNE modules into your source directory:
   - dune-grid          from [1]
   - dune-istl          from [1]
   - dune-localfuctions from [1]
-  - dune-pdelab        from [2]
 
-Use the 2.0 release of the DUNE core modules and the 2.0 snapshot of 
-dune-pdelab. 
+Use the 2.1 release of the DUNE core modules. 
 
 Next, you need to decide whether you want to compile in debug or in
 optimized mode. Example files are located in $DUMUX_ROOT/optim.opts 
@@ -41,13 +39,12 @@ Finally, install DUNE and DuMuX headers to your system by
   ./dune-common/bin/dunecontrol --module=dumux make install
 
 A more comprehensive introduction to the DUNE build system can be
-found in [3].
+found in [2].
 
 Links
 -----
 
 0. http://www.dune-project.org/doc/installation-notes.html
 1. http://www.dune-project.org/download.html
-2. http://www.dune-project.org/downloadext.html
-3. http://www.dune-project.org/doc/buildsystem/buildsystem.pdf
+2. http://www.dune-project.org/doc/buildsystem/buildsystem.pdf
 
