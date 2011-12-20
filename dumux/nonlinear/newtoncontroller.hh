@@ -380,11 +380,15 @@ public:
             int converged = linearSolver_.solve(A, x, b);
 
             // make sure all processes converged
-            converged = gridView_().comm().min(converged);
+            int convergedRemote = gridView_().comm().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
-                           "A process threw NumericalProblem");
+                           "Linear solver did not converge");
+            }
+            else if (!convergedRemote) {
+                DUNE_THROW(NumericalProblem,
+                           "Linear solver did not converge on a remote process");
             }
         }
         catch (Dune::MatrixBlockError e) {
