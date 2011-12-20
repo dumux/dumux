@@ -253,9 +253,9 @@ protected:
                          FluidSystem::componentName(j));
 
                 if (vertexCentered)
-                    writer.attachVertexData(buffer[i][j], name.c_str(), 1);
+                    writer.attachVertexData(buffer[i][j], name, 1);
                 else
-                    writer.attachCellData(buffer[i][j], name.c_str(), 1);
+                    writer.attachCellData(buffer[i][j], name, 1);
             }
         }
     }
