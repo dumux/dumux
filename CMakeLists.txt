@@ -2,7 +2,7 @@
 # general stuff
 cmake_minimum_required(VERSION 2.6)
 set(ProjectName            "DuMuX")
-set(ProjectVersion         "2.1svn")
+set(ProjectVersion         "2.1-svn")
 set(ProjectMaintainer      "Bernd Flemisch")
 set(ProjectMaintainerEmail "Bernd.Flemisch_at_iws dot uni-stuttgart dot de")
 project(${ProjectName} CXX)
@@ -218,7 +218,6 @@ add_test(test_impes util/runTest.sh test/decoupled/2p/test_impes-reference.vtu t
 add_test(test_dec2p2c util/runTest.sh test/decoupled/2p2c/test_dec2p2c-reference.vtu test_dec2p2c-00021.vtu test/decoupled/2p2c/test_dec2p2c)
 add_test(test_fluidsystems test/material/fluidsystems/test_fluidsystems)
 add_test(test_fluidsystems test/material/ncpflash/test_ncpflash)
-add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
