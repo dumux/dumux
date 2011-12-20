@@ -32,11 +32,7 @@
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
-
-#include <dumux/common/pardiso.hh>
-
 #include <dumux/io/vtkmultiwriter.hh>
-
 #include <dumux/linear/boxlinearsolver.hh>
 
 #include "newtonconvergencewriter.hh"

@@ -25,7 +25,6 @@
 #define DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 
 // dumux environment
-#include "dumux/common/pardiso.hh"
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 

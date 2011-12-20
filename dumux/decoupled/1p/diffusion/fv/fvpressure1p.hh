@@ -25,7 +25,6 @@
 
 
 // dumux environment
-#include "dumux/common/pardiso.hh"
 #include <dumux/decoupled/1p/1pproperties.hh>
 
 /**

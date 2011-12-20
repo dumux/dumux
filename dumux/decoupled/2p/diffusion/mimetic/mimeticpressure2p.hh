@@ -36,7 +36,6 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
-#include "dumux/common/pardiso.hh"
 #include <dumux/decoupled/2p/2pproperties.hh>
 #include "mimeticproperties.hh"
 
