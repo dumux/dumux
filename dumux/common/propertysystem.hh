@@ -43,12 +43,9 @@
 #define DUMUX_PROPERTIES_HH
 
 // For is_base_of
-#include <boost/type_traits.hpp>
+#include <tr1/type_traits>
 
 // Integral Constant Expressions
-
-// string formating
-#include <boost/format.hpp>
 
 #include <dune/common/classname.hh>
 
@@ -57,7 +54,7 @@
 #include <list>
 #include <string>
 #include <iostream>
-#include <boost/lexical_cast.hpp>
+#include <sstream>
 
 #include <string.h>
 
@@ -623,9 +620,45 @@ private:
 TypeTagRegistry::ChildrenListMap TypeTagRegistry::keys_;
 #endif // !defined NO_PROPERTY_INTROSPECTION
 
-using namespace boost::type_traits;
-using boost::is_void;
-using boost::is_base_of;
+using std::tr1::is_void;
+using std::tr1::is_base_of;
+
+// logical AND, OR and NOT operations to be used for template meta programming
+template <bool b1, bool b2, bool b3 = true, bool b4 = true, bool b5 = true, bool b6 = true, bool b7 = true>
+struct ice_and
+{
+    static const bool value = false;
+};
+
+template <>
+struct ice_and<true, true, true, true, true, true, true>
+{
+    static const bool value = true;
+};
+
+template <bool b1, bool b2, bool b3 = false, bool b4 = false, bool b5 = false, bool b6 = false, bool b7 = false>
+struct ice_or
+{
+    static const bool value = true;
+};
+
+template <>
+struct ice_or<false, false, false, false, false, false, false>
+{
+    static const bool value = false;
+};
+
+template <bool b>
+struct ice_not
+{
+    static const bool value = false;
+};
+
+template <>
+struct ice_not<false>
+{
+    static const bool value = true;
+};
 
 //! \internal
 class PropertyUndefined {};
@@ -694,7 +727,7 @@ public:
 template <class PropertyTag>
 struct propertyExplicitlyUnsetOnTree<void, PropertyTag>
 {
-    const static bool value = boost::true_type::value;
+    const static bool value = std::tr1::true_type::value;
 };
 
 //! \internal
@@ -735,7 +768,7 @@ template <class RealTypeTag, class PropertyTag>
 class propertyDefinedOnTree<RealTypeTag, void, PropertyTag>
 {
 public:
-    static const bool value = boost::false_type::value;
+    static const bool value = std::tr1::false_type::value;
 };
 
 //! \internal
@@ -779,7 +812,7 @@ public:
 template <class RealTypeTag, class PropertyTag>
 struct defaultPropertyDefinedOnTree<RealTypeTag,void, PropertyTag>
 {
-    static const bool value = boost::false_type::value;
+    static const bool value = std::tr1::false_type::value;
 };
 
 //! \internal
@@ -939,12 +972,13 @@ inline bool getDiagnostic_(const std::string &typeTagName,
     }
 
     if (key) {
-        result = indent;
-        result +=
-            key->propertyKind() + " "
-            + key->propertyName() + " defined on '"
-            + canonicalTypeTagNameToName_(key->effTypeTagName()) + "' at "
-            + key->fileDefined() + ":" + boost::lexical_cast<std::string>(key->lineDefined()) + "\n";
+        std::ostringstream oss;
+        oss << indent 
+            << key->propertyKind() << " "
+            << key->propertyName() << " defined on '"
+            << canonicalTypeTagNameToName_(key->effTypeTagName()) << "' at "
+            << key->fileDefined() << ":" << key->lineDefined() << "\n";
+        result = oss.str();
         return true;
     }
 
@@ -984,10 +1018,13 @@ const std::string getDiagnostic(std::string propTagName)
             const PropertyRegistryKey &key = it->second;
             if (key.propertyName() != propTagName)
                 continue; // property already printed
-            result = "fallback " + key.propertyName()
-                + " defined " + key.fileDefined()
-                + ":" + boost::lexical_cast<std::string>(key.lineDefined())
-                + "\n";
+            
+            std::ostringstream oss;
+            oss << "fallback " << key.propertyName()
+                << " defined at " << key.fileDefined()
+                << ":" << key.lineDefined()
+                <<"\n";
+            result = oss.str();
         };
     }
 
