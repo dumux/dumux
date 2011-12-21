@@ -108,7 +108,7 @@ SET_BOOL_PROP(GeneralLensProblem, EnableGravity, true);
 // Box model TypeTag
 //////////////////////////////////////////////////
 
-NEW_TYPE_TAG(BoxGeneralLensProblem, INHERITS_FROM(GeneralLensProblem, BoxTwoP));
+NEW_TYPE_TAG(BoxGeneralLensProblem, INHERITS_FROM(BoxTwoP, GeneralLensProblem));
 
 
 // Set the problem property

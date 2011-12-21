@@ -134,6 +134,7 @@ int main(int argc, char** argv)
             Dumux::GeneralLensProblem<BoxTypeTag> problem(timeManager, grid->leafView(), lowerLeftLens, upperRightLens);
             problem.setName("generallens_box");
             timeManager.init(problem, 0, dt, tEnd, false);
+            Dumux::Properties::print<BoxTypeTag>();
             timeManager.run();
             return 0;
         }
@@ -143,6 +144,7 @@ int main(int argc, char** argv)
             Dumux::GeneralLensProblem<DecoupledTypeTag> problem(timeManager, grid->leafView(), lowerLeftLens, upperRightLens);
             problem.setName("generallens_decoupled");
             timeManager.init(problem, 0, dt, tEnd, false);
+            Dumux::Properties::print<DecoupledTypeTag>();
             timeManager.run();
             return 0;
         }

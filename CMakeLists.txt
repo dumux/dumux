@@ -197,13 +197,15 @@ file(COPY test/decoupled/1p/test_1p-reference.vtu DESTINATION test/decoupled/1p)
 file(COPY test/decoupled/2p/test_transport-reference.vtu DESTINATION test/decoupled/2p)
 file(COPY test/decoupled/2p/test_impes-reference.vtu DESTINATION test/decoupled/2p)
 file(COPY test/decoupled/2p2c/test_dec2p2c-reference.vtu DESTINATION test/decoupled/2p2c)
+file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION test/common/generalproblem)
+file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION test/common/generalproblem)
 
 # set up CTest 
 ENABLE_TESTING()
 INCLUDE(CTest)
 add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
-add_test(test_general_box test/common/generalproblem/test_generalproblem_2p --box 1e4 250)
-add_test(test_general_dec test/common/generalproblem/test_generalproblem_2p --decoupled 1e4 250)
+add_test(test_general_box util/runTest.sh test/common/generalproblem/generallens_box-reference.vtu generallens_box-00003.vtu test/common/generalproblem/test_generalproblem_2p --box 1e2 2e1)
+add_test(test_general_dec util/runTest.sh test/common/generalproblem/generallens_decoupled-reference.vtu generallens_decoupled-00003.vtu test/common/generalproblem/test_generalproblem_2p --decoupled 1e2 2e1)
 add_test(test_spline test/common/spline/test_spline)
 
 add_test(test_fluidsystems test/material/fluidsystems/test_fluidsystems)
