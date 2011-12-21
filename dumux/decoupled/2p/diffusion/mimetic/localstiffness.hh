@@ -78,6 +78,7 @@ namespace Dumux
     typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
     typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
         typedef Dune::array<Dumux::BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
+        typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
     virtual ~LocalStiffness ()
     {
@@ -206,7 +207,7 @@ namespace Dumux
     /*! Access boundary condition type for each degree of freedom. Elements are
       undefined without prior call to the assemble method.
      */
-     const BCBlockType& bc (int i) const
+     const BoundaryTypes& bc (int i) const
      {
        return bctype[i];
      }
@@ -229,7 +230,7 @@ namespace Dumux
     // assembled data
         Dune::Matrix<MBlockType> A;
         std::vector<VBlockType> b;
-        std::vector<BCBlockType> bctype;
+        std::vector<BoundaryTypes> bctype;
 
   };
 

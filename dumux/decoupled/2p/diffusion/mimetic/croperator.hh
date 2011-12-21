@@ -116,6 +116,13 @@ class CROperatorAssembler
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,CRLayout> EM;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,AllLayout> AM;
 
+//    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+
+    enum
+    {
+        pressEqIdx = 0
+    };
+
     // return number of rows/columns
     int size () const
     {
@@ -295,12 +302,12 @@ public:
                 }
 
                 // essential boundary condition and rhs
-                if (loc.bc(i)[0]>essential[local2Global[i]][0])
+                if (loc.bc(i).isDirichlet(pressEqIdx))
                 {
-                    essential[local2Global[i]][0] = loc.bc(i)[0];
+                    essential[local2Global[i]][0] = BoundaryConditions::dirichlet;
                     f[local2Global[i]][0] = loc.rhs(i)[0];
                 }
-                if (essential[local2Global[i]][0]==BoundaryConditions::neumann)
+                else
                     f[local2Global[i]][0] += loc.rhs(i)[0];
             }
 

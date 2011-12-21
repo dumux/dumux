@@ -37,8 +37,6 @@
 
 //Dumux-includes
 #include <dumux/decoupled/2p/2pproperties.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
 
 namespace Dumux
 {
@@ -65,12 +63,6 @@ NEW_TYPE_TAG(Mimetic)
 // Property tags
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
-
-SET_PROP(Mimetic, LocalStiffness)
-{
-public:
-    typedef MimeticGroundwaterEquationLocalStiffness<TypeTag> type;
-};
 
 }
 }

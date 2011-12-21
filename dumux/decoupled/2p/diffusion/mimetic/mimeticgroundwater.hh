@@ -83,8 +83,8 @@ public LocalStiffness<TypeTag, 1>
     };
     enum
     {
-        wetting = Indices::wPhaseIdx,
-        nonwetting = Indices::nPhaseIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         pressEqIdx = Indices::pressEqIdx,
@@ -131,7 +131,7 @@ public:
         for (int i=0; i<numFaces; i++)
         {
             this->b[i] = 0;
-            this->bctype[i][0] = BoundaryConditions::neumann;
+            this->bctype[i].reset();
             for (int j=0; j<numFaces; j++)
                 this->A[i][j] = 0;
         }
@@ -167,7 +167,7 @@ public:
         for (int i=0; i<numFaces; i++)
         {
             this->b[i] = 0;
-            this->bctype[i][0] = BoundaryConditions::neumann;
+            this->bctype[i].reset();
         }
 
         assembleBC(element,k);
@@ -338,7 +338,7 @@ public:
         Scalar densityNW = problem_.variables().densityNonwetting(globalIdx);
         PrimaryVariables sourceVec(0.0);
         problem_.source(sourceVec, element);
-        qmean = volume*(sourceVec[wetting]/densityW + sourceVec[nonwetting]/densityNW);
+        qmean = volume*(sourceVec[wPhaseIdx]/densityW + sourceVec[nPhaseIdx]/densityNW);
     }
 
 private:
@@ -393,35 +393,33 @@ private:
         // evaluate boundary conditions via intersection iterator
         typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-        BoundaryTypes bcType;
-
-        IntersectionIterator endit = gridView_.iend(element);
-        for (IntersectionIterator it = gridView_.ibegin(element); it!=endit; ++it)
-            if (!it->neighbor())
+        IntersectionIterator endIsIt = gridView_.iend(element);
+        for (IntersectionIterator isIt = gridView_.ibegin(element); isIt != endIsIt; ++isIt)
+        {
+            int faceIndex = isIt->indexInInside();
+            if (isIt->boundary())
             {
-                unsigned int faceIndex = it->indexInInside();
-
-                problem_.boundaryTypes(bcType, *it);
+                problem_.boundaryTypes(this->bctype[faceIndex], *isIt);
                 PrimaryVariables boundValues(0.0);
 
-                if (bcType.isNeumann(pressEqIdx))
+                if (this->bctype[faceIndex].isNeumann(pressEqIdx))
                 {
                     int globalIdx = problem_.variables().index(element);
+
                     Scalar densityW = problem_.variables().densityWetting(globalIdx);
                     Scalar densityNW = problem_.variables().densityNonwetting(globalIdx);
 
-                    problem_.neumann(boundValues, *it);
-                    Scalar J = (boundValues[wetting]/densityW + boundValues[nonwetting]/densityNW);
-                    this->b[faceIndex] -= J*it->geometry().volume();
+                    problem_.neumann(boundValues, *isIt);
+                    Scalar J = (boundValues[wPhaseIdx]/densityW + boundValues[nPhaseIdx]/densityNW);
+                    this->b[faceIndex] -= J * isIt->geometry().volume();
                 }
-                else if (bcType.isDirichlet(pressEqIdx))
+                else if (this->bctype[faceIndex].isDirichlet(pressEqIdx))
                 {
-                    problem_.dirichlet(boundValues, *it);
+                    problem_.dirichlet(boundValues, *isIt);
                     this->b[faceIndex] = boundValues[pressureIdx];
-
-                    this->bctype[faceIndex][0] = BoundaryConditions::dirichlet;
                 }
             }
+        }
     }
 
 private:

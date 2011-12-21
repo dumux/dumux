@@ -36,11 +36,20 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
-#include <dumux/decoupled/2p/2pproperties.hh>
-#include "mimeticproperties.hh"
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticproperties.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
 
 namespace Dumux
 {
+namespace Properties
+{
+SET_PROP(Mimetic, LocalStiffness)
+{
+public:
+    typedef MimeticGroundwaterEquationLocalStiffness<TypeTag> type;
+};
+}
 
 /*! \ingroup Mimetic2p
  *
