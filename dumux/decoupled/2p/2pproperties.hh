@@ -102,6 +102,10 @@ NEW_PROP_TAG( FluidSystem )//!< Defines the fluid system
 NEW_PROP_TAG( FluidState )//!< Defines the fluid state
 ;
 
+NEW_PROP_TAG( ErrorTermFactor );
+NEW_PROP_TAG( ErrorTermLowerBound );
+NEW_PROP_TAG( ErrorTermUpperBound );
+
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -154,6 +158,10 @@ private:
 public:
     typedef typename MaterialLaw::Params type;
 };
+
+SET_SCALAR_PROP(DecoupledTwoP, ErrorTermFactor, 0.5);
+SET_SCALAR_PROP(DecoupledTwoP, ErrorTermLowerBound, 0.1);
+SET_SCALAR_PROP(DecoupledTwoP, ErrorTermUpperBound, 0.9);
 
 // \}
 }

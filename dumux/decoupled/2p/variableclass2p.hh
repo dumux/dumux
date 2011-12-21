@@ -567,6 +567,16 @@ public:
     }
 
 
+    ScalarSolutionType& volumecorrection()
+    {
+        return volumecorrection_;
+    }
+
+    const ScalarSolutionType& volumecorrection() const
+    {
+        return volumecorrection_;
+    }
+
     Scalar& volumecorrection(int Idx)
     {
         return volumecorrection_[Idx][0];
