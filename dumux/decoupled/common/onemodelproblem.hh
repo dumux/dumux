@@ -62,6 +62,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::VertexMapper VertexMapper;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
     typedef typename SolutionTypes::ScalarSolution Solution;
 
     enum
@@ -494,6 +496,18 @@ public:
      */
     const GridView &gridView() const
     { return gridView_; }
+
+    /*!
+     * \brief Returns the mapper for vertices to indices.
+     */
+    const VertexMapper &vertexMapper() const
+    { return variables_.vertexMapper(); }
+
+    /*!
+     * \brief Returns the mapper for elements to indices.
+     */
+    const ElementMapper &elementMapper() const
+    { return variables_.elementMapper(); }
 
     /*!
      * \brief The coordinate of the corner of the GridView's bounding

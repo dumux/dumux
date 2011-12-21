@@ -98,7 +98,7 @@ public:
         if(indicatorVector_.size()!=problem_.variables().gridSize())
         {
             indicatorVector_.resize(problem_.variables().gridSize());
-            indicatorVector_ = -1e00;
+            indicatorVector_ = -1e100;
         }
 
         /**** 1) determine refining parameter if standard is used ***/
@@ -285,11 +285,12 @@ private:
      */
     void indicator()
     {
-        Scalar globalMax_(0.), globalMin_(0.);
+        Scalar globalMax = -1e100;
+        Scalar globalMin = 1e100;
 
         /**** determine refining parameter          *************/
-        problem_.transportModel().indicatorSaturation(indicatorVector_, globalMin_=1e100, globalMax_=-1e100);
-        Scalar globaldelta = globalMax_- globalMin_;
+        problem_.transportModel().indicatorSaturation(indicatorVector_, globalMin, globalMax);
+        Scalar globaldelta = globalMax- globalMin;
 //            globaldelta = std::max(globaldelta,0.1);
 
         refineBound_ = refinetol_*globaldelta;
