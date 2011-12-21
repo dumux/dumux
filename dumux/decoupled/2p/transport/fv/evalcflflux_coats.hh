@@ -93,12 +93,22 @@ public:
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
             const Element& element, int phaseIdx = -1)
     {
+        if (hasHangingNode_)
+        {
+            return;
+        }
+
         ParentType::addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, element, phaseIdx);
     }
 
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
             const Intersection& intersection, int phaseIdx = -1)
     {
+        if (hasHangingNode_)
+        {
+            return;
+        }
+
         Scalar parentMob = 0.5;
         Scalar parentVis = 1;
         //        ParentType::addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, intersection, phaseIdx);
@@ -133,16 +143,20 @@ public:
             Dune::FieldVector < Scalar, dimWorld > distVec = globalPosNeighbor - globalPos;
 
             // compute distance between cell centers
-            Scalar dist = distVec.two_norm();
+//            Scalar dist = distVec.two_norm();
+            Scalar dist = std::abs(distVec*unitOuterNormal);
 
             int globalIdxJ = problem_.variables().index(neighbor);
 
             //calculate potential gradients
-            Scalar potentialW = 0;
-            Scalar potentialNW = 0;
-
-            potentialW = problem_.variables().potentialWetting(globalIdxI, indexInInside);
-            potentialNW = problem_.variables().potentialNonwetting(globalIdxI, indexInInside);
+            if (element.level() < neighbor.level())
+            {
+                hasHangingNode_ = true;
+                return;
+            }
+            //get phase potentials
+            Scalar potentialW = problem_.variables().potentialWetting(globalIdxI, indexInInside);
+            Scalar potentialNW = problem_.variables().potentialNonwetting(globalIdxI, indexInInside);
 
             Scalar satJ = problem_.variables().saturation()[globalIdxJ];
             Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
@@ -439,12 +453,19 @@ public:
         Scalar returnValue = std::max(cflFluxFunction_, cflFluxDefault);
         reset();
 
-        if (returnValue > 0)
+        if (returnValue > 0 && !hasHangingNode_)
         {
             return (returnValue == cflFluxDefault) ? 0.95 / returnValue : 1 / returnValue;
         }
         else
             return 1e100;
+    }
+
+    void reset()
+    {
+        ParentType::reset();
+        cflFluxFunction_ = 0;
+        hasHangingNode_ = false;
     }
 
     EvalCflFluxCoats(Problem& problem) :
@@ -454,14 +475,11 @@ public:
     }
 
 private:
-    void reset()
-    {
-        ParentType::reset();
-        cflFluxFunction_ = 0;
-    }
+
 
     Problem& problem_;//problem data
     Scalar cflFluxFunction_;
+    bool hasHangingNode_;
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
