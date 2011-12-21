@@ -350,7 +350,8 @@ public:
 
         }
 
-        error_ = gridView_().comm().max(error_);
+        if (gridView_().comm().size() > 1)
+            error_ = gridView_().comm().max(error_);
     }
 
     /*!
@@ -371,7 +372,8 @@ public:
             if (numSteps_ == 0)
             {
                 Scalar norm2 = b.two_norm2();
-                norm2 = gridView_().comm().sum(norm2);
+                if (gridView_().comm().size() > 1)
+                    norm2 = gridView_().comm().sum(norm2);
 
                 initialAbsoluteError_ = std::sqrt(norm2);
                 lastAbsoluteError_ = initialAbsoluteError_;
@@ -380,7 +382,9 @@ public:
             int converged = linearSolver_.solve(A, x, b);
 
             // make sure all processes converged
-            int convergedRemote = gridView_().comm().min(converged);
+            int convergedRemote = converged;
+            if (gridView_().comm().size() > 1)
+                convergedRemote = gridView_().comm().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
@@ -394,7 +398,8 @@ public:
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
             int converged = 0;
-            converged = gridView_().comm().min(converged);
+            if (gridView_().comm().size() > 1)
+                converged = gridView_().comm().min(converged);
 
             Dumux::NumericalProblem p;
             std::string msg;
@@ -406,7 +411,8 @@ public:
         catch (const Dune::Exception &e) {
             // make sure all processes converged
             int converged = 0;
-            converged = gridView_().comm().min(converged);
+            if (gridView_().comm().size() > 1)
+                converged = gridView_().comm().min(converged);
 
             Dumux::NumericalProblem p;
             p.message(e.what());

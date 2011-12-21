@@ -394,9 +394,8 @@ void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
         problem().transportModel().update(0., dt_estimate, problem().variables().updateEstimate(), false);
         dt_estimate = std::min ( problem().timeManager().timeStepSize(), dt_estimate);
         //make sure the right time-step is used by all processes in the parallel case
-        #if HAVE_MPI
-        dt_estimate = problem().gridView().comm().min(dt_estimate);
-        #endif
+        if (problem().gridView().comm().size() > 1)
+            dt_estimate = problem().gridView().comm().min(dt_estimate);
 
         problem().variables().updateEstimate() *= dt_estimate;
         //communicate in parallel case

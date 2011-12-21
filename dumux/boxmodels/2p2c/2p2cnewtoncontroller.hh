@@ -76,7 +76,8 @@ public:
             ParentType::newtonEndStep(uCurrentIter, uLastIter);
 
             succeeded = 1;
-            succeeded = this->problem_().gridView().comm().min(succeeded);
+            if (this->gridView_().comm().size() > 1)
+                succeeded = this->gridView_().comm().min(succeeded);
         }
         catch (Dumux::NumericalProblem &e)
         {
@@ -84,7 +85,8 @@ public:
                       << " caught an exception while updating:" << e.what()
                       << "\n";
             succeeded = 0;
-            succeeded = this->problem_().gridView().comm().min(succeeded);
+            if (this->gridView_().comm().size() > 1)
+                succeeded = this->gridView_().comm().min(succeeded);
         }
 
         if (!succeeded) {

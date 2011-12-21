@@ -117,13 +117,12 @@ public:
             }
         }
 
-#if HAVE_MPI
         // communicate to get the bounding box of the whole domain
-        for (int i = 0; i < dim; ++i) {
-            bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
-            bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
-        };
-#endif
+        if (gridView.comm().size() > 1)
+            for (int i = 0; i < dim; ++i) {
+                bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
+                bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+            }
 
         timeManager_ = new TimeManager(verbose);
         deleteTimeManager_ = true;
@@ -164,13 +163,12 @@ public:
             }
         }
 
-#if HAVE_MPI
         // communicate to get the bounding box of the whole domain
-        for (int i = 0; i < dim; ++i) {
-            bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
-            bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
-        };
-#endif
+        if (gridView.comm().size() > 1)
+            for (int i = 0; i < dim; ++i) {
+                bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
+                bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
+            }
 
         pressModel_ = new PressureModel(asImp_());
 
@@ -426,16 +424,12 @@ public:
         // check if we are in first TS and an initialDt was assigned
         if (t==0. && timeManager().timeStepSize()!=0.)
         {
-#if HAVE_MPI
-        dt = this->gridView().comm().min(dt);
-#endif
+            if (this->gridView().comm().size() > 1)
+                dt = this->gridView().comm().min(dt);
 
             // check if assigned initialDt is in accordance with dt from first transport step
             if (timeManager().timeStepSize() > dt
-#if HAVE_MPI
-        && this->gridView().comm().rank() == 0
-#endif
-            )
+                    && this->gridView().comm().rank() == 0)
                 Dune::dwarn << "initial timestep of size " << timeManager().timeStepSize()
                             << "is larger then dt= "<<dt<<" from transport" << std::endl;
             // internally assign next timestep size
@@ -446,9 +440,8 @@ public:
         dt = std::min(dt, asImp_().maxTimeStepSize());
 
         //make sure the right time-step is used by all processes in the parallel case
-#if HAVE_MPI
-        dt = this->gridView().comm().min(dt);
-#endif
+        if (this->gridView().comm().size() > 1)
+            dt = this->gridView().comm().min(dt);
 
         //assign next tiestep size
         timeManager().setTimeStepSize(dt);

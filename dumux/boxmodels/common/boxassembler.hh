@@ -163,7 +163,10 @@ public:
             storageTerm_.resize(numVerts);
         }
 
-        totalElems_ = gridView_().comm().sum(numElems);
+        if (gridView_().comm().size() > 1)
+            totalElems_ = gridView_().comm().sum(numElems);
+        else
+            totalElems_ = numElems;
 
         // initialize data needed for partial reassembly
         if (enablePartialReassemble_()) {
@@ -187,7 +190,8 @@ public:
         try {
             assemble_();
             succeeded = 1;
-            succeeded = problem_().gridView().comm().min(succeeded);
+            if (gridView_().comm().size() > 1)
+                succeeded = gridView_().comm().min(succeeded);
         }
         catch (Dumux::NumericalProblem &e)
         {
@@ -195,7 +199,8 @@ public:
                       << " caught an exception while assembling:" << e.what()
                       << "\n";
             succeeded = 0;
-            succeeded = problem_().gridView().comm().min(succeeded);
+            if (gridView_().comm().size() > 1)
+                succeeded = gridView_().comm().min(succeeded);
         }
 
         if (!succeeded) {
@@ -205,8 +210,15 @@ public:
 
         if (printReassembleStatistics)
         {
-            greenElems_ = gridView_().comm().sum(greenElems_);
-            reassembleAccuracy_ = gridView_().comm().max(nextReassembleAccuracy_);
+            if (gridView_().comm().size() > 1)
+            {
+                greenElems_ = gridView_().comm().sum(greenElems_);
+                reassembleAccuracy_ = gridView_().comm().max(nextReassembleAccuracy_);
+            }
+            else
+            {
+                reassembleAccuracy_ = nextReassembleAccuracy_;
+            }
 
             problem_().newtonController().endIterMsg()
                 << ", reassembled "
