@@ -202,7 +202,8 @@ file(COPY test/decoupled/2p2c/test_dec2p2c-reference.vtu DESTINATION test/decoup
 ENABLE_TESTING()
 INCLUDE(CTest)
 add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
-add_test(test_generalproblem test/common/generalproblem/test_generalproblem_2p)
+add_test(test_general_box test/common/generalproblem/test_generalproblem_2p --box 1e4 250)
+add_test(test_general_dec test/common/generalproblem/test_generalproblem_2p --decoupled 1e4 250)
 add_test(test_spline test/common/spline/test_spline)
 
 add_test(test_fluidsystems test/material/fluidsystems/test_fluidsystems)
