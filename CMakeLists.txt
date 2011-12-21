@@ -81,7 +81,7 @@ set(DumuxIncludeDirectories
 
 ##############
 # set appropriate compiler flags for debug/release compilation modes
-add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing")
+add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing -DHAVE_NULLPTR=1")
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   # debug mode
