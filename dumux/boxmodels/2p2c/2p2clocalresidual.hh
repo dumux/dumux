@@ -55,12 +55,12 @@ namespace Dumux
  * This class is used to fill the gaps in BoxLocalResidual for the 2P-2C flow.
  */
 template<class TypeTag>
-class TwoPTwoCLocalResidual: public BoxLocalResidual<TypeTag>
+class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, PTAG(BaseLocalResidual))
 {
 protected:
     typedef TwoPTwoCLocalResidual<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
-    typedef BoxLocalResidual<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BaseLocalResidual)) ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;

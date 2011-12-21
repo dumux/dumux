@@ -22,7 +22,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Caculates the residual of models based on the box scheme element-wise.
+ * \brief Calculates the residual of models based on the box scheme element-wise.
  */
 #ifndef DUMUX_BOX_LOCAL_RESIDUAL_HH
 #define DUMUX_BOX_LOCAL_RESIDUAL_HH

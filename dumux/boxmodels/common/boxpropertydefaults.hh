@@ -38,6 +38,7 @@
 #include "boxfvelementgeometry.hh"
 #include "boxelementboundarytypes.hh"
 #include "boxlocaljacobian.hh"
+#include "boxlocalresidual.hh"
 #include "boxelementvolumevariables.hh"
 #include "boxvolumevariables.hh"
 
@@ -93,6 +94,9 @@ SET_TYPE_PROP(BoxModel,
 
 //! Mapper for the degrees of freedoms.
 SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)));
+
+//! Set the BaseLocalResidual to BoxLocalResidual
+SET_TYPE_PROP(BoxModel, BaseLocalResidual, Dumux::BoxLocalResidual<TypeTag>);
 
 //! The local jacobian operator for the box scheme
 SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
