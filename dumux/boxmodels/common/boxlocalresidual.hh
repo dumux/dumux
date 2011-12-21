@@ -39,8 +39,8 @@ namespace Dumux
 /*!
  * \ingroup BoxModel
  * \ingroup BoxLocalResidual
- * \brief Element-wise caculation of the residual matrix for models
- *        based on the box scheme .
+ * \brief Element-wise calculation of the residual matrix for models
+ *        based on the box scheme.
  *
  * \todo Please doc me more!
  */
@@ -104,7 +104,7 @@ public:
      * \brief Initialize the local residual.
      *
      * This assumes that all objects of the simulation have been fully
-     * allocated but not necessarrily initialized completely.
+     * allocated but not necessarily initialized completely.
      *
      * \param prob The representation of the physical problem to be
      *             solved.
@@ -150,40 +150,6 @@ public:
         problem_().updateCouplingParams(element);
 
         asImp_().eval(element, fvElemGeom_(), volVarsPrev, volVarsCur, bcTypes);
-    }
-    /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero. Gets a solution vector computed by PDELab
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param elementSolVector The local solution for the element using PDELab ordering
-     */
-    template<typename ElemSolVectorType>
-    void evalPDELab(const Element &element, const ElemSolVectorType& elementSolVector)
-    {
-        FVElementGeometry fvGeom;
-        fvGeom.update(gridView_(), element);
-        ElementVolumeVariables volVarsPrev, volVarsCur;
-        volVarsPrev.update(problem_(),
-                           element,
-                           fvGeom,
-                           true /* oldSol? */);
-        volVarsCur.updatePDELab(problem_(),
-                          element,
-                          fvGeom,
-                          elementSolVector);
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem_(), element, fvGeom);
-
-        // this is pretty much a HACK because the internal state of
-        // the problem is not supposed to be changed during the
-        // evaluation of the residual. (Reasons: It is a violation of
-        // abstraction, makes everything more prone to errors and is
-        // not thread save.) The real solution are context objects!
-        problem_().updateCouplingParams(element);
-
-        asImp_().eval(element, fvGeom, volVarsPrev, volVarsCur, bcTypes);
     }
 
     /*!
@@ -257,35 +223,34 @@ public:
      *
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
-     * \param fvGeom The finite-volume geometry of the element
+     * \param fvElemGeom The finite-volume geometry of the element
      * \param prevVolVars The volume averaged variables for all
-     *                   sub-contol volumes of the element at the previous
+     *                   sub-control volumes of the element at the previous
      *                   time level
      * \param curVolVars The volume averaged variables for all
-     *                   sub-contol volumes of the element at the current
+     *                   sub-control volumes of the element at the current
      *                   time level
      * \param bcTypes The types of the boundary conditions for all
      *                vertices of the element
      */
     void eval(const Element &element,
-              const FVElementGeometry &fvGeom,
+              const FVElementGeometry &fvElemGeom,
               const ElementVolumeVariables &prevVolVars,
               const ElementVolumeVariables &curVolVars,
               const ElementBoundaryTypes &bcTypes)
     {
-        //Valgrind::CheckDefined(fvGeom);
         Valgrind::CheckDefined(prevVolVars);
         Valgrind::CheckDefined(curVolVars);
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvGeom.numVertices; i++) {
+        for (int i=0; i < fvElemGeom.numVertices; i++) {
             prevVolVars[i].checkDefined();
             curVolVars[i].checkDefined();
         }
 #endif // HAVE_VALGRIND
 
         elemPtr_ = &element;
-        fvElemGeomPtr_ = &fvGeom;
+        fvElemGeomPtr_ = &fvElemGeom;
         bcTypesPtr_ = &bcTypes;
         prevVolVarsPtr_ = &prevVolVars;
         curVolVarsPtr_ = &curVolVars;
@@ -559,7 +524,7 @@ protected:
             Scalar extrusionFactor =
                 curVolVars_(i).extrusionFactor();
 
-            PrimaryVariables tmp;
+            PrimaryVariables tmp(0.);
 
             // mass balance within the element. this is the
             // $\frac{m}{\partial t}$ term if using implicit
@@ -635,6 +600,16 @@ protected:
     {
         Valgrind::CheckDefined(fvElemGeomPtr_);
         return *fvElemGeomPtr_;
+    }
+
+    /*!
+     * \brief Returns a reference to the primary variables of 
+     * 		  the last time step of the i'th
+     *        sub-control volume of the current element.
+     */
+    const PrimaryVariables &prevPrimaryVars_(int i) const
+    {
+        return prevVolVars_(i).primaryVars();
     }
 
     /*!
