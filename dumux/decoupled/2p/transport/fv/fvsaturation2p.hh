@@ -424,11 +424,14 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 Scalar dist = distVec * unitOuterNormal;
 //                Scalar dist = distVec.two_norm();
 
+                bool takeNeighbor = (eIt->level() < neighborPointer->level());
                 //get phase potentials
-                Scalar potentialW = problem_.variables().potentialWetting(
-                        globalIdxI, isIndex);
-                Scalar potentialNW = problem_.variables().potentialNonwetting(
-                        globalIdxI, isIndex);
+                Scalar potentialW =
+                        (takeNeighbor) ? -problem_.variables().potentialWetting(globalIdxJ, isIt->indexInOutside()) :
+                                problem_.variables().potentialWetting(globalIdxI, isIndex);
+                Scalar potentialNW =
+                        (takeNeighbor) ? -problem_.variables().potentialNonwetting(globalIdxJ, isIt->indexInOutside()) :
+                                problem_.variables().potentialNonwetting(globalIdxI, isIndex);
 
                 Scalar densityWJ = problem_.variables().densityWetting(
                         globalIdxJ);
