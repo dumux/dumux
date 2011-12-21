@@ -198,7 +198,12 @@ public:
         : ParentType(timeManager, gridView)
     {
         // initialize the tables of the fluid system
-        FluidSystem::init();
+        FluidSystem::init(/*tempMin=*/273.15,
+                /*tempMax=*/423.15,
+                /*numTemp=*/50,
+                /*pMin=*/0.0,
+                /*pMax=*/30e6,
+                /*numP=*/300);
     }
 
     /*!
