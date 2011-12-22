@@ -154,8 +154,8 @@ public:
         FluidSystem::init(/*Tmin=*/temperature_ - 1.0,
                           /*Tmax=*/temperature_ + 1.0,
                           /*nT=*/3,
-                          /*pmin=*/1e5 + 1000*depthBOR_/1.2,
-                          /*pmax=*/1e5 + 1000*depthBOR_*1.2,
+                          /*pmin=*/1e5,
+                          /*pmax=*/3e7,
                           /*np=*/200);
     }
 
