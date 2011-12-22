@@ -218,7 +218,7 @@ add_test(test_2p util/runTest.sh test/boxmodels/2p/lens-reference.vtu lens-00010
 add_test(test_2pni util/runTest.sh test/boxmodels/2pni/injection2pni-reference.vtu injection2pni-00009.vtu test/boxmodels/2pni/test_2pni test/boxmodels/2pni/grids/test_2pni.dgf 1e4 250)
 add_test(test_2p2c util/runTest.sh test/boxmodels/2p2c/injection-reference.vtu injection-00009.vtu test/boxmodels/2p2c/test_2p2c test/boxmodels/2p2c/grids/test_2p2c.dgf 1e4 250)
 add_test(test_2p2cni util/runTest.sh test/boxmodels/2p2cni/waterair-reference.vtu waterair-00011.vtu test/boxmodels/2p2cni/test_2p2cni test/boxmodels/2p2cni/grids/test_2p2cni.dgf 1e4 250)
-add_test(test_MpNc util/runTest.sh test/boxmodels/MpNc/obstacle-reference.vtu obstacle-00011.vtu test/boxmodels/MpNc/test_MpNc test/boxmodels/MpNc/grids/obstacle_24x16.dgf 1e4 250)
+add_test(test_MpNc util/runTest.sh test/boxmodels/MpNc/obstacle-reference.vtu obstacle-00010.vtu test/boxmodels/MpNc/test_MpNc test/boxmodels/MpNc/grids/obstacle_24x16.dgf 1e4 250)
 add_test(test_richards util/runTest.sh test/boxmodels/richards/richardslens-reference.vtu richardslens-00009.vtu test/boxmodels/richards/test_richards test/boxmodels/richards/grids/richardslens.dgf 100 10)
 
 add_test(test_diffusion util/runTest.sh test/decoupled/1p/diffusion-reference.vtu mimeticdiffusion-00001.vtu test/decoupled/1p/test_diffusion 3)
