@@ -79,13 +79,13 @@ SET_BOOL_PROP(InjectionProblem, EnableVelocityOutput, false);
 /*!
  * \ingroup TwoPTwoCModel
  * \ingroup BoxTestProblems
- * \brief Problem where air is injected under a low permeable layer in a depth of 800m.
+ * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately
  * permeable spatial parameters (\f$ K=10e-12\f$) for \f$ y>22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
  * in the rest of the domain.
  *
- * Air enters a water-filled aquifer, which is situated 800m below sea level, at the right boundary
+ * Air enters a water-filled aquifer, which is situated 2700m below sea level, at the right boundary
  * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
  * partially enters the lower permeable aquitard.
  * This problem uses the \ref TwoPTwoCModel.

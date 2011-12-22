@@ -56,7 +56,6 @@ class TwoPTwoCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
 
-    typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
@@ -110,12 +109,21 @@ public:
             molarConcGrad_[phaseIdx] = Scalar(0);
         }
 
+//        calculateValues_(problem, element, boundaryFace, elemDat);
         calculateGradients_(problem, element, elemVolVars);
         calculateVelocities_(problem, element, elemVolVars);
         calculateDiffCoeffPM_(problem, element, elemVolVars);
     };
 
-private:
+protected:
+    template <class FaceType>
+    void calculateValues_(const Problem &problem,
+                          const Element & element,
+                          const FVElementGeometry &elemGeom)
+    {
+
+    }
+
     void calculateGradients_(const Problem &problem,
                              const Element &element,
                              const ElementVolumeVariables &elemVolVars)
