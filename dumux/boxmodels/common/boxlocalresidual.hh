@@ -447,7 +447,7 @@ protected:
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
                 if (!bcTypes.isNeumann(eqIdx))
                     continue;
-                residual_[scvIdx] += values;
+                residual_[scvIdx][eqIdx] += values[eqIdx];
             }
         }
     }
