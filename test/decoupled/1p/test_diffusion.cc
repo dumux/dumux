@@ -94,40 +94,40 @@ int main(int argc, char** argv)
         fvProblem.model().calculateVelocity();
         double fvTime = timer.elapsed();
         fvProblem.writeOutput();
-        Dumux::ResultEvaluation fvResult;
-        fvResult.evaluate(grid.leafView(), fvProblem, fvProblem.variables().pressure(), fvProblem.variables().velocity(), consecutiveNumbering);
+//        Dumux::ResultEvaluation fvResult;
+//        fvResult.evaluate(grid.leafView(), fvProblem, fvProblem.variables().pressure(), fvProblem.variables().velocity(), consecutiveNumbering);
 
-        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), PTAG(Problem)) MPFAOProblem;
-        MPFAOProblem mpfaProblem(grid.leafView(), delta);
-        mpfaProblem.setName("fvmpfaodiffusion");
-        timer.reset();
-        mpfaProblem.init();
-        mpfaProblem.model().calculateVelocity();
-        double mpfaTime = timer.elapsed();
-        mpfaProblem.writeOutput();
-        Dumux::ResultEvaluation mpfaResult;
-        mpfaResult.evaluate(grid.leafView(), mpfaProblem, mpfaProblem.variables().pressure(), mpfaProblem.variables().velocity(), consecutiveNumbering);
+//        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), PTAG(Problem)) MPFAOProblem;
+//        MPFAOProblem mpfaProblem(grid.leafView(), delta);
+//        mpfaProblem.setName("fvmpfaodiffusion");
+//        timer.reset();
+//        mpfaProblem.init();
+//        mpfaProblem.model().calculateVelocity();
+//        double mpfaTime = timer.elapsed();
+//        mpfaProblem.writeOutput();
+//        Dumux::ResultEvaluation mpfaResult;
+//        mpfaResult.evaluate(grid.leafView(), mpfaProblem, mpfaProblem.variables().pressure(), mpfaProblem.variables().velocity(), consecutiveNumbering);
+//
+//        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), PTAG(Problem)) MimeticProblem;
+//        MimeticProblem mimeticProblem(grid.leafView(), delta);
+//        mimeticProblem.setName("mimeticdiffusion");
+//        timer.reset();
+//        mimeticProblem.init();
+//        mimeticProblem.model().calculateVelocity();
+//        double mimeticTime = timer.elapsed();
+//        mimeticProblem.writeOutput();
+//        Dumux::ResultEvaluation mimeticResult;
+//        mimeticResult.evaluate(grid.leafView(), mimeticProblem, mimeticProblem.variables().pressure(), mimeticProblem.variables().velocity(), consecutiveNumbering);
 
-        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), PTAG(Problem)) MimeticProblem;
-        MimeticProblem mimeticProblem(grid.leafView(), delta);
-        mimeticProblem.setName("mimeticdiffusion");
-        timer.reset();
-        mimeticProblem.init();
-        mimeticProblem.model().calculateVelocity();
-        double mimeticTime = timer.elapsed();
-        mimeticProblem.writeOutput();
-        Dumux::ResultEvaluation mimeticResult;
-        mimeticResult.evaluate(grid.leafView(), mimeticProblem, mimeticProblem.variables().pressure(), mimeticProblem.variables().velocity(), consecutiveNumbering);
-
-        std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
-        std::cout.precision(2);
-        std::cout << "\t error press \t error grad\t sumflux\t erflm\t\t uMin\t\t uMax\t\t time" << std::endl;
-        std::cout << "2pfa\t " << fvResult.relativeL2Error << "\t " << fvResult.ergrad << "\t " << fvResult.sumflux
-                        << "\t " << fvResult.erflm << "\t " << fvResult.uMin << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
-        std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad << "\t " << mpfaResult.sumflux
-                        << "\t " << mpfaResult.erflm << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
-        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad << "\t " << mimeticResult.sumflux
-                        << "\t " << mimeticResult.erflm << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
+//        std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+//        std::cout.precision(2);
+//        std::cout << "\t error press \t error grad\t sumflux\t erflm\t\t uMin\t\t uMax\t\t time" << std::endl;
+//        std::cout << "2pfa\t " << fvResult.relativeL2Error << "\t " << fvResult.ergrad << "\t " << fvResult.sumflux
+//                        << "\t " << fvResult.erflm << "\t " << fvResult.uMin << "\t " << fvResult.uMax << "\t " << fvTime << std::endl;
+//        std::cout << "mpfa-o\t " << mpfaResult.relativeL2Error << "\t " << mpfaResult.ergrad << "\t " << mpfaResult.sumflux
+//                        << "\t " << mpfaResult.erflm << "\t " << mpfaResult.uMin << "\t " << mpfaResult.uMax << "\t " << mpfaTime << std::endl;
+//        std::cout << "mimetic\t " << mimeticResult.relativeL2Error << "\t " << mimeticResult.ergrad << "\t " << mimeticResult.sumflux
+//                        << "\t " << mimeticResult.erflm << "\t " << mimeticResult.uMin << "\t " << mimeticResult.uMax << "\t " << mimeticTime << std::endl;
 
 
 

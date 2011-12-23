@@ -41,8 +41,8 @@
 #include <dumux/decoupled/2p/diffusion/fvmpfa/mpfaproperties.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
+//#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
+//#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
 
 #include "test_diffusion_spatialparams.hh"
 
@@ -91,22 +91,22 @@ public:
 // Enable gravity
 SET_BOOL_PROP(DiffusionTestProblem, EnableGravity, false);
 
-// set the types for the 2PFA FV method
+//// set the types for the 2PFA FV method
 NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
 SET_TYPE_PROP(FVVelocity2PTestProblem, Model, Dumux::FVVelocity2P<TTAG(FVVelocity2PTestProblem)>);
 SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVVelocity2PTestProblem)>);
 
 // set the types for the MPFA-O FV method
-NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
-SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVMPFAOVelocity2PTestProblem)>);
-
-// set the types for the mimetic FD method
-NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(DiffusionTestProblem, Mimetic));
-SET_TYPE_PROP(MimeticPressure2PTestProblem, Model, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
-SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(MimeticPressure2PTestProblem)>);
+//NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
+//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
+//SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
+//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
+//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVMPFAOVelocity2PTestProblem)>);
+//
+//// set the types for the mimetic FD method
+//NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(DiffusionTestProblem, Mimetic));
+//SET_TYPE_PROP(MimeticPressure2PTestProblem, Model, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
+//SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(MimeticPressure2PTestProblem)>);
 }
 
 /*!
@@ -120,7 +120,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
     typedef DiffusionProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
@@ -154,7 +154,7 @@ public:
     TestDiffusionProblem(const GridView &gridView, const double delta = 1.0) :
         ParentType(gridView), delta_(delta)
     {
-        this->variables().saturation() = 1.0;
+        this->variables().primaryVariablesGlobal(pressEqIdx) = 1.0;
         this->spatialParameters().setDelta(delta_);
     }
 
