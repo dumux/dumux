@@ -52,11 +52,13 @@ private:
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
 
     enum
     {
@@ -122,11 +124,13 @@ public:
         // cell index
         int globalIdxI = problem_.variables().index(element);
 
+        CellData& cellDataI = problem_.variables().cellData(globalIdxI);
+
         int indexInInside = intersection.indexInInside();
 
-        Scalar satI = problem_.variables().saturation()[globalIdxI];
-        Scalar lambdaWI = problem_.variables().mobilityWetting(globalIdxI);
-        Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
+        Scalar satI = cellDataI.saturation(wPhaseIdx);
+        Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
+        Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
 
         Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(element), satI);
 
@@ -148,19 +152,18 @@ public:
 
             int globalIdxJ = problem_.variables().index(neighbor);
 
+            CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
+
             //calculate potential gradients
             if (element.level() < neighbor.level())
             {
                 hasHangingNode_ = true;
                 return;
             }
-            //get phase potentials
-            Scalar potentialW = problem_.variables().potentialWetting(globalIdxI, indexInInside);
-            Scalar potentialNW = problem_.variables().potentialNonwetting(globalIdxI, indexInInside);
 
-            Scalar satJ = problem_.variables().saturation()[globalIdxJ];
-            Scalar lambdaWJ = problem_.variables().mobilityWetting(globalIdxJ);
-            Scalar lambdaNWJ = problem_.variables().mobilityNonwetting(globalIdxJ);
+            Scalar satJ = cellDataJ.saturation(wPhaseIdx);
+            Scalar lambdaWJ = cellDataI.mobility(wPhaseIdx);
+            Scalar lambdaNWJ = cellDataI.mobility(nPhaseIdx);
 
             Scalar dPcdSJ = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(neighbor), satJ);
 
@@ -177,7 +180,7 @@ public:
             Scalar transmissibility = (unitOuterNormal * permeability) * intersection.geometry().volume() / dist;
 
             Scalar satUpw = 0;
-            if (potentialW >= 0)
+            if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside))
             {
                 satUpw = std::max(satI, 0.0);
             }
@@ -200,7 +203,7 @@ public:
             dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(neighbor), std::abs(satMinus)) / viscosityW;
             dLambdaWdS /= (dS);
 
-            if (potentialNW >= 0)
+            if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
             {
                 satUpw = std::max(1 - satI, 0.0);
             }
@@ -288,43 +291,33 @@ public:
             Dune::FieldVector<Scalar, dim> permeability(0);
             meanPermeability.mv(unitOuterNormal, permeability);
 
-            Scalar satBound = 0;
+            Scalar satWBound =  cellDataI.saturation(wPhaseIdx);
             if (bcType.isDirichlet(eqIdxSat))
             {
                 PrimaryVariables bcValues;
                 problem_.dirichlet(bcValues, intersection);
-                satBound = bcValues[eqIdxSat];
-            }
-            else
-            {
-                satBound = problem_.variables().saturation()[globalIdxI];
+                switch (saturationType_)
+                {
+                case Sw:
+                {
+                    satWBound = bcValues[eqIdxSat];
+                    break;
+                }
+                case Sn:
+                {
+                    satWBound = 1 - bcValues[eqIdxSat];
+                    break;
+                }
+                default:
+                {
+                    DUNE_THROW(Dune::RangeError, "saturation type not implemented");
+                    break;
+                }
+                }
+
             }
 
-            //determine phase saturations from primary saturation variable
-            Scalar satW;
-            //Scalar satNW;
-            switch (saturationType_)
-            {
-            case Sw:
-            {
-                satW = satBound;
-                //satNW = 1 - satBound;
-                break;
-            }
-            case Sn:
-            {
-                satW = 1 - satBound;
-                //satNW = satBound;
-                break;
-            }
-            default:
-            {
-                DUNE_THROW(Dune::RangeError, "saturation type not implemented");
-                break;
-            }
-            }
-
-            Scalar dPcdSBound = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(element), satBound);
+            Scalar dPcdSBound = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(element), satWBound);
 
             Scalar lambdaWBound = 0;
             Scalar lambdaNWBound = 0;
@@ -332,28 +325,26 @@ public:
             Scalar temperature = problem_.temperature(element);
             Scalar referencePressure = problem_.referencePressure(element);
             FluidState fluidState;
-            Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState);
+            fluidState.setPressure(wPhaseIdx, referencePressure);
+            fluidState.setPressure(nPhaseIdx, referencePressure);
+            fluidState.setTemperature(temperature);
+
+            Scalar viscosityWBound = FluidSystem::viscosity(fluidState, wPhaseIdx);
             Scalar viscosityNWBound =
-                    FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState);
-            lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satW) / viscosityWBound;
-            lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satW) / viscosityNWBound;
-
-            Scalar potentialW = 0;
-            Scalar potentialNW = 0;
-
-            potentialW = problem_.variables().potentialWetting(globalIdxI, indexInInside);
-            potentialNW = problem_.variables().potentialNonwetting(globalIdxI, indexInInside);
+                    FluidSystem::viscosity(fluidState, nPhaseIdx);
+            lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satWBound) / viscosityWBound;
+            lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satWBound) / viscosityNWBound;
 
             Scalar transmissibility = (unitOuterNormal * permeability) * intersection.geometry().volume() / dist;
 
             Scalar satUpw = 0;
-            if (potentialW >= 0)
+            if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, indexInInside))
             {
                 satUpw = std::max(satI, 0.0);
             }
             else
             {
-                satUpw = std::max(satBound, 0.0);
+                satUpw = std::max(satWBound, 0.0);
             }
 
             Scalar dS = eps_;
@@ -370,13 +361,13 @@ public:
             dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satMinus) / viscosityW;
             dLambdaWdS /= (dS);
 
-            if (potentialNW >= 0)
+            if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
             {
                 satUpw = std::max(1 - satI, 0.0);
             }
             else
             {
-                satUpw = std::max(1 - satBound, 0.0);
+                satUpw = std::max(1 - satWBound, 0.0);
             }
 
             dS = eps_;

@@ -29,8 +29,10 @@
 #define DUMUX_TRANSPORTPROBLEM_2P_HH
 
 #include <dumux/decoupled/common/onemodelproblem.hh>
-#include <dumux/decoupled/2p/variableclass2p.hh>
-#include <dumux/material/old_fluidsystems/2p_system.hh>
+#include <dumux/decoupled/common/variableclass.hh>
+#include <dumux/decoupled/2p/cellData2p.hh>
+#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/fluidstates/isoimmisciblefluidstate.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 
@@ -65,9 +67,15 @@ class TransportProblem2P : public OneModelProblem<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+
     enum {
         dim = Grid::dimension,
         dimWorld = Grid::dimensionworld
+    };
+    enum
+    {
+        transportEqIdx = Indices::transportEqIdx
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
@@ -246,7 +254,7 @@ public:
     void timeIntegration()
     {
         // allocate temporary vectors for the updates
-        Solution k1 = this->asImp_().variables().saturation();
+        Solution k1 = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
 
         Scalar t = this->timeManager().time();
         Scalar dt = 1e100;
@@ -259,7 +267,13 @@ public:
         this->timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        this->asImp_().variables().saturation() += (k1 *= dt);
+        int size = this->gridView().size(0);
+        Solution& newSol = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
+        for (int i = 0; i < size; i++)
+        {
+            newSol[i] += (k1[i] *= dt);
+            this->model().updateSaturationSolution(i, newSol[i][0]);
+        }
     }
 
     // \}

@@ -69,30 +69,29 @@ class FVSaturation2P
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
 
-    typedef Dune::GenericReferenceElements<Scalar, dim>
-            ReferenceElementContainer;
-    typedef Dune::GenericReferenceElements<Scalar, dim - 1>
-            ReferenceElementFaceContainer;
+    typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
+    typedef Dune::GenericReferenceElements<Scalar, dim - 1> ReferenceElementFaceContainer;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(DiffusivePart)) DiffusivePart;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConvectivePart))
-            ConvectivePart;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(EvalCflFluxFunction))
-            EvalCflFluxFunction;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConvectivePart)) ConvectivePart;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(EvalCflFluxFunction)) EvalCflFluxFunction;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))
-            SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
 
     enum
     {
@@ -172,8 +171,7 @@ public:
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing a CFL condition.
      */
-    void update(const Scalar t, Scalar& dt,
-            RepresentationType& updateVec, bool impes);
+    void update(const Scalar t, Scalar& dt, RepresentationType& updateVec, bool impes);
 
     //! Sets the initial solution \f$S_0\f$.
     void initialize();
@@ -185,25 +183,70 @@ public:
      */
     void updateMaterialLaws(RepresentationType& saturation, bool iterate);
 
+    void updateSaturationSolution()
+    {
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            Scalar sat = problem_.variables().primaryVariablesGlobal(satEqIdx)[i];
+            updateSaturationSolution(i, sat);
+        }
+    }
+
+    void updateSaturationSolution(int globalIdx, Scalar sat)
+    {
+        CellData& cellData = problem_.variables().cellData(globalIdx);
+        switch (saturationType_)
+        {
+        case Sw:
+        {
+            if (compressibility_)
+            {
+                cellData.fluidState().setSaturation(wPhaseIdx, sat);
+                cellData.fluidState().setSaturation(nPhaseIdx, 1 - sat);
+            }
+            else
+            {
+                cellData.setSaturation(wPhaseIdx, sat);
+                cellData.setSaturation(nPhaseIdx, 1 - sat);
+            }
+            break;
+        }
+        case Sn:
+        {
+            if (compressibility_)
+            {
+                cellData.fluidState().setSaturation(wPhaseIdx, 1 - sat);
+                cellData.fluidState().setSaturation(nPhaseIdx, sat);
+            }
+            else
+            {
+                cellData.setSaturation(wPhaseIdx,1 -sat);
+                cellData.setSaturation(nPhaseIdx, sat);
+            }
+            break;
+        }
+        }
+    }
+
     //! \brief Write data files
     /*  \param name file name */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typename Variables::ScalarSolutionType *saturation =
-                writer.allocateManagedBuffer (
-                        problem_.gridView().size(0));
+        int size = problem_.gridView().size(0);
+        typename Variables::ScalarSolutionType *saturationW = writer.allocateManagedBuffer(size);
+        typename Variables::ScalarSolutionType *saturationN = writer.allocateManagedBuffer(size);
 
-        *saturation = problem_.variables().saturation();
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+            (*saturationW)[i] = cellData.saturation(wPhaseIdx);
+            (*saturationN)[i] = cellData.saturation(nPhaseIdx);
+        }
 
-        if (saturationType_ == Sw)
-        {
-            writer.attachCellData(*saturation, "wetting saturation");
-        }
-        if (saturationType_ == Sn)
-        {
-            writer.attachCellData(*saturation, "nonwetting saturation");
-        }
+        writer.attachCellData(*saturationW, "wetting saturation");
+        writer.attachCellData(*saturationN, "nonwetting saturation");
 
         return;
     }
@@ -215,14 +258,14 @@ public:
     template<class Restarter>
     void serialize(Restarter &res)
     {
-        problem_.variables().serialize<Restarter> (res);
+        problem_.variables().serialize<Restarter>(res);
     }
 
     //! Function needed for restart option.
     template<class Restarter>
     void deserialize(Restarter &res)
     {
-        problem_.variables().deserialize<Restarter> (res);
+        problem_.variables().deserialize<Restarter>(res);
     }
 
     //! Constructs a FVSaturation2P object
@@ -232,20 +275,18 @@ public:
      */
 
     FVSaturation2P(Problem& problem) :
-        problem_(problem), switchNormals_(false), threshold_(1e-6)
+            problem_(problem), switchNormals_(false), threshold_(1e-6)
     {
         if (compressibility_ && velocityType_ == vt)
         {
-            DUNE_THROW(
-                    Dune::NotImplemented,
+            DUNE_THROW(Dune::NotImplemented,
                     "Total velocity - global pressure - model cannot be used with compressible fluids!");
         }
         if (saturationType_ != Sw && saturationType_ != Sn)
         {
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
-        if (pressureType_ != pw && pressureType_ != pn && pressureType_
-                != pglobal)
+        if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pglobal)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
         }
@@ -272,15 +313,11 @@ private:
     ConvectivePart* convectivePart_;
     EvalCflFluxFunction* evalCflFluxFunction_;
 
-    static const bool compressibility_ =
-            GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
+    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
     ;
-    static const int saturationType_ =
-            GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
-    static const int velocityType_ =
-            GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
-    static const int pressureType_ =
-            GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
     bool switchNormals_;
 
     const Scalar threshold_;
@@ -298,8 +335,8 @@ void FVSaturation2P<TypeTag>::indicatorSaturation(RepresentationType &indicator,
 {
     // 1) calculate Indicator -> min, maxvalues
     // Schleife über alle Leaf-Elemente
-    for (ElementIterator it = problem_.gridView().template begin<0>();
-        it!=problem_.gridView().template end<0>(); ++it)
+    for (ElementIterator it = problem_.gridView().template begin<0>(); it != problem_.gridView().template end<0>();
+            ++it)
     {
         // Bestimme maximale und minimale Sättigung
         // Index des aktuellen Leaf-Elements
@@ -309,23 +346,23 @@ void FVSaturation2P<TypeTag>::indicatorSaturation(RepresentationType &indicator,
 
         // Berechne Verfeinerungsindikator an allen Zellen
         IntersectionIterator isend = problem_.gridView().iend(*it);
-        for (IntersectionIterator is = problem_.gridView().ibegin(*it); is!= isend; ++is)
+        for (IntersectionIterator is = problem_.gridView().ibegin(*it); is != isend; ++is)
         {
-            const typename IntersectionIterator::Intersection &intersection =*is;
+            const typename IntersectionIterator::Intersection &intersection = *is;
             // Steige aus, falls es sich nicht um einen Nachbarn handelt
-            if ( !intersection.neighbor() )
-                continue ;
+            if (!intersection.neighbor())
+                continue;
 
             // Greife auf Nachbarn zu
-            const Element &outside =*intersection.outside();
-            int indexj = problem_.variables().index( outside );
+            const Element &outside = *intersection.outside();
+            int indexj = problem_.variables().index(outside);
 
             // Jede Intersection nur von einer Seite betrachten
-            if ( it.level() > outside.level() ||
-                    (it.level() == outside.level() && indexi<indexj) )
+            if (it.level() > outside.level() || (it.level() == outside.level() && indexi < indexj))
             {
 
-                Scalar localdelta = std::abs(problem_.variables().saturation()[indexi][0] - problem_.variables().saturation()[indexj][0]);
+                Scalar localdelta = std::abs(
+                        problem_.variables().saturation()[indexi][0] - problem_.variables().saturation()[indexj][0]);
                 indicator[indexi][0] = std::max(indicator[indexi][0], localdelta);
                 indicator[indexj][0] = std::max(indicator[indexj][0], localdelta);
             }
@@ -334,8 +371,7 @@ void FVSaturation2P<TypeTag>::indicatorSaturation(RepresentationType &indicator,
 }
 
 template<class TypeTag>
-void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
-        RepresentationType& updateVec, bool impes = false)
+void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt, RepresentationType& updateVec, bool impes = false)
 {
     if (!impes)
     {
@@ -353,10 +389,25 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
 
     BoundaryTypes bcType;
 
+    ElementIterator eItBegin = problem_.gridView().template begin<0>();
+    Scalar densityW = 0;
+    Scalar densityNW = 0;
+    Scalar viscosityW = 0;
+    Scalar viscosityNW = 0;
+
+    if (!compressibility_)
+    {
+        Scalar temp = problem_.temperature(*eItBegin);
+        Scalar pRef = problem_.referencePressure(*eItBegin);
+        densityW = WettingPhase::density(temp, pRef);
+        densityNW = NonwettingPhase::density(temp, pRef);
+        viscosityW = WettingPhase::viscosity(temp, pRef);
+        viscosityNW = NonwettingPhase::viscosity(temp, pRef);
+    }
+
     // compute update vector
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt
-            != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
     {
 #if HAVE_MPI
         if (eIt->partitionType() != Dune::InteriorEntity)
@@ -373,27 +424,26 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
 
+        CellData& cellDataI = problem_.variables().cellData(globalIdxI);
+
         //for benchmark only!
         //        problem_.variables().storeSrn(residualSatNW, globalIdxI);
         //for benchmark only!
 
-        Scalar porosity =
-                problem_.spatialParameters().porosity(*eIt);
+        Scalar porosity = problem_.spatialParameters().porosity(*eIt);
 
-        Scalar viscosityWI = problem_.variables().viscosityWetting(globalIdxI);
-        Scalar viscosityNWI = problem_.variables().viscosityNonwetting(
-                globalIdxI);
+        Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
+        Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
 
-        Scalar densityWI = problem_.variables().densityWetting(globalIdxI);
-        Scalar densityNWI = problem_.variables().densityNonwetting(globalIdxI);
-
-        Scalar lambdaWI = problem_.variables().mobilityWetting(globalIdxI);
-        Scalar lambdaNWI = problem_.variables().mobilityNonwetting(globalIdxI);
+        if (compressibility_)
+        {
+            viscosityW = cellDataI.viscosity(wPhaseIdx);
+            viscosityNW = cellDataI.viscosity(nPhaseIdx);
+        }
 
         // run through all intersections with neighbors and boundary
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt
-                != isItEnd; ++isIt)
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             // local number of faces
             int isIndex = isIt->indexInInside();
@@ -404,8 +454,10 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
 
             Scalar faceArea = isIt->geometry().volume();
 
-            Scalar factor = 0;
-            Scalar factorSecondPhase = 0;
+            //get velocity*normalvector*facearea/(volume*porosity)
+            Scalar factorW = (cellDataI.fluxData().velocity(wPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
+            Scalar factorNW = (cellDataI.fluxData().velocity(nPhaseIdx, isIndex) * unitOuterNormal) * faceArea;
+            Scalar factorTotal = factorW + factorNW;
 
             // handle interior face
             if (isIt->neighbor())
@@ -414,82 +466,61 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 ElementPointer neighborPointer = isIt->outside();
                 int globalIdxJ = problem_.variables().index(*neighborPointer);
 
+                CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
+
                 // neighbor cell center in global coordinates
-                const GlobalPosition& globalPosNeighbor =
-                        neighborPointer->geometry().center();
+                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
 
                 // distance vector between barycenters
                 GlobalPosition distVec = globalPosNeighbor - globalPos;
                 // compute distance between cell centers
-                Scalar dist = distVec * unitOuterNormal;
-//                Scalar dist = distVec.two_norm();
+                Scalar dist = distVec.two_norm();
 
                 bool takeNeighbor = (eIt->level() < neighborPointer->level());
                 //get phase potentials
-                Scalar potentialW =
-                        (takeNeighbor) ? -problem_.variables().potentialWetting(globalIdxJ, isIt->indexInOutside()) :
-                                problem_.variables().potentialWetting(globalIdxI, isIndex);
-                Scalar potentialNW =
-                        (takeNeighbor) ? -problem_.variables().potentialNonwetting(globalIdxJ, isIt->indexInOutside()) :
-                                problem_.variables().potentialNonwetting(globalIdxI, isIndex);
-
-                Scalar densityWJ = problem_.variables().densityWetting(
-                        globalIdxJ);
-                Scalar densityNWJ = problem_.variables().densityNonwetting(
-                        globalIdxJ);
-
-                //get velocity*normalvector*facearea/(volume*porosity)
-                factor = (problem_.variables().velocity()[globalIdxI][isIndex]
-                        * unitOuterNormal) * faceArea;
-                factorSecondPhase
-                        = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
-                                * unitOuterNormal) * faceArea;
+                bool upwindWI =
+                        (takeNeighbor) ? !cellDataJ.fluxData().isUpwindCell(wPhaseIdx, isIt->indexInOutside()) :
+                                cellDataI.fluxData().isUpwindCell(wPhaseIdx, isIndex);
+                bool upwindNWI =
+                        (takeNeighbor) ? !cellDataJ.fluxData().isUpwindCell(nPhaseIdx, isIt->indexInOutside()) :
+                                cellDataI.fluxData().isUpwindCell(nPhaseIdx, isIndex);
 
                 Scalar lambdaW = 0;
                 Scalar lambdaNW = 0;
-                //Scalar viscosityW = 0;
-                //Scalar viscosityNW = 0;
 
                 //upwinding of lambda dependend on the phase potential gradients
-                if (potentialW >= 0.)
+                if (upwindWI)
                 {
                     lambdaW = lambdaWI;
                     if (compressibility_)
                     {
-                        lambdaW /= densityWI;
-                    }//divide by density because lambda is saved as lambda*density
-                    //viscosityW = viscosityWI;
+                        lambdaW /= cellDataI.density(wPhaseIdx);
+                    } //divide by density because lambda is saved as lambda*density
                 }
                 else
                 {
-                    lambdaW = problem_.variables().mobilityWetting(globalIdxJ);
+                    lambdaW = cellDataJ.mobility(wPhaseIdx);
                     if (compressibility_)
                     {
-                        lambdaW /= densityWJ;
-                    }//divide by density because lambda is saved as lambda*density
-                    //viscosityW = problem_.variables().viscosityWetting(
-                    //        globalIdxJ);
+                        lambdaW /= cellDataJ.density(wPhaseIdx);
+                    } //divide by density because lambda is saved as lambda*density
                 }
 
-                if (potentialNW >= 0.)
+                if (upwindNWI)
                 {
                     lambdaNW = lambdaNWI;
                     if (compressibility_)
                     {
-                        lambdaNW /= densityNWI;
-                    }//divide by density because lambda is saved as lambda*density
-                    //viscosityNW = viscosityNWI;
+                        lambdaNW /= cellDataI.density(nPhaseIdx);
+                    } //divide by density because lambda is saved as lambda*density
                 }
                 else
                 {
-                    lambdaNW = problem_.variables().mobilityNonwetting(
-                            globalIdxJ);
+                    lambdaNW = cellDataJ.mobility(nPhaseIdx);
                     if (compressibility_)
                     {
-                        lambdaNW /= densityNWJ;
-                    }//divide by density because lambda is saved as lambda*density
-                    //viscosityNW = problem_.variables().viscosityNonwetting(
-                    //        globalIdxJ);
+                        lambdaNW /= cellDataJ.density(nPhaseIdx);
+                    } //divide by density because lambda is saved as lambda*density
                 }
 
                 switch (velocityType_)
@@ -497,111 +528,68 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 case vt:
                 {
                     //add cflFlux for time-stepping
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, factor, *isIt);
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorTotal, *isIt);
 
                     //determine phase saturations from primary saturation variable
-                    Scalar satWI = 0;
-                    Scalar satWJ = 0;
-                    switch (saturationType_)
-                    {
-                    case Sw:
-                    {
-                        satWI = problem_.variables().saturation()[globalIdxI];
-                        satWJ = problem_.variables().saturation()[globalIdxJ];
-                        break;
-                    }
-                    case Sn:
-                    {
-                        satWI = 1
-                                - problem_.variables().saturation()[globalIdxI];
-                        satWJ = 1
-                                - problem_.variables().saturation()[globalIdxJ];
-                        break;
-                    }
-                    }
+                    Scalar satWI = cellDataI.saturation(wPhaseIdx);
+                    Scalar satWJ = cellDataJ.saturation(wPhaseIdx);
 
-                    Scalar pcI = problem_.variables().capillaryPressure(
-                            globalIdxI);
-                    Scalar pcJ = problem_.variables().capillaryPressure(
-                            globalIdxJ);
+                    Scalar pcI = cellDataI.capillaryPressure();
+                    Scalar pcJ = cellDataJ.capillaryPressure();
 
                     // calculate the saturation gradient
                     GlobalPosition pcGradient = unitOuterNormal;
                     pcGradient *= (pcI - pcJ) / dist;
 
                     // get the diffusive part
-                    Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI,
-                            satWJ, pcGradient) * unitOuterNormal * faceArea;
+                    Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI, satWJ, pcGradient) * unitOuterNormal
+                            * faceArea;
 
-
-                    Scalar convPart = convectivePart()(*eIt, isIndex, satWI,
-                            satWJ) * unitOuterNormal * faceArea;
+                    Scalar convPart = convectivePart()(*eIt, isIndex, satWI, satWJ) * unitOuterNormal * faceArea;
 
                     switch (saturationType_)
                     {
                     case Sw:
                     {
                         //vt*fw
-                        factor *= lambdaW / (lambdaW + lambdaNW);
+                        factorTotal *= lambdaW / (lambdaW + lambdaNW);
                         break;
                     }
                     case Sn:
                     {
                         //vt*fn
-                        factor *= lambdaNW / (lambdaW + lambdaNW);
+                        factorTotal *= lambdaNW / (lambdaW + lambdaNW);
                         diffPart *= -1;
                         convPart *= -1;
                         break;
                     }
                     }
-                    factor -= diffPart;
-                    factor += convPart;
+                    factorTotal -= diffPart;
+                    factorTotal += convPart;
 
                     //add cflFlux for time-stepping
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, 10 * diffPart, *isIt);
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, 10 * convPart, *isIt);
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, 10 * diffPart, *isIt);
+                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, 10 * convPart, *isIt);
 
                     break;
                 }
-                case vw:
+                default:
                 {
                     if (compressibility_)
                     {
-                        factor /= densityWI;
-                        factorSecondPhase /= densityNWI;
+                        factorW /= cellDataI.density(wPhaseIdx);
+                        factorNW /= cellDataI.density(nPhaseIdx);
                     }
-
-                    //add cflFlux for time-stepping
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, factor, *isIt, wPhaseIdx);
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, factorSecondPhase,
-                            *isIt, nPhaseIdx);
-
-                    break;
-                }
-                case vn:
-                {
-                    if (compressibility_)
-                    {
-                        factor /= densityNWI;
-                        factorSecondPhase /= densityWI;
-                    }
-
-                    //add cflFlux for time-stepping
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, factor, *isIt, nPhaseIdx);
-                    evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                            viscosityWI, viscosityNWI, factorSecondPhase,
-                            *isIt, wPhaseIdx);
+                        //add cflFlux for time-stepping
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorW, *isIt,
+                                wPhaseIdx);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorNW, *isIt,
+                                nPhaseIdx);
 
                     break;
                 }
                 }
-            }//end intersection with neighbor element
+            } //end intersection with neighbor element
 
             // handle boundary face
             if (isIt->boundary())
@@ -616,8 +604,7 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                 // distance vector between barycenters
                 GlobalPosition distVec = globalPosFace - globalPos;
                 // compute distance between cell centers
-                Scalar dist = distVec * unitOuterNormal;
-//                Scalar dist = distVec.two_norm();
+                Scalar dist = distVec.two_norm();
 
                 if (bcType.isDirichlet(satEqIdx))
                 {
@@ -625,126 +612,70 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
 
                     Scalar satBound = boundValues[saturationIdx];
 
-                    //get velocity*normalvector*facearea/(volume*porosity)
-                    factor
-                            = (problem_.variables().velocity()[globalIdxI][isIndex]
-                                    * unitOuterNormal) * faceArea;
-                    factorSecondPhase
-                            = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
-                                    * unitOuterNormal) * faceArea;
-
-                    Scalar pressBound = problem_.variables().pressure()[globalIdxI];
-                    Scalar temperature = problem_.temperature(*eIt);
-
                     //determine phase saturations from primary saturation variable
-                    Scalar satWI = 0;
+                    Scalar satWI = cellDataI.saturation(wPhaseIdx);
                     Scalar satWBound = 0;
                     switch (saturationType_)
                     {
                     case Sw:
                     {
-                        satWI = problem_.variables().saturation()[globalIdxI];
                         satWBound = satBound;
                         break;
                     }
                     case Sn:
                     {
-                        satWI = 1
-                                - problem_.variables().saturation()[globalIdxI];
                         satWBound = 1 - satBound;
                         break;
                     }
                     }
 
-                    Scalar pcBound = MaterialLaw::pC(
-                            problem_.spatialParameters().materialLawParams(*eIt), satBound);
-
-                    //determine phase pressures from primary pressure variable
-                    Scalar pressW = 0;
-                    Scalar pressNW = 0;
-                    switch (pressureType_)
-                    {
-                    case pw:
-                    {
-                        pressW = pressBound;
-                        pressNW = pressBound + pcBound;
-                        break;
-                    }
-                    case pn:
-                    {
-                        pressW = pressBound - pcBound;
-                        pressNW = pressBound;
-                        break;
-                    }
-                    }
-
-                    FluidState fluidState;
-                    fluidState.update(satBound, pressW, pressNW, temperature);
-
-                    //get phase potentials
-                    Scalar potentialW = problem_.variables().potentialWetting(
-                            globalIdxI, isIndex);
-                    Scalar potentialNW =
-                            problem_.variables().potentialNonwetting(
-                                    globalIdxI, isIndex);
+                    Scalar pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satBound);
 
                     Scalar lambdaW = 0;
                     Scalar lambdaNW = 0;
 
                     //upwinding of lambda dependend on the phase potential gradients
-                    if (potentialW > 0.)
+                    if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, isIndex))
                     {
                         lambdaW = lambdaWI;
                         if (compressibility_)
                         {
-                            lambdaW /= densityWI;
-                        }//divide by density because lambda is saved as lambda*density
+                            lambdaW /= cellDataI.density(wPhaseIdx);
+                        } //divide by density because lambda is saved as lambda*density
                     }
                     else
                     {
                         if (compressibility_)
                         {
-                            lambdaW
-                                    = MaterialLaw::krw(
-                                            problem_.spatialParameters().materialLawParams(*eIt), satWBound)
-                                            / FluidSystem::phaseViscosity(
-                                                    wPhaseIdx, temperature,
-                                                    pressW, fluidState);
+                            lambdaW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satWBound)
+                                    / FluidSystem::viscosity(cellDataI.fluidState(), wPhaseIdx);
                         }
                         else
                         {
-                            lambdaW
-                                    = MaterialLaw::krw(
-                                            problem_.spatialParameters().materialLawParams(*eIt), satWBound)
-                                            / viscosityWI;
+                            lambdaW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satWBound)
+                                    / viscosityW;
                         }
                     }
 
-                    if (potentialNW >= 0.)
+                    if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, isIndex))
                     {
                         lambdaNW = lambdaNWI;
                         if (compressibility_)
                         {
-                            lambdaNW /= densityNWI;
-                        }//divide by density because lambda is saved as lambda*density
+                            lambdaNW /= cellDataI.density(nPhaseIdx);
+                        } //divide by density because lambda is saved as lambda*density
                     }
                     else
                     {
                         if (compressibility_)
                         {
-                            lambdaNW
-                                    = MaterialLaw::krn(
-                                            problem_.spatialParameters().materialLawParams(*eIt), satWBound)
-                                            / FluidSystem::phaseViscosity(
-                                                    nPhaseIdx, temperature,
-                                                    pressNW, fluidState);
+                            lambdaNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satWBound)
+                                    / FluidSystem::viscosity(cellDataI.fluidState(), nPhaseIdx);
                         }
                         else
                         {
-                            lambdaNW
-                                    = MaterialLaw::krn(
-                                            problem_.spatialParameters().materialLawParams(*eIt), satWBound)
-                                            / viscosityNWI;
+                            lambdaNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satWBound)
+                                    / viscosityNW;
                         }
                     }
                     //                    std::cout<<lambdaW<<" "<<lambdaNW<<std::endl;
@@ -753,136 +684,95 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     {
                     case vt:
                     {
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorTotal, *isIt);
 
-                        Scalar pcI = problem_.variables().capillaryPressure(
-                                globalIdxI);
+                        Scalar pcI = cellDataI.capillaryPressure();
 
                         // calculate the saturation gradient
                         GlobalPosition pcGradient = unitOuterNormal;
                         pcGradient *= (pcI - pcBound) / dist;
 
                         // get the diffusive part -> give 1-sat because sat = S_n and lambda = lambda(S_w) and pc = pc(S_w)
-                        Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI,
-                                satWBound, pcGradient) * unitOuterNormal
+                        Scalar diffPart = diffusivePart()(*eIt, isIndex, satWI, satWBound, pcGradient) * unitOuterNormal
                                 * faceArea;
 
-                        Scalar convPart = convectivePart()(*eIt, isIndex,
-                                satWI, satWBound) * unitOuterNormal * faceArea;
+                        Scalar convPart = convectivePart()(*eIt, isIndex, satWI, satWBound) * unitOuterNormal
+                                * faceArea;
 
                         switch (saturationType_)
                         {
                         case Sw:
                         {
                             //vt*fw
-                            factor *= lambdaW / (lambdaW + lambdaNW);
+                            factorTotal *= lambdaW / (lambdaW + lambdaNW);
                             break;
                         }
                         case Sn:
                         {
                             //vt*fn
-                            factor *= lambdaNW / (lambdaW + lambdaNW);
-                            diffPart *= -1;
+                            factorTotal *= lambdaNW / (lambdaW + lambdaNW);
+                            diffPart *= -1;                        //add cflFlux for time-stepping
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorW, *isIt,
+                                    wPhaseIdx);
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorNW,
+                                    *isIt, nPhaseIdx);
                             convPart *= -1;
                             break;
                         }
                         }
                         //vt*fw
-                        factor -= diffPart;
-                        factor += convPart;
+                        factorTotal -= diffPart;
+                        factorTotal += convPart;
 
                         //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, 10 * diffPart, *isIt);
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, 10 * convPart, *isIt);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, 10 * diffPart, *isIt);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, 10 * convPart, *isIt);
 
                         break;
                     }
-
-                    case vw:
+                    default:
                     {
                         if (compressibility_)
                         {
-                            factor /= densityWI;
-                            factorSecondPhase /= densityNWI;
+                            factorW /= cellDataI.density(wPhaseIdx);
+                            factorNW /= cellDataI.density(nPhaseIdx);
                         }
 
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt,
-                                wPhaseIdx);
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factorSecondPhase,
-                                *isIt, nPhaseIdx);
-
-                        break;
-                    }
-
-                        //for time step criterion if the non-wetting phase velocity is used
-                    case vn:
-                    {
-                        if (compressibility_)
-                        {
-                            factor /= densityNWI;
-                            factorSecondPhase /= densityWI;
-                        }
-
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt,
-                                nPhaseIdx);
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factorSecondPhase,
-                                *isIt, wPhaseIdx);
+                            //add cflFlux for time-stepping
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorW, *isIt,
+                                    wPhaseIdx);
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorNW, *isIt,
+                                    nPhaseIdx);
 
                         break;
                     }
                     }
-                }//end dirichlet boundary
+                } //end dirichlet boundary
 
                 if (bcType.isNeumann(satEqIdx))
                 {
                     problem_.neumann(boundValues, *isIt);
+                    factorW = boundValues[wPhaseIdx];
+                    factorNW = boundValues[nPhaseIdx];
+                    factorW *= faceArea;
+                    factorNW *= faceArea;
 
                     //get mobilities
                     Scalar lambdaW, lambdaNW;
 
                     lambdaW = lambdaWI;
-                    if (compressibility_)
-                    {
-                        lambdaW /= densityWI;
-                    }
-
                     lambdaNW = lambdaNWI;
                     if (compressibility_)
                     {
-                        lambdaNW /= densityNWI;
+                        lambdaW /= cellDataI.density(wPhaseIdx);
+                        lambdaNW /= cellDataI.density(nPhaseIdx);
+                        factorW /= cellDataI.density(wPhaseIdx);
+                        factorNW /= cellDataI.density(nPhaseIdx);
                     }
-
-                    switch (saturationType_)
+                    else
                     {
-                    case Sw:
-                    {
-                        factor = boundValues[wPhaseIdx];
-                        factor /= densityWI;
-                        factor *= faceArea;
-                        factorSecondPhase = boundValues[nPhaseIdx];
-                        factorSecondPhase /= densityNWI;
-                        factorSecondPhase *= faceArea;
-                        break;
-                    }
-                    case Sn:
-                    {
-                        factor = boundValues[nPhaseIdx];
-                        factor /= densityNWI;
-                        factor *= faceArea;
-                        factorSecondPhase = boundValues[wPhaseIdx];
-                        factorSecondPhase /= densityWI;
-                        factorSecondPhase *= faceArea;
-                        break;
-                    }
+                        factorW /= densityW;
+                        factorNW /= densityNW;
                     }
 
                     switch (velocityType_)
@@ -890,59 +780,32 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                     case vt:
                     {
                         //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor+factorSecondPhase, *isIt);
+                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorW + factorNW,
+                                *isIt);
                         break;
                     }
-                    case vw:
+                    default:
                     {
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt,
-                                wPhaseIdx);
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factorSecondPhase, *isIt,
-                                nPhaseIdx);
-                        break;
-                    }
-                    case vn:
-                    {
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt,
-                                nPhaseIdx);
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factorSecondPhase, *isIt,
-                                wPhaseIdx);
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorW, *isIt,
+                                    wPhaseIdx);
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorNW, *isIt,
+                                    nPhaseIdx);
+
                         break;
                     }
                     }
 
-                }//end neumann boundary
+                } //end neumann boundary
                 if (bcType.isOutflow(satEqIdx))
                 {
                     //get mobilities
-                    Scalar lambdaW, lambdaNW;
-
-                    lambdaW = lambdaWI;
+                    Scalar lambdaW = lambdaWI;
+                    Scalar lambdaNW = lambdaNWI;
                     if (compressibility_)
                     {
-                        lambdaW /= densityWI;
+                        lambdaW /= cellDataI.density(wPhaseIdx);
+                        lambdaNW /= cellDataI.density(nPhaseIdx);
                     }
-
-                    lambdaNW = lambdaNWI;
-                    if (compressibility_)
-                    {
-                        lambdaNW /= densityNWI;
-                    }
-
-                    //get velocity*normalvector*facearea/(volume*porosity)
-                    factor
-                            = (problem_.variables().velocity()[globalIdxI][isIndex]
-                                    * unitOuterNormal) * faceArea;
-                    factorSecondPhase
-                            = (problem_.variables().velocitySecondPhase()[globalIdxI][isIndex]
-                                    * unitOuterNormal) * faceArea;
 
                     if (velocityType_ == vt)
                     {
@@ -951,131 +814,120 @@ void FVSaturation2P<TypeTag>::update(const Scalar t, Scalar& dt,
                         case Sw:
                         {
                             //vt*fw
-                            factor *= lambdaW / (lambdaW + lambdaNW);
+                            factorTotal *= lambdaW / (lambdaW + lambdaNW);
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorTotal,
+                                    *isIt);
                             break;
                         }
                         case Sn:
                         {
                             //vt*fn
-                            factor *= lambdaNW / (lambdaW + lambdaNW);
+                            factorTotal *= lambdaNW / (lambdaW + lambdaNW);
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorTotal,
+                                    *isIt);
                             break;
                         }
                         }
                     }
+                    else
+                    {
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorW, *isIt,
+                                    wPhaseIdx);
+                            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, factorNW, *isIt,
+                                    nPhaseIdx);
 
-                    switch (velocityType_)
-                    {
-                    case vt:
-                    {
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt);
                         break;
                     }
-                    case vw:
-                    {
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt,
-                                wPhaseIdx);
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factorSecondPhase, *isIt,
-                                nPhaseIdx);
-                        break;
-                    }
-                    case vn:
-                    {
-                        //add cflFlux for time-stepping
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factor, *isIt,
-                                nPhaseIdx);
-                        evalCflFluxFunction().addFlux(lambdaW, lambdaNW,
-                                viscosityWI, viscosityNWI, factorSecondPhase, *isIt,
-                                wPhaseIdx);
-                        break;
-                    }
-                    }
 
-                }//end outflow boundary
-            }//end boundary
-            // add to update vector
-            updateVec[globalIdxI] -= factor / (volume * porosity);//-:v>0, if flow leaves the cell
-        }// end all intersections
-        PrimaryVariables sourceVec(0.0);
-        problem_.source(sourceVec, *eIt);
-        sourceVec[wPhaseIdx] /= densityWI;
-        sourceVec[nPhaseIdx] /= densityNWI;
-
-            //get mobilities
-            Scalar lambdaW = 0;
-            Scalar lambdaNW = 0;
-
-            lambdaW = lambdaWI;
-            if (compressibility_)
-            {
-                lambdaW /= densityWI;
-            }
-            lambdaNW = lambdaNWI;
-            if (compressibility_)
-            {
-                lambdaNW /= densityNWI;
-            }
-
-            switch (saturationType_)
-            {
-            case Sw:
-            {
-                if (sourceVec[wPhaseIdx] < 0 && problem_.variables().saturation()[globalIdxI] < threshold_)
-                    sourceVec[wPhaseIdx] = 0.0;
-
-                updateVec[globalIdxI] += sourceVec[wPhaseIdx] / porosity;
-                break;
-            }
-            case Sn:
-            {
-                if (sourceVec[nPhaseIdx] < 0 && problem_.variables().saturation()[globalIdxI] < threshold_)
-                    sourceVec[nPhaseIdx] = 0.0;
-
-                updateVec[globalIdxI] += sourceVec[nPhaseIdx] / porosity;
-                break;
-            }
-            }
+                } //end outflow boundary
+            } //end boundary
+              // add to update vector
 
             switch (velocityType_)
             {
-            case vw:
-            {
-                //add cflFlux for time-stepping
-                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI,
-                        viscosityNWI, sourceVec[wPhaseIdx] * volume, *eIt, wPhaseIdx);
-                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI,
-                        viscosityNWI, sourceVec[nPhaseIdx] * volume, *eIt, nPhaseIdx);
-                break;
-            }
-            case vn:
-            {
-                //add cflFlux for time-stepping
-                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI,
-                        viscosityNWI, sourceVec[nPhaseIdx] * volume, *eIt, nPhaseIdx);
-                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI,
-                        viscosityNWI, sourceVec[wPhaseIdx] * volume, *eIt, wPhaseIdx);
-                break;
-            }
             case vt:
-            {
-                //add cflFlux for time-stepping
-                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityWI,
-                        viscosityNWI, (sourceVec[wPhaseIdx]+sourceVec[nPhaseIdx]) * volume, *eIt);
+                updateVec[globalIdxI] -= factorTotal / (volume * porosity); //-:v>0, if flow leaves the cell
+                break;
+            default:
+                switch (saturationType_)
+                {
+                case Sw:
+                    updateVec[globalIdxI] -= factorW / (volume * porosity); //-:v>0, if flow leaves the cell
+                    break;
+                case Sn:
+                    updateVec[globalIdxI] -= factorNW / (volume * porosity); //-:v>0, if flow leaves the cell
+                    break;
+                }
                 break;
             }
-            }
+        } // end all intersections
+        PrimaryVariables sourceVec(0.0);
+        problem_.source(sourceVec, *eIt);
+
+        if (compressibility_)
+        {
+            sourceVec[wPhaseIdx] /= cellDataI.density(wPhaseIdx);
+            sourceVec[nPhaseIdx] /= cellDataI.density(nPhaseIdx);
+        }
+        else
+        {
+            sourceVec[wPhaseIdx] /= densityW;
+            sourceVec[nPhaseIdx] /= densityNW;
+        }
+
+        //get mobilities
+        Scalar lambdaW = lambdaWI;
+        Scalar lambdaNW = lambdaNWI;
+        if (compressibility_)
+        {
+            lambdaW /= cellDataI.density(wPhaseIdx);
+            lambdaNW /= cellDataI.density(nPhaseIdx);
+        }
+
+        switch (saturationType_)
+        {
+        case Sw:
+        {
+            if (sourceVec[wPhaseIdx] < 0 && cellDataI.saturation(wPhaseIdx) < threshold_)
+                sourceVec[wPhaseIdx] = 0.0;
+
+            updateVec[globalIdxI] += sourceVec[wPhaseIdx] / porosity;
+            break;
+        }
+        case Sn:
+        {
+            if (sourceVec[nPhaseIdx] < 0 && cellDataI.saturation(nPhaseIdx) < threshold_)
+                sourceVec[nPhaseIdx] = 0.0;
+
+            updateVec[globalIdxI] += sourceVec[nPhaseIdx] / porosity;
+            break;
+        }
+        }
+
+        switch (velocityType_)
+        {
+        case vt:
+        {
+            //add cflFlux for time-stepping
+            evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW,
+                    (sourceVec[wPhaseIdx] + sourceVec[nPhaseIdx]) * volume, *eIt);
+            break;
+        }
+        default:
+        {
+                //add cflFlux for time-stepping
+                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, sourceVec[wPhaseIdx] * volume,
+                        *eIt, wPhaseIdx);
+                evalCflFluxFunction().addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, sourceVec[nPhaseIdx] * volume,
+                        *eIt, nPhaseIdx);
+            break;
+        }
+        }
 
         //calculate time step
-        dt = std::min(dt, evalCflFluxFunction().getCflFluxFunction(globalPos,
-                *eIt) * (porosity * volume));
+        dt = std::min(dt, evalCflFluxFunction().getCflFluxFunction(globalPos, *eIt) * (porosity * volume));
 
-        problem_.variables().volumecorrection(globalIdxI)
-                = updateVec[globalIdxI];
+        cellDataI.setUpdate(updateVec[globalIdxI]);
     } // end grid traversal
 }
 
@@ -1083,97 +935,80 @@ template<class TypeTag>
 void FVSaturation2P<TypeTag>::initialize()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt
-            != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         PrimaryVariables initSol(0.0);
         problem_.initial(initSol, *eIt);
+
+        int globalIdx = problem_.variables().index(*eIt);
+
         // initialize cell concentration
-        problem_.variables().saturation()[problem_.variables().index(*eIt)]
-                = initSol[saturationIdx];
+        problem_.variables().primaryVariablesGlobal(satEqIdx)[globalIdx] = initSol[saturationIdx];
     }
 
     return;
 }
 
 template<class TypeTag>
-void FVSaturation2P<TypeTag>::updateMaterialLaws(
-        RepresentationType& saturation = *(new RepresentationType(0)),
+void FVSaturation2P<TypeTag>::updateMaterialLaws(RepresentationType& saturation = *(new RepresentationType(0)),
         bool iterate = false)
 {
-    FluidState fluidState;
+    ElementIterator eItBegin = problem_.gridView().template begin<0>();
+
+    Scalar temp = problem_.temperature(*eItBegin);
+    Scalar pRef = problem_.referencePressure(*eItBegin);
+    Scalar densityW = WettingPhase::density(temp, pRef);
+    Scalar densityNW = NonwettingPhase::density(temp, pRef);
+    Scalar viscosityW = WettingPhase::viscosity(temp, pRef);
+    Scalar viscosityNW = NonwettingPhase::viscosity(temp, pRef);
 
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt
-            != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
 
-        Scalar sat = 0;
-        if (!iterate)
-        {
-            sat = problem_.variables().saturation()[globalIdx];
-        }
-        else
-        {
-            sat = saturation[globalIdx];
-        }
+        CellData& cellData = problem_.variables().cellData(globalIdx);
+
+        Scalar temperature = problem_.temperature(*eIt);
 
         //determine phase saturations from primary saturation variable
         Scalar satW = 0;
-        if (saturationType_ == Sw)
+        Scalar satNW = 0;
+        switch (saturationType_)
         {
-            satW = sat;
-        }
-        if (saturationType_ == Sn)
+        case Sw:
         {
-            satW = 1 - sat;
+            satW = problem_.variables().primaryVariablesGlobal(satEqIdx)[globalIdx];
+            satNW = 1 - satW;
+            break;
+        }
+        case Sn:
+        {
+            satNW = problem_.variables().primaryVariablesGlobal(satEqIdx)[globalIdx];
+            satW = 1 - satNW;
+            break;
+        }
         }
 
-        Scalar temperature = problem_.temperature(*eIt);
-        Scalar referencePressure = problem_.referencePressure(*eIt);
+        Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
 
-        fluidState.update(satW, referencePressure, referencePressure,
-                temperature);
-
-        problem_.variables().densityWetting(globalIdx)
-                = FluidSystem::phaseDensity(wPhaseIdx, temperature,
-                        referencePressure, fluidState);
-        problem_.variables().densityNonwetting(globalIdx)
-                = FluidSystem::phaseDensity(nPhaseIdx, temperature,
-                        referencePressure, fluidState);
-        problem_.variables().viscosityWetting(globalIdx)
-                = FluidSystem::phaseViscosity(wPhaseIdx, temperature,
-                        referencePressure, fluidState);
-        problem_.variables().viscosityNonwetting(globalIdx)
-                = FluidSystem::phaseViscosity(nPhaseIdx, temperature,
-                        referencePressure, fluidState);
+        cellData.setSaturation(wPhaseIdx, satW);
+        cellData.setSaturation(nPhaseIdx, satNW);
+        cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        problem_.variables().mobilityWetting(globalIdx)
-                = MaterialLaw::krw(
-                        problem_.spatialParameters().materialLawParams(*eIt), satW)
-                        / problem_.variables().viscosityWetting(globalIdx);
-        problem_.variables().mobilityNonwetting(globalIdx)
-                = MaterialLaw::krn(
-                        problem_.spatialParameters().materialLawParams(*eIt), satW)
-                        / problem_.variables().viscosityNonwetting(globalIdx);
-        problem_.variables().capillaryPressure(globalIdx)
-                = MaterialLaw::pC(
-                        problem_.spatialParameters().materialLawParams(*eIt), satW);
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosityW;
+        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosityNW;
 
-        problem_.variables().fracFlowFuncWetting(globalIdx)
-                = problem_.variables().mobilityWetting(globalIdx)
-                        / (problem_.variables().mobilityWetting(globalIdx)
-                                + problem_.variables().mobilityNonwetting(
-                                        globalIdx));
-        problem_.variables().fracFlowFuncNonwetting(globalIdx)
-                = problem_.variables().mobilityNonwetting(globalIdx)
-                        / (problem_.variables().mobilityWetting(globalIdx)
-                                + problem_.variables().mobilityNonwetting(
-                                        globalIdx));
+        // initialize mobilities
+        cellData.mobility(wPhaseIdx) = mobilityW;
+        cellData.mobility(nPhaseIdx) = mobilityNW;
+
+        //initialize fractional flow functions
+        cellData.fracFlowFunc(wPhaseIdx) = mobilityW / (mobilityW + mobilityNW);
+        cellData.fracFlowFunc(nPhaseIdx) = mobilityNW / (mobilityW + mobilityNW);
     }
     return;
 }

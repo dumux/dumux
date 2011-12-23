@@ -49,7 +49,7 @@ private:
       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+      typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
     enum
     {
@@ -219,9 +219,18 @@ typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCfl
     Scalar volumeCorrectionFactorOutW = 0;
     Scalar volumeCorrectionFactorOutNW = 0;
 
-        Scalar satW = problem_.variables().cellData(problem_.variables().index(element)).saturation(wPhaseIdx);
-        volumeCorrectionFactorOutW = std::max((satW - residualSatW), 1e-2);
-        volumeCorrectionFactorOutNW = std::max((1 - satW - residualSatNW), 1e-2);
+    Scalar sat = problem_.variables().saturation()[problem_.variables().index(element)];
+
+    if (saturationType_ == Sw)
+    {
+        volumeCorrectionFactorOutW = std::max((sat - residualSatW), 1e-2);
+        volumeCorrectionFactorOutNW = std::max((1 - sat - residualSatNW), 1e-2);
+    }
+    if (saturationType_ == Sn)
+    {
+        volumeCorrectionFactorOutW = std::max((1 - sat - residualSatW), 1e-2);
+        volumeCorrectionFactorOutNW = std::max((sat - residualSatNW), 1e-2);
+    }
 
     //make sure correction is in the right range. If not: force dt to be not min-dt!
     if (volumeCorrectionFactorOutW <= 0)
