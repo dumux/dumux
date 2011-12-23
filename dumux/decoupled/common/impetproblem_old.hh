@@ -68,8 +68,6 @@ private:
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
-
     enum
     {
         dim = GridView::dimension,
@@ -77,8 +75,8 @@ private:
     };
     enum
     {
-        adaptiveGrid = GET_PROP_VALUE(TypeTag, PTAG(AdaptiveGrid)),
-        transportEqIdx = Indices::transportEqIdx
+        wetting = 0, nonwetting = 1,
+        adaptiveGrid = GET_PROP_VALUE(TypeTag, PTAG(AdaptiveGrid))
     };
 
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
@@ -412,7 +410,7 @@ public:
     {
         // allocate temporary vectors for the updates
         typedef TransportSolutionType Solution;
-        Solution k1 = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
+        Solution k1 = asImp_().variables().transportedQuantity();
 
         Scalar t = timeManager().time();
         Scalar dt = 1e100;
@@ -449,13 +447,7 @@ public:
         timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        int size = gridView_.size(0);
-        Solution& newSol = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
-        for (int i = 0; i < size; i++)
-        {
-            newSol[i] += (k1[i] *= dt);
-            transportModel().updateSaturationSolution(i, newSol[i][0]);
-        }
+        asImp_().variables().transportedQuantity() += (k1 *= timeManager().timeStepSize());
     }
 
     /*!

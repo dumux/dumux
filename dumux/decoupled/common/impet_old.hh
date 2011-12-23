@@ -62,13 +62,9 @@ template<class TypeTag> class IMPET
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
-
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld,
-        transportEqIdx = Indices::transportEqIdx
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
@@ -104,9 +100,9 @@ public:
     void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
     {
         // the method is valid for any transported quantity.
-        int transSize = problem.variables().primaryVariablesGlobal(transportEqIdx).size();
-        TransportSolutionType transportedQuantity(problem.variables().primaryVariablesGlobal(transportEqIdx));
-        TransportSolutionType transValueOldIter(problem.variables().primaryVariablesGlobal(transportEqIdx));
+        int transSize = problem.variables().gridSize();
+        TransportSolutionType transportedQuantity(problem.variables().transportedQuantity());
+        TransportSolutionType transValueOldIter(problem.variables().transportedQuantity());
         TransportSolutionType transValueHelp(transSize);
         TransportSolutionType transValueDiff(transSize);
         TransportSolutionType updateOldIter(transSize);
@@ -134,7 +130,7 @@ public:
             if (iterFlag_)
             { // only needed if iteration has to be done
                 updateHelp = updateVec;
-                transportedQuantity = problem.variables().primaryVariablesGlobal(transportEqIdx);
+                transportedQuantity = problem.variables().transportedQuantity();
                 transportedQuantity += (updateHelp *= (dt * cFLFactor_));
                 transportedQuantity *= omega_;
                 transValueHelp = transValueOldIter;

@@ -56,7 +56,6 @@ NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag));
 NEW_PROP_TAG( SolutionTypes);
 NEW_PROP_TAG( TransportSolutionType);
 NEW_PROP_TAG( PrimaryVariables);
-NEW_PROP_TAG ( Indices );
 
 NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
 NEW_PROP_TAG( GridView); //!< The type of the grid view
@@ -70,7 +69,6 @@ NEW_PROP_TAG( NumComponents); //!< Number of components in the system
 NEW_PROP_TAG( Variables); //!< The type of the container of global variables
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
-NEW_PROP_TAG( CellData );//!< Defines data object to be stored
 }
 }
 
@@ -80,6 +78,9 @@ NEW_PROP_TAG( CellData );//!< Defines data object to be stored
 #include <dumux/common/timemanager.hh>
 #include <dumux/common/boundarytypes.hh>
 #include<dumux/common/boundaryconditions.hh>
+
+template<class TypeTag>
+class VariableClass;
 
 namespace Dumux
 {
@@ -101,6 +102,9 @@ public:
 
 //! Disables Grid Adaptivity as standard
 SET_BOOL_PROP(DecoupledModel, AdaptiveGrid, false);
+
+//! Use the parent VariableClass
+SET_TYPE_PROP(DecoupledModel, Variables, VariableClass<TypeTag>);
 
 NEW_PROP_TAG(MaxIntersections);   //!< maximum number of intersections per element
 SET_PROP(DecoupledModel, MaxIntersections)
@@ -222,7 +226,6 @@ SET_PROP(DecoupledModel, LinearSolverBlockSize)
 {public:
     static constexpr int value = 1;
 };
-
 // \}
 
 }

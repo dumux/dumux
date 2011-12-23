@@ -22,10 +22,6 @@
 #ifndef DUMUX_VARIABLECLASS_HH
 #define DUMUX_VARIABLECLASS_HH
 
-//#define HACK_SINTEF_RESPROP
-
-#include <dune/istl/bvector.hh>
-#include <dumux/io/vtkmultiwriter.hh>
 #include "decoupledproperties.hh"
 
 // for  parallelization
@@ -57,69 +53,52 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld, numPhase = GET_PROP_VALUE(TypeTag, PTAG(
-                NumPhases))
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
     };
 
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef typename SolutionTypes::VertexMapper VertexMapper;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 public:
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;//!<type for vector of scalars
-    typedef typename SolutionTypes::PhaseProperty PhasePropertyType;//!<type for vector of phase properties
-    typedef typename SolutionTypes::FluidProperty FluidPropertyType;//!<type for vector of fluid properties
-    typedef typename SolutionTypes::PhasePropertyElemFace PhasePropertyElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of scalars
-    typedef typename SolutionTypes::DimVecElemFace DimVecElemFaceType;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
+    typedef typename std::vector <CellData> CellDataVector;
 
 private:
     const GridView& gridView_;
     ElementMapper elementMapper_;
     VertexMapper vertexMapper_;
-    int gridSize_;
-
     const int codim_;
-
-    DimVecElemFaceType velocity_;
-    PhasePropertyElemFaceType potential_;
+    CellDataVector cellDataVector_;
 protected:
-    ScalarSolutionType pressure_;
-
+    ScalarSolutionType primaryVariablesVector_[numEq];
 
 public:
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
-     */
-
-    VariableClass(const GridView& gridView, Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim>(0))) :
-        gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView), gridSize_(gridView_.size(0)), codim_(0)
-    {
-        initializeGlobalVariables(initialVel);
-    }
-
     //! Constructs a VariableClass object
     /**
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      *  @param codim codimension of the entity of which data has to be strored
      *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
-    VariableClass(const GridView& gridView, int codim, Dune::FieldVector<Scalar,
-            dim>& initialVel = *(new Dune::FieldVector<Scalar, dim>(0))) :
-        gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView), gridSize_(gridView_.size(codim)), codim_(codim)
+    VariableClass(const GridView& gridView, int codim = 0) :
+        gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView), codim_(codim)
     {
-        initializeGlobalVariables(initialVel);
+        for (int i = 0; i < numEq; i++)
+        {
+            primaryVariablesVector_[i].resize(gridView.size(codim));
+            primaryVariablesVector_[i] = 0;
+        }
+        cellDataVector_.resize(gridView.size(codim));
     }
 
     // serialization methods
@@ -141,46 +120,22 @@ public:
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int globalIdx = elementMapper_.map(element);
-        outstream << pressure_[globalIdx];
+        outstream << primaryVariablesVector_[0][globalIdx][0];
+        for (int i = 1; i < numEq; i++)
+        {
+            outstream <<"   "<< primaryVariablesVector_[i][globalIdx][0];
+        }
     }
 
     //! Function needed for restart option.
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = elementMapper_.map(element);
-        instream >> pressure_[globalIdx];
-    }
-
-    //! initializes the potential differences stored at the element faces.
-    void initializePotentials(Dune::FieldVector<Scalar, dim>& initialPot)
-    {
-        if (initialPot.two_norm())
+        instream >> primaryVariablesVector_[0][globalIdx][0];
+        for (int i = 1; i < numEq; i++)
         {
-            // compute update vector
-            ElementIterator eItEnd = gridView_.template end<0> ();
-            for (ElementIterator eIt = gridView_.template begin<0> (); eIt != eItEnd; ++eIt)
-            {
-                // cell index
-                int globalIdxI = elementMapper_.map(*eIt);
-
-                // run through all intersections with neighbors and boundary
-                IntersectionIterator isItEnd = gridView_.iend(*eIt);
-                for (IntersectionIterator isIt = gridView_.ibegin(*eIt); isIt != isItEnd; ++isIt)
-                {
-                    // local number of facet
-                    int indexInInside = isIt->indexInInside();
-
-                    const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
-
-                    for (int i = 0; i < numPhase; i++) {potential_[globalIdxI][indexInInside][i] = initialPot * unitOuterNormal;}
-                }
-            }
+            instream >> primaryVariablesVector_[i][globalIdx][0];
         }
-        else
-        {
-            potential_ = Dune::FieldVector<Scalar, numPhase> (0);
-        }
-        return;
     }
 
     //! Resizes decoupled variable vectors
@@ -190,97 +145,55 @@ public:
      */
     void adaptVariableSize(int size)
         {
-            pressure_.resize(size);
-            velocity_.resize(size);
-            velocity_ = Dune::FieldVector<Scalar, dim>(0);
-            potential_.resize(size);
-            potential_ = Dune::FieldVector<Scalar, dim>(0);
-        }
-private:
-    void initializeGlobalVariables(Dune::FieldVector<Scalar, dim>& initialVel)
-    {
-        //resize to grid size
-        pressure_.resize(gridSize_);
-        velocity_.resize(gridSize_);//depends on pressure
-        potential_.resize(gridSize_);//depends on pressure
-
-        //initialise variables
-        pressure_ = 0;
-        velocity_ = initialVel;
-        initializePotentials(initialVel);
-    }
-
-    //Write saturation and pressure into file
-    template<class MultiWriter>
-    void addOutputVtkFields(MultiWriter &writer)
-    {
-        if (codim_ == 0)
+        for (int i = 0; i < numEq; i++)
         {
-            ScalarSolutionType *pressure = writer.allocateManagedBuffer (this->gridSize());
-
-            *pressure = this->pressure();
-
-            writer.attachCellData(*pressure, "pressure");
+            primaryVariablesVector_[i].resize(size);
+            primaryVariablesVector_[i] = 0;
         }
-        if (codim_ == dim)
-        {
-            ScalarSolutionType *pressure = writer.allocateManagedBuffer (this->gridSize());
-
-            *pressure = this->pressure();
-
-            writer.attachVertexData(*pressure, "pressure");
+            cellDataVector_.resize(size);
         }
 
-        return;
-    }
-public:
-
-    void communicatePressure()
-    {
-#if HAVE_MPI
-        ElementHandleAssign<typename ScalarSolutionType::block_type, ScalarSolutionType, ElementMapper> elementHandle(pressure_, elementMapper_);
-        gridView_.communicate(elementHandle,
-                              Dune::InteriorBorder_All_Interface,
-                              Dune::ForwardCommunication);
-#endif
-    }
+//    void communicatePressure()
+//    {
+//#if HAVE_MPI
+//        ElementHandleAssign<typename ScalarSolutionType::block_type, ScalarSolutionType, ElementMapper> elementHandle(primaryVariables_, elementMapper_);
+//        gridView_.communicate(elementHandle,
+//                              Dune::InteriorBorder_All_Interface,
+//                              Dune::ForwardCommunication);
+//#endif
+//    }
 
     //! Return pressure vector
-    const ScalarSolutionType& pressure() const
+    const ScalarSolutionType& primaryVariablesGlobal(int eqIdx) const
     {
-        return pressure_;
+        return primaryVariablesVector_[eqIdx];
     }
 
-    ScalarSolutionType& pressure()
+    ScalarSolutionType& primaryVariablesGlobal(int eqIdx)
     {
-        return pressure_;
+        return primaryVariablesVector_[eqIdx];
     }
 
-    //! Return velocity vector
-    const DimVecElemFaceType& velocity() const
+    //! Return saturation vector
+    CellDataVector& cellDataGlobal()
     {
-        return velocity_;
+        return cellDataVector_;
     }
 
-    DimVecElemFaceType& velocity()
+    const CellDataVector& cellDataGlobal() const
     {
-        return velocity_;
+        return cellDataVector_;
     }
 
-    const PhasePropertyElemFaceType& potential() const
+    //! Return saturation vector
+    CellData& cellData(int idx)
     {
-        return potential_;
+        return cellDataVector_[idx];
     }
 
-    PhasePropertyElemFaceType& potential()
+    const CellData& cellData(int idx) const
     {
-        return potential_;
-    }
-
-    //! Return vector of wetting phase potential gradients
-    Dune::FieldVector<Scalar, numPhase>& potential(int Idx1, int Idx2)
-    {
-        return potential_[Idx1][Idx2];
+        return cellDataVector_[idx];
     }
 
     //! Get index of element (codim 0 entity)
@@ -301,17 +214,6 @@ public:
     int index(const Vertex& vertex) const
     {
         return vertexMapper_.map(vertex);
-    }
-
-    //!Return the number of data elements
-    int gridSize() const
-    {
-        return gridSize_;
-    }
-
-    void setGridSize(int size)
-    {
-        gridSize_=size;
     }
 
     //!Return gridView
@@ -339,36 +241,6 @@ public:
     const VertexMapper& vertexMapper() const
     {
         return vertexMapper_;
-    }
-
-    //! Get pressure
-    /*! evaluate pressure at given element
-     @param element entity of codim 0
-     \return value of pressure
-     */
-    const Dune::FieldVector<Scalar, 1>& pressElement(const Element& element) const
-    {
-        return pressure_[elementMapper_.map(element)];
-    }
-
-    //! Get velocity at given element face
-    /*! evaluate velocity at given location
-     @param element entity of codim 0
-     @param indexInInside index in reference element
-     \return vector of velocity
-     */
-    Dune::FieldVector<Scalar, dim>& velocityElementFace(const Element& element, const int indexInInside)
-    {
-        int elemId = elementMapper_.map(element);
-
-        return (velocity_[elemId][indexInInside]);
-    }
-
-    const Dune::FieldVector<Scalar, dim>& velocityElementFace(const Element& element, const int indexInInside) const
-    {
-        int elemId = elementMapper_.map(element);
-
-        return (velocity_[elemId][indexInInside]);
     }
 };
 }
