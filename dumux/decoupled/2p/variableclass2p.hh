@@ -22,9 +22,9 @@
 #ifndef DUMUX_VARIABLECLASS2P_HH
 #define DUMUX_VARIABLECLASS2P_HH
 
-#include <dumux/decoupled/common/variableclass.hh>
+#include <dumux/decoupled/common/variableclass_old.hh>
 #include <dumux/decoupled/2p/2pfluidstate.hh>
-#include "2pproperties.hh"
+#include "2pproperties_old.hh"
 
 /**
  * @file

@@ -48,16 +48,16 @@ namespace Dumux
 ////////////////////////////////
 
 template<class TypeTag>
-class VariableClass;
-
-template<class TypeTag, bool enableCompressibility>
-class CellData2P;
+class VariableClass2P;
 
 template<class TypeTag>
-class TwoPImmiscibleFluidSystem;
+class FluidSystem2P;
 
-template<class Scalar, class FluidSystem>
-class IsothermalImmiscibleFluidState;
+template<class TypeTag>
+class DecoupledTwoPFluidState;
+
+//template<class TypeTag>
+//struct DecoupledTwoPCommonIndices;
 
 ////////////////////////////////
 // properties
@@ -76,6 +76,8 @@ NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPET, Transport))
 // Property tags
 //////////////////////////////////////////////////////////////////
 
+NEW_PROP_TAG ( TwoPIndices )
+;
 NEW_PROP_TAG( SpatialParameters )
 ; //!< The type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
@@ -103,13 +105,7 @@ NEW_PROP_TAG( FluidState )//!< Defines the fluid state
 NEW_PROP_TAG( ErrorTermFactor );
 NEW_PROP_TAG( ErrorTermLowerBound );
 NEW_PROP_TAG( ErrorTermUpperBound );
-}
-}
 
-namespace Dumux
-{
-namespace Properties
-{
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -124,7 +120,7 @@ SET_INT_PROP(DecoupledTwoP,
     Formulation,
     DecoupledTwoPCommonIndices::pwSw);
 
-SET_PROP(DecoupledTwoP, Indices)
+SET_PROP(DecoupledTwoP, TwoPIndices)
 {
 typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
 };
@@ -132,32 +128,23 @@ typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,
     PressureFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(Indices))::pressureType);
+    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureType);
 
 SET_INT_PROP(DecoupledTwoP,
     SaturationFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(Indices))::saturationType);
+    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::saturationType);
 
 SET_INT_PROP(DecoupledTwoP,
     VelocityFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(Indices))::velocityDefault);
+    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityDefault);
 
 SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
 
-SET_TYPE_PROP(DecoupledTwoP, Variables, VariableClass<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoP, Variables, VariableClass2P<TypeTag>);
 
-SET_TYPE_PROP(DecoupledTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility))>);
+SET_TYPE_PROP(DecoupledTwoP, FluidSystem, FluidSystem2P<TypeTag>);
 
-SET_TYPE_PROP(DecoupledTwoP, FluidSystem, TwoPImmiscibleFluidSystem<TypeTag>);
-
-SET_PROP(DecoupledTwoP, FluidState)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-public:
-    typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
-};
+SET_TYPE_PROP(DecoupledTwoP, FluidState, DecoupledTwoPFluidState<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting

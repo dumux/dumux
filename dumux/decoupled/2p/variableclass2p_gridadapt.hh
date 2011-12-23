@@ -22,7 +22,7 @@
 #ifndef DUMUX_VariableClass2PGridAdapt_GRIDADAPT_HH
 #define DUMUX_VariableClass2PGridAdapt_GRIDADAPT_HH
 
-#include <dumux/decoupled/2p/variableclass2p.hh>
+#include <dumux/decoupled/2p/variableclass2p_old.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 
 /**

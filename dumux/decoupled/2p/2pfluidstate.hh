@@ -28,7 +28,7 @@
 #define DUMUX_2P_FLUID_STATE_DECOUPLED_HH
 
 #include <dumux/material/old_fluidsystems/fluidstate.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/2p/2pproperties_old.hh>
 
 namespace Dumux
 {
