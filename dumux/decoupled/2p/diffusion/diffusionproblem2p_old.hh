@@ -25,15 +25,13 @@
  * \brief Base class for stationary sequential 2-phase problems
  * @author Markus Wolff
  */
-#ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
-#define DUMUX_DIFFUSIONPROBLEM_2P_HH
+#ifndef DUMUX_DIFFUSIONPROBLEM_OLD_2P_HH
+#define DUMUX_DIFFUSIONPROBLEM_OLD_2P_HH
 
-#include <dumux/decoupled/common/onemodelproblem.hh>
-#include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/2p/cellData2p.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidstates/isoimmisciblefluidstate.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/common/onemodelproblem_old.hh>
+#include <dumux/decoupled/2p/variableclass2p.hh>
+#include <dumux/material/old_fluidsystems/2p_system.hh>
+#include <dumux/decoupled/2p/2pproperties_old.hh>
 
 namespace Dumux
 {
@@ -46,7 +44,7 @@ namespace Dumux
  * @tparam Implementation The Problem implementation
  */
 template<class TypeTag>
-class DiffusionProblem2P: public OneModelProblem<TypeTag>
+class DiffusionProblem2POLD: public OneModelProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
     typedef OneModelProblem<TypeTag> ParentType;
@@ -70,7 +68,7 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     // private!! copy constructor
-    DiffusionProblem2P(const DiffusionProblem2P&)
+    DiffusionProblem2POLD(const DiffusionProblem2POLD&)
     {}
 
 public:
@@ -80,7 +78,7 @@ public:
      * \param timeManager the time manager
      * \param gridView The grid view
      */
-    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView)
+    DiffusionProblem2POLD(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView), gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
@@ -96,7 +94,7 @@ public:
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
      */
-    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
+    DiffusionProblem2POLD(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
     : ParentType(timeManager, gridView), gravity_(0), spatialParameters_(&spatialParameters)
     {
         newSpatialParams_ = false;
@@ -110,7 +108,7 @@ public:
      *
      * \param gridView The grid view
      */
-    DiffusionProblem2P(const GridView &gridView)
+    DiffusionProblem2POLD(const GridView &gridView)
     : ParentType(gridView, false), gravity_(0)
     {
         spatialParameters_ = new SpatialParameters(gridView);
@@ -125,7 +123,7 @@ public:
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
      */
-    DiffusionProblem2P(const GridView &gridView, SpatialParameters &spatialParameters)
+    DiffusionProblem2POLD(const GridView &gridView, SpatialParameters &spatialParameters)
     : ParentType(gridView, false), gravity_(0), spatialParameters_(&spatialParameters)
     {
         newSpatialParams_ = false;
@@ -134,7 +132,7 @@ public:
             gravity_[dim - 1] = -9.81;
     }
 
-    virtual ~DiffusionProblem2P()
+    virtual ~DiffusionProblem2POLD()
     {
         if (newSpatialParams_)
         {
