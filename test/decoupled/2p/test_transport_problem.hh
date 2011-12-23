@@ -122,7 +122,7 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
     typedef TransportProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
@@ -131,6 +131,10 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
 
     enum
     {
@@ -155,8 +159,33 @@ public:
     {
         GlobalPosition vel(0);
         vel[0] = 1e-5;
-        this->variables().velocity() = vel;
-        this->variables().initializePotentials(vel);
+
+        // compute update vector
+        ElementIterator eItEnd = gridView.template end<0> ();
+        for (ElementIterator eIt = gridView.template begin<0> (); eIt != eItEnd; ++eIt)
+        {
+            // cell index
+            int globalIdx = this->elementMapper().map(*eIt);
+
+            CellData& cellData = this->variables().cellData(globalIdx);
+
+            cellData.fluxData().velocity(wPhaseIdx) = vel;
+
+            // run through all intersections with neighbors and boundary
+            IntersectionIterator isItEnd = gridView.iend(*eIt);
+            for (IntersectionIterator isIt = gridView.ibegin(*eIt); isIt != isItEnd; ++isIt)
+            {
+                // local number of facet
+                int indexInInside = isIt->indexInInside();
+
+                const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
+
+                Scalar pot = vel * unitOuterNormal;
+
+                cellData.fluxData().setPotential(wPhaseIdx, indexInInside, pot);
+                cellData.fluxData().setPotential(nPhaseIdx, indexInInside, pot);
+            }
+        }
     }
 
     /*!

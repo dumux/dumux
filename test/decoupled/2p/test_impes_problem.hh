@@ -133,10 +133,12 @@ class TestIMPESProblem: public IMPESProblem2P<TypeTag>
 typedef IMPESProblem2P<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+
+typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
 
 typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
 
@@ -195,7 +197,7 @@ bool shouldWriteRestartFile() const
  *
  * This problem assumes a temperature of 10 degrees Celsius.
  */
-Scalar temperature(const Element& element) const
+Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 {
     return 273.15 + 10; // -> 10°C
 }
@@ -203,7 +205,7 @@ Scalar temperature(const Element& element) const
 // \}
 
 //! Returns the reference pressure for evaluation of constitutive relations
-Scalar referencePressure(const Element& element) const
+Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
     return 1e5; // -> 10°C
 }
@@ -248,11 +250,8 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
         {
             Scalar pRef = referencePressureAtPos(globalPos);
             Scalar temp = temperatureAtPos(globalPos);
-            Scalar sat = 1;
 
-            FluidState fluidState;
-            fluidState.update(sat, pRef, pRef, temp);
-            values[pWIdx] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * FluidSystem::phaseDensity(wPhaseIdx, temp, pRef, fluidState) * this->gravity().two_norm());
+            values[pWIdx] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
         }
         else
         {
