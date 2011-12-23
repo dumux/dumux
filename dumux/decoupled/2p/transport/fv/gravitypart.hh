@@ -97,6 +97,8 @@ public:
 
         Scalar densityW = WettingPhase::density(temperature, referencePressure);
         Scalar  densityNW = NonwettingPhase::density(temperature, referencePressure);
+        Scalar viscosityW = WettingPhase::density(temperature, referencePressure);
+        Scalar  viscosityNW = NonwettingPhase::density(temperature, referencePressure);
 
         IntersectionIterator isItEnd = problem_.gridView().iend(element);
         IntersectionIterator isIt = problem_.gridView().ibegin(element);
@@ -125,9 +127,9 @@ public:
         else
         {
             lambdaWI = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satI);
-            lambdaWI /= FluidSystem::viscosity(fluidState, wPhaseIdx);
+            lambdaWI /= viscosityW;
             lambdaNWI = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satI);
-            lambdaNWI /= FluidSystem::viscosity(fluidState, nPhaseIdx);
+            lambdaNWI /= viscosityNW;
         }
 
         FieldMatrix meanPermeability(0);
@@ -154,9 +156,9 @@ public:
             else
             {
                 lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
-                lambdaWJ /= FluidSystem::viscosity(fluidState, wPhaseIdx);
+                lambdaWJ /= viscosityW;
                 lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
-                lambdaNWJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
+                lambdaNWJ /= viscosityNW;
             }
         }
         else
@@ -167,9 +169,9 @@ public:
 
             //calculate lambda_n*f_w at the boundary
             lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(element), satJ);
-            lambdaWJ /= FluidSystem::viscosity(fluidState, wPhaseIdx);
+            lambdaWJ /= viscosityW;
             lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(element), satJ);
-            lambdaNWJ /= FluidSystem::viscosity(fluidState, nPhaseIdx);
+            lambdaNWJ /= viscosityNW;
         }
 
         // set result to K*grad(pc)
