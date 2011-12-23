@@ -442,7 +442,13 @@ protected:
                 fvElemGeom_().boundaryFace[boundaryFaceIdx].area
                 * curVolVars_(scvIdx).extrusionFactor();
             Valgrind::CheckDefined(values);
-            residual_[scvIdx] += values;
+
+            // set the neumann conditions
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+                if (!bcTypes.isNeumann(eqIdx))
+                    continue;
+                residual_[scvIdx] += values;
+            }
         }
     }
 
