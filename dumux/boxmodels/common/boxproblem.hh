@@ -483,7 +483,7 @@ public:
         DUNE_THROW(Dune::MathError,
                    "Newton solver didn't converge after "
                    << maxFails
-                   << " timestep divisions. dt="
+                   << " time-step divisions. dt="
                    << timeManager().timeStepSize());
     }
 
@@ -513,10 +513,10 @@ public:
 
     /*!
      * \brief Called by Dumux::TimeManager whenever a solution for a
-     *        timestep has been computed and the simulation time has
+     *        time step has been computed and the simulation time has
      *        been updated.
      *
-     * \param dt The current time step size
+     * \param dt The current time-step size
      */
     Scalar nextTimeStepSize(Scalar dt)
     {
@@ -528,8 +528,8 @@ public:
      * \brief Returns true if a restart file should be written to
      *        disk.
      *
-     * The default behaviour is to write one restart file every 5 time
-     * steps. This file is intented to be overwritten by the
+     * The default behavior is to write one restart file every 5 time
+     * steps. This file is intended to be overwritten by the
      * implementation.
      */
     bool shouldWriteRestartFile() const
@@ -542,8 +542,8 @@ public:
      * \brief Returns true if the current solution should be written to
      *        disk (i.e. as a VTK file)
      *
-     * The default behaviour is to write out every the solution for
-     * very time step. This file is intented to be overwritten by the
+     * The default behavior is to write out every the solution for
+     * very time step. This file is intended to be overwritten by the
      * implementation.
      */
     bool shouldWriteOutput() const
@@ -603,6 +603,16 @@ public:
     void setName(const char *newName)
     {
         simName_ = newName;
+    }
+
+
+    /*!
+     * \brief Returns the number of the current VTK file.
+     */
+    int currentVTKFileNumber()
+    {
+        createResultWriter_();
+        return resultWriter_->curWriterNum();
     }
 
     /*!
@@ -739,7 +749,7 @@ public:
      *
      * \tparam Restarter The deserializer type
      *
-     * \param res The desrializer object
+     * \param res The deserializer object
      */
     template <class Restarter>
     void deserialize(Restarter &res)
@@ -758,7 +768,7 @@ public:
     {}
 
     /*!
-     * \brief Write the relavant secondar variables of the current
+     * \brief Write the relevant secondary variables of the current
      *        solution into an VTK output file.
      */
     void writeOutput(bool verbose = true)

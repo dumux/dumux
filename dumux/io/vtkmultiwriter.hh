@@ -21,7 +21,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Simplyfies writing multi-file VTK datasets.
+ * \brief Simplifies writing multi-file VTK datasets.
  */
 #ifndef VTK_MULTI_WRITER_HH
 #define VTK_MULTI_WRITER_HH
@@ -47,11 +47,11 @@
 
 namespace Dumux {
 /*!
- * \brief Simplyfies writing multi-file VTK datasets.
+ * \brief Simplifies writing multi-file VTK datasets.
  *
  * This class automatically keeps the meta file up to date and
  * simplifies writing datasets consisting of multiple files. (i.e.
- * multiple timesteps or grid refinements within a timestep.)
+ * multiple time steps or grid refinements within a time step.)
  */
 template<class GridView>
 class VtkMultiWriter
@@ -120,6 +120,12 @@ public:
     }
 
     /*!
+     * \brief Returns the number of the current VTK file.
+     */
+    int curWriterNum() const
+    { return curWriterNum_; }
+
+    /*!
      * \brief Updates the internal data structures after mesh
      *        refinement.
      *
@@ -133,7 +139,7 @@ public:
     }
 
     /*!
-     * \brief Called when ever a new timestep or a new grid
+     * \brief Called when ever a new time step or a new grid
      *        must be written.
      */
     void beginWrite(double t)
@@ -399,7 +405,6 @@ public:
         res.deserializeSectionEnd();
     }
 
-
 private:
     std::string fileName_()
     {
@@ -437,7 +442,7 @@ private:
     {
         // only the first process writes to the multi-file
         if (commRank_ == 0) {
-            // generate one meta vtk-file holding the individual timesteps
+            // generate one meta vtk-file holding the individual time steps
             multiFile_.open(multiFileName.c_str());
             multiFile_ <<
                 "<?xml version=\"1.0\"?>\n"

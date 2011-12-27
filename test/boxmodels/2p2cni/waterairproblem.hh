@@ -84,9 +84,9 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  *        buoyancy driven upward migration the gas passes a high
  *        temperature area.
  *
- * The domain is sized 40 m times 40 m. The rectangular area with the
- * increased temperature (380 K) starts at (20 m, 5 m) and ends at (30
- * m, 35 m).
+ * The domain is sized 40 m times 40 m in a depth of 1000 m. The rectangular area
+ * with the increased temperature (380 K) starts at (20 m, 5 m) and ends at
+ * (30 m, 35 m).
  *
  * For the mass conservation equation neumann boundary conditions are used on
  * the top and on the bottom of the domain, while dirichlet conditions
