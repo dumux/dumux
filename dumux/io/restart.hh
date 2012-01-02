@@ -76,7 +76,7 @@ class Restart {
         std::ostringstream oss;
         oss << simName<<"_time="<<t<<"_rank="<<rank<<".drs";
         return oss.str();
-    };
+    }
 
 
 public:

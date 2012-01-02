@@ -366,8 +366,8 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
         Scalar fNew = d + x*(c + x*(b + x*a));
         if (std::abs(fNew) < std::abs(fOld))
             sol[i] = x;
-    };
-};
+    }
+}
 
 /*!
  * \ingroup Math

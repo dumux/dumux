@@ -98,7 +98,7 @@ public:
                               i,
                               oldSol);
         }
-    };
+    }
 
     /*!
      * \brief Construct the volume variables for all of vertices of an
@@ -134,7 +134,7 @@ public:
                                       false);
 
         }
-    };
+    }
 };
 
 } // namespace Dumux

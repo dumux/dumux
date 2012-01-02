@@ -51,7 +51,7 @@ NEW_PROP_TAG(Model);
 NEW_PROP_TAG(NewtonController);
 NEW_PROP_TAG(SolutionVector);
 NEW_PROP_TAG(JacobianAssembler);
-};
+}
 
 /*!
  * \ingroup Newton

@@ -74,7 +74,7 @@ class OnePBoxModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
 
     enum {
-        dim = GridView::dimension,
+        dim = GridView::dimension
     };
 
 public:

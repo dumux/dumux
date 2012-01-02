@@ -81,14 +81,14 @@ public:
 
     template<class EntityType>
     size_t size(const EntityType &e) const
-    { return 2; };
+    { return 2; }
 
     template<class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp &buff, const EntityType &e) const
     {
         buff.write(gv_.comm().rank());
         buff.write(map_.map(e));
-    };
+    }
 
     template<class MessageBufferImp, class EntityType>
     void scatter(MessageBufferImp &buff, const EntityType &e, size_t n)
@@ -104,7 +104,7 @@ public:
         bIdx.isShared = true;
 
         borderList_.push_back(bIdx);
-    };
+    }
 
     // Access to the foreign border list.
     const BorderList &foreignBorderList() const

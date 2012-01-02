@@ -52,6 +52,6 @@ struct BorderIndex
     bool isShared;
 };
 
-};
+}
 
 #endif

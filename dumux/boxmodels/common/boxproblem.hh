@@ -757,7 +757,7 @@ public:
         createResultWriter_();
         resultWriter_->deserialize(res);
         model().deserialize(res);
-    };
+    }
 
     // \}
 

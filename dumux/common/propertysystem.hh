@@ -586,7 +586,7 @@ public:
             keys_[typeTagName].push_front(Dune::className<Child4>());
         if (typeid(Child5) != typeid(void))
             keys_[typeTagName].push_front(Dune::className<Child5>());
-    };
+    }
 
     template <class TypeTag>
     static void addChildren()
@@ -1030,7 +1030,7 @@ const std::string getDiagnostic(std::string propTagName)
 
 
     return result;
-};
+}
 
 //! \internal
 template <class TypeTag>

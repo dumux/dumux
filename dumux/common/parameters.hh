@@ -166,7 +166,7 @@ void print(std::ostream &os = std::cout)
             os << *it << " = \"" << tree.get(*it, "") << "\"\n";
         };
     }
-};
+}
 
 const char *getString_(const char *foo = 0)
 { return foo; }

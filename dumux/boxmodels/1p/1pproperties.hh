@@ -61,7 +61,7 @@ NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the p
 NEW_PROP_TAG(UpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
 
 // \}
-};
+}
 
 } // end namepace
 

@@ -167,7 +167,7 @@ int startFromDGF(int argc, char **argv)
 #endif
 
     return 3;
-};
+}
 
 
 /*!
@@ -240,7 +240,7 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
 #endif
 
     return 3;
-};
+}
 
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
 // requires DUNE 2.1 and above

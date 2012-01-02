@@ -85,7 +85,7 @@ private:
 
         Red = JacobianAssembler::Red,
         Yellow = JacobianAssembler::Yellow,
-        Green = JacobianAssembler::Green,
+        Green = JacobianAssembler::Green
     };
 
 

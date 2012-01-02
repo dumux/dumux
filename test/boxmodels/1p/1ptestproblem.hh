@@ -122,7 +122,7 @@ class OnePTestProblem : public OnePBoxProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
 
         // indices of the primary variables
-        pressureIdx = Indices::pressureIdx,
+        pressureIdx = Indices::pressureIdx
     };
 
 

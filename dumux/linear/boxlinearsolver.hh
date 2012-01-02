@@ -151,7 +151,7 @@ public:
 
         // return the result of the solver
         return result.converged;
-    };
+    }
 
 private:
     void prepare_(const Matrix &M)

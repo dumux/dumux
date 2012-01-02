@@ -88,8 +88,8 @@ public:
 };
 
 // \}
-};
+} // end namepace Properties
 
-} // end namepace
+} // end namepace Dumux
 
 #endif

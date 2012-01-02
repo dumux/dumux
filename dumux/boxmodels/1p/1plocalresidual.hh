@@ -61,7 +61,7 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
         dimWorld = GridView::dimensionworld,
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
-        pressureIdx = Indices::pressureIdx,
+        pressureIdx = Indices::pressureIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
@@ -177,6 +177,6 @@ private:
     Scalar upwindWeight_;
 };
 
-};
+}
 
 #endif

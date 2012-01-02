@@ -101,9 +101,7 @@ public:
         this->resize(numVerts);
 
         int nBoundary = 0;
-        bool onBoundary[numVerts];
-        for (int i = 0; i < numVerts; ++i)
-            onBoundary[i] = false;
+        std::vector<bool> onBoundary(numVerts, false);
 
         // loop over all intersections of the element and mark all
         // vertices in these intersections

@@ -61,7 +61,7 @@ class OnePFluxVariables
 
     enum {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;

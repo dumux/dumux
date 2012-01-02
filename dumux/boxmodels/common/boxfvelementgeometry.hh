@@ -42,7 +42,7 @@ namespace Properties
 NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(Scalar);
-};
+}
 
 /////////////////////
 // HACK: Functions to initialize the subcontrol volume data
