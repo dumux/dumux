@@ -80,8 +80,17 @@ SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
 // Enable partial reassembly of the Jacobian matrix?
 SET_BOOL_PROP(RichardsLensProblem, EnablePartialReassemble, true);
 
+// Enable re-use of the Jacobian matrix for the first iteration of a time step?
+SET_BOOL_PROP(RichardsLensProblem, EnableJacobianRecycling, true);
+
 // Use forward diffferences to approximate the Jacobian matrix
 SET_INT_PROP(RichardsLensProblem, NumericDifferenceMethod, +1);
+
+// Set the maximum number of newton iterations of a time step
+SET_INT_PROP(RichardsLensProblem, NewtonMaxSteps, 28);
+
+// Set the "desireable" number of newton iterations of a time step
+SET_INT_PROP(RichardsLensProblem, NewtonTargetSteps, 18);
 
 // Write the intermediate results of the newton method?
 SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
@@ -146,19 +155,17 @@ public:
      *
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
-     * \param lensLowerLeft The lower left coordinate of the
-     *                      low-permeability lens
-     * \param lensUpperRight The upper right coordinate of the
-     *                       low-permeability lens
      */
     RichardsLensProblem(TimeManager &timeManager,
-                        const GridView &gridView,
-                        const GlobalPosition &lensLowerLeft,
-                        const GlobalPosition &lensUpperRight)
+                        const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        lensLowerLeft_=lensLowerLeft;
-        lensUpperRight_=lensUpperRight;
+        lensLowerLeft_[0] = 1.0;
+        lensLowerLeft_[1] = 2.0;
+
+        lensUpperRight_[0] = 4.0;
+        lensUpperRight_[1] = 3.0;
+
         pnRef_ = 1e5;
         this->spatialParameters().setLensCoords(lensLowerLeft_, lensUpperRight_);
     }

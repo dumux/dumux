@@ -87,6 +87,10 @@ public:
 
         if (!GET_PARAM(TypeTag, bool, NewtonUseLineSearch))
         {
+            // do not clamp anything after 5 iterations
+            if (this->numSteps_ > 4)
+                return;
+            
             // clamp saturation change to at most 20% per iteration
             FVElementGeometry fvElemGeom;
             const GridView &gv = this->problem_().gridView();
