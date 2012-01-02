@@ -5,6 +5,7 @@ AC_CONFIG_SRCDIR([dumux/common/spline.hh])
 AM_CONFIG_HEADER([config.h])
 
 DUNE_CHECK_ALL
+DUMUX_CHECKS_PRIVATE
 
 AC_CONFIG_FILES([dumux.pc
     Makefile

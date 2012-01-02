@@ -4,14 +4,6 @@ dnl -*- autoconf -*-
 # "dunecontrol autogen"
 AC_DEFUN([DUMUX_CHECKS],
 [
-  AC_CHECK_PROGS([TEX4HT], [tex4ht], [true])
-  AC_CHECK_PROGS([MK4HT], [mk4ht], [true])
-  AC_CHECK_PROGS([T4HT], [t4ht], [true])
-  AC_CHECK_PROGS([LATEX], [latex], [true])
-  AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
-  AC_CHECK_PROGS([CONVERT], [convert], [false])
-  AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
-
   AC_CHECK_HEADER([valgrind/memcheck.h], 
                   [HAVE_VALGRIND_H="1"],
                   AC_MSG_WARN([valgrind/memcheck.h not found]))
@@ -38,6 +30,15 @@ AC_DEFUN([DUMUX_CHECKS],
   if test "x$HAVE_CONSTEXPR" != "xyes"; then
       AC_DEFINE(constexpr, const, ['set 'constexpr' to 'const' if constexpr is not supported])
   fi
+
+])
+
+# checks only relevant for the dumux module itself but not for modules
+# which depend on it
+AC_DEFUN([DUMUX_CHECKS_PRIVATE],
+[
+  AC_CHECK_PROGS([LATEX], [latex], [true])
+  AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
 
   # Add the latex and handbook status to the summary
   have_latex=no
