@@ -81,10 +81,14 @@ public:
 
     FluxData2P()
     {
-        for (int i = 0; i<2*dim; i++)
+        for (int face = 0;  face < 2*dim; face++)
         {
-            velocity_[i] = FieldVector(0.0);
-            potential_[i]= {0.0, 0.0};
+            for (int phase = 0; phase < numPhases; phase++)
+            {
+                velocity_[phase][face] = FieldVector(0.0);
+
+                potential_[face][phase] = 0.0;
+            }
         }
     }
 
