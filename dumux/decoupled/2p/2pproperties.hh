@@ -100,6 +100,8 @@ NEW_PROP_TAG( FluidSystem )//!< Defines the fluid system
 NEW_PROP_TAG( FluidState )//!< Defines the fluid state
 ;
 
+NEW_PROP_TAG( TwoPIndices ); //!< keep for compatibility with box models
+
 NEW_PROP_TAG( ErrorTermFactor );
 NEW_PROP_TAG( ErrorTermLowerBound );
 NEW_PROP_TAG( ErrorTermUpperBound );
@@ -128,6 +130,7 @@ SET_PROP(DecoupledTwoP, Indices)
 {
 typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
 };
+SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, PTAG(Indices)));
 
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,

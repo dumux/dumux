@@ -56,7 +56,7 @@ NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag));
 NEW_PROP_TAG( SolutionTypes);
 NEW_PROP_TAG( TransportSolutionType);
 NEW_PROP_TAG( PrimaryVariables);
-NEW_PROP_TAG ( Indices );
+NEW_PROP_TAG( Indices);
 
 NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
 NEW_PROP_TAG( GridView); //!< The type of the grid view

@@ -958,8 +958,8 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws(RepresentationType& saturation 
 
     Scalar temp = problem_.temperature(*eItBegin);
     Scalar pRef = problem_.referencePressure(*eItBegin);
-    Scalar densityW = WettingPhase::density(temp, pRef);
-    Scalar densityNW = NonwettingPhase::density(temp, pRef);
+//    Scalar densityW = WettingPhase::density(temp, pRef);
+//    Scalar densityNW = NonwettingPhase::density(temp, pRef);
     Scalar viscosityW = WettingPhase::viscosity(temp, pRef);
     Scalar viscosityNW = NonwettingPhase::viscosity(temp, pRef);
 
@@ -971,7 +971,7 @@ void FVSaturation2P<TypeTag>::updateMaterialLaws(RepresentationType& saturation 
 
         CellData& cellData = problem_.variables().cellData(globalIdx);
 
-        Scalar temperature = problem_.temperature(*eIt);
+//        Scalar temperature = problem_.temperature(*eIt);
 
         //determine phase saturations from primary saturation variable
         Scalar satW = 0;
