@@ -183,10 +183,10 @@ public:
         // initialize the tables of the fluid system
         Scalar Tmin = temperature_ - 1.0;
         Scalar Tmax = temperature_ + 1.0;
-        int nT = 10;
+        int nT = 3;
 
-        Scalar pmin = 0.75 * 1e5;
-        Scalar pmax = 1.25 * 2e5;
+        Scalar pmin = 0.0;
+        Scalar pmax = 1e6;
         int np = 1000;
 
         FluidSystem::init(Tmin, Tmax, nT, pmin, pmax, np);
