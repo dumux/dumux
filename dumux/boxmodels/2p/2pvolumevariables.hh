@@ -47,10 +47,9 @@ template <class TypeTag>
 class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
@@ -58,25 +57,20 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
-
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-
-        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
-
         pwSn = Indices::pwSn,
         pnSw = Indices::pnSw,
-
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
-
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
+        nPhaseIdx = Indices::nPhaseIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation))
     };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:

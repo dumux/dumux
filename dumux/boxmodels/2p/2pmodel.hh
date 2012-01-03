@@ -75,42 +75,31 @@ namespace Dumux
 template<class TypeTag >
 class TwoPModel : public BoxModel<TypeTag>
 {
-    typedef TwoPModel<TypeTag> ThisType;
-    typedef BoxModel<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx,
-
-        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)),
-
-        pwSn = Indices::pwSn,
-        pnSw = Indices::pnSw,
-
         pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::ctype CoordScalar;
+    enum {
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+    };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     /*!
@@ -122,7 +111,7 @@ public:
      */
     Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
     {
-        if (Indices::pressureIdx == pvIdx)
+        if (pressureIdx == pvIdx)
             return std::min(10.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
         return 1;
     }

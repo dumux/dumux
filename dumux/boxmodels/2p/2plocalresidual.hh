@@ -48,42 +48,26 @@ class TwoPLocalResidual : public BoxLocalResidual<TypeTag>
 {
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
-    typedef TwoPLocalResidual<TypeTag> ThisType;
-    typedef BoxLocalResidual<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
-    enum
-    {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-
-        pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
-
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiNEqIdx = Indices::contiNEqIdx,
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    enum
+    {
+        contiWEqIdx = Indices::contiWEqIdx,
+        contiNEqIdx = Indices::contiNEqIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+    };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    enum { dimWorld = GridView::dimensionworld };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
 public:
     /*!
