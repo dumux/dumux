@@ -243,17 +243,6 @@ public:
     {
         //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values = 0;
-
-        //int globalIdx = this->model().vertexMapper().map(element, scvIdx, dim);
-
-        //Scalar lambda = (globalPos[1])/height_;
-//        if (globalPos[0] < eps_ ) {
-//            values[contiEqIdx] = -3.8676e-2; // [kg/(m^2 * s)]
-
-            //values[transEqIdx] = -4.35064e-4; // [mol/(m^2*s)
-            //Robin-Boundary
-            //values[transEqIdx] = (*this->model().curSolFunction())[globalIdx][transEqIdx];
-//        }
     }
 
     // \}
@@ -337,7 +326,6 @@ private:
     }
 
     Scalar totalInjectionVolume_;
-    static constexpr Scalar eps_ = 1e-6;
 }; //end namespace
 }
 #endif

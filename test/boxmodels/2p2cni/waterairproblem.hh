@@ -167,6 +167,9 @@ public:
     WaterAirProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
+        maxDepth_ = 1000.0; // [m]
+        eps_ = 1e-6;
+
         FluidSystem::init();
     }
 
@@ -335,15 +338,15 @@ private:
                   const GlobalPosition &globalPos) const
     {
         Scalar densityW = 1000.0;
-        values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+        values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[switchIdx] = 0.0;
 #if !ISOTHERMAL
-        values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+        values[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
 #endif
     }
 
-    static constexpr Scalar depthBOR_ = 1000.0; // [m]
-    static constexpr Scalar eps_ = 1e-6;
+    Scalar maxDepth_;
+    Scalar eps_;
 };
 } //end namespace
 

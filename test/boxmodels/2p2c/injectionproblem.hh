@@ -149,6 +149,10 @@ public:
     InjectionProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
+        temperature_ = 273.15 + 40; // [K]
+        depthBOR_ = 2700.0; // [m]
+        eps_ = 1e-6;
+
         // initialize the tables of the fluid system
         //FluidSystem::init();
         FluidSystem::init(/*Tmin=*/temperature_ - 1.0,
@@ -336,9 +340,9 @@ private:
         values[Indices::switchIdx] = massFracLiquidN2;
     }
 
-    static constexpr Scalar temperature_ = 273.15 + 40; // [K]
-    static constexpr Scalar depthBOR_ = 2700.0; // [m]
-    static constexpr Scalar eps_ = 1e-6;
+    Scalar temperature_;
+    Scalar depthBOR_;
+    Scalar eps_;
 };
 } //end namespace
 

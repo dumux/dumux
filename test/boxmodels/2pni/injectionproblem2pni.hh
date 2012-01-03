@@ -197,6 +197,9 @@ public:
     InjectionProblem2PNI(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
+        maxDepth_ = 2700.0; // [m]
+        eps_ = 1e-6;
+
         // initialize the tables of the fluid system
         FluidSystem::init(/*tempMin=*/273.15,
                 /*tempMax=*/423.15,
@@ -287,10 +290,10 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
 
         Scalar densityW = 1000.0;
-        values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+        values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[saturationIdx] = 0.0;
 #if !ISOTHERMAL
-        values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+        values[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
 #endif
     }
 
@@ -351,11 +354,11 @@ public:
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
         Scalar densityW = 1000.0;
-        values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+        values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[saturationIdx] = 0.0;
 
 #if !ISOTHERMAL
-        values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+        values[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
         if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] > 5 && globalPos[1] < 35)
             values[temperatureIdx] = 380;
 #endif // !ISOTHERMAL
@@ -363,8 +366,8 @@ public:
     // \}
 
 private:
-    static constexpr Scalar depthBOR_ = 2700.0; // [m]
-    static constexpr Scalar eps_ = 1e-6;
+    Scalar maxDepth_;
+    Scalar eps_;
 };
 } //end namespace
 

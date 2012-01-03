@@ -107,25 +107,21 @@ namespace Properties
     int PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::foo =   \
     PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();
 
-#define FA_TTAG_(TypeTagName, ...) TTAG(TypeTagName)
-
 //! Internal macro which is only required if the property introspection is enabled
-#define TTAG_INFO_(...)                                                 \
+#define TTAG_INFO_(TypeTagName, ...)                                    \
     template <>                                                         \
-    struct TypeTagInfo<FA_TTAG_(__VA_ARGS__)>                           \
+    struct TypeTagInfo<TypeTagName>                                     \
     {                                                                   \
         static int init() {                                             \
-        TypeTagRegistry::addChildren<__VA_ARGS__ >();                   \
-        return 0;                                                       \
+            TypeTagRegistry::addChildren<TypeTagName, ##__VA_ARGS__ >(); \
+            return 0;                                                   \
+        };                                                              \
+        static int foo;                                                 \
     };                                                                  \
-    static int foo;                                                     \
-    };                                                                  \
-int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
-    TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::init();
+    int TypeTagInfo<TypeTagName>::foo =                                 \
+    TypeTagInfo<TypeTagName>::init();
 
 #else
-//! Internal macro which is only required if the property introspection is enabled
-//!
 //! Don't do anything if introspection is disabled
 #define PROP_INFO_(EffTypeTagName, PropKind, PropTagName, ...)
 #define TTAG_INFO_(EffTypeTagName, ...)
@@ -308,14 +304,14 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_INT_PROP(EffTypeTagName, PropTagName, Value, ...)   \
+#define SET_INT_PROP(EffTypeTagName, PropTagName, /*Value*/...)    \
     SET_PROP_(EffTypeTagName,                                   \
               /*kind=*/"int   ",                                \
               PropTagName,                                      \
-              /*value=*/Value, ##__VA_ARGS__)                   \
+              /*value=*/__VA_ARGS__)                            \
     {                                                           \
         typedef int type;                                       \
-        static constexpr int value = Value, ##__VA_ARGS__;      \
+        static constexpr int value = __VA_ARGS__;               \
     }
 
 /*!
@@ -323,14 +319,14 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *
  * The constant can be accessed by the 'value' attribute.
  */
-#define SET_BOOL_PROP(EffTypeTagName, PropTagName, Value, ...)  \
-    SET_PROP_(EffTypeTagName,                                   \
-              /*kind=*/"bool  ",                                \
-              PropTagName,                                      \
-              /*value=*/Value, ##__VA_ARGS__)                   \
-    {                                                           \
-        typedef bool type;                                      \
-        static constexpr bool value = Value, ##__VA_ARGS__;     \
+#define SET_BOOL_PROP(EffTypeTagName, PropTagName, /*Value*/...)    \
+    SET_PROP_(EffTypeTagName,                                       \
+              /*kind=*/"bool  ",                                    \
+              PropTagName,                                          \
+              /*value=*/__VA_ARGS__)                                \
+    {                                                               \
+        typedef bool type;                                          \
+        static constexpr bool value = __VA_ARGS__;                  \
     }
 
 /*!
@@ -338,13 +334,13 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *
  * The type can be accessed by the 'type' attribute.
  */
-#define SET_TYPE_PROP(EffTypeTagName, PropTagName, Type, ...)   \
-    SET_PROP_(EffTypeTagName,                                   \
-              /*kind=*/"type  ",                                \
-              PropTagName,                                      \
-              /*value=*/Type, __VA_ARGS__)                      \
-    {                                                           \
-        typedef Type, ##__VA_ARGS__ type;                       \
+#define SET_TYPE_PROP(EffTypeTagName, PropTagName, /*Value*/...)  \
+    SET_PROP_(EffTypeTagName,                                     \
+              /*kind=*/"type  ",                                  \
+              PropTagName,                                        \
+              /*value=*/__VA_ARGS__)                              \
+    {                                                             \
+        typedef __VA_ARGS__ type;                                 \
     }
 
 /*!

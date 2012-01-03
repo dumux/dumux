@@ -178,6 +178,7 @@ public:
     ObstacleProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
+        eps_ = 1e-6;
         temperature_ = 273.15 + 25; // -> 25°C
 
         // initialize the tables of the fluid system
@@ -450,7 +451,7 @@ private:
     };
 
     Scalar temperature_;
-    static constexpr Scalar eps_ = 1e-6;
+    Scalar eps_;
 };
 } //end namespace
 

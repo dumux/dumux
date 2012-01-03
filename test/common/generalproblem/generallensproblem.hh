@@ -259,6 +259,7 @@ public:
                        const GlobalPosition &lensUpperRight)
         : ParentType(timeManager, gridView)
     {
+        eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
         this->timeManager().startNextEpisode(500);
@@ -463,7 +464,7 @@ private:
     }
 
     Scalar temperature_;
-    static constexpr Scalar eps_ = 3e-6;
+    Scalar eps_;
 };
 } //end namespace
 

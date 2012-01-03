@@ -41,8 +41,8 @@
 // the BoundaryTypes class)
 namespace Valgrind
 {
-bool boolBlubb() { return true; };
-void voidBlubb() { };
+bool boolBlubb() { return true; }
+void voidBlubb() { }
 
 #define SetUndefined(t) voidBlubb()
 #define SetDefined(t) voidBlubb()

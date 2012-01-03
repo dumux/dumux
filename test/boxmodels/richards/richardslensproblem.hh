@@ -160,13 +160,15 @@ public:
                         const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
+        eps_ = 3e-6;
+        pnRef_ = 1e5;
+
         lensLowerLeft_[0] = 1.0;
         lensLowerLeft_[1] = 2.0;
 
         lensUpperRight_[0] = 4.0;
         lensUpperRight_[1] = 3.0;
 
-        pnRef_ = 1e5;
         this->spatialParameters().setLensCoords(lensLowerLeft_, lensUpperRight_);
     }
 
@@ -333,8 +335,9 @@ private:
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
-    static constexpr Scalar eps_ = 3e-6;
+    Scalar eps_;
     Scalar pnRef_;
+
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
 };

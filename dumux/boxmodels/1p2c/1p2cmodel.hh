@@ -135,7 +135,7 @@ public:
         ScalarField &velocityY = *writer.allocateManagedBuffer(numVertices);
         ScalarField &velocityZ = *writer.allocateManagedBuffer(numVertices);
         //use vertiacl faces for vx and horizontal faces for vy calculation
-        GlobalPosition boxSurface[numVertices];
+        std::vector<GlobalPosition> boxSurface(numVertices);
         // initialize velocity fields
           for (int i = 0; i < numVertices; ++i)
           {

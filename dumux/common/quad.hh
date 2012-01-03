@@ -117,47 +117,47 @@ inline quad ceil(quad val)
 { return ceilq(val); }
 
 inline quad max(quad a, quad b)
-{ return (a>b)?a:b; };
+{ return (a>b)?a:b; }
 
 inline quad min(quad a, quad b)
-{ return (a<b)?a:b; };
+{ return (a<b)?a:b; }
 
 inline quad sqrt(quad val)
-{ return sqrtq(val); };
+{ return sqrtq(val); }
 
 template <class ExpType>
 inline quad pow(quad base, ExpType exp)
-{ return powq(base, exp); };
+{ return powq(base, exp); }
 
 inline quad exp(quad val)
-{ return expq(val); };
+{ return expq(val); }
 
 inline quad log(quad val)
-{ return logq(val); };
+{ return logq(val); }
 
 inline quad sin(quad val)
-{ return sinq(val); };
+{ return sinq(val); }
 
 inline quad cos(quad val)
-{ return cosq(val); };
+{ return cosq(val); }
 
 inline quad tan(quad val)
-{ return tanq(val); };
+{ return tanq(val); }
 
 inline quad atan(quad val)
-{ return atanq(val); };
+{ return atanq(val); }
 
 inline quad atan2(quad a, quad b)
-{ return atan2q(a, b); };
+{ return atan2q(a, b); }
 
 inline bool isfinite(quad val)
-{ return !isnanq(val) && !isinfq(val); };
+{ return !isnanq(val) && !isinfq(val); }
 
 inline bool isnan(quad val)
-{ return isnanq(val); };
+{ return isnanq(val); }
 
 inline bool isinf(quad val)
-{ return isinfq(val); };
+{ return isinfq(val); }
 
 } // namespace std
 
@@ -211,14 +211,14 @@ template <class T>
 std::string className()
 {
     return ClassNameHelper_<T>::name();
-};
+}
 
 template <class T>
 std::string className(const T &t)
 {
     return ClassNameHelper_<T>::name();
-};
+}
 
-};
+}
 
 #endif // DUMUX_QUAD_HH
