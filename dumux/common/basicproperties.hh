@@ -108,7 +108,7 @@ SET_PROP(NumericModel, ParameterTree)
 };
 
 // use the global group as default for the model's parameter group
-SET_STRING_PROP(NumericModel, ModelParameterGroup, "")
+SET_STRING_PROP(NumericModel, ModelParameterGroup, "");
 
 } // namespace Properties
 } // namespace Dumux
