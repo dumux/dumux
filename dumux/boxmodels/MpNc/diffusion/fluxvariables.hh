@@ -234,6 +234,6 @@ public:
     };
 };
 
-};
+}
 
 #endif // DUMUX_MPNC_DIFFUSION_FLUX_VARIABLES_HH

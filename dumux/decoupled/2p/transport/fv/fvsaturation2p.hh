@@ -314,7 +314,6 @@ private:
     EvalCflFluxFunction* evalCflFluxFunction_;
 
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
-    ;
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));

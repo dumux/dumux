@@ -63,7 +63,7 @@ NEW_PROP_TAG(NonwettingPhase); //!< Fluid which represents the non-wetting phase
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 // \}
-};
+}
 
 } // end namepace
 

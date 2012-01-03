@@ -148,7 +148,7 @@ public:
 };
 
 // \}
-};
+}
 
 } // end namepace
 

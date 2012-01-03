@@ -88,7 +88,7 @@ public:
             }
         }
         Valgrind::CheckDefined(diffCoeffG_);
-    };
+    }
 
 
     Scalar diffCoeff(int phaseIdx, int compIIdx, int compJIdx) const
@@ -102,7 +102,7 @@ public:
         if (i != 0)
             return 0;
         return diffCoeffL_[j];
-    };
+    }
 
     /*!
      * \brief If running under valgrind this produces an error message
@@ -142,13 +142,13 @@ public:
                 ParameterCache &paramCache,
                 const VolumeVariables &volVars,
                 const Problem &problem)
-    { };
+    { }
 
     Scalar diffCoeffL(int compIdx) const
-    { return 0; };
+    { return 0; }
 
     Scalar diffCoeffG(int compIIdx, int compJIdx) const
-    { return 0; };
+    { return 0; }
 
     /*!
      * \brief If running under valgrind this produces an error message

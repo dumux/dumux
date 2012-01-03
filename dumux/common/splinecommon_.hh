@@ -325,7 +325,7 @@ protected:
             destX[i] = srcX[idx];
             destY[i] = srcY[idx];
         }
-    };
+    }
 
     template <class DestVector, class ListIterator>
     void assignFromArrayList_(DestVector &destX,
@@ -352,7 +352,7 @@ protected:
             destX[i] = (*it)[0];
             destY[i] = (*it)[1];
         }
-    };
+    }
 
     /*!
      * \brief Set the sampling points.
@@ -389,7 +389,7 @@ protected:
             destX[i] = std::tr1::get<0>(*it);
             destY[i] = std::tr1::get<1>(*it);
         }
-    };
+    }
 
 
     /*!
@@ -587,7 +587,7 @@ protected:
         x0 = (x0 + x1)/2; // pick point in the middle of the interval
                           // to avoid extrema on the boundaries
         return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
-    };
+    }
 
     /*!
      * \brief Find all the intersections of a segment of the spline
@@ -633,7 +633,7 @@ protected:
                 iLow = i;
         };
         return iLow;
-    };
+    }
 
     /*!
      * \brief Returns x[i] - x[i - 1]
@@ -642,7 +642,8 @@ protected:
     {
         assert(x_(i) > x_(i-1)); // the sampling points must be given
                                  // in ascending order
-        return x_(i) - x_(i - 1); }
+        return x_(i) - x_(i - 1); 
+    }
 
     /*!
      * \brief Returns the y coordinate of the i-th sampling point.

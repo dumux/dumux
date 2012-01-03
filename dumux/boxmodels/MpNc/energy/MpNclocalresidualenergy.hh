@@ -61,7 +61,7 @@ public:
                                const VolumeVariables &volVars)
     {
         // do nothing, we're isothermal!
-    };
+    }
 
 
     static void addPhaseStorage(PrimaryVariables &storage,
@@ -69,7 +69,7 @@ public:
                                 int phaseIdx)
     {
         // do nothing, we're isothermal!
-    };
+    }
 
     static void phaseEnthalpyFlux(PrimaryVariables &result,
                                   int phaseIdx,
@@ -78,14 +78,14 @@ public:
                                   const FluxVariables &fluxVars)
     {
         // do nothing, we're isothermal!
-    };
+    }
 
     static void heatConduction(PrimaryVariables &result,
                                const ElementVolumeVariables &volVars,
                                const FluxVariables &fluxVars)
     {
         // do nothing, we're isothermal!
-    };
+    }
 
 
     static void computeFlux(PrimaryVariables & flux,
@@ -233,6 +233,6 @@ public:
 
 
 
-};
+}
 
 #endif // DUMUX_MPNC_ENERGY_HH

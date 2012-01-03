@@ -136,7 +136,7 @@ public:
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         return false;
-    };
+    }
 
     /****************************************
      * Component related static parameters
@@ -283,7 +283,7 @@ public:
     {
         // TODO!
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
-    };
+    }
 
 
     /*!
@@ -327,7 +327,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         DUNE_THROW(Dune::NotImplemented, "Enthalpies");
-    };
+    }
 
     /*!
      * \brief Thermal conductivity of a fluid phase [W/(m^2 K/m)].
@@ -343,7 +343,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         DUNE_THROW(Dune::NotImplemented, "Thermal conductivities.");
-    };
+    }
 
     /*!
      * \brief Specific isobaric heat capacity of a fluid phase.
@@ -360,7 +360,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         DUNE_THROW(Dune::NotImplemented, "Heat capacities.");
-    };
+    }
 };
 
 } // end namepace

@@ -169,6 +169,6 @@ private:
     Scalar massUpwindWeight_;
 };
 
-};
+}
 
 #endif
