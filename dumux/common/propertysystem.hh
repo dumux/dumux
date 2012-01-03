@@ -192,7 +192,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  * NEW_PROP_TAG(blubbPropTag);
  * NEW_PROP_TAG(blabbPropTag);
  */
-#define NEW_PROP_TAG(PTagName) \
+#define NEW_PROP_TAG(PTagName)                             \
     namespace PTag {                                       \
     struct PTagName; } extern int semicolonHack_
 
@@ -213,7 +213,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  */
 #define SET_PROP_DEFAULT(PropTagName) \
     template <class TypeTag>                                            \
-    struct DefaultProperty<TypeTag, PTAG_(PropTagName)>;                 \
+    struct DefaultProperty<TypeTag, PTAG_(PropTagName)>;                \
     PROP_INFO_DEPRECATED_("Default properties are deprecated and will be removed in the future", \
                           __Default,                                    \
                           /*kind=*/"<opaque>",                          \
@@ -233,8 +233,8 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
                PropTagName,                                         \
                /*value=*/__VA_ARGS__)                               \
     template <class TypeTag>                                        \
-    struct Property<TypeTag, \
-                    TTAG(EffTypeTagName), \
+    struct Property<TypeTag,                                        \
+                    TTAG(EffTypeTagName),                           \
                     PTAG_(PropTagName) >
 
 /*!
@@ -264,7 +264,7 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
  *    { return arg * blabb::value; };
  * };
  */
-#define SET_PROP(EffTypeTagName, PropTagName) \
+#define SET_PROP(EffTypeTagName, PropTagName)                   \
     template <class TypeTag>                                    \
     struct Property<TypeTag,                                    \
                     TTAG(EffTypeTagName),                       \
@@ -274,8 +274,8 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
                PropTagName,                                     \
                /*value=*/"<opaque>")                            \
     template <class TypeTag>                                    \
-    struct Property<TypeTag, \
-                    TTAG(EffTypeTagName), \
+    struct Property<TypeTag,                                    \
+                    TTAG(EffTypeTagName),                       \
                     PTAG_(PropTagName) >
 
 /*!
@@ -363,8 +363,11 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;         \
     public:                                                             \
         typedef Scalar type;                                            \
-        static constexpr Scalar value = __VA_ARGS__;                    \
-    }
+        static const Scalar value;                                      \
+    };                                                                  \
+    template <class TypeTag>                                            \
+    const typename Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::type   \
+    Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::value(__VA_ARGS__)
 
 /*!
  * \brief Set a property to a simple constant string value.
@@ -383,7 +386,8 @@ int TypeTagInfo<FA_TTAG_(__VA_ARGS__)>::foo =                           \
         static const std::string value;                                 \
     };                                                                  \
     template <class TypeTag>                                            \
-    const std::string Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::value(__VA_ARGS__);
+    const typename Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::type \
+    Property<TypeTag, TTAG(EffTypeTagName), PTAG_(PropTagName)>::value(__VA_ARGS__)
 
 /*!
  * \brief Get the property for a type tag.
