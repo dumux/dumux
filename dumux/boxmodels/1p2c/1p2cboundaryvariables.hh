@@ -59,6 +59,13 @@ class OnePTwoCBoundaryVariables
 
     enum {
         dim = GridView::dimension,
+
+        phaseIdx = Indices::phaseIdx,
+
+        comp0Idx = Indices::comp0Idx,
+        comp1Idx = Indices::comp1Idx,
+
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -69,15 +76,6 @@ class OnePTwoCBoundaryVariables
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::BoundaryFace BoundaryFace;
-
-    enum {
-        phaseIdx = Indices::phaseIdx,
-
-        comp0Idx = Indices::comp0Idx,
-        comp1Idx = Indices::comp1Idx,
-
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
-    };
 
 public:
     OnePTwoCBoundaryVariables(const Problem &problem,

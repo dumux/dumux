@@ -56,12 +56,12 @@ class DecoupledTwoPTwoCFluidState
         nPhaseIdx = Indices::nPhaseIdx,
 
         wCompIdx = Indices::wPhaseIdx,
-        nCompIdx = Indices::nPhaseIdx,
+        nCompIdx = Indices::nPhaseIdx
     };
 
 public:
     enum {  numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-            numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),};
+            numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))};
 
 public:
     /*!

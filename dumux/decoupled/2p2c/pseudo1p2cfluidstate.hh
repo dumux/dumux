@@ -56,7 +56,7 @@ public:
         nPhaseIdx = Indices::nPhaseIdx,
 
         wCompIdx = Indices::wPhaseIdx,
-        nCompIdx = Indices::nPhaseIdx,
+        nCompIdx = Indices::nPhaseIdx
     };
 
 public:

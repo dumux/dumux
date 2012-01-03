@@ -99,7 +99,7 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
     // primary variable indices
     enum {
         switchIdx = Indices::switchIdx,
-        pressureIdx = Indices::pressureIdx,
+        pressureIdx = Indices::pressureIdx
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

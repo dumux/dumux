@@ -78,7 +78,7 @@ class OnePTwoCFluxVariables
     enum {
         phaseIdx = Indices::phaseIdx,
         comp0Idx = Indices::comp0Idx,
-        comp1Idx = Indices::comp1Idx,
+        comp1Idx = Indices::comp1Idx
     };
 public:
     /*

@@ -152,7 +152,7 @@ class ObstacleProblem
         lPhaseIdx = FluidSystem::lPhaseIdx,
 
         H2OIdx = FluidSystem::H2OIdx,
-        N2Idx = FluidSystem::N2Idx,
+        N2Idx = FluidSystem::N2Idx
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -171,7 +171,7 @@ class ObstacleProblem
     enum {
         fug0Idx = Indices::fug0Idx,
         S0Idx = Indices::S0Idx,
-        p0Idx = Indices::p0Idx,
+        p0Idx = Indices::p0Idx
     };
 
 public:

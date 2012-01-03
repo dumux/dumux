@@ -106,7 +106,7 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
 
     // copy some indices for convenience
@@ -123,7 +123,7 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
         
         conti0EqIdx = Indices::conti0EqIdx,
         contiH2OEqIdx = conti0EqIdx + H2OIdx,
-        contiN2EqIdx = conti0EqIdx + N2Idx,
+        contiN2EqIdx = conti0EqIdx + N2Idx
     };
 
 

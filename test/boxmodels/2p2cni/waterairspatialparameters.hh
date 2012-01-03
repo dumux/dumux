@@ -78,13 +78,13 @@ class WaterAirSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
+        dimWorld=GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     enum {
         lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx
     };
 
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;

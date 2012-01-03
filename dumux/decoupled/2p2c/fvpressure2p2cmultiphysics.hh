@@ -90,7 +90,7 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
         pn = Indices::pressureNW,
         pglobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNW
     };
     enum
     {

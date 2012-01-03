@@ -103,7 +103,7 @@ class TwoPModel : public BoxModel<TypeTag>
         pnSw = Indices::pnSw,
 
         pressureIdx = Indices::pressureIdx,
-        saturationIdx = Indices::saturationIdx,
+        saturationIdx = Indices::saturationIdx
     };
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;

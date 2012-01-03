@@ -81,7 +81,7 @@ class MPNCVolumeVariables
         numEnergyEqs     = Indices::NumPrimaryEnergyVars,
 
         S0Idx = Indices::S0Idx,
-        p0Idx = Indices::p0Idx,
+        p0Idx = Indices::p0Idx
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

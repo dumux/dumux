@@ -73,7 +73,7 @@ private:
     enum
     {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
     enum
     {

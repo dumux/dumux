@@ -71,7 +71,7 @@ class MPNCFluxVariables
         enableEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)),
         enableKinetic = GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)),
         enableKineticEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy)),
-        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)),
+        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity))
     };
 
     typedef typename GridView::ctype CoordScalar;

@@ -141,7 +141,7 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
         contiEqIdx = Indices::contiEqIdx,
 
         // Grid and world dimension
-        dim = GridView::dimensionworld,
+        dim = GridView::dimensionworld
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

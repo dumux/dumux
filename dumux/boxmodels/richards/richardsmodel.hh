@@ -111,7 +111,7 @@ class RichardsModel : public BoxModel<TypeTag>
     enum {
         dim = GridView::dimension,
         nPhaseIdx = Indices::nPhaseIdx,
-        wPhaseIdx = Indices::wPhaseIdx,
+        wPhaseIdx = Indices::wPhaseIdx
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

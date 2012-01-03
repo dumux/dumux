@@ -57,7 +57,7 @@ class MPNCFluxVariablesDiffusion
         numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
         lPhaseIdx = FluidSystem::lPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;

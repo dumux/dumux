@@ -87,7 +87,7 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
         dimWorld = GridView::dimensionworld,
         gPhaseIdx = FluidSystem::gPhaseIdx,
         lPhaseIdx = FluidSystem::lPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
     typedef Dune::FieldVector<CoordScalar, dimWorld>  Vector;

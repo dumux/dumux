@@ -146,7 +146,7 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
 
         // indices of the equations
         contiEqIdx = Indices::contiEqIdx,
-        transEqIdx = Indices::transEqIdx,
+        transEqIdx = Indices::transEqIdx
     };
 
 

@@ -54,7 +54,7 @@ class TissueTumorSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
     typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
+        dimWorld=GridView::dimensionworld
     };
 
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;

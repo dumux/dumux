@@ -93,7 +93,7 @@ protected:
 
         // indices of the equations
         contiEqIdx = Indices::contiEqIdx,
-        transEqIdx = Indices::transEqIdx,
+        transEqIdx = Indices::transEqIdx
     };
 
     static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));

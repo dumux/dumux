@@ -78,15 +78,14 @@ class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename Grid::ctype CoordScalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
-    };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    enum {
         lPhaseIdx = FluidSystem::lPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx
     };
 
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;

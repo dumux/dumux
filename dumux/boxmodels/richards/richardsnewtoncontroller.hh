@@ -57,7 +57,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
         dim = GridView::dimension,
-        pwIdx = Indices::pwIdx,
+        pwIdx = Indices::pwIdx
     };
 
 public:

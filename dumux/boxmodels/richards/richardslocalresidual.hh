@@ -57,7 +57,7 @@ class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
         contiEqIdx = Indices::contiEqIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;

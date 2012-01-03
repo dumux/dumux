@@ -188,7 +188,7 @@ public:
     enum BoundaryFormulation
         {
             saturation=-1,
-            concentration=-2,
+            concentration=-2
         };
 
 

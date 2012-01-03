@@ -47,7 +47,7 @@ struct BoundaryConditions2p2c
     enum Flags
         {
             saturation=1,
-            concentration=2,
+            concentration=2
         };
 };
 

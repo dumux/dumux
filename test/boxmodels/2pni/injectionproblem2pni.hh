@@ -169,7 +169,7 @@ class InjectionProblem2PNI
 
         // Grid and world dimension
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
 
 

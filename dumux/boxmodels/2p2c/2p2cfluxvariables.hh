@@ -79,7 +79,7 @@ class TwoPTwoCFluxVariables
         gPhaseIdx = Indices::gPhaseIdx,
 
         lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx,
+        gCompIdx = Indices::gCompIdx
     };
 
 public:

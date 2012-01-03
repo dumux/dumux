@@ -69,7 +69,7 @@ private:
         vn = Indices::velocityNW,
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNW
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;

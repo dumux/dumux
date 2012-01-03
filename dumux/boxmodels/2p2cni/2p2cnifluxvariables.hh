@@ -67,7 +67,7 @@ class TwoPTwoCNIFluxVariables : public TwoPTwoCFluxVariables<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;

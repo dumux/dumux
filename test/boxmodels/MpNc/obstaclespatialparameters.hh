@@ -55,7 +55,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
     enum {
         lPhaseIdx = FluidSystem::lPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx
     };
     // define the material law
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -90,12 +90,12 @@ class ObstacleSpatialParameters : public BoxSpatialParameters<TypeTag>
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
 
     enum {
         lPhaseIdx = FluidSystem::lPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx,
+        gPhaseIdx = FluidSystem::gPhaseIdx
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

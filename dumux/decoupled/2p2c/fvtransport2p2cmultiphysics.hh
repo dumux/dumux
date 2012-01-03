@@ -81,7 +81,7 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
         vn = Indices::velocityNW,
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNW
     };
     enum
     {

@@ -80,7 +80,7 @@ private:
         vn = Indices::velocityNW,
         vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNW
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;

@@ -73,7 +73,7 @@ template<class TypeTag> class FVPressure1P
 
     enum
     {
-        pressEqIdx = 0,// only one equation!
+        pressEqIdx = 0 // only one equation!
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
