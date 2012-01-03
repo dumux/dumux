@@ -54,32 +54,34 @@ namespace Dumux
 template <class TypeTag>
 class OnePTwoCFluxVariables
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
-
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
-
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
     enum {
         phaseIdx = Indices::phaseIdx,
         comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx
     };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    enum { 
+        dim = GridView::dimension,  
+        dimWorld = GridView::dimensionworld 
+    };
+
+    typedef typename GridView::ctype CoordScalar;
+    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+
 public:
     /*
      * \brief The constructor

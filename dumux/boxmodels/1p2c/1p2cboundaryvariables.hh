@@ -49,32 +49,26 @@ namespace Dumux
 template <class TypeTag>
 class OnePTwoCBoundaryVariables
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
-
     enum {
-        dim = GridView::dimension,
-
         phaseIdx = Indices::phaseIdx,
-
         comp0Idx = Indices::comp0Idx,
-        comp1Idx = Indices::comp1Idx,
-
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        comp1Idx = Indices::comp1Idx
     };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dim> VelocityVector;
-    typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> VectorGradient;
+    enum { dim = GridView::dimension };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef Dune::FieldVector<Scalar, dim> Vector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::BoundaryFace BoundaryFace;
 
 public:
@@ -163,7 +157,7 @@ public:
      *
      * \param compIdx The index of the considered component
      */
-    const ScalarGradient &concentrationGrad(int compIdx) const
+    const Vector &concentrationGrad(int compIdx) const
     {
         if (compIdx != 1)
         { DUNE_THROW(Dune::InvalidStateException,
@@ -178,7 +172,7 @@ public:
      *
      * \param compIdx The index of the considered component
      */
-    const ScalarGradient &moleFracGrad(int compIdx) const
+    const Vector &moleFracGrad(int compIdx) const
     {
         if (compIdx != 1)
         { DUNE_THROW(Dune::InvalidStateException,
@@ -193,7 +187,7 @@ public:
       *
       * \param compIdx The index of the considered component
       */
-     const ScalarGradient &massFracGrad(int compIdx) const
+     const Vector &massFracGrad(int compIdx) const
      {
          if (compIdx != 1)
           { DUNE_THROW(Dune::InvalidStateException,
@@ -222,7 +216,7 @@ protected:
         K_[0][0] = K_[1][1] = k;
     }
 
-    void calculateK_(VectorGradient K)
+    void calculateK_(Tensor K)
     {
        K_ = K;
     }
@@ -237,7 +231,7 @@ protected:
                              const Element &element,
                              const ElementVolumeVariables &elemDat)
     {
-        ScalarGradient tmp(0.0);
+        Vector tmp(0.0);
 
         // calculate gradients and secondary variables at IPs of the boundary
         for (int idx = 0;
@@ -245,7 +239,7 @@ protected:
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
-            const ScalarGradient& feGrad = boundaryFace_->grad[idx];
+            const Vector& feGrad = boundaryFace_->grad[idx];
 
             pressureAtBIP_ += elemDat[idx].pressure() *
                              boundaryFace_->shapeValue[idx];
@@ -285,7 +279,7 @@ protected:
         potentialGrad_ -= tmp;
         
         calculateK_(problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_));
-        ScalarGradient Kmvp;
+        Vector Kmvp;
         K_.mv(potentialGrad_, Kmvp);
         KmvpNormal_ = 0;
         for (int i = 0; i < dim; ++i)
@@ -303,10 +297,10 @@ protected:
     const BoundaryFace *boundaryFace_;
     
     // gradients
-    ScalarGradient potentialGrad_;
-    ScalarGradient concentrationGrad_;
-    ScalarGradient moleFracGrad_;
-    ScalarGradient massFracGrad_;
+    Vector potentialGrad_;
+    Vector concentrationGrad_;
+    Vector moleFracGrad_;
+    Vector massFracGrad_;
 
     // quanitities at the integration point
     Scalar pressureAtBIP_;
@@ -316,7 +310,7 @@ protected:
     Scalar molarDensityAtIP_;
 
     //intrinsic permeability tensor
-    VectorGradient K_;
+    Tensor K_;
     // intrinsic permeability times pressure potential gradient
     // projected on the face normal
     Scalar KmvpNormal_;

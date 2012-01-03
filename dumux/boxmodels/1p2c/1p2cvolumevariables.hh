@@ -47,22 +47,15 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
-
-        dimWorld = GridView::dimensionworld,
-
         phaseIdx = Indices::phaseIdx,
         comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx,
@@ -74,9 +67,12 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         transEqIdx = Indices::transEqIdx
     };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+    enum { dimWorld = GridView::dimensionworld };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar,dimWorld> Vector;
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
 
 public:
     //! The type returned by the fluidState() method

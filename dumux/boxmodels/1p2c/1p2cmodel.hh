@@ -78,13 +78,6 @@ namespace Dumux
 template<class TypeTag >
 class OnePTwoCBoxModel : public BoxModel<TypeTag>
 {
-    typedef OnePTwoCBoxModel<TypeTag> ThisType;
-    typedef BoxModel<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
@@ -92,12 +85,16 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     OnePTwoCBoxModel()
