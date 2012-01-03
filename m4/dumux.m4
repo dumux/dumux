@@ -37,26 +37,84 @@ AC_DEFUN([DUMUX_CHECKS],
 # which depend on it
 AC_DEFUN([DUMUX_CHECKS_PRIVATE],
 [
-  AC_CHECK_PROGS([LATEX], [latex], [true])
-  AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
+  if test "$enable_documentation" == "yes"; then
+    AC_PROG_LATEX
+    AC_PROG_BIBTEX
+    AC_PROG_DVIPDF
 
-  # Add the latex and handbook status to the summary
-  have_latex=no
-  if test "x$LATEX" != "x"; then
-     have_latex=yes
+    if test "$latex" != "no" && \
+     test "$bibtex" != "no" && \
+     test "$dvipdf" != "no"; then
+
+     AC_LATEX_CLASS(scrreprt,have_latex_class_scrreprt)
+
+     AC_LATEX_PACKAGE(amsfonts,scrreprt,have_latex_pkg_amsfonts)
+     AC_LATEX_PACKAGE(amsmath,scrreprt,have_latex_pkg_amsmath)
+     AC_LATEX_PACKAGE(amssymb,scrreprt,have_latex_pkg_amssymb)
+     # AC_LATEX_PACKAGE(babel,scrreprt,have_latex_pkg_babel)
+     AC_LATEX_PACKAGE(color,scrreprt,have_latex_pkg_color)
+     AC_LATEX_PACKAGE(enumerate,scrreprt,have_latex_pkg_enumerate)
+     AC_LATEX_PACKAGE(graphics,scrreprt,have_latex_pkg_graphics)
+     AC_LATEX_PACKAGE(graphicx,scrreprt,have_latex_pkg_graphicx)
+     AC_LATEX_PACKAGE(hyperref,scrreprt,have_latex_pkg_hyperref)
+     AC_LATEX_PACKAGE(hyphenat,scrreprt,have_latex_pkg_hyphenat)
+     AC_LATEX_PACKAGE(inputenc,scrreprt,have_latex_pkg_inputenc)
+     AC_LATEX_PACKAGE(layout,scrreprt,have_latex_pkg_layout)
+     AC_LATEX_PACKAGE(listings,scrreprt,have_latex_pkg_listings)
+     AC_LATEX_PACKAGE(lscape,scrreprt,have_latex_pkg_lscape)
+     AC_LATEX_PACKAGE(makeidx,scrreprt,have_latex_pkg_makeidx)
+     AC_LATEX_PACKAGE(pstricks,scrreprt,have_latex_pkg_pstricks)
+     AC_LATEX_PACKAGE(rotating,scrreprt,have_latex_pkg_rotating)
+     AC_LATEX_PACKAGE(scrpage2,scrreprt,have_latex_pkg_scrpage2)
+     AC_LATEX_PACKAGE(subfig,scrreprt,have_latex_pkg_subfig)
+     AC_LATEX_PACKAGE(theorem,scrreprt,have_latex_pkg_theorem)
+     AC_LATEX_PACKAGE(tabularx,scrreprt,have_latex_pkg_tabularx)
+     AC_LATEX_PACKAGE(ulem,scrreprt,have_latex_pkg_ulem)
+     AC_LATEX_PACKAGE(xspace,scrreprt,have_latex_pkg_xspace)
+    fi
   fi
-  DUNE_ADD_SUMMARY_ENTRY([Latex],[$have_latex])
 
   # only build the handbook if the documentation is build, latex is
   # available and the tree is checked out via a version control system
   build_handbook=no
-  if test "x$enable_documentation" == "xyes" && \
-     test -a "$(pwd)/${top_srcdir}/stamp-vc" && \
-     test "$have_latex" == "yes"; then
+  if test "$enable_documentation" == "yes" && \
+     test "$CONVERT" != "no" && test "$CONVERT" != "" && \
+     test "$latex" != "no" && test "$latex" != "" && \
+     test "$bibtex" != "no" && test "$bibtex" != "" && \
+     test "$dvipdf" != "no" && test "$dvipdf" != "" && \
+     test "$have_latex_class_scrreprt" == "yes" && \
+     test "$have_latex_pkg_amsfonts" == "yes" && \
+     test "$have_latex_pkg_amsmath" == "yes" && \
+     test "$have_latex_pkg_amssymb" == "yes" && \
+     test "$have_latex_pkg_color" == "yes" && \
+     test "$have_latex_pkg_enumerate" == "yes" && \
+     test "$have_latex_pkg_graphics" == "yes" && \
+     test "$have_latex_pkg_graphicx" == "yes" && \
+     test "$have_latex_pkg_hyperref" == "yes" && \
+     test "$have_latex_pkg_hyphenat" == "yes" && \
+     test "$have_latex_pkg_inputenc" == "yes" && \
+     test "$have_latex_pkg_layout" == "yes" && \
+     test "$have_latex_pkg_listings" == "yes" && \
+     test "$have_latex_pkg_lscape" == "yes" && \
+     test "$have_latex_pkg_makeidx" == "yes" && \
+     test "$have_latex_pkg_pstricks" == "yes" && \
+     test "$have_latex_pkg_rotating" == "yes" && \
+     test "$have_latex_pkg_scrpage2" == "yes" && \
+     test "$have_latex_pkg_subfig" == "yes" && \
+     test "$have_latex_pkg_theorem" == "yes" && \
+     test "$have_latex_pkg_tabularx" == "yes" && \
+     test "$have_latex_pkg_ulem" == "yes" && \
+     test "$have_latex_pkg_xspace" == "yes"; 
+  then
     build_handbook=yes
-  fi
-  AM_CONDITIONAL([BUILD_HANDBOOK], [test "$build_handbook" == "yes"])
 
+  fi
+
+  AC_SUBST([LATEX],[$latex])
+  AC_SUBST([BIBTEX],[$bibtex])
+  AC_SUBST([DVIPDF],[$dvipdf])
+
+  AM_CONDITIONAL([BUILD_HANDBOOK], [test "$build_handbook" == "yes"])
   DUNE_ADD_SUMMARY_ENTRY([Build DuMuX handbook],[$build_handbook])
 ])
 
