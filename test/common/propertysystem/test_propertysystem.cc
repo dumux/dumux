@@ -124,8 +124,8 @@ SET_INT_PROP(HummerH1, TopSpeed, GET_PROP_VALUE(TTAG(Pickup), PTAG(TopSpeed)));
 // Unmount the canon from the Hummer
 UNSET_PROP(HummerH1, CanonCaliber);
 
-}; // namespace Properties
-}; // namespace Dumux
+} // namespace Properties
+} // namespace Dumux
 
 
 int main()
@@ -196,4 +196,4 @@ int main()
               << PROP_DIAGNOSTIC(TTAG(HummerH1), PTAG(AutomaticTransmission));
 
     return 0;
-};
+}

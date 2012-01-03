@@ -158,6 +158,6 @@ public:
     { }
 };
 
-};
+}
 
 #endif // DUMUX_MPNC_DIFFUSION_VOLUME_VARIABLES_HH

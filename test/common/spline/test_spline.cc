@@ -101,7 +101,7 @@ void testFull(const Spline &sp,
     double d1 = sp.evalDerivative(x[n-1]);
     assert(std::abs(d0 - m0) < eps);
     assert(std::abs(d1 - m1) < eps);
-};
+}
 
 template <class Spline>
 void testNatural(const Spline &sp,
@@ -122,7 +122,7 @@ void testNatural(const Spline &sp,
     double d3 = sp.evalDerivative(x[n-1]);
     assert(std::abs(d1 - d0)/eps < 1000*eps);
     assert(std::abs(d3 - d2)/eps < 1000*eps);
-};
+}
 
 void testAll()
 {
@@ -236,7 +236,7 @@ void plot()
                        0.01*(x_[n] - x_[0]) + x_[n],
                        1000);
     std::cerr << "Spline is monotonic: " << spFull.monotonic(x_[0], x_[n]) << "\n";
-};
+}
 
 int main(int argc, char** argv)
 {
