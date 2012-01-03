@@ -47,29 +47,19 @@ template<class TypeTag>
 class OnePLocalResidual : public BoxLocalResidual<TypeTag>
 {
     typedef OnePLocalResidual<TypeTag> ThisType;
-    typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-
-        pressureIdx = Indices::pressureIdx
-    };
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    enum { dimWorld = GridView::dimensionworld };
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
+    enum { pressureIdx = Indices::pressureIdx };
 
 public:
 
