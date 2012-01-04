@@ -42,29 +42,19 @@ namespace Dumux
 template <class TypeTag>
 class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
 {
-    typedef TwoPVolumeVariables<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
-    };
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
     enum { temperatureIdx = Indices::temperatureIdx };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
     /*!
