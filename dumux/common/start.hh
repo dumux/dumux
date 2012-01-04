@@ -33,11 +33,7 @@
 #include <iostream>
 
 #include <dune/common/version.hh>
-
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
 #include <dune/common/parametertreeparser.hh>
-#endif // DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
-
 
 namespace Dumux
 {
@@ -242,9 +238,6 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
     return 3;
 }
 
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
-// requires DUNE 2.1 and above
-
 /*!
  * \ingroup Start
  * \brief Provides a default main function for simulations requiring
@@ -351,7 +344,6 @@ int startFromInputFile(int argc, char **argv)
 
    return 3;
 }
-#endif // DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 1, 0)
 
 }
 
