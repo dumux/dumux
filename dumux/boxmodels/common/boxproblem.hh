@@ -468,16 +468,16 @@ public:
         const int maxFails = 10;
         for (int i = 0; i < maxFails; ++i) {
             Scalar dt = timeManager().timeStepSize();
+            Scalar nextDt = dt / 2;
 
             // update failed
             if (i > 0 && gridView().comm().rank() == 0)
                 std::cout << "Newton solver did not converge with dt="<<dt<<" seconds. Retrying with time step of "
-                          << timeManager().timeStepSize() << "seconds\n";
+                          << nextDt << " seconds\n";
 
             if (model_.update(newtonMethod_, newtonCtl_))
                 return;
 
-            Scalar nextDt = dt / 2;
             timeManager().setTimeStepSize(nextDt);
         }
 
