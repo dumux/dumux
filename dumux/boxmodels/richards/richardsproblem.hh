@@ -41,22 +41,20 @@ template<class TypeTag>
 class RichardsBoxProblem : public BoxProblem<TypeTag>
 {
     typedef BoxProblem<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
-    // material properties
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:

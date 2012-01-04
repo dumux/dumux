@@ -44,22 +44,21 @@ namespace Dumux
 template<class TypeTag>
 class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
-        dimWorld = GridView::dimensionworld,
-
         contiEqIdx = Indices::contiEqIdx,
-
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    enum { dimWorld = GridView::dimensionworld};
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
 public:

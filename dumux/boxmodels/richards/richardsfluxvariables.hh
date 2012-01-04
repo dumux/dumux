@@ -43,30 +43,26 @@ namespace Dumux
 template <class TypeTag>
 class RichardsFluxVariables
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
     enum {
-        dimWorld = GridView::dimensionworld,
-
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    enum { dimWorld = GridView::dimensionworld};
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 public:
     /*!
      * \brief Constructor

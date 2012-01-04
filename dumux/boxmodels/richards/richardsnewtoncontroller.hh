@@ -45,8 +45,6 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef NewtonController<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
@@ -55,11 +53,11 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
-    enum {
-        dim = GridView::dimension,
-        pwIdx = Indices::pwIdx
-    };
+    enum { pwIdx = Indices::pwIdx };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    enum { dim = GridView::dimension };
 public:
     /*!
      * \brief Constructor
