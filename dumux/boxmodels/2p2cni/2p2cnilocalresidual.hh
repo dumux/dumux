@@ -51,38 +51,22 @@ namespace Dumux
 template<class TypeTag>
 class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
 {
-    typedef TwoPTwoCNILocalResidual<TypeTag> ThisType;
     typedef TwoPTwoCLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-
-        energyEqIdx = Indices::energyEqIdx,
-        temperatureIdx = Indices::temperatureIdx,
-
-        lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx
-    };
-
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    enum {
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        energyEqIdx = Indices::energyEqIdx,
+        temperatureIdx = Indices::temperatureIdx,
+        lPhaseIdx = Indices::lPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx
+    };
 
 public:
     /*!

@@ -53,27 +53,17 @@ template <class TypeTag>
 class TwoPTwoCNIFluxVariables : public TwoPTwoCFluxVariables<TypeTag>
 {
     typedef TwoPTwoCFluxVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    enum { dimWorld = GridView::dimensionworld };
 
     typedef typename GridView::ctype CoordScalar;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
-    };
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-
     typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
 
 public:

@@ -48,28 +48,19 @@ class TwoPTwoCNIVolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 {
     //! \cond 0
     typedef TwoPTwoCVolumeVariables<TypeTag> ParentType;
+    typedef typename ParentType::FluidState FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename ParentType::FluidState FluidState;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
     enum { temperatureIdx = Indices::temperatureIdx };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
     //! \endcond
 
 public:
