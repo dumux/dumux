@@ -92,14 +92,14 @@ public:
      * \param gridView The simulation's idea about physical space
      */
     BoxProblem(TimeManager &timeManager, const GridView &gridView)
-        : gridView_(gridView),
-          bboxMin_(std::numeric_limits<double>::max()),
-          bboxMax_(-std::numeric_limits<double>::max()),
-          elementMapper_(gridView),
-          vertexMapper_(gridView),
-          timeManager_(&timeManager),
-          newtonMethod_(asImp_()),
-          newtonCtl_(asImp_())
+        : gridView_(gridView)
+        , bboxMin_(std::numeric_limits<double>::max())
+        , bboxMax_(-std::numeric_limits<double>::max())
+        , elementMapper_(gridView)
+        , vertexMapper_(gridView)
+        , timeManager_(&timeManager)
+        , newtonMethod_(asImp_())
+        , newtonCtl_(asImp_())
     {
         // calculate the bounding box of the local partition of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -467,15 +467,16 @@ public:
     {
         const int maxFails = 10;
         for (int i = 0; i < maxFails; ++i) {
+            Scalar dt = timeManager().timeStepSize();
+
+            // update failed
             if (i > 0 && gridView().comm().rank() == 0)
-                std::cout << "Newton solver did not converge. Retrying with time step of "
-                          << timeManager().timeStepSize() << "sec\n";
+                std::cout << "Newton solver did not converge with dt="<<dt<<" seconds. Retrying with time step of "
+                          << timeManager().timeStepSize() << "seconds\n";
 
             if (model_.update(newtonMethod_, newtonCtl_))
                 return;
 
-            // update failed
-            Scalar dt = timeManager().timeStepSize();
             Scalar nextDt = dt / 2;
             timeManager().setTimeStepSize(nextDt);
         }
