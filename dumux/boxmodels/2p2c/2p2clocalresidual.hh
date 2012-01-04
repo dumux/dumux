@@ -58,66 +58,34 @@ template<class TypeTag>
 class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, PTAG(BaseLocalResidual))
 {
 protected:
-    typedef TwoPTwoCLocalResidual<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BaseLocalResidual)) ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-
-    enum
-    {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
-
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-
-        contiLEqIdx = Indices::contiLEqIdx,
-        contiGEqIdx = Indices::contiGEqIdx,
-
-        lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx,
-
-        lPhaseOnly = Indices::lPhaseOnly,
-        gPhaseOnly = Indices::gPhaseOnly,
-        bothPhases = Indices::bothPhases,
-
-        plSg = TwoPTwoCFormulation::plSg,
-        pgSl = TwoPTwoCFormulation::pgSl,
-        formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation))
-    };
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    enum
+    {
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))
+    };
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    enum
+    {
+        contiLEqIdx = Indices::contiLEqIdx,
+        contiGEqIdx = Indices::contiGEqIdx,
+        lPhaseIdx = Indices::lPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx,
+        lCompIdx = Indices::lCompIdx,
+        gCompIdx = Indices::gCompIdx
+    };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::ctype CoordScalar;
-
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
     static constexpr unsigned int replaceCompEqIdx =
             GET_PROP_VALUE(TypeTag, PTAG(ReplaceCompEqIdx));
@@ -318,9 +286,7 @@ public:
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp = 0;
-        for (int i = 0; i < dim; ++i)
-            tmp += vars.molarConcGrad(lPhaseIdx)[i] * vars.face().normal[i];
+        Scalar tmp = vars.molarConcGrad(lPhaseIdx)*vars.face().normal;
         tmp *= -1;
         tmp *=
             vars.porousDiffCoeff(lPhaseIdx) *
@@ -332,9 +298,7 @@ public:
             flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
 
         // add diffusive flux of liquid component in gas phase
-        tmp = 0;
-        for (int i = 0; i < dim; ++i)
-            tmp += vars.molarConcGrad(gPhaseIdx)[i] * vars.face().normal[i];
+        tmp = vars.molarConcGrad(gPhaseIdx)*vars.face().normal;
         tmp *= -1;
         tmp *=
             vars.porousDiffCoeff(gPhaseIdx) *

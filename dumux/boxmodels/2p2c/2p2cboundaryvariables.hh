@@ -49,35 +49,29 @@ namespace Dumux
 template <class TypeTag>
 class TwoPTwoCBoundaryVariables
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
+    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-
-    enum { dim = GridView::dimension };
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dim> VelocityVector;
-    typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> VectorGradient;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::BoundaryFace BoundaryFace;
-
     enum {
         lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx
-    };
-    enum {
+        gPhaseIdx = Indices::gPhaseIdx,
         lCompIdx = Indices::lCompIdx,
         gCompIdx = Indices::gCompIdx
     };
-    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    enum { dim = GridView::dimension };
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef Dune::FieldVector<Scalar, dim> Vector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename FVElementGeometry::BoundaryFace BoundaryFace;
 
 public:
     TwoPTwoCBoundaryVariables(const Problem &problem,
@@ -131,13 +125,13 @@ public:
     /*!
      * \brief The concentration gradient of a component in a phase.
      */
-    const ScalarGradient &concentrationGrad(int phaseIdx) const
+    const Vector &concentrationGrad(int phaseIdx) const
     { return concentrationGrad_[phaseIdx]; };
 
     /*!
      * \brief The molar concentration gradient of a component in a phase.
      */
-    const ScalarGradient &molarConcGrad(int phaseIdx) const
+    const Vector &molarConcGrad(int phaseIdx) const
     { return molarConcGrad_[phaseIdx]; };
 
     const FVElementGeometry &fvElemGeom() const
@@ -151,7 +145,7 @@ protected:
                              const Element &element,
                              const ElementVolumeVariables &elemDat)
     {
-        ScalarGradient tmp(0.0);
+        Vector tmp(0.0);
 
         // calculate gradients and secondary variables at IPs of the boundary
         for (int idx = 0;
@@ -159,7 +153,7 @@ protected:
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
-            const ScalarGradient& feGrad = boundaryFace_->grad[idx];
+            const Vector& feGrad = boundaryFace_->grad[idx];
 
             // compute sum of pressure gradients for each phase
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
@@ -209,9 +203,9 @@ protected:
             potentialGrad_[phaseIdx] -= tmp;
 
             Scalar k = problem.spatialParameters().intrinsicPermeability(element, fvElemGeom_, scvIdx_);
-            VectorGradient K(0);
+            Tensor K(0);
             K[0][0] = K[1][1] = k;
-            ScalarGradient Kmvp;
+            Vector Kmvp;
             K.mv(potentialGrad_[phaseIdx], Kmvp);
             KmvpNormal_[phaseIdx] = - (Kmvp*boundaryFace_->normal);
 
@@ -233,9 +227,9 @@ protected:
     const BoundaryFace *boundaryFace_;
 
     // gradients
-    ScalarGradient potentialGrad_[numPhases];
-    ScalarGradient concentrationGrad_[numPhases];
-    ScalarGradient molarConcGrad_[numPhases];
+    Vector potentialGrad_[numPhases];
+    Vector concentrationGrad_[numPhases];
+    Vector molarConcGrad_[numPhases];
 
     // density of each face at the integration point
     Scalar pressureAtIP_[numPhases];
