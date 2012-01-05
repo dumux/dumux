@@ -1,4 +1,4 @@
-SUBDIRS = boxmodels common decoupled io material nonlinear
+SUBDIRS = boxmodels common decoupled io linear material nonlinear parallel
 
 dumuxdir = $(includedir)/dune/dumux
 
