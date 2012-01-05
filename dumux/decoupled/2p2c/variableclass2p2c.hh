@@ -22,6 +22,7 @@
 #ifndef DUMUX_VARIABLECLASS2P2C_HH
 #define DUMUX_VARIABLECLASS2P2C_HH
 
+#include <dune/grid/common/gridenums.hh>
 #include <dumux/decoupled/common/variableclass.hh>
 #include <dumux/decoupled/2p2c/dec2p2cfluidstate.hh>
 

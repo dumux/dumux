@@ -32,6 +32,7 @@
 #endif
 
 #include <tr1/type_traits>
+#include <assert.h>
 
 namespace Dumux
 {
@@ -51,21 +52,21 @@ public:
         mpiDataSize_ = size;
 
         // set the MPI data type
-        if (std::is_same<DataType, char>::value)
+        if (std::tr1::is_same<DataType, char>::value)
             mpiDataType_ = MPI_CHAR;
-        else if (std::is_same<DataType, unsigned char>::value)
+        else if (std::tr1::is_same<DataType, unsigned char>::value)
             mpiDataType_ = MPI_UNSIGNED_CHAR;
-        else if (std::is_same<DataType, short>::value  || std::is_same<DataType, unsigned short>::value)
+        else if (std::tr1::is_same<DataType, short>::value  || std::tr1::is_same<DataType, unsigned short>::value)
             mpiDataType_ = MPI_SHORT;
-        else if (std::is_same<DataType, int>::value || std::is_same<DataType, unsigned>::value)
+        else if (std::tr1::is_same<DataType, int>::value || std::tr1::is_same<DataType, unsigned>::value)
             mpiDataType_ = MPI_INT;
-        else if (std::is_same<DataType, long>::value || std::is_same<DataType, unsigned long>::value)
+        else if (std::tr1::is_same<DataType, long>::value || std::tr1::is_same<DataType, unsigned long>::value)
             mpiDataType_ = MPI_LONG;
-        else if (std::is_same<DataType, float>::value)
+        else if (std::tr1::is_same<DataType, float>::value)
             mpiDataType_ = MPI_FLOAT;
-        else if (std::is_same<DataType, double>::value)
+        else if (std::tr1::is_same<DataType, double>::value)
             mpiDataType_ = MPI_DOUBLE;
-        else if (std::is_same<DataType, long double>::value)
+        else if (std::tr1::is_same<DataType, long double>::value)
             mpiDataType_ = MPI_LONG_DOUBLE;
         else {
             mpiDataType_ = MPI_BYTE;

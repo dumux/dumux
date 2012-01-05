@@ -30,7 +30,7 @@
 #ifndef DUMUX_LINEAR_SOLVER_PROPERTIES_HH
 #define DUMUX_LINEAR_SOLVER_PROPERTIES_HH
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {

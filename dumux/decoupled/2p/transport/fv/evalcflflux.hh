@@ -22,6 +22,8 @@
 #ifndef DUMUX_EVALCFLFLUX_HH
 #define DUMUX_EVALCFLFLUX_HH
 
+#include <dumux/decoupled/2p/2pproperties.hh>
+
 /**
  * @file
  * @brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition

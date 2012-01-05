@@ -33,6 +33,7 @@
 #include <dumux/parallel/mpibuffer.hh>
 
 #include <dune/istl/scalarproducts.hh>
+#include <dune/istl/io.hh>
 
 #include <algorithm>
 #include <list>

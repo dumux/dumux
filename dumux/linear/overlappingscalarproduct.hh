@@ -27,6 +27,12 @@
 #ifndef DUMUX_OVERLAPPING_SCALAR_PRODUCT_HH
 #define DUMUX_OVERLAPPING_SCALAR_PRODUCT_HH
 
+#if HAVE_MPI
+#include <mpi.h>
+#endif
+
+#include <dune/istl/scalarproducts.hh>
+
 namespace Dumux {
 
 template <class OverlappingBlockVector, class Overlap>

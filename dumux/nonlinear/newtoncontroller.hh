@@ -43,6 +43,9 @@ namespace Dumux
 template <class TypeTag>
 class NewtonController;
 
+template <class TypeTag>
+class NewtonConvergenceWriter;
+
 namespace Properties
 {
 //! Specifies the implementation of the Newton controller

@@ -22,6 +22,8 @@
 #ifndef DUMUX_TRANSPORT_PROPERTIES_HH
 #define DUMUX_TRANSPORT_PROPERTIES_HH
 
+#include <dumux/common/basicproperties.hh>
+
 /*!
  * \ingroup Saturation2p
  * \ingroup Properties

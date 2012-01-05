@@ -36,6 +36,7 @@
 
 //DUMUX includes
 #include <dumux/decoupled/2p/2pindices.hh>
+#include <dumux/decoupled/common/impetproperties.hh>
 
 namespace Dumux
 {

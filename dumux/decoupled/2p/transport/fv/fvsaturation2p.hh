@@ -22,6 +22,7 @@
 #ifndef DUMUX_FVSATURATION2P_HH
 #define DUMUX_FVSATURATION2P_HH
 
+#include <dune/grid/common/gridenums.hh>
 #include "dumux/decoupled/2p/transport/fv/diffusivepart.hh"
 #include "dumux/decoupled/2p/transport/fv/convectivepart.hh"
 #include <dumux/decoupled/2p/transport/transportproperties.hh>

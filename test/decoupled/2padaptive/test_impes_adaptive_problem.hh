@@ -66,7 +66,9 @@ NEW_TYPE_TAG(TestIMPESAdaptiveProblem, INHERITS_FROM(DecoupledTwoP, Transport, T
 // Set the grid type
 SET_PROP(TestIMPESAdaptiveProblem, Grid)
 {
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
+#endif
 };
 
 // Set the problem property

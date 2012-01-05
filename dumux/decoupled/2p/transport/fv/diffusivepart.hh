@@ -23,6 +23,8 @@
 #ifndef DUMUX_DIFFUSIVEPART_HH
 #define DUMUX_DIFFUSIVEPART_HH
 
+#include <dumux/decoupled/2p/2pproperties.hh>
+
 /**
  * @file
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation

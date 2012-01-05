@@ -35,6 +35,8 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+#include <dumux/boxmodels/richards/richardsmodel.hh>
+
 namespace Dumux
 {
 

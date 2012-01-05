@@ -27,6 +27,8 @@
 #ifndef DUMUX_OVERLAPPING_OPERATOR_HH
 #define DUMUX_OVERLAPPING_OPERATOR_HH
 
+#include <dune/istl/operators.hh>
+
 namespace Dumux {
 
 // operator that resets result to zero at constrained DOFS

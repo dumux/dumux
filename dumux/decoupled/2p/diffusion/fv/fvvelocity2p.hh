@@ -29,6 +29,7 @@
  */
 
 #include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
+#include <dune/grid/common/gridenums.hh>
 
 namespace Dumux
 {

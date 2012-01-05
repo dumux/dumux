@@ -40,6 +40,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/decoupled/2p2c/Makefile 
     dumux/decoupled/common/Makefile 
     dumux/io/Makefile
+    dumux/linear/Makefile
     dumux/material/Makefile 
     dumux/material/binarycoefficients/Makefile 
     dumux/material/components/Makefile 
@@ -53,7 +54,8 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/fluidsystems/Makefile 
     dumux/material/constraintsolvers/Makefile 
     dumux/material/eos/Makefile 
-    dumux/nonlinear/Makefile 
+    dumux/nonlinear/Makefile
+    dumux/parallel/Makefile 
     m4/Makefile
     test/Makefile
     test/boxmodels/Makefile 

@@ -39,6 +39,13 @@
 #include <list>
 #include <set>
 #include <map>
+#include <tr1/tuple>
+
+#if HAVE_MPI
+#include <mpi.h>
+#endif
+
+#include "borderindex.hh"
 
 namespace Dumux {
 

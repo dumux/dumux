@@ -27,6 +27,7 @@
 #define DUMUX_START_HH
 
 #include <dumux/common/propertysystem.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dune/grid/io/file/dgfparser.hh>
 #include <dune/common/mpihelper.hh>

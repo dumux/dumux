@@ -22,6 +22,8 @@
 #ifndef DUMUX_CONVECTIVEPART_HH
 #define DUMUX_CONVECTIVEPART_HH
 
+#include <dumux/decoupled/2p/2pproperties.hh>
+
 /**
  * @file
  * @brief  Base class for defining a convective part of an advection-diffusion equation

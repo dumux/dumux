@@ -32,6 +32,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dumux/common/exceptions.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/linear/elementborderlistfromgrid.hh>
 #include <dumux/linear/overlappingbcrsmatrix.hh>

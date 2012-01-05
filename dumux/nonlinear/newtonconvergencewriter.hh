@@ -28,6 +28,8 @@
 #ifndef DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 #define DUMUX_NEWTON_CONVERGENCE_WRITER_HH
 
+#include "newtoncontroller.hh"
+
 namespace Dumux
 {
 /*!

@@ -27,6 +27,9 @@
 #ifndef DUMUX_OVERLAPPING_PRECONDITIONER_HH
 #define DUMUX_OVERLAPPING_PRECONDITIONER_HH
 
+#include <dumux/common/exceptions.hh>
+#include <dune/istl/preconditioners.hh>
+
 #include "overlappingscalarproduct.hh"
 
 namespace Dumux {
