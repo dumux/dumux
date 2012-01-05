@@ -42,10 +42,6 @@ namespace Dumux
 template<class TypeTag>
 class BoxElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) >
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef std::vector<VolumeVariables> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
@@ -54,7 +50,6 @@ class BoxElementVolumeVariables : public std::vector<typename GET_PROP_TYPE(Type
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     enum { dim = GridView::dimension };
     enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };

@@ -49,18 +49,15 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
     typedef std::vector<BoundaryTypes> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     enum { dim = GridView::dimension };
-
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-
     typedef typename GridView::ctype CoordScalar;
+
     typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 

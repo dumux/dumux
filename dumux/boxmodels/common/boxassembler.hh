@@ -49,30 +49,16 @@ class BoxAssembler
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) JacobianMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
 
-    enum{dim = GridView::dimension};
+    enum{ dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
-    typedef SolutionVector Vector;
-    typedef JacobianMatrix Matrix;
-    typedef Matrix RepresentationType;
-
-    enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
-    };
-
+    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
     typedef Dune::FieldVector<Scalar, numEq> VectorBlock;
 
@@ -545,7 +531,7 @@ public:
     /*!
      * \brief Return constant reference to global Jacobian matrix.
      */
-    const Matrix& matrix() const
+    const JacobianMatrix& matrix() const
     { return *matrix_; }
 
     /*!
@@ -566,7 +552,7 @@ private:
         int nVerts = gridView_().size(dim);
 
         // allocate raw matrix
-        matrix_ = new Matrix(nVerts, nVerts, Matrix::random);
+        matrix_ = new JacobianMatrix(nVerts, nVerts, JacobianMatrix::random);
 
         // find out the global indices of the neighboring vertices of
         // each vertex
@@ -790,7 +776,7 @@ private:
 
             // set main diagonal entries for the vertex
             int vIdx = vertexMapper_().map(*vp);
-            typedef typename Matrix::block_type BlockType;
+            typedef typename JacobianMatrix::block_type BlockType;
             BlockType &J = (*matrix_)[vIdx][vIdx];
             for (int j = 0; j < BlockType::rows; ++j)
                 J[j][j] = 1.0;
@@ -819,7 +805,7 @@ private:
     Problem *problemPtr_;
 
     // the jacobian matrix
-    Matrix *matrix_;
+    JacobianMatrix *matrix_;
     // the right-hand side
     SolutionVector residual_;
 

@@ -69,43 +69,24 @@ template<class TypeTag>
 class BoxLocalJacobian
 {
 private:
-    typedef BoxLocalJacobian<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) LocalResidual;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
 
         Red = JacobianAssembler::Red,
         Yellow = JacobianAssembler::Yellow,
         Green = JacobianAssembler::Green
     };
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GridView::Grid::ctype CoordScalar;
-
-    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename Element::EntityPointer ElementPointer;
-
-    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
-
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename Element::Geometry Geometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
@@ -114,6 +95,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
     typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
 

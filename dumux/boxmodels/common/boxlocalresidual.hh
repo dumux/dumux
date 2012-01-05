@@ -48,37 +48,26 @@ template<class TypeTag>
 class BoxLocalResidual
 {
 private:
-    typedef BoxLocalResidual<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     enum {
         numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dim = GridView::dimension
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GridView::Grid::ctype CoordScalar;
-
-    typedef Dune::FieldVector<Scalar, dim>  LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
+    typedef typename GridView::Grid::ctype CoordScalar;
     typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
     typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename Element::Geometry Geometry;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementSolutionVector)) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
@@ -86,9 +75,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-
-    typedef Dune::FieldMatrix<Scalar, numEq, numEq>  MatrixBlock;
-    typedef Dune::Matrix<MatrixBlock> LocalBlockMatrix;
 
     // copying the local residual class is not a good idea
     BoxLocalResidual(const BoxLocalResidual &);

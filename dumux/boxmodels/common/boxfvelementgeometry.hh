@@ -39,7 +39,6 @@ namespace Dumux
 {
 namespace Properties
 {
-NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(Scalar);
 }
@@ -302,25 +301,23 @@ public:
 template<class TypeTag>
 class BoxFVElementGeometry
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    enum{dim = GridView::dimension};
 
     typedef BoxFVElementGeometry<TypeTag>   ThisType;
 
     /** \todo Please doc me! */
-    friend class _BoxFVElemGeomHelper<ThisType, Grid::dimension>;
+    friend class _BoxFVElemGeomHelper<ThisType, dim>;
 
-    typedef _BoxFVElemGeomHelper<ThisType, Grid::dimension> BoxFVElemGeomHelper;
+    typedef _BoxFVElemGeomHelper<ThisType, dim> BoxFVElemGeomHelper;
 
-    enum{dim = Grid::dimension};
     enum{maxNC = (dim < 3 ? 4 : 8)};
     enum{maxNE = (dim < 3 ? 4 : 12)};
     enum{maxNF = (dim < 3 ? 1 : 6)};
     enum{maxCOS = (dim < 3 ? 2 : 4)};
     enum{maxBF = (dim < 3 ? 8 : 24)};
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename Grid::ctype CoordScalar;
-  //typedef Scalar CoordScalar;
+    typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
     typedef Dune::FieldVector<CoordScalar,dim> FV;
@@ -345,14 +342,6 @@ class BoxFVElementGeometry
 
     Scalar pyramidVolume (const FV& p0, const FV& p1, const FV& p2, const FV& p3, const FV& p4)
     {
-        /*
-          FV a = p2 - p0;
-          FV b = p3 - p1;
-          FV h = p4 - p0;
-          FV n = crossProduct(a, b);
-          return 1.0/6.0*(n*h);
-        */
-
         FV a(p2); a -= p0;
         FV b(p3); b -= p1;
 
@@ -366,18 +355,6 @@ class BoxFVElementGeometry
 
     Scalar prismVolume (const FV& p0, const FV& p1, const FV& p2, const FV& p3, const FV& p4, const FV& p5)
     {
-        /*
-          FV a = p4 - p0;
-          FV b = p1 - p3;
-          FV c = p1 - p0;
-          FV d = p2 - p0;
-          FV e = p5 - p0;
-          FV m = crossProduct(a, b);
-          FV n = m + crossProduct(c, d);
-
-          return fabs(1.0/6.0*(n*e));
-        */
-
         FV a(p4); a -= p0;
         FV b(p1); b -= p3;
         FV m;
