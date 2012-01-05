@@ -44,8 +44,8 @@ template<class TypeTag>
 class FluxData2P
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
@@ -54,7 +54,7 @@ private:
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
@@ -63,7 +63,7 @@ private:
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     typedef Dune::FieldVector<Scalar, dim> FieldVector;

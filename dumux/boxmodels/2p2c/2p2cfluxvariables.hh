@@ -52,13 +52,13 @@ namespace Dumux
 template <class TypeTag>
 class TwoPTwoCFluxVariables
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
     enum {
         lPhaseIdx = Indices::lPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
@@ -66,15 +66,15 @@ class TwoPTwoCFluxVariables
         gCompIdx = Indices::gCompIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dim = GridView::dimension };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> Vector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:

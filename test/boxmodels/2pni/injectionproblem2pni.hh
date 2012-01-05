@@ -77,13 +77,13 @@ SET_PROP(InjectionProblem2PNI, Problem)
 
 #if 1
 // Use the same fluid system as the 2p2c injection problem
-SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)), false>);
+SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 #else
 // Set the wetting phase
 SET_PROP(InjectionProblem2PNI, WettingPhase)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
@@ -92,7 +92,7 @@ public:
 SET_PROP(InjectionProblem2PNI, NonwettingPhase)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::GasPhase<Scalar, Dumux::N2<Scalar> > type;
 };
@@ -146,16 +146,16 @@ class InjectionProblem2PNI
 {
     typedef InjectionProblem2PNI<TypeTag> ThisType;
     typedef TwoPNIProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 #if ISOTHERMAL
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 #else
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPNIIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPNIIndices) Indices;
 #endif
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
 
@@ -173,16 +173,16 @@ class InjectionProblem2PNI
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;

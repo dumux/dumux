@@ -46,32 +46,32 @@ namespace Dumux
 template<class TypeTag>
 class MPNCLocalResidual : public BoxLocalResidual<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
 
 protected:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef MPNCLocalResidual<TypeTag> ThisType;
     typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        enableEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)),
-        enableKineticEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy)),
+        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
+        enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
 
-        enableDiffusion = GET_PROP_VALUE(TypeTag, PTAG(EnableDiffusion)),
-        enableKinetic = GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)),
-        enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, PTAG(EnableSmoothUpwinding)),
+        enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion),
+        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
+        enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, EnableSmoothUpwinding),
 
         phase0NcpIdx = Indices::phase0NcpIdx
     };
@@ -79,18 +79,18 @@ protected:
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GridView::CollectiveCommunication CollectiveCommunication;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;

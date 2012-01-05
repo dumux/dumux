@@ -99,7 +99,7 @@ SET_BOOL_PROP(Vehicle, AutomaticTransmission, false);
 // (HummmerH1, TopSpeed) = (Pickup, TopSpeed)
 ///////////////////
 
-SET_INT_PROP(CompactCar, TopSpeed, GET_PROP_VALUE(TypeTag, PTAG(GasUsage)) * 30);
+SET_INT_PROP(CompactCar, TopSpeed, GET_PROP_VALUE(TypeTag, GasUsage) * 30);
 SET_INT_PROP(CompactCar, NumSeats, 5);
 SET_INT_PROP(CompactCar, GasUsage, 4);
 
@@ -118,7 +118,7 @@ SET_BOOL_PROP(Sedan, AutomaticTransmission, true);
 SET_INT_PROP(Pickup, TopSpeed, 120);
 SET_INT_PROP(Pickup, Payload, 5);
 
-SET_INT_PROP(HummerH1, TopSpeed, GET_PROP_VALUE(TTAG(Pickup), PTAG(TopSpeed)));
+SET_INT_PROP(HummerH1, TopSpeed, GET_PROP_VALUE(TTAG(Pickup), TopSpeed));
 
 ///////////////////
 // Unmount the canon from the Hummer
@@ -137,48 +137,48 @@ int main()
 
     std::cout << "---------- Values for CompactCar ----------\n";
 
-    std::cout << "(CompactCar, TopSpeed) = " << GET_PROP_VALUE(TTAG(CompactCar), PTAG(TopSpeed)) << "\n";
-    std::cout << "(CompactCar, NumSeats) = " << GET_PROP_VALUE(TTAG(CompactCar), PTAG(NumSeats)) << "\n";
-    std::cout << "(CompactCar, GasUsage) = " << GET_PROP_VALUE(TTAG(CompactCar), PTAG(GasUsage)) << "\n";
-    std::cout << "(CompactCar, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(CompactCar), PTAG(AutomaticTransmission)) << "\n";
+    std::cout << "(CompactCar, TopSpeed) = " << GET_PROP_VALUE(TTAG(CompactCar), TopSpeed) << "\n";
+    std::cout << "(CompactCar, NumSeats) = " << GET_PROP_VALUE(TTAG(CompactCar), NumSeats) << "\n";
+    std::cout << "(CompactCar, GasUsage) = " << GET_PROP_VALUE(TTAG(CompactCar), GasUsage) << "\n";
+    std::cout << "(CompactCar, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(CompactCar), AutomaticTransmission) << "\n";
 
     std::cout << "---------- Values for Truck ----------\n";
 
-    std::cout << "(Truck, TopSpeed) = " << GET_PROP_VALUE(TTAG(Truck), PTAG(TopSpeed)) << "\n";
-    std::cout << "(Truck, NumSeats) = " << GET_PROP_VALUE(TTAG(Truck), PTAG(NumSeats)) << "\n";
-    std::cout << "(Truck, GasUsage) = " << GET_PROP_VALUE(TTAG(Truck), PTAG(GasUsage)) << "\n";
-    std::cout << "(Truck, Payload) = " << GET_PROP_VALUE(TTAG(Truck), PTAG(Payload)) << "\n";
-    std::cout << "(Truck, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Truck), PTAG(AutomaticTransmission)) << "\n";
+    std::cout << "(Truck, TopSpeed) = " << GET_PROP_VALUE(TTAG(Truck), TopSpeed) << "\n";
+    std::cout << "(Truck, NumSeats) = " << GET_PROP_VALUE(TTAG(Truck), NumSeats) << "\n";
+    std::cout << "(Truck, GasUsage) = " << GET_PROP_VALUE(TTAG(Truck), GasUsage) << "\n";
+    std::cout << "(Truck, Payload) = " << GET_PROP_VALUE(TTAG(Truck), Payload) << "\n";
+    std::cout << "(Truck, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Truck), AutomaticTransmission) << "\n";
 
     std::cout << "---------- Values for Tank ----------\n";
 
-    std::cout << "(Tank, TopSpeed) = " << GET_PROP_VALUE(TTAG(Tank), PTAG(TopSpeed)) << "\n";
-    std::cout << "(Tank, GasUsage) = " << GET_PROP_VALUE(TTAG(Tank), PTAG(GasUsage)) << "\n";
-    std::cout << "(Tank, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Tank), PTAG(AutomaticTransmission)) << "\n";
-    std::cout << "(Tank, CanonCaliber) = " << GET_PROP_VALUE(TTAG(Tank), PTAG(CanonCaliber)) << "\n";
+    std::cout << "(Tank, TopSpeed) = " << GET_PROP_VALUE(TTAG(Tank), TopSpeed) << "\n";
+    std::cout << "(Tank, GasUsage) = " << GET_PROP_VALUE(TTAG(Tank), GasUsage) << "\n";
+    std::cout << "(Tank, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Tank), AutomaticTransmission) << "\n";
+    std::cout << "(Tank, CanonCaliber) = " << GET_PROP_VALUE(TTAG(Tank), CanonCaliber) << "\n";
 
     std::cout << "---------- Values for Sedan ----------\n";
 
-    std::cout << "(Sedan, TopSpeed) = " << GET_PROP_VALUE(TTAG(Sedan), PTAG(TopSpeed)) << "\n";
-    std::cout << "(Sedan, NumSeats) = " << GET_PROP_VALUE(TTAG(Sedan), PTAG(NumSeats)) << "\n";
-    std::cout << "(Sedan, GasUsage) = " << GET_PROP_VALUE(TTAG(Sedan), PTAG(GasUsage)) << "\n";
-    std::cout << "(Sedan, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Sedan), PTAG(AutomaticTransmission)) << "\n";
+    std::cout << "(Sedan, TopSpeed) = " << GET_PROP_VALUE(TTAG(Sedan), TopSpeed) << "\n";
+    std::cout << "(Sedan, NumSeats) = " << GET_PROP_VALUE(TTAG(Sedan), NumSeats) << "\n";
+    std::cout << "(Sedan, GasUsage) = " << GET_PROP_VALUE(TTAG(Sedan), GasUsage) << "\n";
+    std::cout << "(Sedan, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Sedan), AutomaticTransmission) << "\n";
 
     std::cout << "---------- Values for Pickup ----------\n";
-    std::cout << "(Pickup, TopSpeed) = " << GET_PROP_VALUE(TTAG(Pickup), PTAG(TopSpeed)) << "\n";
-    std::cout << "(Pickup, NumSeats) = " << GET_PROP_VALUE(TTAG(Pickup), PTAG(NumSeats)) << "\n";
-    std::cout << "(Pickup, GasUsage) = " << GET_PROP_VALUE(TTAG(Pickup), PTAG(GasUsage)) << "\n";
-    std::cout << "(Pickup, Payload) = " << GET_PROP_VALUE(TTAG(Pickup), PTAG(Payload)) << "\n";
-    std::cout << "(Pickup, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Pickup), PTAG(AutomaticTransmission)) << "\n";
+    std::cout << "(Pickup, TopSpeed) = " << GET_PROP_VALUE(TTAG(Pickup), TopSpeed) << "\n";
+    std::cout << "(Pickup, NumSeats) = " << GET_PROP_VALUE(TTAG(Pickup), NumSeats) << "\n";
+    std::cout << "(Pickup, GasUsage) = " << GET_PROP_VALUE(TTAG(Pickup), GasUsage) << "\n";
+    std::cout << "(Pickup, Payload) = " << GET_PROP_VALUE(TTAG(Pickup), Payload) << "\n";
+    std::cout << "(Pickup, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(Pickup), AutomaticTransmission) << "\n";
 
     std::cout << "---------- Values for HummerH1 ----------\n";
-    std::cout << "(HummerH1, TopSpeed) = " << GET_PROP_VALUE(TTAG(HummerH1), PTAG(TopSpeed)) << "\n";
-    std::cout << "(HummerH1, NumSeats) = " << GET_PROP_VALUE(TTAG(HummerH1), PTAG(NumSeats)) << "\n";
-    std::cout << "(HummerH1, GasUsage) = " << GET_PROP_VALUE(TTAG(HummerH1), PTAG(GasUsage)) << "\n";
-    std::cout << "(HummerH1, Payload) = " << GET_PROP_VALUE(TTAG(HummerH1), PTAG(Payload)) << "\n";
-    std::cout << "(HummerH1, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(HummerH1), PTAG(AutomaticTransmission)) << "\n";
+    std::cout << "(HummerH1, TopSpeed) = " << GET_PROP_VALUE(TTAG(HummerH1), TopSpeed) << "\n";
+    std::cout << "(HummerH1, NumSeats) = " << GET_PROP_VALUE(TTAG(HummerH1), NumSeats) << "\n";
+    std::cout << "(HummerH1, GasUsage) = " << GET_PROP_VALUE(TTAG(HummerH1), GasUsage) << "\n";
+    std::cout << "(HummerH1, Payload) = " << GET_PROP_VALUE(TTAG(HummerH1), Payload) << "\n";
+    std::cout << "(HummerH1, AutomaticTransmission) = " << GET_PROP_VALUE(TTAG(HummerH1), AutomaticTransmission) << "\n";
     // CanonCaliber is explcitly unset for the Hummer -> this would not compile:
-    // std::cout << "(HummerH1, CanonCaliber) = " << GET_PROP_VALUE(TTAG(HummerH1), PTAG(CanonCaliber)) << "\n";
+    // std::cout << "(HummerH1, CanonCaliber) = " << GET_PROP_VALUE(TTAG(HummerH1), CanonCaliber) << "\n";
 
     std::cout << "\n";
     std::cout << "---------------------------------------\n";
@@ -189,11 +189,11 @@ int main()
     Dumux::Properties::print<TTAG(Sedan)>();
 
     std::cout << "---- Message for (HummerH1, CanonCaliber) ---\n"
-              << PROP_DIAGNOSTIC(TTAG(HummerH1), PTAG(CanonCaliber));
+              << PROP_DIAGNOSTIC(TTAG(HummerH1), CanonCaliber);
     std::cout << "---- Message for (HummerH1, GasUsage) ---\n"
-              << PROP_DIAGNOSTIC(TTAG(HummerH1), PTAG(GasUsage));
+              << PROP_DIAGNOSTIC(TTAG(HummerH1), GasUsage);
     std::cout << "---- Message for (HummerH1, AutomaticTransmission) ---\n"
-              << PROP_DIAGNOSTIC(TTAG(HummerH1), PTAG(AutomaticTransmission));
+              << PROP_DIAGNOSTIC(TTAG(HummerH1), AutomaticTransmission);
 
     return 0;
 }

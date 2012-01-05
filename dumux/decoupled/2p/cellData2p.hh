@@ -50,17 +50,17 @@ template<class TypeTag>
 class CellData2P<TypeTag, false>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef FluxData2P<TypeTag> FluxData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
@@ -68,7 +68,7 @@ private:
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 private:
     Scalar saturation_[numPhases];
@@ -227,17 +227,17 @@ template<class TypeTag>
 class CellData2P<TypeTag, true>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef FluxData2P<TypeTag> FluxData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
@@ -245,7 +245,7 @@ private:
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 private:
     Scalar mobility_[numPhases];

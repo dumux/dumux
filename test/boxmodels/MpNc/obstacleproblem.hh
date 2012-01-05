@@ -67,7 +67,7 @@ SET_TYPE_PROP(ObstacleProblem,
 // Set fluid configuration
 SET_PROP(ObstacleProblem, FluidSystem)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
 };
@@ -131,22 +131,22 @@ class ObstacleProblem
     typedef ObstacleProblem<TypeTag> ThisType;
     typedef MPNCProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
 
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         gPhaseIdx = FluidSystem::gPhaseIdx,
         lPhaseIdx = FluidSystem::lPhaseIdx,
@@ -159,15 +159,15 @@ class ObstacleProblem
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
     enum {
         fug0Idx = Indices::fug0Idx,
         S0Idx = Indices::S0Idx,

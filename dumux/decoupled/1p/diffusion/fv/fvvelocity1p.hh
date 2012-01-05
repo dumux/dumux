@@ -50,15 +50,15 @@ class FVVelocity1P: public FVPressure1P<TypeTag>
 {
     typedef FVVelocity1P<TypeTag> ThisType;
     typedef FVPressure1P<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+     typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
+     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
 
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;

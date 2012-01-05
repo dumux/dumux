@@ -104,7 +104,7 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
                      const Dune::ParameterTree &tree,
                      const std::string prefix="")
 {
-    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
     const Dune::ParameterTree &rt = Params::runTimeParams();
 
     // loop over all keys of the current tree
@@ -139,7 +139,7 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
 template <class TypeTag>
 void print(std::ostream &os = std::cout)
 {
-    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
 
     const Dune::ParameterTree &tree = Params::tree();
     const Dune::ParameterTree &rt = Params::runTimeParams();
@@ -174,7 +174,7 @@ const char *getString_(const char *foo = 0)
 template <class TypeTag>
 class Param
 {
-    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
 public:
     template <class ParamType, class PropTag>
     static const ParamType &get(const char *groupOrParamName,
@@ -318,7 +318,7 @@ private:
             canonicalName.insert(0, groupName);
         }
 
-        std::string modelParamGroup(GET_PROP_VALUE(TypeTag, PTAG(ModelParameterGroup)));
+        std::string modelParamGroup(GET_PROP_VALUE(TypeTag, ModelParameterGroup));
         // prefix the parameter with the parameter group of the
         // model. this allows things like sub-model specific parameters like
         //
@@ -364,7 +364,7 @@ private:
             paramName = groupOrParamName;
         }
 
-        static std::string modelParamGroup(GET_PROP(TypeTag, PTAG(ModelParameterGroup))::value);
+        static std::string modelParamGroup(GET_PROP(TypeTag, ModelParameterGroup)::value);
 
         std::string canonicalName(modelParamGroup);
 

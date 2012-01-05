@@ -53,17 +53,17 @@ namespace Dumux
  */
 template<class TypeTag> class FVPressure1P
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid)) Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     enum
@@ -85,8 +85,8 @@ template<class TypeTag> class FVPressure1P
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
 
     //initializes the matrix to store the system of equations
     void initializeMatrix();
@@ -462,7 +462,7 @@ void FVPressure1P<TypeTag>::assemble(bool first)
 template<class TypeTag>
 void FVPressure1P<TypeTag>::solve()
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
+    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
     int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
 

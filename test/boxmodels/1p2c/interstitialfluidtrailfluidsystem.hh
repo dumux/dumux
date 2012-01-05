@@ -375,7 +375,7 @@ public:
  */
 template<class TypeTag>
 class InterstitialFluidTrailFluidSystem
-: public FluidSystems::InterstitialFluidTrail<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>
+: public FluidSystems::InterstitialFluidTrail<typename GET_PROP_TYPE(TypeTag, Scalar)>
 {};
 #endif
 } // end namepace

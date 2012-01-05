@@ -50,7 +50,7 @@ SET_TYPE_PROP(TestDiffusionSpatialParams, SpatialParameters, Dumux::TestDiffusio
 SET_PROP(TestDiffusionSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef LinearMaterial<Scalar> RawMaterialLaw;
 public:
     typedef EffToAbsLaw<RawMaterialLaw> type;
@@ -65,9 +65,9 @@ template<class TypeTag>
 class TestDiffusionSpatialParams: public FVSpatialParameters<TypeTag>
 {
     typedef FVSpatialParameters<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
 
     enum
@@ -78,7 +78,7 @@ class TestDiffusionSpatialParams: public FVSpatialParameters<TypeTag>
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     const FieldMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const

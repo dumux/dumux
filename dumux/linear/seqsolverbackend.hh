@@ -114,7 +114,7 @@ private:
 template <class TypeTag>
 class ILUnBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -138,7 +138,7 @@ public:
 template <class TypeTag>
 class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -162,7 +162,7 @@ public:
 template <class TypeTag>
 class SSORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -186,7 +186,7 @@ public:
 template <class TypeTag>
 class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -210,7 +210,7 @@ public:
 template <class TypeTag>
 class JacBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -234,7 +234,7 @@ public:
 template <class TypeTag>
 class ILUnCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -258,7 +258,7 @@ public:
 template <class TypeTag>
 class SORCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -282,7 +282,7 @@ public:
 template <class TypeTag>
 class SSORCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -306,7 +306,7 @@ public:
 template <class TypeTag>
 class GSCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -330,7 +330,7 @@ public:
 template <class TypeTag>
 class JacCGBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -354,7 +354,7 @@ public:
 template <class TypeTag>
 class SSORRestartedGMResBackend: public IterativePrecondSolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef IterativePrecondSolverBackend<TypeTag> ParentType;
 public:
 
@@ -448,7 +448,7 @@ private:
 template <class TypeTag>
 class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef ILU0SolverBackend<TypeTag> ParentType;
   public:
 
@@ -472,7 +472,7 @@ class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
 template <class TypeTag>
 class ILU0CGBackend : public ILU0SolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef ILU0SolverBackend<TypeTag> ParentType;
 public:
 
@@ -496,7 +496,7 @@ public:
 template <class TypeTag>
 class ILU0RestartedGMResBackend : public ILU0SolverBackend<TypeTag>
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
   typedef ILU0SolverBackend<TypeTag> ParentType;
 public:
 
@@ -518,7 +518,7 @@ public:
 template <class TypeTag>
 class SuperLUBackend
 {
-  typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+  typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
 public:
 
@@ -531,8 +531,8 @@ public:
   {
     Vector bTmp(b);
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    enum {blockSize = GET_PROP_VALUE(TypeTag, PTAG(LinearSolverBlockSize))};
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    enum {blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize)};
     typedef typename Dune::FieldMatrix<Scalar, blockSize, blockSize> MatrixBlock;
     typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
 

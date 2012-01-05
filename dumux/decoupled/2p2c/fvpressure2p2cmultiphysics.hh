@@ -67,18 +67,18 @@ namespace Dumux
 template<class TypeTag>
 class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     enum
     {
@@ -110,7 +110,7 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
 
 //! Access functions to the current problem object
@@ -195,7 +195,7 @@ private:
 
 protected:
     const GlobalPosition& gravity; //!< vector including the gravity constant
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     Dune::Timer timer_;
 };
 
@@ -586,7 +586,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                 unitDistVec /= dist;
 
                 //get boundary condition for boundary face center
-                typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) bcType;
+                typename GET_PROP_TYPE(TypeTag, BoundaryTypes) bcType;
                 problem().boundaryTypes(bcType, *isIt);
 
                 // prepare pressure boundary condition
@@ -642,7 +642,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
                             FluidSystem::viscosity(BCfluidState, nPhaseIdx);
 
                         // mobility at the boundary
-                        switch (GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility)))
+                        switch (GET_PROP_VALUE(TypeTag, BoundaryMobility))
                         {
                         case Indices::satDependent:
                             {
@@ -898,7 +898,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
             if (isnan(compress_term) || isinf(compress_term))
                 DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << globalIdxI);
 
-            if(!GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility)))
+            if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
                 DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
         }
 
@@ -1041,7 +1041,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
 
             // iterations part in case of enabled capillary pressure
             Scalar pc(0.), oldPc(0.);
-            if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+            if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
             {
                 pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPos, *eIt),
                         fluidState.saturation(wPhaseIdx));

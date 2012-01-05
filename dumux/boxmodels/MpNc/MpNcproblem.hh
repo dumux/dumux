@@ -45,17 +45,17 @@ template<class TypeTag>
 class MPNCProblem : public BoxProblem<TypeTag>
 {
     typedef BoxProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     enum {
         dim = Grid::dimension,
@@ -70,7 +70,7 @@ public:
           gravity_(0),
           spatialParameters_(gridView)
     {
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
+        if (GET_PROP_VALUE(TypeTag, EnableGravity))
             gravity_[dim-1]  = -9.81;
     }
 

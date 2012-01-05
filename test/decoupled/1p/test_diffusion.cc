@@ -50,8 +50,8 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(DiffusionTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
         static const int dim = Grid::dimension;
         typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
         Dune::Timer timer;
         bool consecutiveNumbering = true;
 
-        typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), PTAG(Problem)) FVProblem;
+        typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem) FVProblem;
         FVProblem fvProblem(grid.leafView(), delta);
         fvProblem.setName("fvdiffusion");
         timer.reset();
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 //        Dumux::ResultEvaluation fvResult;
 //        fvResult.evaluate(grid.leafView(), fvProblem, fvProblem.variables().pressure(), fvProblem.variables().velocity(), consecutiveNumbering);
 
-//        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), PTAG(Problem)) MPFAOProblem;
+//        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
 //        MPFAOProblem mpfaProblem(grid.leafView(), delta);
 //        mpfaProblem.setName("fvmpfaodiffusion");
 //        timer.reset();
@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 //        Dumux::ResultEvaluation mpfaResult;
 //        mpfaResult.evaluate(grid.leafView(), mpfaProblem, mpfaProblem.variables().pressure(), mpfaProblem.variables().velocity(), consecutiveNumbering);
 //
-//        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), PTAG(Problem)) MimeticProblem;
+//        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
 //        MimeticProblem mimeticProblem(grid.leafView(), delta);
 //        mimeticProblem.setName("mimeticdiffusion");
 //        timer.reset();

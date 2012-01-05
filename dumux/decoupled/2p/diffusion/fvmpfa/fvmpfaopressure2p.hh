@@ -64,24 +64,24 @@ namespace Dumux
 template<class TypeTag>
 class FVMPFAOPressure2P
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridTypeIndices)) GridTypeIndices;
+    typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
     enum
     {
@@ -112,8 +112,8 @@ class FVMPFAOPressure2P
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
     //initializes the matrix to store the system of equations
@@ -226,7 +226,7 @@ private:
     Matrix A_;
     Vector f_;
 protected:
-    static const int saturationType = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    static const int saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
 template<class TypeTag>
@@ -255,7 +255,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
             IntersectionIterator nextisIt = ++tempisIt;
 
             // get 'nextisIt'
-            switch (GET_PROP_VALUE(TypeTag, PTAG(GridImplementation)))
+            switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
                 // for SGrid
                 case GridTypeIndices::sGrid:
@@ -345,7 +345,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
             IntersectionIterator nextisIt = ++tempisIt;
 
             // get 'nextisIt'
-            switch (GET_PROP_VALUE(TypeTag, PTAG(GridImplementation)))
+            switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
                 // for SGrid
                 case GridTypeIndices::sGrid:
@@ -520,7 +520,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
             IntersectionIterator nextisIt = ++tempisIt;
 
             //get nextisIt
-            switch (GET_PROP_VALUE(TypeTag, PTAG(GridImplementation)))
+            switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
                 // for SGrid
                 case GridTypeIndices::sGrid:
@@ -2321,7 +2321,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 //            IntersectionIterator nextisIt = ++tempisIt;
 //
 //            // get 'nextisIt'
-//            switch (GET_PROP_VALUE(TypeTag, PTAG(GridImplementation)))
+//            switch (GET_PROP_VALUE(TypeTag, GridImplementation))
 //            {
 //                // for SGrid
 //                case GridTypeIndices::sGrid:
@@ -2425,7 +2425,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::solve()
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
+    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
     int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
 

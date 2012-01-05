@@ -64,12 +64,12 @@ NEW_PROP_TAG(PreconditionerRelaxation);
 template <class TypeTag>
 class IMPETBiCGStabILU0Solver
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;

@@ -66,7 +66,7 @@ SET_TYPE_PROP(BoxModel, TimeManager, Dumux::TimeManager<TypeTag>);
 //! Use the leaf grid view if not defined otherwise
 SET_TYPE_PROP(BoxModel,
               GridView,
-              typename GET_PROP_TYPE(TypeTag, PTAG(Grid))::LeafGridView);
+              typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
 
 //! Set the default for the FVElementGeometry
 SET_TYPE_PROP(BoxModel, FVElementGeometry, Dumux::BoxFVElementGeometry<TypeTag>);
@@ -83,17 +83,17 @@ SET_TYPE_PROP(BoxModel, NewtonController, Dumux::NewtonController<TypeTag>);
 //! Mapper for the grid view's vertices.
 SET_TYPE_PROP(BoxModel,
               VertexMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, PTAG(GridView)),
+              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
                                                         Dune::MCMGVertexLayout>);
 
 //! Mapper for the grid view's elements.
 SET_TYPE_PROP(BoxModel,
               ElementMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, PTAG(GridView)),
+              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
                                                         Dune::MCMGElementLayout>);
 
 //! Mapper for the degrees of freedoms.
-SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)));
+SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper));
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, Dumux::BoxLocalResidual<TypeTag>);
@@ -106,22 +106,22 @@ SET_TYPE_PROP(BoxModel, LocalJacobian, Dumux::BoxLocalJacobian<TypeTag>);
  */
 SET_TYPE_PROP(BoxModel,
               SolutionVector,
-              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables))>);
+              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
 /*!
  * \brief The type of a solution for a whole element.
  */
 SET_TYPE_PROP(BoxModel,
               ElementSolutionVector,
-              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables))>);
+              Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
 /*!
  * \brief A vector of primary variables.
  */
 SET_TYPE_PROP(BoxModel,
               PrimaryVariables,
-              Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
-                                GET_PROP_VALUE(TypeTag, PTAG(NumEq))>);
+              Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                GET_PROP_VALUE(TypeTag, NumEq)>);
 
 /*!
  * \brief The volume variable class.
@@ -140,7 +140,7 @@ SET_TYPE_PROP(BoxModel, ElementVolumeVariables, Dumux::BoxElementVolumeVariables
  */
 SET_TYPE_PROP(BoxModel,
               BoundaryTypes,
-              Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, PTAG(NumEq))>);
+              Dumux::BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
 
 /*!
  * \brief Assembler for the global jacobian matrix.
@@ -171,8 +171,8 @@ SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
 SET_PROP(BoxModel, JacobianMatrix)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     typedef typename Dune::FieldMatrix<Scalar, numEq, numEq> MatrixBlock;
 public:
     typedef typename Dune::BCRSMatrix<MatrixBlock> type;
@@ -192,7 +192,7 @@ SET_SCALAR_PROP(BoxModel, LinearSolverResidualReduction, 1e-6);
 SET_INT_PROP(BoxModel, LinearSolverMaxIterations, 250);
 
 //! set number of equations of the mathematical model as default
-SET_INT_PROP(BoxModel, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, PTAG(NumEq)));
+SET_INT_PROP(BoxModel, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
 } // namespace Properties
 } // namespace Dumux

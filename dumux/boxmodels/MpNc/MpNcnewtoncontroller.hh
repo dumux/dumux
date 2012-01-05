@@ -41,12 +41,12 @@ namespace Dumux {
 template <class TypeTag, bool enableKinetic /* = false */>
 class MpNcNewtonChop
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    enum { numPhases =  GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
-    enum { numComponents =  GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
+    enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents =  GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { fug0Idx = Indices::fug0Idx };
     enum { S0Idx = Indices::S0Idx };
     enum { p0Idx = Indices::p0Idx };
@@ -92,12 +92,12 @@ private:
 template <class TypeTag>
 class MpNcNewtonChop<TypeTag, /*enableKinetic=*/true>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    enum { numPhases =  GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
-    enum { numComponents =  GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
+    enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents =  GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { moleFrac00Idx = Indices::moleFrac00Idx };
     enum { S0Idx = Indices::S0Idx };
     enum { p0Idx = Indices::p0Idx };
@@ -165,24 +165,24 @@ class MPNCNewtonController : public NewtonController<TypeTag>
     typedef MPNCNewtonController<TypeTag> ThisType;
     typedef NewtonController<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
-        enableEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)),
-        enableKinetic = GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)),
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
+        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
-        enablePartialReassemble = GET_PROP_VALUE(TypeTag, PTAG(EnablePartialReassemble)),
+        enablePartialReassemble = GET_PROP_VALUE(TypeTag, EnablePartialReassemble),
 
         p0Idx = Indices::p0Idx,
         S0Idx = Indices::S0Idx,
@@ -218,7 +218,7 @@ public:
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
 
-        if (GET_PROP_VALUE(TypeTag, PTAG(NewtonUseLineSearch))) {
+        if (GET_PROP_VALUE(TypeTag, NewtonUseLineSearch)) {
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         }
         else {

@@ -57,11 +57,11 @@ int main(int argc, char** argv)
         typedef TTAG(BoxGeneralLensProblem) BoxTypeTag;
         //TypeTag which chooses the decoupled model
         typedef TTAG(DecoupledGeneralLensProblem) DecoupledTypeTag;
-        typedef GET_PROP_TYPE(BoxTypeTag, PTAG(Scalar)) Scalar;
-        typedef GET_PROP_TYPE(BoxTypeTag, PTAG(Grid)) Grid;
-//        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-        typedef GET_PROP_TYPE(BoxTypeTag, PTAG(TimeManager)) BoxTimeManager;
-        typedef GET_PROP_TYPE(DecoupledTypeTag, PTAG(TimeManager)) DecoupledTimeManager;
+        typedef GET_PROP_TYPE(BoxTypeTag, Scalar) Scalar;
+        typedef GET_PROP_TYPE(BoxTypeTag, Grid) Grid;
+//        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
+        typedef GET_PROP_TYPE(BoxTypeTag, TimeManager) BoxTimeManager;
+        typedef GET_PROP_TYPE(DecoupledTypeTag, TimeManager) DecoupledTimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
 
         static const int dim = Grid::dimension;

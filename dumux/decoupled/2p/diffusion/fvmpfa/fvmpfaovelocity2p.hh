@@ -41,20 +41,20 @@ namespace Dumux
 template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTag>
 {
     typedef FVMPFAOVelocity2P<TypeTag> ThisType;
-    typedef FVMPFAOPressure2P<TypeTag> ParentType;typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef FVMPFAOPressure2P<TypeTag> ParentType;typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -64,7 +64,7 @@ template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTa
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridTypeIndices)) GridTypeIndices;
+    typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
     enum
     {
@@ -183,7 +183,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             IntersectionIterator nextisIt = ++tempisIt;
 
             //get nextisIt
-            switch (GET_PROP_VALUE(TypeTag, PTAG(GridImplementation)))
+            switch (GET_PROP_VALUE(TypeTag, GridImplementation))
             {
                 // for SGrid
                 case GridTypeIndices::sGrid:
@@ -2059,7 +2059,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
         }
 
         // check if local mass conservative
-        if (dim == 2 && GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation)) == vt)
+        if (dim == 2 && GET_PROP_VALUE(TypeTag, VelocityFormulation) == vt)
         {
             Scalar diff = fabs(this->problem().variables().velocity()[globalIdx1][0] * unitOuterNormal[0] * facevol[0]
                     + this->problem().variables().velocity()[globalIdx1][1] * unitOuterNormal[1] * facevol[1]

@@ -44,11 +44,11 @@ template <class TypeTag>
 class DecoupledTwoPTwoCFluidState
 {
     typedef DecoupledTwoPTwoCFluidState<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
 
 
     enum {
@@ -60,8 +60,8 @@ class DecoupledTwoPTwoCFluidState
     };
 
 public:
-    enum {  numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-            numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))};
+    enum {  numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+            numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
 
 public:
     /*!

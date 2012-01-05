@@ -56,25 +56,25 @@ namespace Dumux
  */
 template<class TypeTag> class FVPressure2P
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     enum
     {
@@ -96,7 +96,7 @@ template<class TypeTag> class FVPressure2P
     {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -108,8 +108,8 @@ template<class TypeTag> class FVPressure2P
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
 
     //initializes the matrix to store the system of equations
     void initializeMatrix();
@@ -349,9 +349,9 @@ private:
     Matrix A_;
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > f_;
 
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation)); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 protected:
     const GlobalPosition& gravity; //!< vector including the gravity constant
 };
@@ -897,7 +897,7 @@ void FVPressure2P<TypeTag>::assemble(bool first)
 template<class TypeTag>
 void FVPressure2P<TypeTag>::solve()
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
+    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
     int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
 

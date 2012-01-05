@@ -56,7 +56,7 @@ SET_PROP(RichardsLensSpatialParameters, MaterialLaw)
 private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
 public:
     // define the material law parameterized by absolute saturations
@@ -73,9 +73,9 @@ template<class TypeTag>
 class RichardsLensSpatialParameters : public BoxSpatialParameters<TypeTag>
 {
     typedef BoxSpatialParameters<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
 
     enum {
@@ -86,11 +86,11 @@ class RichardsLensSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     //get the material law from the property system
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     //! The parameters of the material law to be used
     typedef typename MaterialLaw::Params MaterialLawParams;
 

@@ -58,40 +58,40 @@ namespace Dumux
 template<class TypeTag>
 class FVSaturation2P
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
     typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElementContainer;
     typedef Dune::GenericReferenceElements<Scalar, dim - 1> ReferenceElementFaceContainer;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DiffusivePart)) DiffusivePart;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ConvectivePart)) ConvectivePart;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(EvalCflFluxFunction)) EvalCflFluxFunction;
+    typedef typename GET_PROP_TYPE(TypeTag, DiffusivePart) DiffusivePart;
+    typedef typename GET_PROP_TYPE(TypeTag, ConvectivePart) ConvectivePart;
+    typedef typename GET_PROP_TYPE(TypeTag, EvalCflFluxFunction) EvalCflFluxFunction;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     enum
     {
@@ -313,10 +313,10 @@ private:
     ConvectivePart* convectivePart_;
     EvalCflFluxFunction* evalCflFluxFunction_;
 
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility));
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
+    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
     bool switchNormals_;
 
     const Scalar threshold_;

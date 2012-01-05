@@ -51,7 +51,7 @@ SET_TYPE_PROP(TestIMPESAdaptiveSpatialParams, SpatialParameters, Dumux::TestIMPE
 SET_PROP(TestIMPESAdaptiveSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
 public:
     typedef EffToAbsLaw<RawMaterialLaw> type;
@@ -66,9 +66,9 @@ public:
 template<class TypeTag>
 class TestIMPESAdaptiveSpatialParams: public FVSpatialParameters<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef FVSpatialParameters<TypeTag> ParentType;
     typedef typename Grid::ctype CoordScalar;
 
@@ -80,7 +80,7 @@ class TestIMPESAdaptiveSpatialParams: public FVSpatialParameters<TypeTag>
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
 

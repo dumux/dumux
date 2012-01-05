@@ -95,7 +95,7 @@ SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
 SET_PROP(DecoupledOneP, PressureCoefficientMatrix)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
 
 public:
@@ -104,7 +104,7 @@ public:
 SET_PROP(DecoupledOneP, PressureRHSVector)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;

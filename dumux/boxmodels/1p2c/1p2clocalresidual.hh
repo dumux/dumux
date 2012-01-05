@@ -60,28 +60,28 @@ class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
 {
 protected:
     typedef OnePTwoCLocalResidual<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryVariables)) BoundaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryVariables) BoundaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum
     {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -96,7 +96,7 @@ protected:
         transEqIdx = Indices::transEqIdx
     };
 
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, PTAG(UseMoles));
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;

@@ -89,7 +89,7 @@ SET_SCALAR_PROP(IMPET, RelaxationFactor, 1);//!< 1 = new solution is new solutio
 SET_PROP(IMPET, PressureCoefficientMatrix)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
 
 public:
@@ -98,7 +98,7 @@ public:
 SET_PROP(IMPET, PressureRHSVector)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;

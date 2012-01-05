@@ -49,8 +49,8 @@ template <class TypeTag>
 class TwoPTwoCNewtonController : public NewtonController<TypeTag>
 {
     typedef NewtonController<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
 public:
     TwoPTwoCNewtonController(const Problem &problem)

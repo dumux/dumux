@@ -56,11 +56,11 @@ namespace Dumux
 template <class TypeTag>
 class BoxLinearSolver
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
@@ -241,7 +241,7 @@ class StandardSolverBackend
 {
 public:
     typedef Imp Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     template <class Operator, class ScalarProduct, class Prec>
     StandardSolverBackend(Operator& A, ScalarProduct& sp, Prec& prec,
@@ -265,10 +265,10 @@ template <class TypeTag>
 class BoxBiCGStabILU0Solver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqILU0<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecNoIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -296,10 +296,10 @@ template <class TypeTag>
 class BoxBiCGStabSORSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -327,10 +327,10 @@ template <class TypeTag>
 class BoxBiCGStabSSORSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqSSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -358,10 +358,10 @@ template <class TypeTag>
 class BoxBiCGStabJacSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -389,10 +389,10 @@ template <class TypeTag>
 class BoxBiCGStabGSSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqGS<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -420,10 +420,10 @@ template <class TypeTag>
 class BoxCGILU0Solver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqILU0<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecNoIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -451,10 +451,10 @@ template <class TypeTag>
 class BoxCGSORSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -482,10 +482,10 @@ template <class TypeTag>
 class BoxCGSSORSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqSSOR<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -513,10 +513,10 @@ template <class TypeTag>
 class BoxCGJacSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqJac<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;
@@ -544,10 +544,10 @@ template <class TypeTag>
 class BoxCGGSSolver : public BoxLinearSolver<TypeTag>
 {
     typedef BoxLinearSolver<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianMatrix)) Matrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) Matrix;
     typedef Dumux::OverlappingBCRSMatrix<Matrix> OverlappingMatrix;
     typedef typename OverlappingMatrix::Overlap Overlap;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) Vector;
     typedef Dumux::OverlappingBlockVector<typename Vector::block_type, Overlap> OverlappingVector;
     typedef Dune::SeqGS<OverlappingMatrix, OverlappingVector, OverlappingVector> SeqPreconditioner;
     typedef PrecIterBackend<TypeTag, SeqPreconditioner> PrecBackend;

@@ -88,7 +88,7 @@ SET_TYPE_PROP(BoxRichards, RichardsIndices, Dumux::RichardsIndices);
 SET_PROP(BoxRichards, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;
@@ -106,7 +106,7 @@ public:
  */
 SET_PROP(BoxRichards, WettingPhase)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
@@ -121,7 +121,7 @@ public:
  */
 SET_PROP(BoxRichards, NonwettingPhase)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::GasPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
@@ -137,9 +137,9 @@ public:
  */
 SET_PROP(BoxRichards, FluidSystem)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
 public:
     typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,

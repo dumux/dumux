@@ -37,15 +37,15 @@ namespace Dumux {
 template<class TypeTag, bool enableDiffusion>
 class MPNCFluxVariablesDiffusion
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -53,8 +53,8 @@ class MPNCFluxVariablesDiffusion
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         lPhaseIdx = FluidSystem::lPhaseIdx,
         gPhaseIdx = FluidSystem::gPhaseIdx
@@ -64,13 +64,13 @@ class MPNCFluxVariablesDiffusion
     typedef Dune::FieldVector<Scalar, dimWorld>  Vector;
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
 
 public:
     MPNCFluxVariablesDiffusion()
@@ -213,13 +213,13 @@ protected:
 template<class TypeTag>
 class MPNCFluxVariablesDiffusion<TypeTag, false>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     MPNCFluxVariablesDiffusion()

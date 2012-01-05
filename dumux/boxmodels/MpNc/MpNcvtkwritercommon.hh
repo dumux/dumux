@@ -44,18 +44,18 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
 {
     typedef MPNCVtkWriterModule<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementBoundaryTypes)) ElementBoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
@@ -65,11 +65,11 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     typedef typename ParentType::ComponentBuffer ComponentBuffer;
     typedef typename ParentType::PhaseComponentBuffer PhaseComponentBuffer;
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
-    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
-    enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, PTAG(VelocityAveragingInModel)) };
+    enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel) };
 
     typedef Dune::FieldVector<Scalar, dim> VelocityVector;
     typedef Dune::BlockVector<VelocityVector> VelocityField;

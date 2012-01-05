@@ -94,7 +94,7 @@ namespace Properties
 SET_PROP(DecoupledModel, GridView)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
 
 public:
     typedef typename Grid::LeafGridView type;
@@ -110,7 +110,7 @@ NEW_PROP_TAG(MaxIntersections);   //!< maximum number of intersections per eleme
 SET_PROP(DecoupledModel, MaxIntersections)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     static const int dim = Grid::dimension;
 public:
     typedef int type;
@@ -124,19 +124,19 @@ public:
  */
 SET_PROP(DecoupledModel, SolutionTypes)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid Grid;
     typedef typename Grid::ctype CoordScalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
     enum
     {
         dim = GridView::dimension,
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
-        maxIntersections = GET_PROP_VALUE(TypeTag, PTAG(MaxIntersections))
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        maxIntersections = GET_PROP_VALUE(TypeTag, MaxIntersections)
     };
 
     template<int dim>
@@ -178,7 +178,7 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 };
 
-SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, PTAG(SolutionTypes))::PrimaryVariables);
+SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
 
 /*!
  * \brief Default implementation for the Vector of the transportet quantity
@@ -190,7 +190,7 @@ SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, PTAG
 SET_PROP(DecoupledModel, TransportSolutionType)
 {
     private:
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionType;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionType;
 
     public:
     typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
@@ -204,7 +204,7 @@ SET_TYPE_PROP(DecoupledModel, TimeManager, Dumux::TimeManager<TypeTag>);
  */
 SET_PROP(DecoupledModel, BoundaryTypes)
 { private:
-    enum { numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)) };
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
     typedef Dumux::BoundaryTypes<numEq>  type;
 };

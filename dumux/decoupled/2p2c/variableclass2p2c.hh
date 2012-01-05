@@ -45,12 +45,12 @@ template<class TypeTag>
 class VariableClass2P2C: public VariableClass<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
 
     typedef VariableClass<TypeTag> ParentClass;
 
@@ -68,7 +68,7 @@ private:
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
     };
 
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -232,12 +232,12 @@ public:
             ScalarSolutionType *saturation = writer.allocateManagedBuffer (size_);
             *pressure = this->pressure();
             *saturation = saturation_;
-            if (GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)) == GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureW)
+            if (GET_PROP_VALUE(TypeTag, PressureFormulation) == GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::pressureW)
                 writer.attachCellData(*pressure, "pressure w_phase");
             else
                 writer.attachCellData(*pressure, "pressure nw_phase");
             writer.attachCellData(*saturation, "water saturation");
-            if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+            if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
             {
                 ScalarSolutionType *pc = writer.allocateManagedBuffer (size_);
                 *pc = capillaryPressure_;

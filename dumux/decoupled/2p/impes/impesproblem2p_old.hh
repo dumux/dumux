@@ -48,18 +48,18 @@ namespace Dumux
 template<class TypeTag>
 class IMPESProblem2P : public IMPETProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef IMPETProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
 
 
     enum {

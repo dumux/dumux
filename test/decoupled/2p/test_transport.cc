@@ -52,9 +52,9 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(TransportTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
+        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
+        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);

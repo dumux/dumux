@@ -50,8 +50,8 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(TestProblemOneP) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
         static const int dim = Grid::dimension;
         typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
         Problem problem(grid.leafView(), delta);
         problem.init();
         problem.writeOutput();

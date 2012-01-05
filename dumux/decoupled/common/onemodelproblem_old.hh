@@ -48,20 +48,20 @@ template<class TypeTag>
 class OneModelProblem
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Model;
+    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::VertexMapper VertexMapper;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
     typedef typename SolutionTypes::ScalarSolution Solution;
@@ -82,7 +82,7 @@ private:
     typedef typename GridView::Intersection Intersection;
 
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     // private!! copy constructor
     OneModelProblem(const OneModelProblem&)

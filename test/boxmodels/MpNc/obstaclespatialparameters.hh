@@ -52,13 +52,13 @@ SET_TYPE_PROP(ObstacleSpatialParameters, SpatialParameters, Dumux::ObstacleSpati
 SET_PROP(ObstacleSpatialParameters, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     enum {
         lPhaseIdx = FluidSystem::lPhaseIdx,
         gPhaseIdx = FluidSystem::gPhaseIdx
     };
     // define the material law
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     //    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
         typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
         typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
@@ -77,20 +77,20 @@ template<class TypeTag>
 class ObstacleSpatialParameters : public BoxSpatialParameters<TypeTag>
 {
     typedef BoxSpatialParameters<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     enum {
@@ -103,7 +103,7 @@ class ObstacleSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef Dune::FieldVector<Scalar,dimWorld> Vector;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     ObstacleSpatialParameters(const GridView &gv)

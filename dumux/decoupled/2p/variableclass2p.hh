@@ -48,11 +48,11 @@ template<class TypeTag>
 class VariableClass2P: public VariableClass<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
     typedef VariableClass<TypeTag> ParentType;
 
@@ -71,8 +71,8 @@ private:
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 
     typedef typename SolutionTypes::ElementMapper ElementMapper;
 

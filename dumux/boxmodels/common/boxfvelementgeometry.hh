@@ -301,7 +301,7 @@ public:
 template<class TypeTag>
 class BoxFVElementGeometry
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     enum{dim = GridView::dimension};
 
     typedef BoxFVElementGeometry<TypeTag>   ThisType;
@@ -316,7 +316,7 @@ class BoxFVElementGeometry
     enum{maxNF = (dim < 3 ? 1 : 6)};
     enum{maxCOS = (dim < 3 ? 2 : 4)};
     enum{maxBF = (dim < 3 ? 8 : 24)};
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;

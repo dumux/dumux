@@ -58,7 +58,7 @@ template <class TypeTag,
           int PVOffset = 0>
 class TwoPTwoCIndices
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     // Phase indices
@@ -96,7 +96,7 @@ public:
 template <class TypeTag, int PVOffset>
 class TwoPTwoCIndices<TypeTag, TwoPTwoCFormulation::pgSl, PVOffset>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     // Phase indices

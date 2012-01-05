@@ -97,7 +97,7 @@ SET_PROP(DecoupledTwoPTwoC, NumPhases) //!< The number of phases in the 2p model
 {
     // the property is created in decoupledproperties.hh
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     static const int value = FluidSystem::numPhases;
@@ -108,7 +108,7 @@ public:
 SET_PROP(DecoupledTwoPTwoC, NumComponents) //!< The number of components in the 2p2c model is 2
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     static const int value = FluidSystem::numComponents;
@@ -119,19 +119,19 @@ public:
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoPTwoC,
         PressureFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureW);
+        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::pressureW);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         SaturationFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::saturationW);
+        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::saturationW);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         VelocityFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::velocityW);
+        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::velocityW);
 
 SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> > > type;//!<type for vector of vector (of scalars)
 
 };
@@ -171,7 +171,7 @@ template <class TypeTag>
 struct DecoupledTwoPTwoCIndices : DecoupledTwoPCommonIndices
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     // Component indices

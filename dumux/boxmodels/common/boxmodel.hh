@@ -50,29 +50,29 @@ namespace Dumux
 template<class TypeTag>
 class BoxModel
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementMapper)) ElementMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexMapper)) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(DofMapper)) DofMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(JacobianAssembler)) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementMapper) ElementMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, DofMapper) DofMapper;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         dim = GridView::dimension
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalResidual)) LocalResidual;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalJacobian) LocalJacobian;
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
+    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;

@@ -44,8 +44,8 @@ class MPNCMassIndices
                   "No kinetic mass transfer module included, "
                   "but kinetic mass transfer enabled.");
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
 
 public:
     /*!

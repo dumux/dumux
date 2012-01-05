@@ -41,16 +41,16 @@ namespace Dumux
  *  \tparam TypeTag The property Type Tag
  */
 template <class TypeTag>
-class PseudoOnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
+class PseudoOnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
                                            PseudoOnePTwoCFluidState<TypeTag> >
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))      Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
 
 public:
-    enum {     numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-            numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))};
+    enum {     numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+            numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,

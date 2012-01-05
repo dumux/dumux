@@ -59,7 +59,7 @@ namespace Properties {
 SET_PROP(BoxTwoPTwoC, NumComponents)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     static const int value = FluidSystem::numComponents;
@@ -77,7 +77,7 @@ public:
 SET_PROP(BoxTwoPTwoC, NumPhases)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     static const int value = FluidSystem::numPhases;
@@ -102,7 +102,7 @@ SET_INT_PROP(BoxTwoPTwoC, ReplaceCompEqIdx, 2);
 SET_PROP(BoxTwoPTwoC, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;
@@ -135,7 +135,7 @@ SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);
 SET_PROP(BoxTwoPTwoC,
          TwoPTwoCIndices)
 { private:
-    enum { Formulation = GET_PROP_VALUE(TypeTag, PTAG(Formulation)) };
+    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
 public:
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };

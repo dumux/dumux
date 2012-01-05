@@ -98,9 +98,9 @@ int startFromDGF(int argc, char **argv)
     try {
 #endif
 
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+        typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+        typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+        typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
         typedef Dune::GridPtr<Grid> GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
@@ -179,7 +179,7 @@ int startFromDGF(int argc, char **argv)
  * \param argv  The 'argv' argument of the main function
  */
 template <class TypeTag>
-int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
+int startWithGrid(const typename GET_PROP_TYPE(TypeTag, Grid) &grid,
                   int argc,
                   char **argv)
 {
@@ -187,9 +187,9 @@ int startWithGrid(const typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) &grid,
     try {
 #endif
 
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-        typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+        typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+        typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+        typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
         // parse the command line arguments for the program
         if (argc < 3)
@@ -255,10 +255,10 @@ int startFromInputFile(int argc, char **argv)
    try {
 #endif
 
-       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-       typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-       typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-       typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Params;
+       typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+       typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+       typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+       typedef typename GET_PROP(TypeTag, ParameterTree) Params;
        typedef Dune::GridPtr<Grid> GridPointer;
 
        // initialize MPI, finalize is done automatically on exit

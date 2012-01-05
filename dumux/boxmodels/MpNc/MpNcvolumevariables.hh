@@ -50,33 +50,33 @@ namespace Dumux
 template <class TypeTag>
 class MPNCVolumeVariables
     : public BoxVolumeVariables<TypeTag>
-    , public MPNCVolumeVariablesIA<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)), GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy))>
-    , public MPNCVolumeVariablesMass<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic))>
-    , public MPNCVolumeVariablesDiffusion<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(EnableDiffusion)) || GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic))>
-    , public MPNCVolumeVariablesEnergy<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)), GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy))>
+    , public MPNCVolumeVariablesIA<TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic), GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
+    , public MPNCVolumeVariablesMass<TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic)>
+    , public MPNCVolumeVariablesDiffusion<TypeTag, GET_PROP_VALUE(TypeTag, EnableDiffusion) || GET_PROP_VALUE(TypeTag, EnableKinetic)>
+    , public MPNCVolumeVariablesEnergy<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergy), GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams)) MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
     enum {
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
         dimWorld = GridView::dimensionworld,
 
-        enableEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)),
-        enableKinetic = GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)),
-        enableKineticEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy)),
-        enableDiffusion = GET_PROP_VALUE(TypeTag, PTAG(EnableDiffusion)) || enableKinetic,
+        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
+        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
+        enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
+        enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion) || enableKinetic,
 
         numEnergyEqs     = Indices::NumPrimaryEnergyVars,
 

@@ -39,22 +39,22 @@ template <class TypeTag, int BasePVOffset = 0>
 struct MPNCIndices :
         public MPNCMassIndices<BasePVOffset,
                                TypeTag,
-                               GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)) >,
+                               GET_PROP_VALUE(TypeTag, EnableKinetic) >,
         public MPNCEnergyIndices<BasePVOffset +
-                                 MPNCMassIndices<0, TypeTag, GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)) >::NumPrimaryVars,
-                                 GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)),
-                                 GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy))>
+                                 MPNCMassIndices<0, TypeTag, GET_PROP_VALUE(TypeTag, EnableKinetic) >::NumPrimaryVars,
+                                 GET_PROP_VALUE(TypeTag, EnableEnergy),
+                                 GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
 {
 private:
-    enum { enableEnergy         = GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)) };
-    enum { enableDiffusion      = GET_PROP_VALUE(TypeTag, PTAG(EnableDiffusion)) };
-    enum { enableKinetic        = GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)) }; //mass transfer
-    enum { enableKineticEnergy  = GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy)) }; // energy transfer
+    enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy) };
+    enum { enableDiffusion      = GET_PROP_VALUE(TypeTag, EnableDiffusion) };
+    enum { enableKinetic        = GET_PROP_VALUE(TypeTag, EnableKinetic) }; //mass transfer
+    enum { enableKineticEnergy  = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) }; // energy transfer
 
     typedef MPNCMassIndices<BasePVOffset, TypeTag, enableKinetic> MassIndices;
     typedef MPNCEnergyIndices<BasePVOffset + MassIndices::NumPrimaryVars, enableEnergy, enableKineticEnergy> EnergyIndices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     enum { numComponents = FluidSystem::numComponents };
     enum { numPhases = FluidSystem::numPhases };
 

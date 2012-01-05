@@ -53,15 +53,15 @@ namespace Dumux
 template<class TypeTag> class IMPET
 {
     typedef IMPET<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP(TypeTag, PTAG(ParameterTree)) Parameters;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP(TypeTag, ParameterTree) Parameters;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld

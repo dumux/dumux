@@ -45,11 +45,11 @@ template<class TypeTag>
 class EvalCflFluxDefault: public EvalCflFlux<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+      typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
     enum
     {
@@ -204,8 +204,8 @@ private:
     Scalar fluxNonwettingOut_;
     Scalar fluxOut_;
     Scalar fluxIn_;
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
 template<class TypeTag>

@@ -65,7 +65,7 @@ namespace Properties
 SET_PROP(BoxMPNC, NumComponents)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     static const int value = FluidSystem::numComponents;
@@ -80,7 +80,7 @@ public:
 SET_PROP(BoxMPNC, NumPhases)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     static const int value = FluidSystem::numPhases;
@@ -92,7 +92,7 @@ public:
 SET_PROP(BoxMPNC, NumEq)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
 
 public:
     static const int value = Indices::NumPrimaryVars;
@@ -105,7 +105,7 @@ public:
 SET_PROP(BoxMPNC, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;
@@ -118,8 +118,8 @@ public:
 SET_PROP(BoxMPNC, CompositionFromFugacitiesSolver)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> type;
@@ -184,7 +184,7 @@ SET_PROP(BoxMPNC, MPNCVtkCommonModule)
 //! mass module
 SET_PROP(BoxMPNC, MPNCVtkMassModule)
 {
-private: enum { enableKinetic = GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)) };
+private: enum { enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic) };
 public: typedef MPNCVtkWriterMass<TypeTag, enableKinetic> type;
 };
 
@@ -193,8 +193,8 @@ public: typedef MPNCVtkWriterMass<TypeTag, enableKinetic> type;
 SET_PROP(BoxMPNC, MPNCVtkEnergyModule)
 {
 private:
-    enum { enableEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)) };
-    enum { enableKineticEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy)) };
+    enum { enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy) };
+    enum { enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
 public:
     typedef MPNCVtkWriterEnergy<TypeTag, enableEnergy, enableKineticEnergy> type;
 };

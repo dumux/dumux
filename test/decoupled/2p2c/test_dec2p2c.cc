@@ -51,10 +51,10 @@ int main(int argc, char** argv)
 {
     try {
         typedef TTAG(TestDecTwoPTwoCProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-        typedef GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+        typedef GET_PROP_TYPE(TypeTag, Scalar)  Scalar;
+        typedef GET_PROP_TYPE(TypeTag, Grid)    Grid;
+        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
+        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
         typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
 
         static const int dim = Grid::dimension;

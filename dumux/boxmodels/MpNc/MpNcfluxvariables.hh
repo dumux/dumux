@@ -54,31 +54,31 @@ namespace Dumux
 template <class TypeTag>
 class MPNCFluxVariables
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VolumeVariables)) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
     enum {
         dimWorld = GridView::dimensionworld,
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        enableDiffusion = GET_PROP_VALUE(TypeTag, PTAG(EnableDiffusion)),
-        enableEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableEnergy)),
-        enableKinetic = GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic)),
-        enableKineticEnergy = GET_PROP_VALUE(TypeTag, PTAG(EnableKineticEnergy)),
-        enableGravity = GET_PROP_VALUE(TypeTag, PTAG(EnableGravity))
+        enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion),
+        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
+        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
+        enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
+        enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity)
     };
 
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 

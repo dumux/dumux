@@ -57,7 +57,7 @@ SET_TYPE_PROP(GeneralLensSpatialParameters, SpatialParameters, Dumux::GeneralLen
 SET_PROP(GeneralLensSpatialParameters, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
 public:
     typedef EffToAbsLaw<EffectiveLaw> type;
@@ -72,15 +72,15 @@ public:
  *        twophase box model or twophase decoupled model
  */
 template<class TypeTag>
-class GeneralLensSpatialParameters : public GET_PROP_TYPE(TypeTag, PTAG(SpatialParamsBaseClass))
+class GeneralLensSpatialParameters : public GET_PROP_TYPE(TypeTag, SpatialParamsBaseClass)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParamsBaseClass)) ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParamsBaseClass) ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
     enum {
         dim=GridView::dimension,
@@ -97,7 +97,7 @@ class GeneralLensSpatialParameters : public GET_PROP_TYPE(TypeTag, PTAG(SpatialP
 
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
     GeneralLensSpatialParameters(const GridView& gridView)

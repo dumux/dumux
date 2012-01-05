@@ -82,7 +82,7 @@ SET_TYPE_PROP(BoxOneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_
 
 SET_PROP(BoxOneP, Fluid)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };

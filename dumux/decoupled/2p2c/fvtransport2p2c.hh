@@ -49,20 +49,20 @@ namespace Dumux
 template<class TypeTag>
 class FVTransport2P2C
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
 
     enum
     {
@@ -93,7 +93,7 @@ class FVTransport2P2C
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     //! Acess function for the current problem
     Problem& problem()
@@ -138,7 +138,7 @@ public:
 protected:
     Problem& problem_;
 
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     bool switchNormals;
 };
 
@@ -213,7 +213,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         double Xn1_I = problem().variables().nonwet_X1(globalIdxI);
 
         Scalar densityWI (0.), densityNWI(0.);
-        if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
+        if (GET_PROP_VALUE(TypeTag, NumDensityTransport))
         {
             densityWI= problem().variables().numericalDensity(globalIdxI, wPhaseIdx);
             densityNWI = problem().variables().numericalDensity(globalIdxI, nPhaseIdx);
@@ -271,7 +271,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
                 // phase densities in neighbor
                 Scalar densityWJ (0.), densityNWJ(0.);
-                if (GET_PROP_VALUE(TypeTag, PTAG(NumDensityTransport)))
+                if (GET_PROP_VALUE(TypeTag, NumDensityTransport))
                 {
                     densityWJ = problem().variables().numericalDensity(globalIdxJ, wPhaseIdx);
                     densityNWJ = problem().variables().numericalDensity(globalIdxJ, nPhaseIdx);
@@ -403,7 +403,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                     Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
                     Scalar viscosityWBound = FluidSystem::viscosity(BCfluidState, wPhaseIdx);
                     Scalar viscosityNWBound = FluidSystem::viscosity(BCfluidState, nPhaseIdx);
-                    if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+                    if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
                         pcBound = BCfluidState.capillaryPressure();
                     // average
                     double densityW_mean = (densityWI + densityWBound) / 2;
@@ -444,7 +444,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                         lambdaW = problem().variables().mobilityWetting(globalIdxI);
                     else
                         {
-                        if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
+                        if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
                             lambdaW = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
                         else
                             lambdaW = MaterialLaw::krw(
@@ -455,7 +455,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
                         lambdaNW = problem().variables().mobilityNonwetting(globalIdxI);
                     else
                         {
-                        if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
+                        if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
                             lambdaNW = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
                         else
                             lambdaNW = MaterialLaw::krn(
@@ -582,7 +582,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     if (bcType == Indices::saturation)
     {
         Scalar satBound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
-        if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
             Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
                     satBound);
@@ -618,7 +618,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
                             problem().temperatureAtPos(globalPosFace));
 
-        if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
             Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
                     BCfluidState.saturation(wPhaseIdx));

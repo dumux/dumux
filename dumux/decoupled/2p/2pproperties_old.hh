@@ -122,21 +122,21 @@ SET_INT_PROP(DecoupledTwoP,
 
 SET_PROP(DecoupledTwoP, TwoPIndices)
 {
-typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
+typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 };
 
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,
     PressureFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::pressureType);
+    GET_PROP_TYPE(TypeTag, TwoPIndices)::pressureType);
 
 SET_INT_PROP(DecoupledTwoP,
     SaturationFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::saturationType);
+    GET_PROP_TYPE(TypeTag, TwoPIndices)::saturationType);
 
 SET_INT_PROP(DecoupledTwoP,
     VelocityFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices))::velocityDefault);
+    GET_PROP_TYPE(TypeTag, TwoPIndices)::velocityDefault);
 
 SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
 
@@ -153,7 +153,7 @@ SET_TYPE_PROP(DecoupledTwoP, FluidState, DecoupledTwoPFluidState<TypeTag>);
 SET_PROP(DecoupledTwoP, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;

@@ -48,18 +48,18 @@ template<class TypeTag>
 class CapillaryDiffusion: public DiffusivePart<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+      typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+      typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
       typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+      typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+      typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-      typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
+      typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
 
     enum

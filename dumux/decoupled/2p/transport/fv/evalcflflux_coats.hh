@@ -44,21 +44,21 @@ template<class TypeTag>
 class EvalCflFluxCoats: public EvalCflFluxDefault<TypeTag>
 {
 private:
-    typedef EvalCflFluxDefault<TypeTag> ParentType;typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef EvalCflFluxDefault<TypeTag> ParentType;typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     enum
     {
@@ -471,9 +471,9 @@ private:
     Problem& problem_;//problem data
     Scalar cflFluxFunction_;
     bool hasHangingNode_;
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation));
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation));
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, PTAG(SaturationFormulation));
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
     static constexpr Scalar eps_ = 5e-3;
 };
 

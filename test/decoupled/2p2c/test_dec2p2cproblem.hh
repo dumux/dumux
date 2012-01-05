@@ -82,7 +82,7 @@ SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
 };
 
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::pressureNW);
+        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::pressureNW);
 
 // Select fluid system
 SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
@@ -94,9 +94,9 @@ SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
 
 
 // Select water formulation
-SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, PTAG(DefaultComponents))
+SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 //    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
         typedef Dumux::SimpleH2O<Scalar> H2O;
 };
@@ -105,8 +105,8 @@ SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, PTAG(Def
 SET_PROP(TestDecTwoPTwoCProblem, SpatialParameters)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:
     typedef Dumux::Test2P2CSpatialParams<TypeTag> type;
@@ -119,7 +119,7 @@ SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableGravity, true);
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestDecTwoPTwoCProblem,
         BoundaryMobility,
-        GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices))::satDependent);
+        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::satDependent);
 SET_SCALAR_PROP(TestDecTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
@@ -141,15 +141,15 @@ template<class TypeTag = TTAG(TestDecTwoPTwoCProblem)>
 class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
 typedef IMPETProblem2P2C<TypeTag> ParentType;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 // boundary typedefs
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
 enum
 {
@@ -161,7 +161,7 @@ enum
     wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
 };
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
 typedef typename GridView::Intersection Intersection;

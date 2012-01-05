@@ -71,7 +71,7 @@ SET_PROP(TissueTumorProblem, Problem)
 // Set fluid configuration
 SET_PROP(TissueTumorProblem, FluidSystem)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:    
     typedef Dumux::FluidSystems::InterstitialFluidTrail<Scalar> type;
 };
@@ -126,15 +126,15 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
     typedef TissueTumorProblem<TypeTag> ThisType;
     typedef OnePTwoCBoxProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices) Indices;
     enum {
         // Grid and world dimension
         dim = GridView::dimension,

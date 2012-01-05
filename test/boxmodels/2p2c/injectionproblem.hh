@@ -61,7 +61,7 @@ SET_PROP(InjectionProblem, Problem)
 // Set fluid configuration
 SET_PROP(InjectionProblem, FluidSystem)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     static const bool useComplexRelations = false;
 public:
     typedef Dumux::FluidSystems::H2ON2<Scalar, useComplexRelations> type;
@@ -99,9 +99,9 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     typedef InjectionProblem<TypeTag> ThisType;
     typedef TwoPTwoCProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum {
         // Grid and world dimension
@@ -110,7 +110,7 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     };
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
     enum {
         lPhaseIdx = Indices::lPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
@@ -127,15 +127,15 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 

@@ -81,7 +81,7 @@ SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
 //! The indices required by the isothermal 2p model
 SET_TYPE_PROP(BoxTwoP,
               TwoPIndices,
-              TwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0>);
+              TwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
@@ -89,27 +89,27 @@ SET_TYPE_PROP(BoxTwoP,
  */
 SET_TYPE_PROP(BoxTwoP,
               MaterialLawParams,
-              typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))::Params);
+              typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 SET_PROP(BoxTwoP, WettingPhase)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
 SET_PROP(BoxTwoP, NonwettingPhase)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
 SET_PROP(BoxTwoP, FluidSystem)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
 public:
     typedef Dumux::FluidSystems::TwoPImmiscible<Scalar,
@@ -120,8 +120,8 @@ public:
 SET_PROP(BoxTwoP, FluidState)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
     typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
 };

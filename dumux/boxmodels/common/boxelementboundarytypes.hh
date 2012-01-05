@@ -43,14 +43,14 @@ namespace Dumux
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class TypeTag>
-class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) >
+class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag, BoundaryTypes) >
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef std::vector<BoundaryTypes> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     enum { dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;

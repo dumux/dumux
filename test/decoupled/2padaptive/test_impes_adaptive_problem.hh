@@ -91,7 +91,7 @@ SET_PROP(TestIMPESAdaptiveProblem, PressureModel)
 SET_PROP(TestIMPESAdaptiveProblem, WettingPhase)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
@@ -100,7 +100,7 @@ public:
 SET_PROP(TestIMPESAdaptiveProblem, NonwettingPhase)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
@@ -137,15 +137,15 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>//IMPESProblem2Pad
 {
 //typedef IMPESProblem2Padaptive<TypeTag> ParentType;
 typedef IMPESProblem2P<TypeTag> ParentType;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
 enum
 {
@@ -161,14 +161,14 @@ enum
     eqIdxSat = Indices::satEqIdx
 };
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
 public:

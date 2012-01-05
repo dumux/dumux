@@ -47,26 +47,26 @@ template<class TypeTag>
 class IMPETProblem
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::VertexMapper VertexMapper;
     typedef typename SolutionTypes::ElementMapper ElementMapper;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model)) IMPETModel;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureModel)) PressureModel;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportModel)) TransportModel;
+    typedef typename GET_PROP_TYPE(TypeTag, Model) IMPETModel;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) PressureModel;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) TransportModel;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     enum
     {
@@ -76,7 +76,7 @@ private:
     enum
     {
         wetting = 0, nonwetting = 1,
-        adaptiveGrid = GET_PROP_VALUE(TypeTag, PTAG(AdaptiveGrid))
+        adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
     };
 
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
@@ -87,7 +87,7 @@ private:
     typedef GridAdapt<TypeTag, adaptiveGrid> GridAdaptModel;
 
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)

@@ -74,7 +74,7 @@ SET_TYPE_PROP(LensProblem, Problem, Dumux::LensProblem<TypeTag>);
 SET_PROP(LensProblem, WettingPhase)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
@@ -83,7 +83,7 @@ public:
 SET_PROP(LensProblem, NonwettingPhase)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
 };
@@ -154,16 +154,16 @@ class LensProblem : public TwoPProblem<TypeTag>
 {
     typedef LensProblem<TypeTag> ThisType;
     typedef TwoPProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase)) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
 
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
         // primary variable indices
         pressureIdx = Indices::pressureIdx,
@@ -186,18 +186,18 @@ class LensProblem : public TwoPProblem<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TimeManager)) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -301,7 +301,7 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
-        typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) fluidState;
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
@@ -370,7 +370,7 @@ public:
     {
         Scalar depth = this->bboxMax()[1] - globalPos[1];
 
-        typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) fluidState;
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature_);
         fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
         fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);

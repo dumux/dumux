@@ -50,17 +50,17 @@ template<class TypeTag>
 class VariableClass
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum
     {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-        numEq = GET_PROP_VALUE(TypeTag, PTAG(NumEq))
+        numEq = GET_PROP_VALUE(TypeTag, NumEq)
     };
 
     typedef typename GridView::Grid Grid;

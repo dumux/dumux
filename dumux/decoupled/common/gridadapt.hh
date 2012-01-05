@@ -43,18 +43,18 @@ namespace Dumux
 template<class TypeTag, bool adaptive>
 class GridAdapt
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))     Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem)     Problem;
 
 
     //*******************************
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid                         Grid;
     typedef typename Grid::LeafGridView                     LeafGridView;
     typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
     typedef typename GridView::IntersectionIterator         LeafIntersectionIterator;
     typedef typename Grid::template Codim<0>::Entity         Entity;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 public:
@@ -406,9 +406,9 @@ private:
 template<class TypeTag>
 class GridAdapt<TypeTag, false>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))     Problem;
-    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem)     Problem;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 public:

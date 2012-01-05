@@ -99,7 +99,7 @@ NEW_PROP_TAG( Grid );
 SET_PROP(MPFAProperties, GridImplementation)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
 public:
     static const int value = GridImp<Grid, Grid::dimension>::imp;
 };

@@ -54,19 +54,19 @@ namespace Dumux
 template<class TypeTag>
 class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
 
     enum
     {
@@ -97,7 +97,7 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, 2> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
@@ -117,7 +117,7 @@ public:
 protected:
     Problem& problem_;
 
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     bool switchNormals;
 };
 
@@ -348,7 +348,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                     FluidState BCfluidState;
 
                     //get boundary type
-                    typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) bcTypes;
+                    typename GET_PROP_TYPE(TypeTag, BoundaryTypes) bcTypes;
                     problem_.boundaryTypes(bcTypes, *isIt);
 
                     if (bcTypes.isDirichlet(Indices::contiWEqIdx)) // if contiWEq is Dirichlet, so is contiNEq
@@ -371,7 +371,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                         Scalar densityNWBound = BCfluidState.density(nPhaseIdx);
                         Scalar viscosityWBound = FluidSystem::viscosity(BCfluidState, wPhaseIdx);
                         Scalar viscosityNWBound = FluidSystem::viscosity(BCfluidState, nPhaseIdx);
-                        if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+                        if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
                              pcBound = BCfluidState.capillaryPressure();
 
                         // average
@@ -413,7 +413,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                             lambdaW = problem_.variables().mobilityWetting(globalIdxI);
                         else
                             {
-                            if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
+                            if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
                                 lambdaW = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
                             else
                                 lambdaW = MaterialLaw::krw(
@@ -424,7 +424,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
                             lambdaNW = problem_.variables().mobilityNonwetting(globalIdxI);
                         else
                             {
-                            if(GET_PROP_VALUE(TypeTag, PTAG(BoundaryMobility))==Indices::satDependent)
+                            if(GET_PROP_VALUE(TypeTag, BoundaryMobility)==Indices::satDependent)
                                 lambdaNW = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
                             else
                                 lambdaNW = MaterialLaw::krn(

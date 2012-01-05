@@ -128,36 +128,36 @@ SET_INT_PROP(DecoupledTwoP,
 
 SET_PROP(DecoupledTwoP, Indices)
 {
-typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
+typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 };
-SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, PTAG(Indices)));
+SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoP,
     PressureFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(Indices))::pressureType);
+    GET_PROP_TYPE(TypeTag, Indices)::pressureType);
 
 SET_INT_PROP(DecoupledTwoP,
     SaturationFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(Indices))::saturationType);
+    GET_PROP_TYPE(TypeTag, Indices)::saturationType);
 
 SET_INT_PROP(DecoupledTwoP,
     VelocityFormulation,
-    GET_PROP_TYPE(TypeTag, PTAG(Indices))::velocityDefault);
+    GET_PROP_TYPE(TypeTag, Indices)::velocityDefault);
 
 SET_BOOL_PROP(DecoupledTwoP, EnableCompressibility, false);
 
 SET_TYPE_PROP(DecoupledTwoP, Variables, VariableClass<TypeTag>);
 
-SET_TYPE_PROP(DecoupledTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility))>);
+SET_TYPE_PROP(DecoupledTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
 
 SET_TYPE_PROP(DecoupledTwoP, FluidSystem, TwoPImmiscibleFluidSystem<TypeTag>);
 
 SET_PROP(DecoupledTwoP, FluidState)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
     typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
 };
@@ -169,7 +169,7 @@ public:
 SET_PROP(DecoupledTwoP, MaterialLawParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw)) MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
 public:
     typedef typename MaterialLaw::Params type;

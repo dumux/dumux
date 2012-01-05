@@ -33,18 +33,18 @@ namespace Dumux {
 template <class TypeTag, bool enableDiffusion>
 class MPNCDiffusion
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MPNCIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))};
-    enum { enableKinetic= GET_PROP_VALUE(TypeTag, PTAG(EnableKinetic))};
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum { enableKinetic= GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum { gPhaseIdx = FluidSystem::gPhaseIdx };
     enum { lPhaseIdx = FluidSystem::lPhaseIdx };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
     typedef Dune::FieldMatrix<Scalar, numComponents, numComponents> DiffMatrix;
     typedef Dune::FieldVector<Scalar, numComponents> DiffVector;
@@ -135,10 +135,10 @@ protected:
 template <class TypeTag>
 class MPNCDiffusion<TypeTag, false>
 {
-    enum { numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)) };
+    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxVariables)) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef Dune::FieldVector<Scalar, numComponents>        CompVector;
 
 public:

@@ -40,14 +40,14 @@ namespace Dumux
  *        2p model.
  */
 template <class TypeTag>
-class DecoupledTwoPFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
+class DecoupledTwoPFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
 DecoupledTwoPFluidState<TypeTag> >
 {
     typedef DecoupledTwoPFluidState<TypeTag> ThisType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
@@ -58,7 +58,7 @@ DecoupledTwoPFluidState<TypeTag> >
     };
 
 public:
-    enum { numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)) };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
 public:
     void update(Scalar Sw, Scalar pressW, Scalar pressN, Scalar temperature)

@@ -54,21 +54,21 @@ class FVVelocity2Padaptive: public FVPressure2Padaptive<TypeTag>
 {
     typedef FVVelocity2Padaptive<TypeTag> ThisType;
     typedef FVPressure2Padaptive<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Variables)) Variables;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+     typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
+     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
      typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
+     typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
+     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-     typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
-     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -119,7 +119,7 @@ public:
     : FVPressure2Padaptive<TypeTag>(problem)
     {
     	// todo: kompatibilität prüfen
-        if (GET_PROP_VALUE(TypeTag, PTAG(EnableCompressibility)) && velocityType_ == vt)
+        if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
         {
             DUNE_THROW(Dune::NotImplemented, "Total velocity - global pressure - model cannot be used with compressible fluids!");
         }
@@ -239,7 +239,7 @@ public:
     }
 
 private:
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, PTAG(VelocityFormulation)); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
 };
 
 template<class TypeTag>
