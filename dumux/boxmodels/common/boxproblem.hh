@@ -465,8 +465,8 @@ public:
     void timeIntegration()
     {
         const int maxFails = 10;
+        Scalar dt = timeManager().timeStepSize();
         for (int i = 0; i < maxFails; ++i) {
-            Scalar dt = timeManager().timeStepSize();
             Scalar nextDt = dt / 2;
 
             // update failed
@@ -478,6 +478,7 @@ public:
                 return;
 
             timeManager().setTimeStepSize(nextDt);
+            dt = nextDt;
         }
 
         DUNE_THROW(Dune::MathError,
