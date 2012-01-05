@@ -28,6 +28,9 @@
 #ifndef DUMUX_MPNC_DIFFUSION_VOLUME_VARIABLES_HH
 #define DUMUX_MPNC_DIFFUSION_VOLUME_VARIABLES_HH
 
+#include <dumux/common/valgrind.hh>
+#include <dumux/boxmodels/MpNc/MpNcproperties.hh>
+
 namespace Dumux {
 
 template<class TypeTag, bool enableDiffusion>

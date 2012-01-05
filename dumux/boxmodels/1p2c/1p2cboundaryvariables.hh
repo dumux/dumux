@@ -33,6 +33,7 @@
 #define DUMUX_1P2C_BOUNDARY_VARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include "1p2cproperties.hh"
 
 namespace Dumux
 {

@@ -30,6 +30,7 @@
 #define DUMUX_RICHARDS_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include "richardsproperties.hh"
 
 namespace Dumux
 {

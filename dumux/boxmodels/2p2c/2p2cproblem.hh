@@ -30,6 +30,8 @@
 
 #include <dumux/boxmodels/common/boxproblem.hh>
 
+#include "2p2cproperties.hh"
+
 namespace Dumux
 {
 /*!

@@ -30,6 +30,8 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_IA_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_IA_HH
 
+#include <dumux/boxmodels/MpNc/MpNcproperties.hh>
+
 namespace Dumux
 {
 

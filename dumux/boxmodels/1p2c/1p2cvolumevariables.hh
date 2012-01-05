@@ -30,8 +30,9 @@
 #define DUMUX_1P2C_VOLUME_VARIABLES_HH
 
 #include <dumux/boxmodels/common/boxvolumevariables.hh>
-
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
+
+#include "1p2cproperties.hh"
 
 namespace Dumux
 {

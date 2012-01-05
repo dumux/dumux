@@ -29,6 +29,7 @@
 
 #include <dune/istl/matrix.hh>
 
+#include <dumux/common/math.hh>
 #include "boxelementboundarytypes.hh"
 
 namespace Dumux

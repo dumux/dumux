@@ -33,7 +33,6 @@
 #include <dune/istl/superlu.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
-
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/overlappingbcrsmatrix.hh>
@@ -41,6 +40,7 @@
 #include <dumux/linear/overlappingpreconditioner.hh>
 #include <dumux/linear/overlappingscalarproduct.hh>
 #include <dumux/linear/overlappingoperator.hh>
+#include <dumux/boxmodels/common/boxproperties.hh>
 
 namespace Dumux
 {

@@ -29,6 +29,7 @@
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
 
+#include <dumux/common/propertysystem.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>

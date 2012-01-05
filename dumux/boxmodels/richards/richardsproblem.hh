@@ -28,6 +28,8 @@
 
 #include <dumux/boxmodels/common/boxproblem.hh>
 
+#include "richardsproperties.hh"
+
 namespace Dumux
 {
 /*!

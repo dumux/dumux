@@ -37,6 +37,7 @@
 #include "1p2cproperties.hh"
 
 #include <dumux/common/math.hh>
+#include <dumux/common/valgrind.hh>
 
 namespace Dumux
 {

@@ -28,10 +28,11 @@
 #ifndef DUMUX_BOX_ASSEMBLER_HH
 #define DUMUX_BOX_ASSEMBLER_HH
 
-//#include "overlapmatrix.hh"
+#include <dune/grid/common/gridenums.hh>
+
+#include <dumux/boxmodels/common/boxproperties.hh>
 #include <dumux/linear/vertexborderlistfromgrid.hh>
 #include <dumux/linear/foreignoverlapfrombcrsmatrix.hh>
-
 #include <dumux/parallel/vertexhandles.hh>
 
 namespace Dumux {

@@ -31,6 +31,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 
 namespace Dumux

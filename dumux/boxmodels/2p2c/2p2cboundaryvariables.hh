@@ -34,6 +34,8 @@
 
 #include <dumux/common/math.hh>
 
+#include "2p2cproperties.hh"
+
 namespace Dumux
 {
 

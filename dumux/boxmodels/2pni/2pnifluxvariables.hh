@@ -35,6 +35,7 @@
 #define DUMUX_2PNI_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/boxmodels/2p/2pfluxvariables.hh>
 
 namespace Dumux
 {

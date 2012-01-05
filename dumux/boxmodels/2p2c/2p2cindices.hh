@@ -28,6 +28,8 @@
 #ifndef DUMUX_2P2C_INDICES_HH
 #define DUMUX_2P2C_INDICES_HH
 
+#include "2p2cproperties.hh"
+
 namespace Dumux
 {
 // \{

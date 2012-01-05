@@ -31,6 +31,7 @@
 #define DUMUX_1P2C_PROBLEM_HH
 
 #include <dumux/boxmodels/common/boxproblem.hh>
+#include "1p2cproperties.hh"
 
 namespace Dumux
 {
