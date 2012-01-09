@@ -231,10 +231,7 @@ protected:
                                                                     fvElemGeom_,
                                                                     face().j));
             K.mv(potentialGrad_[phaseIdx], Kmvp_[phaseIdx]);
-            KmvpNormal_[phaseIdx] = 0;
-            for (int i = 0; i < Vector::size; ++i)
-                KmvpNormal_[phaseIdx] += Kmvp_[phaseIdx][i] * face().normal[i];
-            KmvpNormal_[phaseIdx] *= -1;
+            KmvpNormal_[phaseIdx] = -(Kmvp_[phaseIdx]*face().normal);
         }
 
         // set the upstream and downstream vertices

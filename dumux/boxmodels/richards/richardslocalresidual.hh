@@ -129,10 +129,7 @@ public:
         Vector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGradW(),
                                             tmpVec);
-        Scalar normalFlux = 0;
-        for (int i = 0; i < Vector::size; ++ i)
-             normalFlux += tmpVec[i] + fluxVars.face().normal[i];
-        normalFlux *= -1;
+        Scalar normalFlux = -(tmpVec*fluxVars.face().normal);
 
         // data attached to upstream and the downstream vertices
         // of the current phase

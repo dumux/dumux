@@ -412,10 +412,7 @@ protected:
                               const ElementVolumeVariables &elemDat)
     {
         K_.mv(potentialGrad_, Kmvp_);
-        KmvpNormal_ = 0;
-        for (int i = 0; i < Vector::size; ++i)
-            KmvpNormal_ += Kmvp_[i] * face().normal[i];
-        KmvpNormal_ *= -1;
+        KmvpNormal_ = -(Kmvp_*face().normal);
 
         // set the upstream and downstream vertices
         upstreamIdx_ = face().i;
