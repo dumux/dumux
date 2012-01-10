@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2009-2010 by Andreas Lauser                               *
+ *   Copyright (C) 2009-2012 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -32,16 +32,15 @@ namespace Dumux
 {
 /*!
  * \ingroup MPNCModel
- * \brief Adaption of the box scheme to compositional twophase flows.
+ * \brief A vertex centered fully implicit model for M-phase, N-component flow
  *
- * This model implements a two-phase flow of a fluid mixture composed
- * of \f$N\f$ chemical species. The phases are denoted by \f$\alpha
- * \in \{ l, g \}\f$ for liquid and gas. The liquid and the gas phase
- * both are a mixture of of \f$N \geq 2\f$ species. The model assumes,
- * a fluid configuration of a solvent species and \f$N-1\f$ solute
- * species with very low solubility.
+ * This model implements a \f$M\f$-phase flow of a fluid mixture
+ * composed of \f$N\f$ chemical species. The phases are denoted by
+ * lower index \f$\alpha \in \{ 1, \dots, M \}\f$. All fluid phases
+ * are mixtures of \f$N \geq M - 1\f$ chemical species which are
+ * denoted by the upper index \f$\kappa \in \{ 1, \dot, N \} \f$.
  *
- * The standard multiphase Darcy approach is used as the equation for
+ * The standard multi-phase Darcy law is used as the equation for
  * the conservation of momentum:
  * \f[
      v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
@@ -50,41 +49,63 @@ namespace Dumux
  *
  * By inserting this into the equations for the conservation of the
  * components, one gets one transport equation for each component \f$\kappa\f$
- * \f{eqnarray*}
-    && \sum_{\kappa \in \alpha} \left(
+ * \f{equation*}
+ \sum_{\kappa} \left(
     %
-    \phi \frac{\partial \varrho_\alpha x_{\alpha\kappa} S_\alpha}{\partial t}
+    \phi \frac{\partial \varrho_\alpha x_\alpha^\kappa S_\alpha}{\partial t}
     -
     \nabla \cdot
     \left\{
-       \frac{\varrho_\alpha}{\overline M_\alpha} x_{\alpha\kappa}
+       \frac{\varrho_\alpha}{\overline M_\alpha} x_\alpha^\kappa
        \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
        (\nabla p_\alpha - \varrho_{\alpha} \boldsymbol{g})
     \right\}
     \left)
-    \nonumber \\
-    \nonumber \
-    &-& \sum_{\kappa \in \ \nabla \cdot \left\{{\bf D_{pm}^\kappa} \frac{\varrho_{\alpha}}{\overline M_\alpha} {\bf \nabla} x^\kappa_{\alpha} \right\}
-    - \sum_{\kappa \in \alpha} q_\alpha^\kappa = \quad 0 \qquad \kappa \in \{1, \dots, N\} \, ,
-    \alpha \in \{l, g\}
-    \f}
+    = q^\kappa
+    \f{equation*}
  * with \f$\overline M_\alpha\f$ being the average molar mass of the phase \f$\alpha\f$:
- * \f[ \overline M_\alpha = \sum_{\kappa = 1}^N M_\kappa \; x_{\alpha\kappa} \f]
+ * \f[ \overline M_\alpha = \sum_\kappa M^\kappa \; x_\alpha^\kappa \f]
  *
- * This is discretized in the model using the fully-coupled vertex
- * centered finite volume (box) scheme as spatial and
- * the implicit Euler method as temporal discretization.
+ * For the missing \f$M\f$ model assumptions, the model assumes that
+ * if a fluid phase is not present, the sum of the mole fractions of
+ * this fluid phase is smaller than \f$1\f$, i.e.
+ * \f[ \forall \alpha: S_\alpha = 0 \implies \sum_\kappa x_\alpha^\kappa \leq 1 \]
  *
- * The model uses \f$x_{l1}, \dots, x_{lN}, S_g, p_g \f$ as primary
- * variables. \f$x_{g\kappa}\f$ is calculated using Henry's law (if
- * the componentis a solute), or the vapor pressure (if \f$\kappa\f$
- * is the solvent) as \f$\beta_\kappa\f$, the constant of
- * proportionality between the liquid mole fraction and the partial
- * pressure of a component:
- * \f[ x_{g\kappa} = \frac{\beta_kappa x_{l\kappa}}{\sum_{i=1}^N x_{l\kappa} \beta_kappa} \f]
+ * Also, if a fluid phase may be present at a given spatial location
+ * its saturation must be positive:
+ * \f[ \forall \alpha: \sum_\kappa x_\alpha^\kappa = 1 \implies S_\alpha \geq 0 \f]
  *
- * Additionally two auxiliary conditions are used to keep the solution physical.
- * \todo describe NCP approach
+ * Since at any given spatial location, a phase is always either
+ * present or not present, the one of the strict equallities on the
+ * right hand side is always true, i.e.
+ * \f[ \forall \alpha: S_\alpha \left( \sum_\kappa x_\alpha^\kappa - 1 \right) = 0 \f]
+ * always holds.
+ *
+ * These three equations constitute a non-linear complementarity
+ * problem, which can be solved using a so-called non-linear
+ * complementarity function \f$\Phi(a, b)\f$ which has the property
+ * \f[\Phi(a,b) = 0 \iff a \geq0 \land b \geq0  \land a \cdot b = 0 \f]
+ *
+ * Several non-linear complementarity functions have been suggested,
+ * e.g. the Fischer-Burmeister function
+ * \f[ \Phi(a,b) = a + b - \sqrt{a^2 + b^2} \;. \f]
+ *
+ * Though this model uses
+ * \f[ \Phi(a,b) = \min \{a,  b}}\;, \f]
+ * because of its piecewise linearity.
+ *
+ * These equations are then discretized using a fully-implicit vertex
+ * centered finite volume scheme (often known as 'box'-scheme) for
+ * spatial discretization and the implicit Euler method as temporal
+ * discretization.
+ *
+ * The model assumes thermodynamic equilibrium and uses the following
+ * primary variables:
+ * 
+ * - The componentfugacities \f$f^1, \dots, f^{N}
+ * - The pressure of the first phase \f$p_1\f$
+ * - The saturations of the first \f$M-1\f$ phases \f$S_1, \dots, S_{M-1}\f$
+ * - Temperature \f$T\f$ if the energy equation is enabled
  */
 template<class TypeTag>
 class MPNCModel : public BoxModel<TypeTag>
