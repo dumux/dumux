@@ -186,8 +186,8 @@ public:
         Scalar Tmax = temperature_ + 1.0;
         int nT = 3;
 
-        Scalar pmin = 0.0;
-        Scalar pmax = 1e6;
+        Scalar pmin = 1.0e5 * 0.75;
+        Scalar pmax = 2.0e5 * 1.25;
         int np = 1000;
 
         FluidSystem::init(Tmin, Tmax, nT, pmin, pmax, np);
