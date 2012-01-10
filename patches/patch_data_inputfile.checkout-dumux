@@ -1,9 +1,0 @@
-# This file is made for selection and application of patches by checkout-dumux script
-# it's format is is of four or more fields per line 
-# fill in data here only if you are knowing what you do
-#
-# please make sure to work with compatible checkout dumux script
-#
-# <target_directory_relative_to-DUNEROOT>  <options_for_patch_command> <name_inputfile_for_patch> <dune_version_number> <comment rows which are displayed to the user>
-dune-istl -p1 dune-istl-2.0.patch 2.0		DUNE ISTL patch
-dune-istl -p1 dune-istl-2.0.patch 2.0.1		DUNE ISTL patch
