@@ -644,11 +644,11 @@ public:
 
         for (int i = 0; i < numEq; ++i) {
             std::ostringstream oss;
-            oss << "x_" << i;
+            oss.str(""); oss << "x_" << i;
             writer.attachVertexData(*x[i], oss.str());
-            oss.clear(); oss << "delta_" << i;
+            oss.str(""); oss << "delta_" << i;
             writer.attachVertexData(*delta[i], oss.str());
-            oss.clear(); oss << "defect_" << i;
+            oss.str(""); oss << "defect_" << i;
             writer.attachVertexData(*def[i], oss.str());
         }
 
