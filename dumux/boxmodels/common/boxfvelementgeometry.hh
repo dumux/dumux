@@ -30,7 +30,7 @@
 
 #include <dune/grid/common/intersectioniterator.hh>
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 2)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 2, 0)
 // dune 2.2
 #include <dune/geometry/referenceelements.hh>
 #else

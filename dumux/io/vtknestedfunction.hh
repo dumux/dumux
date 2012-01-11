@@ -41,7 +41,7 @@ namespace Dumux {
  *        as elements.
  */
 template <class GridView, class Mapper, class Buffer>
-#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 2)
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 2, 0)
 // dune 2.2
 class VtkNestedFunction : public Dune::VTKFunction<GridView>
 #else
