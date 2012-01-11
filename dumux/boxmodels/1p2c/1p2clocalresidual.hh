@@ -249,10 +249,7 @@ public:
         if(!useMoles)
         {
             // diffusive flux of the second component - massfraction
-            tmp = 0;
-            for (int i = 0; i < Vector::dimension; ++ i)
-                tmp += fluxVars.massFracGrad(comp1Idx)[i]*fluxVars.face().normal[i];
-            tmp *= -1;
+            tmp = -(fluxVars.massFracGrad(comp1Idx)*fluxVars.face().normal);
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.densityAtIP();
 
             flux[transEqIdx] += tmp;// * FluidSystem::molarMass(comp1Idx);
@@ -260,10 +257,7 @@ public:
         else
         {
             // diffusive flux of the second component - molefraction
-            tmp = 0;
-            for (int i = 0; i < Vector::dimension; ++ i)
-                tmp += fluxVars.moleFracGrad(comp1Idx)[i]*fluxVars.face().normal[i];
-            tmp *= -1;
+            tmp = -(fluxVars.moleFracGrad(comp1Idx)*fluxVars.face().normal);
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP();
 
                 // dispersive flux of second component - molefraction
@@ -416,10 +410,7 @@ protected:
                 *vertVars.fluidState().massFraction(phaseIdx, comp1Idx);
 
             // diffusive flux of comp1 component in phase0
-            Scalar tmp = 0;
-            for (int i = 0; i < Vector::dimension; ++ i)
-               tmp += boundaryVars.massFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
-            tmp *= -1;
+            Scalar tmp = -(boundaryVars.massFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
 
             tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP();
             values[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
@@ -432,10 +423,7 @@ protected:
                 *vertVars.fluidState().moleFraction(phaseIdx, comp1Idx);
 
             // diffusive flux of comp1 component in phase0
-            Scalar tmp = 0;
-            for (int i = 0; i < Vector::dimension; ++ i)
-               tmp += boundaryVars.moleFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
-            tmp *= -1;
+            Scalar tmp = -(boundaryVars.moleFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
 
             tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP();
             values[transEqIdx] += tmp;

@@ -147,10 +147,7 @@ public:
             // current sub control volume face
             fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
                                                 tmpVec);
-            Scalar normalFlux = 0;
-            for (int i = 0; i < Vector::dimension; ++i)
-                normalFlux += tmpVec[i]*fluxVars.face().normal[i];
-            normalFlux *= -1;
+            Scalar normalFlux = -(tmpVec*fluxVars.face().normal);
 
             // data attached to upstream and the downstream vertices
             // of the current phase
