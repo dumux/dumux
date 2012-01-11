@@ -155,9 +155,9 @@ public:
      * @param indicator Vector where the refinement indicator is stored
      * @param refineThreshold lower threshold where to refine
      * @param coarsenThreshold upper threshold where to coarsen
-     * @return
+     * @return Total ammount of marked cells
      */
-    int markElements(ScalarSolutionType &indicator, const double refineThreshold, const double coarsenThreshold)
+    int markElements(const ScalarSolutionType &indicator, const double refineThreshold, const double coarsenThreshold)
     {
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
                     eIt!=problem_.gridView().template end<0>(); ++eIt)

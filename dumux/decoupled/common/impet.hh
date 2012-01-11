@@ -67,8 +67,7 @@ template<class TypeTag> class IMPET
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld,
-        transportEqIdx = Indices::transportEqIdx
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
@@ -99,42 +98,44 @@ public:
      *  \param dt         time step size
      *  \param updateVec  vector for the update values
      *
-     *  Calculates the new pressure and velocity and determines the time step size and the update of the transported quantity for the explicit time step
+     *  Calculates the new pressure and velocity and determines the time step size
+     *  and the update of the transported quantity for the explicit time step.
      */
     void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
     {
-        // the method is valid for any transported quantity.
-        int transSize = problem.variables().primaryVariablesGlobal(transportEqIdx).size();
-        TransportSolutionType transportedQuantity(problem.variables().primaryVariablesGlobal(transportEqIdx));
-        TransportSolutionType transValueOldIter(problem.variables().primaryVariablesGlobal(transportEqIdx));
-        TransportSolutionType transValueHelp(transSize);
-        TransportSolutionType transValueDiff(transSize);
-        TransportSolutionType updateOldIter(transSize);
-        TransportSolutionType updateHelp(transSize);
-        TransportSolutionType updateDiff(transSize);
-
         bool converg = false;
         int iter = 0;
         int iterTot = 0;
-        updateOldIter = 0;
 
         while (!converg)
         {
             iter++;
             iterTot++;
 
-            problem.pressureModel().pressure(false);
+            problem.pressureModel().update(false);
 
             //calculate velocities
+            // TODO: remove calculateVelocity in impet
             problem.pressureModel().calculateVelocity();
 
             //calculate defect of transported quantity
             problem.transportModel().update(t, dt, updateVec, true);
 
-            if (iterFlag_)
-            { // only needed if iteration has to be done
+            if (iterFlag_)// only needed if iteration has to be done
+            {
+                // the method is valid for any transported quantity.
+                int transSize = problem.transportModel().transportedQuantity().size();
+                TransportSolutionType transportedQuantity(problem.transportModel().transportedQuantity());
+                TransportSolutionType transValueOldIter(problem.transportModel().transportedQuantity());
+                TransportSolutionType transValueHelp(transSize);
+                TransportSolutionType transValueDiff(transSize);
+                TransportSolutionType updateOldIter(transSize);
+                TransportSolutionType updateHelp(transSize);
+                TransportSolutionType updateDiff(transSize);
+
+                updateOldIter = 0;
                 updateHelp = updateVec;
-                transportedQuantity = problem.variables().primaryVariablesGlobal(transportEqIdx);
+                transportedQuantity = problem.transportModel().transportedQuantity();
                 transportedQuantity += (updateHelp *= (dt * cFLFactor_));
                 transportedQuantity *= omega_;
                 transValueHelp = transValueOldIter;
@@ -144,30 +145,31 @@ public:
                 updateDiff -= updateOldIter;
                 transValueOldIter = transportedQuantity;
                 updateOldIter = updateVec;
+
+                // break criteria for iteration loop
+                if (iterFlag_ == 2 && dt * updateDiff.two_norm() / transportedQuantity.two_norm() <= maxDefect_)
+                {
+                    converg = true;
+                }
+                else if (iterFlag_ == 1 && iter > nIter_)
+                {
+                    converg = true;
+                }
+
+                if (iterFlag_ == 2 && transportedQuantity.infinity_norm() > (1 + maxDefect_))
+                {
+                    converg = false;
+                }
+                if (!converg && iter > nIter_)
+                {
+                    converg = true;
+                    std::cout << "Nonlinear loop in IMPET.update exceeded nIter = " << nIter_ << " iterations." << std::endl;
+                    std::cout << transportedQuantity.infinity_norm() << std::endl;
+                }
             }
-            // break criteria for iteration loop
-            if (iterFlag_ == 2 && dt * updateDiff.two_norm() / transportedQuantity.two_norm() <= maxDefect_)
-            {
+            else    // no iteration => always "converged"
                 converg = true;
-            }
-            else if (iterFlag_ == 1 && iter > nIter_)
-            {
-                converg = true;
-            }
-            else if (iterFlag_ == 0)
-            {
-                converg = true;
-            }
-            if (iterFlag_ == 2 && transportedQuantity.infinity_norm() > (1 + maxDefect_))
-            {
-                converg = false;
-            }
-            if (!converg && iter > nIter_)
-            {
-                converg = true;
-                std::cout << "Nonlinear loop in IMPET.update exceeded nIter = " << nIter_ << " iterations." << std::endl;
-                std::cout << transportedQuantity.infinity_norm() << std::endl;
-            }
+
         }
         // outputs
         if (iterFlag_ == 2)

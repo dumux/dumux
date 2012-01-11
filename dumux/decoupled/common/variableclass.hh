@@ -72,6 +72,7 @@ private:
 
 public:
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;//!<type for vector of scalars
+    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
     typedef typename std::vector <CellData> CellDataVector;
 
 private:
@@ -80,8 +81,6 @@ private:
     VertexMapper vertexMapper_;
     const int codim_;
     CellDataVector cellDataVector_;
-protected:
-    ScalarSolutionType primaryVariablesVector_[numEq];
 
 public:
     //! Constructs a VariableClass object
@@ -93,50 +92,9 @@ public:
     VariableClass(const GridView& gridView, int codim = 0) :
         gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView), codim_(codim)
     {
-        for (int i = 0; i < numEq; i++)
-        {
-            primaryVariablesVector_[i].resize(gridView.size(codim));
-            primaryVariablesVector_[i] = 0;
-        }
         cellDataVector_.resize(gridView.size(codim));
     }
 
-    // serialization methods
-    //! Function needed for restart option.
-    template<class Restarter>
-    void serialize(Restarter &res)
-    {
-        res.template serializeEntities<0> (*this, gridView_);
-    }
-
-    //! Function needed for restart option.
-    template<class Restarter>
-    void deserialize(Restarter &res)
-    {
-        res.template deserializeEntities<0> (*this, gridView_);
-    }
-
-    //! Function needed for restart option.
-    void serializeEntity(std::ostream &outstream, const Element &element)
-    {
-        int globalIdx = elementMapper_.map(element);
-        outstream << primaryVariablesVector_[0][globalIdx][0];
-        for (int i = 1; i < numEq; i++)
-        {
-            outstream <<"   "<< primaryVariablesVector_[i][globalIdx][0];
-        }
-    }
-
-    //! Function needed for restart option.
-    void deserializeEntity(std::istream &instream, const Element &element)
-    {
-        int globalIdx = elementMapper_.map(element);
-        instream >> primaryVariablesVector_[0][globalIdx][0];
-        for (int i = 1; i < numEq; i++)
-        {
-            instream >> primaryVariablesVector_[i][globalIdx][0];
-        }
-    }
 
     //! Resizes decoupled variable vectors
     /*! Method that change the size of the vectors for h-adaptive simulations.
@@ -144,37 +102,12 @@ public:
      *\param size Size of the current (refined and coarsened) grid
      */
     void adaptVariableSize(int size)
-        {
-        for (int i = 0; i < numEq; i++)
-        {
-            primaryVariablesVector_[i].resize(size);
-            primaryVariablesVector_[i] = 0;
-        }
-            cellDataVector_.resize(size);
-        }
-
-//    void communicatePressure()
-//    {
-//#if HAVE_MPI
-//        ElementHandleAssign<typename ScalarSolutionType::block_type, ScalarSolutionType, ElementMapper> elementHandle(primaryVariables_, elementMapper_);
-//        gridView_.communicate(elementHandle,
-//                              Dune::InteriorBorder_All_Interface,
-//                              Dune::ForwardCommunication);
-//#endif
-//    }
-
-    //! Return pressure vector
-    const ScalarSolutionType& primaryVariablesGlobal(int eqIdx) const
     {
-        return primaryVariablesVector_[eqIdx];
-    }
+        DUNE_THROW(Dune::NotImplemented,"TODO: Primary Variables Vector have to be resized!!!");
+        cellDataVector_.resize(size);
+     }
 
-    ScalarSolutionType& primaryVariablesGlobal(int eqIdx)
-    {
-        return primaryVariablesVector_[eqIdx];
-    }
-
-    //! Return saturation vector
+    //! Return the vector holding all cell data
     CellDataVector& cellDataGlobal()
     {
         return cellDataVector_;
@@ -185,7 +118,7 @@ public:
         return cellDataVector_;
     }
 
-    //! Return saturation vector
+    //! Return the cell data of a specific cell
     CellData& cellData(int idx)
     {
         return cellDataVector_[idx];

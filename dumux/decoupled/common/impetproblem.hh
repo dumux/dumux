@@ -77,8 +77,8 @@ private:
     };
     enum
     {
-        adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid),
-        transportEqIdx = Indices::transportEqIdx
+        wetting = 0, nonwetting = 1,
+        adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
     };
 
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
@@ -411,14 +411,14 @@ public:
     void timeIntegration()
     {
         // allocate temporary vectors for the updates
-        typedef TransportSolutionType Solution;
-        Solution k1 = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
+        TransportSolutionType updateVector
+            = transportModel().transportedQuantity();
 
         Scalar t = timeManager().time();
         Scalar dt = 1e100;
 
         // obtain the first update and the time step size
-        model().update(t, dt, k1);
+        model().update(t, dt, updateVector);
 
         //make sure t_old + dt is not larger than tend
         dt = std::min(dt, timeManager().episodeMaxTimeStepSize());
@@ -449,13 +449,7 @@ public:
         timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        int size = gridView_.size(0);
-        Solution& newSol = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
-        for (int i = 0; i < size; i++)
-        {
-            newSol[i] += (k1[i] *= dt);
-            transportModel().updateSaturationSolution(i, newSol[i][0]);
-        }
+        transportModel().updateTransportedQuantity(updateVector);
     }
 
     /*!
@@ -744,7 +738,10 @@ public:
 
         timeManager().serialize(res);
         resultWriter().serialize(res);
-        model().serialize(res);
+
+        // do the actual serialization process: write primary variables
+        res.template serializeEntities<0> (*pressModel_, gridView_);
+        res.template serializeEntities<0> (*transportModel_, gridView_);
 
         res.serializeEnd();
     }
@@ -766,7 +763,11 @@ public:
 
         timeManager().deserialize(res);
         resultWriter().deserialize(res);
-        model().deserialize(res);
+
+        // do the actual serialization process: get primary variables
+        res.template deserializeEntities<0> (*pressModel_, gridView_);
+        res.template deserializeEntities<0> (*transportModel_, gridView_);
+        pressureModel().updateMaterialLaws();
 
         res.deserializeEnd();
     };
