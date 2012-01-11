@@ -199,9 +199,9 @@ public:
         sanitizeBuffer_(buf, nComps);
 
         typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
-        typedef Dumux::VtkNestedFunction<Grid, VertexMapper, DataBuffer> VtkFn;
+        typedef Dumux::VtkNestedFunction<GridView, VertexMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
-                                    gridView_.grid(),
+                                    gridView_,
                                     vertexMapper_,
                                     buf,
                                     /*codim=*/dim,
@@ -239,9 +239,9 @@ public:
         sanitizeBuffer_(buf, nComps);
 
         typedef typename VtkWriter::VTKFunctionPtr FunctionPtr;
-        typedef Dumux::VtkNestedFunction<Grid, ElementMapper, DataBuffer> VtkFn;
+        typedef Dumux::VtkNestedFunction<GridView, ElementMapper, DataBuffer> VtkFn;
         FunctionPtr fnPtr(new VtkFn(name,
-                                    gridView_.grid(),
+                                    gridView_,
                                     elementMapper_,
                                     buf,
                                     /*codim=*/0,

@@ -40,22 +40,28 @@ namespace Dumux {
  * \brief Provides a vector-valued function using Dune::FieldVectors
  *        as elements.
  */
-template <class Grid, class Mapper, class Buffer>
-class VtkNestedFunction : public Dune::VTKFunction<Grid>
+template <class GridView, class Mapper, class Buffer>
+#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 2)
+// dune 2.2
+class VtkNestedFunction : public Dune::VTKFunction<GridView>
+#else
+// dune 2.1
+class VtkNestedFunction : public Dune::VTKFunction<typename GridView::Grid>
+#endif
 {
-    enum { dim = Grid::dimension };
-    typedef typename Grid::ctype ctype;
-    typedef typename Grid::template Codim<0>::Entity Element;
+    enum { dim = GridView::dimension };
+    typedef typename GridView::ctype ctype;
+    typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
     VtkNestedFunction(std::string name,
-                      const Grid &grid,
+                      const GridView &gridView,
                       const Mapper &mapper,
                       const Buffer &buf,
                       int codim,
                       int numComp)
         : name_(name)
-        , grid_(grid)
+        , gridView_(gridView)
         , mapper_(mapper)
         , buf_(buf)
         , codim_(codim)
@@ -116,7 +122,7 @@ public:
 
 private:
     const std::string name_;
-    const Grid &grid_;
+    const GridView gridView_;
     const Mapper &mapper_;
     const Buffer &buf_;
     int codim_;
