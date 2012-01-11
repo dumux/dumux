@@ -75,7 +75,12 @@ protected:
 
         phase0NcpIdx = Indices::phase0NcpIdx
     };
-
+#if SUMMED_UP
+    enum { energyEq0Idx     = Indices::energyEq0Idx };
+    enum { wPhaseIdx        = FluidSystem::lPhaseIdx};
+    enum { nPhaseIdx        = FluidSystem::gPhaseIdx};
+    enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
+#endif
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -262,6 +267,16 @@ public:
                         this->curVolVars_(i).phaseNcp(phaseIdx);
                 }
             }
+
+#if SUMMED_UP
+            this->residual_[i][energyEq0Idx + wPhaseIdx] +=  this->residual_[i][energyEq0Idx + nPhaseIdx]
+                                                           + this->residual_[i][energyEq0Idx + sPhaseIdx];
+            this->residual_[i][energyEq0Idx + nPhaseIdx] = this->curVolVars_(i).temperature(wPhaseIdx)
+                                                         - this->curVolVars_(i).temperature(nPhaseIdx);
+            this->residual_[i][energyEq0Idx + sPhaseIdx] = this->curVolVars_(i).temperature(wPhaseIdx)
+                                                         - this->curVolVars_(i).temperature(sPhaseIdx);
+#endif
+
         }
     }
 

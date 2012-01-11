@@ -180,10 +180,13 @@ public:
                                 phaseIdx,
                                 molarPhaseComponentValuesMassTransport[phaseIdx]);
 
+#warning HEAT CONDUCTION OFF
+#if 0
         //conduction is treated lumped in this model
         computeHeatConduction(flux,
                              fluxVars,
                              volVars);
+#endif
     }
 
     static void computePhaseEnthalpyFlux(PrimaryVariables & result,

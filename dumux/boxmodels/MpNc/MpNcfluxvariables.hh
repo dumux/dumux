@@ -71,12 +71,12 @@ class MPNCFluxVariables
         enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
         enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
         enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
-        enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity)
+        enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity),
     };
 
     typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume SCV;
