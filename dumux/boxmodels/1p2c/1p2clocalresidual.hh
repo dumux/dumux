@@ -250,7 +250,7 @@ public:
         {
             // diffusive flux of the second component - massfraction
             tmp = 0;
-            for (int i = 0; i < Vector::size; ++ i)
+            for (int i = 0; i < Vector::dimension; ++ i)
                 tmp += fluxVars.massFracGrad(comp1Idx)[i]*fluxVars.face().normal[i];
             tmp *= -1;
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.densityAtIP();
@@ -261,7 +261,7 @@ public:
         {
             // diffusive flux of the second component - molefraction
             tmp = 0;
-            for (int i = 0; i < Vector::size; ++ i)
+            for (int i = 0; i < Vector::dimension; ++ i)
                 tmp += fluxVars.moleFracGrad(comp1Idx)[i]*fluxVars.face().normal[i];
             tmp *= -1;
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP();
@@ -417,7 +417,7 @@ protected:
 
             // diffusive flux of comp1 component in phase0
             Scalar tmp = 0;
-            for (int i = 0; i < Vector::size; ++ i)
+            for (int i = 0; i < Vector::dimension; ++ i)
                tmp += boundaryVars.massFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
             tmp *= -1;
 
@@ -433,7 +433,7 @@ protected:
 
             // diffusive flux of comp1 component in phase0
             Scalar tmp = 0;
-            for (int i = 0; i < Vector::size; ++ i)
+            for (int i = 0; i < Vector::dimension; ++ i)
                tmp += boundaryVars.moleFracGrad(comp1Idx)[i]*boundaryVars.boundaryFace().normal[i];
             tmp *= -1;
 
