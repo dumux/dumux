@@ -47,7 +47,7 @@ class DecoupledTwoPTwoCFluidState
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
 
 
@@ -125,6 +125,7 @@ public:
         {
             nu_[nPhaseIdx] = 1; // only nPhase
             massFraction_[nPhaseIdx][wCompIdx] = Z1; // hence, assign complete mass soluted into nPhase
+            massFraction_[wPhaseIdx][nCompIdx] = 1. - massFraction_[wPhaseIdx][wCompIdx];
             // store as moleFractions
             moleFraction_[nPhaseIdx][wCompIdx] = ( massFraction_[nPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx) );  // = moles of compIdx
             moleFraction_[nPhaseIdx][wCompIdx] /= ( massFraction_[nPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
@@ -138,6 +139,7 @@ public:
         {
             nu_[nPhaseIdx] = 0; // no second phase
             massFraction_[wPhaseIdx][wCompIdx] = Z1;
+            massFraction_[wPhaseIdx][nCompIdx] = 1. - massFraction_[wPhaseIdx][wCompIdx];
             // store as moleFractions
             moleFraction_[wPhaseIdx][wCompIdx] = ( massFraction_[wPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx) );  // = moles of compIdx
             moleFraction_[wPhaseIdx][wCompIdx] /= ( massFraction_[wPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
@@ -163,13 +165,6 @@ public:
 
         Sw_ = (nu_[wPhaseIdx]) / density_[wPhaseIdx];
         Sw_ /= (nu_[wPhaseIdx]/density_[wPhaseIdx] + nu_[nPhaseIdx]/density_[nPhaseIdx]);
-
-        massConcentration_[wCompIdx] =
-                poro * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massFraction_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
-        massConcentration_[nCompIdx] =
-                poro * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massFraction_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
     }
 
     //! a flash routine for 2p2c if the saturation instead of total concentration is known.
@@ -268,7 +263,6 @@ public:
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
         return massFraction_[phaseIdx][compIdx];
-
     }
 
     /*!
@@ -294,7 +288,22 @@ public:
     {
         return massConcentration_[compIdx];
     };
-
+    /*!
+     * \brief Sets the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
+     */
+    void setMassConcentration(int compIdx, Scalar value)
+    {
+        massConcentration_[compIdx] = value;
+    };
+    void calculateMassConcentration(Scalar poro)
+    {
+        massConcentration_[wCompIdx] =
+                poro * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
+                        + massFraction_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
+        massConcentration_[nCompIdx] =
+                poro * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
+                        + massFraction_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
+    }
 
     /*!
      * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
@@ -303,6 +312,16 @@ public:
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
+
+    /*!
+     * \brief Returns the viscosity of a phase TODO: \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     */
+    Scalar viscosity(int phaseIdx) const
+    { return viscosity_[phaseIdx]; }
+    void setViscosity(int phaseIdx, Scalar value)
+    { viscosity_[phaseIdx] = value; }
 
     /*!
      * \brief Return the partial pressure of a component in the gas phase.
@@ -379,8 +398,59 @@ public:
         else
             return nu_[phaseIdx];
     }
-    //@}
 
+    /*!
+     * \brief Returns the mass fraction of a component in a phase.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
+     */
+    void setMassFraction(int phaseIdx, int compIdx, Scalar value)
+    {
+        massFraction_[phaseIdx][compIdx] = value;
+    }
+
+    /*!
+     * \brief Returns the molar fraction of a component in a fluid phase.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
+     */
+    void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
+    {
+        moleFraction_[phaseIdx][compIdx] = value;
+    }
+    /*!
+     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     */
+    void setDensity(int phaseIdx, Scalar value)
+    { density_[phaseIdx] = value; }
+
+    void setSaturation(int phaseIdx, Scalar value)
+    {
+        if (phaseIdx == wPhaseIdx)
+            Sw_ = value;
+        else
+            Sw_ = 1.-value;
+    }
+    void setNu(int phaseIdx, Scalar value)
+    {
+            nu_[phaseIdx] = value;
+    }
+    void setTemperature(Scalar value)
+    {
+        temperature_ = value;
+    }
+    void setPressure(int phaseIdx, Scalar value)
+    {
+        phasePressure_[phaseIdx] = value;
+    }
+
+    //@}
+    DecoupledTwoPTwoCFluidState()
+    { Valgrind::SetUndefined(*this); }
 private:
     Scalar massConcentration_[numComponents];
     Scalar phasePressure_[numPhases];
@@ -389,6 +459,7 @@ private:
     Scalar Sw_;
     Scalar nu_[numPhases]; //phase mass fraction
     Scalar density_[numPhases];
+    Scalar viscosity_[numPhases];
     Scalar massFraction_[numPhases][numComponents];
     Scalar moleFraction_[numPhases][numComponents];
     Scalar equilRatio_[numPhases][numComponents];

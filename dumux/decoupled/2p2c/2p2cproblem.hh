@@ -26,9 +26,8 @@
 #ifndef DUMUX_IMPETPROBLEM_2P2C_HH
 #define DUMUX_IMPETPROBLEM_2P2C_HH
 
-#include "boundaryconditions2p2c.hh"
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
-#include <dumux/decoupled/2p2c/variableclass2p2c.hh>
+#include <dumux/decoupled/common/variableclass.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
 
 
@@ -51,7 +50,7 @@ class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
     typedef IMPESProblem2P<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid                         Grid;

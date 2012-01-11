@@ -44,6 +44,7 @@ namespace Dumux
  */
 struct BoundaryConditions2p2c
 {
+    DUNE_DEPRECATED
     enum Flags
         {
             saturation=1,

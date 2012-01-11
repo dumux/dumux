@@ -31,6 +31,7 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
+#include <dumux/decoupled/2p2c/fvpressurecompositional.hh>
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
@@ -66,6 +67,7 @@ namespace Dumux
  * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVPressure2P2C
+: public FVPressureCompositional<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -75,12 +77,13 @@ template<class TypeTag> class FVPressure2P2C
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -105,7 +108,7 @@ template<class TypeTag> class FVPressure2P2C
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::Intersection Intersection;
 
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -117,13 +120,7 @@ template<class TypeTag> class FVPressure2P2C
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
 
-    //initializes the matrix to store the system of equations
-    void initializeMatrix();
-
 protected:
-    //solves the system of equations to get the spatial distribution of the pressure
-    void solve();
-
     Problem& problem()
     {
         return problem_;
@@ -134,153 +131,42 @@ protected:
     }
 
 public:
+    void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
 
-    //function which assembles the system of equations to be solved
-    void assemble(bool first);
+    void getStorage(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
 
+    void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
+
+    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
+                            const Intersection&, const CellData&, const bool);
+
+    //constitutive functions are initialized and stored in the variables object
+    void updateMaterialLaws();
+    //updates secondary variables for one cell and stores in the variables object
+    void updateMaterialLawsInElement(const Element&);
+
+#if 0
     //the variables object is initialized, non-compositional before and compositional after first pressure calculation
     void initialMaterialLaws(bool compositional);
 
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
-    //initialization routine to prepare first timestep
-    void initialize(bool solveTwice = false);
-
-    //pressure solution routine: update estimate for secants, assemble, solve.
-    void pressure(bool solveTwice = true)
-    {
-        //pre-transport to estimate update vector
-        Scalar dt_estimate = 0.;
-        Dune::dinfo << "secant guess"<< std::endl;
-        problem().transportModel().update(-1, dt_estimate, problem().variables().updateEstimate(), false);
-        //last argument false in update() makes shure that this is estimate and no "real" transport step
-        problem().variables().updateEstimate() *= problem().timeManager().timeStepSize();
-
-        problem().variables().communicateUpdateEstimate();
-
-        assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
-        solve();
-
-        return;
-    }
-
-    void calculateVelocity()
-    {
-        return;
-    }
-
     //numerical volume derivatives wrt changes in mass, pressure
     void volumeDerivatives(GlobalPosition globalPos, ElementPointer ep, Scalar& dv_dC1, Scalar& dv_dC2, Scalar& dv_dp);
-
-    /*! \name general methods for serialization, output */
-    //@{
-    // serialization methods
-    template<class Restarter>
-    void serialize(Restarter &res)
-    {
-        return;
-    }
-
-    template<class Restarter>
-    void deserialize(Restarter &res)
-    {
-        return;
-    }
-
-    //! \brief Write data files
-     /*  \param name file name */
-    template<class MultiWriter>
-    void addOutputVtkFields(MultiWriter &writer)
-    {
-        problem().variables().addOutputVtkFields(writer);
-
-#if DUNE_MINIMAL_DEBUG_LEVEL <= 2
-        int size_ = problem().variables().gridSize();
-        // add debug stuff
-        typename SolutionTypes::ScalarSolution *numdensityW = writer.allocateManagedBuffer (size_);
-        typename SolutionTypes::ScalarSolution *numdensityNW = writer.allocateManagedBuffer (size_);
-        *numdensityW = problem().variables().numericalDensity(wPhaseIdx);
-        *numdensityNW = problem().variables().numericalDensity(nPhaseIdx);
-        writer.attachCellData(*numdensityW, "numerical density (mass/volume) w_phase");
-        writer.attachCellData(*numdensityNW, "numerical density (mass/volume) nw_phase");
-
-        typename SolutionTypes::ScalarSolution *errorCorrPtr = writer.allocateManagedBuffer (size_);
-        *errorCorrPtr = problem().variables().errorCorrection();
-//        int size = subdomainPtr.size();
-        writer.attachCellData(*errorCorrPtr, "Error Correction");
-
-        typename SolutionTypes::ScalarSolution *dv_dpPtr = writer.allocateManagedBuffer (size_);
-        *dv_dpPtr = problem().variables().dv_dp();
-        writer.attachCellData(*dv_dpPtr, "dv_dp");
-
-        typename SolutionTypes::ScalarSolution *dV_dC1Ptr = writer.allocateManagedBuffer (size_);
-        typename SolutionTypes::ScalarSolution *dV_dC2Ptr = writer.allocateManagedBuffer (size_);
-        *dV_dC1Ptr = problem().variables().dv()[0];
-        *dV_dC2Ptr = problem().variables().dv()[1];
-        writer.attachCellData(*dV_dC1Ptr, "dV_dC1");
-        writer.attachCellData(*dV_dC2Ptr, "dV_dC2");
-
-        Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate1 = writer.allocateManagedBuffer (size_);
-        Dune::BlockVector<Dune::FieldVector<double,1> > *updEstimate2 = writer.allocateManagedBuffer (size_);
-        *updEstimate1 = problem().variables().updateEstimate()[0];
-        *updEstimate2 = problem().variables().updateEstimate()[1];
-        writer.attachCellData(*updEstimate1, "updEstimate comp 1");
-        writer.attachCellData(*updEstimate2, "updEstimate comp 2");
 #endif
-        return;
-    }
-
-    //! \brief Write additional debug info in a special writer
-    // used via pseudoTS thorugh the initialization procedure.
-    void debugOutput(double pseudoTS = 0.)
-    {
-        std::cout << "Writing debug for current time step\n";
-        debugWriter_.beginWrite(problem().timeManager().time() + pseudoTS);
-        addOutputVtkFields(debugWriter_);
-
-#if DUNE_MINIMAL_DEBUG_LEVEL <= 2
-        int size_ = problem().variables().gridSize();
-        // output porosity, permeability
-        Dune::BlockVector<Dune::FieldVector<double,1> > *poroPtr = debugWriter_.allocateManagedBuffer (size_);
-        Dune::BlockVector<Dune::FieldVector<double,1> > *permPtr = debugWriter_.allocateManagedBuffer (size_);
-
-        Dune::BlockVector<Dune::FieldVector<double,1> > poro_(0.), perm_(0.);
-        poro_.resize(size_); perm_.resize(size_);
-        // iterate over all elements of domain
-        for (ElementIterator eIt = problem().gridView().template begin<0> ();
-                eIt != problem().gridView().template end<0>(); ++eIt)
-        {
-            // get position, index
-            GlobalPosition globalPos = eIt->geometry().center();
-            int globalIdx = problem().variables().index(*eIt);
-            poro_[globalIdx] = problem().spatialParameters().porosity(globalPos, *eIt);
-            perm_[globalIdx] = problem().spatialParameters().intrinsicPermeability(globalPos, *eIt)[0][0];
-        }
-        *poroPtr = poro_;
-        *permPtr = perm_;
-        debugWriter_.attachCellData(*poroPtr, "porosity");
-        debugWriter_.attachCellData(*permPtr, "permeability");
-#endif
-
-        debugWriter_.endWrite();
-        return;
-    }
-    //@}
-
     //! Constructs a FVPressure2P2C object
     /**
      * \param problem a problem class object
      */
-    FVPressure2P2C(Problem& problem) :
-        problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (2 * dim + 1)
-                * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()),
-                debugWriter_(problem.gridView(),"debugOutput2p2c")
+    FVPressure2P2C(Problem& problem) : FVPressureCompositional<TypeTag>(problem),
+        problem_(problem)
     {
         ErrorTermFactor_ = GET_PARAM(TypeTag, Scalar, ErrorTermFactor);
         ErrorTermLowerBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermLowerBound);
         ErrorTermUpperBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermUpperBound);
 
+        maxError_=0.;
         if (pressureType != pw && pressureType != pn)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
@@ -289,167 +175,13 @@ public:
 
 protected:
     Problem& problem_;
-    Matrix A_;
-    RHSVector f_;
-    std::string solverName_;
-    std::string preconditionerName_;
-
-    // debug
-    Dumux::VtkMultiWriter<GridView> debugWriter_;
-
+    Scalar maxError_;
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 };
 
-//! initializes the matrix to store the system of equations
-template<class TypeTag>
-void FVPressure2P2C<TypeTag>::initializeMatrix()
-{
-    // determine matrix row sizes
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-    {
-        // cell index
-        int globalIdxI = problem().variables().index(*eIt);
-
-        // initialize row size
-        int rowSize = 1;
-
-        // set perimeter to zero
-        problem().variables().perimeter(globalIdxI) = 0;
-
-        // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
-        {
-            problem().variables().perimeter(globalIdxI)
-                    += isIt->geometry().volume();
-            if (isIt->neighbor())
-                rowSize++;
-        }
-        A_.setrowsize(globalIdxI, rowSize);
-    }
-    A_.endrowsizes();
-
-    // determine position of matrix entries
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-    {
-        // cell index
-        int globalIdxI = problem().variables().index(*eIt);
-
-        // add diagonal index
-        A_.addindex(globalIdxI, globalIdxI);
-
-        // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
-            if (isIt->neighbor())
-            {
-                // access neighbor
-                ElementPointer outside = isIt->outside();
-                int globalIdxJ = problem().variables().index(*outside);
-
-                // add off diagonal index
-                A_.addindex(globalIdxI, globalIdxJ);
-            }
-    }
-    A_.endindices();
-
-    return;
-}
-
-//! initializes the simulation run
-/*!
- * Initializes the simulation to gain the initial pressure field.
- *
- * \param solveTwice flag to determine possible iterations of the initialization process
- */
-template<class TypeTag>
-void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
-{
-    //prepare stiffness Matrix and Vectors
-    problem().pressureModel().initializeMatrix();
-
-    // initialguess: set saturations, determine visco and mobility for initial pressure equation
-    // at this moment, the pressure is unknown. Hence, dont regard compositional effects.
-    Dune::dinfo << "first saturation guess"<<std::endl; //=J: initialGuess()
-        problem().pressureModel().initialMaterialLaws(false);
-            #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
-                debugOutput();
-            #endif
-    Dune::dinfo << "first pressure guess"<<std::endl;
-        problem().pressureModel().assemble(true);
-        problem().pressureModel().solve();
-            #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
-                debugOutput(1e-6);
-            #endif
-    // update the compositional variables (hence true)
-    Dune::dinfo << "first guess for mass fractions"<<std::endl;//= J: transportInitial()
-        problem().pressureModel().initialMaterialLaws(true);
-
-    // perform concentration update to determine secants
-    Dune::dinfo << "secant guess"<< std::endl;
-        Scalar dt_estimate = 0.;
-        problem().transportModel().update(0., dt_estimate, problem().variables().updateEstimate(), false);
-        dt_estimate = std::min ( problem().timeManager().timeStepSize(), dt_estimate);
-        //make sure the right time-step is used by all processes in the parallel case
-        if (problem().gridView().comm().size() > 1)
-            dt_estimate = problem().gridView().comm().min(dt_estimate);
-
-        problem().variables().updateEstimate() *= dt_estimate;
-        //communicate in parallel case
-        problem().variables().communicateUpdateEstimate();
-            #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
-                debugOutput(2e-6);
-            #endif
-    // pressure calculation
-    Dune::dinfo << "second pressure guess"<<std::endl;
-        problem().pressureModel().assemble(false);
-        problem().pressureModel().solve();
-            #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
-                debugOutput(3e-6);
-            #endif
-
-        // update the compositional variables
-        problem().pressureModel().initialMaterialLaws(true);
-
-
-    if (solveTwice)
-    {
-        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > pressureOld(this->problem().variables().pressure());
-        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > pressureDiff;
-        Scalar pressureNorm = 1.;   //dummy initialization to perform at least 1 iteration
-        int numIter = 1;
-
-        while (pressureNorm > 1e-5 && numIter < 10)
-        {
-            Scalar dt_dummy=0.;    // without this dummy, it will never converge!
-            // update for secants
-            problem().transportModel().update(0., dt_dummy, problem().variables().updateEstimate(), false);   Dune::dinfo << "secant guess"<< std::endl;
-            problem().variables().updateEstimate() *= dt_estimate;
-
-            //communicate in parallel case
-            problem().variables().communicateUpdateEstimate();
-
-            // pressure calculation
-            problem().pressureModel().assemble(false);                 Dune::dinfo << "pressure guess number "<< numIter <<std::endl;
-            problem().pressureModel().solve();
-            // update the compositional variables
-            problem().pressureModel().initialMaterialLaws(true);
-
-            pressureDiff = pressureOld;
-            pressureDiff -= this->problem().variables().pressure();
-            pressureNorm = pressureDiff.infinity_norm();
-            pressureOld = this->problem().variables().pressure();
-            pressureNorm /= pressureOld.infinity_norm();
-
-            numIter++;
-        }
-    }
-    return;
-}
 
 //! function which assembles the system of equations to be solved
 /** for first == true, this function assembles the matrix and right hand side for
@@ -462,175 +194,220 @@ void FVPressure2P2C<TypeTag>::initialize(bool solveTwice)
  * \param first Flag if pressure field is unknown
  */
 template<class TypeTag>
-void FVPressure2P2C<TypeTag>::assemble(bool first)
+void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntry, const Element& elementI, const CellData& cellDataI, const bool first)
 {
-    // initialization: set matrix A_ to zero
-    A_ = 0;
-    f_ = 0;
+    sourceEntry=0.;
 
-    // initialization: set the fluid volume derivatives to zero
-    Scalar dv_dC1(0.), dv_dC2(0.);
-    for (int i = 0; i < problem().variables().gridSize(); i++)
+    // get global coordinate of cell center
+    const GlobalPosition& globalPos = elementI.geometry().center();
+
+    // cell volume & perimeter, assume linear map here
+    Scalar volume = elementI.geometry().volume();
+
+    Scalar densityWI = cellDataI.density(wPhaseIdx);
+    Scalar densityNWI = cellDataI.density(nPhaseIdx);
+
+    /****************implement sources************************/
+    PrimaryVariables source(NAN);
+    problem().source(source, elementI);
+    if(first)
     {
-        problem().variables().dv(i, wPhaseIdx) = 0;     // dv_dC1 = dV/dm1
-        problem().variables().dv(i, nPhaseIdx) = 0;     // dv / dC2
-        problem().variables().dv_dp(i) = 0;      // dv / dp
+            source[contiWEqIdx] /= densityWI;
+            source[contiNEqIdx] /= densityNWI;
     }
+    else
+    {
+            // derivatives of the fluid volume with respect to concentration of components, or pressure
+            if (!cellDataI.hasVolumeDerivatives())
+                this->volumeDerivatives(globalPos, elementI);
 
+            source[contiWEqIdx] *= cellDataI.dv(wCompIdx);        // note: dV_[i][1] = dv_dC1 = dV/dm1
+            source[contiNEqIdx] *= cellDataI.dv(nCompIdx);
+    }
+    sourceEntry[1] = volume * (source[contiWEqIdx] + source[contiNEqIdx]);
+
+    return;
+}
+
+template<class TypeTag>
+void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEntry, const Element& elementI, const CellData& cellDataI,
+                                                                                const bool first)
+{
+    storageEntry = 0.;
+    // cell index
+    int globalIdxI = problem().variables().index(elementI);
+    Scalar volume = elementI.geometry().volume();
+
+    storageEntry = 0.;
     // determine maximum error to scale error-term
     Scalar timestep_ = problem().timeManager().timeStepSize();
-    Scalar maxErr = fabs(problem().variables().volErr().infinity_norm()) / timestep_;
+//    maxErr /= timestep_;
 
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    // compressibility term
+    if (!first && timestep_ != 0)
     {
-        // get global coordinate of cell center
-        const GlobalPosition& globalPos = eIt->geometry().center();
+        Scalar compress_term = cellDataI.dv_dp() / timestep_;
 
-        // cell index
-        int globalIdxI = problem().variables().index(*eIt);
+        storageEntry[0] -= compress_term*volume;
+        storageEntry[1] -= this->pressure(globalIdxI) * compress_term * volume;
 
-        // cell volume & perimeter, assume linear map here
-        Scalar volume = eIt->geometry().volume();
-        Scalar perimeter = problem().variables().perimeter(globalIdxI);
+        if (isnan(compress_term) || isinf(compress_term))
+            DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << globalIdxI);
 
-        const GlobalPosition& gravity_ = problem().gravity();
+        if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
+            DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
+    }
 
-        Scalar densityWI = problem().variables().densityWetting(globalIdxI);
-        Scalar densityNWI = problem().variables().densityNonwetting(globalIdxI);
 
-        /****************implement sources and problem()************************/
-        PrimaryVariables source(NAN);
-        problem().source(source, *eIt);
-        if(first)
+    // error reduction routine: volumetric error is damped and inserted to right hand side
+    // if damping is not done, the solution method gets unstable!
+    problem().variables().cellData(globalIdxI).volumeError() /= timestep_;
+    Scalar maxError = this->maxError_;
+    Scalar erri = fabs(cellDataI.volumeError());
+    Scalar x_lo = ErrorTermLowerBound_;
+    Scalar x_mi = ErrorTermUpperBound_;
+    Scalar fac  = ErrorTermFactor_;
+    if (pressureType == pw)
+        fac = 0.1*ErrorTermFactor_;
+    Scalar lofac = 0.;
+    Scalar hifac = 0.;
+
+    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError) && (!problem().timeManager().willBeFinished()))
+    {
+        if (erri <= x_mi * maxError)
+            storageEntry[1] +=
+                    problem().variables().cellData(globalIdxI).errorCorrection() =
+                            fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxError)
+                                * cellDataI.volumeError() * volume;
+        else
+            storageEntry[1] +=
+                    problem().variables().cellData(globalIdxI).errorCorrection() =
+                            fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxError)
+                                * cellDataI.volumeError() * volume;
+    }
+
+    return;
+}
+
+
+
+template<class TypeTag>
+void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
+        const Intersection& intersection, const CellData& cellDataI, const bool first)
+{
+    entries = 0.;
+    ElementPointer elementPointerI = intersection.inside();
+
+    // get global coordinate of cell center
+    const GlobalPosition& globalPos = elementPointerI->geometry().center();
+
+    // cell index
+    int globalIdxI = problem().variables().index(*elementPointerI);
+
+    // cell volume & perimeter, assume linear map here
+    Scalar volume = elementPointerI->geometry().volume();
+    Scalar perimeter = cellDataI.perimeter();
+
+    const GlobalPosition& gravity_ = problem().gravity();
+
+    Scalar densityWI = cellDataI.density(wPhaseIdx);
+    Scalar densityNWI = cellDataI.density(nPhaseIdx);
+
+    // get absolute permeability
+    FieldMatrix permeabilityI(problem().spatialParameters().intrinsicPermeability(globalPos, *elementPointerI));
+
+    // get mobilities and fractional flow factors
+    Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
+    Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
+    Scalar fractionalWI=0, fractionalNWI=0;
+    if (first)
+    {
+        fractionalWI = lambdaWI / (lambdaWI+ lambdaNWI);
+        fractionalNWI = lambdaNWI / (lambdaWI+ lambdaNWI);
+    }
+
+    Scalar pcI = cellDataI.capillaryPressure();
+
+    // get normal vector
+    const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
+
+    // get face volume
+    Scalar faceArea = intersection.geometry().volume();
+
+        // access neighbor
+        ElementPointer neighborPointer = intersection.outside();
+        int globalIdxJ = problem().variables().index(*neighborPointer);
+        CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
+
+        // gemotry info of neighbor
+        const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+
+        // distance vector between barycenters
+        GlobalPosition distVec = globalPosNeighbor - globalPos;
+
+        // compute distance between cell centers
+        Scalar dist = distVec.two_norm();
+
+        GlobalPosition unitDistVec(distVec);
+        unitDistVec /= dist;
+
+        FieldMatrix permeabilityJ
+            = problem().spatialParameters().intrinsicPermeability(globalPosNeighbor,
+                                                                    *neighborPointer);
+
+        // compute vectorized permeabilities
+        FieldMatrix meanPermeability(0);
+        Dumux::harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
+
+        Dune::FieldVector<Scalar, dim> permeability(0);
+        meanPermeability.mv(unitDistVec, permeability);
+
+        // get densities & mobilities in neighbor
+        Scalar densityWJ = cellDataJ.density(wPhaseIdx);
+        Scalar densityNWJ = cellDataJ.density(nPhaseIdx);
+        Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
+        Scalar lambdaNWJ = cellDataJ.mobility(nPhaseIdx);
+
+        Scalar pcJ = cellDataJ.capillaryPressure();
+
+        Scalar rhoMeanW = 0.5 * (densityWI + densityWJ);
+        Scalar rhoMeanNW = 0.5 * (densityNWI + densityNWJ);
+
+        // reset potential gradients, density
+        Scalar potentialW = 0;
+        Scalar potentialNW = 0;
+        Scalar densityW = 0;
+        Scalar densityNW = 0;
+
+        if (first)     // if we are at the very first iteration we can't calculate phase potentials
         {
-                source[contiWEqIdx] /= densityWI;
-                source[contiNEqIdx] /= densityNWI;
+            // get fractional flow factors in neigbor
+            Scalar fractionalWJ = lambdaWJ / (lambdaWJ+ lambdaNWJ);
+            Scalar fractionalNWJ = lambdaNWJ / (lambdaWJ+ lambdaNWJ);
+
+            // perform central weighting
+            Scalar lambda = (lambdaWI + lambdaWJ) * 0.5 + (lambdaNWI + lambdaNWJ) * 0.5;
+
+            entries[0] = fabs(lambda*faceArea*(permeability*unitOuterNormal)/(dist));
+
+            Scalar factor = (fractionalWI + fractionalWJ) * (rhoMeanW) * 0.5 + (fractionalNWI + fractionalNWJ) * (rhoMeanNW) * 0.5;
+            entries[1] = factor * lambda * faceArea * (permeability * gravity_) * (unitOuterNormal * unitDistVec);
         }
         else
         {
-                // derivatives of the fluid volume with respect to concentration of components, or pressure
-                if (problem().variables().dv(globalIdxI, wCompIdx) == 0)
-                    volumeDerivatives(globalPos, *eIt,
-                            problem().variables().dv(globalIdxI, wPhaseIdx),
-                            problem().variables().dv(globalIdxI, nPhaseIdx),
-                            problem().variables().dv_dp(globalIdxI));
+            // determine volume derivatives
+            if (!cellDataJ.hasVolumeDerivatives())
+                this->volumeDerivatives(globalPosNeighbor, *neighborPointer);
 
-                source[contiWEqIdx] *= problem().variables().dv(globalIdxI, wPhaseIdx);        // note: dV_[i][1] = dv_dC1 = dV/dm1
-                source[contiNEqIdx] *= problem().variables().dv(globalIdxI, nPhaseIdx);
-        }
-        f_[globalIdxI] = volume * (source[contiWEqIdx] + source[contiNEqIdx]);
-        /***********************************/
+            Scalar dv_dC1 = (cellDataJ.dv(wPhaseIdx)
+                        + cellDataI.dv(wPhaseIdx)) / 2; // dV/dm1= dv/dC^1
+            Scalar dv_dC2 = (cellDataJ.dv(nPhaseIdx)
+                        + cellDataI.dv(nPhaseIdx)) / 2;
 
-        // get absolute permeability
-        FieldMatrix permeabilityI(problem().spatialParameters().intrinsicPermeability(globalPos, *eIt));
-
-        // get mobilities and fractional flow factors
-        Scalar lambdaWI = problem().variables().mobilityWetting(globalIdxI);
-        Scalar lambdaNWI = problem().variables().mobilityNonwetting(globalIdxI);
-        Scalar fractionalWI=0, fractionalNWI=0;
-        if (first)
-        {
-            fractionalWI = lambdaWI / (lambdaWI+ lambdaNWI);
-            fractionalNWI = lambdaNWI / (lambdaWI+ lambdaNWI);
-        }
-
-        Scalar pcI = problem().variables().capillaryPressure(globalIdxI);
-
-        // prepare meatrix entries
-        Scalar entry=0.;
-        Scalar rightEntry=0.;
-
-        // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
-        {
-            // get normal vector
-            const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
-
-            // get face volume
-            Scalar faceArea = isIt->geometry().volume();
-
-            /************* handle interior face *****************/
-            if (isIt->neighbor())
-            {
-                // access neighbor
-                ElementPointer neighborPointer = isIt->outside();
-                int globalIdxJ = problem().variables().index(*neighborPointer);
-
-                // gemotry info of neighbor
-                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
-
-                // distance vector between barycenters
-                GlobalPosition distVec = globalPosNeighbor - globalPos;
-
-                // compute distance between cell centers
-                Scalar dist = distVec.two_norm();
-
-                GlobalPosition unitDistVec(distVec);
-                unitDistVec /= dist;
-
-                FieldMatrix permeabilityJ
-                    = problem().spatialParameters().intrinsicPermeability(globalPosNeighbor,
-                                                                            *neighborPointer);
-
-                // compute vectorized permeabilities
-                FieldMatrix meanPermeability(0);
-                Dumux::harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
-
-                Dune::FieldVector<Scalar, dim> permeability(0);
-                meanPermeability.mv(unitDistVec, permeability);
-
-                // get mobilities in neighbor
-                Scalar lambdaWJ = problem().variables().mobilityWetting(globalIdxJ);
-                Scalar lambdaNWJ = problem().variables().mobilityNonwetting(globalIdxJ);
-
-                // phase densities in cell in neighbor
-                Scalar densityWJ = problem().variables().densityWetting(globalIdxJ);
-                Scalar densityNWJ = problem().variables().densityNonwetting(globalIdxJ);
-
-                Scalar pcJ = problem().variables().capillaryPressure(globalIdxJ);
-
-                Scalar rhoMeanW = 0.5 * (densityWI + densityWJ);
-                Scalar rhoMeanNW = 0.5 * (densityNWI + densityNWJ);
-
-                // reset potential gradients, density
-                Scalar potentialW = 0;
-                Scalar potentialNW = 0;
-                Scalar densityW = 0;
-                Scalar densityNW = 0;
-
-                if (first)     // if we are at the very first iteration we can't calculate phase potentials
-                {
-                    // get fractional flow factors in neigbor
-                    Scalar fractionalWJ = lambdaWJ / (lambdaWJ+ lambdaNWJ);
-                    Scalar fractionalNWJ = lambdaNWJ / (lambdaWJ+ lambdaNWJ);
-
-                    // perform central weighting
-                    Scalar lambda = (lambdaWI + lambdaWJ) * 0.5 + (lambdaNWI + lambdaNWJ) * 0.5;
-
-                    entry = fabs(lambda*faceArea*(permeability*unitOuterNormal)/(dist));
-
-                    Scalar factor = (fractionalWI + fractionalWJ) * (rhoMeanW) * 0.5 + (fractionalNWI + fractionalNWJ) * (rhoMeanNW) * 0.5;
-                    rightEntry = factor * lambda * faceArea * (permeability * gravity_) * (unitOuterNormal * unitDistVec);
-                }
-                else
-                {
-                    // determine volume derivatives
-                    if (problem().variables().dv(globalIdxJ, wCompIdx) == 0)
-                        volumeDerivatives(globalPosNeighbor, *neighborPointer,
-                                problem().variables().dv(globalIdxJ, wPhaseIdx),
-                                problem().variables().dv(globalIdxJ, nPhaseIdx),
-                                problem().variables().dv_dp(globalIdxJ));
-                    dv_dC1 = (problem().variables().dv(globalIdxJ, wPhaseIdx)
-                                + problem().variables().dv(globalIdxI, wPhaseIdx)) / 2; // dV/dm1= dv/dC^1
-                    dv_dC2 = (problem().variables().dv(globalIdxJ, nPhaseIdx)
-                                + problem().variables().dv(globalIdxI, nPhaseIdx)) / 2;
-
-                    Scalar graddv_dC1 = (problem().variables().dv(globalIdxJ, wPhaseIdx)
-                                            - problem().variables().dv(globalIdxI, wPhaseIdx)) / dist;
-                    Scalar graddv_dC2 = (problem().variables().dv(globalIdxJ, nPhaseIdx)
-                                            - problem().variables().dv(globalIdxI, nPhaseIdx)) / dist;
+            Scalar graddv_dC1 = (cellDataJ.dv(wPhaseIdx)
+                                    - cellDataI.dv(wPhaseIdx)) / dist;
+            Scalar graddv_dC2 = (cellDataJ.dv(nPhaseIdx)
+                                    - cellDataI.dv(nPhaseIdx)) / dist;
 
 
 //                    potentialW = problem().variables().potentialWetting(globalIdxI, isIndex);
@@ -641,125 +418,137 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 //
 //                    densityW = (potentialW == 0.) ? rhoMeanW : densityW;
 //                    densityNW = (potentialNW == 0.) ? rhoMeanNW : densityNW;
-                    //jochen: central weighting for gravity term
-                    densityW = rhoMeanW; densityNW = rhoMeanNW;
+            //jochen: central weighting for gravity term
+            densityW = rhoMeanW; densityNW = rhoMeanNW;
 
-                    switch (pressureType)
-                    {
-                    case pw:
-                    {
-                        potentialW = (unitOuterNormal * distVec) * (problem().variables().pressure()[globalIdxI]
-                                - problem().variables().pressure()[globalIdxJ]) / (dist*dist);
-                        potentialNW = (unitOuterNormal * distVec) * (problem().variables().pressure()[globalIdxI]
-                                - problem().variables().pressure()[globalIdxJ] + pcI - pcJ) / (dist*dist);
-                        break;
-                    }
-                    case pn:
-                    {
-                        potentialW = (unitOuterNormal * distVec) * (problem().variables().pressure()[globalIdxI]
-                                - problem().variables().pressure()[globalIdxJ] - pcI + pcJ) / (dist*dist);
-                        potentialNW = (unitOuterNormal * distVec) * (problem().variables().pressure()[globalIdxI]
-                                - problem().variables().pressure()[globalIdxJ]) / (dist*dist);
-                        break;
-                    }
-                    }
+            switch (pressureType)
+            {
+            case pw:
+            {
+                potentialW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                        - this->pressure(globalIdxJ)) / dist;
+                potentialNW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                        - this->pressure(globalIdxJ) + pcI - pcJ) / dist;
+                break;
+            }
+            case pn:
+            {
+                potentialW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                        - this->pressure(globalIdxJ) - pcI + pcJ) / dist;
+                potentialNW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                        - this->pressure(globalIdxJ)) / dist;
+                break;
+            }
+            }
 
-                    potentialW += densityW * (unitDistVec * gravity_);
-                    potentialNW += densityNW * (unitDistVec * gravity_);
+            potentialW += densityW * (unitDistVec * gravity_);
+            potentialNW += densityNW * (unitDistVec * gravity_);
 
-                    // initialize convenience shortcuts
-                    Scalar lambdaW, lambdaN;
-                    Scalar dV_w(0.), dV_n(0.);        // dV_a = \sum_k \rho_a * dv/dC^k * X^k_a
-                    Scalar gV_w(0.), gV_n(0.);        // multipaper eq(3.3) line 3 analogon dV_w
-
-
-                    //do the upwinding of the mobility depending on the phase potentials
-                    if (potentialW >= 0.)
-                    {
-                        dV_w = (dv_dC1 * problem().variables().wet_X1(globalIdxI) + dv_dC2 * (1. - problem().variables().wet_X1(globalIdxI)));
-                        lambdaW = problem().variables().mobilityWetting(globalIdxI);
-                        gV_w = (graddv_dC1 * problem().variables().wet_X1(globalIdxI) + graddv_dC2 * (1. - problem().variables().wet_X1(globalIdxI)));
-                        dV_w *= densityWI; gV_w *= densityWI;
-                    }
-                    else
-                    {
-                        dV_w = (dv_dC1 * problem().variables().wet_X1(globalIdxJ) + dv_dC2 * (1. - problem().variables().wet_X1(globalIdxJ)));
-                        lambdaW = problem().variables().mobilityWetting(globalIdxJ);
-                        gV_w = (graddv_dC1 * problem().variables().wet_X1(globalIdxJ) + graddv_dC2 * (1. - problem().variables().wet_X1(globalIdxJ)));
-                        dV_w *= densityWJ; gV_w *= densityWJ;
-                    }
-                    if (potentialNW >= 0.)
-                    {
-                        dV_n = (dv_dC1 * problem().variables().nonwet_X1(globalIdxI) + dv_dC2 * (1. - problem().variables().nonwet_X1(globalIdxI)));
-                        lambdaN = problem().variables().mobilityNonwetting(globalIdxI);
-                        gV_n = (graddv_dC1 * problem().variables().nonwet_X1(globalIdxI) + graddv_dC2 * (1. - problem().variables().nonwet_X1(globalIdxI)));
-                        dV_n *= densityNWI; gV_n *= densityNWI;
-                    }
-                    else
-                    {
-                        dV_n = (dv_dC1 * problem().variables().nonwet_X1(globalIdxJ) + dv_dC2 * (1. - problem().variables().nonwet_X1(globalIdxJ)));
-                        lambdaN = problem().variables().mobilityNonwetting(globalIdxJ);
-                        gV_n = (graddv_dC1 * problem().variables().nonwet_X1(globalIdxJ) + graddv_dC2 * (1. - problem().variables().nonwet_X1(globalIdxJ)));
-                        dV_n *= densityNWJ; gV_n *= densityNWJ;
-                    }
-
-                    //calculate current matrix entry
-                    entry = faceArea * (lambdaW * dV_w + lambdaN * dV_n)
-                            - volume * faceArea / perimeter * (lambdaW * gV_w + lambdaN * gV_n);     // = boundary integral - area integral
-                    entry *= fabs((permeability*unitOuterNormal)/(dist));
-
-                    //calculate right hand side
-                    rightEntry = faceArea  * (unitOuterNormal * unitDistVec) * (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n);
-                    rightEntry -= volume * faceArea / perimeter * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n);
-                    rightEntry *= (permeability * gravity_);         // = multipaper eq(3.3) line 2+3
-
-                    // include capillary pressure fluxes
-                    switch (pressureType)
-                    {
-                    case pw:
-                        {
-                            // calculate capillary pressure gradient
-                            Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-                            pCGradient *= (pcI - pcJ) / dist;
-
-                            //add capillary pressure term to right hand side
-                            rightEntry += lambdaN * dV_n * (permeability * pCGradient) * faceArea
-                                         - lambdaN * gV_n * (permeability * pCGradient) * volume * faceArea / perimeter;
-                            break;
-                        }
-                    case pn:
-                        {
-                            // calculate capillary pressure gradient
-                            Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-                            pCGradient *= (pcI - pcJ) / dist;
-
-                            //add capillary pressure term to right hand side
-                            rightEntry -= lambdaW * dV_w * (permeability * pCGradient) * faceArea
-                                            - lambdaW * gV_w * (permeability * pCGradient) * volume * faceArea / perimeter;
-                            break;
-                        }
-                    }
-                }   // end !first
-
-                //set right hand side
-                f_[globalIdxI] -= rightEntry;
-                // set diagonal entry
-                A_[globalIdxI][globalIdxI] += entry;
-                // set off-diagonal entry
-                A_[globalIdxI][globalIdxJ] = -entry;
-            }   // end neighbor
-            /****************************************************/
+            // initialize convenience shortcuts
+            Scalar lambdaW, lambdaN;
+            Scalar dV_w(0.), dV_n(0.);        // dV_a = \sum_k \rho_a * dv/dC^k * X^k_a
+            Scalar gV_w(0.), gV_n(0.);        // multipaper eq(3.3) line 3 analogon dV_w
 
 
-            /************* boundary face ************************/
+            //do the upwinding of the mobility depending on the phase potentials
+            if (potentialW >= 0.)
+            {
+                dV_w = (dv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
+                        + dv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
+                lambdaW = cellDataI.mobility(wPhaseIdx);
+                gV_w = (graddv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
+                        + graddv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
+                dV_w *= densityWI; gV_w *= densityWI;
+            }
             else
             {
+                dV_w = (dv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
+                        + dv_dC2 * cellDataJ.massFraction(wPhaseIdx, nCompIdx));
+                lambdaW = cellDataJ.mobility(wPhaseIdx);
+                gV_w = (graddv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
+                        + graddv_dC2 * cellDataJ.massFraction(wPhaseIdx, nCompIdx));
+                dV_w *= densityWJ; gV_w *= densityWJ;
+            }
+            if (potentialNW >= 0.)
+            {
+                dV_n = (dv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
+                        + dv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
+                lambdaN = cellDataI.mobility(nPhaseIdx);
+                gV_n = (graddv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
+                        + graddv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
+                dV_n *= densityNWI; gV_n *= densityNWI;
+            }
+            else
+            {
+                dV_n = (dv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
+                        + dv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
+                lambdaN = cellDataJ.mobility(nPhaseIdx);
+                gV_n = (graddv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
+                        + graddv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
+                dV_n *= densityNWJ; gV_n *= densityNWJ;
+            }
+
+            //calculate current matrix entry
+            entries[0] = faceArea * (lambdaW * dV_w + lambdaN * dV_n);
+            entries[0] -= volume * faceArea / perimeter * (lambdaW * gV_w + lambdaN * gV_n);     // = boundary integral - area integral
+            entries[0] *= fabs((permeability*unitOuterNormal)/(dist));
+
+            //calculate right hand side
+            entries[1] = faceArea  * (unitOuterNormal * unitDistVec) * (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n);
+            entries[1] -= volume * faceArea / perimeter * (densityW * lambdaW * gV_w + densityNW * lambdaN * gV_n);
+            entries[1] *= (permeability * gravity_);         // = multipaper eq(3.3) line 2+3
+
+            // include capillary pressure fluxes
+            switch (pressureType)
+            {
+            case pw:
+                {
+                    // calculate capillary pressure gradient
+                    Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
+                    pCGradient *= (pcI - pcJ) / dist;
+
+                    //add capillary pressure term to right hand side
+                    entries[1] += lambdaN * dV_n * (permeability * pCGradient) * faceArea
+                                 - lambdaN * gV_n * (permeability * pCGradient) * volume * faceArea / perimeter;
+                    break;
+                }
+            case pn:
+                {
+                    // calculate capillary pressure gradient
+                    Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
+                    pCGradient *= (pcI - pcJ) / dist;
+
+                    //add capillary pressure term to right hand side
+                    entries[1] -= lambdaW * dV_w * (permeability * pCGradient) * faceArea
+                                    - lambdaW * gV_w * (permeability * pCGradient) * volume * faceArea / perimeter;
+                    break;
+                }
+            }
+        }   // end !first
+}
+
+template<class TypeTag>
+void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entries,
+        const Intersection& intersection, const CellData& cellDataI, const bool first)
+{
+    entries = 0.;
+    // get global coordinate of cell center
+    ElementPointer elementPointerI = intersection.inside();
+    const GlobalPosition& globalPos = elementPointerI->geometry().center();
+    int globalIdxI = problem().variables().index(*elementPointerI);
+
+    // get normal vector
+    const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
+    // get face volume
+    Scalar faceArea = intersection.geometry().volume();
                 // get volume derivatives inside the cell
-                dv_dC1 = problem().variables().dv(globalIdxI, wCompIdx);
-                dv_dC2 = problem().variables().dv(globalIdxI, nCompIdx);
+                Scalar dv_dC1 = cellDataI.dv(wCompIdx);
+                Scalar dv_dC2 = cellDataI.dv(nCompIdx);
+                Scalar densityWI = cellDataI.density(wPhaseIdx);
+                Scalar densityNWI = cellDataI.density(nPhaseIdx);
 
                 // center of face in global coordinates
-                const GlobalPosition& globalPosFace = isIt->geometry().center();
+                const GlobalPosition& globalPosFace = intersection.geometry().center();
 
                 // geometrical information
                 GlobalPosition distVec(globalPosFace - globalPos);
@@ -769,7 +558,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 
                 //get boundary condition for boundary face center
                 BoundaryTypes bcType;
-                problem().boundaryTypes(bcType, *isIt);
+                problem().boundaryTypes(bcType, intersection);
 
                 // prepare pressure boundary condition
                 PhaseVector pressBC(0.);
@@ -778,6 +567,13 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                 /**********         Dirichlet Boundary        *************/
                 if (bcType.isDirichlet(Indices::pressureEqIdx))
                 {
+                    // get absolute permeability
+                    FieldMatrix permeabilityI(problem().spatialParameters().intrinsicPermeability(globalPos, *elementPointerI));
+                    const GlobalPosition& gravity_ = problem().gravity();
+                    // get mobilities and fractional flow factors
+                    Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
+                    Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
+
                     //permeability vector at boundary
                     Dune::FieldVector<Scalar, dim> permeability(0);
                     permeabilityI.mv(unitDistVec, permeability);
@@ -787,25 +583,29 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 
                     //read boundary values
                     PrimaryVariables primaryVariablesOnBoundary(NAN);
-                    problem().dirichlet(primaryVariablesOnBoundary, *isIt);
+                    problem().dirichlet(primaryVariablesOnBoundary, intersection);
 
                     if (first)
                     {
+
+                        Scalar fractionalWI=0, fractionalNWI=0;
+                        fractionalWI = lambdaWI / (lambdaWI+ lambdaNWI);
+                        fractionalNWI = lambdaNWI / (lambdaWI+ lambdaNWI);
+
                         Scalar lambda = lambdaWI+lambdaNWI;
-                        A_[globalIdxI][globalIdxI] += lambda * faceArea * (permeability * unitOuterNormal) / (dist);
+                        entries[0] += lambda * faceArea * (permeability * unitOuterNormal) / (dist);
                         Scalar pressBC = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                        f_[globalIdxI] += lambda * faceArea * pressBC * (permeability * unitOuterNormal) / (dist);
+                        entries[1] += lambda * faceArea * pressBC * (permeability * unitOuterNormal) / (dist);
                         Scalar rightentry = (fractionalWI * densityWI
                                              + fractionalNWI * densityNWI)
                                              * lambda * faceArea * (unitOuterNormal * unitDistVec) *(permeability*gravity_);
-                        f_[globalIdxI] -= rightentry;
+                        entries[1] -= rightentry;
                     }
                     else    //not first
                     {
                         // read boundary values
                         problem().transportModel().evalBoundary(globalPosFace,
-                                                                    isIt,
-                                                                    eIt,
+                                                                    intersection,
                                                                     BCfluidState,
                                                                     pressBC);
                         pcBound = pressBC[nPhaseIdx] - pressBC[wPhaseIdx];
@@ -837,10 +637,10 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         case Indices::permDependent:
                             {
                             lambdaWBound = MaterialLaw::krw(
-                                    problem().spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
+                                    problem().spatialParameters().materialLawParams(globalPos, *elementPointerI), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityWBound;
                             lambdaNWBound = MaterialLaw::krn(
-                                    problem().spatialParameters().materialLawParams(globalPos, *eIt), BCfluidState.saturation(wPhaseIdx))
+                                    problem().spatialParameters().materialLawParams(globalPos, *elementPointerI), BCfluidState.saturation(wPhaseIdx))
                                     / viscosityNWBound;
                             break;
                             }
@@ -872,17 +672,17 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                             if (pressureType == pw)
                             {
                                 potentialW = ((unitOuterNormal * distVec)  / (dist * dist)) *
-                                        (problem().variables().pressure()[globalIdxI] - pressBC[wPhaseIdx]);
+                                        (this->pressure(globalIdxI) - pressBC[wPhaseIdx]);
                                 potentialNW = ((unitOuterNormal * distVec)  / (dist * dist)) *
-                                        (problem().variables().pressure()[globalIdxI] + pcI
+                                        (this->pressure(globalIdxI) + cellDataI.capillaryPressure()
                                                 - pressBC[wPhaseIdx] - pcBound);
                             }
                             else if (pressureType == pn)
                             {
                                 potentialW = ((unitOuterNormal * distVec) / (dist * dist)) *
-                                        (problem().variables().pressure()[globalIdxI] - pcI - pressBC[nPhaseIdx] + pcBound);
+                                        (this->pressure(globalIdxI) - cellDataI.capillaryPressure() - pressBC[nPhaseIdx] + pcBound);
                                 potentialNW = ((unitOuterNormal * distVec) / (dist * dist)) *
-                                        (problem().variables().pressure()[globalIdxI] - pressBC[nPhaseIdx]);
+                                        (this->pressure(globalIdxI) - pressBC[nPhaseIdx]);
                             }
                             potentialW += densityW * (unitDistVec * gravity_);
                             potentialNW += densityNW * (unitDistVec * gravity_);
@@ -895,8 +695,8 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         if (potentialW >= 0.)
                         {
                             densityW = (potentialW == 0) ? rhoMeanW : densityWI;
-                            dV_w = (dv_dC1 * problem().variables().wet_X1(globalIdxI)
-                                               + dv_dC2 * (1. - problem().variables().wet_X1(globalIdxI)));
+                            dV_w = (dv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
+                                               + dv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
                             dV_w *= densityW;
                             lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWBound) : lambdaWI;
                         }
@@ -911,7 +711,8 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         if (potentialNW >= 0.)
                         {
                             densityNW = (potentialNW == 0) ? rhoMeanNW : densityNWI;
-                            dV_n = (dv_dC1 * problem().variables().nonwet_X1(globalIdxI) + dv_dC2 * (1. - problem().variables().nonwet_X1(globalIdxI)));
+                            dV_n = (dv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
+                                    + dv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
                             dV_n *= densityNW;
                             lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWBound) : lambdaNWI;
                         }
@@ -940,7 +741,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                             {
                                 // calculate capillary pressure gradient
                                 Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-                                pCGradient *= (pcI - pcBound) / dist;
+                                pCGradient *= (cellDataI.capillaryPressure() - pcBound) / dist;
 
                                 //add capillary pressure term to right hand side
                                 rightEntry += lambdaNW * dV_n * (permeability * pCGradient) * faceArea;
@@ -950,7 +751,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                             {
                                 // calculate capillary pressure gradient
                                 Dune::FieldVector<Scalar, dim> pCGradient = unitDistVec;
-                                pCGradient *= (pcI - pcBound) / dist;
+                                pCGradient *= (cellDataI.capillaryPressure() - pcBound) / dist;
 
                                 //add capillary pressure term to right hand side
                                 rightEntry -= lambdaW * dV_w * (permeability * pCGradient) * faceArea;
@@ -960,9 +761,9 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
 
 
                         // set diagonal entry and right hand side entry
-                        A_[globalIdxI][globalIdxI] += entry;
-                        f_[globalIdxI] += entry * primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                        f_[globalIdxI] -= rightEntry * (unitOuterNormal * unitDistVec);
+                        entries[0] += entry;
+                        entries[1] += entry * primaryVariablesOnBoundary[Indices::pressureEqIdx];
+                        entries[1] -= rightEntry * (unitOuterNormal * unitDistVec);
                     }    //end of if(first) ... else{...
                 }   // end dirichlet
 
@@ -972,7 +773,7 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                 else if(bcType.isNeumann(Indices::pressureEqIdx))
                 {
                     PrimaryVariables J(NAN);
-                    problem().neumann(J, *isIt);
+                    problem().neumann(J, intersection);
                     if (first)
                     {
                         J[contiWEqIdx] /= densityWI;
@@ -984,80 +785,207 @@ void FVPressure2P2C<TypeTag>::assemble(bool first)
                         J[contiNEqIdx] *= dv_dC2;
                     }
 
-                    f_[globalIdxI] -= (J[contiWEqIdx] + J[contiNEqIdx]) * faceArea;
+                    entries[1] -= (J[contiWEqIdx] + J[contiNEqIdx]) * faceArea;
                 }
                 else
                     DUNE_THROW(Dune::NotImplemented, "Boundary Condition neither Dirichlet nor Neumann!");
-            }
-        } // end all intersections
-//        printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-//        printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
-        // compressibility term
-        if (!first && timestep_ != 0)
-        {
-            Scalar compress_term = problem().variables().dv_dp(globalIdxI) / timestep_;
 
-            A_[globalIdxI][globalIdxI] -= compress_term*volume;
-            f_[globalIdxI] -= problem().variables().pressure()[globalIdxI] * compress_term * volume;
 
-            if (isnan(compress_term) || isinf(compress_term))
-                DUNE_THROW(Dune::MathError, "Compressibility term leads to NAN matrix entry at index " << globalIdxI);
-
-            if(!GET_PROP_VALUE(TypeTag, EnableCompressibility))
-                DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
-        }
-
-        // error reduction routine: volumetric error is damped and inserted to right hand side
-        // if damping is not done, the solution method gets unstable!
-        problem().variables().volErr()[globalIdxI] /= timestep_;
-        Scalar erri = fabs(problem().variables().volErr()[globalIdxI]);
-        Scalar x_lo = ErrorTermLowerBound_;
-        Scalar x_mi = ErrorTermUpperBound_;
-        Scalar fac  = ErrorTermFactor_;
-        if (pressureType == pw)
-            fac = 0.1*ErrorTermFactor_;
-        Scalar lofac = 0.;
-        Scalar hifac = 0.;
-
-        if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxErr) && (!problem().timeManager().willBeFinished()))
-        {
-            if (erri <= x_mi * maxErr)
-                f_[globalIdxI] +=
-                        problem().variables().errorCorrection(globalIdxI) =
-                                fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxErr)
-                                    * problem().variables().volErr()[globalIdxI] * volume;
-            else
-                f_[globalIdxI] +=
-                        problem().variables().errorCorrection(globalIdxI) =
-                                fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr)
-                                    * problem().variables().volErr()[globalIdxI] * volume;
-        }
-//        printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-    } // end grid traversal
-//    printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
     return;
 }
 
-//! solves the system of equations to get the spatial distribution of the pressure
+//! constitutive functions are updated once if new concentrations are calculated and stored in the variables container
 template<class TypeTag>
-void FVPressure2P2C<TypeTag>::solve()
+void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 {
-    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
-    int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+    // instantiate a brandnew fluid state object
+    FluidState fluidState;
 
-    if (verboseLevelSolver)
-        std::cout << "compositional 2p2c: solve for pressure" << std::endl;
+    Scalar maxError = 0.;
+    // iterate through leaf grid an evaluate c0 at cell center
+    ElementIterator eItEnd = problem().gridView().template end<0> ();
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    {
+        int globalIdx = problem().variables().index(*eIt);
 
-    Solver solver(problem());
-    solver.solve(A_, problem().variables().pressure(), f_);
-    //                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-    //                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
-    //                printvector(std::cout, (problem().variables().pressure()), "pressure", "row", 200, 1, 3);
+        CellData& cellData = problem().variables().cellData(globalIdx);
+
+        this->updateMaterialLawsInElement(*eIt);
+
+        maxError = std::max(maxError, fabs(cellData.volumeError()));
+    }
+    maxError_ = maxError/problem().timeManager().timeStepSize();
+    return;
+}
+
+template<class TypeTag>
+void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& elementI)
+{
+    // instantiate a brandnew fluid state object
+    FluidState fluidState;
+
+    // get global coordinate of cell center
+    GlobalPosition globalPos = elementI.geometry().center();
+
+    int globalIdx = problem().variables().index(elementI);
+    CellData& cellData = problem().variables().cellData(globalIdx);
+
+    Scalar temperature_ = problem().temperatureAtPos(globalPos);
+    // reset
+    cellData.reset();
+
+    // make shure total concentrations from solution vector are exact in fluidstate
+    fluidState.setMassConcentration(wCompIdx,
+            problem().transportModel().transportedQuantity()[wCompIdx][globalIdx]);
+    fluidState.setMassConcentration(nCompIdx,
+            problem().transportModel().transportedQuantity()[nCompIdx][globalIdx]);
+    // get the overall mass of component 1 Z1 = C^k / (C^1+C^2) [-]
+    Scalar Z1 = fluidState.massConcentration(wCompIdx)
+            / (fluidState.massConcentration(wCompIdx)
+                    + fluidState.massConcentration(nCompIdx));
+
+    // make shure only physical quantities enter flash calculation
+    #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+    if(Z1<0. || Z1 > 1.)
+    {
+        Dune::dgrave << "Feed mass fraction unphysical: Z1 = " << Z1
+               << " at global Idx " << globalIdx
+               << " , because totalConcentration(wCompIdx) = "
+               << cellData.totalConcentration(wCompIdx)
+               << " and totalConcentration(nCompIdx) = "
+               << cellData.totalConcentration(nCompIdx)<< std::endl;
+        if(Z1<0.)
+            {
+            Z1 = 0.;
+            cellData.setTotalConcentration(wCompIdx, 0.);
+            Dune::dgrave << "Regularize totalConcentration(wCompIdx) = "
+                << cellData.totalConcentration(wCompIdx)<< std::endl;
+            }
+        else
+            {
+            Z1 = 1.;
+            cellData.setTotalConcentration(nCompIdx, 0.);
+            Dune::dgrave << "Regularize totalConcentration(globalIdx, nCompIdx) = "
+                << cellData.totalConcentration(nCompIdx)<< std::endl;
+            }
+    }
+    #endif
+
+    //determine phase pressures from primary pressure variable and pc of last TS
+    PhaseVector pressure(0.);
+    switch (pressureType)
+    {
+    case pw:
+    {
+        pressure[wPhaseIdx] = this->pressure(globalIdx);
+        pressure[nPhaseIdx] = this->pressure(globalIdx)
+                  + cellData.capillaryPressure();
+        break;
+    }
+    case pn:
+    {
+        pressure[wPhaseIdx] = this->pressure(globalIdx)
+                 - cellData.capillaryPressure();
+        pressure[nPhaseIdx] = this->pressure(globalIdx);
+        break;
+    }
+    }
+
+    //complete fluid state
+    fluidState.update(Z1, pressure, problem().spatialParameters().porosity(globalPos, elementI), temperature_);
+
+    // iterations part in case of enabled capillary pressure
+    Scalar pc(0.), oldPc(0.);
+    if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+    {
+        pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPos, elementI),
+                fluidState.saturation(wPhaseIdx));
+        int maxiter = 5; int iterout = -1;
+        //start iteration loop
+        for(int iter=0; iter < maxiter; iter++)
+        {
+            //prepare pressures to enter flash calculation
+            switch (pressureType)
+            {
+            case pw:
+            {
+                // pressure[w] does not change, since it is primary variable
+                pressure[nPhaseIdx] = pressure[wPhaseIdx] + pc;
+                break;
+            }
+            case pn:
+            {
+                // pressure[n] does not change, since it is primary variable
+                pressure[wPhaseIdx] = pressure[nPhaseIdx] - pc;
+                break;
+            }
+            }
+
+            //store old pc
+            oldPc = pc;
+            //update with better pressures
+            fluidState.update(Z1, pressure, problem().spatialParameters().porosity(globalPos, elementI),
+                                problem().temperatureAtPos(globalPos));
+            pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPos, elementI),
+                                fluidState.saturation(wPhaseIdx));
+            // TODO: get right criterion, do output for evaluation
+            //converge criterion
+            if (abs(oldPc-pc)<10)
+                maxiter = 1;
+            iterout = iter;
+        }
+        if(iterout !=0)
+        Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx << ", pc delta still " << abs(oldPc-pc) << std::endl;
+    }
+
+    // secondary variables
+    // initialize saturation, capillary pressure
+    cellData.setFluidState(fluidState);
+
+    // initialize phase properties not stored in fluidstate
+    cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
+    cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
+
+    // initialize mobilities
+    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParameters().materialLawParams(globalPos, elementI), fluidState.saturation(wPhaseIdx))
+                / cellData.viscosity(wPhaseIdx));
+    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParameters().materialLawParams(globalPos, elementI), fluidState.saturation(wPhaseIdx))
+                / cellData.viscosity(nPhaseIdx));
+
+    // determine volume mismatch between actual fluid volume and pore volume
+    Scalar sumConc = (cellData.totalConcentration(wCompIdx)
+            + cellData.totalConcentration(nCompIdx));
+    Scalar massw = cellData.numericalDensity(wPhaseIdx) = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
+    Scalar massn = cellData.numericalDensity(nPhaseIdx) = sumConc * fluidState.phaseMassFraction(nPhaseIdx);
+
+    if ((cellData.density(wPhaseIdx)*cellData.density(nPhaseIdx)) == 0)
+        DUNE_THROW(Dune::MathError, "Decoupled2p2c::postProcessUpdate: try to divide by 0 density");
+    Scalar vol = massw / cellData.density(wPhaseIdx) + massn / cellData.density(nPhaseIdx);
+    if (problem().timeManager().timeStepSize() != 0)
+    {
+        cellData.volumeError()=(vol - problem().spatialParameters().porosity(globalPos, elementI));
+
+        if (std::isnan(cellData.volumeError()))
+        {
+            DUNE_THROW(Dune::MathError, "Decoupled2p2c::postProcessUpdate:\n"
+                    << "volErr[" << globalIdx << "] isnan: vol = " << vol
+                    << ", massw = " << massw << ", rho_l = " << cellData.density(wPhaseIdx)
+                    << ", massn = " << massn << ", rho_g = " << cellData.density(nPhaseIdx)
+                    << ", poro = " << problem().spatialParameters().porosity(globalPos, elementI)
+                    << ", dt = " << problem().timeManager().timeStepSize());
+        }
+    }
+    else
+        cellData.volumeError()=0.;
+
+    cellData.reset();
 
     return;
 }
 
+
+#if 0
 /*!
  *  \brief initializes the fluid distribution and hereby the variables container
  *
@@ -1070,8 +998,8 @@ void FVPressure2P2C<TypeTag>::solve()
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 {
-    problem().variables().communicateTransportedQuantity();
-    problem().variables().communicatePressure();
+//    problem().variables().communicateTransportedQuantity();
+//    problem().variables().communicatePressure();
 
     // initialize the fluid system
     FluidState fluidState;
@@ -1244,8 +1172,8 @@ void FVPressure2P2C<TypeTag>::initialMaterialLaws(bool compositional)
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 {
-    problem().variables().communicateTransportedQuantity();
-    problem().variables().communicatePressure();
+//    problem().variables().communicateTransportedQuantity();
+//    problem().variables().communicatePressure();
 
     // instantiate a brandnew fluid state object
     FluidState fluidState;
@@ -1546,7 +1474,7 @@ void FVPressure2P2C<TypeTag>::volumeDerivatives(GlobalPosition globalPos, Elemen
         DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
     }
 }
-
+#endif
 
 }//end namespace Dumux
 #endif

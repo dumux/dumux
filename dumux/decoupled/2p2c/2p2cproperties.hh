@@ -29,25 +29,21 @@
 #ifndef DUMUX_2P2CPROPERTIES_HH
 #define DUMUX_2P2CPROPERTIES_HH
 
-//Dune-includes
-#include <dune/istl/operators.hh>
-#include <dune/istl/solvers.hh>
-#include <dune/istl/preconditioners.hh>
-
 //DUMUX includes
-#include <dumux/decoupled/2p/2pindices.hh>
 #include <dumux/decoupled/common/impetproperties.hh>
+#include <dumux/decoupled/2p/2pindices.hh>
+#include <dumux/decoupled/2p2c/cellData2p2c.hh>
+#include <dumux/decoupled/2p2c/dec2p2cfluidstate.hh>
 
 namespace Dumux
 {
 
-////////////////////////////////
-// forward declarations
-////////////////////////////////
-
+//****** forward declarations  ******//
+template<class TypeTag>
+class VariableClass;
 
 template<class TypeTag>
-class VariableClass2P2C;
+class CellData2P2C;
 
 template<class TypeTag>
 class DecoupledTwoPTwoCFluidState;
@@ -70,7 +66,7 @@ NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(IMPET));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG ( TwoPTwoCIndices );
+NEW_PROP_TAG( Indices );
 NEW_PROP_TAG( SpatialParameters ); //!< The type of the soil properties object
 NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
@@ -86,10 +82,12 @@ NEW_PROP_TAG( ErrorTermUpperBound );
 NEW_PROP_TAG( FluidSystem );
 NEW_PROP_TAG( FluidState );
 NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); // Two-point flux approximation (false) or mpfa (true)
+NEW_PROP_TAG( EnableVolumeIntegral );
+NEW_PROP_TAG( EnableSecondHalfEdge );
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(DecoupledTwoPTwoC, TwoPTwoCIndices,DecoupledTwoPTwoCIndices<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoPTwoC, Indices,DecoupledTwoPTwoCIndices<TypeTag>);
 
 SET_INT_PROP(DecoupledTwoPTwoC, NumEq, 3);
 
@@ -120,15 +118,15 @@ public:
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoPTwoC,
         PressureFormulation,
-        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::pressureW);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureW);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         SaturationFormulation,
-        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::saturationW);
+        GET_PROP_TYPE(TypeTag, Indices)::saturationW);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         VelocityFormulation,
-        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::velocityW);
+        GET_PROP_TYPE(TypeTag, Indices)::velocityW);
 
 SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 {
@@ -151,11 +149,12 @@ SET_PROP(DecoupledTwoPTwoC, NumDensityTransport)
     static const bool value = false;
 };
 
-SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass2P2C<TypeTag>);
-
+SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoPTwoC, CellData, CellData2P2C<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecoupledTwoPTwoCFluidState<TypeTag>);
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false);
+SET_BOOL_PROP(DecoupledTwoPTwoC, EnableVolumeIntegral, true);
 
 SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermFactor, 0.5);
 SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermLowerBound, 0.2);
@@ -176,8 +175,12 @@ private:
 
 public:
     // Component indices
-    static const int wCompIdx = FluidSystem::wPhaseIdx; //!< Component index equals phase index
-    static const int nCompIdx = FluidSystem::nPhaseIdx; //!< Component index equals phase index
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx;
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx;
+
+    // Component indices
+    static const int wCompIdx = wPhaseIdx; //!< Component index equals phase index
+    static const int nCompIdx = nPhaseIdx; //!< Component index equals phase index
 
     // Equation indices
     static const int pressureEqIdx = 0;

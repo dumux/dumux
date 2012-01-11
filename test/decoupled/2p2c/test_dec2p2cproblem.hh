@@ -82,7 +82,7 @@ SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
 };
 
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::pressureNW);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureNW);
 
 // Select fluid system
 SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
@@ -98,7 +98,7 @@ SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultC
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 //    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
-        typedef Dumux::SimpleH2O<Scalar> H2O;
+        typedef Dumux::H2O<Scalar> H2O;
 };
 
 // Set the soil properties
@@ -119,7 +119,7 @@ SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableGravity, true);
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestDecTwoPTwoCProblem,
         BoundaryMobility,
-        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::satDependent);
+        GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 SET_SCALAR_PROP(TestDecTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
@@ -143,7 +143,7 @@ class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 typedef IMPETProblem2P2C<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
@@ -303,7 +303,7 @@ void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos
 {
     sourceValues[Indices::contiWEqIdx]=0.;
     sourceValues[Indices::contiNEqIdx]=0.;
-    if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1)
+    if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
 //! Flag for the type of initial conditions
