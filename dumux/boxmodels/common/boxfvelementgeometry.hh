@@ -555,6 +555,7 @@ public:
 
     struct BoundaryFace //! boundary face of a sub control volume
     {
+        int i,j; //! scv index
         FV ipLocal; //!< integration point in local coords
         FV ipGlobal; //!< integration point in global coords
         Scalar area; //!< area of boundary face
@@ -742,6 +743,8 @@ public:
                         DUNE_THROW(Dune::NotImplemented, "BoxFVElementGeometry for dim = " << dim);
                     }
                     boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
+                    boundaryFace[bfIdx].i = vertInElement;
+                    boundaryFace[bfIdx].j = vertInElement;
 
                     // ASSUME constant normal
                     Dune::FieldVector<CoordScalar, dim-1> localDimM1(0);
