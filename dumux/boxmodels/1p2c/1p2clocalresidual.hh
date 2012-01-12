@@ -278,10 +278,11 @@ public:
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
-        this->problem_().source(q,
-                                this->elem_(),
-                                this->fvElemGeom_(),
-                                localVertexIdx);
+        this->problem_().boxSDSource(q,
+                                     this->elem_(),
+                                     this->fvElemGeom_(),
+                                     localVertexIdx,
+                                     this->curVolVars_());
     }
 
     /*!

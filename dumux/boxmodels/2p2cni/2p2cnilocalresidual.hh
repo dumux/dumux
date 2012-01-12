@@ -34,10 +34,8 @@
 
 #include <dumux/boxmodels/2p2c/2p2clocalresidual.hh>
 
-
 #include <dumux/boxmodels/2p2cni/2p2cnivolumevariables.hh>
 #include <dumux/boxmodels/2p2cni/2p2cnifluxvariables.hh>
-
 #include <dumux/boxmodels/2p2cni/2p2cniproperties.hh>
 
 namespace Dumux
