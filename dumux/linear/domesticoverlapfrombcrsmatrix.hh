@@ -63,16 +63,12 @@ public:
     typedef int ProcessRank;
     typedef int BorderDistance;
     typedef int Index;
-    typedef Index PeerIndex;
     typedef Index LocalIndex;
-    typedef std::pair<LocalIndex, ProcessRank> IndexRank;
     typedef std::tr1::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
-    typedef std::list<IndexRank> SeedList;
 
     typedef std::set<ProcessRank> PeerSet;
 
     typedef std::list<IndexDistanceNpeers> ForeignOverlapWithPeer;
-    typedef std::vector<std::map<ProcessRank, BorderDistance> > ForeignOverlapByIndex;
 
     typedef std::pair<LocalIndex, BorderDistance> IndexDistance;
     typedef std::set<LocalIndex> DomesticOverlapWithPeer;

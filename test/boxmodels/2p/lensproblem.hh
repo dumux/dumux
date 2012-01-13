@@ -152,7 +152,6 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
 template <class TypeTag >
 class LensProblem : public TwoPProblem<TypeTag>
 {
-    typedef LensProblem<TypeTag> ThisType;
     typedef TwoPProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -191,14 +190,10 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:

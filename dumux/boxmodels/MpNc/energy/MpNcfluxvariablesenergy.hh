@@ -93,8 +93,6 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
     typedef Dune::FieldVector<CoordScalar, dimWorld>  Vector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     MPNCFluxVariablesEnergy()

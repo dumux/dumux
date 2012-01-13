@@ -54,15 +54,11 @@ public:
 
 private:
     typedef typename Overlap::Index Index;
-    typedef typename Overlap::Index RowIndex;
     typedef typename Overlap::Index ColIndex;
     typedef typename Overlap::PeerSet PeerSet;
     typedef typename Overlap::BorderList BorderList;
     typedef typename Overlap::ProcessRank ProcessRank;
     typedef typename Overlap::ForeignOverlapWithPeer ForeignOverlapWithPeer;
-    typedef std::vector<ColIndex> PeerColumns;
-    typedef std::pair<RowIndex,  PeerColumns> PeerRow;
-    typedef std::vector<PeerRow> PeerRows;
 
     typedef std::vector<std::set<ColIndex> > Entries;
 

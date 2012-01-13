@@ -40,7 +40,6 @@ class OverlappingScalarProduct : public Dune::ScalarProduct<OverlappingBlockVect
 {
 public:
     typedef typename OverlappingBlockVector::field_type field_type;
-    typedef OverlappingBlockVector domain_type;
 
     enum { category = Dune::SolverCategory::overlapping };
 

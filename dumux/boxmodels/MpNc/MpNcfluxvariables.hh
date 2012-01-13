@@ -74,15 +74,12 @@ class MPNCFluxVariables
         enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity),
     };
 
-    typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
     typedef MPNCFluxVariablesDiffusion<TypeTag, enableDiffusion>                  FluxVariablesDiffusion;
     typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, enableKineticEnergy>    FluxVariablesEnergy;

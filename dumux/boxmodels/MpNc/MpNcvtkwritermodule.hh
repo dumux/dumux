@@ -56,7 +56,6 @@ class MPNCVtkWriterModule
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 

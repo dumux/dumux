@@ -44,7 +44,6 @@ struct NewtonConvergenceWriter
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
 
     typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
 

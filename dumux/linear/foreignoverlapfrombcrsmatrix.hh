@@ -68,7 +68,6 @@ public:
     typedef int ProcessRank;
     typedef int BorderDistance;
     typedef int Index;
-    typedef Index PeerIndex;
     typedef Index LocalIndex;
     typedef std::pair<LocalIndex, ProcessRank> IndexRank;
     typedef std::tr1::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;

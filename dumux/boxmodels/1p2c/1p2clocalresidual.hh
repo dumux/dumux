@@ -59,9 +59,7 @@ template<class TypeTag>
 class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
 {
 protected:
-    typedef OnePTwoCLocalResidual<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef BoxLocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -75,7 +73,6 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum
         {
@@ -98,11 +95,7 @@ protected:
 
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
 public:
     /*!

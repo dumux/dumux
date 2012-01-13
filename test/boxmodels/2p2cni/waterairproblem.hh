@@ -114,10 +114,8 @@ class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GridView::Grid Grid;
 
-    typedef WaterAirProblem<TypeTag> ThisType;
     typedef TwoPTwoCNIProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
@@ -154,7 +152,6 @@ class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:

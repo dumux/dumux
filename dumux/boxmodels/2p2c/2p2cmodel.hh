@@ -97,10 +97,7 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementMapper) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),

@@ -58,11 +58,6 @@ template <class GridView, class ElementMapper>
 class ElementBorderListFromGrid : public Dune::CommDataHandleIF<ElementBorderListFromGrid<GridView, ElementMapper>,
                                                                 int >
 {
-    typedef int ProcessRank;
-    typedef int Index;
-    typedef int Distance;
-    typedef Index LocalIndex;
-    typedef Index PeerIndex;
     typedef std::list<BorderIndex> BorderList;
 
 public:

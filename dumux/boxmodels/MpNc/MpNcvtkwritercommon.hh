@@ -52,7 +52,6 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) LocalResidual;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -73,7 +72,6 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dim> VelocityVector;
     typedef Dune::BlockVector<VelocityVector> VelocityField;
-    typedef VelocityField VectorField;
     typedef std::tr1::array<VelocityField, numPhases> PhaseVelocityField;
 
 public:

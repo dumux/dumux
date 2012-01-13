@@ -96,7 +96,6 @@ SET_BOOL_PROP(InjectionProblem, EnableVelocityOutput, false);
 template <class TypeTag = TTAG(InjectionProblem) >
 class InjectionProblem : public TwoPTwoCProblem<TypeTag>
 {
-    typedef InjectionProblem<TypeTag> ThisType;
     typedef TwoPTwoCProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

@@ -57,21 +57,15 @@ class TissueTumorSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
 
 
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
     //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
     TissueTumorSpatialParameters(const GridView &gv)

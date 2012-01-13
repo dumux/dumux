@@ -125,9 +125,7 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticenergyTra
     enum { conti0EqIdx = Indices::conti0EqIdx };
     enum { energyEqIdx = Indices::energyEqIdx };
 
-    typedef Dune::FieldVector<Scalar, dim> Vector;
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef typename Dune::FieldMatrix<Scalar, numPhases, numComponents>    PhaseComponentMatrix;
 
 
 

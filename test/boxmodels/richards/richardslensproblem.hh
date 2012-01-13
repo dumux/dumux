@@ -123,7 +123,6 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 template <class TypeTag>
 class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
 {
-    typedef RichardsLensProblem<TypeTag> ThisType;
     typedef RichardsBoxProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -145,7 +144,6 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 

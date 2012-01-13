@@ -108,7 +108,6 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
 template <class TypeTag = TTAG(OnePTestProblem) >
 class OnePTestProblem : public OnePBoxProblem<TypeTag>
 {
-    typedef OnePTestProblem<TypeTag> ThisType;
     typedef OnePBoxProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -136,7 +135,6 @@ class OnePTestProblem : public OnePBoxProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:

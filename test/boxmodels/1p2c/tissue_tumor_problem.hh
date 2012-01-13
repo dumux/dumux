@@ -123,7 +123,6 @@ SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
 template <class TypeTag = TTAG(TissueTumorProblem) >
 class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
 {
-    typedef TissueTumorProblem<TypeTag> ThisType;
     typedef OnePTwoCBoxProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

@@ -61,34 +61,13 @@ class GlobalIndices
     {}
 
     typedef int ProcessRank;
-    typedef int BorderDistance;
     typedef int Index;
-    typedef Index PeerIndex;
-    typedef Index DomesticIndex;
-    typedef std::pair<DomesticIndex, ProcessRank> IndexRank;
-    typedef std::pair<PeerIndex, BorderDistance> IndexDistance;
-    typedef std::tr1::tuple<Index, BorderDistance, int>  IndexDistanceNpeers;
-    typedef std::list<IndexRank> SeedList;
-    typedef std::pair<ProcessRank, int> ProcessDistance;
 
     typedef std::set<ProcessRank> PeerSet;
-    typedef std::list<IndexDistanceNpeers> ForeignOverlapWithPeer;
-    typedef std::map<ProcessRank,  ForeignOverlapWithPeer> ForeignOverlapByRank;
-    typedef std::vector<std::map<ProcessRank, BorderDistance> > ForeignOverlapByIndex;
 
-    typedef std::vector<IndexDistanceNpeers> DomesticOverlapWithPeer;
-    typedef std::map<ProcessRank,  DomesticOverlapWithPeer> DomesticOverlap;
-    typedef std::map<ProcessRank, std::set<PeerIndex> > DomesticFront;
-    typedef std::map<ProcessRank, std::set<DomesticIndex> > ForeignFront;
-    typedef std::map<PeerIndex, DomesticIndex> BorderWithPeer;
-    typedef std::map<ProcessRank, BorderWithPeer> DomesticBorder;
 
     typedef std::list<BorderIndex> BorderList;
 
-    typedef std::map<PeerIndex, DomesticIndex> PeerToDomesticMap;
-    typedef std::map<ProcessRank,  PeerToDomesticMap> ForeignToDomesticMap;
-    typedef std::map<DomesticIndex, PeerIndex> DomesticToPeerMap;
-    typedef std::map<ProcessRank, DomesticToPeerMap > DomesticToForeignMap;
 
     typedef std::map<Index, Index> GlobalToDomesticMap;
     typedef std::map<Index, Index> DomesticToGlobalMap;

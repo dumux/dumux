@@ -50,13 +50,10 @@ class MPNCLocalResidual : public BoxLocalResidual<TypeTag>
 
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef MPNCLocalResidual<TypeTag> ThisType;
     typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     enum {
         dim = GridView::dimension,
@@ -78,11 +75,8 @@ protected:
 
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GridView::CollectiveCommunication CollectiveCommunication;
 
@@ -92,14 +86,8 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
 
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
     typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
     typedef MPNCLocalResidualMass<TypeTag, enableKinetic> MassResid;

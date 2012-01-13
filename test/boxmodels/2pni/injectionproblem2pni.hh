@@ -144,7 +144,6 @@ class InjectionProblem2PNI
   : public TwoPNIProblem<TypeTag>
 #endif
 {
-    typedef InjectionProblem2PNI<TypeTag> ThisType;
     typedef TwoPNIProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -184,7 +183,6 @@ class InjectionProblem2PNI
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:

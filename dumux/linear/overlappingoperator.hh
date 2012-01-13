@@ -40,9 +40,7 @@ class OverlappingOperator :
 {
 public:
     //! export types
-    typedef OverlappingMatrix matrix_type;
     typedef DomainVector domain_type;
-    typedef RangeVector range_type;
     typedef typename domain_type::field_type field_type;
 
     //redefine the category, that is the only difference

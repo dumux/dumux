@@ -57,10 +57,6 @@ template <class GridView, class VertexMapper>
 class VertexBorderListFromGrid : public Dune::CommDataHandleIF<VertexBorderListFromGrid<GridView, VertexMapper>,
                                                                int >
 {
-    typedef int ProcessRank;
-    typedef int Index;
-    typedef Index LocalIndex;
-    typedef Index PeerIndex;
     typedef std::list<BorderIndex> BorderList;
 
 public:

@@ -128,7 +128,6 @@ template <class TypeTag>
 class ObstacleProblem
     : public MPNCProblem<TypeTag>
 {
-    typedef ObstacleProblem<TypeTag> ThisType;
     typedef MPNCProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
