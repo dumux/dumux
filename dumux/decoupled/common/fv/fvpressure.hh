@@ -24,12 +24,6 @@
 #ifndef DUMUX_FVPRESSURE_HH
 #define DUMUX_FVPRESSURE_HH
 
-// dune environent:
-#include <dune/istl/bvector.hh>
-#include <dune/istl/operators.hh>
-#include <dune/istl/solvers.hh>
-#include <dune/istl/preconditioners.hh>
-
 // dumux environment
 #include "dumux/common/math.hh"
 #include <dumux/decoupled/common/impetproperties.hh>
@@ -49,31 +43,19 @@ namespace Dumux
  */
 template<class TypeTag> class FVPressure
 {
+    //the model implementation
+    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolution;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
-    };
-    enum
-    {
-        pw = Indices::pressureW,
-        pn = Indices::pressureNW,
-        pglobal = Indices::pressureGlobal,
-        Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
-    };
-    enum
-    {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
-        contiWEqIdx = Indices::contiWEqIdx, contiNEqIdx = Indices::contiNEqIdx
     };
 
     // typedefs to abbreviate several dune classes...
@@ -83,46 +65,28 @@ template<class TypeTag> class FVPressure
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
-    // convenience shortcuts for Vectors/Matrices
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
-    typedef Dune::FieldVector<Scalar, 2> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
 
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) RHSVector;
 
 protected:
+
+    enum
+    {
+        rhs = 1,
+        matrix = 0,
+
+    };
+
     //initializes the matrix to store the system of equations
     void initializeMatrix();
 
-    //solves the system of equations to get the spatial distribution of the pressure
-    void solve();
-
-    /*! \name Access functions for protected variables  */
-    //@{
-    Problem& problem()
-    {
-        return problem_;
-    }
-    const Problem& problem() const
-    {
-        return problem_;
-    }
-
-    ScalarSolution& pressure()
-    { return pressure_; }
-    const ScalarSolution& pressure() const
-    { return pressure_; }
-    //@}
-public:
-    //! Public acess function for the primary variable pressure
-    const Scalar pressure(int globalIdx) const
-    { return pressure_[globalIdx]; }
-
     //function which assembles the system of equations to be solved
     void assemble(bool first);
+
+    //solves the system of equations to get the spatial distribution of the pressure
+    void solve();
 
     void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
 
@@ -133,11 +97,30 @@ public:
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
                             const Intersection&, const CellData&, const bool);
 
-    //pressure solution routine: update estimate for secants, assemble, solve.
-    void update(bool solveTwice = true)
+    ScalarSolution& pressure()
+    { return pressure_; }
+
+    const ScalarSolution& pressure() const
+    { return pressure_; }
+    //@}
+public:
+    //! Public acess function for the primary variable pressure
+    const Scalar pressure(int globalIdx) const
+    { return pressure_[globalIdx]; }
+
+
+    //initialize pressure model
+    void initialize()
     {
-        problem().pressureModel().assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
-        problem().pressureModel().solve();
+        initializeMatrix();
+        pressure_ = 0;
+    }
+
+    //pressure solution routine: update estimate for secants, assemble, solve.
+    void update()
+    {
+        assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
+        solve();
 
         return;
     }
@@ -165,12 +148,18 @@ public:
      */
     FVPressure(Problem& problem) :
         problem_(problem), A_(problem.gridView().size(0), problem.gridView().size(0), (2 * dim + 1)
-                * problem.gridView().size(0), Matrix::random), f_(problem.gridView().size(0))
-    {
-        pressure_.resize(problem.gridView().size(0));
-    }
+                * problem.gridView().size(0), Matrix::random), f_(problem.gridView().size(0)), pressure_(problem.gridView().size(0))
+    {}
 
-protected:
+private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
+
     Problem& problem_;
     Matrix A_;
     RHSVector f_;
@@ -178,8 +167,6 @@ protected:
 
     std::string solverName_;
     std::string preconditionerName_;
-
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 };
 
 //! initializes the matrix to store the system of equations
@@ -259,8 +246,8 @@ void FVPressure<TypeTag>::assemble(bool first)
         Dune::FieldVector<Scalar, 2> entries(0.);
 
         /*****  source term ***********/
-        problem().pressureModel().getSource(entries,*eIt, cellDataI, first);
-        f_[globalIdxI] = entries[1];
+        asImp_().getSource(entries,*eIt, cellDataI, first);
+        f_[globalIdxI] = entries[rhs];
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
@@ -271,36 +258,48 @@ void FVPressure<TypeTag>::assemble(bool first)
             if (isIt->neighbor())
             {
                 int globalIdxJ = problem().variables().index(*(isIt->outside()));
-                problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
+
+                //calculate only from one side, but add matrix entries for both sides
+                if (globalIdxI > globalIdxJ)
+                    continue;
+
+                entries = 0;
+                asImp_().getFlux(entries, *isIt, cellDataI, first);
 
 
                 //set right hand side
-                f_[globalIdxI] -= entries[1];
+                f_[globalIdxI] -= entries[rhs];
+                f_[globalIdxJ] += entries[rhs];
+
                 // set diagonal entry
-                A_[globalIdxI][globalIdxI] += entries[0];
+                A_[globalIdxI][globalIdxI] += entries[matrix];
+                A_[globalIdxJ][globalIdxJ] += entries[matrix];
                 // set off-diagonal entry
-                A_[globalIdxI][globalIdxJ] = -entries[0];
+                A_[globalIdxI][globalIdxJ] = -entries[matrix];
+                A_[globalIdxJ][globalIdxI] = -entries[matrix];
             }   // end neighbor
 
 
             /************* boundary face ************************/
             else
             {
-                problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
+                entries = 0;
+                asImp_().getFluxOnBoundary(entries, *isIt, cellDataI, first);
 
                 //set right hand side
-                f_[globalIdxI] += entries[1];
+                f_[globalIdxI] += entries[rhs];
                 // set diagonal entry
-                A_[globalIdxI][globalIdxI] += entries[0];
+                A_[globalIdxI][globalIdxI] += entries[matrix];
             }
         } //end interfaces loop
 //        printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
 
         /*****  storage term ***********/
-        problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
-        f_[globalIdxI] += entries[1];
+        entries = 0;
+        asImp_().getStorage(entries, *eIt, cellDataI, first);
+        f_[globalIdxI] += entries[rhs];
         // set diagonal entry
-        A_[globalIdxI][globalIdxI] += entries[0];
+        A_[globalIdxI][globalIdxI] += entries[matrix];
     } // end grid traversal
 //    printmatrix(std::cout, A_, "global stiffness matrix after assempling", "row", 11,3);
 //    printvector(std::cout, f_, "right hand side", "row", 10);
