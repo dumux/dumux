@@ -28,6 +28,7 @@
 #ifndef DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
+#include <dune/common/version.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 
 #if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 2, 0)

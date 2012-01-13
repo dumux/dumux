@@ -28,6 +28,8 @@
 #define DUMUX_BOX_BOUNDARY_VARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/common/propertysystem.hh>
+#include <dumux/boxmodels/common/boxproperties.hh>
 
 namespace Dumux
 {
