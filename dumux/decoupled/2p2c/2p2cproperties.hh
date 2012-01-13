@@ -136,6 +136,8 @@ SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 };
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true);
+//! Faces are regarded from both sides
+SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false);
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
 

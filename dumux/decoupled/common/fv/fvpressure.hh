@@ -131,13 +131,13 @@ public:
     //! Function needed for restart option.
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
-        int globalIdx = problem().variables().index(element);
+        int globalIdx = problem_.variables().index(element);
         outstream << pressure_[globalIdx][0];
     }
 
     void deserializeEntity(std::istream &instream, const Element &element)
     {
-        int globalIdx = problem().variables().index(element);
+        int globalIdx = problem_.variables().index(element);
         instream >> pressure_[globalIdx][0];
     }
     //@}
@@ -174,18 +174,18 @@ template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrix()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0> ();
+    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(*eIt);
 
         // initialize row size
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             if (isIt->neighbor())
                 rowSize++;
@@ -195,22 +195,22 @@ void FVPressure<TypeTag>::initializeMatrix()
     A_.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int globalIdxI = problem().variables().index(*eIt);
+        int globalIdxI = problem_.variables().index(*eIt);
 
         // add diagonal index
         A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
             if (isIt->neighbor())
             {
                 // access neighbor
                 ElementPointer outside = isIt->outside();
-                int globalIdxJ = problem().variables().index(*outside);
+                int globalIdxJ = problem_.variables().index(*outside);
 
                 // add off diagonal index
                 A_.addindex(globalIdxI, globalIdxJ);
@@ -236,12 +236,12 @@ void FVPressure<TypeTag>::assemble(bool first)
     A_ = 0;
     f_ = 0;
 
-    ElementIterator eItEnd = problem().gridView().template end<0> ();
-    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0> ();
+    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // cell information
-        int globalIdxI = problem().variables().index(*eIt);
-        CellData& cellDataI = problem().variables().cellData(globalIdxI);
+        int globalIdxI = problem_.variables().index(*eIt);
+        CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
         Dune::FieldVector<Scalar, 2> entries(0.);
 
@@ -251,16 +251,17 @@ void FVPressure<TypeTag>::assemble(bool first)
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             /************* handle interior face *****************/
             if (isIt->neighbor())
             {
-                int globalIdxJ = problem().variables().index(*(isIt->outside()));
+                int globalIdxJ = problem_.variables().index(*(isIt->outside()));
 
                 //calculate only from one side, but add matrix entries for both sides
-                if (globalIdxI > globalIdxJ)
+                if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) &&
+                        (globalIdxI > globalIdxJ))
                     continue;
 
                 entries = 0;
@@ -269,14 +270,18 @@ void FVPressure<TypeTag>::assemble(bool first)
 
                 //set right hand side
                 f_[globalIdxI] -= entries[rhs];
-                f_[globalIdxJ] += entries[rhs];
 
                 // set diagonal entry
                 A_[globalIdxI][globalIdxI] += entries[matrix];
-                A_[globalIdxJ][globalIdxJ] += entries[matrix];
                 // set off-diagonal entry
                 A_[globalIdxI][globalIdxJ] = -entries[matrix];
-                A_[globalIdxJ][globalIdxI] = -entries[matrix];
+
+                if(GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce))
+                {
+                    f_[globalIdxJ] += entries[rhs];
+                    A_[globalIdxJ][globalIdxJ] += entries[matrix];
+                    A_[globalIdxJ][globalIdxI] = -entries[matrix];
+                }
             }   // end neighbor
 
 
@@ -317,7 +322,7 @@ void FVPressure<TypeTag>::solve()
     if (verboseLevelSolver)
         std::cout << __FILE__ <<": solve for pressure" << std::endl;
 
-    Solver solver(problem());
+    Solver solver(problem_);
     solver.solve(A_, pressure_, f_);
 //                    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
 //                    printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);

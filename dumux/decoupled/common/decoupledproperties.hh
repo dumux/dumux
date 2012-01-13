@@ -71,6 +71,7 @@ NEW_PROP_TAG( Variables); //!< The type of the container of global variables
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG( CellData );//!< Defines data object to be stored
+NEW_PROP_TAG( VisitFacesOnlyOnce); //!< Indicates if faces are only regarded from one side
 }
 }
 
@@ -101,6 +102,9 @@ public:
 
 //! Disables Grid Adaptivity as standard
 SET_BOOL_PROP(DecoupledModel, AdaptiveGrid, false);
+
+//! Faces are only regarded from one side and not from both cells
+SET_BOOL_PROP(DecoupledModel, VisitFacesOnlyOnce, true);
 
 NEW_PROP_TAG(MaxIntersections);   //!< maximum number of intersections per element
 SET_PROP(DecoupledModel, MaxIntersections)
