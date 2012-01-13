@@ -75,50 +75,69 @@ public:
      * \param element The finite element
      * \param elemGeom The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
-     * \param elemDat The volume variables of the current element
+     * \param elemVolVars The volume variables of the current element
      */
     TwoPTwoCNIFluxVariables(const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &elemGeom,
-                       int scvfIdx,
-                       const ElementVolumeVariables &elemDat)
-        : ParentType(problem, element, elemGeom, scvfIdx, elemDat)
+                       int faceIdx,
+                       const ElementVolumeVariables &elemVolVars,
+                       bool onBoundary = false)
+        : ParentType(problem, element, elemGeom, faceIdx, elemVolVars, onBoundary)
     {
+        scvfIdx_ = faceIdx;
+
+        if (!onBoundary)
+            calculateValues_(problem, element, this->face(), elemVolVars);
+    }
+
+    /*!
+     * \brief The total heat flux \f$\mathrm{[J/s]}\f$ due to heat conduction
+     *        of the rock matrix over the sub-control volume face in
+     *        direction of the face normal.
+     */
+    Scalar normalMatrixHeatFlux() const
+    { return normalMatrixHeatFlux_; }
+
+protected:
+    template<class FaceType>
+    void calculateValues_(const Problem &problem,
+                          const Element &element,
+                          const FaceType &face,
+                          const ElementVolumeVariables &elemVolVars,
+                          bool onBoundary = false)
+    {
+        if (onBoundary)
+            ParentType::calculateValues_(problem, element, face, elemVolVars, onBoundary);
+
         // calculate temperature gradient using finite element
         // gradients
         Vector temperatureGrad(0);
         Vector tmp(0.0);
-        for (int vertIdx = 0; vertIdx < elemGeom.numVertices; vertIdx++)
+        for (int vertIdx = 0; vertIdx < this->fvGeom_.numVertices; vertIdx++)
         {
-            tmp = elemGeom.subContVolFace[scvfIdx].grad[vertIdx];
-            tmp *= elemDat[vertIdx].temperature();
+            tmp = this->fvGeom_.subContVolFace[scvfIdx_].grad[vertIdx];
+            tmp *= elemVolVars[vertIdx].temperature();
             temperatureGrad += tmp;
         }
 
         // The spatial parameters calculates the actual heat flux vector
         problem.spatialParameters().matrixHeatFlux(tmp,
                                                    *this,
-                                                   elemDat,
+                                                   elemVolVars,
                                                    temperatureGrad,
                                                    element,
-                                                   elemGeom,
-                                                   scvfIdx);
+                                                   this->fvGeom_,
+                                                   scvfIdx_);
         // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = tmp*elemGeom.subContVolFace[scvfIdx].normal;
+        normalMatrixHeatFlux_ = tmp*this->fvGeom_.subContVolFace[scvfIdx_].normal;
     }
-
-    /*!
-     * \brief The total heat flux \f$\mathrm{[J/s]}\f$ due to heat conduction
-     *        of the rock matrix over the sub-control volume's face in
-     *        direction of the face normal.
-     */
-    Scalar normalMatrixHeatFlux() const
-    { return normalMatrixHeatFlux_; }
 
 private:
     Scalar normalMatrixHeatFlux_;
+    int scvfIdx_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif
