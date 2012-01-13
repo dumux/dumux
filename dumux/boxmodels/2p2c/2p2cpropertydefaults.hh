@@ -40,7 +40,8 @@
 #include "2p2cvolumevariables.hh"
 #include "2p2cproperties.hh"
 #include "2p2cnewtoncontroller.hh"
-#include "2p2cboundaryvariables.hh"
+
+#include <dumux/boxmodels/common/boxboundaryvariables.hh>
 
 namespace Dumux
 {
@@ -58,10 +59,10 @@ namespace Properties {
  */
 SET_PROP(BoxTwoPTwoC, NumComponents)
 {
-private:
+ private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-public:
+ public:
     static const int value = FluidSystem::numComponents;
 
     static_assert(value == 2,
@@ -76,10 +77,10 @@ public:
  */
 SET_PROP(BoxTwoPTwoC, NumPhases)
 {
-private:
+ private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-public:
+ public:
     static const int value = FluidSystem::numPhases;
     static_assert(value == 2,
                   "Only fluid systems with 2 phases are supported by the 2p-2c model!");
@@ -101,10 +102,10 @@ SET_INT_PROP(BoxTwoPTwoC, ReplaceCompEqIdx, 2);
  */
 SET_PROP(BoxTwoPTwoC, MaterialLawParams)
 {
-private:
+ private:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
 
-public:
+ public:
     typedef typename MaterialLaw::Params type;
 };
 
@@ -126,7 +127,7 @@ SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
 //! the BoundaryVariables property
-SET_TYPE_PROP(BoxTwoPTwoC, BoundaryVariables, TwoPTwoCBoundaryVariables<TypeTag>);
+SET_TYPE_PROP(BoxTwoPTwoC, BoundaryVariables, Dumux::BoxBoundaryVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);
@@ -136,7 +137,7 @@ SET_PROP(BoxTwoPTwoC,
          TwoPTwoCIndices)
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
-public:
+ public:
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };
 

@@ -274,6 +274,17 @@ public:
     }
 
     /*!
+     * \brief Add Outflow boundary conditions for a single sub-control
+     *        volume face to the local residual.
+     *           ATTENTION: This is so far an empty method doing not more than nothing. A beta version is
+     *           available for the 2p2c and 2p2cni model. There you can find a sample implementation.
+     */
+    void evalOutflowSegment(const IntersectionIterator &isIt,
+                            int scvIdx,
+                            int boundaryFaceIdx)
+    { }
+
+    /*!
      * \brief Returns the local residual for a given sub-control
      *        volume of the element.
      */
@@ -300,14 +311,14 @@ public:
 protected:
     Implementation &asImp_()
     {
-      assert(static_cast<Implementation*>(this) != 0);
-      return *static_cast<Implementation*>(this);
+        assert(static_cast<Implementation*>(this) != 0);
+        return *static_cast<Implementation*>(this);
     }
 
     const Implementation &asImp_() const
     {
-      assert(static_cast<const Implementation*>(this) != 0);
-      return *static_cast<const Implementation*>(this);
+        assert(static_cast<const Implementation*>(this) != 0);
+        return *static_cast<const Implementation*>(this);
     }
 
     /*!
@@ -316,8 +327,8 @@ protected:
      */
     void evalBoundary_()
     {
-        if (bcTypes_().hasNeumann())
-            asImp_().evalNeumann_();
+        if (bcTypes_().hasNeumann() || bcTypes_().hasOutflow())
+            asImp_().evalBoundaryFluxes_();
 #if !defined NDEBUG && HAVE_VALGRIND
         for (int i=0; i < fvElemGeom_().numVertices; i++)
             Valgrind::CheckDefined(residual_[i]);
@@ -361,10 +372,10 @@ protected:
     }
 
     /*!
-     * \brief Add all Neumann boundary conditions to the local
+     * \brief Add all Neumann and outflow boundary conditions to the local
      *        residual.
      */
-    void evalNeumann_()
+    void evalBoundaryFluxes_()
     {
         Dune::GeometryType geoType = elem_().geometry().type();
         const ReferenceElement &refElem = ReferenceElements::general(geoType);
@@ -398,6 +409,12 @@ protected:
                 evalNeumannSegment_(isIt,
                                     elemVertIdx,
                                     boundaryFaceIdx);
+                // evaluate the outflow conditions at the boundary face
+                // ATTENTION: This is so far a beta version that is only for the 2p2c and 2p2cni model
+                //              available and not thoroughly tested.
+                this->asImp_().evalOutflowSegment(isIt,
+                                                  elemVertIdx,
+                                                  boundaryFaceIdx);
             }
         }
     }
@@ -595,8 +612,8 @@ protected:
     }
 
     /*!
-     * \brief Returns a reference to the primary variables of 
-     * 		  the last time step of the i'th
+     * \brief Returns a reference to the primary variables of
+     *           the last time step of the i'th
      *        sub-control volume of the current element.
      */
     const PrimaryVariables &prevPrimaryVars_(int i) const

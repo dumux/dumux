@@ -57,7 +57,7 @@ namespace Dumux
 template<class TypeTag>
 class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-protected:
+ protected:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -65,10 +65,13 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryVariables) BoundaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     enum
     {
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
@@ -86,11 +89,12 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     static constexpr unsigned int replaceCompEqIdx =
-            GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+        GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 
-public:
+ public:
     /*!
      * \brief Constructor. Sets the upwind weight.
      */
@@ -130,11 +134,50 @@ public:
     }
 
     /*!
+     * \brief Evaluate the outflow conditions at a boundary face.
+     *        This is still a beta version and only available
+     *        for the 2p2c and the 2p2cni model yet.
+     *
+     * \param isIt The intersection iterator
+     * \param scvIdx The index of the sub-control volume containing the outflow face
+     * \param boundaryFaceIdx  The index of the boundary face
+     */
+    void evalOutflowSegment(const IntersectionIterator &isIt,
+                            int scvIdx,
+                            int boundaryFaceIdx)
+    {
+        // temporary vector to store the outflow boundary fluxes
+        PrimaryVariables flux(0.0);
+        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
+
+        // deal with outflow boundaries
+        if (bcTypes.hasOutflow())
+        {
+            const BoundaryVariables boundaryVars(this->problem_(),
+                                                 this->elem_(),
+                                                 this->fvElemGeom_(),
+                                                 boundaryFaceIdx,
+                                                 this->curVolVars_());
+
+            PrimaryVariables values(0.0);
+            asImp_()->computeOutflowValues(values, boundaryVars, scvIdx, boundaryFaceIdx);
+            Valgrind::CheckDefined(values);
+
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                if (!bcTypes.isOutflow(eqIdx) )
+                    continue;
+                this->residual_[scvIdx][eqIdx] += values[eqIdx];
+            }
+        }
+    }
+
+    /*!
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
-     * inside a sub control volume divided by the volume)
+     * inside a sub-control volume divided by the volume)
      *
      *  \param result The mass of the component within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
@@ -148,7 +191,7 @@ public:
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
-                : this->curVolVars_();
+            : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute storage term of all components within all phases
@@ -160,13 +203,13 @@ public:
             {
                 int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
                 result[eqIdx] += volVars.density(phaseIdx)
-                        * volVars.saturation(phaseIdx)
-                        * volVars.fluidState().massFraction(phaseIdx, compIdx);
+                    * volVars.saturation(phaseIdx)
+                    * volVars.fluidState().massFraction(phaseIdx, compIdx);
             }
             // this is only processed, if one component mass balance equation
-            // is replaced by a total mass balance equation
+            // is replaced by the total mass balance equation
             if (replaceCompEqIdx < numComponents)
-                result[replaceCompEqIdx] += 
+                result[replaceCompEqIdx] +=
                     volVars.density(phaseIdx)
                     * volVars.saturation(phaseIdx);
         }
@@ -183,10 +226,10 @@ public:
     void computeFlux(PrimaryVariables &flux, int faceIdx) const
     {
         FluxVariables vars(this->problem_(),
-                      this->elem_(),
-                      this->fvElemGeom_(),
-                      faceIdx,
-                      this->curVolVars_());
+                           this->elem_(),
+                           this->fvElemGeom_(),
+                           faceIdx,
+                           this->curVolVars_());
 
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
@@ -197,10 +240,10 @@ public:
 
     /*!
      * \brief Evaluates the advective mass flux of all components over
-     *        a face of a subcontrol volume.
+     *        a face of a sub-control volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV
+     * \param vars The flux variables at the current SCV face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
@@ -231,11 +274,11 @@ public:
                         * up.fluidState().massFraction(phaseIdx, compIdx);
                 if (massUpwindWeight_ < 1.0)
                     // downstream vertex
-                    flux[eqIdx] += 
+                    flux[eqIdx] +=
                         vars.KmvpNormal(phaseIdx)
-                        * (1 - massUpwindWeight_) 
+                        * (1 - massUpwindWeight_)
                         * dn.density(phaseIdx)
-                        * dn.mobility(phaseIdx) 
+                        * dn.mobility(phaseIdx)
                         * dn.fluidState().massFraction(phaseIdx, compIdx);
 
                 Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
@@ -260,8 +303,8 @@ public:
                         * up.mobility(phaseIdx);
                 // downstream vertex
                 if (massUpwindWeight_ < 1.0)
-                    flux[replaceCompEqIdx] += 
-                        vars.KmvpNormal(phaseIdx) 
+                    flux[replaceCompEqIdx] +=
+                        vars.KmvpNormal(phaseIdx)
                         * (1 - massUpwindWeight_)
                         * dn.density(phaseIdx)
                         * dn.mobility(phaseIdx);
@@ -278,7 +321,7 @@ public:
 
     /*!
      * \brief Adds the diffusive mass flux of all components over
-     *        a face of a subcontrol volume.
+     *        a face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
      * \param vars The flux variables at the current sub control volume face
@@ -313,8 +356,8 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param q The source/sink in the sub control volume for each component
-     * \param localVertexIdx The index of the sub control volume
+     * \param q The source/sink in the sub-control volume for each component
+     * \param localVertexIdx The index of the sub-control volume
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
@@ -325,7 +368,79 @@ public:
                                      this->curVolVars_());
     }
 
-protected:
+    /*!
+     * \brief Compute the fluxes at outflow boundaries. This does essentially the same
+     *        as computeFluxes, but the fluxes are evaluated at the integration point
+     *        of the boundary face. However, some variables are evaluated
+     *        at the vertex (usually the ones which are upwinded).
+     *
+     * \param flux A temporary vector, where the outflow boundary fluxes are stored
+     * \param boundaryVars The boundary variables object
+     * \param scvIdx The index of the SCV containing the outflow boundary face
+     * \param boundaryFaceIdx The index of the boundary face
+     */
+    void computeOutflowValues(PrimaryVariables &flux,
+                              const BoundaryVariables &boundaryVars,
+                              const int scvIdx,
+                              const int boundaryFaceIdx)
+    {
+        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
+        const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
+
+        // component transport
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
+            {
+                int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
+                if (bcTypes.isOutflow(eqIdx))
+                {
+                    // advective flux
+                    flux[eqIdx] += boundaryVars.KmvpNormal(phaseIdx)
+                        * vertVars.density(phaseIdx)
+                        * vertVars.mobility(phaseIdx)
+                        * vertVars.fluidState().massFraction(phaseIdx, compIdx);
+                }
+            }
+        }
+
+        // add diffusive flux of gas component in liquid phase
+        Scalar tmp = boundaryVars.molarConcGrad(lPhaseIdx)*boundaryVars.face().normal;
+        tmp *= -1;
+        tmp *= boundaryVars.porousDiffCoeff(lPhaseIdx) *
+            boundaryVars.molarDensityAtIP(lPhaseIdx);
+        // add the diffusive fluxes only to the component mass balance
+        if (replaceCompEqIdx != contiGEqIdx && bcTypes.isOutflow(contiGEqIdx))
+            flux[contiGEqIdx] += tmp * FluidSystem::molarMass(gCompIdx);
+        if (replaceCompEqIdx != contiLEqIdx && bcTypes.isOutflow(contiLEqIdx))
+            flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
+
+        // add diffusive flux of liquid component in gas phase
+        tmp = boundaryVars.molarConcGrad(gPhaseIdx)*boundaryVars.face().normal;
+        tmp *= -1;
+        tmp *= boundaryVars.porousDiffCoeff(gPhaseIdx) *
+            boundaryVars.molarDensityAtIP(gPhaseIdx);
+        // add the diffusive fluxes only to the component mass balance
+        if (replaceCompEqIdx != contiLEqIdx && bcTypes.isOutflow(contiLEqIdx))
+            flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
+        if (replaceCompEqIdx != contiGEqIdx && bcTypes.isOutflow(contiGEqIdx))
+            flux[contiGEqIdx] -= tmp * FluidSystem::molarMass(gCompIdx);
+
+        // flux of the total mass balance;
+        // this is only processed, if one component mass-balance equation
+        // is replaced by a total mass-balance equation
+        if (replaceCompEqIdx < numComponents)
+        {
+            if (bcTypes.isOutflow(replaceCompEqIdx))
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    flux[replaceCompEqIdx] += boundaryVars.KmvpNormal(phaseIdx)
+                        *vertVars.density(phaseIdx)
+                        *vertVars.mobility(phaseIdx);
+        }
+    }
+
+
+ protected:
     void evalPhaseStorage_(int phaseIdx)
     {
         // evaluate the storage terms of a single phase
@@ -350,17 +465,17 @@ protected:
     }
 
     /*!
-     * \brief Return the equation index of the first mass balance equation
+     * \brief Return the equation index of the first mass-balance equation
      *        of the component (used for loops); if one component mass balance
      *        is replaced by the total mass balance, this is the index
-     *        of the remaining component mass balance equation.
+     *        of the remaining component mass-balance equation.
      */
     constexpr unsigned int contiCompIdx1_() const {
         switch (replaceCompEqIdx)
         {
-            case contiLEqIdx: return contiGEqIdx;
-            case contiGEqIdx: return contiLEqIdx;
-            default:          return 0;
+        case contiLEqIdx: return contiGEqIdx;
+        case contiGEqIdx: return contiLEqIdx;
+        default:          return 0;
         }
     }
 
@@ -373,25 +488,21 @@ protected:
     constexpr unsigned int contiCompIdx2_() const {
         switch (replaceCompEqIdx)
         {
-            case contiLEqIdx: return contiGEqIdx;
-            case contiGEqIdx: return contiLEqIdx;
-            default:          return numComponents-1;
+        case contiLEqIdx: return contiGEqIdx;
+        case contiGEqIdx: return contiLEqIdx;
+        default:          return numComponents-1;
         }
     }
 
     Implementation *asImp_()
-    {
-        return static_cast<Implementation *> (this);
-    }
+    { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const
-    {
-        return static_cast<const Implementation *> (this);
-    }
+    { return static_cast<const Implementation *> (this); }
 
-private:
+ private:
     Scalar massUpwindWeight_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif
