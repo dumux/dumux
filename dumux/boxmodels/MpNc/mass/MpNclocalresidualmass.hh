@@ -236,7 +236,6 @@ class MPNCLocalResidualMass
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { conti0EqIdx      = Indices::conti0EqIdx };
-    enum { numEnergyEqs     = Indices::NumPrimaryEnergyVars};
 
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
 

@@ -144,7 +144,6 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
 public:

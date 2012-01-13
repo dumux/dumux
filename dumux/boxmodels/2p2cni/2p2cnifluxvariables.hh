@@ -63,9 +63,7 @@ class TwoPTwoCNIFluxVariables : public TwoPTwoCFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dimWorld = GridView::dimensionworld };
-
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
 public:
     /*
@@ -137,9 +135,10 @@ protected:
             problem.spatialParameters().matrixHeatFlux(tmp,
                                                        *this,
                                                        elemVolVars,
-                                                       face,
+                                                       temperatureGrad_,
                                                        element,
-                                                       this->fvGeom_);
+                                                       this->fvGeom_,
+                                                       scvfIdx_);
 
         // project the heat flux vector on the face's normal vector
         normalMatrixHeatFlux_ = tmp*face.normal;

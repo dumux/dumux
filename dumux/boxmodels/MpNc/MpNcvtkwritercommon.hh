@@ -68,7 +68,6 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
-    enum { velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel) };
 
     typedef Dune::FieldVector<Scalar, dim> VelocityVector;
     typedef Dune::BlockVector<VelocityVector> VelocityField;

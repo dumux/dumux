@@ -54,7 +54,6 @@ class BoxBoundaryVariables : public GET_PROP_TYPE(TypeTag, PTAG(FluxVariables))
 
     typedef typename FVElementGeometry::BoundaryFace BoundaryFace;
     typedef typename GridView::template Codim<0>::Entity Element;
-    enum { dim = GridView::dimension };
 
 public:
     BoxBoundaryVariables(const Problem &problem,

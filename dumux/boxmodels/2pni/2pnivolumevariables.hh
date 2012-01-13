@@ -48,7 +48,6 @@ class TwoPNIVolumeVariables : public TwoPVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
     typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
     enum { temperatureIdx = Indices::temperatureIdx };

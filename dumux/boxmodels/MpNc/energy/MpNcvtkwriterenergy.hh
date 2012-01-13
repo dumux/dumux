@@ -63,12 +63,9 @@ class MPNCVtkWriterEnergy : public MPNCVtkWriterModule<TypeTag>
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
 
     typedef typename ParentType::ScalarBuffer ScalarBuffer;
     typedef typename ParentType::PhaseBuffer PhaseBuffer;
-    typedef typename ParentType::ComponentBuffer ComponentBuffer;
-    typedef typename ParentType::PhaseComponentBuffer PhaseComponentBuffer;
 
 public:
     MPNCVtkWriterEnergy(const Problem &problem)
@@ -150,12 +147,9 @@ class MPNCVtkWriterEnergy<TypeTag, /* enableEnergy = */ true, /* enableKineticEn
 
     enum { dim = GridView::dimension };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
 
     typedef typename ParentType::ScalarBuffer ScalarBuffer;
     typedef typename ParentType::PhaseBuffer PhaseBuffer;
-    typedef typename ParentType::ComponentBuffer ComponentBuffer;
-    typedef typename ParentType::PhaseComponentBuffer PhaseComponentBuffer;
 
 
 public:

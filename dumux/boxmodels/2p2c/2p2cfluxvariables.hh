@@ -76,7 +76,6 @@ class TwoPTwoCFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-    typedef typename FVElementGeometry::BoundaryFace BoundaryFace;
 
 public:
     /*

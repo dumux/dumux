@@ -190,7 +190,6 @@ class LensProblem : public TwoPProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
 
-    typedef typename GridView::Intersection Intersection;
 
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

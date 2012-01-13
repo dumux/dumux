@@ -37,9 +37,7 @@ class MPNCDiffusion
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
-    enum { enableKinetic= GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum { gPhaseIdx = FluidSystem::gPhaseIdx };
     enum { lPhaseIdx = FluidSystem::lPhaseIdx };
 

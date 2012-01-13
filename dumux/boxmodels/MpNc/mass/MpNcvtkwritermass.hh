@@ -64,10 +64,7 @@ class MPNCVtkWriterMass : public MPNCVtkWriterModule<TypeTag>
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     bool fugacityOutput_;
 
-    typedef typename ParentType::ScalarBuffer ScalarBuffer;
-    typedef typename ParentType::PhaseBuffer PhaseBuffer;
     typedef typename ParentType::ComponentBuffer ComponentBuffer;
-    typedef typename ParentType::PhaseComponentBuffer PhaseComponentBuffer;
 
 
 public:

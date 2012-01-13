@@ -63,10 +63,8 @@ private:
     typedef std::vector<std::set<ColIndex> > Entries;
 
 public:
-    typedef typename ParentType::RowIterator RowIterator;
     typedef typename ParentType::ColIterator ColIterator;
     typedef typename ParentType::ConstColIterator ConstColIterator;
-    typedef typename ParentType::field_type field_type;
     typedef typename ParentType::block_type block_type;
 
 

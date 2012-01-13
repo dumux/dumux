@@ -50,7 +50,6 @@ class OverlappingBlockVector
     typedef typename Overlap::Index RowIndex;
     typedef typename Overlap::ProcessRank ProcessRank;
     typedef typename Overlap::PeerSet PeerSet;
-    typedef typename Overlap::ForeignOverlapWithPeer ForeignOverlapWithPeer;
     typedef typename Overlap::DomesticOverlapWithPeer DomesticOverlapWithPeer;
 
     typedef typename ParentType::field_type Scalar;

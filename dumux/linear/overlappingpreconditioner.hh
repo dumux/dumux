@@ -42,7 +42,6 @@ class OverlappingPreconditioner :
 public:
     typedef typename SeqPreCond::domain_type domain_type;
     typedef typename SeqPreCond::range_type range_type;
-    typedef typename SeqPreCond::field_type field_type;
 
     enum { category = Dune::SolverCategory::overlapping };
 
