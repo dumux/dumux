@@ -147,8 +147,8 @@ public:
      * \param problem a problem class object
      */
     FVPressure(Problem& problem) :
-        problem_(problem), A_(problem.gridView().size(0), problem.gridView().size(0), (2 * dim + 1)
-                * problem.gridView().size(0), Matrix::random), f_(problem.gridView().size(0)), pressure_(problem.gridView().size(0))
+        problem_(problem), size_(problem.gridView().size(0)),
+        pressure_(size_), A_(size_, size_, (2 * dim + 1) * size_, Matrix::random), f_(size_)
     {}
 
 private:
@@ -161,12 +161,15 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
     Problem& problem_;
-    Matrix A_;
-    RHSVector f_;
+
+    int size_;
     ScalarSolution pressure_;
 
     std::string solverName_;
     std::string preconditionerName_;
+protected:
+    Matrix A_;
+    RHSVector f_;
 };
 
 //! initializes the matrix to store the system of equations
