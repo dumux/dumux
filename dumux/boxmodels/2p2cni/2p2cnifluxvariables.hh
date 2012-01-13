@@ -99,6 +99,9 @@ public:
     Scalar normalMatrixHeatFlux() const
     { return normalMatrixHeatFlux_; }
 
+    Vector temperatureGradient() const
+    { return temperatureGrad_; }
+
 protected:
     template<class FaceType>
     void calculateValues_(const Problem &problem,
@@ -112,29 +115,39 @@ protected:
 
         // calculate temperature gradient using finite element
         // gradients
-        Vector temperatureGrad(0);
+        temperatureGrad_ = 0;
         Vector tmp(0.0);
         for (int vertIdx = 0; vertIdx < this->fvGeom_.numVertices; vertIdx++)
         {
-            tmp = this->fvGeom_.subContVolFace[scvfIdx_].grad[vertIdx];
+            tmp = face.grad[vertIdx];
             tmp *= elemVolVars[vertIdx].temperature();
-            temperatureGrad += tmp;
+            temperatureGrad_ += tmp;
         }
 
         // The spatial parameters calculates the actual heat flux vector
-        problem.spatialParameters().matrixHeatFlux(tmp,
-                                                   *this,
-                                                   elemVolVars,
-                                                   temperatureGrad,
-                                                   element,
-                                                   this->fvGeom_,
-                                                   scvfIdx_);
+        if (!onBoundary)
+            problem.spatialParameters().matrixHeatFlux(tmp,
+                                                       *this,
+                                                       elemVolVars,
+                                                       temperatureGrad_,
+                                                       element,
+                                                       this->fvGeom_,
+                                                       scvfIdx_);
+        else
+            problem.spatialParameters().matrixHeatFlux(tmp,
+                                                       *this,
+                                                       elemVolVars,
+                                                       face,
+                                                       element,
+                                                       this->fvGeom_);
+
         // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = tmp*this->fvGeom_.subContVolFace[scvfIdx_].normal;
+        normalMatrixHeatFlux_ = tmp*face.normal;
     }
 
 private:
     Scalar normalMatrixHeatFlux_;
+    Vector temperatureGrad_;
     int scvfIdx_;
 };
 

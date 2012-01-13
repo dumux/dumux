@@ -52,10 +52,12 @@ class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
     typedef TwoPTwoCLocalResidual<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryVariables) BoundaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
     enum {
@@ -172,6 +174,45 @@ public:
         // diffusive heat flux
         flux[temperatureIdx] +=
             fluxData.normalMatrixHeatFlux();
+    }
+
+    /*!
+     * \brief Compute the fluxes at outflow boundaries. This does essentially the same
+     *        as computeFluxes, but the fluxes are evaluated at the integration point
+     *        of the boundary face. Therefore, still some variables are evaluated
+     *        at the vertex (usually the ones which are upwinded).
+     *
+     * \param flux A temporary vector, where the outflow boundary fluxes are written into
+     * \param boundaryVars The boundary variables object
+     * \param scvIdx The index of the SCV containing the outflow boundary face
+     * \param boundaryFaceIdx The index of the boundary face
+     */
+    void computeOutflowValues(PrimaryVariables &flux,
+            const BoundaryVariables &boundaryVars,
+            const int scvIdx,
+            const int boundaryFaceIdx)
+    {
+        ParentType::computeOutflowValues(flux, boundaryVars, scvIdx, boundaryFaceIdx);
+
+        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
+        const VolumeVariables &vertVars = this->curVolVars_()[scvIdx];
+
+        if (bcTypes.isOutflow(energyEqIdx))
+        {
+            // advective heat flux in all phases
+            flux[energyEqIdx] = 0;
+            for (int phase = 0; phase < numPhases; ++phase) {
+                flux[energyEqIdx] +=
+                    boundaryVars.KmvpNormal(phase) *
+                            vertVars.density(phase) *
+                            vertVars.mobility(phase) *
+                            vertVars.enthalpy(phase);
+            }
+
+            // add conductive heat flux in all phases
+            flux[energyEqIdx] +=
+                boundaryVars.normalMatrixHeatFlux();
+        }
     }
 
 private:

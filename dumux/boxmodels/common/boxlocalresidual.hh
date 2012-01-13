@@ -363,10 +363,10 @@ protected:
                 assert(0 <= pvIdx && pvIdx < numEq);
                 Valgrind::CheckDefined(tmp[pvIdx]);
 
-                this->residual_[i][eqIdx] =
-                    curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
+                residual_[i][eqIdx] =
+                        curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
 
-                this->storageTerm_[i][eqIdx] = 0.0;
+                storageTerm_[i][eqIdx] = 0.0;
             };
         };
     }
@@ -406,15 +406,15 @@ protected:
 
                 // add the residual of all vertices of the boundary
                 // segment
-                evalNeumannSegment_(isIt,
-                                    elemVertIdx,
-                                    boundaryFaceIdx);
+                asImp_().evalNeumannSegment_(isIt,
+                                             elemVertIdx,
+                                             boundaryFaceIdx);
                 // evaluate the outflow conditions at the boundary face
                 // ATTENTION: This is so far a beta version that is only for the 2p2c and 2p2cni model
                 //              available and not thoroughly tested.
-                this->asImp_().evalOutflowSegment(isIt,
-                                                  elemVertIdx,
-                                                  boundaryFaceIdx);
+                asImp_().evalOutflowSegment(isIt,
+                                            elemVertIdx,
+                                            boundaryFaceIdx);
             }
         }
     }
@@ -471,7 +471,7 @@ protected:
             PrimaryVariables flux;
 
             Valgrind::SetUndefined(flux);
-            this->asImp_().computeFlux(flux, k);
+            asImp_().computeFlux(flux, k);
             Valgrind::CheckDefined(flux);
 
             Scalar extrusionFactor =
@@ -512,7 +512,7 @@ protected:
         // all sub control volumes
         for (int i=0; i < fvElemGeom_().numVertices; i++) {
             Valgrind::SetUndefined(storageTerm_[i]);
-            this->asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
+            asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
             storageTerm_[i] *=
                 fvElemGeom_().subContVol[i].volume
                 * curVolVars_(i).extrusionFactor();
@@ -543,8 +543,8 @@ protected:
             // doing the time discretization...
             Valgrind::SetUndefined(storageTerm_[i]);
             Valgrind::SetUndefined(tmp);
-            this->asImp_().computeStorage(storageTerm_[i], i, false);
-            this->asImp_().computeStorage(tmp, i, true);
+            asImp_().computeStorage(storageTerm_[i], i, false);
+            asImp_().computeStorage(tmp, i, true);
             Valgrind::CheckDefined(storageTerm_[i]);
             Valgrind::CheckDefined(tmp);
 
@@ -557,7 +557,7 @@ protected:
 
             // subtract the source term from the local rate
             Valgrind::SetUndefined(tmp);
-            this->asImp_().computeSource(tmp, i);
+            asImp_().computeSource(tmp, i);
             Valgrind::CheckDefined(tmp);
             tmp *= fvElemGeom_().subContVol[i].volume * extrusionFactor;
             residual_[i] -= tmp;
