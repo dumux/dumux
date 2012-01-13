@@ -39,6 +39,7 @@
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2cmultiphysics.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2cmultiphysics.hh>
+#include <dumux/decoupled/2p2c/cellData2p2cmultiphysics.hh>
 // fluid properties
 //#include <dumux/material/fluidsystems/brine_co2_system.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
@@ -56,6 +57,8 @@ namespace Properties
 {
 NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC));
 
+SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2Cmultiphysics<TypeTag>);
+
 // Set the grid type
 SET_PROP(TestMultTwoPTwoCProblem, Grid)
 {
@@ -66,22 +69,23 @@ SET_PROP(TestMultTwoPTwoCProblem, Grid)
 // Set the problem property
 SET_PROP(TestMultTwoPTwoCProblem, Problem)
 {
-    typedef Dumux::TestMultTwoPTwoCProblem<TTAG(TestMultTwoPTwoCProblem)> type;
+    typedef Dumux::TestMultTwoPTwoCProblem<TypeTag> type;
 };
 
 // Set the model properties
 SET_PROP(TestMultTwoPTwoCProblem, TransportModel)
 {
-    typedef Dumux::FVTransport2P2CMultiPhysics<TTAG(TestMultTwoPTwoCProblem)> type;
+    typedef Dumux::FVTransport2P2CMultiPhysics<TypeTag> type;
 };
 
 SET_PROP(TestMultTwoPTwoCProblem, PressureModel)
 {
-    typedef Dumux::FVPressure2P2CMultiPhysics<TTAG(TestMultTwoPTwoCProblem)> type;
+    typedef Dumux::FVPressure2P2CMultiPhysics<TypeTag> type;
 };
 
 SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
-        GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::pressureNW);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureNW);
+
 
 //// Select fluid system
 //SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
@@ -93,6 +97,8 @@ SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
 {
     typedef Dumux::H2ON2FluidSystem<TypeTag> type;
 };
+// Select fluid system
+SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
 
 //// Select water formulation
 //SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
@@ -118,7 +124,7 @@ SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestMultTwoPTwoCProblem,
              BoundaryMobility,
-             GET_PROP_TYPE(TypeTag, TwoPTwoCIndices)::satDependent);
+             GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 SET_SCALAR_PROP(TestMultTwoPTwoCProblem, CFLFactor, 0.8);
 }
 
@@ -145,7 +151,7 @@ class TestMultTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 typedef IMPETProblem2P2C<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
@@ -169,17 +175,21 @@ typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 typedef typename GridView::Traits::template Codim<0>::Entity Element;
 typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
 TestMultTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
 ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
 {
     // Specifies how many time-steps are done before output will be written.
-    this->setOutputInterval(10);
+//    this->setOutputInterval(20);
 
     // initialize the tables of the fluid system
-//    FluidSystem::init();
+    FluidSystem::init(/*tempMin=*/280,
+            /*tempMax=*/290,
+            /*numTemp=*/10,
+            /*pMin=*/190000,
+            /*pMax=*/280000,
+            /*numP=*/400);
 }
 
 /*!
@@ -204,6 +214,7 @@ bool shouldWriteRestartFile() const
 
 //! Returns the temperature within the domain.
 /*! This problem assumes a temperature of 10 degrees Celsius.
+ * \param globalPos The global Position
  */
 Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 {
@@ -272,7 +283,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
 void sourceAtPos(PrimaryVariables &sourceValues, const GlobalPosition& globalPos) const
 {
     setZero(sourceValues);
-    if (fabs(globalPos[0] - 4.5) < 1 && fabs(globalPos[1] - 4.5) < 1)
+    if (fabs(globalPos[0] - 4.8) < 0.5 && fabs(globalPos[1] - 4.8) < 0.5)
         sourceValues[Indices::contiNEqIdx] = 0.0001;
 }
 /*!

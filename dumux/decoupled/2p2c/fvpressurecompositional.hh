@@ -121,16 +121,6 @@ template<class TypeTag> class FVPressureCompositional
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) RHSVector;
 
-protected:
-    Problem& problem()
-    {
-        return problem_;
-    }
-    const Problem& problem() const
-    {
-        return problem_;
-    }
-
 public:
 
     //the variables object is initialized, non-compositional before and compositional after first pressure calculation
@@ -145,14 +135,14 @@ public:
         //pre-transport to estimate update vector
         Scalar dt_estimate = 0.;
         Dune::dinfo << "secant guess"<< std::endl;
-        problem().transportModel().update(-1, dt_estimate, updateEstimate_, false);
+        problem_.transportModel().update(-1, dt_estimate, updateEstimate_, false);
         //last argument false in update() makes shure that this is estimate and no "real" transport step
-        updateEstimate_ *= problem().timeManager().timeStepSize();
+        updateEstimate_ *= problem_.timeManager().timeStepSize();
 
-//        problem().variables().communicateUpdateEstimate();
+//        problem_.variables().communicateUpdateEstimate();
 
-        problem().pressureModel().assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
-        problem().pressureModel().solve();
+        problem_.pressureModel().assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
+        problem_.pressureModel().solve();
 
         return;
     }
@@ -255,7 +245,7 @@ public:
             (*updEstimate1)[i] = updateEstimate_[0][i];
             (*updEstimate2)[i] = updateEstimate_[1][i];
         }
-        *pressurePV = this->pressure_;
+        *pressurePV = this->pressure();
         writer.attachCellData(*pressurePV, "pressure (Primary Variable");
         writer.attachCellData(*totalConcentration1, "C^w from cellData");
         writer.attachCellData(*totalConcentration2, "C^n from cellData");
@@ -277,11 +267,11 @@ public:
     void debugOutput(double pseudoTS = 0.)
     {
         std::cout << "Writing debug for current time step\n";
-        debugWriter_.beginWrite(problem().timeManager().time() + pseudoTS);
+        debugWriter_.beginWrite(problem_.timeManager().time() + pseudoTS);
         addOutputVtkFields(debugWriter_);
 
 #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
-        int size_ = problem().gridView().size(0);
+        int size_ = problem_.gridView().size(0);
         // output porosity, permeability
         Dune::BlockVector<Dune::FieldVector<double,1> > *poroPtr = debugWriter_.allocateManagedBuffer (size_);
         Dune::BlockVector<Dune::FieldVector<double,1> > *permPtr = debugWriter_.allocateManagedBuffer (size_);
@@ -289,14 +279,14 @@ public:
         Dune::BlockVector<Dune::FieldVector<double,1> > poro_(0.), perm_(0.);
         poro_.resize(size_); perm_.resize(size_);
         // iterate over all elements of domain
-        for (ElementIterator eIt = problem().gridView().template begin<0> ();
-                eIt != problem().gridView().template end<0>(); ++eIt)
+        for (ElementIterator eIt = problem_.gridView().template begin<0> ();
+                eIt != problem_.gridView().template end<0>(); ++eIt)
         {
             // get position, index
             GlobalPosition globalPos = eIt->geometry().center();
-            int globalIdx = problem().variables().index(*eIt);
-            poro_[globalIdx] = problem().spatialParameters().porosity(globalPos, *eIt);
-            perm_[globalIdx] = problem().spatialParameters().intrinsicPermeability(globalPos, *eIt)[0][0];
+            int globalIdx = problem_.variables().index(*eIt);
+            poro_[globalIdx] = problem_.spatialParameters().porosity(globalPos, *eIt);
+            perm_[globalIdx] = problem_.spatialParameters().intrinsicPermeability(globalPos, *eIt)[0][0];
         }
         *poroPtr = poro_;
         *permPtr = perm_;
@@ -354,55 +344,55 @@ template<class TypeTag>
 void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
 {
     //prepare stiffness Matrix and Vectors
-    problem().pressureModel().initializeMatrix();
+    problem_.pressureModel().initializeMatrix();
 
     // initialguess: set saturations, determine visco and mobility for initial pressure equation
     // at this moment, the pressure is unknown. Hence, dont regard compositional effects.
     Dune::dinfo << "first saturation guess"<<std::endl; //=J: initialGuess()
-        problem().pressureModel().initialMaterialLaws(false);
+        problem_.pressureModel().initialMaterialLaws(false);
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
                 debugOutput();
             #endif
     Dune::dinfo << "first pressure guess"<<std::endl;
-        problem().pressureModel().assemble(true);
-        problem().pressureModel().solve();
+        problem_.pressureModel().assemble(true);
+        problem_.pressureModel().solve();
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
                 debugOutput(1e-6);
             #endif
     // update the compositional variables (hence true)
     Dune::dinfo << "first guess for mass fractions"<<std::endl;//= J: transportInitial()
-        problem().pressureModel().initialMaterialLaws(true);
+        problem_.pressureModel().initialMaterialLaws(true);
 
     // perform concentration update to determine secants
     Dune::dinfo << "secant guess"<< std::endl;
         Scalar dt_estimate = 0.;
-        problem().transportModel().update(0., dt_estimate, updateEstimate_, false);
-        dt_estimate = std::min ( problem().timeManager().timeStepSize(), dt_estimate);
+        problem_.transportModel().update(0., dt_estimate, updateEstimate_, false);
+        dt_estimate = std::min ( problem_.timeManager().timeStepSize(), dt_estimate);
         //make sure the right time-step is used by all processes in the parallel case
-        if (problem().gridView().comm().size() > 1)
-            dt_estimate = problem().gridView().comm().min(dt_estimate);
+        if (problem_.gridView().comm().size() > 1)
+            dt_estimate = problem_.gridView().comm().min(dt_estimate);
 
         updateEstimate_ *= dt_estimate;
         //communicate in parallel case
-//        problem().variables().communicateUpdateEstimate();
+//        problem_.variables().communicateUpdateEstimate();
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
                 debugOutput(2e-6);
             #endif
     // pressure calculation
     Dune::dinfo << "second pressure guess"<<std::endl;
-        problem().pressureModel().assemble(false);
-        problem().pressureModel().solve();
+        problem_.pressureModel().assemble(false);
+        problem_.pressureModel().solve();
             #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
                 debugOutput(3e-6);
             #endif
 
         // update the compositional variables
-        problem().pressureModel().initialMaterialLaws(true);
+        problem_.pressureModel().initialMaterialLaws(true);
 
 
     if (solveTwice)
     {
-        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > pressureOld(this->pressure_);
+        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > pressureOld(this->pressure());
         Dune::BlockVector<Dune::FieldVector<Scalar, 1> > pressureDiff;
         Scalar pressureNorm = 1.;   //dummy initialization to perform at least 1 iteration
         int numIter = 1;
@@ -411,22 +401,22 @@ void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
         {
             Scalar dt_dummy=0.;    // without this dummy, it will never converge!
             // update for secants
-            problem().transportModel().update(0., dt_dummy, updateEstimate_, false);   Dune::dinfo << "secant guess"<< std::endl;
+            problem_.transportModel().update(0., dt_dummy, updateEstimate_, false);   Dune::dinfo << "secant guess"<< std::endl;
             updateEstimate_ *= dt_estimate;
 
             //communicate in parallel case
-//            problem().variables().communicateUpdateEstimate();
+//            problem_.variables().communicateUpdateEstimate();
 
             // pressure calculation
-            problem().pressureModel().assemble(false);                 Dune::dinfo << "pressure guess number "<< numIter <<std::endl;
-            problem().pressureModel().solve();
+            problem_.pressureModel().assemble(false);                 Dune::dinfo << "pressure guess number "<< numIter <<std::endl;
+            problem_.pressureModel().solve();
             // update the compositional variables
-            problem().pressureModel().initialMaterialLaws(true);
+            problem_.pressureModel().initialMaterialLaws(true);
 
             pressureDiff = pressureOld;
-            pressureDiff -= this->pressure_;
+            pressureDiff -= this->pressure();
             pressureNorm = pressureDiff.infinity_norm();
-            pressureOld = this->pressure_;
+            pressureOld = this->pressure();
             pressureNorm /= pressureOld.infinity_norm();
 
             numIter++;
@@ -447,48 +437,47 @@ void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
 template<class TypeTag>
 void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
 {
-//    problem().variables().communicateTransportedQuantity();
-//    problem().variables().communicatePressure();
+//    problem_.variables().communicateTransportedQuantity();
+//    problem_.variables().communicatethis->pressure();
 
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem().gridView().template end<0>();
-    ElementIterator eIt = problem().gridView().template begin<0>();
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    ElementIterator eIt = problem_.gridView().template begin<0>();
     for (; eIt != eItEnd; ++eIt)
     {
-        // initialize the fluid system
-        FluidState fluidState;
-
         // get global coordinate of cell center
         GlobalPosition globalPos = eIt->geometry().center();
 
         // assign an Index for convenience
-        int globalIdx = problem().variables().index(*eIt);
+        int globalIdx = problem_.variables().index(*eIt);
 
         // get the temperature
-        Scalar temperature_ = problem().temperatureAtPos(globalPos);
-        CellData& cellData = problem().variables().cellData(globalIdx);
+        Scalar temperature_ = problem_.temperatureAtPos(globalPos);
+        CellData& cellData = problem_.variables().cellData(globalIdx);
+        // acess the fluid state and prepare for manipulation
+        FluidState& fluidState = cellData.manipulateFluidState();
 
         // initial conditions
         PhaseVector pressure(0.);
         Scalar sat_0=0.;
 
         typename Indices::BoundaryFormulation icFormulation;
-        problem().initialFormulation(icFormulation, *eIt);            // get type of initial condition
+        problem_.initialFormulation(icFormulation, *eIt);            // get type of initial condition
 
         if(!compositional) //means that we do the first approximate guess without compositions
         {
             // phase pressures are unknown, so start with an exemplary
-            Scalar exemplaryPressure = problem().referencePressure(*eIt);
-            pressure[wPhaseIdx] = pressure[nPhaseIdx] = this->pressure_[globalIdx] = exemplaryPressure;
+            Scalar exemplaryPressure = problem_.referencePressure(*eIt);
+            pressure[wPhaseIdx] = pressure[nPhaseIdx] = this->pressure()[globalIdx] = exemplaryPressure;
             if (icFormulation == Indices::saturation)  // saturation initial condition
             {
-                sat_0 = problem().initSat(*eIt);
-                fluidState.satFlash(sat_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
+                sat_0 = problem_.initSat(*eIt);
+                fluidState.satFlash(sat_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
             }
             else if (icFormulation == Indices::concentration) // concentration initial condition
             {
-                Scalar Z1_0 = problem().initConcentration(*eIt);
-                fluidState.update(Z1_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
+                Scalar Z1_0 = problem_.initConcentration(*eIt);
+                fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
             }
         }
         else if(compositional)    //means we regard compositional effects since we know an estimate pressure field
@@ -496,11 +485,11 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
             if (icFormulation == Indices::saturation)  // saturation initial condition
             {
                 //get saturation, determine pc
-                sat_0 = problem().initSat(*eIt);
+                sat_0 = problem_.initSat(*eIt);
                 Scalar pc=0.;
                 if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
                 {
-                    pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPos, *eIt),
+                    pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPos, *eIt),
                                     sat_0);
                 }
                 else
@@ -511,23 +500,23 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 {
                     case pw:
                     {
-                        pressure[wPhaseIdx] = this->pressure_[globalIdx];
-                        pressure[nPhaseIdx] = this->pressure_[globalIdx] +pc;
+                        pressure[wPhaseIdx] = this->pressure()[globalIdx];
+                        pressure[nPhaseIdx] = this->pressure()[globalIdx] +pc;
                         break;
                     }
                     case pn:
                     {
-                        pressure[wPhaseIdx] = this->pressure_[globalIdx]-pc;
-                        pressure[nPhaseIdx] = this->pressure_[globalIdx];
+                        pressure[wPhaseIdx] = this->pressure()[globalIdx]-pc;
+                        pressure[nPhaseIdx] = this->pressure()[globalIdx];
                         break;
                     }
                 }
 
-                fluidState.satFlash(sat_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
+                fluidState.satFlash(sat_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
             }
             else if (icFormulation == Indices::concentration) // concentration initial condition
             {
-                Scalar Z1_0 = problem().initConcentration(*eIt);
+                Scalar Z1_0 = problem_.initConcentration(*eIt);
                 // If total concentrations are given at the boundary, saturation is unknown.
                 // This may affect pc and hence p_alpha and hence again saturation -> iteration.
 
@@ -546,14 +535,14 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         {
                             case pw:
                             {
-                                pressure[wPhaseIdx] = this->pressure_[globalIdx];
-                                pressure[nPhaseIdx] = this->pressure_[globalIdx] + pc;
+                                pressure[wPhaseIdx] = this->pressure()[globalIdx];
+                                pressure[nPhaseIdx] = this->pressure()[globalIdx] + pc;
                                 break;
                             }
                             case pn:
                             {
-                                pressure[wPhaseIdx] = this->pressure_[globalIdx] - pc;
-                                pressure[nPhaseIdx] = this->pressure_[globalIdx];
+                                pressure[wPhaseIdx] = this->pressure()[globalIdx] - pc;
+                                pressure[nPhaseIdx] = this->pressure()[globalIdx];
                                 break;
                             }
                         }
@@ -561,53 +550,49 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         //store old pc
                         Scalar oldPc = pc;
                         //update with better pressures
-                        fluidState.update(Z1_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt),
-                                            problem().temperatureAtPos(globalPos));
-                        pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPos, *eIt),
+                        fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt),
+                                            problem_.temperatureAtPos(globalPos));
+                        pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPos, *eIt),
                                             fluidState.saturation(wPhaseIdx));
                         // TODO: get right criterion, do output for evaluation
                         //converge criterion
                         if (abs(oldPc-pc)<10)
                             iter = maxiter;
 
-                        pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPos, *eIt),
+                        pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(globalPos, *eIt),
                                 fluidState.saturation(wPhaseIdx));
                     }
                 }
                 else  // capillary pressure neglected
                 {
                     pressure[wPhaseIdx] = pressure[nPhaseIdx]
-                        = this->pressure_[globalIdx];
-                    fluidState.update(Z1_0, pressure, problem().spatialParameters().porosity(globalPos, *eIt), temperature_);
+                        = this->pressure()[globalIdx];
+                    fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(globalPos, *eIt), temperature_);
                 }
 
-                fluidState.calculateMassConcentration(problem().spatialParameters().porosity(globalPos, *eIt));
+                fluidState.calculateMassConcentration(problem_.spatialParameters().porosity(globalPos, *eIt));
 
             } //end conc initial condition
         } //end compositional
-        problem().transportModel().transportedQuantity()[wCompIdx][globalIdx] = fluidState.massConcentration(wCompIdx);
-        problem().transportModel().transportedQuantity()[nCompIdx][globalIdx] = fluidState.massConcentration(nCompIdx);
-
-        // secondary variables
-        // initialize saturation, capillary pressure
-        cellData.setFluidState(fluidState);
+        problem_.transportModel().transportedQuantity()[wCompIdx][globalIdx] = fluidState.massConcentration(wCompIdx);
+        problem_.transportModel().transportedQuantity()[nCompIdx][globalIdx] = fluidState.massConcentration(nCompIdx);
 
         // initialize phase properties not stored in fluidstate
         cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
         cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
 
         // initialize mobilities
-        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(wPhaseIdx));
-        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem_.spatialParameters().materialLawParams(globalPos, *eIt), fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(nPhaseIdx));
 
         // calculate perimeter used as weighting factor
         if(!compositional)
         {
             // run through all intersections with neighbors
-            IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-            for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
                 cellData.perimeter()
                         += isIt->geometry().volume();
@@ -641,12 +626,12 @@ template<class TypeTag>
 void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& globalPos, const Element& element)
 {
     // cell index
-    int globalIdx = problem().variables().index(element);
+    int globalIdx = problem_.variables().index(element);
 
-    CellData& cellData = problem().variables().cellData(globalIdx);
+    CellData& cellData = problem_.variables().cellData(globalIdx);
 
     // get cell temperature
-    Scalar temperature_ = problem().temperatureAtPos(globalPos);
+    Scalar temperature_ = problem_.temperatureAtPos(globalPos);
 
     // initialize an Fluid state for the update
     FluidState updFluidState;
@@ -661,16 +646,16 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     //TODO: use pressure from cellData here
         case pw:
         {
-            pressure[wPhaseIdx] = this->pressure_[globalIdx];
-            pressure[nPhaseIdx] = this->pressure_[globalIdx]
+            pressure[wPhaseIdx] = this->pressure()[globalIdx];
+            pressure[nPhaseIdx] = this->pressure()[globalIdx]
                           + cellData.capillaryPressure();
             break;
         }
         case pn:
         {
-            pressure[wPhaseIdx] = this->pressure_[globalIdx]
+            pressure[wPhaseIdx] = this->pressure()[globalIdx]
                           - cellData.capillaryPressure();
-            pressure[nPhaseIdx] = this->pressure_[globalIdx];
+            pressure[nPhaseIdx] = this->pressure()[globalIdx];
             break;
         }
     }
@@ -683,12 +668,11 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     // shortcuts for density
     Scalar densityW = cellData.density(wPhaseIdx);
     Scalar densityNW = cellData.density(nPhaseIdx);
-    // mass fraction of wetting phase
-    Scalar nuw1 =  cellData.saturation(wPhaseIdx)*densityW
-            / (cellData.saturation(wPhaseIdx)*densityW
-                    + cellData.saturation(nPhaseIdx)*densityNW);
+
     // actual fluid volume
-    Scalar volalt = (mass[0]+mass[1]) * (nuw1 / densityW + (1-nuw1) / densityNW);
+    Scalar volalt = (mass[0]+mass[1])
+            * (cellData.phaseMassFraction(wPhaseIdx) / densityW
+                    + cellData.phaseMassFraction(nPhaseIdx) / densityNW);
 
     /**********************************
      * b) define increments
@@ -713,9 +697,9 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     p_ += pressure;
     Scalar Z1 = mass[0] / (mass[0] + mass[1]);
     updFluidState.update(Z1,
-            p_, problem().spatialParameters().porosity(globalPos, element), temperature_);
-    cellData.dv_dp() = (((mass[0]+mass[1]) * (nuw1 /updFluidState.density(wPhaseIdx)
-            + (1-nuw1) /updFluidState.density(nPhaseIdx))) - volalt) /incp;
+            p_, problem_.spatialParameters().porosity(globalPos, element), temperature_);
+    cellData.dv_dp() = (((mass[0]+mass[1]) * (updFluidState.phaseMassFraction(wPhaseIdx) /updFluidState.density(wPhaseIdx)
+            + updFluidState.phaseMassFraction(nPhaseIdx) /updFluidState.density(nPhaseIdx))) - volalt) /incp;
 
     if (cellData.dv_dp()>0)
     {
@@ -724,9 +708,9 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
 
         p_ -= 2*incp;
         updFluidState.update(Z1,
-                    p_, problem().spatialParameters().porosity(globalPos, element), temperature_);
-        cellData.dv_dp() = (((mass[0]+mass[1]) * (nuw1 /updFluidState.density(wPhaseIdx)
-                + (1-nuw1) /updFluidState.density(nPhaseIdx))) - volalt) /incp;
+                    p_, problem_.spatialParameters().porosity(globalPos, element), temperature_);
+        cellData.dv_dp() = (((mass[0]+mass[1]) * (updFluidState.phaseMassFraction(wPhaseIdx) /updFluidState.density(wPhaseIdx)
+                + updFluidState.phaseMassFraction(nPhaseIdx) /updFluidState.density(nPhaseIdx))) - volalt) /incp;
         // dV_dp > 0 is unphysical: Try inverse increment for secant
         if (cellData.dv_dp()>0)
         {
@@ -739,13 +723,11 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     {
         mass[comp] +=  massIncrement[comp];
         Z1 = mass[0] / (mass[0] + mass[1]);
-        updFluidState.update(Z1, pressure, problem().spatialParameters().porosity(globalPos, element), temperature_);
+        updFluidState.update(Z1, pressure, problem_.spatialParameters().porosity(globalPos, element), temperature_);
 
-        Scalar nuw = updFluidState.saturation(wPhaseIdx) * updFluidState.density(wPhaseIdx)
-                / (updFluidState.saturation(wPhaseIdx) * updFluidState.density(wPhaseIdx)
-                        + updFluidState.saturation(nPhaseIdx) * updFluidState.density(nPhaseIdx));
         cellData.dv(comp) = ((mass[0]+mass[1])
-                * (nuw / updFluidState.density(wPhaseIdx) + (1-nuw) / updFluidState.density(nPhaseIdx)) - volalt)
+                * (updFluidState.phaseMassFraction(wPhaseIdx) / updFluidState.density(wPhaseIdx)
+                        + updFluidState.phaseMassFraction(nPhaseIdx) / updFluidState.density(nPhaseIdx)) - volalt)
                 / massIncrement[comp];
         mass[comp] -= massIncrement[comp];
 

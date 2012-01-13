@@ -46,7 +46,7 @@ class PseudoOnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTa
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 public:
     enum {     numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -73,16 +73,18 @@ public:
      *
      * \param Z1 Feed mass fraction \f$\mathrm{[-]}\f$
      * \param press1p Pressure value for present phase \f$\mathrm{[Pa]}\f$
-     * \param satW Saturation of the wetting phase \f$\mathrm{[-]}\f$
+     * \param presentPhaseIdx Subdomain Index = Indication which phase is present
+     * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
-    void update(const Scalar& Z1,const Scalar& press1p,const Scalar& satW, const Scalar& temperature)
+    void update(const Scalar& Z1,const Scalar& press1p,const int presentPhaseIdx, const Scalar& temperature)
     {
-        Sw_ = satW;
+
         pressure1p_=press1p;
         temperature_ = temperature;
 
-        if (satW == 1.)
+        if (presentPhaseIdx == wPhaseIdx)
         {
+            Sw_ = 1.;
             massFractionWater_[wPhaseIdx] = Z1;
             massFractionWater_[nPhaseIdx] = 0.;
 
@@ -90,9 +92,12 @@ public:
             moleFractionWater_[wPhaseIdx] /= ( Z1 / FluidSystem::molarMass(0)
                            + (1.-Z1) / FluidSystem::molarMass(1));
             moleFractionWater_[nPhaseIdx] = 0.;
+
+            presentPhaseIdx_ = wPhaseIdx;
         }
-        else if (satW == 0.)
+        else if (presentPhaseIdx == nPhaseIdx)
         {
+            Sw_ = 0.;
             massFractionWater_[wPhaseIdx] = 0.;
             massFractionWater_[nPhaseIdx] = Z1;
 
@@ -101,9 +106,17 @@ public:
             moleFractionWater_[nPhaseIdx] /= (Z1/ FluidSystem::molarMass(0)
                            + (1.-Z1) / FluidSystem::molarMass(1) );    // /= total moles in phase
             moleFractionWater_[nPhaseIdx] = 0.;
+
+            presentPhaseIdx_ = nPhaseIdx;
         }
         else
-            Dune::dgrave << "Twophase conditions in single-phase flash! Saturation is " << satW << std::endl;
+            Dune::dgrave << __FILE__ <<": Twophase conditions in single-phase flash!"
+                << " Z1 is "<<Z1<< std::endl;
+
+        density_ = FluidSystem::density(*this, presentPhaseIdx);
+
+        aveMoMass_ =  moleFractionWater_[presentPhaseIdx]*FluidSystem::molarMass(wCompIdx)
+        +   (1.-moleFractionWater_[presentPhaseIdx])*FluidSystem::molarMass(nCompIdx);
 
         return;
     }
@@ -121,12 +134,24 @@ public:
             return Scalar(1.0) - Sw_;
     };
 
+    int presentPhaseIdx() const
+    {
+        return presentPhaseIdx_;
+    }
+
     /*! \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *  \param phaseIdx Index of the phase
      */
     Scalar pressure(int phaseIdx) const
     { return pressure1p_; }
 
+    Scalar density(int phaseIdx) const
+    {
+        if(phaseIdx == presentPhaseIdx_)
+            return density_;
+        else
+            return FluidSystem::density(*this, phaseIdx);
+    }
 
     /*!
      * \brief Returns the mass fraction of a component in a phase.
@@ -155,10 +180,27 @@ public:
             return 1.-moleFractionWater_[phaseIdx];
     }
 
+    /*!
+     * \brief Returns the viscosity of a phase TODO: \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     */
+    Scalar viscosity(int phaseIdx) const
+    {
+        assert(phaseIdx == presentPhaseIdx_);
+        return viscosity_;
+    }
+    void setViscosity(int phaseIdx, Scalar value)
+    {
+        assert(phaseIdx == presentPhaseIdx_);
+        viscosity_ = value;
+    }
+
     Scalar averageMolarMass(int phaseIdx) const
     {
-        return moleFractionWater_[phaseIdx]*FluidSystem::molarMass(wCompIdx)
-                +   (1.-moleFractionWater_[phaseIdx])*FluidSystem::molarMass(nCompIdx);
+        return aveMoMass_;
+//        return moleFractionWater_[phaseIdx]*FluidSystem::molarMass(wCompIdx)
+//                +   (1.-moleFractionWater_[phaseIdx])*FluidSystem::molarMass(nCompIdx);
     }
 
     /*!
@@ -169,14 +211,39 @@ public:
      */
     Scalar temperature(int phaseIdx) const
     { return temperature_; };
+
+    /*!
+     * \brief Returns the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * This is equivalent to the sum of the component concentrations for all
+     * phases multiplied with the phase density.
+     *
+     * \param compIdx the index of the component
+     */
+    Scalar massConcentration(int compIdx) const
+    {
+        return massConcentration_[compIdx];
+    };
+    /*!
+     * \brief Sets the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
+     */
+    void setMassConcentration(int compIdx, Scalar value)
+    {
+        massConcentration_[compIdx] = value;
+    };
     //@}
 
 public:
+    Scalar aveMoMass_;
+    Scalar massConcentration_[numComponents];
     Scalar massFractionWater_[numPhases];
     Scalar moleFractionWater_[numPhases];
     Scalar Sw_;
     Scalar pressure1p_;
+    Scalar density_;
+    Scalar viscosity_;
     Scalar temperature_;
+    int presentPhaseIdx_;
 };
 
 } // end namepace

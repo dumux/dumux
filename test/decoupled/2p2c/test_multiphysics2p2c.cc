@@ -3,7 +3,6 @@
 /*****************************************************************************
  *   Copyright (C) 20010 by Benjamin Faigle                                  *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
- *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -102,7 +101,6 @@ int main(int argc, char** argv)
         Dune::FieldVector<double ,dim> L(0);
         Dune::FieldVector<double,dim> H(10);
         Grid grid(N,L,H);
-        grid.loadBalance();
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem

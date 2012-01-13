@@ -238,10 +238,8 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     int globalIdxI = problem().variables().index(elementI);
     Scalar volume = elementI.geometry().volume();
 
-    storageEntry = 0.;
     // determine maximum error to scale error-term
     Scalar timestep_ = problem().timeManager().timeStepSize();
-//    maxErr /= timestep_;
 
     // compressibility term
     if (!first && timestep_ != 0)
@@ -798,10 +796,6 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 {
-
-    // instantiate a brandnew fluid state object
-    FluidState fluidState;
-
     Scalar maxError = 0.;
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = problem().gridView().template end<0> ();
@@ -822,14 +816,14 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& elementI)
 {
-    // instantiate a brandnew fluid state object
-    FluidState fluidState;
-
     // get global coordinate of cell center
     GlobalPosition globalPos = elementI.geometry().center();
 
     int globalIdx = problem().variables().index(elementI);
     CellData& cellData = problem().variables().cellData(globalIdx);
+
+    // acess the fluid state and prepare for manipulation
+    FluidState& fluidState = cellData.manipulateFluidState();
 
     Scalar temperature_ = problem().temperatureAtPos(globalPos);
     // reset
@@ -938,11 +932,6 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
         if(iterout !=0)
         Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx << ", pc delta still " << abs(oldPc-pc) << std::endl;
     }
-
-    // secondary variables
-    // initialize saturation, capillary pressure
-    cellData.setFluidState(fluidState);
-
     // initialize phase properties not stored in fluidstate
     cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
     cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
