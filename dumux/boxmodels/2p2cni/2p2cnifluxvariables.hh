@@ -131,14 +131,13 @@ protected:
                                                        element,
                                                        this->fvGeom_,
                                                        scvfIdx_);
-        else
-            problem.spatialParameters().matrixHeatFlux(tmp,
+        else // heat flux at outflow boundaries
+            problem.spatialParameters().boundaryMatrixHeatFlux(tmp,
                                                        *this,
                                                        elemVolVars,
-                                                       temperatureGrad_,
+                                                       face,
                                                        element,
-                                                       this->fvGeom_,
-                                                       scvfIdx_);
+                                                       this->fvGeom_);
 
         // project the heat flux vector on the face's normal vector
         normalMatrixHeatFlux_ = tmp*face.normal;
