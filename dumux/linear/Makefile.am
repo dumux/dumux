@@ -1,4 +1,4 @@
-lineardir = $(includedir)/dune/dumux/linear
+lineardir = $(includedir)/dumux/linear
 linear_HEADERS = *.hh
 
 include $(top_srcdir)/am/global-rules
