@@ -85,8 +85,7 @@ public:
     {
         scvfIdx_ = faceIdx;
 
-        if (!onBoundary)
-            calculateValues_(problem, element, this->face(), elemVolVars);
+        calculateValues_(problem, element, this->face(), elemVolVars);
     }
 
     /*!
@@ -105,12 +104,8 @@ protected:
     void calculateValues_(const Problem &problem,
                           const Element &element,
                           const FaceType &face,
-                          const ElementVolumeVariables &elemVolVars,
-                          bool onBoundary = false)
+                          const ElementVolumeVariables &elemVolVars)
     {
-        if (onBoundary)
-            ParentType::calculateValues_(problem, element, face, elemVolVars, onBoundary);
-
         // calculate temperature gradient using finite element
         // gradients
         temperatureGrad_ = 0;
@@ -123,7 +118,7 @@ protected:
         }
 
         // The spatial parameters calculates the actual heat flux vector
-        if (!onBoundary)
+        if (face.i != face.j)
             problem.spatialParameters().matrixHeatFlux(tmp,
                                                        *this,
                                                        elemVolVars,

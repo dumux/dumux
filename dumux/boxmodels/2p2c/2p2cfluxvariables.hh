@@ -104,10 +104,7 @@ public:
             molarConcGrad_[phaseIdx] = Scalar(0);
         }
 
-        if (!onBoundary)
-        {
-            calculateValues_(problem, element, face(), elemVolVars);
-        }
+        calculateValues_(problem, element, face(), elemVolVars);
     }
 
 protected:
@@ -115,8 +112,7 @@ protected:
     void calculateValues_(const Problem &problem,
                           const Element &element,
                           const FaceType &face,
-                          const ElementVolumeVariables &elemVolVars,
-                          bool onBoundary = false)
+                          const ElementVolumeVariables &elemVolVars)
     {
         calculateGradients_(problem, element, face, elemVolVars);
         calculateVelocities_(problem, element, face, elemVolVars);

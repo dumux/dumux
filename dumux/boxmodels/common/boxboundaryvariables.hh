@@ -53,8 +53,6 @@ class BoxBoundaryVariables : public GET_PROP_TYPE(TypeTag, PTAG(FluxVariables))
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementVolumeVariables)) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
-
-    typedef typename FVElementGeometry::BoundaryFace BoundaryFace;
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
@@ -64,9 +62,7 @@ public:
                          int boundaryFaceIdx,
                          const ElementVolumeVariables &elemDat)
         : ParentType(problem, element, elemGeom, boundaryFaceIdx, elemDat, /*onBoundary=*/ true)
-    {
-        ParentType::calculateValues_(problem, element, this->face(), elemDat,  /*onBoundary=*/ true);
-    }
+    {}
 };
 
 } // end namespace
