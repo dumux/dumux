@@ -549,21 +549,13 @@ public:
         int i,j; //!< scvf seperates corner i and j of elem
         FV ipLocal; //!< integration point in local coords
         FV ipGlobal; //!< integration point in global coords
-        FV normal; //!< normal on face at ip pointing to CV j with length equal to |scvf|
+        FV normal; //!< normal on face pointing to CV j or outward of the domain with length equal to |scvf|
+        Scalar area; //!< area of face
         Dune::FieldVector<FV, maxNC> grad; //!< derivatives of shape functions at ip
         Dune::FieldVector<Scalar, maxNC> shapeValue; //!< value of shape functions at ip
     };
 
-    struct BoundaryFace //! boundary face of a sub control volume
-    {
-        int i,j; //! scv index
-        FV ipLocal; //!< integration point in local coords
-        FV ipGlobal; //!< integration point in global coords
-        Scalar area; //!< area of boundary face
-        FV normal; //!< normal on face at ip pointing to CV j with length equal to |scvf|
-        Dune::FieldVector<FV, maxNC> grad; //!< derivatives of shape functions at ip
-        Dune::FieldVector<Scalar, maxNC> shapeValue; //!< value of shape functions at ip
-    };
+    typedef SubControlVolumeFace BoundaryFace; //!< compatibility typedef
 
     FV elementLocal; //!< local coordinate of element center
     FV elementGlobal; //!< global coordinate of element center
