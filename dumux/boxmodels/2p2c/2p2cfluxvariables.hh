@@ -94,10 +94,8 @@ public:
                           int faceIdx,
                           const ElementVolumeVariables &elemVolVars,
                           bool onBoundary = false)
-        : fvGeom_(elemGeom)
+        : fvGeom_(elemGeom), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
-        scvfIdx_ = faceIdx;
-
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             densityAtIP_[phaseIdx] = Scalar(0);
             molarDensityAtIP_[phaseIdx] = Scalar(0);
@@ -108,10 +106,9 @@ public:
 
         if (!onBoundary)
         {
-            const SCVFace &face = fvGeom_.subContVolFace[scvfIdx_];
-            calculateValues_(problem, element, face, elemVolVars);
+            calculateValues_(problem, element, face(), elemVolVars);
         }
-    };
+    }
 
 protected:
     template <class FaceType>
@@ -363,11 +360,17 @@ public:
     { return molarConcGrad_[phaseIdx]; };
 
     const SCVFace &face() const
-    { return fvGeom_.subContVolFace[scvfIdx_]; }
+    {
+	if (onBoundary_)
+           return fvGeom_.boundaryFace[faceIdx_];
+ 	else 
+	   return fvGeom_.subContVolFace[faceIdx_]; 
+    }
 
 protected:
     const FVElementGeometry &fvGeom_;
-    int scvfIdx_;
+    const int faceIdx_;
+    const bool onBoundary_;
 
     // gradients
     Vector potentialGrad_[numPhases];

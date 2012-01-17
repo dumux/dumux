@@ -405,7 +405,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         }
 
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp = boundaryVars.molarConcGrad(lPhaseIdx)*boundaryVars.boundaryFace().normal;
+        Scalar tmp = boundaryVars.molarConcGrad(lPhaseIdx)*boundaryVars.face().normal;
         tmp *= -1;
         tmp *= boundaryVars.porousDiffCoeff(lPhaseIdx) *
             boundaryVars.molarDensityAtIP(lPhaseIdx);
@@ -416,7 +416,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
             flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
 
         // add diffusive flux of liquid component in gas phase
-        tmp = boundaryVars.molarConcGrad(gPhaseIdx)*boundaryVars.boundaryFace().normal;
+        tmp = boundaryVars.molarConcGrad(gPhaseIdx)*boundaryVars.face().normal;
         tmp *= -1;
         tmp *= boundaryVars.porousDiffCoeff(gPhaseIdx) *
             boundaryVars.molarDensityAtIP(gPhaseIdx);

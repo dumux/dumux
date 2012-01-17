@@ -63,24 +63,10 @@ public:
                          const FVElementGeometry &elemGeom,
                          int boundaryFaceIdx,
                          const ElementVolumeVariables &elemDat)
-        : ParentType(problem, element, elemGeom, boundaryFaceIdx, elemDat, /*onBoundary=*/ true),
-          fvGeom_(elemGeom)
+        : ParentType(problem, element, elemGeom, boundaryFaceIdx, elemDat, /*onBoundary=*/ true)
     {
-        // evaluate variables at the integration point of the boundary face
-        boundaryFaceIdx_ = boundaryFaceIdx;
-        const BoundaryFace &boundaryFace = elemGeom.boundaryFace[boundaryFaceIdx_];
-
-        ParentType::calculateValues_(problem, element, boundaryFace, elemDat,  /*onBoundary=*/ true);
-    };
-
-    // CAREFUL: use this method to address boundary faces
-    // DO NOT USE face() from the parent flux variables!!!
-    const BoundaryFace &boundaryFace() const
-    { return fvGeom_.boundaryFace[boundaryFaceIdx_]; };
-
-private:
-    FVElementGeometry fvGeom_;
-    int boundaryFaceIdx_;
+        ParentType::calculateValues_(problem, element, this->face(), elemDat,  /*onBoundary=*/ true);
+    }
 };
 
 } // end namespace
