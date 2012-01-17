@@ -1,3 +1,5 @@
+SUBDIRS = fv
+
 commondir = $(includedir)/dumux/decoupled/common
 common_HEADERS = *.hh
 
