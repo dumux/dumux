@@ -91,7 +91,6 @@ int main(int argc, char** argv)
         fvProblem.setName("fvdiffusion");
         timer.reset();
         fvProblem.init();
-        fvProblem.model().calculateVelocity();
         double fvTime = timer.elapsed();
         fvProblem.writeOutput();
 //        Dumux::ResultEvaluation fvResult;

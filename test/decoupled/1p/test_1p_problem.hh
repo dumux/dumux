@@ -38,7 +38,9 @@
 #include <dumux/material/components/unit.hh>
 
 #include <dumux/decoupled/1p/diffusion/diffusionproblem1p.hh>
+#include <dumux/decoupled/1p/diffusion/fv/fvpressure1p.hh>
 #include <dumux/decoupled/1p/diffusion/fv/fvvelocity1p.hh>
+#include <dumux/decoupled/common/fv/fvvelocity.hh>
 
 #include "test_1p_spatialparams.hh"
 
@@ -86,7 +88,9 @@ public:
 SET_BOOL_PROP(TestProblemOneP, EnableGravity, false);
 
 // Set the model
-SET_TYPE_PROP(TestProblemOneP, Model, Dumux::FVVelocity1P<TypeTag>);
+SET_TYPE_PROP(TestProblemOneP, Model, Dumux::FVPressure1P<TypeTag>);
+SET_TYPE_PROP(TestProblemOneP, PressureModel, Dumux::FVPressure1P<TypeTag>);
+SET_TYPE_PROP(TestProblemOneP, Velocity, Dumux::FVVelocity1P<TypeTag>);
 
 //Set the problem
 SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TTAG(TestProblemOneP)>);
@@ -124,7 +128,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 
 public:
     TestProblemOneP(const GridView &gridView, const double delta = 1.0) :
-        ParentType(gridView), delta_(delta)
+        ParentType(gridView), delta_(delta), velocity_(*this)
     {
         this->spatialParameters().setDelta(delta_);
     }
@@ -146,6 +150,12 @@ public:
 
     bool shouldWriteRestartFile() const
     { return false; }
+
+    void addOutputVtkFields()
+    {
+        velocity_.calculateVelocity();
+        velocity_.addOutputVtkFields(this->resultWriter());
+    }
 
     /*!
     * \brief Returns the temperature within the domain.
@@ -226,6 +236,7 @@ private:
         }
 
     double delta_;
+    Dumux::FVVelocity<TypeTag> velocity_;
 };
 } //end namespace
 

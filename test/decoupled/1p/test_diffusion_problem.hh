@@ -40,7 +40,9 @@
 
 #include <dumux/decoupled/2p/diffusion/fvmpfa/mpfaproperties.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproblem2p.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
+#include <dumux/decoupled/common/fv/fvvelocity.hh>
 //#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
 //#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
 
@@ -93,8 +95,10 @@ SET_BOOL_PROP(DiffusionTestProblem, EnableGravity, false);
 
 //// set the types for the 2PFA FV method
 NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
-SET_TYPE_PROP(FVVelocity2PTestProblem, Model, Dumux::FVVelocity2P<TTAG(FVVelocity2PTestProblem)>);
+SET_TYPE_PROP(FVVelocity2PTestProblem, PressureModel, Dumux::FVPressure2P<TTAG(FVVelocity2PTestProblem)>);
+SET_TYPE_PROP(FVVelocity2PTestProblem, Model, Dumux::FVPressure2P<TTAG(FVVelocity2PTestProblem)>);
 SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVVelocity2PTestProblem)>);
+SET_TYPE_PROP(FVVelocity2PTestProblem, Velocity, Dumux::FVVelocity2P<TTAG(FVVelocity2PTestProblem)>);
 
 // set the types for the MPFA-O FV method
 //NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
@@ -152,10 +156,13 @@ public:
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     TestDiffusionProblem(const GridView &gridView, const double delta = 1.0) :
-        ParentType(gridView), delta_(delta)
+        ParentType(gridView), delta_(delta), velocity_(*this)
     {
-        this->variables().primaryVariablesGlobal(pressEqIdx) = 1.0;
         this->spatialParameters().setDelta(delta_);
+        for (int i = 0; i < gridView.size(0); i++)
+        {
+            this->variables().cellData(i).setSaturation(wPhaseIdx, 1.0);
+        }
     }
 
     /*!
@@ -166,6 +173,11 @@ public:
     bool shouldWriteRestartFile() const
     { return false; }
 
+    void addOutputVtkFields()
+    {
+        velocity_.calculateVelocity();
+        velocity_.addOutputVtkFields(this->resultWriter());
+    }
     /*!
      * \brief Returns the temperature within the domain.
      *
@@ -245,6 +257,7 @@ public:
 
 private:
     double delta_;
+    Dumux::FVVelocity<TypeTag> velocity_;
 };
 } //end namespace
 
