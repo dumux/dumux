@@ -350,10 +350,7 @@ public:
 
 private:
     Problem& problem_;
-
-    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    const GlobalPosition& gravity_; //!< vector including the gravity constant
 
     Scalar maxError_;
     Scalar timeStep_;
@@ -363,7 +360,10 @@ private:
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
-    const GlobalPosition& gravity_; //!< vector including the gravity constant
+
+    static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
 //!function which calculates the source entry

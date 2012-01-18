@@ -200,9 +200,6 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
-            // local number of faces
-            int isIndex = isIt->indexInInside();
-
             FieldVector unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals_)
                 unitOuterNormal *= -1.0;

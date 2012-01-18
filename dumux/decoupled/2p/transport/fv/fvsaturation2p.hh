@@ -459,12 +459,6 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     const GlobalPosition& globalPosI = elementI->geometry().center();
     const GlobalPosition& globalPosJ = elementJ->geometry().center();
 
-    // get mobilities and fractional flow factors
-    Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
-    Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
-    Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
-    Scalar lambdaNWJ = cellDataJ.mobility(nPhaseIdx);
-
     // cell volume, assume linear map here
     Scalar volume = elementI->geometry().volume();
     Scalar porosity = problem_.spatialParameters().porosity(*elementI);
@@ -512,7 +506,7 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     //upwinding of lambda dependend on the phase potential gradients
     if (upwindWI)
     {
-        lambdaW = lambdaWI;
+        lambdaW = cellDataI.mobility(wPhaseIdx);
         if (compressibility_)
         {
             lambdaW /= cellDataI.density(wPhaseIdx);
@@ -529,7 +523,7 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
 
     if (upwindNWI)
     {
-        lambdaNW = lambdaNWI;
+        lambdaNW = cellDataI.mobility(nPhaseIdx);
         if (compressibility_)
         {
             lambdaNW /= cellDataI.density(nPhaseIdx);
@@ -643,10 +637,6 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
     // center of face in global coordinates
     const GlobalPosition& globalPosJ = intersection.geometry().center();
 
-    // get mobilities and fractional flow factors
-    Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
-    Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
-
     // cell volume, assume linear map here
     Scalar volume = elementI->geometry().volume();
     Scalar porosity = problem_.spatialParameters().porosity(*elementI);
@@ -716,7 +706,7 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         //upwinding of lambda dependend on the phase potential gradients
         if (cellDataI.fluxData().isUpwindCell(wPhaseIdx, isIndex))
         {
-            lambdaW = lambdaWI;
+            lambdaW = cellDataI.mobility(wPhaseIdx);
             if (compressibility_)
             {
                 lambdaW /= cellDataI.density(wPhaseIdx);
@@ -738,7 +728,7 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
 
         if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, isIndex))
         {
-            lambdaNW = lambdaNWI;
+            lambdaNW = cellDataI.mobility(nPhaseIdx);
             if (compressibility_)
             {
                 lambdaNW /= cellDataI.density(nPhaseIdx);
@@ -836,8 +826,8 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
         //get mobilities
         Scalar lambdaW, lambdaNW;
 
-        lambdaW = lambdaWI;
-        lambdaNW = lambdaNWI;
+        lambdaW = cellDataI.mobility(wPhaseIdx);
+        lambdaNW = cellDataI.mobility(nPhaseIdx);
         if (compressibility_)
         {
             lambdaW /= cellDataI.density(wPhaseIdx);
@@ -872,8 +862,8 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
     if (bcType.isOutflow(satEqIdx))
     {
         //get mobilities
-        Scalar lambdaW = lambdaWI;
-        Scalar lambdaNW = lambdaNWI;
+        Scalar lambdaW = cellDataI.mobility(wPhaseIdx);
+        Scalar lambdaNW = cellDataI.mobility(nPhaseIdx);
         if (compressibility_)
         {
             lambdaW /= cellDataI.density(wPhaseIdx);
@@ -933,9 +923,6 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
 
     Scalar porosity = problem_.spatialParameters().porosity(element);
 
-    Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
-    Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
-
     if (compressibility_)
     {
         viscosity_[wPhaseIdx] = cellDataI.viscosity(wPhaseIdx);
@@ -957,8 +944,8 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
     }
 
     //get mobilities
-    Scalar lambdaW = lambdaWI;
-    Scalar lambdaNW = lambdaNWI;
+    Scalar lambdaW = cellDataI.mobility(wPhaseIdx);
+    Scalar lambdaNW = cellDataI.mobility(nPhaseIdx);
     if (compressibility_)
     {
         lambdaW /= cellDataI.density(wPhaseIdx);
