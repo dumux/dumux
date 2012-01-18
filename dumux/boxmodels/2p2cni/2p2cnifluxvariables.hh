@@ -85,7 +85,7 @@ public:
     {
         scvfIdx_ = faceIdx;
 
-        calculateValues_(problem, element, this->face(), elemVolVars);
+        calculateValues_(problem, element, elemVolVars);
     }
 
     /*!
@@ -100,10 +100,8 @@ public:
     { return temperatureGrad_; }
 
 protected:
-    template<class FaceType>
     void calculateValues_(const Problem &problem,
                           const Element &element,
-                          const FaceType &face,
                           const ElementVolumeVariables &elemVolVars)
     {
         // calculate temperature gradient using finite element
@@ -112,13 +110,13 @@ protected:
         Vector tmp(0.0);
         for (int vertIdx = 0; vertIdx < this->fvGeom_.numVertices; vertIdx++)
         {
-            tmp = face.grad[vertIdx];
+            tmp = this->face().grad[vertIdx];
             tmp *= elemVolVars[vertIdx].temperature();
             temperatureGrad_ += tmp;
         }
 
         // The spatial parameters calculates the actual heat flux vector
-        if (face.i != face.j)
+        if (this->face().i != this->face().j)
             problem.spatialParameters().matrixHeatFlux(tmp,
                                                        *this,
                                                        elemVolVars,
@@ -130,12 +128,12 @@ protected:
             problem.spatialParameters().boundaryMatrixHeatFlux(tmp,
                                                        *this,
                                                        elemVolVars,
-                                                       face,
+                                                       this->face(),
                                                        element,
                                                        this->fvGeom_);
 
         // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = tmp*face.normal;
+        normalMatrixHeatFlux_ = tmp*this->face().normal;
     }
 
 private:

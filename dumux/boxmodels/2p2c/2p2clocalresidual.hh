@@ -146,21 +146,13 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                             int scvIdx,
                             int boundaryFaceIdx)
     {
-        // temporary vector to store the outflow boundary fluxes
-        PrimaryVariables flux(0.0);
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
         // deal with outflow boundaries
         if (bcTypes.hasOutflow())
         {
-            const BoundaryVariables boundaryVars(this->problem_(),
-                                                 this->elem_(),
-                                                 this->fvElemGeom_(),
-                                                 boundaryFaceIdx,
-                                                 this->curVolVars_());
-
             PrimaryVariables values(0.0);
-            asImp_()->computeOutflowValues(values, boundaryVars, scvIdx, boundaryFaceIdx);
+            asImp_()->computeFlux(values, boundaryFaceIdx, true);
             Valgrind::CheckDefined(values);
 
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -223,13 +215,14 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \param flux The flux over the SCV (sub-control-volume) face for each component
      * \param faceIdx The index of the SCV face
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx) const
+    void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {
         FluxVariables vars(this->problem_(),
                            this->elem_(),
                            this->fvElemGeom_(),
                            faceIdx,
-                           this->curVolVars_());
+                           this->curVolVars_(),
+                           onBoundary);
 
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
@@ -367,78 +360,6 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                                      localVertexIdx,
                                      this->curVolVars_());
     }
-
-    /*!
-     * \brief Compute the fluxes at outflow boundaries. This does essentially the same
-     *        as computeFluxes, but the fluxes are evaluated at the integration point
-     *        of the boundary face. However, some variables are evaluated
-     *        at the vertex (usually the ones which are upwinded).
-     *
-     * \param flux A temporary vector, where the outflow boundary fluxes are stored
-     * \param boundaryVars The boundary variables object
-     * \param scvIdx The index of the SCV containing the outflow boundary face
-     * \param boundaryFaceIdx The index of the boundary face
-     */
-    void computeOutflowValues(PrimaryVariables &flux,
-                              const BoundaryVariables &boundaryVars,
-                              const int scvIdx,
-                              const int boundaryFaceIdx)
-    {
-        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-        const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
-
-        // component transport
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-        {
-            for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
-            {
-                int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
-                if (bcTypes.isOutflow(eqIdx))
-                {
-                    // advective flux
-                    flux[eqIdx] += boundaryVars.KmvpNormal(phaseIdx)
-                        * vertVars.density(phaseIdx)
-                        * vertVars.mobility(phaseIdx)
-                        * vertVars.fluidState().massFraction(phaseIdx, compIdx);
-                }
-            }
-        }
-
-        // add diffusive flux of gas component in liquid phase
-        Scalar tmp = boundaryVars.molarConcGrad(lPhaseIdx)*boundaryVars.face().normal;
-        tmp *= -1;
-        tmp *= boundaryVars.porousDiffCoeff(lPhaseIdx) *
-            boundaryVars.molarDensityAtIP(lPhaseIdx);
-        // add the diffusive fluxes only to the component mass balance
-        if (replaceCompEqIdx != contiGEqIdx && bcTypes.isOutflow(contiGEqIdx))
-            flux[contiGEqIdx] += tmp * FluidSystem::molarMass(gCompIdx);
-        if (replaceCompEqIdx != contiLEqIdx && bcTypes.isOutflow(contiLEqIdx))
-            flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
-
-        // add diffusive flux of liquid component in gas phase
-        tmp = boundaryVars.molarConcGrad(gPhaseIdx)*boundaryVars.face().normal;
-        tmp *= -1;
-        tmp *= boundaryVars.porousDiffCoeff(gPhaseIdx) *
-            boundaryVars.molarDensityAtIP(gPhaseIdx);
-        // add the diffusive fluxes only to the component mass balance
-        if (replaceCompEqIdx != contiLEqIdx && bcTypes.isOutflow(contiLEqIdx))
-            flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
-        if (replaceCompEqIdx != contiGEqIdx && bcTypes.isOutflow(contiGEqIdx))
-            flux[contiGEqIdx] -= tmp * FluidSystem::molarMass(gCompIdx);
-
-        // flux of the total mass balance;
-        // this is only processed, if one component mass-balance equation
-        // is replaced by a total mass-balance equation
-        if (replaceCompEqIdx < numComponents)
-        {
-            if (bcTypes.isOutflow(replaceCompEqIdx))
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    flux[replaceCompEqIdx] += boundaryVars.KmvpNormal(phaseIdx)
-                        *vertVars.density(phaseIdx)
-                        *vertVars.mobility(phaseIdx);
-        }
-    }
-
 
  protected:
     void evalPhaseStorage_(int phaseIdx)

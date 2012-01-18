@@ -104,25 +104,21 @@ public:
             molarConcGrad_[phaseIdx] = Scalar(0);
         }
 
-        calculateValues_(problem, element, face(), elemVolVars);
+        calculateValues_(problem, element, elemVolVars);
     }
 
 protected:
-    template <class FaceType>
     void calculateValues_(const Problem &problem,
                           const Element &element,
-                          const FaceType &face,
                           const ElementVolumeVariables &elemVolVars)
     {
-        calculateGradients_(problem, element, face, elemVolVars);
-        calculateVelocities_(problem, element, face, elemVolVars);
-        calculateDiffCoeffPM_(problem, element, face, elemVolVars);
+        calculateGradients_(problem, element, elemVolVars);
+        calculateVelocities_(problem, element, elemVolVars);
+        calculateDiffCoeffPM_(problem, element, elemVolVars);
     }
 
-    template <class FaceType>
     void calculateGradients_(const Problem &problem,
                              const Element &element,
-                             const FaceType &face,
                              const ElementVolumeVariables &elemVolVars)
     {
         // calculate gradients
@@ -132,7 +128,7 @@ protected:
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
-            const Vector &feGrad = face.grad[idx];
+            const Vector &feGrad = face().grad[idx];
 
             // compute sum of pressure gradients for each phase
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
@@ -170,18 +166,18 @@ protected:
         if (GET_PARAM(TypeTag, bool, EnableGravity)) {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
-            Vector g(problem.boxGravity(element, fvGeom_, face.i));
-            g += problem.boxGravity(element, fvGeom_, face.j);
+            Vector g(problem.boxGravity(element, fvGeom_, face().i));
+            g += problem.boxGravity(element, fvGeom_, face().j);
             g /= 2;
 
             for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
             {
                 // calculate the phase density at the integration point. we
                 // only do this if the wetting phase is present in both cells
-                Scalar SI = elemVolVars[face.i].saturation(phaseIdx);
-                Scalar SJ = elemVolVars[face.j].saturation(phaseIdx);
-                Scalar rhoI = elemVolVars[face.i].density(phaseIdx);
-                Scalar rhoJ = elemVolVars[face.j].density(phaseIdx);
+                Scalar SI = elemVolVars[face().i].saturation(phaseIdx);
+                Scalar SJ = elemVolVars[face().j].saturation(phaseIdx);
+                Scalar rhoI = elemVolVars[face().i].density(phaseIdx);
+                Scalar rhoJ = elemVolVars[face().j].density(phaseIdx);
                 Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
                 Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
                 if (fI + fJ == 0)
@@ -215,10 +211,8 @@ protected:
         return sp.eval(sat);
     }
 
-    template <class FaceType>
     void calculateVelocities_(const Problem &problem,
                               const Element &element,
-                              const FaceType &face,
                               const ElementVolumeVariables &elemVolVars)
     {
         const SpatialParameters &spatialParams = problem.spatialParameters();
@@ -229,19 +223,19 @@ protected:
             spatialParams.meanK(K,
                                 spatialParams.intrinsicPermeability(element,
                                                                     fvGeom_,
-                                                                    face.i),
+                                                                    face().i),
                                 spatialParams.intrinsicPermeability(element,
                                                                     fvGeom_,
-                                                                    face.j));
+                                                                    face().j));
             K.mv(potentialGrad_[phaseIdx], Kmvp_[phaseIdx]);
-            KmvpNormal_[phaseIdx] = -(Kmvp_[phaseIdx]*face.normal);
+            KmvpNormal_[phaseIdx] = -(Kmvp_[phaseIdx]*face().normal);
         }
 
         // set the upstream and downstream vertices
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            upstreamIdx_[phaseIdx] = face.i;
-            downstreamIdx_[phaseIdx] = face.j;
+            upstreamIdx_[phaseIdx] = face().i;
+            downstreamIdx_[phaseIdx] = face().j;
 
             if (KmvpNormal_[phaseIdx] < 0) {
                 std::swap(upstreamIdx_[phaseIdx],
@@ -250,14 +244,12 @@ protected:
         }
     }
 
-    template <class FaceType>
     void calculateDiffCoeffPM_(const Problem &problem,
                                const Element &element,
-                               const FaceType &face,
                                const ElementVolumeVariables &elemVolVars)
     {
-        const VolumeVariables &vDat_i = elemVolVars[face.i];
-        const VolumeVariables &vDat_j = elemVolVars[face.j];
+        const VolumeVariables &vDat_i = elemVolVars[face().i];
+        const VolumeVariables &vDat_j = elemVolVars[face().j];
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
@@ -355,12 +347,16 @@ public:
     const Vector &molarConcGrad(int phaseIdx) const
     { return molarConcGrad_[phaseIdx]; };
 
+    /*!
+     * \brief The face of the current sub-control volume. This may be either
+     *        an inner sub-control-volume face or a face on the boundary.
+     */
     const SCVFace &face() const
     {
-	if (onBoundary_)
-           return fvGeom_.boundaryFace[faceIdx_];
- 	else 
-	   return fvGeom_.subContVolFace[faceIdx_]; 
+        if (onBoundary_)
+            return fvGeom_.boundaryFace[faceIdx_];
+        else
+            return fvGeom_.subContVolFace[faceIdx_];
     }
 
 protected:
