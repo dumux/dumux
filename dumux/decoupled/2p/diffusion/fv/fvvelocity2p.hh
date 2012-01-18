@@ -258,13 +258,9 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();
 
-    int globalIdxI = problem_.variables().index(*elementI);
     int globalIdxJ = problem_.variables().index(*elementJ);
 
     CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
-
-//    problem_.pressureModel().storePressureSolution(globalIdxI, cellDataI);
-//    problem_.pressureModel().storePressureSolution(globalIdxJ, cellDataJ);
 
     // get global coordinates of cell centers
     const GlobalPosition& globalPosI = elementI->geometry().center();
