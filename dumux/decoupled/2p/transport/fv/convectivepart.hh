@@ -49,7 +49,8 @@ private:
 
     enum{dim = GridView::dimension, dimWorld = GridView::dimensionworld};
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GridView::Intersection Intersection;
+    typedef Dune::FieldVector<Scalar, dimWorld> FieldVector;
 
 public:
     //! Returns convective term
@@ -59,10 +60,9 @@ public:
      *  @param[in] sat           saturation of current element
      *  \return     convective term of an advection-diffusion equation
      */
-    Scalar operator() (const Element& element, const int indexInInside, const Scalar sat) const
+    Scalar getFlux(const Intersection& intersection, const Scalar sat) const
     {
-        Scalar trivial(0);
-        return trivial;
+        return 0.0;
     }
     //! Returns convective term
     /*! Returns convective term for current element face
@@ -72,11 +72,8 @@ public:
      *  @param[in] satJ           saturation of neighbor element
      *  \return     convective term of an advection-diffusion equation
      */
-    GlobalPosition operator() (const Element& element, const int indexInInside, const Scalar satI, const Scalar satJ) const
-    {
-        GlobalPosition trivial(0);
-        return trivial;
-    }
+    void getFlux(FieldVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
+    {}
 
     //! The constructor
     /*

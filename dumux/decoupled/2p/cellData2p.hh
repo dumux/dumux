@@ -87,7 +87,7 @@ public:
      */
 
     CellData2P() :
-        saturation_({0.0, 0.0}), pressure_({0.0, 0.0}), capillaryPressure_(0), mobility_({0.0, 0.0}), fracFlowFunc_({0.0, 0.0})
+        saturation_({0.0, 0.0}), pressure_({0.0, 0.0}), capillaryPressure_(0), mobility_({0.0, 0.0}), fracFlowFunc_({0.0, 0.0}), update_(0)
     {
     }
 
@@ -121,23 +121,38 @@ public:
         return pressure_[phaseIdx];
     }
 
+    Scalar pressure(int phaseIdx) const
+    {
+        return pressure_[phaseIdx];
+    }
+
     void setPressure(int phaseIdx, Scalar press)
     {
         pressure_[phaseIdx] = press;
     }
 
-    Scalar& globalPressure()
+    Scalar globalPressure()
     {
         return pressure_[wPhaseIdx];
     }
 
-    const Scalar& globalPressure() const
+    Scalar globalPressure() const
     {
         return pressure_[wPhaseIdx];
+    }
+
+    void setGlobalPressure(Scalar press)
+    {
+        pressure_[wPhaseIdx] = press;
     }
 
     //! Return saturation vector
     Scalar saturation(int phaseIdx)
+    {
+        return saturation_[phaseIdx];
+    }
+
+    Scalar saturation(int phaseIdx) const
     {
         return saturation_[phaseIdx];
     }
@@ -152,29 +167,44 @@ public:
     //////////////////////////////////////////////////////////////
 
     //! Return phase mobilities
-    Scalar& mobility(int phaseIdx)
+    Scalar mobility(int phaseIdx)
     {
         return mobility_[phaseIdx];
     }
 
-    const Scalar& mobility(int phaseIdx) const
+    Scalar mobility(int phaseIdx) const
     {
         return mobility_[phaseIdx];
+    }
+
+    void setMobility(int phaseIdx, Scalar mobility)
+    {
+        mobility_[phaseIdx] = mobility;
     }
 
     //! Return phase fractional flow functions
-    Scalar& fracFlowFunc(int phaseIdx)
+    Scalar fracFlowFunc(int phaseIdx)
     {
         return fracFlowFunc_[phaseIdx];
     }
 
-    const Scalar& fracFlowFunc(int phaseIdx) const
+    Scalar fracFlowFunc(int phaseIdx) const
     {
         return fracFlowFunc_[phaseIdx];
+    }
+
+    void  setFracFlowFunc(int phaseIdx, Scalar fracFlowFunc)
+    {
+        fracFlowFunc_[phaseIdx] = fracFlowFunc;
     }
 
     //! Return capillary pressure vector
     Scalar capillaryPressure()
+    {
+        return capillaryPressure_;
+    }
+
+    Scalar capillaryPressure() const
     {
         return capillaryPressure_;
     }
@@ -190,12 +220,12 @@ public:
     }
 
     //! Return density vector
-    Scalar& volumeCorrection()
+    Scalar volumeCorrection()
     {
         return update_;
     }
 
-    const Scalar& volumeCorrection() const
+    Scalar volumeCorrection() const
     {
         return update_;
     }
@@ -209,7 +239,6 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,"density function not implemented in cell data of incompressible models!");
     }
-
 
     //! Return density vector
     Scalar viscosity(int phaseIdx)
@@ -262,7 +291,7 @@ public:
      */
 
     CellData2P() :
-        mobility_({0.0, 0.0}), fracFlowFunc_({0.0, 0.0})
+        mobility_({0.0, 0.0}), fracFlowFunc_({0.0, 0.0}), update_(0)
     {
     }
 
@@ -303,15 +332,20 @@ public:
 
     void setPressure(int phaseIdx, Scalar press)
     {
-        DUNE_THROW(Dune::NotImplemented,"setPressure function defined for compressible models!");
+        fluidState_.setPressure(phaseIdx, press);
     }
 
-    Scalar& globalPressure()
+    Scalar globalPressure()
     {
         DUNE_THROW(Dune::NotImplemented,"no global pressure defined for compressible models!");
     }
 
-    const Scalar& globalPressure() const
+    Scalar globalPressure() const
+    {
+        DUNE_THROW(Dune::NotImplemented,"no global pressure defined for compressible models!");
+    }
+
+    void setGlobalPressure(Scalar press)
     {
         DUNE_THROW(Dune::NotImplemented,"no global pressure defined for compressible models!");
     }
@@ -330,7 +364,7 @@ public:
 
     void setSaturation(int phaseIdx, Scalar sat)
     {
-        DUNE_THROW(Dune::NotImplemented,"setSaturation function defined for compressible models!");
+        fluidState_.setSaturation(phaseIdx, sat);
     }
 
     //////////////////////////////////////////////////////////////
@@ -338,25 +372,35 @@ public:
     //////////////////////////////////////////////////////////////
 
     //! Return phase mobilities
-    Scalar& mobility(int phaseIdx)
+    Scalar mobility(int phaseIdx)
     {
         return mobility_[phaseIdx];
     }
 
-    const Scalar& mobility(int phaseIdx) const
+    Scalar mobility(int phaseIdx) const
     {
         return mobility_[phaseIdx];
+    }
+
+    void setMobility(int phaseIdx, Scalar mobility)
+    {
+        mobility_[phaseIdx] = mobility;
     }
 
     //! Return phase fractional flow functions
-    Scalar& fracFlowFunc(int phaseIdx)
+    Scalar fracFlowFunc(int phaseIdx)
     {
         return fracFlowFunc_[phaseIdx];
     }
 
-    const Scalar& fracFlowFunc(int phaseIdx) const
+    Scalar fracFlowFunc(int phaseIdx) const
     {
         return fracFlowFunc_[phaseIdx];
+    }
+
+    void  setFracFlowFunc(int phaseIdx, Scalar fracFlowFunc)
+    {
+        fracFlowFunc_[phaseIdx] = fracFlowFunc;
     }
 
     //! Return capillary pressure vector
@@ -385,6 +429,10 @@ public:
         return fluidState_.density(phaseIdx);
     }
 
+    void setDensity(int phaseIdx, Scalar density)
+    {
+        fluidState_.setDensity(phaseIdx, density);
+    }
 
     //! Return density vector
     Scalar viscosity(int phaseIdx)
@@ -397,21 +445,27 @@ public:
         return fluidState_.viscosity(phaseIdx);
     }
 
+    void setViscosity(int phaseIdx, Scalar viscosity)
+    {
+        fluidState_.setViscosity(phaseIdx, viscosity);
+    }
+
     void setUpdate(Scalar update)
     {
         update_ = update;
     }
 
     //! Return density vector
-    Scalar& volumeCorrection()
+    Scalar volumeCorrection()
     {
         return update_;
     }
 
-    const Scalar& volumeCorrection() const
+    Scalar volumeCorrection() const
     {
         return update_;
     }
+
 };
 }
 #endif

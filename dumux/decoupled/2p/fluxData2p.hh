@@ -71,6 +71,7 @@ private:
 
     VelocityVector velocity_[numPhases];
     Scalar potential_[2 * dim][numPhases];
+    bool velocityMarker_[2 * dim];
 
 public:
 
@@ -89,6 +90,7 @@ public:
 
                 potential_[face][phase] = 0.0;
             }
+            velocityMarker_[face] = false;
         }
     }
 
@@ -97,18 +99,7 @@ public:
     ////////////////////////////////////////////////////////////
 
     //! Return the velocity
-    VelocityVector& velocity(int phaseIdx)
-    {
-        return velocity_[phaseIdx];
-    }
-
-    const VelocityVector& velocity(int phaseIdx) const
-    {
-        return velocity_[phaseIdx];
-    }
-
-    //! Return the velocity
-    FieldVector& velocity(int phaseIdx, int indexInInside)
+    const FieldVector& velocity(int phaseIdx, int indexInInside)
     {
         return velocity_[phaseIdx][indexInInside];
     }
@@ -116,6 +107,11 @@ public:
     const FieldVector& velocity(int phaseIdx, int indexInInside) const
     {
         return velocity_[phaseIdx][indexInInside];
+    }
+
+    void setVelocity(int phaseIdx, int indexInInside, FieldVector& velocity)
+    {
+        velocity_[phaseIdx][indexInInside] = velocity;
     }
 
     //! Return the velocity
@@ -129,6 +125,22 @@ public:
     {
         return velocity_[wPhaseIdx][indexInInside]
                 + velocity_[nPhaseIdx][indexInInside];
+    }
+
+    void setVelocityMarker(int indexInInside)
+    {
+        velocityMarker_[indexInInside] = true;
+    }
+
+    bool haveVelocity(int indexInInside)
+    {
+        return velocityMarker_[indexInInside];
+    }
+
+    void resetVelocityMarker()
+    {
+        for (int i = 0; i < 2*dim; i++)
+            velocityMarker_[i] = false;
     }
 
     bool isUpwindCell(int phaseIdx, int indexInInside)
@@ -152,11 +164,6 @@ public:
     }
 
     void setPotential(int phaseIdx, int indexInInside, Scalar pot)
-    {
-        potential_[indexInInside][phaseIdx] = pot;
-    }
-
-    void setUpwindCell(int phaseIdx, int indexInInside, Scalar pot) const
     {
         potential_[indexInInside][phaseIdx] = pot;
     }

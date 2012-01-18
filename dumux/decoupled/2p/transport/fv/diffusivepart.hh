@@ -47,6 +47,7 @@ private:
 
     enum{dim = GridView::dimension};
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
 public:
@@ -59,11 +60,8 @@ public:
      *  @param[in] pcGradient     gradient of capillary pressure between element I and J
      *  \return     diffusive term of an advection-diffusion equation
      */
-    FieldVector operator() (const Element& element, const int indexInInside, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
-    {
-        FieldVector trivial(0);
-        return trivial;
-    }
+    void getFlux(FieldVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
+    {}
 
     //! Returns diffusive term
     /*! Returns diffusive term for current element face
@@ -74,12 +72,9 @@ public:
      *  @param[in] time             time
      *  \return     diffusive term of an advection-diffusion equation
      */
-    FieldVector operator() (const Element& element, const int indexInInside,
+    void getFlux(FieldVector& flux, const Intersection& intersection,
                                     const Scalar satIntersection, const FieldVector& satGradient, const Scalar time) const
-    {
-        FieldVector trivial(0);
-        return trivial;
-    }
+    {}
 
     //! Returns diffusive term
     /*! Returns diffusive term for current element face
@@ -92,13 +87,10 @@ public:
      *  @param[in] satJ             saturation of neighbor element
      *  \return     diffusive term of an advection-diffusion equation
      */
-    FieldVector operator() (const Element& element, const int indexInInside,
+    void getFlux(FieldVector& flux, const Intersection& intersection,
                                     const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
                                     Scalar satI, Scalar satJ) const
-    {
-        FieldVector trivial(0);
-        return trivial;
-    }
+    {}
 
 
     //! The constructor

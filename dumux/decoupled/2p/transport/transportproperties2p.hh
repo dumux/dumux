@@ -19,10 +19,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_TRANSPORT_PROPERTIES_HH
-#define DUMUX_TRANSPORT_PROPERTIES_HH
+#ifndef DUMUX_TRANSPORT_PROPERTIES_2P_HH
+#define DUMUX_TRANSPORT_PROPERTIES_2P_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/decoupled/common/transportproperties.hh>
 
 /*!
  * \ingroup Saturation2p
@@ -44,6 +44,9 @@ class ConvectivePart;
 template<class TypeTag>
 class EvalCflFluxDefault;
 
+template<class TypeTag>
+class FVVelocityDefault;
+
 namespace Properties
 {
 // \{
@@ -53,21 +56,23 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(Transport);
+NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG( DiffusivePart );         //!< The type of the diffusive part in a transport equation
-NEW_PROP_TAG( ConvectivePart );        //!< The type of a convective part in a transport equation
-NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
-NEW_PROP_TAG( CFLFactor );
+NEW_PROP_TAG( CapillaryFlux );         //!< The type of the diffusive part in a transport equation
+NEW_PROP_TAG( GravityFlux );        //!< The type of a convective part in a transport equation
+NEW_PROP_TAG( CalculateVelocityInTransport );
+NEW_PROP_TAG( PrecomputedConstRels );
 
-SET_TYPE_PROP(Transport, DiffusivePart, DiffusivePart<TypeTag>);
-SET_TYPE_PROP(Transport, ConvectivePart, ConvectivePart<TypeTag>);
-SET_TYPE_PROP(Transport, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
-SET_SCALAR_PROP(Transport, CFLFactor, 1.0);
+SET_TYPE_PROP(TransportTwoP, CapillaryFlux, DiffusivePart<TypeTag>);
+SET_TYPE_PROP(TransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
+SET_TYPE_PROP(TransportTwoP, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
+SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
+SET_BOOL_PROP( TransportTwoP, CalculateVelocityInTransport, true);
+SET_BOOL_PROP( TransportTwoP, PrecomputedConstRels, true);
 }
 }
 

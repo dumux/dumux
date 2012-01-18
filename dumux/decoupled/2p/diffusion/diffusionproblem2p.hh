@@ -158,15 +158,6 @@ public:
         return;
     }
 
-    void serialize()
-    {
-        return;
-    }
-    void deserialize(double t)
-    {
-        return;
-    }
-
     /*!
      * \brief Returns the temperature within the domain.
      *

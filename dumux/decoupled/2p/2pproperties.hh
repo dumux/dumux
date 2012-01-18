@@ -37,7 +37,7 @@
 
 //Dumux-includes
 #include <dumux/decoupled/common/impetproperties.hh>
-#include <dumux/decoupled/2p/transport/transportproperties.hh>
+#include <dumux/decoupled/2p/transport/transportproperties2p.hh>
 #include "2pindices.hh"
 
 namespace Dumux
@@ -69,7 +69,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPET, Transport))
+NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPET, TransportTwoP))
 ;
 
 //////////////////////////////////////////////////////////////////

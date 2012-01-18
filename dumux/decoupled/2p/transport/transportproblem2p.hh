@@ -254,26 +254,20 @@ public:
     void timeIntegration()
     {
         // allocate temporary vectors for the updates
-        Solution k1 = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
+        Solution updateVector;
 
         Scalar t = this->timeManager().time();
         Scalar dt = 1e100;
 
         // obtain the first update and the time step size
-        this->model().update(t, dt, k1);
+        this->model().update(t, dt, updateVector);
 
         //make sure t_old + dt is not larger than tend
         dt = std::min(dt*cFLFactor_, this->timeManager().episodeMaxTimeStepSize());
         this->timeManager().setTimeStepSize(dt);
 
         // explicit Euler: Sat <- Sat + dt*N(Sat)
-        int size = this->gridView().size(0);
-        Solution& newSol = asImp_().variables().primaryVariablesGlobal(transportEqIdx);
-        for (int i = 0; i < size; i++)
-        {
-            newSol[i] += (k1[i] *= dt);
-            this->model().updateSaturationSolution(i, newSol[i][0]);
-        }
+        this->model().updateTransportedQuantity(updateVector);
     }
 
     // \}

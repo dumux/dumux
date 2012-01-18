@@ -90,7 +90,12 @@ public:
         addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, phaseIdx);
     }
 
-    Scalar getCflFluxFunction(const GlobalPosition& globalPos, const Element& element);
+    Scalar getCflFluxFunction(const Element& element);
+
+    Scalar getDt(const Element& element)
+    {
+        return (getCflFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume());
+    }
 
     EvalCflFluxDefault (Problem& problem)
     : problem_(problem)
@@ -209,7 +214,7 @@ private:
 };
 
 template<class TypeTag>
-typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCflFluxFunction(const GlobalPosition& globalPos, const Element& element)
+typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCflFluxFunction(const Element& element)
 {
     Scalar residualSatW = problem_.spatialParameters().materialLawParams(element).Swr();
     Scalar residualSatNW = problem_.spatialParameters().materialLawParams(element).Snr();

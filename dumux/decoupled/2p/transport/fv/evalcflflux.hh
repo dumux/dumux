@@ -97,7 +97,18 @@ public:
      *  \param element       element on which the CFL-criterion is evaluated
      *  \return fluxFunction for the calculation of the CFL-time step (\f$ 1/F_i\f$)
      */
-    Scalar getCFLFluxFunction(const GlobalPosition& globalPos, const Element& element)
+    Scalar getCFLFluxFunction(const Element& element)
+    {
+        return 0.0;
+    }
+
+    //! adds a flux to the cfl-criterion evaluation
+    /*!
+     *  \param globalPos     global position
+     *  \param element       element on which the CFL-criterion is evaluated
+     *  \return fluxFunction for the calculation of the CFL-time step (\f$ 1/F_i\f$)
+     */
+    Scalar getDt(const Element& element)
     {
         return 0.0;
     }

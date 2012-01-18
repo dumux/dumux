@@ -426,9 +426,9 @@ public:
         }
     }
 
-    Scalar getCflFluxFunction(const GlobalPosition& globalPos, const Element& element)
+    Scalar getCflFluxFunction(const Element& element)
     {
-        Scalar cflFluxDefault = 1 / ParentType::getCflFluxFunction(globalPos, element);
+        Scalar cflFluxDefault = 1 / ParentType::getCflFluxFunction(element);
 
         if (std::isnan(cflFluxFunction_) || std::isinf(cflFluxFunction_) || cflFluxFunction_ > 100 * cflFluxDefault)
         {
@@ -450,6 +450,11 @@ public:
         }
         else
             return 1e100;
+    }
+
+    Scalar getDt(const Element& element)
+    {
+        return getCflFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume();
     }
 
     void reset()
