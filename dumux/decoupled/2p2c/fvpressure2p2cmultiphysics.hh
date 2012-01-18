@@ -453,8 +453,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         Scalar density = 0;
 
         // 1p => no pC => only 1 pressure, potential
-        Scalar potential = (unitOuterNormal * unitDistVec)
-                * (this->pressure(globalIdxI) - this->pressure(globalIdxJ)) / dist;
+        Scalar potential = (this->pressure(globalIdxI) - this->pressure(globalIdxJ)) / dist;
 
         potential += rhoMean * (unitDistVec * gravity_);
 
@@ -569,8 +568,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
                         Scalar potential = 0;
 
                         //calculate potential gradient: pc = 0;
-                        potential = (unitOuterNormal * unitDistVec) *
-                              (this->pressure(globalIdxI) - pressBC[phaseIdx]) / dist;
+                        potential = (this->pressure(globalIdxI) - pressBC[phaseIdx]) / dist;
 
                         potential += rhoMean * (unitDistVec * gravity_);
 
@@ -704,9 +702,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
             Scalar press1p = this->pressure(globalIdx);
             // make shure total concentrations from solution vector are exact in fluidstate
             pseudoFluidState.setMassConcentration(wCompIdx,
-                    problem().transportModel().transportedQuantity()[wCompIdx][globalIdx]);
+                    problem().transportModel().totalConcentration(wCompIdx,globalIdx));
             pseudoFluidState.setMassConcentration(nCompIdx,
-                    problem().transportModel().transportedQuantity()[nCompIdx][globalIdx]);
+                    problem().transportModel().totalConcentration(wCompIdx,globalIdx));
 
             // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]
             Scalar sumConc = pseudoFluidState.massConcentration(wCompIdx)

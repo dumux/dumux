@@ -423,17 +423,17 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
             {
             case pw:
             {
-                potentialW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                potentialW = (this->pressure(globalIdxI)
                         - this->pressure(globalIdxJ)) / dist;
-                potentialNW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                potentialNW = (this->pressure(globalIdxI)
                         - this->pressure(globalIdxJ) + pcI - pcJ) / dist;
                 break;
             }
             case pn:
             {
-                potentialW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                potentialW = (this->pressure(globalIdxI)
                         - this->pressure(globalIdxJ) - pcI + pcJ) / dist;
-                potentialNW = (unitOuterNormal * unitDistVec) * (this->pressure(globalIdxI)
+                potentialNW = (this->pressure(globalIdxI)
                         - this->pressure(globalIdxJ)) / dist;
                 break;
             }
@@ -487,9 +487,9 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
             }
 
             //calculate current matrix entry
-            entries[0] = faceArea * (lambdaW * dV_w + lambdaN * dV_n);
+            entries[0] = faceArea * (lambdaW * dV_w + lambdaN * dV_n)*(unitOuterNormal * unitDistVec);
             entries[0] -= volume * faceArea / perimeter * (lambdaW * gV_w + lambdaN * gV_n);     // = boundary integral - area integral
-            entries[0] *= fabs((permeability*unitOuterNormal)/(dist));
+            entries[0] *= fabs((permeability*unitDistVec)/(dist));
 
             //calculate right hand side
             entries[1] = faceArea  * (unitOuterNormal * unitDistVec) * (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n);
@@ -506,7 +506,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
                     pCGradient *= (pcI - pcJ) / dist;
 
                     //add capillary pressure term to right hand side
-                    entries[1] += lambdaN * dV_n * (permeability * pCGradient) * faceArea
+                    entries[1] += lambdaN * dV_n * (permeability * pCGradient) * faceArea * (unitOuterNormal * unitDistVec)
                                  - lambdaN * gV_n * (permeability * pCGradient) * volume * faceArea / perimeter;
                     break;
                 }
@@ -517,7 +517,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
                     pCGradient *= (pcI - pcJ) / dist;
 
                     //add capillary pressure term to right hand side
-                    entries[1] -= lambdaW * dV_w * (permeability * pCGradient) * faceArea
+                    entries[1] -= lambdaW * dV_w * (permeability * pCGradient) * faceArea * (unitOuterNormal * unitDistVec)
                                     - lambdaW * gV_w * (permeability * pCGradient) * volume * faceArea / perimeter;
                     break;
                 }
@@ -669,18 +669,15 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
                             //calculate potential gradient
                             if (pressureType == pw)
                             {
-                                potentialW = ((unitOuterNormal * distVec)  / (dist * dist)) *
-                                        (this->pressure(globalIdxI) - pressBC[wPhaseIdx]);
-                                potentialNW = ((unitOuterNormal * distVec)  / (dist * dist)) *
-                                        (this->pressure(globalIdxI) + cellDataI.capillaryPressure()
-                                                - pressBC[wPhaseIdx] - pcBound);
+                                potentialW = (this->pressure(globalIdxI) - pressBC[wPhaseIdx])/dist;
+                                potentialNW = (this->pressure(globalIdxI) + cellDataI.capillaryPressure()
+                                                - pressBC[wPhaseIdx] - pcBound)/dist;
                             }
                             else if (pressureType == pn)
                             {
-                                potentialW = ((unitOuterNormal * distVec) / (dist * dist)) *
-                                        (this->pressure(globalIdxI) - cellDataI.capillaryPressure() - pressBC[nPhaseIdx] + pcBound);
-                                potentialNW = ((unitOuterNormal * distVec) / (dist * dist)) *
-                                        (this->pressure(globalIdxI) - pressBC[nPhaseIdx]);
+                                potentialW = (this->pressure(globalIdxI) - cellDataI.capillaryPressure()
+                                        - pressBC[nPhaseIdx] + pcBound)/dist;
+                                potentialNW = (this->pressure(globalIdxI) - pressBC[nPhaseIdx])/dist;
                             }
                             potentialW += densityW * (unitDistVec * gravity_);
                             potentialNW += densityNW * (unitDistVec * gravity_);
@@ -831,9 +828,9 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
 
     // make shure total concentrations from solution vector are exact in fluidstate
     fluidState.setMassConcentration(wCompIdx,
-            problem().transportModel().transportedQuantity()[wCompIdx][globalIdx]);
+            problem().transportModel().totalConcentration(wCompIdx,globalIdx));
     fluidState.setMassConcentration(nCompIdx,
-            problem().transportModel().transportedQuantity()[nCompIdx][globalIdx]);
+            problem().transportModel().totalConcentration(nCompIdx,globalIdx));
     // get the overall mass of component 1 Z1 = C^k / (C^1+C^2) [-]
     Scalar Z1 = fluidState.massConcentration(wCompIdx)
             / (fluidState.massConcentration(wCompIdx)
@@ -853,6 +850,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             {
             Z1 = 0.;
             cellData.setTotalConcentration(wCompIdx, 0.);
+            problem().transportModel().transportedQuantity()[wCompIdx][globalIdx] = 0.;
             Dune::dgrave << "Regularize totalConcentration(wCompIdx) = "
                 << cellData.totalConcentration(wCompIdx)<< std::endl;
             }
@@ -860,6 +858,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             {
             Z1 = 1.;
             cellData.setTotalConcentration(nCompIdx, 0.);
+            problem().transportModel().transportedQuantity()[nCompIdx][globalIdx] = 0.;
             Dune::dgrave << "Regularize totalConcentration(globalIdx, nCompIdx) = "
                 << cellData.totalConcentration(nCompIdx)<< std::endl;
             }

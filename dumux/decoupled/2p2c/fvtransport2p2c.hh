@@ -138,14 +138,14 @@ public:
         writer.attachCellData(*totalC2PV, "total Concentration n-Comp");
     }
 
-    //! Function needed for restart option.
+    //! Function needed for restart option of the transport model: Write out
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int globalIdx = problem().variables().index(element);
         outstream << totalConcentration_[wCompIdx][globalIdx]
                   << "  " << totalConcentration_[nCompIdx][globalIdx];
     }
-
+    //! Function needed for restart option of the transport model: Read in
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = problem().variables().index(element);
@@ -169,10 +169,9 @@ public:
         transportedQuantity = totalConcentration_;
     }
 
-    const TransportSolutionType& totalConcentration() const
-    DUNE_DEPRECATED
+    Scalar& totalConcentration(int compIdx, int globalIdx)
     {
-        return totalConcentration_;
+        return totalConcentration_[compIdx][globalIdx][0];
     }
 
     //! Constructs a FVTransport2P2C object
@@ -316,6 +315,8 @@ void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& 
         }
     }
 }
+
+
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries,
                                         Dune::FieldVector<Scalar, 2>& timestepFlux,
@@ -423,9 +424,9 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     }
     case pn:
     {
-        potentialW = (K * unitOuterNormal) * (pressI - pressJ - pcI + pcJ) / (dist);
+                potentialW = (K * unitOuterNormal) * (pressI - pressJ - pcI + pcJ) / (dist);
         potentialNW = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
-        break;
+break;
     }
     }
     // add gravity term
