@@ -64,9 +64,6 @@ NEW_TYPE_TAG(IMPET, INHERITS_FROM(DecoupledModel));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(PressureModel);         //!< The type of the discretization
-NEW_PROP_TAG(TransportModel);         //!< The type of the discretization
-
 NEW_PROP_TAG(CFLFactor);         //!< Scalar factor for additional scaling of the time step
 NEW_PROP_TAG(IterationFlag); //!< Flag to switch the iteration type of the IMPET scheme
 NEW_PROP_TAG(IterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags

@@ -79,7 +79,6 @@ private:
     const GridView& gridView_;
     ElementMapper elementMapper_;
     VertexMapper vertexMapper_;
-    const int codim_;
     CellDataVector cellDataVector_;
 
 public:
@@ -89,10 +88,10 @@ public:
      *  @param codim codimension of the entity of which data has to be strored
      *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
-    VariableClass(const GridView& gridView, int codim = 0) :
-        gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView), codim_(codim)
+    VariableClass(const GridView& gridView) :
+        gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView)
     {
-        cellDataVector_.resize(gridView.size(codim));
+        cellDataVector_.resize(gridView.size(0));
     }
 
 

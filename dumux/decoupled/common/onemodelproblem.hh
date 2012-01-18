@@ -585,7 +585,7 @@ public:
 
         timeManager().serialize(res);
         resultWriter().serialize(res);
-        model().serialize(res);
+        res.template deserializeEntities<0> (model(), gridView_);
 
         res.serializeEnd();
     }
@@ -606,7 +606,7 @@ public:
 
         timeManager().deserialize(res);
         resultWriter().deserialize(res);
-        model().deserialize(res);
+        res.template deserializeEntities<0> (model(), gridView_);
 
         res.deserializeEnd();
     };

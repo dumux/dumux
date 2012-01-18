@@ -411,8 +411,7 @@ public:
     void timeIntegration()
     {
         // allocate temporary vectors for the updates
-        TransportSolutionType updateVector
-            = transportModel().transportedQuantity();
+        TransportSolutionType updateVector;//(this->transportModel().solutionSize());
 
         Scalar t = timeManager().time();
         Scalar dt = 1e100;

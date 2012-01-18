@@ -64,6 +64,9 @@ NEW_PROP_TAG( AdaptiveGrid); //!< Defines if the grid is h-adaptive
 
 NEW_PROP_TAG( Problem); //!< The type of the problem
 NEW_PROP_TAG( Model); //!< The type of the discretizations
+NEW_PROP_TAG( PressureModel ); //!< The type of the discretization of a pressure model
+NEW_PROP_TAG( TransportModel ); //!< The type of the discretization of a transport model
+NEW_PROP_TAG( Velocity ); //!< The type velocity reconstruction
 NEW_PROP_TAG( NumEq ); //!< Number of equations in the system of PDEs
 NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
 NEW_PROP_TAG( NumComponents); //!< Number of components in the system
