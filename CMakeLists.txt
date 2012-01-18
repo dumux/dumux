@@ -221,11 +221,11 @@ add_test(test_2p2cni bin/runTest.sh test/boxmodels/2p2cni/waterair-reference.vtu
 add_test(test_MpNc bin/runTest.sh test/boxmodels/MpNc/obstacle-reference.vtu obstacle-00010.vtu test/boxmodels/MpNc/test_MpNc test/boxmodels/MpNc/grids/obstacle_24x16.dgf 1e4 250)
 add_test(test_richards bin/runTest.sh test/boxmodels/richards/richardslens-reference.vtu richardslens-00008.vtu test/boxmodels/richards/test_richards test/boxmodels/richards/grids/richardslens-24x16.dgf 3000 100)
 
-#add_test(test_diffusion bin/runTest.sh test/decoupled/1p/diffusion-reference.vtu mimeticdiffusion-00001.vtu test/decoupled/1p/test_diffusion 3)
-#add_test(test_dec1p bin/runTest.sh test/decoupled/1p/test_1p-reference.vtu test_1p-00001.vtu test/decoupled/1p/test_dec1p 3)
-#add_test(test_transport bin/runTest.sh test/decoupled/2p/test_transport-reference.vtu test_transport-00006.vtu test/decoupled/2p/test_transport test/decoupled/2p/grids/test_transport.dgf 1e4)
-#add_test(test_impes bin/runTest.sh test/decoupled/2p/test_impes-reference.vtu test_impes-00013.vtu test/decoupled/2p/test_impes 1e7)
-#add_test(test_dec2p2c bin/runTest.sh test/decoupled/2p2c/test_dec2p2c-reference.vtu test_dec2p2c-00021.vtu test/decoupled/2p2c/test_dec2p2c)
+add_test(test_diffusion bin/runTest.sh test/decoupled/1p/diffusion-reference.vtu mimeticdiffusion-00001.vtu test/decoupled/1p/test_diffusion 3)
+add_test(test_dec1p bin/runTest.sh test/decoupled/1p/test_1p-reference.vtu test_1p-00001.vtu test/decoupled/1p/test_dec1p 3)
+add_test(test_transport bin/runTest.sh test/decoupled/2p/test_transport-reference.vtu test_transport-00006.vtu test/decoupled/2p/test_transport test/decoupled/2p/grids/test_transport.dgf 1e4)
+add_test(test_impes bin/runTest.sh test/decoupled/2p/test_impes-reference.vtu test_impes-00013.vtu test/decoupled/2p/test_impes 1e7)
+add_test(test_dec2p2c bin/runTest.sh test/decoupled/2p2c/test_dec2p2c-reference.vtu test_dec2p2c-00021.vtu test/decoupled/2p2c/test_dec2p2c)
 
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
