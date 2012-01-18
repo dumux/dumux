@@ -340,7 +340,7 @@ public:
 
         if (!compressibility_)
         {
-            const Element& element = *(problem_.gridView().template end<0> ());
+            const Element& element = *(problem_.gridView().template begin<0> ());
             FluidState fluidState;
             fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
             fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));

@@ -142,13 +142,32 @@ public:
     }
     //@}
 
+    /*! set a pressure to be fixed at a certain cell */
+    void setFixPressureAtIndex(Scalar pressure, int globalIdx)
+    {
+        hasFixPressureAtIndex_ = true;
+        fixPressureAtIndex_ = pressure;
+        idxFixPressureAtIndex_ = globalIdx;
+    }
+
+    /*! unset a fixed pressure at a certain cell */
+    void unsetFixPressureAtIndex(int globalIdx)
+    {
+        hasFixPressureAtIndex_ = false;
+        fixPressureAtIndex_ = 0.0;
+        idxFixPressureAtIndex_ = 0.0;
+    }
+
     //! Constructs a FVPressure object
     /**
      * \param problem a problem class object
      */
     FVPressure(Problem& problem) :
         problem_(problem), size_(problem.gridView().size(0)),
-        pressure_(size_), A_(size_, size_, (2 * dim + 1) * size_, Matrix::random), f_(size_)
+        pressure_(size_), A_(size_, size_, (2 * dim + 1) * size_, Matrix::random), f_(size_),
+        fixPressureAtIndex_(0),
+        idxFixPressureAtIndex_(0),
+        hasFixPressureAtIndex_(false)
     {}
 
 private:
@@ -170,6 +189,9 @@ private:
 protected:
     Matrix A_;
     RHSVector f_;
+    Scalar fixPressureAtIndex_;
+    Scalar idxFixPressureAtIndex_;
+    bool hasFixPressureAtIndex_;
 };
 
 //! initializes the matrix to store the system of equations
@@ -324,6 +346,14 @@ void FVPressure<TypeTag>::solve()
 
     if (verboseLevelSolver)
         std::cout << __FILE__ <<": solve for pressure" << std::endl;
+
+    //set a fixed pressure for a certain cell
+    if (hasFixPressureAtIndex_)
+    {
+        A_[idxFixPressureAtIndex_] = 0;
+        A_[idxFixPressureAtIndex_][idxFixPressureAtIndex_] = 1;
+        f_[idxFixPressureAtIndex_] = fixPressureAtIndex_;
+    }
 
     Solver solver(problem_);
     solver.solve(A_, pressure_, f_);

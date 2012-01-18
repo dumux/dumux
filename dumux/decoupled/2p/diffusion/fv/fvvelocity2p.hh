@@ -125,7 +125,7 @@ public:
 
         if (!compressibility_)
         {
-            const Element& element = *(problem_.gridView().template end<0> ());
+            const Element& element = *(problem_.gridView().template begin<0> ());
             FluidState fluidState;
             fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
             fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
@@ -653,6 +653,10 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
             velocityW /= density_[wPhaseIdx];
             velocityNW /= density_[nPhaseIdx];
         }
+
+        //store potential gradients for further calculations
+        cellDataI.fluxData().setPotential(wPhaseIdx, isIndex, boundValues[wPhaseIdx]);
+        cellDataI.fluxData().setPotential(nPhaseIdx, isIndex, boundValues[nPhaseIdx]);
 
         cellDataI.fluxData().setVelocity(wPhaseIdx, isIndex, velocityW);
         cellDataI.fluxData().setVelocity(nPhaseIdx, isIndex, velocityNW);
