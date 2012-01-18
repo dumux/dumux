@@ -38,7 +38,6 @@
 #include <dumux/boxmodels/1p2c/1p2cproperties.hh>
 #include <dumux/boxmodels/1p2c/1p2cvolumevariables.hh>
 #include <dumux/boxmodels/1p2c/1p2cfluxvariables.hh>
-#include <dumux/boxmodels/1p2c/1p2cboundaryvariables.hh>
 
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -67,7 +66,6 @@ protected:
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryVariables) BoundaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -157,14 +155,15 @@ public:
      *        \param flux The flux over the SCV (sub-control-volume) face for each component
      *        \param faceId The index of the considered face of the sub control volume
      */
-    void computeFlux(PrimaryVariables &flux, int faceId) const
+    void computeFlux(PrimaryVariables &flux, int faceId, bool onBoundary=false) const
     {
         flux = 0;
         FluxVariables fluxVars(this->problem_(),
                                this->elem_(),
                                this->fvElemGeom_(),
                                faceId,
-                               this->curVolVars_());
+                               this->curVolVars_(),
+                               onBoundary);
 
         asImp_()->computeAdvectiveFlux(flux, fluxVars);
         asImp_()->computeDiffusiveFlux(flux, fluxVars);
@@ -286,21 +285,13 @@ public:
                             int scvIdx,
                             int boundaryFaceIdx)
     {
-        // temporary vector to store the neumann boundary fluxes
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-        // deal with neumann boundaries
+        // deal with outflow boundaries
         if (bcTypes.hasOutflow())
         {
-            const BoundaryVariables boundaryVars(this->problem_(),
-                                                 this->elem_(),
-                                                 this->fvElemGeom_(),
-                                                 boundaryFaceIdx,
-                                                 this->curVolVars_(),
-                                                 scvIdx);
-
             //calculate outflow fluxes
             PrimaryVariables values(0.0);
-            asImp_()->computeOutflowValues_(values, boundaryVars, scvIdx, boundaryFaceIdx);
+            asImp_()->computeFlux(values, boundaryFaceIdx, true);
             Valgrind::CheckDefined(values);
 
             for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
@@ -310,56 +301,6 @@ public:
                 // deduce outflow
                 this->residual_[scvIdx][equationIdx] += values[equationIdx];
             }
-        }
-    }
-
-    /*!
-     * \brief Compute the fluxes at the outflow boundaries
-     */
-    void computeOutflowValues_(PrimaryVariables &values,
-                               const BoundaryVariables &boundaryVars,
-                               const int scvIdx,
-                               const int boundaryFaceIdx)
-
-    {
-        const VolumeVariables& vertVars = this->curVolVars_()[scvIdx];
-
-        // mass balance
-        if(!useMoles) //use massfractions
-        {
-            values[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity();
-        }
-        else //use molefractions
-        {
-            values[contiEqIdx] += boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity();
-        }
-
-        // component transport
-        if(!useMoles)//use massfractions
-        {
-            // advective flux
-            values[transEqIdx]+=
-                boundaryVars.KmvpNormal()*vertVars.density()/vertVars.viscosity()
-                *vertVars.fluidState().massFraction(phaseIdx, comp1Idx);
-
-            // diffusive flux of comp1 component in phase0
-            Scalar tmp = -(boundaryVars.massFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
-
-            tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.densityAtIP();
-            values[transEqIdx] += tmp;//* FluidSystem::molarMass(comp1Idx);
-        }
-        else //use molefractions
-        {
-            // advective flux
-            values[transEqIdx]+=
-                boundaryVars.KmvpNormal()*vertVars.molarDensity()/vertVars.viscosity()
-                *vertVars.fluidState().moleFraction(phaseIdx, comp1Idx);
-
-            // diffusive flux of comp1 component in phase0
-            Scalar tmp = -(boundaryVars.moleFracGrad(comp1Idx)*boundaryVars.boundaryFace().normal);
-
-            tmp *= boundaryVars.porousDiffCoeff()*boundaryVars.molarDensityAtIP();
-            values[transEqIdx] += tmp;
         }
     }
 

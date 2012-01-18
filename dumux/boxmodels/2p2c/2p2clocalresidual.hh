@@ -213,6 +213,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *
      * \param flux The flux over the SCV (sub-control-volume) face for each component
      * \param faceIdx The index of the SCV face
+     * \param onBoundary Evaluate flux at inner SCV face or on a boundary face
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {

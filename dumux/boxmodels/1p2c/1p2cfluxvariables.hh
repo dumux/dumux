@@ -96,12 +96,11 @@ public:
     OnePTwoCFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &elemGeom,
-                          int scvfIdx,
-                          const ElementVolumeVariables &elemDat)
-        : fvElemGeom_(elemGeom)
+                          int faceIdx,
+                          const ElementVolumeVariables &elemDat,
+                          bool onBoundary = false)
+        : fvGeom_(elemGeom), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
-        scvfIdx_ = scvfIdx;
-
         viscosityAtIP_ = Scalar(0);
         molarDensityAtIP_ = Scalar(0);
         densityAtIP_ = Scalar(0);
@@ -141,10 +140,16 @@ public:
    { return Kmvp_; }
 
    /*!
-    * \brief Return the subcontrol volume face.
+    * \brief The face of the current sub-control volume. This may be either
+    *        an inner sub-control-volume face or a SCV face on the boundary.
     */
-    const SCVFace &face() const
-    { return fvElemGeom_.subContVolFace[scvfIdx_]; }
+   const SCVFace &face() const
+   {
+       if (onBoundary_)
+           return fvGeom_.boundaryFace[faceIdx_];
+       else
+           return fvGeom_.subContVolFace[faceIdx_];
+   }
 
     /*!
      * \brief Return the intrinsic permeability tensor.
@@ -298,7 +303,7 @@ protected:
             // use finite-element gradients
             tmp = 0.0;
             for (int idx = 0;
-                    idx < fvElemGeom_.numVertices;
+                    idx < fvGeom_.numVertices;
                     idx++) // loop over adjacent vertices
             {
                 // FE gradient at vertex idx
@@ -362,8 +367,8 @@ protected:
 
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
-            Vector f(problem.boxGravity(element, fvElemGeom_, face().i));
-            f += problem.boxGravity(element, fvElemGeom_, face().j);
+            Vector f(problem.boxGravity(element, fvGeom_, face().i));
+            f += problem.boxGravity(element, fvGeom_, face().j);
             f /= 2;
 
             // make it a force
@@ -390,10 +395,10 @@ protected:
         const SpatialParameters &sp = problem.spatialParameters();
         sp.meanK(K_,
                  sp.intrinsicPermeability(element,
-                                          fvElemGeom_,
+                                          fvGeom_,
                                           face().i),
                  sp.intrinsicPermeability(element,
-                                          fvElemGeom_,
+                                          fvGeom_,
                                           face().j));
 
     }
@@ -493,8 +498,9 @@ protected:
             dispersionTensor_[i][i] += vNorm*dispersivity[1];
     }
 
-    const FVElementGeometry &fvElemGeom_;
-    int scvfIdx_;
+    const FVElementGeometry &fvGeom_;
+    const int faceIdx_;
+    const bool onBoundary_;
 
     //! pressure potential gradient
     Vector potentialGrad_;
