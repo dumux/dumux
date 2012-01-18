@@ -33,14 +33,10 @@
 #ifndef DUMUX_1PPROPERTIES_HH
 #define DUMUX_1PPROPERTIES_HH
 
-//Dune-includes
-#include <dune/istl/operators.hh>
-#include <dune/istl/solvers.hh>
-#include <dune/istl/preconditioners.hh>
-
 //Dumux-includes
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dumux/linear/seqsolverbackend.hh>
+#include "1pindices.hh"
 
 namespace Dumux
 {
@@ -51,6 +47,9 @@ namespace Dumux
 
 template<class TypeTag>
 class VariableClass;
+
+template<class TypeTag>
+class CellData1P;
 
 ////////////////////////////////
 // properties
@@ -90,7 +89,11 @@ SET_INT_PROP(DecoupledOneP, NumPhases, 1)//!< Single phase system
 ;
 SET_INT_PROP(DecoupledOneP, NumComponents, 1); //!< Each phase consists of 1 pure component
 
+SET_TYPE_PROP(DecoupledOneP, Indices, DecoupledOnePCommonIndices);
+
 SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
+
+SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
 
 SET_PROP(DecoupledOneP, PressureCoefficientMatrix)
 {

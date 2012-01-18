@@ -28,9 +28,10 @@
 #ifndef DUMUX_DIFFUSIONPROBLEM_1P_HH
 #define DUMUX_DIFFUSIONPROBLEM_1P_HH
 
-#include <dumux/decoupled/common/onemodelproblem_old.hh>
-#include <dumux/decoupled/common/variableclass_old.hh>
+#include <dumux/decoupled/common/onemodelproblem.hh>
+#include <dumux/decoupled/common/variableclass.hh>
 #include <dumux/decoupled/1p/1pproperties.hh>
+#include <dumux/decoupled/1p/cellData1p.hh>
 
 namespace Dumux
 {

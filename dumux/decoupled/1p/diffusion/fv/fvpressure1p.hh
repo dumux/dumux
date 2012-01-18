@@ -25,6 +25,7 @@
 
 
 // dumux environment
+#include <dumux/decoupled/common/fv/fvpressure.hh>
 #include <dumux/decoupled/1p/1pproperties.hh>
 
 /**
@@ -51,12 +52,15 @@ namespace Dumux
  * @tparam TypeTag The Type Tag
  *
  */
-template<class TypeTag> class FVPressure1P
+template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 {
+    typedef FVPressure<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
+
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
 
@@ -65,6 +69,8 @@ template<class TypeTag> class FVPressure1P
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
     enum
     {
@@ -73,7 +79,12 @@ template<class TypeTag> class FVPressure1P
 
     enum
     {
-        pressEqIdx = 0 // only one equation!
+        pressEqIdx = Indices::pressEqIdx // only one equation!
+    };
+
+    enum
+    {
+        rhs = ParentType::rhs, matrix = ParentType::matrix,
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -81,35 +92,25 @@ template<class TypeTag> class FVPressure1P
     typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
-
-    //initializes the matrix to store the system of equations
-    void initializeMatrix();
-
-    //function which assembles the system of equations to be solved
-    void assemble(bool first);
-
-    //solves the system of equations to get the spatial distribution of the pressure
-    void solve();
-
-protected:
-    //! Returns reference to the instance of the problem definition
-    Problem& problem()
-    {
-        return problem_;
-    }
-    //! Returns reference to the instance of the problem definition
-    const Problem& problem() const
-    {
-        return problem_;
-    }
 
 public:
+    void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
+
+    void getStorage(Dune::FieldVector<Scalar, 2>& entries, const Element& element, const CellData& cellData, const bool first)
+    {
+        entries = 0;
+    }
+
+    void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
+
+    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
+    const Intersection&, const CellData&, const bool);
+
     //! Initializes the problem
     /*!
      *  @param solveTwice repeats the pressure calculation step
@@ -121,45 +122,39 @@ public:
 
     void initialize(bool solveTwice = true)
     {
-        assemble(true);
-        solve();
+        ParentType::initialize();
+        this->assemble(true);
+        this->solve();
         if (solveTwice)
         {
-            assemble(false);
-            solve();
+            this->assemble(false);
+            this-> solve();
         }
+        storePressureSolution();
         return;
     }
 
-    //! Calculates the pressure.
-    /*!
-     *  @param solveTwice without any function here!
-     *
-     *  Calculates the pressure \f$p\f$ as solution of the boundary value
-     *  \f[  \text{div}\, \boldsymbol{v} = q, \f]
-     *  subject to appropriate boundary conditions.
-     */
-    void pressure(bool solveTwice = true)
+    void update()
     {
-        assemble(false);
-        solve();
-
-        return;
+        ParentType::update();
+        storePressureSolution();
     }
 
-    // serialization methods
-    //! Function needed for restart option.
-    template<class Restarter>
-    void serialize(Restarter &res)
+    void storePressureSolution()
     {
-        return;
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+            storePressureSolution(i, cellData);
+        }
     }
 
-    //! Function needed for restart option.
-    template<class Restarter>
-    void deserialize(Restarter &res)
+    void storePressureSolution(int globalIdx, CellData& cellData)
     {
-        return;
+            Scalar press = this->pressure()[globalIdx];
+
+            cellData.setPressure(press);
     }
 
     //! \brief Writes data files
@@ -167,28 +162,14 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typename Variables::ScalarSolutionType *pressure = writer.allocateManagedBuffer (
+        ScalarSolutionType *pressure = writer.allocateManagedBuffer (
                 problem_.gridView().size(0));
 
-        *pressure = problem_.variables().pressure();
+        *pressure = this->pressure();
 
         writer.attachCellData(*pressure, "pressure");
 
         return;
-    }
-
-    void setPressureHard(Scalar pressure, int globalIdx)
-    {
-        setPressHard_ = true;
-        pressHard_ = pressure;
-        idxPressHard_ = globalIdx;
-    }
-
-    void unsetPressureHard(int globalIdx)
-    {
-        setPressHard_ = false;
-        pressHard_ = 0.0;
-        idxPressHard_ = 0.0;
     }
 
     //! Constructs a FVPressure1P object
@@ -196,291 +177,155 @@ public:
      * \param problem a problem class object
      */
     FVPressure1P(Problem& problem) :
-        problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (2 * dim + 1)
-                * problem.variables().gridSize(), Matrix::random), f_(problem.variables().gridSize()),
-                pressHard_(0),
-                idxPressHard_(0),
-                setPressHard_(false),
-                gravity(
-                problem.gravity())
+        ParentType(problem), problem_(problem),
+        gravity_(
+        problem.gravity())
     {
-        initializeMatrix();
+        const Element& element = *(problem_.gridView().template begin<0> ());
+        Scalar temperature = problem_.temperature(element);
+        Scalar referencePress = problem_.referencePressure(element);
+
+        density_ = Fluid::density(temperature, referencePress);
+        viscosity_ = Fluid::viscosity(temperature, referencePress);
     }
 
 private:
     Problem& problem_;
-    Matrix A_;
-    Dune::BlockVector<Dune::FieldVector<Scalar, 1> > f_;
-    Scalar pressHard_;
-    Scalar idxPressHard_;
-    bool setPressHard_;
-protected:
-    const GlobalPosition& gravity; //!< vector including the gravity constant
+    const GlobalPosition& gravity_; //!< vector including the gravity constant
+    Scalar density_;
+    Scalar viscosity_;
 };
 
-//!initializes the matrix to store the system of equations
+//!function which calculates the source entry
 template<class TypeTag>
-void FVPressure1P<TypeTag>::initializeMatrix()
+void FVPressure1P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entries, const Element& element
+        , const CellData& cellData, const bool first)
 {
-    // determine matrix row sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-    {
-        // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+    // cell volume, assume linear map here
+    Scalar volume = element.geometry().volume();
 
-        // initialize row size
-        int rowSize = 1;
+    // get sources from problem
+    PrimaryVariables sourcePhase(0.0);
+    problem_.source(sourcePhase, element);
+        sourcePhase /= density_;
 
-        // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
-            if (isIt->neighbor())
-                rowSize++;
-        A_.setrowsize(globalIdxI, rowSize);
-    }
-    A_.endrowsizes();
-
-    // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
-    {
-        // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
-
-        // add diagonal index
-        A_.addindex(globalIdxI, globalIdxI);
-
-        // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
-            if (isIt->neighbor())
-            {
-                // access neighbor
-                ElementPointer outside = isIt->outside();
-                int globalIdxJ = problem_.variables().index(*outside);
-
-                // add off diagonal index
-                A_.addindex(globalIdxI, globalIdxJ);
-            }
-    }
-    A_.endindices();
+    entries[rhs] = volume * sourcePhase;
 
     return;
 }
 
-//!function which assembles the system of equations to be solved
+//!function which calculates internal flux entries
 template<class TypeTag>
-void FVPressure1P<TypeTag>::assemble(bool first)
+void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const Intersection& intersection
+        , const CellData& cellDataI, const bool first)
 {
-    // initialization: set matrix A_ to zero
-    A_ = 0;
-    f_ = 0;
+    ElementPointer elementI = intersection.inside();
+    ElementPointer elementJ = intersection.outside();
+
+    // get global coordinates of cell centers
+    const GlobalPosition& globalPosI = elementI->geometry().center();
+    const GlobalPosition& globalPosJ = elementJ->geometry().center();
+
+    //get face normal
+    const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
+
+    // get face area
+    Scalar faceArea = intersection.geometry().volume();
+
+    // distance vector between barycenters
+    GlobalPosition distVec = globalPosJ - globalPosI;
+
+    // compute distance between cell centers
+    Scalar dist = distVec.two_norm();
+
+    // compute vectorized permeabilities
+    FieldMatrix meanPermeability(0);
+
+    problem_.spatialParameters().meanK(meanPermeability, problem_.spatialParameters().intrinsicPermeability(*elementI),
+            problem_.spatialParameters().intrinsicPermeability(*elementJ));
+
+    Dune::FieldVector<Scalar, dim> permeability(0);
+    meanPermeability.mv(unitOuterNormal, permeability);
+
+    permeability/=viscosity_;
+
+    //calculate current matrix entry
+    entries[matrix] = ((permeability * unitOuterNormal) / dist) * faceArea;
+
+    //calculate right hand side
+    entries[rhs] = density_ * (permeability * gravity_) * faceArea;
+
+    return;
+}
+
+//!function which calculates internal flux entries
+template<class TypeTag>
+void FVPressure1P<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entries,
+const Intersection& intersection, const CellData& cellData, const bool first)
+{
+    ElementPointer element = intersection.inside();
+
+    // get global coordinates of cell centers
+    const GlobalPosition& globalPosI = element->geometry().center();
+
+    // center of face in global coordinates
+    const GlobalPosition& globalPosJ = intersection.geometry().center();
+
+    //get face normal
+    const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
+
+    // get face area
+    Scalar faceArea = intersection.geometry().volume();
+
+    // distance vector between barycenters
+    GlobalPosition distVec = globalPosJ - globalPosI;
+
+    // compute distance between cell centers
+    Scalar dist = distVec.two_norm();
 
     BoundaryTypes bcType;
+    problem_.boundaryTypes(bcType, intersection);
+    PrimaryVariables boundValues(0.0);
 
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    if (bcType.isDirichlet(pressEqIdx))
     {
-        // get global coordinate of cell center
-        const GlobalPosition& globalPos = eIt->geometry().center();
+        problem_.dirichlet(boundValues, intersection);
 
-        // cell index
-        int globalIdxI = problem_.variables().index(*eIt);
+        //permeability vector at boundary
+        // compute vectorized permeabilities
+        FieldMatrix meanPermeability(0);
 
-        // cell volume, assume linear map here
-        Scalar volume = eIt->geometry().volume();
+        problem_.spatialParameters().meanK(meanPermeability,
+                problem_.spatialParameters().intrinsicPermeability(*element));
 
-        Scalar temperatureI = problem_.temperature(*eIt);
-        Scalar referencePressI = problem_.referencePressure(*eIt);
+        Dune::FieldVector<Scalar, dim> permeability(0);
+        meanPermeability.mv(unitOuterNormal, permeability);
 
-        Scalar densityI = Fluid::density(temperatureI, referencePressI);
-        Scalar viscosityI = Fluid::viscosity(temperatureI, referencePressI);
+        permeability/= viscosity_;
 
-        // set right side to zero
-        PrimaryVariables source(0.0);
-        problem_.source(source, *eIt);
-        source /= densityI;
+        //get dirichlet pressure boundary condition
+        Scalar pressBound = boundValues;
 
-        f_[globalIdxI] = source *= volume;
+        //calculate current matrix entry
+        entries[matrix] = ((permeability * unitOuterNormal) / dist) * faceArea;
+        entries[rhs] = entries[matrix] * pressBound;
 
-        int isIndex = 0;
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt);
-             isIt != isItEnd;
-             ++isIt, ++isIndex)
-        {
-            // get normal vector
-            Dune::FieldVector < Scalar, dimWorld > unitOuterNormal = isIt->centerUnitOuterNormal();
+        //calculate right hand side
+        entries[rhs] -= density_ * (permeability * gravity_) * faceArea;
 
-            // get face volume
-            Scalar faceArea = isIt->geometry().volume();
-
-            // handle interior face
-            if (isIt->neighbor())
-            {
-                // access neighbor
-                ElementPointer neighborPointer = isIt->outside();
-                int globalIdxJ = problem_.variables().index(*neighborPointer);
-
-                // neighbor cell center in global coordinates
-                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
-
-                // distance vector between barycenters
-                Dune::FieldVector < Scalar, dimWorld > distVec = globalPosNeighbor - globalPos;
-
-                // compute distance between cell centers
-                Scalar dist = distVec.two_norm();
-
-                // compute vectorized permeabilities
-                FieldMatrix meanPermeability(0);
-
-                problem_.spatialParameters().meanK(meanPermeability,
-                        problem_.spatialParameters().intrinsicPermeability(*eIt),
-                        problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
-
-                Dune::FieldVector<Scalar, dim> permeability(0);
-                meanPermeability.mv(unitOuterNormal, permeability);
-
-                permeability/=viscosityI;
-
-                Scalar temperatureJ = problem_.temperature(*neighborPointer);
-                Scalar referencePressJ = problem_.referencePressure(*neighborPointer);
-
-                Scalar densityJ = Fluid::density(temperatureJ, referencePressJ);
-
-                Scalar rhoMean = 0.5 * (densityI + densityJ);
-
-                // update diagonal entry
-                Scalar entry;
-
-                //calculate potential gradients
-                Scalar potential = 0;
-
-                Scalar density = 0;
-
-                //if we are at the very first iteration we can't calculate phase potentials
-                if (!first)
-                {
-                    potential = problem_.variables().potential(globalIdxI, isIndex);
-
-                    density = (potential > 0.) ? densityI : densityJ;
-
-                    density = (potential == 0.) ? rhoMean : density;
-
-                    potential = (problem_.variables().pressure()[globalIdxI]
-                            - problem_.variables().pressure()[globalIdxJ]) / dist;
-
-                    potential += density * (unitOuterNormal * gravity);
-
-                    //store potentials for further calculations (velocity, saturation, ...)
-                    problem_.variables().potential(globalIdxI, isIndex) = potential;
-                }
-
-                //do the upwinding depending on the potentials
-
-                density = (potential > 0.) ? densityI : densityJ;
-
-                density = (potential == 0) ? rhoMean : density;
-
-                //calculate current matrix entry
-                entry = ((permeability * unitOuterNormal) / dist) * faceArea;
-
-                //calculate right hand side
-                Scalar rightEntry = density * (permeability * gravity) * faceArea;
-
-                //set right hand side
-                f_[globalIdxI] -= rightEntry;
-
-                // set diagonal entry
-                A_[globalIdxI][globalIdxI] += entry;
-
-                // set off-diagonal entry
-                A_[globalIdxI][globalIdxJ] = -entry;
-            }
-
-            // boundary face
-
-            else if (isIt->boundary())
-            {
-                // center of face in global coordinates
-                const GlobalPosition& globalPosFace = isIt->geometry().center();
-
-                //get boundary condition for boundary face center
-                problem_.boundaryTypes(bcType, *isIt);
-                PrimaryVariables boundValues(0.0);
-
-                if (bcType.isDirichlet(pressEqIdx))
-                {
-                    problem_.dirichlet(boundValues, *isIt);
-
-                    Dune::FieldVector < Scalar, dimWorld > distVec(globalPosFace - globalPos);
-                    Scalar dist = distVec.two_norm();
-
-                    //permeability vector at boundary
-                    // compute vectorized permeabilities
-                    FieldMatrix meanPermeability(0);
-
-                    problem_.spatialParameters().meanK(meanPermeability,
-                            problem_.spatialParameters().intrinsicPermeability(*eIt));
-
-                    //permeability vector at boundary
-                    Dune::FieldVector < Scalar, dim > permeability(0);
-                    meanPermeability.mv(unitOuterNormal, permeability);
-
-                    permeability/= viscosityI;
-
-                    //get dirichlet pressure boundary condition
-                    Scalar pressBound = boundValues;
-
-                    //calculate current matrix entry
-                    Scalar entry = ((permeability * unitOuterNormal) / dist) * faceArea;
-
-                    //calculate right hand side
-                    Scalar rightEntry = densityI * (permeability * gravity) * faceArea;
-
-                    // set diagonal entry and right hand side entry
-                    A_[globalIdxI][globalIdxI] += entry;
-                    f_[globalIdxI] += entry * pressBound;
-                    f_[globalIdxI] -= rightEntry;
-                }
-                //set neumann boundary condition
-
-                else if (bcType.isNeumann(pressEqIdx))
-                {
-                    problem_.neumann(boundValues, *isIt);
-                    Scalar J = boundValues /= densityI;
-
-                    f_[globalIdxI] -= J * faceArea;
-                }
-            }
-        } // end all intersections
-    } // end grid traversal
-    return;
-}
-
-//!solves the system of equations to get the spatial distribution of the pressure
-template<class TypeTag>
-void FVPressure1P<TypeTag>::solve()
-{
-    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
-
-    int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-
-    if (verboseLevelSolver)
-        std::cout << "FVPressure1P: solve for pressure" << std::endl;
-
-    if (setPressHard_)
-    {
-        A_[idxPressHard_] = 0;
-        A_[idxPressHard_][idxPressHard_] = 1;
-        f_[idxPressHard_] = pressHard_;
     }
+    //set neumann boundary condition
+    else if (bcType.isNeumann(pressEqIdx))
+    {
+        problem_.neumann(boundValues, intersection);
+        Scalar J = boundValues /= density_;
 
-    Solver solver(problem_);
-    solver.solve(A_, problem_.variables().pressure(), f_);
-    //                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-    //                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
-    //                printvector(std::cout, (problem_.variables().pressure()), "pressure", "row", 200, 1, 3);
+        entries[rhs] = -(J * faceArea);
+    }
+    else
+    {
+        DUNE_THROW(Dune::NotImplemented, "No valid boundary condition type defined for pressure equation!");
+    }
 
     return;
 }
