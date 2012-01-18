@@ -139,7 +139,10 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     // initialize dt very large
     dt = 1E100;
 
-    // set update vector to zero
+    // resize update vector and set to zero
+    updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
+    updateVec[wCompIdx].resize(problem().gridView().size(0));
+    updateVec[nCompIdx].resize(problem().gridView().size(0));
     updateVec[wCompIdx] = 0;
     updateVec[nCompIdx] = 0;
 

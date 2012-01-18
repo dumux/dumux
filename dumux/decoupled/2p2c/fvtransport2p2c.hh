@@ -159,9 +159,14 @@ public:
     /*! For an immiscible IMPES scheme, this is the saturation. For Miscible simulations, however,
      *  the total concentration of all components is transported.
      */
-    TransportSolutionType& transportedQuantity()
+    TransportSolutionType& transportedQuantity() DUNE_DEPRECATED
     {
         return totalConcentration_;
+    }
+
+    void getTransportedQuantity(TransportSolutionType& transportedQuantity)
+    {
+        transportedQuantity = totalConcentration_;
     }
 
     const TransportSolutionType& totalConcentration() const
@@ -222,7 +227,10 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
     // initialize dt very large
     dt = 1E100;
 
-    // set update vector to zero
+    // resize update vector and set to zero
+    updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
+    updateVec[wCompIdx].resize(problem_.gridView().size(0));
+    updateVec[nCompIdx].resize(problem_.gridView().size(0));
     updateVec[wCompIdx] = 0;
     updateVec[nCompIdx] = 0;
 
