@@ -79,13 +79,12 @@ public:
     void initialize()
     {
         //initial values of transported quantity
-        problem.transportModel().initialize();
+        problem_.transportModel().initialize();
         //call function with true to get a first initialisation of the pressure field
-        problem.pressureModel().initialize();
-        problem.pressureModel().calculateVelocity();
+        problem_.pressureModel().initialize();
 
         //update constitutive functions
-        problem.pressureModel().updateMaterialLaws();
+        problem_.pressureModel().updateMaterialLaws();
 
         Dune::dinfo << "IMPET: initialization done." << std::endl;
 
@@ -103,44 +102,38 @@ public:
      */
     void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec)
     {
-        bool converg = false;
-        int iter = 0;
-        int iterTot = 0;
-
-        while (!converg)
+        if (iterFlag_) // only needed if iteration has to be done
         {
-            iter++;
-            iterTot++;
+            bool converg = false;
+            int iter = 0;
+            int iterTot = 0;
 
-            problem.pressureModel().update(false);
+            // the method is valid for any transported quantity.
+            TransportSolutionType transValueOldIter;
+            problem_.transportModel().getTransportedQuantity(transValueOldIter);
+            int transSize = transValueOldIter.size();
+            TransportSolutionType updateOldIter(transSize);
+            updateOldIter = 0;
+            TransportSolutionType transportedQuantity(transSize);
+            TransportSolutionType updateHelp(transSize);
+            TransportSolutionType updateDiff(transSize);
 
-            //calculate velocities
-            // TODO: remove calculateVelocity in impet
-            problem.pressureModel().calculateVelocity();
-
-            //calculate defect of transported quantity
-            problem.transportModel().update(t, dt, updateVec, true);
-
-            if (iterFlag_)// only needed if iteration has to be done
+            while (!converg)
             {
-                // the method is valid for any transported quantity.
-                int transSize = problem.transportModel().transportedQuantity().size();
-                TransportSolutionType transportedQuantity(problem.transportModel().transportedQuantity());
-                TransportSolutionType transValueOldIter(problem.transportModel().transportedQuantity());
-                TransportSolutionType transValueHelp(transSize);
-                TransportSolutionType transValueDiff(transSize);
-                TransportSolutionType updateOldIter(transSize);
-                TransportSolutionType updateHelp(transSize);
-                TransportSolutionType updateDiff(transSize);
+                iter++;
+                iterTot++;
 
-                updateOldIter = 0;
+                problem_.pressureModel().update();
+
+                //calculate defect of transported quantity
+                problem_.transportModel().update(t, dt, updateVec, true);
+
                 updateHelp = updateVec;
-                transportedQuantity = problem.transportModel().transportedQuantity();
+                problem_.transportModel().getTransportedQuantity(transportedQuantity);
                 transportedQuantity += (updateHelp *= (dt * cFLFactor_));
                 transportedQuantity *= omega_;
-                transValueHelp = transValueOldIter;
-                transValueHelp *= (1 - omega_);
-                transportedQuantity += transValueHelp;
+                transValueOldIter *= (1 - omega_);
+                transportedQuantity += transValueOldIter;
                 updateDiff = updateVec;
                 updateDiff -= updateOldIter;
                 transValueOldIter = transportedQuantity;
@@ -163,18 +156,24 @@ public:
                 if (!converg && iter > nIter_)
                 {
                     converg = true;
-                    std::cout << "Nonlinear loop in IMPET.update exceeded nIter = " << nIter_ << " iterations." << std::endl;
+                    std::cout << "Nonlinear loop in IMPET.update exceeded nIter = " << nIter_ << " iterations."
+                            << std::endl;
                     std::cout << transportedQuantity.infinity_norm() << std::endl;
                 }
             }
-            else    // no iteration => always "converged"
-                converg = true;
-
+            // outputs
+            if (iterFlag_ == 2)
+                std::cout << "Iteration steps: " << iterTot << std::endl;
+            std::cout.setf(std::ios::scientific, std::ios::floatfield);
         }
-        // outputs
-        if (iterFlag_ == 2)
-            std::cout << "Iteration steps: " << iterTot << std::endl;
-        std::cout.setf(std::ios::scientific, std::ios::floatfield);
+        else
+        {
+            //update pressure
+            problem_.pressureModel().update();
+
+            //calculate defect of transported quantity
+            problem_.transportModel().update(t, dt, updateVec, true);
+        }
 
         dt *= cFLFactor_;
     }
@@ -187,27 +186,10 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        problem.pressureModel().addOutputVtkFields(writer);
-        problem.transportModel().addOutputVtkFields(writer);
+        problem_.pressureModel().addOutputVtkFields(writer);
+        problem_.transportModel().addOutputVtkFields(writer);
 
         return;
-    }
-
-    // serialization methods
-    //! Function needed for restart option.
-    template<class Restarter>
-    void serialize(Restarter &res)
-    {
-        problem.variables().serialize<Restarter> (res);
-    }
-
-    //! Function needed for restart option.
-    template<class Restarter>
-    void deserialize(Restarter &res)
-    {
-        problem.variables().deserialize<Restarter> (res);
-        //update constitutive functions
-        problem.pressureModel().updateMaterialLaws();
     }
 
     //! Constructs an IMPET object
@@ -215,7 +197,7 @@ public:
      * \param prob Problem
      */
     IMPET(Problem& prob) :
-        problem(prob)
+            problem_(prob)
     {
         cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
         iterFlag_ = GET_PARAM(TypeTag, int, IterationFlag);
@@ -224,10 +206,8 @@ public:
         omega_ = GET_PARAM(TypeTag, Scalar, RelaxationFactor);
     }
 
-protected:
-
-    Problem& problem; //!< object of type Problem including problem
 private:
+    Problem& problem_; //!< object of type Problem including problem
     Scalar cFLFactor_;
     int iterFlag_;
     int nIter_;
