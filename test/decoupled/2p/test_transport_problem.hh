@@ -73,6 +73,12 @@ SET_PROP(TransportTestProblem, Model)
     typedef Dumux::FVSaturation2P<TTAG(TransportTestProblem)> type;
 };
 
+// Set the model properties
+SET_PROP(TransportTestProblem, TransportModel)
+{
+    typedef Dumux::FVSaturation2P<TTAG(TransportTestProblem)> type;
+};
+
 // Set the wetting phase
 SET_PROP(TransportTestProblem, WettingPhase)
 {
@@ -169,14 +175,14 @@ public:
 
             CellData& cellData = this->variables().cellData(globalIdx);
 
-            cellData.fluxData().velocity(wPhaseIdx) = vel;
-
             // run through all intersections with neighbors and boundary
             IntersectionIterator isItEnd = gridView.iend(*eIt);
             for (IntersectionIterator isIt = gridView.ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
                 // local number of facet
                 int indexInInside = isIt->indexInInside();
+
+                cellData.fluxData().setVelocity(wPhaseIdx, indexInInside, vel);
 
                 const GlobalPosition& unitOuterNormal = isIt->centerUnitOuterNormal();
 

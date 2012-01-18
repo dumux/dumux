@@ -38,9 +38,11 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/simplednapl.hh>
 #include <dumux/material/components/oil.hh>
 
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
@@ -76,17 +78,24 @@ SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::TestIMPESProblem<TTAG(IMPESTestP
 // Set the model properties
 SET_TYPE_PROP(IMPESTestProblem, TransportModel, Dumux::FVSaturation2P<TTAG(IMPESTestProblem)>);
 
-SET_TYPE_PROP(IMPESTestProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
-SET_TYPE_PROP(IMPESTestProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, CapillaryFlux, Dumux::CapillaryDiffusion<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, GravityFlux, Dumux::GravityPart<TypeTag>);
 
 SET_PROP(IMPESTestProblem, PressureModel)
 {
-    typedef Dumux::FVVelocity2P<TTAG(IMPESTestProblem)> type;
+    typedef Dumux::FVPressure2P<TypeTag> type;
 };
+
+SET_TYPE_PROP(IMPESTestProblem, Velocity, Dumux::FVVelocity2P<TypeTag>);
 
 //SET_INT_PROP(IMPESTestProblem, Formulation,
 //        DecoupledTwoPCommonIndices::pnSn);
 
+//SET_INT_PROP(IMPESTestProblem, Formulation,
+//        DecoupledTwoPCommonIndices::pGlobalSw);
+
+//SET_INT_PROP(IMPESTestProblem, VelocityFormulation,
+//        DecoupledTwoPCommonIndices::velocityTotal);
 
 // Set the wetting phase
 SET_PROP(IMPESTestProblem, WettingPhase)
