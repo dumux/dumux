@@ -41,8 +41,6 @@
 #include "2p2cproperties.hh"
 #include "2p2cnewtoncontroller.hh"
 
-#include <dumux/boxmodels/common/boxboundaryvariables.hh>
-
 namespace Dumux
 {
 
@@ -127,7 +125,7 @@ SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
 //! the BoundaryVariables property
-SET_TYPE_PROP(BoxTwoPTwoC, BoundaryVariables, Dumux::BoxBoundaryVariables<TypeTag>);
+SET_TYPE_PROP(BoxTwoPTwoC, BoundaryVariables, TwoPTwoCFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);
