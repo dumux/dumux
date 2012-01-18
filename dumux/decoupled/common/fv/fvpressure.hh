@@ -26,7 +26,7 @@
 
 // dumux environment
 #include "dumux/common/math.hh"
-#include <dumux/decoupled/common/impetproperties.hh>
+#include <dumux/decoupled/common/decoupledproperties.hh>
 
 /**
  * @file
@@ -88,6 +88,13 @@ protected:
     //solves the system of equations to get the spatial distribution of the pressure
     void solve();
 
+    ScalarSolution& pressure()
+    { return pressure_; }
+
+    const ScalarSolution& pressure() const
+    { return pressure_; }
+    //@}
+public:
     void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
 
     void getStorage(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
@@ -97,13 +104,6 @@ protected:
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
                             const Intersection&, const CellData&, const bool);
 
-    ScalarSolution& pressure()
-    { return pressure_; }
-
-    const ScalarSolution& pressure() const
-    { return pressure_; }
-    //@}
-public:
     //! Public acess function for the primary variable pressure
     const Scalar pressure(int globalIdx) const
     { return pressure_[globalIdx]; }
@@ -250,7 +250,7 @@ void FVPressure<TypeTag>::assemble(bool first)
 
         /*****  source term ***********/
         asImp_().getSource(entries,*eIt, cellDataI, first);
-        f_[globalIdxI] = entries[rhs];
+        f_[globalIdxI] += entries[rhs];
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
@@ -306,7 +306,7 @@ void FVPressure<TypeTag>::assemble(bool first)
         entries = 0;
         asImp_().getStorage(entries, *eIt, cellDataI, first);
         f_[globalIdxI] += entries[rhs];
-        // set diagonal entry
+//         set diagonal entry
         A_[globalIdxI][globalIdxI] += entries[matrix];
     } // end grid traversal
 //    printmatrix(std::cout, A_, "global stiffness matrix after assempling", "row", 11,3);
