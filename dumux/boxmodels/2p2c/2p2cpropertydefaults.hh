@@ -124,9 +124,6 @@ SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 //! the FluxVariables property
 SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
-//! the BoundaryVariables property
-SET_TYPE_PROP(BoxTwoPTwoC, BoundaryVariables, TwoPTwoCFluxVariables<TypeTag>);
-
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);
 
