@@ -145,7 +145,7 @@ public:
             return this->fluidState_->pressure(phaseIdx);
     }
 
-    const Scalar& pressure(int phaseIdx) const
+    const Scalar pressure(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
         {

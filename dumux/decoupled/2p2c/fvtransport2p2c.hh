@@ -85,7 +85,8 @@ class FVTransport2P2C
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
+        wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
+        contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -282,8 +283,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         /***********     Handle source term     ***************/
         PrimaryVariables q(NAN);
         problem().source(q, *eIt);
-        updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
-        updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
+        updateVec[wCompIdx][globalIdxI] += q[contiWEqIdx];
+        updateVec[nCompIdx][globalIdxI] += q[contiNEqIdx];
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
@@ -543,7 +544,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
     problem().boundaryTypes(bcTypes, intersection);
 
     /**********         Dirichlet Boundary        *************/
-    if (bcTypes.isDirichlet(Indices::contiWEqIdx)) // if contiWEq is Dirichlet, so is contiNEq
+    if (bcTypes.isDirichlet(contiWEqIdx)) // if contiWEq is Dirichlet, so is contiNEq
     {
         //get dirichlet pressure boundary condition
         PhaseVector pressBound(0.);
@@ -645,13 +646,13 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
             + velocityJIn * BCfluidState.massFraction(nPhaseIdx, nCompIdx) * densityNWBound
             - velocityIJn * cellDataI.massFraction(nPhaseIdx, nCompIdx) * densityNWI ;
     }//end dirichlet boundary
-    else if (bcTypes.isNeumann(Indices::contiWEqIdx))
+    else if (bcTypes.isNeumann(contiWEqIdx))
     {
         // Convention: outflow => positive sign : has to be subtracted from update vec
         PrimaryVariables J(NAN);
         problem().neumann(J, intersection);
-        fluxEntries[wCompIdx] = - J[Indices::contiWEqIdx] * faceArea / volume;
-        fluxEntries[nCompIdx] = - J[Indices::contiNEqIdx] * faceArea / volume;
+        fluxEntries[wCompIdx] = - J[contiWEqIdx] * faceArea / volume;
+        fluxEntries[nCompIdx] = - J[contiNEqIdx] * faceArea / volume;
 
         // for timestep control
         #define cflIgnoresNeumann
@@ -708,7 +709,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     problem().boundaryFormulation(bcType, intersection);
     if (bcType == Indices::saturation)
     {
-        Scalar satBound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
+        Scalar satBound = primaryVariablesOnBoundary[contiWEqIdx];
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
             Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
@@ -741,7 +742,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
     {
         // saturation and hence pc and hence corresponding pressure unknown
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-        Scalar Z1Bound = primaryVariablesOnBoundary[Indices::contiWEqIdx];
+        Scalar Z1Bound = primaryVariablesOnBoundary[contiWEqIdx];
         BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
                             problem().temperatureAtPos(globalPosFace));
 

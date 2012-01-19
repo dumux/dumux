@@ -80,7 +80,7 @@ protected:
     Scalar dv_[numComponents];
     bool volumeDerivativesAvailable_;
 
-
+    int globalIdx_;
     Scalar perimeter_;
 
     FluidState* fluidState_;
@@ -96,7 +96,7 @@ public:
         mobility_({0.0, 0.0}),
         numericalDensity_({0.0, 0.0}), volumeError_(0.), errorCorrection_(0.),
         dv_dp_(0.), dv_({0.0, 0.0}), volumeDerivativesAvailable_(false),
-        perimeter_(0.),fluidState_(0)
+        globalIdx_(0), perimeter_(0.),fluidState_(0)
     {
     }
 
@@ -128,6 +128,8 @@ public:
         return *fluidState_;
     }
 
+    int& globalIdx()
+    { return globalIdx_;}
     const bool hasVolumeDerivatives() const
     { return volumeDerivativesAvailable_;}
     void confirmVolumeDerivatives()
@@ -145,7 +147,7 @@ public:
         return fluidState_->pressure(phaseIdx);
     }
 
-    const Scalar& pressure(int phaseIdx) const
+    const Scalar pressure(int phaseIdx) const
     {
         return fluidState_->pressure(phaseIdx);
     }

@@ -320,6 +320,7 @@ protected:
 //! initializes the simulation run
 /*!
  * Initializes the simulation to gain the initial pressure field.
+ * Output throughout initialization procedure is only done in debug mode.
  *
  * \param solveTwice flag to determine possible iterations of the initialization process
  */
@@ -411,11 +412,10 @@ void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
 /*!
  *  \brief initializes the fluid distribution and hereby the variables container
  *
- *  This function equals the method initialguess() and transportInitial() in the old model.
- *  It differs from updateMaterialLaws because there are two possible initial conditions:
+ *  It differs from updateMaterialLaws() because there are two possible initial conditions:
  *  saturations and concentration.
  *  \param compositional flag that determines if compositional effects are regarded, i.e.
- *      a reasonable pressure field is known.
+ *      a reasonable pressure field is known with which compositions can be calculated.
  */
 template<class TypeTag>
 void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
@@ -580,6 +580,8 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 cellData.perimeter()
                         += isIt->geometry().volume();
             }
+            cellData.globalIdx() = globalIdx;
+
             // set dv to zero to prevent output errors
             cellData.dv_dp() = 0.;
             cellData.dv(wPhaseIdx) = 0.;
