@@ -201,13 +201,13 @@ public:
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        this->writeConvergence_(uLastIter, deltaU);
-        this->newtonUpdateRelError(uLastIter, deltaU);
+        if (this->enableRelativeCriterion_ || this->enablePartialReassemble_)
+            this->newtonUpdateRelError(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial
         // reassembly
         if (enablePartialReassemble) {
-            Scalar minReasmTol = 0.5*this->tolerance_;
+            Scalar minReasmTol = 0.01*this->tolerance_;
             Scalar reassembleTol = Dumux::geometricMean(this->error_, minReasmTol);
             reassembleTol = std::max(reassembleTol, minReasmTol);
 
@@ -215,27 +215,31 @@ public:
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
 
+        this->writeConvergence_(uLastIter, deltaU);
+
         if (GET_PROP_VALUE(TypeTag, NewtonUseLineSearch)) {
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         }
         else {
-            Scalar lambda = 1.0;
-            /*
-            if (this->error_ > 10) {
-                // Do a "poor man's line search"
-                lambda /= std::sqrt((this->numSteps_ + 1)*this->error_/10);
-                lambda = std::max(0.2, lambda);
+            for (int i = 0; i < uLastIter.size(); ++i) {
+                if (this->model_().jacobianAssembler().vertexColor(i) != JacobianAssembler::Red)
+                    continue;
+                
+                uCurrentIter[i] = uLastIter[i];
+                uCurrentIter[i] -= deltaU[i];
             }
-            */
-
-            uCurrentIter = deltaU;
-            uCurrentIter *= - lambda;
-            uCurrentIter += uLastIter;
-
-            if (this->numSteps_ < 4 && enableChop_) {
+            
+            if (this->numSteps_ < 2 && enableChop_) {
                 // put crash barriers along the update path at the
                 // beginning...
                 NewtonChop::chop(uCurrentIter, uLastIter);
+            }
+            
+            if (this->enableAbsoluteCriterion_)
+            {
+                SolutionVector tmp(uLastIter);
+                this->absoluteError_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                this->absoluteError_ /= this->initialAbsoluteError_;
             }
         }
     }

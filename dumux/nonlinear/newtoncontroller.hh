@@ -115,6 +115,9 @@ NEW_PROP_TAG(NewtonTargetSteps);
 //! Number of maximum iterations for the Newton method.
 NEW_PROP_TAG(NewtonMaxSteps);
 
+//! The assembler for the Jacobian matrix
+NEW_PROP_TAG(JacobianAssembler);
+
 // set default values
 SET_TYPE_PROP(NewtonMethod, NewtonController, Dumux::NewtonController<TypeTag>);
 SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
@@ -149,6 +152,7 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
+    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
 
@@ -444,30 +448,33 @@ public:
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        writeConvergence_(uLastIter, deltaU);
-
         if (enableRelativeCriterion_ || enablePartialReassemble_)
             newtonUpdateRelError(uLastIter, deltaU);
 
         // compute the vertex and element colors for partial reassembly
         if (enablePartialReassemble_) {
-            Scalar minReasmTol, tmp, reassembleTol;
-            minReasmTol = 0.1*tolerance_;
-            tmp = Dumux::geometricMean(error_, minReasmTol);
-            reassembleTol = Dumux::geometricMean(error_, tmp);
+            Scalar minReasmTol = 0.01*tolerance_;
+            Scalar reassembleTol = Dumux::geometricMean(error_, minReasmTol);
             reassembleTol = std::max(reassembleTol, minReasmTol);
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
+
+        writeConvergence_(uLastIter, deltaU);
 
         if (useLineSearch_)
         {
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         }
         else {
-            uCurrentIter = uLastIter;
-            uCurrentIter -= deltaU;
-
+            for (int i = 0; i < uLastIter.size(); ++i) {
+                if (this->model_().jacobianAssembler().vertexColor(i) != JacobianAssembler::Red)
+                    continue;
+                
+                uCurrentIter[i] = uLastIter[i];
+                uCurrentIter[i] -= deltaU[i];
+            }
+            
             if (enableAbsoluteCriterion_)
             {
                 SolutionVector tmp(uLastIter);
@@ -712,7 +719,6 @@ protected:
     // the linear solver
     LinearSolver linearSolver_;
 
-private:
     bool enablePartialReassemble_;
     bool enableJacobianRecycling_;
     bool useLineSearch_;
