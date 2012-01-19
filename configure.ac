@@ -43,6 +43,10 @@ AC_CONFIG_FILES([dumux.pc
     dumux/decoupled/2p2c/Makefile 
     dumux/decoupled/common/Makefile
     dumux/decoupled/common/fv/Makefile 
+	dumux/freeflow/Makefile
+	dumux/freeflow/stokes/Makefile
+	dumux/freeflow/stokes2c/Makefile
+	dumux/freeflow/stokes2cni/Makefile
     dumux/io/Makefile
     dumux/linear/Makefile
     dumux/material/Makefile 
@@ -80,7 +84,11 @@ AC_CONFIG_FILES([dumux.pc
     test/decoupled/2p/Makefile
     test/decoupled/2padaptive/Makefile
     test/decoupled/2p2c/Makefile
-    test/material/Makefile
+    test/freeflow/Makefile
+	test/freeflow/stokes/Makefile
+	test/freeflow/stokes2c/Makefile
+	test/freeflow/stokes2cni/Makefile
+	test/material/Makefile
     test/material/tabulation/Makefile
     test/material/ncpflash/Makefile
     test/material/fluidsystems/Makefile
