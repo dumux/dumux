@@ -225,7 +225,7 @@ void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntr
 /** for first == true, there is no storage contribution.
  * for first == false, the storage term comprises the compressibility (due to a change in
  * pressure from last timestep):
- *  \f[ V_i c_{t,i}& \frac{p^t_i - p^{t-\Delta t}_i}{\Delta t} \f]
+ *  \f[ V_i c_{t,i} \frac{p^t_i - p^{t-\Delta t}_i}{\Delta t} \f]
  * and the damped error introduced by the incorrect transport of the last timestep:
  *  \f[ V_i \alpha_r \frac{v_{t} - \phi}{\Delta t} \f].
  * The latter is damped according to Fritz 2011.
@@ -304,8 +304,8 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
 \frac{\frac{\partial v_{t,j}}{\partial C^{\kappa}_j}-\frac{\partial v_{t,i}}{\partial C^{\kappa}_i}}{\Delta x} X^{\kappa}_{\alpha}
     \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \f]
  * This includes a boundary integral and a volume integral, because
- *  \f$ \frac{\partial v_{t,i}}{\partial C^{\kappa}_i}} \f$ is not constant.
- * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij} \f$
+ *  \f$ \frac{\partial v_{t,i}}{\partial C^{\kappa}_i} \f$ is not constant.
+ * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
  * represents the normal of the face \f$ \gamma{ij} \f$.
  * \param entries The Matrix and RHS entries
  * \param intersection Intersection between cell I and J
@@ -526,9 +526,9 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
  *  \f[ - A_{\gamma_{ij}} \cdot \mathbf{K} \cdot \mathbf{u} \cdot (\mathbf{n}_{\gamma_{ij}} \cdot \mathbf{u})
       \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} X^{\kappa}_{\alpha}
     \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \;, \f]
- * where we skip the volume integral assuming  \f$ \frac{\partial v_{t,i}}{\partial C^{\kappa}_i}} \f$
+ * where we skip the volume integral assuming  \f$ \frac{\partial v_{t,i}}{\partial C^{\kappa}_i} \f$
  * to be constant at the boundary.
- * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij} \f$
+ * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
  * represents the normal of the face \f$ \gamma{ij} \f$.
  * \param entries The Matrix and RHS entries
  * \param intersection Intersection between cell I and J

@@ -44,14 +44,15 @@ namespace Dumux
  * the conservation of momentum:
  * \f[
      v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
-     \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
- * \f]
+     \left(
+       \text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} 
+     \right) 
+     \f]
  *
  * By inserting this into the equations for the conservation of the
  * components, one gets one transport equation for each component \f$\kappa\f$
- * \f{equation*}
+ * \f[
  \sum_{\kappa} \left(
-    %
     \phi \frac{\partial \varrho_\alpha x_\alpha^\kappa S_\alpha}{\partial t}
     -
     \nabla \cdot
@@ -60,16 +61,16 @@ namespace Dumux
        \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
        (\nabla p_\alpha - \varrho_{\alpha} \boldsymbol{g})
     \right\}
-    \left)
+    \right)
     = q^\kappa
-    \f{equation*}
+    \f]
  * with \f$\overline M_\alpha\f$ being the average molar mass of the phase \f$\alpha\f$:
  * \f[ \overline M_\alpha = \sum_\kappa M^\kappa \; x_\alpha^\kappa \f]
  *
  * For the missing \f$M\f$ model assumptions, the model assumes that
  * if a fluid phase is not present, the sum of the mole fractions of
  * this fluid phase is smaller than \f$1\f$, i.e.
- * \f[ \forall \alpha: S_\alpha = 0 \implies \sum_\kappa x_\alpha^\kappa \leq 1 \]
+ * \f[ \forall \alpha: S_\alpha = 0 \implies \sum_\kappa x_\alpha^\kappa \leq 1 \f]
  *
  * Also, if a fluid phase may be present at a given spatial location
  * its saturation must be positive:
@@ -91,7 +92,7 @@ namespace Dumux
  * \f[ \Phi(a,b) = a + b - \sqrt{a^2 + b^2} \;. \f]
  *
  * Though this model uses
- * \f[ \Phi(a,b) = \min \{a,  b}}\;, \f]
+ * \f[ \Phi(a,b) = \min \{a,  b \}\;, \f]
  * because of its piecewise linearity.
  *
  * These equations are then discretized using a fully-implicit vertex
@@ -102,7 +103,7 @@ namespace Dumux
  * The model assumes thermodynamic equilibrium and uses the following
  * primary variables:
  * 
- * - The componentfugacities \f$f^1, \dots, f^{N}
+ * - The componentfugacities \f$f^1, \dots, f^{N}\f$
  * - The pressure of the first phase \f$p_1\f$
  * - The saturations of the first \f$M-1\f$ phases \f$S_1, \dots, S_{M-1}\f$
  * - Temperature \f$T\f$ if the energy equation is enabled
