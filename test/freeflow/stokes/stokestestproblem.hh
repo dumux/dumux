@@ -35,11 +35,8 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-//#include <dumux/material/old_fluidsystems/simple_h2o_n2_system.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
-//#include <dumux/material/components/n2.hh>
-//#include <dumux/material/fluidsystems/gasphase.hh>
 
 #include <dumux/freeflow/stokes/stokesmodel.hh>
 

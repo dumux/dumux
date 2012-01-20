@@ -69,12 +69,7 @@ public:
      * \brief Constructor. Sets the upwind weight.
      */
     Stokes2cniLocalResidual()
-    {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
-    };
+    {};
 
     /*!
      * \brief Evaluate the amount the additional quantities to the stokes2c model
@@ -122,9 +117,9 @@ public:
 
         Scalar tmp = fluxVars.normalVelocityAtIP();
 
-        tmp *=  massUpwindWeight_ *         // upwind data
+        tmp *=  this->massUpwindWeight_ *         // upwind data
             up.density() * up.enthalpy() +
-            (1 - massUpwindWeight_) *     // rest
+            (1.0 - this->massUpwindWeight_) *     // rest
             dn.density() * dn.enthalpy();
 
         flux[energyIdx] += tmp;
@@ -148,26 +143,8 @@ public:
                 fluxVars.face().normal[dimIdx] *
                 fluxVars.heatConductivityAtIP();
     }
-
-    // handle boundary conditions for a single sub-control volume face
-    // evaluate one part of the Dirichlet-like conditions for the temperature
-    // rest is done in local coupling operator
-    void evalCouplingVertex_(const IntersectionIterator &isIt,
-                             const int scvIdx,
-                             const int boundaryFaceIdx,
-                             const FluxVariables& boundaryVars)
-    {
-        ParentType::evalCouplingVertex_(isIt, scvIdx, boundaryFaceIdx, boundaryVars);
-        const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
-
-        if (this->bcTypes_(scvIdx).isCouplingOutflow(energyIdx))
-            this->residual_[scvIdx][energyIdx] = volVars.temperature();
-    }
-
-protected:
-    Scalar massUpwindWeight_;
 };
 
-}
+} // namespace
 
 #endif

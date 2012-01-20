@@ -233,7 +233,7 @@ public:
                 velGradComp *= up.viscosity();
             else
                 velGradComp *= massUpwindWeight_ * up.viscosity() +
-                        (1.-massUpwindWeight_) * dn.viscosity();
+                        (1.0 - massUpwindWeight_) * dn.viscosity();
 
             flux[momentumXIdx + velIdx] -=
                     velGradComp*fluxVars.face().normal;

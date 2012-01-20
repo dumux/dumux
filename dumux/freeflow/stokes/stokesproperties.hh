@@ -100,7 +100,6 @@ NEW_PROP_TAG(FluidState);
 NEW_PROP_TAG(StabilizationAlpha);
 NEW_PROP_TAG(StabilizationBeta);
 
-NEW_PROP_TAG(CalculateVariablesAtCenterOfSCV);
 NEW_PROP_TAG(PhaseIndex);
 
 NEW_PROP_TAG(SpatialParameters);

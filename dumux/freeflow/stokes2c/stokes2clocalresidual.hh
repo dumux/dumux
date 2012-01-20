@@ -75,12 +75,7 @@ public:
      * \brief Constructor. Sets the upwind weight.
      */
     Stokes2cLocalResidual()
-    {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
-    };
+    {};
 
     /*!
      * \brief Evaluate the amount the additional quantities to the stokes model
@@ -131,11 +126,11 @@ public:
 
         Scalar tmp = fluxVars.normalVelocityAtIP();
 
-        if (massUpwindWeight_ > 0.0)
-            tmp *=  massUpwindWeight_ *         // upwind data
+        if (this->massUpwindWeight_ > 0.0)
+            tmp *=  this->massUpwindWeight_ *         // upwind data
                 up.density() * up.fluidState().massFraction(phaseIdx, lCompIdx);
-        if (massUpwindWeight_ < 1.0)
-            tmp += (1 - massUpwindWeight_) *     // rest
+        if (this->massUpwindWeight_ < 1.0)
+            tmp += (1.0 - this->massUpwindWeight_) *     // rest
                 dn.density() * dn.fluidState().massFraction(phaseIdx, lCompIdx);
 
         flux[transportIdx] += tmp;
@@ -161,63 +156,6 @@ public:
                 fluxVars.densityAtIP();
         Valgrind::CheckDefined(flux[transportIdx]);
     }
-
-    // handle boundary conditions for a single sub-control volume face
-    // evaluate one part of the Dirichlet-like conditions for the massfraction
-    // rest is done in local coupling operator
-    void evalCouplingVertex_(const IntersectionIterator &isIt,
-                             const int scvIdx,
-                             const int boundaryFaceIdx,
-                             const FluxVariables& boundaryVars)
-    {
-        ParentType::evalCouplingVertex_(isIt, scvIdx, boundaryFaceIdx, boundaryVars);
-        const VolumeVariables &volVars = this->curVolVars_()[scvIdx];
-
-        // set mass fraction
-        if (this->bcTypes_(scvIdx).isCouplingOutflow(transportIdx))
-            this->residual_[scvIdx][transportIdx] = volVars.fluidState().massFraction(phaseIdx, lCompIdx);
-        Valgrind::CheckDefined(this->residual_[scvIdx][transportIdx]);
-    }
-
-    /*!
-     * \brief Compute the component fluxes at the outflow boundaries. The
-     *        rest is done in the local jacobian of the stokes model
-     */
-    void computeOutflowValues_(PrimaryVariables &values,
-                               const FluxVariables &boundaryVars,
-                               const int scvIdx,
-                               const int boundaryFaceIdx)
-    {
-        ParentType::computeOutflowValues_(values,
-                                          boundaryVars,
-                                          scvIdx,
-                                          boundaryFaceIdx);
-
-        // calculate the outflow component flux
-        // density and massfraction are evaluated at the vertex (upwinding),
-        // the velocity at the IP
-        const Scalar advectiveFlux =
-            boundaryVars.velocityAtIP() *
-            boundaryVars.face().normal *
-            this->curVolVars_(scvIdx).density() *
-            this->curVolVars_(scvIdx).fluidState().massFraction(phaseIdx, lCompIdx);
-        //            boundaryVars.massFractionAtIP;
-
-        // the diffusive fluxes are evaluated at the IP
-        const Scalar diffusiveFlux =
-            boundaryVars.massFractionGradAtIP() *
-            boundaryVars.face().normal *
-            boundaryVars.diffusionCoeffAtIP() *
-            boundaryVars.densityAtIP();
-
-        Valgrind::CheckDefined(advectiveFlux);
-        Valgrind::CheckDefined(diffusiveFlux);
-
-        values[transportIdx] = advectiveFlux - diffusiveFlux;
-    }
-
-protected:
-    Scalar massUpwindWeight_;
 };
 
 }
