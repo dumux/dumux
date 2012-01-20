@@ -86,6 +86,8 @@ template<class TypeTag> class MimeticPressure2P
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
+
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -100,7 +102,8 @@ template<class TypeTag> class MimeticPressure2P
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -109,7 +112,6 @@ template<class TypeTag> class MimeticPressure2P
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
@@ -117,6 +119,7 @@ template<class TypeTag> class MimeticPressure2P
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 1> > TraceType;
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 2*dim> > NormalVelType;
     typedef MimeticOperatorAssembler<Scalar,GridView> OperatorAssembler;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolution;
 
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
@@ -138,7 +141,7 @@ template<class TypeTag> class MimeticPressure2P
     void postprocess()
     {
         LocalStiffness lstiff(problem_, false, problem_.gridView());
-        A_.calculatePressure(lstiff, pressTrace_, normalVelocity_, problem_.variables().pressure());
+        A_.calculatePressure(lstiff, pressTrace_, normalVelocity_, pressure_);
         return;
     }
 
@@ -160,37 +163,66 @@ public:
     void initialize(bool solveTwice = true)
     {
         updateMaterialLaws();
-        pressTrace_ = 0; f_ = 0;
+        pressure_ = 0;
+        pressTrace_ = 0;
+        f_ = 0;
         assemble(true);
         solve();
         postprocess();
 
+        storePressureSolution();
+        storeVelocity();
+
         return;
     }
 
-    void pressure(bool solveTwice = true)
+    void update()
     {
         assemble(false);
         solve();
         postprocess();
 
+        storePressureSolution();
+        storeVelocity();
+
         return;
     }
 
-    void calculateVelocity();
+    void storePressureSolution()
+    {
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+            storePressureSolution(i, cellData);
+            cellData.fluxData().resetVelocity();
+        }
+    }
 
+    void storePressureSolution(int globalIdx, CellData& cellData)
+    {
+        cellData.setGlobalPressure(pressure_[globalIdx]);
+    }
+
+    void storeVelocity();
+
+
+    /*! \name general methods for serialization, output */
+    //@{
     // serialization methods
-    template<class Restarter>
-    void serialize(Restarter &res)
+    //! Function needed for restart option.
+    void serializeEntity(std::ostream &outstream, const Element &element)
     {
-       return;
+        int globalIdx = problem_.variables().index(element);
+        outstream << pressure_[globalIdx][0];
     }
 
-    template<class Restarter>
-    void deserialize(Restarter &res)
+    void deserializeEntity(std::istream &instream, const Element &element)
     {
-        return;
+        int globalIdx = problem_.variables().index(element);
+        instream >> pressure_[globalIdx][0];
     }
+    //@}
 
     //! \brief Write data files
      /*  \param name file name */
@@ -199,7 +231,7 @@ public:
     {
         typename Variables::ScalarSolutionType *pressure = writer.allocateManagedBuffer (problem_.gridView().size(0));
 
-        *pressure = problem_.variables().pressure();
+        *pressure = pressure_;
 
         writer.attachCellData(*pressure, "global pressure");
 
@@ -212,6 +244,7 @@ public:
      */
     MimeticPressure2P(Problem& problem) :
     problem_(problem),
+    pressure_(problem.gridView().size(0)),
     pressTrace_(problem.gridView().size(1)),
     normalVelocity_(problem.gridView().size(0)),
     f_(problem.gridView().size(1)),
@@ -225,14 +258,30 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
+
+        const Element& element = *(problem_.gridView().template begin<0> ());
+        FluidState fluidState;
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
+        fluidState.setSaturation(wPhaseIdx, 1.);
+        fluidState.setSaturation(nPhaseIdx, 0.);
+        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
     }
 
 private:
     Problem& problem_;
+    ScalarSolution pressure_;
     TraceType pressTrace_; //!< vector of pressure traces
     NormalVelType normalVelocity_;
     TraceType f_;
     OperatorAssembler A_;
+
+    Scalar density_[numPhases];
+    Scalar viscosity_[numPhases];
 protected:
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
     static const int saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
@@ -258,82 +307,63 @@ void MimeticPressure2P<TypeTag>::solve()
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 {
-    FluidState fluidState;
-
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
 
-        Scalar sat = problem_.variables().saturation()[globalIdx];
-
-        std::vector<Scalar> mobilities(2);
-
-        problem_.variables().capillaryPressure(globalIdx)= MaterialLaw::pC(
-                problem_.spatialParameters().materialLawParams(*eIt), sat);
+        CellData& cellData = problem_.variables().cellData(globalIdx);
 
         Scalar temperature = problem_.temperature(*eIt);
-        Scalar pressW =  problem_.referencePressure(*eIt);
-        Scalar pressN = pressW;
-        fluidState.update(sat, pressW, pressN, temperature);
-        Scalar viscosityW = FluidSystem::phaseViscosity(wPhaseIdx, temperature, pressW, fluidState);
-        Scalar viscosityN = FluidSystem::phaseViscosity(nPhaseIdx, temperature, pressN, fluidState);
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), sat)
-                / viscosityW;
-        Scalar mobilityN = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), sat)
-                / viscosityN;
 
-        Scalar densityW = FluidSystem::phaseDensity(wPhaseIdx, temperature, pressW, fluidState);
-        Scalar densityN = FluidSystem::phaseDensity(nPhaseIdx, temperature, pressN, fluidState);
+        //determine phase saturations from primary saturation variable
+
+        Scalar satW = cellData.saturation(wPhaseIdx);
+        Scalar satNW = cellData.saturation(nPhaseIdx);
+
+        Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
+
+            cellData.setSaturation(wPhaseIdx, satW);
+            cellData.setSaturation(nPhaseIdx, satNW);
+            cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        problem_.variables().mobilityWetting(globalIdx)= mobilityW;
-        problem_.variables().mobilityNonwetting(globalIdx)= mobilityN;
-        Scalar mobilityT = mobilityW + mobilityN;
-        problem_.variables().fracFlowFuncWetting(globalIdx)= mobilityW/mobilityT;
-        problem_.variables().fracFlowFuncNonwetting(globalIdx)= mobilityN/mobilityT;
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
+        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
 
-        // initialize densities
-        problem_.variables().densityWetting(globalIdx) = densityW;
-        problem_.variables().densityNonwetting(globalIdx) = densityN;
+        // initialize mobilities
+        cellData.setMobility(wPhaseIdx, mobilityW);
+        cellData.setMobility(nPhaseIdx, mobilityNW);
 
-        // initialize viscosities
-        problem_.variables().viscosityWetting(globalIdx) = viscosityW;
-        problem_.variables().viscosityNonwetting(globalIdx) = viscosityN;
+        //initialize fractional flow functions
+        cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNW));
+        cellData.setFracFlowFunc(nPhaseIdx, mobilityNW / (mobilityW + mobilityNW));
     }
     return;
 }
 
 template<class TypeTag>
-void MimeticPressure2P<TypeTag>::calculateVelocity()
+void MimeticPressure2P<TypeTag>::storeVelocity()
 {
-//    // ASSUMES axiparallel grids in 2D
-//    for (int i = 0; i < problem_.gridView().size(0); i++)
-//    {
-//        problem_.variables().velocity()[i][j][0] = -normalVelocity_[i][j];
-//        problem_.variables().velocity()[i][j][1] = 0;
-//        problem_.variables().velocity()[i][j][0] = normalVelocity_[i][j];
-//        problem_.variables().velocity()[i][j][1] = 0;
-//        problem_.variables().velocity()[i][j][0] = 0;
-//        problem_.variables().velocity()[i][j][1] = -normalVelocity_[i][j];
-//        problem_.variables().velocity()[i][j][0] = 0;
-//        problem_.variables().velocity()[i][j][1] = normalVelocity_[i][j];
-//    }
     // iterate through leaf grid an evaluate c0 at cell center
     const ElementIterator &eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
+
+        CellData& cellData = problem_.variables().cellData(globalIdx);
+
         IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt);
         const IntersectionIterator &isItEnd = problem_.gridView().template iend(*eIt);
         for (; isIt != isItEnd; ++isIt)
         {
             int idxInInside = isIt->indexInInside();
-            problem_.variables().velocity()[globalIdx][idxInInside] = isIt->centerUnitOuterNormal();
-            problem_.variables().velocity()[globalIdx][idxInInside] *= normalVelocity_[globalIdx][idxInInside];
-            problem_.variables().potentialWetting(globalIdx, idxInInside) = normalVelocity_[globalIdx][idxInInside];
-            problem_.variables().potentialNonwetting(globalIdx, idxInInside) = normalVelocity_[globalIdx][idxInInside];
+            Dune::FieldVector<Scalar, dimWorld> velocity(isIt->centerUnitOuterNormal());
+            velocity*= normalVelocity_[globalIdx][idxInInside];
+            cellData.fluxData().setVelocity(wPhaseIdx, idxInInside, velocity);
+            cellData.fluxData().setPotential(wPhaseIdx, idxInInside, normalVelocity_[globalIdx][idxInInside]);
+            cellData.fluxData().setPotential(nPhaseIdx, idxInInside, normalVelocity_[globalIdx][idxInInside]);
         }
     }
 //    printvector(std::cout, problem_.variables().velocity(), "velocity", "row", 4, 1, 3);

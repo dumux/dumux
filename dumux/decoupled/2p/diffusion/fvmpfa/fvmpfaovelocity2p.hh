@@ -24,7 +24,7 @@
 #ifndef DUMUX_MPFAOVELOCITY2P_HH
 #define DUMUX_MPFAOVELOCITY2P_HH
 
-#include "dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaopressure2p.hh"
+#include "fvmpfaopressure2p.hh"
 
 /**
  * @file
@@ -38,10 +38,10 @@ namespace Dumux
  *
  * \brief Velocity calculation for the MPFA-O method
  */
-template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTag>
+template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag>
 {
-    typedef FVMPFAOVelocity2P<TypeTag> ThisType;
-    typedef FVMPFAOPressure2P<TypeTag> ParentType;typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef FVMPFAOPressure2P<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
@@ -56,6 +56,7 @@ template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTa
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
@@ -85,10 +86,10 @@ template<class TypeTag> class FVMPFAOVelocity2P: public FVMPFAOPressure2P<TypeTa
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         pressEqIdx = Indices::pressEqIdx,
-        satEqIdx = Indices::satEqIdx
+        satEqIdx = Indices::satEqIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
@@ -99,13 +100,51 @@ public:
      * \param problem a problem class object
      */
     FVMPFAOVelocity2P(Problem& problem) :
-        ParentType(problem)
+        ParentType(problem), problem_(problem)
     {
+        const Element& element = *(problem_.gridView().template begin<0> ());
+        FluidState fluidState;
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
+        fluidState.setSaturation(wPhaseIdx, 1.);
+        fluidState.setSaturation(nPhaseIdx, 0.);
+        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
     }
 
     //! \copydoc Dumux::FVVelocity2P::calculateVelocity()
     void calculateVelocity();
 
+    void initialize(bool solveTwice = true)
+    {
+        ParentType::initialize(solveTwice);
+
+        calculateVelocity();
+
+        return;
+    }
+
+    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    void update()
+    {
+        ParentType::update();
+
+        calculateVelocity();
+
+        return;
+    }
+
+private:
+    Problem& problem_;
+
+    Scalar density_[numPhases];
+    Scalar viscosity_[numPhases];
+
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 }; // end of template
 
 template<class TypeTag>
@@ -125,8 +164,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
     BoundaryTypes bcType;
 
     // run through all elements
-    ElementIterator eItEnd = this->problem().gridView().template end<0> ();
-    for (ElementIterator eIt = this->problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0> ();
+    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // get common geometry information for the following computation
 
@@ -140,40 +179,31 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
         Scalar volume1 = eIt->geometry().volume();
 
         // cell 1 index
-        int globalIdx1 = this->problem().variables().index(*eIt);
+        int globalIdx1 = problem_.variables().index(*eIt);
+
+        CellData& cellData1 = problem_.variables().cellData(globalIdx1);
 
         // get pressure value
-        Scalar press1 = this->problem().variables().pressure()[globalIdx1];
+        Scalar press1 = cellData1.globalPressure();
 
         // get right hand side
         PrimaryVariables source(0.0);
-        this->problem().source(source, *eIt);
+        problem_.source(source, *eIt);
         Scalar q1 = source[wPhaseIdx] + source[nPhaseIdx];
 
         // get absolute permeability of cell 1
-        FieldMatrix K1(this->problem().spatialParameters().intrinsicPermeability(*eIt));
+        FieldMatrix K1(problem_.spatialParameters().intrinsicPermeability(*eIt));
 
         // compute total mobility of cell 1
-        Scalar lambda1 = this->problem().variables().mobilityWetting(globalIdx1)
-                    + this->problem().variables().mobilityNonwetting(globalIdx1);
-
-        // this 'for' loop can be deleted since velocity is
-        // initiated in variableclass.hh
-        for (int i = 0; i < 2 * dim; i++)
-        {
-            this->problem().variables().velocity()[globalIdx1][i] = 0;
-        }
-
-        //get the densities
-        Scalar densityW = this->problem().variables().densityWetting(globalIdx1);
-        Scalar densityNW = this->problem().variables().densityNonwetting(globalIdx1);
+        Scalar lambda1 = cellData1.mobility(wPhaseIdx)
+                    + cellData1.mobility(nPhaseIdx);
 
         // the following two variables are used to check local conservation
         Scalar facevol[2 * dim];
         GlobalPosition unitOuterNormal[2 * dim];
 
-        IntersectionIterator isItBegin = this->problem().gridView().ibegin(*eIt);
-        IntersectionIterator isItEnd = this->problem().gridView().iend(*eIt);
+        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = isItBegin; isIt != isItEnd; ++isIt)
         {
             // intersection iterator 'nextisIt' is used to get geometry information
@@ -308,10 +338,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             {
                 // access neighbor cell 2 of 'isIt'
                 ElementPointer outside = isIt->outside();
-                int globalIdx2 = this->problem().variables().index(*outside);
+                int globalIdx2 = problem_.variables().index(*outside);
+
+                CellData& cellData2 = problem_.variables().cellData(globalIdx2);
 
                 // get pressure value
-                Scalar press2 = this->problem().variables().pressure()[globalIdx2];
+                Scalar press2 = cellData2.globalPressure();
 
                 // neighbor cell 2 geometry type
                 //Dune::GeometryType gt2 = outside->geometry().type();
@@ -320,11 +352,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                 GlobalPosition globalPos2 = outside->geometry().center();
 
                 // get absolute permeability of neighbor cell 2
-                FieldMatrix K2(this->problem().spatialParameters().intrinsicPermeability(*outside));
+                FieldMatrix K2(problem_.spatialParameters().intrinsicPermeability(*outside));
 
                 // get total mobility of neighbor cell 2
-                Scalar lambda2 = this->problem().variables().mobilityWetting(globalIdx2)
-                            + this->problem().variables().mobilityNonwetting(globalIdx2);
+                Scalar lambda2 = cellData2.mobility(wPhaseIdx)
+                            + cellData2.mobility(nPhaseIdx);
 
                 // 'nextisIt' is an interior face
                 if (nextisIt->neighbor())
@@ -333,10 +365,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     // neighbor cell 3
                     // access neighbor cell 3
                     ElementPointer nextisItoutside = nextisIt->outside();
-                    int globalIdx3 = this->problem().variables().index(*nextisItoutside);
+                    int globalIdx3 = problem_.variables().index(*nextisItoutside);
+
+                    CellData& cellData3 = problem_.variables().cellData(globalIdx3);
 
                     // get pressure value
-                    Scalar press3 = this->problem().variables().pressure()[globalIdx3];
+                    Scalar press3 = cellData3.globalPressure();
 
                     // neighbor cell 3 geometry type
                     //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -345,23 +379,24 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     GlobalPosition globalPos3 = nextisItoutside->geometry().center();
 
                     // get absolute permeability of neighbor cell 3
-                    FieldMatrix K3(this->problem().spatialParameters().intrinsicPermeability(*nextisItoutside));
+                    FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
 
                     // get total mobility of neighbor cell 3
-                    Scalar lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
-                                + this->problem().variables().mobilityNonwetting(globalIdx3);
+                    Scalar lambda3 = cellData3.mobility(wPhaseIdx)
+                                + cellData3.mobility(nPhaseIdx);
 
                     // neighbor cell 4
                     GlobalPosition globalPos4(0);
                     FieldMatrix K4(0);
                     Scalar lambda4 = 0;
                     int globalIdx4 = 0;
+                    Scalar press4 = 0;
 
-                    IntersectionIterator innerisItEnd = this->problem().gridView().iend(*outside);
-                    IntersectionIterator innernextisItEnd = this->problem().gridView().iend(*nextisItoutside);
-                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*outside); innerisIt
+                    IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
+                    IntersectionIterator innernextisItEnd = problem_.gridView().iend(*nextisItoutside);
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside); innerisIt
                             != innerisItEnd; ++innerisIt)
-                        for (IntersectionIterator innernextisIt = this->problem().gridView().ibegin(
+                        for (IntersectionIterator innernextisIt = problem_.gridView().ibegin(
                                 *nextisItoutside); innernextisIt != innernextisItEnd; ++innernextisIt)
                         {
                             if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -373,7 +408,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 if (innerisItoutside == innernextisItoutside && innerisItoutside != isIt->inside())
                                 {
                                     // access neighbor cell 4
-                                    globalIdx4 = this->problem().variables().index(*innerisItoutside);
+                                    globalIdx4 = problem_.variables().index(*innerisItoutside);
+
+                                    CellData& cellData4 = problem_.variables().cellData(globalIdx4);
 
                                     // neighbor cell 4 geometry type
                                     //Dune::GeometryType gt4 = innerisItoutside->geometry().type();
@@ -382,24 +419,26 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     globalPos4 = innerisItoutside->geometry().center();
 
                                     // get absolute permeability of neighbor cell 4
-                                    K4 += this->problem().spatialParameters().intrinsicPermeability(*innerisItoutside);
+                                    K4 += problem_.spatialParameters().intrinsicPermeability(*innerisItoutside);
 
-                                    lambda4 = this->problem().variables().mobilityWetting(globalIdx4)
-                                                + this->problem().variables().mobilityNonwetting(globalIdx4);
+                                    lambda4 = cellData4.mobility(wPhaseIdx)
+                                                + cellData4.mobility(nPhaseIdx);
+
+                                    // get pressure value
+                                    press4 = cellData4.globalPressure();
                                 }
                             }
                         }
 
-                    // get pressure value
-                    Scalar press4 = this->problem().variables().pressure()[globalIdx4];
+
 
                     // computation of flux through the first half edge of 'isIt' and the flux
                     // through the second half edge of 'nextisIt'
 
                     // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-                    IntersectionIterator isIt24 = this->problem().gridView().ibegin(*outside);
+                    IntersectionIterator isIt24 = problem_.gridView().ibegin(*outside);
 
-                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*outside); innerisIt
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside); innerisIt
                             != innerisItEnd; ++innerisIt)
                     {
                         if (innerisIt->neighbor())
@@ -434,9 +473,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     integrationOuterNormaln4 *= face24vol / 2.0;
 
                     // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                    IntersectionIterator isIt34 = this->problem().gridView().ibegin(*nextisItoutside);
+                    IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
 
-                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*nextisItoutside); innerisIt
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*nextisItoutside); innerisIt
                             != innernextisItEnd; ++innerisIt)
                     {
                         if (innerisIt->neighbor())
@@ -604,12 +643,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     // evaluate velocity of facet 'isIt'
                     FieldVector vector1 = unitOuterNormaln1;
                     vector1 *= Tu[0] / face12vol;
-                    this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                    vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                    cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                     // evaluate velocity of facet 'nextisIt'
                     FieldVector vector3 = unitOuterNormaln3;
                     vector3 *= Tu[2] / face13vol;
-                    this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                    vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                    cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                 }
                 // 'nextisIt' is on the boundary
@@ -620,9 +661,9 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                     // get common geometry information for the following computation
                     // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-                    IntersectionIterator isIt24 = this->problem().gridView().ibegin(*outside);
-                    IntersectionIterator innerisItEnd = this->problem().gridView().iend(*outside);
-                    for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(*outside); innerisIt
+                    IntersectionIterator isIt24 = problem_.gridView().ibegin(*outside);
+                    IntersectionIterator innerisItEnd = problem_.gridView().iend(*outside);
+                    for (IntersectionIterator innerisIt = problem_.gridView().ibegin(*outside); innerisIt
                             != innerisItEnd; ++innerisIt)
                     {
                         if (innerisIt->boundary())
@@ -654,11 +695,11 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     integrationOuterNormaln4 *= face24vol / 2.0;
 
                     BoundaryTypes nextIsItBcType;
-                    this->problem().boundaryTypes(nextIsItBcType, *nextisIt);
+                    problem_.boundaryTypes(nextIsItBcType, *nextisIt);
 
                     // get boundary condition for boundary face (isIt24) center
                     BoundaryTypes isIt24BcType;
-                    this->problem().boundaryTypes(isIt24BcType, *isIt24);
+                    problem_.boundaryTypes(isIt24BcType, *isIt24);
 
                     PrimaryVariables boundValues(0.0);
 
@@ -666,15 +707,15 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     if (nextIsItBcType.isNeumann(pressEqIdx))
                     {
                         // get Neumann boundary value of 'nextisIt'
-                        this->problem().neumann(boundValues, *nextisIt);
-                        Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                        problem_.neumann(boundValues, *nextisIt);
+                        Scalar J3 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                         // 'isIt24': Neumann boundary
                         if (isIt24BcType.isNeumann(pressEqIdx))
                         {
                             // get neumann boundary value of 'isIt24'
-                            this->problem().neumann(boundValues, *isIt24);
-                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt24);
+                            Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -752,14 +793,15 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                         }
                         // 'isIt24': Dirichlet boundary
                         else if (isIt24BcType.isDirichlet(pressEqIdx))
                         {
                             // get Dirichlet boundary value on 'isIt24'
-                            this->problem().dirichlet(boundValues, *isIt24);
+                            problem_.dirichlet(boundValues, *isIt24);
                              Scalar g4 = boundValues[pressureIdx];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
@@ -771,7 +813,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (this->saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -785,23 +827,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(*eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -878,7 +915,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                         }
                     }
@@ -886,7 +924,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     else if (nextIsItBcType.isDirichlet(pressEqIdx))
                     {
                         // get Dirichlet boundary value of 'nextisIt'
-                        this->problem().dirichlet(boundValues, *nextisIt);
+                        problem_.dirichlet(boundValues, *nextisIt);
                         Scalar g3 = boundValues[pressureIdx];
 
                         // compute total mobility for Dirichlet boundary 'nextisIt'
@@ -898,7 +936,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                             //determine phase saturations from primary saturation variable
                             Scalar satW = 0;
-                            switch (this->saturationType)
+                            switch (saturationType_)
                             {
                             case Sw:
                             {
@@ -912,23 +950,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             }
                             }
 
-                            Scalar temperature = this->problem().temperature(*eIt);
-                            Scalar referencePressure =  this->problem().referencePressure(*eIt);
+                            Scalar temperature = problem_.temperature(*eIt);
+                            Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                             Scalar lambdaWBound = 0;
                             Scalar lambdaNWBound = 0;
 
-                            FluidState fluidState;
-                            fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                            Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                            Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                             lambdaWBound = MaterialLaw::krw(
-                                    this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                    / viscosityWBound;
+                                    problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                    / viscosity_[wPhaseIdx];
                             lambdaNWBound = MaterialLaw::krn(
-                                    this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                    / viscosityNWBound;
+                                    problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                    / viscosity_[nPhaseIdx];
                             alambda1 = lambdaWBound + lambdaNWBound;
                         }
                         else
@@ -940,8 +973,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         if (isIt24BcType.isNeumann(pressEqIdx))
                         {
                             // get Neumann boundary value of 'isIt24'
-                            this->problem().neumann(boundValues, *isIt24);
-                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt24);
+                            Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -1016,19 +1049,21 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                         // 'isIt24': Dirichlet boundary
                         else if (isIt24BcType.isDirichlet(pressEqIdx))
                         {
                             // get Dirichlet boundary value on 'isIt24'
-                            this->problem().dirichlet(boundValues, *isIt24);
+                            problem_.dirichlet(boundValues, *isIt24);
                                 Scalar g4 = boundValues[pressureIdx];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
@@ -1040,7 +1075,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (this->saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1054,23 +1089,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(*eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1139,12 +1169,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                     }
@@ -1155,7 +1187,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             {
                 // get boundary condition for boundary face center of 'isIt'
                 BoundaryTypes isItBcType;
-                this->problem().boundaryTypes(isItBcType, *isIt);
+                problem_.boundaryTypes(isItBcType, *isIt);
 
                 PrimaryVariables boundValues(0.0);
 
@@ -1163,24 +1195,25 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                 if (isItBcType.isNeumann(pressEqIdx))
                 {
                     // get Neumann boundary value
-                    this->problem().neumann(boundValues, *isIt);
-                    Scalar J1 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                    problem_.neumann(boundValues, *isIt);
+                    Scalar J1 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                     // evaluate velocity of facet 'isIt'
                     FieldVector vector1 = unitOuterNormaln1;
                     vector1 *= -J1;
-                    this->problem().variables().velocity()[globalIdx1][indexInInside] -= vector1;
+                    vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                    cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                     // 'nextisIt' is on boundary
                     if (nextisIt->boundary())
                     {
                         // get boundary condition for boundary face center of 'nextisIt'
                         BoundaryTypes nextIsItBcType;
-                        this->problem().boundaryTypes(nextIsItBcType, *nextisIt);
+                        problem_.boundaryTypes(nextIsItBcType, *nextisIt);
 
                         if (nextIsItBcType.isDirichlet(pressEqIdx))
                         {
-                            this->problem().dirichlet(boundValues, *nextisIt);
+                            problem_.dirichlet(boundValues, *nextisIt);
 
                             // compute total mobility for Dirichlet boundary 'nextisIt'
                             //determine lambda at the boundary -> if no saturation is known directly at the boundary use the cell saturation
@@ -1191,7 +1224,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (this->saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1205,23 +1238,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(*eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1261,7 +1289,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                     }
@@ -1271,10 +1300,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         // neighbor cell 3
                         // access neighbor cell 3
                         ElementPointer nextisItoutside = nextisIt->outside();
-                        int globalIdx3 = this->problem().variables().index(*nextisItoutside);
+                        int globalIdx3 = problem_.variables().index(*nextisItoutside);
+
+                        CellData& cellData3 = problem_.variables().cellData(globalIdx3);
 
                         // get pressure value
-                        Scalar press3 = this->problem().variables().pressure()[globalIdx3];
+                        Scalar press3 = cellData3.globalPressure();
 
                         // neighbor cell 3 geometry type
                         //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1283,17 +1314,17 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         GlobalPosition globalPos3 = nextisItoutside->geometry().center();
 
                         // get absolute permeability of neighbor cell 3
-                        FieldMatrix K3(this->problem().spatialParameters().intrinsicPermeability(*nextisItoutside));
+                        FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
 
                         // get total mobility of neighbor cell 3
-                        Scalar lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
-                                    + this->problem().variables().mobilityNonwetting(globalIdx3);
+                        Scalar lambda3 = cellData3.mobility(wPhaseIdx)
+                                    + cellData3.mobility(nPhaseIdx);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                        IntersectionIterator isIt34 = this->problem().gridView().ibegin(*nextisItoutside);
-                        IntersectionIterator innernextisItEnd = this->problem().gridView().iend(
+                        IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
+                        IntersectionIterator innernextisItEnd = problem_.gridView().iend(
                                 *nextisItoutside);
-                        for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(
+                        for (IntersectionIterator innerisIt = problem_.gridView().ibegin(
                                 *nextisItoutside); innerisIt != innernextisItEnd; ++innerisIt)
                         {
                             if (innerisIt->boundary())
@@ -1326,14 +1357,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         // get boundary condition for boundary face center of 'isIt34'
                         BoundaryTypes isIt34BcType;
-                        this->problem().boundaryTypes(isIt34BcType, *isIt34);
+                        problem_.boundaryTypes(isIt34BcType, *isIt34);
 
                         // 'isIt34': Neumann boundary
                         if (isIt34BcType.isNeumann(pressEqIdx))
                         {
                             // get Neumann boundary value
-                            this->problem().neumann(boundValues, *isIt34);
-                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt34);
+                            Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -1426,14 +1457,15 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                         // 'isIt34': Dirichlet boundary
                         else if (isIt34BcType.isDirichlet(pressEqIdx))
                         {
                             // get Dirichlet boundary value
-                            this->problem().dirichlet(boundValues, *isIt34);
+                            problem_.dirichlet(boundValues, *isIt34);
                             Scalar g2 = boundValues[pressureIdx];
 
                             // compute total mobility for Dirichlet boundary 'isIt24'
@@ -1445,7 +1477,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (this->saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1459,23 +1491,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(*eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
+                                Scalar temperature = problem_.temperature(*eIt);
+                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1565,7 +1592,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                     }
@@ -1574,7 +1602,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                 else if (isItBcType.isDirichlet(pressEqIdx))
                 {
                     // get Dirichlet boundary value
-                    this->problem().dirichlet(boundValues, *isIt);
+                    problem_.dirichlet(boundValues, *isIt);
                     Scalar g1 = boundValues[pressureIdx];
 
                     // compute total mobility for Dirichlet boundary 'isIt'
@@ -1586,7 +1614,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         //determine phase saturations from primary saturation variable
                         Scalar satW = 0;
-                        switch (this->saturationType)
+                        switch (saturationType_)
                         {
                         case Sw:
                         {
@@ -1600,23 +1628,18 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         }
                         }
 
-                        Scalar temperature = this->problem().temperature(*eIt);
-                        Scalar referencePressure =  this->problem().referencePressure(*eIt);
+                        Scalar temperature = problem_.temperature(*eIt);
+                        Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                         Scalar lambdaWBound = 0;
                         Scalar lambdaNWBound = 0;
 
-                        FluidState fluidState;
-                        fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                        Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                        Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                         lambdaWBound = MaterialLaw::krw(
-                                this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                / viscosityWBound;
+                                problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                / viscosity_[wPhaseIdx];
                         lambdaNWBound = MaterialLaw::krn(
-                                this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                / viscosityNWBound;
+                                problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                / viscosity_[nPhaseIdx];
                         alambda1 = lambdaWBound + lambdaNWBound;
                     }
                     else
@@ -1629,13 +1652,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     {
                         // get boundary condition for boundary face (nextisIt) center
                         BoundaryTypes nextIsItBcType;
-                        this->problem().boundaryTypes(nextIsItBcType, *nextisIt);
+                        problem_.boundaryTypes(nextIsItBcType, *nextisIt);
 
                         // 'nextisIt': Dirichlet boundary
                         if (nextIsItBcType.isDirichlet(pressEqIdx))
                         {
                             // get Dirichlet boundary value of 'nextisIt'
-                            this->problem().dirichlet(boundValues, *nextisIt);
+                            problem_.dirichlet(boundValues, *nextisIt);
                             Scalar g3 = boundValues[pressureIdx];
 
                             // compute total mobility for Dirichlet boundary 'nextisIt'
@@ -1647,7 +1670,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (this->saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1661,23 +1684,15 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(*eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
-
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1720,20 +1735,22 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                         // 'nextisIt': Neumann boundary
                         else if (nextIsItBcType.isNeumann(pressEqIdx))
                         {
                             // get Neumann boundary value of 'nextisIt'
-                            this->problem().neumann(boundValues, *nextisIt);
-                            Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *nextisIt);
+                            Scalar J3 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21;
                             FieldVector nu11(0);
@@ -1767,7 +1784,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                         }
                     }
@@ -1777,10 +1795,12 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         // neighbor cell 3
                         // access neighbor cell 3
                         ElementPointer nextisItoutside = nextisIt->outside();
-                        int globalIdx3 = this->problem().variables().index(*nextisItoutside);
+                        int globalIdx3 = problem_.variables().index(*nextisItoutside);
+
+                        CellData& cellData3 = problem_.variables().cellData(globalIdx3);
 
                         // get pressure value
-                        Scalar press3 = this->problem().variables().pressure()[globalIdx3];
+                        Scalar press3 = cellData3.globalPressure();
 
                         // neighbor cell 3 geometry type
                         //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1789,17 +1809,17 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         GlobalPosition globalPos3 = nextisItoutside->geometry().center();
 
                         // get absolute permeability of neighbor cell 3
-                        FieldMatrix K3(this->problem().spatialParameters().intrinsicPermeability(*nextisItoutside));
+                        FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
 
                         // get total mobility of neighbor cell 3
-                        Scalar lambda3 = this->problem().variables().mobilityWetting(globalIdx3)
-                                    + this->problem().variables().mobilityNonwetting(globalIdx3);
+                        Scalar lambda3 = cellData3.mobility(wPhaseIdx)
+                                    + cellData3.mobility(nPhaseIdx);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-                        IntersectionIterator isIt34 = this->problem().gridView().ibegin(*nextisItoutside);
-                        IntersectionIterator innernextisItEnd = this->problem().gridView().iend(
+                        IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
+                        IntersectionIterator innernextisItEnd = problem_.gridView().iend(
                                 *nextisItoutside);
-                        for (IntersectionIterator innerisIt = this->problem().gridView().ibegin(
+                        for (IntersectionIterator innerisIt = problem_.gridView().ibegin(
                                 *nextisItoutside); innerisIt != innernextisItEnd; ++innerisIt)
                         {
                             if (innerisIt->boundary())
@@ -1832,13 +1852,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                         // get boundary condition for boundary face (isIt34) center
                         BoundaryTypes isIt34BcType;
-                        this->problem().boundaryTypes(isIt34BcType, *isIt34);
+                        problem_.boundaryTypes(isIt34BcType, *isIt34);
 
                         // 'isIt34': Dirichlet boundary
                         if (isIt34BcType.isDirichlet(pressEqIdx))
                         {
                             // get Dirichlet boundary value of 'isIt34'
-                            this->problem().dirichlet(boundValues, *isIt34);
+                            problem_.dirichlet(boundValues, *isIt34);
                             Scalar g2 = boundValues[pressureIdx];
 
                             // compute total mobility for Dirichlet boundary 'isIt34'
@@ -1850,7 +1870,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (this->saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1864,23 +1884,15 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 }
                                 }
 
-                                Scalar temperature = this->problem().temperature(*eIt);
-                                Scalar referencePressure =  this->problem().referencePressure(*eIt);
-
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
-                                lambdaWBound = MaterialLaw::krw(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                 lambdaWBound = MaterialLaw::krw(
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        this->problem().spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1949,20 +1961,22 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                         // 'isIt34': Neumann boundary
                         else if (isIt34BcType.isNeumann(pressEqIdx))
                         {
                             // get Neumann boundary value of 'isIt34'
-                            this->problem().neumann(boundValues, *isIt34);
-                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            problem_.neumann(boundValues, *isIt34);
+                            Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -2037,12 +2051,14 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // evaluate velocity of facet 'isIt'
                             FieldVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
-                            this->problem().variables().velocity()[globalIdx1][indexInInside] += vector1;
+                            vector1 += cellData1.fluxData().velocityTotal(indexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
                             FieldVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
-                            this->problem().variables().velocity()[globalIdx1][nextindexInInside] += vector3;
+                            vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
+                            cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
 
                         }
                     }
@@ -2050,41 +2066,39 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
             }
         } // end all intersections
 
-        for (int i = 0; i < this->problem().variables().velocity()[globalIdx1].N(); i++)
+        for (int i = 0; i < 2*dim; i++)
         {
-            this->problem().variables().potentialWetting(globalIdx1, i) = this->problem().variables().velocity()[globalIdx1][i] * unitOuterNormal[i];
-            this->problem().variables().potentialNonwetting(globalIdx1, i) = this->problem().variables().velocity()[globalIdx1][i] * unitOuterNormal[i];
-//            std::cout<<"potentialW = "<<this->problem().variables().potentialWetting(globalIdx1, i)
-//                    <<" ,potentialNW = "<<this->problem().variables().potentialNonwetting(globalIdx1, i)<<"\n";
+            cellData1.fluxData().setPotential(wPhaseIdx, i, cellData1.fluxData().velocityTotal(i) * unitOuterNormal[i]);
+            cellData1.fluxData().setPotential(nPhaseIdx, i, cellData1.fluxData().velocityTotal(i) * unitOuterNormal[i]);
         }
 
         // check if local mass conservative
         if (dim == 2 && GET_PROP_VALUE(TypeTag, VelocityFormulation) == vt)
         {
-            Scalar diff = fabs(this->problem().variables().velocity()[globalIdx1][0] * unitOuterNormal[0] * facevol[0]
-                    + this->problem().variables().velocity()[globalIdx1][1] * unitOuterNormal[1] * facevol[1]
-                    + this->problem().variables().velocity()[globalIdx1][2] * unitOuterNormal[2] * facevol[2]
-                    + this->problem().variables().velocity()[globalIdx1][3] * unitOuterNormal[3] * facevol[3] - q1
-                    * volume1) / (fabs(this->problem().variables().velocity()[globalIdx1][0] * unitOuterNormal[0]
-                    * facevol[0]) + fabs(this->problem().variables().velocity()[globalIdx1][1] * unitOuterNormal[1]
-                    * facevol[1]) + fabs(this->problem().variables().velocity()[globalIdx1][2] * unitOuterNormal[2]
-                    * facevol[2]) + fabs(this->problem().variables().velocity()[globalIdx1][3] * unitOuterNormal[3]
+            Scalar diff = fabs(cellData1.fluxData().velocityTotal(0) * unitOuterNormal[0] * facevol[0]
+                    + cellData1.fluxData().velocityTotal(1) * unitOuterNormal[1] * facevol[1]
+                    + cellData1.fluxData().velocityTotal(2) * unitOuterNormal[2] * facevol[2]
+                    + cellData1.fluxData().velocityTotal(3) * unitOuterNormal[3] * facevol[3] - q1
+                    * volume1) / (fabs((cellData1.fluxData().velocityTotal(0) * unitOuterNormal[0])
+                    * facevol[0]) + fabs((cellData1.fluxData().velocityTotal(1) * unitOuterNormal[1])
+                    * facevol[1]) + fabs((cellData1.fluxData().velocityTotal(2) * unitOuterNormal[2])
+                    * facevol[2]) + fabs((cellData1.fluxData().velocityTotal(3) * unitOuterNormal[3])
                     * facevol[3]) + fabs(q1 * volume1));
 
             // without source/sink
             if (diff > 1e-8)
             {
                 std::cout << "NOT conservative!!! diff = " << diff << ", globalIdxI = " << globalIdx1 << std::endl;
-                std::cout << this->problem().variables().velocity()[globalIdx1][0] * unitOuterNormal[0] * facevol[0]
-                        << ", " << this->problem().variables().velocity()[globalIdx1][1] * unitOuterNormal[1]
-                        * facevol[1] << ", " << this->problem().variables().velocity()[globalIdx1][2]
+                std::cout << cellData1.fluxData().velocityTotal(0) * unitOuterNormal[0] * facevol[0]
+                        << ", " << cellData1.fluxData().velocityTotal(1) * unitOuterNormal[1]
+                        * facevol[1] << ", " << cellData1.fluxData().velocityTotal(2)
                         * unitOuterNormal[2] * facevol[2] << ", "
-                        << this->problem().variables().velocity()[globalIdx1][3] * unitOuterNormal[3] * facevol[3]
+                        << cellData1.fluxData().velocityTotal(3) * unitOuterNormal[3] * facevol[3]
                         << std::endl;
             }
         }
     } // end grid traversal
-//    printvector(std::cout, this->problem().variables().velocity(), "velocity", "row", 4, 1, 3);
+//    printvector(std::cout, problem_.variables().velocity(), "velocity", "row", 4, 1, 3);
     return;
 } // end method calcTotalVelocity
 

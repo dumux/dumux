@@ -23,13 +23,8 @@
 #ifndef DUMUX_FVMPFAOPRESSURE2P_HH
 #define DUMUX_FVMPFAOPRESSURE2P_HH
 
-// dune environent:
-#include <dune/istl/bvector.hh>
-#include <dune/istl/operators.hh>
-#include <dune/istl/solvers.hh>
-#include <dune/istl/preconditioners.hh>
-
 // dumux environment
+#include <dumux/decoupled/common/fv/fvpressure.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 #include <dumux/decoupled/2p/diffusion/fvmpfa/mpfaproperties.hh>
 
@@ -62,12 +57,13 @@ namespace Dumux
  * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
-class FVMPFAOPressure2P
+class FVMPFAOPressure2P: public FVPressure<TypeTag>
 {
+    typedef FVPressure<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
@@ -80,6 +76,9 @@ class FVMPFAOPressure2P
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
@@ -91,6 +90,7 @@ class FVMPFAOPressure2P
     {
         Sw = Indices::saturationW,
         Sn = Indices::saturationNW,
+        pGlobal = Indices::pressureGlobal
     };
     enum
     {
@@ -99,16 +99,15 @@ class FVMPFAOPressure2P
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         pressEqIdx = Indices::pressEqIdx,
-        satEqIdx = Indices::satEqIdx
+        satEqIdx = Indices::satEqIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
@@ -121,9 +120,6 @@ class FVMPFAOPressure2P
 
     //function which assembles the system of equations to be solved
     void assemble();
-
-    //solves the system of equations to get the spatial distribution of the pressure
-    void solve();
 
 protected:
     Problem& problem()
@@ -144,27 +140,42 @@ public:
 
     void initialize(bool solveTwice = true)
     {
+        initializeMatrix();
         updateMaterialLaws();
 
         assemble();
-        solve();
+        this->solve();
+
+        storePressureSolution();
 
         return;
     }
 
-    // serialization methods
-    //! \copydoc Dumux::FVPressure1P::serialize(Restarter &res)
-    template<class Restarter>
-    void serialize(Restarter &res)
+    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    void update()
     {
-       return;
+        assemble();
+        this->solve();
+
+        storePressureSolution();
+
+        return;
     }
 
-    //! \copydoc Dumux::FVPressure1P::deserialize(Restarter &res)
-    template<class Restarter>
-    void deserialize(Restarter &res)
+    void storePressureSolution()
     {
-        return;
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+            storePressureSolution(i, cellData);
+            cellData.fluxData().resetVelocity();
+        }
+    }
+
+    void storePressureSolution(int globalIdx, CellData& cellData)
+    {
+            cellData.setGlobalPressure(this->pressure()[globalIdx]);
     }
 
     //! \brief Write data files
@@ -172,40 +183,21 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typename Variables::ScalarSolutionType *pressure = writer.allocateManagedBuffer (problem_.gridView().size(0));
+        ScalarSolutionType *pressure = writer.allocateManagedBuffer (problem_.gridView().size(0));
 
-        *pressure = problem_.variables().pressure();
+        *pressure = this->pressure();
 
         writer.attachCellData(*pressure, "global pressure");
 
         // output  phase-dependent stuff
-        typename Variables::ScalarSolutionType *pC = writer.allocateManagedBuffer (problem_.gridView().size(0));
-        *pC = problem_.variables().capillaryPressure();
+        ScalarSolutionType *pC = writer.allocateManagedBuffer (problem_.gridView().size(0));
+        int size = problem_.gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = problem_.variables().cellData(i);
+            (*pC)[i] = cellData.capillaryPressure();
+        }
         writer.attachCellData(*pC, "capillary pressure");
-
-        typename Variables::ScalarSolutionType *viscosityWetting = writer.allocateManagedBuffer (problem_.gridView().size(0));
-        *viscosityWetting = problem_.variables().viscosityWetting();
-        writer.attachCellData(*viscosityWetting, "wetting viscosity");
-
-        typename Variables::ScalarSolutionType *viscosityNonwetting = writer.allocateManagedBuffer (problem_.gridView().size(0));
-        *viscosityNonwetting = problem_.variables().viscosityNonwetting();
-        writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
-
-        return;
-    }
-
-    //! \copydoc Dumux::FVPressure1P::pressure()
-    void pressure(bool solveTwice = true)
-    {
-//        Dune::Timer timer;
-
-//        timer.reset();
-        assemble();
-//        std::cout << "assembling MPFA O-matrix on level" << problem_.gridView().grid().maxLevel() << " took " << timer.elapsed() << " seconds" << std::endl;
-
-//        timer.reset();
-        solve();
-//        std::cout << "solving MPFA O-matrix on level" << problem_.gridView().grid().maxLevel() << " took " << timer.elapsed() << " seconds" << std::endl;
 
         return;
     }
@@ -215,18 +207,34 @@ public:
      * \param problem a problem class object
      */
     FVMPFAOPressure2P(Problem& problem)
-    : problem_(problem), A_(problem.variables().gridSize(), problem.variables().gridSize(), (4*dim+(dim-1))*problem.variables().gridSize(), Matrix::random),
-    f_(problem.variables().gridSize())
+    : ParentType(problem), problem_(problem)
     {
-        initializeMatrix();
+        if (pressureType_ != pGlobal)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
+        }
+
+        const Element& element = *(problem_.gridView().template begin<0> ());
+        FluidState fluidState;
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
+        fluidState.setSaturation(wPhaseIdx, 1.);
+        fluidState.setSaturation(nPhaseIdx, 0.);
+        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
     }
 
 private:
     Problem& problem_;
-    Matrix A_;
-    Vector f_;
+    Scalar density_[numPhases];
+    Scalar viscosity_[numPhases];
+
 protected:
-    static const int saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
 template<class TypeTag>
@@ -316,12 +324,12 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
         } // end of 'for' IntersectionIterator
 
         // set number of indices in row globalIdxI to rowSize
-        A_.setrowsize(globalIdxI, rowSize);
+        this->A_.setrowsize(globalIdxI, rowSize);
 
     } // end of 'for' ElementIterator
 
     // indicate that size of all rows is defined
-    A_.endrowsizes();
+    this->A_.endrowsizes();
 
     // determine position of matrix entries
     for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
@@ -330,7 +338,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
         int globalIdxI = problem_.variables().index(*eIt);
 
         // add diagonal index
-        A_.addindex(globalIdxI, globalIdxI);
+        this->A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
         IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
@@ -408,7 +416,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
 
                 // add off diagonal index
                 // add index (row,col) to the matrix
-                A_.addindex(globalIdxI, globalIdxJ);
+                this->A_.addindex(globalIdxI, globalIdxJ);
             }
 
             if (isIt->neighbor() && nextisIt->neighbor())
@@ -434,7 +442,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
                         {
                             int globalIdxJ = problem_.variables().index(*innerisItoutside);
 
-                            A_.addindex(globalIdxI, globalIdxJ);
+                            this->A_.addindex(globalIdxI, globalIdxJ);
                         }
                     }
                 }
@@ -443,7 +451,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
     } // end of 'for' ElementIterator
 
     // indicate that all indices are defined, check consistency
-    A_.endindices();
+    this->A_.endindices();
 
     return;
 }
@@ -452,9 +460,6 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::assemble()
 {
-    // initialization: set global matrix A_ to zero
-    A_ = 0;
-
     // introduce matrix R for vector rotation and R is initialized as zero matrix
     FieldMatrix R(0);
 
@@ -484,28 +489,26 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
         // cell 1 index
         int globalIdx1 = problem_.variables().index(*eIt);
 
+        CellData& cellData1 = problem_.variables().cellData(globalIdx1);
+
         // evaluate right hand side
         PrimaryVariables source(0.0);
         problem_.source(source, *eIt);
 
-        //get the densities
-        Scalar densityW = problem_.variables().densityWetting(globalIdx1);
-        Scalar densityNW = problem_.variables().densityNonwetting(globalIdx1);
-
-        f_[globalIdx1] = volume1*(source[wPhaseIdx]/densityW + source[nPhaseIdx]/densityNW);
+        this->f_[globalIdx1] = volume1*(source[wPhaseIdx]/density_[wPhaseIdx] + source[nPhaseIdx]/density_[nPhaseIdx]);
 
         // get absolute permeability of cell 1
         FieldMatrix K1(problem_.spatialParameters().intrinsicPermeability(*eIt));
 
         //compute total mobility of cell 1
         Scalar lambda1 = 0;
-        lambda1 = problem_.variables().mobilityWetting(globalIdx1) + problem_.variables().mobilityNonwetting(globalIdx1);
+        lambda1 = cellData1.mobility(wPhaseIdx) + cellData1.mobility(nPhaseIdx);
 
         // if K1 is zero, no flux through cell1
         // for 2-D
         if (K1[0][0] == 0 && K1[0][1] == 0 && K1[1][0] == 0 && K1[1][1] == 0)
         {
-            A_[globalIdx1][globalIdx1] += 1.0;
+            this->A_[globalIdx1][globalIdx1] += 1.0;
             continue;
         }
 
@@ -635,6 +638,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 ElementPointer outside = isIt->outside();
                 int globalIdx2 = problem_.variables().index(*outside);
 
+                CellData& cellData2 = problem_.variables().cellData(globalIdx2);
+
                 // neighbor cell 2 geometry type
                 //Dune::GeometryType gt2 = outside->geometry().type();
 
@@ -647,7 +652,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                 // get total mobility of neighbor cell 2
                 Scalar lambda2 = 0;
-                lambda2 = problem_.variables().mobilityWetting(globalIdx2) + problem_.variables().mobilityNonwetting(globalIdx2);
+                lambda2 = cellData2.mobility(wPhaseIdx) + cellData2.mobility(nPhaseIdx);
 
                 // 'nextisIt' is an interior face
                 if (nextisIt->neighbor())
@@ -657,6 +662,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     // access neighbor cell 3
                     ElementPointer nextisItoutside = nextisIt->outside();
                     int globalIdx3 = problem_.variables().index(*nextisItoutside);
+
+                    CellData& cellData3 = problem_.variables().cellData(globalIdx3);
 
                     // neighbor cell 3 geometry type
                     //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -670,7 +677,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                     // get total mobility of neighbor cell 3
                     Scalar lambda3 = 0;
-                    lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
+                    lambda3 = cellData3.mobility(wPhaseIdx) + cellData3.mobility(nPhaseIdx);
 
                     // neighbor cell 4
                     GlobalPosition globalPos4(0);
@@ -696,6 +703,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 // access neighbor cell 4
                                 globalIdx4 = problem_.variables().index(*innerisItoutside);
 
+                                CellData& cellData4 = problem_.variables().cellData(globalIdx4);
+
                                 // get global coordinate of neighbor cell 4 center
                                 globalPos4 = innerisItoutside->geometry().center();
 
@@ -703,7 +712,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 K4 += problem_.spatialParameters().intrinsicPermeability(*innerisItoutside);
 
                                 // get total mobility of neighbor cell 4
-                                lambda4 = problem_.variables().mobilityWetting(globalIdx4) + problem_.variables().mobilityNonwetting(globalIdx4);
+                                lambda4 = cellData4.mobility(wPhaseIdx) + cellData4.mobility(nPhaseIdx);
                             }
                         }
                     }
@@ -912,11 +921,11 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     F += B.leftmultiply(C.rightmultiply(A));
                     Dune::FieldMatrix<Scalar,2*dim,2*dim> T(F);
 
-                    // assemble the global matrix A_ and right hand side f
-                    A_[globalIdx1][globalIdx1] += T[0][0] + T[2][0];
-                    A_[globalIdx1][globalIdx2] += T[0][1] + T[2][1];
-                    A_[globalIdx1][globalIdx3] += T[0][2] + T[2][2];
-                    A_[globalIdx1][globalIdx4] += T[0][3] + T[2][3];
+                    // assemble the global matrix this->A_ and right hand side f
+                    this->A_[globalIdx1][globalIdx1] += T[0][0] + T[2][0];
+                    this->A_[globalIdx1][globalIdx2] += T[0][1] + T[2][1];
+                    this->A_[globalIdx1][globalIdx3] += T[0][2] + T[2][2];
+                    this->A_[globalIdx1][globalIdx4] += T[0][3] + T[2][3];
 
                 }
                 // 'nextisIt' is on the boundary
@@ -978,14 +987,14 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     {
                         // get Neumann boundary value of 'nextisIt'
                         problem_.neumann(boundValues, *nextisIt);
-                        Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                        Scalar J3 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                         // 'isIt24': Neumann boundary
                         if (isIt24BcType.isNeumann(pressEqIdx))
                         {
                             // get neumann boundary value of 'isIt24'
                             problem_.neumann(boundValues, *isIt24);
-                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -1056,10 +1065,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Dune::FieldMatrix<Scalar,2*dim-1,dim> T(B);
                             A.umv(r1, r);
 
-                            // assemble the global matrix A_ and right hand side f
-                            A_[globalIdx1][globalIdx1] += g111 + g121 - g111 * T[0][0] - g121 * T[1][0];
-                            A_[globalIdx1][globalIdx2] += -g111 * T[0][1] - g121 * T[1][1];
-                            f_[globalIdx1] += g111 * r[0] + g121 * r[1];
+                            // assemble the global matrix this->A_ and right hand side f
+                            this->A_[globalIdx1][globalIdx1] += g111 + g121 - g111 * T[0][0] - g121 * T[1][0];
+                            this->A_[globalIdx1][globalIdx2] += -g111 * T[0][1] - g121 * T[1][1];
+                            this->f_[globalIdx1] += g111 * r[0] + g121 * r[1];
 
                         }
                         // 'isIt24': Dirichlet boundary
@@ -1079,7 +1088,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1099,17 +1108,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1179,10 +1183,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             FieldMatrix T(B);
                             A.umv(r1, r);
 
-                            // assemble the global matrix A_ and right hand side f
-                            A_[globalIdx1][globalIdx1] += g111 + g121 - g111 * T[0][0] - g121 * T[1][0];
-                            A_[globalIdx1][globalIdx2] += -g111 * T[0][1] - g121 * T[1][1];
-                            f_[globalIdx1] += g111 * r[0] + g121 * r[1];
+                            // assemble the global matrix this->A_ and right hand side f
+                            this->A_[globalIdx1][globalIdx1] += g111 + g121 - g111 * T[0][0] - g121 * T[1][0];
+                            this->A_[globalIdx1][globalIdx2] += -g111 * T[0][1] - g121 * T[1][1];
+                            this->f_[globalIdx1] += g111 * r[0] + g121 * r[1];
 
                         }
                     }
@@ -1203,7 +1207,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                             //determine phase saturations from primary saturation variable
                             Scalar satW = 0;
-                            switch (saturationType)
+                            switch (saturationType_)
                             {
                             case Sw:
                             {
@@ -1224,17 +1228,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar lambdaWBound = 0;
                             Scalar lambdaNWBound = 0;
 
-                            FluidState fluidState;
-                            fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                            Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                            Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                             lambdaWBound = MaterialLaw::krw(
                                     problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                    / viscosityWBound;
+                                    / viscosity_[wPhaseIdx];
                             lambdaNWBound = MaterialLaw::krn(
                                     problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                    / viscosityNWBound;
+                                    / viscosity_[nPhaseIdx];
                             alambda1 = lambdaWBound + lambdaNWBound;
                         }
                         else
@@ -1247,7 +1246,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         {
                             // get Neumann boundary value of 'isIt24'
                             problem_.neumann(boundValues, *isIt24);
-                            Scalar J4 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
                             FieldVector nu11(0);
@@ -1313,10 +1312,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             FieldMatrix T(B);
                             A.umv(r1, r);
 
-                            // assemble the global matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += (g111 + g121 - g111 * T[0][0]) + (g211 + g221 - g211 * T[0][0]);
-                            A_[globalIdx1][globalIdx2] += -g111 * T[0][1] - g211 * T[0][1];
-                            f_[globalIdx1] += (g121 + g221) * g3 + (g111 + g211) * r[0];
+                            // assemble the global matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += (g111 + g121 - g111 * T[0][0]) + (g211 + g221 - g211 * T[0][0]);
+                            this->A_[globalIdx1][globalIdx2] += -g111 * T[0][1] - g211 * T[0][1];
+                            this->f_[globalIdx1] += (g121 + g221) * g3 + (g111 + g211) * r[0];
 
                         }
                         // 'isIt24': Dirichlet boundary
@@ -1336,7 +1335,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1356,17 +1355,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1427,10 +1421,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // evaluate vector r
                             r[0] = -(g4 * g122 * g111 + g3 * g112 * g121)/coe;
                             r[1] = -g221 * g3 + (g3 * g211 * g121 - g4 * g211 * g122)/coe;
-                            // assemble the global matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += T[0][0] + T[1][0];
-                            A_[globalIdx1][globalIdx2] += T[0][1] + T[1][1];
-                            f_[globalIdx1] -= r[0] + r[1];
+                            // assemble the global matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += T[0][0] + T[1][0];
+                            this->A_[globalIdx1][globalIdx2] += T[0][1] + T[1][1];
+                            this->f_[globalIdx1] -= r[0] + r[1];
 
                         }
                     }
@@ -1450,10 +1444,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 {
                     // get Neumann boundary value
                     problem_.neumann(boundValues, *isIt);
-                    Scalar J1 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                    Scalar J1 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                     // evaluate right hand side
-                    f_[globalIdx1] -= face12vol*J1;
+                    this->f_[globalIdx1] -= face12vol*J1;
 
                     // 'nextisIt' is on boundary
                     if (nextisIt->boundary())
@@ -1475,7 +1469,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1495,17 +1489,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
-                                lambdaWBound = MaterialLaw::krw(
+                                 lambdaWBound = MaterialLaw::krw(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1538,9 +1527,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g211 = alambda1 * (integrationOuterNormaln3 * K1nu11)/dF1;
                             Scalar g221 = alambda1 * (integrationOuterNormaln3 * K1nu21)/dF1;
 
-                            // assemble the global matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += g221 - g211 * g121/g111;
-                            f_[globalIdx1] -= (g211 * g121/g111 - g221) * g3 - (g211 * (-J1) * face12vol)/(2.0 * g111);
+                            // assemble the global matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += g221 - g211 * g121/g111;
+                            this->f_[globalIdx1] -= (g211 * g121/g111 - g221) * g3 - (g211 * (-J1) * face12vol)/(2.0 * g111);
 
                         }
                     }
@@ -1552,6 +1541,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         // access neighbor cell 3
                         ElementPointer nextisItoutside = nextisIt->outside();
                         int globalIdx3 = problem_.variables().index(*nextisItoutside);
+
+                        CellData& cellData3 = problem_.variables().cellData(globalIdx3);
 
                         // neighbor cell 3 geometry type
                         //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1565,7 +1556,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                         // get total mobility of neighbor cell 3
                         Scalar lambda3 = 0;
-                        lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
+                        lambda3 = cellData3.mobility(wPhaseIdx) + cellData3.mobility(nPhaseIdx);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
                         IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
@@ -1613,7 +1604,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         {
                             // get Neumann boundary value
                             problem_.neumann(boundValues, *isIt34);
-                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -1700,10 +1691,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Dune::FieldVector<Scalar,2*dim-1> r(0);
                             CAinv.umv(r1, r);
 
-                            // assemble the global matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += T[2][0];
-                            A_[globalIdx1][globalIdx3] += T[2][1];
-                            f_[globalIdx1] -= r[2];
+                            // assemble the global matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += T[2][0];
+                            this->A_[globalIdx1][globalIdx3] += T[2][1];
+                            this->f_[globalIdx1] -= r[2];
 
                         }
                         // 'isIt34': Dirichlet boundary
@@ -1723,7 +1714,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1743,17 +1734,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1837,10 +1823,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             CAinv.umv(r2, r);
                             r += r1;
 
-                            // assemble the global matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += T[1][0];
-                            A_[globalIdx1][globalIdx3] += T[1][1];
-                            f_[globalIdx1] -= r[1];
+                            // assemble the global matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += T[1][0];
+                            this->A_[globalIdx1][globalIdx3] += T[1][1];
+                            this->f_[globalIdx1] -= r[1];
 
                         }
                     }
@@ -1862,7 +1848,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                         //determine phase saturations from primary saturation variable
                         Scalar satW = 0;
-                        switch (saturationType)
+                        switch (saturationType_)
                         {
                         case Sw:
                         {
@@ -1882,17 +1868,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         Scalar lambdaWBound = 0;
                         Scalar lambdaNWBound = 0;
 
-                        FluidState fluidState;
-                        fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                        Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                        Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                         lambdaWBound = MaterialLaw::krw(
                                 problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                / viscosityWBound;
+                                / viscosity_[wPhaseIdx];
                         lambdaNWBound = MaterialLaw::krn(
                                 problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                / viscosityNWBound;
+                                / viscosity_[nPhaseIdx];
                         alambda1 = lambdaWBound + lambdaNWBound;
                     }
                     else
@@ -1923,7 +1904,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -1943,17 +1924,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -1990,9 +1966,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar r1 = g111 * g1 + g121 * g3;
                             Scalar r3 = g211 * g1 + g221 * g3;
 
-                            // assemble matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += T1 + T3;
-                            f_[globalIdx1] += r1 + r3;
+                            // assemble matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += T1 + T3;
+                            this->f_[globalIdx1] += r1 + r3;
                         }
                         // 'nextisIt': Neumann boundary
 
@@ -2000,7 +1976,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         {
                             // get Neumann boundary value of 'nextisIt'
                             problem_.neumann(boundValues, *nextisIt);
-                            Scalar J3 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            Scalar J3 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21;
                             FieldVector nu11(0);
@@ -2028,9 +2004,9 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar T = g111 - g211 * g121/g221;
                             Scalar r = -T * g1 - g121 * (-J3) * nextisIt->geometry().volume()/ (2.0 * g221);
 
-                            // assemble matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += T;
-                            f_[globalIdx1] -= r;
+                            // assemble matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += T;
+                            this->f_[globalIdx1] -= r;
                         }
                     }
                     // 'nextisIt' is inside
@@ -2041,6 +2017,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         // access neighbor cell 3
                         ElementPointer nextisItoutside = nextisIt->outside();
                         int globalIdx3 = problem_.variables().index(*nextisItoutside);
+
+                        CellData& cellData3 = problem_.variables().cellData(globalIdx3);
 
                         // neighbor cell 3 geometry type
                         //Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -2054,7 +2032,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                         // get total mobility of neighbor cell 3
                         Scalar lambda3 = 0;
-                        lambda3 = problem_.variables().mobilityWetting(globalIdx3) + problem_.variables().mobilityNonwetting(globalIdx3);
+                        lambda3 = cellData3.mobility(wPhaseIdx) + cellData3.mobility(nPhaseIdx);
 
                         // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
                         IntersectionIterator isIt34 = problem_.gridView().ibegin(*nextisItoutside);
@@ -2113,7 +2091,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                                 //determine phase saturations from primary saturation variable
                                 Scalar satW = 0;
-                                switch (saturationType)
+                                switch (saturationType_)
                                 {
                                 case Sw:
                                 {
@@ -2133,17 +2111,12 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
-                                FluidState fluidState;
-                                fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-                                Scalar viscosityWBound = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-                                Scalar viscosityNWBound = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
                                 lambdaWBound = MaterialLaw::krw(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityWBound;
+                                        / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
                                         problem_.spatialParameters().materialLawParams(*eIt), satW)
-                                        / viscosityNWBound;
+                                        / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
                             else
@@ -2204,10 +2177,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // evaluate vector r
                             r[0] = -g111 * g1 + (g1 * g121 * g211 - g2 * g213 * g121)/coe;
                             r[1] = -(g1 * g211 * g223 + g2 * g221 * g213)/coe;
-                            // assemble the global matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += T[0][0] + T[1][0];
-                            A_[globalIdx1][globalIdx3] += T[0][1] + T[1][1];
-                            f_[globalIdx1] -= r[0] + r[1];
+                            // assemble the global matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += T[0][0] + T[1][0];
+                            this->A_[globalIdx1][globalIdx3] += T[0][1] + T[1][1];
+                            this->f_[globalIdx1] -= r[0] + r[1];
 
                         }
                         // 'isIt34': Neumann boundary
@@ -2216,7 +2189,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         {
                             // get Neumann boundary value of 'isIt34'
                             problem_.neumann(boundValues, *isIt34);
-                            Scalar J2 = (boundValues[wPhaseIdx]/densityW+boundValues[nPhaseIdx]/densityNW);
+                            Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
                             FieldVector nu11(0);
@@ -2282,10 +2255,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             FieldMatrix T(B);
                             A.umv(r1, r);
 
-                            // assemble the global matrix A_ and right hand side f_
-                            A_[globalIdx1][globalIdx1] += (g111 + g121 - g121 * T[1][0]) + (g211 + g221 - g221 * T[1][0]);
-                            A_[globalIdx1][globalIdx3] += -g121 * T[1][1] - g221 * T[1][1];
-                            f_[globalIdx1] += (g111 + g211) * g1 + (g121 + g221) * r[1];
+                            // assemble the global matrix this->A_ and right hand side this->f_
+                            this->A_[globalIdx1][globalIdx1] += (g111 + g121 - g121 * T[1][0]) + (g211 + g221 - g221 * T[1][0]);
+                            this->A_[globalIdx1][globalIdx3] += -g121 * T[1][1] - g221 * T[1][1];
+                            this->f_[globalIdx1] += (g111 + g211) * g1 + (g121 + g221) * r[1];
 
                         }
                     }
@@ -2305,7 +2278,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 //        // cell index
 //        int globalIdxI = problem_.variables().index(*eIt);
 //
-//        if (A_[globalIdxI][globalIdxI] != 0)
+//        if (this->A_[globalIdxI][globalIdxI] != 0)
 //        ++num_nonzero;
 //
 //        // run through all intersections with neighbors
@@ -2381,7 +2354,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 //                ElementPointer outside = isIt->outside();
 //                int globalIdxJ = problem_.variables().index(*outside);
 //
-//                if (A_[globalIdxI][globalIdxJ] != 0)
+//                if (this->A_[globalIdxI][globalIdxJ] != 0)
 //                ++num_nonzero;
 //            }
 //
@@ -2408,7 +2381,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 //                        {
 //                            int globalIdxJ = problem_.variables().index(*innerisItoutside);
 //
-//                            if (A_[globalIdxI][globalIdxJ] != 0)
+//                            if (this->A_[globalIdxI][globalIdxJ] != 0)
 //                            ++num_nonzero;
 //                        }
 //                    }
@@ -2422,98 +2395,43 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
     return;
 }
 
-template<class TypeTag>
-void FVMPFAOPressure2P<TypeTag>::solve()
-{
-    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
-
-    int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-
-    if (verboseLevelSolver)
-        std::cout << "FVMPFAOPressure2P: solve for pressure" << std::endl;
-
-    Solver solver(problem_);
-    solver.solve(A_, problem_.variables().pressure(), f_);
-
-    //                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-    //                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
-//                    printvector(std::cout, (problem_.variables().pressure()), "pressure", "row", 200, 1, 3);
-
-    return;
-}
-
 //constitutive functions are updated once if new saturations are calculated and stored in the variables object
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
 {
-    FluidState fluidState;
-
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdx = problem_.variables().index(*eIt);
 
+        CellData& cellData = problem_.variables().cellData(globalIdx);
+
         Scalar temperature = problem_.temperature(*eIt);
-        Scalar referencePressure =  problem_.referencePressure(*eIt);
 
         //determine phase saturations from primary saturation variable
-        Scalar satW = 0;
-        //Scalar satNW = 0;
-        switch (saturationType)
-        {
-        case Sw:
-        {
-            satW = problem_.variables().saturation()[globalIdx];
-            //satNW = 1 - problem_.variables().saturation()[globalIdx];
-            break;
-        }
-        case Sn:
-        {
-            satW = 1 - problem_.variables().saturation()[globalIdx];
-            //satNW = problem_.variables().saturation()[globalIdx];
-            break;
-        }
-        }
 
+        Scalar satW = cellData.saturation(wPhaseIdx);
+        Scalar satNW = cellData.saturation(nPhaseIdx);
 
-        problem_.variables().capillaryPressure(globalIdx) = MaterialLaw::pC(
-                problem_.spatialParameters().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
 
-        Scalar densityW = 0;
-        Scalar densityNW = 0;
-        Scalar viscosityW = 0;
-        Scalar viscosityNW = 0;
+            cellData.setSaturation(wPhaseIdx, satW);
+            cellData.setSaturation(nPhaseIdx, satNW);
+            cellData.setCapillaryPressure(pc);
 
-        fluidState.update(satW, referencePressure, referencePressure, temperature);
-
-        densityW = FluidSystem::phaseDensity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-        densityNW = FluidSystem::phaseDensity(nPhaseIdx, temperature, referencePressure, fluidState) ;
-
-        viscosityW = FluidSystem::phaseViscosity(wPhaseIdx, temperature, referencePressure, fluidState) ;
-        viscosityNW = FluidSystem::phaseViscosity(nPhaseIdx, temperature, referencePressure, fluidState) ;
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW)
-                / viscosityW;
-        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW)
-                / viscosityNW;
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
+        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
-        problem_.variables().mobilityWetting(globalIdx) = mobilityW;
-        problem_.variables().mobilityNonwetting(globalIdx) = mobilityNW;
-
-        // initialize densities
-        problem_.variables().densityWetting(globalIdx) = densityW;
-        problem_.variables().densityNonwetting(globalIdx) = densityNW;
-
-        // initialize viscosities
-        problem_.variables().viscosityWetting(globalIdx) = viscosityW;
-        problem_.variables().viscosityNonwetting(globalIdx) = viscosityNW;
+        cellData.setMobility(wPhaseIdx, mobilityW);
+        cellData.setMobility(nPhaseIdx, mobilityNW);
 
         //initialize fractional flow functions
-        problem_.variables().fracFlowFuncWetting(globalIdx) = mobilityW / (mobilityW + mobilityNW);
-        problem_.variables().fracFlowFuncNonwetting(globalIdx) = mobilityNW / (mobilityW + mobilityNW);
+        cellData.setFracFlowFunc(wPhaseIdx, mobilityW / (mobilityW + mobilityNW));
+        cellData.setFracFlowFunc(nPhaseIdx, mobilityNW / (mobilityW + mobilityNW));
     }
     return;
 }

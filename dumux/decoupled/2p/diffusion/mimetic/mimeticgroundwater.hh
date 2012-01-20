@@ -72,7 +72,6 @@ public LocalStiffness<TypeTag, 1>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
     typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
@@ -88,7 +87,8 @@ public LocalStiffness<TypeTag, 1>
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         pressEqIdx = Indices::pressEqIdx,
-        satEqIdx = Indices::satEqIdx
+        satEqIdx = Indices::satEqIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -96,6 +96,11 @@ public LocalStiffness<TypeTag, 1>
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
 
 public:
     // define the number of components of your system, this is used outside
@@ -110,7 +115,17 @@ public:
             bool levelBoundaryAsDirichlet, const GridView& gridView,
             bool procBoundaryAsDirichlet=true)
     : problem_(problem), gridView_(gridView)
-    {}
+    {
+        const Element& element = *(problem_.gridView().template begin<0> ());
+        FluidState fluidState;
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
+        fluidState.setTemperature(problem_.temperature(element));
+        fluidState.setSaturation(wPhaseIdx, 1.);
+        fluidState.setSaturation(nPhaseIdx, 0.);
+        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+    }
 
     //! assemble local stiffness matrix for given element and order
     /*! On exit the following things have been done:
@@ -185,11 +200,13 @@ public:
 
         int globalIdx = problem_.variables().index(element);
 
+        CellData& cellData = problem_.variables().cellData(globalIdx);
+
         // eval diffusion tensor, ASSUMING to be constant over each cell
         Dune::FieldMatrix<Scalar,dim,dim> K(0);
         K = problem_.spatialParameters().intrinsicPermeability(element);
 
-        K *= (problem_.variables().mobilityWetting(globalIdx) + problem_.variables().mobilityNonwetting(globalIdx));
+        K *= (cellData.mobility(wPhaseIdx) + cellData.mobility(nPhaseIdx));
 
         // cell volume
         Scalar volume = element.geometry().volume();
@@ -334,11 +351,9 @@ public:
         Pi.umv(Wc, F);
         //      std::cout << "Pi = \dim" << Pi << "c = " << c << ", F = " << F << std::endl;
 
-        Scalar densityW = problem_.variables().densityWetting(globalIdx);
-        Scalar densityNW = problem_.variables().densityNonwetting(globalIdx);
         PrimaryVariables sourceVec(0.0);
         problem_.source(sourceVec, element);
-        qmean = volume*(sourceVec[wPhaseIdx]/densityW + sourceVec[nPhaseIdx]/densityNW);
+        qmean = volume*(sourceVec[wPhaseIdx]/density_[wPhaseIdx] + sourceVec[nPhaseIdx]/density_[nPhaseIdx]);
     }
 
 private:
@@ -406,11 +421,8 @@ private:
                 {
                     int globalIdx = problem_.variables().index(element);
 
-                    Scalar densityW = problem_.variables().densityWetting(globalIdx);
-                    Scalar densityNW = problem_.variables().densityNonwetting(globalIdx);
-
                     problem_.neumann(boundValues, *isIt);
-                    Scalar J = (boundValues[wPhaseIdx]/densityW + boundValues[nPhaseIdx]/densityNW);
+                    Scalar J = (boundValues[wPhaseIdx]/density_[wPhaseIdx] + boundValues[nPhaseIdx]/density_[nPhaseIdx]);
                     this->b[faceIndex] -= J * isIt->geometry().volume();
                 }
                 else if (this->bctype[faceIndex].isDirichlet(pressEqIdx))
@@ -425,6 +437,8 @@ private:
 private:
     Problem& problem_;
     const GridView& gridView_;
+
+    Scalar density_[numPhases];
 };
 
 /** @} */
