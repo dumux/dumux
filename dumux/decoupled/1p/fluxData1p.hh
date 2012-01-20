@@ -98,6 +98,15 @@ public:
         velocity_[indexInInside] = velocity;
     }
 
+    void resetVelocity()
+    {
+        for (int i = 0; i < 2 * dim; i++)
+        {
+            velocity_[i] = 0.;
+            velocityMarker_[i] = false;
+        }
+    }
+
     void setVelocityMarker(int indexInInside)
     {
         velocityMarker_[indexInInside] = true;

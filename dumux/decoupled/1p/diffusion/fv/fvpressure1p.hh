@@ -147,6 +147,7 @@ public:
         {
             CellData& cellData = problem_.variables().cellData(i);
             storePressureSolution(i, cellData);
+            cellData.fluxData().resetVelocity();
         }
     }
 
