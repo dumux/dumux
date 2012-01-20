@@ -25,6 +25,7 @@
 // dumux environment
 #include "dumux/common/math.hh"
 #include <dumux/decoupled/common/impetproperties.hh>
+#include "fvvelocitydefault.hh"
 
 /**
  * @file

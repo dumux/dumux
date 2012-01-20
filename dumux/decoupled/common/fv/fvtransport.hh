@@ -85,12 +85,12 @@ public:
      *  \param[in]  t         time
      *  \param[in] dt         time step size
      *  \param[in] updateVec  vector for the update values
-     *  \param[in] impes      variable is true if an impes algorithm is used and false if the transport part is solved independently
+     *  \param[in] impet      variable is true if an impet algorithm is used and false if the transport part is solved independently
      *
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing a CFL condition.
      */
-    void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
+    void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet);
 
     void getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI);
 
@@ -165,9 +165,9 @@ private:
 };
 
 template<class TypeTag>
-void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes = false)
+void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false)
 {
-    if (!impes)
+    if (!impet)
     {
         asImp_().updateMaterialLaws();
     }

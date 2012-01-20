@@ -65,7 +65,6 @@ template<class TypeTag> class FVPressure
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
-
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureCoefficientMatrix)) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(PressureRHSVector)) RHSVector;
@@ -89,10 +88,10 @@ protected:
     void solve();
 
     ScalarSolution& pressure()
-    { return pressure_; }
+    {   return pressure_;}
 
     const ScalarSolution& pressure() const
-    { return pressure_; }
+    {   return pressure_;}
     //@}
 public:
     void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
@@ -102,12 +101,11 @@ public:
     void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
 
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
-                            const Intersection&, const CellData&, const bool);
+            const Intersection&, const CellData&, const bool);
 
     //! Public acess function for the primary variable pressure
     const Scalar pressure(int globalIdx) const
-    { return pressure_[globalIdx]; }
-
+    {   return pressure_[globalIdx];}
 
     //initialize pressure model
     void initialize()
@@ -119,7 +117,7 @@ public:
     //pressure solution routine: update estimate for secants, assemble, solve.
     void update()
     {
-        assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
+        assemble(false); Dune::dinfo << "pressure calculation"<< std::endl;
         solve();
 
         return;
@@ -163,21 +161,21 @@ public:
      * \param problem a problem class object
      */
     FVPressure(Problem& problem) :
-        problem_(problem), size_(problem.gridView().size(0)),
-        pressure_(size_), A_(size_, size_, (2 * dim + 1) * size_, Matrix::random), f_(size_),
-        fixPressureAtIndex_(0),
-        idxFixPressureAtIndex_(0),
-        hasFixPressureAtIndex_(false)
+    problem_(problem), size_(problem.gridView().size(0)),
+    pressure_(size_), A_(size_, size_, Matrix::random), f_(size_),
+    fixPressureAtIndex_(0),
+    idxFixPressureAtIndex_(0),
+    hasFixPressureAtIndex_(false)
     {}
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
+    {   return *static_cast<Implementation *>(this);}
 
     //! \copydoc Dumux::IMPETProblem::asImp_()
     const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
+    {   return *static_cast<const Implementation *>(this);}
 
     Problem& problem_;
 
@@ -199,8 +197,8 @@ template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrix()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -220,7 +218,7 @@ void FVPressure<TypeTag>::initializeMatrix()
     A_.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
         int globalIdxI = problem_.variables().index(*eIt);
@@ -261,8 +259,8 @@ void FVPressure<TypeTag>::assemble(bool first)
     A_ = 0;
     f_ = 0;
 
-    ElementIterator eItEnd = problem_.gridView().template end<0> ();
-    for (ElementIterator eIt = problem_.gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = problem_.gridView().template end<0>();
+    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell information
         int globalIdxI = problem_.variables().index(*eIt);
@@ -271,7 +269,7 @@ void FVPressure<TypeTag>::assemble(bool first)
         Dune::FieldVector<Scalar, 2> entries(0.);
 
         /*****  source term ***********/
-        asImp_().getSource(entries,*eIt, cellDataI, first);
+        asImp_().getSource(entries, *eIt, cellDataI, first);
         f_[globalIdxI] += entries[rhs];
 
         /*****  flux term ***********/
@@ -282,33 +280,38 @@ void FVPressure<TypeTag>::assemble(bool first)
             /************* handle interior face *****************/
             if (isIt->neighbor())
             {
-                int globalIdxJ = problem_.variables().index(*(isIt->outside()));
+                ElementPointer elementNeighbor = isIt->outside();
 
+                int globalIdxJ = problem_.variables().index(*elementNeighbor);
+
+                //check for hanging nodes
+                //take a hanging node never from the element with smaller level!
+                bool haveSameLevel = (eIt->level() == elementNeighbor->level());
                 //calculate only from one side, but add matrix entries for both sides
-                if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) &&
-                        (globalIdxI > globalIdxJ))
+                if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && (globalIdxI > globalIdxJ) && haveSameLevel)
                     continue;
 
+                //check for hanging nodes
                 entries = 0;
                 asImp_().getFlux(entries, *isIt, cellDataI, first);
-
 
                 //set right hand side
                 f_[globalIdxI] -= entries[rhs];
 
                 // set diagonal entry
                 A_[globalIdxI][globalIdxI] += entries[matrix];
-                // set off-diagonal entry
-                A_[globalIdxI][globalIdxJ] = -entries[matrix];
 
-                if(GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce))
+                    // set off-diagonal entry
+                A_[globalIdxI][globalIdxJ] -= entries[matrix];
+
+                if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce))
                 {
                     f_[globalIdxJ] += entries[rhs];
                     A_[globalIdxJ][globalIdxJ] += entries[matrix];
-                    A_[globalIdxJ][globalIdxI] = -entries[matrix];
+                    A_[globalIdxJ][globalIdxI] -= entries[matrix];
                 }
-            }   // end neighbor
 
+            } // end neighbor
 
             /************* boundary face ************************/
             else
@@ -345,7 +348,7 @@ void FVPressure<TypeTag>::solve()
     int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
 
     if (verboseLevelSolver)
-        std::cout << __FILE__ <<": solve for pressure" << std::endl;
+        std::cout << __FILE__ << ": solve for pressure" << std::endl;
 
     //set a fixed pressure for a certain cell
     if (hasFixPressureAtIndex_)
@@ -364,5 +367,5 @@ void FVPressure<TypeTag>::solve()
     return;
 }
 
-}//end namespace Dumux
+} //end namespace Dumux
 #endif
