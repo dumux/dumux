@@ -114,6 +114,18 @@ public:
         velocity_[phaseIdx][indexInInside] = velocity;
     }
 
+    void resetVelocity()
+    {
+        for (int i = 0; i < 2 * dim; i++)
+        {
+            for (int j = 0; j < numPhases; j++)
+            {
+                velocity_[j][i] = 0.;
+            }
+            velocityMarker_[i] = false;
+        }
+    }
+
     //! Return the velocity
     FieldVector velocityTotal(int indexInInside)
     {

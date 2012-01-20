@@ -30,6 +30,7 @@
 #include <dumux/decoupled/common/fv/fvvelocitydefault.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 #include "evalcflflux_default.hh"
+#include "gridadaptionindicator2p.hh"
 
 /**
  * @file
@@ -234,7 +235,6 @@ public:
             break;
         }
         }
-        cellData.fluxData().resetVelocityMarker();
     }
 
     //! \brief Write data files
@@ -260,9 +260,6 @@ public:
 
         return;
     }
-
-    void indicatorSaturation(TransportSolutionType &indicator, Scalar &globalMin, Scalar &globalMax);
-
 
     /*! \name general methods for serialization, output */
     //@{
@@ -378,74 +375,6 @@ private:
     const Scalar threshold_;
     const bool switchNormals_;
 };
-
-/*!
- * \name Methods for adaptive refinement / coarsening of grids
- */
-// \{
-/*!
- * Indicator for grid refinement: saturation gradient
- */
-template<class TypeTag>
-void FVSaturation2P<TypeTag>::indicatorSaturation(TransportSolutionType &indicator, Scalar &globalMin, Scalar &globalMax)
-{
-    // 1) calculate Indicator -> min, maxvalues
-    // Schleife über alle Leaf-Elemente
-    for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != problem_.gridView().template end<0>();
-            ++eIt)
-    {
-        // Bestimme maximale und minimale Sättigung
-        // Index des aktuellen Leaf-Elements
-        int globalIdxI = problem_.variables().index(*eIt);
-
-        Scalar satI = 0.0;
-        switch (saturationType_)
-        {
-        case Sw:
-            satI = problem_.variables().cellData(globalIdxI).saturation(wPhaseIdx);
-        break;
-        case Sn:
-            satI = problem_.variables().cellData(globalIdxI).saturation(nPhaseIdx);
-            break;
-        }
-
-        globalMin = std::min(satI, globalMin);
-        globalMax = std::max(satI, globalMax);
-
-        // Berechne Verfeinerungsindikator an allen Zellen
-        IntersectionIterator isItend = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
-        {
-            const typename IntersectionIterator::Intersection &intersection = *isIt;
-            // Steige aus, falls es sich nicht um einen Nachbarn handelt
-            if (!intersection.neighbor())
-                continue;
-
-            // Greife auf Nachbarn zu
-            ElementPointer outside = intersection.outside();
-            int globalIdxJ = problem_.variables().index(*outside);
-
-            // Jede Intersection nur von einer Seite betrachten
-            if (eIt->level() > outside->level() || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
-            {
-                Scalar satJ = 0.;
-                switch (saturationType_)
-                {
-                case Sw:
-                    satJ = problem_.variables().cellData(globalIdxJ).saturation(wPhaseIdx);
-                break;
-                case Sn:
-                    satJ = problem_.variables().cellData(globalIdxJ).saturation(nPhaseIdx);
-                    break;
-                }
-
-                Scalar localdelta = std::abs(satI - satJ);
-                indicator[globalIdxI][0] = std::max(indicator[globalIdxI][0], localdelta);
-                indicator[globalIdxJ][0] = std::max(indicator[globalIdxJ][0], localdelta);
-            }
-        }
-    }
-}
 
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI)

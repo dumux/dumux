@@ -47,6 +47,9 @@ class EvalCflFluxDefault;
 template<class TypeTag>
 class FVVelocityDefault;
 
+template<class TypeTag>
+class GridAdaptionIndicator2P;
+
 namespace Properties
 {
 // \{
@@ -67,6 +70,7 @@ NEW_PROP_TAG( GravityFlux );        //!< The type of a convective part in a tran
 NEW_PROP_TAG( CalculateVelocityInTransport );
 NEW_PROP_TAG( PrecomputedConstRels );
 
+SET_TYPE_PROP(TransportTwoP, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 SET_TYPE_PROP(TransportTwoP, CapillaryFlux, DiffusivePart<TypeTag>);
 SET_TYPE_PROP(TransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
 SET_TYPE_PROP(TransportTwoP, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
