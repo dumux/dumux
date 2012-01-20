@@ -1,4 +1,3 @@
 tEnd = 10000000
-levelInit =4 
-levelMin =0 
-levelMax =4 
+MinLevel = 0 
+MaxLevel = 4 

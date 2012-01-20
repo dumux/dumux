@@ -40,11 +40,11 @@
 #include <dumux/material/components/oil.hh>
 
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvpressure2padaptive.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2padaptive.hh>
 #include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
-#include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
-#include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
-#include <dumux/decoupled/2p/variableclass2p_gridadapt.hh>
+#include <dumux/decoupled/common/variableclass_adaptive.hh>
+#include <dumux/decoupled/2p/cellData2p_adaptive.hh>
 
 #include "test_impes_adaptive_spatialparams.hh"
 
@@ -72,22 +72,20 @@ SET_PROP(TestIMPESAdaptiveProblem, Grid)
 };
 
 // Set the problem property
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, Dumux::TestIMPESAdaptiveProblem<TTAG(TestIMPESAdaptiveProblem)>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, Dumux::TestIMPESAdaptiveProblem<TypeTag>);
 
 // Set the model properties
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, TransportModel, Dumux::FVSaturation2P<TTAG(TestIMPESAdaptiveProblem)>);
-
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, DiffusivePart, Dumux::CapillaryDiffusion<TypeTag>);
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, ConvectivePart, Dumux::GravityPart<TypeTag>);
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, TransportModel, Dumux::FVSaturation2P<TypeTag>);
 
 SET_PROP(TestIMPESAdaptiveProblem, PressureModel)
 {
-    typedef Dumux::FVVelocity2Padaptive<TTAG(TestIMPESAdaptiveProblem)> type;
+    typedef Dumux::FVPressure2Padaptive<TypeTag> type;
 };
 
-//SET_INT_PROP(TestIMPESAdaptiveProblem, Formulation,
-//        DecoupledTwoPCommonIndices::pnSn);
-
+SET_PROP(TestIMPESAdaptiveProblem, Velocity)
+{
+    typedef Dumux::FVVelocity2Padaptive<TypeTag> type;
+};
 
 // Set the wetting phase
 SET_PROP(TestIMPESAdaptiveProblem, WettingPhase)
@@ -109,14 +107,20 @@ public:
 
 SET_PROP(TestIMPESAdaptiveProblem, Variables)
 {
-    typedef Dumux::VariableClass2PGridAdapt<TypeTag> type;
+    typedef Dumux::VariableClassAdaptive<TypeTag> type;
+};
+SET_PROP(TestIMPESAdaptiveProblem, CellData)
+{
+    typedef Dumux::CellData2PAdaptive<TypeTag> type;
 };
 
 // Enable gravity
 SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableGravity, false);
 SET_BOOL_PROP(TestIMPESAdaptiveProblem, AdaptiveGrid, true);
 
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
+//SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableCompressibility, true);
+
+//SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
 SET_SCALAR_PROP(TestIMPESAdaptiveProblem, CFLFactor, 0.95);
 }
@@ -134,104 +138,104 @@ SET_SCALAR_PROP(TestIMPESAdaptiveProblem, CFLFactor, 0.95);
  * <tt>./test_impes 1e8</tt>,
  * where the argument defines the simulation endtime.
  */
-template<class TypeTag = TTAG(TestIMPESAdaptiveProblem)>
-class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>//IMPESProblem2Padaptive<TypeTag>
+template<class TypeTag>
+class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
 {
-//typedef IMPESProblem2Padaptive<TypeTag> ParentType;
-typedef IMPESProblem2P<TypeTag> ParentType;
-typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef IMPESProblem2P<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 
-typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
 
-typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
-enum
-{
-    dim = GridView::dimension, dimWorld = GridView::dimensionworld
-};
+    enum
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
 
-enum
-{
-    wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
-    pWIdx = Indices::pwIdx,
-    SwIdx = Indices::SwIdx,
-    eqIdxPress = Indices::pressEqIdx,
-    eqIdxSat = Indices::satEqIdx
-};
+    enum
+    {
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        pWIdx = Indices::pwIdx,
+        SwIdx = Indices::SwIdx,
+        eqIdxPress = Indices::pressEqIdx,
+        eqIdxSat = Indices::satEqIdx
+    };
 
-typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename GridView::Intersection Intersection;
-typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Intersection Intersection;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
-typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
 public:
-TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
-ParentType(timeManager, gridView)
-{
-this->setOutputInterval(10);
-}
+    TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
+            ParentType(timeManager, gridView)
+    {
+        this->setOutputInterval(10);
+    }
 
-/*!
- * \name Problem parameters
- */
+    /*!
+     * \name Problem parameters
+     */
 // \{
+    /*!
+     * \brief The problem name.
+     *
+     * This is used as a prefix for files generated by the simulation.
+     */
+    const char *name() const
+    {
+        return "output2padaptive";
+    }
 
-/*!
- * \brief The problem name.
- *
- * This is used as a prefix for files generated by the simulation.
- */
-const char *name() const
-{
-    return "output2padaptive";
-}
+    bool shouldWriteRestartFile() const
+    {
+        return false;
+    }
 
-bool shouldWriteRestartFile() const
-{
-    return false;
-}
-
-/*!
- * \brief Returns the temperature within the domain.
- *
- * This problem assumes a temperature of 10 degrees Celsius.
- */
-Scalar temperatureAtPos(const GlobalPosition& globalPos) const
-{
-    return 273.15 + 10; // -> 10°C
-}
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     * This problem assumes a temperature of 10 degrees Celsius.
+     */
+    Scalar temperatureAtPos(const GlobalPosition& globalPos) const
+    {
+        return 273.15 + 10; // -> 10°C
+    }
 
 // \}
 
 //! Returns the reference pressure for evaluation of constitutive relations
-Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
-{
-    return 1e5; // -> 10°C
-}
+    Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
+    {
+        return 1e5; // -> 10°C
+    }
 
-void source(PrimaryVariables &values,const Element& element) const
-{
-    values = 0;
-}
+    void source(PrimaryVariables &values, const Element& element) const
+    {
+        values = 0;
+    }
 
-/*!
-* \brief Returns the type of boundary condition.
-*
-* BC for pressure equation can be dirichlet (pressure) or neumann (flux).
-*
-* BC for saturation equation can be dirichlet (saturation), neumann (flux), or outflow.
-*/
-void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
-{
+    /*!
+     * \brief Returns the type of boundary condition.
+     *
+     * BC for pressure equation can be dirichlet (pressure) or neumann (flux).
+     *
+     * BC for saturation equation can be dirichlet (saturation), neumann (flux), or outflow.
+     */
+    void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
+    {
         if (globalPos[0] < eps_)
         {
             bcTypes.setAllDirichlet();
@@ -246,57 +250,52 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
         {
             bcTypes.setAllNeumann();
         }
-}
+    }
 
 //! set dirichlet condition  (pressure [Pa], saturation [-])
-void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
-{
-    values = 0;
-    if (globalPos[0] < eps_)
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        values = 0;
+        if (globalPos[0] < eps_)
         {
-            Scalar pRef = referencePressureAtPos(globalPos);
-            Scalar temp = temperatureAtPos(globalPos);
-            Scalar sat = 1;
+            if (GET_PARAM(TypeTag, bool, EnableGravity))
+            {
+                Scalar pRef = referencePressureAtPos(globalPos);
+                Scalar temp = temperatureAtPos(globalPos);
 
-            FluidState fluidState;
-            fluidState.update(sat, pRef, pRef, temp);
-            values[pWIdx] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * FluidSystem::phaseDensity(wPhaseIdx, temp, pRef, fluidState) * this->gravity().two_norm());
+                values[pWIdx] = (2e5 + (this->bboxMax()[dim-1] - globalPos[dim-1]) * WettingPhase::density(temp, pRef) * this->gravity().two_norm());
+            }
+            else
+            {
+                values[pWIdx] = 2e5;
+            }
+            values[SwIdx] = 0.8;
         }
         else
         {
             values[pWIdx] = 2e5;
+            values[SwIdx] = 0.2;
         }
-        values[SwIdx] = 0.8;
     }
-    else
-    {
-        values[pWIdx] = 2e5;
-        values[SwIdx] = 0.2;
-    }
-}
 
 //! set neumann condition for phases (flux, [kg/(m^2 s)])
-void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
-{
-    values = 0;
-    if (globalPos[0] > this->bboxMax()[0] - eps_)
+    void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        values[nPhaseIdx] = 3e-4;
+        values = 0;
+        if (globalPos[0] > this->bboxMax()[0] - eps_)
+        {
+            values[nPhaseIdx] = 3e-4;
+        }
     }
-}
 //! return initial solution -> only saturation values have to be given!
-void initial(PrimaryVariables &values,
-        const Element& element) const
-{
-    values[pWIdx] = 0;
-    values[SwIdx] = 0.2;
-}
+    void initial(PrimaryVariables &values, const Element& element) const
+    {
+        values[pWIdx] = 0;
+        values[SwIdx] = 0.2;
+    }
 
 private:
-
-static constexpr Scalar eps_ = 1e-6;
+    static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
 

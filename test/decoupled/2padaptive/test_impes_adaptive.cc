@@ -125,7 +125,7 @@ int main(int argc, char** argv)
         Dune::shared_ptr<Grid> grid(Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeftCorner, domainSize, numberOfCells));
         grid->setClosureType(Grid::ClosureType::NONE);
 
-        grid->globalRefine(Params::tree().get<int>("levelInit"));
+        grid->globalRefine(Params::tree().get<int>("MaxLevel"));
 
         // read the initial time step and the end time
         double tEnd, dt;
@@ -138,7 +138,6 @@ int main(int argc, char** argv)
         TimeManager timeManager;
         Problem problem(timeManager, grid->leafView());
         problem.setGrid(*grid);
-        problem.gridAdapt().setLevels(Params::tree().get<int>("levelMin"), Params::tree().get<int>("levelMax"));
 
         timeManager.init(problem, startTime, dt, tEnd, restart);
         timeManager.run();
