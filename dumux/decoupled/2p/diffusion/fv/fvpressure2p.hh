@@ -99,11 +99,6 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    enum
-    {
-        rhs = ParentType::rhs, matrix = ParentType::matrix,
-    };
-
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
@@ -113,6 +108,12 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
 public:
+
+    enum
+    {
+        rhs = ParentType::rhs, matrix = ParentType::matrix,
+    };
+
     void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
 
     void getStorage(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
@@ -201,8 +202,6 @@ public:
             }
         }
 
-        updateMaterialLaws();
-
         ParentType::update();
 
         storePressureSolution();
@@ -217,6 +216,7 @@ public:
         {
             CellData& cellData = problem_.variables().cellData(i);
             storePressureSolution(i, cellData);
+            cellData.fluxData().resetVelocity();
         }
     }
 
