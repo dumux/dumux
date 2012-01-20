@@ -119,7 +119,7 @@ public:
             int indexi = elementmapper.map(element);
 
             // get approximate solution value
-            uMean += volume*(problem.variables().pressure())[indexi];
+            uMean += volume*(problem.variables().cellData(indexi).globalPressure());
 
             // add to domainVolume
             domainVolume += volume;
@@ -128,7 +128,10 @@ public:
 
         if (pureNeumann) {
             for (int i = 0; i < (int) problem.variables().pressure().size(); i++)
-                (problem.variables().pressure())[i] -= uMean;
+            {
+                double press = problem.variables().cellData(i).globalPressure() - uMean;
+                problem.variables().cellData(i).setGlobalPressure(press);
+            }
         }
 
 
@@ -178,7 +181,7 @@ public:
             int indexi = elementmapper.map(element);
 
             // get approximate solution value
-            double approximateValue = (problem.variables().pressure())[indexi];
+            double approximateValue = problem.variables().cellData(indexi).globalPressure();
 
             // update uMin and uMax
             uMin = std::min(uMin, approximateValue);
@@ -369,11 +372,9 @@ public:
     double erflm;
     double ener1;
 
-    template<class GridView, class Problem, class SolVector, class VelVector>
+    template<class GridView, class Problem>
     void evaluate(const GridView& gridView,
-            Problem& problem,
-            const SolVector& solution,
-            const VelVector& velocity, bool consecutiveNumbering = false)
+            Problem& problem, bool consecutiveNumbering = false)
     {
         typedef typename GridView::Grid Grid;
         typedef typename Grid::ctype Scalar;
@@ -425,7 +426,7 @@ public:
             //int eIdx = elementMapper.map(element);
             int eIdx = problem.variables().index(element);
 
-            Scalar approxPressure = solution[eIdx];
+            Scalar approxPressure = problem.variables().cellData(eIdx).globalPressure();
             Scalar exactPressure = problem.exact(global);
 
             numerator += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
@@ -473,7 +474,7 @@ public:
                 double exactFlux = KGrad*unitOuterNormal;
 
                 // get the approximate normalvelocity
-                double approximateFlux = (velocity[eIdx][isIdx]*unitOuterNormal);
+                double approximateFlux = problem.variables().cellData(eIdx).fluxData().velocityTotal(isIdx)*unitOuterNormal;
 
                 // calculate the difference in the normal velocity
                 double fluxDiff = exactFlux + approximateFlux;
@@ -604,7 +605,7 @@ public:
 
             int eIdx = elementMapper.map(element);
 
-            Scalar approxPressure = solution[eIdx];
+            Scalar approxPressure = problem.variables().cellData(eIdx).globalPressure();
             Scalar exactPressure = problem.exact(global);
             //std::cout << global << ": p =" << exactPressure << ", p_h = " << approxPressure << std::endl;
             numerator += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
@@ -654,7 +655,7 @@ public:
                 Scalar exactFlux = KGrad*unitOuterNormal;
 
                 // get the approximate normalvelocity
-                Scalar approximateFlux = velocity[eIdx][i]*unitOuterNormal;
+                Scalar approximateFlux = problem.cellData(eIdx).fluxData().velocityTotal(i)*unitOuterNormal;
 
                 // calculate the difference in the normal velocity
                 Scalar fluxDiff = exactFlux + approximateFlux;

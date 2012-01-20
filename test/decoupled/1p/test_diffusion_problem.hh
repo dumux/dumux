@@ -43,8 +43,8 @@
 #include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
-//#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
-//#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
 
 #include "test_diffusion_spatialparams.hh"
 
@@ -101,16 +101,19 @@ SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG
 SET_TYPE_PROP(FVVelocity2PTestProblem, Velocity, Dumux::FVVelocity2P<TTAG(FVVelocity2PTestProblem)>);
 
 // set the types for the MPFA-O FV method
-//NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
-//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
-//SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
-//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
-//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVMPFAOVelocity2PTestProblem)>);
-//
-//// set the types for the mimetic FD method
-//NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(DiffusionTestProblem, Mimetic));
-//SET_TYPE_PROP(MimeticPressure2PTestProblem, Model, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
-//SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(MimeticPressure2PTestProblem)>);
+NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
+SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVMPFAOVelocity2PTestProblem)>);
+
+// set the types for the mimetic FD method
+NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(DiffusionTestProblem, Mimetic));
+SET_TYPE_PROP(MimeticPressure2PTestProblem, PressureModel, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
+SET_TYPE_PROP(MimeticPressure2PTestProblem, Model, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
+SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(MimeticPressure2PTestProblem)>);
+
 }
 
 /*!
@@ -173,11 +176,13 @@ public:
     bool shouldWriteRestartFile() const
     { return false; }
 
-    void addOutputVtkFields()
+
+    void calculateFVVelocity()
     {
         velocity_.calculateVelocity();
-        velocity_.addOutputVtkFields(this->resultWriter());
+//        velocity_.addOutputVtkFields(this->resultWriter());
     }
+
     /*!
      * \brief Returns the temperature within the domain.
      *
