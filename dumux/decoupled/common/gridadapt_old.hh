@@ -55,8 +55,8 @@ class GridAdapt
     typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
     typedef typename GridView::IntersectionIterator         LeafIntersectionIterator;
     typedef typename Grid::template Codim<0>::Entity         Entity;
-
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 public:
     /*!
@@ -65,15 +65,16 @@ public:
      * @param levelMin minimum refinement level
      * @param levelMax maximum refinement level
      */
-    GridAdapt (Problem& problem)
-    : problem_(problem), adaptionIndicator_(problem)
+    GridAdapt (Problem& problem, const int levelMin = 0,const int levelMax=1)
+    : levelMin_(levelMin), levelMax_(levelMax), problem_(problem)
     {
-        levelMin_ = GET_PARAM(TypeTag, int, MinLevel);
-        levelMax_ = GET_PARAM(TypeTag, int, MaxLevel);
-
         if (levelMin_ < 0)
             Dune::dgrave <<  __FILE__<< ":" <<__LINE__
             << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
+
+        standardIndicator_ = true;
+        refinetol_ = 0.05;
+        coarsentol_ = 0.001;
     }
 
     /*!
@@ -94,13 +95,21 @@ public:
         // reset internal counter for marked elements
         marked_ = coarsened_ = 0;
 
+        // prepare an indicator for refinement
+        if(indicatorVector_.size()!=problem_.variables().gridSize())
+        {
+            indicatorVector_.resize(problem_.variables().gridSize());
+            indicatorVector_ = -1e100;
+        }
+
         /**** 1) determine refining parameter if standard is used ***/
         // if not, the indicatorVector and refinement Bounds have to
         // specified by the problem through setIndicator()
-        adaptionIndicator_.calculateIndicator();
+        if(standardIndicator_)
+            indicator();
 
         /**** 2) mark elements according to indicator     *********/
-        markElements();
+        markElements(indicatorVector_, refineBound_, coarsenBound_);
 
         // abort if nothing in grid is marked
         if (marked_==0 && coarsened_ == 0)
@@ -117,6 +126,7 @@ public:
         problem_.variables().storePrimVars(problem_);
 
         /****  4) Adapt Grid and size of variable vectors    *****/
+//        problem_.grid().preAdapt();
         problem_.grid().adapt();
 
 //        forceRefineRatio(1);
@@ -129,10 +139,8 @@ public:
 
         /****  5) (Re-)construct primary variables to new grid **/
         problem_.variables().reconstructPrimVars(problem_);
-
         // delete markers in grid
         problem_.grid().postAdapt();
-
         // adapt secondary variables
         problem_.pressureModel().updateMaterialLaws();
 
@@ -149,13 +157,14 @@ public:
      * @param coarsenThreshold upper threshold where to coarsen
      * @return Total ammount of marked cells
      */
-    int markElements()
+    int markElements(const ScalarSolutionType &indicator, const double refineThreshold, const double coarsenThreshold)
     {
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
                     eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
             // Verfeinern?
-            if (adaptionIndicator_.refine(*eIt) && eIt->level() < levelMax_)
+            if (indicator[problem_.variables().elementMapper().map(*eIt)] > refineThreshold
+                    && eIt.level()<levelMax_)
             {
                 const Entity &entity =*eIt;
                 problem_.grid().mark( 1, entity );
@@ -169,7 +178,8 @@ public:
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
                     eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
-            if (adaptionIndicator_.coarsen(*eIt) && eIt->level() > levelMin_ && problem_.grid().getMark(*eIt) == 0)
+            if (indicator[problem_.variables().elementMapper().map(*eIt)] < coarsenThreshold
+                    && eIt.level()>levelMin_ && problem_.grid().getMark(*eIt) == 0)
             {
                 // check if coarsening is possible
                 bool coarsenPossible = true;
@@ -210,7 +220,24 @@ public:
         levelMin_ = levMin;
         levelMax_ = levMax;
     }
+    /*!
+     * Sets minimum and maximum refinement tolerances
+     *
+     * @param coarsentol minimum tolerance when to coarsen
+     * @param refinetol maximum tolerance when to refine
+     */
+    void setTolerance(Scalar coarsentol, Scalar refinetol)
+    {
+        if (coarsentol < 0. or refinetol < 0. )
+            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+            << " :  Tolerance levels out of meaningful bounds! "<< std::endl;
+        if (coarsentol > refinetol )
+            Dune::dgrave <<  __FILE__<< ":" <<__LINE__
+            << " :  Check tolerance levels: coarsentol > refinetol! "<< std::endl;
 
+        coarsentol_ = coarsentol;
+        refinetol_ = refinetol;
+    }
     /*!
      * Gets maximum refinement level
      *
@@ -229,8 +256,49 @@ public:
     {
         return levelMin_;
     }
+    /*!
+     * @brief Adapter for external Refinement indicators.
+     *
+     * External indicators to refine/coarsen the grid can be set
+     * from outside this container. Both indicator itsself as well as
+     * the coarsening and refinement bounds have to be specified.
+     * @param indicatorVector Vector holding indicator values
+     * @param coarsenLowerBound bounding value where to be coarsened
+     * @param refineUpperBound bounding value where to be refined
+     */
+    const void setIndicator(const ScalarSolutionType& indicatorVector,
+            const Scalar& coarsenLowerBound, const Scalar& refineUpperBound)
+    {
+        // switch off usage of standard (saturation) indicator: by settting this,
+        // the standard function indicator() called by adaptGrid() is disabled.
+        standardIndicator_=false;
 
+        indicatorVector_ = indicatorVector;
+        refineBound_ = refineUpperBound;
+        coarsenBound_ = coarsenLowerBound;
+    }
 private:
+    /*!
+     * @brief Simple standard indicator.
+     *
+     * Mehod computes the refinement and coarsening bounds through a
+     * standard refinement criteria.
+     */
+    void indicator()
+    {
+        Scalar globalMax = -1e100;
+        Scalar globalMin = 1e100;
+
+        /**** determine refining parameter          *************/
+        problem_.transportModel().indicatorSaturation(indicatorVector_, globalMin, globalMax);
+        Scalar globaldelta = globalMax- globalMin;
+//            globaldelta = std::max(globaldelta,0.1);
+
+        refineBound_ = refinetol_*globaldelta;
+        coarsenBound_ = coarsentol_*globaldelta;
+
+        return;
+    }
     /*!
      * @brief Method ensuring the refinement ratio of 2:1
      *
@@ -318,14 +386,15 @@ private:
     }
 
     // private Variables
+    ScalarSolutionType indicatorVector_;
+    bool standardIndicator_;
+    Scalar refineBound_, coarsenBound_;
+    int marked_, coarsened_;
+    int levelMin_, levelMax_;
+    Scalar refinetol_;
+    Scalar coarsentol_;
+
     Problem& problem_;
-    AdaptionIndicator adaptionIndicator_;
-
-    int levelMin_;
-    int levelMax_;
-
-    int marked_;
-    int coarsened_;
 };
 
 /*!

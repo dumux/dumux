@@ -25,6 +25,7 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/decoupled/common/gridadaptproperties.hh>
 
 /*!
  * \ingroup Sequential
@@ -44,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all decoupled models
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag, GridAdaptTypeTag));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -60,7 +61,6 @@ NEW_PROP_TAG( Indices);
 
 NEW_PROP_TAG( Grid); //!< The type of the DUNE grid
 NEW_PROP_TAG( GridView); //!< The type of the grid view
-NEW_PROP_TAG( AdaptiveGrid); //!< Defines if the grid is h-adaptive
 
 NEW_PROP_TAG( Problem); //!< The type of the problem
 NEW_PROP_TAG( Model); //!< The type of the discretizations
@@ -71,8 +71,8 @@ NEW_PROP_TAG( NumEq ); //!< Number of equations in the system of PDEs
 NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
 NEW_PROP_TAG( NumComponents); //!< Number of components in the system
 NEW_PROP_TAG( Variables); //!< The type of the container of global variables
-NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
-NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
+NEW_PROP_TAG( TimeManager );  //!< Manages the simulation time
+NEW_PROP_TAG( BoundaryTypes ); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG( CellData );//!< Defines data object to be stored
 NEW_PROP_TAG( VisitFacesOnlyOnce); //!< Indicates if faces are only regarded from one side
 }

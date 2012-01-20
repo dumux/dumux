@@ -102,9 +102,8 @@ public:
      */
     void adaptVariableSize(int size)
     {
-        DUNE_THROW(Dune::NotImplemented,"TODO: Primary Variables Vector have to be resized!!!");
         cellDataVector_.resize(size);
-     }
+    }
 
     //! Return the vector holding all cell data
     CellDataVector& cellDataGlobal()
