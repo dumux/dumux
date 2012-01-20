@@ -224,15 +224,8 @@ void FVPressure2Padaptive<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entrie
         // get face area
         Scalar faceArea = intersection.geometry().volume();
 
-        // distance vector between barycenters
-        GlobalPosition distVecIJ = globalPosJ - globalPosI;
-
-        // compute distance between cell centers
-        Scalar distIJ = distVecIJ.two_norm();
-
         // Count number of hanging nodes
         // not really necessary
-        int isIndexJ = intersection.indexInOutside();
         int globalIdxK = 0;
         ElementPointer elementK = intersection.outside();
         // We are looking for two things:
@@ -299,8 +292,6 @@ void FVPressure2Padaptive<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entrie
 
         ng = gravity_ * unitOuterNormal;
 
-        Scalar lambdaWK = cellDataK.mobility(wPhaseIdx);
-        Scalar lambdaNWK = cellDataK.mobility(nPhaseIdx);
         Scalar fractionalWK = cellDataK.fracFlowFunc(wPhaseIdx);
         Scalar fractionalNWK = cellDataK.fracFlowFunc(nPhaseIdx);
 

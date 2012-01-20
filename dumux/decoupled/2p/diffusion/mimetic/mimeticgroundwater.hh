@@ -419,8 +419,6 @@ private:
 
                 if (this->bctype[faceIndex].isNeumann(pressEqIdx))
                 {
-                    int globalIdx = problem_.variables().index(element);
-
                     problem_.neumann(boundValues, *isIt);
                     Scalar J = (boundValues[wPhaseIdx]/density_[wPhaseIdx] + boundValues[nPhaseIdx]/density_[nPhaseIdx]);
                     this->b[faceIndex] -= J * isIt->geometry().volume();

@@ -202,15 +202,6 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //get face normal
         const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
-        // get face area
-        Scalar faceArea = intersection.geometry().volume();
-
-        // distance vector between barycenters
-        GlobalPosition distVecIJ = globalPosJ - globalPosI;
-
-        // compute distance between cell centers
-        Scalar distIJ = distVecIJ.two_norm();
-
         // Count number of hanging nodes
         // not really necessary
         int isIndexJ = intersection.indexInOutside();
@@ -281,8 +272,6 @@ void FVVelocity2Padaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         ng = gravity_ * unitOuterNormal;
 
-        Scalar lambdaWK = cellDataK.mobility(wPhaseIdx);
-        Scalar lambdaNWK = cellDataK.mobility(nPhaseIdx);
         Scalar fractionalWK = cellDataK.fracFlowFunc(wPhaseIdx);
         Scalar fractionalNWK = cellDataK.fracFlowFunc(nPhaseIdx);
 

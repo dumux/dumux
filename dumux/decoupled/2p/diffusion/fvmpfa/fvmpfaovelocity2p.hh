@@ -827,9 +827,6 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
-
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
@@ -949,9 +946,6 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 break;
                             }
                             }
-
-                            Scalar temperature = problem_.temperature(*eIt);
-                            Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                             Scalar lambdaWBound = 0;
                             Scalar lambdaNWBound = 0;
@@ -1088,9 +1082,6 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     break;
                                 }
                                 }
-
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1237,9 +1228,6 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     break;
                                 }
                                 }
-
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1627,9 +1615,6 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             break;
                         }
                         }
-
-                        Scalar temperature = problem_.temperature(*eIt);
-                        Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                         Scalar lambdaWBound = 0;
                         Scalar lambdaNWBound = 0;

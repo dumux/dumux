@@ -315,8 +315,6 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 
         CellData& cellData = problem_.variables().cellData(globalIdx);
 
-        Scalar temperature = problem_.temperature(*eIt);
-
         //determine phase saturations from primary saturation variable
 
         Scalar satW = cellData.saturation(wPhaseIdx);

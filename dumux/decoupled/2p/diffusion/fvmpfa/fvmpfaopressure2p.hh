@@ -1102,9 +1102,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
-
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
@@ -1220,10 +1217,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 break;
                             }
                             }
-
-                            Scalar temperature = problem_.temperature(*eIt);
-                            Scalar referencePressure =  problem_.referencePressure(*eIt);
-
 
                             Scalar lambdaWBound = 0;
                             Scalar lambdaNWBound = 0;
@@ -1348,9 +1341,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                     break;
                                 }
                                 }
-
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1482,9 +1472,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                     break;
                                 }
                                 }
-
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -1728,9 +1715,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 }
                                 }
 
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
-
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
 
@@ -1862,9 +1846,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         }
                         }
 
-                        Scalar temperature = problem_.temperature(*eIt);
-                        Scalar referencePressure =  problem_.referencePressure(*eIt);
-
                         Scalar lambdaWBound = 0;
                         Scalar lambdaNWBound = 0;
 
@@ -1917,9 +1898,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                     break;
                                 }
                                 }
-
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -2104,9 +2082,6 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                     break;
                                 }
                                 }
-
-                                Scalar temperature = problem_.temperature(*eIt);
-                                Scalar referencePressure =  problem_.referencePressure(*eIt);
 
                                 Scalar lambdaWBound = 0;
                                 Scalar lambdaNWBound = 0;
@@ -2406,8 +2381,6 @@ void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
         int globalIdx = problem_.variables().index(*eIt);
 
         CellData& cellData = problem_.variables().cellData(globalIdx);
-
-        Scalar temperature = problem_.temperature(*eIt);
 
         //determine phase saturations from primary saturation variable
 
