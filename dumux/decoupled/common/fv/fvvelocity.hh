@@ -24,8 +24,8 @@
 
 // dumux environment
 #include "dumux/common/math.hh"
-#include <dumux/decoupled/common/impetproperties.hh>
-#include "fvvelocitydefault.hh"
+#include <dumux/decoupled/common/pressureproperties.hh>
+#include "velocitydefault.hh"
 
 /**
  * @file
@@ -41,15 +41,13 @@ namespace Dumux
  *  TODO:
  * \tparam TypeTag The Type Tag
  */
-template<class TypeTag> class FVVelocity
+template<class TypeTag, class Velocity> class FVVelocity
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Velocity) Velocity;
 
     enum
     {
@@ -93,8 +91,8 @@ private:
 
 
 //! function which reconstructs a global velocity field
-template<class TypeTag>
-void FVVelocity<TypeTag>::calculateVelocity()
+template<class TypeTag, class Velocity>
+void FVVelocity<TypeTag, Velocity>::calculateVelocity()
 {
     Dune::FieldVector<Scalar, dim> vel(0.);
 

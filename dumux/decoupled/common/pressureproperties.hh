@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Copyright (C) 2011 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -19,12 +19,17 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_IMPET_PROPERTIES_HH
-#define DUMUX_IMPET_PROPERTIES_HH
+#ifndef DUMUX_PRESSURE_PROPERTIES_HH
+#define DUMUX_PRESSURE_PROPERTIES_HH
 
-#include <dumux/decoupled/common/decoupledproperties.hh>
-#include <dumux/decoupled/common/pressureproperties.hh>
-#include <dumux/decoupled/common/transportproperties.hh>
+//Dune-includes
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/bvector.hh>
+
+#include "decoupledproperties.hh"
+#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/linear/seqsolverbackend.hh>
+
 
 /*!
  * \ingroup IMPET
@@ -54,38 +59,69 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(IMPET, INHERITS_FROM(DecoupledModel));
+NEW_TYPE_TAG(Pressure, INHERITS_FROM(LinearSolverTypeTag, DecoupledModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(CFLFactor);         //!< Scalar factor for additional scaling of the time step
-NEW_PROP_TAG(IterationFlag); //!< Flag to switch the iteration type of the IMPET scheme
-NEW_PROP_TAG(IterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
-NEW_PROP_TAG(MaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags
-NEW_PROP_TAG(RelaxationFactor); //!< Used for IMPET iterations
-
-//forward declaration!
-NEW_PROP_TAG( Model );//! The model of the specific problem
+//Properties for linear solvers
+NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
+NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
+NEW_PROP_TAG( VisitFacesOnlyOnce); //!< Indicates if faces are only regarded from one side
 }
 }
 
-#include <dumux/decoupled/common/impet.hh>
+#include <dumux/decoupled/common/fv/velocitydefault.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
-//set impet model
-SET_TYPE_PROP(IMPET, Model, IMPET<TypeTag>);
+//! Faces are only regarded from one side and not from both cells
+SET_BOOL_PROP(Pressure, VisitFacesOnlyOnce, false);
 
 //Set defaults
-SET_SCALAR_PROP(IMPET, CFLFactor, 1.0);
-SET_INT_PROP(IMPET, IterationFlag, 0); //!< 0 = no iterations, 1 = iterate IterationNumber iterations, 2 = iterate until converged or IterationNumber is reached
-SET_INT_PROP(IMPET, IterationNumber, 2);
-SET_SCALAR_PROP(IMPET, MaximumDefect, 1e-5);
-SET_SCALAR_PROP(IMPET, RelaxationFactor, 1.0);//!< 1 = new solution is new solution, 0 = old solution is new solution
+SET_PROP(Pressure, PressureCoefficientMatrix)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
+
+public:
+    typedef Dune::BCRSMatrix<MB> type;
+};
+SET_PROP(Pressure, PressureRHSVector)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+
+public:
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
+};
+
+// use the stabilized BiCG solver preconditioned by the ILU-0 by default
+SET_TYPE_PROP(Pressure, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
+
+//! set the default for the reduction of the initial residual
+SET_PROP(Pressure, LinearSolverResidualReduction)
+{public:
+    static constexpr double value = 1e-13;
+};
+
+//! set the default number of maximum iterations for the linear solver
+SET_PROP(Pressure, LinearSolverMaxIterations)
+{public:
+    static constexpr int value = 500;
+};
+
+//! set the default number of maximum iterations for the linear solver
+SET_PROP(Pressure, LinearSolverBlockSize)
+{public:
+    static constexpr int value = 1;
+};
+
+SET_TYPE_PROP( Pressure, Velocity, VelocityDefault<TypeTag>);
+
 }
 }
 

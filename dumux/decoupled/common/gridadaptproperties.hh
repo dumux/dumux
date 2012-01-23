@@ -59,6 +59,7 @@ NEW_PROP_TAG(CoarsenTolerance);
 
 //no adaptive grid
 SET_BOOL_PROP(GridAdaptTypeTag, AdaptiveGrid, false);
+
 //standard setting
 SET_INT_PROP(GridAdaptTypeTag, MinLevel, 0);
 SET_INT_PROP(GridAdaptTypeTag, MaxLevel, 1);

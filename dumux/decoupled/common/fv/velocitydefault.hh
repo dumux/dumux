@@ -19,8 +19,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_FVVELOCITYDEFAULT_HH
-#define DUMUX_FVVELOCITYDEFAULT_HH
+#ifndef DUMUX_VELOCITYDEFAULT_HH
+#define DUMUX_VELOCITYDEFAULT_HH
 
 /**
  * @file
@@ -39,7 +39,7 @@ namespace Dumux
  */
 
 template<class TypeTag>
-class FVVelocityDefault
+class VelocityDefault
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -53,7 +53,7 @@ public:
     /*!
      * \param problem a problem class object
      */
-    FVVelocityDefault(Problem& problem)
+    VelocityDefault(Problem& problem)
     {}
 
     //! Empty functions!
@@ -64,6 +64,11 @@ public:
 
     void calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
     {}
+
+    bool calculateVelocityInTransport()
+    {
+        return false;
+    }
 
     //! \brief Write data files
     /*  \param name file name */

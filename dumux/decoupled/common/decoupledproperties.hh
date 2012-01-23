@@ -24,7 +24,6 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/decoupled/common/gridadaptproperties.hh>
 
 /*!
@@ -45,7 +44,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all decoupled models
-NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag, GridAdaptTypeTag));
+NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(NumericModel, GridAdaptTypeTag));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -55,7 +54,6 @@ NEW_TYPE_TAG(DecoupledModel, INHERITS_FROM(ExplicitModel, LinearSolverTypeTag, G
 //! This means vectors of primary variables, solution functions on the
 //! grid, and elements, and shape functions.
 NEW_PROP_TAG( SolutionTypes);
-NEW_PROP_TAG( TransportSolutionType);
 NEW_PROP_TAG( PrimaryVariables);
 NEW_PROP_TAG( Indices);
 
@@ -71,10 +69,10 @@ NEW_PROP_TAG( NumEq ); //!< Number of equations in the system of PDEs
 NEW_PROP_TAG( NumPhases); //!< Number of phases in the system
 NEW_PROP_TAG( NumComponents); //!< Number of components in the system
 NEW_PROP_TAG( Variables); //!< The type of the container of global variables
+NEW_PROP_TAG( CellData );//!< Defines data object to be stored
 NEW_PROP_TAG( TimeManager );  //!< Manages the simulation time
 NEW_PROP_TAG( BoundaryTypes ); //!< Stores the boundary types of a single degree of freedom
-NEW_PROP_TAG( CellData );//!< Defines data object to be stored
-NEW_PROP_TAG( VisitFacesOnlyOnce); //!< Indicates if faces are only regarded from one side
+NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of an element and neighboring elements
 }
 }
 
@@ -84,6 +82,7 @@ NEW_PROP_TAG( VisitFacesOnlyOnce); //!< Indicates if faces are only regarded fro
 #include <dumux/common/timemanager.hh>
 #include <dumux/common/boundarytypes.hh>
 #include<dumux/common/boundaryconditions.hh>
+#include "variableclass.hh"
 
 namespace Dumux
 {
@@ -103,20 +102,16 @@ public:
     typedef typename Grid::LeafGridView type;
 };
 
-//! Disables Grid Adaptivity as standard
-SET_BOOL_PROP(DecoupledModel, AdaptiveGrid, false);
-
-//! Faces are only regarded from one side and not from both cells
-SET_BOOL_PROP(DecoupledModel, VisitFacesOnlyOnce, true);
-
-NEW_PROP_TAG(MaxIntersections);   //!< maximum number of intersections per element
+//! Default number of intersections for quadrilaterals
 SET_PROP(DecoupledModel, MaxIntersections)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    static const int dim = Grid::dimension;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum
+    {
+        dim = GridView::dimension
+    };
 public:
-    typedef int type;
     static const int value = 2*dim;
 };
 
@@ -181,23 +176,9 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;//!<type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
 };
 
+SET_TYPE_PROP(DecoupledModel,  Variables, VariableClass<TypeTag>);
+
 SET_TYPE_PROP(DecoupledModel,  PrimaryVariables, typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables);
-
-/*!
- * \brief Default implementation for the Vector of the transportet quantity
- *
- * This type defines the data type of the transportet quantity. In case of a
- * immiscible 2p system, this would represent a vector holding the saturation
- * of one phase.
- */
-SET_PROP(DecoupledModel, TransportSolutionType)
-{
-    private:
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionType;
-
-    public:
-    typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
-};
 
 //! Set the default type for the time manager
 SET_TYPE_PROP(DecoupledModel, TimeManager, Dumux::TimeManager<TypeTag>);
@@ -210,24 +191,6 @@ SET_PROP(DecoupledModel, BoundaryTypes)
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
     typedef Dumux::BoundaryTypes<numEq>  type;
-};
-
-//! set the default for the reduction of the initial residual
-SET_PROP(DecoupledModel, LinearSolverResidualReduction)
-{public:
-    static constexpr double value = 1e-13;
-};
-
-//! set the default number of maximum iterations for the linear solver
-SET_PROP(DecoupledModel, LinearSolverMaxIterations)
-{public:
-    static constexpr int value = 500;
-};
-
-//! set the default number of maximum iterations for the linear solver
-SET_PROP(DecoupledModel, LinearSolverBlockSize)
-{public:
-    static constexpr int value = 1;
 };
 
 // \}

@@ -22,7 +22,7 @@
 #ifndef DUMUX_TRANSPORT_PROPERTIES_HH
 #define DUMUX_TRANSPORT_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
+#include "decoupledproperties.hh"
 
 /*!
  * \ingroup Saturation2p
@@ -44,18 +44,34 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(Transport);
+NEW_TYPE_TAG(Transport, INHERITS_FROM(DecoupledModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
+NEW_PROP_TAG( TransportSolutionType);
 NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
 NEW_PROP_TAG( CFLFactor );
 NEW_PROP_TAG( SwitchNormals );
 
 SET_SCALAR_PROP(Transport, CFLFactor, 1.0);
 SET_BOOL_PROP(Transport, SwitchNormals, false);
+
+/*!
+ * \brief Default implementation for the Vector of the transportet quantity
+ *
+ * This type defines the data type of the transportet quantity. In case of a
+ * immiscible 2p system, this would represent a vector holding the saturation
+ * of one phase.
+ */
+SET_PROP(Transport, TransportSolutionType)
+{
+    private:
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionType;
+
+    public:
+    typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
+};
 }
 }
 

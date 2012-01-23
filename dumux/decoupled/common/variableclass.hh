@@ -71,8 +71,6 @@ private:
     typedef typename SolutionTypes::ElementMapper ElementMapper;
 
 public:
-    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;//!<type for vector of scalars
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
     typedef typename std::vector <CellData> CellDataVector;
 
 private:
