@@ -39,7 +39,7 @@
 #include <dumux/material/components/unit.hh>
 
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfapressureproperties2p.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaopressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproblem2p.hh>
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
@@ -94,7 +94,7 @@ SET_BOOL_PROP(FVVelocity2PTestProblem, EnableGravity, false);
 
 
 // set the types for the MPFA-O FV method
-NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FVMPFAPressurePropertiesTwoP, TestDiffusionSpatialParams));
+NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FVMPFAOPressurePropertiesTwoP, TestDiffusionSpatialParams));
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
 SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
