@@ -32,12 +32,12 @@
 
 #include <dumux/freeflow/stokes2c/stokes2cvolumevariables.hh>
 #include <dumux/freeflow/stokes2c/stokes2cfluxvariables.hh>
-#include <dumux/freeflow/stokes2c/stokes2cproperties.hh>
 
 namespace Dumux
 {
 /*!
- * \ingroup Stokes2cModel
+ * \ingroup BoxStokes2cModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the compositional stokes box model. This is derived
  *        from the stokes box model.

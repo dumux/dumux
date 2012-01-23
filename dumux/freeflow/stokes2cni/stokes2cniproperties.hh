@@ -18,6 +18,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup BoxStokes2cniModel
+ *
  * \file
  *
  * \brief Defines the properties required for the non-isothermal compositional
@@ -29,13 +33,13 @@
 #include "stokes2cniindices.hh"
 
 #include <dumux/freeflow/stokes2c/stokes2cproperties.hh>
-#include "stokes2cnivolumevariables.hh"
-#include "stokes2cnifluxvariables.hh"
+
+#include "stokes2cnilocalresidual.hh"
 
 namespace Dumux
 {
 /*!
- * \addtogroup Stokes2cniModel
+ * \addtogroup BoxStokes2cniModel
  */
 // \{
 ////////////////////////////////
@@ -54,8 +58,7 @@ template <class TypeTag>
 class Stokes2cniFluxVariables;
 
 template <class TypeTag>
-class Stokes2cniNewtonController;
-
+class Stokes2cniIndices;
 
 ////////////////////////////////
 // properties
@@ -93,12 +96,6 @@ SET_PROP(BoxStokes2cni, NumEq) //!< set the number of equations
 SET_TYPE_PROP(BoxStokes2cni,
               LocalResidual,
               Stokes2cniLocalResidual<TypeTag>);
-
-//! Use the stokes2cni specific newton controller for the compositional stokes model
-SET_PROP(BoxStokes2cni, NewtonController)
-{public:
-    typedef Stokes2cniNewtonController<TypeTag> type;
-};
 
 //! the Model property
 SET_TYPE_PROP(BoxStokes2cni, Model, Stokes2cniModel<TypeTag>);

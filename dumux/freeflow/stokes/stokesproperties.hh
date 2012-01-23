@@ -19,6 +19,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup BoxStokesModel
+ *
  * \file
  *
  * \brief Defines the properties required for the Stokes BOX model.
@@ -30,7 +34,8 @@
 #include "stokesindices.hh"
 
 #include <dumux/boxmodels/common/boxproperties.hh>
-#include <dumux/freeflow/stokes/stokeslocaljacobian.hh>
+#include "stokeslocaljacobian.hh"
+#include "stokesnewtoncontroller.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -43,10 +48,6 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup StokesModel
- */
-// \{
 
 ////////////////////////////////
 // forward declarations
@@ -75,7 +76,7 @@ namespace Properties
 {
 
 /*!
- * \addtogroup StokesModel
+ * \addtogroup BoxStokesModel
  */
 // \{
 
@@ -180,15 +181,6 @@ public:
 SET_INT_PROP(BoxStokes, PhaseIndex, 0);
 
 // \}
-
-//// enable jacobian matrix recycling by default
-//SET_BOOL_PROP(BoxStokes, EnableJacobianRecycling, false);
-//// enable partial reassembling by default
-//SET_BOOL_PROP(BoxStokes, EnablePartialReassemble, false);
-//// set some Newton properties deviating from the default ones
-//
-//SET_SCALAR_PROP(BoxStokes, NewtonRelTolerance, 1e-4);
-//SET_INT_PROP(BoxStokes, NewtonTargetSteps, 10);
 
 }
 }

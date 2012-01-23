@@ -21,7 +21,6 @@
  *****************************************************************************/
 /**
  * @file
- * \ingroup Stokes2cProblems
  * @brief  Definition of a simple Stokes problem
  * @author Klaus Mosthaf, Andreas Lauser, Bernd Flemisch
  */
@@ -93,8 +92,9 @@ SET_BOOL_PROP(Stokes2cTestProblem, NewtonWriteConvergence, false);
 }
 
 /*!
- * \ingroup Stokes2cBoxProblems
- * \brief Stokes transport problem with air (N2) flowing
+ * \ingroup BoxStokes2cModel
+ * \ingroup BoxTestProblems
+ * \brief Stokes transport problem with nitrogen (N2) flowing
  *        from the left to the right.
  *
  * The domain is sized 1m times 1m. The boundary conditions for the momentum balances
@@ -103,7 +103,7 @@ SET_BOOL_PROP(Stokes2cTestProblem, NewtonWriteConvergence, false);
  * of the two momentum balances. In the middle of the right boundary,
  * one vertex receives Dirichlet bcs, to set the pressure level.
  *
- * This problem uses the \ref Stokes2cModel.
+ * This problem uses the \ref BoxStokes2cModel.
  *
  * This problem is non-stationary and can be simulated until \f$t_{\text{end}} =
  * 1e5\;s\f$ is reached. A good choice for the initial time step size
@@ -112,10 +112,10 @@ SET_BOOL_PROP(Stokes2cTestProblem, NewtonWriteConvergence, false);
  * <tt>./test_stokes2c grid/stokes.dgf 1e5 10</tt>
  */
 template <class TypeTag>
-class Stokes2cTestProblem : public Stokes2cProblem<TypeTag>
+class Stokes2cTestProblem : public StokesProblem<TypeTag>
 {
     typedef Stokes2cTestProblem<TypeTag> ThisType;
-    typedef Stokes2cProblem<TypeTag> ParentType;
+    typedef StokesProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;

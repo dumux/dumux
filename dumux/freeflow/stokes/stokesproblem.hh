@@ -25,15 +25,13 @@
 #ifndef DUMUX_STOKES_PROBLEM_HH
 #define DUMUX_STOKES_PROBLEM_HH
 
-#include "dumux/freeflow/stokes/stokesnewtoncontroller.hh"
-
 #include <dumux/boxmodels/common/boxproblem.hh>
 
 
 namespace Dumux
 {
 /*!
- * \ingroup StokesProblems
+ * \ingroup BoxStokesProblems
  * \brief Base class for all problems which use the stokes box model
  *
  * \todo Please doc me more!

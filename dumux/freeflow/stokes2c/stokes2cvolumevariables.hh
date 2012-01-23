@@ -33,9 +33,10 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Stokes2cModel
+ * \ingroup BoxStokes2cModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the compositional Stokes model.
+ *        finite volume in the two-component Stokes model.
  */
 template <class TypeTag>
 class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>

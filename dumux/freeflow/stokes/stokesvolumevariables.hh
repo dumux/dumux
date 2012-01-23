@@ -22,7 +22,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the stokes model.
+ *        finite volume in the Stokes model.
  */
 #ifndef DUMUX_STOKES_VOLUME_VARIABLES_HH
 #define DUMUX_STOKES_VOLUME_VARIABLES_HH
@@ -32,15 +32,11 @@
 
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
 
-//#include <dumux/material/fluidstates/compositionalfluidstate.hh>
-//#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-//#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-
 namespace Dumux
 {
 
 /*!
- * \ingroup StokesModel
+ * \ingroup BoxStokesModel
  * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the Stokes model.

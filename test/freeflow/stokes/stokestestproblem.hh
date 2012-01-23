@@ -22,7 +22,6 @@
  *****************************************************************************/
 /**
  * @file
- * \ingroup StokesProblems
  * @brief  Definition of a simple Stokes problem
  * @author Klaus Mosthaf, Andreas Lauser, Bernd Flemisch
  */
@@ -92,17 +91,18 @@ SET_BOOL_PROP(StokesTestProblem, EnableGravity, false);
 }
 
 /*!
- * \ingroup StokesBoxProblems
- * \brief Stokes flow problem with air (N2) flowing
+ * \ingroup BoxStokesModel
+ * \ingroup BoxTestProblems
+ * \brief Stokes flow problem with nitrogen (N2) flowing
  *        from the left to the right.
  *
- * The domain is sized 6m times 4m. The boundary conditions for the momentum balances
+ * The domain is sized 1m times 1m. The boundary conditions for the momentum balances
  * are all set to Dirichlet. The mass balance receives
  * outflow bcs, which are replaced in the localresidual by the sum
  * of the two momentum balances. In the middle of the right boundary,
  * one vertex receives Dirichlet bcs, to set the pressure level.
  *
- * This problem uses the \ref StokesModel.
+ * This problem uses the \ref BoxStokesModel.
  *
  * This problem is stationary and can be simulated until \f$t_{\text{end}} =
  * 1\;s\f$ is reached. A good choice for the initial time step size

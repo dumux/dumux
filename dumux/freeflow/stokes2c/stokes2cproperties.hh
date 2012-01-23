@@ -18,6 +18,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup BoxProperties
+ * \ingroup BoxStokes2cModel
+ *
  * \file
  *
  * \brief Defines the properties required for the compositional
@@ -29,15 +33,14 @@
 #include "stokes2cindices.hh"
 
 #include <dumux/freeflow/stokes/stokesproperties.hh>
-#include "stokes2cvolumevariables.hh"
-#include "stokes2cfluxvariables.hh"
-
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
+
+#include "stokes2clocalresidual.hh"
 
 namespace Dumux
 {
 /*!
- * \addtogroup Stokes2cModel
+ * \addtogroup BoxStokes2cModel
  */
 // \{
 ////////////////////////////////
@@ -54,10 +57,6 @@ class Stokes2cVolumeVariables;
 
 template <class TypeTag>
 class Stokes2cFluxVariables;
-
-template <class TypeTag>
-class Stokes2cNewtonController;
-
 
 ////////////////////////////////
 // properties
@@ -95,12 +94,6 @@ SET_PROP(BoxStokes2c, NumEq) //!< set the number of equations
 SET_TYPE_PROP(BoxStokes2c,
               LocalResidual,
               Stokes2cLocalResidual<TypeTag>);
-
-//! Use the stokes2c specific newton controller for the compositional stokes model
-SET_PROP(BoxStokes2c, NewtonController)
-{public:
-    typedef Stokes2cNewtonController<TypeTag> type;
-};
 
 //! the Model property
 SET_TYPE_PROP(BoxStokes2c, Model, Stokes2cModel<TypeTag>);

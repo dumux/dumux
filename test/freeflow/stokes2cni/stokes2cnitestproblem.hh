@@ -21,7 +21,6 @@
  *****************************************************************************/
 /**
  * @file
- * \ingroup Stokes2cniProblems
  * @brief  Definition of a simple Stokes problem
  * @author Klaus Mosthaf, Andreas Lauser, Bernd Flemisch
  */
@@ -78,7 +77,8 @@ SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
 }
 
 /*!
- * \ingroup Stokes2cniBoxProblems
+ * \ingroup BoxStokes2cniModel
+ * \ingroup BoxTestProblems
  * \brief Stokes2cni problem with air (N2) flowing
  *        from the left to the right.
  *
@@ -88,7 +88,7 @@ SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
  * of the two momentum balances. In the middle of the right boundary,
  * one vertex obtains Dirichlet bcs to fix the pressure at one point.
  *
- * This problem uses the \ref Stokes2cniModel.
+ * This problem uses the \ref BoxStokes2cniModel.
  *
  * This problem is non-stationary and can be simulated until \f$t_{\text{end}} =
  * 100\;s\f$ is reached. A good choice for the initial time step size
@@ -97,10 +97,10 @@ SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
  * <tt>./test_stokes2cni grids/test_stokes2cni.dgf 100 1</tt>
  */
 template <class TypeTag>
-class Stokes2cniTestProblem : public Stokes2cniProblem<TypeTag>
+class Stokes2cniTestProblem : public StokesProblem<TypeTag>
 {
     typedef Stokes2cniTestProblem<TypeTag> ThisType;
-    typedef Stokes2cniProblem<TypeTag> ParentType;
+    typedef StokesProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;

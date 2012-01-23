@@ -31,38 +31,44 @@
 
 #include "stokes2cnilocalresidual.hh"
 #include "stokes2cniproperties.hh"
-#include "stokes2cniproblem.hh"
 
 namespace Dumux {
-
 /*!
- * \ingroup BoxProblems
- * \defgroup Stokes2cniBoxProblems Non-isothermal compositional stokes problems
- */
-
-/*!
- * \ingroup BoxModels
- * \defgroup Stokes2cniModel Non-isothermal compositional box stokes model
- */
-
-/*!
- * \ingroup Stokes2cniModel
- * \brief Adaption of the BOX scheme to the non-isothermal compositional stokes model.
+ * \ingroup BoxStokes2cniModel
+ * \brief Adaption of the BOX scheme to the non-isothermal compositional Stokes model.
  *
- * This model implements a non-isothermal flow of a fluid
- * \f$\alpha \in \{ w, n \}\f$.
- * Using the standard Stokes approach a mass balance equation is
- * solved:
- * \f{eqnarray*}
- && \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa S_\alpha )}{\partial t}
- - \sum_\alpha \text{div} \left\{ \varrho_\alpha X_\alpha^\kappa
- \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- (\text{grad} p_\alpha - \varrho_{\alpha} \mbox{\bf g}) \right\}\\
- &-& \sum_\alpha \text{div} \left\{{\bf D_{\alpha, pm}^\kappa} \varrho_{\alpha} \text{grad} X^\kappa_{\alpha} \right\}
- - \sum_\alpha q_\alpha^\kappa = \quad 0 \qquad \kappa \in \{w, a\} \, ,
- \alpha \in \{w, n\}
- *     \f}
- \f}
+ * This model implements a non-isothermal two-component Stokes flow of a fluid
+ * solving a momentum balance, a mass balance, a conservation equation for one component,
+ * and one balance quation for the energy.
+ *
+ * Momentum Balance:
+ * \f[
+\frac{\partial \left(\varrho_g {\boldsymbol{v}}_g\right)}{\partial t}
++ \boldsymbol{\nabla} \boldsymbol{\cdot} \left(p_g {\bf {I}}
+- \mu_g \left(\boldsymbol{\nabla} \boldsymbol{v}_g
++ \boldsymbol{\nabla} \boldsymbol{v}_g^T\right)\right)
+- \varrho_g {\bf g} = 0,
+ * \f]
+ *
+ * Mass balance equation:
+ * \f[
+\frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+ * \f]
+ *
+ * Component mass balance equation:
+ * \f[
+ \frac{\partial \left(\varrho_g X_g^\kappa\right)}{\partial t}
+ + \boldsymbol{\nabla} \boldsymbol{\cdot} \left( \varrho_g {\boldsymbol{v}}_g X_g^\kappa
+ - D^\kappa_g \varrho_g \boldsymbol{\nabla} X_g^\kappa \right)
+ - q_g^\kappa = 0
+ * \f]
+ *
+ * Energy balance equation:
+ * \f[
+\frac{\partial (\varrho_g  u_g)}{\partial t}
++ \boldsymbol{\nabla} \boldsymbol{\cdot} \varrho_g h_g {\boldsymbol{v}}_g
+- \lambda_g \boldsymbol{\nabla} T - q_T = 0
+ * \f]
  *
  * This is discretized using a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and

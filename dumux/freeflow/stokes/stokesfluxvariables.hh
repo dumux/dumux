@@ -22,10 +22,9 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        all fluxes of the fluid phase over a face of a finite volume.
+ *        the fluxes of the fluid phase over a face of a finite volume.
  *
- * This means pressure and temperature gradients, phase densities at
- * the integration point, etc.
+ * This means pressure gradients, phase densities at the integration point, etc.
  */
 #ifndef DUMUX_STOKES_FLUX_VARIABLES_HH
 #define DUMUX_STOKES_FLUX_VARIABLES_HH
@@ -36,10 +35,11 @@ namespace Dumux
 {
 
 /*!
- * \ingroup StokesModel
+ * \ingroup BoxStokesModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
- *        calculate the fluxes of the fluid phases over a face of a
- *        finite volume for the stokes model.
+ *        calculate the fluxes of the fluid phase over a face of a
+ *        finite volume for the Stokes model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.

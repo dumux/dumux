@@ -29,7 +29,9 @@
 
 namespace Dumux {
 /*!
- * \brief A Stokes specific controller for the newton solver.
+ * \ingroup BoxStokesModel
+ * \ingroup Newton
+ * \brief A Stokes-specific controller for the newton solver.
  */
 template <class TypeTag>
 class StokesNewtonController : public NewtonController<TypeTag>
@@ -43,9 +45,9 @@ public:
     {
         Dune::FMatrixPrecision<>::set_singular_limit(1e-35);
 
-        this->setRelTolerance(1e-4);
-        this->setTargetSteps(15);
-        this->setMaxSteps(23);
+        this->setRelTolerance(1e-6);
+        this->setTargetSteps(10);
+        this->setMaxSteps(18);
     };
 };
 }

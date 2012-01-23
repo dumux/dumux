@@ -27,31 +27,34 @@
 #define DUMUX_STOKES_MODEL_HH
 
 #include "stokeslocalresidual.hh"
+#include "stokesnewtoncontroller.hh"
 #include "stokeslocaljacobian.hh"
 #include "stokesproblem.hh"
 #include "stokesproperties.hh"
 
 namespace Dumux
 {
-
 /*!
- * \ingroup BoxProblems
- * \defgroup StokesBoxProblems Stokes box problems
- */
-
-/*!
- * \ingroup BoxModels
- * \defgroup StokesModel Stokes box model
- */
-
-/*!
- * \ingroup StokesModel
+ * \ingroup BoxStokesModel
  * \brief Adaption of the BOX scheme to the stokes flow model.
  *
- * This model implements stokes flow of a single fluid
- * discretized by a fully-coupled vertex
- * centered finite volume (box) scheme as spatial and
- * the implicit Euler method as time discretization.
+ * This model implements laminar Stokes flow of a single fluid, solving a momentum balance:
+ * \f[
+\frac{\partial \left(\varrho_g {\boldsymbol{v}}_g\right)}{\partial t}
++ \boldsymbol{\nabla} \boldsymbol{\cdot} \left(p_g {\bf {I}}
+- \mu_g \left(\boldsymbol{\nabla} \boldsymbol{v}_g
++ \boldsymbol{\nabla} \boldsymbol{v}_g^T\right)\right)
+- \varrho_g {\bf g} = 0,
+ * \f]
+ *
+ * and the mass balance equation:
+ * \f[
+\frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
+ * \f]
+ *
+ * This is discretized by a fully-coupled vertex- centered finite volume
+ * (box) scheme as spatial and the implicit Euler method
+ * as temporal discretization.
  */
 template<class TypeTag >
 class StokesModel : public BoxModel<TypeTag>

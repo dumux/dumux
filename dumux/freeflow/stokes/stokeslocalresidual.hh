@@ -44,7 +44,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup StokesModel
+ * \ingroup BoxStokesModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the stokes box model.
  *

@@ -30,13 +30,14 @@
 
 #include <dumux/freeflow/stokes2c/stokes2clocalresidual.hh>
 
-#include <dumux/freeflow/stokes2cni/stokes2cnivolumevariables.hh>
-#include <dumux/freeflow/stokes2cni/stokes2cnifluxvariables.hh>
+#include "stokes2cnivolumevariables.hh"
+#include "stokes2cnifluxvariables.hh"
 
 namespace Dumux
 {
 /*!
- * \ingroup Stokes2cniModel
+ * \ingroup BoxStokes2cniModel
+ * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the non-isothermal compositional stokes box model. This is derived
  *        from the stokes2c box model.

@@ -34,6 +34,8 @@ namespace Dumux
 // \{
 
 /*!
+ * \ingroup BoxStokes2cniModel
+ * \ingroup BoxIndices
  * \brief Enumerations for the non-isothermal compositional stokes model
  */
 template <class TypeTag, int PVOffset=0>

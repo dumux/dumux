@@ -31,12 +31,14 @@
 #define DUMUX_STOKES2CNI_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/freeflow/stokes2c/stokes2cfluxvariables.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup Stokes2cniModel
+ * \ingroup BoxStokes2cniModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the energy fluxes over a face of a finite
  *        volume for the non-isothermal compositional stokes model.

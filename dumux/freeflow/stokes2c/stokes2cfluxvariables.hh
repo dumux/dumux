@@ -31,6 +31,7 @@
 #define DUMUX_STOKES2C_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/freeflow/stokes/stokesfluxvariables.hh>
 
 namespace Dumux
 {
@@ -41,10 +42,11 @@ NEW_PROP_TAG(Stokes2cIndices); //!< Enumerations for the compositional stokes mo
 }
 
 /*!
- * \ingroup Stokes2cModel
+ * \ingroup BoxStokes2cModel
+ * \ingroup BoxFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the component fluxes over a face of a finite
- *        volume for the compositional stokes model.
+ *        volume for the compositional Stokes model.
  *
  * This means concentration gradients, diffusion coefficients, mass fractions, etc.
  * at the integration point.

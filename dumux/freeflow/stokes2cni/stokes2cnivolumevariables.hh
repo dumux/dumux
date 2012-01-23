@@ -33,9 +33,10 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Stokes2cniModel
+ * \ingroup BoxStokes2cniModel
+ * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the non-isothermal compositional stokes
+ *        finite volume in the non-isothermal two-component Stokes
  *        model.
  */
 template <class TypeTag>
