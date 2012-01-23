@@ -29,14 +29,14 @@
 #define DUMUX_DIFFUSIONPROBLEM_2P_HH
 
 #include <dumux/decoupled/common/onemodelproblem.hh>
-#include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/2p/cellData2p.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidstates/isoimmisciblefluidstate.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include "diffusionproperties2p.hh"
 
 namespace Dumux
 {
+namespace Properties
+{
+SET_TYPE_PROP(PressureTwoP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
+}
 /*!
  * \ingroup IMPETproblems
  * \ingroup Pressure2p

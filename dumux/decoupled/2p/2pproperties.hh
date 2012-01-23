@@ -36,8 +36,7 @@
 #define DUMUX_2PPROPERTIES_DECOUPLED_HH
 
 //Dumux-includes
-#include <dumux/decoupled/common/impetproperties.hh>
-#include <dumux/decoupled/2p/transport/transportproperties2p.hh>
+#include <dumux/decoupled/common/decoupledproperties.hh>
 #include "2pindices.hh"
 
 namespace Dumux
@@ -46,18 +45,6 @@ namespace Dumux
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
-
-template<class TypeTag>
-class VariableClass;
-
-template<class TypeTag, bool enableCompressibility>
-class CellData2P;
-
-template<class TypeTag>
-class TwoPImmiscibleFluidSystem;
-
-template<class Scalar, class FluidSystem>
-class IsothermalImmiscibleFluidState;
 
 ////////////////////////////////
 // properties
@@ -69,7 +56,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(IMPET, TransportTwoP))
+NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(DecoupledModel))
 ;
 
 //////////////////////////////////////////////////////////////////
@@ -99,7 +86,6 @@ NEW_PROP_TAG( FluidSystem )//!< Defines the fluid system
 ;
 NEW_PROP_TAG( FluidState )//!< Defines the fluid state
 ;
-
 NEW_PROP_TAG( TwoPIndices ); //!< keep for compatibility with box models
 
 NEW_PROP_TAG( ErrorTermFactor );
@@ -108,6 +94,11 @@ NEW_PROP_TAG( ErrorTermUpperBound );
 }
 }
 
+#include <dumux/decoupled/common/variableclass.hh>
+#include <dumux/decoupled/2p/cellData2p.hh>
+#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/fluidstates/isoimmisciblefluidstate.hh>
+
 namespace Dumux
 {
 namespace Properties
@@ -115,12 +106,12 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
-
 SET_INT_PROP(DecoupledTwoP, NumEq, 2);
 
 SET_INT_PROP(DecoupledTwoP, NumPhases, 2);//!< The number of phases in the 2p model is 2
 
 SET_INT_PROP(DecoupledTwoP, NumComponents, 1); //!< Each phase consists of 1 pure component
+
 
 SET_INT_PROP(DecoupledTwoP,
     Formulation,

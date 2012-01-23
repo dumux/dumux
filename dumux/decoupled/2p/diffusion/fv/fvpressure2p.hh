@@ -36,7 +36,6 @@
 
 namespace Dumux
 {
-
 //! \ingroup FV2p
 //! \brief Finite Volume discretization of the pressure equation of the sequential IMPES Model.
 /*! Provides a Finite Volume implementation for the evaluation

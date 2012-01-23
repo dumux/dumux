@@ -19,11 +19,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_TRANSPORT_PROPERTIES_2P_HH
-#define DUMUX_TRANSPORT_PROPERTIES_2P_HH
+#ifndef DUMUX_DIFFUSION_PROPERTIES_1P_HH
+#define DUMUX_DIFFUSION_PROPERTIES_1P_HH
 
-#include <dumux/decoupled/common/transportproperties.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/common/pressureproperties.hh>
+#include <dumux/decoupled/1p/1pproperties.hh>
 
 /*!
  * \ingroup Saturation2p
@@ -44,17 +44,13 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
+NEW_TYPE_TAG(PressureOneP, INHERITS_FROM(Pressure, DecoupledOneP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 }
 }
-
-
-#include "gridadaptionindicator2p.hh"
-#include <dumux/decoupled/common/fv/velocitydefault.hh>
 
 namespace Dumux
 {
@@ -63,7 +59,6 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TransportTwoP, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 }
 }
 

@@ -50,7 +50,7 @@ namespace Dumux
  */
 
 template<class TypeTag>
-class FVVelocity2Padaptive: public FVVelocity2P<TypeTag>
+class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
 {
     typedef FVVelocity2P<TypeTag> ParentType;
 
@@ -109,11 +109,11 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! Constructs a FVVelocity2Padaptive object
+    //! Constructs a FVVelocity2PAdaptive object
     /*!
      * \param problem a problem class object
      */
-    FVVelocity2Padaptive(Problem& problem)
+    FVVelocity2PAdaptive(Problem& problem)
     : ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
     	// todo: kompatibilität prüfen
@@ -152,6 +152,11 @@ public:
      */
     void calculateVelocity(const Intersection& intersection, CellData& cellDataI);
 
+    bool calculateVelocityInTransport()
+    {
+        return GET_PROP_VALUE(TypeTag, CalculateVelocityInTransport);
+    }
+
 private:
     Problem& problem_;
     const GlobalPosition& gravity_; //!< vector including the gravity constant
@@ -165,7 +170,7 @@ private:
 };
 
 template<class TypeTag>
-void FVVelocity2Padaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellDataI)
+void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellDataI)
 {
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();

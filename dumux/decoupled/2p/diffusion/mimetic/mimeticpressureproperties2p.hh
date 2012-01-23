@@ -1,7 +1,9 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -19,51 +21,60 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_TRANSPORT_PROPERTIES_2P_HH
-#define DUMUX_TRANSPORT_PROPERTIES_2P_HH
-
-#include <dumux/decoupled/common/transportproperties.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
 
 /*!
- * \ingroup Saturation2p
+ * \ingroup IMPES
  * \ingroup Properties
  */
 /*!
  * \file
- * \brief Specifies the properties for immiscible 2p transport
+ *
+ * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
+
+#ifndef DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
+#define DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
+
+//Dumux-includes
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 namespace Dumux
 {
+
+////////////////////////////////
+// forward declarations
+////////////////////////////////
+
+
+////////////////////////////////
+// properties
+////////////////////////////////
 namespace Properties
 {
-// \{
-
 //////////////////////////////////////////////////////////////////
-// Type tags tags
+// Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
+//! The type tag for the two-phase problems
+NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP))
+;
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
+NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
+
 }
 }
 
-
-#include "gridadaptionindicator2p.hh"
-#include <dumux/decoupled/common/fv/velocitydefault.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TransportTwoP, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
+SET_TYPE_PROP(MimeticPressureTwoP, PressureModel, MimeticPressure2P<TypeTag>);
+SET_TYPE_PROP(MimeticPressureTwoP, LocalStiffness, MimeticGroundwaterEquationLocalStiffness<TypeTag>);
 }
 }
 

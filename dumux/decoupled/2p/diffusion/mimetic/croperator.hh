@@ -44,8 +44,6 @@
 #include<dumux/common/boundaryconditions.hh>
 #include<dumux/decoupled/2p/diffusion/mimetic/localstiffness.hh>
 
-#include "mimeticproperties.hh"
-
 /**
  * @file
  * @brief  defines a class for piecewise linear finite element functions

@@ -25,9 +25,6 @@
 
 // dumux environment
 #include <dumux/decoupled/common/fv/fvpressure.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/mpfaproperties.hh>
-
 
 /**
  * @file

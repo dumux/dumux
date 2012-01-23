@@ -36,20 +36,10 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticproperties.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
 
 namespace Dumux
 {
-namespace Properties
-{
-SET_PROP(Mimetic, LocalStiffness)
-{
-public:
-    typedef MimeticGroundwaterEquationLocalStiffness<TypeTag> type;
-};
-}
 
 /*! \ingroup Mimetic2p
  *
@@ -229,7 +219,7 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typename Variables::ScalarSolutionType *pressure = writer.allocateManagedBuffer (problem_.gridView().size(0));
+        ScalarSolution *pressure = writer.allocateManagedBuffer (problem_.gridView().size(0));
 
         *pressure = pressure_;
 

@@ -704,7 +704,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
             pseudoFluidState.setMassConcentration(wCompIdx,
                     problem().transportModel().totalConcentration(wCompIdx,globalIdx));
             pseudoFluidState.setMassConcentration(nCompIdx,
-                    problem().transportModel().totalConcentration(wCompIdx,globalIdx));
+                    problem().transportModel().totalConcentration(nCompIdx,globalIdx));
 
             // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]
             Scalar sumConc = pseudoFluidState.massConcentration(wCompIdx)

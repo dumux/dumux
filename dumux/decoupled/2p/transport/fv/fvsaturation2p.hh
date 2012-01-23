@@ -22,15 +22,8 @@
 #ifndef DUMUX_FVSATURATION2P_HH
 #define DUMUX_FVSATURATION2P_HH
 
-#include <dune/grid/common/gridenums.hh>
+#include "fvtransportproperties2p.hh"
 #include "dumux/decoupled/common/fv/fvtransport.hh"
-#include "dumux/decoupled/2p/transport/fv/diffusivepart.hh"
-#include "dumux/decoupled/2p/transport/fv/convectivepart.hh"
-#include <dumux/decoupled/2p/transport/transportproperties2p.hh>
-#include <dumux/decoupled/common/fv/fvvelocitydefault.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
-#include "evalcflflux_default.hh"
-#include "gridadaptionindicator2p.hh"
 
 /**
  * @file
@@ -256,7 +249,8 @@ public:
         writer.attachCellData(*saturationW, "wetting saturation");
         writer.attachCellData(*saturationN, "nonwetting saturation");
 
-        velocity().addOutputVtkFields(writer);
+        if (velocity().calculateVelocityInTransport())
+            velocity().addOutputVtkFields(writer);
 
         return;
     }
@@ -407,7 +401,7 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
 
     Scalar faceArea = intersection.geometry().volume();
 
-    if (GET_PROP_VALUE(TypeTag, CalculateVelocityInTransport) && !cellDataI.fluxData().haveVelocity(isIndex))
+    if (velocity().calculateVelocityInTransport() && !cellDataI.fluxData().haveVelocity(isIndex))
         velocity().calculateVelocity(intersection, cellDataI);
 
     //get velocity*normalvector*facearea/(volume*porosity)
@@ -585,7 +579,7 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
 
     Scalar faceArea = intersection.geometry().volume();
 
-    if (GET_PROP_VALUE(TypeTag, CalculateVelocityInTransport))
+    if (velocity().calculateVelocityInTransport())
         velocity().calculateVelocityOnBoundary(intersection, cellDataI);
 
     //get velocity*normalvector*facearea/(volume*porosity)

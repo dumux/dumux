@@ -30,11 +30,8 @@
 
 #include <dumux/decoupled/common/impet.hh>
 #include <dumux/decoupled/common/impetproblem.hh>
-#include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/2p/cellData2p.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidstates/isoimmisciblefluidstate.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include "impesproperties2p.hh"
+#include "impesproperties2padaptive.hh"
 
 
 namespace Dumux

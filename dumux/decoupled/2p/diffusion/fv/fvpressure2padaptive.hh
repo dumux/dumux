@@ -55,7 +55,7 @@ namespace Dumux
  *
  * \tparam TypeTag The Type Tag
  */
-template<class TypeTag> class FVPressure2Padaptive: public FVPressure2P<TypeTag>
+template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 {
     typedef FVPressure2P<TypeTag> ParentType;
 
@@ -129,11 +129,11 @@ public:
         return;
     }
 
-    //! Constructs a FVPressure2Padaptive object
+    //! Constructs a FVPressure2PAdaptive object
     /**
      * \param problem a problem class object
      */
-    FVPressure2Padaptive(Problem& problem) :
+    FVPressure2PAdaptive(Problem& problem) :
             ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
         if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pglobal)
@@ -179,7 +179,7 @@ private:
 
 //!function which assembles the system of equations to be solved. Only works for 2D.
 template<class TypeTag>
-void FVPressure2Padaptive<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const Intersection& intersection
+void FVPressure2PAdaptive<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const Intersection& intersection
         , const CellData& cellDataI, const bool first)
 {
     ElementPointer elementI = intersection.inside();

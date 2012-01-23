@@ -36,8 +36,6 @@
 #include<dune/istl/matrix.hh>
 #include<dumux/common/boundaryconditions.hh>
 
-#include "mimeticproperties.hh"
-
 /**
  * @file
  * @brief  defines a class for piecewise linear finite element functions

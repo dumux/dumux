@@ -1,9 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Markus Wolff                                 *
- *   Copyright (C) 2008-2009 by Andreas Lauser                               *
- *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Copyright (C) 2011 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -29,14 +27,14 @@
 /*!
  * \file
  *
- * \brief Defines the properties required for (immiscible) twophase sequential models.
+ * \brief Defines the properties required for finite volume pressure models in a twophase sequential model.
  */
 
-#ifndef DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
-#define DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
+#ifndef DUMUX_FVPRESSUREPORPERTIES2P_ADAPTIVE_DECOUPLED_HH
+#define DUMUX_FVPRESSUREPORPERTIES2P_ADAPTIVE_DECOUPLED_HH
 
 //Dumux-includes
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
 
 namespace Dumux
 {
@@ -56,15 +54,31 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(Mimetic)
-;
+NEW_TYPE_TAG(FVPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
 
 }
+}
+
+#include "fvvelocity2padaptive.hh"
+#include "fvpressure2padaptive.hh"
+
+namespace Dumux
+{
+namespace Properties
+{
+//////////////////////////////////////////////////////////////////
+// Properties
+//////////////////////////////////////////////////////////////////
+SET_TYPE_PROP( FVPressureTwoPAdaptive, Velocity, Dumux::FVVelocity2PAdaptive<TypeTag> );
+SET_TYPE_PROP(FVPressureTwoPAdaptive, PressureModel, Dumux::FVPressure2PAdaptive<TypeTag>);
+SET_BOOL_PROP(FVPressureTwoPAdaptive, VisitFacesOnlyOnce, true);
+// \}
+}
+
 }
 
 #endif

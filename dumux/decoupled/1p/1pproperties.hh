@@ -45,12 +45,6 @@ namespace Dumux
 // forward declarations
 ////////////////////////////////
 
-template<class TypeTag>
-class VariableClass;
-
-template<class TypeTag>
-class CellData1P;
-
 ////////////////////////////////
 // properties
 ////////////////////////////////
@@ -73,12 +67,16 @@ NEW_PROP_TAG( EnableGravity)
 ; //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Fluid )
 ; //!< The fluid for one-phase models
+}
+}
 
-//Properties for linear solvers
-NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
-NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
-NEW_PROP_TAG( LinearSolver );//!< Type of linear solver
+#include <dumux/decoupled/common/variableclass.hh>
+#include <dumux/decoupled/1p/cellData1p.hh>
 
+namespace Dumux
+{
+namespace Properties
+{
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -94,27 +92,6 @@ SET_TYPE_PROP(DecoupledOneP, Indices, DecoupledOnePCommonIndices);
 SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
 
 SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
-
-SET_PROP(DecoupledOneP, PressureCoefficientMatrix)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
-
-public:
-    typedef Dune::BCRSMatrix<MB> type;
-};
-SET_PROP(DecoupledOneP, PressureRHSVector)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-public:
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
-};
-
-// use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(DecoupledOneP, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 }
 }
 #endif

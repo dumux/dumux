@@ -30,6 +30,8 @@
 #define DUMUX_2P2CPROPERTIES_HH
 
 //DUMUX includes
+#include <dumux/decoupled/common/pressureproperties.hh>
+#include <dumux/decoupled/common/transportproperties.hh>
 #include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/2pindices.hh>
 #include <dumux/decoupled/2p2c/cellData2p2c.hh>
@@ -61,7 +63,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tag for the compositional two-phase problems
-NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(IMPET));
+NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

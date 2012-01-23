@@ -151,6 +151,11 @@ public:
 
     void calculateVelocityOnBoundary(const Intersection&, CellData&);
 
+    bool calculateVelocityInTransport()
+    {
+        return true;
+    }
+
     //! \brief Write data files
     /*  \param name file name */
     template<class MultiWriter>

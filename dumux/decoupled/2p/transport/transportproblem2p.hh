@@ -28,16 +28,21 @@
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
 #define DUMUX_TRANSPORTPROBLEM_2P_HH
 
+#include "transportproperties2p.hh"
 #include <dumux/decoupled/common/onemodelproblem.hh>
-#include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/2p/cellData2p.hh>
-#include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidstates/isoimmisciblefluidstate.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
-
 
 namespace Dumux
 {
+namespace Properties
+{
+// Set the model properties
+SET_PROP(TransportTwoP, Model)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) type;
+};
+SET_TYPE_PROP(TransportTwoP, Velocity, VelocityDefault<TypeTag>); //this Property should be set by the pressure model, only for a pure transport it is set here for the transportproblem!
+}
+
 /*!
  * \ingroup Saturation2p
  * \ingroup IMPETproblems

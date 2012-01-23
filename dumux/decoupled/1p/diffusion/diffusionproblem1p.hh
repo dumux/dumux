@@ -35,6 +35,10 @@
 
 namespace Dumux
 {
+namespace Properties
+{
+SET_TYPE_PROP(PressureOneP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
+}
 /*!
  * \ingroup OnePhase
  *

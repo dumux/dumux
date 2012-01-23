@@ -19,11 +19,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_TRANSPORT_PROPERTIES_2P_HH
-#define DUMUX_TRANSPORT_PROPERTIES_2P_HH
+#ifndef DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
+#define DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
 
-#include <dumux/decoupled/common/transportproperties.hh>
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/2p/transport/transportproperties2p.hh>
 
 /*!
  * \ingroup Saturation2p
@@ -44,26 +43,37 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
+NEW_TYPE_TAG(FVTransportTwoP, INHERITS_FROM(TransportTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG( CapillaryFlux );         //!< The type of the diffusive part in a transport equation
+NEW_PROP_TAG( GravityFlux );        //!< The type of a convective part in a transport equation
+NEW_PROP_TAG( PrecomputedConstRels );
 }
 }
 
-
-#include "gridadaptionindicator2p.hh"
-#include <dumux/decoupled/common/fv/velocitydefault.hh>
+#include "evalcflflux_default.hh"
+#include "dumux/decoupled/2p/transport/fv/diffusivepart.hh"
+#include "dumux/decoupled/2p/transport/fv/convectivepart.hh"
+#include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TransportTwoP, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
+SET_TYPE_PROP(FVTransportTwoP, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
+SET_TYPE_PROP(FVTransportTwoP, CapillaryFlux, DiffusivePart<TypeTag>);
+SET_TYPE_PROP(FVTransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
+SET_BOOL_PROP( FVTransportTwoP, PrecomputedConstRels, true);
+
+// Set the model properties
+SET_PROP(FVTransportTwoP, TransportModel)
+{
+    typedef Dumux::FVSaturation2P<TypeTag> type;
+};
 }
 }
 

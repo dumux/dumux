@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Copyright (C) 2011 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -19,51 +19,49 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_TRANSPORT_PROPERTIES_2P_HH
-#define DUMUX_TRANSPORT_PROPERTIES_2P_HH
+#ifndef DUMUX_IMPES2P_PROPERTIES_HH
+#define DUMUX_IMPES2P_PROPERTIES_HH
 
-#include <dumux/decoupled/common/transportproperties.hh>
+#include <dumux/decoupled/common/impetproperties.hh>
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 /*!
- * \ingroup Saturation2p
+ * \ingroup IMPET
  * \ingroup Properties
  */
 /*!
  * \file
- * \brief Specifies the properties for immiscible 2p transport
+ * \brief Base file for properties related to sequential IMPET algorithms
  */
 namespace Dumux
 {
+
 namespace Properties
 {
-// \{
+/*!
+ *
+ * \brief General properties for sequential IMPET algorithms
+ *
+ * This class holds properties necessary for the sequential IMPET solution.
+ */
 
 //////////////////////////////////////////////////////////////////
 // Type tags tags
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
+NEW_TYPE_TAG(IMPESTwoP, INHERITS_FROM(IMPET, DecoupledTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 }
 }
-
-
-#include "gridadaptionindicator2p.hh"
-#include <dumux/decoupled/common/fv/velocitydefault.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TransportTwoP, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 }
 }
 
