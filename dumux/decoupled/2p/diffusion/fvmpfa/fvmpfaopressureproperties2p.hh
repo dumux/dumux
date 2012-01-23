@@ -28,8 +28,8 @@
  *
  * \brief Properties for the MPFA-O method.
  */
-#ifndef DUMUX_MPFAOPROPERTIES_HH
-#define DUMUX_MPFAOPROPERTIES_HH
+#ifndef DUMUX_FVMPFAOPROPERTIES_HH
+#define DUMUX_FVMPFAOPROPERTIES_HH
 
 // dumux environment
 #include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
@@ -88,7 +88,7 @@ struct GridImp<Dune::UGGrid<dim>, dim>
 
 namespace Properties
 {
-NEW_TYPE_TAG(FVMPFAPressurePropertiesTwoP, INHERITS_FROM(PressureTwoP));
+NEW_TYPE_TAG(FVMPFAOPressurePropertiesTwoP, INHERITS_FROM(PressureTwoP));
 
 NEW_PROP_TAG( GridTypeIndices );
 NEW_PROP_TAG( GridImplementation ); //returns kind of grid implementation
@@ -102,9 +102,9 @@ namespace Dumux
 {
 namespace Properties
 {
-SET_TYPE_PROP(FVMPFAPressurePropertiesTwoP, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
+SET_TYPE_PROP(FVMPFAOPressurePropertiesTwoP, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
 
-SET_PROP(FVMPFAPressurePropertiesTwoP, GridImplementation)
+SET_PROP(FVMPFAOPressurePropertiesTwoP, GridImplementation)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -112,7 +112,7 @@ public:
     static const int value = GridImp<Grid, Grid::dimension>::imp;
 };
 
-SET_TYPE_PROP(FVMPFAPressurePropertiesTwoP, GridTypeIndices, GridTypes);
+SET_TYPE_PROP(FVMPFAOPressurePropertiesTwoP, GridTypeIndices, GridTypes);
 
 }
 }// end of Dune namespace
