@@ -30,7 +30,7 @@
 
 #include <dumux/decoupled/common/onemodelproblem.hh>
 #include <dumux/decoupled/common/variableclass.hh>
-#include <dumux/decoupled/1p/1pproperties.hh>
+#include <dumux/decoupled/1p/diffusion/diffusionproperties1p.hh>
 #include <dumux/decoupled/1p/cellData1p.hh>
 
 namespace Dumux

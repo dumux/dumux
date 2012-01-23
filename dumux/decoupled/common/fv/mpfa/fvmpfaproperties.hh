@@ -22,34 +22,95 @@
  *****************************************************************************/
 
 /*!
- * \ingroup MPFA2p
+ * \ingroup Decoupled
  * \ingroup Properties
  * \file
  *
- * \brief Properties for the MPFA-O method.
+ * \brief Properties for a MPFA method.
  */
-#ifndef DUMUX_FVMPFAOPROPERTIES2P_HH
-#define DUMUX_FVMPFAOPROPERTIES2P_HH
+#ifndef DUMUX_FVMPFAPROPERTIES_HH
+#define DUMUX_FVMPFAPROPERTIES_HH
 
 // dumux environment
-#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
-#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
+#include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/sgrid.hh>
+#include <dune/grid/alugrid.hh>
+#if HAVE_UG
+#include <dune/grid/uggrid.hh>
+#endif
+
+namespace Dumux
+{
+/*!
+ * \brief Indices denoting the different grid types.
+ */
+struct GridTypes
+{
+public:
+    //
+    static const int any = 0;
+    //SGrid
+    static const int sGrid = 1;
+    //YaspGrid
+    static const int yaspGrid = 2;
+    //UGGrid
+    static const int ugGrid = 3;
+    //ALUGrid
+    static const int aluGrid = 4;
+};
+
+template<class Grid, int dim>
+struct GridImp
+{
+    static const int imp = GridTypes::any;
+};
+
+template<int dim>
+struct GridImp<Dune::YaspGrid<dim>, dim>
+{
+    static const int imp = GridTypes::yaspGrid;
+};
+
+template<int dim>
+struct GridImp<Dune::SGrid<dim, dim>, dim>
+{
+    static const int imp = GridTypes::sGrid;
+};
+
+#if HAVE_UG
+template<int dim>
+struct GridImp<Dune::UGGrid<dim>, dim>
+{
+    static const int imp = GridTypes::ugGrid;
+};
+#endif
+
+namespace Properties
+{
+NEW_TYPE_TAG(MPFAProperties);
+
+NEW_PROP_TAG( GridTypeIndices );
+NEW_PROP_TAG( GridImplementation ); //returns kind of grid implementation
+
+}
+}
 
 namespace Dumux
 {
 namespace Properties
 {
-NEW_TYPE_TAG(FVMPFAOPressurePropertiesTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
-}
-}
 
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
+SET_PROP(MPFAProperties, GridImplementation)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+public:
+    static const int value = GridImp<Grid, Grid::dimension>::imp;
+};
 
-namespace Dumux
-{
-namespace Properties
-{
-SET_TYPE_PROP(FVMPFAOPressurePropertiesTwoP, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
+SET_TYPE_PROP(MPFAProperties, GridTypeIndices, GridTypes);
+
 }
 }// end of Dune namespace
 #endif

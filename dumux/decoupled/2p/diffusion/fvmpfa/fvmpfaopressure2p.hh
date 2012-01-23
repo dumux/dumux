@@ -457,6 +457,9 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::assemble()
 {
+    this->A_=0;
+    this->f_=0;
+
     // introduce matrix R for vector rotation and R is initialized as zero matrix
     FieldMatrix R(0);
 
