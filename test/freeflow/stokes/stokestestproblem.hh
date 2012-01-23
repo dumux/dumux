@@ -305,8 +305,8 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      *
-     * A NEUMANN condition for the STOKES equation corresponds to:
-     * \f -\mu \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N
+     * A NEUMANN condition for the Stokes equation corresponds to:
+     * \f[ -\mu \nabla {\bf v} \cdot {\bf n} + p \cdot {\bf n} = q_N \f]
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,

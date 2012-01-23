@@ -21,7 +21,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the compositional stokes model.
+ *        finite volume in the compositional Stokes model.
  */
 #ifndef DUMUX_STOKES2C_VOLUME_VARIABLES_HH
 #define DUMUX_STOKES2C_VOLUME_VARIABLES_HH
@@ -61,7 +61,6 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
     };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
-
     enum { transportIdx = Indices::transportIdx };
 
 public:

@@ -21,7 +21,7 @@
  * \file
  *
  * \brief Contains the quantities which are constant within a
- *        finite volume in the non-isothermal compositional stokes model.
+ *        finite volume in the non-isothermal compositional Stokes model.
  */
 #ifndef DUMUX_STOKES2CNI_VOLUME_VARIABLES_HH
 #define DUMUX_STOKES2CNI_VOLUME_VARIABLES_HH
@@ -87,8 +87,6 @@ public:
     /*!
      * \brief Returns the total internal energy of a phase in the
      *        sub-control volume.
-     *
-     * \param phaseIdx The phase index
      */
     Scalar internalEnergy() const
     { return this->fluidState_.internalEnergy(phaseIdx); };
@@ -96,8 +94,6 @@ public:
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
      *        volume.
-     *
-     * \param phaseIdx The phase index
      */
     Scalar enthalpy() const
     { return this->fluidState_.enthalpy(phaseIdx); };

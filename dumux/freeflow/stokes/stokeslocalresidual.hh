@@ -153,6 +153,7 @@ public:
      *
      * \param flux The flux over the SCV (sub-control-volume) face
      * \param faceIdx The index of the SCV face
+     * \param onBoundary Indicates, if the flux is evaluated on a boundary face
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {
@@ -175,7 +176,7 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -259,10 +260,10 @@ public:
      * conductive fluxes
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current sub control volume face
+     * \param fluxVars The flux variables at the current sub control volume face
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxData) const
+                              const FluxVariables &fluxVars) const
     { }
 
     /*!

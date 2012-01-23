@@ -141,8 +141,6 @@ public:
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
-     *
-     * \param phaseIdx The phase index
      */
     Scalar density() const
     { return fluidState_.density(phaseIdx); }
@@ -150,8 +148,6 @@ public:
     /*!
      * \brief Returns the effective pressure of a given phase within
      *        the control volume.
-     *
-     * \param phaseIdx The phase index
      */
     Scalar pressure() const
     { return fluidState_.pressure(phaseIdx); }
@@ -169,14 +165,12 @@ public:
     /*!
      * \brief Returns the viscosity of the fluid in
      *        the control volume.
-     *
-     * \param phaseIdx The phase index
      */
     Scalar viscosity() const
     { return fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Returns the velocity
+     * \brief Returns the phase velocity
      */
     const VelocityVector &velocity() const
     { return velocity_; }
@@ -199,22 +193,10 @@ protected:
         return problem.boxTemperature(element, elemGeom, scvIdx);
     }
 
-//    /*!
-//     * \brief Called by update() to compute the energy related quantities
-//     */
-//    void updateEnergy_(const PrimaryVariables &primaryVars,
-//                       const Problem &problem,
-//                       const Element &element,
-//                       const FVElementGeometry &elemGeom,
-//                       int vertIdx,
-//                       bool isOldSol)
-//    { }
-
     VelocityVector velocity_;
     FluidState fluidState_;
 
 private:
-
     Implementation &asImp()
     { return *static_cast<Implementation*>(this); }
     const Implementation &asImp() const

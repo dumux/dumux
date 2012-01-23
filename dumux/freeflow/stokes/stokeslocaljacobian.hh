@@ -31,6 +31,7 @@
 #define DUMUX_STOKES_LOCAL_JACOBIAN_HH
 
 #include <dune/istl/matrix.hh>
+#include <dumux/boxmodels/common/boxlocaljacobian.hh>
 
 namespace Dumux
 {
@@ -55,7 +56,7 @@ private:
     };
 
 public:
-    //! \copydoc BoxLocalJacobian::numericEpsilon_()
+    //! \copydoc numericEpsilon_()
     Scalar numericEpsilon_(int scvIdx,
                            int pvIdx) const
     {
