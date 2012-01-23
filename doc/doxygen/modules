@@ -130,6 +130,18 @@
 		 * \ingroup BoxModels
 		 * \defgroup RichardsModel Richards
 		 */
+		/*!
+		 * \ingroup BoxModels
+		 * \defgroup BoxStokesModel Stokes
+		 */
+        /*!
+         * \ingroup BoxModels
+         * \defgroup BoxStokes2cModel Two-component Stokes
+         */
+        /*!
+         * \ingroup BoxModels
+         * \defgroup BoxStokes2cniModel Non-isothermal two-component Stokes
+         */
 
 	/*!
 	 * \ingroup BoxModel
