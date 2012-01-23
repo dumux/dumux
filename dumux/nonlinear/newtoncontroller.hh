@@ -453,9 +453,11 @@ public:
 
         // compute the vertex and element colors for partial reassembly
         if (enablePartialReassemble_) {
-            Scalar minReasmTol = 0.01*tolerance_;
-            Scalar reassembleTol = Dumux::geometricMean(error_, minReasmTol);
-            reassembleTol = std::max(reassembleTol, minReasmTol);
+            Scalar minReasmTol, tmp, reassembleTol;
+            minReasmTol = 0.1*tolerance_;
+            tmp = Dumux::geometricMean(error_, minReasmTol);
+            reassembleTol = Dumux::geometricMean(error_, tmp);
+
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
             this->model_().jacobianAssembler().computeColors(reassembleTol);
         }
@@ -468,9 +470,6 @@ public:
         }
         else {
             for (int i = 0; i < uLastIter.size(); ++i) {
-                if (this->model_().jacobianAssembler().vertexColor(i) != JacobianAssembler::Red)
-                    continue;
-                
                 uCurrentIter[i] = uLastIter[i];
                 uCurrentIter[i] -= deltaU[i];
             }

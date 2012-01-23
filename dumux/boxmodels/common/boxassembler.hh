@@ -618,18 +618,18 @@ private:
     // only be erased partially!
     void resetSystem_()
     {
-        // always reset the right hand side.
-        residual_ = 0.0;
-
         // do not do anything if we can re-use the current linearization
         if (reuseMatrix_)
             return;
+
+        // reset the right hand side.
+        residual_ = 0.0;
 
         if (!enablePartialReassemble_()) {
             // If partial reassembly of the jacobian is not enabled,
             // we can just reset everything!
             (*matrix_) = 0;
-
+          
             // reset the parts needed for Jacobian recycling
             if (enableJacobianRecycling_()) {
                 int numVertices = matrix_->N();
@@ -647,6 +647,8 @@ private:
             if (vertexColor_[rowIdx] == Green)
                 continue; // the equations for this control volume are
                           // already below the treshold
+            
+            // here we have yellow or red vertices...
 
             // reset the parts needed for Jacobian recycling
             if (enableJacobianRecycling_()) {
@@ -654,7 +656,7 @@ private:
                 storageTerm_[rowIdx] = 0;
             }
 
-            // set all entries in the row to 0
+            // set all matrix entries in the row to 0
             typedef typename JacobianMatrix::ColIterator ColIterator;
             ColIterator colIt = (*matrix_)[rowIdx].begin();
             const ColIterator &colEndIt = (*matrix_)[rowIdx].end();

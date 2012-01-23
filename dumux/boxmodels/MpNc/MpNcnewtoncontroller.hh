@@ -167,7 +167,6 @@ class MPNCNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 
     typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -179,12 +178,8 @@ class MPNCNewtonController : public NewtonController<TypeTag>
         enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
-        enablePartialReassemble = GET_PROP_VALUE(TypeTag, EnablePartialReassemble),
-
         p0Idx = Indices::p0Idx,
         S0Idx = Indices::S0Idx,
-
-        Red = JacobianAssembler::Red
     };
 
     typedef MpNcNewtonChop<TypeTag, enableKinetic> NewtonChop;
@@ -206,8 +201,8 @@ public:
 
         // compute the vertex and element colors for partial
         // reassembly
-        if (enablePartialReassemble) {
-            Scalar minReasmTol = 0.01*this->tolerance_;
+        if (this->enablePartialReassemble_) {
+            Scalar minReasmTol = 0.1*this->tolerance_;
             Scalar reassembleTol = Dumux::geometricMean(this->error_, minReasmTol);
             reassembleTol = std::max(reassembleTol, minReasmTol);
 
@@ -222,9 +217,6 @@ public:
         }
         else {
             for (int i = 0; i < uLastIter.size(); ++i) {
-                if (this->model_().jacobianAssembler().vertexColor(i) != JacobianAssembler::Red)
-                    continue;
-                
                 uCurrentIter[i] = uLastIter[i];
                 uCurrentIter[i] -= deltaU[i];
             }
