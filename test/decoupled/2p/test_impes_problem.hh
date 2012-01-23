@@ -41,12 +41,9 @@
 #include <dumux/material/components/simplednapl.hh>
 #include <dumux/material/components/oil.hh>
 
+#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
+#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
-#include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
-#include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
 
 #include "test_impes_spatialparams.hh"
 
@@ -63,7 +60,7 @@ class TestIMPESProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(DecoupledTwoP, Transport, TestIMPESSpatialParams));
+NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
 
 // Set the grid type
 SET_PROP(IMPESTestProblem, Grid)
@@ -75,18 +72,6 @@ SET_PROP(IMPESTestProblem, Grid)
 // Set the problem property
 SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::TestIMPESProblem<TTAG(IMPESTestProblem)>);
 
-// Set the model properties
-SET_TYPE_PROP(IMPESTestProblem, TransportModel, Dumux::FVSaturation2P<TTAG(IMPESTestProblem)>);
-
-SET_TYPE_PROP(IMPESTestProblem, CapillaryFlux, Dumux::CapillaryDiffusion<TypeTag>);
-SET_TYPE_PROP(IMPESTestProblem, GravityFlux, Dumux::GravityPart<TypeTag>);
-
-SET_PROP(IMPESTestProblem, PressureModel)
-{
-    typedef Dumux::FVPressure2P<TypeTag> type;
-};
-
-SET_TYPE_PROP(IMPESTestProblem, Velocity, Dumux::FVVelocity2P<TypeTag>);
 
 //SET_INT_PROP(IMPESTestProblem, Formulation,
 //        DecoupledTwoPCommonIndices::pnSn);

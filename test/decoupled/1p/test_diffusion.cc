@@ -49,7 +49,7 @@ void usage(const char *progname)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(DiffusionTestProblem) TypeTag;
+        typedef TTAG(FVVelocity2PTestProblem) TypeTag;
         typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
         typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
         static const int dim = Grid::dimension;

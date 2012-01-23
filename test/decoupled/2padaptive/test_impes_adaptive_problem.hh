@@ -40,11 +40,8 @@
 #include <dumux/material/components/oil.hh>
 
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvpressure2padaptive.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2padaptive.hh>
-#include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
-#include <dumux/decoupled/common/variableclass_adaptive.hh>
-#include <dumux/decoupled/2p/cellData2p_adaptive.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>
+#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 
 #include "test_impes_adaptive_spatialparams.hh"
 
@@ -61,7 +58,7 @@ class TestIMPESAdaptiveProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TestIMPESAdaptiveProblem, INHERITS_FROM(DecoupledTwoP, Transport, TestIMPESAdaptiveSpatialParams));
+NEW_TYPE_TAG(TestIMPESAdaptiveProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, TestIMPESAdaptiveSpatialParams));
 
 // Set the grid type
 SET_PROP(TestIMPESAdaptiveProblem, Grid)
@@ -73,19 +70,6 @@ SET_PROP(TestIMPESAdaptiveProblem, Grid)
 
 // Set the problem property
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, Dumux::TestIMPESAdaptiveProblem<TypeTag>);
-
-// Set the model properties
-SET_TYPE_PROP(TestIMPESAdaptiveProblem, TransportModel, Dumux::FVSaturation2P<TypeTag>);
-
-SET_PROP(TestIMPESAdaptiveProblem, PressureModel)
-{
-    typedef Dumux::FVPressure2Padaptive<TypeTag> type;
-};
-
-SET_PROP(TestIMPESAdaptiveProblem, Velocity)
-{
-    typedef Dumux::FVVelocity2Padaptive<TypeTag> type;
-};
 
 // Set the wetting phase
 SET_PROP(TestIMPESAdaptiveProblem, WettingPhase)
@@ -105,18 +89,8 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-SET_PROP(TestIMPESAdaptiveProblem, Variables)
-{
-    typedef Dumux::VariableClassAdaptive<TypeTag> type;
-};
-SET_PROP(TestIMPESAdaptiveProblem, CellData)
-{
-    typedef Dumux::CellData2PAdaptive<TypeTag> type;
-};
-
 // Enable gravity
 SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableGravity, false);
-SET_BOOL_PROP(TestIMPESAdaptiveProblem, AdaptiveGrid, true);
 
 //SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableCompressibility, true);
 

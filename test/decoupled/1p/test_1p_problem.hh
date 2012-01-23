@@ -37,9 +37,8 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
 
+#include <dumux/decoupled/1p/diffusion/fv/fvpressureproperties1p.hh>
 #include <dumux/decoupled/1p/diffusion/diffusionproblem1p.hh>
-#include <dumux/decoupled/1p/diffusion/fv/fvpressure1p.hh>
-#include <dumux/decoupled/1p/diffusion/fv/fvvelocity1p.hh>
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
 
 #include "test_1p_spatialparams.hh"
@@ -55,7 +54,7 @@ class TestProblemOneP;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(DecoupledOneP))
+NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(FVPressureOneP))
         ;
 
 // Set the grid type
@@ -74,26 +73,13 @@ public:
 };
 
 // Set the spatial parameters
-SET_PROP(TestProblemOneP, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-public:
-    typedef Dumux::TestOnePSpatialParams<TypeTag> type;
-};
+SET_TYPE_PROP(TestProblemOneP, SpatialParameters, Dumux::TestOnePSpatialParams<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(TestProblemOneP, EnableGravity, false);
 
-// Set the model
-SET_TYPE_PROP(TestProblemOneP, Model, Dumux::FVPressure1P<TypeTag>);
-SET_TYPE_PROP(TestProblemOneP, PressureModel, Dumux::FVPressure1P<TypeTag>);
-SET_TYPE_PROP(TestProblemOneP, Velocity, Dumux::FVVelocity1P<TypeTag>);
-
 //Set the problem
-SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TTAG(TestProblemOneP)>);
+SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TypeTag>);
 
 
 SET_INT_PROP(TestProblemOneP, LinearSolverVerbosity, 1);
@@ -104,7 +90,7 @@ SET_INT_PROP(TestProblemOneP, LinearSolverVerbosity, 1);
  *
  * \brief test problem for the decoupled one-phase model.
  */
-template<class TypeTag = TTAG(TestProblemOneP)>
+template<class TypeTag>
 class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 {
     typedef DiffusionProblem1P<TypeTag> ParentType;
@@ -236,7 +222,7 @@ private:
         }
 
     double delta_;
-    Dumux::FVVelocity<TypeTag> velocity_;
+    Dumux::FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
 };
 } //end namespace
 

@@ -34,9 +34,8 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
 
+#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/transport/transportproblem2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
 
 #include "test_transport_spatialparams.hh"
 
@@ -51,7 +50,7 @@ class TestTransportProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(DecoupledTwoP, Transport, TestTransportSpatialParams));
+NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(FVTransportTwoP, TestTransportSpatialParams));
 
 
 // Set the grid type
@@ -64,19 +63,7 @@ SET_PROP(TransportTestProblem, Grid)
 SET_PROP(TransportTestProblem, Problem)
 {
 public:
-    typedef Dumux::TestTransportProblem<TTAG(TransportTestProblem)> type;
-};
-
-// Set the model properties
-SET_PROP(TransportTestProblem, Model)
-{
-    typedef Dumux::FVSaturation2P<TTAG(TransportTestProblem)> type;
-};
-
-// Set the model properties
-SET_PROP(TransportTestProblem, TransportModel)
-{
-    typedef Dumux::FVSaturation2P<TTAG(TransportTestProblem)> type;
+    typedef Dumux::TestTransportProblem<TypeTag> type;
 };
 
 // Set the wetting phase
@@ -122,7 +109,7 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
  * <tt>./test_transport grids/test_transport.dgf 16000</tt>,
  * where the argument defines the simulation endtime.
  */
-template<class TypeTag = TTAG(TransportTestProblem)>
+template<class TypeTag>
 class TestTransportProblem: public TransportProblem2P<TypeTag>
 {
     typedef TransportProblem2P<TypeTag> ParentType;

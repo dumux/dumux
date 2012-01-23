@@ -38,13 +38,11 @@
 
 #include <dumux/material/components/unit.hh>
 
-#include <dumux/decoupled/2p/diffusion/fvmpfa/mpfaproperties.hh>
+#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfapressureproperties2p.hh>
+#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/diffusionproblem2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
 
 #include "test_diffusion_spatialparams.hh"
 
@@ -61,19 +59,20 @@ class TestDiffusionProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(DecoupledTwoP, MPFAProperties, TestDiffusionSpatialParams));
-
+//// set the types for the 2PFA FV method
+NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(FVPressureTwoP, TestDiffusionSpatialParams));
+SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 // Set the grid type
-SET_PROP(DiffusionTestProblem, Grid)
+SET_PROP(FVVelocity2PTestProblem, Grid)
 {//    typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
 
-SET_INT_PROP(DiffusionTestProblem, Formulation,
+SET_INT_PROP(FVVelocity2PTestProblem, Formulation,
         DecoupledTwoPCommonIndices::pGlobalSw);
 
 // Set the wetting phase
-SET_PROP(DiffusionTestProblem, WettingPhase)
+SET_PROP(FVVelocity2PTestProblem, WettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -82,7 +81,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(DiffusionTestProblem, NonwettingPhase)
+SET_PROP(FVVelocity2PTestProblem, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -91,28 +90,76 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(DiffusionTestProblem, EnableGravity, false);
+SET_BOOL_PROP(FVVelocity2PTestProblem, EnableGravity, false);
 
-//// set the types for the 2PFA FV method
-NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
-SET_TYPE_PROP(FVVelocity2PTestProblem, PressureModel, Dumux::FVPressure2P<TTAG(FVVelocity2PTestProblem)>);
-SET_TYPE_PROP(FVVelocity2PTestProblem, Model, Dumux::FVPressure2P<TTAG(FVVelocity2PTestProblem)>);
-SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVVelocity2PTestProblem)>);
-SET_TYPE_PROP(FVVelocity2PTestProblem, Velocity, Dumux::FVVelocity2P<TTAG(FVVelocity2PTestProblem)>);
 
 // set the types for the MPFA-O FV method
-NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(DiffusionTestProblem));
+NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FVMPFAPressurePropertiesTwoP, TestDiffusionSpatialParams));
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
 SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Model, Dumux::FVMPFAOVelocity2P<TypeTag>);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(FVMPFAOVelocity2PTestProblem)>);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
+// Set the grid type
+SET_PROP(FVMPFAOVelocity2PTestProblem, Grid)
+{//    typedef Dune::YaspGrid<2> type;
+    typedef Dune::SGrid<2, 2> type;
+};
+
+SET_INT_PROP(FVMPFAOVelocity2PTestProblem, Formulation,
+        DecoupledTwoPCommonIndices::pGlobalSw);
+
+// Set the wetting phase
+SET_PROP(FVMPFAOVelocity2PTestProblem, WettingPhase)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+};
+
+// Set the non-wetting phase
+SET_PROP(FVMPFAOVelocity2PTestProblem, NonwettingPhase)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+};
+
+// Enable gravity
+SET_BOOL_PROP(FVMPFAOVelocity2PTestProblem, EnableGravity, false);
 
 // set the types for the mimetic FD method
-NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(DiffusionTestProblem, Mimetic));
-SET_TYPE_PROP(MimeticPressure2PTestProblem, PressureModel, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
-SET_TYPE_PROP(MimeticPressure2PTestProblem, Model, Dumux::MimeticPressure2P<TTAG(MimeticPressure2PTestProblem)>);
-SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TTAG(MimeticPressure2PTestProblem)>);
+NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
+SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
+// Set the grid type
+SET_PROP(MimeticPressure2PTestProblem, Grid)
+{//    typedef Dune::YaspGrid<2> type;
+    typedef Dune::SGrid<2, 2> type;
+};
+
+SET_INT_PROP(MimeticPressure2PTestProblem, Formulation,
+        DecoupledTwoPCommonIndices::pGlobalSw);
+
+// Set the wetting phase
+SET_PROP(MimeticPressure2PTestProblem, WettingPhase)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+};
+
+// Set the non-wetting phase
+SET_PROP(MimeticPressure2PTestProblem, NonwettingPhase)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef Dumux::LiquidPhase<Scalar, Dumux::Unit<Scalar> > type;
+};
+
+// Enable gravity
+SET_BOOL_PROP(MimeticPressure2PTestProblem, EnableGravity, false);
 
 }
 
@@ -121,7 +168,7 @@ SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem
  *
  * \brief test problem for diffusion models from the FVCA5 benchmark.
  */
-template<class TypeTag = TTAG(DiffusionTestProblem)>
+template<class TypeTag>
 class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 {
     typedef DiffusionProblem2P<TypeTag> ParentType;
@@ -262,7 +309,7 @@ public:
 
 private:
     double delta_;
-    Dumux::FVVelocity<TypeTag> velocity_;
+    Dumux::FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
 };
 } //end namespace
 
