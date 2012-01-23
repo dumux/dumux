@@ -46,9 +46,10 @@
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
 //decoupled model
+#include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
+#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
-#include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>
-#include <dumux/decoupled/2p/transport/fv/fvsaturation2p.hh>
+
 #include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
 
 #include "generallensspatialparameters.hh"
@@ -128,7 +129,7 @@ SET_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass)
 // Deoupled model TypeTag
 //////////////////////////////////////////////////
 
-NEW_TYPE_TAG(DecoupledGeneralLensProblem, INHERITS_FROM(DecoupledTwoP, Transport, GeneralLensProblem));
+NEW_TYPE_TAG(DecoupledGeneralLensProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, GeneralLensProblem));
 
 
 // Set the problem property
@@ -141,14 +142,6 @@ SET_PROP(DecoupledGeneralLensProblem, ProblemBaseClass)
 SET_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass)
 {
     typedef Dumux::FVSpatialParameters<TypeTag> type;
-};
-
-// Set the model properties
-SET_TYPE_PROP(DecoupledGeneralLensProblem, TransportModel, Dumux::FVSaturation2P<TTAG(DecoupledGeneralLensProblem)>);
-
-SET_PROP(DecoupledGeneralLensProblem, PressureModel)
-{
-    typedef Dumux::FVVelocity2P<TTAG(DecoupledGeneralLensProblem)> type;
 };
 
 SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
