@@ -875,7 +875,6 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         //determine phase saturations from primary saturation variable
 
         Scalar satW = cellData.saturation(wPhaseIdx);
-        Scalar satNW = cellData.saturation(nPhaseIdx);
 
         Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
 
