@@ -901,8 +901,6 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         if (compressibility_)
         {
             FluidState& fluidState = cellData.fluidState();
-            fluidState.setSaturation(wPhaseIdx, satW);
-            fluidState.setSaturation(nPhaseIdx, satNW);
             fluidState.setTemperature(temperature);
 
             fluidState.setPressure(wPhaseIdx, pressW);
@@ -924,8 +922,6 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         }
         else
         {
-            cellData.setSaturation(wPhaseIdx, satW);
-            cellData.setSaturation(nPhaseIdx, satNW);
             cellData.setCapillaryPressure(pc);
 
             if (pressureType_ != pglobal)
@@ -938,8 +934,6 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         // initialize mobilities
         Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
         Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
-//                std::cout<<"MobilityW: "<<mobilityW <<"\n"
-//                        "MobilityNW"<< mobilityNW<<"\n";
 
         if (compressibility_)
         {

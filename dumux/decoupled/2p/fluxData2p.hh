@@ -109,9 +109,14 @@ public:
         return velocity_[phaseIdx][indexInInside];
     }
 
-    void setVelocity(int phaseIdx, int indexInInside, FieldVector& velocity)
+    void setVelocity(int phaseIdx, int indexInInside, const FieldVector& velocity)
     {
         velocity_[phaseIdx][indexInInside] = velocity;
+    }
+
+    void addVelocity(int phaseIdx, int indexInInside, const FieldVector& velocity)
+    {
+        velocity_[phaseIdx][indexInInside] += velocity;
     }
 
     void resetVelocity()
@@ -121,6 +126,7 @@ public:
             for (int j = 0; j < numPhases; j++)
             {
                 velocity_[j][i] = 0.;
+                potential_[j][i] = 0.;
             }
             velocityMarker_[i] = false;
         }
@@ -179,7 +185,10 @@ public:
     {
         potential_[indexInInside][phaseIdx] = pot;
     }
-
+    void addPotential(int phaseIdx, int indexInInside, Scalar pot)
+    {
+        potential_[indexInInside][phaseIdx] += pot;
+    }
 };
 }
 #endif

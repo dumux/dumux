@@ -27,6 +27,7 @@
 // dumux environment
 #include <dumux/decoupled/2p/2pproperties.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvpressure2p.hh>
+#include <dumux/decoupled/common/fv/fvvelocity.hh>
 
 /**
  * @file
@@ -126,7 +127,17 @@ public:
 
         ParentType::update();
 
+        velocity_.calculateVelocity();
+
         return;
+    }
+
+    //! \copydoc Dumux::FVPressure1P::addOutputVtkFields(MultiWriter &writer)
+    template<class MultiWriter>
+    void addOutputVtkFields(MultiWriter &writer)
+    {
+        ParentType::addOutputVtkFields(writer);
+        velocity_.addOutputVtkFields(writer);
     }
 
     //! Constructs a FVPressure2PAdaptive object
@@ -134,7 +145,7 @@ public:
      * \param problem a problem class object
      */
     FVPressure2PAdaptive(Problem& problem) :
-            ParentType(problem), problem_(problem), gravity_(problem.gravity())
+            ParentType(problem), problem_(problem), velocity_(problem), gravity_(problem.gravity())
     {
         if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pglobal)
         {
@@ -167,6 +178,7 @@ public:
 
 private:
     Problem& problem_;
+    FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity)> velocity_;
     const GlobalPosition& gravity_; //!< vector including the gravity constant
 
     Scalar density_[numPhases];
@@ -423,18 +435,21 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entrie
 
         // set diagonal entry
         this->A_[globalIdxI][globalIdxI] += entries[matrix];
-        this->A_[globalIdxI][globalIdxJ] -= 0.5 * entries[matrix];
-        this->A_[globalIdxI][globalIdxK] -= 0.5 * entries[matrix];
+        //set off-diagonal
+        this->A_[globalIdxI][globalIdxJ] -= entries[matrix];
 
-        // set off-diagonal entry
+        // set entries for cell J
         this->A_[globalIdxJ][globalIdxI] -= entries[matrix];
-        this->A_[globalIdxJ][globalIdxJ] += 0.5 * entries[matrix];
-        this->A_[globalIdxJ][globalIdxK] += 0.5 * entries[matrix];
+        this->A_[globalIdxJ][globalIdxJ] += entries[matrix];
 
         //set entries to zero -> matrix already written!
         entries = 0.;
 
 //        std::cout<<"finished hanging node!\n";
+    }
+    else
+    {
+        entries = 0;
     }
 
     return;

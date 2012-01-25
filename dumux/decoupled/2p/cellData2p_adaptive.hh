@@ -148,11 +148,11 @@ public:
 
     static void setAdaptionValues(AdaptedValues& adaptedValues, AdaptedValues& adaptedValuesFather, const Problem& problem)
     {
-        adaptedValues.saturationW += adaptedValuesFather.saturationW / adaptedValuesFather.count;
-        adaptedValues.saturationNW += adaptedValuesFather.saturationNW / adaptedValuesFather.count;
-        adaptedValues.pressW += adaptedValuesFather.pressW / adaptedValuesFather.count;
-        adaptedValues.pressNW += adaptedValuesFather.pressNW / adaptedValuesFather.count;
-        adaptedValues.volCorr += adaptedValuesFather.volCorr / adaptedValuesFather.count;
+        adaptedValues.saturationW = adaptedValuesFather.saturationW / adaptedValuesFather.count;
+        adaptedValues.saturationNW = adaptedValuesFather.saturationNW / adaptedValuesFather.count;
+        adaptedValues.pressW = adaptedValuesFather.pressW / adaptedValuesFather.count;
+        adaptedValues.pressNW = adaptedValuesFather.pressNW / adaptedValuesFather.count;
+        adaptedValues.volCorr = adaptedValuesFather.volCorr / adaptedValuesFather.count;
     }
 
 };

@@ -112,13 +112,10 @@ void FVVelocity<TypeTag, Velocity>::calculateVelocity()
             /************* handle interior face *****************/
             if (isIt->neighbor())
             {
-                int globalIdxJ = problem_.variables().index(*(isIt->outside()));
+                int isIndex = isIt->indexInInside();
 
-                //calculate only from one side
-                if (globalIdxI > globalIdxJ)
-                    continue;
-
-                velocity_.calculateVelocity(*isIt, cellDataI);
+                if (!cellDataI.fluxData().haveVelocity(isIndex))
+                    velocity_.calculateVelocity(*isIt, cellDataI);
             }   // end neighbor
 
 

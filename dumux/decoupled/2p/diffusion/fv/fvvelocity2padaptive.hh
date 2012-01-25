@@ -154,7 +154,7 @@ public:
 
     bool calculateVelocityInTransport()
     {
-        return GET_PROP_VALUE(TypeTag, CalculateVelocityInTransport);
+        return false;
     }
 
 private:
@@ -376,8 +376,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //store potentials for further calculations (velocity, saturation, ...)
         // these quantities only have correct sign (needed for upwinding)
         // potentials are defined slightly different for adaptive scheme
-        cellDataI.fluxData().setPotential(wPhaseIdx, isIndexI, potentialWIJ);
-        cellDataI.fluxData().setPotential(nPhaseIdx, isIndexI, potentialNWIJ);
+        cellDataI.fluxData().addPotential(wPhaseIdx, isIndexI, potentialWIJ);
+        cellDataI.fluxData().addPotential(nPhaseIdx, isIndexI, potentialNWIJ);
         cellDataJ.fluxData().setPotential(wPhaseIdx, isIndexJ, -potentialWIJ);
         cellDataJ.fluxData().setPotential(nPhaseIdx, isIndexJ, -potentialNWIJ);
 
@@ -398,16 +398,6 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
             densityWIK = (potentialWIK == 0) ? rhoMeanWIK : densityWIK;
             densityNWIK = (potentialNWIK == 0) ? rhoMeanNWIK : densityNWIK;
         }
-
-        fractionalWIJ = (potentialWIJ > 0.) ? fractionalWI : fractionalWJ;
-        fractionalNWIJ = (potentialNWIJ > 0.) ? fractionalNWI : fractionalNWJ;
-        fractionalWIK = (potentialWIK > 0.) ? fractionalWI : fractionalWK;
-        fractionalNWIK = (potentialNWIK > 0.) ? fractionalNWI : fractionalNWK;
-
-        fractionalWIJ = (potentialWIJ == 0.) ? fMeanWIJ : fractionalWIJ;
-        fractionalNWIJ = (potentialNWIJ == 0.) ? fMeanNWIJ : fractionalNWIJ;
-        fractionalWIK = (potentialWIK == 0.) ? fMeanWIK : fractionalWIK;
-        fractionalNWIK = (potentialNWIK == 0.) ? fMeanNWIK : fractionalNWIK;
 
         //calculate velocities and the gravity term
         Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
@@ -456,12 +446,13 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         cellDataJ.fluxData().setVelocity(nPhaseIdx, isIndexJ, velocityNW);
         cellDataJ.fluxData().setVelocityMarker(isIndexJ);
 
+        //times 0.5 because cell face with hanging node is called twice! Do not set marker because it should be called twice!
         velocityW *= 0.5;
         velocityNW *= 0.5;
-        cellDataI.fluxData().setVelocity(wPhaseIdx, isIndexI, velocityW);
-        cellDataI.fluxData().setVelocity(nPhaseIdx, isIndexI, velocityNW);
-        cellDataI.fluxData().setVelocityMarker(isIndexI);
+        cellDataI.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
+        cellDataI.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNW);
     }
+
     return;
 }
 }

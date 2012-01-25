@@ -183,9 +183,9 @@ public:
             {
                 int isIndex = isIt->indexInInside();
 
-                fluxW[isIndex] = isIt->geometry().volume()
+                fluxW[isIndex] += isIt->geometry().volume()
                         * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                fluxNW[isIndex] = isIt->geometry().volume()
+                fluxNW[isIndex] += isIt->geometry().volume()
                         * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
             }
 

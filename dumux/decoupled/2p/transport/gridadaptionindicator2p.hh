@@ -73,8 +73,8 @@ public:
         if(indicatorVector_.size() != problem_.variables().cellDataGlobal().size())
         {
             indicatorVector_.resize(problem_.variables().cellDataGlobal().size());
-            indicatorVector_ = -1e100;
         };
+        indicatorVector_ = -1e100;
 
         Scalar globalMax = -1e100;
         Scalar globalMin = 1e100;
@@ -137,7 +137,7 @@ public:
             }
         }
 
-        Scalar globaldelta = globalMax- globalMin;
+        Scalar globaldelta = globalMax - globalMin;
 
         refineBound_ = refinetol_*globaldelta;
         coarsenBound_ = coarsentol_*globaldelta;

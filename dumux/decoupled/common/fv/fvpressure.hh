@@ -358,11 +358,13 @@ void FVPressure<TypeTag>::solve()
         f_[idxFixPressureAtIndex_] = fixPressureAtIndex_;
     }
 
+//    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
+//    printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);
+
     Solver solver(problem_);
     solver.solve(A_, pressure_, f_);
-//                    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-//                    printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);
-//                    printvector(std::cout, pressure_, "pressure", "row", 200, 1, 3);
+
+//    printvector(std::cout, pressure_, "pressure", "row", 200, 1, 3);
 
     return;
 }
