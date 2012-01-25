@@ -1,9 +1,6 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2007 by Peter Bastian                                     *
- *   Institute of Parallel and Distributed System                            *
- *   Department Simulation of Large Systems                                  *
- *   University of Stuttgart, Germany                                        *
- *                                                                           *
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
@@ -30,6 +27,8 @@
 #ifndef DUMUX_STOKES_LOCAL_JACOBIAN_HH
 #define DUMUX_STOKES_LOCAL_JACOBIAN_HH
 
+#include "stokesproperties.hh"
+#include <dumux/boxmodels/common/boxlocaljacobian.hh>
 #include <dune/istl/matrix.hh>
 #include <dumux/boxmodels/common/boxlocaljacobian.hh>
 

@@ -24,9 +24,15 @@
 #define DUMUX_MPNC_LOCAL_RESIDUAL_MASS_HH
 
 #include <dune/common/fvector.hh>
+
+#include <dumux/boxmodels/MpNc/MpNcproperties.hh>
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
 
+#include <dumux/common/math.hh>
+#include <dumux/common/spline.hh>
+
 #include "../diffusion/diffusion.hh"
+#include "../energy/MpNclocalresidualenergy.hh"
 
 namespace Dumux
 {

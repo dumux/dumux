@@ -20,6 +20,8 @@
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2P_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2P_HH
 
+#include <dumux/decoupled/2p/impes/impesproperties2padaptive.hh>
+
 /**
  * @file
  * @brief  Base class for implementations of an saturation dependent indicator for grid adaption

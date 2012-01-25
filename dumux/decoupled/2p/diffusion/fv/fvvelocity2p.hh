@@ -29,6 +29,7 @@
  */
 
 #include <dune/grid/common/gridenums.hh>
+#include <dumux/decoupled/2p/2pproperties.hh>
 
 namespace Dumux
 {

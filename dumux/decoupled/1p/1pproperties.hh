@@ -35,8 +35,6 @@
 
 //Dumux-includes
 #include <dumux/decoupled/common/decoupledproperties.hh>
-#include <dumux/linear/seqsolverbackend.hh>
-#include "1pindices.hh"
 
 namespace Dumux
 {
@@ -44,12 +42,15 @@ namespace Dumux
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
+template <class TypeTag>
+class CellData1P;
 
 ////////////////////////////////
 // properties
 ////////////////////////////////
 namespace Properties
 {
+
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -61,17 +62,18 @@ NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG( SpatialParameters )
-; //!< The type of the spatial parameters object
-NEW_PROP_TAG( EnableGravity)
-; //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG( Fluid )
-; //!< The fluid for one-phase models
+NEW_PROP_TAG( SpatialParameters ); //!< The type of the spatial parameters object
+NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( Fluid ); //!< The fluid for one-phase models
+NEW_PROP_TAG( Indices );
+NEW_PROP_TAG( CellData );
 }
 }
 
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/decoupled/common/variableclass.hh>
 #include <dumux/decoupled/1p/cellData1p.hh>
+#include <dumux/decoupled/1p/1pindices.hh>
 
 namespace Dumux
 {

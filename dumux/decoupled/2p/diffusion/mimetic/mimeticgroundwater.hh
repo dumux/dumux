@@ -40,7 +40,10 @@
 #include<dune/grid/common/quadraturerules.hh>
 
 #include<dumux/common/boundaryconditions.hh>
+
 #include "localstiffness.hh"
+#include "mimeticpressureproperties2p.hh"
+
 namespace Dumux
 {
 /*!

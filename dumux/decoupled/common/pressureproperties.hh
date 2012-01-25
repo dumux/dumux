@@ -68,6 +68,7 @@ NEW_TYPE_TAG(Pressure, INHERITS_FROM(LinearSolverTypeTag, DecoupledModel));
 NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
 NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
 NEW_PROP_TAG( VisitFacesOnlyOnce); //!< Indicates if faces are only regarded from one side
+NEW_PROP_TAG(Velocity);
 }
 }
 

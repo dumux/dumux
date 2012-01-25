@@ -37,7 +37,7 @@
 
 //Dumux-includes
 #include <dumux/decoupled/common/impetproperties.hh>
-#include <dumux/decoupled/2p/transport/transportproperties.hh>
+#include <dumux/decoupled/common/transportproperties.hh>
 #include "2pindices.hh"
 
 namespace Dumux

@@ -29,6 +29,8 @@
 #ifndef DUMUX_MPNC_LOCAL_RESIDUAL_ENERGY_HH
 #define DUMUX_MPNC_LOCAL_RESIDUAL_ENERGY_HH
 
+#include <dumux/boxmodels/MpNc/MpNcproperties.hh>
+
 namespace Dumux {
 
 /*!

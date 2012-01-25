@@ -41,10 +41,11 @@
 
 namespace Dumux
 {
-
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
+template <class TypeTag, bool enableCompressibility>
+class CellData2P;
 
 ////////////////////////////////
 // properties

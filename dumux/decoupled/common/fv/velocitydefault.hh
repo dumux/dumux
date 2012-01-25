@@ -30,6 +30,8 @@
 
 #include <dune/grid/common/gridenums.hh>
 
+#include <dumux/decoupled/1p/1pproperties.hh>
+
 namespace Dumux
 {
 //! \ingroup FV2p

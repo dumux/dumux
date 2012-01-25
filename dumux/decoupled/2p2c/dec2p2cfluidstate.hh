@@ -27,7 +27,7 @@
 #ifndef DUMUX_DEC2P2C_FLUID_STATE_HH
 #define DUMUX_DEC2P2C_FLUID_STATE_HH
 
-#include <dumux/decoupled/2p2c/2p2cproperties.hh>
+#include "2p2cproperties.hh"
 
 namespace Dumux
 {

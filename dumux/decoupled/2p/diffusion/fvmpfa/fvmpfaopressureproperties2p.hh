@@ -37,18 +37,13 @@
 
 namespace Dumux
 {
+template <class TypeTag>
+class FVMPFAOVelocity2P;
+
 namespace Properties
 {
 NEW_TYPE_TAG(FVMPFAOPressurePropertiesTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
-}
-}
 
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
 SET_TYPE_PROP(FVMPFAOPressurePropertiesTwoP, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
 }
 }// end of Dune namespace

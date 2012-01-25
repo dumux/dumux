@@ -35,7 +35,7 @@
 #include<dune/istl/bvector.hh>
 #include<dune/istl/matrix.hh>
 #include<dumux/common/boundaryconditions.hh>
-
+#include<dumux/decoupled/common/decoupledproperties.hh>
 /**
  * @file
  * @brief  defines a class for piecewise linear finite element functions

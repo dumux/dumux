@@ -37,6 +37,7 @@
 
 // dumux environment
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
+#include "mimeticpressureproperties2p.hh"
 
 namespace Dumux
 {

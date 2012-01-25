@@ -22,6 +22,8 @@
 #ifndef DUMUX_FVVELOCITY1P_HH
 #define DUMUX_FVVELOCITY1P_HH
 
+#include<dumux/decoupled/1p/1pproperties.hh>
+
 /**
  * @file
  * @brief  Single Phase Finite Volume Model

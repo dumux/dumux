@@ -1,3 +1,5 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   Copyright (C) 2008 by Klaus Mosthaf, Andreas Lauser, Bernd Flemisch     *
  *   Institute of Hydraulic Engineering                                      *
@@ -27,43 +29,13 @@
  * \brief Defines the properties required for the non-isothermal compositional
  * stokes BOX model.
  */
-#ifndef DUMUX_STOKES2CNIPROPERTIES_HH
-#define DUMUX_STOKES2CNIPROPERTIES_HH
-
-#include "stokes2cniindices.hh"
+#ifndef DUMUX_STOKES2CNI_PROPERTIES_HH
+#define DUMUX_STOKES2CNI_PROPERTIES_HH
 
 #include <dumux/freeflow/stokes2c/stokes2cproperties.hh>
 
-#include "stokes2cnilocalresidual.hh"
-
 namespace Dumux
 {
-/*!
- * \addtogroup BoxStokes2cniModel
- */
-// \{
-////////////////////////////////
-// forward declarations
-////////////////////////////////
-template<class TypeTag>
-class Stokes2cniModel;
-
-template<class TypeTag>
-class Stokes2cniLocalResidual;
-
-template <class TypeTag>
-class Stokes2cniVolumeVariables;
-
-template <class TypeTag>
-class Stokes2cniFluxVariables;
-
-template <class TypeTag>
-class Stokes2cniIndices;
-
-////////////////////////////////
-// properties
-////////////////////////////////
-
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////
@@ -79,40 +51,6 @@ NEW_TYPE_TAG(BoxStokes2cni, INHERITS_FROM(BoxStokes2c));
 
 NEW_PROP_TAG(Stokes2cniIndices); //!< Enumerations for the compositional stokes models
 NEW_PROP_TAG(NumComponents); //!< Number of components
-
-//////////////////////////////////////////////////////////////////
-// Properties
-//////////////////////////////////////////////////////////////////
-
-SET_PROP(BoxStokes2cni, NumEq) //!< set the number of equations
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    static const int dim = Grid::dimension;
- public:
-    static constexpr int value = 3 + dim;
-};
-
-//! Use the stokes2cni local jacobian operator for the compositional stokes model
-SET_TYPE_PROP(BoxStokes2cni,
-              LocalResidual,
-              Stokes2cniLocalResidual<TypeTag>);
-
-//! the Model property
-SET_TYPE_PROP(BoxStokes2cni, Model, Stokes2cniModel<TypeTag>);
-
-//! the VolumeVariables property
-SET_TYPE_PROP(BoxStokes2cni, VolumeVariables, Stokes2cniVolumeVariables<TypeTag>);
-
-//! the FluxVariables property
-SET_TYPE_PROP(BoxStokes2cni, FluxVariables, Stokes2cniFluxVariables<TypeTag>);
-
-// the indices for the Stokes2cni model
-SET_TYPE_PROP(BoxStokes2cni,
-              Stokes2cniIndices,
-              Stokes2cniCommonIndices<TypeTag>);
-
-//! Set the number of components to 2
-SET_INT_PROP(BoxStokes2cni, NumComponents, 2);
 }
 
 }

@@ -1,3 +1,5 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   Copyright (C) 2010 by Katherina Baber, Klaus Mosthaf                    *
  *   Copyright (C) 2008-2009 by Bernd Flemisch, Andreas Lauser               *
@@ -30,6 +32,9 @@
 #define DUMUX_STOKES_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
+#include <dumux/common/valgrind.hh>
+
+#include "stokesproperties.hh"
 
 namespace Dumux
 {

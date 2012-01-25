@@ -31,6 +31,9 @@
 
 namespace Dumux
 {
+template<class TypeTag>
+class FluxData2P;
+
 /*!
  * \ingroup IMPES
  */
@@ -43,8 +46,6 @@ namespace Dumux
  1*/
 template<class TypeTag, bool enableCompressibility>
 class CellData2P;
-
-
 
 template<class TypeTag>
 class CellData2P<TypeTag, false>

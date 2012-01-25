@@ -17,8 +17,8 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_ELEMENTDATA1P_HH
-#define DUMUX_ELEMENTDATA1P_HH
+#ifndef DUMUX_CELLDATA1P_HH
+#define DUMUX_CELLDATA1P_HH
 
 #include "1pproperties.hh"
 #include "fluxData1p.hh"
@@ -31,6 +31,9 @@
 
 namespace Dumux
 {
+template<class TypeTag>
+class FluxData1P;
+
 /*!
  * \ingroup IMPES
  */

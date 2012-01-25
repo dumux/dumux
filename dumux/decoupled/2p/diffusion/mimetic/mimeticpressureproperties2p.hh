@@ -21,7 +21,6 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \ingroup IMPES
  * \ingroup Properties
@@ -43,7 +42,11 @@ namespace Dumux
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
+template <class TypeTag>
+class MimeticGroundwaterEquationLocalStiffness;
 
+template <class TypeTag>
+class MimeticPressure2P;
 
 ////////////////////////////////
 // properties
@@ -55,24 +58,13 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP))
-;
+NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
 
-}
-}
-
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticpressure2p.hh>
-#include <dumux/decoupled/2p/diffusion/mimetic/mimeticgroundwater.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
 SET_TYPE_PROP(MimeticPressureTwoP, PressureModel, MimeticPressure2P<TypeTag>);
 SET_TYPE_PROP(MimeticPressureTwoP, LocalStiffness, MimeticGroundwaterEquationLocalStiffness<TypeTag>);
 }

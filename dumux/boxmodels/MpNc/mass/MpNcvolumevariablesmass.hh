@@ -27,6 +27,8 @@
 #ifndef DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
 #define DUMUX_MPNC_VOLUME_VARIABLES_MASS_HH
 
+#include <dumux/boxmodels/MpNc/MpNcproperties.hh>
+
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
 namespace Dumux

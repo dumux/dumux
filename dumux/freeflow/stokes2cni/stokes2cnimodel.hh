@@ -1,3 +1,5 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   Copyright (C) 2010 by Klaus Mosthaf                                     *
  *   Copyright (C) 2008-2009 by Bernd Flemisch, Andreas Lauser               *
@@ -177,4 +179,7 @@ public:
 };
 
 }
+
+#include "stokes2cnipropertydefaults.hh"
+
 #endif

@@ -34,6 +34,9 @@
 
 namespace Dumux
 {
+template<class TypeTag> 
+class FVMPFAOPressure2P;
+
 /*! \ingroup FV2p
  *
  * \brief Velocity calculation for the MPFA-O method

@@ -26,6 +26,8 @@
 // dumux environment
 #include <dumux/decoupled/common/fv/fvpressure.hh>
 
+#include "fvmpfaopressureproperties2p.hh"
+
 /**
  * @file
  * @brief  Finite Volume MPFA O-method discretization of a pressure equation.

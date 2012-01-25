@@ -28,6 +28,11 @@
 #ifndef DUMUX_MPNC_DIFFUSION_HH
 #define DUMUX_MPNC_DIFFUSION_HH
 
+#include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
+
+#include <dumux/boxmodels/MpNc/MpNcproperties.hh>
+
 namespace Dumux {
 
 template <class TypeTag, bool enableDiffusion>

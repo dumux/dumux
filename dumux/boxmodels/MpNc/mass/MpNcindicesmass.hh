@@ -27,6 +27,8 @@
 #ifndef DUMUX_MPNC_MASS_INDICES_HH
 #define DUMUX_MPNC_MASS_INDICES_HH
 
+#include <dumux/boxmodels/MpNc/MpNcproperties.hh>
+
 namespace Dumux
 {
 /*!

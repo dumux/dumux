@@ -29,13 +29,9 @@
 #ifndef DUMUX_2P2CPROPERTIES_HH
 #define DUMUX_2P2CPROPERTIES_HH
 
-//DUMUX includes
 #include <dumux/decoupled/common/pressureproperties.hh>
 #include <dumux/decoupled/common/transportproperties.hh>
 #include <dumux/decoupled/common/impetproperties.hh>
-#include <dumux/decoupled/2p/2pindices.hh>
-#include <dumux/decoupled/2p2c/cellData2p2c.hh>
-#include <dumux/decoupled/2p2c/dec2p2cfluidstate.hh>
 
 namespace Dumux
 {
@@ -86,6 +82,16 @@ NEW_PROP_TAG( FluidState );
 NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); // Two-point flux approximation (false) or mpfa (true)
 NEW_PROP_TAG( EnableVolumeIntegral );
 NEW_PROP_TAG( EnableSecondHalfEdge );
+
+}}
+
+//DUMUX includes
+#include <dumux/decoupled/2p/2pindices.hh>
+#include <dumux/decoupled/2p2c/cellData2p2c.hh>
+#include <dumux/decoupled/2p2c/dec2p2cfluidstate.hh>
+
+namespace Dumux {
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////

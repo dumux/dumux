@@ -22,8 +22,8 @@
 #ifndef DUMUX_GRAVITYPART_HH
 #define DUMUX_GRAVITYPART_HH
 
-#include "dumux/decoupled/2p/transport/fv/convectivepart.hh"
-
+#include <dumux/decoupled/2p/transport/fv/convectivepart.hh>
+#include "fvtransportproperties2p.hh"
 
 /**
  * @file
