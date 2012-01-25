@@ -1,3 +1,5 @@
-tEnd = 10000000
+tEnd = 5e7 
 MinLevel = 0 
-MaxLevel = 4 
+MaxLevel = 5 
+RefineTolerance = 0.05
+CoarsenTolerance = 0.001

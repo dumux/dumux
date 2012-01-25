@@ -116,11 +116,11 @@ int main(int argc, char** argv)
         Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
 
         Dune::array< unsigned int, dim > numberOfCells;
-        numberOfCells[0] = 30;
+        numberOfCells[0] = 2;
         numberOfCells[1] = 1;
         Dune::FieldVector<double, dim> lowerLeftCorner(0);
         Dune::FieldVector<double, dim> domainSize(300);
-        domainSize[1] = 10;
+        domainSize[1] = 100;
 
         Dune::shared_ptr<Grid> grid(Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeftCorner, domainSize, numberOfCells));
         grid->setClosureType(Grid::ClosureType::NONE);
