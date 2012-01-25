@@ -23,7 +23,6 @@
 #define DUMUX_VARIABLECLASS_ADAPTIVE_HH
 
 
-// for  parallelization
 #include "variableclass.hh"
 #include <dune/grid/utility/persistentcontainer.hh>
 

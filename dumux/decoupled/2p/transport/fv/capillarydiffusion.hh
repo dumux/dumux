@@ -24,7 +24,7 @@
 #define DUMUX_CAPILLARYDIFFUSION_HH
 
 #include <dumux/decoupled/2p/transport/fv/diffusivepart.hh>
-#include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
+#include "fvtransportproperties2p.hh"
 /**
  * @file
  * @brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation

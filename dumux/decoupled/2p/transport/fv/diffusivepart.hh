@@ -23,7 +23,7 @@
 #ifndef DUMUX_DIFFUSIVEPART_HH
 #define DUMUX_DIFFUSIVEPART_HH
 
-#include <dumux/decoupled/2p/2pproperties.hh>
+#include <dumux/decoupled/2p/transport/transportproperties2p.hh>
 
 /**
  * @file

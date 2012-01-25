@@ -49,21 +49,8 @@ NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-}
-}
-
-
-#include "gridadaptionindicator2p.hh"
-#include <dumux/decoupled/common/fv/velocitydefault.hh>
-
-namespace Dumux
-{
-namespace Properties
-{
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TransportTwoP, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
+NEW_PROP_TAG( CapillaryFlux );         //!< The type of the diffusive part in a transport equation
+NEW_PROP_TAG( GravityFlux );        //!< The type of a convective part in a transport equation
 }
 }
 

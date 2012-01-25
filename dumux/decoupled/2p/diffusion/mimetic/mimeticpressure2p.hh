@@ -36,8 +36,9 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
+#include <dumux/decoupled/2p/diffusion/diffusionproperties2p.hh>
+#include <dumux/decoupled/common/mimetic/mimeticproperties.hh>
 #include <dumux/decoupled/2p/diffusion/mimetic/mimeticoperator.hh>
-#include "mimeticpressureproperties2p.hh"
 
 namespace Dumux
 {

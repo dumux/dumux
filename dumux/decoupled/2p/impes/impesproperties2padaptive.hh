@@ -60,6 +60,7 @@ NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, DecoupledTwoP));
 
 #include <dumux/decoupled/common/variableclass_adaptive.hh>
 #include <dumux/decoupled/2p/cellData2p_adaptive.hh>
+#include "gridadaptionindicator2p.hh"
 
 namespace Dumux
 {
@@ -68,6 +69,7 @@ namespace Properties
 SET_BOOL_PROP(IMPESTwoPAdaptive, AdaptiveGrid, true);
 SET_TYPE_PROP(IMPESTwoPAdaptive, Variables, Dumux::VariableClassAdaptive<TypeTag>);
 SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, Dumux::CellData2PAdaptive<TypeTag>);
+SET_TYPE_PROP(IMPESTwoPAdaptive, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 }
 }
 

@@ -26,7 +26,6 @@
 
 // dumux environment
 #include "dumux/common/math.hh"
-#include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dumux/decoupled/common/pressureproperties.hh>
 /**
  * @file

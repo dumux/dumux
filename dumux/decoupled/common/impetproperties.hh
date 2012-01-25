@@ -65,7 +65,6 @@ NEW_PROP_TAG(IterationFlag); //!< Flag to switch the iteration type of the IMPET
 NEW_PROP_TAG(IterationNumber); //!< Number of iterations if IMPET iterations are enabled by the IterationFlags
 NEW_PROP_TAG(MaximumDefect); //!< Maximum Defect if IMPET iterations are enabled by the IterationFlags
 NEW_PROP_TAG(RelaxationFactor); //!< Used for IMPET iterations
-NEW_PROP_TAG(Indices);
 
 //forward declaration!
 NEW_PROP_TAG( Model );//! The model of the specific problem

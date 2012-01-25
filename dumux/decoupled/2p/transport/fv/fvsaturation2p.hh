@@ -22,7 +22,7 @@
 #ifndef DUMUX_FVSATURATION2P_HH
 #define DUMUX_FVSATURATION2P_HH
 
-#include "fvtransportproperties2p.hh"
+#include <dumux/decoupled/2p/transport/transportproperties2p.hh>
 #include "dumux/decoupled/common/fv/fvtransport.hh"
 
 /**
