@@ -130,7 +130,7 @@ class StokesTestProblem : public StokesProblem<TypeTag>
 
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
-        momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
+        momentumZIdx = Indices::momentumZIdx //!< Index of the z-component of the momentum balance
     };
 
 
@@ -151,11 +151,7 @@ public:
     StokesTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-
-        bboxMin_ = 0.0;
-        bboxMax_[0] = 1.0;
-        bboxMax_[1] = 1.0;
-
+        eps_ = 1e-6;
     }
 
     /*!
@@ -222,7 +218,7 @@ public:
 //        if(onRightBoundary_(globalPos) && globalPos[1] < 1-eps_ && globalPos[1] > eps_)
 //            values.setAllOutflow();
 //
-        const Scalar middle = (bboxMax_[1] - bboxMin_[1])/2;
+        const Scalar middle = (this->bboxMax()[1] - this->bboxMin()[1])/2;
         // set pressure at one point
         if (onUpperBoundary_(globalPos) &&
                 globalPos[0] > middle - eps_ && globalPos[0] < middle + eps_)
@@ -257,9 +253,9 @@ public:
 
          const Scalar v0 = 1.0;
          values[momentumXIdx] = v0*globalPos[1];// + 1e-4;
-//         values[momentumXIdx] = v0*log((globalPos[1]+1.0)/(bboxMin_[1]+1.0)) + 9.5e-5;
-//        values[momentumXIdx] =  v0*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
-//                               / (0.25*(bboxMax_[1] - bboxMin_[1])*(bboxMax_[1] - bboxMin_[1])) + 0.0004;
+//         values[momentumXIdx] = v0*log((globalPos[1]+1.0)/(this->bboxMin()[1]+1.0)) + 9.5e-5;
+//        values[momentumXIdx] =  v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
+//                               / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.0004;
 
 //        const Scalar v1 = -0.1;
 //        if (onUpperBoundary_(globalPos)
@@ -270,8 +266,8 @@ public:
 //
 //        Scalar v0 = 0.0625*16;
 //        //parabolic profile
-//        values[momentumXIdx] =  v0*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
-//                               / (0.25*(bboxMax_[1] - bboxMin_[1])*(bboxMax_[1] - bboxMin_[1])) + 0.00035;
+//        values[momentumXIdx] =  v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
+//                               / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.00035;
 //        //linear profile
 //        values[momentumXIdx] = -3.9992*globalPos[1]*globalPos[1]+3.998*globalPos[1]+3.75e-4;//v0 *(1 + globalPos[1]);//0.1;
 //        values[momentumXIdx] = 0.0;//v0*globalPos[1]+ 1e-4;
@@ -382,7 +378,7 @@ public:
         const GlobalPosition &globalPos = is.geometry().center();
 
         if (onLowerBoundary_(globalPos))
-//                && globalPos[0] > bboxMin_[0]+eps_ &&  globalPos[0] < bboxMax_[0]-eps_)
+//                && globalPos[0] > this->bboxMin()[0]+eps_ &&  globalPos[0] < this->bboxMax()[0]-eps_)
             return 1.0;
         else
             return 0.0;
@@ -411,8 +407,8 @@ private:
 //       const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         Scalar v0 = 0.0;//0.0625*16;
        //parabolic profile
-//       values[momentumXIdx] = v0*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
-//                            / (0.25*(bboxMax_[1] - bboxMin_[1])*(bboxMax_[1] - bboxMin_[1])) + 0.0004;
+//       values[momentumXIdx] = v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
+//                            / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.0004;
        //linear profile
 //        values[momentumXIdx]=-3.9992*globalPos[1]*globalPos[1]+3.998*globalPos[1]+3.75e-4;//v0*(1 + globalPos[1]);//0.0;
 
@@ -420,25 +416,24 @@ private:
         values[momentumXIdx] = v0*globalPos[1];// + 1e-4;
         values[momentumYIdx] = v1;//*(0.75-globalPos[0])*(globalPos[0]-0.25);
 //        values[momentumYIdx] = 0.0;
-        values[massBalanceIdx] = 1e5;// + 1.189*this->gravity()[1]*(globalPos[1] - bboxMin_[1]);
+        values[massBalanceIdx] = 1e5;// + 1.189*this->gravity()[1]*(globalPos[1] - this->bboxMin()[1]);
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < bboxMin_[0] + eps_; }
+    { return globalPos[0] < this->bboxMin()[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > bboxMax_[0] - eps_; }
+    { return globalPos[0] > this->bboxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < bboxMin_[1] + eps_; }
+    { return globalPos[1] < this->bboxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > bboxMax_[1] - eps_; }
+    { return globalPos[1] > this->bboxMax()[1] - eps_; }
 
-    static const Scalar eps_ = 1e-6;
-    GlobalPosition bboxMin_;
-    GlobalPosition bboxMax_;
+    Scalar eps_;
 };
+
 } //end namespace
 
 #endif

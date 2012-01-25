@@ -92,8 +92,6 @@ class Stokes2cModel : public StokesModel<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
-    static const Scalar scale_ = GET_PROP_VALUE(TypeTag, Scaling);
-
 public:
     /*!
      * \brief Append all quantities of interest which can be derived
@@ -105,6 +103,8 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
+
+        const Scalar scale_ = GET_PROP_VALUE(TypeTag, Scaling);
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);

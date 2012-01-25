@@ -68,7 +68,7 @@ class StokesModel : public BoxModel<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+        numEq = GET_PROP_VALUE(TypeTag, NumEq)
     };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;

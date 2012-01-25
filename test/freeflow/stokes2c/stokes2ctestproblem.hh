@@ -152,8 +152,7 @@ public:
     Stokes2cTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        bboxMin_ = 0.0;
-        bboxMax_ = 1.0;
+        eps_ = 1e-6;
 
         // initialize the tables of the fluid system
         FluidSystem::init();
@@ -289,8 +288,8 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+        //const GlobalPosition &globalPos
+        //    = element.geometry().corner(scvIdx);
 
         values = 0.0;
         //only set normal direction to gN
@@ -393,8 +392,8 @@ private:
 //       const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
        Scalar v0 = 1.0;//0.0625*16;
       //parabolic profile
-//       values[momentumXIdx] = v0*(globalPos[1] - bboxMin_[1])*(bboxMax_[1] - globalPos[1])
-//                            / (0.25*(bboxMax_[1] - bboxMin_[1])*(bboxMax_[1] - bboxMin_[1])) + 0.0004;
+//       values[momentumXIdx] = v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
+//                            / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.0004;
       //linear profile
 //        values[momentumXIdx]=-3.9992*globalPos[1]*globalPos[1]+3.998*globalPos[1]+3.75e-4;//v0*(1 + globalPos[1]);//0.0;
 
@@ -406,20 +405,18 @@ private:
        values[transportIdx] = 0.007876;
    }
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < bboxMin_[0] + eps_; }
+    { return globalPos[0] < this->bboxMin()[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > bboxMax_[0] - eps_; }
+    { return globalPos[0] > this->bboxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < bboxMin_[1] + eps_; }
+    { return globalPos[1] < this->bboxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > bboxMax_[1] - eps_; }
+    { return globalPos[1] > this->bboxMax()[1] - eps_; }
 
-    static const Scalar eps_ = 1e-6;
-    GlobalPosition bboxMin_;
-    GlobalPosition bboxMax_;
+    Scalar eps_;
 };
 } //end namespace
 
