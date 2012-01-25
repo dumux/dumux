@@ -71,7 +71,7 @@ class MPNCFluxVariables
         enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
         enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
         enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
-        enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity),
+        enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity)
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;

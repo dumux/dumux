@@ -118,9 +118,9 @@ public:
                Vector &x,
                const Vector &b)
     {
-        int verbosityLevel = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-        const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
-        const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
+        int verbosityLevel = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+        const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+        const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
         const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
 
         if (!overlapMatrix_) {

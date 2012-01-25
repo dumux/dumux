@@ -13,7 +13,7 @@
  *                                                                           *
  *   This program is distributed in the hope that it will be useful,         *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   MERCHANTBILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
  *   GNU General Public License for more details.                            *
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
@@ -62,6 +62,12 @@ namespace Dumux
 {
 namespace Properties
 {
+#define DUMUX_GET_HEAD_(Arg1, ...) Arg1
+#define DUMUX_GET_TAIL_(Arg1, ...) Blubber // __VA_ARGS__
+
+#define DUMUX_STRINGIGY_HEAD_(Arg1, ...) #Arg1
+#define DUMUX_STRINGIGY_TAIL_(Arg1, ...) #__VA_ARGS__
+
 #if !defined NO_PROPERTY_INTROSPECTION
 
 //! Internal macro which is only required if the property introspection is enabled
@@ -108,18 +114,18 @@ namespace Properties
     PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();
 
 //! Internal macro which is only required if the property introspection is enabled
-#define TTAG_INFO_(TypeTagName, ...)                                    \
+#define TTAG_INFO_(...)                                                 \
     template <>                                                         \
-    struct TypeTagInfo<TypeTagName>                                     \
+    struct TypeTagInfo<DUMUX_GET_HEAD_(__VA_ARGS__)>               \
     {                                                                   \
         static int init() {                                             \
-            TypeTagRegistry::addChildren<TypeTagName, ##__VA_ARGS__ >(); \
+            TypeTagRegistry::addChildren<__VA_ARGS__>();                \
             return 0;                                                   \
         };                                                              \
         static int foo;                                                 \
     };                                                                  \
-    int TypeTagInfo<TypeTagName>::foo =                                 \
-    TypeTagInfo<TypeTagName>::init();
+    int TypeTagInfo<DUMUX_GET_HEAD_(__VA_ARGS__)>::foo =           \
+        TypeTagInfo<DUMUX_GET_HEAD_(__VA_ARGS__)>::init();
 
 #else
 //! Don't do anything if introspection is disabled
@@ -161,12 +167,13 @@ namespace Properties
  * // preceedence over those defined for FooTypeTag:
  * NEW_TYPE_TAG(FooBarTypeTag, INHERITS_FROM(FooTypeTag, BarTypeTag));
  */
-#define NEW_TYPE_TAG(TypeTagName, ...)                              \
-    namespace TTag {                                                \
-    struct TypeTagName : public TypeTag<TypeTagName, ##__VA_ARGS__> \
-    { };                                                            \
-    TTAG_INFO_(TypeTagName, ##__VA_ARGS__)                          \
-    }                                                               \
+#define NEW_TYPE_TAG(...)                                               \
+    namespace TTag {                                                    \
+    struct DUMUX_GET_HEAD_(__VA_ARGS__, blubb)                          \
+        : public TypeTag<__VA_ARGS__>                                   \
+    { };                                                                \
+    TTAG_INFO_(__VA_ARGS__, void)                                       \
+    }                                                                   \
     extern int semicolonHack_
 
 /*!
@@ -567,12 +574,7 @@ public:
     typedef std::list<std::string> ChildrenList;
     typedef std::map<std::string, ChildrenList> ChildrenListMap;
 
-    template <class TypeTag,
-              class Child1,
-              class Child2,
-              class Child3,
-              class Child4,
-              class Child5>
+    template <class TypeTag, class Child1, class Child2, class Child3, class Child4, class Child5, class Dummy>
     static void addChildren()
     {
         std::string typeTagName = Dune::className<TypeTag>();
@@ -588,25 +590,25 @@ public:
             keys_[typeTagName].push_front(Dune::className<Child5>());
     }
 
-    template <class TypeTag>
+    template <class TypeTag, class Child1, class Child2, class Child3, class Child4, class Dummy>
     static void addChildren()
-    { addChildren<TypeTag, void, void, void, void, void>(); }
+    { addChildren<TypeTag, Child1, Child2, Child3, Child4, void, Dummy>(); }
 
-    template <class TypeTag, class Child1>
+    template <class TypeTag, class Child1, class Child2, class Child3, class Dummy>
     static void addChildren()
-    { addChildren<TypeTag, Child1, void, void, void, void>(); }
+    { addChildren<TypeTag, Child1, Child2, Child3, void, void, Dummy>(); }
 
-    template <class TypeTag, class Child1, class Child2>
+    template <class TypeTag, class Child1, class Child2, class Dummy>
     static void addChildren()
-    { addChildren<TypeTag, Child1, Child2, void, void, void>(); }
+    { addChildren<TypeTag, Child1, Child2, void, void,  void, Dummy>(); }
 
-    template <class TypeTag, class Child1, class Child2, class Child3>
+    template <class TypeTag, class Child1, class Dummy>
     static void addChildren()
-    { addChildren<TypeTag, Child1, Child2, Child3, void, void>(); }
+    { addChildren<TypeTag, Child1, void, void, void, void, Dummy>(); }
 
-    template <class TypeTag, class Child1, class Child2, class Child3, class Child4>
+    template <class TypeTag, class Dummy>
     static void addChildren()
-    { addChildren<TypeTag, Child1, Child2, Child3, Child4, void>(); }
+    { addChildren<TypeTag, void, void, void, void, void, Dummy>(); }
 
     static const ChildrenList &children(const std::string &typeTagName)
     {
@@ -618,6 +620,7 @@ private:
 };
 
 TypeTagRegistry::ChildrenListMap TypeTagRegistry::keys_;
+
 #endif // !defined NO_PROPERTY_INTROSPECTION
 
 using std::tr1::is_void;

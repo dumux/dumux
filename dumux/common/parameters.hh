@@ -45,49 +45,64 @@
  * \brief Retrieve a runtime parameter which _does_ have a default value taken from
  *        the Dumux property system.
  *
- * If the macro is called with four argument the third argument is
- * group name which must be the prefix to the property name which
- * provides the default value for the parameter
- *
- * Examples:
+ * Example:
  *
  * // -> retrieves scalar value UpwindWeight, default
  * // is taken from the property UpwindWeight
  * GET_PARAM(TypeTag, Scalar, UpwindWeight);
+ */
+#define GET_PARAM(TypeTag, ParamType, ParamName)                        \
+    Dumux::Parameters::get<TypeTag,                                     \
+                           ParamType,                                   \
+                           PTAG_(ParamName)>(#ParamName)
+
+/*!
+ * \ingroup Parameter
+ * \brief Retrieve a runtime parameter which _does_ have a default value taken from
+ *        the Dumux property system.
+ *
+ * The third argument is group name which must be the prefix to the
+ * property name which provides the default value for the parameter
+ *
+ * Example:
  *
  * // -> retrieves Boolean value Newton.WriteConvergence, default
  * // is taken from the property NewtonWriteConvergence
- * GET_PARAM(TypeTag, bool, Newton, WriteConvergence);
+ * GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence);
  */
-#define GET_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...)         \
+#define GET_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName)  \
     Dumux::Parameters::get<TypeTag,                                     \
                            ParamType,                                   \
-                           PTAG_(ParamNameOrGroupName ## __VA_ARGS__)>   \
-    (#ParamNameOrGroupName,                                              \
-     Dumux::Parameters::getString_(#__VA_ARGS__))
+                           PTAG_(GroupName##ParamName)>(#GroupName, #ParamName)
 
 /*!
  * \ingroup Parameter
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
- * If the macro is called with four argument the third argument is
- * group name
- *
- * Examples:
+ * Example:
  *
  * // -> retrieves global integer value NumberOfCellsX
  * GET_RUNTIME_PARAM(TypeTag, int, NumberOfCellsX);
+ */
+#define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamName) \
+        Dumux::Parameters::getRuntime<TypeTag, ParamType>(#ParamName)
+
+/*!
+ * \ingroup Parameter
+ * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
+ *        the Dumux property system.
+ *
+ * The third argument is group name.
+ *
+ * Example:
  *
  * // -> retrieves global integer value NumberOfCellsX which is
  * // located int the parameter group "Geometry"
- * GET_RUNTIME_PARAM(TypeTag, int, Geometry, NumberOfCellsX);
+ * GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Geometry, NumberOfCellsX);
  */
-#define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamNameOrGroupName, ...) \
-        Dumux::Parameters::getRuntime<TypeTag,                          \
-                                      ParamType>                        \
-     (#ParamNameOrGroupName,                                            \
-      Dumux::Parameters::getString_(#__VA_ARGS__))
+#define GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName) \
+    Dumux::Parameters::getRuntime<TypeTag, ParamType>(#GroupName, #ParamName)
 
 namespace Dumux
 {

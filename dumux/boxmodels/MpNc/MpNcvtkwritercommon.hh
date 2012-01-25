@@ -77,17 +77,17 @@ public:
     MPNCVtkWriterCommon(const Problem &problem)
         : ParentType(problem)
     {
-        porosityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddPorosity);
-        boundaryTypesOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddBoundaryTypes);
-        saturationOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddSaturations);
-        pressureOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddPressures);
-        velocityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddVelocities);
-        densityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddDensities);
-        mobilityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMobilities);
-        averageMolarMassOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddAverageMolarMass);
-        massFracOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMassFractions);
-        moleFracOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMoleFractions);
-        molarityOutput_ = GET_PARAM(TypeTag, bool, MPNC, VtkAddMolarities);
+        porosityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddPorosity);
+        boundaryTypesOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddBoundaryTypes);
+        saturationOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddSaturations);
+        pressureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddPressures);
+        velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddVelocities);
+        densityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddDensities);
+        mobilityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddMobilities);
+        averageMolarMassOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddAverageMolarMass);
+        massFracOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddMassFractions);
+        moleFracOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddMoleFractions);
+        molarityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddMolarities);
     }
 
     /*!

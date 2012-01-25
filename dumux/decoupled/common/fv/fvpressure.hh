@@ -345,7 +345,7 @@ void FVPressure<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(LinearSolver)) Solver;
 
-    int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+    int verboseLevelSolver = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
 
     if (verboseLevelSolver)
         std::cout << __FILE__ << ": solve for pressure" << std::endl;

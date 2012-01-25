@@ -175,20 +175,20 @@ public:
         enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
 
-        useLineSearch_ = GET_PARAM(TypeTag, bool, Newton, UseLineSearch);
-        enableRelativeCriterion_ = GET_PARAM(TypeTag, bool, Newton, EnableRelativeCriterion);
-        enableAbsoluteCriterion_ = GET_PARAM(TypeTag, bool, Newton, EnableAbsoluteCriterion);
-        satisfyAbsAndRel_ = GET_PARAM(TypeTag, bool, Newton, SatisfyAbsAndRel);
+        useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
+        enableRelativeCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableRelativeCriterion);
+        enableAbsoluteCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteCriterion);
+        satisfyAbsAndRel_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyAbsAndRel);
         if (!enableRelativeCriterion_ && !enableAbsoluteCriterion_)
         {
             DUNE_THROW(Dune::NotImplemented, "at least one of NewtonEnableRelativeCriterion or "
                     << "NewtonEnableAbsoluteCriterion has to be set to true");
         }
 
-        setRelTolerance(GET_PARAM(TypeTag, Scalar, Newton, RelTolerance));
-        setAbsTolerance(GET_PARAM(TypeTag, Scalar, Newton, AbsTolerance));
-        setTargetSteps(GET_PARAM(TypeTag, int, Newton, TargetSteps));
-        setMaxSteps(GET_PARAM(TypeTag, int, Newton, MaxSteps));
+        setRelTolerance(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, RelTolerance));
+        setAbsTolerance(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, AbsTolerance));
+        setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
+        setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
 
         verbose_ = true;
         numSteps_ = 0;
@@ -309,7 +309,7 @@ public:
         method_ = &method;
         numSteps_ = 0;
 
-        if (GET_PARAM(TypeTag, bool, Newton, WriteConvergence))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
             convergenceWriter_.beginTimestep();
     }
 
@@ -514,7 +514,7 @@ public:
      */
     void newtonEnd()
     {
-        if (GET_PARAM(TypeTag, bool, Newton, WriteConvergence))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
             convergenceWriter_.endTimestep();
     }
 
@@ -657,7 +657,7 @@ protected:
     void writeConvergence_(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
-        if (GET_PARAM(TypeTag, bool, Newton, WriteConvergence)) {
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence)) {
             convergenceWriter_.beginIteration(this->gridView_());
             convergenceWriter_.writeFields(uLastIter, deltaU);
             convergenceWriter_.endIteration();

@@ -107,9 +107,9 @@ public:
     {
         int verbosity = 0;
         if (problem_.gridView().comm().rank() == 0)
-            verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-        const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
-        const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
+            verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+        const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+        const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
         if (!overlapMatrix_) {
             // make sure that the overlapping matrix and block vectors

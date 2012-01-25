@@ -284,7 +284,7 @@ void MimeticPressure2P<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
-    int verboseLevelSolver = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
+    int verboseLevelSolver = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
 
     if (verboseLevelSolver)
     std::cout << "MimeticPressure2P: solve for pressure" << std::endl;

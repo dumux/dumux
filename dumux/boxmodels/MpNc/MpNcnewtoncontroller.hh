@@ -179,7 +179,7 @@ class MPNCNewtonController : public NewtonController<TypeTag>
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
         p0Idx = Indices::p0Idx,
-        S0Idx = Indices::S0Idx,
+        S0Idx = Indices::S0Idx
     };
 
     typedef MpNcNewtonChop<TypeTag, enableKinetic> NewtonChop;
@@ -188,7 +188,7 @@ public:
     MPNCNewtonController(const Problem &problem)
         : ParentType(problem)
     {
-        enableChop_ = GET_PARAM(TypeTag, bool, Newton, EnableChop);
+        enableChop_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableChop);
         Dune::FMatrixPrecision<>::set_singular_limit(1e-35);
     };
 

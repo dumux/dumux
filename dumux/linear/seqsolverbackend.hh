@@ -54,9 +54,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
+      int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
@@ -79,9 +79,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
+    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
@@ -389,9 +389,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
+    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
@@ -413,9 +413,9 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PARAM(TypeTag, int, LinearSolver, Verbosity);
-    const int maxIter = GET_PARAM(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM(TypeTag, double, LinearSolver, ResidualReduction);
+    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
+    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
     Vector bTmp(b);
 
