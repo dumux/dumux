@@ -170,9 +170,10 @@ public:
         ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt)
         {
-#warning "currently, velocity output only works for cubes and is set to false for simplices"
-            if(elemIt->geometry().type().isCube() == false){
-                velocityOutput = false;
+            if(velocityOutput && !elemIt->geometry().type().isCube()){
+                DUNE_THROW(Dune::InvalidStateException, 
+                           "Currently, velocity output only works for cubes. "
+                           "Please set the EnableVelocityOutput property to false!");
             }
             int idx = this->elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();

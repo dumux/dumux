@@ -108,7 +108,7 @@ template<class TypeTag> class FVPressure2P2C
     };
     enum
     {
-        rhs = BaseType::rhs, matrix = BaseType::matrix,
+        rhs = BaseType::rhs, matrix = BaseType::matrix
     };
 
     // typedefs to abbreviate several dune classes...

@@ -90,7 +90,7 @@ template<class TypeTag> class MimeticPressure2P
         pn = Indices::pressureNW,
         pglobal = Indices::pressureGlobal,
         Sw = Indices::saturationW,
-        Sn = Indices::saturationNW,
+        Sn = Indices::saturationNW
     };
     enum
     {

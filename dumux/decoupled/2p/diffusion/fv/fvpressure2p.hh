@@ -110,7 +110,7 @@ public:
 
     enum
     {
-        rhs = ParentType::rhs, matrix = ParentType::matrix,
+        rhs = ParentType::rhs, matrix = ParentType::matrix
     };
 
     void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);

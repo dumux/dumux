@@ -100,7 +100,7 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 
     enum
     {
-        rhs = ParentType::rhs, matrix = ParentType::matrix,
+        rhs = ParentType::rhs, matrix = ParentType::matrix
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;

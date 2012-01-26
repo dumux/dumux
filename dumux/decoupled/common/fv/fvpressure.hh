@@ -73,7 +73,7 @@ protected:
     enum
     {
         rhs = 1,
-        matrix = 0,
+        matrix = 0
 
     };
 
