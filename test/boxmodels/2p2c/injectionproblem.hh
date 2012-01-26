@@ -135,6 +135,7 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -145,8 +146,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InjectionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    InjectionProblem(TimeManager &timeManager)
+        : ParentType(timeManager, GridCreator::grid().leafView())
     {
         temperature_ = 273.15 + 40; // [K]
         depthBOR_ = 2700.0; // [m]

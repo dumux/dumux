@@ -33,6 +33,7 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/dgfgridcreator.hh>
 
 namespace Dumux
 {
@@ -73,6 +74,9 @@ NEW_PROP_TAG(ParameterTree);
 //! Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(ModelParameterGroup);
 
+//! Property which provides a GridCreator (manages grids)
+NEW_PROP_TAG(GridCreator);
+
 ///////////////////////////////////
 // Default values for properties:
 //
@@ -107,8 +111,11 @@ SET_PROP(NumericModel, ParameterTree)
     };
 };
 
-// use the global group as default for the model's parameter group
+//! use the global group as default for the model's parameter group
 SET_STRING_PROP(NumericModel, ModelParameterGroup, "");
+
+//! Use the DgfGridCreator by default
+SET_TYPE_PROP(NumericModel, GridCreator, Dumux::DgfGridCreator<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux
