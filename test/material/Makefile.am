@@ -1,4 +1,4 @@
-SUBDIRS = fluidsystems tabulation ncpflash
+SUBDIRS = fluidsystems ncpflash pengrobinson tabulation 
 
 include $(top_srcdir)/am/global-rules
 
