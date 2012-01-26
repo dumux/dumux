@@ -288,7 +288,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
 
         // account for porosity
         sumfactorin = std::max(sumfactorin,sumfactorout)
-                        / problem().spatialParameters().porosity(globalPos, *eIt);
+                        / problem().spatialParameters().porosity(*eIt);
 
         if ( 1./sumfactorin < dt)
         {
@@ -312,7 +312,7 @@ void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& 
         for(int compIdx = 0; compIdx < GET_PROP_VALUE(TypeTag, NumComponents); compIdx++)
         {
             totalConcentration_[compIdx][i] += (updateVector[compIdx][i]*=dt);
-            cellDataI.setTotalConcentration(wCompIdx, totalConcentration_[compIdx][i]);
+            cellDataI.setTotalConcentration(compIdx, totalConcentration_[compIdx][i]);
         }
     }
 }
@@ -336,13 +336,13 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     // get values of cell I
     Scalar pressI = problem().pressureModel().pressure(globalIdxI);
     Scalar pcI = cellDataI.capillaryPressure();
-    Dune::FieldMatrix<Scalar,dim,dim> K_I(problem().spatialParameters().intrinsicPermeability(globalPos, *elementI));
+    Dune::FieldMatrix<Scalar,dim,dim> K_I(problem().spatialParameters().intrinsicPermeability(*elementI));
 
     Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParameters().materialLawParams(globalPos, *elementI).Swr())
+                            - problem().spatialParameters().materialLawParams(*elementI).Swr())
                             , 1e-2);
     Scalar SnmobI = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParameters().materialLawParams(globalPos, *elementI).Snr())
+                                - problem().spatialParameters().materialLawParams(*elementI).Snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -409,8 +409,7 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     Dune::FieldMatrix<Scalar,dim,dim> meanK_(0.);
     Dumux::harmonicMeanMatrix(meanK_,
             K_I,
-            problem().spatialParameters().intrinsicPermeability(globalPosNeighbor,
-                                                                *neighborPointer));
+            problem().spatialParameters().intrinsicPermeability(*neighborPointer));
     Dune::FieldVector<Scalar,dim> K(0);
     meanK_.umv(unitDistVec,K);
 
@@ -492,13 +491,13 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
     // get values of cell I
     Scalar pressI = problem().pressureModel().pressure(globalIdxI);
     Scalar pcI = cellDataI.capillaryPressure();
-    Dune::FieldMatrix<Scalar,dim,dim> K_I(problem().spatialParameters().intrinsicPermeability(globalPos, *elementI));
+    Dune::FieldMatrix<Scalar,dim,dim> K_I(problem().spatialParameters().intrinsicPermeability(*elementI));
 
     Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
-                            - problem().spatialParameters().materialLawParams(globalPos, *elementI).Swr())
+                            - problem().spatialParameters().materialLawParams(*elementI).Swr())
                             , 1e-2);
     Scalar SnmobI = std::max((cellDataI.saturation(nPhaseIdx)
-                                - problem().spatialParameters().materialLawParams(globalPos, *elementI).Snr())
+                                - problem().spatialParameters().materialLawParams(*elementI).Snr())
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
@@ -606,7 +605,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
                 lambdaW = BCfluidState.saturation(wPhaseIdx) / viscosityWBound;
             else
                 lambdaW = MaterialLaw::krw(
-                        problem().spatialParameters().materialLawParams(globalPos, *elementI), BCfluidState.saturation(wPhaseIdx))
+                        problem().spatialParameters().materialLawParams(*elementI), BCfluidState.saturation(wPhaseIdx))
                         / viscosityWBound;
             }
         if (potentialNW >= 0.)
@@ -617,7 +616,7 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
                 lambdaNW = BCfluidState.saturation(nPhaseIdx) / viscosityNWBound;
             else
                 lambdaNW = MaterialLaw::krn(
-                        problem().spatialParameters().materialLawParams(globalPos, *elementI), BCfluidState.saturation(wPhaseIdx))
+                        problem().spatialParameters().materialLawParams(*elementI), BCfluidState.saturation(wPhaseIdx))
                         / viscosityNWBound;
             }
         // calculate and standardized velocity
@@ -712,7 +711,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         Scalar satBound = primaryVariablesOnBoundary[contiWEqIdx];
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
-            Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
+            Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(*eIt),
                     satBound);
             switch (pressureType)
             {
@@ -734,7 +733,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
             pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
 
 
-        BCfluidState.satFlash(satBound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
+        BCfluidState.satFlash(satBound, pressBound, problem().spatialParameters().porosity(*eIt),
                             problem().temperatureAtPos(globalPosFace));
 
     }
@@ -743,12 +742,12 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         // saturation and hence pc and hence corresponding pressure unknown
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
         Scalar Z1Bound = primaryVariablesOnBoundary[contiWEqIdx];
-        BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
+        BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(*eIt),
                             problem().temperatureAtPos(globalPosFace));
 
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
-            Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
+            Scalar pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(*eIt),
                     BCfluidState.saturation(wPhaseIdx));
             int maxiter = 3;
             //start iteration loop
@@ -776,9 +775,9 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 //store old pc
                 Scalar oldPc = pcBound;
                 //update with better pressures
-                BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(globalPosFace, *eIt),
+                BCfluidState.update(Z1Bound, pressBound, problem().spatialParameters().porosity(*eIt),
                                     problem().temperatureAtPos(globalPosFace));
-                pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(globalPosFace, *eIt),
+                pcBound = MaterialLaw::pC(problem().spatialParameters().materialLawParams(*eIt),
                         BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation
                 //converge criterion

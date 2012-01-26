@@ -204,7 +204,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
             // account for porosity
             sumfactorin = std::max(sumfactorin,sumfactorout)
-                            / problem().spatialParameters().porosity(globalPos, *eIt);
+                            / problem().spatialParameters().porosity(*eIt);
 
             if ( 1./sumfactorin < dt)
             {

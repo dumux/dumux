@@ -27,7 +27,6 @@
 #ifndef DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 #define DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 
-#include <dumux/material/old_fluidsystems/fluidstate.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
 
 namespace Dumux
@@ -41,8 +40,7 @@ namespace Dumux
  *  \tparam TypeTag The property Type Tag
  */
 template <class TypeTag>
-class PseudoOnePTwoCFluidState : public FluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                           PseudoOnePTwoCFluidState<TypeTag> >
+class PseudoOnePTwoCFluidState
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

@@ -28,19 +28,43 @@
 #define TEST_2P2C_SPATIALPARAMETERS_HH
 
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
+#include <dumux/material/spatialparameters/fvspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 //#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
 namespace Dumux
 {
+//forward declaration
+template<class TypeTag>
+class Test2P2CSpatialParams;
+
+namespace Properties
+{
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(Test2P2CSpatialParams);
+
+// Set the spatial parameters
+SET_TYPE_PROP(Test2P2CSpatialParams, SpatialParameters, Dumux::Test2P2CSpatialParams<TypeTag>);
+
+// Set the material law
+SET_PROP(Test2P2CSpatialParams, MaterialLaw)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    //    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
+    typedef LinearMaterial<Scalar>         RawMaterialLaw;
+public:
+    typedef EffToAbsLaw<RawMaterialLaw> type;
+};
+}
 
 /*!
  * \ingroup IMPETtests
  * \brief spatial parameters for the sequential 2p2c test
  */
 template<class TypeTag>
-class Test2P2CSpatialParams
+class Test2P2CSpatialParams : public FVSpatialParameters<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid)     Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -55,37 +79,30 @@ class Test2P2CSpatialParams
     typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-//    typedef RegularizedBrooksCorey<Scalar>                RawMaterialLaw;
-    typedef LinearMaterial<Scalar>                        RawMaterialLaw;
 public:
-    typedef EffToAbsLaw<RawMaterialLaw>               MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    void update (Scalar saturationW, const Element& element)
-    {
-
-    }
-
-    const FieldMatrix& intrinsicPermeability  (const GlobalPosition& globalPos, const Element& element) const
+    const FieldMatrix& intrinsicPermeability (const Element& element) const
     {
         return constPermeability_;
     }
 
-    double porosity(const GlobalPosition& globalPos, const Element& element) const
+    double porosity(const Element& element) const
     {
         return 0.2;
     }
 
 
     // return the parameter object for the Brooks-Corey material law which depends on the position
-    const MaterialLawParams& materialLawParams(const GlobalPosition& globalPos, const Element &element) const
+    const MaterialLawParams& materialLawParams(const Element &element) const
     {
             return materialLawParams_;
     }
 
 
-    Test2P2CSpatialParams(const GridView& gridView)
-    : constPermeability_(0)
+    Test2P2CSpatialParams(const GridView& gridView) : FVSpatialParameters<TypeTag>(gridView),
+            constPermeability_(0)
     {
         // residual saturations
         materialLawParams_.setSwr(0);

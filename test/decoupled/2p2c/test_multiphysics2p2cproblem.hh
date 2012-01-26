@@ -43,6 +43,7 @@
 // fluid properties
 //#include <dumux/material/fluidsystems/brine_co2_system.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 
@@ -55,7 +56,7 @@ class TestMultTwoPTwoCProblem;
 // Specify the properties
 namespace Properties
 {
-NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC));
+NEW_TYPE_TAG(TestMultTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC, Test2P2CSpatialParams));
 
 SET_TYPE_PROP(TestMultTwoPTwoCProblem, CellData, Dumux::CellData2P2Cmultiphysics<TypeTag>);
 
@@ -107,17 +108,6 @@ SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
 ////    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
 //        typedef Dumux::H2O<Scalar> H2O;
 //};
-
-// Set the soil properties
-SET_PROP(TestMultTwoPTwoCProblem, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-public:
-    typedef Dumux::Test2P2CSpatialParams<TypeTag> type;
-};
 
 // Enable gravity
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);

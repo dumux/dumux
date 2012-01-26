@@ -55,7 +55,7 @@ class TestDecTwoPTwoCProblem;
 // Specify the properties
 namespace Properties
 {
-NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC));
+NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC, Test2P2CSpatialParams));
 
 // Set the grid type
 SET_PROP(TestDecTwoPTwoCProblem, Grid)
@@ -67,18 +67,18 @@ SET_PROP(TestDecTwoPTwoCProblem, Grid)
 // Set the problem property
 SET_PROP(TestDecTwoPTwoCProblem, Problem)
 {
-    typedef Dumux::TestDecTwoPTwoCProblem<TTAG(TestDecTwoPTwoCProblem)> type;
+    typedef Dumux::TestDecTwoPTwoCProblem<TypeTag> type;
 };
 
 // Set the model properties
 SET_PROP(TestDecTwoPTwoCProblem, TransportModel)
 {
-    typedef Dumux::FVTransport2P2C<TTAG(TestDecTwoPTwoCProblem)> type;
+    typedef Dumux::FVTransport2P2C<TypeTag> type;
 };
 
 SET_PROP(TestDecTwoPTwoCProblem, PressureModel)
 {
-    typedef Dumux::FVPressure2P2C<TTAG(TestDecTwoPTwoCProblem)> type;
+    typedef Dumux::FVPressure2P2C<TypeTag> type;
 };
 
 SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
@@ -99,17 +99,6 @@ SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultC
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 //    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
         typedef Dumux::H2O<Scalar> H2O;
-};
-
-// Set the soil properties
-SET_PROP(TestDecTwoPTwoCProblem, SpatialParameters)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-public:
-    typedef Dumux::Test2P2CSpatialParams<TypeTag> type;
 };
 
 //SET_TYPE_PROP(TestDecTwoPTwoCProblem, LinearSolver, IMPETBiCGStabILU0Solver<TypeTag> );
@@ -171,8 +160,14 @@ public:
 TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
 ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
 {
+//    this->setOutputInterval(20);
     // initialize the tables of the fluid system
-//    FluidSystem::init();
+    FluidSystem::init(/*tempMin=*/280,
+            /*tempMax=*/290,
+            /*numTemp=*/10,
+            /*pMin=*/190000,
+            /*pMax=*/280000,
+            /*numP=*/400);
 }
 
 /*!

@@ -192,6 +192,10 @@ public:
     static const int wCompIdx = wPhaseIdx; //!< Component index equals phase index
     static const int nCompIdx = nPhaseIdx; //!< Component index equals phase index
 
+    // Ensure pressure fomrulation index coincides with FluidSystem
+    static const int pressureW = wPhaseIdx;
+    static const int pressureNW = nPhaseIdx;
+
     // Equation indices
     static const int pressureEqIdx = 0;
     static const int transportEqOffset = pressureEqIdx + 1; //!< Offset to access transport (mass conservation -) equations

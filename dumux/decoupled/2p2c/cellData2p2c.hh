@@ -152,13 +152,17 @@ public:
         return fluidState_->pressure(phaseIdx);
     }
 
-    void setPressure(int phaseIdx, Scalar press)
+    void setPressure(int phaseIdx, Scalar value)
     {
-        DUNE_THROW(Dune::NotImplemented,"setPressure function defined for compressible models!");
+        fluidState_->setPressure(phaseIdx, value);
     }
 
     //! Return saturation vector
     void setTotalConcentration(int compIdx, Scalar value)
+    {
+        fluidState_->setMassConcentration(compIdx, value);
+    }
+    void setMassConcentration(int compIdx, Scalar value)
     {
         fluidState_->setMassConcentration(compIdx, value);
     }

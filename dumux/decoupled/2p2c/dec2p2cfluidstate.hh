@@ -125,7 +125,7 @@ public:
         {
             nu_[nPhaseIdx] = 1; // only nPhase
             massFraction_[nPhaseIdx][wCompIdx] = Z1; // hence, assign complete mass soluted into nPhase
-            massFraction_[wPhaseIdx][nCompIdx] = 1. - massFraction_[wPhaseIdx][wCompIdx];
+            massFraction_[nPhaseIdx][nCompIdx] = 1. - massFraction_[nPhaseIdx][wCompIdx];
             // store as moleFractions
             moleFraction_[nPhaseIdx][wCompIdx] = ( massFraction_[nPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx) );  // = moles of compIdx
             moleFraction_[nPhaseIdx][wCompIdx] /= ( massFraction_[nPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
