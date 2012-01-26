@@ -1,5 +1,3 @@
-add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
-
 # add build targets
 ADD_EXECUTABLE("test_impes" test_impes.cc)
 TARGET_LINK_LIBRARIES("test_impes" ${DumuxLinkLibraries})

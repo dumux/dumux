@@ -1,5 +1,3 @@
-add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
-
 # build target for the simple twophase lens problem
 ADD_EXECUTABLE("test_2p" test_2p.cc)
 TARGET_LINK_LIBRARIES("test_2p" ${DumuxLinkLibraries})
