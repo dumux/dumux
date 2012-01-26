@@ -27,6 +27,7 @@
 #define DUMUX_GIRDADAPT_HH
 
 #include "decoupledproperties.hh"
+#include "gridadaptproperties.hh"
 
 namespace Dumux
 {

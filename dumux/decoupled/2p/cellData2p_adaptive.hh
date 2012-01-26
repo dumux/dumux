@@ -47,9 +47,13 @@ private:
     typedef CellData2P<TypeTag, enableCompressibility> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GridView::Grid Grid;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef FluxData2P<TypeTag> FluxData;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+
+    typedef Dune::FieldVector<Scalar, GridView::dimensionworld> GlobalPosition;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     enum
     {
@@ -146,8 +150,11 @@ public:
         isFront_ = adaptedValues.front;
     }
 
-    static void setAdaptionValues(AdaptedValues& adaptedValues, AdaptedValues& adaptedValuesFather, const Problem& problem)
+    static void setAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptionMap_,
+            const Element& father, const Element& son, const Problem& problem)
     {
+        AdaptedValues& adaptedValues = adaptionMap_[son];
+        AdaptedValues& adaptedValuesFather = adaptionMap_[father];
         adaptedValues.saturationW = adaptedValuesFather.saturationW / adaptedValuesFather.count;
         adaptedValues.saturationNW = adaptedValuesFather.saturationNW / adaptedValuesFather.count;
         adaptedValues.pressW = adaptedValuesFather.pressW / adaptedValuesFather.count;

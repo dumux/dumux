@@ -64,7 +64,7 @@ private:
 
 private:
     const Grid& grid_;
-    Dune::PersistentContainer<Grid, AdaptedValues> adaptionMap_;
+    Dune::PersistentContainer<Grid, AdaptedValues> adaptationMap_;
 
 public:
     //! Constructs a VariableClass object
@@ -74,7 +74,7 @@ public:
      *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
     VariableClassAdaptive(const GridView& gridView) :
-        ParentType(gridView), grid_(gridView.grid()), adaptionMap_(grid_, 0)
+        ParentType(gridView), grid_(gridView.grid()), adaptationMap_(grid_, 0)
     {}
 
 
@@ -96,7 +96,7 @@ public:
             for (LevelIterator eIt = levelView.template begin<0>(); eIt != levelView.template end<0>(); ++eIt)
             {
                 //get your map entry
-                AdaptedValues &adaptedValues = adaptionMap_[*eIt];
+                AdaptedValues &adaptedValues = adaptationMap_[*eIt];
 
                 // put your value in the map
                 if (eIt->isLeaf())
@@ -114,7 +114,7 @@ public:
                 if (eIt.level() > 0)
                 {
                     ElementPointer epFather = eIt->father();
-                    AdaptedValues& adaptedValuesFather = adaptionMap_[*epFather];
+                    AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
                     CellData::getAdaptionValues(adaptedValues, adaptedValuesFather, problem);
                     adaptedValuesFather.count += 1;
                 }
@@ -132,7 +132,7 @@ public:
      */
     void reconstructPrimVars(const Problem& problem)
     {
-        adaptionMap_.reserve();
+        adaptationMap_.reserve();
 
         for (int level = 0; level <= grid_.maxLevel(); level++)
         {
@@ -144,7 +144,7 @@ public:
                     //entry is in map, write in leaf
                     if (eIt->isLeaf())
                     {
-                        AdaptedValues &adaptedValues = adaptionMap_[*eIt];
+                        AdaptedValues &adaptedValues = adaptationMap_[*eIt];
                         int newIdxI = this->index(*eIt);
 
                         CellData& cellData = this->cellData(newIdxI);
@@ -157,8 +157,8 @@ public:
                     // value is not in map, interpolate from father element
                     if (eIt.level() > 0)
                     {
-                        ElementPointer ep = eIt->father();
-                        AdaptedValues& adaptedValuesFather = adaptionMap_[*ep];
+                        ElementPointer epFather = eIt->father();
+                        AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
                         if (eIt->isLeaf())
                         {
                             int newIdxI = this->index(*eIt);
@@ -170,8 +170,8 @@ public:
                         else
                         {
                             //create new entry
-                            AdaptedValues& adaptedValues = adaptionMap_[*eIt];
-                            CellData::setAdaptionValues(adaptedValues, adaptedValuesFather, problem);
+                            AdaptedValues& adaptedValues = adaptationMap_[*eIt];
+                            CellData::setAdaptionValues(adaptationMap_, *epFather, *eIt, problem);
                             adaptedValues.count = 1;
                         }
                     }
@@ -180,7 +180,7 @@ public:
 
         }
         // reset entries in restrictionmap
-        adaptionMap_.clear();
+        adaptationMap_.clear();
     }
 
 };
