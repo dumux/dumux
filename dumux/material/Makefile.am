@@ -1,12 +1,11 @@
 SUBDIRS = \
-	  constraintsolvers \
-	  eos \
-	  fluidstates \
-	  fluidsystems \
 	  binarycoefficients \
 	  components \
+	  constraintsolvers \
+	  eos \
 	  fluidmatrixinteractions \
-	  old_fluidsystems \
+	  fluidstates \
+	  fluidsystems \
 	  spatialparameters
 
 materialdir = $(includedir)/dumux/material
