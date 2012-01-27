@@ -138,6 +138,16 @@ public:
         return false;
     }
 
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
+     *        be an ideal gas.
+     */
+    static bool isIdealGas(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+        return false; // we assume a incompressible liquid
+    }
+
     /****************************************
      * Component related static parameters
      ****************************************/
