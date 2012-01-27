@@ -35,6 +35,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
+#include <dune/grid/uggrid.hh>
 
 #include <iostream>
 
