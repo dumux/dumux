@@ -97,7 +97,7 @@ class ThreePThreeCVolumeVariables : public BoxVolumeVariables<TypeTag>
         gnPhaseOnly = Indices::gnPhaseOnly,
         wnPhaseOnly = Indices::wnPhaseOnly,
         gPhaseOnly  = Indices::gPhaseOnly,
-        wgPhaseOnly = Indices::wgPhaseOnly,
+        wgPhaseOnly = Indices::wgPhaseOnly
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

@@ -67,7 +67,7 @@ class ThreePThreeCNIFluxVariables : public ThreePThreeCFluxVariables<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

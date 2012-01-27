@@ -74,14 +74,14 @@ class ColumnSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
+        dimWorld=GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx
     };
 
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;

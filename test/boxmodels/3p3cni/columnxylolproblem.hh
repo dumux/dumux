@@ -122,7 +122,7 @@ class ColumnProblem : public ThreePThreeCNIProblem<TypeTag>
 
         // Grid and world dimension
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
 
 

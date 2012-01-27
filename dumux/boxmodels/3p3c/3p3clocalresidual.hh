@@ -104,7 +104,7 @@ protected:
             gnPhaseOnly = Indices::gnPhaseOnly,
             wnPhaseOnly = Indices::wnPhaseOnly,
             gPhaseOnly  = Indices::gPhaseOnly,
-            wgPhaseOnly = Indices::wgPhaseOnly,
+            wgPhaseOnly = Indices::wgPhaseOnly
         };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

@@ -59,7 +59,7 @@ class ThreePThreeCNIVolumeVariables : public ThreePThreeCVolumeVariables<TypeTag
 
     enum {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -98,15 +98,14 @@ public:
                            vertIdx,
                            isOldSol);
 
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(this->fluidState());
+
         // the internal energies and the enthalpies
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            enthalpy_[phaseIdx] =
-                FluidSystem::enthalpy(phaseIdx, this->fluidState());
-            internalEnergy_[phaseIdx] =
-                FluidSystem::internalEnergy(phaseIdx, this->fluidState());
+            Scalar h = FluidSystem::enthalpy(this->fluidState_, paramCache, phaseIdx);
+            this->fluidState_.setEnthalpy(phaseIdx, h);
         }
-        Valgrind::CheckDefined(internalEnergy_);
-        Valgrind::CheckDefined(enthalpy_);
     };
 
     /*!
@@ -116,7 +115,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar internalEnergy(int phaseIdx) const
-    { return internalEnergy_[phaseIdx]; };
+    { return this->fluidState_.internalEnergy(phaseIdx); };
 
     /*!
      * \brief Returns the total enthalpy of a phase in the sub-control
@@ -125,7 +124,7 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar enthalpy(int phaseIdx) const
-    { return enthalpy_[phaseIdx]; };
+    { return this->fluidState_.enthalpy(phaseIdx); };
 
     /*!
      * \brief Returns the total heat capacity \f$\mathrm{[J/(K*m^3]}\f$ of the rock matrix in
@@ -170,9 +169,6 @@ protected:
         Valgrind::CheckDefined(heatCapacity_);
     };
 
-
-    Scalar internalEnergy_[numPhases];
-    Scalar enthalpy_[numPhases];
     Scalar heatCapacity_;
 };
 

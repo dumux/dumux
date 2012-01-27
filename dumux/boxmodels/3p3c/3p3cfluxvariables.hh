@@ -87,7 +87,7 @@ class ThreePThreeCFluxVariables
 
         wCompIdx = Indices::wCompIdx,
         cCompIdx = Indices::cCompIdx,
-        aCompIdx = Indices::aCompIdx,
+        aCompIdx = Indices::aCompIdx
     };
 
 public:

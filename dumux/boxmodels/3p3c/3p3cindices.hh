@@ -41,7 +41,7 @@ namespace Dumux
 struct ThreePThreeCFormulation
 {
     enum {
-        pgSwSn,
+        pgSwSn
     };
 };
 
