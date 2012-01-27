@@ -11,7 +11,7 @@
 	/*!
 	 * \ingroup Common
 	 * \defgroup Properties Property System
-	 */
+         	 */
 	/*!
 	 * \ingroup Common
 	 * \defgroup Parameter Parameters
@@ -101,22 +101,30 @@
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup OnePBoxModel One-phase
+                 *
+                 * \copydetails Dumux::OnePBoxModel
 		 */
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup OnePTwoCBoxModel One-phase Two-component
+                 *
+                 * \copydetails Dumux::OnePTwoCBoxModel
 		 */
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup TwoPBoxModel Two-phase 
+                 *
+                 * \copydetails Dumux::TwoP
 		 */
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup TwoPNIModel Non-isothermal two-phase
-		 */
+              	 */
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup TwoPTwoCModel Two-phase two-component
+                 *
+                 * \copydetails Dumux::TwoPTwoCModel
 		 */
 		/*!
 		 * \ingroup BoxModels
@@ -125,23 +133,33 @@
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup MPNCModel M-phase N-component
+                 *
+                 * \copydetails Dumux::MPNCModel
 		 */
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup RichardsModel Richards
+                 *
+                 * \copydetails Dumux::RichardsModel
 		 */
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup BoxStokesModel Stokes
+                 *
+                 * \copydetails Dumux::StokesModel
 		 */
-        /*!
-         * \ingroup BoxModels
-         * \defgroup BoxStokes2cModel Two-component Stokes
-         */
-        /*!
-         * \ingroup BoxModels
-         * \defgroup BoxStokes2cniModel Non-isothermal two-component Stokes
-         */
+                /*!
+                 * \ingroup BoxModels
+                 * \defgroup BoxStokes2cModel Two-component Stokes
+                 *
+                 * \copydetails Dumux::Stokes2cModel
+                 */
+                /*!
+                 * \ingroup BoxModels
+                 * \defgroup BoxStokes2cniModel Non-isothermal two-component Stokes
+                 *
+                 * \copydetails Dumux::Stokes2cniModel
+                 */
 
 	/*!
 	 * \ingroup BoxModel
