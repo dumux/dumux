@@ -727,6 +727,8 @@ private:
             int globalElemIdx = model_().elementMapper().map(elem);
             if (elementColor_[globalElemIdx] == Green) {
                 ++greenElems_;
+                
+                assembleGreenElement_(elem);
                 return;
             }
         }
@@ -738,30 +740,44 @@ private:
             int globI = vertexMapper_().map(elem, i, dim);
 
             // update the right hand side
-            if (vertexColor(globI) == Green) {
-                continue;
-            }
-
             residual_[globI] += model_().localJacobian().residual(i);
             if (enableJacobianRecycling_()) {
-                // save the flux term and the jacobian of the
-                // storage term in case we can reuse the current
-                // linearization...
-                storageJacobian_[globI] +=
-                    model_().localJacobian().storageJacobian(i);
-
                 storageTerm_[globI] +=
                     model_().localJacobian().storageTerm(i);
             }
 
-            // update the jacobian matrix
-            for (int j=0; j < numVertices; ++ j) {
-                int globJ = vertexMapper_().map(elem, j, dim);
-                (*matrix_)[globI][globJ] +=
-                    model_().localJacobian().mat(i,j);
+            // skip updating the jacobian matrix for green vertices
+            if (vertexColor(globI) != Green) {
+                if (enableJacobianRecycling_())
+                    storageJacobian_[globI] +=
+                        model_().localJacobian().storageJacobian(i);
+                
+                // update the jacobian matrix
+                for (int j=0; j < numVertices; ++ j) {
+                    int globJ = vertexMapper_().map(elem, j, dim);
+                    (*matrix_)[globI][globJ] +=
+                        model_().localJacobian().mat(i,j);
+                }
             }
         }
     }
+
+    // "assemble" a green element. green elements only get the
+    // residual updated, but the jacobian is left alone...
+    void assembleGreenElement_(const Element &elem)
+    {
+        model_().localResidual().eval(elem);
+
+        int numVertices = elem.template count<dim>();
+        for (int i=0; i < numVertices; ++ i) {
+            int globI = vertexMapper_().map(elem, i, dim);
+
+            // update the right hand side
+            residual_[globI] += model_().localResidual().residual(i);
+            if (enableJacobianRecycling_())
+                storageTerm_[globI] += model_().localResidual().storageTerm(i);
+        }
+    };
 
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &elem)

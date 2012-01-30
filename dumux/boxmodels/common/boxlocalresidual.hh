@@ -276,8 +276,10 @@ public:
     /*!
      * \brief Add Outflow boundary conditions for a single sub-control
      *        volume face to the local residual.
-     *           ATTENTION: This is so far an empty method doing not more than nothing. A beta version is
-     *           available for the 2p2c and 2p2cni model. There you can find a sample implementation.
+     *
+     * \note This is so far an empty method doing not more than
+     *       nothing. A beta version is available for the 2p2c and
+     *       2p2cni model. There you can find a sample implementation.
      */
     void evalOutflowSegment(const IntersectionIterator &isIt,
                             int scvIdx,
@@ -307,6 +309,13 @@ public:
      */
     const ElementSolutionVector &storageTerm() const
     { return storageTerm_; }
+
+    /*!
+     * \brief Returns the storage term for a given sub-control volumes
+     *        of the element.
+     */
+    const PrimaryVariables &storageTerm(int scvIdx) const
+    { return storageTerm_[scvIdx]; }
 
 protected:
     Implementation &asImp_()
