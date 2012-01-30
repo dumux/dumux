@@ -295,14 +295,14 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
                     if (s.size() == j)
                     {
                         std::ostringstream oss;
-                        oss << "Parameter name of argument " << i << " (='" << argv[i] << "')"
+                        oss << "Parameter name of argument " << i << " ('" << argv[i] << "')"
                             << " is invalid (ends with a '-' character).";
                         return oss.str();
                     }
                     else if (s[j] == '-')
                     {
                         std::ostringstream oss;
-                        oss << "Malformed parameter name name in argument " << i << " (='" << argv[i] << "'): "
+                        oss << "Malformed parameter name name in argument " << i << " ('" << argv[i] << "'): "
                             << "'--' in parameter name.";
                         return oss.str();
                     }
