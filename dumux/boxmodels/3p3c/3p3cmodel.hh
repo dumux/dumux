@@ -537,7 +537,7 @@ protected:
         // check if a primary var switch is necessary
         if (phasePresence == threePhases)
         {
-            Scalar Smin = -1.e-5;
+            Scalar Smin = 0;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 Smin = -0.01;
 
@@ -580,8 +580,8 @@ protected:
         }
         else if (phasePresence == wPhaseOnly)
         {
-            Scalar gasFlag = 0;
-            Scalar NAPLFlag = 0;
+            bool gasFlag = 0;
+            bool NAPLFlag = 0;
             // calculate fractions of the partial pressures in the
             // hypothetical gas phase
             Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
@@ -658,8 +658,8 @@ protected:
         }
         else if (phasePresence == gnPhaseOnly)
         {
-            Scalar NAPLFlag = 0;
-            Scalar waterFlag = 0;
+            bool NAPLFlag = 0;
+            bool waterFlag = 0;
 
             Scalar Smin = 0.0;
             if (staticVertexDat_[globalIdx].wasSwitched)
@@ -723,8 +723,8 @@ protected:
         }
         else if (phasePresence == wnPhaseOnly)
         {
-            Scalar NAPLFlag = 0;
-            Scalar gasFlag = 0;
+            bool NAPLFlag = 0;
+            bool gasFlag = 0;
 
             Scalar Smin = 0.0;
             if (staticVertexDat_[globalIdx].wasSwitched)
@@ -791,8 +791,8 @@ protected:
         }
         else if (phasePresence == gPhaseOnly)
         {
-            Scalar NAPLFlag = 0;
-            Scalar waterFlag = 0;
+            bool NAPLFlag = 0;
+            bool waterFlag = 0;
 
             // calculate fractions in the hypothetical NAPL phase
             Scalar xnc = volVars.fluidState().moleFraction(nPhaseIdx, cCompIdx);
@@ -849,7 +849,7 @@ protected:
             else if ((waterFlag == 1) && (NAPLFlag == 1))
             {
                 newPhasePresence = threePhases;
-                globalSol[globalIdx][switch1Idx] = 0.0001;
+                globalSol[globalIdx][switch1Idx] = 0.0001; 
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
             else if ((waterFlag == 0) && (NAPLFlag == 1))
@@ -862,17 +862,16 @@ protected:
         }
         else if (phasePresence == wgPhaseOnly)
         {
-            Scalar NAPLFlag = 0;
-            Scalar gasFlag = 0;
-            Scalar waterFlag = 0;
+            bool NAPLFlag = 0;
+            bool gasFlag = 0;
+            bool waterFlag = 0;
 
             // get the fractions in the hypothetical NAPL phase
             Scalar xnc = volVars.fluidState().moleFraction(nPhaseIdx, cCompIdx);
-            /*
-              take care:, xnc, if no NAPL phase is there, take xnc=xcg*pg/pcsat
-              if this is larger than 1, then NAPL appears
-            */
 
+            // take care: if the NAPL phase is not present, take
+            // xnc=xcg*pg/pcsat if this is larger than 1, then NAPL
+            // appears
             Scalar xnMax = 1.0;
             if (xnc > xnMax)
                 wouldSwitch = true;
@@ -929,7 +928,7 @@ protected:
             {
                 newPhasePresence = threePhases;
                 globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
-                globalSol[globalIdx][switch2Idx] = 0.0001;
+                globalSol[globalIdx][switch2Idx] = 0.0;
             }
             else if ((gasFlag == 1) && (NAPLFlag == 0) && (waterFlag == 0))
             {

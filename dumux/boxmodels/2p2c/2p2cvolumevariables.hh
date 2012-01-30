@@ -134,7 +134,7 @@ public:
                            scvIdx,
                            isOldSol);
 
-	completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_, isOldSol);
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_, isOldSol);
         
         /////////////
         // calculate the remaining quantities
@@ -142,11 +142,11 @@ public:
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
 	
- 	// Second instance of a parameter cache.
+        // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also 
-	// became part of the fluid state.
-       typename FluidSystem::ParameterCache paramCache;
-	paramCache.updateAll(fluidState_);
+        // became part of the fluid state.
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState_);
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // relative permeabilities
             Scalar kr;

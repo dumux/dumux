@@ -40,11 +40,10 @@
 
 #include "3p3cproperties.hh"
 
-#include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/material/constants.hh>
-#include <dumux/material/binarycoefficients/h2o_air.hh>
-#include <dumux/material/binarycoefficients/h2o_mesitylene.hh>
-#include <dumux/material/binarycoefficients/air_mesitylene.hh>
+#include <dumux/material/fluidstates/compositionalfluidstate.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 namespace Dumux
 {
@@ -68,6 +67,10 @@ class ThreePThreeCVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+
+    // constraint solvers
+    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
+    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
     enum {
@@ -139,7 +142,6 @@ public:
         int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
         int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
 
-
         Scalar temp = Implementation::temperature_(primaryVars, problem, element, elemGeom, scvIdx);
         fluidState_.setTemperature(temp);
 
@@ -205,14 +207,12 @@ public:
         fluidState_.setPressure(gPhaseIdx, pg_);
         fluidState_.setPressure(nPhaseIdx, pn_);
 
-        assert(FluidSystem::isIdealGas(gPhaseIdx));
-        Scalar rMolG = pg_/(temp*R);
-
         // calculate and set all fugacity coefficients. this is
         // possible because we require all phases to be an ideal
         // mixture, i.e. fugacity coefficients are not supposed to
         // depend on composition!
         typename FluidSystem::ParameterCache paramCache;
+        assert(FluidSystem::isIdealGas(gPhaseIdx));
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             assert(FluidSystem::isIdealMixture(phaseIdx));
             
@@ -224,58 +224,18 @@ public:
 
         // now comes the tricky part: calculate phase composition
         if (phasePresence == threePhases) {
-            // three phases are present, phase composition results from
-            // the gas <-> liquid equilibrium.
-
-            // for the water and NAPL components, assume that their
-            // partial pressure is equivalent to their partial
-            // pressure. This is only valid if the water phase is
-            // almost exclusively made up of the water component and
-            // the contaminant phase is only made of NAPL.
-            const Scalar partPressH2O = pw_*fluidState_.fugacityCoefficient(wPhaseIdx, wCompIdx);
-            const Scalar partPressNAPL = pn_*fluidState_.fugacityCoefficient(nPhaseIdx, cCompIdx);
-            const Scalar partPressAir = pg_ - partPressH2O - partPressNAPL;
-
-            // calculate the partial molar densities of the components
-            // in the gas phase
-            Scalar partDensGNAPL = partPressNAPL/(temp*R);
-            Scalar partDensGH2O = partPressH2O/(temp*R);
-            Scalar partDensGAir = partPressAir/(temp*R);
-
-            // convert partial pressures to mole fractions
-            Scalar xgc = partDensGNAPL/rMolG;
-            Scalar xgw = partDensGH2O/rMolG;
-            Scalar xga = partDensGAir/rMolG;
-
-            // actually, the fugacity coefficient times pressure is
-            // equivalent to the Henry coefficient
-            Scalar xwc = partPressNAPL/(fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx) * pg_);
-            Scalar xwa = partPressAir/(fluidState_.fugacityCoefficient(wPhaseIdx,aCompIdx) * pg_);
-            Scalar xww = 1.-xwa-xwc;
-
-            Scalar xnc = 1.;
-            Scalar xna = 0.;
-            Scalar xnw = 0.;
-
-            fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
-            fluidState_.setMoleFraction(wPhaseIdx, aCompIdx, xwa);
-            fluidState_.setMoleFraction(wPhaseIdx, cCompIdx, xwc);
-            fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
-            fluidState_.setMoleFraction(gPhaseIdx, aCompIdx, xga);
-            fluidState_.setMoleFraction(gPhaseIdx, cCompIdx, xgc);
-            fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
-            fluidState_.setMoleFraction(nPhaseIdx, aCompIdx, xna);
-            fluidState_.setMoleFraction(nPhaseIdx, cCompIdx, xnc);
-
-            paramCache.updateAll(fluidState_);
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                Scalar rho = FluidSystem::density(fluidState_, paramCache, phaseIdx);
-                fluidState_.setDensity(phaseIdx, rho);
-            }
+            // all phases are present, phase compositions are a
+            // result of the the gas <-> liquid equilibrium. This is
+            // the job of the "MiscibleMultiPhaseComposition"
+            // constraint solver
+            MiscibleMultiPhaseComposition::solve(fluidState_,
+                                                 paramCache,
+                                                 /*setViscosity=*/true,
+                                                 /*setInternalEnergy=*/false);
         }
         else if (phasePresence == wPhaseOnly) {
             // only the water phase is present, water phase composition is
-            // stored explicitly.
+            // stored explicitly.          
 
             // extract mole fractions in the water phase
             Scalar xwa = primaryVars[switch1Idx];
@@ -287,57 +247,28 @@ public:
             fluidState_.setMoleFraction(wPhaseIdx, aCompIdx, xwa);
             fluidState_.setMoleFraction(wPhaseIdx, cCompIdx, xwc);
 
-            paramCache.updatePhase(fluidState_, wPhaseIdx);
-            Scalar rhoW = FluidSystem::density(fluidState_, paramCache, wPhaseIdx);
-            fluidState_.setDensity(wPhaseIdx, rhoW);
-
-            // we have the gas phase pressure, the temperature and
-            // the mole fractions in the only phase water
-            // all other mole fraction are in principle not relevant but
-            // they are needed for the switch criteria in 3p3cmodel.hh
-            // see instructions how to calculate them there!
-
-            // calculate gas phase composition and density
-            Scalar xga = xwa * fluidState_.fugacityCoefficient(wPhaseIdx,aCompIdx);
-            Scalar xgc = xwc * fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx);
-            Scalar xgw = xww * fluidState_.fugacityCoefficient(wPhaseIdx,wCompIdx);
-
-            // write gas mole fractions in the fluid state
-            fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
-            fluidState_.setMoleFraction(gPhaseIdx, aCompIdx, xga);
-            fluidState_.setMoleFraction(gPhaseIdx, cCompIdx, xgc);
-
-            paramCache.updatePhase(fluidState_, gPhaseIdx);
-            Scalar rhoG = FluidSystem::density(fluidState_, paramCache, gPhaseIdx);
-            fluidState_.setDensity(gPhaseIdx, rhoG);
-
-            // calculate NAPL phase composition and density
-            Scalar xnw = 0.;
-            Scalar xna = 0.;
-            Scalar xnc = xwc * fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx); // this seems to be physically incorrect
-            // write NAPL mole fractions in the fluid state
-            fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
-            fluidState_.setMoleFraction(nPhaseIdx, aCompIdx, xna);
-            fluidState_.setMoleFraction(nPhaseIdx, cCompIdx, xnc);
-
-            paramCache.updatePhase(fluidState_, nPhaseIdx);
-            Scalar rhoN = FluidSystem::density(fluidState_, paramCache, nPhaseIdx);
-            fluidState_.setDensity(nPhaseIdx, rhoN);
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState_, 
+                                             paramCache,
+                                             wPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
         }
         else if (phasePresence == gnPhaseOnly) {
             // only gas and NAPL phases are present
             // we have all (partly hypothetical) phase pressures
             // and temperature and the mole fraction of water in
             // the gas phase
-            const Scalar xgw = primaryVars[switch1Idx];
 
             // we have all (partly hypothetical) phase pressures
             // and temperature and the mole fraction of water in
             // the gas phase
+            Scalar partPressNAPL = fluidState_.fugacityCoefficient(nPhaseIdx, cCompIdx)*pn_;
 
-            const Scalar partPressNAPL = fluidState_.fugacityCoefficient(gPhaseIdx, cCompIdx)*fluidState_.pressure(gPhaseIdx);
-            Scalar partDensGNAPL = partPressNAPL/(temp*R);
-            Scalar xgc = partDensGNAPL/rMolG;
+            Scalar xgw = primaryVars[switch1Idx];
+            Scalar xgc = partPressNAPL/pg_;
             Scalar xga = 1.-xgw-xgc;
 
             // write mole fractions in the fluid state
@@ -345,83 +276,37 @@ public:
             fluidState_.setMoleFraction(gPhaseIdx, aCompIdx, xga);
             fluidState_.setMoleFraction(gPhaseIdx, cCompIdx, xgc);
 
-            paramCache.updatePhase(fluidState_, gPhaseIdx);
-            Scalar rhoG = FluidSystem::density(fluidState_, paramCache, gPhaseIdx);
-            fluidState_.setDensity(gPhaseIdx, rhoG);
-
-            Scalar xnc = 1.;
-            Scalar xna = 0.;
-            Scalar xnw = 0.;
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
-            fluidState_.setMoleFraction(nPhaseIdx, aCompIdx, xna);
-            fluidState_.setMoleFraction(nPhaseIdx, cCompIdx, xnc);
-
-            paramCache.updatePhase(fluidState_, nPhaseIdx);
-            Scalar rhoN = FluidSystem::density(fluidState_, paramCache, nPhaseIdx);
-            fluidState_.setDensity(nPhaseIdx, rhoN);
-            
-            Scalar pVapW = fluidState_.fugacityCoefficient(wPhaseIdx, wCompIdx)*pw_;
-            Scalar xww = xgw * pg_ / pVapW; // required by phase switch criterion
-            Scalar xwa = 0.;
-            Scalar xwc = 0.;
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
-            fluidState_.setMoleFraction(wPhaseIdx, aCompIdx, xwa);
-            fluidState_.setMoleFraction(wPhaseIdx, cCompIdx, xwc);
-
-            paramCache.updatePhase(fluidState_, wPhaseIdx);
-            Scalar rhoW = FluidSystem::density(fluidState_, paramCache, wPhaseIdx);
-            fluidState_.setDensity(wPhaseIdx, rhoW);
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState_, 
+                                             paramCache,
+                                             gPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
         }
         else if (phasePresence == wnPhaseOnly) {
             // only water and NAPL phases are present
-            const Scalar xwa = primaryVars[switch1Idx]; // xwa
-
             Scalar pPartialC = fluidState_.fugacityCoefficient(nPhaseIdx,cCompIdx)*pn_;
-            Scalar henryC = fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx)*pg_;
+            Scalar henryC = fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx)*pw_;
+            
+            Scalar xwa = primaryVars[switch1Idx];
             Scalar xwc = pPartialC/henryC;
             Scalar xww = 1.-xwa-xwc;
+
             // write mole fractions in the fluid state
             fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
             fluidState_.setMoleFraction(wPhaseIdx, aCompIdx, xwa);
             fluidState_.setMoleFraction(wPhaseIdx, cCompIdx, xwc);
 
-            paramCache.updatePhase(fluidState_, wPhaseIdx);
-            Scalar rhoW = FluidSystem::density(fluidState_, paramCache, wPhaseIdx);
-            fluidState_.setDensity(wPhaseIdx, rhoW);
-
-            // we have the gas phase pressure, the temperature and
-            // the mole fractions in the water phase and the
-            // NAPL phase (assumed to be trivial)
-            // gas phase  mole fractions are in principle not relevant but
-            // they are needed for the switch criteria in 3p3cmodel.hh
-            // see instructions how to calculate them there!
-
-            // calculate gas phase composition and density
-            Scalar xga = xwa * fluidState_.fugacityCoefficient(wPhaseIdx,aCompIdx);
-            Scalar xgc = xwc * fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx);
-            Scalar xgw = fluidState_.fugacityCoefficient(gPhaseIdx, wCompIdx);
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
-            fluidState_.setMoleFraction(gPhaseIdx, aCompIdx, xga);
-            fluidState_.setMoleFraction(gPhaseIdx, cCompIdx, xgc);
-
-            paramCache.updatePhase(fluidState_, gPhaseIdx);
-            Scalar rhoG = FluidSystem::density(fluidState_, paramCache, gPhaseIdx);
-            fluidState_.setDensity(gPhaseIdx, rhoG);
-
-            Scalar xnc = 1.;
-            Scalar xna = 0.;
-            Scalar xnw = 0.;
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
-            fluidState_.setMoleFraction(nPhaseIdx, aCompIdx, xna);
-            fluidState_.setMoleFraction(nPhaseIdx, cCompIdx, xnc);
-
-            paramCache.updatePhase(fluidState_, gPhaseIdx);
-            Scalar rhoN = FluidSystem::density(fluidState_, paramCache, nPhaseIdx);
-            fluidState_.setDensity(nPhaseIdx, rhoN);
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState_,
+                                             paramCache,
+                                             wPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
         }
         else if (phasePresence == gPhaseOnly) {
             // only the gas phase is present, gas phase composition is
@@ -430,90 +315,45 @@ public:
             const Scalar xgw = primaryVars[switch1Idx];
             const Scalar xgc = primaryVars[switch2Idx];
             Scalar xga = 1 - xgw - xgc;
+
             // write mole fractions in the fluid state
             fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
             fluidState_.setMoleFraction(gPhaseIdx, aCompIdx, xga);
             fluidState_.setMoleFraction(gPhaseIdx, cCompIdx, xgc);
 
-            paramCache.updatePhase(fluidState_, gPhaseIdx);
-            Scalar rhoG = FluidSystem::density(fluidState_, paramCache, gPhaseIdx);
-            fluidState_.setDensity(gPhaseIdx, rhoG);
-
-            Scalar pPartialW = fluidState_.fugacityCoefficient(wPhaseIdx, wCompIdx)*pw_;
-            Scalar xww = xgw * pg_ / pPartialW; // required by phase switch criterion
-            Scalar xwa = 0.;
-            Scalar xwc = 0.;
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
-            fluidState_.setMoleFraction(wPhaseIdx, aCompIdx, xwa);
-            fluidState_.setMoleFraction(wPhaseIdx, cCompIdx, xwc);
-
-            paramCache.updatePhase(fluidState_, wPhaseIdx);
-            Scalar rhoW = FluidSystem::density(fluidState_, paramCache, wPhaseIdx);
-            fluidState_.setDensity(wPhaseIdx, rhoW);
-
-            Scalar pPartialN = fluidState_.fugacityCoefficient(nPhaseIdx, cCompIdx)*pn_;
-            Scalar xnc = xgc * pg_ / pPartialN; // required by phase switch criterion
-            Scalar xna = 0.;
-            Scalar xnw = 0.;
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
-            fluidState_.setMoleFraction(nPhaseIdx, aCompIdx, xna);
-            fluidState_.setMoleFraction(nPhaseIdx, cCompIdx, xnc);
-
-            paramCache.updatePhase(fluidState_, nPhaseIdx);
-            Scalar rhoN = FluidSystem::density(fluidState_, paramCache, nPhaseIdx);
-            fluidState_.setDensity(nPhaseIdx, rhoN);
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState_,
+                                             paramCache,
+                                             gPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
         }
         else if (phasePresence == wgPhaseOnly) {
             // only water and gas phases are present
-            const Scalar xgc = primaryVars[switch2Idx]; // xgw
+            Scalar xgc = primaryVars[switch2Idx];
             Scalar partPressH2O = fluidState_.fugacityCoefficient(wPhaseIdx, wCompIdx)*pw_;
-            Scalar partDensGH2O = partPressH2O/(temp*R);
-            // Scalar partPressAir = pg_ - partPressH2O - xgc*pg_;
-            // // regularization of partDensGAir for small gas saturations to
-            // // prevent phase disappearance (is, of course, questionable)
-            // if (Sg<0.01) {
-            // partPressAir*=(1-(0.01-Sg)/(0.01+1.e-20));
-            // if(partPressAir<0) partPressAir=0.0;
-            // }
 
-            Scalar xgw = partDensGH2O/rMolG;
-            Scalar xga = 1.-xgc-xgw;  // partPressAir/rMolG;
+            Scalar xgw = partPressH2O/pg_;
+            Scalar xga = 1.-xgc-xgw;
+
             // write mole fractions in the fluid state
             fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
             fluidState_.setMoleFraction(gPhaseIdx, aCompIdx, xga);
             fluidState_.setMoleFraction(gPhaseIdx, cCompIdx, xgc);
 
-            paramCache.updatePhase(fluidState_, gPhaseIdx);
-            Scalar rhoG = FluidSystem::density(fluidState_, paramCache, gPhaseIdx);
-            fluidState_.setDensity(gPhaseIdx, rhoG);
-
-            Scalar partPressC = fluidState_.fugacityCoefficient(nPhaseIdx, cCompIdx)*pn_;
-            Scalar xnc = xgc*pg_/partPressC;
-            Scalar xna = 0.;
-            Scalar xnw = 0.;
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
-            fluidState_.setMoleFraction(nPhaseIdx, aCompIdx, xna);
-            fluidState_.setMoleFraction(nPhaseIdx, cCompIdx, xnc);
-
-            paramCache.updatePhase(fluidState_, nPhaseIdx);
-            Scalar rhoN = FluidSystem::density(fluidState_, paramCache, nPhaseIdx);
-            fluidState_.setDensity(nPhaseIdx, rhoN);
-
-            Scalar xwc = xgc /fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx);
-            Scalar xwa = xga /fluidState_.fugacityCoefficient(wPhaseIdx,aCompIdx);
-            Scalar xww = 1.-xwa-xwc;
-            // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
-            fluidState_.setMoleFraction(wPhaseIdx, aCompIdx, xwa);
-            fluidState_.setMoleFraction(wPhaseIdx, cCompIdx, xwc);
-
-            paramCache.updatePhase(fluidState_, wPhaseIdx);
-            Scalar rhoW = FluidSystem::density(fluidState_, paramCache, wPhaseIdx);
-            fluidState_.setDensity(wPhaseIdx, rhoW);
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState_,
+                                             paramCache,
+                                             gPhaseIdx,
+                                             /*setViscosity=*/true,
+                                             /*setInternalEnergy=*/false);
         }
+        else
+            assert(false); // unhandled phase state
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // Mobilities
