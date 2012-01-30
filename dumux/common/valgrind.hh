@@ -48,6 +48,7 @@ void voidBlubb() { }
 #define SetDefined(t) voidBlubb()
 #define CheckDefined(t) boolBlubb()
 #define SetNoAccess(t) voidBlubb()
+#define Running() false
 }
 
 #else
@@ -58,6 +59,20 @@ void voidBlubb() { }
 
 namespace Valgrind
 {
+/*!
+ * \ingroup Valgrind
+ * \brief Returns whether the program is running under Valgrind or not.
+ */
+inline bool Running()
+{
+#if !defined NDEBUG && HAVE_VALGRIND
+    return RUNNING_ON_VALGRIND;
+#else
+    return false;
+#endif
+}
+    
+
 /*!
  * \ingroup Valgrind
  * \brief Make valgrind complain if the object occupied by an object

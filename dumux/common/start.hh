@@ -441,6 +441,11 @@ int startWithParameters_(int argc,
  */
 bool inDebugger()
 {
+    // valgrind seems to have a problem with ptrace, so we behave as
+    // if no debugger is present in this case...
+    if (Valgrind::Running())
+        return false;
+
     return ptrace(PTRACE_TRACEME, 0, NULL, 0) == -1;
 }
 
