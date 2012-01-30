@@ -113,7 +113,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSw, PVOffset>
     static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
 
     // indices of the primary variables
-    static const int pnIdx = PVOffset + 0; //!< Pressure index of the wetting phase
+    static const int pnIdx = PVOffset + 0; //!< Pressure index of the non-wetting phase
     static const int SwIdx = PVOffset + 1; //!< Saturation index of the wetting phase
 
     static const int pressureType = pressureNW;
@@ -177,8 +177,8 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSn, PVOffset>
     static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
 
     // indices of the primary variables
-    static const int pnIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int SnIdx = PVOffset + 1; //!< Saturation index of the wetting phase
+    static const int pnIdx = PVOffset + 0; //!< Pressure index of the non-wetting phase
+    static const int SnIdx = PVOffset + 1; //!< Saturation index of the non-wetting phase
 
     static const int pressureType = pressureNW;
     static const int saturationType = saturationNW;
@@ -239,7 +239,7 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
 
     // indices of the primary variables
     static const int pGlobalIdx = PVOffset + 0; //!< Pressure index of the wetting phase
-    static const int SnIdx = PVOffset + 1; //!< Saturation index of the wetting phase
+    static const int SnIdx = PVOffset + 1; //!< Saturation index of the non-wetting phase
 
     static const int pressureType = pressureGlobal;
     static const int saturationType = saturationNW;
