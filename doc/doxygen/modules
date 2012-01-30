@@ -114,21 +114,37 @@
 		 * \ingroup BoxModels
 		 * \defgroup TwoPBoxModel Two-phase 
                  *
-                 * \copydetails Dumux::TwoP
+                 * \copydetails Dumux::TwoPModel
 		 */
 		/*!
 		 * \ingroup BoxModels
 		 * \defgroup TwoPNIModel Non-isothermal two-phase
+                 *
+                 * \copydetails Dumux::TwoPNIModel
               	 */
 		/*!
 		 * \ingroup BoxModels
-		 * \defgroup TwoPTwoCModel Two-phase two-component
+		 * \defgroup TwoPTwoCModel Two-phase, two-component
                  *
                  * \copydetails Dumux::TwoPTwoCModel
 		 */
 		/*!
 		 * \ingroup BoxModels
-		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase two-component
+		 * \defgroup TwoPTwoCNIModel Non-isothermal two-phase, two-component
+                 *
+                 * \copydetails Dumux::TwoPTwoCNIModel
+		 */
+		/*!
+		 * \ingroup BoxModels
+                 * \defgroup ThreePThreeCModel Three-phase, three-component
+                 *
+                 * \copydetails Dumux::ThreePThreeCModel
+		 */
+		/*!
+		 * \ingroup BoxModels
+                 * \defgroup ThreePThreeCNIModel Non-isothermal three-phase, three-component
+                 *
+                 * \copydetails Dumux::ThreePThreeCNIModel
 		 */
 		/*!
 		 * \ingroup BoxModels

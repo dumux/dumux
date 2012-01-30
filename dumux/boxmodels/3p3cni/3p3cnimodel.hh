@@ -35,11 +35,6 @@
 
 namespace Dumux {
 /*!
- * \ingroup BoxModels
- * \defgroup ThreePThreeCNIModel Non-isothermal three-phase three-component box model
- */
-
-/*!
  * \ingroup ThreePThreeCNIModel
  * \brief Adaption of the BOX scheme to the non-isothermal three-phase three-component flow model.
  *

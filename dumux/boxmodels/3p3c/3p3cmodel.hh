@@ -42,11 +42,6 @@
 namespace Dumux
 {
 /*!
- * \ingroup BoxModels
- * \defgroup ThreePThreeCModel Three-phase three-component box model
- */
-
-/*!
  * \ingroup ThreePThreeCModel
  * \brief Adaption of the BOX scheme to the three-phase three-component flow model.
  *

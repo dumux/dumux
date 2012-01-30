@@ -536,7 +536,7 @@ protected:
             PrimaryVariables tmp(0.);
 
             // mass balance within the element. this is the
-            // $\frac{m}{\partial t}$ term if using implicit
+            // \f$\frac{m}{\partial t}\f$ term if using implicit
             // euler as time discretization.
             //
             // TODO (?): we might need a more explicit way for

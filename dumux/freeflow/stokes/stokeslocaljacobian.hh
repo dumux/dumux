@@ -54,14 +54,12 @@ private:
         dimWorld = GridView::dimensionworld
     };
 
-public:
-    //! \copydoc numericEpsilon_()
-    Scalar numericEpsilon_(int scvIdx,
-                           int pvIdx) const
+    //! \copydoc BoxLocalJacobian::numericEpsilon()
+    Scalar numericEpsilon(int scvIdx,
+                          int pvIdx) const
     {
         Scalar pv = this->curVolVars_[scvIdx].primaryVars()[pvIdx];
         if (pvIdx == 0 || pvIdx == 1){
-            //            std::cout << "adjusting eps_ for momentum balance\n";
             return 1e-7*(std::abs(pv) + 1);
         }
         return 1e-9*(std::abs(pv) + 1);

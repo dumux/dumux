@@ -36,7 +36,7 @@ namespace Dumux
  *
  * This class can be used to tabulate a two dimensional function
  * \f$f(x, y)\f$ over the range \f$[x_{min}, x_{max}] \times [y_{min},
- * y_{max}]\f$. For this, the ranges of the $x$ and $y$ axes are
+ * y_{max}]\f$. For this, the ranges of the \f$x\f$ and \f$y\f$ axes are
  * divided into \f$m\f$ and \f$n\f$ sub-intervals and the values of
  * \f$f(x_i, y_j)\f$ need to be provided. Here, \f$x_i\f$ and
  * \f$y_j\f$ are the largest positions of the \f$i\f$-th and

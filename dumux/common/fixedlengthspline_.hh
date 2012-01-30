@@ -34,7 +34,6 @@
 
 namespace Dumux
 {
-//! \cond INTERNAL
 /*!
  * \brief The common code for all 3rd order polynomial splines with
  *        more than two sampling points.
@@ -460,8 +459,6 @@ protected:
     Vector yPos_;
     BlockVector m_;
 };
-
-//! \endcond
 
 }
 

@@ -44,9 +44,7 @@ using tr1::get;
 
 namespace Dumux
 {
-//! \cond INTERNAL
 /*!
- *
  * \brief The common code for all 3rd order polynomial splines.
  */
 template<class ScalarT, class ImplementationT>
@@ -143,7 +141,7 @@ public:
      * \param extrapolate If this parameter is set to true, the spline
      *                    will be extended beyond its range by
      *                    straight lines, if false calling extrapolate
-     *                    for \$f x \not [x_{min}, x_{max}]\f$ will
+     *                    for \f$ x \not [x_{min}, x_{max}]\f$ will
      *                    cause a failed assertation.
      */
     Scalar eval(Scalar x, bool extrapolate=false) const
@@ -176,7 +174,7 @@ public:
      * \param extrapolate If this parameter is set to true, the spline
      *                    will be extended beyond its range by
      *                    straight lines, if false calling extrapolate
-     *                    for \$f x \not [x_{min}, x_{max}]\f$ will
+     *                    for \f$ x \not [x_{min}, x_{max}]\f$ will
      *                    cause a failed assertation.
 
      */
@@ -690,8 +688,6 @@ protected:
     int numSamples_() const
     { return asImp_().numSamples(); }
 };
-
-//! \endcond
 
 }
 
