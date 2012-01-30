@@ -61,22 +61,17 @@ class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum {
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx
-    };
+    enum { lCompIdx = Indices::lCompIdx };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
 
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     Stokes2cFluxVariables(const Problem &problem,

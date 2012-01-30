@@ -50,8 +50,7 @@ class RichardsFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, RichardsIndices) Indices;
     enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

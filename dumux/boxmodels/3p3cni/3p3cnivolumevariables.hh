@@ -58,18 +58,14 @@ class ThreePThreeCNIVolumeVariables : public ThreePThreeCVolumeVariables<TypeTag
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { temperatureIdx = Indices::temperatureIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     //! \endcond
 
 public:

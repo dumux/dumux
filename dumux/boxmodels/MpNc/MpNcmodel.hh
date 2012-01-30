@@ -138,9 +138,7 @@ class MPNCModel : public BoxModel<TypeTag>
         numDiffMethod = GET_PROP_VALUE(TypeTag, NumericDifferenceMethod),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
-        dimWorld = GridView::dimensionworld,
-        dim = GridView::dimension
+        numEq = GET_PROP_VALUE(TypeTag, NumEq)
     };
 
 public:

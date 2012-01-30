@@ -81,14 +81,9 @@ class LensSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
-
     enum {
         dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
-
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
+        dimWorld=GridView::dimensionworld
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;

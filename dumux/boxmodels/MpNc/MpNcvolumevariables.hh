@@ -70,14 +70,12 @@ class MPNCVolumeVariables
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        dimWorld = GridView::dimensionworld,
 
         enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
         enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
         enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
         enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion) || enableKinetic,
 
-        numEnergyEqs     = Indices::NumPrimaryEnergyVars,
 
         S0Idx = Indices::S0Idx,
         p0Idx = Indices::p0Idx

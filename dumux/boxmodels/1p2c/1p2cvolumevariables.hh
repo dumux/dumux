@@ -62,10 +62,7 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         comp1Idx = Indices::comp1Idx,
 
         pressureIdx = Indices::pressureIdx,
-        x1Idx = Indices::x1Idx,
-
-        contiEqIdx = Indices::contiEqIdx,
-        transEqIdx = Indices::transEqIdx
+        x1Idx = Indices::x1Idx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

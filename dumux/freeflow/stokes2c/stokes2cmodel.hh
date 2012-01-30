@@ -77,11 +77,7 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    enum {
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx
-    };
+    enum { lCompIdx = Indices::lCompIdx };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;

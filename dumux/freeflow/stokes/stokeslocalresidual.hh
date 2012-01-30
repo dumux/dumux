@@ -74,21 +74,12 @@ protected:
         massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
 
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
-        momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
-        momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
         lastMomentumIdx = Indices::lastMomentumIdx //!< Index of the last component of the momentum balance
     };
-    enum {
-        dimXIdx = Indices::dimXIdx, //!< Index for the first component of a vector
-        dimYIdx = Indices::dimYIdx, //!< Index for the second component of a vector
-        dimZIdx = Indices::dimZIdx //!< Index for the third component of a vector
-    };
 
-    typedef typename GridView::ctype CoordScalar;
     typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
     typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
 
-    typedef Dune::FieldVector<CoordScalar, dim> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 

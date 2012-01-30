@@ -57,35 +57,21 @@ template<class TypeTag>
 class ThreePThreeCLocalResidual: public BoxLocalResidual<TypeTag>
 {
 protected:
-    typedef ThreePThreeCLocalResidual<TypeTag> ThisType;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef BoxLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
 
     enum
         {
-            dim = GridView::dimension,
-            dimWorld = GridView::dimensionworld,
 
-            numEq = GET_PROP_VALUE(TypeTag, NumEq),
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
             numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-            pressureIdx = Indices::pressureIdx,
-            switch1Idx = Indices::switch1Idx,
-            switch2Idx = Indices::switch2Idx,
 
             contiWEqIdx = Indices::contiWEqIdx,
             contiCEqIdx = Indices::contiCEqIdx,
@@ -97,29 +83,15 @@ protected:
 
             wCompIdx = Indices::wCompIdx,
             cCompIdx = Indices::cCompIdx,
-            aCompIdx = Indices::aCompIdx,
+            aCompIdx = Indices::aCompIdx
 
-            threePhases = Indices::threePhases,
-            wPhaseOnly  = Indices::wPhaseOnly,
-            gnPhaseOnly = Indices::gnPhaseOnly,
-            wnPhaseOnly = Indices::wnPhaseOnly,
-            gPhaseOnly  = Indices::gPhaseOnly,
-            wgPhaseOnly = Indices::wgPhaseOnly
         };
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::ctype CoordScalar;
 
-    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 public:
 
     /*!

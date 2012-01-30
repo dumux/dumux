@@ -82,8 +82,6 @@ private:
         numEq = GET_PROP_VALUE(TypeTag, NumEq),
         dim = GridView::dimension,
 
-        Red = JacobianAssembler::Red,
-        Yellow = JacobianAssembler::Yellow,
         Green = JacobianAssembler::Green
     };
 

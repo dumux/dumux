@@ -113,7 +113,6 @@ SET_BOOL_PROP(StokesTestProblem, EnableGravity, false);
 template <class TypeTag>
 class StokesTestProblem : public StokesProblem<TypeTag>
 {
-    typedef StokesTestProblem<TypeTag> ThisType;
     typedef StokesProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -122,17 +121,14 @@ class StokesTestProblem : public StokesProblem<TypeTag>
     enum {
 
         // Number of equations and grid dimension
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         dim = GridView::dimension,
 
         // copy some indices for convenience
         massBalanceIdx = Indices::massBalanceIdx,
 
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
-        momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
-        momentumZIdx = Indices::momentumZIdx //!< Index of the z-component of the momentum balance
+        momentumYIdx = Indices::momentumYIdx //!< Index of the y-component of the momentum balance
     };
-
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;

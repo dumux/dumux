@@ -65,7 +65,6 @@ class MPNCFluxVariables
     enum {
         dimWorld = GridView::dimensionworld,
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion),
         enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),

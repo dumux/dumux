@@ -56,7 +56,6 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
-    enum { dim = GridView::dimension };
     enum {
         lCompIdx = Indices::lCompIdx,
         gCompIdx = Indices::gCompIdx

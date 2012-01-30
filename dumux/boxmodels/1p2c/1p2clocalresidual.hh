@@ -74,16 +74,10 @@ protected:
 
     enum
         {
-            dim = GridView::dimension,
-            dimWorld = GridView::dimensionworld,
             numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
             // indices of the primary variables
-            pressureIdx = Indices::pressureIdx,
-            x1Idx = Indices::x1Idx,
 
-            phaseIdx = Indices::phaseIdx,
-            comp0Idx = Indices::comp0Idx,
             comp1Idx = Indices::comp1Idx,
 
             // indices of the equations

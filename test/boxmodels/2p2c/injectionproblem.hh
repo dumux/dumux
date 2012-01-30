@@ -114,14 +114,11 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
         lPhaseIdx = Indices::lPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
 
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx,
 
         H2OIdx = FluidSystem::H2OIdx,
         N2Idx = FluidSystem::N2Idx,
         
         conti0EqIdx = Indices::conti0EqIdx,
-        contiH2OEqIdx = conti0EqIdx + H2OIdx,
         contiN2EqIdx = conti0EqIdx + N2Idx
     };
 

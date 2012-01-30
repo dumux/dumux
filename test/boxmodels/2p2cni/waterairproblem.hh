@@ -121,7 +121,6 @@ class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
@@ -132,8 +131,6 @@ class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
 
         // Phase State
         lPhaseOnly = Indices::lPhaseOnly,
-        gPhaseOnly = Indices::gPhaseOnly,
-        bothPhases = Indices::bothPhases,
 
         // Grid and world dimension
         dim = GridView::dimension,

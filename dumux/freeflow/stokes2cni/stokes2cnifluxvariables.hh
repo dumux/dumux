@@ -64,7 +64,6 @@ class Stokes2cniFluxVariables : public Stokes2cFluxVariables<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     Stokes2cniFluxVariables(const Problem &problem,

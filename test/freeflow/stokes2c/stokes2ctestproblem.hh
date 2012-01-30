@@ -114,7 +114,6 @@ SET_BOOL_PROP(Stokes2cTestProblem, NewtonWriteConvergence, false);
 template <class TypeTag>
 class Stokes2cTestProblem : public StokesProblem<TypeTag>
 {
-    typedef Stokes2cTestProblem<TypeTag> ThisType;
     typedef StokesProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -124,7 +123,6 @@ class Stokes2cTestProblem : public StokesProblem<TypeTag>
 
     enum {
         // Number of equations and grid dimension
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         dim = GridView::dimension
     };
     enum {
@@ -132,7 +130,6 @@ class Stokes2cTestProblem : public StokesProblem<TypeTag>
         massBalanceIdx = Indices::massBalanceIdx,
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
-        momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
         transportIdx = Indices::transportIdx  //!< Index of the transport equation (massfraction)
     };
 

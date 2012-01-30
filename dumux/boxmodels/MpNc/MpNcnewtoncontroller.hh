@@ -174,9 +174,7 @@ class MPNCNewtonController : public NewtonController<TypeTag>
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
         enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
         p0Idx = Indices::p0Idx,
         S0Idx = Indices::S0Idx

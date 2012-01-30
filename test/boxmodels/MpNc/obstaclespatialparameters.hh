@@ -54,8 +54,7 @@ SET_PROP(ObstacleSpatialParameters, MaterialLaw)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     enum {
-        lPhaseIdx = FluidSystem::lPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx
+        lPhaseIdx = FluidSystem::lPhaseIdx
     };
     // define the material law
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -87,13 +86,11 @@ class ObstacleSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename Grid::ctype CoordScalar;
     enum {
         dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        dimWorld=GridView::dimensionworld
     };
 
     enum {
-        lPhaseIdx = FluidSystem::lPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx
+        lPhaseIdx = FluidSystem::lPhaseIdx
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;

@@ -95,16 +95,13 @@ class ColumnProblem : public ThreePThreeCNIProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GridView::Grid Grid;
 
-    typedef ColumnProblem<TypeTag> ThisType;
     typedef ThreePThreeCNIProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
@@ -114,11 +111,6 @@ class ColumnProblem : public ThreePThreeCNIProblem<TypeTag>
 
         // Phase State
         threePhases = Indices::threePhases,
-        wPhaseOnly  = Indices::wPhaseOnly,
-        gnPhaseOnly = Indices::gnPhaseOnly,
-        wnPhaseOnly = Indices::wnPhaseOnly,
-        gPhaseOnly  = Indices::gPhaseOnly,
-        wgPhaseOnly = Indices::wgPhaseOnly,
 
         // Grid and world dimension
         dim = GridView::dimension,
@@ -137,7 +129,6 @@ class ColumnProblem : public ThreePThreeCNIProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:

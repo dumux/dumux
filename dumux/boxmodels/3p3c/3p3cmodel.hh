@@ -97,7 +97,6 @@ namespace Dumux
 template<class TypeTag>
 class ThreePThreeCModel: public BoxModel<TypeTag>
 {
-    typedef ThreePThreeCModel<TypeTag> ThisType;
     typedef BoxModel<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -108,11 +107,6 @@ class ThreePThreeCModel: public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementMapper) ElementMapper;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
 
@@ -120,7 +114,6 @@ class ThreePThreeCModel: public BoxModel<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
@@ -128,9 +121,6 @@ class ThreePThreeCModel: public BoxModel<TypeTag>
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
 
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiCEqIdx = Indices::contiCEqIdx,
-        contiAEqIdx = Indices::contiAEqIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
@@ -149,14 +139,12 @@ class ThreePThreeCModel: public BoxModel<TypeTag>
 
     };
 
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 public:
     /*!
@@ -294,7 +282,6 @@ public:
                             MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VectorField;
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);

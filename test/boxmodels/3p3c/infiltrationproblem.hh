@@ -88,10 +88,8 @@ class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
     typedef typename GridView::Grid Grid;
 
-    typedef InfiltrationProblem<TypeTag> ThisType;
     typedef ThreePThreeCProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
@@ -101,18 +99,12 @@ class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
     enum {
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
 
         // Phase State
-        threePhases = Indices::threePhases,
-        wPhaseOnly  = Indices::wPhaseOnly,
-        gnPhaseOnly = Indices::gnPhaseOnly,
-        wnPhaseOnly = Indices::wnPhaseOnly,
-        gPhaseOnly  = Indices::gPhaseOnly,
         wgPhaseOnly = Indices::wgPhaseOnly,
 
         // Grid and world dimension
@@ -132,7 +124,6 @@ class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:

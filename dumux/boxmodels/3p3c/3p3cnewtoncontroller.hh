@@ -49,24 +49,8 @@ template <class TypeTag>
 class ThreePThreeCNewtonController : public NewtonController<TypeTag>
 {
     typedef NewtonController<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) Implementation;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
-
-    enum {
-        pressureIdx = Indices::pressureIdx,
-        switch1Idx = Indices::switch1Idx,
-        switch2Idx = Indices::switch2Idx
-    };
-
-    enum { enablePartialReassemble = GET_PROP_VALUE(TypeTag, EnablePartialReassemble) };
 
 public:
     ThreePThreeCNewtonController(const Problem &problem)

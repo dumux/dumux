@@ -75,7 +75,6 @@ class ThreePThreeCVolumeVariables : public BoxVolumeVariables<TypeTag>
 
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        formulation = GET_PROP_VALUE(TypeTag, Formulation),
 
         wCompIdx = Indices::wCompIdx,
         aCompIdx = Indices::aCompIdx,

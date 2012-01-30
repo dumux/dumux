@@ -66,9 +66,7 @@ class StokesModel : public BoxModel<TypeTag>
 
     enum {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        numEq = GET_PROP_VALUE(TypeTag, NumEq)
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -79,7 +77,6 @@ class StokesModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, DofMapper) DofMapper;
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;

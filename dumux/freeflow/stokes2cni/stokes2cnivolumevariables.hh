@@ -54,8 +54,6 @@ class Stokes2cniVolumeVariables : public Stokes2cVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cniIndices) Indices;
-    enum { dim = GridView::dimension };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
     enum { energyIdx = Indices::energyIdx };
 

@@ -54,23 +54,18 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
 
     enum { dim = GridView::dimension };
     enum {
-        momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
-        massBalanceIdx = Indices::massBalanceIdx, //!< Index of the mass balance
         transportIdx = Indices::transportIdx //!< Index of the transport equation
     };
     enum {
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx
+        lCompIdx = Indices::lCompIdx
     };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex)};
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     /*!

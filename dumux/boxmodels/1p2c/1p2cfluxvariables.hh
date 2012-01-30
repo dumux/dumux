@@ -62,8 +62,6 @@ class OnePTwoCFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices) Indices;
     enum {
-        phaseIdx = Indices::phaseIdx,
-        comp0Idx = Indices::comp0Idx,
         comp1Idx = Indices::comp1Idx
     };
 

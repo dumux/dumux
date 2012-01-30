@@ -54,10 +54,7 @@ class Stokes2cniLocalResidual : public Stokes2cLocalResidual<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cniIndices) Indices;
 
-    enum {
-        dim = GridView::dimension,
-        numEq = GET_PROP_VALUE(TypeTag, NumEq)
-    };
+    enum { dim = GridView::dimension };
     enum { energyIdx = Indices::energyIdx }; //!< Index of the transport equation
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -65,7 +62,6 @@ class Stokes2cniLocalResidual : public Stokes2cLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     /*!

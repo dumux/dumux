@@ -56,7 +56,6 @@ namespace Dumux {
 template<class GridView>
 class VtkMultiWriter
 {
-    typedef typename GridView::Grid Grid;
     enum { dim = GridView::dimension };
 
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;

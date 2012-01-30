@@ -51,11 +51,8 @@ namespace Dumux
 template<class TypeTag>
 class ThreePThreeCNILocalResidual : public ThreePThreeCLocalResidual<TypeTag>
 {
-    typedef ThreePThreeCNILocalResidual<TypeTag> ThisType;
     typedef ThreePThreeCLocalResidual<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 
@@ -64,8 +61,6 @@ class ThreePThreeCNILocalResidual : public ThreePThreeCLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
 
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
 
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
 
@@ -82,8 +77,6 @@ class ThreePThreeCNILocalResidual : public ThreePThreeCLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     static constexpr Scalar massUpwindWeight = GET_PROP_VALUE(TypeTag, MassUpwindWeight);
 

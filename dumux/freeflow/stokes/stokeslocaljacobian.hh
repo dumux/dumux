@@ -44,16 +44,9 @@ namespace Dumux
 template<class TypeTag>
 class StokesLocalJacobian : public BoxLocalJacobian<TypeTag>
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
+public:
     //! \copydoc BoxLocalJacobian::numericEpsilon()
     Scalar numericEpsilon(int scvIdx,
                           int pvIdx) const

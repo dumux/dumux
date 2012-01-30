@@ -54,16 +54,14 @@ class StokesVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, StokesIndices) Indices;
 
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-    enum {
+
         momentumXIdx = Indices::momentumXIdx,
         lastMomentumIdx = Indices::lastMomentumIdx,
         pressureIdx = Indices::pressureIdx
     };
+
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;

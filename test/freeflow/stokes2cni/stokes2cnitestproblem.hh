@@ -99,7 +99,6 @@ SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
 template <class TypeTag>
 class Stokes2cniTestProblem : public StokesProblem<TypeTag>
 {
-    typedef Stokes2cniTestProblem<TypeTag> ThisType;
     typedef StokesProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

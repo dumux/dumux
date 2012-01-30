@@ -56,19 +56,13 @@ protected:
 
 
     enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
 
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
         enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
 
-        enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion),
         enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
-        enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, EnableSmoothUpwinding),
 
         phase0NcpIdx = Indices::phase0NcpIdx
     };
