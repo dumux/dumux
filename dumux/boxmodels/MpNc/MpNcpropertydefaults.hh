@@ -160,13 +160,8 @@ SET_TYPE_PROP(BoxMPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
 //! the FluxVariables property
 SET_TYPE_PROP(BoxMPNC, FluxVariables, MPNCFluxVariables<TypeTag>);
 
-// enable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxMPNC, EnableJacobianRecycling, false);
-// enable partial reassembling by default
-SET_BOOL_PROP(BoxMPNC, EnablePartialReassemble, true);
-// truncate the newton update in the beginning
+//! truncate the newton update for the first few Newton iterations of a time step
 SET_BOOL_PROP(BoxMPNC, NewtonEnableChop, true);
-
 
 //! The indices required by the compositional twophase model
 SET_PROP(BoxMPNC, MPNCIndices)

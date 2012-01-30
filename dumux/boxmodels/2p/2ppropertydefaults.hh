@@ -126,10 +126,6 @@ public:
     typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
-// enable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxTwoP, EnableJacobianRecycling, true);
-// enable partial reassembling by default
-SET_BOOL_PROP(BoxTwoP, EnablePartialReassemble, true);
 // disable velocity output by default
 SET_BOOL_PROP(BoxTwoP, EnableVelocityOutput, false);
 

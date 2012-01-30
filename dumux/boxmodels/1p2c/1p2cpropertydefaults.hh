@@ -73,12 +73,6 @@ SET_SCALAR_PROP(BoxOnePTwoC, UpwindWeight, 1.0);
 
 //! Set the indices used by the 1p2c model
 SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, Dumux::OnePTwoCIndices<0>);
-
-// enable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxOnePTwoC, EnableJacobianRecycling, true);
-// enable partial reassembling by default
-SET_BOOL_PROP(BoxOnePTwoC, EnablePartialReassemble, true);
-
 }
 // \}
 }

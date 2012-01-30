@@ -642,7 +642,7 @@ private:
             return;
         }
 
-        // reset all entries corrosponding to a red vertex
+        // reset all entries corrosponding to a red or yellow vertex
         for (int rowIdx = 0; rowIdx < matrix_->N(); ++rowIdx) {
             if (vertexColor_[rowIdx] == Green)
                 continue; // the equations for this control volume are
@@ -741,12 +741,14 @@ private:
 
             // update the right hand side
             residual_[globI] += model_().localJacobian().residual(i);
+            for (int j = 0; j < residual_[globI].dimension; ++j)
+                assert(std::isfinite(residual_[globI][j]));
             if (enableJacobianRecycling_()) {
                 storageTerm_[globI] +=
                     model_().localJacobian().storageTerm(i);
             }
 
-            // skip updating the jacobian matrix for green vertices
+            // only update the jacobian matrix for non-green vertices
             if (vertexColor(globI) != Green) {
                 if (enableJacobianRecycling_())
                     storageJacobian_[globI] +=

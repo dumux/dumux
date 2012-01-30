@@ -54,7 +54,7 @@
 #define GET_PARAM(TypeTag, ParamType, ParamName)                        \
     Dumux::Parameters::get<TypeTag,                                     \
                            ParamType,                                   \
-                           PTAG_(ParamName)>(#ParamName)
+                           PTAG_(ParamName)>(#ParamName, #ParamName)
 
 /*!
  * \ingroup Parameter
@@ -73,7 +73,7 @@
 #define GET_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName)  \
     Dumux::Parameters::get<TypeTag,                                     \
                            ParamType,                                   \
-                           PTAG_(GroupName##ParamName)>(#GroupName, #ParamName)
+                           PTAG_(GroupName##ParamName)>(#GroupName#ParamName, #GroupName, #ParamName)
 
 /*!
  * \ingroup Parameter
@@ -161,13 +161,22 @@ void print(std::ostream &os = std::cout)
     const Dune::ParameterTree &ct = Params::compileTimeParams();
 
     os << "###############################\n";
-    os << "# Run-time parameters:\n";
+    os << "# Run-time specified parameters:\n";
     os << "###############################\n";
     rt.report(os);
     os << "###############################\n";
-    os << "# Compile-time parameters:\n";
+    os << "# Compile-time specified parameters:\n";
     os << "###############################\n";
     ct.report(os);
+/*
+    printParamTree_(ct);
+    typename Dune::ParameterTree::KeyVector::const_iterator it = ct.begin();
+    for (; it != ct.end(); ++it) {
+        os << *it << " = \"" << ct.get(*it, "") << "\""
+            // << " # Taken From Property: " << 
+           << "\n";
+    };
+*/
 
     std::list<std::string> unusedParams;
     findUnusedKeys_<TypeTag>(unusedParams, tree);
@@ -192,7 +201,8 @@ class Param
     typedef typename GET_PROP(TypeTag, ParameterTree) Params;
 public:
     template <class ParamType, class PropTag>
-    static const ParamType &get(const char *groupOrParamName,
+    static const ParamType &get(const char *propertyName,
+                                const char *groupOrParamName,
                                 const char *paramNameOrNil = 0)
     {
 #ifndef NDEBUG
@@ -200,23 +210,19 @@ public:
         // this is potentially quite expensive, it is only done if
         // debugging code is not explicitly turned off.
         const char *paramName, *groupName;
-        std::string propertyName;
         if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
             groupName = groupOrParamName;
             paramName = paramNameOrNil;
-            propertyName  = groupName;
-            propertyName += paramName;
         }
         else {
             groupName = "";
             paramName = groupOrParamName;
-            propertyName = paramName;
         }
 
         check_<ParamType>(propertyName, groupName, paramName);
 #endif
 
-        static const ParamType &value = retrieve_<ParamType, PropTag>(groupOrParamName, paramNameOrNil);
+        static const ParamType &value = retrieve_<ParamType, PropTag>(propertyName, groupOrParamName, paramNameOrNil);
         return value;
     }
 
@@ -307,7 +313,9 @@ private:
     }
 
     template <class ParamType, class PropTag>
-    static const ParamType &retrieve_(const char *groupOrParamName, const char *paramNameOrNil = 0)
+    static const ParamType &retrieve_(const char *propertyName,
+                                      const char *groupOrParamName, 
+                                      const char *paramNameOrNil = 0)
     {
         const char *paramName, *groupName;
         if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
@@ -439,10 +447,12 @@ private:
 };
 
 template <class TypeTag, class ParamType, class PropTag>
-const ParamType &get(const char *paramOrGroupName,
+const ParamType &get(const char *propertyName,
+                     const char *paramOrGroupName,
                      const char *paramNameOrNil = 0)
 {
-    return Param<TypeTag>::template get<ParamType, PropTag>(paramOrGroupName,
+    return Param<TypeTag>::template get<ParamType, PropTag>(propertyName,
+                                                            paramOrGroupName,
                                                             paramNameOrNil);
 }
 

@@ -164,6 +164,7 @@ SET_BOOL_PROP(BoxModel, EnableHints, false);
 
 // disable jacobian matrix recycling by default
 SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);
+
 // disable partial reassembling by default
 SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);
 

@@ -140,12 +140,6 @@ SET_PROP(BoxThreePThreeC,
     typedef ThreePThreeCIndices<TypeTag, Formulation, 0> type;
 };
 
-// enable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxThreePThreeC, EnableJacobianRecycling, true);
-// enable partial reassembling by default
-SET_BOOL_PROP(BoxThreePThreeC, EnablePartialReassemble, true);
-
-//
 }
 
 }

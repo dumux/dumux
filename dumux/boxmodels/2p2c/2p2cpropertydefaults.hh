@@ -135,16 +135,8 @@ SET_PROP(BoxTwoPTwoC,
  public:
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };
-
-// enable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxTwoPTwoC, EnableJacobianRecycling, true);
-// enable partial reassembling by default
-SET_BOOL_PROP(BoxTwoPTwoC, EnablePartialReassemble, true);
 // disable velocity output by default
 SET_BOOL_PROP(BoxTwoPTwoC, EnableVelocityOutput, false);
-// set some Newton properties deviating from the default ones
-SET_SCALAR_PROP(BoxTwoPTwoC, NewtonRelTolerance, 1e-7);
-SET_INT_PROP(BoxTwoPTwoC, NewtonTargetSteps, 9);
 
 //
 }
