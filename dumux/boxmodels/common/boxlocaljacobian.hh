@@ -268,13 +268,12 @@ public:
         // floating point values, the resolution is about 10^-16 and
         // the base epsilon is thus approximately 10^-8.
         static const Scalar baseEps
-            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(),
-                                           1.0);
+            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
 
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
         Scalar pv = this->curVolVars_[scvIdx].primaryVar(pvIdx);
-        return baseEps*(std::abs(pv) + 1);
+        return baseEps*(std::abs(pv) + 1.0);
     }
 
 protected:

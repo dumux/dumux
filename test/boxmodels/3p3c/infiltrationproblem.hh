@@ -66,6 +66,9 @@ SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, false);
 
 // Maximum tolerated relative error in the Newton method
 SET_SCALAR_PROP(InfiltrationProblem, NewtonRelTolerance, 1e-8);
+
+// -1 backward differences, 0: central differences, +1: forward differences
+SET_INT_PROP(InfiltrationProblem, NumericDifferenceMethod, 0);
 }
 
 /*!
@@ -86,7 +89,6 @@ class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
     enum {
-
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
@@ -124,7 +126,13 @@ public:
         : ParentType(timeManager, gridView)
         , eps_(1e-6)
     {
-        FluidSystem::init();
+        temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
+        FluidSystem::init(/*tempMin=*/temperature_ - 1,
+                          /*tempMax=*/temperature_ + 1,
+                          /*nTemp=*/3,
+                          /*pressMin=*/0.8*1e5,
+                          /*pressMax=*/3*1e5,
+                          /*nPress=*/200);
     }
 
     /*!
@@ -153,7 +161,7 @@ public:
                           const FVElementGeometry &fvElemGeom,
                           int scvIdx) const
     {
-        return (273.15 + 10.0); // -> Temperatur 10°C
+        return temperature_;
     };
 
     void sourceAtPos(PrimaryVariables &values,
@@ -362,6 +370,7 @@ private:
         return(Sw);
     }
 
+    Scalar temperature_;
     Scalar eps_;
 };
 } //end namespace
