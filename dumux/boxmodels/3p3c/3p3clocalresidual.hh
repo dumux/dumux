@@ -200,8 +200,6 @@ public:
 
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
-#warning "Disabled for now"
-        return;
         // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = vars.porousDiffCoeff();
         // add diffusive flux of gas component in liquid phase
         Scalar tmp = - vars.porousDiffCoeff()[wPhaseIdx][aCompIdx] * vars.molarDensityAtIP(wPhaseIdx);
