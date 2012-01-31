@@ -74,12 +74,7 @@ SET_TYPE_PROP(BoxThreePThreeCNI, FluxVariables, ThreePThreeCNIFluxVariables<Type
 SET_PROP(BoxThreePThreeCNI, ThreePThreeCIndices)
 { typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCNIIndices) type; };
 
-SET_PROP(BoxThreePThreeCNI, ThreePThreeCNIIndices)
-{ private:
-    enum { formulation = GET_PROP_VALUE(TypeTag, Formulation) };
- public:
-    typedef ThreePThreeCNIIndices<TypeTag, formulation, 0> type;
-};
+SET_TYPE_PROP(BoxThreePThreeCNI, ThreePThreeCNIIndices, ThreePThreeCNIIndices<TypeTag, 0>);
 
 }
 

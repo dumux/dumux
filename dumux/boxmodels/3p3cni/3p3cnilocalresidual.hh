@@ -58,7 +58,7 @@ class ThreePThreeCNILocalResidual : public ThreePThreeCLocalResidual<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCNIIndices) Indices;
 
     enum {
 

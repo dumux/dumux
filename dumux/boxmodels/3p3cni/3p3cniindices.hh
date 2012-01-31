@@ -47,7 +47,7 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int formulation, int PVOffset>
-class ThreePThreeCNIIndices : public ThreePThreeCIndices<TypeTag, formulation, PVOffset>
+class ThreePThreeCNIIndices : public ThreePThreeCIndices<TypeTag, PVOffset>
 {
 public:
     static const int temperatureIdx = PVOffset + 3; //! The index for temperature in primary variable vectors.
