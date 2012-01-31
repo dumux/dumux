@@ -3,7 +3,7 @@
 /*****************************************************************************
  *   Copyright (C) 2010 by Katherina Baber, Klaus Mosthaf                    *
  *   Copyright (C) 2008-2009 by Bernd Flemisch, Andreas Lauser               *
- *   Institute of Hydraulic Engineering                                      *
+ *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *

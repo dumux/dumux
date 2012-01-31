@@ -3,7 +3,7 @@
 /*****************************************************************************
  *   Copyright (C) 2010-2011 by Andreas Lauser                               *
  *   Copyright (C) 2009-2010 by Bernd Flemisch                               *
- *   Institute of Hydraulic Engineering                                      *
+ *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *

@@ -3,7 +3,7 @@
 /*****************************************************************************
  *   Copyright (C) 2008-2010 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
- *   Institute of Hydraulic Engineering                                      *
+ *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *

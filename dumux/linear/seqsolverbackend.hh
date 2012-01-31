@@ -4,7 +4,7 @@
  *   Copyright (C) 2011 by Bernd Flemisch                                    *
  *   Copyright (C) 2011 by Markus Wolff                                      *
  *   Copyright (C) 2011 by Klaus Mosthaf                                     *
- *   Institute of Hydraulic Engineering                                      *
+ *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
