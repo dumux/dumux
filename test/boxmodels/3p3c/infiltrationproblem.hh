@@ -73,6 +73,8 @@ SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, true);
 
 // Maximum tolerated relative error in the Newton method
 SET_SCALAR_PROP(InfiltrationProblem, NewtonRelTolerance, 1e-8);
+
+SET_TYPE_PROP(InfiltrationProblem, Scalar, quad);
 }
 
 /*!

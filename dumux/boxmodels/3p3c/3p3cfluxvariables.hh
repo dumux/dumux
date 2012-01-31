@@ -75,8 +75,8 @@ class ThreePThreeCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
     enum {

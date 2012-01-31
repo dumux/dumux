@@ -279,7 +279,7 @@ public:
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
