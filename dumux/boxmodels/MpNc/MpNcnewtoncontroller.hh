@@ -200,8 +200,8 @@ public:
         // compute the vertex and element colors for partial
         // reassembly
         if (this->enablePartialReassemble_) {
-            const Scalar minReasmTol = 1e-2*tolerance_;
-            const Scalar maxReasmTol = 1e1*tolerance_;
+            const Scalar minReasmTol = 1e-2*this->tolerance_;
+            const Scalar maxReasmTol = 1e1*this->tolerance_;
             Scalar reassembleTol = std::max(minReasmTol, std::min(maxReasmTol, this->error_/1e4));
 
             this->model_().jacobianAssembler().updateDiscrepancy(uLastIter, deltaU);
