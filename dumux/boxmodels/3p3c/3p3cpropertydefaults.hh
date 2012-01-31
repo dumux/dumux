@@ -90,28 +90,14 @@ SET_PROP(BoxThreePThreeC, NumPhases)
 
 SET_INT_PROP(BoxThreePThreeC, NumEq, 3); //!< set the number of equations to 2
 
-//! Set the default formulation to pg-Sw-Sn
-SET_INT_PROP(BoxThreePThreeC,
-             Formulation,
-             ThreePThreeCFormulation::pgSwSn);
-
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.
  */
-SET_PROP(BoxThreePThreeC, MaterialLawParams)
-{
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+SET_TYPE_PROP(BoxThreePThreeC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
- public:
-    typedef typename MaterialLaw::Params type;
-};
-
-//! Use the 3p3c local jacobian operator for the 3p3c model
-SET_TYPE_PROP(BoxThreePThreeC,
-              LocalResidual,
-              ThreePThreeCLocalResidual<TypeTag>);
+//! The local residual function of the conservation equations
+SET_TYPE_PROP(BoxThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
 //! Use the 3p3c specific newton controller for the 3p3c model
 SET_TYPE_PROP(BoxThreePThreeC, NewtonController, ThreePThreeCNewtonController<TypeTag>);
@@ -125,21 +111,11 @@ SET_TYPE_PROP(BoxThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<Type
 //! the FluxVariables property
 SET_TYPE_PROP(BoxThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>);
 
-//! the BoundaryVariables property
-// SET_TYPE_PROP(BoxThreePThreeC, BoundaryVariables, ThreePThreeCBoundaryVariables<TypeTag>);
-
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(BoxThreePThreeC, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 3p3c model
-SET_PROP(BoxThreePThreeC,
-         ThreePThreeCIndices)
-{ private:
-    enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
- public:
-    typedef ThreePThreeCIndices<TypeTag, Formulation, 0> type;
-};
-
+SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 }
 
 }

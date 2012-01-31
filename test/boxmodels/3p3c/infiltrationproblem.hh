@@ -69,12 +69,11 @@ SET_TYPE_PROP(InfiltrationProblem,
 SET_BOOL_PROP(InfiltrationProblem, EnableGravity, true);
 
 // Write newton convergence?
-SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, false);
+SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, true);
 
-//! Set the formulation
-SET_INT_PROP(InfiltrationProblem, Formulation, ThreePThreeCFormulation::pgSwSn);
+// Maximum tolerated relative error in the Newton method
+SET_SCALAR_PROP(InfiltrationProblem, NewtonRelTolerance, 1e-8);
 }
-
 
 /*!
  * \ingroup ThreePThreeCBoxModel
@@ -83,15 +82,13 @@ SET_INT_PROP(InfiltrationProblem, Formulation, ThreePThreeCFormulation::pgSwSn);
 template <class TypeTag >
 class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
 {
+    typedef ThreePThreeCProblem<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-
-    typedef ThreePThreeCProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
-
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;

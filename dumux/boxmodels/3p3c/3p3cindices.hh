@@ -36,24 +36,12 @@ namespace Dumux
 {
 
 /*!
- * \brief Enumerates the formulations which the 3p3c model accepts.
- */
-struct ThreePThreeCFormulation
-{
-    enum {
-        pgSwSn
-    };
-};
-
-/*!
  * \brief The indices for the isothermal ThreePThreeC model.
  *
  * \tparam formulation The formulation, only pgSwSn
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag,
-          int formulation = ThreePThreeCFormulation::pgSwSn,
-          int PVOffset = 0>
+template <class TypeTag, int PVOffset = 0>
 class ThreePThreeCIndices
 {
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -87,9 +75,10 @@ public:
     static const int SOrX2Idx = switch2Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
 
     // equation indices
-    static const int contiWEqIdx = PVOffset + wCompIdx; //!< Index of the mass conservation equation for the water component
-    static const int contiCEqIdx = PVOffset + cCompIdx; //!< Index of the mass conservation equation for the contaminant component
-    static const int contiAEqIdx = PVOffset + aCompIdx; //!< Index of the mass conservation equation for the air component
+    static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
+    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the water component
+    static const int contiCEqIdx = conti0EqIdx + cCompIdx; //!< Index of the mass conservation equation for the contaminant component
+    static const int contiAEqIdx = conti0EqIdx + aCompIdx; //!< Index of the mass conservation equation for the air component
 };
 
 }

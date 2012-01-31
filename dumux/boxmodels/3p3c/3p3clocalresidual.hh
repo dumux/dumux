@@ -28,8 +28,8 @@
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the two-phase two-component box model.
  */
-#ifndef DUMUX_NEW_3P3C_LOCAL_RESIDUAL_BASE_HH
-#define DUMUX_NEW_3P3C_LOCAL_RESIDUAL_BASE_HH
+#ifndef DUMUX_3P3C_LOCAL_RESIDUAL_HH
+#define DUMUX_3P3C_LOCAL_RESIDUAL_HH
 
 #include <dumux/boxmodels/common/boxmodel.hh>
 #include <dumux/common/math.hh>
@@ -59,41 +59,33 @@ class ThreePThreeCLocalResidual: public BoxLocalResidual<TypeTag>
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
 
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
 
-    enum
-        {
+    enum {
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-            numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-            numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        conti0EqIdx = Indices::conti0EqIdx,
+        contiWEqIdx = Indices::contiWEqIdx,
+        contiCEqIdx = Indices::contiCEqIdx,
+        contiAEqIdx = Indices::contiAEqIdx,
 
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        gPhaseIdx = Indices::gPhaseIdx,
 
-            contiWEqIdx = Indices::contiWEqIdx,
-            contiCEqIdx = Indices::contiCEqIdx,
-            contiAEqIdx = Indices::contiAEqIdx,
-
-            wPhaseIdx = Indices::wPhaseIdx,
-            nPhaseIdx = Indices::nPhaseIdx,
-            gPhaseIdx = Indices::gPhaseIdx,
-
-            wCompIdx = Indices::wCompIdx,
-            cCompIdx = Indices::cCompIdx,
-            aCompIdx = Indices::aCompIdx
-
-        };
+        wCompIdx = Indices::wCompIdx,
+        cCompIdx = Indices::cCompIdx,
+        aCompIdx = Indices::aCompIdx
+    };
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
 
-
 public:
-
     /*!
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -112,7 +104,9 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
+        const ElementVolumeVariables &elemVolVars = 
+            usePrevSol
+            ? this->prevVolVars_()
             : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
@@ -120,48 +114,13 @@ public:
         result = 0;
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            switch (compIdx) {
-            case wCompIdx:
-                {
-                    Scalar waterContrib = 0.0;
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    {
-                        waterContrib += volVars.porosity() * volVars.saturation(phaseIdx)
-                            * volVars.molarDensity(phaseIdx)
-                            * volVars.fluidState().moleFraction(phaseIdx, compIdx);
-                    }
-                    result[contiWEqIdx] += waterContrib;
-                    break;
-                }
-
-            case cCompIdx:
-                {
-                    Scalar contContrib = 0.0;
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    {
-                        contContrib += volVars.porosity() * volVars.saturation(phaseIdx)
-                            * volVars.molarDensity(phaseIdx)
-                            * volVars.fluidState().moleFraction(phaseIdx, compIdx);
-                    }
-                    contContrib += volVars.bulkDensTimesAdsorpCoeff()
-                        * volVars.fluidState().moleFraction(wPhaseIdx, compIdx)
-                        * volVars.molarDensity(wPhaseIdx);
-                    result[contiCEqIdx] += contContrib;
-                    break;
-                }
-
-            case aCompIdx:
-                {
-                    Scalar airContrib = 0.0;
-                    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    {
-                        airContrib += volVars.porosity() * volVars.saturation(phaseIdx)
-                            * volVars.molarDensity(phaseIdx)
-                            * volVars.fluidState().moleFraction(phaseIdx, compIdx);
-                    }
-                    result[contiAEqIdx] += airContrib;
-                    break;
-                }
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                result[conti0EqIdx + compIdx] += 
+                    volVars.porosity() 
+                    * volVars.saturation(phaseIdx)
+                    * volVars.molarDensity(phaseIdx)
+                    * volVars.fluidState().moleFraction(phaseIdx, compIdx);
             }
         }
     }
@@ -205,33 +164,27 @@ public:
         {
             // data attached to upstream and the downstream vertices
             // of the current phase
-            const VolumeVariables &up =
-                this->curVolVars_(vars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn =
-                this->curVolVars_(vars.downstreamIdx(phaseIdx));
+            const VolumeVariables &up = this->curVolVars_(vars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(vars.downstreamIdx(phaseIdx));
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                int eqIdx;
-                if (compIdx == wCompIdx) eqIdx = contiWEqIdx;
-                else if (compIdx == cCompIdx) eqIdx = contiCEqIdx;
-                else eqIdx = contiAEqIdx;
-
                 // add advective flux of current component in current
                 // phase
                 // if alpha > 0 und alpha < 1 then both upstream and downstream
                 // nodes need their contribution
                 // if alpha == 1 (which is mostly the case) then, the downstream
                 // node is not evaluated
+                int eqIdx = conti0EqIdx + compIdx;
                 flux[eqIdx] += vars.KmvpNormal(phaseIdx)
                     * (massUpwindWeight
-                       * up.molarDensity(phaseIdx)
                        * up.mobility(phaseIdx)
+                       * up.fluidState().molarDensity(phaseIdx)
                        * up.fluidState().moleFraction(phaseIdx, compIdx)
                        +
                        (1.0 - massUpwindWeight)
-                       * dn.molarDensity(phaseIdx)
                        * dn.mobility(phaseIdx)
+                       * dn.fluidState().molarDensity(phaseIdx)
                        * dn.fluidState().moleFraction(phaseIdx, compIdx));
             }
         }
@@ -247,7 +200,9 @@ public:
 
     void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
     {
-        // TODO wo kommt das denn her?   Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = vars.porousDiffCoeff();
+#warning "Disabled for now"
+        return;
+        // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = vars.porousDiffCoeff();
         // add diffusive flux of gas component in liquid phase
         Scalar tmp = - vars.porousDiffCoeff()[wPhaseIdx][aCompIdx] * vars.molarDensityAtIP(wPhaseIdx);
         tmp *= (vars.molarAConcGrad(wPhaseIdx) * vars.face().normal);
@@ -312,16 +267,15 @@ public:
     }
 
 protected:
-
     Implementation *asImp_()
     {
         return static_cast<Implementation *> (this);
     }
+
     const Implementation *asImp_() const
     {
         return static_cast<const Implementation *> (this);
     }
-
 };
 
 } // end namepace

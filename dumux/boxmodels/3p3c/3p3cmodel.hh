@@ -212,9 +212,6 @@ public:
 
         setSwitched_(false);
         resetPhasePresence_();
-        /*this->localJacobian().updateStaticData(this->curSolFunction(),
-          this->prevSolFunction());
-        */
     };
 
     /*!
@@ -264,7 +261,9 @@ public:
      */
     int phasePresence(int globalVertexIdx, bool oldSol) const
     {
-        return oldSol ? staticVertexDat_[globalVertexIdx].oldPhasePresence
+        return 
+            oldSol
+            ? staticVertexDat_[globalVertexIdx].oldPhasePresence
             : staticVertexDat_[globalVertexIdx].phasePresence;
     }
 
@@ -276,7 +275,6 @@ public:
      * \param sol The solution vector
      * \param writer The writer for multi-file VTK datasets
      */
-
     template<class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol,
                             MultiWriter &writer)
@@ -286,12 +284,16 @@ public:
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
 
-        ScalarField *Sw = writer.allocateManagedBuffer (numVertices);
-        ScalarField *Sn = writer.allocateManagedBuffer (numVertices);
-        ScalarField *Sg = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pg = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pn = writer.allocateManagedBuffer (numVertices);
-        ScalarField *pw = writer.allocateManagedBuffer (numVertices);
+        ScalarField *saturation[numPhases];
+        ScalarField *pressure[numPhases];
+        ScalarField *density[numPhases];
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+            saturation[phaseIdx] = writer.allocateManagedBuffer(numVertices);
+            pressure[phaseIdx] = writer.allocateManagedBuffer(numVertices);
+            density[phaseIdx] = writer.allocateManagedBuffer(numVertices);
+        }            
+
         ScalarField *phasePresence = writer.allocateManagedBuffer (numVertices);
         ScalarField *moleFraction[numPhases][numComponents];
         for (int i = 0; i < numPhases; ++i)
@@ -326,44 +328,49 @@ public:
                                fvElemGeom,
                                i,
                                false);
-                (*Sw)[globalIdx] = volVars.saturation(wPhaseIdx);
-                (*Sn)[globalIdx] = volVars.saturation(nPhaseIdx);
-                (*Sg)[globalIdx] = volVars.saturation(gPhaseIdx);
-                (*pg)[globalIdx] = volVars.pressure(gPhaseIdx);
-                (*pn)[globalIdx] = volVars.pressure(nPhaseIdx);
-                (*pw)[globalIdx] = volVars.pressure(wPhaseIdx);
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    {
-                        (*moleFraction[phaseIdx][compIdx])[globalIdx]
-                            = volVars.fluidState().moleFraction(phaseIdx,
-                                                                compIdx);
 
-                        Valgrind::CheckDefined(
-                                               (*moleFraction[phaseIdx][compIdx])[globalIdx][0]);
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+                    (*saturation[phaseIdx])[globalIdx] = volVars.fluidState().saturation(phaseIdx);
+                    (*pressure[phaseIdx])[globalIdx] = volVars.fluidState().pressure(phaseIdx);
+                    (*density[phaseIdx])[globalIdx] = volVars.fluidState().density(phaseIdx);
+                }
+
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+                    for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+                        (*moleFraction[phaseIdx][compIdx])[globalIdx] =
+                            volVars.fluidState().moleFraction(phaseIdx,
+                                                              compIdx);
+                        
+                        Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[globalIdx]);
                     }
+                }
+                
                 (*poro)[globalIdx] = volVars.porosity();
                 (*perm)[globalIdx] = volVars.permeability();
                 (*temperature)[globalIdx] = volVars.temperature();
-                (*phasePresence)[globalIdx]
-                    = staticVertexDat_[globalIdx].phasePresence;
+                (*phasePresence)[globalIdx] = staticVertexDat_[globalIdx].phasePresence;
             };
 
         }
 
-        writer.attachVertexData(*Sw, "Sw");
-        writer.attachVertexData(*Sn, "Sn");
-        writer.attachVertexData(*Sg, "Sg");
-        writer.attachVertexData(*pg, "pg");
-        writer.attachVertexData(*pn, "pn");
-        writer.attachVertexData(*pw, "pw");
+        writer.attachVertexData(*saturation[wPhaseIdx], "Sw");
+        writer.attachVertexData(*saturation[nPhaseIdx], "Sn");
+        writer.attachVertexData(*saturation[gPhaseIdx], "Sg");
+        writer.attachVertexData(*pressure[wPhaseIdx], "pw");
+        writer.attachVertexData(*pressure[nPhaseIdx], "pn");
+        writer.attachVertexData(*pressure[gPhaseIdx], "pg");
+        writer.attachVertexData(*density[wPhaseIdx], "rhow");
+        writer.attachVertexData(*density[nPhaseIdx], "rhon");
+        writer.attachVertexData(*density[gPhaseIdx], "rhog");
+
         for (int i = 0; i < numPhases; ++i)
         {
             for (int j = 0; j < numComponents; ++j)
             {
                 std::ostringstream oss;
-                oss << "X_"
+                oss << "x^"
                     << FluidSystem::phaseName(i)
+                    << "_"
                     << FluidSystem::componentName(j);
                 writer.attachVertexData(*moleFraction[i][j], oss.str().c_str());
             }

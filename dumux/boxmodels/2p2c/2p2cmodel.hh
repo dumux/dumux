@@ -219,9 +219,6 @@ public:
 
         setSwitched_(false);
         resetPhasePresence_();
-        /*this->localJacobian().updateStaticData(this->curSolFunction(),
-          this->prevSolFunction());
-        */
     };
 
     /*!
