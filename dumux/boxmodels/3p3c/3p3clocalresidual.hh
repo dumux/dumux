@@ -38,6 +38,7 @@
 #include "3p3cvolumevariables.hh"
 #include "3p3cfluxvariables.hh"
 #include "3p3cnewtoncontroller.hh"
+#include "3p3cproperties.hh"
 
 #include <iostream>
 #include <vector>

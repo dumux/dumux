@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2011      by Holger Class                                 *
+ *   Copyright (C) 2011-2012 by Holger Class                                 *
  *   Copyright (C) 2008-2010 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
@@ -46,7 +46,7 @@ namespace Dumux
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int formulation, int PVOffset>
+template <class TypeTag, int PVOffset>
 class ThreePThreeCNIIndices : public ThreePThreeCIndices<TypeTag, PVOffset>
 {
 public:

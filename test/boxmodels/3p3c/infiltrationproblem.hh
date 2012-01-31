@@ -48,17 +48,10 @@ namespace Properties
 NEW_TYPE_TAG(InfiltrationProblem, INHERITS_FROM(BoxThreePThreeC, InfiltrationSpatialParameters));
 
 // Set the grid type
-SET_PROP(InfiltrationProblem, Grid)
-{
-    typedef Dune::YaspGrid<2> type;
-};
-
+SET_TYPE_PROP(InfiltrationProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_PROP(InfiltrationProblem, Problem)
-{
-    typedef Dumux::InfiltrationProblem<TypeTag> type;
-};
+SET_TYPE_PROP(InfiltrationProblem, Problem, Dumux::InfiltrationProblem<TypeTag>);
 
 // Set the fluid system
 SET_TYPE_PROP(InfiltrationProblem, 
@@ -69,12 +62,10 @@ SET_TYPE_PROP(InfiltrationProblem,
 SET_BOOL_PROP(InfiltrationProblem, EnableGravity, true);
 
 // Write newton convergence?
-SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, true);
+SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, false);
 
 // Maximum tolerated relative error in the Newton method
 SET_SCALAR_PROP(InfiltrationProblem, NewtonRelTolerance, 1e-8);
-
-SET_TYPE_PROP(InfiltrationProblem, Scalar, quad);
 }
 
 /*!
