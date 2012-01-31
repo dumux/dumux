@@ -77,8 +77,12 @@ SET_INT_PROP(KuevetteProblem, NumericDifferenceMethod, 0);
 // Write newton convergence
 SET_BOOL_PROP(KuevetteProblem, NewtonWriteConvergence, true);
 
-//! Set the formulation
-SET_INT_PROP(KuevetteProblem, Formulation, ThreePThreeCFormulation::pgSwSn);
+// set newton relative tolerance
+SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
+
+// Set the maximum time step
+SET_SCALAR_PROP(KuevetteProblem, MaxTimeStepSize, 60.);
+
 }
 
 

@@ -57,6 +57,7 @@ SET_PROP(KuevetteSpatialParameters, MaterialLaw)
     // define the material law
     typedef ParkerVanGen3P<Scalar> type;
 };
+
 }
 
 /*!

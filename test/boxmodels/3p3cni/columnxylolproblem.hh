@@ -33,9 +33,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#warning "TODO: cleanup the h2o-air-xylene fluid system. we use H2OAirMesitylene in the mean time!"
-//#include <dumux/material/fluidsystems/h2o_air_xylene_system.hh>
-#include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oairxylenefluidsystem.hh>
 
 #include <dumux/boxmodels/3p3cni/3p3cnimodel.hh>
 
@@ -67,7 +65,7 @@ SET_PROP(ColumnProblem, Problem)
 // Set the fluid system
 SET_TYPE_PROP(ColumnProblem, 
               FluidSystem,
-              Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              Dumux::FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Enable gravity
 SET_BOOL_PROP(ColumnProblem, EnableGravity, true);
@@ -77,9 +75,6 @@ SET_INT_PROP(ColumnProblem, NumericDifferenceMethod, 0);
 
 // Write newton convergence
 SET_BOOL_PROP(ColumnProblem, NewtonWriteConvergence, true);
-
-//! Set the formulation
-SET_INT_PROP(ColumnProblem, Formulation, ThreePThreeCFormulation::pgSwSn);
 
 // Set the maximum time step
 SET_SCALAR_PROP(ColumnProblem, MaxTimeStepSize, 5.);

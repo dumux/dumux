@@ -35,7 +35,7 @@
 
 int main(int argc, char** argv)
 {
-    // typedef TTAG(KuevetteProblem) ProblemTypeTag;
+    //  typedef TTAG(KuevetteProblem) ProblemTypeTag;
     typedef TTAG(ColumnProblem) ProblemTypeTag;
     return Dumux::startFromDGF<ProblemTypeTag>(argc, argv);
 }
