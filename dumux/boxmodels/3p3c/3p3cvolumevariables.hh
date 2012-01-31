@@ -398,7 +398,7 @@ public:
                                               paramCache,
                                               wPhaseIdx,
                                               aCompIdx);
-        diffusionCoefficient_[gPhaseIdx][cCompIdx] =
+        diffusionCoefficient_[wPhaseIdx][cCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               wPhaseIdx,
@@ -409,7 +409,6 @@ public:
         diffusionCoefficient_[nPhaseIdx][cCompIdx] = 0.0;
         diffusionCoefficient_[nPhaseIdx][wCompIdx] = 0.0;
         diffusionCoefficient_[nPhaseIdx][aCompIdx] = 0.0;
-
 
         Valgrind::CheckDefined(diffusionCoefficient_);
 
