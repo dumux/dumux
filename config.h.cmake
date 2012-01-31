@@ -39,8 +39,15 @@
 #cmakedefine PROJECT_MAINTAINER       "${PROJECT_MAINTAINER}"
 #cmakedefine PROJECT_MAINTAINER_EMAIL "${PROJECT_MAINTAINER_EMAIL}"
 
+#cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
+
 /* tr1/array. */
 //#cmakedefine HAVE_TR1_ARRAY 1
+#cmakedefine HAVE_NULLPTR 1
+#cmakedefine HAVE_STATIC_ASSERT 1
+#cmakedefine HAVE_VARIADIC_TEMPLATES 1
+#cmakedefine HAVE_VARIADIC_CONSTRUCTOR_SFINAE 1
+#cmakedefine HAVE_RVALUE_REFERENCES 1
 #cmakedefine HAVE_MALLOC_H 1
 #cmakedefine HAVE_VALGRIND 1
 

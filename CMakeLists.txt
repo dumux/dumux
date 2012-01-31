@@ -1,17 +1,15 @@
 ##############
 # general stuff
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 set(ProjectName            "DuMuX")
 set(ProjectVersion         "2.1-svn")
 set(ProjectMaintainer      "Bernd Flemisch")
 set(ProjectMaintainerEmail "Bernd.Flemisch_at_iws dot uni-stuttgart dot de")
 project(${ProjectName} CXX)
-##############
 
 ##############
 # make sure our own modules will be found
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules")
-##############
 
 ##############
 # Set the policy how CMake resolves library paths to the
@@ -21,36 +19,140 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules")
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
-##############
-
 
 ##############
 # Find the required packages
-FIND_PACKAGE(DUNE_grid REQUIRED)
-FIND_PACKAGE(DUNE_istl REQUIRED)
-FIND_PACKAGE(DUNE_localfunctions REQUIRED)
-FIND_PACKAGE(DUNE_pdelab REQUIRED)
-FIND_PACKAGE(DUNE_common REQUIRED)
-FIND_PACKAGE(Boost REQUIRED)
-##############
+find_package(DUNE_grid REQUIRED)
+find_package(DUNE_istl REQUIRED)
+find_package(DUNE_localfunctions REQUIRED)
+find_package(DUNE_pdelab REQUIRED)
+find_package(DUNE_common REQUIRED)
 
 ##############
 # Find the optional packages
-FIND_PACKAGE(MPI)
-#FIND_PACKAGE(UG)
-FIND_PACKAGE(ALUGrid)
-FIND_PACKAGE(METIS)
-#FIND_PACKAGE(Alberta)
-##############
+find_package(MPI)
+find_package(Boost)
+find_package(UG)
+find_package(ALUGrid)
+find_package(METIS)
+find_package(SuperLU)
+find_package(Alberta)
 
 ##############
 # Find the required include files
-INCLUDE (CheckIncludeFileCXX)
-CHECK_INCLUDE_FILE_CXX("malloc.h" HAVE_MALLOC_H)
-CHECK_INCLUDE_FILE_CXX("valgrind/memcheck.h" HAVE_VALGRIND)
-CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
-##############
+include(CheckIncludeFileCXX)
+check_include_file_cxx("malloc.h" HAVE_MALLOC_H)
+check_include_file_cxx("valgrind/memcheck.h" HAVE_VALGRIND)
+check_include_file_cxx("tr1/array" HAVE_TR1_ARRAY)
 
+##############
+# determine C++11 (former C++0x) feature support
+set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
+
+include(CheckCXXSourceCompiles)
+
+# nullptr
+CHECK_CXX_SOURCE_COMPILES(
+"   int main(void) {
+    char* ch = nullptr;
+    return 0; }
+"  HAVE_NULLPTR
+)
+
+# static assert
+CHECK_CXX_SOURCE_COMPILES("
+   int main(void) {
+      static_assert(true,\"MSG\");
+    return 0; }
+"  HAVE_STATIC_ASSERT
+)
+
+# variadic template support
+CHECK_CXX_SOURCE_COMPILES("
+   #include <cassert>
+
+   template<typename... T>
+   int addints(T... x);
+
+   int add_ints()
+   {
+     return 0;
+   }
+
+   template<typename T1, typename... T>
+   int add_ints(T1 t1, T... t)
+   {
+     return t1 + add_ints(t...);
+   }
+
+   int main(void)
+   {
+     assert( 5 == add_ints(9,3,-5,-2) );
+     return 0;
+   }
+" HAVE_VARIADIC_TEMPLATES
+)
+
+# SFINAE on variadic template constructors within template classes
+CHECK_CXX_SOURCE_COMPILES("
+  #include <cassert>
+  #include <functional>
+
+  template<typename... U>
+  struct A
+  {
+
+    template<typename... T,
+             typename = typename std::enable_if<(sizeof...(T) < 2)>::type
+            >
+    A(T... t)
+    : i(1)
+    {}
+
+    template<typename... T,
+             typename = typename std::enable_if<(sizeof...(T) >= 2)>::type,
+             typename = void
+            >
+    A(T... t)
+    : i(-1)
+    {}
+
+    A()
+    : i(1)
+    {}
+
+    int i;
+  };
+
+  int main(void)
+  {
+    assert(A<int>().i + A<int>(2).i + A<int>(\"foo\",3.4).i + A<int>({2,5,6},'a',A<int>()).i == 0);
+    return 0;
+  }
+" HAVE_VARIADIC_CONSTRUCTOR_SFINAE
+)
+
+# rvalue references
+CHECK_CXX_SOURCE_COMPILES("
+  #include <cassert>
+  #include <utility>
+  int foo(int&& x) { return 1; }
+  int foo(const int& x) { return -1; }
+
+  template<typename T>
+  int forward(T&& x)
+  {
+    return foo(std::forward<T>(x));
+  }
+
+  int main(void)
+  {
+    int i = 0;
+    assert( forward(i) + forward(int(2)) == 0);
+    return 0;
+  }
+" HAVE_RVALUE_REFERENCES
+)
 
 ##############
 # use this macros in the CMakelists of the subdirectories. 
@@ -76,12 +178,10 @@ set(DumuxIncludeDirectories
     ${DUNE_localfunctions_INCLUDE_DIRS}
     ${DUNE_pdelab_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIR})
-##############
-
 
 ##############
 # set appropriate compiler flags for debug/release compilation modes
-add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing -DHAVE_NULLPTR=1")
+add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing")
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   # debug mode
@@ -92,8 +192,6 @@ else(CMAKE_BUILD_TYPE STREQUAL "debug")
   add_definitions("-O3 -march=native")
   add_definitions(-DNDEBUG)
 endif(CMAKE_BUILD_TYPE STREQUAL "debug")
-##############
-
 
 ##############
 # deal with the config.h include file...
@@ -112,6 +210,7 @@ SetConfigHVar(HAVE_DUNE_ISTL           DUNE_istl_FOUND)
 SetConfigHVar(HAVE_DUNE_LOCALFUNCTIONS DUNE_localfunctions_FOUND)
 SetConfigHVar(HAVE_DUNE_PDELAB         DUNE_pdelab_FOUND)
 SetConfigHVar(HAVE_MPI                 MPI_FOUND)
+SetConfigHVar(HAVE_SUPERLU             SUPERLU_FOUND)
 SetConfigHVar(PROJECT_NAME             ProjectName)
 SetConfigHVar(PROJECT_VERSION          ProjectVersion)
 SetConfigHVar(PROJECT_MAINTAINER       ProjectMaintainer)
@@ -179,7 +278,6 @@ configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 # directories where the actual programs are)
 add_subdirectory("test")
 add_subdirectory("tutorial")
-##############
 
 # copy the testing script
 make_directory(bin)
@@ -201,8 +299,8 @@ file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION t
 file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION test/common/generalproblem)
 
 # set up CTest 
-ENABLE_TESTING()
-INCLUDE(CTest)
+enable_testing()
+include(CTest)
 add_test(test_propertysystem test/common/propertysystem/test_propertysystem)
 add_test(test_general_box bin/runTest.sh test/common/generalproblem/generallens_box-reference.vtu generallens_box-00003.vtu test/common/generalproblem/test_generalproblem_2p --box 1e2 2e1)
 add_test(test_general_dec bin/runTest.sh test/common/generalproblem/generallens_decoupled-reference.vtu generallens_decoupled-00003.vtu test/common/generalproblem/test_generalproblem_2p --decoupled 1e2 2e1)
@@ -229,4 +327,3 @@ add_test(test_dec2p2c bin/runTest.sh test/decoupled/2p2c/test_dec2p2c-reference.
 
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
-
