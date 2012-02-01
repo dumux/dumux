@@ -30,7 +30,6 @@
 
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
-#include <dune/istl/superlu.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolverproperties.hh>
