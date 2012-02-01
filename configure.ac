@@ -94,10 +94,11 @@ AC_CONFIG_FILES([dumux.pc
     test/freeflow/stokes2c/Makefile
     test/freeflow/stokes2cni/Makefile
     test/material/Makefile
-    test/material/tabulation/Makefile
+    test/material/fluidsystems/Makefile
+    test/material/immiscibleflash/Makefile
     test/material/ncpflash/Makefile
     test/material/pengrobinson/Makefile
-    test/material/fluidsystems/Makefile
+    test/material/tabulation/Makefile
     tutorial/Makefile
 ])
 
