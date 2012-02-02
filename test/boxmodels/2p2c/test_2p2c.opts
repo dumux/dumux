@@ -1,3 +1,0 @@
-DtInitial=250 # seconds
-TEnd=1e8 # seconds
-DgfFile="grids/test_2p2c.dgf"

@@ -27,9 +27,8 @@
  * \brief test for the two-phase box model
  */
 #include "config.h"
-#define CUBES 1
-
 #include "lensproblem.hh"
+#include <dumux/common/start.hh>
 
 #include <dune/grid/common/gridinfo.hh>
 
@@ -38,6 +37,39 @@
 #include <dune/grid/uggrid.hh>
 
 #include <iostream>
+
+void usage(const char *progName, const std::string &errorMsg)
+{
+    if (errorMsg.size() > 0) {
+        std::cout << errorMsg << "\n"
+                  << "\n";
+    }
+    std::cout
+        << "Usage: " << progName << " [options]\n"
+        << "Mandatory options are:\n"
+        << "\t--t-end=ENDTIME                  The time of the end of the simlation [s]\n"
+        << "\t--dt-initial=STEPSIZE            The initial time step size [s]\n"
+        << "\n"
+        << "Alternativ supported syntax:\n"
+        << "\t-tEnd ENDTIME                    The time of the end of the simlation [s]\n"
+        << "\t-dtInitial STEPSIZE              The initial time step size [s]\n"
+        << "\n"
+        << "If --parameter-file is specified parameters can also be defined there. In this case,\n"
+        << "camel case is used for the parameters (e.g.: --grid-file becomes gridFile). Parameters\n"
+        << "specified on the command line have priority over those in the parameter file.\n"
+        << "Important optional options include:\n"
+        << "\t--help,-h                        Print this usage message and exit\n"
+        << "\t--print-parameters[=true|false]  Print the run-time modifiable parameters _after_ \n"
+        << "\t                                 the simulation [default: true]\n"
+        << "\t--print-properties[=true|false]  Print the compile-time parameters _before_ \n"
+        << "\t                                 the simulation [default: true]\n"
+        << "\t--parameter-file=FILENAME        File with parameter definitions\n"
+        << "\t--restart=RESTARTTIME            Restart simulation from a restart file\n"
+        << "\n"
+        << "For the case of no arguments given, the input parameter file is expected to be named './parameter.input' \n"
+        << "\n";
+}
+
 
 //! \cond INTERNAL
 ////////////////////////
@@ -139,15 +171,14 @@ public:
 };
 //! \endcond
 
+
+
+
+
+
 ////////////////////////
 // the main function
 ////////////////////////
-void usage(const char *progname)
-{
-    std::cout << "usage: " << progname << " [--restart restartTime] tEnd dt\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
 #ifdef NDEBUG
@@ -168,31 +199,16 @@ int main(int argc, char** argv)
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        if (argc < 3)
-            usage(argv[0]);
-
-        // deal with the restart stuff
-        int argPos = 1;
+        Scalar tEnd, dt;
+        Scalar restartTime=0;
         bool restart = false;
-        double startTime = 0;
-        if (std::string("--restart") == argv[argPos]) {
-            restart = true;
-            ++argPos;
-
-            std::istringstream(argv[argPos++]) >> startTime;
-        }
-
-        if (argc - argPos != 2) {
-            usage(argv[0]);
-        }
-
-        // read the initial time step and the end time
-        double tEnd, dt;
-        std::istringstream(argv[argPos++]) >> tEnd;
-        std::istringstream(argv[argPos++]) >> dt;
+        Dumux::startWithParametersProvideMyOwnGrid<TypeTag, Scalar>(argc,
+                                                                    argv,
+                                                                    usage,
+                                                                    tEnd,
+                                                                    dt,
+                                                                    restart,
+                                                                    restartTime);
 
         ////////////////////////////////////////////////////////////
         // create the grid
@@ -248,9 +264,11 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         TimeManager timeManager;
         Problem problem(timeManager, grid->leafView(), lowerLeftLens, upperRightLens);
-        timeManager.init(problem, startTime, dt, tEnd, restart);
+        timeManager.init(problem, restartTime, dt, tEnd, restart);
         timeManager.run();
+
         return 0;
+
 #ifdef NDEBUG
     }
     catch (Dune::Exception &e) {
