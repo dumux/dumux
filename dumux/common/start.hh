@@ -26,23 +26,25 @@
 #ifndef DUMUX_START_HH
 #define DUMUX_START_HH
 
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/parameters.hh>
-
-#include <dune/grid/io/file/dgfparser.hh>
-#include <dune/common/mpihelper.hh>
 #include <iostream>
+#include <sys/ptrace.h>
 
+#include "propertysystem.hh"
+#include "parameters.hh"
+#include "valgrind.hh"
+
+#include <dune/common/mpihelper.hh>
 #include <dune/common/version.hh>
 #include <dune/common/parametertreeparser.hh>
 
-#include <sys/ptrace.h>
+#include <dune/grid/io/file/dgfparser.hh>
 
 namespace Dumux
 {
 // forward declaration of property tags
 namespace Properties
 {
+NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Grid);
 NEW_PROP_TAG(GridCreator);
 NEW_PROP_TAG(Problem);
