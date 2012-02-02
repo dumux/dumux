@@ -304,7 +304,7 @@ private:
             paramName = paramNameOrNil;
         }
         else {
-            groupName = 0;
+            groupName = "";
             paramName = groupOrParamName;
         }
 
@@ -324,7 +324,7 @@ private:
         // [Newton]
         // WriteConvergence = true
         std::string canonicalName(paramName);
-        if (groupName && strlen(groupName) > 0) {
+        if (strlen(groupName) > 0) {
             canonicalName.insert(0, ".");
             canonicalName.insert(0, groupName);
         }
@@ -371,7 +371,7 @@ private:
             paramName = paramNameOrNil;
         }
         else {
-            groupName = 0;
+            groupName = "";
             paramName = groupOrParamName;
         }
 
@@ -398,7 +398,7 @@ private:
         //
         // [Newton]
         // WriteConvergence = true
-        if (groupName && groupName[0] != '\0') {
+        if (strlen(groupName) > 0) {
             canonicalName.append(groupName);
             canonicalName.push_back('.');
         }
