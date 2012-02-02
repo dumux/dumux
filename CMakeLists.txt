@@ -6,10 +6,12 @@ set(ProjectVersion         "2.1-svn")
 set(ProjectMaintainer      "Bernd Flemisch")
 set(ProjectMaintainerEmail "Bernd.Flemisch_at_iws dot uni-stuttgart dot de")
 project(${ProjectName} CXX)
+# needed for tests like pthread and BLAS
+enable_language(C)
 
 ##############
 # make sure our own modules will be found
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/Modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 ##############
 # Set the policy how CMake resolves library paths to the
@@ -32,17 +34,23 @@ find_package(DUNE_common REQUIRED)
 # Find the optional packages
 find_package(MPI)
 find_package(Boost)
+find_package(Alberta)
 find_package(UG)
 find_package(ALUGrid)
 find_package(METIS)
 find_package(SuperLU)
-find_package(Alberta)
+if(SUPERLU_FOUND)
+  set(SUPERLU_CPPFLAGS "-I${SUPERLU_INCLUDE_DIRS} -DENABLE_SUPERLU")
+  set(SUPERLU_LIBS "-L${SUPERLU_LIBRARIES} -lsuperlu -L${BLAS_LIBRARIES} -lblas")
+  #define HAVE_MEM_USAGE_T_EXPANSIONS 1
+endif(SUPERLU_FOUND)
 
 ##############
 # Find the required include files
+include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
-check_include_file_cxx("malloc.h" HAVE_MALLOC_H)
-check_include_file_cxx("valgrind/memcheck.h" HAVE_VALGRIND)
+check_include_file("malloc.h" HAVE_MALLOC_H)
+check_include_file("valgrind/memcheck.h" HAVE_VALGRIND)
 check_include_file_cxx("tr1/array" HAVE_TR1_ARRAY)
 
 ##############
@@ -183,15 +191,15 @@ set(DumuxIncludeDirectories
 # set appropriate compiler flags for debug/release compilation modes
 add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing")
 
-if(CMAKE_BUILD_TYPE STREQUAL "debug")
+if(("${CMAKE_BUILD_TYPE}" STREQUAL "debug") OR (NOT (DEFINED "${CMAKE_BUILD_TYPE}")))
+  add_definitions(-DNDEBUG)
   # debug mode
   add_definitions("-g")
 #  add_definitions(-DDEBUG -DDUNE_DEVEL_MODE=1 -DDUNE_ISTL_WITH_CHECKING)
-else(CMAKE_BUILD_TYPE STREQUAL "debug")
+else()
   # Release mode
   add_definitions("-O3 -march=native")
-  add_definitions(-DNDEBUG)
-endif(CMAKE_BUILD_TYPE STREQUAL "debug")
+endif( )
 
 ##############
 # deal with the config.h include file...
@@ -312,10 +320,10 @@ add_test(test_tabulation test/material/tabulation/test_tabulation)
 
 add_test(test_1p bin/runTest.sh test/boxmodels/1p/1ptest-reference.vtu 1ptest-00002.vtu test/boxmodels/1p/test_1p test/boxmodels/1p/grids/test_1p_2d.dgf 1 1)
 add_test(test_1p2c bin/runTest.sh test/boxmodels/1p2c/tissue-reference.vtu tissue-00003.vtu test/boxmodels/1p2c/test_1p2c test/boxmodels/1p2c/grids/test_1p2c.dgf 2e3 1e3)
-add_test(test_2p bin/runTest.sh test/boxmodels/2p/lens-reference.vtu lens-00009.vtu test/boxmodels/2p/test_2p 3000 250)
+add_test(test_2p bin/runTest.sh test/boxmodels/2p/lens-reference.vtu lens-00010.vtu test/boxmodels/2p/test_2p 3000 250)
 add_test(test_2pni bin/runTest.sh test/boxmodels/2pni/injection2pni-reference.vtu injection2pni-00009.vtu test/boxmodels/2pni/test_2pni test/boxmodels/2pni/grids/test_2pni.dgf 1e4 250)
 add_test(test_2p2c bin/runTest.sh test/boxmodels/2p2c/injection-reference.vtu injection-00009.vtu test/boxmodels/2p2c/test_2p2c --dgf-file=test/boxmodels/2p2c/grids/test_2p2c.dgf --t-end=1e4 --dt-initial=250)
-add_test(test_2p2cni bin/runTest.sh test/boxmodels/2p2cni/waterair-reference.vtu waterair-00010.vtu test/boxmodels/2p2cni/test_2p2cni test/boxmodels/2p2cni/grids/test_2p2cni.dgf 1e4 250)
+add_test(test_2p2cni bin/runTest.sh test/boxmodels/2p2cni/waterair-reference.vtu waterair-00011.vtu test/boxmodels/2p2cni/test_2p2cni test/boxmodels/2p2cni/grids/test_2p2cni.dgf 1e4 250)
 add_test(test_MpNc bin/runTest.sh test/boxmodels/MpNc/obstacle-reference.vtu obstacle-00010.vtu test/boxmodels/MpNc/test_MpNc test/boxmodels/MpNc/grids/obstacle_24x16.dgf 1e4 250)
 add_test(test_richards bin/runTest.sh test/boxmodels/richards/richardslens-reference.vtu richardslens-00008.vtu test/boxmodels/richards/test_richards test/boxmodels/richards/grids/richardslens-24x16.dgf 3000 100)
 

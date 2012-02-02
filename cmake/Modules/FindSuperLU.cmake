@@ -1,4 +1,8 @@
-# find_package(BLAS)
+find_package(BLAS QUIET REQUIRED)
+if(NOT BLAS_FOUND)
+  message("BLAS required for SuperLU not found")
+  return()
+endif(NOT BLAS_FOUND)
 
 include(FindPackageHandleStandardArgs)
 
