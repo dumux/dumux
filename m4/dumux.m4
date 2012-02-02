@@ -76,38 +76,115 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
 
   # only build the handbook if the documentation is build, latex is
   # available and the tree is checked out via a version control system
-  build_handbook=no
-  if test "$enable_documentation" == "yes" && \
-     test "$CONVERT" != "no" && test "$CONVERT" != "" && \
-     test "$latex" != "no" && test "$latex" != "" && \
-     test "$bibtex" != "no" && test "$bibtex" != "" && \
-     test "$dvipdf" != "no" && test "$dvipdf" != "" && \
-     test "$have_latex_class_scrreprt" == "yes" && \
-     test "$have_latex_pkg_amsfonts" == "yes" && \
-     test "$have_latex_pkg_amsmath" == "yes" && \
-     test "$have_latex_pkg_amssymb" == "yes" && \
-     test "$have_latex_pkg_color" == "yes" && \
-     test "$have_latex_pkg_enumerate" == "yes" && \
-     test "$have_latex_pkg_graphics" == "yes" && \
-     test "$have_latex_pkg_graphicx" == "yes" && \
-     test "$have_latex_pkg_hyperref" == "yes" && \
-     test "$have_latex_pkg_hyphenat" == "yes" && \
-     test "$have_latex_pkg_inputenc" == "yes" && \
-     test "$have_latex_pkg_layout" == "yes" && \
-     test "$have_latex_pkg_listings" == "yes" && \
-     test "$have_latex_pkg_lscape" == "yes" && \
-     test "$have_latex_pkg_makeidx" == "yes" && \
-     test "$have_latex_pkg_pstricks" == "yes" && \
-     test "$have_latex_pkg_rotating" == "yes" && \
-     test "$have_latex_pkg_scrpage2" == "yes" && \
-     test "$have_latex_pkg_subfig" == "yes" && \
-     test "$have_latex_pkg_theorem" == "yes" && \
-     test "$have_latex_pkg_tabularx" == "yes" && \
-     test "$have_latex_pkg_ulem" == "yes" && \
-     test "$have_latex_pkg_xspace" == "yes"; 
-  then
-    build_handbook=yes
-
+  build_handbook=yes
+  if test "$enable_documentation" != "yes"; then
+     build_handbook="no"
+     summary_message="Configure parameter --enable-documentation not specified"
+  fi
+     
+  if test "$CONVERT" == "no" || test "$CONVERT" == "" ; then
+    build_handbook="no"
+    summary_message="Command 'convert' not found"
+  fi
+  if test "$latex" == "no" || test "$latex" == ""; then
+    summary_message="Command 'latex' not found"
+    build_handbook="no"
+  fi
+  if test "$bibtex" == "no" || test "$bibtex" == ""; then
+    summary_message="Command 'bibtex' not found"
+    build_handbook="no"
+  fi
+  if test "$dvipdf" == "no" || test "$dvipdf" == "" ; then
+    summary_message="Command 'dvipdf' not found"
+    build_handbook="no"
+  fi
+  if test "$have_latex_class_scrreprt" != "yes"; then
+    summary_message="Latex class 'scrreprt' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_amsfonts" != "yes"; then
+    summary_message="Latex package 'amsfonts' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_amsmath" != "yes"; then
+    summary_message="Latex package 'amsmath' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_amssymb" != "yes"; then
+    summary_message="Latex package 'amssymb' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_color" != "yes"; then
+    summary_message="Latex package 'color' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_enumerate" != "yes"; then
+    summary_message="Latex package 'enumerate' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_graphics" != "yes"; then
+    summary_message="Latex package 'graphics' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_graphicx" != "yes"; then
+    summary_message="Latex package 'graphicx' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_hyperref" != "yes"; then
+    summary_message="Latex package 'hyperref' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_hyphenat" != "yes"; then
+    summary_message="Latex package 'hyphenat' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_inputenc" != "yes"; then
+    summary_message="Latex package 'inputenc' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_layout" != "yes"; then
+    summary_message="Latex package 'layout' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_listings" != "yes"; then
+    summary_message="Latex package 'listings' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_lscape" != "yes"; then
+    summary_message="Latex package 'lscape' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_makeidx" != "yes"; then
+    summary_message="Latex package 'makeidx' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_pstricks" != "yes"; then
+    summary_message="Latex package 'pstricks' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_rotating" != "yes"; then
+    summary_message="Latex package 'rotating' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_scrpage2" != "yes"; then
+    summary_message="Latex package 'scrpage2' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_subfig" != "yes"; then
+    summary_message="Latex package 'subfig' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_theorem" != "yes"; then
+    summary_message="Latex package 'theorem' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_tabularx" != "yes"; then
+    summary_message="Latex package 'tabularx' not available"
+    build_handbook="no"
+  fi
+  if test "$have_latex_pkg_ulem" != "yes"; then
+    summary_message="Latex package 'ulem' not available"
+    build_handbook="no"
   fi
 
   AC_SUBST([LATEX],[$latex])
@@ -115,7 +192,11 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
   AC_SUBST([DVIPDF],[$dvipdf])
 
   AM_CONDITIONAL([BUILD_HANDBOOK], [test "$build_handbook" == "yes"])
-  DUNE_ADD_SUMMARY_ENTRY([Build DuMuX handbook],[$build_handbook])
+  if test "$build_handbook" == "yes"; then
+     DUNE_ADD_SUMMARY_ENTRY([Build DuMuX handbook],[$build_handbook])
+  else
+     DUNE_ADD_SUMMARY_ENTRY([Build DuMuX handbook],[$build_handbook ($summary_message)])
+  fi
 ])
 
 # DUMUX_CHECK_MODULES(NAME, HEADER, SYMBOL)
