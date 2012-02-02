@@ -95,15 +95,15 @@ public:
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
-	completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
 
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
         tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
         dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
 
-	// Second instance of a parameter cache.
+        // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also 
-	// became part of the fluid state.
+        // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
         

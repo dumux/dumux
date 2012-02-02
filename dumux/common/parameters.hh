@@ -421,8 +421,7 @@ private:
         }
 
         // update the cache
-        ParamType defaultValue;
-        ParamType value = Params::tree().template get<ParamType>(canonicalName, defaultValue);
+        ParamType value = Params::tree().template get<ParamType>(canonicalName);
         paramCache[canonicalName] = value;
 
         // remember whether the parameter was taken from the parameter

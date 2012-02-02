@@ -1,5 +1,6 @@
 GXX_WARNING_OPTS=" \
     -Wall \
+    -Wunused \
     -Wmissing-include-dirs \
     -Wcast-align \
     -Wno-sign-compare \
