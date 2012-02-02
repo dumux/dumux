@@ -29,8 +29,6 @@
 
 #include "boxproperties.hh"
 
-#include <dune/grid/common/geometry.hh>
-
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
@@ -55,11 +53,6 @@ class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTa
     enum { dim = GridView::dimension };
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<dim>::EntityPointer VertexPointer;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::ctype CoordScalar;
-
-    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
 public:
     /*!
@@ -97,50 +90,14 @@ public:
         int numVerts = element.template count<dim>();
         this->resize(numVerts);
 
-        int nBoundary = 0;
-        std::vector<bool> onBoundary(numVerts, false);
-
-        // loop over all intersections of the element and mark all
-        // vertices in these intersections
-        Dune::GeometryType geoType = element.geometry().type();
-        const ReferenceElement &refElem = ReferenceElements::general(geoType);
-        IntersectionIterator isIt = problem.gridView().ibegin(element);
-        IntersectionIterator isEndIt = problem.gridView().iend(element);
-        for (; isIt != isEndIt; ++isIt) {
-            if (!isIt->boundary())
-                continue; // intersection is not on grid boundary
-
-            // mark all vertices on the intersection
-            int faceIdx = isIt->indexInInside();
-            int numFaceVerts = refElem.size(faceIdx, 1, dim);
-            for (int faceVertIdx = 0;
-                 faceVertIdx < numFaceVerts;
-                 ++faceVertIdx)
-            {
-                int elemVertIdx = refElem.subEntity(faceIdx,
-                                                    1,
-                                                    faceVertIdx,
-                                                    dim);
-                if (!onBoundary[elemVertIdx]) {
-                    ++ nBoundary;
-                    onBoundary[elemVertIdx] = true;
-                }
-            }
-        }
-
         hasDirichlet_ = false;
         hasNeumann_ = false;
         hasOutflow_ = false;
 
-        if (nBoundary == 0) {
-            for (int i = 0; i < numVerts; ++i)
-                (*this)[i].reset();
-            return;
-        }
         for (int i = 0; i < numVerts; ++i) {
             (*this)[i].reset();
 
-            if (!onBoundary[i])
+            if (!problem.model().onBoundary(element, i))
                 continue;
 
             const VertexPointer vptr = element.template subEntity<dim>(i);
@@ -150,7 +107,7 @@ public:
             hasNeumann_ = hasNeumann_ || (*this)[i].hasNeumann();
             hasOutflow_ = hasOutflow_ || (*this)[i].hasOutflow();
         }
-    };
+    }
 
     /*!
      * \brief Returns whether the element has a vertex which contains

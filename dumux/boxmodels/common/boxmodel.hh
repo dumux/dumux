@@ -37,6 +37,7 @@
 
 #include <dumux/parallel/vertexhandles.hh>
 
+#include <dune/grid/common/geometry.hh>
 
 namespace Dumux
 {
@@ -74,10 +75,15 @@ class BoxModel
     typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
 
+    typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+
+    typedef typename Dune::GenericReferenceElements<CoordScalar, dim> ReferenceElements;
+    typedef typename Dune::GenericReferenceElement<CoordScalar, dim> ReferenceElement;
 
     // copying a model is not a good idea
     BoxModel(const BoxModel &);
@@ -103,6 +109,8 @@ public:
     void init(Problem &prob)
     {
         problemPtr_ = &prob;
+
+        updateBoundaryIndices_();
 
         int nDofs = asImp_().numDofs();
         uCur_.resize(nDofs);
@@ -705,6 +713,27 @@ public:
     const GridView &gridView() const
     { return problem_().gridView(); }
 
+    /*!
+     * \brief Returns true if the vertex with 'globalVertIdx' is
+     *        located on the grid's boundary.
+     *
+     * \param globalVertIdx The global index of the control volume's
+     *                      associated vertex
+     */
+    bool onBoundary(int globalVertIdx) const
+    { return boundaryIndices_[globalVertIdx]; }
+
+    /*!
+     * \brief Returns true if a vertex is located on the grid's
+     *        boundary.
+     *
+     * \param elem A DUNE Codim<0> entity which contains the control
+     *             volume's associated vertex.
+     * \param vIdx The local vertex index inside elem
+     */
+    bool onBoundary(const Element &elem, int vIdx) const
+    { return onBoundary(vertexMapper().map(elem, vIdx, dim)); }
+
     template <class FluidState>
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
@@ -815,22 +844,54 @@ protected:
         }
     }
 
+    /*!
+     * \brief Find all indices of boundary vertices.
+     *
+     * For this we need to loop over all intersections (which is slow
+     * in general). If the DUNE grid interface would provide a
+     * onBoundary() method for entities this could be done in a much
+     * nicer way (actually this would not be necessary)
+     */
+    void updateBoundaryIndices_()
+    {
+        boundaryIndices_.resize(numDofs());
+        std::fill(boundaryIndices_.begin(), boundaryIndices_.end(), false);
+
+        ElementIterator eIt = gridView_().template begin<0>();
+        ElementIterator eEndIt = gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
+            Dune::GeometryType geoType = eIt->geometry().type();
+            const ReferenceElement &refElem = ReferenceElements::general(geoType);
+
+            IntersectionIterator isIt = gridView_().ibegin(*eIt);
+            IntersectionIterator isEndIt = gridView_().iend(*eIt);
+            for (; isIt != isEndIt; ++isIt) {
+                if (!isIt->boundary())
+                    continue;
+                // add all vertices on the intersection to the set of
+                // boundary vertices
+                int faceIdx = isIt->indexInInside();
+                int numFaceVerts = refElem.size(faceIdx, 1, dim);
+                for (int faceVertIdx = 0;
+                     faceVertIdx < numFaceVerts;
+                     ++faceVertIdx)
+                {
+                    int elemVertIdx = refElem.subEntity(faceIdx,
+                                                        1,
+                                                        faceVertIdx,
+                                                        dim);
+                    int globalVertIdx = vertexMapper().map(*eIt, elemVertIdx, dim);
+                    boundaryIndices_[globalVertIdx] = true;
+                }
+            }
+        }
+    }
+
     // the hint cache for the previous and the current volume
     // variables
     mutable std::vector<bool> hintsUsable_;
     mutable std::vector<VolumeVariables> curHints_;
     mutable std::vector<VolumeVariables> prevHints_;
-
-    /*!
-     * \brief Returns whether messages should be printed
-     */
-    bool verbose_() const
-    { return gridView_().comm().rank() == 0; };
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 
     // the problem we want to solve. defines the constitutive
     // relations, matxerial laws, etc.
@@ -842,6 +903,9 @@ protected:
     // local jacobian
     JacobianAssembler *jacAsm_;
 
+    // the set of all indices of vertices on the boundary
+    std::vector<bool> boundaryIndices_;
+
     // cur is the current iterative solution, prev the converged
     // solution of the previous time step
     SolutionVector uCur_;
@@ -850,6 +914,17 @@ protected:
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
 
 private:
+    /*!
+     * \brief Returns whether messages should be printed
+     */
+    bool verbose_() const
+    { return gridView_().comm().rank() == 0; };
+
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+
     bool enableHints_;
 };
 }
