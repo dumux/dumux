@@ -205,23 +205,6 @@ public:
                                 const char *groupOrParamName,
                                 const char *paramNameOrNil = 0)
     {
-#ifndef NDEBUG
-        // make sure that the parameter is used consistently. since
-        // this is potentially quite expensive, it is only done if
-        // debugging code is not explicitly turned off.
-        const char *paramName, *groupName;
-        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
-            groupName = groupOrParamName;
-            paramName = paramNameOrNil;
-        }
-        else {
-            groupName = "";
-            paramName = groupOrParamName;
-        }
-
-        check_<ParamType>(propertyName, groupName, paramName);
-#endif
-
         static const ParamType &value = retrieve_<ParamType, PropTag>(propertyName, groupOrParamName, paramNameOrNil);
         return value;
     }
@@ -245,7 +228,7 @@ public:
             paramName = groupOrParamName;
         }
 
-        check_<ParamType>(propertyName, groupName, paramName);
+        check_(Dune::className<ParamType>(), propertyName, groupName, paramName);
 #endif
 
         return retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
@@ -266,13 +249,11 @@ private:
         };
     };
 
-    template <class ParamType>
-    static void check_(const std::string &propertyName,
+    static void check_(const std::string &paramTypeName,
+                       const std::string &propertyName,
                        const char *groupName,
                        const char *paramName)
     {
-        const std::string &paramTypeName =
-            Dune::className<ParamType>();
         typedef std::tr1::unordered_map<std::string, Blubb> StaticData;
         static StaticData staticData;
 
@@ -326,6 +307,13 @@ private:
             groupName = 0;
             paramName = groupOrParamName;
         }
+
+#ifndef NDEBUG
+        // make sure that the parameter is used consistently. since
+        // this is potentially quite expensive, it is only done if
+        // debugging code is not explicitly turned off.
+        check_(Dune::className<ParamType>(), propertyName, groupName, paramName);
+#endif
 
         // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
         // and 'WriteConvergence' becomes 'Newton.WriteConvergence'
