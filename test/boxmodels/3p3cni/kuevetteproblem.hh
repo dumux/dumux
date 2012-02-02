@@ -71,14 +71,17 @@ SET_TYPE_PROP(KuevetteProblem,
 // Enable gravity
 SET_BOOL_PROP(KuevetteProblem, EnableGravity, true);
 
-// Use forward differences instead of central differences
+// Use central differences (backward -1, forward +1)
 SET_INT_PROP(KuevetteProblem, NumericDifferenceMethod, 0);
 
 // Write newton convergence
 SET_BOOL_PROP(KuevetteProblem, NewtonWriteConvergence, true);
 
 // Set the maximum time step
-SET_SCALAR_PROP(KuevetteProblem, MaxTimeStepSize, 60.);
+SET_SCALAR_PROP(KuevetteProblem, MaxTimeStepSize, 5.);
+
+// set newton relative tolerance
+SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
 
 }
 
@@ -230,10 +233,10 @@ public:
         // negative values for injection
         if (globalPos[0] < eps_)
         {
-            values[Indices::contiWEqIdx] = -0.002583;
-            values[Indices::contiAEqIdx] = -0.0000056;
+            values[Indices::contiWEqIdx] = -0.1435; // 0.3435 [mol/(s m)] in total
+            values[Indices::contiAEqIdx] = -0.2;
             values[Indices::contiCEqIdx] =  0.0;
-            values[Indices::energyEqIdx] = -6000.;
+            values[Indices::energyEqIdx] = -6929.;
         }
     }
 
@@ -282,50 +285,6 @@ public:
             return threePhases;
         }
         else return wgPhaseOnly;
-    }
-
-    /*!
-     * \brief Returns the maximum allowed time step size [s]
-     *
-     * By default this the time step size is unrestricted.
-     */
-    Scalar maxTimeStepSize() const
-    { return 10.; }
-
-    bool shouldWriteOutput() const
-    {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() == 100 ||
-            this->timeManager().timeStepIndex() == 200 ||
-            this->timeManager().timeStepIndex() == 300 ||
-            this->timeManager().timeStepIndex() == 400 ||
-            this->timeManager().timeStepIndex() == 500 ||
-            this->timeManager().timeStepIndex() == 600 ||
-            this->timeManager().timeStepIndex() == 700 ||
-            this->timeManager().timeStepIndex() == 800 ||
-            this->timeManager().timeStepIndex() == 900 ||
-            this->timeManager().timeStepIndex() == 1000 ||
-            this->timeManager().timeStepIndex() == 1100 ||
-            this->timeManager().timeStepIndex() == 1200 ||
-            this->timeManager().timeStepIndex() == 1300 ||
-            this->timeManager().timeStepIndex() == 1400 ||
-            this->timeManager().timeStepIndex() == 1500 ||
-            this->timeManager().timeStepIndex() == 1600 ||
-            this->timeManager().timeStepIndex() == 1700 ||
-            this->timeManager().timeStepIndex() == 1800 ||
-            this->timeManager().timeStepIndex() == 1900 ||
-            this->timeManager().timeStepIndex() == 2000 ||
-            this->timeManager().timeStepIndex() == 2100 ||
-            this->timeManager().timeStepIndex() == 2200 ||
-            this->timeManager().timeStepIndex() == 2300 ||
-            this->timeManager().timeStepIndex() == 2400 ||
-            this->timeManager().timeStepIndex() == 2500 ||
-            this->timeManager().timeStepIndex() == 2600 ||
-            this->timeManager().timeStepIndex() == 2700 ||
-            this->timeManager().timeStepIndex() == 2800 ||
-            this->timeManager().timeStepIndex() == 2900 ||
-            this->timeManager().willBeFinished();
     }
 
 
