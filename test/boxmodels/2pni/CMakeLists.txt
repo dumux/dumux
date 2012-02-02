@@ -1,9 +1,9 @@
-ADD_EXECUTABLE("test_2pni" test_2pni.cc)
-TARGET_LINK_LIBRARIES("test_2pni" ${DumuxLinkLibraries})
+add_executable("test_2pni" test_2pni.cc)
+target_link_libraries("test_2pni" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
-LINK_DIRECTORIES(${DumuxLinkDirectories})
-INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})
+link_directories(${DumuxLinkDirectories})
+include_directories(${DumuxIncludeDirectories})
 
 
 # make sure the grids are present in the build directory

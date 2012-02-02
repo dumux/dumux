@@ -1,9 +1,9 @@
-ADD_EXECUTABLE("test_1p2c" test_1p2c.cc)
-TARGET_LINK_LIBRARIES("test_1p2c" ${DumuxLinkLibraries})
+add_executable("test_1p2c" test_1p2c.cc)
+target_link_libraries("test_1p2c" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
-LINK_DIRECTORIES(${DumuxLinkDirectories})
-INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})
+link_directories(${DumuxLinkDirectories})
+include_directories(${DumuxIncludeDirectories})
 
 # make sure the grids are present in the build directory
 add_custom_command(TARGET "test_1p2c"

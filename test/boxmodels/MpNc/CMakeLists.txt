@@ -1,10 +1,10 @@
 # build target for the twophase-twocomponent test problem
-ADD_EXECUTABLE("test_MpNc" test_MpNc.cc)
-TARGET_LINK_LIBRARIES("test_MpNc" ${DumuxLinkLibraries})
+add_executable("test_MpNc" test_MpNc.cc)
+target_link_libraries("test_MpNc" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
-LINK_DIRECTORIES(${DumuxLinkDirectories})
-INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})
+link_directories(${DumuxLinkDirectories})
+include_directories(${DumuxIncludeDirectories})
 
 # make sure the grids are present in the build directory
 add_custom_command(TARGET "test_MpNc"
