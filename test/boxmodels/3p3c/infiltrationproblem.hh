@@ -54,8 +54,8 @@ SET_TYPE_PROP(InfiltrationProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(InfiltrationProblem, Problem, Dumux::InfiltrationProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationProblem, 
-              FluidSystem, 
+SET_TYPE_PROP(InfiltrationProblem,
+              FluidSystem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Enable gravity?

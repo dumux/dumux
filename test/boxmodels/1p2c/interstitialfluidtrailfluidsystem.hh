@@ -258,7 +258,7 @@ public:
                             int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
-        
+
         return 0.00069152; // [Pa*s]
     }
 
@@ -317,7 +317,7 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         assert(0 <= compIIdx && compIIdx < numComponents);
         assert(0 <= compJIdx && compJIdx < numComponents);
-        
+
         // 3.7378e-12
         return 8.8786695e-14; // in [m^2/s]
     }

@@ -261,7 +261,7 @@ public:
      */
     int phasePresence(int globalVertexIdx, bool oldSol) const
     {
-        return 
+        return
             oldSol
             ? staticVertexDat_[globalVertexIdx].oldPhasePresence
             : staticVertexDat_[globalVertexIdx].phasePresence;
@@ -292,7 +292,7 @@ public:
             saturation[phaseIdx] = writer.allocateManagedBuffer(numVertices);
             pressure[phaseIdx] = writer.allocateManagedBuffer(numVertices);
             density[phaseIdx] = writer.allocateManagedBuffer(numVertices);
-        }            
+        }
 
         ScalarField *phasePresence = writer.allocateManagedBuffer (numVertices);
         ScalarField *moleFraction[numPhases][numComponents];
@@ -340,11 +340,11 @@ public:
                         (*moleFraction[phaseIdx][compIdx])[globalIdx] =
                             volVars.fluidState().moleFraction(phaseIdx,
                                                               compIdx);
-                        
+
                         Valgrind::CheckDefined((*moleFraction[phaseIdx][compIdx])[globalIdx]);
                     }
                 }
-                
+
                 (*poro)[globalIdx] = volVars.porosity();
                 (*perm)[globalIdx] = volVars.permeability();
                 (*temperature)[globalIdx] = volVars.temperature();
@@ -856,7 +856,7 @@ protected:
             else if ((waterFlag == 1) && (NAPLFlag == 1))
             {
                 newPhasePresence = threePhases;
-                globalSol[globalIdx][switch1Idx] = 0.0001; 
+                globalSol[globalIdx][switch1Idx] = 0.0001;
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
             else if ((waterFlag == 0) && (NAPLFlag == 1))

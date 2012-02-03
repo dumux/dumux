@@ -102,11 +102,11 @@ public:
         dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
 
         // Second instance of a parameter cache.
-        // Could be avoided if diffusion coefficients also 
+        // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
-        
+
         diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                              paramCache,
                                                              phaseIdx,
@@ -117,7 +117,7 @@ public:
         Valgrind::CheckDefined(tortuosity_);
         Valgrind::CheckDefined(dispersivity_);
         Valgrind::CheckDefined(diffCoeff_);
-        
+
         // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
     }
@@ -143,7 +143,7 @@ public:
             Scalar M1 = FluidSystem::molarMass(comp1Idx);
             //meanMolarMass if x1_ is a massfraction
             Scalar meanMolarMass = M0*M1/(M1 + x1*(M0 - M1));
-            
+
             x1 *= meanMolarMass/M1;
         }
         fluidState.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/0, 1 - x1);
@@ -151,7 +151,7 @@ public:
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
-        
+
         Scalar value;
         value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
         fluidState.setDensity(/*phaseIdx=*/0, value);
@@ -265,7 +265,7 @@ protected:
                        int vertIdx,
                        bool isOldSol)
     { }
-    
+
     Scalar porosity_;    //!< Effective porosity within the control volume
     Scalar tortuosity_;
     Vector dispersivity_;

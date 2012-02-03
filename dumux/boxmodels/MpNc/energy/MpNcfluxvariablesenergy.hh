@@ -158,12 +158,12 @@ public:
 
          //        const Scalar lambdaDry = 0.583; // W / (K m) // works, orig
          //        const Scalar lambdaWet = 1.13; // W / (K m) // works, orig
-         
+
          Scalar lambdaSoilI = problem.spatialParameters().soilThermalConductivity(element, fvElemGeom, i);
          Scalar lambdaSoilJ = problem.spatialParameters().soilThermalConductivity(element, fvElemGeom, i);
          const Scalar lambdaDry = 0.5 * (lambdaSoilI + FluidSystem::thermalConductivity(fsI, paramCacheI, gPhaseIdx)); // W / (K m)
          const Scalar lambdaWet = 0.5 * (lambdaSoilJ + FluidSystem::thermalConductivity(fsJ, paramCacheJ, lPhaseIdx)) ; // W / (K m)
-         
+
          // the heat conductivity of the matrix. in general this is a
          // tensorial value, but we assume isotropic heat conductivity.
          // This is the Sommerton approach with lambdaDry =
@@ -171,7 +171,7 @@ public:
          // numerische Modellierung nichtisothermer Mehrphasenprozesse
          // in NAPL-kontaminierten poroesen Medien", PhD Thesis, University of
          // Stuttgart, Institute of Hydraulic Engineering, p. 57
-         
+
          Scalar result;
          if (Sl < 0.1) {
              // regularization
@@ -182,7 +182,7 @@ public:
          }
          else
              result = lambdaDry + std::sqrt(Sl)*(lambdaWet - lambdaDry);
-         
+
          return result;
     }
 

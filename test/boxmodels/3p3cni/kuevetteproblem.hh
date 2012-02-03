@@ -64,7 +64,7 @@ SET_PROP(KuevetteProblem, Problem)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(KuevetteProblem, 
+SET_TYPE_PROP(KuevetteProblem,
               FluidSystem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
@@ -164,7 +164,6 @@ public:
     {
         values = 0;
     }
-
 
     // \}
 

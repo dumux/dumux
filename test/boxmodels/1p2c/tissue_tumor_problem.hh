@@ -72,7 +72,7 @@ SET_PROP(TissueTumorProblem, Problem)
 SET_PROP(TissueTumorProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:    
+public:
     typedef Dumux::FluidSystems::InterstitialFluidTrail<Scalar> type;
 };
 

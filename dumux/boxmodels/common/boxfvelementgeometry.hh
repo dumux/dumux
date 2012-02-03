@@ -366,7 +366,7 @@ class BoxFVElementGeometry
 
     Scalar prismVolume (const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3, const GlobalPosition& p4, const GlobalPosition& p5)
     {
-        Vector a(p4); 
+        Vector a(p4);
         for (int k = 0; k < dimWorld; ++k)
             a[k] -= p0[k];
         Vector b(p1);
@@ -385,7 +385,7 @@ class BoxFVElementGeometry
         crossProduct(n, a, b);
         n += m;
 
-        a = p5; 
+        a = p5;
         for (int k = 0; k < dimWorld; ++k)
             a[k] -= p0[k];
 
@@ -402,10 +402,10 @@ class BoxFVElementGeometry
 
     void normalOfQuadrilateral3D(Vector &normal, const GlobalPosition& p0, const GlobalPosition& p1, const GlobalPosition& p2, const GlobalPosition& p3)
     {
-        Vector a(p2); 
+        Vector a(p2);
         for (int k = 0; k < dimWorld; ++k)
             a[k] -= p0[k];
-        Vector b(p3); 
+        Vector b(p3);
         for (int k = 0; k < dimWorld; ++k)
             b[k] -= p1[k];
 

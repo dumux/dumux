@@ -181,7 +181,7 @@ template <class T>
 class ClassNameHelper_
 { public:
     static std::string name()
-    { 
+    {
         std::string className = typeid( T ).name();
 #if defined(__GNUC__) && ! defined(__clang__)
         int status;

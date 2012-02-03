@@ -173,7 +173,7 @@ void print(std::ostream &os = std::cout)
     typename Dune::ParameterTree::KeyVector::const_iterator it = ct.begin();
     for (; it != ct.end(); ++it) {
         os << *it << " = \"" << ct.get(*it, "") << "\""
-            // << " # Taken From Property: " << 
+            // << " # Taken From Property: " <<
            << "\n";
     };
 */
@@ -295,7 +295,7 @@ private:
 
     template <class ParamType, class PropTag>
     static const ParamType &retrieve_(const char *propertyName,
-                                      const char *groupOrParamName, 
+                                      const char *groupOrParamName,
                                       const char *paramNameOrNil = 0)
     {
         const char *paramName, *groupName;

@@ -71,7 +71,7 @@ inline bool Running()
     return false;
 #endif
 }
-    
+
 
 /*!
  * \ingroup Valgrind

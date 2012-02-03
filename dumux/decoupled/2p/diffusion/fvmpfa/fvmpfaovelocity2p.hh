@@ -34,7 +34,7 @@
 
 namespace Dumux
 {
-template<class TypeTag> 
+template<class TypeTag>
 class FVMPFAOPressure2P;
 
 /*! \ingroup FV2p

@@ -63,7 +63,7 @@ SET_PROP(ColumnProblem, Problem)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(ColumnProblem, 
+SET_TYPE_PROP(ColumnProblem,
               FluidSystem,
               Dumux::FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 

@@ -93,7 +93,7 @@ protected:
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
-public:
+ public:
     /*!
      * \brief Constructor. Sets the upwind weight.
      */
@@ -126,7 +126,7 @@ public:
         // is required to compute the derivative of the storage term
         // using the implicit Euler method.
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
-                : this->curVolVars_();
+            : this->curVolVars_();
         const VolumeVariables &vertexData = elemVolVars[scvIdx];
 
         result = 0.0;
@@ -151,11 +151,11 @@ public:
     void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {
         const FluxVariables fluxVars(this->problem_(),
-                      this->elem_(),
-                      this->fvElemGeom_(),
-                      faceIdx,
-                      this->curVolVars_(),
-                      onBoundary);
+                                     this->elem_(),
+                                     this->fvElemGeom_(),
+                                     faceIdx,
+                                     this->curVolVars_(),
+                                     onBoundary);
         flux = 0.0;
 
         asImp_()->computeAdvectiveFlux(flux, fluxVars);
@@ -190,7 +190,7 @@ public:
             massBalanceResidual *= up.density();
         else
             massBalanceResidual *= massUpwindWeight_ * up.density() +
-                    (1.-massUpwindWeight_) * dn.density();
+                (1.-massUpwindWeight_) * dn.density();
 
         if (!fluxVars.onBoundary())
         {
@@ -198,12 +198,12 @@ public:
             // with 0.5*alpha*(V_i + V_j)*grad P
             FieldVector stabilizationTerm = fluxVars.pressureGradAtIP();
             stabilizationTerm *= stabilizationAlpha_*
-                    fluxVars.averageSCVVolume();
+                fluxVars.averageSCVVolume();
             massBalanceResidual += stabilizationTerm;
         }
 
         flux[massBalanceIdx] +=
-                massBalanceResidual*fluxVars.face().normal;
+            massBalanceResidual*fluxVars.face().normal;
 
         // momentum balance - pressure is evaluated as volume term
         // at the center of the SCV in computeSource
@@ -214,7 +214,7 @@ public:
         Dune::FieldMatrix<Scalar, dim, dim> symmVelGrad = fluxVars.velocityGradAtIP();
         for (int i=0; i<dim; ++i)
             for (int j=0; j<dim; ++j)
-                    symmVelGrad[i][j] += fluxVars.velocityGradAtIP()[j][i];
+                symmVelGrad[i][j] += fluxVars.velocityGradAtIP()[j][i];
 
         FieldVector velGradComp(0.);
         for (int velIdx = 0; velIdx < dim; ++velIdx)
@@ -222,24 +222,24 @@ public:
             velGradComp = symmVelGrad[velIdx];
 
             // TODO: dilatation term has to be accounted for in outflow, coupling, neumann
-//            velGradComp[velIdx] += 2./3*fluxVars.velocityDivAtIP;
+            //            velGradComp[velIdx] += 2./3*fluxVars.velocityDivAtIP;
 
             if (massUpwindWeight_ == 1.0) // fully upwind
                 velGradComp *= up.viscosity();
             else
                 velGradComp *= massUpwindWeight_ * up.viscosity() +
-                        (1.0 - massUpwindWeight_) * dn.viscosity();
+                    (1.0 - massUpwindWeight_) * dn.viscosity();
 
             flux[momentumXIdx + velIdx] -=
-                    velGradComp*fluxVars.face().normal;
+                velGradComp*fluxVars.face().normal;
 
-// gravity is accounted for in computeSource; alternatively:
-//            Scalar gravityTerm = fluxVars.densityAtIP *
-//                    this->problem_().gravity()[dim-1] *
-//                    fluxVars.face().ipGlobal[dim-1]*
-//                    fluxVars.face().normal[velIdx];
-//            flux[momentumXIdx + velIdx] -=
-//                    gravityTerm;
+            // gravity is accounted for in computeSource; alternatively:
+            //            Scalar gravityTerm = fluxVars.densityAtIP *
+            //                    this->problem_().gravity()[dim-1] *
+            //                    fluxVars.face().ipGlobal[dim-1]*
+            //                    fluxVars.face().normal[velIdx];
+            //            flux[momentumXIdx + velIdx] -=
+            //                    gravityTerm;
 
         }
     }
@@ -281,7 +281,7 @@ public:
         // ATTENTION: The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
         const Scalar alphaH2 = stabilizationAlpha_*
-                this->fvElemGeom_().subContVol[localVertexIdx].volume;
+            this->fvElemGeom_().subContVol[localVertexIdx].volume;
         q[massBalanceIdx] *= alphaH2; // stabilization of the source term
 
         // pressure gradient at the center of the SCV,
@@ -307,7 +307,7 @@ public:
             q[momentumXIdx + dimIdx] -= pressureGradAtSCVCenter[dimIdx];
             q[momentumXIdx + dimIdx] += vertexData.density()*this->problem_().gravity()[dimIdx];
         }
-     }
+    }
 
     // the stokes model needs a modified treatment of the BCs
     void evalBoundary_()
@@ -347,7 +347,7 @@ public:
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
                     if (refElem.subEntity(faceIdx, 1, faceVertIdx, dim)
-                            != vertexIdx)
+                        != vertexIdx)
                         continue;
 
                     const int boundaryFaceIdx = this->fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
@@ -366,7 +366,7 @@ public:
                     {
                         FieldVector muGradVelNormal(0.);
                         const FieldVector &boundaryFaceNormal =
-                                boundaryVars.face().normal;
+                            boundaryVars.face().normal;
 
                         boundaryVars.velocityGradAtIP().umv(boundaryFaceNormal, muGradVelNormal);
                         muGradVelNormal *= boundaryVars.viscosityAtIP();
@@ -399,7 +399,7 @@ public:
                 if (momentumBalanceDirichlet_(bcTypes))
                     replaceMassbalanceResidual_(momentumResidual, averagedNormal, vertexIdx);
                 else // de-stabilize (remove alpha*grad p - alpha div f
-                    // from computeFlux on the boundary)
+                     // from computeFlux on the boundary)
                     removeStabilizationAtBoundary_(vertexIdx);
             }
             if (numberOfOuterFaces == 2)
@@ -440,8 +440,8 @@ protected:
                 FieldVector pressureCorrection(boundaryVars.face().normal);
                 pressureCorrection *= this->curVolVars_(scvIdx).pressure();
                 for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; momentumIdx++)
-                	if(bcTypes.isNeumann(momentumIdx))
-                   		this->residual_[scvIdx][momentumIdx] += pressureCorrection[momentumIdx];
+                    if(bcTypes.isNeumann(momentumIdx))
+                        this->residual_[scvIdx][momentumIdx] += pressureCorrection[momentumIdx];
 
                 // beta-stabilization at the boundary
                 // in case of neumann conditions for the momentum equation;
@@ -456,9 +456,9 @@ protected:
                 tangentialVelGrad *= boundaryVars.viscosityAtIP();
 
                 this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5*
-                                                    this->curVolVars_(scvIdx).pressure();
+                    this->curVolVars_(scvIdx).pressure();
                 this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5*
-                                                    (tangentialVelGrad*tangent);
+                    (tangentialVelGrad*tangent);
 
                 for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; momentumIdx++)
                     this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5
@@ -511,8 +511,8 @@ protected:
                 boundaryVars.velocityGradAtIP().mv(tangent, tangentialVelGrad);
 
                 this->residual_[scvIdx][massBalanceIdx] -= 0.5*stabilizationBeta_
-                                                        * boundaryVars.viscosityAtIP()
-                                                        * (tangentialVelGrad*tangent);
+                    * boundaryVars.viscosityAtIP()
+                    * (tangentialVelGrad*tangent);
             }
         }
     }
@@ -535,9 +535,9 @@ protected:
                 continue;
 
             const Scalar alphaH2 = stabilizationAlpha_*
-                    fluxVars.averageSCVVolume();
+                fluxVars.averageSCVVolume();
             Scalar stabilizationTerm = fluxVars.pressureGradAtIP() *
-                  this->fvElemGeom_().subContVolFace[faceIdx].normal;
+                this->fvElemGeom_().subContVolFace[faceIdx].normal;
 
             stabilizationTerm *= alphaH2;
 
@@ -555,7 +555,7 @@ protected:
                                 vertexIdx);
         const Scalar alphaH2 = stabilizationAlpha_*this->fvElemGeom_().subContVol[vertexIdx].volume;
         this->residual_[vertexIdx][massBalanceIdx] += alphaH2*q[massBalanceIdx]*
-                                              this->fvElemGeom_().subContVol[vertexIdx].volume;
+            this->fvElemGeom_().subContVol[vertexIdx].volume;
     }
 
     void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int vertexIdx)
@@ -565,17 +565,17 @@ protected:
         {
             if (vertexIdx == 0 || vertexIdx == 3)
                 this->residual_[vertexIdx][massBalanceIdx] =
-                        this->curPrimaryVars_(0)[massBalanceIdx]-this->curPrimaryVars_(3)[massBalanceIdx];
+                    this->curPrimaryVars_(0)[massBalanceIdx]-this->curPrimaryVars_(3)[massBalanceIdx];
             if (vertexIdx == 1 || vertexIdx == 2)
                 this->residual_[vertexIdx][massBalanceIdx] =
-                        this->curPrimaryVars_(1)[massBalanceIdx]-this->curPrimaryVars_(2)[massBalanceIdx];
+                    this->curPrimaryVars_(1)[massBalanceIdx]-this->curPrimaryVars_(2)[massBalanceIdx];
         }
         else
         {
             if (!bcTypes.isDirichlet(massBalanceIdx)) // do nothing in case of dirichlet
                 this->residual_[vertexIdx][massBalanceIdx] =
-                        this->curPrimaryVars_(0)[massBalanceIdx]+this->curPrimaryVars_(3)[massBalanceIdx]-
-                        this->curPrimaryVars_(1)[massBalanceIdx]-this->curPrimaryVars_(2)[massBalanceIdx];
+                    this->curPrimaryVars_(0)[massBalanceIdx]+this->curPrimaryVars_(3)[massBalanceIdx]-
+                    this->curPrimaryVars_(1)[massBalanceIdx]-this->curPrimaryVars_(2)[massBalanceIdx];
         }
     }
 

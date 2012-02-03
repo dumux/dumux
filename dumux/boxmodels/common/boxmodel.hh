@@ -253,8 +253,8 @@ public:
             VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
                 sumHandle(dest, vertexMapper());
             gridView_().communicate(sumHandle,
-                                   Dune::InteriorBorder_InteriorBorder_Interface,
-                                   Dune::ForwardCommunication);
+                                    Dune::InteriorBorder_InteriorBorder_Interface,
+                                    Dune::ForwardCommunication);
         }
 
         return std::sqrt(result2);
@@ -742,8 +742,8 @@ public:
                                    int scvIdx,
                                    FluidState& fluidState)
     {
-      VolumeVariables::completeFluidState(primaryVariables, problem, element, 
-					  elementGeometry, scvIdx, fluidState);
+        VolumeVariables::completeFluidState(primaryVariables, problem, element,
+                                            elementGeometry, scvIdx, fluidState);
     }
 protected:
     /*!
@@ -827,14 +827,14 @@ protected:
                 Dune::BlockVector<Dune::FieldVector<Scalar, 1> >,
                 VertexMapper> sumVolumeHandle(boxVolume_, vertexMapper());
             gridView_().communicate(sumVolumeHandle,
-                                   Dune::InteriorBorder_InteriorBorder_Interface,
-                                   Dune::ForwardCommunication);
+                                    Dune::InteriorBorder_InteriorBorder_Interface,
+                                    Dune::ForwardCommunication);
 
             VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
                 sumPVHandle(uCur_, vertexMapper());
             gridView_().communicate(sumPVHandle,
-                                   Dune::InteriorBorder_InteriorBorder_Interface,
-                                   Dune::ForwardCommunication);
+                                    Dune::InteriorBorder_InteriorBorder_Interface,
+                                    Dune::ForwardCommunication);
         }
 
         // divide all primary variables by the volume of their boxes

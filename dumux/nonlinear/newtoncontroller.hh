@@ -473,7 +473,7 @@ public:
                 uCurrentIter[i] = uLastIter[i];
                 uCurrentIter[i] -= deltaU[i];
             }
-            
+
             if (enableAbsoluteCriterion_)
             {
                 SolutionVector tmp(uLastIter);

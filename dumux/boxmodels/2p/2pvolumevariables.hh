@@ -98,7 +98,7 @@ public:
                            scvIdx,
                            isOldSol);
 
-	completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
 
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
@@ -243,10 +243,10 @@ public:
 
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx)
+                               const Problem& problem,
+                               const Element &element,
+                               const FVElementGeometry &elemGeom,
+                               int scvIdx)
     {
         return problem.boxTemperature(element, elemGeom, scvIdx);
     }

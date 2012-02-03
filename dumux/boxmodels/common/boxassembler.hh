@@ -629,7 +629,7 @@ private:
             // If partial reassembly of the jacobian is not enabled,
             // we can just reset everything!
             (*matrix_) = 0;
-          
+
             // reset the parts needed for Jacobian recycling
             if (enableJacobianRecycling_()) {
                 int numVertices = matrix_->N();
@@ -647,7 +647,7 @@ private:
             if (vertexColor_[rowIdx] == Green)
                 continue; // the equations for this control volume are
                           // already below the treshold
-            
+
             // here we have yellow or red vertices...
 
             // reset the parts needed for Jacobian recycling
@@ -727,7 +727,7 @@ private:
             int globalElemIdx = model_().elementMapper().map(elem);
             if (elementColor_[globalElemIdx] == Green) {
                 ++greenElems_;
-                
+
                 assembleGreenElement_(elem);
                 return;
             }
@@ -753,7 +753,7 @@ private:
                 if (enableJacobianRecycling_())
                     storageJacobian_[globI] +=
                         model_().localJacobian().storageJacobian(i);
-                
+
                 // update the jacobian matrix
                 for (int j=0; j < numVertices; ++ j) {
                     int globJ = vertexMapper_().map(elem, j, dim);

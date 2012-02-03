@@ -157,7 +157,7 @@ public:
     /*!
      * \brief Returns the list of indices which intersect the process
      *        border and are in the interior of some remote process.
-      */
+     */
     const BorderList &domesticBorderList() const
     { return domesticBorderList_; }
 
@@ -254,7 +254,7 @@ public:
             ForeignOverlapWithPeer::const_iterator rowIt = it->second.begin();
             ForeignOverlapWithPeer::const_iterator rowEndIt = it->second.end();
             for (; rowIt != rowEndIt; ++rowIt) {
-	        std::cout << std::tr1::get<0>(*rowIt) << "(" << std::tr1::get<1>(*rowIt) << ") ";
+                std::cout << std::tr1::get<0>(*rowIt) << "(" << std::tr1::get<1>(*rowIt) << ") ";
             };
             std::cout << "\n";
         }

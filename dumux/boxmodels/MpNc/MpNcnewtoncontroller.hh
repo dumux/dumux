@@ -218,13 +218,13 @@ public:
                 uCurrentIter[i] = uLastIter[i];
                 uCurrentIter[i] -= deltaU[i];
             }
-            
+
             if (this->numSteps_ < 2 && enableChop_) {
                 // put crash barriers along the update path at the
                 // beginning...
                 NewtonChop::chop(uCurrentIter, uLastIter);
             }
-            
+
             if (this->enableAbsoluteCriterion_)
             {
                 SolutionVector tmp(uLastIter);

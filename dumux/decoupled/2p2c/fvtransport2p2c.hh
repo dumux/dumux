@@ -759,14 +759,14 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 case pw:
                 {
                     pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
-                    pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx] 
-                    																	+ pcBound;
+                    pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx]
+                                                                                        + pcBound;
                     break;
                 }
                 case pn:
                 {
                     pressBound[wPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx]
-                    																	 - pcBound;
+                                                                                         - pcBound;
                     pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
                     break;
                 }

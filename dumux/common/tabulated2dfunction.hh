@@ -21,7 +21,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Implements tabulation for a two-dimensional function. 
+ * \brief Implements tabulation for a two-dimensional function.
  */
 #ifndef DUMUX_TABULATED_2D_FUNCTION_HH
 #define DUMUX_TABULATED_2D_FUNCTION_HH
@@ -59,7 +59,7 @@ public:
      */
     Tabulated2DFunction(Scalar xMin, Scalar xMax, int m,
                         Scalar yMin, Scalar yMax, int n)
-    { 
+    {
         resize(xMin, xMax, m, yMin, yMax, n);
     };
 
@@ -76,7 +76,7 @@ public:
 
         m_ = m;
         n_ = n;
-        
+
         xMin_ = xMin;
         xMax_ = xMax;
 
@@ -168,10 +168,10 @@ public:
 
         int i = std::max(0, std::min(m_, static_cast<int>(alpha)));
         int j = std::max(0, std::min(n_, static_cast<int>(beta)));
-        
+
         alpha -= i;
         beta -= j;
-      
+
         // bi-linear interpolation
         Scalar s1 = getSamplePoint(i, j)*(1.0 - alpha) + getSamplePoint(i + 1, j)*alpha;
         Scalar s2 = getSamplePoint(i, j + 1)*(1.0 - alpha) + getSamplePoint(i + 1, j + 1)*alpha;
@@ -205,7 +205,7 @@ private:
     // the range of the tabulation on the y axis
     Scalar yMin_;
     Scalar yMax_;
-    
+
 };
 
 }

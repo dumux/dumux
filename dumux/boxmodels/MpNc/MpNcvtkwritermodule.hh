@@ -247,7 +247,7 @@ protected:
         char name[512];
         for (int i= 0; i < numPhases; ++i) {
             for (int j = 0; j < numComponents; ++j) {
-                snprintf(name, 512, pattern, 
+                snprintf(name, 512, pattern,
                          FluidSystem::phaseName(i),
                          FluidSystem::componentName(j));
 

@@ -263,7 +263,7 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
             oss << "Command line argument " << i << " (='" << argv[i] << "') is invalid.";
             return oss.str();
         }
-        
+
         std::string paramName, paramValue;
 
         // read a --my-opt=abc option. This gets transformed
@@ -325,13 +325,13 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
         else {
             // read a -myOpt abc option
             paramName = argv[i] + 1;
-            
+
             if (argc == i + 1 || argv[i+1][0] == '-') {
                 std::ostringstream oss;
                 oss << "No argument given for parameter '" << argv[i] << "'!";
                 return oss.str();
             }
-            
+
             paramValue = argv[i+1];
             ++i; // In the case of '-myOpt abc' each pair counts as two arguments
         }
@@ -356,7 +356,7 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
  */
 template <class TypeTag>
 int startWithParameters_(int argc,
-                         char **argv, 
+                         char **argv,
                          void (*usage)(const char *, const std::string &))
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -364,10 +364,10 @@ int startWithParameters_(int argc,
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator; // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/common/dgfgridcreator.hh)
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-        
+
     // initialize MPI, finalize is done automatically on exit
     const Dune::MPIHelper &mpiHelper = Dune::MPIHelper::instance(argc, argv);
-    
+
     ////////////////////////////////////////////////////////////
     // parse the command line arguments
     ////////////////////////////////////////////////////////////
@@ -397,7 +397,7 @@ int startWithParameters_(int argc,
             return 0;
         }
     }
-    
+
     // fill the parameter tree with the options from the command line
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
     std::string s = readOptions_(argc, argv, ParameterTree::tree());
@@ -428,7 +428,7 @@ int startWithParameters_(int argc,
         }
         parameterFile.close();
 
-        Dune::ParameterTreeParser::readINITree(inputFileName, 
+        Dune::ParameterTreeParser::readINITree(inputFileName,
                                                ParameterTree::tree(),
                                                /*overwrite=*/false);
     }
@@ -440,7 +440,7 @@ int startWithParameters_(int argc,
     if (printProps && mpiHelper.rank() == 0) {
         Dumux::Properties::print<TypeTag>();
     }
-    
+
     // deal with the restart stuff
     bool restart = false;
     Scalar restartTime = 0;
@@ -448,16 +448,16 @@ int startWithParameters_(int argc,
         restart = true;
         restartTime = GET_RUNTIME_PARAM(TypeTag, Scalar, restart);
     }
-    
+
     // read the PrintParams parameter
     bool printParams = true;
     if (ParameterTree::tree().hasKey("PrintParameters"))
         printParams = GET_RUNTIME_PARAM(TypeTag, bool, PrintParameters);
-    
+
     // try to create a grid (from the given grid file)
     try { GridCreator::makeGrid(); }
     catch (...) { usage(argv[1], "Creation of the grid failed!"); throw; }
-    
+
     // read the initial time step and the end time
     double tEnd;
     double dt;
@@ -512,7 +512,7 @@ bool inDebugger()
  * \param usage Callback function for printing the usage message
  */
 template <class TypeTag>
-int startWithParameters(int argc, 
+int startWithParameters(int argc,
                         char **argv,
                         void (*usage)(const char *, const std::string &))
 {

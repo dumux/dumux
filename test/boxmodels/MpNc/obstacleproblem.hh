@@ -364,15 +364,15 @@ private:
 
         // set the fluid temperatures
         fs.setTemperature(this->temperatureAtPos(globalPos));
-            
+
         if (onInlet_(globalPos)) {
             // only liquid on inlet
             refPhaseIdx = lPhaseIdx;
             otherPhaseIdx = gPhaseIdx;
-            
+
             // set liquid saturation
             fs.setSaturation(lPhaseIdx, 1.0);
-            
+
             // set pressure of the liquid phase
             fs.setPressure(lPhaseIdx, 2e5);
 
@@ -387,7 +387,7 @@ private:
 
             // set gas saturation
             fs.setSaturation(gPhaseIdx, 1.0);
-            
+
             // set pressure of the gas phase
             fs.setPressure(gPhaseIdx, 1e5);
 
@@ -395,26 +395,26 @@ private:
             fs.setMoleFraction(gPhaseIdx, N2Idx, 0.99);
             fs.setMoleFraction(gPhaseIdx, H2OIdx, 0.01);
         };
-        
+
         // set the other saturation
         fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
         // calulate the capillary pressure
-        const MaterialLawParams &matParams = 
+        const MaterialLawParams &matParams =
             this->spatialParameters().materialLawParamsAtPos(globalPos);
         PhaseVector pC;
         MaterialLaw::capillaryPressures(pC, matParams, fs);
-        fs.setPressure(otherPhaseIdx, 
+        fs.setPressure(otherPhaseIdx,
                        fs.pressure(refPhaseIdx)
                        + (pC[otherPhaseIdx] - pC[refPhaseIdx]));
-        
+
         // make the fluid state consistent with local thermodynamic
         // equilibrium
         typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
 
         typename FluidSystem::ParameterCache paramCache;
-        ComputeFromReferencePhase::solve(fs, 
-                                         paramCache, 
+        ComputeFromReferencePhase::solve(fs,
+                                         paramCache,
                                          refPhaseIdx,
                                          /*setViscosity=*/false,
                                          /*setEnthalpy=*/false);

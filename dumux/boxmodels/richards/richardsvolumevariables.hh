@@ -101,22 +101,23 @@ public:
                            scvIdx,
                            isOldSol);
 
-	completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
 
         //////////
         // specify the other parameters
         //////////
         const MaterialLawParams &matParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
-        relativePermeabilityWetting_ = MaterialLaw::krw(matParams, 
-							fluidState_.saturation(wPhaseIdx));
+        relativePermeabilityWetting_ =
+            MaterialLaw::krw(matParams,
+                             fluidState_.saturation(wPhaseIdx));
 
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
 
         // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
     }
-    
+
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
@@ -138,8 +139,7 @@ public:
         fluidState.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
 
         // saturations
-        Scalar Sw = MaterialLaw::Sw(matParams, fluidState.pressure(nPhaseIdx)
-				              - fluidState.pressure(wPhaseIdx));
+        Scalar Sw = MaterialLaw::Sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
         fluidState.setSaturation(wPhaseIdx, Sw);
         fluidState.setSaturation(nPhaseIdx, 1 - Sw);
 
@@ -150,7 +150,7 @@ public:
         fluidState.setDensity(nPhaseIdx, 1e-10);
 
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
-        fluidState.setViscosity(nPhaseIdx, 1e-10);        
+        fluidState.setViscosity(nPhaseIdx, 1e-10);
     }
 
     /*!
@@ -227,9 +227,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar mobility(int phaseIdx) const
-    { 
-        return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx);
-    }
+    { return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Returns relative permeability [-] of a given phase within
@@ -238,12 +236,12 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar relativePermeability(int phaseIdx) const
-    { 
+    {
         if (phaseIdx == wPhaseIdx)
             return relativePermeabilityWetting_;
         return 1;
     }
- 
+
     /*!
      * \brief Returns the effective capillary pressure \f$\mathrm{[Pa]}\f$ within the
      *        control volume.

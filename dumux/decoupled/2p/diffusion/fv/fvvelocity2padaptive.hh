@@ -116,7 +116,7 @@ public:
     FVVelocity2PAdaptive(Problem& problem)
     : ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
-    	// todo: kompatibilität prüfen
+        // todo: kompatibilität prüfen
         if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
         {
             DUNE_THROW(Dune::NotImplemented, "Total velocity - global pressure - model cannot be used with compressible fluids!");

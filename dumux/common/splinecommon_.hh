@@ -640,7 +640,7 @@ protected:
     {
         assert(x_(i) > x_(i-1)); // the sampling points must be given
                                  // in ascending order
-        return x_(i) - x_(i - 1); 
+        return x_(i) - x_(i - 1);
     }
 
     /*!

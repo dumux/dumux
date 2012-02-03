@@ -135,15 +135,15 @@ public:
                            isOldSol);
 
         completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_, isOldSol);
-        
+
         /////////////
         // calculate the remaining quantities
         /////////////
         const MaterialLawParams &materialParams =
             problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
-	
+
         // Second instance of a parameter cache.
-        // Could be avoided if diffusion coefficients also 
+        // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState_);
@@ -157,7 +157,7 @@ public:
                 kr = MaterialLaw::krn(materialParams, saturation(lPhaseIdx));
             relativePermeability_[phaseIdx] = kr;
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
-            
+
             // binary diffusion coefficents
             diffCoeff_[phaseIdx] =
                 FluidSystem::binaryDiffusionCoefficient(fluidState_,
@@ -173,7 +173,7 @@ public:
                                                          elemGeom,
                                                          scvIdx);
         Valgrind::CheckDefined(porosity_);
-        
+
         // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
     }
@@ -183,8 +183,8 @@ public:
                                    const Element& element,
                                    const FVElementGeometry& elemGeom,
                                    int scvIdx,
-                                   FluidState& fluidState, 
-				   bool isOldSol = false)
+                                   FluidState& fluidState,
+                                   bool isOldSol = false)
     {
         Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 elemGeom, scvIdx);
@@ -192,7 +192,7 @@ public:
 
         int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
         int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
-        
+
         /////////////
         // set the saturations
         /////////////
@@ -212,7 +212,7 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         fluidState.setSaturation(lPhaseIdx, 1 - Sg);
         fluidState.setSaturation(gPhaseIdx, Sg);
-        
+
         /////////////
         // set the pressures of the fluid phases
         /////////////
@@ -247,7 +247,7 @@ public:
                                                  paramCache,
                                                  /*setViscosity=*/true,
                                                  /*setInternalEnergy=*/false);
-            
+
         }
         else if (phasePresence == gPhaseOnly) {
             // only the gas phase is present, i.e. gas phase
@@ -263,15 +263,15 @@ public:
             Scalar M2 = FluidSystem::molarMass(gCompIdx);
             Scalar X2 = massFractionG[gCompIdx];
             Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
-            
+
             // convert mass to mole fractions and set the fluid state
             fluidState.setMoleFraction(gPhaseIdx, lCompIdx, massFractionG[lCompIdx]*avgMolarMass/M1);
             fluidState.setMoleFraction(gPhaseIdx, gCompIdx, massFractionG[gCompIdx]*avgMolarMass/M2);
-            
+
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState, 
+            ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
                                              gPhaseIdx,
                                              /*setViscosity=*/true,
@@ -291,15 +291,15 @@ public:
             Scalar M2 = FluidSystem::molarMass(gCompIdx);
             Scalar X2 = massFractionL[gCompIdx];
             Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
-            
+
             // convert mass to mole fractions and set the fluid state
             fluidState.setMoleFraction(lPhaseIdx, lCompIdx, massFractionL[lCompIdx]*avgMolarMass/M1);
             fluidState.setMoleFraction(lPhaseIdx, gCompIdx, massFractionL[gCompIdx]*avgMolarMass/M2);
-            
+
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState, 
+            ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
                                              lPhaseIdx,
                                              /*setViscosity=*/true,
@@ -447,7 +447,7 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    
+
 };
 
 } // end namepace

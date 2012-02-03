@@ -976,7 +976,7 @@ inline bool getDiagnostic_(const std::string &typeTagName,
 
     if (key) {
         std::ostringstream oss;
-        oss << indent 
+        oss << indent
             << key->propertyKind() << " "
             << key->propertyName() << " defined on '"
             << canonicalTypeTagNameToName_(key->effTypeTagName()) << "' at "
@@ -1021,7 +1021,7 @@ const std::string getDiagnostic(std::string propTagName)
             const PropertyRegistryKey &key = it->second;
             if (key.propertyName() != propTagName)
                 continue; // property already printed
-            
+
             std::ostringstream oss;
             oss << "fallback " << key.propertyName()
                 << " defined at " << key.fileDefined()

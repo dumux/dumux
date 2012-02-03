@@ -215,7 +215,7 @@ public:
         assert(FluidSystem::isIdealGas(gPhaseIdx));
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             assert(FluidSystem::isIdealMixture(phaseIdx));
-            
+
             for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
                 Scalar phi = FluidSystem::fugacityCoefficient(fluidState_, paramCache, phaseIdx, compIdx);
                 fluidState_.setFugacityCoefficient(phaseIdx, compIdx, phi);
@@ -235,7 +235,7 @@ public:
         }
         else if (phasePresence == wPhaseOnly) {
             // only the water phase is present, water phase composition is
-            // stored explicitly.          
+            // stored explicitly.
 
             // extract mole fractions in the water phase
             Scalar xwa = primaryVars[switch1Idx];
@@ -250,7 +250,7 @@ public:
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState_, 
+            ComputeFromReferencePhase::solve(fluidState_,
                                              paramCache,
                                              wPhaseIdx,
                                              /*setViscosity=*/true,
@@ -279,7 +279,7 @@ public:
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
-            ComputeFromReferencePhase::solve(fluidState_, 
+            ComputeFromReferencePhase::solve(fluidState_,
                                              paramCache,
                                              gPhaseIdx,
                                              /*setViscosity=*/true,
@@ -289,7 +289,7 @@ public:
             // only water and NAPL phases are present
             Scalar pPartialC = fluidState_.fugacityCoefficient(nPhaseIdx,cCompIdx)*pn_;
             Scalar henryC = fluidState_.fugacityCoefficient(wPhaseIdx,cCompIdx)*pw_;
-            
+
             Scalar xwa = primaryVars[switch1Idx];
             Scalar xwc = pPartialC/henryC;
             Scalar xww = 1.-xwa-xwc;
@@ -358,7 +358,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // Mobilities
             const Scalar mu =
-                FluidSystem::viscosity(fluidState_, 
+                FluidSystem::viscosity(fluidState_,
                                        paramCache,
                                        phaseIdx);
             fluidState_.setViscosity(phaseIdx,mu);
@@ -382,7 +382,7 @@ public:
 
         // diffusivity coefficents
         diffusionCoefficient_[gPhaseIdx][wCompIdx] =
-            FluidSystem::diffusionCoefficient(fluidState_, 
+            FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               gPhaseIdx,
                                               wCompIdx);

@@ -116,7 +116,7 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
 
         H2OIdx = FluidSystem::H2OIdx,
         N2Idx = FluidSystem::N2Idx,
-        
+
         conti0EqIdx = Indices::conti0EqIdx,
         contiN2EqIdx = conti0EqIdx + N2Idx
     };
@@ -363,7 +363,7 @@ private:
             FluidSystem::molarMass(N2Idx)*moleFracLiquidN2;
 
         Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(N2Idx)/meanM;
-        
+
         values[Indices::pressureIdx] = pl;
         values[Indices::switchIdx] = massFracLiquidN2;
     }

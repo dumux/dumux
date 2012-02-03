@@ -93,7 +93,7 @@ protected:
     // this method gets called by the parent class. since this method
     // is protected, we are friends with our parent..
     friend class TwoPTwoCVolumeVariables<TypeTag>;
-    
+
     static Scalar temperature_(const PrimaryVariables &priVars,
                             const Problem& problem,
                             const Element &element,

@@ -75,7 +75,7 @@ public:
     {
         return gridPtr_;
     };
-    
+
 private:
     static GridPointer gridPtr_;
 };

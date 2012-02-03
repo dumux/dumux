@@ -385,7 +385,7 @@ public:
             ++timeStepIdx_;
 
             if (verbose_) {
-                std::cout 
+                std::cout
                     << "Time step "<<timeStepIndex()<<" done. "
                     << "Wall time:"<<timer_.elapsed()
                     <<", time:"<<time()

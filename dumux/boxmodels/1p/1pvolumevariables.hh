@@ -108,7 +108,7 @@ public:
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
         fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
-        
+
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
 
@@ -161,7 +161,7 @@ public:
      */
     const FluidState &fluidState() const
     { return fluidState_; }
-    
+
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                             const Problem& problem,

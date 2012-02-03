@@ -105,7 +105,7 @@ public:
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemVolVars = 
+        const ElementVolumeVariables &elemVolVars =
             usePrevSol
             ? this->prevVolVars_()
             : this->curVolVars_();
@@ -117,8 +117,8 @@ public:
         {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
-                result[conti0EqIdx + compIdx] += 
-                    volVars.porosity() 
+                result[conti0EqIdx + compIdx] +=
+                    volVars.porosity()
                     * volVars.saturation(phaseIdx)
                     * volVars.molarDensity(phaseIdx)
                     * volVars.fluidState().moleFraction(phaseIdx, compIdx);

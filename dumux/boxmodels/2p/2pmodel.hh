@@ -171,7 +171,7 @@ public:
         for (; elemIt != elemEndIt; ++elemIt)
         {
             if(velocityOutput && !elemIt->geometry().type().isCube()){
-                DUNE_THROW(Dune::InvalidStateException, 
+                DUNE_THROW(Dune::InvalidStateException,
                            "Currently, velocity output only works for cubes. "
                            "Please set the EnableVelocityOutput property to false!");
             }
