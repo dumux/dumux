@@ -24,6 +24,12 @@ AC_DEFUN([DUMUX_CHECKS],
   # a DUNE version which provides the DUNE_DEPRECATED_MSG macro!
   DUMUX_CHECKDEPRECATED
 
+  # Check whether the compiler supports __attribute__((always_inline))
+  DUMUX_CHECK_ALWAYS_INLINE
+
+  # Check whether the compiler supports __attribute__((unused))
+  DUMUX_CHECK_UNUSED
+
   # check whether the constexpr keyword is present
   AC_REQUIRE([CONSTEXPR_CHECK])
   # define constexpr as const if it is not available. this is quite a HACK!
@@ -80,109 +86,82 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
   if test "$enable_documentation" != "yes"; then
      build_handbook="no"
      summary_message="Configure parameter --enable-documentation not specified"
-  fi
-     
-  if test "$CONVERT" == "no" || test "$CONVERT" == "" ; then
+  elif test "$CONVERT" == "no" || test "$CONVERT" == "" ; then
     build_handbook="no"
     summary_message="Command 'convert' not found"
-  fi
-  if test "$latex" == "no" || test "$latex" == ""; then
+  elif test "$latex" == "no" || test "$latex" == ""; then
     summary_message="Command 'latex' not found"
     build_handbook="no"
-  fi
-  if test "$bibtex" == "no" || test "$bibtex" == ""; then
+  elif test "$bibtex" == "no" || test "$bibtex" == ""; then
     summary_message="Command 'bibtex' not found"
     build_handbook="no"
-  fi
-  if test "$dvipdf" == "no" || test "$dvipdf" == "" ; then
+  elif test "$dvipdf" == "no" || test "$dvipdf" == "" ; then
     summary_message="Command 'dvipdf' not found"
     build_handbook="no"
-  fi
-  if test "$have_latex_class_scrreprt" != "yes"; then
+  elif test "$have_latex_class_scrreprt" != "yes"; then
     summary_message="Latex class 'scrreprt' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_amsfonts" != "yes"; then
+  elif test "$have_latex_pkg_amsfonts" != "yes"; then
     summary_message="Latex package 'amsfonts' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_amsmath" != "yes"; then
+  elif test "$have_latex_pkg_amsmath" != "yes"; then
     summary_message="Latex package 'amsmath' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_amssymb" != "yes"; then
+  elif test "$have_latex_pkg_amssymb" != "yes"; then
     summary_message="Latex package 'amssymb' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_color" != "yes"; then
+  elif test "$have_latex_pkg_color" != "yes"; then
     summary_message="Latex package 'color' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_enumerate" != "yes"; then
+  elif test "$have_latex_pkg_enumerate" != "yes"; then
     summary_message="Latex package 'enumerate' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_graphics" != "yes"; then
+  elif test "$have_latex_pkg_graphics" != "yes"; then
     summary_message="Latex package 'graphics' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_graphicx" != "yes"; then
+  elif test "$have_latex_pkg_graphicx" != "yes"; then
     summary_message="Latex package 'graphicx' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_hyperref" != "yes"; then
+  elif test "$have_latex_pkg_hyperref" != "yes"; then
     summary_message="Latex package 'hyperref' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_hyphenat" != "yes"; then
+  elif test "$have_latex_pkg_hyphenat" != "yes"; then
     summary_message="Latex package 'hyphenat' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_inputenc" != "yes"; then
+  elif test "$have_latex_pkg_inputenc" != "yes"; then
     summary_message="Latex package 'inputenc' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_layout" != "yes"; then
+  elif test "$have_latex_pkg_layout" != "yes"; then
     summary_message="Latex package 'layout' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_listings" != "yes"; then
+  elif test "$have_latex_pkg_listings" != "yes"; then
     summary_message="Latex package 'listings' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_lscape" != "yes"; then
+  elif test "$have_latex_pkg_lscape" != "yes"; then
     summary_message="Latex package 'lscape' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_makeidx" != "yes"; then
+  elif test "$have_latex_pkg_makeidx" != "yes"; then
     summary_message="Latex package 'makeidx' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_pstricks" != "yes"; then
+  elif test "$have_latex_pkg_pstricks" != "yes"; then
     summary_message="Latex package 'pstricks' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_rotating" != "yes"; then
+  elif test "$have_latex_pkg_rotating" != "yes"; then
     summary_message="Latex package 'rotating' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_scrpage2" != "yes"; then
+  elif test "$have_latex_pkg_scrpage2" != "yes"; then
     summary_message="Latex package 'scrpage2' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_subfig" != "yes"; then
+  elif test "$have_latex_pkg_subfig" != "yes"; then
     summary_message="Latex package 'subfig' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_theorem" != "yes"; then
+  elif test "$have_latex_pkg_theorem" != "yes"; then
     summary_message="Latex package 'theorem' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_tabularx" != "yes"; then
+  elif test "$have_latex_pkg_tabularx" != "yes"; then
     summary_message="Latex package 'tabularx' not available"
     build_handbook="no"
-  fi
-  if test "$have_latex_pkg_ulem" != "yes"; then
+  elif test "$have_latex_pkg_ulem" != "yes"; then
     summary_message="Latex package 'ulem' not available"
     build_handbook="no"
   fi

@@ -37,7 +37,7 @@ AC_DEFUN([DUMUX_CHECKDEPRECATED],[
                     void foo() DEP;
                     void foo() {};],[],
                                   [DUMUX_DEPRECATED_MSG="__attribute__((deprecated(msg)))"
-                     AC_MSG_RESULT()],
+                     AC_MSG_RESULT(yes)],
                                   [DUMUX_DEPRECATED_MSG="$DUMUX_DEPRECATED"
                      AC_MSG_RESULT(no)])
          AC_LANG_POP([C++])
