@@ -64,7 +64,7 @@ SET_PROP(KuevetteProblem, Problem)
 };
 
 // Set the fluid system
-SET_TYPE_PROP(KuevetteProblem,
+SET_TYPE_PROP(KuevetteProblem, 
               FluidSystem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
@@ -141,7 +141,6 @@ public:
      */
     KuevetteProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
-        , eps_(1e-6)
     {
         FluidSystem::init();
     }
@@ -164,6 +163,7 @@ public:
     {
         values = 0;
     }
+
 
     // \}
 
@@ -305,7 +305,7 @@ private:
         }
     }
 
-    const Scalar eps_;
+    static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
 

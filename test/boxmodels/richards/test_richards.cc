@@ -29,40 +29,31 @@
 #include "richardslensproblem.hh"
 #include <dumux/common/start.hh>
 
+/*!
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progname  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
+ */
 void usage(const char *progName, const std::string &errorMsg)
 {
     if (errorMsg.size() > 0) {
-        std::cout << errorMsg << "\n"
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
+                        "--t-end, --dt-initial, --grid-file\n"
+                        "(or -tEnd, -dtInitial, -gridFile)\n"
+                        "\n"
+                        "\t--grid-file=FILENAME             The file name of the file containing the grid \n"
+                        "\t                                   definition in DGF format\n" ;
+
+        std::cout << errorMessageOut
                   << "\n";
     }
-    std::cout
-        << "Usage: " << progName << " [options]\n"
-        << "Mandatory options are:\n"
-        << "\t--t-end=ENDTIME                  The time of the end of the simlation [s]\n"
-        << "\t--dt-initial=STEPSIZE            The initial time step size [s]\n"
-        << "\t--grid-file=FILENAME             The file name of the file containing the grid \n"
-        << "\t                                   definition in DGF format\n"
-        << "\n"
-        << "Alternativ supported syntax:\n"
-        << "\t-tEnd ENDTIME                    The time of the end of the simlation [s]\n"
-        << "\t-dtInitial STEPSIZE              The initial time step size [s]\n"
-        << "\t-gridFile FILENAME              The file name of the file containing the grid \n"
-        << "\t                                   definition in DGF format\n"
-        << "\n"
-        << "If --parameter-file is specified parameters can also be defined there. In this case,\n"
-        << "camel case is used for the parameters (e.g.: --grid-file becomes gridFile). Parameters\n"
-        << "specified on the command line have priority over those in the parameter file.\n"
-        << "Important optional options include:\n"
-        << "\t--help,-h                        Print this usage message and exit\n"
-        << "\t--print-parameters[=true|false]  Print the run-time modifiable parameters _after_ \n"
-        << "\t                                 the simulation [default: true]\n"
-        << "\t--print-properties[=true|false]  Print the compile-time parameters _before_ \n"
-        << "\t                                 the simulation [default: true]\n"
-        << "\t--parameter-file=FILENAME        File with parameter definitions\n"
-        << "\t--restart=RESTARTTIME            Restart simulation from a restart file\n"
-        << "\n"
-        << "For the case of no arguments given, the input parameter file is expected to be named './parameter.input' \n"
-        << "\n";
 }
 
 int main(int argc, char** argv)
