@@ -212,7 +212,6 @@ public:
         // mixture, i.e. fugacity coefficients are not supposed to
         // depend on composition!
         typename FluidSystem::ParameterCache paramCache;
-        assert(FluidSystem::isIdealGas(gPhaseIdx));
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             assert(FluidSystem::isIdealMixture(phaseIdx));
 
