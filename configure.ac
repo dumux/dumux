@@ -60,7 +60,6 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/fluidmatrixinteractions/3p/Makefile 
     dumux/material/fluidmatrixinteractions/Mp/Makefile 
     dumux/material/spatialparameters/Makefile 
-    dumux/material/old_fluidsystems/Makefile 
     dumux/material/fluidstates/Makefile 
     dumux/material/fluidsystems/Makefile 
     dumux/material/constraintsolvers/Makefile 
