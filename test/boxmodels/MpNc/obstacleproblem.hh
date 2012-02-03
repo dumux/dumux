@@ -174,8 +174,9 @@ class ObstacleProblem
     };
 
 public:
-    ObstacleProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ObstacleProblem(TimeManager &timeManager)
+        : ParentType(timeManager, 
+                     GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
     {
         eps_ = 1e-6;
         temperature_ = 273.15 + 25; // -> 25°C

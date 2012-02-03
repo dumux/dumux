@@ -60,7 +60,7 @@ namespace Properties
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters));
 
 // Set the grid type
-#if 0// HAVE_UG
+#if HAVE_UG
 SET_TYPE_PROP(LensProblem, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
@@ -153,16 +153,18 @@ template <class TypeTag >
 class LensProblem : public TwoPProblem<TypeTag>
 {
     typedef TwoPProblem<TypeTag> ParentType;
+
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
-
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     enum {
-
         // primary variable indices
         pwIdx = Indices::pwIdx,
         SnIdx = Indices::SnIdx,
@@ -174,21 +176,11 @@ class LensProblem : public TwoPProblem<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
 
-
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
@@ -197,17 +189,26 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param lensLowerLeft Global position of the lenses lower left corner
-     * \param lensUpperRight Global position of the lenses upper right corner
      */
-    LensProblem(TimeManager &timeManager,
-                const GridView &gridView,
-                const GlobalPosition &lensLowerLeft,
-                const GlobalPosition &lensUpperRight)
-        : ParentType(timeManager, gridView)
+    LensProblem(TimeManager &timeManager)
+        : ParentType(timeManager, GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
+
+        SET_RUNTIME_DEFAULT(TypeTag, Scalar, LensLowerLeftX, "1.0");
+        SET_RUNTIME_DEFAULT(TypeTag, Scalar, LensLowerLeftY, "2.0");
+        SET_RUNTIME_DEFAULT(TypeTag, Scalar, LensUpperRightX, "4.0");
+        SET_RUNTIME_DEFAULT(TypeTag, Scalar, LensUpperRightY, "3.0");
+
+        GlobalPosition lensLowerLeft;
+        lensLowerLeft[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, LensLowerLeftX);
+        lensLowerLeft[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, LensLowerLeftY);
+
+        GlobalPosition lensUpperRight;
+        lensUpperRight[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, LensUpperRightX);
+        lensUpperRight[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, LensUpperRightY);
+
         this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
     }
 

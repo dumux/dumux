@@ -90,6 +90,18 @@
 
 /*!
  * \ingroup Parameter
+ * \brief Set the defailt value for a runtime parameter
+ *
+ * Example:
+ *
+ * // -> sets the default value for runtime paramter NumberOfCellsX to 20
+ * SET_RUNTIME_DEFAULT(TypeTag, int, NumberOfCellsX, "20");
+ */
+#define SET_RUNTIME_DEFAULT(TypeTag, ParamType, ParamName, Value) \
+    Dumux::Parameters::setRuntimeDefault<TypeTag, ParamType>(#ParamName, Value)
+
+/*!
+ * \ingroup Parameter
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
@@ -103,6 +115,18 @@
  */
 #define GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName) \
     Dumux::Parameters::getRuntime<TypeTag, ParamType>(#GroupName, #ParamName)
+
+/*!
+ * \ingroup Parameter
+ * \brief Set the default value for a runtime parameter which is in a grop
+ *
+ * Example:
+ *
+ * // -> sets the default value for runtime paramter Geometry.NumberOfCellsX to 20
+ * SET_GROUP_RUNTIME_DEFAULT(TypeTag, int, Geometry, NumberOfCellsX, "20");
+ */
+#define SET_GROUP_ RUNTIME_DEFAULT(TypeTag, ParamType, GroupName, ParamName, Value) \
+    Dumux::Parameters::setRuntimeDefault<TypeTag, ParamType>(#GroupName, #ParamName, Value)
 
 namespace Dumux
 {
@@ -232,6 +256,68 @@ public:
 #endif
 
         return retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
+    }
+
+    template <class ParamType>
+    static void setRuntimeDefault(const char *groupOrParamName,
+                                  const char *paramNameOrValue,
+                                  const char *valueOrNil = 0)
+    {
+        // make sure that the parameter is used consistently. since
+        // this is potentially quite expensive, it is only done if
+        // debugging code is not explicitly turned off.
+        const char *paramName, *groupName, *value;
+        static const std::string propertyName("");
+        if (valueOrNil != 0) {
+            groupName = groupOrParamName;
+            paramName = paramNameOrValue;
+            value = valueOrNil;
+        }
+        else {
+            groupName = "";
+            paramName = groupOrParamName;
+            value = paramNameOrValue;
+        }
+
+#ifndef NDEBUG
+        check_(Dune::className<ParamType>(), propertyName, groupName, paramName);
+#endif
+
+        static std::string modelParamGroup(GET_PROP_VALUE(TypeTag, ModelParameterGroup));
+
+        std::string canonicalName(modelParamGroup);
+
+        // prefix the parameter with the parameter group of the
+        // model. this allows things like sub-model specific parameters like
+        //
+        // [Stokes.Newton]
+        // WriteConvergence = false
+        // [Darcy.Newton]
+        // WriteConvergence = true
+        if (modelParamGroup.size()) {
+            canonicalName.push_back('.');
+        }
+
+        // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
+        // and 'WriteConvergence' becomes 'Newton.WriteConvergence'
+        // with the default value specified by the
+        // 'NewtonWriteConvergence' property. in an INI file this
+        // would look like:
+        //
+        // [Newton]
+        // WriteConvergence = true
+        if (strlen(groupName) > 0) {
+            canonicalName.append(groupName);
+            canonicalName.push_back('.');
+        }
+
+        // append the name of the parameter
+        canonicalName.append(paramName);
+
+        // set the parameter if not already specified
+        if (!Params::tree().hasKey(canonicalName)) {
+            Params::tree()[canonicalName] = value;
+        }
     }
 
 private:
@@ -449,6 +535,16 @@ const ParamType &getRuntime(const char *paramOrGroupName,
 {
     return Param<TypeTag>::template getRuntime<ParamType>(paramOrGroupName,
                                                           paramNameOrNil);
+}
+
+template <class TypeTag, class ParamType>
+void setRuntimeDefault(const char *paramOrGroupName,
+                       const char *paramNameOrValue,
+                       const char *valueOrNil = 0)
+{
+    Param<TypeTag>::template setRuntimeDefault<ParamType>(paramOrGroupName,
+                                                          paramNameOrValue, 
+                                                          valueOrNil);
 }
 
 } // namespace Parameters

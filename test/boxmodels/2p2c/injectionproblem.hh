@@ -121,7 +121,6 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
         contiN2EqIdx = conti0EqIdx + N2Idx
     };
 
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -131,7 +130,6 @@ class InjectionProblem : public TwoPTwoCProblem<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -142,9 +140,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InjectionProblem(TimeManager &timeManager,
-                     const GridView &gridView)
-        : ParentType(timeManager, GridCreator::grid().leafView())
+    InjectionProblem(TimeManager &timeManager)
+        : ParentType(timeManager, GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
     {
         try
         {

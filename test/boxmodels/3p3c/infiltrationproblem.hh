@@ -122,8 +122,9 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InfiltrationProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    InfiltrationProblem(TimeManager &timeManager)
+        : ParentType(timeManager, 
+                     GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
         , eps_(1e-6)
     {
         temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
