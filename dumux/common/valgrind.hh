@@ -41,14 +41,14 @@
 // the BoundaryTypes class)
 namespace Valgrind
 {
-bool boolBlubb() { return true; }
+bool boolBlubb(bool value) { return value; }
 void voidBlubb() { }
 
 #define SetUndefined(t) voidBlubb()
 #define SetDefined(t) voidBlubb()
-#define CheckDefined(t) boolBlubb()
+#define CheckDefined(t) boolBlubb(true)
 #define SetNoAccess(t) voidBlubb()
-#define Running() false
+#define Running() boolBlubb(false)
 }
 
 #else
@@ -86,6 +86,8 @@ inline bool Running()
  * \param value the object which valgrind should check
  */
 template <class T>
+inline bool CheckDefined(const T &value) DUMUX_ALWAYS_INLINE;
+template <class T>
 inline bool CheckDefined(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -96,6 +98,8 @@ inline bool CheckDefined(const T &value)
 #endif
 }
 
+template <class T>
+inline bool CheckDefined(const T *value, int size) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline bool CheckDefined(const T *value, int size)
 {
@@ -116,6 +120,8 @@ inline bool CheckDefined(const T *value, int size)
  * \param value The object which's memory valgrind should be told is undefined
  */
 template <class T>
+inline void SetUndefined(const T &value) DUMUX_ALWAYS_INLINE;
+template <class T>
 inline void SetUndefined(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -123,6 +129,8 @@ inline void SetUndefined(const T &value)
 #endif
 }
 
+template <class T>
+inline void SetUndefined(const T *value, int size) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline void SetUndefined(const T *value, int size)
 {
@@ -140,6 +148,9 @@ inline void SetUndefined(const T *value, int size)
  * \param value The object which's memory valgrind should consider as defined
  */
 template <class T>
+inline void SetDefined(const T &value) DUMUX_ALWAYS_INLINE;
+
+template <class T>
 inline void SetDefined(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -147,6 +158,8 @@ inline void SetDefined(const T &value)
 #endif
 }
 
+template <class T>
+inline void SetDefined(const T *value, int n) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline void SetDefined(const T *value, int n)
 {
@@ -164,6 +177,8 @@ inline void SetDefined(const T *value, int n)
  * \param value The object which's memory valgrind should complain if accessed
  */
 template <class T>
+inline void SetNoAccess(const T &value) DUMUX_ALWAYS_INLINE;
+template <class T>
 inline void SetNoAccess(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -171,6 +186,8 @@ inline void SetNoAccess(const T &value)
 #endif
 }
 
+template <class T>
+inline void SetNoAccess(const T *value, int n) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline void SetNoAccess(const T *value, int n)
 {
