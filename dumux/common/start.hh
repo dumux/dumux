@@ -77,44 +77,6 @@ void printUsageGrid(const char *progname)
 
 /*!
  * \ingroup Start
- *
- * \brief Prints the default usage message for the startWithParameters() function
- */
-void usageStartWithParameters(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::cout << errorMsg << "\n"
-                  << "\n";
-    }
-    std::cout
-        << 
-        "Usage: " << progName << " [options]\n"
-        "Mandatory options include:\n"
-        "\t--t-end=ENDTIME                  The time of the end of the simlation [s]\n"
-        "\t--dt-initial=STEPSIZE            The initial time step size [s]\n"
-        "\n"
-        "Alternativ supported syntax:\n"
-        "\t-tEnd ENDTIME                    The time of the end of the simlation [s]\n"
-        "\t-dtInitial STEPSIZE              The initial time step size [s]\n"
-        "\n"
-        "If --parameter-file is specified parameters can also be defined there. In this case,\n"
-        "camel case is used for the parameters (e.g.: --t-end becomes tEnd). Parameters\n"
-        "specified on the command line have priority over those in the parameter file.\n"
-        "Important optional options include:\n"
-        "\t--help,-h                        Print this usage message and exit\n"
-        "\t--print-parameters[=true|false]  Print the run-time modifiable parameters _after_ \n"
-        "\t                                 the simulation [default: true]\n"
-        "\t--print-properties[=true|false]  Print the compile-time parameters _before_ \n"
-        "\t                                 the simulation [default: false]\n"
-        "\t--parameter-file=FILENAME        File with parameter definitions\n"
-        "\t--restart=RESTARTTIME            Restart simulation from a restart file\n"
-        "\n"
-        "For the case of no arguments given, the input parameter file is expected to be named './parameter.input' \n"
-        "\n";
-}
-
-/*!
- * \ingroup Start
  * \brief Provides a default main function for simulations requiring
  *        only a single DGF file as their grid specification.
  *
@@ -286,7 +248,7 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] != '-') {
             std::ostringstream oss;
-            oss << "Command line argument " << i << " (='" << argv[i] << "') is invalid.";
+            oss << "\n -> Command line argument " << i << " (='" << argv[i] << "') is invalid. <- \n\n\n\n";
             return oss.str();
         }
 
@@ -297,12 +259,12 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
         // "abc"
         if (argv[i][1] == '-') {
             std::string s(argv[i] + 2);
-            // There is nothing after the '-'
+            // There is nothing after the '='
             if (s.size() == 0 || s[0] == '=')
             {
                 std::ostringstream oss;
-                oss << "Parameter name of argument " << i << " ('" << argv[i] << "')"
-                    << " is empty.";
+                oss << "\n -> Parameter name of argument " << i << " (='" << argv[i] << "')"
+                    << " is empty. <- \n\n\n\n";
                 return oss.str();
             }
 
@@ -331,18 +293,18 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
                     if (s.size() == j)
                     {
                         std::ostringstream oss;
-                        oss << "Parameter name of argument " << i << " ('" << argv[i] << "')"
-                            << " is invalid (ends with a '-' character).";
+                        oss << "\n -> Parameter name of argument " << i << " ('" << argv[i] << "')"
+                            << " is invalid (ends with a '-' character). <- \n\n\n\n";
                         return oss.str();
                     }
                     else if (s[j] == '-')
                     {
                         std::ostringstream oss;
-                        oss << "Malformed parameter name name in argument " << i << " ('" << argv[i] << "'): "
-                            << "'--' in parameter name.";
+                        oss << "\n -> Malformed parameter name name in argument " << i << " ('" << argv[i] << "'): "
+                            << "'--' in parameter name. <- \n\n\n\n";
                         return oss.str();
                     }
-                    s[j] = std::toupper(s[j]);
+                    s[j] = toupper(s[j]);
                 }
 
                 ++j;
@@ -354,7 +316,7 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
 
             if (argc == i + 1 || argv[i+1][0] == '-') {
                 std::ostringstream oss;
-                oss << "No argument given for parameter '" << argv[i] << "'!";
+                oss << "\n -> No argument given for parameter '" << argv[i] << "'! <- \n\n\n\n";
                 return oss.str();
             }
 
@@ -362,13 +324,44 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
             ++i; // In the case of '-myOpt abc' each pair counts as two arguments
         }
 
-        // capitalize first letter of parameter name
-        paramName[0] = std::toupper(paramName[0]);
-
         // Put the key=value pair into the parameter tree
         paramTree[paramName] = paramValue;
     }
     return "";
+}
+
+
+/*!
+ * \ingroup Start
+ *
+ * \brief Provides a general text block, that is part of error/ help messages.
+ *
+ * \return The string that is the help / error message.
+ */
+std::string usageTextBlock()
+{
+    return  "Mandatory options include:\n"
+            "\t--t-end=ENDTIME                  The time of the end of the simlation [s]\n"
+            "\t--dt-initial=STEPSIZE            The initial time step size [s]\n"
+            "\n"
+            "Alternativ supported syntax:\n"
+            "\t-tEnd ENDTIME                    The time of the end of the simlation [s]\n"
+            "\t-dtInitial STEPSIZE              The initial time step size [s]\n"
+            "\n"
+            "If --parameter-file is specified parameters can also be defined there. In this case,\n"
+            "camel case is used for the parameters (e.g.: --t-end becomes tEnd). Parameters\n"
+            "specified on the command line have priority over those in the parameter file.\n"
+            "Important optional options include:\n"
+            "\t--help,-h                        Print this usage message and exit\n"
+            "\t--print-parameters[=true|false]  Print the run-time modifiable parameters _after_ \n"
+            "\t                                 the simulation [default: true]\n"
+            "\t--print-properties[=true|false]  Print the compile-time parameters _before_ \n"
+            "\t                                 the simulation [default: false]\n"
+            "\t--parameter-file=FILENAME        File with parameter definitions\n"
+            "\t--restart=RESTARTTIME            Restart simulation from a restart file\n"
+            "\n"
+            "For the case of no arguments given, the input parameter file is expected to be named './parameter.input' \n"
+            "\n";
 }
 
 /*!
@@ -386,7 +379,7 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
 template <class TypeTag>
 int startWithParameters_(int argc,
                          char **argv,
-                         void (*usage)(const char *, const std::string &) = 0)
+                         void (*usage)(const char *, const std::string &))
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -397,10 +390,6 @@ int startWithParameters_(int argc,
     // initialize MPI, finalize is done automatically on exit
     const Dune::MPIHelper &mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
-    // make sure we have a meaningful usage function
-    if (!usage)
-        usage = usageStartWithParameters;
-    
     ////////////////////////////////////////////////////////////
     // parse the command line arguments
     ////////////////////////////////////////////////////////////
@@ -408,13 +397,14 @@ int startWithParameters_(int argc,
     // check whether the user did not specify any parameter. in this
     // case print the usage message
     if (argc == 1) {
-        std::cout<< "\nNo parameter file given. \n"
+        std::cout<< "\n No parameter file given. \n"
                  << "Defaulting to './parameter.input' for input file.\n";
         std::ifstream parameterFile;
         // check whether the parameter file exists.
         parameterFile.open("parameter.input");
         if (not parameterFile.is_open()){
-            usage(argv[0], "Could not open file './parameter.input'.");
+            std::cout<< "\n\t -> Could not open file './parameter.input'. <- \n\n\n\n";
+            usage(argv[0], usageTextBlock());
             return 0;
         }
         parameterFile.close();
@@ -425,7 +415,7 @@ int startWithParameters_(int argc,
     for (int i = 1; i < argc; ++i) {
         if (std::string("--help") == argv[i] || std::string("-h") == argv[i])
         {
-            usage(argv[0], "");
+            usage(argv[0], usageTextBlock());
             return 0;
         }
     }
@@ -434,7 +424,9 @@ int startWithParameters_(int argc,
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
     std::string s = readOptions_(argc, argv, ParameterTree::tree());
     if (!s.empty()) {
-        usage(argv[0], s);
+        std::string usageMessage = s ;
+                    usageMessage += usageTextBlock();
+        usage(argv[0], usageMessage);
         return 0;
     }
 
@@ -452,10 +444,10 @@ int startWithParameters_(int argc,
         // check whether the parameter file exists.
         parameterFile.open(inputFileName);
         if (not parameterFile.is_open()){
-            std::cout<< "\n Could not open file"
+            std::cout<< "\n\t -> Could not open file"
                      << inputFileName
-                     << "\n\n";
-            usage(argv[0], "");
+                     << ". <- \n\n\n\n";
+            usage(argv[0], usageTextBlock());
             return 0;
         }
         parameterFile.close();
@@ -465,7 +457,7 @@ int startWithParameters_(int argc,
                                                /*overwrite=*/false);
     }
 
-    bool printProps = true;
+    bool printProps = false;
     if (ParameterTree::tree().hasKey("PrintProperties"))
         printProps = GET_RUNTIME_PARAM(TypeTag, bool, PrintProperies);
 
@@ -476,9 +468,9 @@ int startWithParameters_(int argc,
     // deal with the restart stuff
     bool restart = false;
     Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart")) {
+    if (ParameterTree::tree().hasKey("restart")) {
         restart = true;
-        restartTime = GET_RUNTIME_PARAM(TypeTag, Scalar, Restart);
+        restartTime = GET_RUNTIME_PARAM(TypeTag, Scalar, restart);
     }
 
     // read the PrintParams parameter
@@ -488,21 +480,36 @@ int startWithParameters_(int argc,
 
     // try to create a grid (from the given grid file)
     try { GridCreator::makeGrid(); }
-    catch (...) { usage(argv[1], "Creation of the grid failed!"); throw; }
+    catch (...) {
+        std::string usageMessage = "\n\t -> Creation of the grid failed! <- \n\n\n\n";
+                    usageMessage += usageTextBlock();
+        usage(argv[0], usageMessage);
+        throw;
+    }
 
     // read the initial time step and the end time
     double tEnd;
     double dt;
 
-    try { tEnd = GET_RUNTIME_PARAM(TypeTag, Scalar, TEnd); }
-    catch (...) { usage(argv[1], "Mandatory parameter '--t-end' not specified!"); throw; }
+    try { tEnd = GET_RUNTIME_PARAM(TypeTag, Scalar, tEnd); }
+    catch (...) {
+        std::string usageMessage = "\n\t -> Mandatory parameter '--t-end' not specified! <- \n\n\n\n";
+                    usageMessage += usageTextBlock();
+        usage(argv[0], usageMessage);
+        throw;
+    }
 
-    try { dt = GET_RUNTIME_PARAM(TypeTag, Scalar, DtInitial); }
-    catch (...) { usage(argv[1], "Mandatory parameter '--dt-initial' not specified!"); throw; }
+    try { dt = GET_RUNTIME_PARAM(TypeTag, Scalar, dtInitial); }
+    catch (...) {
+        std::string usageMessage = "\n\t -> Mandatory parameter '--dt-initial' not specified! <- \n\n\n\n";
+                    usageMessage += usageTextBlock();
+        usage(argv[0], usageMessage);
+        throw;
+    }
 
     // instantiate and run the concrete problem
     TimeManager timeManager;
-    Problem problem(timeManager);
+    Problem problem(timeManager, GridCreator::grid().leafView());
     timeManager.init(problem, restartTime, dt, tEnd, restart);
     timeManager.run();
 
@@ -510,7 +517,10 @@ int startWithParameters_(int argc,
         Dumux::Parameters::print<TypeTag>();
     }
     return 1;
+
+
 }
+
 
 /*!
  * \ingroup Start
@@ -546,7 +556,7 @@ bool inDebugger()
 template <class TypeTag>
 int startWithParameters(int argc,
                         char **argv,
-                        void (*usage)(const char *, const std::string &) = 0)
+                        void (*usage)(const char *, const std::string &))
 {
     if (!inDebugger()) {
         try {
@@ -567,6 +577,192 @@ int startWithParameters(int argc,
     }
     else
         return startWithParameters_<TypeTag>(argc, argv, usage);
+}
+
+/*!
+ * \ingroup Start
+ *
+ * \brief Provides a main function which reads in parameters from the
+ *        command line and a parameter file. The grid however, is created
+ *        in the 'real' main function.
+ *
+ * \tparam TypeTag  The type tag of the problem which needs to be solved
+ * \tparam Scalar   The type for floating point values
+ *
+ * \param argc      The number of command line arguments of the program
+ * \param argv      The contents of the command line arguments of the program
+ * \param usage     Callback function for printing the usage message
+ * \param tEnd      End of simulation time
+ * \param dt        First time step size
+ * \param restart   Should we restart a simulation?
+ * \param restartTime At which time should the simulation be restarted?
+ */
+template <class TypeTag, class Scalar>
+int startWithParametersProvideMyOwnGrid_(int argc,
+                         char **argv,
+                         void (*usage)(const char *, const std::string &),
+                         Scalar & tEnd,
+                         Scalar & dt,
+                         bool & restart,
+                         Scalar & restartTime)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator; // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/common/dgfgridcreator.hh)
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+
+    // initialize MPI, finalize is done automatically on exit
+    const Dune::MPIHelper &mpiHelper = Dune::MPIHelper::instance(argc, argv);
+
+    ////////////////////////////////////////////////////////////
+    // parse the command line arguments
+    ////////////////////////////////////////////////////////////
+
+    // check whether the user did not specify any parameter. in this
+    // case print the usage message
+    if (argc == 1) {
+        std::cout<< "\nNo parameter file given. \n"
+                 << "Defaulting to './parameter.input' for input file.\n";
+        std::ifstream parameterFile;
+        // check whether the parameter file exists.
+        parameterFile.open("parameter.input");
+        if (not parameterFile.is_open()){
+            std::cout<< "\n\t -> Could not open file './parameter.input'. <- \n\n\n\n";
+            usage(argv[0], usageTextBlock());
+            exit(1);
+        }
+        parameterFile.close();
+    }
+
+
+    // check whether the user wanted to see the help message
+    for (int i = 1; i < argc; ++i) {
+        if (std::string("--help") == argv[i] || std::string("-h") == argv[i])
+        {
+            usage(argv[0], usageTextBlock());
+            exit(0);
+        }
+    }
+
+    // fill the parameter tree with the options from the command line
+    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+    std::string s = readOptions_(argc, argv, ParameterTree::tree());
+    if (!s.empty()) {
+        std::string usageMessage = s ;
+                    usageMessage += usageTextBlock();
+        usage(argv[0], usageMessage);
+        exit(1);
+    }
+
+    if (ParameterTree::tree().hasKey("parameterFile") or argc==1) {
+        // read input file, but do not overwrite options specified
+        // on the command line, since the latter have precedence.
+        std::string inputFileName ;
+        if(argc==1) // if there are no arguments given (and there is a file ./parameter.input) we use it as input file
+            inputFileName="parameter.input";
+        else
+            inputFileName = GET_RUNTIME_PARAM(TypeTag, std::string, parameterFile); // otherwise we try
+
+        std::ifstream parameterFile;
+
+        // check whether the parameter file exists.
+        parameterFile.open(inputFileName);
+        if (not parameterFile.is_open()){
+            std::cout<< "\n\t -> Could not open file"
+                     << inputFileName
+                     << ". <- \n\n\n\n";
+            usage(argv[0], usageTextBlock());
+            exit(1);
+        }
+        parameterFile.close();
+
+        Dune::ParameterTreeParser::readINITree(inputFileName,
+                                               ParameterTree::tree(),
+                                               /*overwrite=*/false);
+    }
+
+
+    bool printProps = false;
+    if (ParameterTree::tree().hasKey("PrintProperties"))
+        printProps = GET_RUNTIME_PARAM(TypeTag, bool, PrintProperies);
+
+    if (printProps && mpiHelper.rank() == 0) {
+        Dumux::Properties::print<TypeTag>();
+    }
+
+    // deal with the restart stuff
+    if (ParameterTree::tree().hasKey("restart")) {
+        restart = true;
+        restartTime = GET_RUNTIME_PARAM(TypeTag, Scalar, restart);
+    }
+
+    try { tEnd = GET_RUNTIME_PARAM(TypeTag, Scalar, tEnd); }
+    catch (...) {
+        std::string usageMessage = "\n\t -> Mandatory parameter '--t-end' not specified! <- \n\n\n\n";
+                    usageMessage += usageTextBlock();
+        usage(argv[0], usageMessage);
+        throw;
+    }
+
+    try { dt = GET_RUNTIME_PARAM(TypeTag, Scalar, dtInitial); }
+    catch (...) {
+        std::string usageMessage = "\n\t -> Mandatory parameter '--dt-initial' not specified! <- \n\n\n\n";
+                    usageMessage += usageTextBlock();
+        usage(argv[0], usageMessage);
+        throw;
+    }
+
+    return 0;
+}
+
+/*!
+ * \ingroup Start
+ *
+ * \brief Provides a main function which reads in parameters from the
+ *        command line and a parameter file. The Grid however is created
+ *        in the 'real' main function.
+ *
+ *        In this function only the differentiation between debugger
+ *        or not is made.
+ *
+ * \tparam TypeTag  The type tag of the problem which needs to be solved
+ *
+ * \param argc      The number of command line arguments of the program
+ * \param argv      The contents of the command line arguments of the program
+ * \param usage     Callback function for printing the usage message
+ * \param tEnd      End of simulation time
+ * \param dt        First time step size
+ * \param restart   Should we restart a simulation?
+ * \param restartTime At which time should the simulation be restarted?
+ */
+template <class TypeTag, class Scalar>
+int startWithParametersProvideMyOwnGrid(int argc,
+                        char **argv,
+                        void (*usage)(const char *, const std::string &),
+                        Scalar & tEnd,
+                        Scalar & dt,
+                        bool & restart,
+                        Scalar & restartTime)
+{
+    if (not inDebugger()) {
+        try {
+            return startWithParametersProvideMyOwnGrid_<TypeTag, Scalar>(argc, argv, usage, tEnd, dt, restart, restartTime);
+        }
+        catch (Dumux::ParameterException &e) {
+            std::cerr << e << ". Abort!\n";
+            exit(1);
+        }
+        catch (Dune::Exception &e) {
+            std::cerr << "Dune reported error: " << e << std::endl;
+            exit(2);
+        }
+        catch (...) {
+            std::cerr << "Unknown exception thrown!\n";
+            exit(3);
+        }
+    }
+    else
+        return startWithParametersProvideMyOwnGrid_<TypeTag, Scalar>(argc, argv, usage, tEnd, dt, restart, restartTime);
 }
 
 } // namespace Dumux

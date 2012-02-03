@@ -153,9 +153,9 @@ public:
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
      */
-    RichardsLensProblem(TimeManager &timeManager)
-        : ParentType(timeManager, 
-                     GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
+    RichardsLensProblem(TimeManager &timeManager,
+                        const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         eps_ = 3e-6;
         pnRef_ = 1e5;

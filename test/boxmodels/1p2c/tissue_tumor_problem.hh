@@ -157,16 +157,16 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    TissueTumorProblem(TimeManager &timeManager)
-        : ParentType(timeManager, GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
+    TissueTumorProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         // calculate the injection volume
         totalInjectionVolume_ = 0;
         FVElementGeometry fvGeom;
-        ElementIterator elemIt = this->gridView().template begin<0>();
-        const ElementIterator endIt = this->gridView().template end<0>();
+        ElementIterator elemIt = gridView.template begin<0>();
+        const ElementIterator endIt = gridView.template end<0>();
         for (; elemIt != endIt; ++ elemIt) {
-            fvGeom.update(this->gridView(), *elemIt);
+            fvGeom.update(gridView, *elemIt);
             for (int i = 0; i < fvGeom.numVertices; ++i) {
                 const GlobalPosition &pos = fvGeom.subContVol[i].global;
                 if (inInjectionVolume_(pos))

@@ -190,9 +190,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InjectionProblem2PNI(TimeManager &timeManager)
-        : ParentType(timeManager, 
-                     GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
+    InjectionProblem2PNI(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         maxDepth_ = 2700.0; // [m]
         eps_ = 1e-6;

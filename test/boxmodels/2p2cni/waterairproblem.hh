@@ -158,8 +158,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    WaterAirProblem(TimeManager &timeManager)
-        : ParentType(timeManager, GET_PROP_TYPE(TypeTag, GridCreator)::grid().leafView())
+    WaterAirProblem(TimeManager &timeManager, const GridView &gridView)
+        : ParentType(timeManager, gridView)
     {
         maxDepth_ = 1000.0; // [m]
         eps_ = 1e-6;

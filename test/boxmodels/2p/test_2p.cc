@@ -49,44 +49,18 @@
 void usage(const char *progName, const std::string &errorMsg)
 {
     if (errorMsg.size() > 0) {
-        std::cout << errorMsg << "\n"
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
+                        "--t-end, --dt-initial\n"
+                        "(or -tEnd, -dtInitial)\n"
+                        "\n";
+
+        std::cout << errorMessageOut
                   << "\n";
     }
-    std::cout
-        << "Usage: " << progName << " [options]\n"
-        << "Mandatory options are:\n"
-        << "\t--t-end=ENDTIME                  The time of the end of the simlation [s]\n"
-        << "\t--dt-initial=STEPSIZE            The initial time step size [s]\n"
-        << "\n"
-        << "Important optional options include:\n"
-        << "\t--help,-h                        Print this usage message and exit\n"
-        << "\t--print-parameters[=true|false]  Print the run-time modifiable parameters _after_ \n"
-        << "\t                                 the simulation [default: true]\n"
-        << "\t--print-properties[=true|false]  Print the compile-time parameters _before_ \n"
-        << "\t                                 the simulation [default: true]\n"
-        << "\t--parameter-file=FILENAME        File with parameter definitions\n"
-        << "\t--restart=RESTARTTIME            Restart simulation from a restart file\n"
-        << "\t--cells-x=NUM                    Number of cells in horizontal direction\n"
-        << "\t--cells-y=NUM                    Number of cells in vertical direction\n"
-        << "\t--lens-lower-left-x=VALUE        X-Coordinate of the lower-left corner\n"
-        << "                                   of the low permeability lens\n"
-        << "\t--lens-lower-left-y=VALUE        Y-Coordinate of the lower-left corner\n"
-        << "                                   of the low permeability lens\n"
-        << "\t--lens-upper-right-x=VALUE       X-Coordinate of the upper-right corner\n"
-        << "                                   of the low permeability lens\n"
-        << "\t--lens-upper-right-y=VALUE       Y-Coordinate of the upper-right corner\n"
-        << "                                   of the low permeability lens\n"
-        << "\n"
-        << "All parameters can also be specified using the alternative syntax:\n"
-        << "\t-tEnd ENDTIME                    The time of the end of the simlation [s]\n"
-        << "\t-dtInitial STEPSIZE              The initial time step size [s]\n"
-        << "\n"
-        << "If --parameter-file is specified, parameters can also be defined there. In this case,\n"
-        << "camel case is used for the parameters (e.g.: --grid-file becomes GridFile). Parameters\n"
-        << "specified on the command line have priority over those in the parameter file.\n"
-        << "\n"
-        << "For the case of no arguments given, the input parameter file is expected to be named './parameter.input' \n"
-        << "\n";
 }
 
 
@@ -94,34 +68,19 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 // helper class for grid instantiation
 ////////////////////////
-template <class TypeTag, class Grid = typename GET_PROP_TYPE(TypeTag, Grid)>
-class LensGridCreator;
+template <class Grid, class Scalar>
+class CreateGrid
+{
+};
 
 #if HAVE_UG
-template <class TypeTag>
-class LensGridCreator<TypeTag, Dune::UGGrid<2> >
+template <class Scalar>
+class CreateGrid<Dune::UGGrid<2>, Scalar>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::UGGrid<2> Grid;
-
 public:
-    /*!
-     * \brief Create the Grid
-     */
-    static void makeGrid()
+    static Dune::UGGrid<2> *create(const Dune::FieldVector<Scalar, 2> &upperRight,
+                                   const Dune::FieldVector<int, 2> &cellRes)
     {
-        Dune::FieldVector<int, 2> cellRes;
-        Dune::FieldVector<Scalar, 2> upperRight;
-        Dune::FieldVector<Scalar, 2> lowerLeft;
-
-        lowerLeft[0] = 0.0;
-        lowerLeft[1] = 0.0;
-        upperRight[0] = 6.0;
-        upperRight[1] = 4.0;
-
-        cellRes[0] = GET_RUNTIME_PARAM(TypeTag, int, CellsX);
-        cellRes[1] = GET_RUNTIME_PARAM(TypeTag, int, CellsY);
-        
         Dune::GridFactory<Dune::UGGrid<2> > factory;
         for (int i=0; i<=cellRes[0]; i++) {
             for (int j=0; j<=cellRes[1]; j++) {
@@ -165,51 +124,21 @@ public:
             }
         }
 
-        grid_ = factory.createGrid();
-        grid_->loadBalance();
+        Dune::UGGrid<2> *grid = factory.createGrid();
+        grid->loadBalance();
+        return grid;
     }
-
-    /*!
-     * \brief Returns a reference to the grid.
-     */
-    static Grid &grid()
-    {
-        return *grid_;
-    };
-
-private:
-    static Grid *grid_;
 };
-
-template <class TypeTag>
-Dune::UGGrid<2> *LensGridCreator<TypeTag, Dune::UGGrid<2> >::grid_;
 #endif
 
-template <class TypeTag>
-class LensGridCreator<TypeTag, Dune::YaspGrid<2> >
+template <class Scalar>
+class CreateGrid<Dune::YaspGrid<2>, Scalar>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::YaspGrid<2> Grid;
-
 public:
-    /*!
-     * \brief Create the Grid
-     */
-    static void makeGrid()
+    static Dune::YaspGrid<2> *create(const Dune::FieldVector<Scalar, 2> &upperRight,
+                                     const Dune::FieldVector<int, 2> &cellRes)
     {
-        Dune::FieldVector<int, 2> cellRes;
-        Dune::FieldVector<Scalar, 2> upperRight;
-        Dune::FieldVector<Scalar, 2> lowerLeft;
-
-        lowerLeft[0] = 0.0;
-        lowerLeft[1] = 0.0;
-        upperRight[0] = 6.0;
-        upperRight[1] = 4.0;
-
-        cellRes[0] = GET_RUNTIME_PARAM(TypeTag, int, CellsX);
-        cellRes[1] = GET_RUNTIME_PARAM(TypeTag, int, CellsY);
-
-        grid_ = new Dune::YaspGrid<2>(
+        return new Dune::YaspGrid<2>(
 #ifdef HAVE_MPI
             Dune::MPIHelper::getCommunicator(),
 #endif
@@ -218,29 +147,26 @@ public:
             Dune::FieldVector<bool,2>(false), // periodic
             0); // overlap
     };
-
-    /*!
-     * \brief Returns a reference to the grid.
-     */
-    static Grid &grid()
-    {
-        return *grid_;
-    };
-
-private:
-    static Grid *grid_;
 };
 
-template <class TypeTag>
-Dune::YaspGrid<2> *LensGridCreator<TypeTag, Dune::YaspGrid<2> >::grid_;
+template <class Scalar>
+class CreateGrid<Dune::SGrid<2, 2>, Scalar>
+{
+public:
+    static Dune::SGrid<2, 2> *create(const Dune::FieldVector<Scalar, 2> &upperRight,
+                                     const Dune::FieldVector<int, 2> &cellRes)
+    {
+        return new Dune::SGrid<2,2>(cellRes, // number of cells
+                                    Dune::FieldVector<Scalar, 2>(0.0), // lower left
+                                    upperRight); // upper right
 
-// set the GridCreator property
-namespace Dumux {
-namespace Properties {
-SET_TYPE_PROP(LensProblem, GridCreator, LensGridCreator<TypeTag>);
-}}
-
+    };
+};
 //! \endcond
+
+
+
+
 
 
 ////////////////////////
@@ -248,10 +174,111 @@ SET_TYPE_PROP(LensProblem, GridCreator, LensGridCreator<TypeTag>);
 ////////////////////////
 int main(int argc, char** argv)
 {
-    typedef TTAG(LensProblem) TypeTag;
+#ifdef NDEBUG
+    try {
+#endif
+        typedef TTAG(LensProblem) TypeTag;
+        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
+        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
+        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
 
-    SET_RUNTIME_DEFAULT(TypeTag, int, CellsX, "48");
-    SET_RUNTIME_DEFAULT(TypeTag, int, CellsY, "32");
-    
-    return Dumux::startWithParameters<TypeTag>(argc, argv, usage);
+        static const int dim = Grid::dimension;
+
+        // initialize MPI, finalize is done automatically on exit
+        const Dune::MPIHelper& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+
+        Scalar tEnd, dt;
+        Scalar restartTime=0;
+        bool restart = false;
+        Dumux::startWithParametersProvideMyOwnGrid<TypeTag, Scalar>(argc,
+                                                                    argv,
+                                                                    usage,
+                                                                    tEnd,
+                                                                    dt,
+                                                                    restart,
+                                                                    restartTime);
+
+        ////////////////////////////////////////////////////////////
+        // create the grid
+        ////////////////////////////////////////////////////////////
+        GlobalPosition lowerLeft(0.0);
+        GlobalPosition upperRight;
+        Dune::FieldVector<int,dim> res; // cell resolution
+        upperRight[0] = 6.0;
+        upperRight[1] = 4.0;
+
+        /*
+        res[0] = 48*4;
+        res[1] = 32*4;
+        */
+
+        /*
+        res[0] = 96;
+        res[1] = 64;
+        */
+
+        res[0] = 48;
+        res[1] = 32;
+
+        /*
+        res[0] = 24;
+        res[1] = 16;
+        */
+
+        /*
+        res[0] = 6;
+        res[1] = 4;
+        */
+
+        /*
+        res[0] = 1;
+        res[1] = 2;
+        */
+
+        std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
+        //grid->globalRefine(2);
+
+        ////////////////////////////////////////////////////////////
+        // instantiate and run the concrete problem
+        ////////////////////////////////////////////////////////////
+
+        // specify dimensions of the low-permeable lens
+        GlobalPosition lowerLeftLens, upperRightLens;
+        lowerLeftLens[0] = 1.0;
+        lowerLeftLens[1] = 2.0;
+        upperRightLens[0] = 4.0;
+        upperRightLens[1] = 3.0;
+
+        // instantiate and run the concrete problem
+        TimeManager timeManager;
+        Problem problem(timeManager, grid->leafView(), lowerLeftLens, upperRightLens);
+        timeManager.init(problem, restartTime, dt, tEnd, restart);
+        timeManager.run();
+
+        // read the PrintParams parameter
+        bool printParams = true ;
+        typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+        if (ParameterTree::tree().hasKey("PrintParameters"))
+            printParams = GET_RUNTIME_PARAM(TypeTag, bool, PrintParameters);
+
+        if (printParams && mpiHelper.rank() == 0) {
+            Dumux::Parameters::print<TypeTag>();
+        }
+
+        return 0;
+
+#ifdef NDEBUG
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!\n";
+        throw;
+    }
+#endif // NDEBUG
+
+    return 3;
 }
