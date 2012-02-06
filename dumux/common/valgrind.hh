@@ -26,23 +26,29 @@
 #ifndef DUMUX_VALGRIND_HH
 #define DUMUX_VALGRIND_HH
 
-#ifndef HAVE_VALGRIND
-// make sure that the HAVE_VALGRIND macro is always defined
-#define HAVE_VALGRIND 0
-#endif
-
 #if __GNUC__ < 4 || (__GNUC__ == 4  && __GNUC_MINOR__ < 5)
 // do not do static_asserts for gcc < 4.5 (semantics changed, so old
 // GCCs will complain when using static_assert)
-#define static_assert(a, b)
+#  define static_assert(a, b)
 
 // do not do valgrind client requests for gcc < 4.5 (old GCCs do not
-// support anonymous template arguments which results in errors inside
-// the BoundaryTypes class)
+// support anonymous template arguments which results in errors for
+// BoundaryTypes)
+#  ifdef HAVE_VALGRIND
+#    undef HAVE_VALGRIND
+#  endif
+#endif // GCC < 4.5
+
+#ifndef HAVE_VALGRIND
+// make sure that the HAVE_VALGRIND macro is always defined
+#  define HAVE_VALGRIND 0
+#endif
+
+#if ! HAVE_VALGRIND
 namespace Valgrind
 {
-bool boolBlubb(bool value) { return value; }
-void voidBlubb() { }
+bool DUMUX_ALWAYS_INLINE boolBlubb(bool value) { return value; }
+void DUMUX_ALWAYS_INLINE voidBlubb() { }
 
 #define SetUndefined(t) voidBlubb()
 #define SetDefined(t) voidBlubb()
@@ -50,12 +56,9 @@ void voidBlubb() { }
 #define SetNoAccess(t) voidBlubb()
 #define Running() boolBlubb(false)
 }
-
 #else
 
-#if HAVE_VALGRIND
 #include <valgrind/memcheck.h>
-#endif // HAVE_VALGRIND
 
 namespace Valgrind
 {
@@ -86,8 +89,6 @@ inline bool Running()
  * \param value the object which valgrind should check
  */
 template <class T>
-inline bool CheckDefined(const T &value) DUMUX_ALWAYS_INLINE;
-template <class T>
 inline bool CheckDefined(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -98,8 +99,6 @@ inline bool CheckDefined(const T &value)
 #endif
 }
 
-template <class T>
-inline bool CheckDefined(const T *value, int size) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline bool CheckDefined(const T *value, int size)
 {
@@ -120,8 +119,6 @@ inline bool CheckDefined(const T *value, int size)
  * \param value The object which's memory valgrind should be told is undefined
  */
 template <class T>
-inline void SetUndefined(const T &value) DUMUX_ALWAYS_INLINE;
-template <class T>
 inline void SetUndefined(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -129,8 +126,6 @@ inline void SetUndefined(const T &value)
 #endif
 }
 
-template <class T>
-inline void SetUndefined(const T *value, int size) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline void SetUndefined(const T *value, int size)
 {
@@ -148,9 +143,6 @@ inline void SetUndefined(const T *value, int size)
  * \param value The object which's memory valgrind should consider as defined
  */
 template <class T>
-inline void SetDefined(const T &value) DUMUX_ALWAYS_INLINE;
-
-template <class T>
 inline void SetDefined(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -158,8 +150,6 @@ inline void SetDefined(const T &value)
 #endif
 }
 
-template <class T>
-inline void SetDefined(const T *value, int n) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline void SetDefined(const T *value, int n)
 {
@@ -177,8 +167,6 @@ inline void SetDefined(const T *value, int n)
  * \param value The object which's memory valgrind should complain if accessed
  */
 template <class T>
-inline void SetNoAccess(const T &value) DUMUX_ALWAYS_INLINE;
-template <class T>
 inline void SetNoAccess(const T &value)
 {
 #if !defined NDEBUG && HAVE_VALGRIND
@@ -186,8 +174,6 @@ inline void SetNoAccess(const T &value)
 #endif
 }
 
-template <class T>
-inline void SetNoAccess(const T *value, int n) DUMUX_ALWAYS_INLINE;
 template <class T>
 inline void SetNoAccess(const T *value, int n)
 {
