@@ -77,7 +77,7 @@
 
 #cmakedefine HAVE_ATTRIBUTE_UNUSED 1
 #if HAVE_ATTRIBUTE_UNUSED
-#  define DUMUX_UNUSED __attribute__((always_inline))
+#  define DUMUX_UNUSED __attribute__((unused))
 #else
 #  define DUMUX_UNUSED
 #endif
