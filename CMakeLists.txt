@@ -27,11 +27,12 @@ endif(COMMAND cmake_policy)
 find_package(DUNE_grid REQUIRED)
 find_package(DUNE_istl REQUIRED)
 find_package(DUNE_localfunctions REQUIRED)
-#find_package(DUNE_pdelab REQUIRED)
 find_package(DUNE_common REQUIRED)
 
 ##############
 # Find the optional packages
+find_package(DUNE_geometry)
+find_package(DUNE_pdelab)
 find_package(MPI)
 find_package(Boost)
 find_package(Alberta)
@@ -42,6 +43,7 @@ find_package(SuperLU)
 if(SUPERLU_FOUND)
   set(SUPERLU_CPPFLAGS "-I${SUPERLU_INCLUDE_DIRS} -DENABLE_SUPERLU")
   set(SUPERLU_LIBS "-L${SUPERLU_LIBRARIES} -lsuperlu -L${BLAS_LIBRARIES} -lblas")
+  #set(SUPERLU_LIBS "${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}")
   #define HAVE_MEM_USAGE_T_EXPANSIONS 1
 endif(SUPERLU_FOUND)
 
@@ -214,10 +216,12 @@ CHECK_CXX_SOURCE_COMPILES("
 # -> for TARGET_LINK_LIBRARIES
 set(DumuxLinkLibraries 
 #    "dumux" # the DUMUX library. CMake replaces this by the proper file location
-    ${DUNE_grid_LIBRARIES}
     ${DUNE_common_LIBRARIES}
+    ${DUNE_geometry_LIBRARIES}
+    ${DUNE_grid_LIBRARIES}
     ${DUNE_mux_LIBRARIES}
-    ${Boost_LIBRARIES})
+    ${Boost_LIBRARIES}
+    "-lm")
 
 # -> for LINK_DIRECTORIES
 set(DumuxLinkDirectories ${Boost_LIBRARY_DIRS})
@@ -227,6 +231,7 @@ set(DumuxIncludeDirectories
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}
     ${DUNE_grid_INCLUDE_DIRS}
+    ${DUNE_geometry_INCLUDE_DIRS}
     ${DUNE_common_INCLUDE_DIRS}
     ${DUNE_istl_INCLUDE_DIRS}
     ${DUNE_localfunctions_INCLUDE_DIRS}
@@ -381,3 +386,9 @@ add_test(test_dec2p2c bin/runTest.sh test/decoupled/2p2c/test_dec2p2c-reference.
 
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
+
+if(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
+  add_test(test_stokes test/freeflow/stokes/test_stokes)
+  add_test(test_stokes2c test/freeflow/stokes2c/test_stokes2c)
+  add_test(test_stokes2cni test/freeflow/stokes2cni/test_stokes2cni)
+endif(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
