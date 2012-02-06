@@ -67,11 +67,12 @@ private:
     Dune::PersistentContainer<Grid, AdaptedValues> adaptationMap_;
 
 public:
-    //! Constructs a VariableClass object
+    //! Constructs an adaptive VariableClass object
     /**
+     * In addition to providing a storage object for cell-centered Methods, this class provides
+     * mapping functionality to adapt the grid.
+     *
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     *  @param codim codimension of the entity of which data has to be strored
-     *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
     VariableClassAdaptive(const GridView& gridView) :
         ParentType(gridView), grid_(gridView.grid()), adaptationMap_(grid_, 0)
@@ -83,6 +84,9 @@ public:
      *
      * To reconstruct the solution in father elements, problem properties might
      * need to be accessed.
+     * From upper level on downwards, the old solution is stored into an container
+     * object, before the grid is adapted. Father elements hold averaged information
+     * from the son cells for the case of the sons being coarsened.
      *
      * @param problem The current problem
      */
@@ -106,7 +110,7 @@ public:
 
                     CellData& cellData = this->cellData(indexI);
 
-                    cellData.getAdaptionValues(adaptedValues, problem);
+                    cellData.storeAdaptionValues(adaptedValues, problem);
 
                     adaptedValues.count = 1;
                 }
@@ -115,7 +119,7 @@ public:
                 {
                     ElementPointer epFather = eIt->father();
                     AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
-                    CellData::getAdaptionValues(adaptedValues, adaptedValuesFather, problem);
+                    CellData::storeAdaptionValues(adaptedValues, adaptedValuesFather, problem);
                     adaptedValuesFather.count += 1;
                 }
             }
@@ -127,6 +131,11 @@ public:
      *
      * To reconstruct the solution in father elements, problem properties might
      * need to be accessed.
+     * Starting from the lowest level, the old solution is mapped on the new grid:
+     * Where coarsened, new cells get information from old father element.
+     * Where refined, a new solution is reconstructed from the old father cell,
+     * and then a new son is created. That is then stored into the general data
+     * structure (CellData).
      *
      * @param problem The current problem
      */
@@ -158,21 +167,23 @@ public:
                     if (eIt.level() > 0)
                     {
                         ElementPointer epFather = eIt->father();
-                        AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
+
+                        // create new entry: reconstruct from adaptationMap_[*father] to a new
+                        // adaptationMap_[*son]
+                        CellData::reconstructAdaptionValues(adaptationMap_, *epFather, *eIt, problem);
+
+                        // access new son
+                        AdaptedValues& adaptedValues = adaptationMap_[*eIt];
+                        adaptedValues.count = 1;
+
+                        // if we are on leaf, store reconstructed values of son in CellData object
                         if (eIt->isLeaf())
                         {
+                            // acess new CellData object
                             int newIdxI = this->index(*eIt);
-
                             CellData& cellData = this->cellData(newIdxI);
 
-                            cellData.setAdaptionValues(adaptedValuesFather, problem);
-                        }
-                        else
-                        {
-                            //create new entry
-                            AdaptedValues& adaptedValues = adaptationMap_[*eIt];
-                            CellData::setAdaptionValues(adaptationMap_, *epFather, *eIt, problem);
-                            adaptedValues.count = 1;
+                            cellData.setAdaptionValues(adaptedValues, problem);
                         }
                     }
                 }

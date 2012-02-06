@@ -77,7 +77,11 @@ private:
     bool isFront_;
 
 public:
-
+    //! Collection of variables that have to be mapped if the grid is adapted
+    /**
+     * For an non-compositional two-phase model, the following data has to be
+     * transferred to a new grid.
+     */
     struct AdaptedValues
     {
         Scalar saturationW;
@@ -99,11 +103,9 @@ public:
         }
     };
 
-    //! Constructs a VariableClass object
+    //! Constructs an adaptive CellData object
     /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
-
     CellData2PAdaptive():
         isFront_(false)
     {}
@@ -123,7 +125,15 @@ public:
         isFront_ = true;
     }
 
-    void getAdaptionValues(AdaptedValues& adaptedValues, const Problem& problem)
+    //! Stores values to be adapted in an adaptedValues container
+    /**
+     * Stores values to be adapted from the current CellData objects into
+     * the adaptation container in order to be mapped on a new grid.
+     *
+     * @param adaptedValues Container for model-specific values to be adapted
+     * @param problem The problem
+     */
+    void storeAdaptionValues(AdaptedValues& adaptedValues, const Problem& problem)
     {
         adaptedValues.saturationW = this->saturation(wPhaseIdx);
         adaptedValues.saturationNW = this->saturation(nPhaseIdx);
@@ -132,8 +142,17 @@ public:
         adaptedValues.volCorr = this->volumeCorrection();
         adaptedValues.front = isFront_;
     }
-
-    static void getAdaptionValues(AdaptedValues& adaptedValues, AdaptedValues& adaptedValuesFather, const Problem& problem)
+    //! Stores sons entries into father element for averageing
+    /**
+     * Sum up the adaptedValues (sons values) into father element. We store from leaf
+     * upwards, so sons are stored first, then cells on the next leaf (=fathers)
+     * can be averaged.
+     *
+     * @param adaptedValues Container for model-specific values to be adapted
+     * @param adaptedValuesFather Values to be adapted of father cell
+     * @param problem The problem
+     */
+    static void storeAdaptionValues(AdaptedValues& adaptedValues, AdaptedValues& adaptedValuesFather, const Problem& problem)
     {
         adaptedValuesFather.saturationW += adaptedValues.saturationW / adaptedValues.count;
         adaptedValuesFather.saturationNW += adaptedValues.saturationNW / adaptedValues.count;
@@ -141,7 +160,15 @@ public:
         adaptedValuesFather.pressNW += adaptedValues.pressNW / adaptedValues.count;
         adaptedValuesFather.volCorr += adaptedValues.volCorr / adaptedValues.count;
     }
-
+    //! Set adapted values in CellData
+    /**
+     * This methods stores reconstructed values into the cellData object, by
+     * this setting a newly mapped solution to the storage container of the
+     * decoupled models.
+     *
+     * @param adaptedValues Container for model-specific values to be adapted
+     * @param problem The problem
+     */
     void setAdaptionValues(AdaptedValues& adaptedValues, const Problem& problem)
     {
         this->setSaturation(wPhaseIdx, adaptedValues.saturationW / adaptedValues.count);
@@ -152,11 +179,22 @@ public:
         isFront_ = adaptedValues.front;
     }
 
-    static void setAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptionMap_,
+    //! Reconstructs sons entries from data of father cell
+    /**
+     * Reconstructs an new solution from a father cell into for a newly
+     * generated son cell. New cell is stored into the global
+     * adaptationMap.
+     *
+     * @param adaptionMap Global map storing all values to be adapted
+     * @param father Entity Pointer to the father cell
+     * @param son Entity Pointer to the newly created son cell
+     * @param problem The problem
+     */
+    static void reconstructAdaptionValues(Dune::PersistentContainer<Grid, AdaptedValues>& adaptionMap,
             const Element& father, const Element& son, const Problem& problem)
     {
-        AdaptedValues& adaptedValues = adaptionMap_[son];
-        AdaptedValues& adaptedValuesFather = adaptionMap_[father];
+        AdaptedValues& adaptedValues = adaptionMap[son];
+        AdaptedValues& adaptedValuesFather = adaptionMap[father];
         adaptedValues.saturationW = adaptedValuesFather.saturationW / adaptedValuesFather.count;
         adaptedValues.saturationNW = adaptedValuesFather.saturationNW / adaptedValuesFather.count;
         adaptedValues.pressW = adaptedValuesFather.pressW / adaptedValuesFather.count;
