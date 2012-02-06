@@ -244,7 +244,6 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
     {
         // get cell infos
         int globalIdxI = problem().variables().index(*eIt);
-        const GlobalPosition globalPos = eIt->geometry().center();
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
         // some variables for time step calculation

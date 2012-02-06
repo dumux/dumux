@@ -156,7 +156,6 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     {
         // get cell infos
         int globalIdxI = problem().variables().index(*eIt);
-        const GlobalPosition globalPos = eIt->geometry().center();
         CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
         if(impet or cellDataI.subdomain()==2)   // estimate only necessary in subdomain
