@@ -101,6 +101,9 @@ public:
         Valgrind::CheckDefined(diffCoeff_);
     };
 
+    /*!
+     * \copydoc BoxModel::completeFluidState
+     */
     static void completeFluidState(const PrimaryVariables& primaryVars,
                                    const Problem& problem,
                                    const Element& element,

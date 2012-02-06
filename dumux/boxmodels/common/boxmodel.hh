@@ -734,6 +734,20 @@ public:
     bool onBoundary(const Element &elem, int vIdx) const
     { return onBoundary(vertexMapper().map(elem, vIdx, dim)); }
 
+    /*!
+     * \brief Fill the fluid state according to the primary variables. 
+     * 
+     * Taking the information from the primary variables, 
+     * the fluid state is filled with every information that is 
+     * necessary to evaluate the model's local residual. 
+     * 
+     * \param primaryVariables The primary variables of the model. 
+     * \param problem The problem at hand. 
+     * \param element The current element. 
+     * \param elementGeometry The finite volume element geometry. 
+     * \param scvIdx The index of the subcontrol volume. 
+     * \param fluidState The fluid state to fill. 
+     */
     template <class FluidState>
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,

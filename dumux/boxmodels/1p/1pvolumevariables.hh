@@ -91,6 +91,9 @@ public:
         asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
     };
 
+    /*!
+     * \copydoc BoxModel::completeFluidState
+     */
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
