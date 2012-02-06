@@ -82,10 +82,13 @@ NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of 
 #include <dumux/common/timemanager.hh>
 #include <dumux/common/boundarytypes.hh>
 #include<dumux/common/boundaryconditions.hh>
-#include "variableclass.hh"
 
 namespace Dumux
 {
+  
+template<class TypeTag>
+class VariableClass;
+
 namespace Properties
 {
 //////////////////////////////////////////////////////////////////

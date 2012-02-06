@@ -29,6 +29,7 @@
 #ifndef DUMUX_INFILTRATION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INFILTRATION_SPATIAL_PARAMETERS_HH
 
+#include <dumux/boxmodels/3p3c/3p3cindices.hh>
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3pparams.hh>

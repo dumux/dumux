@@ -35,6 +35,7 @@
 
 namespace Dumux
 {
+  
 /*!
  * \ingroup Sequential
  */

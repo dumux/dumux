@@ -134,7 +134,7 @@ public:
      * \param gridView The grid view
      */
     ColumnProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+        : ParentType(timeManager, gridView), eps_(1e-6)
     {
         FluidSystem::init();
     }
@@ -361,7 +361,7 @@ private:
 
     }
 
-    static constexpr Scalar eps_ = 1e-6;
+    const Scalar eps_;
 };
 } //end namespace
 
