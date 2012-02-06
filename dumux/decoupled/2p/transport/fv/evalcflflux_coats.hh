@@ -465,7 +465,7 @@ public:
     }
 
     EvalCflFluxCoats(Problem& problem) :
-        ParentType(problem), problem_(problem)
+        ParentType(problem), problem_(problem), eps_(5e-3)
     {
         reset();
     }
@@ -479,7 +479,7 @@ private:
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
-    static constexpr Scalar eps_ = 5e-3;
+    const Scalar eps_;
 };
 
 }

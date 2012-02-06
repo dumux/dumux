@@ -104,22 +104,13 @@ public:
 SET_TYPE_PROP(Pressure, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );
 
 //! set the default for the reduction of the initial residual
-SET_PROP(Pressure, LinearSolverResidualReduction)
-{public:
-    static constexpr double value = 1e-13;
-};
+SET_SCALAR_PROP(Pressure, LinearSolverResidualReduction, 1e-13);
 
 //! set the default number of maximum iterations for the linear solver
-SET_PROP(Pressure, LinearSolverMaxIterations)
-{public:
-    static constexpr int value = 500;
-};
+SET_INT_PROP(Pressure, LinearSolverMaxIterations, 500);
 
 //! set the default number of maximum iterations for the linear solver
-SET_PROP(Pressure, LinearSolverBlockSize)
-{public:
-    static constexpr int value = 1;
-};
+SET_INT_PROP(Pressure, LinearSolverBlockSize, 1);
 
 SET_TYPE_PROP( Pressure, Velocity, VelocityDefault<TypeTag>);
 

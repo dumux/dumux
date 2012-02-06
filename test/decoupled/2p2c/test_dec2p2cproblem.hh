@@ -158,7 +158,7 @@ typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
 TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
-ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight)
+ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight), eps_(1e-6), depthBOR_(1000.0)
 {
 //    this->setOutputInterval(20);
     // initialize the tables of the fluid system
@@ -321,8 +321,8 @@ private:
 GlobalPosition lowerLeft_;
 GlobalPosition upperRight_;
 
-static constexpr Scalar eps_ = 1e-6;
-static constexpr Scalar depthBOR_ = 1000;
+const Scalar eps_;
+const Scalar depthBOR_;
 };
 } //end namespace
 

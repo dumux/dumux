@@ -148,7 +148,7 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
 
 public:
     TestTransportProblem(TimeManager &timeManager, const GridView &gridView) :
-        ParentType(timeManager, gridView)
+        ParentType(timeManager, gridView), eps_(1e-6)
     {
         GlobalPosition vel(0);
         vel[0] = 1e-5;
@@ -272,7 +272,7 @@ public:
     }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;
+    const Scalar eps_;
 };
 } //end namespace
 

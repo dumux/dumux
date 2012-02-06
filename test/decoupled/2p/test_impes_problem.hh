@@ -162,7 +162,7 @@ typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
 
 public:
 TestIMPESProblem(TimeManager &timeManager, const GridView &gridView) :
-ParentType(timeManager, gridView)
+ParentType(timeManager, gridView), eps_(1e-6)
 {
 }
 
@@ -279,7 +279,7 @@ void initial(PrimaryVariables &values,
 
 private:
 
-static constexpr Scalar eps_ = 1e-6;
+const Scalar eps_;
 };
 } //end namespace
 

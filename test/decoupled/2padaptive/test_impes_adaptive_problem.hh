@@ -154,7 +154,7 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
 
 public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
-            ParentType(timeManager, gridView)
+            ParentType(timeManager, gridView), eps_(1e-6)
     {
         this->setOutputInterval(10);
     }
@@ -269,7 +269,7 @@ public:
     }
 
 private:
-    static constexpr Scalar eps_ = 1e-6;
+    const Scalar eps_;
 };
 } //end namespace
 
