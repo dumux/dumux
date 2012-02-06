@@ -1,4 +1,6 @@
-#ifndef CONFIG_H
+#ifdef CONFIG_H
+#  error "config.h included more than once!"
+#endif
 #define CONFIG_H
 
 #define DUNE_MINIMAL_DEBUG_LEVEL 4
@@ -11,15 +13,12 @@
 #cmakedefine HAVE_DUNE_LOCALFUNCTIONS 1
 #cmakedefine HAVE_DUNE_PDELAB 1
 
-#ifdef ENABLE_MPI
 #cmakedefine HAVE_MPI 1
-#endif
 
-#ifdef ENABLE_UG
 #cmakedefine HAVE_UG 1
-#ifdef ENABLE_MPI
-#define ModelP
-#endif
+#if HAVE_MPI && HAVE_UG
+// use parallel UG if both UG and MPI are available
+#   define ModelP
 #endif
 
 #ifdef ENABLE_ALUGRID
@@ -55,10 +54,30 @@
 #cmakedefine HAVE_MALLOC_H 1
 #cmakedefine HAVE_VALGRIND 1
 
-#define DUMUX_DEPRECATED __attribute__((deprecated))
-#define DUMUX_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+#cmakedefine HAVE_ATTRIBUTE_DEPRECATED 1
+#if HAVE_ATTRIBUTE_DEPRECATED
+#  define DUMUX_DEPRECATED __attribute__((deprecated))
+#else
+#  define DUMUX_DEPRECATED
+#endif
 
-#define DUNE_DEPRECATED __attribute__((deprecated))
-#define DUNE_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+#cmakedefine HAVE_ATTRIBUTE_DEPRECATED_MSG 1
+#if HAVE_ATTRIBUTE_DEPRECATED_MSG
+#  define DUMUX_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+#else
+#  define DUMUX_DEPRECATED_MSG DUMUX_DEPRECATED
+#endif
 
-#endif // CONFIG_H
+#cmakedefine HAVE_ATTRIBUTE_ALWAYS_INLINE 1
+#if HAVE_ATTRIBUTE_ALWAYS_INLINE
+#  define DUMUX_ALWAYS_INLINE __attribute__((always_inline))
+#else
+#  define DUMUX_ALWAYS_INLINE
+#endif
+
+#cmakedefine HAVE_ATTRIBUTE_UNUSED 1
+#if HAVE_ATTRIBUTE_UNUSED
+#  define DUMUX_UNUSED __attribute__((always_inline))
+#else
+#  define DUMUX_UNUSED
+#endif
