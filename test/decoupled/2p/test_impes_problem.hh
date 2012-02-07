@@ -45,6 +45,10 @@
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 
+//following includes are only needed if a global pressure formulation is chosen! Then only a total velocity can be reconstructed for the transport step
+#include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
+#include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
+
 #include "test_impes_spatialparams.hh"
 
 #include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
@@ -53,7 +57,7 @@ namespace Dumux
 {
 
 template<class TypeTag>
-class TestIMPESProblem;
+class IMPESTestProblem;
 
 //////////
 // Specify the properties
@@ -70,17 +74,29 @@ SET_PROP(IMPESTestProblem, Grid)
 };
 
 // Set the problem property
-SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::TestIMPESProblem<TTAG(IMPESTestProblem)>);
+SET_TYPE_PROP(IMPESTestProblem, Problem, Dumux::IMPESTestProblem<TypeTag>);
 
-
+////////////////////////////////////////////////////////////////////////
+//Switch to a p_n-S_w formulation
+//
 //SET_INT_PROP(IMPESTestProblem, Formulation,
 //        DecoupledTwoPCommonIndices::pnSn);
+//
+////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////
+//Switch to a p_global-S_w formulation
+//
 //SET_INT_PROP(IMPESTestProblem, Formulation,
 //        DecoupledTwoPCommonIndices::pGlobalSw);
-
-//SET_INT_PROP(IMPESTestProblem, VelocityFormulation,
-//        DecoupledTwoPCommonIndices::velocityTotal);
+//
+//Define the capillary pressure term in the transport equation -> only needed in case of a p_global-S_w formulation!
+//SET_TYPE_PROP(IMPESTestProblem, CapillaryFlux, CapillaryDiffusion<TypeTag>);
+//
+//Define the gravity term in the transport equation -> only needed in case of a p_global-S_w formulation!
+//SET_TYPE_PROP(IMPESTestProblem, GravityFlux, GravityPart<TypeTag>);
+//
+////////////////////////////////////////////////////////////////////////
 
 // Set the wetting phase
 SET_PROP(IMPESTestProblem, WettingPhase)
@@ -121,8 +137,8 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
  * <tt>./test_impes 1e8</tt>,
  * where the argument defines the simulation endtime.
  */
-template<class TypeTag = TTAG(IMPESTestProblem)>
-class TestIMPESProblem: public IMPESProblem2P<TypeTag>
+template<class TypeTag>
+class IMPESTestProblem: public IMPESProblem2P<TypeTag>
 {
 typedef IMPESProblem2P<TypeTag> ParentType;
 typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -161,7 +177,7 @@ typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
 public:
-TestIMPESProblem(TimeManager &timeManager, const GridView &gridView) :
+IMPESTestProblem(TimeManager &timeManager, const GridView &gridView) :
 ParentType(timeManager, gridView), eps_(1e-6)
 {
 }
