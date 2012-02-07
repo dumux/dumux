@@ -61,7 +61,7 @@ public:
     /*!
      * \brief Called after each Newton update
      *
-     * \param u The current global solution vector
+     * \param uCurrentIter The current global solution vector
      * \param uLastIter The previous global solution vector
      */
     void newtonEndStep(SolutionVector &uCurrentIter,

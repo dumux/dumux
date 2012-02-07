@@ -179,7 +179,7 @@ public:
     }
 
     /*!
-     * \copydoc BoxModel::completeFluidState
+     * \@copydoc BoxModel::completeFluidState
      */
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,

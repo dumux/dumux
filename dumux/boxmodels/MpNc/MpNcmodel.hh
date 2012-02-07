@@ -102,7 +102,6 @@ namespace Dumux
  *
  * The model assumes thermodynamic equilibrium and uses the following
  * primary variables:
- *
  * - The componentfugacities \f$f^1, \dots, f^{N}\f$
  * - The pressure of the first phase \f$p_1\f$
  * - The saturations of the first \f$M-1\f$ phases \f$S_1, \dots, S_{M-1}\f$

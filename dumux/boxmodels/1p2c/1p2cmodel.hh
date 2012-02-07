@@ -29,7 +29,6 @@
  *        Adaption of the BOX scheme to the one-phase two-component flow model.
  */
 
-
 #ifndef DUMUX_ONEP_TWOC_MODEL_HH
 #define DUMUX_ONEP_TWOC_MODEL_HH
 

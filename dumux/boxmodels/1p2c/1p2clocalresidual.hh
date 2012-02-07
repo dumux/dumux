@@ -148,6 +148,7 @@ public:
      *
      *        \param flux The flux over the SCV (sub-control-volume) face for each component
      *        \param faceId The index of the considered face of the sub control volume
+     *        \param onBoundary If the considered face exists at the boundary
      */
     void computeFlux(PrimaryVariables &flux, int faceId, bool onBoundary=false) const
     {
