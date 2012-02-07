@@ -99,7 +99,7 @@ public:
      */
     Scalar jToY(int j) const
     {
-        assert(0 <= j && j < m_);
+        assert(0 <= j && j < n_);
 
         return yMin_ + j*(yMax_ - yMin_)/(n_ - 1);
     };
