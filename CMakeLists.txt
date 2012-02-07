@@ -356,6 +356,11 @@ file(COPY test/decoupled/2p/test_impes-reference.vtu DESTINATION test/decoupled/
 file(COPY test/decoupled/2p2c/test_dec2p2c-reference.vtu DESTINATION test/decoupled/2p2c)
 file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION test/common/generalproblem)
 file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION test/common/generalproblem)
+if(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
+  file(COPY test/freeflow/stokes/stokes-reference.vtu DESTINATION test/freeflow/stokes)
+  file(COPY test/freeflow/stokes2c/stokes2c-reference.vtu DESTINATION test/freeflow/stokes2c)
+  file(COPY test/freeflow/stokes2cni/stokes2cni-reference.vtu DESTINATION test/freeflow/stokes2cni)
+endif(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
 
 # set up CTest 
 enable_testing()
@@ -388,7 +393,7 @@ add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
 if(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
-  add_test(test_stokes test/freeflow/stokes/test_stokes test/freeflow/stokes/grids/test_stokes.dgf 10 1e-2)
-  add_test(test_stokes2c test/freeflow/stokes2c/test_stokes2c test/freeflow/stokes2c/grids/test_stokes2c.dgf 10 1e-2)
-  add_test(test_stokes2cni test/freeflow/stokes2cni/test_stokes2cni test/freeflow/stokes2cni/grids/test_stokes2cni.dgf 0.1 5e-3)
+  add_test(test_stokes bin/runTest.sh test/freeflow/stokes/stokes-reference.vtu stokes-00006.vtu test/freeflow/stokes/test_stokes test/freeflow/stokes/grids/test_stokes.dgf 10 1)
+  add_test(test_stokes2c bin/runTest.sh test/freeflow/stokes2c/stokes2c-reference.vtu stokes2c-00006.vtu test/freeflow/stokes2c/test_stokes2c test/freeflow/stokes2c/grids/test_stokes2c.dgf 10 1)
+  add_test(test_stokes2cni bin/runTest.sh test/freeflow/stokes2cni/stokes2cni-reference.vtu stokes2cni-00006.vtu test/freeflow/stokes2cni/test_stokes2cni test/freeflow/stokes2cni/grids/test_stokes2cni.dgf 10 1)
 endif(SUPERLU_FOUND AND DUNE_pdelab_FOUND)

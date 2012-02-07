@@ -25,6 +25,11 @@
 
 int main(int argc, char** argv)
 {
+#if HAVE_SUPERLU
     typedef TTAG(StokesTestProblem) ProblemTypeTag;
     return Dumux::startFromDGF<ProblemTypeTag>(argc, argv);
+#else
+    std::cout << "No SuperLU installed. Stokes currently only works with SuperLU." << std::endl;
+    return 1;
+#endif
 }
