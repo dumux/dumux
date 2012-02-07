@@ -30,14 +30,19 @@
 /**
  * @file
  * @brief  Finite Volume Diffusion Model
- * @author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
+ * @author Benjamin Faigle, Bernd Flemisch, Markus Wolff
  */
 
 namespace Dumux
 {
 //! The finite volume base class for the solution of a pressure equation
-/*! \ingroup multiphase
- *  TODO:
+/*! \ingroup IMPET
+ *  Base class for finite volume (FV) implementations of a diffusion-like pressure equation.
+ *  The class provides a methods for assembling of the global matrix and right hand side (RHS) as well as for solving the system of equations.
+ *  Additionally, it contains the global matrix, the RHS-vector as well as the solution vector.
+ *  A certain pressure equation defined in the implementation of this base class must be splitted into a storage term, a flux term and a source term.
+ *  Corresponding functions (<tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>) have to be defined in the implementation.
+ *
  * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVPressure
@@ -70,50 +75,109 @@ template<class TypeTag> class FVPressure
 
 protected:
 
+    //! Indices of matrix and rhs entries
+    /**
+    *During the assembling of the global system of equations get-functions are called (getSource(), getFlux(), etc.), which return global matrix or right hand side entries in a vector. These can be accessed using following indices:
+    */
     enum
     {
-        rhs = 1,
-        matrix = 0
+        rhs = 1,//!<index for the right hand side entry
+        matrix = 0//!<index for the global matrix entry
 
     };
 
-    //initializes the matrix to store the system of equations
+    //!Initialize the global matrix of the system of equations to solve
     void initializeMatrix();
 
-    //function which assembles the system of equations to be solved
+    //! Function which assembles the system of equations to be solved
+    /* This function assembles the Matrix and the right hand side (RHS) vector to solve for
+     * a pressure field with a Finite-Volume (FV) discretization. Implementations of this base class have to provide the methods
+     * <tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
+     *
+     * \param first Indicates if function is called at the initialization step or during the simulation (If <tt>first</tt> is <tt>true</tt>, no pressure field of previous iterations is required)
+     */
     void assemble(bool first);
 
-    //solves the system of equations to get the spatial distribution of the pressure
+    //!Solves the global system of equations to get the spatial distribution of the pressure
     void solve();
 
+    //!Returns the vector containing the pressure solution
     ScalarSolution& pressure()
     {   return pressure_;}
 
+    //!Returns the vector containing the pressure solution
     const ScalarSolution& pressure() const
     {   return pressure_;}
-    //@}
+
 public:
-    void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
+    //!Function which calculates the source entry
+    /**
+     * Function computes the source term and writes it to the corresponding entry of the entry vector
+     *
+     * \param entry Vector containing return values of the function
+     * \param element Grid element
+     * \param cellData Object containing all model relevant cell data
+     * \param first Indicates if function is called in the initialization step or during the simulation
+     */
+    void getSource(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
 
-    void getStorage(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
+    //!Function which calculates the storage entry
+    /**
+     * Function computes the storage term and writes it to the corresponding entry of the entry vector
+     *
+     * \param entry Vector containing return values of the function
+     * \param element Grid element
+     * \param cellData Object containing all model relevant cell data
+     * \param first Indicates if function is called in the initialization step or during the simulation
+     */
+    void getStorage(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
 
-    void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
+    //!Function which calculates the flux entry
+    /**
+     * Function computes the inter-cell flux term and writes it to the corresponding entry of the entry vector
+     *
+     * \param entry Vector containing return values of the function
+     * \param element Grid element
+     * \param cellData Object containing all model relevant cell data
+     * \param first Indicates if function is called in the initialization step or during the simulation
+     */
+    void getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection, const CellData& cellData, const bool first);
 
+    //!Function which calculates the boundary flux entry
+    /**
+     * Function computes the boundary-flux term and writes it to the corresponding entry of the entry vector
+     *
+     * \param entry Vector containing return values of the function
+     * \param intersection Intersection of two grid elements
+     * \param cellData Object containing all model relevant cell data
+     * \param first Indicates if function is called in the initialization step or during the simulation
+     */
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
             const Intersection&, const CellData&, const bool);
 
-    //! Public acess function for the primary variable pressure
+    //! Public access function for the primary pressure variable
+    /**
+     * Function returns the cell pressure value at index <tt>globalIdx</tt>
+     *
+     * \param globalIdx Global index of a grid cell
+     */
     const Scalar pressure(int globalIdx) const
     {   return pressure_[globalIdx];}
 
-    //initialize pressure model
+    //!Initialize pressure model
+    /**
+     * Function initializes the sparse matrix to solve the global system of equations and sets/calculates the initial pressure
+     */
     void initialize()
     {
         initializeMatrix();
         pressure_ = 0;
     }
 
-    //pressure solution routine: update estimate for secants, assemble, solve.
+    //!Pressure update
+    /**
+     * Function reassembles the system of equations and solves for a new pressure solution.
+     */
     void update()
     {
         assemble(false); Dune::dinfo << "pressure calculation"<< std::endl;
@@ -122,24 +186,38 @@ public:
         return;
     }
 
-    /*! \name general methods for serialization, output */
-    //@{
-    // serialization methods
-    //! Function needed for restart option.
+    //! Function for serialization of the pressure field.
+    /** Function needed for restart option. Writes the pressure of a grid element to a restart file.
+     *
+     *  \param outstream Stream into the restart file.
+     *  \param element Grid element
+     */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int globalIdx = problem_.variables().index(element);
         outstream << pressure_[globalIdx][0];
     }
 
+    //! Function for deserialization of the pressure field.
+    /** Function needed for restart option. Reads the pressure of a grid element from a restart file.
+     *
+     *  \param instream Stream from the restart file.
+     *  \param element Grid element
+     */
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = problem_.variables().index(element);
         instream >> pressure_[globalIdx][0];
     }
-    //@}
 
-    /*! set a pressure to be fixed at a certain cell */
+    //! Set a pressure to be fixed at a certain cell.
+    /**
+     *Allows to fix a pressure somewhere (at one certain cell) in the domain. This can be necessary e.g. if only Neumann boundary conditions are defined.
+     *The pressure is fixed until the <tt>unsetFixPressureAtIndex()</tt> function is called
+     *
+     * \param pressure Pressure value at globalIdx
+     * \param globalIdx Global index of a grid cell
+     */
     void setFixPressureAtIndex(Scalar pressure, int globalIdx)
     {
         hasFixPressureAtIndex_ = true;
@@ -147,7 +225,12 @@ public:
         idxFixPressureAtIndex_ = globalIdx;
     }
 
-    /*! unset a fixed pressure at a certain cell */
+    //! Reset the fixed pressure state
+    /**
+     * No pressure is fixed inside the domain until <tt>setFixPressureAtIndex()</tt> function is called again.
+     *
+     * \param globalIdx Global index of a grid cell
+     */
     void unsetFixPressureAtIndex(int globalIdx)
     {
         hasFixPressureAtIndex_ = false;
@@ -157,7 +240,7 @@ public:
 
     //! Constructs a FVPressure object
     /**
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVPressure(Problem& problem) :
     problem_(problem), size_(problem.gridView().size(0)),
@@ -184,14 +267,15 @@ private:
     std::string solverName_;
     std::string preconditionerName_;
 protected:
-    Matrix A_;
-    RHSVector f_;
+    Matrix A_;//!<Global stiffnes matrix (sparse matrix which is build by the <tt> initializeMatrix()</tt> function)
+    RHSVector f_;//!<Right hand side vector
+private:
     Scalar fixPressureAtIndex_;
     Scalar idxFixPressureAtIndex_;
     bool hasFixPressureAtIndex_;
 };
 
-//! initializes the matrix to store the system of equations
+//!Initialize the global matrix of the system of equations to solve
 template<class TypeTag>
 void FVPressure<TypeTag>::initializeMatrix()
 {
@@ -243,13 +327,12 @@ void FVPressure<TypeTag>::initializeMatrix()
     return;
 }
 
-//! function which assembles the system of equations to be solved
-/* This function assembles the Matrix and the RHS vectors to solve for
- * a pressure field with an Finite-Volume Discretization in an implicit
- * fasion. In the implementations to this base class, the methods
- * getSource(), getStorage(), getFlux() and getFluxOnBoundary() have to
- * be provided.
- * \param first Flag if pressure field is unknown
+//! Function which assembles the system of equations to be solved
+/* This function assembles the Matrix and the right hand side (RHS) vector to solve for
+ * a pressure field with a Finite-Volume (FV) discretization. Implementations of this base class have to provide the methods
+ * <tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
+ *
+ * \param first Indicates if function is called at the initialization step or during the simulation (If <tt>first</tt> is <tt>true</tt>, no pressure field of previous iterations is required)
  */
 template<class TypeTag>
 void FVPressure<TypeTag>::assemble(bool first)
@@ -338,7 +421,7 @@ void FVPressure<TypeTag>::assemble(bool first)
     return;
 }
 
-//! solves the system of equations to get the spatial distribution of the pressure
+//!Solves the global system of equations to get the spatial distribution of the pressure
 template<class TypeTag>
 void FVPressure<TypeTag>::solve()
 {
