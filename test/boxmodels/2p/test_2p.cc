@@ -259,7 +259,7 @@ int main(int argc, char** argv)
 
         // read the PrintParams parameter
         bool printParams = true ;
-        typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+        typedef GET_PROP(TypeTag, ParameterTree) ParameterTree;
         if (ParameterTree::tree().hasKey("PrintParameters"))
             printParams = GET_RUNTIME_PARAM(TypeTag, bool, PrintParameters);
 

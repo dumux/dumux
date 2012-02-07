@@ -27,7 +27,6 @@
  * \brief test for the two-phase box model
  */
 #include "config.h"
-
 #include "generallensproblem.hh"
 
 #include <dune/grid/common/gridinfo.hh>

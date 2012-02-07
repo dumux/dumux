@@ -442,7 +442,7 @@ int startWithParameters_(int argc,
         std::ifstream parameterFile;
 
         // check whether the parameter file exists.
-        parameterFile.open(inputFileName);
+        parameterFile.open(inputFileName.c_str());
         if (not parameterFile.is_open()){
             std::cout<< "\n\t -> Could not open file"
                      << inputFileName
@@ -666,7 +666,7 @@ int startWithParametersProvideMyOwnGrid_(int argc,
         std::ifstream parameterFile;
 
         // check whether the parameter file exists.
-        parameterFile.open(inputFileName);
+        parameterFile.open(inputFileName.c_str());
         if (not parameterFile.is_open()){
             std::cout<< "\n\t -> Could not open file"
                      << inputFileName
