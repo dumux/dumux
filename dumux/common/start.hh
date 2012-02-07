@@ -516,7 +516,7 @@ int startWithParameters_(int argc,
     if (printParams && mpiHelper.rank() == 0) {
         Dumux::Parameters::print<TypeTag>();
     }
-    return 1;
+    return 0;
 
 
 }
