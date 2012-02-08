@@ -31,6 +31,7 @@ mark_as_advanced(SUPERLU_INCLUDE_DIRS SUPERLU_LIBRARIES)
 if(SUPERLU_FOUND)
   set(SUPERLU_INCLUDE_DIRS ${SUPERLU_INCLUDE_DIR})
   set(SUPERLU_LIBRARIES    ${SUPERLU_LIBRARY})
+  set(SUPERLU_FOUND ENABLE_SUPER_LU)
   # log result
   file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
     "Determing location of SuperLU succeded:\n"
@@ -43,5 +44,3 @@ else(SUPERLU_FOUND)
     "Include directory: ${SUPERLU_INCLUDE_DIR}\n"
     "Library directory: ${SUPERLU_LIBRARY}\n\n")
 endif(SUPERLU_FOUND)
-
-set(SUPERLU_FOUND ENABLE_SUPER_LU)

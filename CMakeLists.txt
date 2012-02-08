@@ -42,8 +42,7 @@ find_package(METIS)
 find_package(SuperLU)
 if(SUPERLU_FOUND)
   set(SUPERLU_CPPFLAGS "-I${SUPERLU_INCLUDE_DIRS} -DENABLE_SUPERLU")
-  set(SUPERLU_LIBS "-L${SUPERLU_LIBRARIES} -lsuperlu -L${BLAS_LIBRARIES} -lblas")
-  #set(SUPERLU_LIBS "${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}")
+  set(SUPERLU_LIBS "-L. ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}")
   #define HAVE_MEM_USAGE_T_EXPANSIONS 1
 endif(SUPERLU_FOUND)
 
@@ -392,8 +391,8 @@ add_test(test_dec2p2c bin/runTest.sh test/decoupled/2p2c/test_dec2p2c-reference.
 add_test(tutorial_coupled tutorial/tutorial_coupled 1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
-if(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
+if(SUPERLU_FOUND)
   add_test(test_stokes bin/runTest.sh test/freeflow/stokes/stokes-reference.vtu stokes-00006.vtu test/freeflow/stokes/test_stokes test/freeflow/stokes/grids/test_stokes.dgf 10 1)
   add_test(test_stokes2c bin/runTest.sh test/freeflow/stokes2c/stokes2c-reference.vtu stokes2c-00006.vtu test/freeflow/stokes2c/test_stokes2c test/freeflow/stokes2c/grids/test_stokes2c.dgf 10 1)
   add_test(test_stokes2cni bin/runTest.sh test/freeflow/stokes2cni/stokes2cni-reference.vtu stokes2cni-00006.vtu test/freeflow/stokes2cni/test_stokes2cni test/freeflow/stokes2cni/grids/test_stokes2cni.dgf 10 1)
-endif(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
+endif(SUPERLU_FOUND)
