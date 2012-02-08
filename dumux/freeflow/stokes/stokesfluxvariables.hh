@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2010 by Katherina Baber, Klaus Mosthaf                    *
+ *   Copyright (C) 2010-2011 by Katherina Baber, Klaus Mosthaf               *
  *   Copyright (C) 2008-2009 by Bernd Flemisch, Andreas Lauser               *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
@@ -24,7 +24,7 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        the fluxes of the fluid phase over a face of a finite volume.
+ *        the fluxes of the Stokes model over a face of a finite volume.
  *
  * This means pressure gradients, phase densities at the integration point, etc.
  */
@@ -44,10 +44,10 @@ namespace Dumux
  * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
  *        calculate the fluxes of the fluid phase over a face of a
- *        finite volume for the Stokes model.
+ *        finite volume for the Stokes box model.
  *
- * This means pressure and concentration gradients, phase densities at
- * the intergration point, etc.
+ * This means pressure gradients, phase densities and viscosities, etc. at
+ * the integration point of the sub-control-volume face
  */
 template <class TypeTag>
 class StokesFluxVariables
@@ -125,7 +125,7 @@ protected:
             // pressure gradient including influence of gravity
             pressureGradAtIP_ -= tmp;
 
-            // the velocity gradients
+            // the velocity gradients and divergence
             for (int dimIdx = 0; dimIdx<dim; ++dimIdx)
             {
                 tmp = face().grad[idx];
@@ -253,7 +253,6 @@ public:
 
     bool onBoundary() const
     { return onBoundary_; }
-
 
 protected:
     const FVElementGeometry &fvGeom_;

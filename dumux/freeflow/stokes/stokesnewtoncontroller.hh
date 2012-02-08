@@ -33,7 +33,8 @@ namespace Dumux {
 /*!
  * \ingroup BoxStokesModel
  * \ingroup Newton
- * \brief A Stokes-specific controller for the newton solver.
+ * \brief A Stokes-specific controller for the newton solver, which sets
+ *        a different newton parameters.
  */
 template <class TypeTag>
 class StokesNewtonController : public NewtonController<TypeTag>

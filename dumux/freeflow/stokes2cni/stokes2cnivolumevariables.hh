@@ -22,8 +22,8 @@
 /*!
  * \file
  *
- * \brief Contains the quantities which are constant within a
- *        finite volume in the non-isothermal compositional Stokes model.
+ * \brief Contains the supplemental quantities, which are constant within a
+ *        finite volume in the non-isothermal compositional Stokes box model.
  */
 #ifndef DUMUX_STOKES2CNI_VOLUME_VARIABLES_HH
 #define DUMUX_STOKES2CNI_VOLUME_VARIABLES_HH
@@ -39,7 +39,7 @@ namespace Dumux
  * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the non-isothermal two-component Stokes
- *        model.
+ *        box model.
  */
 template <class TypeTag>
 class Stokes2cniVolumeVariables : public Stokes2cVolumeVariables<TypeTag>
@@ -73,7 +73,8 @@ public:
                 bool isOldSol)
     {
         // the internal energies and the enthalpies
-        heatConductivity_ = 0.0257; //TODO: value (Source: www.engineeringtoolbox.com/air-properties-d_156.html)
+        heatConductivity_ = 0.0257;
+        //TODO: value (Source: www.engineeringtoolbox.com/air-properties-d_156.html)
 
         // vertex update data for the mass balance
         ParentType::update(primaryVars,
@@ -108,7 +109,7 @@ public:
 
 protected:
     // this method gets called by the parent class. since this method
-    // is protected, we are friends with our parent..
+    // is protected, we are friends with our parent...
     friend class StokesVolumeVariables<TypeTag>;
 
     static Scalar temperature_(const PrimaryVariables &priVars,
@@ -131,6 +132,6 @@ protected:
     Scalar heatConductivity_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

@@ -24,7 +24,7 @@
 /*!
  * \file
  *
- * \brief Defines the indices required for the non-isothermal compositional Stokes BOX model.
+ * \brief Defines the indices required for the non-isothermal compositional Stokes box model.
  */
 #ifndef DUMUX_STOKES2CNI_INDICES_HH
 #define DUMUX_STOKES2CNI_INDICES_HH

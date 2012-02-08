@@ -38,7 +38,7 @@ namespace Dumux
  * \ingroup BoxStokes2cModel
  * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-component Stokes model.
+ *        finite volume in the two-component Stokes box model.
  */
 template <class TypeTag>
 class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
@@ -97,7 +97,7 @@ public:
                                                              phaseIdx,
                                                              lCompIdx,
                                                              gCompIdx);
-//        diffCoeff_ *= GET_RUNTIME_PARAM(TypeTag, Scalar, factor);
+
         Valgrind::CheckDefined(diffCoeff_);
     };
 
@@ -128,16 +128,12 @@ public:
     }
 
     /*!
-     * \brief Returns the binary diffusion coefficients for a phase
+     * \brief Returns the binary (mass) diffusion coefficient
      */
     Scalar diffusionCoeff() const
     { return diffCoeff_; }
 
 protected:
-//    // this method gets called by the parent class. since this method
-//    // is protected, we are friends with our parent..
-//    friend class StokesVolumeVariables<TypeTag>;
-
     Scalar diffCoeff_; //!< Binary diffusion coefficient
 };
 

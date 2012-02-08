@@ -23,7 +23,7 @@
 /*!
  * \file
  *
- * \brief Adaption of the BOX scheme to the compositional stokes model (with two components).
+ * \brief Adaptation of the BOX scheme to the compositional stokes model (with two components).
  */
 #ifndef DUMUX_STOKES2C_MODEL_HH
 #define DUMUX_STOKES2C_MODEL_HH
@@ -36,11 +36,10 @@
 namespace Dumux {
 /*!
  * \ingroup BoxStokes2cModel
- * \brief Adaption of the BOX scheme to the compositional stokes model.
+ * \brief Adaptation of the BOX scheme to the compositional stokes model.
  *
- * This model implements a non-isothermal two-component Stokes flow of a fluid
- * solving a momentum balance, a mass balance, a conservation equation for one component,
- * and one balance quation for the energy.
+ * This model implements an isothermal two-component Stokes flow of a fluid
+ * solving a momentum balance, a mass balance and a conservation equation for one component.
  *
  * Momentum Balance:
  * \f[

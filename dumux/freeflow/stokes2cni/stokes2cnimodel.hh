@@ -41,7 +41,7 @@ namespace Dumux {
  *
  * This model implements a non-isothermal two-component Stokes flow of a fluid
  * solving a momentum balance, a mass balance, a conservation equation for one component,
- * and one balance quation for the energy.
+ * and one balance equation for the energy.
  *
  * Momentum Balance:
  * \f[

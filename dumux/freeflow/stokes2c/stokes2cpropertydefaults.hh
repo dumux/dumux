@@ -27,7 +27,7 @@
  * \file
  *
  * \brief Defines the properties required for the compositional
- * stokes BOX model.
+ * Stokes box model.
  */
 #ifndef DUMUX_STOKES2C_PROPERTY_DEFAULTS_HH
 #define DUMUX_STOKES2C_PROPERTY_DEFAULTS_HH
@@ -82,7 +82,7 @@ SET_TYPE_PROP(BoxStokes2c,
               LocalResidual,
               Stokes2cLocalResidual<TypeTag>);
 
-//! the Model property
+//! the model property
 SET_TYPE_PROP(BoxStokes2c, Model, Stokes2cModel<TypeTag>);
 
 //! the VolumeVariables property
@@ -109,7 +109,7 @@ public:
 
 };
 
-//! Choose the considered phase
+//! Choose the considered phase (single-phase system); the gas phase is used
 SET_PROP(BoxStokes2c, PhaseIndex)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;

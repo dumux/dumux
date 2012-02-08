@@ -26,7 +26,7 @@
  *
  * \file
  *
- * \brief Defines the properties required for the compositional
+ * \brief Defines the supplementary properties required for the compositional
  * stokes BOX model.
  */
 #ifndef DUMUX_STOKES2CPROPERTIES_HH

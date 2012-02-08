@@ -51,7 +51,7 @@ NEW_PROP_TAG(Stokes2cIndices); //!< Enumerations for the compositional stokes mo
  *        volume for the compositional Stokes model.
  *
  * This means concentration gradients, diffusion coefficients, mass fractions, etc.
- * at the integration point.
+ * at the integration point of a SCV  or boundary face.
  */
 template <class TypeTag>
 class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>

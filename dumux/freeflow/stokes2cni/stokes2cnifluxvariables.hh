@@ -27,7 +27,7 @@
  *        energy fluxes over a face of a finite volume.
  *
  * This means concentration temperature gradients and heat conductivity at
- * integration point.
+ * the integration point.
  */
 #ifndef DUMUX_STOKES2CNI_FLUX_VARIABLES_HH
 #define DUMUX_STOKES2CNI_FLUX_VARIABLES_HH
@@ -43,10 +43,10 @@ namespace Dumux
  * \ingroup BoxFluxVariables
  * \brief This template class contains data which is required to
  *        calculate the energy fluxes over a face of a finite
- *        volume for the non-isothermal compositional stokes model.
+ *        volume for the non-isothermal compositional Stokes box model.
  *
- * This means temperature gradients, coefficients etc.
- * at the integration point.
+ * This means temperature gradients and heat conductivity
+ * at the integration point of a SCV face or boundary face.
  */
 template <class TypeTag>
 class Stokes2cniFluxVariables : public Stokes2cFluxVariables<TypeTag>

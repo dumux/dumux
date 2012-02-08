@@ -6,7 +6,7 @@
  *   Department Simulation of Large Systems                                  *
  *   University of Stuttgart, Germany                                        *
  *                                                                           *
- *   Copyright (C) 2010 by Katherina Baber, Klaus Mosthaf                    *
+ *   Copyright (C) 2010-2012 by Katherina Baber, Klaus Mosthaf               *
  *   Copyright (C) 2008-2009 by Bernd Flemisch, Andreas Lauser               *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
@@ -38,7 +38,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokesModel
- * \brief Adaption of the BOX scheme to the stokes flow model.
+ * \brief Adaption of the BOX scheme to the stokes box model.
  *
  * This model implements laminar Stokes flow of a single fluid, solving a momentum balance:
  * \f[
@@ -54,7 +54,7 @@ namespace Dumux
 \frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
  * \f]
  *
- * This is discretized by a fully-coupled vertex- centered finite volume
+ * This is discretized by a fully-coupled vertex-centered finite volume
  * (box) scheme as spatial and the implicit Euler method
  * as temporal discretization.
  */

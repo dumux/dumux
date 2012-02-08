@@ -26,8 +26,8 @@
  *
  * \file
  *
- * \brief Defines the properties required for the non-isothermal compositional
- * stokes BOX model.
+ * \brief Sets default properties for the non-isothermal compositional
+ * Stokes box model.
  */
 #ifndef DUMUX_STOKES2CNI_PROPERTY_DEFAULTS_HH
 #define DUMUX_STOKES2CNI_PROPERTY_DEFAULTS_HH
@@ -81,7 +81,7 @@ SET_TYPE_PROP(BoxStokes2cni,
               LocalResidual,
               Stokes2cniLocalResidual<TypeTag>);
 
-//! the Model property
+//! the model property
 SET_TYPE_PROP(BoxStokes2cni, Model, Stokes2cniModel<TypeTag>);
 
 //! the VolumeVariables property
@@ -94,10 +94,6 @@ SET_TYPE_PROP(BoxStokes2cni, FluxVariables, Stokes2cniFluxVariables<TypeTag>);
 SET_TYPE_PROP(BoxStokes2cni,
               Stokes2cniIndices,
               Stokes2cniCommonIndices<TypeTag>);
-
-//! Set the number of components to 2
-SET_INT_PROP(BoxStokes2cni, NumComponents, 2);
 }
-
 }
 #endif

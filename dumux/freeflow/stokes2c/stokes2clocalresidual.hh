@@ -41,8 +41,8 @@ namespace Dumux
  * \ingroup BoxStokes2cModel
  * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the compositional stokes box model. This is derived
- *        from the stokes box model.
+ *        using the compositional Stokes box model. This is derived
+ *        from the Stokes box model.
  */
 template<class TypeTag>
 class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
@@ -53,12 +53,8 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum {
-        transportIdx = Indices::transportIdx //!< Index of the transport equation
-    };
-    enum {
-        lCompIdx = Indices::lCompIdx
-    };
+    enum { transportIdx = Indices::transportIdx }; //!< Index of the transport equation
+    enum { lCompIdx = Indices::lCompIdx }; //!< Index of the liquid component
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex)};
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -69,13 +65,7 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
 
 public:
     /*!
-     * \brief Constructor. Sets the upwind weight.
-     */
-    Stokes2cLocalResidual()
-    {};
-
-    /*!
-     * \brief Evaluate the amount the additional quantities to the stokes model
+     * \brief Evaluate the stored amount of the additional quantities to the stokes model
      *        (transport equation).
      *
      * The result should be averaged over the volume (e.g. phase mass

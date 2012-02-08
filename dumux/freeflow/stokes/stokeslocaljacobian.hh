@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
+ *   Copyright (C) 2010-2011 by Klaus Mosthaf                                *
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
@@ -22,14 +22,13 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Caculates the jacobian of models based on the box scheme element-wise.
+ * \brief Element-wise calculation of the jacobian of the stokes box model.
  */
 #ifndef DUMUX_STOKES_LOCAL_JACOBIAN_HH
 #define DUMUX_STOKES_LOCAL_JACOBIAN_HH
 
-#include "stokesproperties.hh"
-#include <dumux/boxmodels/common/boxlocaljacobian.hh>
 #include <dune/istl/matrix.hh>
+#include "stokesproperties.hh"
 #include <dumux/boxmodels/common/boxlocaljacobian.hh>
 
 namespace Dumux
@@ -39,7 +38,7 @@ namespace Dumux
  * \brief Element-wise calculation of the jacobian matrix for models
  *        based on the box scheme.
  *
- * \todo Please doc me more!
+ * This overloads the numericEpsilon method of the boxlocaljacobian
  */
 template<class TypeTag>
 class StokesLocalJacobian : public BoxLocalJacobian<TypeTag>

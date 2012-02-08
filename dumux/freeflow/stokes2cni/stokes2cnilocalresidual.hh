@@ -24,7 +24,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the non-isothermal compositional stokes box model.
+ *        using the non-isothermal compositional Stokes box model.
  *
  */
 #ifndef DUMUX_STOKES2CNI_LOCAL_RESIDUAL_HH
@@ -41,8 +41,8 @@ namespace Dumux
  * \ingroup BoxStokes2cniModel
  * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the non-isothermal compositional stokes box model. This is derived
- *        from the stokes2c box model.
+ *        using the non-isothermal compositional Stokes box model. This is derived
+ *        from the stokes2c box model and adds the energy balance equation.
  */
 template<class TypeTag>
 class Stokes2cniLocalResidual : public Stokes2cLocalResidual<TypeTag>
@@ -62,14 +62,7 @@ class Stokes2cniLocalResidual : public Stokes2cLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-
 public:
-    /*!
-     * \brief Constructor. Sets the upwind weight.
-     */
-    Stokes2cniLocalResidual()
-    {};
-
     /*!
      * \brief Evaluate the amount the additional quantities to the stokes2c model
      *        (energy equation).
@@ -98,10 +91,11 @@ public:
 
     /*!
      * \brief Evaluates the convective energy flux
-     * over a face of a subcontrol volume and writes the result in
-     * the flux vector.
+     * over a face of a sub-control volume and writes the result in
+     * the flux vector. This method is called by computeFlux in the base class.
      *
-     * This method is called by compute flux (base class)
+     * \param flux The vector for the fluxes over the SCV face
+     * \param fluxVars The flux variables at the current SCV face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -126,8 +120,11 @@ public:
     }
 
     /*!
-     * \brief Adds the conductive energy flux to the flux vector over
-     *        the face of a sub-control volume.
+     * \brief Evaluates the conductive energy flux
+     *        over the face of a sub-control volume.
+     *
+     * \param flux The vector for the fluxes over the SCV face
+     * \param fluxVars The flux variables at the current SCV face
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -144,6 +141,6 @@ public:
     }
 };
 
-} // namespace
+} // end namespace
 
 #endif
