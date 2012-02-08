@@ -99,6 +99,22 @@ public:
     LensSpatialParameters(const GridView& gridView)
         : ParentType(gridView)
     {
+        try
+        {
+            lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftX);
+            lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftY);
+            lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightX);
+            lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightY);
+        }
+        catch (Dumux::ParameterException &e) {
+            std::cerr << e << ". Abort!\n";
+            exit(1) ;
+        }
+        catch (...) {
+            std::cerr << "Unknown exception thrown!\n";
+            exit(1);
+        }
+
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
         lensMaterialParams_.setSnr(0.0);
@@ -173,14 +189,6 @@ public:
         return outerMaterialParams_;
     }
 
-
-    //! Set the bounding box of the fine-sand lens
-    void setLensCoords(const GlobalPosition& lensLowerLeft,
-                       const GlobalPosition& lensUpperRight)
-    {
-        lensLowerLeft_ = lensLowerLeft;
-        lensUpperRight_ = lensUpperRight;
-    }
 
 private:
     bool isInLens_(const GlobalPosition &pos) const

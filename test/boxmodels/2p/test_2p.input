@@ -8,8 +8,15 @@
 #############################################################
 # Mandatory arguments											#
 #############################################################
-dtInitial	=250 	# seconds
-tEnd		=3000 	# seconds
+dtInitial	=250 	# [s]
+tEnd		=1000 	# [s]
+gridFile 	= ./grids/test_2p.dgf 
+
+[SpatialParameters]
+lensLowerLeftX	= 1.0 # [m] dimension of the lens (different properties therin) 
+lensLowerLeftY	= 2.0 # [m] dimension of the lens (different properties therin)
+lensUpperRightX	= 4.0 # [m] dimension of the lens (different properties therin)
+lensUpperRightY	= 3.0 # [m] dimension of the lens (different properties therin)
 
 #####################################################################
 # Simulation restart													        #

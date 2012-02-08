@@ -45,11 +45,10 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                        "--t-end, --dt-initial, --grid-file\n"
-                        "(or -tEnd, -dtInitial, -gridFile)\n"
-                        "\n"
-                        "\t--grid-file=FILENAME             The file name of the file containing the grid \n"
-                        "\t                                   definition in DGF format\n" ;
+                                        "\t-tEnd                          The end of the simulation. [s] \n"
+                                        "\t-dtInitial                     The initial timestep size. [s] \n"
+                                        "\t-gridFile                      The file name of the file containing the grid \n"
+                                        "\t                                   definition in DGF format\n";
 
         std::cout << errorMessageOut
                   << "\n";

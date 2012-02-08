@@ -148,16 +148,15 @@ public:
     {
         try
         {
-        nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.nTemperature);
-        nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.nPressure);
-        pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.pressureLow);
-        pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.pressureHigh);
-        temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.temperatureLow);
-        temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.temperatureHigh);
-
-        temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.temperature);
-        depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.depthBOR);
-        name_               = GET_RUNTIME_PARAM(TypeTag, std::string, SimulationControl.name);
+            nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.nTemperature);
+            nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.nPressure);
+            pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.pressureLow);
+            pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.pressureHigh);
+            temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.temperatureLow);
+            temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.temperatureHigh);
+            temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.temperature);
+            depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.depthBOR);
+            name_               = GET_RUNTIME_PARAM(TypeTag, std::string, SimulationControl.name);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";

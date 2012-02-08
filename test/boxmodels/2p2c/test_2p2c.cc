@@ -44,11 +44,19 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                        "--t-end, --dt-initial, --grid-file\n"
-                        "(or -tEnd, -dtInitial, -gridFile)\n"
-                        "\n"
-                        "\t--grid-file=FILENAME             The file name of the file containing the grid \n"
-                        "\t                                   definition in DGF format\n" ;
+                                        "\t-tEnd                          The end of the simulation. [s] \n"
+                                        "\t-dtInitial                     The initial timestep size. [s] \n"
+                                        "\t-gridFile                      The file name of the file containing the grid \n"
+                                        "\t                                   definition in DGF format\n"
+                                        "\t-FluidSystem.nTemperature      Number of tabularization entries [-] \n"
+                                        "\t-FluidSystem.nPressure         Number of tabularization entries [-] \n"
+                                        "\t-FluidSystem.pressureLow       Low end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.pressureHigh      High end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.temperatureLow    Low end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.temperatureHigh   High end for tabularization of fluid properties [Pa] \n"
+                                        "\t-SimulationControl.name        The name of the output files [-] \n"
+                                        "\t-InitialConditions.temperature Initial temperature in the reservoir [K] \n"
+                                        "\t-InitialConditions.depthBOR    Depth below ground surface [m] \n";
 
         std::cout << errorMessageOut
                   << "\n";

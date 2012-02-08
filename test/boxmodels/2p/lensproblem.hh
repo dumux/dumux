@@ -201,14 +201,11 @@ public:
      * \param lensUpperRight Global position of the lenses upper right corner
      */
     LensProblem(TimeManager &timeManager,
-                const GridView &gridView,
-                const GlobalPosition &lensLowerLeft,
-                const GlobalPosition &lensUpperRight)
+                const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
-        this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
     }
 
     /*!
