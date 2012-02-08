@@ -5,7 +5,7 @@ EXTRA_DIST = dune.module \
              stamp-vc \
              CMake/Modules/*.cmake \
 	     CMakeLists.txt \
-	     CONTRIBUTORS INSTALL.cmake LICENSE \
+	     CHANGELOG CONTRIBUTORS INSTALL.cmake LICENSE \
              debug.opts optim.opts 
 
 SUBDIRS = doc dumux m4 test tutorial

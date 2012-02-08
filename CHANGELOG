@@ -1,0 +1,43 @@
+Changes Since Dumux 2.0
+=======================
+
+- The dependencies for the external dune-pdelab and boost packages
+  have been removed.
+- Improvements to the build system:
+  - Better test coverage of the dependencies of libraries for the
+    default autotools-based build system.
+  - Experimental support for building Dumux using CMake. In the long
+    run, CMake is projected to become the default build system
+- All headers can now be included without any preconditions (i.e. 'make
+  headercheck' works)
+- Dumux now compiles without warnings if GCC is given the -pedantic flag
+- Specifying run-time parameters is now possible. The mechanism allows
+  to use parameter files or to specify parameters directly on the
+  command line.
+- Fine-tuning of the Dumux property system
+  - PTAG() no longer required for the GET_PROP* macros (but can still be used)
+  - Setting property defaults has been deprecated.
+  - All properties set for a type tag can now be printed with their
+    value and the location where they where specified.
+- Overhaul of the fluid framework
+  - The programming interface for fluid systems, fluid states and
+    components has been formalized and cleaned up.
+  - Fluid system now have the option to cache computationally
+    expensive parameters if they are needed for several relations.
+  - Fluid systems are not concerned with the calculation of the
+    chemical equilibrium anymore.
+  - Fluid states are now centralized infrastructure instead of being
+    model-specific
+  - Constraint solvers which simplify solving thermodynamic
+    constraints have been introduced.
+- New fully implicit models:
+  - 3p3c, 3p3cni: Isothermal and non-isothermal three-phase,
+    three-component models for flow and transport in porous media.
+  - MpNc: A model for arbitrary number of phases M > 0, and components
+    (N >= M - 1). This model also comes with modules for considering
+    energy and molecular diffusion
+  - stokes, stokes2c, stokes2cni: A model for the plain Stokes
+    equation as well as isothermal and non-isothermal Stokes models
+    for two-component fluids.
+- Overhaul of the sequentially-coupled models:
+  - TODO
