@@ -30,6 +30,15 @@ Changes Since Dumux 2.0
     model-specific
   - Constraint solvers which simplify solving thermodynamic
     constraints have been introduced.
+- Quadruple precision math is possible for gcc 4.6 or newer
+  - To use it add --enable-quad to the configure options and set the
+    type of scalar values to quad using 
+
+        SET_TYPE_PROP(ProblemTypeTag, Scalar, quad);
+
+    Keep in mind that quadruple precision is meant as
+    a debugging tool to quickly check whether there are machine
+    precision related convergence problems.
 - New fully implicit models:
   - 3p3c, 3p3cni: Isothermal and non-isothermal three-phase,
     three-component models for flow and transport in porous media.
