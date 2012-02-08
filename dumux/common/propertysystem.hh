@@ -1035,29 +1035,6 @@ const std::string getDiagnostic(std::string propTagName)
     return result;
 }
 
-//! \internal
-template <class TypeTag>
-void print(std::ostream &os = std::cout)
-{
-    std::set<std::string> printedProps;
-    print_(Dune::className<TypeTag>(), os, "", printedProps);
-
-    // print the default properties
-    const PropertyRegistry::KeyList &keys =
-        PropertyRegistry::getKeys(Dune::className<TTAG(__Default)>());
-    PropertyRegistry::KeyList::const_iterator it = keys.begin();
-    for (; it != keys.end(); ++it) {
-        const PropertyRegistryKey &key = it->second;
-        if (printedProps.count(key.propertyName()) > 0)
-            continue; // property already printed
-        os << "  default " << key.propertyName()
-           << " (" << key.fileDefined()
-           << ":" << key.lineDefined()
-           << ")\n";
-        printedProps.insert(key.propertyName());
-    };
-}
-
 inline void print_(const std::string &typeTagName,
                    std::ostream &os,
                    const std::string indent,
@@ -1098,6 +1075,29 @@ inline void print_(const std::string &typeTagName,
     for (; ttagIt != children.end(); ++ttagIt) {
         print_(*ttagIt, os, newIndent, printedProperties);
     }
+}
+
+//! \internal
+template <class TypeTag>
+void print(std::ostream &os = std::cout)
+{
+    std::set<std::string> printedProps;
+    print_(Dune::className<TypeTag>(), os, "", printedProps);
+
+    // print the default properties
+    const PropertyRegistry::KeyList &keys =
+        PropertyRegistry::getKeys(Dune::className<TTAG(__Default)>());
+    PropertyRegistry::KeyList::const_iterator it = keys.begin();
+    for (; it != keys.end(); ++it) {
+        const PropertyRegistryKey &key = it->second;
+        if (printedProps.count(key.propertyName()) > 0)
+            continue; // property already printed
+        os << "  default " << key.propertyName()
+           << " (" << key.fileDefined()
+           << ":" << key.lineDefined()
+           << ")\n";
+        printedProps.insert(key.propertyName());
+    };
 }
 #else // !defined NO_PROPERTY_INTROSPECTION
 template <class TypeTag>

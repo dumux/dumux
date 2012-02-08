@@ -47,8 +47,8 @@
 #if ! HAVE_VALGRIND
 namespace Valgrind
 {
-bool DUMUX_ALWAYS_INLINE boolBlubb(bool value) { return value; }
-void DUMUX_ALWAYS_INLINE voidBlubb() { }
+bool boolBlubb(bool value) { return value; }
+void voidBlubb() { }
 
 #define SetUndefined(t) voidBlubb()
 #define SetDefined(t) voidBlubb()

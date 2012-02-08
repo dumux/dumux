@@ -160,6 +160,33 @@ int invertQuadraticPolynomial(SolContainer &sol,
     return 2; // two real roots
 }
 
+//! \cond 0
+template <class Scalar, class SolContainer>
+void invertCubicPolynomialPostProcess_(SolContainer &sol,
+                                       int numSol,
+                                       Scalar a,
+                                       Scalar b,
+                                       Scalar c,
+                                       Scalar d)
+{
+    // do one Newton iteration on the analytic solution if the
+    // precision is increased
+    for (int i = 0; i < numSol; ++i) {
+        Scalar x = sol[i];
+        Scalar fOld = d + x*(c + x*(b + x*a));
+
+        Scalar fPrime = c + x*(2*b + x*3*a);
+        if (fPrime == 0.0)
+            continue;
+        x -= fOld/fPrime;
+
+        Scalar fNew = d + x*(c + x*(b + x*a));
+        if (std::abs(fNew) < std::abs(fOld))
+            sol[i] = x;
+    }
+}
+//! \endcond
+
 /*!
  * \ingroup Math
  * \brief Invert a cubic polynomial analytically
@@ -342,31 +369,6 @@ int invertCubicPolynomial(SolContainer *sol,
 
     // NOT REACHABLE!
     return 0;
-}
-
-template <class Scalar, class SolContainer>
-void invertCubicPolynomialPostProcess_(SolContainer &sol,
-                                       int numSol,
-                                       Scalar a,
-                                       Scalar b,
-                                       Scalar c,
-                                       Scalar d)
-{
-    // do one Newton iteration on the analytic solution if the
-    // precision is increased
-    for (int i = 0; i < numSol; ++i) {
-        Scalar x = sol[i];
-        Scalar fOld = d + x*(c + x*(b + x*a));
-
-        Scalar fPrime = c + x*(2*b + x*3*a);
-        if (fPrime == 0.0)
-            continue;
-        x -= fOld/fPrime;
-
-        Scalar fNew = d + x*(c + x*(b + x*a));
-        if (std::abs(fNew) < std::abs(fOld))
-            sol[i] = x;
-    }
 }
 
 /*!
