@@ -36,10 +36,6 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup BoxStokes2cModel
- */
-// \{
 
 namespace Properties
 {

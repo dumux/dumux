@@ -23,7 +23,7 @@
 /*!
  * \file
  *
- * \brief Adaptation of the BOX scheme to the compositional stokes model (with two components).
+ * \brief Adaptation of the box scheme to the compositional Stokes model (with two components).
  */
 #ifndef DUMUX_STOKES2C_MODEL_HH
 #define DUMUX_STOKES2C_MODEL_HH

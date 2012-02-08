@@ -38,17 +38,8 @@
 namespace Dumux
 {
 
-////////////////////////////////
-// properties
-////////////////////////////////
 namespace Properties
 {
-
-/*!
- * \addtogroup BoxStokesModel
- */
-// \{
-
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
@@ -67,17 +58,12 @@ NEW_PROP_TAG(StokesIndices); //!< Enumerations for the Stokes models
 NEW_PROP_TAG(Fluid);
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(FluidState);
-NEW_PROP_TAG(StabilizationAlpha);
-NEW_PROP_TAG(StabilizationBeta);
+NEW_PROP_TAG(StabilizationAlpha); //!< The parameter for the stabilization
+NEW_PROP_TAG(StabilizationBeta); //!< The parameter for the stabilization at boundaries
 
 NEW_PROP_TAG(PhaseIndex);
-
-NEW_PROP_TAG(SpatialParameters);
-
+NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
 NEW_PROP_TAG(Scaling); //!Defines Scaling of the model
-
-// \}
-
 }
 }
 

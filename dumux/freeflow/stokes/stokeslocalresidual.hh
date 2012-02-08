@@ -49,9 +49,9 @@ namespace Dumux
  * \ingroup BoxStokesModel
  * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the local Jacobian matrix for problems
- *        using the stokes box model.
+ *        using the Stokes box model.
  *
- * This class is also used for the non-isothermal and the compositional stokes
+ * This class is also used for the non-isothermal and the two-component Stokes
  * model, which means that it uses static polymorphism.
  */
 template<class TypeTag>
@@ -142,11 +142,15 @@ protected:
 
     /*!
      * \brief Evaluates the total flux of all conservation quantities
-     *        over a face of a sub-control volume.
+     *        over a face of a sub-control volume. The face may be within
+     *        an element (SCV face) or on the boundary. The advective and
+     *        the diffusive fluxes are computed.
      *
      * \param flux The flux over the SCV (sub-control-volume) face
-     * \param faceIdx The index of the SCV face
-     * \param onBoundary Indicates, if the flux is evaluated on a boundary face
+     * \param faceIdx The index of the SCV face (may also be a boundary face)
+     * \param onBoundary Indicates, if the flux is evaluated on a boundary face. If it is true,
+     *        the created fluxVars object cotains boundary variables evaluated at the IP of the
+     *        boundary face
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {
@@ -169,7 +173,7 @@ protected:
      *        a face of a sub-control volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -260,9 +264,9 @@ protected:
     { }
 
     /*!
-     * \brief Calculates the source term of the equation,
-     *        computes the pressure gradient at the center of a SCV
-     *        and evaluates the gravity term
+     * \brief Calculate the source term of all equations.
+     *        The pressure gradient at the center of a SCV is computed
+     *        and the gravity term evaluated.
      *
      * \param q The source/sink in the sub control volume for each component
      * \param localVertexIdx The index of the sub-control volume
@@ -309,7 +313,10 @@ protected:
         }
     }
 
-    // the stokes model needs a modified treatment of the BCs
+    /*!
+     * \brief The Stokes model needs a modified treatment of the boundary conditions as
+     *        the common box models
+     */
     void evalBoundary_()
     {
         assert(this->residual_.size() == this->fvElemGeom_().numVertices);
@@ -520,8 +527,8 @@ protected:
         }
     }
 
-    /*
-     * \brief removes the alpha stabilization at boundaries
+    /*!
+     * \brief Remove the alpha stabilization at boundaries.
      */
     void removeStabilizationAtBoundary_(const int vertexIdx)
     {
@@ -567,9 +574,9 @@ protected:
         }
     }
 
-    /*
-     * \brief Interpolates the pressure at corner points of the grid, i.e. it takes
-     *        the degree of freedom there
+    /*!
+     * \brief Interpolate the pressure at corner points of the grid, thus taking the degree of freedom there. 
+     * 		  This is required due to stability reasons.s
      */
     void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int vertexIdx)
     {
@@ -592,9 +599,9 @@ protected:
         }
     }
 
-    /*
-     * \brief Replace the residual of the mass balance with the sum of the
-     *        residuals of the momentum balance equation
+    /*!
+     * \brief Replace the local residual of the mass balance equation by
+     *        the sum of the residuals of the momentum balance equation
      */
     void replaceMassbalanceResidual_(const FieldVector& momentumResidual,
                                      FieldVector& averagedNormal,
@@ -608,7 +615,10 @@ protected:
         this->residual_[vertexIdx][massBalanceIdx] = momentumResidual*averagedNormal;
     }
 
-    // returns true, if all conditions for the momentum balance are dirichlet
+    /*!
+     * \brief Returns true, if all boundary conditions for the momentum balance
+     *        at the considered vertex are dirichlet
+     */
     bool momentumBalanceDirichlet_(const BoundaryTypes& bcTypes) const
     {
         for (int momentumIdx=momentumXIdx; momentumIdx<=lastMomentumIdx; ++momentumIdx)
@@ -617,7 +627,9 @@ protected:
         return true;
     }
 
-    // returns true, if one condition of the momentum balance is neumann
+    /*!
+     * \brief Returns true, if at least one boundary condition of the momentum balance is neumann
+     */
     bool momentumBalanceHasNeumann_(const BoundaryTypes& bcTypes) const
     {
         for (int momentumIdx=momentumXIdx; momentumIdx<=lastMomentumIdx; ++momentumIdx)
@@ -626,7 +638,9 @@ protected:
         return false;
     }
 
-    // returns true, if all conditions for the momentum balance are outlow
+    /*!
+     * \brief Returns true, if all boundary conditions for the momentum balance are outlow
+     */
     bool momentumBalanceOutflow_(const BoundaryTypes& bcTypes) const
     {
         for (int momentumIdx=momentumXIdx; momentumIdx<=lastMomentumIdx; ++momentumIdx)

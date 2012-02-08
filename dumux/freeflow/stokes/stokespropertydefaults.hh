@@ -27,7 +27,7 @@
  *
  * \file
  *
- * \brief Defines the properties required for the Stokes BOX model.
+ * \brief Defines the properties required for the Stokes box model.
  */
 
 #ifndef DUMUX_STOKES_PROPERTY_DEFAULTS_HH
@@ -48,37 +48,8 @@
 namespace Dumux
 {
 
-////////////////////////////////
-// forward declarations
-////////////////////////////////
-template<class TypeTag>
-class StokesModel;
-
-template<class TypeTag>
-class StokesLocalResidual;
-
-template <class TypeTag>
-class StokesVolumeVariables;
-
-template <class TypeTag>
-class StokesFluxVariables;
-
-template <class TypeTag>
-class StokesNewtonController;
-
-// \}
-
-////////////////////////////////
-// properties
-////////////////////////////////
 namespace Properties
 {
-
-/*!
- * \addtogroup BoxStokesModel
- */
-// \{
-
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -153,9 +124,9 @@ public:
 
 SET_INT_PROP(BoxStokes, PhaseIndex, 0);
 
-// \}
-
+//
 }
+
 }
 
 #endif

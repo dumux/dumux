@@ -22,7 +22,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A stokes specific controller for the newton solver.
+ * \brief A Stokes specific controller for the newton solver.
  */
 #ifndef DUMUX_STOKES_NEWTON_CONTROLLER_HH
 #define DUMUX_STOKES_NEWTON_CONTROLLER_HH
@@ -34,7 +34,7 @@ namespace Dumux {
  * \ingroup BoxStokesModel
  * \ingroup Newton
  * \brief A Stokes-specific controller for the newton solver, which sets
- *        a different newton parameters.
+ *        different parameters for the relative tolerance, target steps and maximum steps.
  */
 template <class TypeTag>
 class StokesNewtonController : public NewtonController<TypeTag>

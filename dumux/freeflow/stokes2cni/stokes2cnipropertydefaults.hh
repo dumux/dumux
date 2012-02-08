@@ -40,27 +40,6 @@
 
 namespace Dumux
 {
-/*!
- * \addtogroup BoxStokes2cniModel
- */
-// \{
-////////////////////////////////
-// forward declarations
-////////////////////////////////
-template<class TypeTag>
-class Stokes2cniModel;
-
-template<class TypeTag>
-class Stokes2cniLocalResidual;
-
-template <class TypeTag>
-class Stokes2cniVolumeVariables;
-
-template <class TypeTag>
-class Stokes2cniFluxVariables;
-
-template <class TypeTag>
-class Stokes2cniIndices;
 
 namespace Properties
 {

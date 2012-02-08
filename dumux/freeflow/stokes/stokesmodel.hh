@@ -38,7 +38,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokesModel
- * \brief Adaption of the BOX scheme to the stokes box model.
+ * \brief Adaption of the box scheme to the stokes model.
  *
  * This model implements laminar Stokes flow of a single fluid, solving a momentum balance:
  * \f[
@@ -55,10 +55,9 @@ namespace Dumux
  * \f]
  *
  * This is discretized by a fully-coupled vertex-centered finite volume
- * (box) scheme as spatial and the implicit Euler method
- * as temporal discretization.
+ * (box) scheme in space and by the implicit Euler method in time.
  */
-template<class TypeTag >
+template<class TypeTag>
 class StokesModel : public BoxModel<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
