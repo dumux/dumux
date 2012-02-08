@@ -77,7 +77,7 @@ protected:
 
     //! Indices of matrix and rhs entries
     /**
-    *During the assembling of the global system of equations get-functions are called (getSource(), getFlux(), etc.), which return global matrix or right hand side entries in a vector. These can be accessed using following indices:
+    * During the assembling of the global system of equations get-functions are called (getSource(), getFlux(), etc.), which return global matrix or right hand side entries in a vector. These can be accessed using following indices:
     */
     enum
     {
@@ -110,7 +110,7 @@ protected:
     {   return pressure_;}
 
 public:
-    //!Function which calculates the source entry
+    //! Function which calculates the source entry
     /**
      * Function computes the source term and writes it to the corresponding entry of the entry vector
      *
@@ -137,7 +137,7 @@ public:
      * Function computes the inter-cell flux term and writes it to the corresponding entry of the entry vector
      *
      * \param entry Vector containing return values of the function
-     * \param element Grid element
+     * \param intersection Intersection of two grid elements
      * \param cellData Object containing all model relevant cell data
      * \param first Indicates if function is called in the initialization step or during the simulation
      */
@@ -152,8 +152,8 @@ public:
      * \param cellData Object containing all model relevant cell data
      * \param first Indicates if function is called in the initialization step or during the simulation
      */
-    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
-            const Intersection&, const CellData&, const bool);
+    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
+            const Intersection& intersection, const CellData& cellData, const bool first);
 
     //! Public access function for the primary pressure variable
     /**
