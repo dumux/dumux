@@ -355,11 +355,11 @@ file(COPY test/decoupled/2p/test_impes-reference.vtu DESTINATION test/decoupled/
 file(COPY test/decoupled/2p2c/test_dec2p2c-reference.vtu DESTINATION test/decoupled/2p2c)
 file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION test/common/generalproblem)
 file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION test/common/generalproblem)
-if(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
+if(SUPERLU_FOUND)
   file(COPY test/freeflow/stokes/stokes-reference.vtu DESTINATION test/freeflow/stokes)
   file(COPY test/freeflow/stokes2c/stokes2c-reference.vtu DESTINATION test/freeflow/stokes2c)
   file(COPY test/freeflow/stokes2cni/stokes2cni-reference.vtu DESTINATION test/freeflow/stokes2cni)
-endif(SUPERLU_FOUND AND DUNE_pdelab_FOUND)
+endif(SUPERLU_FOUND)
 
 # set up CTest 
 enable_testing()
