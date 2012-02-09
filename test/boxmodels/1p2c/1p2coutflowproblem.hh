@@ -112,8 +112,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, EnableGravity, false);
  * To run the simulation execute the following line in shell:
  * <tt>./test_1p2c -parameterFile ./test_1p2c.input</tt>
  */
-
-template <class TypeTag = TTAG(OnePTwoCOutflowProblem) >
+template <class TypeTag>
 class OnePTwoCOutflowProblem : public OnePTwoCBoxProblem<TypeTag>
 {
     typedef OnePTwoCBoxProblem<TypeTag> ParentType;
@@ -153,6 +152,7 @@ class OnePTwoCOutflowProblem : public OnePTwoCBoxProblem<TypeTag>
 public:
     OnePTwoCOutflowProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
+        , eps_(1e-6)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -289,7 +289,8 @@ private:
         values[x1Idx] = 0.0; //initial condition for the trail molefraction
     }
 
-   static const Scalar eps_ = 1e-4;
-}; //end namespace
-}
+    const Scalar eps_;
+};
+
+} //end namespace
 #endif
