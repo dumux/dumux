@@ -86,6 +86,7 @@ void printUsageGrid(const char *progname)
  * \param argv  The 'argv' argument of the main function
  */
 template <class TypeTag>
+DUMUX_DEPRECATED_MSG("Please use Dumux::start() instead")
 int startFromDGF(int argc, char **argv)
 {
 #ifdef NDEBUG
@@ -173,6 +174,7 @@ int startFromDGF(int argc, char **argv)
  * \param argv  The 'argv' argument of the main function
  */
 template <class TypeTag>
+DUMUX_DEPRECATED_MSG("Please use Dumux::start() instead")
 int startWithGrid(const typename GET_PROP_TYPE(TypeTag, Grid) &grid,
                   int argc,
                   char **argv)
@@ -550,9 +552,9 @@ bool inDebugger()
  * \param usage Callback function for printing the usage message
  */
 template <class TypeTag>
-int startWithParameters(int argc,
-                        char **argv,
-                        void (*usage)(const char *, const std::string &))
+int start(int argc,
+          char **argv,
+          void (*usage)(const char *, const std::string &))
 {
     if (!inDebugger()) {
         try {
@@ -574,6 +576,28 @@ int startWithParameters(int argc,
     else
         return startWithParameters_<TypeTag>(argc, argv, usage);
 }
+
+
+/*!
+ * \ingroup Start
+ *
+ * \brief Provides a main function which reads in parameters from the
+ *        command line and a parameter file.
+ *
+ *        In this function only the differentiation between debugger
+ *        or not is made.
+ *
+ * \tparam TypeTag  The type tag of the problem which needs to be solved
+ *
+ * \param argc  The number of command line arguments of the program
+ * \param argv  The contents of the command line arguments of the program
+ * \param usage Callback function for printing the usage message
+ */
+template <class TypeTag>
+int startWithParameters(int argc,
+                        char **argv,
+                        void (*usage)(const char *, const std::string &))
+{ return start<TypeTag>(argc, argv, usage); }
 
 } // namespace Dumux
 

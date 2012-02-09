@@ -66,5 +66,5 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
     typedef TTAG(InjectionProblem) ProblemTypeTag;
-    return Dumux::startWithParameters<ProblemTypeTag>(argc, argv, usage);
+    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
