@@ -27,7 +27,7 @@
  * \brief test for the 1p2c box model
  */
 #include "config.h"
-#include "tissue_tumor_problem.hh"
+#include "1p2coutflowproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!

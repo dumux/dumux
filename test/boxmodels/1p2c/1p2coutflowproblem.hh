@@ -39,7 +39,7 @@
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
-#include "tissue_tumor_spatialparameters.hh"
+#include "1p2coutflowspatialparameters.hh"
 
 namespace Dumux
 {
