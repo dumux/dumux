@@ -50,7 +50,7 @@ class DecoupledTwoPTwoCFluidState
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
 
-
+public:
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
@@ -59,7 +59,6 @@ class DecoupledTwoPTwoCFluidState
         nCompIdx = Indices::nPhaseIdx
     };
 
-public:
     enum {  numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
             numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
 
@@ -290,18 +289,26 @@ public:
     };
     /*!
      * \brief Sets the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * @param compIdx index of the Component
+     * @param value Value to be stored
      */
     void setMassConcentration(int compIdx, Scalar value)
     {
         massConcentration_[compIdx] = value;
     };
-    void calculateMassConcentration(Scalar poro)
+    /*!
+     * \brief Calculate the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$
+     * for a given porosity (within the initialization procedure).
+     * @param porosity Porosity
+     */
+    void calculateMassConcentration(Scalar porosity)
     {
         massConcentration_[wCompIdx] =
-                poro * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
+                porosity * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
                         + massFraction_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
         massConcentration_[nCompIdx] =
-                poro * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
+                porosity * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
                         + massFraction_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
     }
 
@@ -314,14 +321,12 @@ public:
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief Returns the viscosity of a phase TODO: \f$\mathrm{[kg/m^3]}\f$.
+     * \brief Returns the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
      *
      * \param phaseIdx the index of the phase
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }
-    void setViscosity(int phaseIdx, Scalar value)
-    { viscosity_[phaseIdx] = value; }
 
     /*!
      * \brief Return the partial pressure of a component in the gas phase.
@@ -400,10 +405,25 @@ public:
     }
 
     /*!
-     * \brief Returns the mass fraction of a component in a phase.
+     * \name Functions to set Data
+     */
+    //@{
+    /*!
+     * \brief Sets the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
+    void setViscosity(int phaseIdx, Scalar value)
+    { viscosity_[phaseIdx] = value; }
+
+
+    /*!
+     * \brief Sets the mass fraction of a component in a phase.
      *
      * \param phaseIdx the index of the phase
      * \param compIdx the index of the component
+     * @param value Value to be stored
      */
     void setMassFraction(int phaseIdx, int compIdx, Scalar value)
     {
@@ -411,23 +431,30 @@ public:
     }
 
     /*!
-     * \brief Returns the molar fraction of a component in a fluid phase.
+     * \brief Sets the molar fraction of a component in a fluid phase.
      *
      * \param phaseIdx the index of the phase
      * \param compIdx the index of the component
+     * @param value Value to be stored
      */
     void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
     {
         moleFraction_[phaseIdx][compIdx] = value;
     }
     /*!
-     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
+     * \brief Sets the density of a phase \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx the index of the phase
+     * @param value Value to be stored
      */
     void setDensity(int phaseIdx, Scalar value)
     { density_[phaseIdx] = value; }
-
+    /*!
+     * \brief Sets the saturation of a phase.
+     * Internally, only the wetting saturation is stored.
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
     void setSaturation(int phaseIdx, Scalar value)
     {
         if (phaseIdx == wPhaseIdx)
@@ -435,14 +462,32 @@ public:
         else
             Sw_ = 1.-value;
     }
+
+    /*!
+     * \brief Sets the phase mass fraction. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
     void setNu(int phaseIdx, Scalar value)
     {
             nu_[phaseIdx] = value;
     }
+    /*!
+     * \brief Sets the temperature
+     *
+     * @param value Value to be stored
+     */
     void setTemperature(Scalar value)
     {
         temperature_ = value;
     }
+    /*!
+     * \brief Sets phase pressure
+     *
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
     void setPressure(int phaseIdx, Scalar value)
     {
         phasePressure_[phaseIdx] = value;

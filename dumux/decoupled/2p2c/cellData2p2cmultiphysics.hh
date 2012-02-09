@@ -28,22 +28,23 @@
 
 /**
  * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations for one element
- * @author Markus Wolff
+ * @brief  Storage container for discretized data for multiphysics models
+ * @author Benjamin Faigle
  */
 
 namespace Dumux
 {
 /*!
- * \ingroup IMPES
+ * \ingroup multiphysics multiphase
  */
-//! Class including the variables and data of discretized data of the constitutive relations for one element.
-/*! TODO: The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
- * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
+//! Storage container for discretized data for multiphysics models
+/*! For multiphysics models, we divide the model in seperate sub-domains. Being a cell-based
+ * information, this is also stored in the cellData. In addition, a simpler version of a
+ * fluidState can be stored in cells being in the simpler subdomain.
+ * Hence, acess functions either direct to the full fluidstate, or to the simple fluidstate.
  *
  * @tparam TypeTag The Type Tag
- 1*/
+ */
 template<class TypeTag>
 class CellData2P2Cmultiphysics : public CellData2P2C<TypeTag>
 {
@@ -84,59 +85,15 @@ private:
 //    FluxData fluxData_;
 public:
 
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     */
-
+    //! Constructor for a local storage object
     CellData2P2Cmultiphysics() : CellData2P2C<TypeTag>(),
         subdomain_(2), fluidStateType_(complex), simpleFluidState_(0)
     {
     }
 
-//    FluxData& setFluxData()
-//    {
-//        return fluxData_;
-//    }
-//
-//    const FluxData& fluxData() const
-//    {
-//        return fluxData_;
-//    }
-
-    void setSimpleFluidState(SimpleFluidState& simpleFluidState)
-    {
-        assert (this->subdomain() != 2);
-        fluidStateType_ = simple;
-        simpleFluidState_ = &simpleFluidState;
-    }
-
-    SimpleFluidState& manipulateSimpleFluidState()
-    {
-        assert (this->subdomain() != 2);
-        fluidStateType_ = simple;
-        if(!simpleFluidState_)
-            simpleFluidState_ = new SimpleFluidState;
-        return *simpleFluidState_;
-    }
-
-//    const FluidState& fluidState() const
-//    {
-//        return *fluidState_;
-//    }
-
-    FluidState& manipulateFluidState()
-    {
-        assert(this->subdomain() == 2);
-        fluidStateType_ = complex;
-        if(!this->fluidState_)
-            this->fluidState_ = new FluidState;
-        return *this->fluidState_;
-    }
-
-    ////////////////////////////////////////////////////////////
-    // functions returning primary variables
-    ////////////////////////////////////////////////////////////
+    /*! \name Acess to primary variables */
+    //@{
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::pressure()
     Scalar pressure(int phaseIdx)
     {
         if(fluidStateType_ == simple)
@@ -146,7 +103,7 @@ public:
         else
             return this->fluidState_->pressure(phaseIdx);
     }
-
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::pressure()
     const Scalar pressure(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -157,15 +114,7 @@ public:
             return this->fluidState_->pressure(phaseIdx);
     }
 
-    //! Return saturation vector
-    void setTotalConcentration(int compIdx, Scalar value)
-    {
-        if(fluidStateType_ == simple)
-            return simpleFluidState_->setMassConcentration(compIdx, value);
-        else
-            return this->fluidState_->setMassConcentration(compIdx, value);
-    }
-
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
     const Scalar totalConcentration(int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -173,6 +122,7 @@ public:
         else
             return this->fluidState_->massConcentration(compIdx);
     }
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
     const Scalar massConcentration(int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -180,30 +130,45 @@ public:
         else
             return this->fluidState_->massConcentration(compIdx);
     }
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
+    void setTotalConcentration(int compIdx, Scalar value)
+    {
+        if(fluidStateType_ == simple)
+            return simpleFluidState_->setMassConcentration(compIdx, value);
+        else
+            return this->fluidState_->setMassConcentration(compIdx, value);
+    }
+    //@}
+
 
     //////////////////////////////////////////////////////////////
     // functions returning the vectors of secondary variables
     //////////////////////////////////////////////////////////////
 
     //! Return subdomain information
+    /** Acess function to store subdomain information
+     */
     int& subdomain()
     {
         return subdomain_;
     }
+    //! Return subdomain information
+    /** Acess function to get subdomain information
+     */
     const int& subdomain() const
     {
         return subdomain_;
     }
 
-    /*** b) from fluidstate ***/
-
-    //! Return saturation vector
+    /*! \name Acess to secondary variables */
+    //@{
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setSaturation()
     void setSaturation(int phaseIdx, Scalar value)
     {
         assert(this->subdomain() == 2);
         this->fluidState_->setSaturation(phaseIdx, value);
     }
-
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::saturation()
     const Scalar saturation(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -214,7 +179,7 @@ public:
             return this->fluidState_->saturation(phaseIdx);
     }
 
-    //! Return density vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setViscosity()
     void setViscosity(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)
@@ -225,7 +190,7 @@ public:
         else
             this->fluidState_->setViscosity(phaseIdx, value);
     }
-
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::viscosity()
     const Scalar viscosity(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -239,7 +204,7 @@ public:
     }
 
 
-    //! Return capillary pressure vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::capillaryPressure()
     const Scalar capillaryPressure() const
     {
         if(fluidStateType_ == simple)
@@ -248,7 +213,7 @@ public:
             return this->fluidState_->pressure(nPhaseIdx) - this->fluidState_->pressure(wPhaseIdx);
     }
 
-    //! Return density vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::density()
     const Scalar density(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -259,7 +224,7 @@ public:
             return this->fluidState_->density(phaseIdx);
     }
 
-    //! Return the mass fraction
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massFraction()
     const Scalar massFraction(int phaseIdx, int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -270,7 +235,7 @@ public:
             return this->fluidState_->massFraction(phaseIdx, compIdx);
     }
 
-    //! Return the mole fraction
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::moleFraction()
     const Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         if(fluidStateType_ == simple)
@@ -280,7 +245,7 @@ public:
         else
             return this->fluidState_->moleFraction(phaseIdx, compIdx);
     }
-    //! Return temperature
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::temperature()
     const Scalar temperature(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -291,7 +256,7 @@ public:
             return this->fluidState_->temperature(phaseIdx);
     }
 
-    //! Return phase phase mass fraction
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::phaseMassFraction()
     const Scalar phaseMassFraction(int phaseIdx) const
     {
         if(fluidStateType_ == simple)
@@ -304,6 +269,54 @@ public:
         else
             return this->fluidState_->phaseMassFraction(phaseIdx);
     }
+    //@}
+
+
+//    FluxData& setFluxData()
+//    {
+//        return fluxData_;
+//    }
+//
+//    const FluxData& fluxData() const
+//    {
+//        return fluxData_;
+//    }
+    //! Set a simple fluidstate for a cell in the simple domain
+    /** Uses a simplified fluidstate with less storage capacity
+     * and functionality.
+     * Makes shure the fluidStateType_ flag is set appropriately in this
+     * cell.
+     * @param simpleFluidState A fluidstate storing a 1p2c mixture
+     */
+    void setSimpleFluidState(SimpleFluidState& simpleFluidState)
+    {
+        assert (this->subdomain() != 2);
+        fluidStateType_ = simple;
+        simpleFluidState_ = &simpleFluidState;
+    }
+    //! Manipulates a simple fluidstate for a cell in the simple domain
+    SimpleFluidState& manipulateSimpleFluidState()
+    {
+        assert (this->subdomain() != 2);
+        fluidStateType_ = simple;
+        if(!simpleFluidState_)
+            simpleFluidState_ = new SimpleFluidState;
+        return *simpleFluidState_;
+    }
+    //! Allows manipulation of the complex fluid state
+    /** Fluidstate is stored as a pointer, initialized as a null-pointer.
+     * Enshure that if no FluidState is present, a new one is created.
+     * Also enshure that we are in the complex subdomain.
+     */
+    FluidState& manipulateFluidState()
+    {
+        assert(this->subdomain() == 2);
+        fluidStateType_ = complex;
+        if(!this->fluidState_)
+            this->fluidState_ = new FluidState;
+        return *this->fluidState_;
+    }
+
 };
 }
 #endif

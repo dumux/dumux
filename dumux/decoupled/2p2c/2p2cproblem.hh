@@ -38,11 +38,9 @@ namespace Dumux
  * \ingroup IMPETproblems
  * \brief  Base class for all compositional 2-phase problems which use an impet algorithm
  *
- * Differs from .../2p/impes/impesproblem2p.hh in the includes
- * (usage of the compositional properties and variableclass) and
- * empty functions for the boundary formulation. Because of the latter,
- * only the functions of the currently used formulation has to be specified
- * in the specific problem.
+ * Extends IMPESProblem2P by the compositional the boundary formulation and initial conditions.
+ * These can be specified via a feed mass fractions \f{ Z^k \f} or a saturation, specified by
+ * the appropriate flag.
  */
 template<class TypeTag>
 class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
@@ -140,7 +138,9 @@ public:
     }
 
     //! Concentration initial condition (dimensionless)
-    /*! The problem is initialized with the following concentration.
+    /*! The problem is initialized with a  feed mass fraction:
+     * Mass of component 1 per total mass \f$\mathrm{[-]}\f$. This directly
+     * enters the flash calucalation.
      * \param element The element.
      */
     Scalar initConcentration(const Element& element) const
@@ -161,7 +161,6 @@ public:
     /*!
      * \name Deprecated Problem parameters
      */
-
     //! Saturation initial condition (dimensionless)
     /*! The problem is initialized with the following saturation. Both
      * phases are assumed to contain an equilibrium concentration of the

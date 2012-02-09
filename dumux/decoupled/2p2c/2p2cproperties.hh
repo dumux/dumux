@@ -126,7 +126,7 @@ public:
 //! Set the default formulation
 SET_INT_PROP(DecoupledTwoPTwoC,
         PressureFormulation,
-        GET_PROP_TYPE(TypeTag, Indices)::pressureW);
+        GET_PROP_TYPE(TypeTag, Indices)::pressureNW);
 
 SET_INT_PROP(DecoupledTwoPTwoC,
         SaturationFormulation,
@@ -142,21 +142,17 @@ SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
     typedef typename Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> > > type;//!<type for vector of vector (of scalars)
 
 };
-
+//! Compositional models are very likely compressible
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true);
 //! Faces are regarded from both sides
 SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false);
-
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
-
+//! Disable transport of numerical density (e.g. inclusion of error in transport)
+SET_BOOL_PROP(DecoupledTwoPTwoC, NumDensityTransport, false);
 
 SET_PROP(DecoupledTwoPTwoC, BoundaryMobility)
 {
     static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;
-};
-SET_PROP(DecoupledTwoPTwoC, NumDensityTransport)
-{
-    static const bool value = false;
 };
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass<TypeTag>);
@@ -176,6 +172,8 @@ SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermUpperBound, 0.9);
  *
  * The indices are all of the 2p model plus boundary condition flags
  * distinguishing between given composition or saturation on the boundary.
+ * As we have 3 equations, one pressure and two component transport equations,
+ * special equation indices have to be provided for boundary conditions.
  */
 template <class TypeTag>
 struct DecoupledTwoPTwoCIndices : DecoupledTwoPCommonIndices

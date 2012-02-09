@@ -28,22 +28,23 @@
 
 /**
  * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations for one element
- * @author Markus Wolff
+ * @brief  Storage container for discretized data of the constitutive relations for one element
+ * @author Benjamin Faigle
  */
 
 namespace Dumux
 {
 /*!
- * \ingroup IMPES
+ * \ingroup multiphysics multiphase
  */
-//! Class including the variables and data of discretized data of the constitutive relations for one element.
-/*! TODO: The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
- * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
+//! Storage container for discretized data of the constitutive relations for one element
+/*! This class stores all cell-centered (FV-Scheme) values for decoupled compositional two-phase flow
+ * models that are used by both pressure and transport model. All fluid data are already stored in the
+ * fluidstate, so the CellData contains the fluidstate object for the current element.
+ * At the moment, the compositional model does not use fluxVariables that are stored on the interfaces.
  *
  * @tparam TypeTag The Type Tag
- 1*/
+ */
 template<class TypeTag>
 class CellData2P2C
 {
@@ -89,17 +90,23 @@ protected:
 //    FluxData fluxData_;
 public:
 
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     */
-
+    //! Constructor for a local CellData object
     CellData2P2C() :
-        mobility_({0.0, 0.0}),
-        numericalDensity_({0.0, 0.0}), volumeError_(0.), errorCorrection_(0.),
-        dv_dp_(0.), dv_({0.0, 0.0}), volumeDerivativesAvailable_(false),
-        globalIdx_(0), perimeter_(0.),fluidState_(0)
+        fluidState_(0)
     {
+        for (int i = 0; i < numPhases;i++)
+        {
+            mobility_[i] = 0.0;
+            numericalDensity_[i] = 0.0;
+            mobility_[i] = 0.0;
+            dv_[i] = 0.0;
+        }
+        volumeError_ = 0.;
+        errorCorrection_= 0.;
+        dv_dp_ = 0.;
+        volumeDerivativesAvailable_ = false;
+        globalIdx_ = 0;
+        perimeter_ = 0.;
     }
 
 //    FluxData& setFluxData()
@@ -112,109 +119,112 @@ public:
 //        return fluxData_;
 //    }
 
-    void setFluidState(FluidState& fluidState)
-    DUNE_DEPRECATED
-    {
-        fluidState_ = &fluidState;
-    }
 
-    const FluidState& fluidState() const
-    {
-        return *fluidState_;
-    }
-
-    FluidState& manipulateFluidState()
-    {
-        if(!fluidState_)
-            fluidState_ = new FluidState;
-        return *fluidState_;
-    }
-
-    int& globalIdx()
-    { return globalIdx_;}
-    const bool hasVolumeDerivatives() const
-    { return volumeDerivativesAvailable_;}
-    void confirmVolumeDerivatives()
-    { volumeDerivativesAvailable_ = true;}
-    void reset()
-    {
-        volumeDerivativesAvailable_ = false;
-        //TODO:reset flux stuff!
-    }
-    ////////////////////////////////////////////////////////////
-    // functions returning primary variables
-    ////////////////////////////////////////////////////////////
+    /*! \name Acess to primary variables */
+    //@{
+    /*! Acess to the phase pressure
+     * @param phaseIdx index of the Phase
+     */
     Scalar pressure(int phaseIdx)
     {
         return fluidState_->pressure(phaseIdx);
     }
-
+    /*! Acess to the phase pressure
+     * @param phaseIdx index of the Phase
+     */
     const Scalar pressure(int phaseIdx) const
     {
         return fluidState_->pressure(phaseIdx);
     }
-
+    /*! Modify the phase pressure
+     * @param phaseIdx index of the Phase
+     * @param value Value to be srored
+     */
     void setPressure(int phaseIdx, Scalar value)
     {
         fluidState_->setPressure(phaseIdx, value);
     }
 
-    //! Return saturation vector
-    void setTotalConcentration(int compIdx, Scalar value)
-    {
-        fluidState_->setMassConcentration(compIdx, value);
-    }
-    void setMassConcentration(int compIdx, Scalar value)
-    {
-        fluidState_->setMassConcentration(compIdx, value);
-    }
-
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
     const Scalar totalConcentration(int compIdx) const
     {
         return fluidState_->massConcentration(compIdx);
     }
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
     const Scalar massConcentration(int compIdx) const
     {
         return fluidState_->massConcentration(compIdx);
     }
 
-    //////////////////////////////////////////////////////////////
-    // functions returning the vectors of secondary variables
-    //////////////////////////////////////////////////////////////
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
+    void setTotalConcentration(int compIdx, Scalar value)
+    {
+        fluidState_->setMassConcentration(compIdx, value);
+    }
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
+    void setMassConcentration(int compIdx, Scalar value)
+    {
+        fluidState_->setMassConcentration(compIdx, value);
+    }
+    //@}
 
 
+    /*! \name Acess to secondary variables */
+    //@{
     //! Return phase mobilities
+    /*
+     * @param phaseIdx index of the Phase
+     */
+    const Scalar& mobility(int phaseIdx) const
+    {
+        return mobility_[phaseIdx];
+    }
+    //! Set phase mobilities
+    /*
+     * @param phaseIdx index of the Phase
+     * @param value Value to be stored
+     */
     void setMobility(int phaseIdx, Scalar value)
     {
         mobility_[phaseIdx]=value;
     }
 
-    const Scalar& mobility(int phaseIdx) const
-    {
-        return mobility_[phaseIdx];
-    }
-
-    //! Return numerical density vector
+    //! Return numerical density \f$\mathrm{[kg/m^3]}\f$.
+    /** Returns the real fluid density if the whole pore volume
+     * was filled. This quantity equals the real density scaled with
+     * the volume error.
+     * @param phaseIdx index of the Phase
+     */
     Scalar& numericalDensity(int phaseIdx)
     {
         return numericalDensity_[phaseIdx];
     }
+    //! Return numerical density
     const Scalar& numericalDensity(int phaseIdx) const
     {
         return numericalDensity_[phaseIdx];
     }
 
-    //! Return the volume error
+    //! Return the volume error [-].
+    /** This quantity stands for the deviation of real fluid volume
+     * to available pore space.
+     * \f$ \epsilon = v_{real} - \phi\f$.
+     */
     Scalar& volumeError()
     {
         return volumeError_;
     }
+    //! Return the volume error [-].
     const Scalar& volumeError() const
     {
         return volumeError_;
     }
 
     //! Return the error Correction
+    /** This quantifies the damped error that actually
+     * entered the pressure equation: Damped Error
+     * from last time-step times last time step size
+     */
     Scalar& errorCorrection()
     {
         return errorCorrection_;
@@ -224,110 +234,153 @@ public:
     {
         return errorCorrection_;
     }
-    //! Return the derivative of spec. volume w.r.t. pressure
+    //! Return the derivative of specific volume w.r.t. pressure
+    /**
+     * For details, see description of FVPressureCompositional<TypeTag>::volumeDerivatives()
+     */
     Scalar& dv_dp()
     {
         return dv_dp_;
     }
+    //! Return the derivative of specific volume w.r.t. pressure
     const Scalar& dv_dp() const
     {
         return dv_dp_;
     }
 
-    //! Return the derivative of spec. volume w.r.t. mass change
+    //! Return the derivative of spec. volume w.r.t. change of mass
+    /**
+     * For details, see description of FVPressureCompositional<TypeTag>::volumeDerivatives()
+     * @param compIdx index of the Component
+     */
     Scalar& dv(int compIdx)
     {
         return dv_[compIdx];
     }
+    //! \copydoc dv()
     const Scalar& dv(int compIdx) const
     {
         return dv_[compIdx];
     }
 
     //! Return cell perimeter (as weithing function)
+    /*
+     * The cell perimeter is used in combination with the face Area as a
+     * weighting of the volume integral in the pressure equation.
+     */
     Scalar& perimeter()
     {
         return perimeter_;
     }
+    //! Return cell perimeter (as weithing function)
     const Scalar& perimeter() const
     {
         return perimeter_;
     }
-//
-//    //! Return subdomain information
-//    int& subdomain()
-//    {
-//        return subdomain_;
-//    }
-//    const int& subdomain() const
-//    {
-//        return subdomain_;
-//    }
-//
+
     /*** b) from fluidstate ***/
 
-    //! Return saturation vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setSaturation()
     void setSaturation(int phaseIdx, Scalar value)
     {
         fluidState_->setSaturation(phaseIdx, value);
     }
-
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::saturation()
     const Scalar saturation(int phaseIdx) const
     {
         return fluidState_->saturation(phaseIdx);
     }
 
-    //! Return density vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setViscosity()
     void setViscosity(int phaseIdx, Scalar value)
     {
         fluidState_->setViscosity(phaseIdx, value);
     }
-
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::viscosity()
     const Scalar viscosity(int phaseIdx) const
     {
         return fluidState_->viscosity(phaseIdx);
     }
 
-
-    //! Return capillary pressure vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::capillaryPressure()
     const Scalar capillaryPressure() const
     {
         return fluidState_->pressure(nPhaseIdx) - fluidState_->pressure(wPhaseIdx);
     }
 
-    void setCapillaryPressure(Scalar pc)
-    {
-        DUNE_THROW(Dune::NotImplemented,"no capillary pressure stored for compressible models!");
-    }
-
-    //! Return density vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::density()
     const Scalar density(int phaseIdx) const
     {
         return (fluidState_->density(phaseIdx));
     }
 
-    //! Return density vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massFraction()
     const Scalar massFraction(int phaseIdx, int compIdx) const
     {
         return fluidState_->massFraction(phaseIdx, compIdx);
     }
 
-    //! Return density vector
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::moleFraction()
     const Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         return fluidState_->moleFraction(phaseIdx, compIdx);
     }
-    //! Return temperature
+
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::temperature()
     const Scalar temperature(int phaseIdx) const
     {
         return fluidState_->temperature(phaseIdx);
     }
 
-    //! Return phase phase mass fraction
+    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::phaseMassFraction()
     const Scalar phaseMassFraction(int phaseIdx) const
     {
         return fluidState_->phaseMassFraction(phaseIdx);
     }
+    //@}
+
+
+//    void setFluidState(FluidState& fluidState)
+//    DUNE_DEPRECATED
+//    {
+//        fluidState_ = &fluidState;
+//    }
+
+    //! Returns a reference to the cells fluid state
+    const FluidState& fluidState() const
+    {
+        return *fluidState_;
+    }
+
+    //! Allows manipulation of the cells fluid state
+    /** Fluidstate is stored as a pointer, initialized as a null-pointer.
+     * Enshure that if no FluidState is present, a new one is created.
+     */
+    FluidState& manipulateFluidState()
+    {
+        if(!fluidState_)
+            fluidState_ = new FluidState;
+        return *fluidState_;
+    }
+    //! stores this cell datas index, only for debugging purposes!!
+    int& globalIdx()
+    { return globalIdx_;}
+    //! Indicates if volume derivatives are computed and available
+    const bool hasVolumeDerivatives() const
+    { return volumeDerivativesAvailable_;}
+    //! Specifies that volume derivatives are computed and available
+    void confirmVolumeDerivatives()
+    { volumeDerivativesAvailable_ = true;}
+    //! Resets the cell data after a timestep was completed: No volume derivatives yet available
+    void reset()
+    {
+        volumeDerivativesAvailable_ = false;
+        dv_dp_ = 0.;
+        dv_[0] = 0.;
+        dv_[1] = 0.;
+        //include future fluxData here
+    }
+
 
 };
 }
