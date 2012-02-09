@@ -78,7 +78,7 @@ SET_INT_PROP(KuevetteProblem, NumericDifferenceMethod, 0);
 //SET_BOOL_PROP(KuevetteProblem, NewtonWriteConvergence, true);
 
 // Set the maximum time step
-SET_SCALAR_PROP(KuevetteProblem, MaxTimeStepSize, 5.);
+SET_SCALAR_PROP(KuevetteProblem, MaxTimeStepSize, 60.);
 
 // set newton relative tolerance
 SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
@@ -87,7 +87,36 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
 
 /*!
  * \ingroup ThreePThreeCNIBoxModel
+ * \ingroup BoxTestProblems
+ * \brief Non-isothermal gas injection problem where a gas (e.g. air)
+ *        is injected into a fully water saturated medium with a residually
+ *        trapped NAPL contamination.
  *
+ * The domain is a quasi-two-dimensional container (kuevette). Its dimensions
+ * are 1.5 m x 0.74 m. The top and bottom boundaries are closed, the right
+ * boundary is a Dirichlet boundary allowing fluids to escape. From the left,
+ * an injection of a hot water-air mixture is applied (Neumann boundary condition
+ * for the mass components and the enthalpy), aimed at remediating an initial 
+ * NAPL (Non-Aquoeus Phase Liquid) contamination in the heterogeneous domain.
+ * The contamination is initially placed partly into the coarse sand
+ * and partly into a fine sand lense.
+ *
+ * This simulation can be varied through assigning different boundary conditions
+ * at the left boundary as described in Class (2001):
+ * Theorie und numerische Modellierung nichtisothermer Mehrphasenprozesse in
+ * NAPL-kontaminierten por"osen Medien, Dissertation, Eigenverlag des Instituts
+ * f"ur Wasserbau
+ *
+ * This problem uses the \ref ThreePThreeCNIModel
+ *
+ * To see the basic effect and the differences to scenarios with pure steam or
+ * pure air injection, it is sufficient to simulated for about 2-3 hours (10000 s).
+ * Complete remediation of the domain requires much longer (about 10 days simulated time).
+ * To adjust the simulation time it is necessary to edit the file test_3p3cni.input
+ *
+ * To run the simulation execute:
+ *
+ * <tt>./test_3p3cni -parameterFile test_3p3cni.input</tt>
  *  */
 template <class TypeTag >
 class KuevetteProblem : public ThreePThreeCNIProblem<TypeTag>
