@@ -101,7 +101,6 @@ SET_INT_PROP(InfiltrationProblem, NumericDifferenceMethod, 0);
  * To run the simulation execute the following line in shell:
  * <tt>./test_3p3c -parameterFile test_3p3c.input</tt>
  *  */
- *  */
 template <class TypeTag >
 class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
 {
