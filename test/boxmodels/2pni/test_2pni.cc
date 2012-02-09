@@ -30,6 +30,8 @@
 #include "injectionproblem2pni.hh"
 #include <dumux/common/start.hh>
 
+#include <dumux/common/structuredgridcreator.hh>
+
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -69,155 +71,11 @@ int main(int argc, char** argv)
 }
 
 //! \cond INTERNAL
-////////////////////////
-// helper class for grid instantiation
-////////////////////////
-template <class TypeTag, class Grid = typename GET_PROP_TYPE(TypeTag, Grid)>
-class TwoPNiGridCreator;
-
-#if HAVE_UG
-template <class TypeTag>
-class TwoPNiGridCreator<TypeTag, Dune::UGGrid<2> >
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::UGGrid<2> Grid;
-
-public:
-    /*!
-     * \brief Create the Grid
-     */
-    static void makeGrid()
-    {
-        Dune::FieldVector<int, 2> cellRes;
-        Dune::FieldVector<Scalar, 2> upperRight;
-        Dune::FieldVector<Scalar, 2> lowerLeft;
-
-        lowerLeft[0] = 0.0;
-        lowerLeft[1] = 0.0;
-        upperRight[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightX);
-        upperRight[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightY);
-
-        cellRes[0] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsX);
-        cellRes[1] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsY);
-
-        Dune::GridFactory<Dune::UGGrid<2> > factory;
-        for (int i=0; i<=cellRes[0]; i++) {
-            for (int j=0; j<=cellRes[1]; j++) {
-                Dune::FieldVector<double,2> pos;
-                pos[0] = upperRight[0]*double(i)/cellRes[0];
-                pos[1] = upperRight[1]*double(j)/cellRes[1];
-                factory.insertVertex(pos);
-            }
-        }
-
-        for (int i=0; i<cellRes[0]; i++) {
-            for (int j=0; j<cellRes[1]; j++) {
-#if CUBES
-                std::vector<unsigned int> v(4);
-#else
-                std::vector<unsigned int> v(3);
-#endif
-
-                int i0 = i*(cellRes[1]+1) + j;
-                int i1 = i*(cellRes[1]+1) + j+1;
-                int i2 = (i+1)*(cellRes[1]+1) + j;
-                int i3 = (i+1)*(cellRes[1]+1) + j+1;
-
-#if CUBES
-                v[0] = i0;
-                v[1] = i1;
-                v[2] = i2;
-                v[3] = i3;
-                factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,2), v);
-#else
-                v[0] = i0;
-                v[1] = i1;
-                v[2] = i2;
-                factory.insertElement(Dune::GeometryType(Dune::GeometryType::simplex,2), v);
-
-                v[0] = i1;
-                v[1] = i2;
-                v[2] = i3;
-                factory.insertElement(Dune::GeometryType(Dune::GeometryType::simplex,2), v);
-#endif
-            }
-        }
-
-        grid_ = factory.createGrid();
-        grid_->loadBalance();
-    }
-
-    /*!
-     * \brief Returns a reference to the grid.
-     */
-    static Grid &grid()
-    {
-        return *grid_;
-    };
-
-private:
-    static Grid *grid_;
-};
-
-template <class TypeTag>
-Dune::UGGrid<2> *TwoPNiGridCreator<TypeTag, Dune::UGGrid<2> >::grid_;
-#endif
-
-template <class TypeTag>
-class TwoPNiGridCreator<TypeTag, Dune::YaspGrid<2> >
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::YaspGrid<2> Grid;
-
-public:
-    /*!
-     * \brief Create the Grid
-     */
-    static void makeGrid()
-    {
-        Dune::FieldVector<int, 2> cellRes;
-        Dune::FieldVector<Scalar, 2> upperRight;
-        Dune::FieldVector<Scalar, 2> lowerLeft;
-
-        lowerLeft[0] = 0.0;
-        lowerLeft[1] = 0.0;
-        upperRight[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightX);
-        upperRight[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightY);
-
-        cellRes[0] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsX);
-        cellRes[1] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsY);
-
-        grid_ = new Dune::YaspGrid<2>(
-#ifdef HAVE_MPI
-            Dune::MPIHelper::getCommunicator(),
-#endif
-            upperRight, // upper right
-            cellRes, // number of cells
-            Dune::FieldVector<bool,2>(false), // periodic
-            0); // overlap
-    };
-
-    /*!
-     * \brief Returns a reference to the grid.
-     */
-    static Grid &grid()
-    {
-        return *grid_;
-    };
-
-private:
-    static Grid *grid_;
-};
-
-template <class TypeTag>
-Dune::YaspGrid<2> *TwoPNiGridCreator<TypeTag, Dune::YaspGrid<2> >::grid_;
-
 // set the GridCreator property
 namespace Dumux {
 namespace Properties {
-SET_TYPE_PROP(InjectionProblem2PNI, GridCreator, TwoPNiGridCreator<TypeTag>);
+SET_TYPE_PROP(InjectionProblem2PNI, GridCreator, CubeGridCreator<TypeTag>);
 }}
-
 //! \endcond
 
 

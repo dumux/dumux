@@ -26,6 +26,17 @@
  *
  * \brief test for the 2pni box model
  */
+
+#ifndef DUMUX_STRUCTURED_GRID_CREATOR_HH
+#define DUMUX_STRUCTURED_GRID_CREATOR_HH
+
+#include <dune/grid/io/file/dgfparser.hh>
+
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/parameters.hh>
+
+
+#include <dumux/common/basicproperties.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 //#include <dumux/../util/structuredgridfactorysg.hh> //under discussion!
 
@@ -64,8 +75,8 @@ public:
     static void makeGrid()
     {
         Dune::array< unsigned int, dim > cellRes;
-        Dune::FieldVector<Scalar, 2> upperRight;
-        Dune::FieldVector<Scalar, 2> lowerLeft;
+        Dune::FieldVector<Scalar, dim> upperRight;
+        Dune::FieldVector<Scalar, dim> lowerLeft;
 
         lowerLeft[0] = 0.0;
         upperRight[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightX);
@@ -128,8 +139,8 @@ public:
     static void makeGrid()
     {
         Dune::array< unsigned int, dim > cellRes;
-        Dune::FieldVector<Scalar, 2> upperRight;
-        Dune::FieldVector<Scalar, 2> lowerLeft;
+        Dune::FieldVector<Scalar, dim> upperRight;
+        Dune::FieldVector<Scalar, dim> lowerLeft;
 
         lowerLeft[0] = 0.0;
         upperRight[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightX);
@@ -176,6 +187,4 @@ typename SimplexGridCreator<TypeTag>::GridPointer SimplexGridCreator<TypeTag>::g
 }
 
 //! \endcond
-
-
-
+#endif
