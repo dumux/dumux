@@ -22,8 +22,8 @@
 /*!
  * \file
  *
- * \brief Non-isothermal gas injection problem where a gas (e.g. air)
- *        is injected into a fully water saturated medium.
+ * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
+ *        the unsaturated and the saturated groundwater zone.
  */
 #ifndef DUMUX_INFILTRATIONPROBLEM_HH
 #define DUMUX_INFILTRATIONPROBLEM_HH
@@ -73,7 +73,34 @@ SET_INT_PROP(InfiltrationProblem, NumericDifferenceMethod, 0);
 
 /*!
  * \ingroup ThreePThreeCBoxModel
+ * \ingroup BoxTestProblems
+ * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
+ *        the unsaturated and the saturated groundwater zone.
  *
+ * The 2D domain of this test problem is 500 m long and 10 m deep, where
+ * the lower part represents a slightly inclined groundwater table, and the
+ * upper part is the vadose zone. 
+ * A LNAPL (Non-Aqueous Phase Liquid which is lighter than water) infiltrates
+ * (modelled with a Neumann boundary condition) into the vadose zone. Upon
+ * reaching the water table, it spreads (since lighter than water) and migrates
+ * on top of the water table in the direction of the slope.
+ * On its way through the vadose zone, it leaves a trace of residually trapped
+ * immobile NAPL, which can in the following dissolve and evaporate slowly,
+ * and eventually be transported by advection and diffusion.
+ *
+ * Left and right boundaries are constant head boundaries (Dirichlet),
+ * Top and bottom are Neumann boundaries, all no-flow except for the small
+ * infiltration zone in the upper left part.
+ *
+ * This problem uses the \ref ThreePThreeCModel.
+ *
+ * This problem should typically be simulated for 30 days.
+ * A good choice for the initial time step size is 60 s.
+ * To adjust the simulation time it is necessary to edit the file test_3p3cni.input
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_3p3c -parameterFile test_3p3c.input</tt>
+ *  */
  *  */
 template <class TypeTag >
 class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
