@@ -25,7 +25,7 @@
  * \file
  *
  * \brief Base class for all problems which use the single-phase,
- *        two-component box model
+ *        two-component box model.
  */
 #ifndef DUMUX_1P2C_PROBLEM_HH
 #define DUMUX_1P2C_PROBLEM_HH
@@ -38,7 +38,7 @@ namespace Dumux
 /*!
  * \ingroup OnePTwoCBoxModel
  * \ingroup BoxBaseProblems
- * \brief Base class for all problems which use the single-phase, two-component box model
+ * \brief Base class for all problems which use the single-phase, two-component box model.
  *
  */
 template<class TypeTag>
@@ -65,7 +65,7 @@ class OnePTwoCBoxProblem : public BoxProblem<TypeTag>
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The constructor.
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -85,15 +85,15 @@ public:
     // \{
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
+     * \brief Return the temperature \f$\mathrm{[K]}\f$ within a control volume.
      *
      * This is the discretization specific interface for the box
      * method. By default it just calls temperature(pos).
      *
-     * \param element The DUNE Codim<0> enitiy which intersects with
-     *                the finite volume.
-     * \param fvGeom The finite volume geometry of the element.
-     * \param scvIdx The local index of the sub control volume inside the element
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume
+     * \param fvGeom The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume inside the element
      */
     Scalar boxTemperature(const Element &element,
                           const FVElementGeometry fvGeom,
@@ -101,7 +101,7 @@ public:
     { return asImp_().temperatureAtPos(fvGeom.subContVol[scvIdx].global); }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
+     * \brief Return the temperature \f$\mathrm{[K]}\f$ at a given global position.
      *
      * This is not specific to the discretization. By default it just
      * calls temperature().
@@ -112,7 +112,7 @@ public:
     { return asImp_().temperature(); }
 
     /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
+     * \brief Return the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
      *
      * This is not specific to the discretization. By default it just
      * throws an exception so it must be overloaded by the problem if
@@ -122,10 +122,15 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
 
     /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
+     * \brief Return the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
+     *.
      * This is the box discretization specific interface. By default
      * it just calls gravityAtPos().
+     *
+     * \param element The DUNE Codim<0> entity which intersects with
+     *                the finite volume
+     * \param fvGeom The finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume inside the element
      */
     const Vector &boxGravity(const Element &element,
                                      const FVElementGeometry &fvGeom,
@@ -133,16 +138,18 @@ public:
     { return asImp_().gravityAtPos(fvGeom.subContVol[scvIdx].global); }
 
     /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
+     * \brief Return the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
      *
-     * This is discretization independent interface. By default it
+     * This is the discretization independent interface. By default it
      * just calls gravity().
+     *
+     * \param pos Coordinate vector of the global position
      */
     const Vector &gravityAtPos(const GlobalPosition &pos) const
     { return asImp_().gravity(); }
 
     /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
+     * \brief Return the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
      *
      * This method is used for problems where the gravitational
      * acceleration does not depend on the spatial position. The
@@ -154,7 +161,7 @@ public:
     { return gravity_; }
 
     /*!
-     * \brief Returns the spatial parameters object.
+     * \brief Return the spatial parameters object.
      */
     SpatialParameters &spatialParameters()
     { return spatialParams_; }
@@ -168,7 +175,7 @@ public:
     // \}
 
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
+    //! Return the implementation of the problem (i.e. static polymorphism).
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
     //! \copydoc asImp_()

@@ -27,7 +27,7 @@
  * \brief This file contains the data which is required to calculate
  *        all fluxes of fluid phases over a face of a finite volume.
  *
- * This means pressure and temperature gradients, phase densities at
+ * This means pressure and mole-/mass-fraction gradients, phase densities at
  * the integration point, etc.
  *
  */
@@ -49,7 +49,7 @@ namespace Dumux
  *        calculate the fluxes of the fluid phases over a face of a
  *        finite volume for the one-phase, two-component model.
  *
- * This means pressure and concentration gradients, phase densities at
+ * This means pressure and mole-/mass-fraction gradients, phase densities at
  * the intergration point, etc.
  */
 template <class TypeTag>
@@ -90,6 +90,8 @@ public:
      * \param elemGeom The finite-volume geometry in the box scheme
      * \param scvfIdx The local index of the SCV (sub-control-volume) face
      * \param elemDat The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
      */
     OnePTwoCFluxVariables(const Problem &problem,
                           const Element &element,
@@ -121,7 +123,7 @@ public:
     *        vertex j.
     *
     * Note that the length of the face's normal is the area of the
-    * phase, so this is not the actual velocity by the integral of
+    * phase, so this is not the actual velocity but the integral of
     * the velocity over the face's area. Also note that the phase
     * mobility is not yet included here since this would require a
     * decision on the upwinding approach (which is done in the
@@ -150,25 +152,25 @@ public:
    }
 
     /*!
-     * \brief Return the intrinsic permeability tensor.
+     * \brief Return the intrinsic permeability tensor \f$\mathrm{[m^2]}\f$.
      */
     const Tensor &intrinsicPermeability() const
     { return K_; }
 
     /*!
-     * \brief Return the dispersion tensor.
+     * \brief Return the dispersion tensor \f$\mathrm{[m^2/s]}\f$.
      */
     const Tensor &dispersionTensor() const
     { return dispersionTensor_; }
 
     /*!
-     * \brief Return the pressure potential gradient.
+     * \brief Return the pressure potential gradient \f$\mathrm{[Pa/m]}\f$.
      */
     const Vector &potentialGrad() const
     { return potentialGrad_; }
 
     /*!
-     * \brief Return the concentration gradient.
+     * \brief Return the concentration gradient \f$\mathrm{[mol/m^3/m]}\f$.
      *
      * \param compIdx The index of the considered component
      */
@@ -183,7 +185,7 @@ public:
     };
 
     /*!
-        * \brief The molar concentration gradient of a component in a phase.
+        * \brief Return the mole-fraction gradient of a component in a phase \f$\mathrm{[mol/mol/m)]}\f$.
         *
         * \param compIdx The index of the considered component
         */
@@ -198,7 +200,7 @@ public:
        };
 
        /*!
-       * \brief The mass fraction gradient of a component in a phase.
+       * \brief Return the mass-fraction gradient of a component in a phase \f$\mathrm{[kg/kg/m)]}\f$.
        *
        * \param compIdx The index of the considered component
        */
@@ -213,7 +215,7 @@ public:
       };
 
     /*!
-    * \brief The binary diffusion coefficient for each fluid phase in the porous medium.
+    * \brief The binary diffusion coefficient for each fluid phase in the porous medium \f$\mathrm{[m^2/s]}\f$.
     */
     Scalar porousDiffCoeff() const
     {
@@ -243,23 +245,23 @@ public:
         { return densityAtIP_; }
 
     /*!
-     * \brief Given the intrinisc permeability times the pressure
+     * \brief Given the intrinsic permeability times the pressure
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the upstream control volume
      *        for a given phase.
      *
-     *        \param normalFlux The flux over a face of the sub control volume
+     *        \param normalFlux The flux over a face of the sub-control volume
      */
     int upstreamIdx(Scalar normalFlux) const
     { return (normalFlux >= 0)?face().i:face().j; }
 
     /*!
-     * \brief Given the intrinisc permeability times the pressure
+     * \brief Given the intrinsic permeability times the pressure
      *        potential gradient and SCV face normal for a phase,
      *        return the local index of the downstream control volume
      *        for a given phase.
      *
-     *        \param normalFlux The flux over a face of the sub control volume
+     *        \param normalFlux The flux over a face of the sub-control volume
      */
     int downstreamIdx(Scalar normalFlux) const
     { return (normalFlux > 0)?face().j:face().i; }
@@ -281,7 +283,7 @@ public:
 protected:
 
     /*!
-     * \brief Calculation of the pressure and concentration gradients
+     * \brief Calculation of the pressure and mole-/mass-fraction gradients.
      *
      *        \param problem The considered problem file
      *        \param element The considered element of the grid
@@ -317,17 +319,20 @@ protected:
                 tmp *= elemVolVars[idx].molarity(comp1Idx);
                 concentrationGrad_ += tmp;
 
+                // the mole-fraction gradient
                 tmp = feGrad;
                 tmp *= elemVolVars[idx].moleFraction(comp1Idx);
                 moleFracGrad_ += tmp;
 
+                // the mass-fraction gradient
                 tmp = feGrad;
                 tmp *= elemVolVars[idx].massFraction(comp1Idx);
                 massFracGrad_ += tmp;
+
                 // phase viscosity
                 viscosityAtIP_ += elemVolVars[idx].viscosity()*face().shapeValue[idx];
 
-                //phase moledensity
+                //phase molar density
                 molarDensityAtIP_ += elemVolVars[idx].molarDensity()*face().shapeValue[idx];
 
                 //phase density
@@ -403,8 +408,8 @@ protected:
 
     /*!
       * \brief Calculation of the velocity normal to face using Darcy's law.
-      *     Tensorial permeability is multiplied with the potential Gradient and the face normal.
-      *     Identify upstream node of face
+      *     Tensorial permeability is multiplied with the potential gradient and the face normal.
+      *     Identify upstream node of face.
       *
       *        \param problem The considered problem file
       *        \param element The considered element of the grid
@@ -428,7 +433,7 @@ protected:
         }
     }
     /*!
-    * \brief Calculation of the effective diffusion coefficient
+    * \brief Calculation of the effective diffusion coefficient.
     *
     *        \param problem The considered problem file
     *        \param element The considered element of the grid
@@ -450,7 +455,7 @@ protected:
     }
 
     /*!
-    * \brief Calculation of the dispersion
+    * \brief Calculation of the dispersion.
     *
     *        \param problem The considered problem file
     *        \param element The considered element of the grid
@@ -504,8 +509,9 @@ protected:
     Vector potentialGrad_;
     //! concentratrion gradient
     Vector concentrationGrad_;
-    //! molar concentratrion gradient
+    //! mole-fraction gradient
     Vector moleFracGrad_;
+    //! mass-fraction gradient
     Vector massFracGrad_;
     //! the effective diffusion coefficent in the porous medium
     Scalar diffCoeffPM_;

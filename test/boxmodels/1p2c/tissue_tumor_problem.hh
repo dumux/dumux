@@ -1,6 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
+ *   Copyright (C) 2009 by Katherina Baber
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
@@ -23,12 +24,11 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Definition of a problem, where the distribution of a therapeutic agent
- * within pulmonary tissue is described
- * \author Karin Erbertseder, Bernd Flemisch
+ * \brief Definition of a problem, for the 1p2c box problem:
+ * Component transport of nitrogen dissolved in the water phase.
  */
-#ifndef DUMUX_TISSUE_TUMOR_PROBLEM_HH
-#define DUMUX_TISSUE_TUMOR_PROBLEM_HH
+#ifndef DUMUX_1P2C_OUTFLOW_PROBLEM_HH
+#define DUMUX_1P2C_OUTFLOW_PROBLEM_HH
 
 #ifdef HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
@@ -38,21 +38,21 @@
 
 #include <dumux/boxmodels/1p2c/1p2cmodel.hh>
 
-#include "interstitialfluidtrailfluidsystem.hh"
+#include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
 #include "tissue_tumor_spatialparameters.hh"
 
 namespace Dumux
 {
 
 template <class TypeTag>
-class TissueTumorProblem;
+class OnePTwoCOutflowProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TissueTumorProblem, INHERITS_FROM(BoxOnePTwoC));
+NEW_TYPE_TAG(OnePTwoCOutflowProblem, INHERITS_FROM(BoxOnePTwoC));
 
 // Set the grid type
-SET_PROP(TissueTumorProblem, Grid)
+SET_PROP(OnePTwoCOutflowProblem, Grid)
 {
 #if HAVE_UG
     typedef Dune::UGGrid<2> type;
@@ -63,29 +63,29 @@ SET_PROP(TissueTumorProblem, Grid)
 };
 
 // Set the problem property
-SET_PROP(TissueTumorProblem, Problem)
+SET_PROP(OnePTwoCOutflowProblem, Problem)
 {
-    typedef Dumux::TissueTumorProblem<TTAG(TissueTumorProblem)> type;
+    typedef Dumux::OnePTwoCOutflowProblem<TTAG(OnePTwoCOutflowProblem)> type;
 };
 
 // Set fluid configuration
-SET_PROP(TissueTumorProblem, FluidSystem)
+SET_PROP(OnePTwoCOutflowProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::InterstitialFluidTrail<Scalar> type;
+    typedef Dumux::FluidSystems::H2ON2LiquidPhase<Scalar, false> type;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(TissueTumorProblem,
+SET_TYPE_PROP(OnePTwoCOutflowProblem,
               SpatialParameters,
-              Dumux::TissueTumorSpatialParameters<TypeTag>);
+              Dumux::OnePTwoCOutflowSpatialParameters<TypeTag>);
 
 //Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TissueTumorProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCOutflowProblem, UseMoles, false);
 
 // Disable gravity
-SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
+SET_BOOL_PROP(OnePTwoCOutflowProblem, EnableGravity, false);
 }
 
 
@@ -93,35 +93,28 @@ SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
  * \ingroup OnePTwoCBoxModel
  * \ingroup BoxTestProblems
  *
- * \brief Definition of a problem, where the distribution of a therapeutic agent
- *         within pulmonary tissue is described
+ * \brief Definition of a problem, for the 1p2c box problem:
+ * Nitrogen is dissolved in the water phase and
+ * is transported with the water flow from the left side to the right.
  *
- * The model domain is 22 mm long in x-direction and in y-direction with a discretization length of 0.1
- * mm. The tumour area is located in the middle of the model domain. The diameter of the tumour is
- * assumed to be 2 mm.
+ * The model domain is 1m times 1m with a discretization length of 0.05m
+ * and homogeneous soil properties (\f$ K=10e-10, \Phi=0.4\f$).
+ * Initially the domain is filled with pure water.
  *
- * The intercapillary distance is in the range of 0.1 mm. So the distance between the grid nodes is
- * equal to the intercapillary distance. It is assumed that at each node within the model domain the
- * transition of the therapeutic agent from the blood capillary into the tissue can take place.
- * Based on this assumption, the initial conditions are adapted. The mole fraction of the dissolved
- * therapeutic agent x is set to 1.1249 e-8 within the normal pulmonary tissue. Within the tumour the
- * mole fraction of dissolved therapeutic agent is set to zero due to the assumption of a blood vessel
- * free tumour. As initial condition for the pressure p, an interstitial fluid pressure of -1067 Pa is
- * assumed. This value corresponds to the interstitial fluid pressure in healthy pulmonary tissue.
- *
- * All four sides of the model domain are described by Dirichlet boundary conditions. The primary
- * variable p is instantiated with the value -1067 Pa and the primary variable x with the value
- * 1.1249 e-8.
- *
- * The pressure field of the tumour is generated by an additional source term of 1.98 e-9 l/h,
- * that is set in the center of the tumour region.
+ * At the left side, a Dirichlet condition defines a nitrogen mole fraction
+ * of 0.3 mol/mol.
+ * The water phase flows from the left side to the right due to the applied pressure
+ * gradient of 1e5Pa/m. The nitrogen is transported with the water flow
+ * and leaves the domain at the right boundary
+ * where an outflow boundary condition is applied.
+ * This problem uses the \ref OnePTwoCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_1p2c grids/test_1p2c.dgf 1 1</tt>
+ * <tt>./test_1p2c grids/test_1p2c.dgf 100 1</tt>
  */
 
-template <class TypeTag = TTAG(TissueTumorProblem) >
-class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
+template <class TypeTag = TTAG(OnePTwoCOutflowProblem) >
+class OnePTwoCOutflowProblem : public OnePTwoCBoxProblem<TypeTag>
 {
     typedef OnePTwoCBoxProblem<TypeTag> ParentType;
 
@@ -129,6 +122,7 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -157,22 +151,11 @@ class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    TissueTumorProblem(TimeManager &timeManager, const GridView &gridView)
+    OnePTwoCOutflowProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        // calculate the injection volume
-        totalInjectionVolume_ = 0;
-        FVElementGeometry fvGeom;
-        ElementIterator elemIt = gridView.template begin<0>();
-        const ElementIterator endIt = gridView.template end<0>();
-        for (; elemIt != endIt; ++ elemIt) {
-            fvGeom.update(gridView, *elemIt);
-            for (int i = 0; i < fvGeom.numVertices; ++i) {
-                const GlobalPosition &pos = fvGeom.subContVol[i].global;
-                if (inInjectionVolume_(pos))
-                    totalInjectionVolume_ += fvGeom.subContVol[i].volume;
-            };
-  }
+        //initialize fluid system
+        FluidSystem::init();
     }
 
     /*!
@@ -186,15 +169,15 @@ public:
      * This is used as a prefix for files generated by the simulation.
      */
     const char *name() const
-    { return "tissue"; }
+    { return "outflow"; }
 
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This problem assumes a temperature of 36 degrees Celsius.
+     * This problem assumes a temperature of 20 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 36; }; // in [K]
+    { return 273.15 + 20; }; // in [K]
 
     // \}
 
@@ -209,7 +192,16 @@ public:
      */
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
-        values.setAllDirichlet();
+        const GlobalPosition globalPos = vertex.geometry().center();
+
+        if(globalPos[0] < eps_ || globalPos[0] > this->bboxMax()[0] - eps_)
+            values.setAllDirichlet();
+        else
+            values.setAllNeumann();
+
+        //outflow condition for the transport equation at right boundary
+        if(globalPos[0] > this->bboxMax()[0] - eps_)
+            values.setOutflow(transEqIdx);
     }
 
     /*!
@@ -223,6 +215,9 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
 
         initial_(values, globalPos);
+        //condition for the trail molefraction at left boundary
+        if(globalPos[0] < eps_)
+            values[x1Idx] = 0.3;
     }
 
     /*!
@@ -264,26 +259,6 @@ public:
                      const GlobalPosition &globalPos) const
     {
         values = Scalar(0.0);
-
-        if (inInjectionVolume_(globalPos)) {
-            // total volumetric injection rate in ml/h
-            Scalar injRateVol = 0.1;
-            // convert to m^3/s
-            injRateVol *= 1e-6/3600;
-            // total mass injection rate. assume a density of 1030kg/m^3
-            Scalar injRateMass = injRateVol*1030.0;
-
-            // trail concentration in injected fluid in [mol/ml]
-            Scalar trailInjRate = 1e-5;
-            // convert to mol/m^3
-            trailInjRate *= 1e6;
-            // convert to mol/s
-            trailInjRate *= injRateVol;
-
-            // source term of the total mass
-            values[contiEqIdx] = injRateMass / totalInjectionVolume_; // [kg/(s*m^3)]
-            values[transEqIdx] = trailInjRate / totalInjectionVolume_; // [mol/(s*m^3)]
-        }
     }
 
     /*!
@@ -306,25 +281,15 @@ public:
     // \}
 
 private:
-    bool inInjectionVolume_(const GlobalPosition &globalPos) const
-    {
-        return
-            10e-3 < globalPos[0] && globalPos[0] < 12e-3 &&
-            10e-3 < globalPos[1] && globalPos[1] < 12e-3;
-    };
-
-
     // the internal method for the initial condition
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-        values[pressureIdx] = 0.0; //initial condition for the pressure
+        values[pressureIdx] = 2e5 - 1e5*globalPos[0];//0.0; //initial condition for the pressure
         values[x1Idx] = 0.0; //initial condition for the trail molefraction
-//        if(globalPos[0] > 0.4 && globalPos[0] < 0.6 && globalPos[1] > 0.4 && globalPos[1] < 0.6)
-//            values[x1Idx] = 0.6;
     }
 
-    Scalar totalInjectionVolume_;
+   static const Scalar eps_ = 1e-4;
 }; //end namespace
 }
 #endif

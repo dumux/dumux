@@ -59,7 +59,6 @@ struct OnePTwoCIndices
     // primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< pressure
     static const int x1Idx = PVOffset + 1; //!< mole fraction of the second component
-                                //in my case the therapeutic agent
 };
 
 // \}

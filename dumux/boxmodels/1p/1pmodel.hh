@@ -24,7 +24,7 @@
  * \file
  *
  * \brief Base class for all models which use the one-phase,
- *        box model
+ *        box model.
  *        Adaption of the BOX scheme to the one-phase flow model.
  */
 
@@ -50,13 +50,14 @@ namespace Dumux
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as time discretization.
  * Of course, the model can also be used for incompressible
- * single phase flow modeling, if in the problem file a fluid with constant density is chosen.
+ * single phase flow modeling, if a fluid with constant density is chosen in the problem file.
  */
 template<class TypeTag >
 class OnePBoxModel : public BoxModel<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
@@ -82,6 +83,7 @@ public:
         // create the required scalar fields
         unsigned numVertices = this->problem_().gridView().size(dim);
         ScalarField *p = writer.allocateManagedBuffer(numVertices);
+        ScalarField *K = writer.allocateManagedBuffer(numVertices);
 
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
@@ -110,12 +112,17 @@ public:
                                fvElemGeom,
                                i,
                                false);
+                const SpatialParameters &spatialParams = this->problem_().spatialParameters();
 
                 (*p)[globalIdx] = volVars.pressure();
+                (*K)[globalIdx] = spatialParams.intrinsicPermeability(*elemIt,
+                                                                    fvElemGeom,
+                                                                    i);
             };
         }
 
         writer.attachVertexData(*p, "p");
+        writer.attachVertexData(*K, "K");
         writer.attachCellData(*rank, "process rank");
     }
 };

@@ -24,10 +24,10 @@
  * \file
  *
  * \brief Definition of the spatial parameters for the 1p2c
- *        tissue-tumor problem
+ *        outlfow problem.
  */
-#ifndef DUMUX_TISSUE_TUMOR_SPATIAL_PARAMETERS_HH
-#define DUMUX_TISSUE_TUMOR_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMETERS_HH
+#define DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparameters/boxspatialparameters1p.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -42,10 +42,10 @@ namespace Dumux
  * \ingroup BoxTestProblems
  *
  * \brief Definition of the spatial parameters for the 1p2c
- *        tissue-tumor problem
+ *        outflow problem.
  */
 template<class TypeTag>
-class TissueTumorSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
+class OnePTwoCOutflowSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
 {
     typedef BoxSpatialParametersOneP<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -68,18 +68,15 @@ class TissueTumorSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
 
     //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
-    TissueTumorSpatialParameters(const GridView &gv)
+    OnePTwoCOutflowSpatialParameters(const GridView &gv)
         : ParentType(gv)
     {
-        permTumor_ = 2.142e-11;
-        permTissue_ = 4.424e-12;
-        porosityTumor_ = 0.31;
-        porosityTissue_ = 0.13;
-        tortuosityTumor_ = 0.706;
-        tortuosityTissue_ = 0.280;
+        permeability_ = 1e-10;
+        porosity_ = 0.4;
+        tortuosity_ = 0.28;
     }
 
-    ~TissueTumorSpatialParameters()
+    ~OnePTwoCOutflowSpatialParameters()
     {}
 
 
@@ -104,11 +101,7 @@ public:
                                        const FVElementGeometry &fvElemGeom,
                                        int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isTumor_(pos))
-            return permTumor_;
-        else
-            return permTissue_;
+            return permeability_;
     }
 
     /*!
@@ -122,11 +115,7 @@ public:
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isTumor_(pos))
-            return porosityTumor_;
-        else
-            return porosityTissue_;
+            return porosity_;
     }
 
     /*!
@@ -140,11 +129,7 @@ public:
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isTumor_(pos))
-            return tortuosityTumor_;
-        else
-            return tortuosityTissue_;
+            return tortuosity_;
     }
 
     /*!
@@ -165,31 +150,13 @@ public:
                              int vertexI,
                              int vertexJ) const
     {
-        bool inTumor = isTumor_(elem.geometry().corner(0));
-        int n = elem.template count<dim>();
-        for (int i = 1; i < n; ++i) {
-            if ((inTumor && !isTumor_(elem.geometry().corner(i))) ||
-                (!inTumor && isTumor_(elem.geometry().corner(i))))
-                return true;
-        }
         return false;
     }
 
 private:
-    bool isTumor_(const Dune::FieldVector<CoordScalar,dim>& globalPos) const
-    {
-        if(10e-3 < globalPos[0] && globalPos[0] < 15e-3 &&
-           10e-3 < globalPos[1] && globalPos[1] < 15e-3)
-            return true;
-        return false;
-    }
-
-    Scalar permTumor_;
-    Scalar permTissue_;
-    Scalar porosityTumor_;
-    Scalar porosityTissue_;
-    Scalar tortuosityTumor_;
-    Scalar tortuosityTissue_;
+    Scalar permeability_;
+    Scalar porosity_;
+    Scalar tortuosity_;
 };
 
 }

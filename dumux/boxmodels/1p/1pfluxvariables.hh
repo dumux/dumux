@@ -66,7 +66,7 @@ class OnePFluxVariables
 
 public:
     /*
-     * \brief The constructor
+     * \brief The constructor.
      *
      * \param problem The problem
      * \param element The finite element
@@ -87,27 +87,28 @@ public:
         calculateGradients_(problem, element, elemDat);
     };
 
-
+    /*!
+     * \brief The face of the current sub-control volume.
+     */
     const SCVFace &face() const
     { return fvElemGeom_.subContVolFace[scvfIdx_]; }
 
     /*!
-     * \brief Return the intrinsic permeability.
+     * \brief Return the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      */
     const Tensor &intrinsicPermeability() const
     { return K_; }
 
     /*!
-     * \brief Return the pressure potential gradient.
+     * \brief Return the pressure potential gradient \f$\mathrm{[Pa/m]}\f$.
      */
     const Vector &potentialGrad() const
     { return potentialGrad_; }
 
     /*!
-     * \brief Given the intrinisc permeability times the pressure
-     *        potential gradient and SCV face normal for a phase,
-     *        return the local index of the upstream control volume
-     *        for a given phase.
+     * \brief Return the local index of the upstream control volume
+     *        for a given phase, given the intrinisc permeability times the pressure
+     *        potential gradient and SCV face normal for a phase.
      *
      *        \param normalFlux The normal flux i.e. the given intrinsic permeability
      *                   times the pressure potential gradient and SCV face normal.

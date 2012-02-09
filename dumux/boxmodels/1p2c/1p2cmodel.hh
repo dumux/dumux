@@ -25,7 +25,7 @@
  * \file
  *
  * \brief Base class for all models which use the single-phase,
- *        two-component box model
+ *        two-component box model.
  *        Adaption of the BOX scheme to the one-phase two-component flow model.
  */
 
@@ -45,7 +45,7 @@ namespace Dumux
  * \ingroup OnePTwoCBoxModel
  * \brief Adaption of the BOX scheme to the one-phase two-component flow model.
  *
- * This model implements an one-phase flow of an incompressible fluid, that consists of two components,
+ * This model implements a one-phase flow of a compressible fluid, that consists of two components,
  * using a standard Darcy
  * approach as the equation for the conservation of momentum:
  \f[
@@ -53,17 +53,17 @@ namespace Dumux
  \left(\text{grad} p - \varrho g \right)
  \f]
  *
- * Gravity can be enabled or disabled via the Property system.
+ * Gravity can be enabled or disabled via the property system.
  * By inserting this into the continuity equation, one gets
  \f[
- - \text{div} \left\{
+ \Phi \frac{\partial \varrho}{\partial t} - \text{div} \left\{
    \varrho \frac{K}{\mu}  \left(\text{grad} p - \varrho g \right)
  \right\} = q \;,
  \f]
  *
  * The transport of the components is described by the following equation:
  \f[
- \Phi \varrho \frac{ \partial x}{\partial t} - \text{div} \left( \varrho \frac{K x}{\mu} \left( \text{grad} p -
+ \Phi \frac{ \partial \varrho}{\partial t} - \text{div} \left( \varrho \frac{K x}{\mu} \left( \text{grad} p -
  \varrho g \right) + \varrho \tau \Phi D \text{grad} x \right) = q.
  \f]
  *
@@ -71,7 +71,7 @@ namespace Dumux
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as time discretization.
  *
- * The primary variables are the pressure \f$p\f$ and the mole fraction of dissolved component \f$x\f$.
+ * The primary variables are the pressure \f$p\f$ and the mole or mass fraction of dissolved component \f$x\f$.
  */
 
 template<class TypeTag >
@@ -96,6 +96,9 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
     OnePTwoCBoxModel()
     {
         // retrieve the upwind weight for the mass conservation equations. Use the value
@@ -306,10 +309,10 @@ public:
         if (dim > 2)
             writer.attachVertexData(velocityZ, "Vz");
 #endif
-        writer.attachVertexData(moleFrac0, "x_if");
-        writer.attachVertexData(moleFrac1, "x_TRAIL");
-        writer.attachVertexData(massFrac0, "X_if");
-        writer.attachVertexData(massFrac1, "X_TRAIL");
+        writer.attachVertexData(moleFrac0, "x_H2O");
+        writer.attachVertexData(moleFrac1, "x_N2");
+        writer.attachVertexData(massFrac0, "X_H2O");
+        writer.attachVertexData(massFrac1, "X_N2");
 //        writer.attachVertexData(delFrac, "delFrac_TRAIL");
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");

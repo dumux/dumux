@@ -76,7 +76,7 @@ public:
 
     /*!
      * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub control
+     *        quantites (e.g. phase mass) within a sub-control
      *        volume of a finite volume element for the OneP
      *        model.
      *
@@ -101,7 +101,7 @@ public:
 
 
     /*!
-     * \brief Evaluates the mass flux over a face of a subcontrol
+     * \brief Evaluate the mass flux over a face of a sub-control
      *        volume.
      *
      * \param flux The flux over the SCV (sub-control-volume) face
@@ -131,7 +131,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the source term of the equation
+     * \brief Calculate the source term of the equation.
      *
      * \param q The source/sink in the SCV
      * \param localVertexIdx The index of the SCV

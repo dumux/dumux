@@ -52,7 +52,7 @@ namespace Dumux
  * \brief Calculate the local Jacobian for the single-phase,
  *        two-component model in the BOX scheme.
  *
- *  This class is used to fill the gaps in BoxLocalResidual for the 1P-2C flow.
+ *  This class is used to fill the gaps in BoxLocalResidual for the 1p2c flow.
  */
 template<class TypeTag>
 class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
@@ -76,8 +76,11 @@ protected:
         {
             numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
-            // indices of the primary variables
+            //phase index
+            phaseIdx = Indices::phaseIdx,
 
+            // indices of the primary variables
+            pressuerIdx = Indices::pressureIdx,
             comp1Idx = Indices::comp1Idx,
 
             // indices of the equations
@@ -85,6 +88,7 @@ protected:
             transEqIdx = Indices::transEqIdx
         };
 
+    //property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 
@@ -106,7 +110,7 @@ public:
      *        (e.g. phase mass) within a finite volume.
      *
      *        \param result The mass of the component within the sub-control volume
-     *        \param scvIdx The index of the considered face of the sub control volume
+     *        \param scvIdx The index of the considered face of the sub-control volume
      *        \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
@@ -124,10 +128,10 @@ public:
         {
             // storage term of continuity equation - massfractions
             result[contiEqIdx] +=
-                volVars.fluidState().density(/*phaseIdx*/0)*volVars.porosity();
+                volVars.fluidState().density(phaseIdx)*volVars.porosity();
             //storage term of the transport equation - massfractions
             result[transEqIdx] +=
-                volVars.fluidState().density(/*phaseIdx*/0) * volVars.fluidState().massFraction(/*phaseIdx*/0, comp1Idx) * volVars.porosity();
+                volVars.fluidState().density(phaseIdx) * volVars.fluidState().massFraction(phaseIdx, comp1Idx) * volVars.porosity();
         }
         else
         {
@@ -136,19 +140,20 @@ public:
             result[contiEqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
             result[transEqIdx] +=
-                volVars.fluidState().molarDensity(/*phaseIdx*/0)*volVars.fluidState().moleFraction(/*phaseIdx*/0, comp1Idx) *
+                volVars.fluidState().molarDensity(phaseIdx)*volVars.fluidState().moleFraction(phaseIdx, comp1Idx) *
                 volVars.porosity();
         }
 
     }
 
     /*!
-     * \brief Evaluates the mass flux over a face of a subcontrol
+     * \brief Evaluate the mass flux over a face of a sub-control
      *        volume.
      *
      *        \param flux The flux over the SCV (sub-control-volume) face for each component
      *        \param faceId The index of the considered face of the sub control volume
-     *        \param onBoundary If the considered face exists at the boundary
+     *        \param onBoundary A boolean variable to specify whether the flux variables
+     *               are calculated for interior SCV faces or boundary faces, default=false
      */
     void computeFlux(PrimaryVariables &flux, int faceId, bool onBoundary=false) const
     {
@@ -165,8 +170,8 @@ public:
     }
 
     /*!
-     * \brief Evaluates the advective mass flux of all components over
-     *        a face of a subcontrol volume.
+     * \brief Evaluate the advective mass flux of all components over
+     *        a face of a sub-control volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current SCV
@@ -197,9 +202,9 @@ public:
             // advective flux of the second component - massfraction
             flux[transEqIdx] +=
                 fluxVars.KmvpNormal() *
-                ((    upwindWeight_)*up.fluidState().density(/*phaseIdx=*/0) * up.fluidState().massFraction(/*phaseIdx=*/0, comp1Idx)/up.viscosity()
+                ((    upwindWeight_)*up.fluidState().density(phaseIdx) * up.fluidState().massFraction(phaseIdx, comp1Idx)/up.viscosity()
                  +
-                 (1 - upwindWeight_)*dn.fluidState().density(/*phaseIdx=*/0)*dn.fluidState().massFraction(/*phaseIdx=*/0, comp1Idx)/dn.viscosity());
+                 (1 - upwindWeight_)*dn.fluidState().density(phaseIdx)*dn.fluidState().massFraction(phaseIdx, comp1Idx)/dn.viscosity());
         }
         else
         {
@@ -214,16 +219,16 @@ public:
             // advective flux of the second component -molefraction
             flux[transEqIdx] +=
                 fluxVars.KmvpNormal() *
-                ((    upwindWeight_)*up.molarDensity() * up.fluidState().moleFraction(/*phaseIdx=*/0, comp1Idx)/up.viscosity()
+                ((    upwindWeight_)*up.molarDensity() * up.fluidState().moleFraction(phaseIdx, comp1Idx)/up.viscosity()
                  +
-                 (1 - upwindWeight_)*dn.molarDensity() * dn.fluidState().moleFraction(/*phaseIdx=*/0, comp1Idx)/dn.viscosity());
+                 (1 - upwindWeight_)*dn.molarDensity() * dn.fluidState().moleFraction(phaseIdx, comp1Idx)/dn.viscosity());
         }
 
     }
 
     /*!
      * \brief Adds the diffusive mass flux of all components over
-     *        a face of a subcontrol volume.
+     *        a face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
      * \param fluxVars The flux variables at the current SCV
@@ -275,6 +280,10 @@ public:
     /*!
      * \brief Add Outflow boundary conditions for a single sub-control
      *        volume face to the local residual.
+     *
+     * \param isIt   The intersection iterator of current element
+     * \param scvIdx The index of the considered face of the sub-control volume
+     * \param boundaryFaceIdx The index of the considered boundary face of the sub control volume
      */
     void evalOutflowSegment(const IntersectionIterator &isIt,
                             int scvIdx,

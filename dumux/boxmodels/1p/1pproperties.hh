@@ -26,7 +26,7 @@
  * \ingroup OnePBoxModel
  * \file
  *
- * \brief Defines the properties required for the onephase BOX model.
+ * \brief Defines the properties required for the one-phase BOX model.
  */
 #ifndef DUMUX_1P_PROPERTIES_DATA_HH
 #define DUMUX_1P_PROPERTIES_DATA_HH

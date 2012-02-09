@@ -49,12 +49,37 @@ class OnePTestSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
+    enum {
+        dim=GridView::dimension,
+        dimWorld=GridView::dimensionworld
+    };
+
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
     OnePTestSpatialParameters(const GridView& gridView)
         : ParentType(gridView)
-    {}
+    {
+        try
+        {
+            lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftX);
+            lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftY);
+            lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightX);
+            lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightY);
+
+            permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.permeability);
+            permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.permeabilityLens);
+        }
+        catch (Dumux::ParameterException &e) {
+            std::cerr << e << ". Abort!\n";
+            exit(1) ;
+        }
+        catch (...) {
+            std::cerr << "Unknown exception thrown!\n";
+            exit(1);
+        }
+    }
 
     /*!
      * \brief Apply the intrinsic permeability tensor to a pressure
@@ -68,7 +93,14 @@ public:
     Scalar intrinsicPermeability(const Element &element,
                                  const FVElementGeometry &fvElemGeom,
                                  int scvIdx) const
-    { return 1e-10; }
+    {
+        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
+
+        if (isInLens_(globalPos))
+            return permeabilityLens_;
+        else
+            return permeability_;
+    }
 
     /*! \brief Define the porosity.
    *
@@ -80,9 +112,22 @@ public:
                     const FVElementGeometry &fvElemGeom,
                     int scvIdx) const
     { return 0.4; }
+
+private:
+    bool isInLens_(const GlobalPosition &pos) const
+    {
+        for (int i = 0; i < dim; ++i) {
+            if (pos[i] < lensLowerLeft_[i] || pos[i] > lensUpperRight_[i])
+                return false;
+        }
+        return true;
+    }
+
+    GlobalPosition lensLowerLeft_;
+    GlobalPosition lensUpperRight_;
+
+    Scalar permeability_, permeabilityLens_;
 };
-
-
 
 } // end namespace
 #endif

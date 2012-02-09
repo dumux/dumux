@@ -40,7 +40,7 @@ namespace Dumux
 /*!
  * \ingroup OnePTwoCBoxModel
  * \ingroup BoxVolumeVariables
- * \brief Contains the quantities which are are constant within a
+ * \brief Contains the quantities which are constant within a
  *        finite volume in the single-phase, two-component model.
  */
 template <class TypeTag>
@@ -83,7 +83,7 @@ public:
      * \param problem The considered problem
      * \param element The considered element of the grid
      * \param elemGeom The finite-volume geometry in the box scheme
-     * \param scvIdx  The index of the considered subcontrol volume
+     * \param scvIdx  The index of the considered sub-control volume
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
@@ -95,6 +95,7 @@ public:
     {
         ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
 
+        //calculate all secondary variables from the primary variables and store results in fluidstate
         completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
 
         porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
@@ -105,7 +106,7 @@ public:
         // Could be avoided if diffusion coefficients also
         // became part of the fluid state.
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState_, /*phaseIdx=*/0);
+        paramCache.updatePhase(fluidState_, phaseIdx);
 
         diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                              paramCache,
@@ -136,7 +137,7 @@ public:
                                                 elemGeom, scvIdx);
         fluidState.setTemperature(t);
 
-        fluidState.setPressure(/*phaseIdx=*/0, priVars[pressureIdx]);
+        fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
         Scalar x1 = priVars[x1Idx]; //mole or mass fraction of component 1
         if(!useMoles) //mass-fraction formulation
@@ -149,17 +150,17 @@ public:
 
             x1 *= meanMolarMass/M1;
         }
-        fluidState.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/0, 1 - x1);
-        fluidState.setMoleFraction(/*phaseIdx=*/0, /*compIdx=*/1, x1);
+        fluidState.setMoleFraction(phaseIdx, comp0Idx, 1 - x1);
+        fluidState.setMoleFraction(phaseIdx, comp1Idx, x1);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
+        paramCache.updatePhase(fluidState, phaseIdx);
 
         Scalar value;
-        value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setDensity(/*phaseIdx=*/0, value);
-        value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setViscosity(/*phaseIdx=*/0, value);
+        value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
     }
 
     /*!
@@ -170,16 +171,19 @@ public:
     { return fluidState_; }
 
     /*!
-     * \brief Returns density the of the fluid phase.
+     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      */
     Scalar density() const
     { return fluidState_.density(phaseIdx); }
 
+    /*!
+     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     */
     Scalar molarDensity() const
     { return fluidState_.molarDensity(phaseIdx);}
 
     /*!
-     * \brief Returns mole fraction of a component in the phase
+     * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
      *
      * \param compIdx The index of the component
      */
@@ -187,34 +191,36 @@ public:
     { return fluidState_.moleFraction(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
-     * \brief Returns mass fraction of a component in the phase
+     * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
+     *
      * \param compIdx The index of the component
      */
     Scalar massFraction(int compIdx) const
     { return fluidState_.massFraction(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
-     * \brief Returns concentration of a component in the phase
+     * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     *
      * \param compIdx The index of the component
      */
     Scalar molarity(int compIdx) const
     { return fluidState_.molarity(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
 
     /*!
-     * \brief Returns the effective pressure of a given phase within
+     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      */
     Scalar pressure() const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
-     * \brief Returns the binary diffusion coefficient in the fluid
+     * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
     Scalar diffCoeff() const
     { return diffCoeff_; }
 
     /*!
-     * \brief Returns the tortuosity of the streamlines of the fluid.
+     * \brief Return the tortuosity  \f$\mathrm{[-]}\f$ of the streamlines of the fluid.
      */
     Scalar tortuosity() const
     { return tortuosity_; }
@@ -226,24 +232,24 @@ public:
     { return dispersivity_; }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
+     * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
      * identical.
      */
     Scalar temperature() const
-    { return fluidState_.temperature(/*phaseIdx=*/0); }
+    { return fluidState_.temperature(phaseIdx); }
 
     /*!
-     * \brief Returns the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of a given phase
+     * \brief Return the dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of a given phase
      *        within the control volume.
      */
     Scalar viscosity() const
-    { return fluidState_.viscosity(/*phaseIdx=*/0); }
+    { return fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Returns the average porosity within the control volume.
+     * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
     { return porosity_; }
@@ -259,7 +265,7 @@ protected:
     }
 
     /*!
-     * \brief Called by update() to compute the energy related quantities
+     * \brief Called by update() to compute the energy related quantities.
      */
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,

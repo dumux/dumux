@@ -23,7 +23,8 @@
 /*!
  * \file
  *
- * \brief A test problem for the one-phase box model
+ * \brief A test problem for the one-phase box model:
+ * water is flowing from bottom to top through and around a low permeable lens.
  */
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
@@ -98,6 +99,9 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
  * except the top and bottom boundaries (Dirichlet), where water is
  * flowing from bottom to top.
  *
+ * In the middle of the domain, a lens with low permeability (\f$ K=10e-12f$)
+ * compared to the surrounding material (\f$ K=10e-10f$) is defined.
+ *
  * To run the simulation execute the following line in shell:
  * <tt>./test_1p grids/1p_2d.dgf 10 0.01</tt>
  * where start simulation time = 0.01 second, end simulation time = 10 seconds
@@ -157,12 +161,12 @@ public:
     { return "1ptest"; }
 
     /*!
-     * \brief Returns the temperature within the domain.
+     * \brief Return the temperature within the domain.
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature() const
-    { return 273.15 + 10; } // 10°C
+    { return 273.15 + 10; } // 10C
     // \}
 
     void sourceAtPos(PrimaryVariables &values,
@@ -177,7 +181,7 @@ public:
     // \{
 
     /*!
-     * \brief Specifies which kind of boundary condition should be
+     * \brief Specify which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
@@ -192,7 +196,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
+     * \brief Evaluate the boundary conditions for a Dirichlet
      *        boundary segment.
      *
      * For this method, the \a values parameter stores primary variables.

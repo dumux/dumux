@@ -39,7 +39,7 @@ namespace Dumux
 /*!
  * \ingroup OnePBoxModel
  * \ingroup BoxVolumeVariables
- * \brief Contains the quantities which are are constant within a
+ * \brief Contains the quantities which are constant within a
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
@@ -123,7 +123,7 @@ public:
     }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
+     * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
      * temperature of the rock matrix and of all fluid phases are
@@ -133,34 +133,35 @@ public:
     { return fluidState_.temperature(); }
 
     /*!
-     * \brief Returns the effective pressure of a given phase within
+     * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
+     *
      */
     Scalar pressure() const
     { return fluidState_.pressure(/*phaseIdx=*/0); }
 
     /*!
-     * \brief Returns the mass density of a given phase within the
+     * \brief Return the mass density \f$\mathrm{[kg/m13]}\f$ of a given phase within the
      *        control volume.
      */
     Scalar density() const
     { return fluidState_.density(/*phaseIdx=*/0); }
 
     /*!
-     * \brief Returns the dynamic viscosity of the fluid within the
+     * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
     Scalar viscosity() const
     { return fluidState_.viscosity(/*phaseIdx=*/0); }
 
     /*!
-     * \brief Returns the average porosity within the control volume.
+     * \brief Return the average porosity \f$\mathrm{[-]}\f within the control volume.
      */
     Scalar porosity() const
     { return porosity_; }
 
     /*!
-     * \brief Returns the fluid state of the control volume.
+     * \brief Return the fluid state of the control volume.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -176,7 +177,7 @@ protected:
     }
 
     /*!
-     * \brief Called by update() to compute the energy related quantities
+     * \brief Called by update() to compute the energy related quantities.
      */
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
