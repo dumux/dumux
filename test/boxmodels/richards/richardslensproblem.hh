@@ -115,7 +115,7 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
  * water instead of a %DNAPL infiltrates from the top.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_richards grids/richardslens.dgf 10e6 100</tt>
+ * <tt>./test_richards -parameterFile test_richards.input</tt>
  *
  * where the initial time step is 100 seconds, and the end of the
  * simulation time is 10,000,000 seconds (115.7 days)

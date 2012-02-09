@@ -90,7 +90,7 @@ SET_BOOL_PROP(InjectionProblem, EnableVelocityOutput, false);
  * This problem uses the \ref TwoPTwoCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p2c grids/test_2p2c.dgf 1e6 1e4 </tt>
+ * <tt>./test_2p2c -parameterFile ./test_2p2c.input</tt>
  */
 template <class TypeTag = TTAG(InjectionProblem) >
 class InjectionProblem : public TwoPTwoCProblem<TypeTag>

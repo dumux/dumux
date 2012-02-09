@@ -110,7 +110,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, EnableGravity, false);
  * This problem uses the \ref OnePTwoCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_1p2c grids/test_1p2c.dgf 100 1</tt>
+ * <tt>./test_1p2c -parameterFile ./test_1p2c.input</tt>
  */
 
 template <class TypeTag = TTAG(OnePTwoCOutflowProblem) >

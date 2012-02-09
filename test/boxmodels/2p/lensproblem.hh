@@ -147,7 +147,7 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  * size is \f$t_{\text{inital}} = 250\;s\f$.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p 20000 250</tt>
+ * <tt>./test_2p -parameterFile test_2p.input</tt>
  */
 template <class TypeTag >
 class LensProblem : public TwoPProblem<TypeTag>

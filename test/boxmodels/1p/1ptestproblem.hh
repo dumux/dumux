@@ -103,11 +103,11 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
  * compared to the surrounding material (\f$ K=10e-10f$) is defined.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_1p grids/1p_2d.dgf 10 0.01</tt>
- * where start simulation time = 0.01 second, end simulation time = 10 seconds
- * The same file can be also used for 3d simulation but you need to change line
+ * <tt>./test_1p -parameterFile test_1p.input</tt>
+ * The same parameter file can be also used for 3d simulation but you need to change line
  * <tt>typedef Dune::SGrid<2,2> type;</tt> to
- * <tt>typedef Dune::SGrid<3,3> type;</tt> and use <tt>1p_3d.dgf</tt> grid.
+ * <tt>typedef Dune::SGrid<3,3> type;</tt> in the problem file
+ * and use <tt>1p_3d.dgf</tt> in the parameter file.
  */
 template <class TypeTag = TTAG(OnePTestProblem) >
 class OnePTestProblem : public OnePBoxProblem<TypeTag>

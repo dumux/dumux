@@ -123,6 +123,9 @@ SET_INT_PROP(ObstacleProblem, NumericDifferenceMethod, +1);
  * The boundary is no-flow except on the lower 10 meters of the left
  * and the right boundary which is a Dirichlet condition with the same
  * values as the initial condition.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_MpNc -parameterFile test_MpNc.input</tt>
  */
 template <class TypeTag>
 class ObstacleProblem

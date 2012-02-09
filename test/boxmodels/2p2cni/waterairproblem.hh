@@ -107,7 +107,7 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  * A good choice for the initial time step size is 1000 s.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2p2cni ./grids/test_2p2cni.dgf 300000 1000</tt>
+ * <tt>./test_2p2cni -parameterFile test_2p2cni.input</tt>
  *  */
 template <class TypeTag >
 class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>

@@ -134,7 +134,7 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
  * A good choice for the initial time step size is 1000 seconds.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_2pni ./grids/test_2pni.dgf 300000 1000</tt>
+ * <tt>./test_2pni -parameterFile test_2pni.input</tt>
  */
 template<class TypeTag>
 class InjectionProblem2PNI
