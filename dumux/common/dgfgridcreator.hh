@@ -76,6 +76,14 @@ public:
         return gridPtr_;
     };
 
+    /*!
+     * \brief Call loadBalance() function of GridPointer.
+     */
+    static void loadBalance()
+    {
+        gridPtr_.loadBalance();
+    };
+
 private:
     static GridPointer gridPtr_;
 };

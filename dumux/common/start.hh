@@ -485,6 +485,7 @@ int startWithParameters_(int argc,
         usage(argv[0], usageMessage);
         throw;
     }
+    GridCreator::loadBalance();
 
     // read the initial time step and the end time
     double tEnd;
