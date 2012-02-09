@@ -29,6 +29,7 @@ int main(int argc, char** argv)
     typedef TTAG(Stokes2cniTestProblem) ProblemTypeTag;
     return Dumux::startFromDGF<ProblemTypeTag>(argc, argv);
 #else
+#warning "No SuperLU installed. Stokes currently only works with SuperLU."
     std::cout << "No SuperLU installed. Stokes currently only works with SuperLU." << std::endl;
     return 1;
 #endif
