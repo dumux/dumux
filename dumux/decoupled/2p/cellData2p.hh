@@ -76,9 +76,10 @@ private:
 private:
     Scalar saturation_[numPhases];
     Scalar pressure_[numPhases];
-    Scalar capillaryPressure_;
     Scalar mobility_[numPhases];
     Scalar fracFlowFunc_[numPhases];
+
+    Scalar capillaryPressure_;
     Scalar update_;
 
     FluxData fluxData_;
@@ -89,9 +90,17 @@ public:
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
 
-    CellData2P() :
-        saturation_({0.0, 0.0}), pressure_({0.0, 0.0}), capillaryPressure_(0), mobility_({0.0, 0.0}), fracFlowFunc_({0.0, 0.0}), update_(0)
+    CellData2P()
     {
+        for (int i = 0; i < numPhases;i++)
+        {
+            saturation_[i] = 0.0;
+            pressure_[i] = 0.0;
+            mobility_[i] = 0.0;
+            fracFlowFunc_[i] = 0.0;
+        }
+        capillaryPressure_ = 0.0;
+        update_ = 0.0;
     }
 
     FluxData& fluxData()
