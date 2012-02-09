@@ -302,9 +302,14 @@ public:
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
 
-    CellData2P() :
-        mobility_({0.0, 0.0}), fracFlowFunc_({0.0, 0.0}), update_(0)
+    CellData2P()
     {
+        for (int i = 0; i < numPhases;i++)
+        {
+            mobility_[i] = 0.0;
+            fracFlowFunc_[i] = 0.0;
+        }
+        update_ = 0.0;
     }
 
     FluxData& fluxData()
