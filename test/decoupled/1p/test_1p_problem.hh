@@ -59,8 +59,9 @@ NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(FVPressureOneP))
 
 // Set the grid type
 SET_PROP(TestProblemOneP, Grid)
-{//    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<2, 2> type;
+{
+        typedef Dune::YaspGrid<2> type;
+//    typedef Dune::SGrid<2, 2> type;
 };
 
 // Set the wetting phase
@@ -94,6 +95,8 @@ template<class TypeTag>
 class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 {
     typedef DiffusionProblem1P<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
@@ -111,11 +114,34 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+    typedef typename GET_PROP(TypeTag, GridCreator) GridCreator;
+
 
 public:
-    TestProblemOneP(const GridView &gridView, const double delta = 1.0) :
-        ParentType(gridView), delta_(delta), velocity_(*this)
+    TestProblemOneP(TimeManager &timeManager, const GridView &gridView) :
+        ParentType(gridView), velocity_(*this)
     {
+        delta_ = 1e-3 ;
+
+        try
+        {
+            if (ParameterTree::tree().hasKey("delta"))
+                delta_       = GET_RUNTIME_PARAM(TypeTag, Scalar, delta_);
+            int numRefine;
+            numRefine = GET_RUNTIME_PARAM(TypeTag, int, numRefine);
+#warning access to grid does not work
+            GridCreator::grid().globalRefine(numRefine);
+        }
+        catch (Dumux::ParameterException &e) {
+            std::cerr << e << ". Abort!\n";
+            exit(1) ;
+        }
+        catch (...) {
+            std::cerr << "Unknown exception thrown!\n";
+            exit(1);
+        }
+
         this->spatialParameters().setDelta(delta_);
     }
 

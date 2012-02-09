@@ -30,87 +30,47 @@
 #include "config.h"
 
 #include "test_transport_problem.hh"
+#include <dumux/common/start.hh>
+
 
 #include <dune/grid/common/gridinfo.hh>
-
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
-
 #include <iostream>
 
+
+/*!
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
+ */
+void usage(const char *progName, const std::string &errorMsg)
+{
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
+                                        "\t-tEnd                          The end of the simulation. [s] \n"
+                                        "\t-dtInitial                     The initial timestep size. [s] \n"
+                                        "\t-gridFile                      The file name of the file containing the grid \n"
+                                        "\t                                   definition in DGF format\n";
+
+        std::cout << errorMessageOut
+                  << "\n";
+    }
+}
 
 ////////////////////////
 // the main function
 ////////////////////////
-void usage(const char *progname)
-{
-    std::cout << "usage: "<<progname<<" [--restart restartTime] gridFile.dgf tEnd\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
-    try {
-        typedef TTAG(TransportTestProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
-
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        if (argc < 3)
-            usage(argv[0]);
-
-        // deal with the restart stuff
-        int argPos = 1;
-        bool restart = false;
-        double restartTime = 0;
-        if (std::string("--restart") == argv[argPos]) {
-            restart = true;
-            ++argPos;
-
-            std::istringstream(argv[argPos++]) >> restartTime;
-        }
-
-        if (argc - argPos != 2) {
-            usage(argv[0]);
-        }
-
-        ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        const char *dgfFileName = argv[argPos++];
-        Dune::GridPtr<Grid> gridPtr(dgfFileName);
-
-        // read the initial time step and the end time
-        double tEnd, dt;
-        std::istringstream(argv[argPos++]) >> tEnd;
-        dt = tEnd;
-
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-
-        TimeManager timeManager;
-        Problem problem(timeManager, gridPtr->leafView());
-
-        // use restart file if necessarry
-        timeManager.init(problem, restartTime, dt, tEnd, restart);
-        timeManager.run();
-
-        return 0;
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
-    }
-
-    return 3;
+    typedef TTAG(TransportTestProblem) ProblemTypeTag;
+    return Dumux::startWithParameters<ProblemTypeTag>(argc, argv, usage);
 }
+

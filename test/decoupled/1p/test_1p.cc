@@ -28,75 +28,63 @@
  * \brief test for the decoupled one-phase model.
  */
 #include "config.h"
+
+//#include <dumux/common/structuredgridcreator.hh>
+#include "test_1p_problem.hh"
+#include "benchmarkresult.hh"
+#include <dumux/common/start.hh>
+#include <dumux/common/structuredgridcreator.hh>
+
+
 #include <iostream>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/common/gridinfo.hh>
 
-#include "test_1p_problem.hh"
-#include "benchmarkresult.hh"
+/*!
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
+ */
+void usage(const char *progName, const std::string &errorMsg)
+{
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
+                                        "\t-refine                        The refinement level of the grid. [-] \n"
+                                        "\t-tEnd                          The end of the simulation. [s] \n"
+                                        "\t-dtInitial                     The initial timestep size. [s] \n";
+                    errorMessageOut += "\n\nAdditionaly the following arguments can be specified:\n"
+                                       "\t-delta                    ??? (has to be commented in in the parameter file) \n";
+
+        std::cout << errorMessageOut
+                  << "\n";
+    }
+}
 
 ////////////////////////
 // the main function
 ////////////////////////
-void usage(const char *progname)
-{
-    std::cout << "usage: " << progname << " #refine [delta]\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
-    try {
-        typedef TTAG(TestProblemOneP) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        static const int dim = Grid::dimension;
-        typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+    typedef TTAG(TestProblemOneP) ProblemTypeTag;
 
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
-
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        if (argc != 2 && argc != 3)
-            usage(argv[0]);
-
-        int numRefine;
-        std::istringstream(argv[1]) >> numRefine;
-
-        double delta = 1e-3;
-        if (argc == 3)
-            std::istringstream(argv[2]) >> delta;
-
-        ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> N(1);
-        GlobalPosition L(0.0);
-        GlobalPosition H(1.0);
-        Grid grid(N,L,H);
-        grid.globalRefine(numRefine);
-
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        Problem problem(grid.leafView(), delta);
-        problem.init();
-        problem.writeOutput();
-
-        return 0;
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
-    }
-
-    return 3;
+    return Dumux::startWithParameters<ProblemTypeTag>(argc, argv, usage);
 }
+
+//! \cond INTERNAL
+// set the GridCreator property
+namespace Dumux {
+namespace Properties {
+SET_TYPE_PROP(TestProblemOneP, GridCreator, CubeGridCreator<TypeTag>);
+}}
+//! \endcond
+
+

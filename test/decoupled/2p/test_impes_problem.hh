@@ -134,8 +134,8 @@ SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
  * and there is free outflow on the right side.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_impes 1e8</tt>,
- * where the argument defines the simulation endtime.
+ * <tt>./test_impes -parameterFile ./test_impes.input</tt>,
+ * where the arguments define the parameter file..
  */
 template<class TypeTag>
 class IMPESTestProblem: public IMPESProblem2P<TypeTag>
@@ -179,8 +179,7 @@ typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
 public:
 IMPESTestProblem(TimeManager &timeManager, const GridView &gridView) :
 ParentType(timeManager, gridView), eps_(1e-6)
-{
-}
+{}
 
 /*!
  * \name Problem parameters

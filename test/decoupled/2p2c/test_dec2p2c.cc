@@ -27,107 +27,58 @@
  * \brief test for the sequential 2p2c model
  */
 #include "config.h"
-
 #include "test_dec2p2cproblem.hh"
+#include <dumux/common/start.hh>
+
+#include <dumux/common/structuredgridcreator.hh>
 
 #include <dune/grid/common/gridinfo.hh>
-
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
-
 #include <iostream>
+
+/*!
+ * \brief Provides an interface for customizing error messages associated with
+ *        reading in parameters.
+ *
+ * \param progName  The name of the program, that was tried to be started.
+ * \param errorMsg  The error message that was issued by the start function.
+ *                  Comprises the thing that went wrong and a general help message.
+ */
+void usage(const char *progName, const std::string &errorMsg)
+{
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
+                                        "\t-tEnd                          The end of the simulation. [s] \n"
+                                        "\t-dtInitial                     The initial timestep size. [s] \n"
+                                        "\t-Grid.numberOfCellsX           Resolution in x-direction [-]\n"
+                                        "\t-Grid.numberOfCellsY           Resolution in y-direction [-]\n"
+                                        "\t-Grid.numberOfCellsZ           Resolution in z-direction [-]\n"
+                                        "\t-Grid.upperRightX              Dimension of the grid [m]\n"
+                                        "\t-Grid.upperRightY              Dimension of the grid [m]\n"
+                                        "\t-Grid.upperRightZ              Dimension of the grid [m]\n";
+        std::cout << errorMessageOut
+                  << "\n";
+    }
+}
 
 ////////////////////////
 // the main function
 ////////////////////////
-void usage(const char *progname)
-{
-    std::cout << "usage: " << progname << " [--restart restartTime] tEnd firstDt\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
-    try {
-        typedef TTAG(TestDecTwoPTwoCProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Scalar)  Scalar;
-        typedef GET_PROP_TYPE(TypeTag, Grid)    Grid;
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
-
-        static const int dim = Grid::dimension;
-
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
-
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        // deal with the restart stuff
-        int argPos = 1;
-        bool restart = false;
-        double startTime = 0;
-        // deal with start parameters
-        double tEnd= 3e3;
-        double firstDt = 200;
-        if (argc != 1)
-        {
-            // deal with the restart stuff
-            if (std::string("--restart") == argv[argPos]) {
-                restart = true;
-                ++argPos;
-
-                std::istringstream(argv[argPos++]) >> startTime;
-            }
-            if (argc - argPos == 2)
-            {
-                // read the initial time step and the end time
-                std::istringstream(argv[argPos++]) >> tEnd;
-                std::istringstream(argv[argPos++]) >> firstDt;
-            }
-            else
-                usage(argv[0]);
-        }
-        else
-        {
-            Dune::dwarn << "simulation started with predefs" << std::endl;
-        }
-
-        ////////////////////////////////////////////////////////////
-        // create the grid
-        ////////////////////////////////////////////////////////////
-        Dune::FieldVector<int,dim> N(10);
-        Dune::FieldVector<double ,dim> L(0);
-        Dune::FieldVector<double,dim> H(10);
-        Grid grid(
-#ifdef HAVE_MPI
-            Dune::MPIHelper::getCommunicator(),
-#endif
-            H, // upper right
-            N, // number of cells
-            Dune::FieldVector<bool,dim>(false), // periodic
-            1); // overlap
-
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-        TimeManager timeManager;
-        Problem problem(timeManager, grid.leafView(), L, H);
-
-        // initialize the simulation
-        timeManager.init(problem, startTime, firstDt, tEnd, restart);
-        // run the simulation
-        timeManager.run();
-        return 0;
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
-    }
-
-    return 3;
+    typedef TTAG(TestDecTwoPTwoCProblem) ProblemTypeTag;
+    return Dumux::startWithParameters<ProblemTypeTag>(argc, argv, usage);
 }
+
+//! \cond INTERNAL
+// set the GridCreator property
+namespace Dumux {
+namespace Properties {
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, GridCreator, CubeGridCreator<TypeTag>);
+}}
+//! \endcond

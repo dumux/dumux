@@ -106,8 +106,8 @@ SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
  * pressure field being solved.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_transport grids/test_transport.dgf 16000</tt>,
- * where the argument defines the simulation endtime.
+ * <tt>./test_transport -parameterFile ./test_transport.input</tt>,
+ * where the arguments define the parameter file.
  */
 template<class TypeTag>
 class TestTransportProblem: public TransportProblem2P<TypeTag>
@@ -150,6 +150,7 @@ public:
     TestTransportProblem(TimeManager &timeManager, const GridView &gridView) :
         ParentType(timeManager, gridView), eps_(1e-6)
     {
+
         GlobalPosition vel(0);
         vel[0] = 1e-5;
 

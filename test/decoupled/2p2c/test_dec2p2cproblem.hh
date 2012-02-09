@@ -122,9 +122,7 @@ SET_SCALAR_PROP(TestDecTwoPTwoCProblem, CFLFactor, 0.8);
  * is injected over a vertical well in the center of the domain.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_dec2p2c</tt>
- * Optionally, simulation endtime and first timestep size can be
- * specified by programm arguments.
+ * <tt>./test_dec2p2c -parameterFile ./test_dec2p2c.input</tt>
  */
 template<class TypeTag = TTAG(TestDecTwoPTwoCProblem)>
 class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
@@ -157,8 +155,8 @@ typedef typename GridView::Intersection Intersection;
 typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView, const GlobalPosition lowerLeft = 0, const GlobalPosition upperRight = 0) :
-ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight), eps_(1e-6), depthBOR_(1000.0)
+TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView) :
+ParentType(timeManager, gridView), eps_(1e-6), depthBOR_(1000.0)
 {
 //    this->setOutputInterval(20);
     // initialize the tables of the fluid system
