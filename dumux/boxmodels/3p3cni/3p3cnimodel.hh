@@ -52,13 +52,13 @@ namespace Dumux {
  * \f{eqnarray*}
  && \phi \frac{\partial (\sum_\alpha \varrho_{\text{mol}, \alpha} x_\alpha^\kappa
  S_\alpha )}{\partial t}
- - \sum\limits_\alpha \nabla \cdot \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
+ - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
  \varrho_{\text{mol}, \alpha} x_\alpha^\kappa \mbox{\bf K}
- (\nabla p_\alpha - \varrho_{\text{mass}, \alpha} \mbox{\bf g}) \right\}
+ (\text{grad}\; p_\alpha - \varrho_{\text{mass}, \alpha} \mbox{\bf g}) \right\}
  \nonumber \\
  \nonumber \\
- && - \sum\limits_\alpha \nabla \cdot \left\{ D_{pm}^\kappa \varrho_{\text{mol},
- \alpha } \nabla x_\alpha^\kappa \right\}
+ && - \sum\limits_\alpha \text{div} \left\{ D_{pm}^\kappa \varrho_{\text{mol},
+ \alpha } \text{grad} \; x_\alpha^\kappa \right\}
  - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha
  \f}
  *
