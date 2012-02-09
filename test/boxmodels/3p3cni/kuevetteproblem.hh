@@ -22,8 +22,8 @@
 /*!
  * \file
  *
- * \brief Non-isothermal gas injection problem where a gas (e.g. air)
- *        is injected into a fully water saturated medium with a residually
+ * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
+ *        is injected into a unsaturated porous medium with a residually
  *        trapped NAPL contamination.
  */
 #ifndef DUMUX_KUEVETTE3P3CNIPROBLEM_HH
@@ -88,8 +88,8 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
 /*!
  * \ingroup ThreePThreeCNIBoxModel
  * \ingroup BoxTestProblems
- * \brief Non-isothermal gas injection problem where a gas (e.g. air)
- *        is injected into a fully water saturated medium with a residually
+ * \brief Non-isothermal gas injection problem where a gas (e.g. steam/air)
+ *        is injected into a unsaturated porous medium with a residually
  *        trapped NAPL contamination.
  *
  * The domain is a quasi-two-dimensional container (kuevette). Its dimensions
