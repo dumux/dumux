@@ -75,10 +75,6 @@ class FVTransport2P2C
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNW,
-        pglobal = Indices::pressureGlobal,
-        vw = Indices::velocityW,
-        vn = Indices::velocityNW,
-        vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationNW
     };
@@ -423,7 +419,7 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     }
     case pn:
     {
-                potentialW = (K * unitOuterNormal) * (pressI - pressJ - pcI + pcJ) / (dist);
+        potentialW = (K * unitOuterNormal) * (pressI - pressJ - pcI + pcJ) / (dist);
         potentialNW = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
 break;
     }

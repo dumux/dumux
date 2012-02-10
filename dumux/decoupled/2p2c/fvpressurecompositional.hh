@@ -33,7 +33,7 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
+ * @brief  Base Class for compositional pressure Equations
  * @author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
@@ -41,11 +41,7 @@ namespace Dumux
 {
 //! The finite volume model for the solution of the compositional pressure equation
 /*! \ingroup multiphase
- *  Provides a Finite Volume implementation for the pressure equation of a gas-liquid
- *  system with two components. An IMPES-like method is used for the sequential
- *  solution of the problem.  Diffusion is neglected, capillarity can be regarded.
- *  Isothermal conditions and local thermodynamic
- *  equilibrium are assumed.  Gravity is included.
+ *  Provides the common ground to solve compositional pressure equations of the form
  *  \f[
          c_{total}\frac{\partial p}{\partial t} + \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} \nabla \cdot \left( \sum_{\alpha} X^{\kappa}_{\alpha} \varrho_{\alpha} \bf{v}_{\alpha}\right)
           = \sum_{\kappa} \frac{\partial v_{total}}{\partial C^{\kappa}} q^{\kappa},
@@ -57,6 +53,9 @@ namespace Dumux
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
+ *  Common functions such as output and the initialization procedure are provided here. Also,
+ *  private vector (the update estimate for the volume derivatives) are stored in this class,
+ *  as only derived classes (other compositional pressure models) need acess to it.
  *  The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
  *
  * \tparam TypeTag The Type Tag
@@ -120,7 +119,7 @@ public:
     void initialize(bool solveTwice = false);
 
     //pressure solution routine: update estimate for secants, assemble, solve.
-    void update(bool solveTwice = true)
+    void update()
     {
         //pre-transport to estimate update vector
         Scalar dt_estimate = 0.;
@@ -605,6 +604,8 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
  * \param globalPos The global position of the current element
  * \param ep A pointer to the current element
  */
+#if 1
+#warning decide which one!!!
 template<class TypeTag>
 void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& globalPos, const Element& element)
 {
@@ -638,6 +639,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
         specificVolume += cellData.phaseMassFraction(phaseIdx) / cellData.density(phaseIdx);
     Scalar volalt = mass.one_norm() * specificVolume;
+//    volalt = cellData.volumeError()+problem_.spatialParameters().porosity(element);
         // = \sum_{\kappa} C^{\kappa} + \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
 
     /**********************************
@@ -714,7 +716,125 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     }
     cellData.confirmVolumeDerivatives();
 }
+#else
+template<class TypeTag>
+void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& globalPos, const Element& element)
+{
+    // cell index
+    int globalIdx = problem_.variables().index(element);
 
+    CellData& cellData = problem_.variables().cellData(globalIdx);
+
+    // get cell temperature
+    Scalar temperature_ = problem_.temperatureAtPos(globalPos);
+
+    // initialize an Fluid state for the update
+    FluidState updFluidState;
+
+    /**********************************
+     * a) get necessary variables
+     **********************************/
+    //determine phase pressures from primary pressure variable
+    PhaseVector pressure(0.);
+    switch (pressureType)
+    {
+    //TODO: use pressure from cellData here
+        case pw:
+        {
+            pressure[wPhaseIdx] = this->pressure()[globalIdx];
+            pressure[nPhaseIdx] = this->pressure()[globalIdx]
+                          + cellData.capillaryPressure();
+            break;
+        }
+        case pn:
+        {
+            pressure[wPhaseIdx] = this->pressure()[globalIdx]
+                          - cellData.capillaryPressure();
+            pressure[nPhaseIdx] = this->pressure()[globalIdx];
+            break;
+        }
+    }
+
+    // mass of components inside the cell
+    ComponentVector mass(0.);
+    mass[0] = cellData.massConcentration(wCompIdx);
+    mass[1] = cellData.massConcentration(nCompIdx);
+
+    // shortcuts for density
+    Scalar densityW = cellData.density(wPhaseIdx);
+    Scalar densityNW = cellData.density(nPhaseIdx);
+
+    // actual fluid volume
+    Scalar volalt = (mass[0]+mass[1])
+            * (cellData.phaseMassFraction(wPhaseIdx) / densityW
+                    + cellData.phaseMassFraction(nPhaseIdx) / densityNW);
+
+    /**********************************
+     * b) define increments
+     **********************************/
+    // increments for numerical derivatives
+    ComponentVector massIncrement(0.);
+    massIncrement[0] = updateEstimate_[wCompIdx][globalIdx];
+    massIncrement[1] = updateEstimate_[nCompIdx][globalIdx];
+    if(fabs(massIncrement[0]) < 1e-8 * densityW)
+        massIncrement[0] = 1e-8* densityW;
+    if(fabs(massIncrement[1]) < 1e-8 * densityNW)
+        massIncrement[1] = 1e-8 * densityNW;
+    Scalar incp = 1e-2;
+
+
+    /**********************************
+     * c) Secant method for derivatives
+     **********************************/
+
+    // numerical derivative of fluid volume with respect to pressure
+    PhaseVector p_(incp);
+    p_ += pressure;
+    Scalar Z1 = mass[0] / (mass[0] + mass[1]);
+    updFluidState.update(Z1,
+            p_, problem_.spatialParameters().porosity(globalPos, element), temperature_);
+    cellData.dv_dp() = (((mass[0]+mass[1]) * (updFluidState.phaseMassFraction(wPhaseIdx) /updFluidState.density(wPhaseIdx)
+            + updFluidState.phaseMassFraction(nPhaseIdx) /updFluidState.density(nPhaseIdx))) - volalt) /incp;
+
+    if (cellData.dv_dp()>0)
+    {
+        // dV_dp > 0 is unphysical: Try inverse increment for secant
+        Dune::dinfo << "dv_dp larger 0 at Idx " << globalIdx << " , try and invert secant"<< std::endl;
+
+        p_ -= 2*incp;
+        updFluidState.update(Z1,
+                    p_, problem_.spatialParameters().porosity(globalPos, element), temperature_);
+        cellData.dv_dp() = (((mass[0]+mass[1]) * (updFluidState.phaseMassFraction(wPhaseIdx) /updFluidState.density(wPhaseIdx)
+                + updFluidState.phaseMassFraction(nPhaseIdx) /updFluidState.density(nPhaseIdx))) - volalt) /incp;
+        // dV_dp > 0 is unphysical: Try inverse increment for secant
+        if (cellData.dv_dp()>0)
+        {
+            Dune::dinfo << "dv_dp still larger 0 after inverting secant"<< std::endl;
+        }
+    }
+
+    // numerical derivative of fluid volume with respect to mass of components
+    for (int comp = 0; comp<numComponents; comp++)
+    {
+        mass[comp] +=  massIncrement[comp];
+        Z1 = mass[0] / (mass[0] + mass[1]);
+        updFluidState.update(Z1, pressure, problem_.spatialParameters().porosity(globalPos, element), temperature_);
+
+        cellData.dv(comp) = ((mass[0]+mass[1])
+                * (updFluidState.phaseMassFraction(wPhaseIdx) / updFluidState.density(wPhaseIdx)
+                        + updFluidState.phaseMassFraction(nPhaseIdx) / updFluidState.density(nPhaseIdx)) - volalt)
+                / massIncrement[comp];
+        mass[comp] -= massIncrement[comp];
+
+        //check routines if derivatives are meaningful
+        if (isnan(cellData.dv(comp)) || isinf(cellData.dv(comp)) )
+        {
+            DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
+        }
+    }
+    cellData.confirmVolumeDerivatives();
+}
+#endif
 
 }//end namespace Dumux
 #endif
