@@ -378,13 +378,14 @@ std::string usageTextBlock()
  * \param   usage   Callback function for printing the usage message
  */
 template <class TypeTag>
-int startWithParameters_(int argc,
-                         char **argv,
-                         void (*usage)(const char *, const std::string &))
+int start_(int argc,
+           char **argv,
+           void (*usage)(const char *, const std::string &))
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator; // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/common/dgfgridcreator.hh)
+    // Set by default (dumux/common/basicproperties.hh) to DgfGridCreator (dumux/common/dgfgridcreator.hh)
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -535,7 +536,6 @@ bool inDebugger()
     return ptrace(PTRACE_TRACEME, 0, NULL, 0) == -1;
 }
 
-
 /*!
  * \ingroup Start
  *
@@ -558,7 +558,7 @@ int start(int argc,
 {
     if (!inDebugger()) {
         try {
-            return startWithParameters_<TypeTag>(argc, argv, usage);
+            return start_<TypeTag>(argc, argv, usage);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";
@@ -574,9 +574,8 @@ int start(int argc,
         }
     }
     else
-        return startWithParameters_<TypeTag>(argc, argv, usage);
+        return start_<TypeTag>(argc, argv, usage);
 }
-
 
 /*!
  * \ingroup Start
@@ -594,6 +593,7 @@ int start(int argc,
  * \param usage Callback function for printing the usage message
  */
 template <class TypeTag>
+DUMUX_DEPRECATED_MSG("Please use Dumux::start() instead")
 int startWithParameters(int argc,
                         char **argv,
                         void (*usage)(const char *, const std::string &))
