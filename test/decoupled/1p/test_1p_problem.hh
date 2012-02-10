@@ -115,7 +115,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-    typedef typename GET_PROP(TypeTag, GridCreator) GridCreator;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
 
 public:
@@ -130,7 +130,6 @@ public:
                 delta_       = GET_RUNTIME_PARAM(TypeTag, Scalar, delta_);
             int numRefine;
             numRefine = GET_RUNTIME_PARAM(TypeTag, int, numRefine);
-#warning access to grid does not work
             GridCreator::grid().globalRefine(numRefine);
         }
         catch (Dumux::ParameterException &e) {
