@@ -406,7 +406,7 @@ add_test(test_transport bin/runTest.sh references/test_transport-reference.vtu t
 add_test(test_impes     bin/runTest.sh references/test_impes-reference.vtu     test_impes-00013.vtu       test/decoupled/2p/test_impes     --parameter-file=parameters/test_impes.input)
 add_test(test_impes_adaptive     bin/runTest.sh references/output2padaptive-reference.vtu output2padaptive-00007.vtu      test/decoupled/2padaptive/test_impes_adaptive  parameters/input)
 add_test(test_dec2p2c   bin/runTest.sh references/test_dec2p2c-reference.vtu   test_dec2p2c-00021.vtu     test/decoupled/2p2c/test_dec2p2c --parameter-file=parameters/test_dec2p2c.input)
-add_test(test_multiphysics2p2c   bin/runTest.sh references/test_multiphysics-reference.vtu   test_multiphysics-00021.vtu     test/decoupled/2p2c/test_multiphysics2p2c)
+add_test(test_multiphysics2p2c   bin/runTest.sh references/test_multiphysics2p2c-reference.vtu   test_multiphysics2p2c-00021.vtu     test/decoupled/2p2c/test_multiphysics2p2c)
 
 add_test(tutorial_coupled   tutorial/tutorial_coupled   1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
