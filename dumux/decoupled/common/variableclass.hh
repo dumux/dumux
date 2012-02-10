@@ -89,10 +89,19 @@ public:
      */
     VariableClass(const GridView& gridView) :
         gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView)
-    {
-        cellDataVector_.resize(gridView.size(0));
-    }
+    {}
 
+
+    //! Initializes the variable class
+    /*! Method initializes the cellData vector.
+     * Should be called from problem init()
+     */
+    void initialize()
+    {
+        elementMapper_.update();
+        vertexMapper_.update();
+        cellDataVector_.resize(gridView_.size(0));
+    }
 
     //! Resizes decoupled variable vectors
     /*! Method that change the size of the vectors for h-adaptive simulations.

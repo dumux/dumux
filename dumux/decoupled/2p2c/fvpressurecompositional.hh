@@ -63,6 +63,8 @@ namespace Dumux
 template<class TypeTag> class FVPressureCompositional
 : public FVPressure<TypeTag>
 {
+    typedef FVPressure<TypeTag> ParentType;
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
@@ -327,8 +329,7 @@ protected:
 template<class TypeTag>
 void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
 {
-    //prepare stiffness Matrix and Vectors
-    problem_.pressureModel().initializeMatrix();
+    ParentType::initialize();
 
     // initialguess: set saturations, determine visco and mobility for initial pressure equation
     // at this moment, the pressure is unknown. Hence, dont regard compositional effects.

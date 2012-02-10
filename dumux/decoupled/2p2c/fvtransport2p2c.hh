@@ -116,7 +116,10 @@ public:
      * This method is called before first pressure equation is solved from Dumux::IMPET.
      */
     void initialize()
-    {};
+    {
+        totalConcentration_[wCompIdx].resize(problem_.gridView().size(0));
+        totalConcentration_[nCompIdx].resize(problem_.gridView().size(0));
+    };
 
     void evalBoundary(GlobalPosition,const Intersection&,FluidState &, PhaseVector &);
 

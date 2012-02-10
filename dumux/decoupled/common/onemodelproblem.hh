@@ -343,6 +343,7 @@ public:
     void init()
     {
         // set the initial condition of the model
+        variables_.initialize();
         model().initialize();
     }
 

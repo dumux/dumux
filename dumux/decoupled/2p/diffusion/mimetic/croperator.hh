@@ -141,7 +141,16 @@ public:
     CROperatorAssembler (const GridView& gridview)
     : gridView_(gridview), is_(gridView_.indexSet()), faceMapper_(gridView_), allMapper_(gridView_),
       A_(size(), size(), nnz(is_), RepresentationType::random)
+    {}
+
+    //!Initialize the global matrix of the system of equations to solve
+    void initializeMatrix()
     {
+        faceMapper_.update();
+        allMapper_.update();
+
+        A_.setSize(size(), size());
+
         assert(nnz(is_) != 0);
 
         // set size of all rows to zero

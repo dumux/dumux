@@ -155,6 +155,10 @@ public:
     void initialize(bool solveTwice = true)
     {
         updateMaterialLaws();
+        A_.initializeMatrix();
+        f_.resize(problem_.gridView().size(1));//resize to make sure the final grid size (after the problem was completely built) is used!
+        pressure_.resize(problem_.gridView().size(0));
+        pressTrace_.resize(problem_.gridView().size(1));
         pressure_ = 0;
         pressTrace_ = 0;
         f_ = 0;

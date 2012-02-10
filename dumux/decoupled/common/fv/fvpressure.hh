@@ -170,7 +170,11 @@ public:
      */
     void initialize()
     {
-        initializeMatrix();
+        size_ = problem_.gridView().size(0);//resize to make sure the final grid size (after the problem was completely built) is used!
+        A_.setSize(size_, size_);
+        f_.resize(size_);
+        pressure_.resize(size_);
+        initializeMatrix();// initialize sparse matrix
         pressure_ = 0;
     }
 

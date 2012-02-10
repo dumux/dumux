@@ -67,6 +67,7 @@ namespace Dumux
 template<class TypeTag>
 class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
 {
+    typedef FVPressure2P2C<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -139,6 +140,20 @@ public:
     void get1pFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
                             const Intersection&, const CellData&);
 
+    //initialize mult-physics-specific pressure model stuff
+    void initialize()
+    {
+        // assign whole domain to most complex subdomain, => 2p
+        int size = this->problem().gridView().size(0);
+        for (int i = 0; i < size; i++)
+        {
+            CellData& cellData = this->problem().variables().cellData(i);
+            cellData.subdomain() = 2;
+        }
+        nextSubdomain.resize(size);
+        ParentType::initialize();
+    }
+
 
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
@@ -169,16 +184,7 @@ public:
      */
     FVPressure2P2CMultiPhysics(Problem& problem) : FVPressure2P2C<TypeTag>(problem),
             gravity_(problem.gravity()), timer_(false)
-    {
-        // assign whole domain to most complex subdomain, => 2p
-        int size = problem.gridView().size(0);
-        for (int i = 0; i < size; i++)
-        {
-            CellData& cellData = problem.variables().cellData(i);
-            cellData.subdomain() = 2;
-        }
-        nextSubdomain.resize(size);
-    }
+    {}
 
 private:
     // subdomain map
