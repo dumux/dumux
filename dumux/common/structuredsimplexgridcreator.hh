@@ -27,8 +27,8 @@
  * \brief test for the 2pni box model
  */
 
-#ifndef DUMUX_STRUCTURED_GRID_CREATOR_HH
-#define DUMUX_STRUCTURED_GRID_CREATOR_HH
+#ifndef DUMUX_STRUCTURED_SIMPLEX_GRID_CREATOR_HH
+#define DUMUX_STRUCTURED_SIMPLEX_GRID_CREATOR_HH
 
 #include <dune/grid/io/file/dgfparser.hh>
 
@@ -55,70 +55,6 @@ NEW_PROP_TAG(Grid);
 // helper class for grid instantiation
 ////////////////////////
 
-
-template <class TypeTag>
-class CubeGridCreator
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
-    typedef Dune::shared_ptr<Grid> GridPointer;
-
-    enum
-    {
-        dim = Grid::dimension
-    };
-
-public:
-    /*!
-     * \brief Create the Grid
-     */
-    static void makeGrid()
-    {
-        Dune::array< unsigned int, dim > cellRes;
-        Dune::FieldVector<Scalar, dim> upperRight;
-        Dune::FieldVector<Scalar, dim> lowerLeft;
-
-        lowerLeft[0] = 0.0;
-        upperRight[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightX);
-        cellRes[0] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsX);
-        if (dim > 1)
-        {
-            lowerLeft[1] = 0.0;
-            upperRight[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightY);
-            cellRes[1] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsY);
-        }
-        if (dim > 2)
-        {
-            lowerLeft[2] = 0.0;
-            upperRight[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightZ);
-            cellRes[2] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsZ);
-        }
-
-        grid_ = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
-    }
-
-    /*!
-     * \brief Returns a reference to the grid.
-     */
-    static Grid &grid()
-    {
-        return *grid_;
-    };
-
-    /*!
-     * \brief Call loadBalance() function of Grid.
-     */
-    static void loadBalance()
-    {
-        grid_->loadBalance();
-    };
-
-private:
-    static GridPointer grid_;
-};
-
-template <class TypeTag>
-typename CubeGridCreator<TypeTag>::GridPointer CubeGridCreator<TypeTag>::grid_;
 
 template <class TypeTag>
 class SimplexGridCreator
@@ -158,7 +94,7 @@ public:
             cellRes[2] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsZ);
         }
 
-        grid_ = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cellRes);
+        simplexGrid_ = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cellRes);
     }
 
     /*!
@@ -166,7 +102,7 @@ public:
      */
     static Grid &grid()
     {
-        return *grid_;
+        return *simplexGrid_;
     };
 
     /*!
@@ -174,15 +110,15 @@ public:
      */
     static void loadBalance()
     {
-        grid_->loadBalance();
+        simplexGrid_->loadBalance();
     };
 
 private:
-    static GridPointer grid_;
+    static GridPointer simplexGrid_;
 };
 
 template <class TypeTag>
-typename SimplexGridCreator<TypeTag>::GridPointer SimplexGridCreator<TypeTag>::grid_;
+typename SimplexGridCreator<TypeTag>::GridPointer SimplexGridCreator<TypeTag>::simplexGrid_;
 
 }
 
