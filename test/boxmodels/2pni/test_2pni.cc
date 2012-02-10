@@ -30,7 +30,7 @@
 #include "injectionproblem2pni.hh"
 #include <dumux/common/start.hh>
 
-#include <dumux/common/structuredgridcreator.hh>
+#include <dumux/common/structuredcubegridcreator.hh>
 
 
 /*!
