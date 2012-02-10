@@ -1,4 +1,4 @@
-tEnd = 5e7 
+tEnd = 2e7 
 MinLevel = 0 
 MaxLevel = 5 
 RefineTolerance = 0.05
