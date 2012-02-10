@@ -207,12 +207,18 @@ public:
 
     TestDiffusionProblem(const GridView &gridView, const double delta = 1.0) :
         ParentType(gridView), delta_(delta), velocity_(*this)
+    {}
+
+    //!initializes the saturation and afterwards the model
+    void init()
     {
+        this->variables().initialize();
         this->spatialParameters().setDelta(delta_);
-        for (int i = 0; i < gridView.size(0); i++)
+        for (int i = 0; i < this->gridView().size(0); i++)
         {
             this->variables().cellData(i).setSaturation(wPhaseIdx, 1.0);
         }
+        this->model().initialize();
     }
 
     /*!

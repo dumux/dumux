@@ -31,7 +31,7 @@
 #include "test_impes_problem.hh"
 #include <dumux/common/start.hh>
 
-#include <dumux/common/structuredgridcreator.hh>
+#include <dumux/common/structuredcubegridcreator.hh>
 
 #include <dune/grid/common/gridinfo.hh>
 
@@ -74,7 +74,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
     typedef TTAG(IMPESTestProblem) ProblemTypeTag;
-    return Dumux::startWithParameters<ProblemTypeTag>(argc, argv, usage);
+    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 
 //! \cond INTERNAL

@@ -29,11 +29,10 @@
  */
 #include "config.h"
 
-//#include <dumux/common/structuredgridcreator.hh>
 #include "test_1p_problem.hh"
 #include "benchmarkresult.hh"
 #include <dumux/common/start.hh>
-#include <dumux/common/structuredgridcreator.hh>
+#include <dumux/common/structuredcubegridcreator.hh>
 
 
 #include <iostream>
@@ -76,7 +75,7 @@ int main(int argc, char** argv)
 {
     typedef TTAG(TestProblemOneP) ProblemTypeTag;
 
-    return Dumux::startWithParameters<ProblemTypeTag>(argc, argv, usage);
+    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 
 //! \cond INTERNAL

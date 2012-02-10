@@ -149,14 +149,20 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
 public:
     TestTransportProblem(TimeManager &timeManager, const GridView &gridView) :
         ParentType(timeManager, gridView), eps_(1e-6)
+    {}
+
+
+    //!set initial velocity field -> v_total is assumed to be constant in this test!
+    void init()
     {
+        ParentType::init();
 
         GlobalPosition vel(0);
         vel[0] = 1e-5;
 
         // compute update vector
-        ElementIterator eItEnd = gridView.template end<0> ();
-        for (ElementIterator eIt = gridView.template begin<0> (); eIt != eItEnd; ++eIt)
+        ElementIterator eItEnd = this->gridView().template end<0> ();
+        for (ElementIterator eIt = this->gridView().template begin<0> (); eIt != eItEnd; ++eIt)
         {
             // cell index
             int globalIdx = this->elementMapper().map(*eIt);
@@ -164,8 +170,8 @@ public:
             CellData& cellData = this->variables().cellData(globalIdx);
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator isItEnd = gridView.iend(*eIt);
-            for (IntersectionIterator isIt = gridView.ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isItEnd = this->gridView().iend(*eIt);
+            for (IntersectionIterator isIt = this->gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
                 // local number of facet
                 int indexInInside = isIt->indexInInside();

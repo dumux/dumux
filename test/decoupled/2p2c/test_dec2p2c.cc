@@ -30,7 +30,7 @@
 #include "test_dec2p2cproblem.hh"
 #include <dumux/common/start.hh>
 
-#include <dumux/common/structuredgridcreator.hh>
+#include <dumux/common/structuredcubegridcreator.hh>
 
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/common/exceptions.hh>
@@ -72,7 +72,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
     typedef TTAG(TestDecTwoPTwoCProblem) ProblemTypeTag;
-    return Dumux::startWithParameters<ProblemTypeTag>(argc, argv, usage);
+    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 
 //! \cond INTERNAL
