@@ -525,20 +525,6 @@ int start_(int argc,
 /*!
  * \ingroup Start
  *
- * \brief Returns true if and only if a debugger is attached to the simulation.
- */
-bool inDebugger()
-{
-    // valgrind seems to have a problem with ptrace, so we behave as
-    // if no debugger is present in this case...
-    if (Valgrind::Running())
-        return false;
-    return ptrace(PTRACE_TRACEME, 0, NULL, 0) == -1;
-}
-
-/*!
- * \ingroup Start
- *
  * \brief Provides a main function which reads in parameters from the
  *        command line and a parameter file.
  *
@@ -556,25 +542,21 @@ int start(int argc,
           char **argv,
           void (*usage)(const char *, const std::string &))
 {
-    if (!inDebugger()) {
-        try {
-            return start_<TypeTag>(argc, argv, usage);
-        }
-        catch (Dumux::ParameterException &e) {
-            std::cerr << e << ". Abort!\n";
-            return 1;
-        }
-        catch (Dune::Exception &e) {
-            std::cerr << "Dune reported error: " << e << std::endl;
-            return 2;
-        }
-        catch (...) {
-            std::cerr << "Unknown exception thrown!\n";
-            return 3;
-        }
-    }
-    else
+    try {
         return start_<TypeTag>(argc, argv, usage);
+    }
+    catch (Dumux::ParameterException &e) {
+        std::cerr << e << ". Abort!\n";
+        return 1;
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+        return 2;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!\n";
+        return 3;
+    }
 }
 
 /*!
