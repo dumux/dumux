@@ -27,11 +27,11 @@
  * \brief test for the 2pni box model
  */
 #include "config.h"
-#include "injectionproblem2pni.hh"
-#include <dumux/common/start.hh>
 
 #include <dumux/common/structuredcubegridcreator.hh>
 
+#include "injectionproblem2pni.hh"
+#include <dumux/common/start.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -69,14 +69,3 @@ int main(int argc, char** argv)
     typedef TTAG(InjectionProblem2PNI) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
-
-//! \cond INTERNAL
-// set the GridCreator property
-namespace Dumux {
-namespace Properties {
-SET_TYPE_PROP(InjectionProblem2PNI, GridCreator, CubeGridCreator<TypeTag>);
-}}
-//! \endcond
-
-
-

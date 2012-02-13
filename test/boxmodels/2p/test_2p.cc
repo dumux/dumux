@@ -30,14 +30,6 @@
 #include "lensproblem.hh"
 #include <dumux/common/start.hh>
 
-#include <dune/grid/common/gridinfo.hh>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/mpihelper.hh>
-#include <dune/grid/uggrid.hh>
-
-#include <iostream>
-
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
@@ -77,6 +69,3 @@ int main(int argc, char** argv)
     typedef TTAG(LensProblem) TypeTag;
     return Dumux::start<TypeTag>(argc, argv, usage);
 }
-
-
-

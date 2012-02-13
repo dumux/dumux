@@ -58,6 +58,9 @@ NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoPNI, InjectionSpatialPara
 NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoP, InjectionSpatialParameters));
 #endif
 
+// set the GridCreator property
+SET_TYPE_PROP(InjectionProblem2PNI, GridCreator, CubeGridCreator<TypeTag>);
+
 // Set the grid type
 SET_PROP(InjectionProblem2PNI, Grid)
 {

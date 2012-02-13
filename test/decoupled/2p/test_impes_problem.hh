@@ -66,6 +66,9 @@ namespace Properties
 {
 NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
 
+// set the GridCreator property
+SET_TYPE_PROP(IMPESTestProblem, GridCreator, CubeGridCreator<TypeTag>);
+
 // Set the grid type
 SET_PROP(IMPESTestProblem, Grid)
 {

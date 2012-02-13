@@ -28,17 +28,10 @@
  * \brief test for the sequential 2p model
  */
 #include "config.h"
-#include "test_impes_problem.hh"
-#include <dumux/common/start.hh>
-
 #include <dumux/common/structuredcubegridcreator.hh>
 
-#include <dune/grid/common/gridinfo.hh>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/mpihelper.hh>
-
-#include <iostream>
+#include "test_impes_problem.hh"
+#include <dumux/common/start.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -76,11 +69,3 @@ int main(int argc, char** argv)
     typedef TTAG(IMPESTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
-
-//! \cond INTERNAL
-// set the GridCreator property
-namespace Dumux {
-namespace Properties {
-SET_TYPE_PROP(IMPESTestProblem, GridCreator, CubeGridCreator<TypeTag>);
-}}
-//! \endcond

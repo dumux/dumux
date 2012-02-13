@@ -57,6 +57,9 @@ namespace Properties
 {
 NEW_TYPE_TAG(TestDecTwoPTwoCProblem, INHERITS_FROM(DecoupledTwoPTwoC, Test2P2CSpatialParams));
 
+// set the GridCreator property
+SET_TYPE_PROP(TestDecTwoPTwoCProblem, GridCreator, CubeGridCreator<TypeTag>);
+
 // Set the grid type
 SET_PROP(TestDecTwoPTwoCProblem, Grid)
 {

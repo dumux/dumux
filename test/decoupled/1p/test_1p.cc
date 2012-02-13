@@ -29,17 +29,11 @@
  */
 #include "config.h"
 
+#include <dumux/common/structuredcubegridcreator.hh>
+
 #include "test_1p_problem.hh"
 #include "benchmarkresult.hh"
 #include <dumux/common/start.hh>
-#include <dumux/common/structuredcubegridcreator.hh>
-
-
-#include <iostream>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/mpihelper.hh>
-#include <dune/grid/common/gridinfo.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -77,13 +71,3 @@ int main(int argc, char** argv)
 
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
-
-//! \cond INTERNAL
-// set the GridCreator property
-namespace Dumux {
-namespace Properties {
-SET_TYPE_PROP(TestProblemOneP, GridCreator, CubeGridCreator<TypeTag>);
-}}
-//! \endcond
-
-

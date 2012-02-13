@@ -54,8 +54,10 @@ class TestProblemOneP;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(FVPressureOneP))
-        ;
+NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(FVPressureOneP));
+
+// set the GridCreator property
+SET_TYPE_PROP(TestProblemOneP, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the grid type
 SET_PROP(TestProblemOneP, Grid)
