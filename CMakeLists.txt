@@ -390,9 +390,11 @@ add_test(test_general_box    bin/runTest.sh references/generallens_box-reference
 add_test(test_general_dec    bin/runTest.sh references/generallens_decoupled-reference.vtu generallens_decoupled-00003.vtu test/common/generalproblem/test_generalproblem_2p --decoupled 1e2 2e1)
 add_test(test_spline         test/common/spline/test_spline)
 
-add_test(test_fluidsystems test/material/fluidsystems/test_fluidsystems)
-add_test(test_ncpflash     test/material/ncpflash/test_ncpflash)
-add_test(test_tabulation   test/material/tabulation/test_tabulation)
+add_test(test_fluidsystems    test/material/fluidsystems/test_fluidsystems)
+add_test(test_immiscibleflash test/material/immiscibleflash/test_immiscibleflash)
+add_test(test_ncpflash        test/material/ncpflash/test_ncpflash)
+add_test(test_pengrobinson    test/material/pengrobinson/test_pengrobinson)
+add_test(test_tabulation      test/material/tabulation/test_tabulation)
 
 add_test(test_1p       bin/runTest.sh references/1ptest-reference.vtu        1ptest-00002.vtu        test/boxmodels/1p/test_1p             --parameter-file=parameters/test_1p.input       -gridFile test/boxmodels/1p/grids/test_1p_2d.dgf               -tEnd 1    -dtInitial 1)
 add_test(test_1p2c     bin/runTest.sh references/outflow-reference.vtu       outflow-00010.vtu       test/boxmodels/1p2c/test_1p2c         --parameter-file=parameters/test_1p2c.input     -gridFile test/boxmodels/1p2c/grids/test_1p2c.dgf              -tEnd 100  -dtInitial 1)
