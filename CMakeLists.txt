@@ -414,8 +414,6 @@ add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 if(SUPERLU_FOUND)
   add_test(test_stokes     bin/runTest.sh references/stokes-reference.vtu     stokes-00006.vtu     test/freeflow/stokes/test_stokes
 --parameter-file=test/freeflow/stokes/stokes.input)
-  add_test(test_stokes2c   bin/runTest.sh references/stokes2c-reference.vtu   stokes2c-00006.vtu   test/freeflow/stokes2c/test_stokes2c
---parameter-file=test/freeflow/stokes2c/stokes2c.input)
-  add_test(test_stokes2cni bin/runTest.sh references/stokes2cni-reference.vtu stokes2cni-00006.vtu test/freeflow/stokes2cni/test_stokes2cni
---parameter-file=test/freeflow/stokes2cni/stokes2cni.input)
+  add_test(test_stokes2c   bin/runTest.sh references/stokes2c-reference.vtu   stokes2c-00006.vtu   test/freeflow/stokes2c/test_stokes2c --parameter-file=test/freeflow/stokes2c/stokes2c.input)
+  add_test(test_stokes2cni bin/runTest.sh references/stokes2cni-reference.vtu stokes2cni-00006.vtu test/freeflow/stokes2cni/test_stokes2cni --parameter-file=test/freeflow/stokes2cni/stokes2cni.input)
 endif(SUPERLU_FOUND)
