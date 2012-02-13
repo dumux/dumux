@@ -24,10 +24,10 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/3p3c/Makefile 
     dumux/boxmodels/3p3cni/Makefile 
     dumux/boxmodels/common/Makefile 
-    dumux/boxmodels/MpNc/Makefile 
-    dumux/boxmodels/MpNc/diffusion/Makefile
-    dumux/boxmodels/MpNc/energy/Makefile
-    dumux/boxmodels/MpNc/mass/Makefile
+    dumux/boxmodels/mpnc/Makefile 
+    dumux/boxmodels/mpnc/diffusion/Makefile
+    dumux/boxmodels/mpnc/energy/Makefile
+    dumux/boxmodels/mpnc/mass/Makefile
     dumux/boxmodels/richards/Makefile 
     dumux/common/Makefile 
     dumux/decoupled/Makefile
@@ -77,7 +77,7 @@ AC_CONFIG_FILES([dumux.pc
     test/boxmodels/2p2cni/Makefile
     test/boxmodels/3p3c/Makefile
     test/boxmodels/3p3cni/Makefile
-    test/boxmodels/MpNc/Makefile
+    test/boxmodels/mpnc/Makefile
     test/boxmodels/richards/Makefile  
     test/common/Makefile
     test/common/generalproblem/Makefile

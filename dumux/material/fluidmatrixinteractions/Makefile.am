@@ -1,4 +1,4 @@
-SUBDIRS = 2p 3p Mp
+SUBDIRS = 2p 3p mp
 
 fluidmatrixinteractionsdir = $(includedir)/dumux/material/fluidmatrixinteractions
 
