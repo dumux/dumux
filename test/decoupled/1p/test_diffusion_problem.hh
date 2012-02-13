@@ -197,6 +197,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -204,12 +205,13 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 public:
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolution;
 
     TestDiffusionProblem(const GridView &gridView, const double delta = 1.0) :
         ParentType(gridView), delta_(delta), velocity_(*this)
     {}
 
-    //!initializes the saturation and afterwards the model
+    //!for this specific problem: initialize the saturation and afterwards the model
     void init()
     {
         this->variables().initialize();
@@ -234,6 +236,23 @@ public:
     {
         velocity_.calculateVelocity();
 //        velocity_.addOutputVtkFields(this->resultWriter());
+    }
+
+    //! \copydoc ParentType::addOutputVtkFields()
+    void addOutputVtkFields()
+    {
+        ScalarSolution *exactPressure = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
+
+        ElementIterator eIt = this->gridView().template begin<0>();
+        ElementIterator eItEnd = this->gridView().template end<0>();
+        for(;eIt != eItEnd; ++eIt)
+        {
+            (*exactPressure)[this->elementMapper().map(*eIt)] = exact(eIt->geometry().center());
+        }
+
+        this->resultWriter().attachCellData(*exactPressure, "exact pressure");
+
+        return;
     }
 
     /*!
