@@ -113,7 +113,7 @@ public:
         cubeGrid_->loadBalance();
     };
 
-private:
+protected:
     static GridPointer cubeGrid_;
 };
 
