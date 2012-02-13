@@ -110,7 +110,7 @@ SET_BOOL_PROP(StokesTestProblem, EnableGravity, false);
  * 1\;s\f$ is reached. A good choice for the initial time step size
  * is \f$t_{\text{inital}} = 0.01\;s\f$.
  * To run the simulation execute the following line in shell:
- * <tt>./test_stokes gris/stokes.dgf 1 0.01</tt>
+ * <tt>./test_stokes -parameterFile ./test_stokes.input</tt>
  */
 template <class TypeTag>
 class StokesTestProblem : public StokesProblem<TypeTag>

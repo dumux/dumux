@@ -111,7 +111,7 @@ SET_BOOL_PROP(Stokes2cTestProblem, NewtonWriteConvergence, false);
  * 1e5\;s\f$ is reached. A good choice for the initial time step size
  * is \f$t_{\text{inital}} = 1\;s\f$.
  * To run the simulation execute the following line in shell:
- * <tt>./test_stokes2c grid/stokes.dgf 1e5 10</tt>
+ * <tt>./test_stokes2c -parameterFile ./test_stokes2c.input</tt>
  */
 template <class TypeTag>
 class Stokes2cTestProblem : public StokesProblem<TypeTag>

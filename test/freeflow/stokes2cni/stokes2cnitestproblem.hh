@@ -96,7 +96,7 @@ SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
  * 100\;s\f$ is reached. A good choice for the initial time step size
  * is \f$t_{\text{inital}} = 1\;s\f$.
  * To run the simulation execute the following line in shell:
- * <tt>./test_stokes2cni grids/test_stokes2cni.dgf 100 1</tt>
+ * <tt>./test_stokes2cni  -parameterFile ./test_stokes2cni.input</tt>
  */
 template <class TypeTag>
 class Stokes2cniTestProblem : public StokesProblem<TypeTag>
