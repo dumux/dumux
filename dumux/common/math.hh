@@ -247,15 +247,15 @@ int invertCubicPolynomial(SolContainer *sol,
         // t^3 + p*t = 0 = t*(t^2 + p),
         //
         // i. e. roots at t = 0, t^2 + p = 0
-        sol[0] = 0.0 - b/3;
-        if (p > 0)
+        if (p > 0) {
+            sol[0] = 0.0 - b/3;
             return 1; // only a single real root at t=0
-        // two additional real roots at t = sqrt(-p) and t = -sqrt(-p)
-        sol[1] = std::sqrt(-p) - b/3;
-        sol[2] = -sol[1];
+        }
 
-        // sort the result
-        std::sort(sol, sol + 3);
+        // two additional real roots at t = sqrt(-p) and t = -sqrt(-p)
+        sol[0] = -std::sqrt(-p) - b/3;;
+        sol[1] = 0.0 - b/3;
+        sol[2] = std::sqrt(-p) - b/3;
 
         return 3;
     }
@@ -280,7 +280,7 @@ int invertCubicPolynomial(SolContainer *sol,
     //
     // Now, substituting u^3 = w yields
     //
-    // w^2 + q*w - p^3/27
+    // w^2 + q*w - p^3/27 = 0
     //
     // This is a quadratic equation with the solutions
     //
