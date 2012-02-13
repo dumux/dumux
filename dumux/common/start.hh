@@ -361,7 +361,7 @@ std::string usageTextBlock()
             "\t-parameterFile FILENAME           File with parameter definitions\n"
             "\t-restart RESTARTTIME              Restart simulation from a restart file\n"
             "\n"
-            "For the case of no arguments given, the input parameter file is expected to be named './parameter.input' \n"
+            "For the case of no arguments given, the input parameter file is expected to be named './<programname>.input' \n"
             "\n";
 }
 
@@ -400,12 +400,18 @@ int start_(int argc,
     // case print the usage message
     if (argc == 1) {
         std::cout<< "\nNo parameter file given. \n"
-                 << "Defaulting to './parameter.input' for input file.\n";
+                 << "Defaulting to '"
+                 <<argv[0]
+                 <<".input' for input file.\n";
         std::ifstream parameterFile;
         // check whether the parameter file exists.
-        parameterFile.open("parameter.input");
+        std::string defaultName = argv[0];
+                    defaultName += ".input";
+        parameterFile.open(defaultName);
         if (not parameterFile.is_open()){
-            std::cout<< "\n\t -> Could not open file './parameter.input'. <- \n\n\n\n";
+            std::cout<< "\n\t -> Could not open file '"
+                     <<defaultName
+                     <<"'. <- \n\n\n\n";
             usage(argv[0], usageTextBlock());
             return 1;
         }
@@ -436,8 +442,11 @@ int start_(int argc,
         // read input file, but do not overwrite options specified
         // on the command line, since the latter have precedence.
         std::string inputFileName ;
-        if(argc==1) // if there are no arguments given (and there is a file ./parameter.input) we use it as input file
-            inputFileName="parameter.input";
+        if(argc==1) // if there are no arguments given (and there is a file ./<programname>.input) we use it as input file
+        {
+            inputFileName = argv[0];
+            inputFileName += ".input";
+        }
         else
             inputFileName = GET_RUNTIME_PARAM(TypeTag, std::string, parameterFile); // otherwise we read from the command line
 
