@@ -220,7 +220,7 @@ set(DumuxLinkLibraries
     ${DUNE_grid_LIBRARIES}
     ${DUNE_mux_LIBRARIES}
     ${Boost_LIBRARIES}
-    "-lm")
+    "-lm -fprofile-arcs -ftest-coverage")
 
 # -> for LINK_DIRECTORIES
 set(DumuxLinkDirectories ${Boost_LIBRARY_DIRS})
@@ -244,7 +244,7 @@ add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing")
 if(("${CMAKE_BUILD_TYPE}" STREQUAL "debug") OR (NOT (DEFINED "${CMAKE_BUILD_TYPE}")))
   add_definitions(-DNDEBUG)
   # debug mode
-  add_definitions("-g")
+  add_definitions("-g -O0 -fprofile-arcs -ftest-coverage")
 #  add_definitions(-DDEBUG -DDUNE_DEVEL_MODE=1 -DDUNE_ISTL_WITH_CHECKING)
 else()
   # Release mode
@@ -375,8 +375,11 @@ file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION r
 file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION references)
 if(SUPERLU_FOUND)
   file(COPY test/freeflow/stokes/stokes-reference.vtu DESTINATION references)
+  file(COPY test/freeflow/stokes/test_stokes.input DESTINATION parameters)
   file(COPY test/freeflow/stokes2c/stokes2c-reference.vtu DESTINATION references)
+  file(COPY test/freeflow/stokes2c/test_stokes2c.input DESTINATION parameters)
   file(COPY test/freeflow/stokes2cni/stokes2cni-reference.vtu DESTINATION references)
+  file(COPY test/freeflow/stokes2cni/test_stokes2cni.input DESTINATION parameters)
 endif(SUPERLU_FOUND)
 
 # set up CTest 
@@ -412,8 +415,7 @@ add_test(tutorial_coupled   tutorial/tutorial_coupled   1 1)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
 if(SUPERLU_FOUND)
-  add_test(test_stokes     bin/runTest.sh references/stokes-reference.vtu     stokes-00006.vtu     test/freeflow/stokes/test_stokes
---parameter-file=test/freeflow/stokes/stokes.input)
-  add_test(test_stokes2c   bin/runTest.sh references/stokes2c-reference.vtu   stokes2c-00006.vtu   test/freeflow/stokes2c/test_stokes2c --parameter-file=test/freeflow/stokes2c/stokes2c.input)
-  add_test(test_stokes2cni bin/runTest.sh references/stokes2cni-reference.vtu stokes2cni-00006.vtu test/freeflow/stokes2cni/test_stokes2cni --parameter-file=test/freeflow/stokes2cni/stokes2cni.input)
+  add_test(test_stokes     bin/runTest.sh references/stokes-reference.vtu     stokes-00006.vtu     test/freeflow/stokes/test_stokes --parameter-file=parameters/test_stokes.input)
+  add_test(test_stokes2c   bin/runTest.sh references/stokes2c-reference.vtu   stokes2c-00006.vtu   test/freeflow/stokes2c/test_stokes2c --parameter-file=parameters/test_stokes2c.input)
+  add_test(test_stokes2cni bin/runTest.sh references/stokes2cni-reference.vtu stokes2cni-00006.vtu test/freeflow/stokes2cni/test_stokes2cni --parameter-file=parameters/test_stokes2cni.input)
 endif(SUPERLU_FOUND)
