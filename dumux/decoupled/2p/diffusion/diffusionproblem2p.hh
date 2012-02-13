@@ -149,9 +149,6 @@ public:
 
     void timeIntegration()
     {
-        // set the initial condition of the model
-        ParentType::init();
-
         //end simulation -> no time dependent problem!
         this->timeManager().setFinished();
 
