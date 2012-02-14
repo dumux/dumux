@@ -373,6 +373,7 @@ file(COPY test/decoupled/2p2c/test_dec2p2c.input DESTINATION parameters)
 file(COPY test/decoupled/2p2c/test_multiphysics2p2c-reference.vtu DESTINATION references)
 file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION references)
 file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION references)
+file(COPY tutorial/tutorial_coupled.input DESTINATION parameters)
 if(SUPERLU_FOUND)
   file(COPY test/freeflow/stokes/stokes-reference.vtu DESTINATION references)
   file(COPY test/freeflow/stokes/test_stokes.input DESTINATION parameters)
@@ -413,7 +414,7 @@ add_test(test_impes_adaptive     bin/runTest.sh references/output2padaptive-refe
 add_test(test_dec2p2c   bin/runTest.sh references/test_dec2p2c-reference.vtu   test_dec2p2c-00021.vtu     test/decoupled/2p2c/test_dec2p2c --parameter-file=parameters/test_dec2p2c.input)
 add_test(test_multiphysics2p2c   bin/runTest.sh references/test_multiphysics2p2c-reference.vtu   test_multiphysics2p2c-00021.vtu     test/decoupled/2p2c/test_multiphysics2p2c)
 
-add_test(tutorial_coupled   tutorial/tutorial_coupled   1 1)
+add_test(tutorial_coupled   tutorial/tutorial_coupled --parameter-file=parameters/tutorial_coupled.input)
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
 if(SUPERLU_FOUND)
