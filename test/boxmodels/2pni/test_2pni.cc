@@ -28,8 +28,6 @@
  */
 #include "config.h"
 
-#include <dumux/common/structuredcubegridcreator.hh>
-
 #include "injectionproblem2pni.hh"
 #include <dumux/common/start.hh>
 

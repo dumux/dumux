@@ -35,6 +35,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
+#include <dumux/common/structuredcubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -67,7 +68,7 @@ namespace Properties
 NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
 
 // set the GridCreator property
-SET_TYPE_PROP(IMPESTestProblem, GridCreator, SimplexGridCreator<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, GridCreator, StructuredCubeGridCreator<TypeTag>);
 
 // Set the grid type
 SET_PROP(IMPESTestProblem, Grid)

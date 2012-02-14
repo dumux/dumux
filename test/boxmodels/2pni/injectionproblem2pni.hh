@@ -34,6 +34,8 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+#include <dumux/common/structuredsimplexgridcreator.hh>
+#include <dumux/common/structuredcubegridcreator.hh>
 
 #include <dumux/boxmodels/2pni/2pnimodel.hh>
 
@@ -59,7 +61,14 @@ NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoP, InjectionSpatialParame
 #endif
 
 // set the GridCreator property
-SET_TYPE_PROP(InjectionProblem2PNI, GridCreator, CubeGridCreator<TypeTag>);
+SET_PROP(InjectionProblem2PNI, GridCreator)
+{
+#if HAVE_UG
+    typedef StructuredSimplexGridCreator<TypeTag> type;
+#else
+    typedef StructuredCubeGridCreator<TypeTag> type;
+#endif
+};
 
 // Set the grid type
 SET_PROP(InjectionProblem2PNI, Grid)
@@ -67,7 +76,6 @@ SET_PROP(InjectionProblem2PNI, Grid)
 #if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
-//    typedef Dune::SGrid<2, 2> type;
     typedef Dune::YaspGrid<2> type;
 #endif
 };
