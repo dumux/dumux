@@ -150,13 +150,11 @@ CHECK_CXX_SOURCE_COMPILES("
 
 # SFINAE on variadic template constructors within template classes
 CHECK_CXX_SOURCE_COMPILES("
-  #include <cassert>
   #include <functional>
 
   template<typename... U>
   struct A
   {
-
     template<typename... T,
              typename = typename std::enable_if<(sizeof...(T) < 2)>::type
             >
@@ -181,8 +179,7 @@ CHECK_CXX_SOURCE_COMPILES("
 
   int main(void)
   {
-    assert(A<int>().i + A<int>(2).i + A<int>(\"foo\",3.4).i + A<int>({2,5,6},'a',A<int>()).i == 0);
-    return 0;
+    return (A<int>().i + A<int>(2).i + A<int>("foo",3.4).i + A<int>(8,'a',A<int>()).i == 0 ? 0 : 1);
   }
 " HAVE_VARIADIC_CONSTRUCTOR_SFINAE
 )
