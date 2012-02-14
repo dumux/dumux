@@ -57,7 +57,7 @@ NEW_PROP_TAG(Grid);
 
 
 template <class TypeTag>
-class CubeGridCreator
+class StructuredCubeGridCreator
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
@@ -118,7 +118,7 @@ protected:
 };
 
 template <class TypeTag>
-typename CubeGridCreator<TypeTag>::GridPointer CubeGridCreator<TypeTag>::cubeGrid_;
+typename StructuredCubeGridCreator<TypeTag>::GridPointer StructuredCubeGridCreator<TypeTag>::cubeGrid_;
 
 }
 
