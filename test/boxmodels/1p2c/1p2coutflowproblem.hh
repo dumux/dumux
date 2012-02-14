@@ -98,7 +98,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, EnableGravity, false);
  * is transported with the water flow from the left side to the right.
  *
  * The model domain is 1m times 1m with a discretization length of 0.05m
- * and homogeneous soil properties (\f$ K=10e-10, \Phi=0.4\f$).
+ * and homogeneous soil properties (\f$ \mathrm{K=10e-10, \Phi=0.4}\f$).
  * Initially the domain is filled with pure water.
  *
  * At the left side, a Dirichlet condition defines a nitrogen mole fraction

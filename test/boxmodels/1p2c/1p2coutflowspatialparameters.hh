@@ -91,7 +91,7 @@ public:
     };
 
     /*!
-     * \brief Define the intrinsic permeability \f$[m^2]\f$.
+     * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
      * \param element The current finite element
      * \param fvElemGeom The current finite volume geometry of the element
@@ -105,7 +105,7 @@ public:
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$.
+     * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
      * \param element The finite element
      * \param fvElemGeom The finite volume geometry
@@ -119,7 +119,7 @@ public:
     }
 
     /*!
-     * \brief Define the tortuosity \f$[?]\f$.
+     * \brief Define the tortuosity \f$\mathrm{[-]}\f$.
      *
      * \param element The finite element
      * \param fvElemGeom The finite volume geometry
@@ -133,7 +133,7 @@ public:
     }
 
     /*!
-     * \brief Define the dispersivity \f$[?]\f$.
+     * \brief Define the dispersivity.
      *
      * \param element The finite element
      * \param fvElemGeom The finite volume geometry

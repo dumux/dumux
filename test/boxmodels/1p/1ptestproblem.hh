@@ -93,14 +93,15 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
 /*!
  * \ingroup OnePBoxModel
  * \ingroup BoxTestProblems
- * \brief Air flow in porous media
+ * \brief  Test problem for the one-phase box model:
+ * water is flowing from bottom to top through and around a low permeable lens.
  *
  * The domain is box shaped. All sides are closed (Neumann 0 boundary)
  * except the top and bottom boundaries (Dirichlet), where water is
  * flowing from bottom to top.
  *
- * In the middle of the domain, a lens with low permeability (\f$ K=10e-12f$)
- * compared to the surrounding material (\f$ K=10e-10f$) is defined.
+ * In the middle of the domain, a lens with low permeability (\f$K=10e-12\f$)
+ * compared to the surrounding material (\f$ K=10e-10\f$) is defined.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_1p -parameterFile test_1p.input</tt>
@@ -167,14 +168,14 @@ public:
      */
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
-    // \}
+
 
     void sourceAtPos(PrimaryVariables &values,
                 const GlobalPosition &globalPos) const
     {
         values = 0;
     }
-
+    // \}
     /*!
      * \name Boundary conditions
      */

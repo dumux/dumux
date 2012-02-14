@@ -82,8 +82,7 @@ public:
     }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Return the intrinsic permeability for the current sub-control volume.
      *
      * \param element The current finite element
      * \param fvElemGeom The current finite volume geometry of the element
