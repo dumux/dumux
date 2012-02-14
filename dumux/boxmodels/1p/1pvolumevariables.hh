@@ -141,7 +141,7 @@ public:
     { return fluidState_.pressure(/*phaseIdx=*/0); }
 
     /*!
-     * \brief Return the mass density \f$\mathrm{[kg/m13]}\f$ of a given phase within the
+     * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
      *        control volume.
      */
     Scalar density() const
