@@ -76,6 +76,7 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
      AC_LATEX_PACKAGE(theorem,scrreprt,have_latex_pkg_theorem)
      AC_LATEX_PACKAGE(tabularx,scrreprt,have_latex_pkg_tabularx)
      AC_LATEX_PACKAGE(ulem,scrreprt,have_latex_pkg_ulem)
+     AC_LATEX_PACKAGE(units,scrreprt,have_latex_pkg_units)
      AC_LATEX_PACKAGE(xspace,scrreprt,have_latex_pkg_xspace)
     fi
   fi
@@ -163,6 +164,9 @@ AC_DEFUN([DUMUX_CHECKS_PRIVATE],
     build_handbook="no"
   elif test "$have_latex_pkg_ulem" != "yes"; then
     summary_message="Latex package 'ulem' not available"
+    build_handbook="no"
+  elif test "$have_latex_pkg_units" != "yes"; then
+    summary_message="Latex package 'units' not available"
     build_handbook="no"
   fi
 
