@@ -115,6 +115,7 @@ class FVMPFAOPressure2P: public FVPressure<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
     //initializes the matrix to store the system of equations
+    friend class FVPressure<TypeTag>;
     void initializeMatrix();
 
     //function which assembles the system of equations to be solved
@@ -139,7 +140,7 @@ public:
 
     void initialize(bool solveTwice = true)
     {
-        initializeMatrix();
+        ParentType::initialize();
         updateMaterialLaws();
 
         assemble();

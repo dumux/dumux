@@ -314,13 +314,9 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
         //determine phase saturations from primary saturation variable
 
         Scalar satW = cellData.saturation(wPhaseIdx);
-        Scalar satNW = cellData.saturation(nPhaseIdx);
-
         Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
 
-            cellData.setSaturation(wPhaseIdx, satW);
-            cellData.setSaturation(nPhaseIdx, satNW);
-            cellData.setCapillaryPressure(pc);
+        cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
         Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];

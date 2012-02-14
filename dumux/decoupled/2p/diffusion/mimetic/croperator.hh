@@ -149,7 +149,7 @@ public:
         faceMapper_.update();
         allMapper_.update();
 
-        A_.setSize(size(), size());
+        A_.setSize(size(), size(),  nnz(is_));
 
         assert(nnz(is_) != 0);
 

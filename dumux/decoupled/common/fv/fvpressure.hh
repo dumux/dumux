@@ -174,7 +174,7 @@ public:
         A_.setSize(size_, size_);
         f_.resize(size_);
         pressure_.resize(size_);
-        initializeMatrix();// initialize sparse matrix
+        asImp_().initializeMatrix();// initialize sparse matrix
         pressure_ = 0;
     }
 
