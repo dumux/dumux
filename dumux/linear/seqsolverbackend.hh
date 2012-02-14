@@ -538,7 +538,8 @@ public:
     typedef typename Dune::FieldMatrix<Scalar, blockSize, blockSize> MatrixBlock;
     typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
 
-    Dune::SuperLU<ISTLMatrix> solver(A);
+    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    Dune::SuperLU<ISTLMatrix> solver(A, verbosity > 0);
 
     solver.apply(x, bTmp, result_);
 
