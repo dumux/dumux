@@ -28,7 +28,8 @@
  * \brief test for the sequential 2p model
  */
 #include "config.h"
-#include <dumux/common/structuredcubegridcreator.hh>
+#include <dumux/common/structuredsimplexgridcreator.hh>
+
 
 #include "test_impes_problem.hh"
 #include <dumux/common/start.hh>

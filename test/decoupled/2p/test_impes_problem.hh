@@ -67,13 +67,17 @@ namespace Properties
 NEW_TYPE_TAG(IMPESTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TestIMPESSpatialParams));
 
 // set the GridCreator property
-SET_TYPE_PROP(IMPESTestProblem, GridCreator, CubeGridCreator<TypeTag>);
+SET_TYPE_PROP(IMPESTestProblem, GridCreator, SimplexGridCreator<TypeTag>);
 
 // Set the grid type
 SET_PROP(IMPESTestProblem, Grid)
 {
+#if HAVE_UG
+    typedef Dune::UGGrid<2> type;
+#else
     typedef Dune::YaspGrid<2> type;
     //typedef Dune::SGrid<2, 2> type;
+#endif
 };
 
 // Set the problem property
