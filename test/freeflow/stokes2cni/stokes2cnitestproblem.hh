@@ -183,7 +183,6 @@ public:
             values.setAllOutflow();
 
         // set pressure at one point
-        const Scalar middle = (this->bboxMax()[0] - this->bboxMin()[0])/2;
         if (onUpperBoundary_(globalPos) &&
                 !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
             values.setDirichlet(massBalanceIdx);
