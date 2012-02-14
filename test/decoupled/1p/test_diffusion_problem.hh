@@ -95,8 +95,9 @@ SET_BOOL_PROP(FVVelocity2PTestProblem, EnableGravity, false);
 
 // set the types for the MPFA-O FV method
 NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FVMPFAOPressurePropertiesTwoP, TestDiffusionSpatialParams));
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
-SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 1);
+//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::SSORBiCGSTABBackend<TypeTag>);
+SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 2);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_PROP(FVMPFAOVelocity2PTestProblem, Grid)
@@ -133,7 +134,8 @@ NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, Te
 SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_PROP(MimeticPressure2PTestProblem, Grid)
-{//    typedef Dune::YaspGrid<2> type;
+{
+//        typedef Dune::YaspGrid<2> type;
     typedef Dune::SGrid<2, 2> type;
 };
 
@@ -178,6 +180,8 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) NonwettingPhase;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
@@ -201,13 +205,14 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename SolutionTypes::ScalarSolution ScalarSolution;
 
-    TestDiffusionProblem(const GridView &gridView, const double delta = 1.0) :
+    TestDiffusionProblem(const GridView &gridView, const Scalar delta = 1.0) :
         ParentType(gridView), delta_(delta), velocity_(*this)
     {}
 
@@ -215,7 +220,7 @@ public:
     void init()
     {
         this->variables().initialize();
-        this->spatialParameters().setDelta(delta_);
+        this->spatialParameters().initialize(delta_);
         for (int i = 0; i < this->gridView().size(0); i++)
         {
             this->variables().cellData(i).setSaturation(wPhaseIdx, 1.0);
@@ -247,10 +252,12 @@ public:
         ElementIterator eItEnd = this->gridView().template end<0>();
         for(;eIt != eItEnd; ++eIt)
         {
-            (*exactPressure)[this->elementMapper().map(*eIt)] = exact(eIt->geometry().center());
+            (*exactPressure)[this->elementMapper().map(*eIt)][0] = exact(eIt->geometry().center());
         }
 
         this->resultWriter().attachCellData(*exactPressure, "exact pressure");
+
+        this->spatialParameters().addOutputVtkFields(this->resultWriter());
 
         return;
     }
@@ -274,20 +281,11 @@ public:
         return 1e5; // -> 10°C
     }
 
-    void sourceAtPos(PrimaryVariables &values,const GlobalPosition& globalPos) const
+    void source(PrimaryVariables &values,const Element& element) const
     {
-        double pi = 4.0*atan(1.0);
-        double rt = globalPos[0]*globalPos[0]+globalPos[1]*globalPos[1];
-        double ux = pi*cos(pi*globalPos[0])*sin(pi*globalPos[1]);
-        double uy = pi*cos(pi*globalPos[1])*sin(pi*globalPos[0]);
-        double kxx = (delta_*globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1])/rt;
-        double kxy = -(1.0 - delta_)*globalPos[0]*globalPos[1]/rt;
-        double kyy = (globalPos[0]*globalPos[0] + delta_*globalPos[1]*globalPos[1])/rt;
-        double f0 = sin(pi*globalPos[0])*sin(pi*globalPos[1])*pi*pi*(1.0 + delta_)*(globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1])
-        + cos(pi*globalPos[0])*sin(pi*globalPos[1])*pi*(1.0 - 3.0*delta_)*globalPos[0]
-                                                                                    + cos(pi*globalPos[1])*sin(pi*globalPos[0])*pi*(1.0 - 3.0*delta_)*globalPos[1] + cos(pi*globalPos[1])*cos(pi*globalPos[0])*2.0*pi*pi*(1.0 - delta_)*globalPos[0]*globalPos[1];
+        values = 0;
 
-        values[wPhaseIdx] = (f0 + 2.0*(globalPos[0]*(kxx*ux + kxy*uy) + globalPos[1]*(kxy*ux + kyy*uy)))/rt;
+        values[wPhaseIdx] = integratedSource_(element, 4);
     }
 
     /*!
@@ -299,7 +297,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
     {
 
-                bcTypes.setAllDirichlet();
+          bcTypes.setAllDirichlet();
     }
 
     //! set dirichlet condition  (saturation [-])
@@ -317,7 +315,7 @@ public:
 
     Scalar exact (const GlobalPosition& globalPos) const
     {
-        double pi = 4.0*atan(1.0);
+        Scalar pi = 4.0*atan(1.0);
 
         return (sin(pi*globalPos[0])*sin(pi*globalPos[1]));
     }
@@ -325,7 +323,7 @@ public:
     Dune::FieldVector<Scalar,dim> exactGrad (const GlobalPosition& globalPos) const
         {
         Dune::FieldVector<Scalar,dim> grad(0);
-        double pi = 4.0*atan(1.0);
+        Scalar pi = 4.0*atan(1.0);
         grad[0] = pi*cos(pi*globalPos[0])*sin(pi*globalPos[1]);
         grad[1] = pi*cos(pi*globalPos[1])*sin(pi*globalPos[0]);
 
@@ -333,7 +331,57 @@ public:
         }
 
 private:
-    double delta_;
+
+    Scalar integratedSource_(const Element& element, int integrationPoints) const
+    {
+        Scalar source = 0.;
+        LocalPosition localPos(0.0);
+        GlobalPosition globalPos(0.0);
+        Scalar halfInterval = 1.0/double(integrationPoints)/2.;
+        for (int i = 1; i <= integrationPoints; i++)
+        {
+            for (int j = 1; j <= integrationPoints; j++)
+            {
+                localPos[0] = double(i)/double(integrationPoints) - halfInterval;
+                localPos[1] = double(j)/double(integrationPoints) - halfInterval;
+                globalPos = element.geometry().global(localPos);
+                source += 1./(integrationPoints*integrationPoints) * evaluateSource_(globalPos);
+            }
+        }
+
+        return source;
+    }
+
+    Scalar evaluateSource_(const GlobalPosition& globalPos) const
+    {
+        Scalar temp = temperatureAtPos(globalPos);
+        Scalar referencePress = referencePressureAtPos(globalPos);
+
+        Scalar pi = 4.0 * atan(1.0);
+        Scalar x = globalPos[0];
+        Scalar y = globalPos[1];
+
+        Scalar dpdx = pi * cos(pi * x) * sin(pi * y);
+        Scalar dpdy = pi * sin(pi * x) * cos(pi * y);
+        Scalar dppdxx = -pi * pi * sin(pi * x) * sin(pi * y);
+        Scalar dppdxy = pi * pi * cos(pi * x) * cos(pi * y);
+        Scalar dppdyx = dppdxy;
+        Scalar dppdyy = dppdxx;
+        Scalar kxx = (delta_* x*x + y*y)/(x*x + y*y);
+        Scalar kxy = -(1.0 - delta_) * x * y / (x*x + y*y);
+        Scalar kyy = (x*x + delta_*y*y)/(x*x + y*y);
+        Scalar dkxxdx = 2 * x * y*y * (delta_ - 1.0)/((x*x + y*y) * (x*x + y*y));
+        Scalar dkyydy = 2 * x*x * y * (delta_ - 1.0)/((x*x + y*y) * (x*x + y*y));
+        Scalar dkxydx = (1.0 - delta_) * y * (x*x - y*y) /((x*x + y*y) * (x*x + y*y));
+        Scalar dkxydy = (1.0 - delta_) * x * (y*y - x*x) /((x*x + y*y) * (x*x + y*y));
+
+        Scalar fx = dkxxdx * dpdx + kxx * dppdxx + dkxydx * dpdy + kxy * dppdyx;
+        Scalar fy = dkxydy * dpdx + kxy * dppdxy + dkyydy * dpdy + kyy * dppdyy;
+
+        return -(fx + fy) / WettingPhase::viscosity(temp, referencePress) * WettingPhase::density(temp, referencePress);
+    }
+
+    Scalar delta_;
     Dumux::FVVelocity<TypeTag, typename GET_PROP_TYPE(TypeTag, Velocity) > velocity_;
 };
 } //end namespace

@@ -67,12 +67,15 @@ class TestDiffusionSpatialParams: public FVSpatialParameters<TypeTag>
     typedef FVSpatialParameters<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GridView::IndexSet IndexSet;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename Grid::ctype CoordScalar;
+    typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolution;
 
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
@@ -81,14 +84,9 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    const FieldMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
+    const FieldMatrix& intrinsicPermeability (const Element& element) const
     {
-        double rt = globalPos[0]*globalPos[0]+globalPos[1]*globalPos[1];
-        permeability_[0][0] = (delta_*globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1])/rt;
-        permeability_[0][1] = permeability_[1][0] = -(1.0 - delta_)*globalPos[0]*globalPos[1]/rt;
-        permeability_[1][1] = (globalPos[0]*globalPos[0] + delta_*globalPos[1]*globalPos[1])/rt;
-
-        return permeability_;
+        return permeability_[indexSet_.index(element)];
     }
 
     double porosity(const Element& element) const
@@ -103,13 +101,46 @@ public:
             return materialLawParams_;
     }
 
-    void setDelta(const double delta)
+    void initialize(const double delta)
     {
         delta_ = delta;
+        permeability_.resize(gridView_.size(0));
+
+        ElementIterator eIt = gridView_.template begin<0>();
+        ElementIterator eItEnd = gridView_.template end<0>();
+        for(;eIt != eItEnd; ++eIt)
+        {
+            perm(permeability_[indexSet_.index(*eIt)], eIt->geometry().center());
+        }
+
+    }
+
+    template<class Writer>
+    void addOutputVtkFields(Writer& writer)
+    {
+        ScalarSolution *permXX = writer.allocateManagedBuffer(gridView_.size(0));
+        ScalarSolution *permXY = writer.allocateManagedBuffer(gridView_.size(0));
+        ScalarSolution *permYY = writer.allocateManagedBuffer(gridView_.size(0));
+
+        ElementIterator eIt = gridView_.template begin<0>();
+        ElementIterator eItEnd = gridView_.template end<0>();
+        for(;eIt != eItEnd; ++eIt)
+        {
+            int globalIdx = indexSet_.index(*eIt);
+            (*permXX)[globalIdx][0] = permeability_[globalIdx][0][0];
+            (*permXY)[globalIdx][0] = permeability_[globalIdx][0][1];
+            (*permYY)[globalIdx][0] = permeability_[globalIdx][1][1];
+        }
+
+        writer.attachCellData(*permXX, "permeability-X");
+        writer.attachCellData(*permYY, "permeability-Y");
+        writer.attachCellData(*permXY, "permeability-Offdiagonal");
+
+        return;
     }
 
     TestDiffusionSpatialParams(const GridView& gridView)
-    : ParentType(gridView), permeability_(0)
+    : ParentType(gridView),gridView_(gridView), indexSet_(gridView.indexSet()), permeability_(0)
     {
         // residual saturations
         materialLawParams_.setSwr(0.0);
@@ -121,8 +152,19 @@ public:
     }
 
 private:
+    void perm (FieldMatrix& perm, const GlobalPosition& globalPos) const
+    {
+        double rt = globalPos[0]*globalPos[0]+globalPos[1]*globalPos[1];
+        perm[0][0] = (delta_*globalPos[0]*globalPos[0] + globalPos[1]*globalPos[1])/rt;
+        perm[0][1] = -(1.0 - delta_)*globalPos[0]*globalPos[1]/rt;
+        perm[1][0] = perm[0][1];
+        perm[1][1] = (globalPos[0]*globalPos[0] + delta_*globalPos[1]*globalPos[1])/rt;
+    }
+
+    const GridView& gridView_;
+    const IndexSet& indexSet_;
     MaterialLawParams materialLawParams_;
-    mutable FieldMatrix permeability_;
+    std::vector<FieldMatrix> permeability_;
     double delta_;
 };
 
