@@ -35,7 +35,6 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-//#include <dumux/material/old_fluidsystems/simple_h2o_n2_system.hh>
 #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
 #include <dumux/freeflow/stokes2c/stokes2cmodel.hh>
@@ -47,28 +46,17 @@ template <class TypeTag>
 class Stokes2cTestProblem;
 
 //////////
-// Specify the properties for the stokes problem
+// Specify the properties for the stokes2c problem
 //////////
 namespace Properties
 {
 NEW_TYPE_TAG(Stokes2cTestProblem, INHERITS_FROM(BoxStokes2c));
 
 // Set the grid type
-SET_PROP(Stokes2cTestProblem, Grid)
-{
-//#if HAVE_UG
-//    typedef Dune::UGGrid<2> type;
-//#else
-//    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<2, 2> type;
-//#endif
-};
+SET_TYPE_PROP(Stokes2cTestProblem, Grid, Dune::SGrid<2,2>);
 
 // Set the problem property
-SET_PROP(Stokes2cTestProblem, Problem)
-{
-    typedef Dumux::Stokes2cTestProblem<TypeTag> type;
-};
+SET_TYPE_PROP(Stokes2cTestProblem, Problem, Dumux::Stokes2cTestProblem<TypeTag>);
 
 //! Select the fluid system
 SET_PROP(BoxStokes2c, FluidSystem)
@@ -88,15 +76,12 @@ SET_SCALAR_PROP(BoxStokes2c, StabilizationBeta, 0.0);
 
 // Enable gravity
 SET_BOOL_PROP(Stokes2cTestProblem, EnableGravity, false);
-
-// write out netwon convergence files
-SET_BOOL_PROP(Stokes2cTestProblem, NewtonWriteConvergence, false);
 }
 
 /*!
  * \ingroup BoxStokes2cModel
  * \ingroup BoxTestProblems
- * \brief Stokes transport problem with nitrogen (N2) flowing
+ * \brief Stokes transport problem with air flowing
  *        from the left to the right.
  *
  * The domain is sized 1m times 1m. The boundary conditions for the momentum balances
@@ -123,10 +108,8 @@ class Stokes2cTestProblem : public StokesProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    enum {
-        // Number of equations and grid dimension
-        dim = GridView::dimension
-    };
+    // Number of equations and grid dimension
+    enum { dim = GridView::dimension };
     enum {
         // copy some indices for convenience
         massBalanceIdx = Indices::massBalanceIdx,
@@ -203,27 +186,17 @@ public:
 
         values.setAllDirichlet();
 
-//        if ((onUpperBoundary_(globalPos) && !onLeftBoundary_(globalPos))
-//            || (onRightBoundary_(globalPos) && !onLowerBoundary_(globalPos)))
-        if (onRightBoundary_(globalPos)
-                && !onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
+        if (onLowerBoundary_(globalPos)
+                && !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
             values.setAllOutflow();
-
-//        coupling
-//       if (onLowerBoundary_(globalPos))
-//       {
-////           values.setAllCouplingOutflow();
-//           values.setCouplingOutflow(momentumXIdx);
-//           values.setCouplingOutflow(momentumYIdx);
-//       }
 
         // the mass balance has to be of type outflow
         values.setOutflow(massBalanceIdx);
 
-//         fix pressure at one vertex on the boundary
-//         disturbs, if coupling is set (pressure from p.n)
-        if (onLeftBoundary_(globalPos) &&
-                globalPos[1] > 0.5-eps_ && globalPos[1] < 0.5+eps_)
+        // set pressure at one point
+        const Scalar middle = (this->bboxMax()[0] - this->bboxMin()[0])/2;
+        if (onLowerBoundary_(globalPos) &&
+                globalPos[0] > middle - eps_ && globalPos[1] < middle + eps_)
             values.setDirichlet(massBalanceIdx);
     }
 
@@ -241,36 +214,10 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
         initial_(values, globalPos);
 
-        const Scalar v0 = 1.0;
-        values[momentumXIdx] = v0*globalPos[1] + 1e-4;
-        values[massBalanceIdx] = 1e5;
-//        if(onLowerBoundary_(globalPos))
-//        {
-//            values[transportIdx] = 0.007876;
-//        }
-//        const Scalar v0 = 0.01;
-//        const Scalar v1 = 0.01;
-        if (onLeftBoundary_(globalPos))
+        if (onUpperBoundary_(globalPos))
         {
-//            values[momentumXIdx] = v0;
-//            values[momentumYIdx] = v1;
-//            values[massBalanceIdx] = 1e5;
             values[transportIdx] = 0.005;
         }
-//        else if (onRightBoundary_(globalPos))
-//        {
-//            values[momentumXIdx] = v0;
-//            values[momentumYIdx] = v1;
-//            values[massBalanceIdx] = 1e5;
-//            values[transportIdx] = 0.1;
-//        }
-//        else
-//        {
-//            values[momentumXIdx] = v0;
-//            values[momentumYIdx] = v1;
-//            values[massBalanceIdx] = 1e5;
-//            values[transportIdx] = 0.1;
-//        }
     }
 
     /*!
@@ -287,36 +234,9 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-        //const GlobalPosition &globalPos
-        //    = element.geometry().corner(scvIdx);
-
         values = 0.0;
-        //only set normal direction to gN
-        //tangential component gets Neumann = 0, what correponds to an outflow condition
-//        if(onLowerBoundary_(globalPos))
-//            values[momentumYIdx] = 1e5;
     }
     // \}
-
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient
-     *        at the center of a given intersection
-     *
-     * \return Beavers-Joseph coefficient
-     */
-    Scalar beaversJosephCoeff(const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
-    {
-        const GlobalPosition &globalPos = is.geometry().center();
-
-        if (onLowerBoundary_(globalPos))
-            return 1.0;
-        else
-            return 0.0;
-    }
 
     /*!
      * \name Volume terms
@@ -355,30 +275,7 @@ public:
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         initial_(values, globalPos);
 
-//        values[momentumXIdx] = 0.0;
-//        values[momentumYIdx] = 0.0;
-//        values[massBalanceIdx] = 1e5;
-//        values[transportIdx] = 0.1;
-//
-//        if (globalPos[0] > 2.5 && globalPos[0] < 3.5 &&
-//                globalPos[1] > 1.5 && globalPos[1] < 2.5)
-//        {
-//            values[transportIdx] = 0.2;
-//        }
-
     }
-    /*!
-    * \brief Evaluate the intrinsic permeability
-    *        at the corner of a given element
-    *
-    * \return permeability in x-direction
-    */
-    Scalar permeability(const Element &element,
-                   const FVElementGeometry &fvElemGeom,
-                   int scvIdx) const
-   {
-       return 1e-8;
-   }
    // \}
 
 private:
@@ -388,20 +285,19 @@ private:
                  const GlobalPosition &globalPos) const
    {
        values = 0.0;
-//       const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-       Scalar v0 = 1.0;//0.0625*16;
-      //parabolic profile
-//       values[momentumXIdx] = v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
-//                            / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.0004;
-      //linear profile
-//        values[momentumXIdx]=-3.9992*globalPos[1]*globalPos[1]+3.998*globalPos[1]+3.75e-4;//v0*(1 + globalPos[1]);//0.0;
 
-      const Scalar v1 = 0.0;
-      values[momentumXIdx] = v0*globalPos[1] + 1e-4;
-       values[momentumYIdx] = v1;//*(0.75-globalPos[0])*(globalPos[0]-0.25);
-//        values[momentumYIdx] = 0.0;
        values[massBalanceIdx] = 1e5;
-       values[transportIdx] = 0.007876;
+       values[momentumXIdx] = 0.0;
+
+       //parabolic profile
+       const Scalar v1 = 1.0;
+       values[momentumYIdx] = -v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
+                                    / (0.25*(this->bboxMax()[0] - this->bboxMin()[0])*(this->bboxMax()[0] - this->bboxMin()[0]));
+
+       if (onUpperBoundary_(globalPos))
+           values[transportIdx] = 0.005;
+       else
+           values[transportIdx] = 0.007;
    }
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->bboxMin()[0] + eps_; }

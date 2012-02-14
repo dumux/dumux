@@ -418,7 +418,7 @@ add_test(tutorial_coupled   tutorial/tutorial_coupled --parameter-file=parameter
 add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
 
 if(SUPERLU_FOUND)
-  add_test(test_stokes     bin/runTest.sh references/stokes-reference.vtu     stokes-00006.vtu     test/freeflow/stokes/test_stokes         --parameter-file=parameters/test_stokes.input     -gridFile test/freeflow/stokes/grids/test_stokes.dgf         -tEnd 10 -dtInitial 1)
-  add_test(test_stokes2c   bin/runTest.sh references/stokes2c-reference.vtu   stokes2c-00006.vtu   test/freeflow/stokes2c/test_stokes2c     --parameter-file=parameters/test_stokes2c.input   -gridFile test/freeflow/stokes2c/grids/test_stokes2c.dgf     -tEnd 10 -dtInitial 1)
-  add_test(test_stokes2cni bin/runTest.sh references/stokes2cni-reference.vtu stokes2cni-00006.vtu test/freeflow/stokes2cni/test_stokes2cni --parameter-file=parameters/test_stokes2cni.input -gridFile test/freeflow/stokes2cni/grids/test_stokes2cni.dgf -tEnd 10 -dtInitial 1)
+  add_test(test_stokes     bin/runTest.sh references/stokes-reference.vtu     stokes-00014.vtu     test/freeflow/stokes/test_stokes         --parameter-file=parameters/test_stokes.input     -gridFile test/freeflow/stokes/grids/test_stokes.dgf         -tEnd 6e3 -dtInitial 10)
+  add_test(test_stokes2c   bin/runTest.sh references/stokes2c-reference.vtu   stokes2c-00007.vtu   test/freeflow/stokes2c/test_stokes2c     --parameter-file=parameters/test_stokes2c.input   -gridFile test/freeflow/stokes2c/grids/test_stokes2c.dgf     -tEnd 2 -dtInitial 0.1)
+  add_test(test_stokes2cni bin/runTest.sh references/stokes2cni-reference.vtu stokes2cni-00008.vtu test/freeflow/stokes2cni/test_stokes2cni --parameter-file=parameters/test_stokes2cni.input -gridFile test/freeflow/stokes2cni/grids/test_stokes2cni.dgf -tEnd 3 -dtInitial 0.1)
 endif(SUPERLU_FOUND)

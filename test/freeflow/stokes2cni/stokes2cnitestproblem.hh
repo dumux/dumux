@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2009-2011 by Klaus Mosthaf                                *
+ *   Copyright (C) 2009-2012 by Klaus Mosthaf                                *
  *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
@@ -35,8 +35,7 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
-
+#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/freeflow/stokes2cni/stokes2cnimodel.hh>
 
 namespace Dumux
@@ -53,7 +52,7 @@ namespace Properties
 NEW_TYPE_TAG(Stokes2cniTestProblem, INHERITS_FROM(BoxStokes2cni));
 
 // Set the grid type
-SET_TYPE_PROP(Stokes2cniTestProblem, Grid, Dune::SGrid<2, 2>);
+SET_TYPE_PROP(Stokes2cniTestProblem, Grid, Dune::SGrid<2,2>);
 
 // Set the problem property
 SET_TYPE_PROP(Stokes2cniTestProblem, Problem, Stokes2cniTestProblem<TypeTag>);
@@ -62,14 +61,14 @@ SET_TYPE_PROP(Stokes2cniTestProblem, Problem, Stokes2cniTestProblem<TypeTag>);
 SET_PROP(BoxStokes2cni, FluidSystem)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::FluidSystems::H2ON2<Scalar> type;
+    typedef Dumux::FluidSystems::H2OAir<Scalar> type;
 };
 
 //! Scalar is set to type long double for higher accuracy
-//SET_TYPE_PROP(BoxStokes, Scalar, long double); // for a higher accuracy
+//SET_TYPE_PROP(BoxStokes, Scalar, long double);
 
 //! a stabilization factor. Set to zero for no stabilization
-SET_SCALAR_PROP(BoxStokes2cni, StabilizationAlpha, -1.0); // -1.0
+SET_SCALAR_PROP(BoxStokes2cni, StabilizationAlpha, -1.0);
 
 //! stabilization at the boundaries
 SET_SCALAR_PROP(BoxStokes2cni, StabilizationBeta, 0.0);
@@ -176,29 +175,17 @@ public:
 
         values.setAllDirichlet();
 
-//        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
-//        {
-//            values.setOutflow(transportIdx);
-//            values.setOutflow(energyIdx);
-//        }
-
-        if (onRightBoundary_(globalPos))
-            values.setAllOutflow();
-
-        // set all corner points to dirichlet
-        if ((onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) &&
-                (onUpperBoundary_(globalPos) || onLowerBoundary_(globalPos)))
-            values.setAllDirichlet();
-
         // the mass balance has to be of type outflow
         values.setOutflow(massBalanceIdx);
 
-        // set pressure at one point
-        const Scalar middle = (this->bboxMax()[1] - this->bboxMin()[1])/2;
-//        const Scalar middle = this->bboxMin()[1] + (this->bboxMax()[1] - this->bboxMin()[1])/2;
+        if (onUpperBoundary_(globalPos) &&
+                !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
+            values.setAllOutflow();
 
-        if (onLeftBoundary_(globalPos) &&
-                globalPos[1] > middle - eps_ && globalPos[1] < middle + eps_)
+        // set pressure at one point
+        const Scalar middle = (this->bboxMax()[0] - this->bboxMin()[0])/2;
+        if (onUpperBoundary_(globalPos) &&
+                !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
             values.setDirichlet(massBalanceIdx);
     }
 
@@ -216,13 +203,6 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
 
         initial_(values, globalPos);
-
-        if(onLeftBoundary_(globalPos)
-                && globalPos[1]<0.75 && globalPos[1]>0.25)
-        {
-            values[transportIdx] = 0.9e-4;
-            values[energyIdx] = 284.15;
-        }
     }
 
     /*!
@@ -239,32 +219,9 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-//        const GlobalPosition &globalPos
-//            = is.geometry().center();
-
         values = 0.0;
     }
 
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient
-     *        at the center of a given intersection
-     *
-     * \return Beavers-Joseph coefficient
-     */
-    Scalar beaversJosephCoeff(const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
-    {
-//        const GlobalPosition &globalPos = is.geometry().center();
-
-//        if (onLowerBoundary_(globalPos))
-//                && globalPos[0] > this->bboxMin()[0]+eps_ &&  globalPos[0] < this->bboxMax()[0]-eps_)
-//            return 1.0;
-//        else
-            return 0.0;
-    }
     // \}
 
     /*!
@@ -306,19 +263,6 @@ public:
 
         initial_(values, globalPos);
     }
-
-    /*!
-    * \brief Evaluate the intrinsic permeability
-    *        at the corner of a given element
-    *
-    * \return permeability in x-direction
-    */
-   Scalar permeability(const Element &element,
-                const FVElementGeometry &fvElemGeom,
-                int scvIdx) const
-   {
-       return 1e-8;
-   }
    // \}
 
 private:
@@ -327,20 +271,21 @@ private:
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
-//        const Scalar v0 = 1.0;
-        const Scalar v0 = 2.0;
-
-        values[momentumXIdx] = 0.0;//v0*(globalPos[1]-1.0) + 1e-4;
-        values[momentumYIdx] = 0.0;
-        if (globalPos[1] < this->bboxMax()[1] && globalPos[1] > this->bboxMin()[1])
-            values[momentumXIdx] = v0*(this->bboxMax()[1]-globalPos[1])*(globalPos[1]-this->bboxMin()[1]);
-//        if (//onUpperBoundary_(globalPos) &&
-//               globalPos[0]<0.75 && globalPos[0]>0.25)
-//            values[momentumYIdx] = v1*(0.75-globalPos[0])*(globalPos[0]-0.25);
-
-        values[massBalanceIdx] = 1e5;
+        const Scalar v1 = 0.5;
+        values[momentumXIdx] = 0.0;
+        values[momentumYIdx] = v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
+                                   / (0.25*(this->bboxMax()[0] - this->bboxMin()[0])*(this->bboxMax()[0] - this->bboxMin()[0]));
+        values[massBalanceIdx] = 1e5 - 1.189*this->gravity()[1]*globalPos[1];
         values[transportIdx] = 1e-4;
         values[energyIdx] = 283.15;
+        if(globalPos[0]<0.75 && globalPos[0]>0.25 &&
+                globalPos[1]<0.75 && globalPos[1]>0.25)
+//        if(onLowerBoundary_(globalPos) &&
+//                !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
+        {
+            values[transportIdx] = 0.9e-4;
+            values[energyIdx] = 284.15;
+        }
     }
     // \}
 

@@ -55,21 +55,10 @@ namespace Properties
 NEW_TYPE_TAG(StokesTestProblem, INHERITS_FROM(BoxStokes));
 
 // Set the grid type
-SET_PROP(StokesTestProblem, Grid)
-{
-//#if HAVE_UG
-//    typedef Dune::UGGrid<2> type;
-//#else
-//    typedef Dune::YaspGrid<2> type;
-    typedef Dune::SGrid<2, 2> type;
-//#endif
-};
+SET_TYPE_PROP(StokesTestProblem, Grid, Dune::SGrid<2, 2>);
 
 // Set the problem property
-SET_PROP(StokesTestProblem, Problem)
-{
-    typedef Dumux::StokesTestProblem<TypeTag> type;
-};
+SET_TYPE_PROP(StokesTestProblem, Problem, Dumux::StokesTestProblem<TypeTag>);
 
 SET_PROP(StokesTestProblem, Fluid)
 {
@@ -82,10 +71,10 @@ public:
 SET_TYPE_PROP(BoxStokes, Scalar, double);
 //SET_TYPE_PROP(BoxStokes, Scalar, long double);
 
-//! a stabilization factor. Set to zero for no stabilization
+//! A stabilization factor. Set negative for stabilization and to zero for no stabilization
 SET_SCALAR_PROP(BoxStokes, StabilizationAlpha, -1.0);
 
-//! stabilization at the boundaries
+//! Stabilization factor for the boundaries
 SET_SCALAR_PROP(BoxStokes, StabilizationBeta, 0.0);
 
 // Enable gravity
@@ -99,16 +88,13 @@ SET_BOOL_PROP(StokesTestProblem, EnableGravity, false);
  *        from the left to the right.
  *
  * The domain is sized 1m times 1m. The boundary conditions for the momentum balances
- * are all set to Dirichlet. The mass balance receives
+ * are set to Dirichlet with outflow on the right boundary. The mass balance has
  * outflow bcs, which are replaced in the localresidual by the sum
  * of the two momentum balances. In the middle of the right boundary,
- * one vertex receives Dirichlet bcs, to set the pressure level.
+ * one vertex receives Dirichlet bcs to set the pressure level.
  *
  * This problem uses the \ref BoxStokesModel.
  *
- * This problem is stationary and can be simulated until \f$t_{\text{end}} =
- * 1\;s\f$ is reached. A good choice for the initial time step size
- * is \f$t_{\text{inital}} = 0.01\;s\f$.
  * To run the simulation execute the following line in shell:
  * <tt>./test_stokes -parameterFile ./test_stokes.input</tt>
  */
@@ -127,7 +113,6 @@ class StokesTestProblem : public StokesProblem<TypeTag>
 
         // copy some indices for convenience
         massBalanceIdx = Indices::massBalanceIdx,
-
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx //!< Index of the y-component of the momentum balance
     };
@@ -168,7 +153,7 @@ public:
     /*!
      * \brief Returns the temperature within the domain.
      *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * This problem assumes a constant temperature of 10 degrees Celsius.
      */
     Scalar boxTemperature(const Element &element,
                        const FVElementGeometry &fvElemGeom,
@@ -198,40 +183,18 @@ public:
 
         values.setAllDirichlet();
 
-         //coupling
-//        if (onLowerBoundary_(globalPos))
-//        {
-//            values.setCouplingOutflow(momentumXIdx);
-//            values.setCouplingOutflow(momentumYIdx);
-//        }
-
-        // set all corner points to dirichlet
-//        if ((onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) &&
-//                (onUpperBoundary_(globalPos) || onLowerBoundary_(globalPos)))
-//            values.setAllDirichlet();
-
         // the mass balance has to be of type outflow
         values.setOutflow(massBalanceIdx);
 
-//        if(onRightBoundary_(globalPos) && globalPos[1] < 1-eps_ && globalPos[1] > eps_)
-//            values.setAllOutflow();
-//
-        const Scalar middle = (this->bboxMax()[1] - this->bboxMin()[1])/2;
+        if(onRightBoundary_(globalPos) &&
+                globalPos[1] < this->bboxMax()[1]-eps_ && globalPos[1] > this->bboxMin()[1]+eps_)
+            values.setAllOutflow();
+
         // set pressure at one point
-        if (onUpperBoundary_(globalPos) &&
-                globalPos[0] > middle - eps_ && globalPos[0] < middle + eps_)
+        const Scalar middle = (this->bboxMax()[1] - this->bboxMin()[1])/2;
+        if (onRightBoundary_(globalPos) &&
+                globalPos[1] > middle - eps_ && globalPos[1] < middle + eps_)
             values.setDirichlet(massBalanceIdx);
-//
-//        values.setAllDirichlet();
-//
-//
-//        // the mass balance has to be of type outflow
-//        values.setOutflow(massBalanceIdx);
-//
-//        // fix pressure at one vertex on the boundary
-//        if (onUpperBoundary_(globalPos)
-//            && globalPos[0] > 0.5-eps_ && globalPos[0] < 0.5+eps_)
-//            values.setDirichlet(massBalanceIdx);
     }
 
     /*!
@@ -249,47 +212,10 @@ public:
 
         initial_(values, globalPos);
 
-         const Scalar v0 = 1.0;
-         values[momentumXIdx] = v0*globalPos[1];// + 1e-4;
-//         values[momentumXIdx] = v0*log((globalPos[1]+1.0)/(this->bboxMin()[1]+1.0)) + 9.5e-5;
-//        values[momentumXIdx] =  v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
-//                               / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.0004;
-
-//        const Scalar v1 = -0.1;
-//        if (onUpperBoundary_(globalPos)
-//               && globalPos[0]<0.75 && globalPos[0]>0.25)
-//            values[momentumYIdx] = v1*(0.75-globalPos[0])*(globalPos[0]-0.25);
-//        if (onUpperBoundary_(globalPos))
-//            values[massBalanceIdx] = 1e5;
-//
-//        Scalar v0 = 0.0625*16;
-//        //parabolic profile
-//        values[momentumXIdx] =  v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
-//                               / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.00035;
-//        //linear profile
-//        values[momentumXIdx] = -3.9992*globalPos[1]*globalPos[1]+3.998*globalPos[1]+3.75e-4;//v0 *(1 + globalPos[1]);//0.1;
-//        values[momentumXIdx] = 0.0;//v0*globalPos[1]+ 1e-4;
-//        values[momentumYIdx] = -1e-5;
-//        values[massBalanceIdx] = 1e5;
-
-//        if (onLeftBoundary_(globalPos))
-//        {
-//            values[momentumXIdx] = v0 *(1 + globalPos[1])-1;//0.1;
-//            values[momentumYIdx] = 0.0;
-//            values[massBalanceIdx] = 1e5;
-//        }
-//        else if (onRightBoundary_(globalPos))
-//        {
-//            values[momentumXIdx]=v0*(1 + globalPos[1])-1; //v0 *(1 + globalPos[1]);//0.1;
-//            values[momentumYIdx] = 0.0;
-//            values[massBalanceIdx] = 1e5-1;
-//        }
-//        else
-//        {
-//            values[momentumXIdx]=v0*(1 + globalPos[1]-1);//v0 *(1 + globalPos[1]);//0.1;
-//            values[momentumYIdx] = 0.0;
-//            values[massBalanceIdx] = 1e5;
-//        }
+        const Scalar v0 = 1.0;
+        // parabolic velocity profile
+        values[momentumXIdx] =  v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
+                               / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1]));
     }
 
     /*!
@@ -309,14 +235,7 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
         values = 0.0;
-        //only set normal direction to gN
-        //tangential component gets Neumann = 0, what correponds to an outflow condition
-        if(onLowerBoundary_(globalPos))
-            values[momentumYIdx] = 1e5;//0.923515 + globalPos[0]*0.152975;//1e0;
     }
     // \}
 
@@ -341,7 +260,6 @@ public:
         // ATTENTION: The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
         values = Scalar(0.0);
-//        values[momentumXIdx] = -1.0;
     }
 
     /*!
@@ -361,40 +279,6 @@ public:
     }
     // \}
 
-    /*!
-     * \brief Evaluate the Beavers-Joseph coefficient
-     *        at the center of a given intersection
-     *
-     * \return Beavers-Joseph coefficient
-     */
-    Scalar beaversJosephCoeff(const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
-    {
-        const GlobalPosition &globalPos = is.geometry().center();
-
-        if (onLowerBoundary_(globalPos))
-//                && globalPos[0] > this->bboxMin()[0]+eps_ &&  globalPos[0] < this->bboxMax()[0]-eps_)
-            return 1.0;
-        else
-            return 0.0;
-    }
-
-    /*!
-     * \brief Evaluate the intrinsic permeability
-     *        at the corner of a given element
-     *
-     * \return permeability in x-direction
-     */
-    Scalar permeability(const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
-    {
-        return 1e-8;
-    }
-
 private:
     // internal method for the initial condition (reused for the
     // dirichlet conditions!)
@@ -402,19 +286,7 @@ private:
                   const GlobalPosition &globalPos) const
     {
         values = 0.0;
-//       const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        Scalar v0 = 0.0;//0.0625*16;
-       //parabolic profile
-//       values[momentumXIdx] = v0*(globalPos[1] - this->bboxMin()[1])*(this->bboxMax()[1] - globalPos[1])
-//                            / (0.25*(this->bboxMax()[1] - this->bboxMin()[1])*(this->bboxMax()[1] - this->bboxMin()[1])) + 0.0004;
-       //linear profile
-//        values[momentumXIdx]=-3.9992*globalPos[1]*globalPos[1]+3.998*globalPos[1]+3.75e-4;//v0*(1 + globalPos[1]);//0.0;
-
-        const Scalar v1 = 0.0;
-        values[momentumXIdx] = v0*globalPos[1];// + 1e-4;
-        values[momentumYIdx] = v1;//*(0.75-globalPos[0])*(globalPos[0]-0.25);
-//        values[momentumYIdx] = 0.0;
-        values[massBalanceIdx] = 1e5;// + 1.189*this->gravity()[1]*(globalPos[1] - this->bboxMin()[1]);
+        values[massBalanceIdx] = 1e5;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
