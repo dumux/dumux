@@ -65,19 +65,19 @@ template<class TypeTag> class FVPressureCompositional
 {
     typedef FVPressure<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TransportSolutionType)) TransportSolutionType;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Indices)) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(BoundaryTypes)) BoundaryTypes;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidState)) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters)::MaterialLaw MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(CellData)) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -95,8 +95,8 @@ template<class TypeTag> class FVPressureCompositional
     };
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
-        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents))
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
     // typedefs to abbreviate several dune classes...
@@ -111,7 +111,7 @@ template<class TypeTag> class FVPressureCompositional
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
     typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(PrimaryVariables)) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
 public:
     //the variables object is initialized, non-compositional before and compositional after first pressure calculation
@@ -148,7 +148,7 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))::ScalarSolution ScalarSolutionType;
+        typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
         int size = problem_.gridView().size(0);
         ScalarSolutionType *pressureW = writer.allocateManagedBuffer(size);
         ScalarSolutionType *pressureN = writer.allocateManagedBuffer(size);
@@ -292,8 +292,8 @@ public:
     FVPressureCompositional(Problem& problem) : FVPressure<TypeTag>(problem),
         problem_(problem), initializationOutputWriter_(problem.gridView(),"initOutput2p2c")
     {
-        updateEstimate_.resize(GET_PROP_VALUE(TypeTag, PTAG(NumPhases)));
-        for  (int i=0; i<GET_PROP_VALUE(TypeTag, PTAG(NumPhases)); i++)
+        updateEstimate_.resize(GET_PROP_VALUE(TypeTag, NumPhases));
+        for  (int i=0; i<GET_PROP_VALUE(TypeTag, NumPhases); i++)
             updateEstimate_[i].resize(problem.gridView().size(0));
 
         ErrorTermFactor_ = GET_PARAM(TypeTag, Scalar, ErrorTermFactor);
@@ -315,7 +315,7 @@ protected:
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
-    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PTAG(PressureFormulation)); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 };
 
 
@@ -471,7 +471,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 //get saturation, determine pc
                 sat_0 = problem_.initSat(*eIt);
                 Scalar pc=0.;
-                if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+                if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
                 {
                     pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt),
                                     sat_0);
@@ -505,7 +505,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 // This may affect pc and hence p_alpha and hence again saturation -> iteration.
 
                 // iterations in case of enabled capillary pressure
-                if(GET_PROP_VALUE(TypeTag, PTAG(EnableCapillarity)))
+                if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
                 {
                     //start with pc from last TS
                     Scalar pc(cellData.capillaryPressure());
