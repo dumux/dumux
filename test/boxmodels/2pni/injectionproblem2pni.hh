@@ -66,7 +66,7 @@ SET_PROP(InjectionProblem2PNI, GridCreator)
 #if HAVE_UG
     typedef StructuredSimplexGridCreator<TypeTag> type;
 #else
-    typedef StructuredCubeGridCreator<TypeTag> type;
+    typedef Dumux::CubeGridCreator<TypeTag> type;
 #endif
 };
 

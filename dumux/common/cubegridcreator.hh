@@ -56,7 +56,7 @@ NEW_PROP_TAG(Grid);
  * cube in 3D.
  */
 template <class TypeTag>
-class StructuredCubeGridCreator
+class Dumux::CubeGridCreator
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
@@ -115,7 +115,7 @@ protected:
 };
 
 template <class TypeTag>
-typename StructuredCubeGridCreator<TypeTag>::GridPointer StructuredCubeGridCreator<TypeTag>::cubeGrid_;
+typename Dumux::CubeGridCreator<TypeTag>::GridPointer StructuredCubeGridCreator<TypeTag>::cubeGrid_;
 
 }
 
