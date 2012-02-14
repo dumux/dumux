@@ -98,7 +98,7 @@ NEW_PROP_TAG( ErrorTermUpperBound );
 #include <dumux/decoupled/common/variableclass.hh>
 #include <dumux/decoupled/2p/cellData2p.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
-#include <dumux/material/fluidstates/isoimmisciblefluidstate.hh>
+#include <dumux/material/fluidstates/isothermalimmisciblefluidstate.hh>
 
 namespace Dumux
 {
