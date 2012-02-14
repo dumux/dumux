@@ -34,8 +34,8 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#include <dumux/common/structuredsimplexgridcreator.hh>
-#include <dumux/common/structuredcubegridcreator.hh>
+#include <dumux/common/simplexgridcreator.hh>
+#include <dumux/common/cubegridcreator.hh>
 
 #include <dumux/boxmodels/2pni/2pnimodel.hh>
 

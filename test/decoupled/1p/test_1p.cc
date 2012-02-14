@@ -29,7 +29,7 @@
  */
 #include "config.h"
 
-#include <dumux/common/structuredcubegridcreator.hh>
+#include <dumux/common/cubegridcreator.hh>
 
 #include "test_1p_problem.hh"
 #include "benchmarkresult.hh"

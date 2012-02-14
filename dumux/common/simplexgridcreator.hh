@@ -1,9 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2007-2008 by Melanie Darcis                               *
- *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
- *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2012 by Markus Wolff                                      *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -24,49 +22,38 @@
 /*!
  * \file
  *
- * \brief test for the 2pni box model
+ * \brief Provides a grid creator which a regular grid made of
+ *        simplices.
  */
-
-#ifndef DUMUX_STRUCTURED_CUBE_GRID_CREATOR_HH
-#define DUMUX_STRUCTURED_CUBE_GRID_CREATOR_HH
-
-#include <dune/grid/io/file/dgfparser.hh>
+#ifndef DUMUX_SIMPLEX_GRID_CREATOR_HH
+#define DUMUX_SIMPLEX_GRID_CREATOR_HH
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 
-
 #include <dumux/common/basicproperties.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
-//#include <dumux/../util/structuredgridfactorysg.hh> //under discussion!
-
 
 namespace Dumux
 {
-
 namespace Properties
 {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Grid);
 }
 
-//! \cond INTERNAL
-////////////////////////
-// helper class for grid instantiation
-////////////////////////
-
-
+/*!
+ * \brief Provides a grid creator which a regular grid made of
+ *        simplices.
+ */
 template <class TypeTag>
-class StructuredCubeGridCreator
+class StructuredSimplexGridCreator
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
     typedef Dune::shared_ptr<Grid> GridPointer;
 
-    enum
-    {
-        dim = Grid::dimension
-    };
+    enum { dim = Grid::dimension };
 
 public:
     /*!
@@ -94,7 +81,7 @@ public:
             cellRes[2] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsZ);
         }
 
-        cubeGrid_ = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
+        simplexGrid_ = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cellRes);
     }
 
     /*!
@@ -102,25 +89,25 @@ public:
      */
     static Grid &grid()
     {
-        return *cubeGrid_;
+        return *simplexGrid_;
     };
 
     /*!
-     * \brief Call loadBalance() function of Grid.
+     * \brief Distributes the grid on all processes of a parallel
+     *        computation.
      */
     static void loadBalance()
     {
-        cubeGrid_->loadBalance();
+        simplexGrid_->loadBalance();
     };
 
-protected:
-    static GridPointer cubeGrid_;
+private:
+    static GridPointer simplexGrid_;
 };
 
 template <class TypeTag>
-typename StructuredCubeGridCreator<TypeTag>::GridPointer StructuredCubeGridCreator<TypeTag>::cubeGrid_;
+typename StructuredSimplexGridCreator<TypeTag>::GridPointer StructuredSimplexGridCreator<TypeTag>::simplexGrid_;
 
 }
 
-//! \endcond
 #endif

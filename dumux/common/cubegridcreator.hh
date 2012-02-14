@@ -1,9 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2007-2008 by Melanie Darcis                               *
- *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
- *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2012 by Markus Wolff                                      *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -24,11 +22,11 @@
 /*!
  * \file
  *
- * \brief test for the 2pni box model
+ * \brief Provides a grid creator which a regular grid made of
+ *        quadrilaterals.
  */
-
-#ifndef DUMUX_STRUCTURED_SIMPLEX_GRID_CREATOR_HH
-#define DUMUX_STRUCTURED_SIMPLEX_GRID_CREATOR_HH
+#ifndef DUMUX_CUBE_GRID_CREATOR_HH
+#define DUMUX_CUBE_GRID_CREATOR_HH
 
 #include <dune/grid/io/file/dgfparser.hh>
 
@@ -50,23 +48,21 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(Grid);
 }
 
-//! \cond INTERNAL
-////////////////////////
-// helper class for grid instantiation
-////////////////////////
-
-
+/*!
+ * \brief Provides a grid creator which a regular grid made of
+ *        quadrilaterals.
+ *
+ * A quadirlateral is a line segment in 1D, a rectangle in 2D and a
+ * cube in 3D.
+ */
 template <class TypeTag>
-class StructuredSimplexGridCreator
+class StructuredCubeGridCreator
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
     typedef Dune::shared_ptr<Grid> GridPointer;
 
-    enum
-    {
-        dim = Grid::dimension
-    };
+    enum { dim = Grid::dimension };
 
 public:
     /*!
@@ -94,7 +90,7 @@ public:
             cellRes[2] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsZ);
         }
 
-        simplexGrid_ = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cellRes);
+        cubeGrid_ = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
     }
 
     /*!
@@ -102,25 +98,25 @@ public:
      */
     static Grid &grid()
     {
-        return *simplexGrid_;
+        return *cubeGrid_;
     };
 
     /*!
-     * \brief Call loadBalance() function of Grid.
+     * \brief Distributes the grid on all processes of a parallel
+     *        computation.
      */
     static void loadBalance()
     {
-        simplexGrid_->loadBalance();
+        cubeGrid_->loadBalance();
     };
 
-private:
-    static GridPointer simplexGrid_;
+protected:
+    static GridPointer cubeGrid_;
 };
 
 template <class TypeTag>
-typename StructuredSimplexGridCreator<TypeTag>::GridPointer StructuredSimplexGridCreator<TypeTag>::simplexGrid_;
+typename StructuredCubeGridCreator<TypeTag>::GridPointer StructuredCubeGridCreator<TypeTag>::cubeGrid_;
 
 }
 
-//! \endcond
 #endif
