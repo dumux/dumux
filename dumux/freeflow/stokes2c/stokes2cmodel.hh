@@ -23,7 +23,7 @@
 /*!
  * \file
  *
- * \brief Adaptation of the box scheme to the compositional Stokes model (with two components).
+ * \brief Adaptation of the box scheme to the two-component Stokes model.
  */
 #ifndef DUMUX_STOKES2C_MODEL_HH
 #define DUMUX_STOKES2C_MODEL_HH
@@ -36,7 +36,7 @@
 namespace Dumux {
 /*!
  * \ingroup BoxStokes2cModel
- * \brief Adaptation of the BOX scheme to the compositional stokes model.
+ * \brief Adaptation of the BOX scheme to the compositional Stokes model.
  *
  * This model implements an isothermal two-component Stokes flow of a fluid
  * solving a momentum balance, a mass balance and a conservation equation for one component.
@@ -85,6 +85,7 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
@@ -149,7 +150,9 @@ public:
         }
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
-        writer.attachVertexData(Xw, "X_TRAIL");
+        std::ostringstream outputNameX;
+        outputNameX << "X^" << FluidSystem::componentName(lCompIdx);
+        writer.attachVertexData(Xw, outputNameX.str());
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");
         writer.attachVertexData(velocity, "v", dim);

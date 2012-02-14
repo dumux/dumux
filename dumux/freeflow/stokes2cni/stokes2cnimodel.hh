@@ -94,6 +94,7 @@ class Stokes2cniModel : public Stokes2cModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
@@ -162,7 +163,9 @@ public:
         writer.attachVertexData(pN, "pg");
         writer.attachVertexData(delP, "delP");
 //        writer.attachVertexData(D, "Dwg");
-        writer.attachVertexData(Xw, "X_gH2O");
+        std::ostringstream outputNameX;
+        outputNameX << "X^" << FluidSystem::componentName(lCompIdx);
+        writer.attachVertexData(Xw, outputNameX.str());
         writer.attachVertexData(T, "temperature");
         writer.attachVertexData(rho, "rhoG");
         writer.attachVertexData(mu, "mu");
