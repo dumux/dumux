@@ -193,8 +193,6 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param lensLowerLeft Global position of the lenses lower left corner
-     * \param lensUpperRight Global position of the lenses upper right corner
      */
     LensProblem(TimeManager &timeManager,
                 const GridView &gridView)

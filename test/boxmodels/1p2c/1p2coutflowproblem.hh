@@ -107,7 +107,7 @@ SET_BOOL_PROP(OnePTwoCOutflowProblem, EnableGravity, false);
  * gradient of 1e5Pa/m. The nitrogen is transported with the water flow
  * and leaves the domain at the right boundary
  * where an outflow boundary condition is applied.
- * This problem uses the \ref OnePTwoCModel.
+ * This problem uses the \ref OnePTwoCBoxModel.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_1p2c -parameterFile ./test_1p2c.input</tt>
