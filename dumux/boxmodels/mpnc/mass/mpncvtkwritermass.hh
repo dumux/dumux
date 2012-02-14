@@ -23,7 +23,7 @@
  * \file
  *
  * \brief VTK writer module for the mass related quantities of the
- *        mpnc model.
+ *        MpNc model.
  */
 #ifndef DUMUX_MPNC_VTK_WRITER_MASS_HH
 #define DUMUX_MPNC_VTK_WRITER_MASS_HH
@@ -36,7 +36,7 @@ namespace Dumux
  * \ingroup MPNCModel
  *
  * \brief VTK writer module for the mass related quantities of the
- *        mpnc model.
+ *        MpNc model.
  *
  * This is the specialization for the case _without_ kinetic mass
  * transfer between phases.

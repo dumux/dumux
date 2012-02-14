@@ -22,7 +22,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A mpnc specific controller for the newton solver.
+ * \brief A MpNc specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -39,7 +39,7 @@
 namespace Dumux {
 
 template <class TypeTag, bool enableKinetic /* = false */>
-class mpncNewtonChop
+class MpNcNewtonChop
 {
     typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -90,7 +90,7 @@ private:
 };
 
 template <class TypeTag>
-class mpncNewtonChop<TypeTag, /*enableKinetic=*/true>
+class MpNcNewtonChop<TypeTag, /*enableKinetic=*/true>
 {
     typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -153,7 +153,7 @@ private:
 
 /*!
  * \ingroup Newton
- * \brief A mpnc specific controller for the newton solver.
+ * \brief A MpNc specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -180,7 +180,7 @@ class MPNCNewtonController : public NewtonController<TypeTag>
         S0Idx = Indices::S0Idx
     };
 
-    typedef mpncNewtonChop<TypeTag, enableKinetic> NewtonChop;
+    typedef MpNcNewtonChop<TypeTag, enableKinetic> NewtonChop;
 
 public:
     MPNCNewtonController(const Problem &problem)

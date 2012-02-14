@@ -27,7 +27,7 @@
 /*!
  * \ingroup Properties
  * \ingroup BoxProperties
- * \ingroup BoxmpncModel
+ * \ingroup BoxMpNcModel
  * \file
  * \brief  Defines the properties required for the Mp-Nc box model.
  */

@@ -45,7 +45,7 @@
 /*!
  * \ingroup Properties
  * \ingroup BoxProperties
- * \ingroup BoxmpncModel
+ * \ingroup BoxMpNcModel
  * \file
  * \brief  Default properties for the Mp-Nc box model.
  */
@@ -125,12 +125,12 @@ public:
     typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> type;
 };
 
-//! Use the mpnc local jacobian operator for the mpnc model
+//! Use the MpNc local jacobian operator for the MpNc model
 SET_TYPE_PROP(BoxMPNC,
               LocalResidual,
               MPNCLocalResidual<TypeTag>);
 
-//! Use the mpnc specific newton controller for the mpnc model
+//! Use the MpNc specific newton controller for the MpNc model
 SET_PROP(BoxMPNC, NewtonController)
 {public:
     typedef MPNCNewtonController<TypeTag> type;

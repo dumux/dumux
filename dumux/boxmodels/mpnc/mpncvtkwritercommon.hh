@@ -22,7 +22,7 @@
 /*!
  * \file
  *
- * \brief VTK writer module for the common quantities of the mpnc
+ * \brief VTK writer module for the common quantities of the MpNc
  *        model.
  */
 #ifndef DUMUX_MPNC_VTK_WRITER_COMMON_HH
@@ -36,7 +36,7 @@ namespace Dumux
 /*!
  * \ingroup MPNCModel
  *
- * \brief VTK writer module for the common quantities of the mpnc
+ * \brief VTK writer module for the common quantities of the MpNc
  *        model.
  */
 template<class TypeTag>

@@ -23,7 +23,7 @@
  * \file
  *
  * \brief VTK writer module for the energy related quantities of the
- *        mpnc model.
+ *        MpNc model.
  */
 #ifndef DUMUX_MPNC_VTK_WRITER_ENERGY_HH
 #define DUMUX_MPNC_VTK_WRITER_ENERGY_HH
@@ -36,7 +36,7 @@ namespace Dumux
  * \ingroup MPNCModel
  *
  * \brief VTK writer module for the energy related quantities of the
- *        mpnc model.
+ *        MpNc model.
  *
  * This is the specialization for the case without energy.
  */
@@ -123,7 +123,7 @@ private:
  * \ingroup MPNCModel
  *
  * \brief VTK writer module for the energy related quantities of the
- *        mpnc model.
+ *        MpNc model.
  *
  * This is the specialization for the case with an energy equation but
  * local thermal equilibrium. (i.e. no kinetic energy transfer)

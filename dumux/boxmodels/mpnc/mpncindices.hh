@@ -32,7 +32,7 @@ namespace Dumux
 /*!
  * \ingroup MPNCModel
  * \ingroup BoxIndices
- * \brief The primary variable and equation indices for the mpnc
+ * \brief The primary variable and equation indices for the MpNc
  *        model.
  */
 template <class TypeTag, int BasePVOffset = 0>

@@ -25,7 +25,7 @@
  * \file
  *
  * \brief Contains the quantities to calculate the energy flux in the
- *        mpnc box model.
+ *        MpNc box model.
  */
 #ifndef DUMUX_MPNC_ENERGY_FLUX_VARIABLES_HH
 #define DUMUX_MPNC_ENERGY_FLUX_VARIABLES_HH
