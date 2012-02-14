@@ -102,7 +102,7 @@ public:
     };
 
     /*!
-     * \copydoc BoxModel::completeFluidState
+     * \@copydoc BoxModel::completeFluidState
      */
     static void completeFluidState(const PrimaryVariables& primaryVars,
                                    const Problem& problem,

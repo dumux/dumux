@@ -92,7 +92,7 @@ public:
     };
 
     /*!
-     * \copydoc BoxModel::completeFluidState
+     * \@copydoc BoxModel::completeFluidState
      */
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
@@ -155,7 +155,7 @@ public:
     { return fluidState_.viscosity(/*phaseIdx=*/0); }
 
     /*!
-     * \brief Return the average porosity \f$\mathrm{[-]}\f within the control volume.
+     * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
      */
     Scalar porosity() const
     { return porosity_; }
