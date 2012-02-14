@@ -64,7 +64,7 @@ NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoP, InjectionSpatialParame
 SET_PROP(InjectionProblem2PNI, GridCreator)
 {
 #if HAVE_UG
-    typedef StructuredSimplexGridCreator<TypeTag> type;
+    typedef Dumux::SimplexGridCreator<TypeTag> type;
 #else
     typedef Dumux::CubeGridCreator<TypeTag> type;
 #endif
