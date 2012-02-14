@@ -47,7 +47,7 @@ NEW_PROP_TAG(Grid);
  *        simplices.
  */
 template <class TypeTag>
-class StructuredSimplexGridCreator
+class SimplexGridCreator
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
@@ -106,7 +106,7 @@ private:
 };
 
 template <class TypeTag>
-typename StructuredSimplexGridCreator<TypeTag>::GridPointer StructuredSimplexGridCreator<TypeTag>::simplexGrid_;
+typename SimplexGridCreator<TypeTag>::GridPointer SimplexGridCreator<TypeTag>::simplexGrid_;
 
 }
 
