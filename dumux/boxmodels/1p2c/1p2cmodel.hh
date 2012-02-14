@@ -80,6 +80,7 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
@@ -110,8 +111,6 @@ public:
     /*!
      * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
      *
-     * \copydetails Dumux::BoxModel::addOutputVtkFields
-     *
      * Specialization for the OnePTwoCBoxModel, adding pressure,
      * mass and mole fractions, and the process rank to the VTK writer.
      */
@@ -131,7 +130,6 @@ public:
         ScalarField &massFrac1 = *writer.allocateManagedBuffer(numVertices);
         ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &delFrac= *writer.allocateManagedBuffer(numVertices);
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
         ScalarField &velocityX = *writer.allocateManagedBuffer(numVertices);
         ScalarField &velocityY = *writer.allocateManagedBuffer(numVertices);
@@ -191,7 +189,6 @@ public:
                 massFrac1[globalIdx] = volVars.massFraction(1);
                 rho[globalIdx] = volVars.density();
                 mu[globalIdx] = volVars.viscosity();
-                delFrac[globalIdx] = volVars.massFraction(1)-volVars.moleFraction(1);
             };
 
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
@@ -309,10 +306,17 @@ public:
         if (dim > 2)
             writer.attachVertexData(velocityZ, "Vz");
 #endif
-        writer.attachVertexData(moleFrac0, "x_H2O");
-        writer.attachVertexData(moleFrac1, "x_N2");
-        writer.attachVertexData(massFrac0, "X_H2O");
-        writer.attachVertexData(massFrac1, "X_N2");
+        char nameMoleFrac0[42], nameMoleFrac1[42];
+        snprintf(nameMoleFrac0, 42, "x_%s", FluidSystem::componentName(0));
+        snprintf(nameMoleFrac1, 42, "x_%s", FluidSystem::componentName(1));
+        writer.attachVertexData(moleFrac0, nameMoleFrac0);
+        writer.attachVertexData(moleFrac0, nameMoleFrac1);
+
+        char nameMassFrac0[42], nameMassFrac1[42];
+        snprintf(nameMassFrac0, 42, "X_%s", FluidSystem::componentName(0));
+        snprintf(nameMassFrac1, 42, "X_%s", FluidSystem::componentName(1));
+        writer.attachVertexData(massFrac0, nameMassFrac0);
+        writer.attachVertexData(massFrac1, nameMassFrac1);
 //        writer.attachVertexData(delFrac, "delFrac_TRAIL");
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");

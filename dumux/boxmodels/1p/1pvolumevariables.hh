@@ -92,7 +92,7 @@ public:
     };
 
     /*!
-     * \@copydoc BoxModel::completeFluidState
+     * \copydoc BoxModel::completeFluidState
      */
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
@@ -126,14 +126,14 @@ public:
      * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
      *
      * Note that we assume thermodynamic equilibrium, i.e. the
-     * temperature of the rock matrix and of all fluid phases are
+     * temperatures of the rock matrix and of all fluid phases are
      * identical.
      */
     Scalar temperature() const
     { return fluidState_.temperature(); }
 
     /*!
-     * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
+     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
      *
      */

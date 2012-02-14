@@ -52,7 +52,7 @@ namespace Dumux
  * \brief Calculate the local Jacobian for the single-phase,
  *        two-component model in the BOX scheme.
  *
- *  This class is used to fill the gaps in BoxLocalResidual for the 1p2c flow.
+ *  This class is used to fill the gaps in BoxLocalResidual for the 1p2c flow and transport.
  */
 template<class TypeTag>
 class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
@@ -88,7 +88,7 @@ protected:
             transEqIdx = Indices::transEqIdx
         };
 
-    //property that defines whether mole or mass fractions are used
+    //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 

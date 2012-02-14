@@ -287,8 +287,8 @@ public:
     { }
 
     /*!
-     * \brief Returns the local residual for a given sub-control
-     *        volume of the element.
+     * \brief Returns the local residual for all sub-control
+     *        volumes of the element.
      */
     const ElementSolutionVector &residual() const
     { return residual_; }

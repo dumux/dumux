@@ -68,8 +68,6 @@ public:
     /*!
      * \brief \copybrief Dumux::BoxModel::addOutputVtkFields
      *
-     * \copydetails Dumux::BoxModel::addOutputVtkFields
-     *
      * Specialization for the OnePBoxModel, adding the pressure and
      * the process rank to the VTK writer.
      */

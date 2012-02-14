@@ -106,9 +106,10 @@ public:
     { return potentialGrad_; }
 
     /*!
-     * \brief Return the local index of the upstream control volume
-     *        for a given phase, given the intrinisc permeability times the pressure
-     *        potential gradient and SCV face normal for a phase.
+     * \brief Given the intrinisc permeability times the pressure
+     *        potential gradient and SCV-face normal for a phase,
+     *        return the local index of the upstream control volume
+     *        for a given phase.
      *
      *        \param normalFlux The normal flux i.e. the given intrinsic permeability
      *                   times the pressure potential gradient and SCV face normal.

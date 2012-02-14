@@ -119,8 +119,8 @@ public:
 public:
     /*!
     * \brief Return the pressure potential multiplied with the
-    *        intrinsic permeability which goes from vertex i to
-    *        vertex j.
+    *        intrinsic permeability  and the face normal which
+    *        goes from vertex i to vertex j.
     *
     * Note that the length of the face's normal is the area of the
     * phase, so this is not the actual velocity but the integral of

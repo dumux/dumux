@@ -123,7 +123,7 @@ public:
 
     /*!
      * \brief Return the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *.
+     *
      * This is the box discretization specific interface. By default
      * it just calls gravityAtPos().
      *
