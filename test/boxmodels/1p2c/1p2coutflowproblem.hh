@@ -65,7 +65,7 @@ SET_PROP(OnePTwoCOutflowProblem, Grid)
 // Set the problem property
 SET_PROP(OnePTwoCOutflowProblem, Problem)
 {
-    typedef Dumux::OnePTwoCOutflowProblem<TTAG(OnePTwoCOutflowProblem)> type;
+    typedef Dumux::OnePTwoCOutflowProblem<TypeTag> type;
 };
 
 // Set fluid configuration

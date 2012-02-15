@@ -127,7 +127,7 @@ SET_SCALAR_PROP(TestDecTwoPTwoCProblem, CFLFactor, 0.8);
  * To run the simulation execute the following line in shell:
  * <tt>./test_dec2p2c -parameterFile ./test_dec2p2c.input</tt>
  */
-template<class TypeTag = TTAG(TestDecTwoPTwoCProblem)>
+template<class TypeTag>
 class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
 typedef IMPETProblem2P2C<TypeTag> ParentType;

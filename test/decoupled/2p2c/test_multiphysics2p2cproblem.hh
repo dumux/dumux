@@ -135,7 +135,7 @@ SET_SCALAR_PROP(TestMultTwoPTwoCProblem, CFLFactor, 0.8);
  * Optionally, simulation endtime and first timestep size can be
  * specified by programm arguments.
  */
-template<class TypeTag = TTAG(TestMultTwoPTwoCProblem)>
+template<class TypeTag>
 class TestMultTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
 typedef IMPETProblem2P2C<TypeTag> ParentType;

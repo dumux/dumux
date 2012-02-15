@@ -55,7 +55,7 @@ SET_PROP(InjectionProblem, Grid)
 // Set the problem property
 SET_PROP(InjectionProblem, Problem)
 {
-    typedef Dumux::InjectionProblem<TTAG(InjectionProblem)> type;
+    typedef Dumux::InjectionProblem<TypeTag> type;
 };
 
 // Set fluid configuration
@@ -92,7 +92,7 @@ SET_BOOL_PROP(InjectionProblem, EnableVelocityOutput, false);
  * To run the simulation execute the following line in shell:
  * <tt>./test_2p2c -parameterFile ./test_2p2c.input</tt>
  */
-template <class TypeTag = TTAG(InjectionProblem) >
+template <class TypeTag>
 class InjectionProblem : public TwoPTwoCProblem<TypeTag>
 {
     typedef TwoPTwoCProblem<TypeTag> ParentType;

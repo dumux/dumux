@@ -73,7 +73,7 @@ SET_PROP(OnePTestProblem, Grid)
 
 // Set the problem property
 SET_PROP(OnePTestProblem, Problem)
-{ typedef Dumux::OnePTestProblem<TTAG(OnePTestProblem)> type; };
+{ typedef Dumux::OnePTestProblem<TypeTag> type; };
 
 // Set the spatial parameters
 SET_PROP(OnePTestProblem, SpatialParameters)
@@ -110,7 +110,7 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
  * <tt>typedef Dune::SGrid<3,3> type;</tt> in the problem file
  * and use <tt>1p_3d.dgf</tt> in the parameter file.
  */
-template <class TypeTag = TTAG(OnePTestProblem) >
+template <class TypeTag>
 class OnePTestProblem : public OnePBoxProblem<TypeTag>
 {
     typedef OnePBoxProblem<TypeTag> ParentType;
