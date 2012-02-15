@@ -83,7 +83,6 @@ struct NewtonConvergenceWriter
 
     void endTimestep()
     {
-        ++timeStepIndex_;
         iteration_ = 0;
     };
 
