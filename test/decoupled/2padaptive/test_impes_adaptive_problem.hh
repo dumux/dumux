@@ -30,10 +30,7 @@
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
 #include <dune/grid/uggrid.hh>
-
-//#include <dune/grid/yaspgrid.hh>
-//#include <dune/grid/sgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dumux/common/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -67,6 +64,9 @@ SET_PROP(TestIMPESAdaptiveProblem, Grid)
     typedef Dune::UGGrid<2> type;
 #endif
 };
+
+// set the GridCreator property
+SET_TYPE_PROP(TestIMPESAdaptiveProblem, GridCreator, CubeGridCreator<TypeTag>);
 
 // Set the problem property
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, Dumux::TestIMPESAdaptiveProblem<TypeTag>);
@@ -151,11 +151,16 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
 public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
             ParentType(timeManager, gridView), eps_(1e-6)
     {
+        GridCreator::grid().setClosureType(Grid::ClosureType::NONE);
+        GridCreator::grid().globalRefine(GET_PARAM(TypeTag, int, MaxLevel));
+        this->setGrid(GridCreator::grid());
+
         this->setOutputInterval(10);
     }
 
@@ -170,7 +175,7 @@ public:
      */
     const char *name() const
     {
-        return "output2padaptive";
+        return "test_2padaptive";
     }
 
     bool shouldWriteRestartFile() const

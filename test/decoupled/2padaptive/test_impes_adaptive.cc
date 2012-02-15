@@ -42,115 +42,37 @@ int main()
 #else
 
 #include "test_impes_adaptive_problem.hh"
-
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/utility/structuredgridfactory.hh>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/mpihelper.hh>
-#include <dune/common/parametertreeparser.hh>
-
-#include <iostream>
-
+#include <dumux/common/start.hh>
 
 ////////////////////////
 // the main function
 ////////////////////////
-void usage(const char *progname)
+void usage(const char *progName, const std::string &errorMsg)
 {
-    std::cout << "usage: " << progname << " [--restart restartTime] InputFileName\n";
-    exit(1);
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " [options]\n";
+                    errorMessageOut += errorMsg;
+                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
+                                        "\t-tEnd                          The end of the simulation. [s] \n"
+                                        "\t-dtInitial                     The initial timestep size. [s] \n"
+                                        "\t-MinLevel                      Minimum grid level [-] \n"
+                                        "\t-MaxLevel                      Maximum grid level [-] \n"
+                                        "\t-RefineTolerance               threshold for refinement criterion [-] \n"
+                                        "\t-CoarsenTolerance              threshold for coarsening criterion [-] \n"
+                                        "\t-Grid.numberOfCellsX           Resolution in x-direction [-]\n"
+                                        "\t-Grid.numberOfCellsY           Resolution in y-direction [-]\n"
+                                        "\t-Grid.upperRightX              Dimension of the grid [m]\n"
+                                        "\t-Grid.upperRightY              Dimension of the grid [m]\n";
+        std::cout << errorMessageOut
+                  << "\n";
+    }
 }
 
 int main(int argc, char** argv)
 {
-    try {
-        typedef TTAG(TestIMPESAdaptiveProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef GET_PROP_TYPE(TypeTag, Grid) Grid;
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
-        typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-
-        static const int dim = Grid::dimension;
-
-        //todo: diese zwei Zeile nach dem testen entfernen
-        typedef GET_PROP_TYPE(TypeTag, GridView) GridView;
-        typedef typename GridView::Codim<0>::Iterator ElementLeafIterator;
-
-//        static const int dim = Grid::dimension;
-
-        // initialize MPI, finalize is done automatically on exit
-        Dune::MPIHelper::instance(argc, argv);
-
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        if (argc < 2)
-            usage(argv[0]);
-
-        // deal with the restart stuff
-        int argPos = 1;
-        bool restart = false;
-        double startTime = 0;
-        if (std::string("--restart") == argv[argPos]) {
-            restart = true;
-            ++argPos;
-
-            std::istringstream(argv[argPos++]) >> startTime;
-        }
-
-        if (argc - argPos != 1) {
-            usage(argv[0]);
-        }
-
-
-        std::string inputFileName;
-        inputFileName = argv[argPos++];
-
-        ////////////////////////////////////////////////////////////
-        // Read Input file and create grid
-        ////////////////////////////////////////////////////////////
-
-        Dune::ParameterTreeParser::readINITree(inputFileName, Params::tree());
-
-        Dune::array< unsigned int, dim > numberOfCells;
-        numberOfCells[0] = 2;
-        numberOfCells[1] = 1;
-        Dune::FieldVector<double, dim> lowerLeftCorner(0);
-        Dune::FieldVector<double, dim> domainSize(300);
-        domainSize[1] = 100;
-
-        Dune::shared_ptr<Grid> grid(Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeftCorner, domainSize, numberOfCells));
-        grid->setClosureType(Grid::ClosureType::NONE);
-
-        grid->globalRefine(Params::tree().get<int>("MaxLevel"));
-
-        // read the initial time step and the end time
-        double tEnd, dt;
-        tEnd = Params::tree().get<double>("tEnd");
-        dt = tEnd;
-
-        ////////////////////////////////////////////////////////////
-        // instantiate and run the concrete problem
-        ////////////////////////////////////////////////////////////
-        TimeManager timeManager;
-        Problem problem(timeManager, grid->leafView());
-        problem.setGrid(*grid);
-
-        timeManager.init(problem, startTime, dt, tEnd, restart);
-        timeManager.run();
-        return 0;
-    }
-    catch (Dune::Exception &e) {
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...) {
-        std::cerr << "Unknown exception thrown!\n";
-        throw;
-    }
-
-    return 3;
+        typedef TTAG(TestIMPESAdaptiveProblem) ProblemTypeTag;
+        return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 #endif
