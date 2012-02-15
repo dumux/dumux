@@ -11,18 +11,21 @@
 tEnd = 2e7	# [s]
 dtInitial = 0	# [s]
 
-#for grid adaption
-MinLevel = 0	# [-] minimum level of refinement 
-MaxLevel = 5	# [-] maximum level of refinement
-RefineTolerance = 0.05	# threshold for refinement criterion
-CoarsenTolerance = 0.001	# threshold for coarsening criterion
-
 [Grid]
 numberOfCellsX = 2 # [-] level 0 resolution in x-direction
 numberOfCellsY = 1 # [-] level 0 resolution in y-direction
 
 upperRightX 		= 300 # [m] dimension of the grid
 upperRightY 		= 100 # [m] dimension of the grid
+
+#############################################################
+#parameters for grid adaption                               #
+#############################################################
+[]
+MinLevel = 0	# [-] minimum level of refinement 
+MaxLevel = 5	# [-] maximum level of refinement
+RefineTolerance = 0.05	# threshold for refinement criterion
+CoarsenTolerance = 0.001	# threshold for coarsening criterion
 
 #########################################################################
 # Simulation restart										            #
