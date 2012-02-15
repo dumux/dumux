@@ -27,7 +27,6 @@
 #define DUMUX_START_HH
 
 #include <iostream>
-#include <sys/ptrace.h>
 
 #include "propertysystem.hh"
 #include "parameters.hh"
