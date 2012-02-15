@@ -11,7 +11,8 @@ DumuxSetup("UG" "UG" "UG")
 
 set(MyIncludeSuffixes 
     "gm"
-    "np")
+    "np"
+    "include/ug")
 set(MyLibSuffixes 
     "np" 
     "np/field"
@@ -49,7 +50,6 @@ set(MyUgLibs
 DumuxAddPathSuffixes("${MyIncludeSuffixes}" "${MyLibSuffixes}" )
 
 DumuxFindIncludeDir("ugm.h")
-DumuxFindExtraIncludeDir("GM_H" "gm.h")
 
 foreach(tmp ${MyUgLibs})
   DumuxFindLibrary(${tmp})

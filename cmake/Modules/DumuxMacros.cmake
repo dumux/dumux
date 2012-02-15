@@ -34,10 +34,10 @@ the ${DumuxFramework}_DIR entry where all ${DumuxFramework} sub-modules have bee
   # Path to look for includes (->DumuxIncludePath) and libraries (-> DumuxLibraryPath)
   foreach(tmp ${DumuxModulePath})
     list(APPEND DumuxIncludePath "${tmp}" "${tmp}/include")
-    list(APPEND DumuxLibraryPath "${tmp}" "${tmp}/lib")
+    list(APPEND DumuxLibraryPath "${tmp}" "${tmp}/lib" "${tmp}/lib64")
   endforeach(tmp)
   list(APPEND DumuxIncludePath "/usr/include" "/usr/local/include")
-  list(APPEND DumuxLibraryPath "/usr/lib" "/usr/local/lib")
+  list(APPEND DumuxLibraryPath "/usr/lib" "/usr/lib64" "/usr/local/lib" "/usr/local/lib64")
 
   set(DumuxLibraries)
   set(DumuxFailedLibraries)
@@ -163,21 +163,35 @@ macro(DumuxCheckFound)
 
   if(DumuxLibsFound AND ${DumuxModule}_INCLUDE_DIR)
     set(DumuxFound 1)
+    # log result
+    file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+      "Determing location of ${DumuxModule} succeded:\n"
+      "Include directory: ${${DumuxModule}_INCLUDE_DIR}\n"
+      "Library directory: ${DumuxLibraries}\n\n")
+  else()
+    # log errornous result
+    file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+      "Determing location of ${DumuxModule} failed:\n"
+      "Include directory: ${${DumuxModule}_INCLUDE_DIR}\n"
+      "Library directory: ${DumuxLibraries}\n\n")
   endif(DumuxLibsFound AND ${DumuxModule}_INCLUDE_DIR)
   set(${DumuxModule}_FOUND ${DumuxFound})
   set(${DumuxModule}_LIBRARIES ${DumuxLibraries})
 
   # print status message if requested
-  if(NOT ${DumuxModule}_FIND_QUIETLY AND DumuxFound)
-    message(STATUS "Found ${DumuxModule}")
-  endif(NOT ${DumuxModule}_FIND_QUIETLY AND DumuxFound)
+  if(NOT ${DumuxModule}_FIND_QUIETLY)
+    if(DumuxFound)
+      message(STATUS "Found ${DumuxModule}")
+    else()
+      message(STATUS "Could not find ${DumuxModule}")
+    endif(DumuxFound)
+  endif(NOT ${DumuxModule}_FIND_QUIETLY)
 
   if(NOT DumuxFound AND ${DumuxModule}_FIND_REQUIRED)
-    if (DumuxLibsFound)
+    if(DumuxLibsFound)
       message(FATAL_ERROR "${DumuxPathMessage}")
-    else (DumuxLibsFound)
-      message(FATAL_ERROR "${DumuxPathMessage}
-${DumuxFailedLibsMessage}")
-    endif( DumuxLibsFound)
+    else(DumuxLibsFound)
+      message(FATAL_ERROR "${DumuxPathMessage} ${DumuxFailedLibsMessage}")
+    endif(DumuxLibsFound)
   endif(NOT DumuxFound AND ${DumuxModule}_FIND_REQUIRED)
 endmacro(DumuxCheckFound)

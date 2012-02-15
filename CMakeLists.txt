@@ -263,7 +263,7 @@ SetConfigHVar(HAVE_DUNE                DUNE_common_FOUND)
 SetConfigHVar(HAVE_DUNE_GRID           DUNE_grid_FOUND)
 SetConfigHVar(HAVE_DUNE_ISTL           DUNE_istl_FOUND)
 SetConfigHVar(HAVE_DUNE_LOCALFUNCTIONS DUNE_localfunctions_FOUND)
-#SetConfigHVar(HAVE_DUNE_PDELAB         DUNE_pdelab_FOUND)
+SetConfigHVar(HAVE_DUNE_PDELAB         DUNE_pdelab_FOUND)
 SetConfigHVar(HAVE_MPI                 MPI_FOUND)
 SetConfigHVar(HAVE_SUPERLU             SUPERLU_FOUND)
 SetConfigHVar(PROJECT_NAME             ProjectName)
@@ -276,53 +276,43 @@ SetConfigHVar(PROJECT_MAINTAINER_EMAIL ProjectMaintainerEmail)
 # adapt build system to detected packages
 
 # deal with UG
-#if (UG_FOUND)
-#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-#      ${UG_LIBRARIES})
-#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-#      ${UG_INCLUDE_DIRS})
-#endif(UG_FOUND)
-#SetConfigHVar(HAVE_UG UG_FOUND)
+if(UG_FOUND)
+  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${UG_INCLUDE_DIRS})
+  set(DumuxLinkLibraries ${DumuxLinkLibraries} ${UG_LIBRARIES})
+endif(UG_FOUND)
+SetConfigHVar(HAVE_UG UG_FOUND)
 
 # deal with ALUGrid
-#if (ALUGrid_FOUND)
-#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-#      ${ALUGrid_LIBRARIES})
-#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-#      ${ALUGrid_INCLUDE_DIRS})
-#endif(ALUGrid_FOUND)
-#SetConfigHVar(HAVE_ALUGRID ALUGrid_FOUND)
-
-# deal with METIS
-#if (METIS_FOUND)
-#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-#      ${METIS_LIBRARIES})
-#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-#      ${METIS_INCLUDE_DIRS})
-#endif(METIS_FOUND)
-#SetConfigHVar(HAVE_METIS METIS_FOUND)
+if(ALUGrid_FOUND)
+  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${ALUGrid_INCLUDE_DIRS})
+  set(DumuxLinkLibraries ${DumuxLinkLibraries} ${ALUGrid_LIBRARIES})
+endif(ALUGrid_FOUND)
+SetConfigHVar(HAVE_ALUGRID ALUGrid_FOUND)
 
 # deal with Alberta
-#if (Alberta_FOUND)
-#  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
-#      ${Alberta_LIBRARIES})
-#  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
-#      ${Alberta_INCLUDE_DIRS})
-#endif(Alberta_FOUND)
-#SetConfigHVar(HAVE_ALBERTA Alberta_FOUND)
+if(Alberta_FOUND)
+ set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${Alberta_INCLUDE_DIRS})
+ set(DumuxLinkLibraries ${DumuxLinkLibraries} ${Alberta_LIBRARIES})
+endif(Alberta_FOUND)
+SetConfigHVar(HAVE_ALBERTA Alberta_FOUND)
+
+# deal with METIS
+if(METIS_FOUND)
+ set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${METIS_INCLUDE_DIRS})
+ set(DumuxLinkLibraries ${DumuxLinkLibraries} ${METIS_LIBRARIES})
+endif(METIS_FOUND)
+SetConfigHVar(HAVE_METIS METIS_FOUND)
 ##############
 
-if (MPI_FOUND)
+if(MPI_FOUND)
    set(TMP ${MPI_COMPILE_FLAGS})
    separate_arguments(TMP)
    add_definitions(${TMP})
    add_definitions(-DENABLE_MPI=1)
-#   add_definitions(-DModelP) # tell UG that the model is parallelized
-
+# add_definitions(-DModelP) # tell UG that the model is parallelized
    set(DumuxLinkLibraries ${DumuxLinkLibraries} ${MPI_LIBRARIES})
    set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${MPI_INCLUDE_PATH})
-
-endif (MPI_FOUND)
+endif(MPI_FOUND)
 
 # actually write the config.h file to disk 
 configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )

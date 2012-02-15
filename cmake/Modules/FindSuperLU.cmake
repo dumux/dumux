@@ -4,8 +4,6 @@ if(NOT BLAS_FOUND)
   return()
 endif(NOT BLAS_FOUND)
 
-include(FindPackageHandleStandardArgs)
-
 # look for header files
 find_path(SUPERLU_INCLUDE_DIR
   NAMES supermatrix.h
@@ -19,7 +17,9 @@ find_library(SUPERLU_LIBRARY
 )
 
 # behave like a CMake module is supposed to behave
-find_package_handle_standard_args(SUPERLU
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  "SuperLU"
   DEFAULT_MSG
   SUPERLU_INCLUDE_DIR
   SUPERLU_LIBRARY
