@@ -310,7 +310,7 @@ public:
         snprintf(nameMoleFrac0, 42, "x_%s", FluidSystem::componentName(0));
         snprintf(nameMoleFrac1, 42, "x_%s", FluidSystem::componentName(1));
         writer.attachVertexData(moleFrac0, nameMoleFrac0);
-        writer.attachVertexData(moleFrac0, nameMoleFrac1);
+        writer.attachVertexData(moleFrac1, nameMoleFrac1);
 
         char nameMassFrac0[42], nameMassFrac1[42];
         snprintf(nameMassFrac0, 42, "X_%s", FluidSystem::componentName(0));

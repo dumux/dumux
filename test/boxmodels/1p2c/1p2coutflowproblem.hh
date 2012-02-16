@@ -217,7 +217,7 @@ public:
         initial_(values, globalPos);
         //condition for the trail molefraction at left boundary
         if(globalPos[0] < eps_)
-            values[x1Idx] = 0.3;
+            values[x1Idx] = 2.0e-5;
     }
 
     /*!
