@@ -65,8 +65,8 @@ NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
 NEW_PROP_TAG( SpatialParameters ); //!< The type of the spatial parameters object
 NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Fluid ); //!< The fluid for one-phase models
-NEW_PROP_TAG( Indices );
-NEW_PROP_TAG( CellData );
+NEW_PROP_TAG( Indices ); //!< Set of indices for the one-phase model
+NEW_PROP_TAG( CellData ); //!< The cell data storage class
 }
 }
 
@@ -83,16 +83,22 @@ namespace Properties
 // Properties
 //////////////////////////////////////////////////////////////////
 
+//! Set number of equations to 1 for isothermal one-phase models
 SET_INT_PROP(DecoupledOneP, NumEq, 1);
 
-SET_INT_PROP(DecoupledOneP, NumPhases, 1)//!< Single phase system
+//! Set number of phases to 1 for one-phase models
+SET_INT_PROP(DecoupledOneP, NumPhases, 1)
 ;
-SET_INT_PROP(DecoupledOneP, NumComponents, 1); //!< Each phase consists of 1 pure component
+//!< Each phase consists of 1 pure component
+SET_INT_PROP(DecoupledOneP, NumComponents, 1);
 
+//! Chose the set of indices for the one-phase formulation
 SET_TYPE_PROP(DecoupledOneP, Indices, DecoupledOnePCommonIndices);
 
+//! Set general decoupled VariableClass as default
 SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
 
+//! Set standart CellData of immiscible one-phase models as default
 SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
 }
 }

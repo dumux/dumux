@@ -27,7 +27,7 @@
 
 /**
  * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations for one element
+ * @brief  Class including data of one grid cell
  * @author Markus Wolff
  */
 
@@ -37,15 +37,13 @@ template<class TypeTag>
 class FluxData1P;
 
 /*!
- * \ingroup IMPES
+ * \ingroup OnePhase
  */
-//! Class including the variables and data of discretized data of the constitutive relations for one element.
-/*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
- * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
+//! Class including data of one grid cell.
+/*! The variables of one-phase flow, which are the pressure as well as additional data assigned to cell-cell interfaces, so-called flux-data, are stored.
  *
- * @tparam TypeTag The Type Tag
- 1*/
+ * \tparam TypeTag The problem TypeTag
+ */
 template<class TypeTag>
 class CellData1P
 {
@@ -59,21 +57,17 @@ private:
 
 public:
 
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     */
-
+    //! Constructs a CellData1P object
     CellData1P() :
         pressure_(0.0)
     {
     }
-
+    //! Returns the flux data of the cell
     FluxData& fluxData()
     {
         return fluxData_;
     }
-
+    //! Returns the flux data of the cell
     const FluxData& fluxData() const
     {
         return fluxData_;
@@ -83,17 +77,17 @@ public:
     // functions returning primary variables
     ////////////////////////////////////////////////////////////
 
-
+    //!\brief Returns the cell pressure
     Scalar pressure()
     {
         return pressure_;
     }
-
+    //!\brief Returns the cell pressure
     Scalar pressure() const
     {
         return pressure_;
     }
-
+    //!Sets the cell pressure
     void setPressure(Scalar press)
     {
         pressure_ = press;

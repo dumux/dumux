@@ -23,7 +23,7 @@
 /*!
  * \file
  *
- * \brief Defines the indices required for the two-phase box model.
+ * \brief Defines the indices required for the decoupled one-phase model.
  */
 #ifndef DUMUX_DECOUPLED_1P_INDICES_HH
 #define DUMUX_DECOUPLED_1P_INDICES_HH
@@ -31,7 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPES
+ * \ingroup OnePhase
  */
 // \{
 
@@ -41,7 +41,7 @@ namespace Dumux
 struct DecoupledOnePCommonIndices
 {
     // Formulations
-    static const int pressEqIdx = 0;
+    static const int pressEqIdx = 0;//!< Index of the pressure equation
 };
 
 // \}
