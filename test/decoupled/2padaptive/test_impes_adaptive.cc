@@ -30,7 +30,7 @@
 #include "config.h"
 
 #if !HAVE_UG
-#warning "You need to have an UGGrid installed to run this test"
+#warning You need to have an UGGrid installed to run this test
 
 #include <iostream>
 

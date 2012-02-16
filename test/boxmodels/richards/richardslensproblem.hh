@@ -30,7 +30,9 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
+#if HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 

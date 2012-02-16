@@ -35,7 +35,9 @@
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
+#if HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
+#endif
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
 #endif

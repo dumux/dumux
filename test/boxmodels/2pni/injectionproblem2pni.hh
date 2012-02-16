@@ -31,7 +31,9 @@
 #ifndef DUMUX_INJECTION_PROBLEM_2PNI_HH
 #define DUMUX_INJECTION_PROBLEM_2PNI_HH
 
+#if HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dumux/common/simplexgridcreator.hh>

@@ -29,10 +29,10 @@
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
 
-#ifdef HAVE_UG
+#if HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #endif
-#ifdef HAVE_ALUGRID
+#if HAVE_ALUGRID
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>

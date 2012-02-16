@@ -60,7 +60,7 @@ namespace Properties
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters));
 
 // Set the grid type
-#if 0// HAVE_UG
+#if HAVE_UG
 SET_TYPE_PROP(LensProblem, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
@@ -69,6 +69,7 @@ SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(LensProblem, Problem, Dumux::LensProblem<TypeTag>);
 
+// TODO: remove this macro switch
 #if 1
 // Set the wetting phase
 SET_PROP(LensProblem, WettingPhase)
