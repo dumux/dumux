@@ -227,6 +227,14 @@
 		 * \ingroup IMPET
 		 * \defgroup OnePhase Single Phase (FV)
 		 */ 
+		 	/*!
+			* \ingroup OnePhase
+			* \defgroup Pressure1p Pressure Equation
+			*/
+				/*!
+			 	* \ingroup Pressure1p
+			 	* \defgroup FV1p Finite Volume
+			 	*/	
 		/*!
 		 * \ingroup IMPET
 		 * \defgroup IMPES Immiscible IMPES
@@ -237,16 +245,20 @@
 			 */
 			 	/*!
 			 	* \ingroup Pressure2p
-			 	* \defgroup FV2p Finite Volume
+			 	* \defgroup FVPressure2p Finite Volume
 			 	*/	
 				/*!
 				* \ingroup Pressure2p
-			 	* \defgroup Mimetic2p Mimetic Finite Differences
+			 	* \defgroup MimeticPressure2p Mimetic Finite Differences
 			 	*/	
 			/*!
 			 * \ingroup IMPES
 			 * \defgroup Saturation2p Immiscible Saturation Transport
 			 */
+			 	/*!
+			 	* \ingroup Saturation2p
+			 	* \defgroup FVSaturation2p Finite Volume
+			 	*/	
 		/*!
 		 * \ingroup IMPET
 		 * \defgroup IMPEC Miscible IMPEC
