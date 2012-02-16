@@ -27,7 +27,7 @@
 
 /**
  * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations for one element
+ * @brief  Class including data of one grid cell
  * @author Markus Wolff
  */
 
@@ -39,16 +39,28 @@ class FluxData2P;
 /*!
  * \ingroup IMPES
  */
-//! Class including the variables and data of discretized data of the constitutive relations for one element.
-/*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
- * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
+//! Class including data of one grid cell.
+/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class. Further, resulting cell values for constitutive relationships like
+ * mobilities, fractional flow functions and capillary pressure are stored.
+ * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
- * @tparam TypeTag The Type Tag
- 1*/
+ * \tparam TypeTag The problem TypeTag
+ * \tparam bool Used for specialization for case of compressible flow (<tt>true</tt>) or incompressible flow (<tt>false</tt>)
+ */
 template<class TypeTag, bool enableCompressibility>
 class CellData2P;
 
+/*!
+ * \ingroup IMPES
+ */
+//! Class including the variables and data of discretized data of the constitutive relations for one grid cell.
+/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class. Further, resulting cell values for constitutive relationships like
+ * mobilities, fractional flow functions and capillary pressure are stored.
+ * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
+ *
+ * \tparam TypeTag The problem TypeTag
+ * \tparam bool Used for specialization: in case of incompressible flow bool = <tt>false</tt>
+ */
 template<class TypeTag>
 class CellData2P<TypeTag, false>
 {
@@ -85,11 +97,7 @@ private:
     FluxData fluxData_;
 public:
 
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     */
-
+    //! Constructs a CellData2P object
     CellData2P()
     {
         for (int i = 0; i < numPhases;i++)
@@ -103,72 +111,108 @@ public:
         update_ = 0.0;
     }
 
+    //! Returns the flux data of the cell
     FluxData& fluxData()
     {
         return fluxData_;
     }
 
+    //! Returns the flux data of the cell
     const FluxData& fluxData() const
     {
         return fluxData_;
     }
 
+    //! \cond \private
+    //fluidstates are not stored for the incompressible model, however the function is needed to avoid compiler errors
     FluidState& fluidState()
     {
         DUNE_THROW(Dune::NotImplemented,"fluid states not stored in cell data of incompressible models!");
     }
 
+    //fluidstates are not stored for the incompressible model, however the function is needed to avoid compiler errors
     const FluidState& fluidState() const
     {
         DUNE_THROW(Dune::NotImplemented,"fluid states not stored in cell data of incompressible models!");
     }
+    //! \endcond
 
     ////////////////////////////////////////////////////////////
     // functions returning primary variables
     ////////////////////////////////////////////////////////////
 
-
+    /*!\brief Returns the cell phase pressure
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar pressure(int phaseIdx)
     {
         return pressure_[phaseIdx];
     }
 
+    /*!\brief Returns the cell phase pressure
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar pressure(int phaseIdx) const
     {
         return pressure_[phaseIdx];
     }
 
+    /*!\brief Sets the cell phase pressure
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param press Phase pressure which is stored
+     */
     void setPressure(int phaseIdx, Scalar press)
     {
         pressure_[phaseIdx] = press;
     }
 
+    //! Returns the global pressure of the cell
     Scalar globalPressure()
     {
         return pressure_[wPhaseIdx];
     }
 
+    //! Returns the global pressure of the cell
     Scalar globalPressure() const
     {
         return pressure_[wPhaseIdx];
     }
 
+    /*!\brief Sets the cell global pressure
+     *
+     * \param press Global pressure which is stored
+     */
     void setGlobalPressure(Scalar press)
     {
         pressure_[wPhaseIdx] = press;
     }
 
-    //! Return saturation vector
+    /*!\brief Returns the cell phase saturation
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar saturation(int phaseIdx)
     {
         return saturation_[phaseIdx];
     }
 
+    /*!\brief Returns the cell phase saturation
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar saturation(int phaseIdx) const
     {
         return saturation_[phaseIdx];
     }
 
+    /*!\brief Sets the cell phase saturation
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param sat Phase saturation which is stored
+     */
     void setSaturation(int phaseIdx, Scalar sat)
     {
         saturation_[phaseIdx] = sat;
@@ -178,71 +222,105 @@ public:
     // functions returning the vectors of secondary variables
     //////////////////////////////////////////////////////////////
 
-    //! Return phase mobilities
+    /*!\brief Returns the cell phase mobility
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar mobility(int phaseIdx)
     {
         return mobility_[phaseIdx];
     }
 
+    /*!\brief Returns the cell phase mobility
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar mobility(int phaseIdx) const
     {
         return mobility_[phaseIdx];
     }
 
+    /*!\brief Sets the cell phase mobility
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param mobility Phase mobility with which is stored
+     */
     void setMobility(int phaseIdx, Scalar mobility)
     {
         mobility_[phaseIdx] = mobility;
     }
 
-    //! Return phase fractional flow functions
+    /*!\brief Returns the cell phase fractional flow function
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar fracFlowFunc(int phaseIdx)
     {
         return fracFlowFunc_[phaseIdx];
     }
 
+    /*!\brief Returns the cell phase fractional flow function
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar fracFlowFunc(int phaseIdx) const
     {
         return fracFlowFunc_[phaseIdx];
     }
 
+    /*!\brief Sets the cell phase fractional flow function
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param fracFlowFunc Phase fractional flow function which is stored
+     */
     void  setFracFlowFunc(int phaseIdx, Scalar fracFlowFunc)
     {
         fracFlowFunc_[phaseIdx] = fracFlowFunc;
     }
 
-    //! Return capillary pressure vector
+    //! Returns the cell capillary pressure
     Scalar capillaryPressure()
     {
         return capillaryPressure_;
     }
 
+    //! Returns the cell capillary pressure
     Scalar capillaryPressure() const
     {
         return capillaryPressure_;
     }
 
+    /*!\brief Sets the cell capillary pressure
+     *
+     * \param pc Capillary pressure which is stored
+     */
     void setCapillaryPressure(Scalar pc)
     {
         capillaryPressure_ = pc;
     }
 
+    /*!\brief Store transport update
+     *
+     * \param update Transport update of the cell
+     */
     void setUpdate(Scalar update)
     {
         update_ = update;
     }
 
-    //! Return density vector
+    //! Returns the cell volume correction needed in the pressure equation
     Scalar volumeCorrection()
     {
         return update_;
     }
-
+    //! Returns the cell volume correction needed in the pressure equation
     Scalar volumeCorrection() const
     {
         return update_;
     }
 
-    //! Return density vector
+    //! \cond \private
+    //densities are not stored for the incompressible model, however the function is needed to avoid compiler errors
     Scalar density(int phaseIdx)
     {
         DUNE_THROW(Dune::NotImplemented,"density function not implemented in cell data of incompressible models!");
@@ -252,7 +330,7 @@ public:
         DUNE_THROW(Dune::NotImplemented,"density function not implemented in cell data of incompressible models!");
     }
 
-    //! Return density vector
+    //viscosities are not stored for the incompressible model, however the function is needed to avoid compiler errors
     Scalar viscosity(int phaseIdx)
     {
         DUNE_THROW(Dune::NotImplemented,"viscosity function not implemented in cell data of incompressible models!");
@@ -262,8 +340,20 @@ public:
     {
         DUNE_THROW(Dune::NotImplemented,"viscosity function not implemented in cell data of incompressible models!");
     }
+    //! \endcond
 };
 
+/*!
+ * \ingroup IMPES
+ */
+//! Class including the variables and data of discretized data of the constitutive relations for one grid cell.
+/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class. Further, resulting cell values for constitutive relationships like
+ * mobilities, fractional flow functions and capillary pressure are stored.
+ * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
+ *
+ * \tparam TypeTag The problem TypeTag
+ * \tparam bool Used for specialization: In case of compressible flow bool = <tt>true</tt>
+ */
 template<class TypeTag>
 class CellData2P<TypeTag, true>
 {
@@ -297,11 +387,7 @@ private:
     FluidState fluidState_;
 public:
 
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     */
-
+    //! Constructs a CellData2P object
     CellData2P()
     {
         for (int i = 0; i < numPhases;i++)
@@ -312,21 +398,24 @@ public:
         update_ = 0.0;
     }
 
+    //! Returns the flux data of the cell
     FluxData& fluxData()
     {
         return fluxData_;
     }
 
+    //! Returns the flux data of the cell
     const FluxData& fluxData() const
     {
         return fluxData_;
     }
 
+    //! Returns the FluidState object for this cell
     FluidState& fluidState()
     {
         return fluidState_;
     }
-
+    //! Returns the FluidState object for this cell
     const FluidState& fluidState() const
     {
         return fluidState_;
@@ -336,49 +425,77 @@ public:
     // functions returning primary variables
     ////////////////////////////////////////////////////////////
 
-
+    /*!\brief Returns the cell phase pressure
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar pressure(int phaseIdx)
     {
         return fluidState_.pressure(phaseIdx);
     }
 
+    /*!\brief Returns the cell phase pressure
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar pressure(int phaseIdx) const
     {
         return fluidState_.pressure(phaseIdx);
     }
 
+    /*!\brief Sets the cell phase pressure
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param press Phase pressure which is stored
+     */
     void setPressure(int phaseIdx, Scalar press)
     {
         fluidState_.setPressure(phaseIdx, press);
     }
 
+    //! \cond \private
+    // global pressure is not supported in the compressible case, however the function hast to be defined to avoid compiler errors!
     Scalar globalPressure()
     {
         DUNE_THROW(Dune::NotImplemented,"no global pressure defined for compressible models!");
     }
 
+    // global pressure is not supported in the compressible case, however the function hast to be defined to avoid compiler errors!
     Scalar globalPressure() const
     {
         DUNE_THROW(Dune::NotImplemented,"no global pressure defined for compressible models!");
     }
 
+    // global pressure is not supported in the compressible case, however the function hast to be defined to avoid compiler errors!
     void setGlobalPressure(Scalar press)
     {
         DUNE_THROW(Dune::NotImplemented,"no global pressure defined for compressible models!");
     }
+    //! \endcond
 
-
-    //! Return saturation vector
+    /*!\brief Returns the cell phase saturation
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar saturation(int phaseIdx)
     {
         return fluidState_.saturation(phaseIdx);
     }
 
+    /*!\brief Returns the cell phase saturation
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar saturation(int phaseIdx) const
     {
         return fluidState_.saturation(phaseIdx);
     }
 
+    /*!\brief Sets the cell phase saturation
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param sat Phase saturation which is stored
+     */
     void setSaturation(int phaseIdx, Scalar sat)
     {
         fluidState_.setSaturation(phaseIdx, sat);
@@ -388,96 +505,154 @@ public:
     // functions returning the vectors of secondary variables
     //////////////////////////////////////////////////////////////
 
-    //! Return phase mobilities
+    /*!\brief Returns the cell phase mobility
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar mobility(int phaseIdx)
     {
         return mobility_[phaseIdx];
     }
 
+    /*!\brief Returns the cell phase mobility
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar mobility(int phaseIdx) const
     {
         return mobility_[phaseIdx];
     }
 
+    /*!\brief Sets the cell phase mobility
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param mobility Phase mobility with which is stored
+     */
     void setMobility(int phaseIdx, Scalar mobility)
     {
         mobility_[phaseIdx] = mobility;
     }
 
-    //! Return phase fractional flow functions
+    /*!\brief Returns the cell phase fractional flow function
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar fracFlowFunc(int phaseIdx)
     {
         return fracFlowFunc_[phaseIdx];
     }
 
+    /*!\brief Returns the cell phase fractional flow function
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar fracFlowFunc(int phaseIdx) const
     {
         return fracFlowFunc_[phaseIdx];
     }
 
+    /*!\brief Sets the cell phase fractional flow function
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param fracFlowFunc Phase fractional flow function which is stored
+     */
     void  setFracFlowFunc(int phaseIdx, Scalar fracFlowFunc)
     {
         fracFlowFunc_[phaseIdx] = fracFlowFunc;
     }
 
-    //! Return capillary pressure vector
+    //! Returns the cell capillary pressure
     Scalar capillaryPressure()
     {
         return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
     }
 
+    //! Returns the cell capillary pressure
     Scalar capillaryPressure() const
     {
         return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx);
     }
 
+    //! \cond \private
+    //in the compressible model capillary pressure is not stored eplicitely, however the function is needed to avoid compiler errors
     void setCapillaryPressure(Scalar pc)
     {
         DUNE_THROW(Dune::NotImplemented,"no capillary pressure stored for compressible models!");
     }
+    //! \endcond
 
-    //! Return density vector
+    /*!\brief Returns the cell phase density
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar density(int phaseIdx)
     {
         return fluidState_.density(phaseIdx);
     }
+
+    /*!\brief Returns the cell phase density
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar density(int phaseIdx) const
     {
         return fluidState_.density(phaseIdx);
     }
 
+    /*!\brief Sets the cell phase density
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param density Phase density which is stored
+     */
     void setDensity(int phaseIdx, Scalar density)
     {
         fluidState_.setDensity(phaseIdx, density);
     }
 
-    //! Return density vector
+    /*!\brief Returns the cell phase viscosity
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar viscosity(int phaseIdx)
     {
         return fluidState_.viscosity(phaseIdx);
     }
 
+    /*!\brief Returns the cell phase viscosity
+     *
+     * \param phaseIdx Index of a fluid phase
+     */
     Scalar viscosity(int phaseIdx) const
     {
         return fluidState_.viscosity(phaseIdx);
     }
 
+    /*!\brief Sets the cell phase viscosity
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param viscosity Phase viscosity which is stored
+     */
     void setViscosity(int phaseIdx, Scalar viscosity)
     {
         fluidState_.setViscosity(phaseIdx, viscosity);
     }
 
+    /*!\brief Store transport update
+     *
+     * \param update Transport update of the cell
+     */
     void setUpdate(Scalar update)
     {
         update_ = update;
     }
 
-    //! Return density vector
+    //! Returns the cell volume correction needed in the pressure equation
     Scalar volumeCorrection()
     {
         return update_;
     }
 
+    //! Returns the cell volume correction needed in the pressure equation
     Scalar volumeCorrection() const
     {
         return update_;

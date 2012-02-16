@@ -26,22 +26,23 @@
 
 /**
  * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations for one element
+ * @brief  Class including the data of a grid cell needed if an adaptive grid is used.
  * @author Markus Wolff
  */
 
 namespace Dumux
 {
+
 /*!
  * \ingroup IMPES
  */
-//! Class including the variables and data of discretized data of the constitutive relations for one element.
-/*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
- * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
+//! Class including the data of a grid cell needed if an adaptive grid is used.
+/*! The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
+ * Additionally, it provides the storage-infrastructure for explicit front tracking.
  *
- * @tparam TypeTag The Type Tag
- 1*/
+ * \tparam TypeTag The problem TypeTag
+ * \tparam bool Used for specialization for case of compressible flow (<tt>true</tt>) or incompressible flow (<tt>false</tt>)
+ */
 template<class TypeTag, bool enableCompressibility = GET_PROP_VALUE(TypeTag, EnableCompressibility)>
 class CellData2PAdaptive: public CellData2P<TypeTag, enableCompressibility>
 {
@@ -79,7 +80,7 @@ private:
 public:
     //! Collection of variables that have to be mapped if the grid is adapted
     /**
-     * For an non-compositional two-phase model, the following data has to be
+     * For an immiscible two-phase model, the following data has to be
      * transferred to a new grid.
      */
     struct AdaptedValues
@@ -104,22 +105,29 @@ public:
     };
 
     //! Constructs an adaptive CellData object
-    /**
-     */
     CellData2PAdaptive():
         isFront_(false)
     {}
 
+    /*! \brief Track the front
+     *
+     * Returns true if the cell is located at a fluid-fluid displacement-front
+     */
     bool isFront() const
     {
         return isFront_;
     }
 
+    /*! \brief Track the front
+     *
+     * Returns true if the cell is located at a fluid-fluid displacement-front
+     */
     bool isFront()
     {
         return isFront_;
     }
 
+    //! Marks the cell as fluid-fluid displacement-front cell
     void setFront()
     {
         isFront_ = true;

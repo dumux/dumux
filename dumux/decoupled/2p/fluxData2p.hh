@@ -26,7 +26,7 @@
 
 /**
  * @file
- * @brief  Class including the variables and data of discretized data of the constitutive relations
+ * @brief  Class storing data assigned to a cell-cell interfaces, so-called flux-data
  * @author Markus Wolff
  */
 
@@ -35,13 +35,11 @@ namespace Dumux
 /*!
  * \ingroup IMPES
  */
-//! Class including the variables and data of discretized data of the constitutive relations.
-/*! The variables of two-phase flow, which are one pressure and one saturation are stored in this class.
- * Additionally, a velocity needed in the transport part of the decoupled two-phase flow is stored, as well as discretized data of constitutive relationships like
- * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
+//! Class storing data assigned to a cell-cell interfaces, so-called flux-data.
+/*! Stores velocities and potentials at cell-cell interfaces. Further it provides methods which interpret stored phase potentials for upwind decisions.
  *
- * @tparam TypeTag The Type Tag
- 1*/
+ * @tparam TypeTag The problem TypeTag
+ */
 template<class TypeTag>
 class FluxData2P
 {
@@ -77,11 +75,7 @@ private:
 
 public:
 
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     */
-
+    //! Constructs a FluxData2P object
     FluxData2P()
     {
         for (int face = 0;  face < 2*dim; face++)
@@ -100,27 +94,49 @@ public:
     // functions returning the vectors of the primary variables
     ////////////////////////////////////////////////////////////
 
-    //! Return the velocity
+    /*! \brief Returns the phase velocity vector at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     const FieldVector& velocity(int phaseIdx, int indexInInside)
     {
         return velocity_[phaseIdx][indexInInside];
     }
 
+    /*! \brief Returns the phase velocity vector at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     const FieldVector& velocity(int phaseIdx, int indexInInside) const
     {
         return velocity_[phaseIdx][indexInInside];
     }
 
+    /*! \brief Sets the phase velocity vector at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     * \param velocity Phase velocity vector which is stored
+     */
     void setVelocity(int phaseIdx, int indexInInside, const FieldVector& velocity)
     {
         velocity_[phaseIdx][indexInInside] = velocity;
     }
 
+    /*! \brief Adds a phase velocity vector to the one previously stored.
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     * \param velocity Phase velocity vector which is added
+     */
     void addVelocity(int phaseIdx, int indexInInside, const FieldVector& velocity)
     {
         velocity_[phaseIdx][indexInInside] += velocity;
     }
 
+    //!Resets velocities and potentials
     void resetVelocity()
     {
         for (int i = 0; i < 2 * dim; i++)
@@ -134,59 +150,112 @@ public:
         }
     }
 
-    //! Return the velocity
+    /*! \brief Returns the total velocity vector at a cell-cell interface
+     *
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     FieldVector velocityTotal(int indexInInside)
     {
         return velocity_[wPhaseIdx][indexInInside]
                 + velocity_[nPhaseIdx][indexInInside];
     }
 
+    /*! \brief Returns the total velocity vector at a cell-cell interface
+     *
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     FieldVector velocityTotal(int indexInInside) const
     {
         return velocity_[wPhaseIdx][indexInInside]
                 + velocity_[nPhaseIdx][indexInInside];
     }
 
+    /*! \brief Sets the velocity marker at a cell-cell interface
+     * This marker can be used to check if a velocity has already been stored for this interface
+     *
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     void setVelocityMarker(int indexInInside)
     {
         velocityMarker_[indexInInside] = true;
     }
 
+    /*! \brief Check the velocity marker
+     * Returns <tt>true</tt> if a velocity marker was set, otherwise <tt>false</tt>
+     *
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     bool haveVelocity(int indexInInside)
     {
         return velocityMarker_[indexInInside];
     }
 
+    //!Resets the velocity marker
     void resetVelocityMarker()
     {
         for (int i = 0; i < 2*dim; i++)
             velocityMarker_[i] = false;
     }
 
+    /*! \brief Checks for upwind direction
+     *Returns <tt>true</tt> if the cell is the upwind cell, otherwise <tt>false</tt>
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     bool isUpwindCell(int phaseIdx, int indexInInside)
     {
         return (potential_[indexInInside][phaseIdx] >= 0.);
     }
 
+    /*! \brief Checks for upwind direction
+     *Returns <tt>true</tt> if the cell is the upwind cell, otherwise <tt>false</tt>
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     bool isUpwindCell(int phaseIdx, int indexInInside) const
     {
         return (potential_[indexInInside][phaseIdx] >= 0.);
     }
 
+    /*! \brief Returns the phase potential at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     Scalar potential(int phaseIdx, int indexInInside)
     {
         return potential_[indexInInside][phaseIdx];
     }
 
+    /*! \brief Returns the phase potential at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     */
     Scalar potential(int phaseIdx, int indexInInside) const
     {
         return potential_[indexInInside][phaseIdx];
     }
 
+    /*! \brief Sets the phase potential at a cell-cell interface
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     * \param pot Phase potential which is stored
+     */
     void setPotential(int phaseIdx, int indexInInside, Scalar pot)
     {
         potential_[indexInInside][phaseIdx] = pot;
     }
+
+    /*! \brief Adds a phase potential to the one previously stored
+     *
+     * \param phaseIdx Index of a fluid phase
+     * \param indexInInside Index of the cell-cell interface in this cell
+     * \param pot Phase potential which is added
+     */
     void addPotential(int phaseIdx, int indexInInside, Scalar pot)
     {
         potential_[indexInInside][phaseIdx] += pot;

@@ -54,48 +54,51 @@ struct DecoupledTwoPCommonIndices
     static const int totalPhaseIdx = 2; //!< Index of the total phase (wetting + nonwetting)
 
     //saturation flags
-    static const int saturationW = 0;
-    static const int saturationNW = 1;
+    static const int saturationW = 0; //!< Indicates wetting phase saturation
+    static const int saturationNW = 1; //!<  Indicates non-wetting phase saturation
     //pressure flags
-    static const int pressureW = 0;
-    static const int pressureNW = 1;
-    static const int pressureGlobal = 2;
+    static const int pressureW = 0; //!< Indicates wetting phase pressure
+    static const int pressureNW = 1; //!<  Indicates non-wetting phase pressure
+    static const int pressureGlobal = 2; //!<  Indicates global-pressure
 
     //velocity flags
-    static const int velocityW = 0;
-    static const int velocityNW = 1;
-    static const int velocityTotal = 2;
+    static const int velocityW = 0; //!< Indicates wetting phase velocity
+    static const int velocityNW = 1; //!<  Indicates non-wetting phase velocity
+    static const int velocityTotal = 2; //!<  Indicates total velocity
 };
 
 /*!
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam formulation The formulation, either pwSn or pnSw
+ * \tparam formulation Index of the formulation
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int formulation = DecoupledTwoPCommonIndices::pwSn, int PVOffset = 0>
 struct DecoupledTwoPIndices : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
     static const int SnIdx = PVOffset + 1; //!< Saturation index of the non-wetting phase
 
+    //! \cond \private
+    //Set the types of the single models depending on the formulation
     static const int pressureType = pressureW;
     static const int saturationType = saturationNW;
 
     static const int velocityDefault = velocityNW;
+    //! \endcond
 
     // indices of the equations
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
     static const int pressEqIdx = contiWEqIdx; //!< Index of the pressure equation (total mass balance)
     static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
     static const int satEqIdx = contiNEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx;
+    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
 
 /*!
@@ -109,32 +112,35 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSw, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pnIdx = PVOffset + 0; //!< Pressure index of the non-wetting phase
     static const int SwIdx = PVOffset + 1; //!< Saturation index of the wetting phase
 
+    //! \cond \private
+    //Set the types of the single models depending on the formulation
     static const int pressureType = pressureNW;
     static const int saturationType = saturationW;
 
     static const int velocityDefault = velocityW;
+    //! \endcond
 
     // indices of the equations
     static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
     static const int pressEqIdx = contiNEqIdx; //!< Index of the pressure equation (total mass balance)
     static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
     static const int satEqIdx = contiWEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx;
+    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
 
 
 /*!
- * \brief The indices for the \f$p_w-S_n\f$ formulation of the
+ * \brief The indices for the \f$p_w-S_w\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam formulation The formulation, either pwSn or pnSw
+ * \tparam formulation Index of the formulation
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
@@ -142,28 +148,31 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pwSw, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
     static const int SwIdx = PVOffset + 1; //!< Saturation index of the wetting phase
 
+    //! \cond \private
+    //Set the types of the single models depending on the formulation
     static const int pressureType = pressureW;
     static const int saturationType = saturationW;
 
     static const int velocityDefault = velocityW;
+    //! \endcond
 
     // indices of the equations
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
     static const int pressEqIdx = contiWEqIdx; //!< Index of the pressure equation (total mass balance)
     static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
     static const int satEqIdx = contiNEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx;
+    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
 
 /*!
- * \brief The indices for the \f$p_n-S_w\f$ formulation of the
+ * \brief The indices for the \f$p_n-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
@@ -173,58 +182,64 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pnSn, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pnIdx = PVOffset + 0; //!< Pressure index of the non-wetting phase
     static const int SnIdx = PVOffset + 1; //!< Saturation index of the non-wetting phase
 
+    //! \cond \private
+    //Set the types of the single models depending on the formulation
     static const int pressureType = pressureNW;
     static const int saturationType = saturationNW;
 
     static const int velocityDefault = velocityNW;
+    //! \endcond
 
     // indices of the equations
     static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
     static const int pressEqIdx = contiNEqIdx; //!< Index of the pressure equation (total mass balance)
     static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
     static const int satEqIdx = contiWEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx;
+    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
 
 
 /*!
- * \brief The indices for the \f$p_w-S_n\f$ formulation of the
+ * \brief The indices for the \f$p_{global}-S_w\f$ formulation of the
  *        isothermal two-phase model.
  *
- * \tparam formulation The formulation, either pwSn or pnSw
+ * \tparam formulation Index of the formulation
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <int PVOffset>
 struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSw, PVOffset> : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
-    static const int pGlobalIdx = PVOffset + 0; //!< Pressure index of the wetting phase
+    static const int pGlobalIdx = PVOffset + 0; //!< Global pressure index
     static const int SwIdx = PVOffset + 1; //!< Saturation index of the wetting phase
 
+    //! \cond \private
+    //Set the types of the single models depending on the formulation
     static const int pressureType = pressureGlobal;
     static const int saturationType = saturationW;
 
     static const int velocityDefault = velocityTotal;
+    //! \endcond
 
     // indices of the equations
     static const int pressEqIdx = PVOffset + 0; //!< Index of the pressure equation (total mass balance)
     static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx;
+    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
 
 /*!
- * \brief The indices for the \f$p_n-S_w\f$ formulation of the
+ * \brief The indices for the \f$p_{global}-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
@@ -234,22 +249,25 @@ struct DecoupledTwoPIndices<DecoupledTwoPCommonIndices::pGlobalSn, PVOffset>
     : public DecoupledTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
-    static const int pGlobalIdx = PVOffset + 0; //!< Pressure index of the wetting phase
+    static const int pGlobalIdx = PVOffset + 0; //!< Global pressure index
     static const int SnIdx = PVOffset + 1; //!< Saturation index of the non-wetting phase
 
+    //! \cond \private
+    //Set the types of the single models depending on the formulation
     static const int pressureType = pressureGlobal;
     static const int saturationType = saturationNW;
 
     static const int velocityDefault = velocityTotal;
+    //! \endcond
 
     // indices of the equations
     static const int pressEqIdx = PVOffset + 0; //!< Index of the pressure equation (total mass balance)
     static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx;
+    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
 };
 
 // \}
