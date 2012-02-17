@@ -41,8 +41,7 @@ namespace Dumux
  * \ingroup IMPES
  * \brief  Base class for all 2-phase problems which use an impes algorithm
  *
- * @tparam TypeTag The Type Tag
- * @tparam Implementation The Problem implementation
+ * @tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 class IMPESProblem2P : public IMPETProblem<TypeTag>
@@ -70,12 +69,13 @@ class IMPESProblem2P : public IMPETProblem<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
 
+    //Copy constructor
     IMPESProblem2P(const IMPESProblem2P &)
     {}
 
 public:
     /*!
-     * \brief The constructor
+     * \brief Constructs an IMPESProblem2P object
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -92,7 +92,7 @@ public:
             gravity_[dim - 1] = - 9.81;
     }
     /*!
-     * \brief The constructor
+     * \brief Constructs an IMPESProblem2P object
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -109,7 +109,7 @@ public:
     }
 
     /*!
-     * \brief The constructor
+     * \brief Constructs an IMPESProblem2P object
      *
      * \param gridView The grid view
      * \param verbose Output flag for the time manager.
@@ -127,7 +127,7 @@ public:
             gravity_[dim - 1] = - 9.81;
     }
     /*!
-     * \brief The constructor
+     * \brief Constructs an IMPESProblem2P object
      *
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
@@ -144,6 +144,7 @@ public:
             gravity_[dim - 1] = - 9.81;
     }
 
+    //! Destructor
     virtual ~IMPESProblem2P()
     {
         if (newSpatialParams_)
@@ -223,7 +224,7 @@ public:
     { return *spatialParameters_; }
 
     /*!
-     * \copydoc Dumux::IMPESProblem2P::spatialParameters()
+     * \brief Returns the spatial parameters object.
      */
     const SpatialParameters &spatialParameters() const
     { return *spatialParameters_; }
@@ -236,7 +237,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc Dumux::IMPETProblem::asImp_()
+    //! Returns the implementation of the problem (i.e. static polymorphism)
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

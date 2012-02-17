@@ -26,13 +26,13 @@
 
 /**
  * @file
- * @brief  Base class for implementations of an saturation dependent indicator for grid adaption
+ * @brief  Class defining a standard, saturation dependent indicator for grid adaption
  * @author Markus Wolff
  */
 namespace Dumux
 {
-/*!\ingroup Saturation2p
- * @brief  Base class for implementations of an saturation dependent indicator for grid adaption
+/*!\ingroup IMPES
+ * @brief  Class defining a standard, saturation dependent indicator for grid adaption
  */
 template<class TypeTag>
 class GridAdaptionIndicator2P
@@ -71,6 +71,10 @@ private:
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
+    /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
+     *
+     * This standard indicator is based on the saturation gradient.
+     */
     void calculateIndicator()
     {
         // prepare an indicator for refinement
@@ -147,18 +151,36 @@ public:
         coarsenBound_ = coarsentol_*globaldelta;
     }
 
+    /*! \brief Indicator function for marking of grid cells for refinement
+     *
+     * Returns true if an element should be refined.
+     *
+     *  \param element A grid element
+     */
     bool refine(const Element& element)
     {
         return (indicatorVector_[problem_.elementMapper().map(element)] > refineBound_);
     }
 
+    /*! \brief Indicator function for marking of grid cells for coarsening
+     *
+     * Returns true if an element should be coarsened.
+     *
+     *  \param element A grid element
+     */
     bool coarsen(const Element& element)
     {
         return (indicatorVector_[problem_.elementMapper().map(element)] < coarsenBound_);
     }
 
 
-    /*! @brief Constructs a GridAdaptionIndicator instance */
+    /*! @brief Constructs a GridAdaptionIndicator instance
+     *
+     *  This standard indicator is based on the saturation gradient. It checks the local gradient compared to the maximum global gradient.
+     *  The indicator is compared locally to a refinement/coarsening threshold to decide whether a cell should be marked for refinement or coarsening or should not be adapted.
+     *
+     * \param problem The problem object
+     */
     GridAdaptionIndicator2P (Problem& problem):
         problem_(problem)
     {

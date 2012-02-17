@@ -26,12 +26,12 @@
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 /*!
- * \ingroup IMPET
+ * \ingroup IMPES
  * \ingroup Properties
  */
 /*!
  * \file
- * \brief Base file for properties related to sequential IMPET algorithms
+ * \brief Properties related to the sequential IMPES algorithms
  */
 namespace Dumux
 {
@@ -40,16 +40,15 @@ namespace Properties
 {
 /*!
  *
- * \brief General properties for sequential IMPET algorithms
+ * \brief General properties for sequential IMPES algorithms
  *
- * This class holds properties necessary for the sequential IMPET solution.
  */
 
 //////////////////////////////////////////////////////////////////
 // Type tags tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
+//! TypeTag for the two-phase IMPES scheme
 NEW_TYPE_TAG(IMPESTwoP, INHERITS_FROM(IMPET, DecoupledTwoP));
 
 //////////////////////////////////////////////////////////////////

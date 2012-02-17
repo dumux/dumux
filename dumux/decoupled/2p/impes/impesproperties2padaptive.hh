@@ -26,12 +26,12 @@
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 /*!
- * \ingroup IMPET
+ * \ingroup IMPES
  * \ingroup Properties
  */
 /*!
  * \file
- * \brief Base file for properties related to sequential IMPET algorithms
+ * \brief Properties for adaptive implementations of the sequential IMPES algorithms
  */
 namespace Dumux
 {
@@ -40,16 +40,14 @@ namespace Properties
 {
 /*!
  *
- * \brief General properties for sequential IMPET algorithms
- *
- * This class holds properties necessary for the sequential IMPET solution.
+ * \brief General properties for adaptive implementations of the sequential IMPES algorithms
  */
 
 //////////////////////////////////////////////////////////////////
 // Type tags tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
+//!  TypeTag for grid-adaptive two-phase IMPES scheme
 NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, DecoupledTwoP));
 
 //////////////////////////////////////////////////////////////////
@@ -66,9 +64,13 @@ namespace Dumux
 {
 namespace Properties
 {
+//! Enable adaptive grid
 SET_BOOL_PROP(IMPESTwoPAdaptive, AdaptiveGrid, true);
+//! Set variable class for adaptive impet schemes
 SET_TYPE_PROP(IMPESTwoPAdaptive, Variables, Dumux::VariableClassAdaptive<TypeTag>);
+//! Set cell data class for adaptive two-phase IMPES schemes
 SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, Dumux::CellData2PAdaptive<TypeTag>);
+//! Set the standard indicator class of two-phase models for adaption or coarsening
 SET_TYPE_PROP(IMPESTwoPAdaptive, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 }
 }
