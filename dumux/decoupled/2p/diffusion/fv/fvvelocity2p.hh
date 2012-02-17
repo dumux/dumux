@@ -33,19 +33,23 @@
 
 namespace Dumux
 {
-//! \ingroup FV2p
-//! \brief Determines the velocity from a finite volume solution of the  pressure equation of the sequential Model (IMPES).
-/*! Calculates phase velocities or total velocity from a known pressure field in context of a Finite Volume implementation for the evaluation
- * of equations of the form
- * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
+//! \ingroup FVPressure2p
+//! \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
+/*! Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization.
  * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
  * The phase velocities are calculated following  Darcy's law as
- * \f[\boldsymbol{v}_\alpha = \lambda_\alpha \boldsymbol{K} \left(\text{grad}\, p_\alpha + \rho_\alpha g  \text{grad}\, z\right),\f]
- * where \f$p_\alpha\f$ denotes the pressure of phase \f$_\alpha\f$ (wetting or non-wetting), \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_\alpha\f$ the phase mobility, \f$\rho_\alpha\f$ the phase density and \f$g\f$ the gravity constant.
+ * \f[
+ * \boldsymbol v_\alpha = \lambda_\alpha \boldsymbol K \left(\text{grad}\, p_\alpha + \rho_\alpha g  \text{grad}\, z \right),
+ * \f]
+ * where \f$ p_\alpha \f$ denotes the pressure of phase \f$ _\alpha \f$ (wetting or non-wetting), \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda_\alpha \f$ the phase mobility, \f$ \rho_\alpha \f$ the phase density and \f$ g \f$ the gravity constant.
  * The total velocity is either calculated as sum of the phase velocities
- * \f[\boldsymbol{v}_{total} = \boldsymbol{v}_{wetting}+\boldsymbol{v}_{non-wetting},\f]
+ * \f[
+ * \boldsymbol v_{total} = \boldsymbol v_{wetting}+\boldsymbol v_{non-wetting},
+ * \f]
  * or with a given global pressure
- * \f[\boldsymbol{v}_{total} = \lambda_{total} \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right).\f]
+ * \f[
+ * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right).
+ * \f]
  *
  * \tparam TypeTag The Type Tag
  */
@@ -107,9 +111,8 @@ class FVVelocity2P
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
 public:
-    //! Constructs a FVVelocity2P object
-    /*!
-     * \param problem a problem class object
+    /*! \brief Constructs a FVVelocity2P object
+     * \param problem A Problem class object
      */
     FVVelocity2P(Problem& problem) :
             problem_(problem), gravity_(problem.gravity())
@@ -140,25 +143,29 @@ public:
         }
     }
 
-    //! Calculate the velocity.
-    /*!
-     *
-     *  Given the piecewise constant pressure \f$p\f$,
-     *  this method calculates the velocity
-     *  The method is needed in the IMPES (Implicit Pressure Explicit Saturation) algorithm which is used for a fractional flow formulation
-     *  to provide the velocity field required for the solution of the saturation equation.
-     */
+    //! \cond \private
     void calculateVelocity(const Intersection&, CellData&);
 
     void calculateVelocityOnBoundary(const Intersection&, CellData&);
+    //! \endcond
 
+    /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
+     *
+     * Returns true (In the standard finite volume discretization the velocity is calculated during the saturation transport.)
+     */
     bool calculateVelocityInTransport()
     {
         return true;
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds velocity output to the output file
+     *
+     * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -264,6 +271,13 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
+/*! \brief Calculates the velocity at a cell-cell interface.
+*
+* Calculates the velocity at a cell-cell interface from a given pressure field.
+*
+* \param intersection Intersection of two grid cells
+* \param CellData Object containing all model relevant cell data
+*/
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellDataI)
 {
@@ -429,6 +443,13 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     return;
 }
 
+/*! \brief Calculates the velocity at a boundary.
+*
+* Calculates the velocity at a boundary from a given pressure field.
+*
+* \param intersection Boundary intersection
+* \param CellData Object containing all model relevant cell data
+*/
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellDataI)
 {

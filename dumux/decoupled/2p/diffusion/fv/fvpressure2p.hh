@@ -30,27 +30,60 @@
 
 /**
  * @file
- * @brief  Finite Volume Discretization of a pressure equation.
- * @author Bernd Flemisch, Jochen Fritz, Markus Wolff
+ * @brief  Finite Volume Discretization of a two-phase flow pressure equation.
+ * @author Markus Wolff, Bernd Flemisch, Jochen Fritz,
  */
 
 namespace Dumux
 {
-//! \ingroup FV2p
-//! \brief Finite Volume discretization of the pressure equation of the sequential IMPES Model.
-/*! Provides a Finite Volume implementation for the evaluation
- * of equations of the form
- * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
- * The definition of the total velocity \f$\boldsymbol{v}_total\f$ depends on the kind of pressure chosen. This could be a wetting (w) phase pressure leading to
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * a non-wetting (n) phase pressure yielding
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * or a global pressure leading to
- * \f[ - \text{div}\, \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q.\f]
- *  Here, \f$p\f$ denotes a pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda\f$ the total mobility, possibly depending on the
- * saturation,\f$f\f$ the fractional flow function of a phase, \f$\rho\f$ a phase density, \f$g\f$ the gravity constant and \f$q\f$ the source term.
- * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
- * on \f$\Gamma_{Dirichlet}\f$.
+//! \ingroup FVPressure2p
+/*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES Model.
+ *
+ * This class provides a finite volume (FV) implementation for solving equations of the form
+ * \f[
+ * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) + \text{div}\, \boldsymbol{v}_{total} = q.
+ * \f]
+ * The definition of the total velocity \f$\boldsymbol{v}_{total}\f$ depends on the choice of the primary pressure variable.
+ * Further, fluids can be assumed to be compressible or incompressible (Property: <tt>EnableCompressibility</tt>).
+ * In the incompressible case a wetting (\f$ w \f$) phase pressure as primary variable leads to
+ *
+ * \f[
+ * - \text{div}\,  \left[\lambda \boldsymbol K \left(\text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q,
+ * \f]
+ *
+ * a non-wetting (\f$ n \f$) phase pressure yields
+ * \f[
+ *  - \text{div}\,  \left[\lambda \boldsymbol K  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q,
+ *  \f]
+ * and a global pressure leads to
+ * \f[
+ * - \text{div}\, \left[\lambda \boldsymbol K \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q.
+ * \f]
+ * Here, \f$ p_\alpha \f$ is a phase pressure, \f$ p_ {global} \f$ the global pressure of a classical fractional flow formulation
+ * (see e.g. ﻿P. Binning and M. A. Celia, “Practical implementation of the fractional flow approach to multi-phase flow simulation,” Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
+ * \f$ p_c = p_n - p_w \f$ is the capillary pressure, \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda = \lambda_w +  \lambda_n \f$ the total mobility depending on the
+ * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$),\f$ f_\alpha = \lambda_\alpha / \lambda \f$ the fractional flow function of a phase,
+ * \f$ \rho_\alpha \f$ a phase density, \f$ g \f$ the gravity constant and \f$ q \f$ the source term.
+ *
+ * For all cases, \f$ p = p_D \f$ on \f$ \Gamma_{Neumann} \f$, and \f$ \boldsymbol{v}_{total}  = q_N \f$
+ * on \f$ \Gamma_{Dirichlet} \f$.
+ *
+ * The slightly compressible case is only implemented for phase pressures! In this case for a wetting (\f$ w \f$) phase pressure as primary variable the equations are formulated as
+ * \f[
+ * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q,
+ * \f]
+ * and for a non-wetting (\f$ n \f$) phase pressure as
+ *  \f[
+ *  \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q,
+ *  \f]
+ * In this slightly compressible case the following definitions are valid:  \f$ \lambda = \rho_w \lambda_w + \rho_n \lambda_n \f$, \f$ f_\alpha = (\rho_\alpha \lambda_\alpha) / \lambda \f$
+ * This model assumes that temporal changes in density are very small and thus terms of temporal derivatives are negligible in the pressure equation.
+ * Depending on the formulation the terms including time derivatives of saturations are simplified by inserting  \f$ S_w + S_n = 1 \f$.
+ *
+ *  In the IMPES models the default setting is:
+ *
+ *      - formulation: \f$ p_w-S_w \f$ (Property: <tt>Formulation</tt> defined as <tt>DecoupledTwoPCommonIndices::pwSw</tt>)
+ *      - compressibility: disabled (Property: <tt>EnableCompressibility</tt> set to <tt>false</tt>)
  *
  * \tparam TypeTag The Type Tag
  */
@@ -106,26 +139,41 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
-public:
-
+protected:
+    //! \cond \private
     enum
     {
         rhs = ParentType::rhs, matrix = ParentType::matrix
     };
+    //! \endcond
 
-    void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
+public:
 
-    void getStorage(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
+    //! \cond \private
 
-    void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
+    // Function which calculates the source entry
+    void getSource(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
 
-    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
-    const Intersection&, const CellData&, const bool);
+    // Function which calculates the storage entry
+    void getStorage(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
 
-    //! updates and stores constitutive relations
+    // Function which calculates the flux entry
+    void getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection, const CellData& cellData, const bool first);
+
+    // Function which calculates the boundary flux entry
+    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
+    const Intersection& intersection, const CellData& cellData, const bool first);
+
+    // updates and stores constitutive relations
     void updateMaterialLaws();
+    //! \endcond
 
-    //! \copydoc Dumux::FVPressure1P::initialize()
+    /*! \brief Initializes the pressure model
+     *
+     * \copydoc ParentType::initialize()
+     *
+     * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
+     */
     void initialize(bool solveTwice = true)
     {
         ParentType::initialize();
@@ -169,13 +217,17 @@ public:
         return;
     }
 
-    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    /*! \brief Pressure update
+     *
+     * \copydoc ParentType::update()
+     *
+     */
     void update()
     {
+        timeStep_ = problem_.timeManager().timeStepSize();
         //error bounds for error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
         if (!compressibility_)
         {
-            timeStep_ = problem_.timeManager().timeStepSize();
             maxError_ = 0.0;
             int size = problem_.gridView().size(0);
             for (int i = 0; i < size; i++)
@@ -208,6 +260,9 @@ public:
         return;
     }
 
+    /*! \brief Globally stores the pressure solution
+     *
+     */
     void storePressureSolution()
     {
         int size = problem_.gridView().size(0);
@@ -219,6 +274,13 @@ public:
         }
     }
 
+    /*! \brief Stores the pressure solution of a cell
+     *
+     * Calculates secondary pressure variables and stores pressures.
+     *
+     * \param globalIdx Global cell index
+     * \param cellData A CellData object
+     */
     void storePressureSolution(int globalIdx, CellData& cellData)
     {
         switch (pressureType_)
@@ -251,7 +313,15 @@ public:
         }
     }
 
-    //! \copydoc Dumux::FVPressure1P::addOutputVtkFields(MultiWriter &writer)
+    /*! \brief Adds pressure output to the output file
+     *
+     * Adds the phase pressures or a global pressure (depending on the formulation) as well as the capillary pressure to the output.
+     * In the compressible case additionally density and viscosity are added.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -368,9 +438,14 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
-//!function which calculates the source entry
+/*! \brief Function which calculates the source entry
+ *
+ * \copydoc FVPressure::getSource(Dune::FieldVector<Scalar,2>&,const Element&,const CellData&,const bool)
+ *
+ * Source of each fluid phase has to be added as mass flux (\f$\text{kg}/(\text{m}^3 \text{s}\f$).
+ */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entries, const Element& element
+void FVPressure2P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entry, const Element& element
         , const CellData& cellData, const bool first)
 {
     // cell volume, assume linear map here
@@ -386,14 +461,34 @@ void FVPressure2P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entries, con
         sourcePhase[nPhaseIdx] /= density_[nPhaseIdx];
     }
 
-    entries[rhs] = volume * (sourcePhase[wPhaseIdx] + sourcePhase[nPhaseIdx]);
+    entry[rhs] = volume * (sourcePhase[wPhaseIdx] + sourcePhase[nPhaseIdx]);
 
     return;
 }
 
-//!function which calculates the storage entry
+/** \brief Function which calculates the storage entry
+ *
+ * \copydoc FVPressure::getStorage(Dune::FieldVector<Scalar,2>&,const Element&,const CellData&,const bool)
+ *
+ * If compressibility is enabled this functions calculates the term
+ * \f[
+ *      \phi \sum_\alpha \rho_\alpha \frac{\partial S_\alpha}{\partial t} V
+ * \f]
+ *
+ * In the incompressible case an volume correction term is calculated which corrects for unphysical saturation overshoots/undershoots.
+ * These can occur if the estimated time step for the explicit transport was too large. Correction by an artificial source term allows to correct
+ * this errors due to wrong time-stepping without losing mass conservation. The error term looks as follows:
+ * \f[
+ *  q_{error} = \begin{cases}
+ *          S < 0 & a_{error} \frac{S}{\Delta t} V \\
+ *          S > 1 & a_{error} \frac{(S - 1)}{\Delta t} V \\
+ *          0 \le S \le 1 & 0
+ *      \end{cases}
+ *  \f]
+ *  where \f$a_{error}\f$ is a weighting factor (default: \f$a_{error} = 0.5\f$)
+ */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& entries, const Element& element
+void FVPressure2P<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& entry, const Element& element
         , const CellData& cellData, const bool first)
 {
     //volume correction due to density differences
@@ -408,13 +503,13 @@ void FVPressure2P<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& entries, co
         {
         case Sw:
         {
-            entries[rhs] = -(cellData.volumeCorrection() * porosity * volume
+            entry[rhs] = -(cellData.volumeCorrection()/timeStep_ * porosity * volume
                     * (cellData.density(wPhaseIdx) - cellData.density(nPhaseIdx)));
             break;
         }
         case Sn:
         {
-            entries[rhs] = -(cellData.volumeCorrection() * porosity * volume
+            entry[rhs] = -(cellData.volumeCorrection()/timeStep_ * porosity * volume
                     * (cellData.density(nPhaseIdx) - cellData.density(wPhaseIdx)));
             break;
         }
@@ -445,16 +540,20 @@ void FVPressure2P<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& entries, co
 
         if ((errorAbs*timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_) && (!problem_.timeManager().willBeFinished()))
         {
-            entries[rhs] = ErrorTermFactor_ * error * volume;
+            entry[rhs] = ErrorTermFactor_ * error * volume;
         }
     }
 
     return;
 }
 
-//!function which calculates internal flux entries
+/*! \brief Function which calculates the flux entry
+ *
+ * \copydoc FVPressure::getFlux(Dune::FieldVector<Scalar,2>&,const Intersection&,const CellData&,const bool)
+ *
+ */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const Intersection& intersection
+void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection
         , const CellData& cellDataI, const bool first)
 {
     ElementPointer elementI = intersection.inside();
@@ -562,10 +661,10 @@ void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const
     }
 
     //calculate current matrix entry
-    entries[matrix] = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
+    entry[matrix] = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
 
     //calculate right hand side
-    entries[rhs] = (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * (permeability * gravity_) * faceArea;
+    entry[rhs] = (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * (permeability * gravity_) * faceArea;
 
     switch (pressureType_)
     {
@@ -576,7 +675,7 @@ void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const
         pCGradient *= (pcI - pcJ) / dist;
 
         //add capillary pressure term to right hand side
-        entries[rhs] += 0.5 * (lambdaNWI + lambdaNWJ) * (permeability * pCGradient) * faceArea;
+        entry[rhs] += 0.5 * (lambdaNWI + lambdaNWJ) * (permeability * pCGradient) * faceArea;
         break;
     }
     case pn:
@@ -586,7 +685,7 @@ void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const
         pCGradient *= (pcI - pcJ) / dist;
 
         //add capillary pressure term to right hand side
-        entries[rhs] -= 0.5 * (lambdaWI + lambdaWJ) * (permeability * pCGradient) * faceArea;
+        entry[rhs] -= 0.5 * (lambdaWI + lambdaWJ) * (permeability * pCGradient) * faceArea;
         break;
     }
     }
@@ -594,9 +693,15 @@ void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const
     return;
 }
 
-//!function which calculates internal flux entries
+/*! \brief Function which calculates the flux entry at a boundary
+ *
+ * \copydoc FVPressure::getFluxOnBoundary(Dune::FieldVector<Scalar,2>&,const Intersection&,const CellData&,const bool)
+ *
+ * Dirichlet boundary condition is a pressure depending on the formulation (\f$p_w\f$ (default), \f$p_n\f$, \f$p_{global}\f$),
+ * Neumann boundary condition are the phase mass fluxes (\f$q_w\f$ and \f$q_n\f$, [\f$\text{kg}/(\text{m}^2 \text{s}\f$])
+ */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entries,
+void FVPressure2P<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
 const Intersection& intersection, const CellData& cellData, const bool first)
 {
     ElementPointer element = intersection.inside();
@@ -797,11 +902,11 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         }
 
         //calculate current matrix entry
-        entries[matrix] = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
-        entries[rhs] = entries[matrix] * pressBound;
+        entry[matrix] = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
+        entry[rhs] = entry[matrix] * pressBound;
 
         //calculate right hand side
-        entries[rhs] -= (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * (permeability * gravity_)
+        entry[rhs] -= (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * (permeability * gravity_)
                 * faceArea;
 
         switch (pressureType_)
@@ -813,7 +918,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             pCGradient *= (pcI - pcBound) / dist;
 
             //add capillary pressure term to right hand side
-            entries[rhs] -= 0.5 * (lambdaNWI + lambdaNWBound) * (permeability * pCGradient) * faceArea;
+            entry[rhs] -= 0.5 * (lambdaNWI + lambdaNWBound) * (permeability * pCGradient) * faceArea;
             break;
         }
         case pn:
@@ -823,7 +928,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             pCGradient *= (pcI - pcBound) / dist;
 
             //add capillary pressure term to right hand side
-            entries[rhs] += 0.5 * (lambdaWI + lambdaWBound) * (permeability * pCGradient) * faceArea;
+            entry[rhs] += 0.5 * (lambdaWI + lambdaWBound) * (permeability * pCGradient) * faceArea;
             break;
         }
         }
@@ -838,7 +943,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             boundValues[wPhaseIdx] /= density_[wPhaseIdx];
             boundValues[nPhaseIdx] /= density_[nPhaseIdx];
         }
-        entries[rhs] = -(boundValues[wPhaseIdx] + boundValues[nPhaseIdx]) * faceArea;
+        entry[rhs] = -(boundValues[wPhaseIdx] + boundValues[nPhaseIdx]) * faceArea;
     }
     else
     {
@@ -848,7 +953,10 @@ const Intersection& intersection, const CellData& cellData, const bool first)
     return;
 }
 
-//!constitutive functions are updated once if new saturations are calculated and stored in the variables object
+/*! \brief Updates constitutive relations and stores them in the variable class
+ *
+ * Stores mobility, fractional flow function and capillary pressure for all grid cells. In the compressible case additionally the densities and viscosities are stored.
+ */
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
 {
