@@ -26,12 +26,12 @@
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 /*!
- * \ingroup Saturation2p
+ * \ingroup Pressure2p
  * \ingroup Properties
  */
 /*!
  * \file
- * \brief Specifies the properties for immiscible 2p transport
+ * \brief Specifies the properties for immiscible 2p diffusion/pressure models
  */
 namespace Dumux
 {

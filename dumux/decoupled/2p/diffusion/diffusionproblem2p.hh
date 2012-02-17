@@ -22,7 +22,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for stationary sequential 2-phase problems
+ * \brief Base class for stationary solution of a two-phase diffusion/pressure equation
  * @author Markus Wolff
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
@@ -40,10 +40,9 @@ SET_TYPE_PROP(PressureTwoP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel
 /*!
  * \ingroup IMPETproblems
  * \ingroup Pressure2p
- * \brief  Base class for stationary sequential 2-phase problems
+ * \brief  Base class for stationary solution of a two-phase diffusion/pressure equation
  *
- * @tparam TypeTag The Type Tag
- * @tparam Implementation The Problem implementation
+ * @tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 class DiffusionProblem2P: public OneModelProblem<TypeTag>
@@ -75,7 +74,7 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag>
 
 public:
     /*!
-     * \brief The constructor
+     * \brief Constructs a DiffusionProblem2P object
      *
      * \param timeManager the time manager
      * \param gridView The grid view
@@ -90,7 +89,7 @@ public:
             gravity_[dim - 1] = -9.81;
     }
     /*!
-     * \brief The constructor
+     * \brief Constructs a DiffusionProblem2P object
      *
      * \param timeManager the time manager
      * \param gridView The grid view
@@ -106,7 +105,7 @@ public:
     }
 
     /*!
-     * \brief The constructor
+     * \brief Constructs a DiffusionProblem2P object
      *
      * \param gridView The grid view
      */
@@ -120,7 +119,7 @@ public:
             gravity_[dim - 1] = -9.81;
     }
     /*!
-     * \brief The constructor
+     * \brief Constructs a DiffusionProblem2P object
      *
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation
@@ -134,6 +133,7 @@ public:
             gravity_[dim - 1] = -9.81;
     }
 
+    //! Destructor
     virtual ~DiffusionProblem2P()
     {
         if (newSpatialParams_)
@@ -147,6 +147,10 @@ public:
      */
     // \{
 
+    /* \brief Time integration function called by the time manager
+     *
+     * For stationary diffusion problems this functions just finishes the simulation.
+     */
     void timeIntegration()
     {
         //end simulation -> no time dependent problem!
