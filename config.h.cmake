@@ -41,7 +41,7 @@
 #cmakedefine HAVE_SUPERLU ENABLE_SUPERLU
 #ifdef HAVE_SUPERLU
 #define SUPERLU_POST_2005_VERSION
-#define HAVE_MEM_USAGE_T_EXPANSIONS 1
+#cmakedefine SUPERLU_MIN_VERSION_4_3
 #endif
 
 /* tr1/array. */
