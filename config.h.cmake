@@ -45,7 +45,26 @@
 #endif
 
 /* tr1/array. */
-//#cmakedefine HAVE_TR1_ARRAY 1
+/*#cmakedefine HAVE_TR1_ARRAY 1*/
+
+/* Define to 1 if the <array> C++0x is available and support array::fill */
+#cmakedefine HAVE_ARRAY 1
+
+/* Define to 1 if you have the <memory> header file. */
+#cmakedefine HAVE_MEMORY 1
+
+/* The namespace in which SHARED_PTR can be found */
+#cmakedefine SHARED_PTR_NAMESPACE ${SHARED_PTR_NAMESPACE}
+
+/* The header in which SHARED_PTR can be found */
+#cmakedefine SHARED_PTR_HEADER ${SHARED_PTR_HEADER}
+
+/* Define to 1 if SHARED_PTR_NAMESPACE::make_shared is usable */
+#cmakedefine HAVE_MAKE_SHARED 1
+
+/* Define to 1 if you have <boost/make_shared.hpp> */
+#cmakedefine HAVE_BOOST_MAKE_SHARED_HPP 1
+
 #cmakedefine HAVE_NULLPTR 1
 #cmakedefine HAVE_STATIC_ASSERT 1
 #cmakedefine HAVE_VARIADIC_TEMPLATES 1

@@ -51,7 +51,9 @@ include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
 check_include_file("malloc.h" HAVE_MALLOC_H)
 check_include_file("valgrind/memcheck.h" HAVE_VALGRIND)
+check_include_file_cxx("memory" HAVE_MEMORY)
 check_include_file_cxx("tr1/array" HAVE_TR1_ARRAY)
+check_include_file_cxx("tr1/memory" HAVE_TR1_MEMORY)
 
 ##############
 # determine C++11 (former C++0x) feature support
@@ -65,6 +67,19 @@ CHECK_CXX_SOURCE_COMPILES(
     char* ch = nullptr;
     return 0; }
 "  HAVE_NULLPTR
+)
+
+# array and fill
+CHECK_CXX_SOURCE_COMPILES("
+    #include <array>
+    
+    int main(void)
+    {
+      std::array<int,2> a;
+      a.fill(9);
+      return 0;
+    }
+    " HAVE_ARRAY
 )
 
 # __attribute__((always_inline))
@@ -205,6 +220,8 @@ CHECK_CXX_SOURCE_COMPILES("
 " HAVE_RVALUE_REFERENCES
 )
 
+find_package(SharedPtr)
+
 ##############
 # use this macros in the CMakelists of the subdirectories. 
 
@@ -215,11 +232,7 @@ set(DumuxLinkLibraries
     ${DUNE_geometry_LIBRARIES}
     ${DUNE_grid_LIBRARIES}
     ${DUNE_mux_LIBRARIES}
-    ${Boost_LIBRARIES}
     "-lm -fprofile-arcs -ftest-coverage")
-
-# -> for LINK_DIRECTORIES
-set(DumuxLinkDirectories ${Boost_LIBRARY_DIRS})
 
 # -> for INCLUDE_DIRECTORIES
 set(DumuxIncludeDirectories 
@@ -230,8 +243,13 @@ set(DumuxIncludeDirectories
     ${DUNE_common_INCLUDE_DIRS}
     ${DUNE_istl_INCLUDE_DIRS}
     ${DUNE_localfunctions_INCLUDE_DIRS}
-    ${DUNE_pdelab_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIR})
+    ${DUNE_pdelab_INCLUDE_DIRS})
+
+if(BOOST_FOUND)
+  set(DumuxLinkDirectories "${DumuxLinkDirectories} ${Boost_LIBRARY_DIRS}")
+  set(DumuxLinkLibraries "${DumuxLinkLibraries} ${Boost_LIBRARIES}")
+  set(DumuxIncludeDirectories "${DumuxIncludeDirectories} ${Boost_INCLUDE_DIR}")
+endif(BOOST_FOUND)
 
 ##############
 # set appropriate compiler flags for debug/release compilation modes

@@ -1,9 +1,11 @@
 # add build targets
 add_executable("test_impes_adaptive" test_impes_adaptive.cc)
-set_target_properties("test_impes_adaptive"
+if(UG_FOUND)
+  set_target_properties("test_impes_adaptive"
     PROPERTIES
     COMPILE_FLAGS ${UG_CPPFLAGS})
-target_link_libraries("test_impes_adaptive" ${DumuxLinkLibraries} ${UG_LIBS})
+  target_link_libraries("test_impes_adaptive" ${DumuxLinkLibraries} ${UG_LIBS})
+endif(UG_FOUND)
 
 # add required libraries and includes to the build flags 
 link_directories(${DumuxLinkDirectories})
