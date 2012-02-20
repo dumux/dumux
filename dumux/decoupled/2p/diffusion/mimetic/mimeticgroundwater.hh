@@ -45,7 +45,7 @@
 namespace Dumux
 {
 /*!
-*  \ingroup Mimetic2p
+*  \ingroup MimeticPressure2p
 */
 /**
 * @brief compute local stiffness matrix for conforming finite elements for diffusion equation
@@ -53,18 +53,15 @@ namespace Dumux
 */
 
 //! A class for computing local stiffness matrices
-/*! A class for computing local stiffness matrix for the
-diffusion equation
-
-div j = q; j = -K grad u; in Omega
-
-u = g on Gamma1; j*n = J on Gamma2.
-
-Template parameters are:
-
-- Grid a DUNE grid type
-- RT type used for return values
-*/
+/*! A class for computing local stiffness matrix for the diffusion equation
+ * \f{eqnarray*}{
+ * \text{div} \boldsymbol v_{total} &=& q \\
+ * \boldsymbol v_{total} &=& - \lambda \boldsymbol K \text{grad} p
+ * \f}
+ * where \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v_{total} \cdot  \boldsymbol n  = q_N \f$ on \f$ \Gamma_{Neumann} \f$.
+ *
+ * \tparam TypeTag The problem TypeTag
+ */
 template<class TypeTag>
 class MimeticGroundwaterEquationLocalStiffness
 :

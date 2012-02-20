@@ -51,16 +51,15 @@
 namespace Dumux
 {
 /*!
- * \ingroup Mimetic2P
+ * \ingroup MimeticPressure2p
  * @brief Levelwise assembler
 
   This class serves as a base class for local assemblers. It provides
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  The template parameters are:
-
-  - Scalar The field type used in the elements of the stiffness matrix
+  \tparam Scalar The field type used in the elements of the stiffness matrix
+  \tparam GridView The grid view of the simulation grid
 */
 template<class Scalar, class GridView>
 class MimeticOperatorAssembler : public CROperatorAssembler<Scalar, GridView>

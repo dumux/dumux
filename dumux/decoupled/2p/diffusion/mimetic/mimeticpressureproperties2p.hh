@@ -22,13 +22,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup IMPES
+ * \ingroup MimeticPressure2p
  * \ingroup Properties
  */
 /*!
  * \file
  *
- * \brief Defines the properties required for (immiscible) twophase sequential models.
+ * \brief Defines the properties required for a two-phase mimetic finite differences model.
  */
 
 #ifndef DUMUX_MIMETICPROPERTIES2P_DECOUPLED_HH
@@ -54,7 +54,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the two-phase problems
+//! The type tag for two-phase problems using a mimetic finite differences method.
 NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP, Mimetic))
 ;
 
@@ -71,7 +71,9 @@ namespace Dumux
 {
 namespace Properties
 {
+//! Set mimetic finite differences implementation of the two-phase pressure equation as default pressure model
 SET_TYPE_PROP(MimeticPressureTwoP, PressureModel, MimeticPressure2P<TypeTag>);
+//! Set the local stiffness implementation for the two-phase model
 SET_TYPE_PROP(MimeticPressureTwoP, LocalStiffness, MimeticGroundwaterEquationLocalStiffness<TypeTag>);
 }
 }

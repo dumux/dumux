@@ -46,6 +46,10 @@ class FVMPFAOPressure2P;
  * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \text{grad}\, p_{global}.
  * \f]
  *
+ * Remark1: only for 2-D quadrilateral grids!
+ * Remark2: can use UGGrid or SGrid/YaspGrid!
+ * Remark3: gravity is neglected!
+ *
  * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag>
@@ -112,6 +116,15 @@ public:
     FVMPFAOVelocity2P(Problem& problem) :
         ParentType(problem), problem_(problem)
     {
+        if (pressureType_ != pGlobal)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
+        }
+        if (dim != 2)
+        {
+            DUNE_THROW(Dune::NotImplemented, "MPFA method only implemented for 2-d!");
+        }
+
         const Element& element = *(problem_.gridView().template begin<0> ());
         FluidState fluidState;
         fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));

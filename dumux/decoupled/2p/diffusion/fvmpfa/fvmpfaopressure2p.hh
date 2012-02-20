@@ -244,6 +244,10 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
         }
+        if (dim != 2)
+        {
+            DUNE_THROW(Dune::NotImplemented, "MPFA method only implemented for 2-d!");
+        }
 
         const Element& element = *(problem_.gridView().template begin<0> ());
         FluidState fluidState;

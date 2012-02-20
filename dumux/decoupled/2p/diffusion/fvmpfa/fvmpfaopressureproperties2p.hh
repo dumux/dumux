@@ -26,7 +26,7 @@
  * \ingroup Properties
  * \file
  *
- * \brief Properties for the MPFA-O method.
+ * \brief Properties for two-phase finite volume model with MPFA-O method.
  */
 #ifndef DUMUX_FVMPFAOPROPERTIES2P_HH
 #define DUMUX_FVMPFAOPROPERTIES2P_HH

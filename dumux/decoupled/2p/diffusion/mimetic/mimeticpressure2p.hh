@@ -43,25 +43,27 @@
 namespace Dumux
 {
 
-/*! \ingroup Mimetic2p
+//! \ingroup MimeticPressure2p
+/*! \brief Mimetic finite differences discretization of a two-phase pressure equation of the sequential IMPES model.
  *
- * \brief mimetic method for the pressure equation
+ * This class provides a mimetic finite differences implementation for solving equations of the form
+ * \f[
+ * \text{div}\, \boldsymbol{v}_{total} = q.
+ * \f]
+ * The total velocity \f$\boldsymbol{v}_{total}\f$ is defined using a global pressure approach. This leads to
+ * \f[
+ * - \text{div}\, \left(\lambda \boldsymbol K \text{grad}\, p_{global}\right) = q.
+ * \f]
+ * Here, \f$ p_{global} \f$ is the global pressure of a classical fractional flow formulation
+ * (see e.g. ﻿P. Binning and M. A. Celia, “Practical implementation of the fractional flow approach to multi-phase flow simulation,” Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
+ * \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda = \lambda_w + \lambda_n \f$ the total mobility depending on the
+ * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$) and \f$ q \f$ the source term. Gravity is neglected in this implementation.
  *
- * Provides a mimetic implementation for the evaluation
- * of equations of the form
- * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
- * The definition of the total velocity \f$\boldsymbol{v}_total\f$ depends on the kind of pressure chosen. This could be a wetting (w) phase pressure leading to
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * a non-wetting (n) phase pressure yielding
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * or a global pressure leading to
- * \f[ - \text{div}\, \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q.\f]
- *  Here, \f$p\f$ denotes a pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda\f$ the total mobility, possibly depending on the
- * saturation,\f$f\f$ the fractional flow function of a phase, \f$\rho\f$ a phase density, \f$g\f$ the gravity constant and \f$q\f$ the source term.
- * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
- * on \f$\Gamma_{Dirichlet}\f$.
+ * \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v_{total} \cdot  \boldsymbol n  = q_N \f$ on \f$ \Gamma_{Neumann} \f$.
  *
- *\tparam TypeTag The Type Tag
+ * Remark: gravity is neglected!
+ *
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class MimeticPressure2P
 {
@@ -138,6 +140,7 @@ template<class TypeTag> class MimeticPressure2P
     }
 
 protected:
+    //! \cond \private
     Problem& problem()
     {
         return problem_;
@@ -147,11 +150,19 @@ protected:
     {
         return problem_;
     }
+    //! \endcond
 
 public:
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
+
+    /*! \brief Initializes the pressure model
+     *
+     * Initializes pressure and velocity field.
+     *
+     * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
+     */
     void initialize(bool solveTwice = true)
     {
         updateMaterialLaws();
@@ -172,6 +183,7 @@ public:
         return;
     }
 
+    /*! \brief Pressure and velocity update */
     void update()
     {
         assemble(false);
@@ -184,6 +196,7 @@ public:
         return;
     }
 
+    /*! \brief Globally stores the pressure solution*/
     void storePressureSolution()
     {
         int size = problem_.gridView().size(0);
@@ -195,33 +208,54 @@ public:
         }
     }
 
+    /*! \brief Stores the pressure solution of a cell
+     *
+     * \param globalIdx Global cell index
+     * \param cellData A CellData object
+     */
     void storePressureSolution(int globalIdx, CellData& cellData)
     {
         cellData.setGlobalPressure(pressure_[globalIdx]);
     }
 
+    // Globally stores the velocity solution at cell-cell interfaces
     void storeVelocity();
 
 
-    /*! \name general methods for serialization, output */
-    //@{
-    // serialization methods
-    //! Function needed for restart option.
+    /*! \brief  Function for serialization of the pressure field.
+     *
+     *  Function needed for restart option. Writes the pressure of a grid element to a restart file.
+     *
+     *  \param outstream Stream into the restart file.
+     *  \param element Grid element
+     */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int globalIdx = problem_.variables().index(element);
         outstream << pressure_[globalIdx][0];
     }
 
+    /*! \brief  Function for deserialization of the pressure field.
+     *
+     *  Function needed for restart option. Reads the pressure of a grid element from a restart file.
+     *
+     *  \param instream Stream from the restart file.
+     *  \param element Grid element
+     */
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = problem_.variables().index(element);
         instream >> pressure_[globalIdx][0];
     }
-    //@}
 
-    //! \brief Write data files
-     /*  \param name file name */
+    /*! \brief Adds pressure output to the output file
+     *
+     * Adds the global pressure to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -236,7 +270,7 @@ public:
 
     //! Constructs a MimeticPressure2P object
     /**
-     * \param problem The Dumux problem
+     * \param problem A problem class object
      */
     MimeticPressure2P(Problem& problem) :
     problem_(problem),
@@ -278,9 +312,8 @@ private:
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
-protected:
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
+    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    static const int saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$ 0 = S_w \f$, \f$ 1 = S_n \f$)
 };
 
 //solves the system of equations to get the spatial distribution of the pressure
@@ -299,7 +332,10 @@ void MimeticPressure2P<TypeTag>::solve()
     return;
 }
 
-//constitutive functions are updated once if new saturations are calculated and stored in the variables object
+/*! \brief Updates constitutive relations and stores them in the variable class
+ *
+ * Stores mobility, fractional flow function and capillary pressure for all grid cells.
+ */
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 {
@@ -333,6 +369,7 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
     return;
 }
 
+/*! \brief Globally stores the velocity solution at cell-cell interfaces*/
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::storeVelocity()
 {

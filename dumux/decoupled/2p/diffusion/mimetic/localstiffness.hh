@@ -44,7 +44,7 @@
 
 namespace Dumux
 {
-  /** @ingroup Mimetic2p
+  /** @ingroup MimeticPressure2p
    *
    * @{
    */
@@ -60,8 +60,7 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam GridView A grid view type
-  \tparam Scalar The field type used in the elements of the stiffness matrix
+  \tparam TypeTag The problem TypeTag
   \tparam m number of degrees of freedom per node (system size)
    */
   template<class TypeTag, int m>
@@ -240,8 +239,7 @@ namespace Dumux
   space and access to the local stiffness matrix. The actual assembling is done
   in a derived class via the virtual assemble method.
 
-  \tparam GridView A grid view type
-  \tparam Scalar The field type used in the elements of the stiffness matrix
+  \tparam TypeTag The problem TypeTag
   \tparam m number of degrees of freedom per node (system size)
    */
   template<class TypeTag, int m>

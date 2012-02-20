@@ -53,7 +53,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup Mimetic2p
+ * \ingroup MimeticPressure2p
  */
 /**
  * @brief defines a class for Crozieux-Raviart piecewise linear finite element functions
@@ -72,10 +72,8 @@ namespace Dumux
 */
 /*! @brief Extends CROperatorBase by a generic methods to assemble global stiffness matrix from local stiffness matrices
  *
- *
- * The template parameter TypeTag describes what kind of Assembler we are. There two choices:
- * <dt>LevelTag</dt> We assemble on a grid level.
- * <dt>LeafTag</dt> We assemble on the leaf entities of the grid
+ * \tparam Scalar The field type used in the elements of the global stiffness matrix
+ * \tparam GridView The grid view of the simulation grid
  */
 template<class Scalar, class GridView>
 class CROperatorAssembler
