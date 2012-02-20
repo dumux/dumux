@@ -39,7 +39,7 @@ namespace Dumux
  * \brief  Base class for all compositional 2-phase problems which use an impet algorithm
  *
  * Extends IMPESProblem2P by the compositional the boundary formulation and initial conditions.
- * These can be specified via a feed mass fractions \f{ Z^k \f} or a saturation, specified by
+ * These can be specified via a feed mass fractions \f$ Z^k \f$ or a saturation, specified by
  * the appropriate flag.
  */
 template<class TypeTag>
@@ -69,7 +69,7 @@ class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
 
 public:
     /*!
-     * \brief The constructor
+     * \brief The standard constructor
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -78,7 +78,10 @@ public:
         : ParentType(timeManager, gridView)
     { }
     /*!
-     * \brief The constructor
+     * \brief The constructor for a given spatialParameters
+     *
+     * This constructor uses a predefined SpatialParameters object that was created (e.g. in
+     * the problem) and does not create one in the base class.
      *
      * \param timeManager The time manager
      * \param gridView The grid view
@@ -89,7 +92,7 @@ public:
     { }
 
     /*!
-     * \brief The constructor
+     * \brief The deprecated constructor without the time manager
      *
      * \param gridView The grid view
      * \param verbose Output flag for the time manager.
@@ -99,7 +102,7 @@ public:
         : ParentType(gridView, verbose)
     { }
     /*!
-     * \brief The constructor
+     * \brief The deprecated constructor without the time manager
      *
      * \param gridView The grid view
      * \param spatialParameters SpatialParameters instantiation

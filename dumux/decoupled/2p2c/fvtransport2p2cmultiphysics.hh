@@ -77,10 +77,6 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
     {
         pw = Indices::pressureW,
         pn = Indices::pressureNW,
-        pglobal = Indices::pressureGlobal,
-        vw = Indices::velocityW,
-        vn = Indices::velocityNW,
-        vt = Indices::velocityTotal,
         Sw = Indices::saturationW,
         Sn = Indices::saturationNW
     };
@@ -169,21 +165,13 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
 
-                // handle interior face
+            	/****** interior face   *****************/
                 if (isIt->neighbor())
-                {
                     this->getFlux(entries, timestepFlux, *isIt, cellDataI);
-                }
 
-                /******************************************
-                 *     Boundary Face
-                 ******************************************/
+            	/******  Boundary Face   *****************/
                 if (isIt->boundary())
-                {
                     this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
-                }
-                if(isnan(entries[0]) or isinf(entries[0]) or isnan(entries[1]) or isinf(entries[1]))
-                    std::cout << "args!!!";
 
                 // add to update vector
                 updateVec[wCompIdx][globalIdxI] += entries[wCompIdx];
@@ -201,7 +189,7 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
             updateVec[wCompIdx][globalIdxI] += q[Indices::contiWEqIdx];
             updateVec[nCompIdx][globalIdxI] += q[Indices::contiNEqIdx];
 
-            // account for porosity
+        	// account for porosity in fluxes for time-step
             sumfactorin = std::max(sumfactorin,sumfactorout)
                             / problem().spatialParameters().porosity(*eIt);
 

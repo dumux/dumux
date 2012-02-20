@@ -603,7 +603,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
  * \f$ \frac{\partial v}{\partial C^{\kappa}} = \frac{\partial V}{\partial m^{\kappa}}\f$
  *
  * \param globalPos The global position of the current element
- * \param ep A pointer to the current element
+ * \param element The current element
  */
 template<class TypeTag>
 void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& globalPos, const Element& element)

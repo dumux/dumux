@@ -195,7 +195,7 @@ protected:
 /** for first == true, a source is implemented as in FVPressure2P.
  * for first == false, the source is translated into a volumentric source term:
  * \f[ V_i \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} q^{\kappa}_i  \f].
- * \param storageEntry The Matrix and RHS entries
+ * \param sourceEntry The Matrix and RHS entries
  * \param elementI The element I
  * \param cellDataI Data of cell I
  * \param first Flag if pressure field is unknown

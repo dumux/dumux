@@ -168,7 +168,7 @@ public:
         return totalConcentration_;
     }
     //! \copydoc transportedQuantity()
-    void getTransportedQuantity(TransportSolutionType& transportedQuantity) DUNE_DEPRECATED
+    void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
         transportedQuantity = totalConcentration_;
     }
@@ -241,7 +241,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     // Cell which restricts time step size
     int restrictingCell = -1;
 
-    Dune::FieldVector<Scalar, 2> entries(0.), timestepFlux(0.);
+    PhaseVector entries(0.), timestepFlux(0.);
     // compute update vector
     ElementIterator eItEnd = problem().gridView().template end<0> ();
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
