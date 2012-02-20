@@ -143,11 +143,11 @@ public:
         }
     }
 
-    //! \cond \private
+    // Calculates the velocity at a cell-cell interface.
     void calculateVelocity(const Intersection&, CellData&);
 
+    //Calculates the velocity at a boundary.
     void calculateVelocityOnBoundary(const Intersection&, CellData&);
-    //! \endcond
 
     /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
      *

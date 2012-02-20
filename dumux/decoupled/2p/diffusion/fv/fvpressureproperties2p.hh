@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 /*!
- * \ingroup IMPES
+ * \ingroup FVPressure2p
  * \ingroup Properties
  */
 /*!
@@ -53,7 +53,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the two-phase problems
+//! The type tag for two-phase problems using a standard finite volume model
 NEW_TYPE_TAG(FVPressureTwoP, INHERITS_FROM(PressureTwoP));
 
 //////////////////////////////////////////////////////////////////
@@ -73,12 +73,13 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
+//! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
 SET_TYPE_PROP( FVPressureTwoP, Velocity, Dumux::FVVelocity2P<TypeTag> );
+//! Set finite volume implementation of the two-phase pressure equation as default pressure model
 SET_TYPE_PROP(FVPressureTwoP, PressureModel, Dumux::FVPressure2P<TypeTag>);
-//! Faces are only regarded from one side and not from both cells
+//! Allow assembling algorithm for the pressure matrix to assemble only from one side of a cell-cell interface
 SET_BOOL_PROP(FVPressureTwoP, VisitFacesOnlyOnce, true);
 
-// \}
 }
 
 }

@@ -30,14 +30,14 @@
 
 /**
  * @file
- * @brief  Finite Volume Discretization of a two-phase flow pressure equation.
+ * @brief  Finite Volume discretization of a two-phase flow pressure equation.
  * @author Markus Wolff, Bernd Flemisch, Jochen Fritz,
  */
 
 namespace Dumux
 {
 //! \ingroup FVPressure2p
-/*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES Model.
+/*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * This class provides a finite volume (FV) implementation for solving equations of the form
  * \f[
@@ -65,8 +65,8 @@ namespace Dumux
  * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$),\f$ f_\alpha = \lambda_\alpha / \lambda \f$ the fractional flow function of a phase,
  * \f$ \rho_\alpha \f$ a phase density, \f$ g \f$ the gravity constant and \f$ q \f$ the source term.
  *
- * For all cases, \f$ p = p_D \f$ on \f$ \Gamma_{Neumann} \f$, and \f$ \boldsymbol{v}_{total}  = q_N \f$
- * on \f$ \Gamma_{Dirichlet} \f$.
+ * For all cases, \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v_{total} \cdot  \boldsymbol n  = q_N \f$
+ * on \f$ \Gamma_{Neumann} \f$.
  *
  * The slightly compressible case is only implemented for phase pressures! In this case for a wetting (\f$ w \f$) phase pressure as primary variable the equations are formulated as
  * \f[
@@ -141,6 +141,7 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
 
 protected:
     //! \cond \private
+    typedef typename ParentType::EntryType EntryType;
     enum
     {
         rhs = ParentType::rhs, matrix = ParentType::matrix
@@ -148,29 +149,25 @@ protected:
     //! \endcond
 
 public:
-
-    //! \cond \private
-
     // Function which calculates the source entry
-    void getSource(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
+    void getSource(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
     // Function which calculates the storage entry
-    void getStorage(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
+    void getStorage(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
     // Function which calculates the flux entry
-    void getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection, const CellData& cellData, const bool first);
+    void getFlux(EntryType& entry, const Intersection& intersection, const CellData& cellData, const bool first);
 
     // Function which calculates the boundary flux entry
-    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
+    void getFluxOnBoundary(EntryType& entry,
     const Intersection& intersection, const CellData& cellData, const bool first);
 
     // updates and stores constitutive relations
     void updateMaterialLaws();
-    //! \endcond
 
     /*! \brief Initializes the pressure model
      *
-     * \copydoc ParentType::initialize()
+     * \copydetails ParentType::initialize()
      *
      * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
      */
@@ -219,7 +216,7 @@ public:
 
     /*! \brief Pressure update
      *
-     * \copydoc ParentType::update()
+     * \copydetails ParentType::update()
      *
      */
     void update()
@@ -382,7 +379,7 @@ public:
 
     //! Constructs a FVPressure2P object
     /**
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVPressure2P(Problem& problem) :
             ParentType(problem), problem_(problem), gravity_(problem.gravity()), maxError_(0.), timeStep_(1.)
@@ -440,12 +437,12 @@ private:
 
 /*! \brief Function which calculates the source entry
  *
- * \copydoc FVPressure::getSource(Dune::FieldVector<Scalar,2>&,const Element&,const CellData&,const bool)
+ * \copydetails FVPressure::getSource(EntryType&,const Element&,const CellData&,const bool)
  *
  * Source of each fluid phase has to be added as mass flux (\f$\text{kg}/(\text{m}^3 \text{s}\f$).
  */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entry, const Element& element
+void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
         , const CellData& cellData, const bool first)
 {
     // cell volume, assume linear map here
@@ -468,7 +465,7 @@ void FVPressure2P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entry, const
 
 /** \brief Function which calculates the storage entry
  *
- * \copydoc FVPressure::getStorage(Dune::FieldVector<Scalar,2>&,const Element&,const CellData&,const bool)
+ * \copydetails FVPressure::getStorage(EntryType&,const Element&,const CellData&,const bool)
  *
  * If compressibility is enabled this functions calculates the term
  * \f[
@@ -488,7 +485,7 @@ void FVPressure2P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entry, const
  *  where \f$a_{error}\f$ is a weighting factor (default: \f$a_{error} = 0.5\f$)
  */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& entry, const Element& element
+void FVPressure2P<TypeTag>::getStorage(EntryType& entry, const Element& element
         , const CellData& cellData, const bool first)
 {
     //volume correction due to density differences
@@ -549,11 +546,11 @@ void FVPressure2P<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& entry, cons
 
 /*! \brief Function which calculates the flux entry
  *
- * \copydoc FVPressure::getFlux(Dune::FieldVector<Scalar,2>&,const Intersection&,const CellData&,const bool)
+ * \copydetails FVPressure::getFlux(EntryType&,const Intersection&,const CellData&,const bool)
  *
  */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection
+void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& intersection
         , const CellData& cellDataI, const bool first)
 {
     ElementPointer elementI = intersection.inside();
@@ -695,13 +692,13 @@ void FVPressure2P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const I
 
 /*! \brief Function which calculates the flux entry at a boundary
  *
- * \copydoc FVPressure::getFluxOnBoundary(Dune::FieldVector<Scalar,2>&,const Intersection&,const CellData&,const bool)
+ * \copydetails FVPressure::getFluxOnBoundary(EntryType&,const Intersection&,const CellData&,const bool)
  *
  * Dirichlet boundary condition is a pressure depending on the formulation (\f$p_w\f$ (default), \f$p_n\f$, \f$p_{global}\f$),
  * Neumann boundary condition are the phase mass fluxes (\f$q_w\f$ and \f$q_n\f$, [\f$\text{kg}/(\text{m}^2 \text{s}\f$])
  */
 template<class TypeTag>
-void FVPressure2P<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
+void FVPressure2P<TypeTag>::getFluxOnBoundary(EntryType& entry,
 const Intersection& intersection, const CellData& cellData, const bool first)
 {
     ElementPointer element = intersection.inside();

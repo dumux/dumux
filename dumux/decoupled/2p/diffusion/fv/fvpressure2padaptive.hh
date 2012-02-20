@@ -31,30 +31,18 @@
 
 /**
  * @file
- * @brief  Finite Volume Discretization of a pressure equation.
+ * @brief  Finite Volume discretization of a two-phase flow pressure equation.
  * @author Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
 namespace Dumux
 {
 
-//! \ingroup FV2p
-//! \brief Finite Volume discretization of the pressure equation of the sequential IMPES Model.
-/*! Provides a Finite Volume implementation for the evaluation
- * of equations of the form
- * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
- * The definition of the total velocity \f$\boldsymbol{v}_total\f$ depends on the kind of pressure chosen. This could be a wetting (w) phase pressure leading to
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * a non-wetting (n) phase pressure yielding
- * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
- * or a global pressure leading to
- * \f[ - \text{div}\, \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q.\f]
- *  Here, \f$p\f$ denotes a pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda\f$ the total mobility, possibly depending on the
- * saturation,\f$f\f$ the fractional flow function of a phase, \f$\rho\f$ a phase density, \f$g\f$ the gravity constant and \f$q\f$ the source term.
- * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
- * on \f$\Gamma_{Dirichlet}\f$.
+//! \ingroup FVPressure2p
+/*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
- * \tparam TypeTag The Type Tag
+ * Details see FVPressure2P
+ *
  */
 template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 {
@@ -111,10 +99,19 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
-public:
-    void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
+    typedef typename ParentType::EntryType EntryType;
 
-    //pressure solution routine: update estimate for secants, assemble, solve.
+public:
+    // Function which calculates the flux entry
+    void getFlux(EntryType&, const Intersection&, const CellData&, const bool);
+
+    /*! \brief Pressure update
+     *
+     *  \copydetails FVPressure2P::update()
+     *
+     *  The grid-adaptive implementation also reconstructs the velocity directly after the pressure update.
+     *  This is necessary to make sure the hanging nodes are treated correctly!
+     */
     void update()
     {
         int gridSize = problem_.gridView().size(0);
@@ -132,7 +129,11 @@ public:
         return;
     }
 
-    //! \copydoc Dumux::FVPressure1P::addOutputVtkFields(MultiWriter &writer)
+    /*! \brief Adds pressure output to the output file
+     *
+     *  \copydetails FVPressure2P::addOutputVtkFields(MultiWriter&)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -142,11 +143,15 @@ public:
 
     //! Constructs a FVPressure2PAdaptive object
     /**
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVPressure2PAdaptive(Problem& problem) :
             ParentType(problem), problem_(problem), velocity_(problem), gravity_(problem.gravity())
     {
+        if (dim != 2)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Adaptive finite volume implementation only available in 2-d!");
+        }
         if (pressureType_ != pw && pressureType_ != pn && pressureType_ != pglobal)
         {
             DUNE_THROW(Dune::NotImplemented, "Pressure type not supported!");
@@ -189,9 +194,16 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
-//!function which assembles the system of equations to be solved. Only works for 2D.
+/*! \brief Function which calculates the flux entry.
+ *
+ * \copydetails FVPressure2P::getFlux(EntryType&,const Intersection&,const CellData&,const bool)
+ *
+ * Implementation of the getFlux() function for cell-cell interfaces with hanging nodes.
+ * In case of hanging nodes the function does not return a vector of entries but directly manipulates the global matrix!
+ *
+ */
 template<class TypeTag>
-void FVPressure2PAdaptive<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const Intersection& intersection
+void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entries, const Intersection& intersection
         , const CellData& cellDataI, const bool first)
 {
     ElementPointer elementI = intersection.inside();

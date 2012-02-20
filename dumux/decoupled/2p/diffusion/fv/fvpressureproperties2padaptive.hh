@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 /*!
- * \ingroup IMPES
+ * \ingroup FVPressure2p
  * \ingroup Properties
  */
 /*!
@@ -53,7 +53,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the two-phase problems
+//! The type tag for two-phase problems using a grid-adaptive finite volume model
 NEW_TYPE_TAG(FVPressureTwoPAdaptive, INHERITS_FROM(PressureTwoP));
 
 //////////////////////////////////////////////////////////////////
@@ -73,10 +73,13 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
+
+//! Set velocity reconstruction implementation for grid-adaptive cell centered finite volume schemes as default
 SET_TYPE_PROP( FVPressureTwoPAdaptive, Velocity, Dumux::FVVelocity2PAdaptive<TypeTag> );
+//! Set finite volume implementation of the two-phase pressure equation which allows hanging nodes as default pressure model
 SET_TYPE_PROP(FVPressureTwoPAdaptive, PressureModel, Dumux::FVPressure2PAdaptive<TypeTag>);
+//! Allow assembling algorithm for the pressure matrix to assemble only from one side of a cell-cell interface
 SET_BOOL_PROP(FVPressureTwoPAdaptive, VisitFacesOnlyOnce, true);
-// \}
 }
 
 }

@@ -32,23 +32,11 @@
 
 namespace Dumux
 {
-//! \ingroup FV2p
-//! \brief Determines the velocity from a finite volume solution of the  pressure equation of the sequential Model (IMPES).
-/*! Calculates phase velocities or total velocity from a known pressure field in context of a Finite Volume implementation for the evaluation
- * of equations of the form
- * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
- * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
- * The phase velocities are calculated following  Darcy's law as
- * \f[\boldsymbol{v}_\alpha = \lambda_\alpha \boldsymbol{K} \left(\text{grad}\, p_\alpha + \rho_\alpha g  \text{grad}\, z\right),\f]
- * where \f$p_\alpha\f$ denotes the pressure of phase \f$_\alpha\f$ (wetting or non-wetting), \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_\alpha\f$ the phase mobility, \f$\rho_\alpha\f$ the phase density and \f$g\f$ the gravity constant.
- * The total velocity is either calculated as sum of the phase velocities
- * \f[\boldsymbol{v}_{total} = \boldsymbol{v}_{wetting}+\boldsymbol{v}_{non-wetting},\f]
- * or with a given global pressure
- * \f[\boldsymbol{v}_{total} = \lambda_{total} \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right).\f]
+//! \ingroup FVPressure2p
+/*! \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
  *
- * \tparam TypeTag The Type Tag
+ * Details see FVVelocity2P
  */
-
 template<class TypeTag>
 class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
 {
@@ -109,14 +97,16 @@ typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! Constructs a FVVelocity2PAdaptive object
-    /*!
-     * \param problem a problem class object
+    /*! \brief Constructs a FVVelocity2PAdaptive object
+     * \param problem A problem class object
      */
     FVVelocity2PAdaptive(Problem& problem)
     : ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
-        // todo: kompatibilität prüfen
+        if (dim != 2)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Adaptive finite volume implementation only available in 2-d!");
+        }
         if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
         {
             DUNE_THROW(Dune::NotImplemented, "Total velocity - global pressure - model cannot be used with compressible fluids!");
@@ -142,16 +132,13 @@ public:
         }
     }
 
-    //! Calculate the velocity.
-    /*!
-     *
-     *  Given the piecewise constant pressure \f$p\f$,
-     *  this method calculates the velocity
-     *  The method is needed in the IMPES (Implicit Pressure Explicit Saturation) algorithm which is used for a fractional flow formulation
-     *  to provide the velocity field required for the solution of the saturation equation.
-     */
+    //Calculates the velocity at a cell-cell interface.
     void calculateVelocity(const Intersection& intersection, CellData& cellDataI);
 
+    /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
+     *
+     * Returns false (In the adaptive finite volume scheme the velocity has to be calculated separately to make sure the hanging nodes are treated correctly.)
+     */
     bool calculateVelocityInTransport()
     {
         return false;
@@ -169,6 +156,12 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
+/*! \brief Calculates the velocity at a cell-cell interface.
+*
+* \copydetails FVVelocity2P::calculateVelocity(const Intersection&,CellData&)
+*
+* Implementation of calculateVelocity() function for cell-cell interfaces with hanging nodes.
+*/
 template<class TypeTag>
 void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellDataI)
 {
