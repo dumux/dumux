@@ -33,6 +33,8 @@ namespace Dumux
 {
 /*!\ingroup IMPES
  * @brief  Class defining a standard, saturation dependent indicator for grid adaption
+ *
+ * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 class GridAdaptionIndicator2P
