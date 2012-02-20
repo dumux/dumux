@@ -406,7 +406,7 @@ int start_(int argc,
         // check whether the parameter file exists.
         std::string defaultName = argv[0];
                     defaultName += ".input";
-        parameterFile.open(defaultName);
+                    parameterFile.open(defaultName.c_str());
         if (not parameterFile.is_open()){
             std::cout<< "\n\t -> Could not open file '"
                      <<defaultName
