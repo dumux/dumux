@@ -37,9 +37,16 @@ namespace Dumux
 template<class TypeTag>
 class FVMPFAOPressure2P;
 
-/*! \ingroup FV2p
+//! \ingroup FVPressure2p
+/*! \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
+ *  Calculates the total velocity from a known pressure field applying a finite volume discretization and a MPFA O-method.
+ * The global pressure has to be given as piecewise constant cell values.
+ * The velocities are calculated as
+ * \f[
+ * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \text{grad}\, p_{global}.
+ * \f]
  *
- * \brief Velocity calculation for the MPFA-O method
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag>
 {
@@ -100,7 +107,7 @@ template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag
 public:
     //! Constructs a FVMPFAOVelocity2P object
     /*!
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVMPFAOVelocity2P(Problem& problem) :
         ParentType(problem), problem_(problem)
@@ -118,9 +125,13 @@ public:
         viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
     }
 
-    //! \copydoc Dumux::FVVelocity2P::calculateVelocity()
+    //Calculates the velocities at all cell-cell interfaces.
     void calculateVelocity();
 
+    /*! \brief Initializes pressure and velocity
+     *
+     * \copydetails ParentType::initialize()
+     */
     void initialize(bool solveTwice = true)
     {
         ParentType::initialize(solveTwice);
@@ -130,7 +141,11 @@ public:
         return;
     }
 
-    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    /*! \brief Pressure and velocity update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         ParentType::update();
@@ -150,6 +165,10 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 }; // end of template
 
+/*! \brief Calculates the velocities at all cell-cell interfaces.
+*
+* Calculates the velocities at all cell-cell interfaces from a given pressure field.
+*/
 template<class TypeTag>
 void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 {

@@ -22,7 +22,7 @@
  *****************************************************************************/
 
 /*!
- * \ingroup MPFA2p
+ * \ingroup FVPressure2p
  * \ingroup Properties
  * \file
  *
@@ -39,6 +39,7 @@ namespace Dumux
 {
 namespace Properties
 {
+//! The type tag for two-phase problems using a finite volume model with MPFA O-method.
 NEW_TYPE_TAG(FVMPFAOPressurePropertiesTwoP, INHERITS_FROM(PressureTwoP, MPFAProperties));
 }
 }
@@ -49,6 +50,7 @@ namespace Dumux
 {
 namespace Properties
 {
+//! Set finite volume implementation of the two-phase pressure equation with MPFA O-method as default pressure model
 SET_TYPE_PROP(FVMPFAOPressurePropertiesTwoP, PressureModel, Dumux::FVMPFAOVelocity2P<TypeTag>);
 }
 }// end of Dune namespace

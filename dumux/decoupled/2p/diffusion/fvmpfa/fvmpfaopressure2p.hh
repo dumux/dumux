@@ -30,28 +30,34 @@
 
 /**
  * @file
- * @brief  Finite Volume MPFA O-method discretization of a pressure equation.
- * @brief  Remark1: only for 2-D quadrilateral grid.
- * @brief  Remark2: can use UGGrid or SGrid (YaspGrid).
- * @brief  Remark3: without capillary pressure and gravity!
+ * @brief  Finite Volume MPFA O-method discretization of a two-phase pressure equation.
  * @author Yufei Cao
  */
 
 namespace Dumux
 {
-/*! \ingroup FV2p
+/*! \ingroup FVPressure2p
  *
- * \brief MPFA-O method for the pressure equation
+ * \brief Finite Volume MPFA O-method discretization of a two-phase pressure equation of the sequential IMPES model.
  *
- * An interface for defining a numerical diffusion model for the
- *  solution of equations of the form
- * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
- * \f$p = g\f$ on \f$\Gamma_1\f$, and
- * \f$-\lambda K \text{grad}\, p \cdot \mathbf{n} = J\f$
- * on \f$\Gamma_2\f$. Here,
- * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
- * and \f$\lambda\f$ the total mobility, possibly depending on the
- * saturation.
+ * This class provides a finite volume (FV) implementation using the multi-point flux approximation O-method (MPFA O-method) for solving equations of the form
+ * \f[
+ * \text{div}\, \boldsymbol{v}_{total} = q.
+ * \f]
+ * The total velocity \f$\boldsymbol{v}_{total}\f$ is defined using a global pressure approach. This leads to
+ * \f[
+ * - \text{div}\, \left(\lambda \boldsymbol K \text{grad}\, p_{global}\right) = q.
+ * \f]
+ * Here, \f$ p_{global} \f$ is the global pressure of a classical fractional flow formulation
+ * (see e.g. ﻿P. Binning and M. A. Celia, “Practical implementation of the fractional flow approach to multi-phase flow simulation,” Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
+ * \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda = \lambda_w + \lambda_n \f$ the total mobility depending on the
+ * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$) and \f$ q \f$ the source term. Gravity is neglected in this implementation.
+ *
+ * \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v_{total} \cdot  \boldsymbol n  = q_N \f$ on \f$ \Gamma_{Neumann} \f$.
+ *
+ * Remark1: only for 2-D quadrilateral grids!
+ * Remark2: can use UGGrid or SGrid/YaspGrid!
+ * Remark3: gravity is neglected!
  *
  * \tparam TypeTag The Type Tag
  */
@@ -122,6 +128,8 @@ class FVMPFAOPressure2P: public FVPressure<TypeTag>
     void assemble();
 
 protected:
+
+    //! \cond \private
     Problem& problem()
     {
         return problem_;
@@ -131,13 +139,18 @@ protected:
     {
         return problem_;
     }
+    //! \endcond
 
 public:
-
-    //constitutive functions are initialized and stored in the variables object
-    //! updates and stores constitutive relations
+    // updates and stores constitutive relations
     void updateMaterialLaws();
 
+    /*! \brief Initializes the pressure model
+     *
+     * \copydetails ParentType::initialize()
+     *
+     * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
+     */
     void initialize(bool solveTwice = true)
     {
         ParentType::initialize();
@@ -151,7 +164,11 @@ public:
         return;
     }
 
-    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    /*! \brief Pressure update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         assemble();
@@ -162,6 +179,9 @@ public:
         return;
     }
 
+    /*! \brief Globally stores the pressure solution
+     *
+     */
     void storePressureSolution()
     {
         int size = problem_.gridView().size(0);
@@ -173,13 +193,24 @@ public:
         }
     }
 
+    /*! \brief Stores the pressure solution of a cell
+     *
+     * \param globalIdx Global cell index
+     * \param cellData A CellData object
+     */
     void storePressureSolution(int globalIdx, CellData& cellData)
     {
             cellData.setGlobalPressure(this->pressure()[globalIdx]);
     }
 
-    //! \brief Write data files
-     /*  \param name file name */
+    /*! \brief Adds pressure output to the output file
+     *
+     * Adds the global pressure as well as the capillary pressure to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -204,7 +235,7 @@ public:
 
     //! Constructs a FVMPFAOPressure2P object
     /**
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVMPFAOPressure2P(Problem& problem)
     : ParentType(problem), problem_(problem)
@@ -237,6 +268,13 @@ protected:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
+/*! \brief Initialize the global matrix of the system of equations to solve.
+ *
+ *  \copydetails FVressure::initializeMatrix()
+ *
+ *  The stencil of the MPFA method is larger than of the standard TPFA method (Two-Point-Flux-Approximation).
+ *  Thus, the sparse matrix of the global system is different!
+ */
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
 {
@@ -456,7 +494,7 @@ void FVMPFAOPressure2P<TypeTag>::initializeMatrix()
     return;
 }
 
-// only for 2-D general quadrilateral
+// assembles the global system of equations: Only for 2-D general quadrilateral
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::assemble()
 {
@@ -2373,7 +2411,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
     return;
 }
 
-//constitutive functions are updated once if new saturations are calculated and stored in the variables object
+/*! \brief Updates constitutive relations and stores them in the variable class
+ *
+ * Stores mobility, fractional flow function and capillary pressure for all grid cells.
+ */
 template<class TypeTag>
 void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
 {
