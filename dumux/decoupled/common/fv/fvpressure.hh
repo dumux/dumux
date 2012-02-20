@@ -75,6 +75,12 @@ template<class TypeTag> class FVPressure
 
 protected:
 
+    /*! Type of the vector of entries
+     *
+     * Contains the return values of the get*()-functions (matrix or right-hand side entry).
+     */
+    typedef Dune::FieldVector<Scalar, 2> EntryType;
+
     //! Indices of matrix and rhs entries
     /**
     * During the assembling of the global system of equations get-functions are called (getSource(), getFlux(), etc.), which return global matrix or right hand side entries in a vector. These can be accessed using following indices:
@@ -89,8 +95,9 @@ protected:
     //!Initialize the global matrix of the system of equations to solve
     void initializeMatrix();
 
-    //! Function which assembles the system of equations to be solved
-    /* This function assembles the Matrix and the right hand side (RHS) vector to solve for
+    /*!\brief Function which assembles the system of equations to be solved
+     *
+     *  This function assembles the Matrix and the right hand side (RHS) vector to solve for
      * a pressure field with a Finite-Volume (FV) discretization. Implementations of this base class have to provide the methods
      * <tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
      *
@@ -110,8 +117,8 @@ protected:
     {   return pressure_;}
 
 public:
-    //! Function which calculates the source entry
-    /**
+    /*! \brief Function which calculates the source entry
+     *
      * Function computes the source term and writes it to the corresponding entry of the entry vector
      *
      * \param entry Vector containing return values of the function
@@ -119,10 +126,10 @@ public:
      * \param cellData Object containing all model relevant cell data
      * \param first Indicates if function is called in the initialization step or during the simulation
      */
-    void getSource(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
+    void getSource(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
-    //!Function which calculates the storage entry
-    /**
+    /*! \brief Function which calculates the storage entry
+     *
      * Function computes the storage term and writes it to the corresponding entry of the entry vector
      *
      * \param entry Vector containing return values of the function
@@ -130,10 +137,10 @@ public:
      * \param cellData Object containing all model relevant cell data
      * \param first Indicates if function is called in the initialization step or during the simulation
      */
-    void getStorage(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first);
+    void getStorage(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
-    //!Function which calculates the flux entry
-    /**
+    /*! \brief Function which calculates the flux entry
+     *
      * Function computes the inter-cell flux term and writes it to the corresponding entry of the entry vector
      *
      * \param entry Vector containing return values of the function
@@ -141,10 +148,10 @@ public:
      * \param cellData Object containing all model relevant cell data
      * \param first Indicates if function is called in the initialization step or during the simulation
      */
-    void getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection, const CellData& cellData, const bool first);
+    void getFlux(EntryType& entry, const Intersection& intersection, const CellData& cellData, const bool first);
 
-    //!Function which calculates the boundary flux entry
-    /**
+    /*! \brief Function which calculates the boundary flux entry
+     *
      * Function computes the boundary-flux term and writes it to the corresponding entry of the entry vector
      *
      * \param entry Vector containing return values of the function
@@ -152,11 +159,11 @@ public:
      * \param cellData Object containing all model relevant cell data
      * \param first Indicates if function is called in the initialization step or during the simulation
      */
-    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
+    void getFluxOnBoundary(EntryType& entry,
             const Intersection& intersection, const CellData& cellData, const bool first);
 
-    //! Public access function for the primary pressure variable
-    /**
+    /*! \brief Public access function for the primary pressure variable
+     *
      * Function returns the cell pressure value at index <tt>globalIdx</tt>
      *
      * \param globalIdx Global index of a grid cell
@@ -164,8 +171,8 @@ public:
     const Scalar pressure(int globalIdx) const
     {   return pressure_[globalIdx];}
 
-    //!Initialize pressure model
-    /**
+    /*! \brief Initialize pressure model
+     *
      * Function initializes the sparse matrix to solve the global system of equations and sets/calculates the initial pressure
      */
     void initialize()
@@ -178,8 +185,8 @@ public:
         pressure_ = 0;
     }
 
-    //!Pressure update
-    /**
+    /*! \brief Pressure update
+     *
      * Function reassembles the system of equations and solves for a new pressure solution.
      */
     void update()
@@ -190,8 +197,9 @@ public:
         return;
     }
 
-    //! Function for serialization of the pressure field.
-    /** Function needed for restart option. Writes the pressure of a grid element to a restart file.
+    /*! \brief  Function for serialization of the pressure field.
+     *
+     *  Function needed for restart option. Writes the pressure of a grid element to a restart file.
      *
      *  \param outstream Stream into the restart file.
      *  \param element Grid element
@@ -202,8 +210,9 @@ public:
         outstream << pressure_[globalIdx][0];
     }
 
-    //! Function for deserialization of the pressure field.
-    /** Function needed for restart option. Reads the pressure of a grid element from a restart file.
+    /*! \brief  Function for deserialization of the pressure field.
+     *
+     *  Function needed for restart option. Reads the pressure of a grid element from a restart file.
      *
      *  \param instream Stream from the restart file.
      *  \param element Grid element
@@ -214,8 +223,8 @@ public:
         instream >> pressure_[globalIdx][0];
     }
 
-    //! Set a pressure to be fixed at a certain cell.
-    /**
+    /*! \brief Set a pressure to be fixed at a certain cell.
+     *
      *Allows to fix a pressure somewhere (at one certain cell) in the domain. This can be necessary e.g. if only Neumann boundary conditions are defined.
      *The pressure is fixed until the <tt>unsetFixPressureAtIndex()</tt> function is called
      *
@@ -229,8 +238,8 @@ public:
         idxFixPressureAtIndex_ = globalIdx;
     }
 
-    //! Reset the fixed pressure state
-    /**
+    /*! \brief Reset the fixed pressure state
+     *
      * No pressure is fixed inside the domain until <tt>setFixPressureAtIndex()</tt> function is called again.
      *
      * \param globalIdx Global index of a grid cell
@@ -242,8 +251,8 @@ public:
         idxFixPressureAtIndex_ = 0.0;
     }
 
-    //! Constructs a FVPressure object
-    /**
+    /*! \brief Constructs a FVPressure object
+     *
      * \param problem A problem class object
      */
     FVPressure(Problem& problem) :
@@ -331,8 +340,9 @@ void FVPressure<TypeTag>::initializeMatrix()
     return;
 }
 
-//! Function which assembles the system of equations to be solved
-/* This function assembles the Matrix and the right hand side (RHS) vector to solve for
+/*!\brief Function which assembles the system of equations to be solved
+ *
+ *  This function assembles the Matrix and the right hand side (RHS) vector to solve for
  * a pressure field with a Finite-Volume (FV) discretization. Implementations of this base class have to provide the methods
  * <tt>getSource()</tt>, <tt>getStorage()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt> if the assemble() method is called!
  *
@@ -352,7 +362,7 @@ void FVPressure<TypeTag>::assemble(bool first)
         int globalIdxI = problem_.variables().index(*eIt);
         CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
-        Dune::FieldVector<Scalar, 2> entries(0.);
+        EntryType entries(0.);
 
         /*****  source term ***********/
         asImp_().getSource(entries, *eIt, cellDataI, first);
