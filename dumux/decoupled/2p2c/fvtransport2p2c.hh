@@ -44,6 +44,10 @@ namespace Dumux
  *  where \f$ \bf{v}_{\alpha} = - \lambda_{\alpha} \bf{K} \left(\nabla p_{\alpha} + \rho_{\alpha} \bf{g} \right) \f$.
  *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
  *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
+ *  The whole flux contribution for each cell is subdivided into a storage term, a flux term and a source term.
+ *  Corresponding functions (<tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>) are provided,
+ *  internal sources are directly treated.
+ *
  *
  *  \tparam TypeTag The Type Tag
  */
@@ -111,6 +115,8 @@ public:
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&, Dune::FieldVector<Scalar, 2>&,
                             const Intersection&, const CellData&);
 
+    void evalBoundary(GlobalPosition,const Intersection&,FluidState &, PhaseVector &);
+
     //! Set the initial values before the first pressure equation
     /*!
      * This method is called before first pressure equation is solved from Dumux::IMPET.
@@ -120,8 +126,6 @@ public:
         totalConcentration_[wCompIdx].resize(problem_.gridView().size(0));
         totalConcentration_[nCompIdx].resize(problem_.gridView().size(0));
     };
-
-    void evalBoundary(GlobalPosition,const Intersection&,FluidState &, PhaseVector &);
 
     //! \brief Write data files
      /*  \param writer applied VTK-writer */
@@ -163,17 +167,17 @@ public:
     {
         return totalConcentration_;
     }
-
-    void getTransportedQuantity(TransportSolutionType& transportedQuantity)
+    //! \copydoc transportedQuantity()
+    void getTransportedQuantity(TransportSolutionType& transportedQuantity) DUNE_DEPRECATED
     {
         transportedQuantity = totalConcentration_;
     }
-
+    //! \copydoc transportedQuantity()
     Scalar& totalConcentration(int compIdx, int globalIdx)
     {
         return totalConcentration_[compIdx][globalIdx][0];
     }
-
+    //@}
     //! Constructs a FVTransport2P2C object
     /*!
      * Currently, the miscible transport scheme can not be applied with a global pressure / total velocity
@@ -221,7 +225,8 @@ protected:
  *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
  */
 template<class TypeTag>
-void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false)
+void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
+		TransportSolutionType& updateVec, bool impet = false)
 {
     // initialize dt very large
     dt = 1E100;
@@ -254,19 +259,13 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
 
-            // handle interior face
+            /****** interior face   *****************/
             if (isIt->neighbor())
-            {
                 getFlux(entries, timestepFlux, *isIt, cellDataI);
-            }
 
-            /******************************************
-             *     Boundary Face
-             ******************************************/
+            /******  Boundary Face   *****************/
             if (isIt->boundary())
-            {
                 getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
-            }
 
             // add to update vector
             updateVec[wCompIdx][globalIdxI] += entries[wCompIdx];
@@ -284,7 +283,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         updateVec[wCompIdx][globalIdxI] += q[contiWEqIdx];
         updateVec[nCompIdx][globalIdxI] += q[contiNEqIdx];
 
-        // account for porosity
+        // account for porosity in fluxes for time-step
         sumfactorin = std::max(sumfactorin,sumfactorout)
                         / problem().spatialParameters().porosity(*eIt);
 
@@ -298,7 +297,11 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolut
         Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PARAM(TypeTag, Scalar, CFLFactor)<< std::endl;
     return;
 }
-
+/*	Updates the transported quantity once an update is calculated.
+ *  This method updates both, the internal transport solution vector and the entries in the cellData.
+ *  \param updateVec Update vector, or update estimate for secants, resp. Here in \f$\mathrm{[kg/m^3]}\f$
+ *
+ */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& updateVector)
 {
@@ -315,11 +318,24 @@ void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& 
     }
 }
 
-
+//! Get flux at an interface between two cells
+/** The flux thorugh \f$ \gamma{ij} \f$  is calculated according to the underlying pressure field,
+ * calculated by the pressure model.
+ *  \f[ - A_{\gamma_{ij}} \cdot \mathbf{K} \cdot \mathbf{u} \cdot (\mathbf{n}_{\gamma_{ij}} \cdot \mathbf{u})
+      \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} X^{\kappa}_{\alpha}
+    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \f]
+ * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
+ * represents the normal of the face \f$ \gamma{ij} \f$.
+ * \param fluxEntries The flux entries, mass influx from cell \f$j\f$ to \f$i\f$.
+ * \param timestepFlux flow velocities for timestep estimation
+ * \param intersection The intersection
+ * \param cellDataI The cell data for cell \f$i\f$
+ */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries,
                                         Dune::FieldVector<Scalar, 2>& timestepFlux,
-                                        const Intersection& intersection, const CellData& cellDataI)
+                                        const Intersection& intersection,
+                                        const CellData& cellDataI)
 {
     // cell information
     ElementPointer elementI= intersection.inside();
@@ -470,11 +486,24 @@ break;
         - velocityIJn * cellDataI.massFraction(nPhaseIdx, nCompIdx) * densityNWI;
     return;
 }
-
+//! Get flux on Boundary
+/** The flux thorugh \f$ \gamma{ij} \f$  is calculated according to the underlying pressure field,
+ * calculated by the pressure model.
+ *  \f[ - A_{\gamma_{ij}} \cdot \mathbf{K} \cdot \mathbf{u} \cdot (\mathbf{n}_{\gamma_{ij}} \cdot \mathbf{u})
+      \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} X^{\kappa}_{\alpha}
+    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \f]
+ * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
+ * represents the normal of the face \f$ \gamma{ij} \f$.
+ * \param fluxEntries The flux entries, mass influx from cell \f$j\f$ to \f$i\f$.
+ * \param timestepFlux flow velocities for timestep estimation
+ * \param intersection The intersection
+ * \param cellDataI The cell data for cell \f$i\f$
+ */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& fluxEntries,
                                                     Dune::FieldVector<Scalar, 2>& timestepFlux,
-                                                    const Intersection& intersection, const CellData& cellDataI)
+                                                    const Intersection& intersection,
+                                                    const CellData& cellDataI)
 {
     // cell information
     ElementPointer elementI= intersection.inside();
@@ -679,14 +708,14 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
 
 //! evaluate the boundary conditions
 /*!
- *  As the transport primary variable in this formulation is the total component concentration, \f$ C^{\kappa} \f$
- *  it seems natural that the boundary values are also total concentrations. However, as for the initial conditions,
- *  it is possible to define boundaries by means of a saturation. This choice determines which version of flash
- *  calculation is necessary to get to the composition at the boundary.
- *
+ *  As the transport primary variable in this formulation is the total component
+ *  concentration, \f$ C^{\kappa} \f$ it seems natural that the boundary values
+ *  are also total concentrations. However, as for the initial conditions, it is
+ *  possible to define boundaries by means of a saturation. This choice determines
+ *  which version of flash calculation is necessary to get to the composition at
+ *  the boundary.
  *  \param globalPosFace Face of the current boundary
- *  \param isIt Iterator pointing on the current intersection
- *  \param eIt Iterator pointing on the current element
+ *  \param intersection The current intersection
  *  \param BCfluidState FluidState object that is used for the boundary
  *  \param pressBound Boundary values of phase pressures
  */

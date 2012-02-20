@@ -38,7 +38,7 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
+ * @brief  Finite Volume 2p2c Diffusion Model
  * @author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
@@ -201,7 +201,10 @@ protected:
  * \param first Flag if pressure field is unknown
  */
 template<class TypeTag>
-void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntry, const Element& elementI, const CellData& cellDataI, const bool first)
+void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntry,
+											const Element& elementI,
+											const CellData& cellDataI,
+											const bool first)
 {
     sourceEntry=0.;
     // cell volume & perimeter, assume linear map here
@@ -245,8 +248,10 @@ void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntr
  * \param first Flag if pressure field is unknown
  */
 template<class TypeTag>
-void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEntry, const Element& elementI, const CellData& cellDataI,
-                                                                                const bool first)
+void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEntry,
+											const Element& elementI,
+											const CellData& cellDataI,
+                                            const bool first)
 {
     storageEntry = 0.;
     // cell index
@@ -287,7 +292,8 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     Scalar lofac = 0.;
     Scalar hifac = 0.;
 
-    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError) && (!problem().timeManager().willBeFinished()))
+    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError)
+    		&& (!problem().timeManager().willBeFinished()))
     {
         if (erri <= x_mi * maxError)
             storageEntry[rhs] +=
@@ -799,7 +805,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
 //! updates secondary variables
 /*
  * A loop through all elements updates the secondary variables stored in the variableclass
- * by using the primary variables.
+ * by using the updated primary variables.
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::updateMaterialLaws()
@@ -821,8 +827,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
     return;
 }
 //! updates secondary variables of one cell
-/* Storing secondary variables means completeing a cellData object, where an updated
- * fluidState is stored.
+/* For each element, the secondary variables are updated according to the
+ * primary variables.
  * \param elementI The element
  */
 template<class TypeTag>
@@ -866,7 +872,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             {
             Z1 = 0.;
             cellData.setTotalConcentration(wCompIdx, 0.);
-            problem().transportModel().transportedQuantity()[wCompIdx][globalIdx] = 0.;
+            problem().transportModel().totalConcentration(wCompIdx, globalIdx) = 0.;
             Dune::dgrave << "Regularize totalConcentration(wCompIdx) = "
                 << cellData.totalConcentration(wCompIdx)<< std::endl;
             }
@@ -874,7 +880,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             {
             Z1 = 1.;
             cellData.setTotalConcentration(nCompIdx, 0.);
-            problem().transportModel().transportedQuantity()[nCompIdx][globalIdx] = 0.;
+            problem().transportModel().totalConcentration(nCompIdx,globalIdx) = 0.;
             Dune::dgrave << "Regularize totalConcentration(globalIdx, nCompIdx) = "
                 << cellData.totalConcentration(nCompIdx)<< std::endl;
             }
