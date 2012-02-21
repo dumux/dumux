@@ -199,19 +199,19 @@ private:
  * \copydetails FVPressure2P::getFlux(EntryType&,const Intersection&,const CellData&,const bool)
  *
  * Implementation of the getFlux() function for cell-cell interfaces with hanging nodes.
- * In case of hanging nodes the function does not return a vector of entries but directly manipulates the global matrix!
+ * In case of hanging nodes the function does not return a vector of entry but directly manipulates the global matrix!
  *
  */
 template<class TypeTag>
-void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entries, const Intersection& intersection
-        , const CellData& cellDataI, const bool first)
+void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection& intersection
+        , const CellData& cellData, const bool first)
 {
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();
 
     if (elementI->level() == elementJ->level())
     {
-        ParentType::getFlux(entries, intersection, cellDataI, first);
+        ParentType::getFlux(entry, intersection, cellData, first);
     }
     // hanging node situation: neighbor has higher level
     else if (elementJ->level() == elementI->level() + 1)
@@ -226,17 +226,17 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entries, const Intersecti
         int globalIdxJ = problem_.variables().index(*elementJ);
 
         // get mobilities and fractional flow factors
-        Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
-        Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
-        Scalar fractionalWI = cellDataI.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNWI = cellDataI.fracFlowFunc(nPhaseIdx);
+        Scalar lambdaWI = cellData.mobility(wPhaseIdx);
+        Scalar lambdaNWI = cellData.mobility(nPhaseIdx);
+        Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
+        Scalar fractionalNWI = cellData.fracFlowFunc(nPhaseIdx);
         Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
         Scalar lambdaNWJ = cellDataJ.mobility(nPhaseIdx);
         Scalar fractionalWJ = cellDataJ.fracFlowFunc(wPhaseIdx);
         Scalar fractionalNWJ = cellDataJ.fracFlowFunc(nPhaseIdx);
 
         // get capillary pressure
-        Scalar pcI = cellDataI.capillaryPressure();
+        Scalar pcI = cellData.capillaryPressure();
         Scalar pcJ = cellDataJ.capillaryPressure();
 
         //get face index
@@ -334,10 +334,10 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entries, const Intersecti
 
         if (compressibility_)
         {
-            rhoMeanWIJ = (lJ * cellDataI.density(wPhaseIdx) + lI * cellDataJ.density(wPhaseIdx)) / l;
-            rhoMeanNWIJ = (lJ * cellDataI.density(nPhaseIdx) + lI * cellDataJ.density(nPhaseIdx)) / l;
-            rhoMeanWIK = (lJ * cellDataI.density(wPhaseIdx) + lI * cellDataK.density(wPhaseIdx)) / l;
-            rhoMeanNWIK = (lJ * cellDataI.density(nPhaseIdx) + lI * cellDataK.density(nPhaseIdx)) / l;
+            rhoMeanWIJ = (lJ * cellData.density(wPhaseIdx) + lI * cellDataJ.density(wPhaseIdx)) / l;
+            rhoMeanNWIJ = (lJ * cellData.density(nPhaseIdx) + lI * cellDataJ.density(nPhaseIdx)) / l;
+            rhoMeanWIK = (lJ * cellData.density(wPhaseIdx) + lI * cellDataK.density(wPhaseIdx)) / l;
+            rhoMeanNWIK = (lJ * cellData.density(nPhaseIdx) + lI * cellDataK.density(nPhaseIdx)) / l;
         }
 
         Scalar densityWIJ = density_[wPhaseIdx];
@@ -373,28 +373,28 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entries, const Intersecti
             {
                 Scalar pressJK = (cellDataJ.globalPressure() + cellDataK.globalPressure()) / 2;
 
-                potentialWIJ = (cellDataI.globalPressure() - fMeanNWIJ * pcI - (pressJK - fMeanNWIJ * pcJK)) / l
+                potentialWIJ = (cellData.globalPressure() - fMeanNWIJ * pcI - (pressJK - fMeanNWIJ * pcJK)) / l
                         + (densityWIJ - lJ / l * (kI + kK) / kI * (densityWIK - densityWIJ) / 2) * ng;
-                potentialNWIJ = (cellDataI.globalPressure() + fMeanWIJ * pcI - (pressJK + fMeanWIJ * pcJK)) / l
+                potentialNWIJ = (cellData.globalPressure() + fMeanWIJ * pcI - (pressJK + fMeanWIJ * pcJK)) / l
                         + (densityNWIJ - lJ / l * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2) * ng;
-                potentialWIK = (cellDataI.globalPressure() - fMeanNWIK * pcI - (pressJK - fMeanNWIK * pcJK)) / l
+                potentialWIK = (cellData.globalPressure() - fMeanNWIK * pcI - (pressJK - fMeanNWIK * pcJK)) / l
                         + (densityWIK - lJ / l * (kI + kK) / kI * (densityWIJ - densityWIK) / 2) * ng;
-                potentialNWIK = (cellDataI.globalPressure() + fMeanWIK * pcI - (pressJK + fMeanWIK * pcJK)) / l
+                potentialNWIK = (cellData.globalPressure() + fMeanWIK * pcI - (pressJK + fMeanWIK * pcJK)) / l
                         + (densityNWIK - lJ / l * (kI + kK) / kI * (densityNWIJ - densityNWIK) / 2) * ng;
                 break;
             }
             default:
             {
-                potentialWIJ = (cellDataI.pressure(wPhaseIdx)
+                potentialWIJ = (cellData.pressure(wPhaseIdx)
                         - 0.5 * (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx))) / l
                         + (densityWIJ - lJ / l * (kI + kK) / kI * (densityWIK - densityWIJ) / 2) * ng;
-                potentialNWIJ = (cellDataI.pressure(nPhaseIdx)
+                potentialNWIJ = (cellData.pressure(nPhaseIdx)
                         - (0.5 * (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)))) / l
                         + (densityNWIJ - lJ / l * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2) * ng;
-                potentialWIK = (cellDataI.pressure(wPhaseIdx)
+                potentialWIK = (cellData.pressure(wPhaseIdx)
                         - 0.5 * (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx))) / l
                         + (densityWIK - lJ / l * (kI + kK) / kI * (densityWIJ - densityWIK) / 2) * ng;
-                potentialNWIK = (cellDataI.pressure(nPhaseIdx)
+                potentialNWIK = (cellData.pressure(nPhaseIdx)
                         - (0.5 * (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)))) / l
                         + (densityNWIK - lJ / l * (kI + kK) / kI * (densityNWIJ - densityNWIK) / 2) * ng;
                 break;
@@ -410,58 +410,58 @@ void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entries, const Intersecti
 
         if (compressibility_)
         {
-            densityWIJ = (potentialWIJ > 0.) ? cellDataI.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-            densityNWIJ = (potentialNWIJ > 0.) ? cellDataI.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+            densityWIJ = (potentialWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            densityNWIJ = (potentialNWIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
             densityWIJ = (potentialWIJ == 0) ? rhoMeanWIJ : densityWIJ;
             densityNWIJ = (potentialNWIJ == 0) ? rhoMeanNWIJ : densityNWIJ;
-            densityWIK = (potentialWIK > 0.) ? cellDataI.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
-            densityNWIK = (potentialNWIK > 0.) ? cellDataI.density(nPhaseIdx) : densityNWIK;
+            densityWIK = (potentialWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
+            densityNWIK = (potentialNWIK > 0.) ? cellData.density(nPhaseIdx) : densityNWIK;
             densityWIK = (potentialWIK == 0) ? rhoMeanWIK : densityWIK;
             densityNWIK = (potentialNWIK == 0) ? rhoMeanNWIK : densityNWIK;
         }
 
         // update diagonal entry and right hand side
-        entries[matrix] = (lambdaWIJ + lambdaNWIJ) * kMean / l * faceArea;
-        entries[rhs] = faceArea * lambdaWIJ * kMean * ng
+        entry[matrix] = (lambdaWIJ + lambdaNWIJ) * kMean / l * faceArea;
+        entry[rhs] = faceArea * lambdaWIJ * kMean * ng
                 * ((densityWIJ) - (lJ / l) * (kI + kK) / kI * (densityWIK - densityWIJ) / 2);
-        entries[rhs] += faceArea * lambdaNWIJ * kMean * ng
+        entry[rhs] += faceArea * lambdaNWIJ * kMean * ng
                 * ((densityNWIJ) - (lJ / l) * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2);
 
         switch (pressureType_)
         {
         case pw:
         {
-            entries[rhs] += faceArea * lambdaNWIJ * kMean * (pcJK - pcI) / l;
+            entry[rhs] += faceArea * lambdaNWIJ * kMean * (pcJK - pcI) / l;
             break;
         }
         case pn:
         {
-            entries[rhs] -= faceArea * lambdaWIJ * kMean * (pcJK - pcI) / l;
+            entry[rhs] -= faceArea * lambdaWIJ * kMean * (pcJK - pcI) / l;
             break;
         }
         }
 
         //write hanging-node-specific stuff directly into matrix and rhs!
-        this->f_[globalIdxI] -= entries[rhs];
-        this->f_[globalIdxJ] += entries[rhs];
+        this->f_[globalIdxI] -= entry[rhs];
+        this->f_[globalIdxJ] += entry[rhs];
 
         // set diagonal entry
-        this->A_[globalIdxI][globalIdxI] += entries[matrix];
+        this->A_[globalIdxI][globalIdxI] += entry[matrix];
         //set off-diagonal
-        this->A_[globalIdxI][globalIdxJ] -= entries[matrix];
+        this->A_[globalIdxI][globalIdxJ] -= entry[matrix];
 
-        // set entries for cell J
-        this->A_[globalIdxJ][globalIdxI] -= entries[matrix];
-        this->A_[globalIdxJ][globalIdxJ] += entries[matrix];
+        // set entry for cell J
+        this->A_[globalIdxJ][globalIdxI] -= entry[matrix];
+        this->A_[globalIdxJ][globalIdxJ] += entry[matrix];
 
-        //set entries to zero -> matrix already written!
-        entries = 0.;
+        //set entry to zero -> matrix already written!
+        entry = 0.;
 
 //        std::cout<<"finished hanging node!\n";
     }
     else
     {
-        entries = 0;
+        entry = 0;
     }
 
     return;

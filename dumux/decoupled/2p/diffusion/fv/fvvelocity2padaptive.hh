@@ -133,7 +133,7 @@ public:
     }
 
     //Calculates the velocity at a cell-cell interface.
-    void calculateVelocity(const Intersection& intersection, CellData& cellDataI);
+    void calculateVelocity(const Intersection& intersection, CellData& cellData);
 
     /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
      *
@@ -163,14 +163,14 @@ private:
 * Implementation of calculateVelocity() function for cell-cell interfaces with hanging nodes.
 */
 template<class TypeTag>
-void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellDataI)
+void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();
 
     if (elementI->level() == elementJ->level())
     {
-        ParentType::calculateVelocity(intersection, cellDataI);
+        ParentType::calculateVelocity(intersection, cellData);
     }
     else if (elementJ->level() == elementI->level() + 1)
     {
@@ -181,17 +181,17 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         const GlobalPosition& globalPosJ = elementJ->geometry().center();
 
         // get mobilities and fractional flow factors
-        Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
-        Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
-        Scalar fractionalWI = cellDataI.fracFlowFunc(wPhaseIdx);
-        Scalar fractionalNWI = cellDataI.fracFlowFunc(nPhaseIdx);
+        Scalar lambdaWI = cellData.mobility(wPhaseIdx);
+        Scalar lambdaNWI = cellData.mobility(nPhaseIdx);
+        Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
+        Scalar fractionalNWI = cellData.fracFlowFunc(nPhaseIdx);
         Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
         Scalar lambdaNWJ = cellDataJ.mobility(nPhaseIdx);
         Scalar fractionalWJ = cellDataJ.fracFlowFunc(wPhaseIdx);
         Scalar fractionalNWJ = cellDataJ.fracFlowFunc(nPhaseIdx);
 
         // get capillary pressure
-        Scalar pcI = cellDataI.capillaryPressure();
+        Scalar pcI = cellData.capillaryPressure();
         Scalar pcJ = cellDataJ.capillaryPressure();
 
         //get face index
@@ -278,8 +278,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         // calculate potential gradients
         // reuse potentials from fvpressure2padaptive
-        Scalar potentialWIJ = cellDataI.fluxData().potential(wPhaseIdx, isIndexI);
-        Scalar potentialNWIJ = cellDataI.fluxData().potential(nPhaseIdx, isIndexI);
+        Scalar potentialWIJ = cellData.fluxData().potential(wPhaseIdx, isIndexI);
+        Scalar potentialNWIJ = cellData.fluxData().potential(nPhaseIdx, isIndexI);
         Scalar potentialWIK = potentialWIJ;
         Scalar potentialNWIK = potentialNWIJ;
         // preliminary potential. The "real" ones are found below
@@ -292,10 +292,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         if (compressibility_)
         {
-            rhoMeanWIJ = (lJ * cellDataI.density(wPhaseIdx) + lI * cellDataJ.density(wPhaseIdx)) / l;
-            rhoMeanNWIJ = (lJ * cellDataI.density(nPhaseIdx) + lI * cellDataJ.density(nPhaseIdx)) / l;
-            rhoMeanWIK = (lJ * cellDataI.density(wPhaseIdx) + lI * cellDataK.density(wPhaseIdx)) / l;
-            rhoMeanNWIK = (lJ * cellDataI.density(nPhaseIdx) + lI * cellDataK.density(nPhaseIdx)) / l;
+            rhoMeanWIJ = (lJ * cellData.density(wPhaseIdx) + lI * cellDataJ.density(wPhaseIdx)) / l;
+            rhoMeanNWIJ = (lJ * cellData.density(nPhaseIdx) + lI * cellDataJ.density(nPhaseIdx)) / l;
+            rhoMeanWIK = (lJ * cellData.density(wPhaseIdx) + lI * cellDataK.density(wPhaseIdx)) / l;
+            rhoMeanNWIK = (lJ * cellData.density(nPhaseIdx) + lI * cellDataK.density(nPhaseIdx)) / l;
         }
 
         Scalar fMeanWIJ = (lJ * fractionalWI + lI * fractionalWJ) / l;
@@ -311,10 +311,10 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         if (compressibility_)
         {
         // Upwinding for finding the upwinding direction
-            densityWIJ = (potentialWIJ > 0.) ? cellDataI.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-            densityNWIJ = (potentialNWIJ > 0.) ? cellDataI.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
-            densityWIK = (potentialWIK > 0.) ? cellDataI.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
-            densityNWIK = (potentialNWIK > 0.) ? cellDataI.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
+            densityWIJ = (potentialWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            densityNWIJ = (potentialNWIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+            densityWIK = (potentialWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
+            densityNWIK = (potentialNWIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
 
             densityWIJ = (potentialWIJ == 0.) ? rhoMeanWIJ : densityWIJ;
             densityNWIJ = (potentialNWIJ == 0.) ? rhoMeanNWIJ : densityNWIJ;
@@ -338,28 +338,28 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         {
             Scalar pressJK = (cellDataJ.globalPressure() + cellDataK.globalPressure()) / 2;
 
-            potentialWIJ = (cellDataI.globalPressure() - fMeanNWIJ * pcI - (pressJK - fMeanNWIJ * pcJK)) / l
+            potentialWIJ = (cellData.globalPressure() - fMeanNWIJ * pcI - (pressJK - fMeanNWIJ * pcJK)) / l
                     + (densityWIJ - lJ / l * (kI + kK) / kI * (densityWIK - densityWIJ) / 2) * ng;
-            potentialNWIJ = (cellDataI.globalPressure() + fMeanWIJ * pcI - (pressJK + fMeanWIJ * pcJK)) / l
+            potentialNWIJ = (cellData.globalPressure() + fMeanWIJ * pcI - (pressJK + fMeanWIJ * pcJK)) / l
                     + (densityNWIJ - lJ / l * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2) * ng;
-            potentialWIK = (cellDataI.globalPressure() - fMeanNWIK * pcI - (pressJK - fMeanNWIK * pcJK)) / l
+            potentialWIK = (cellData.globalPressure() - fMeanNWIK * pcI - (pressJK - fMeanNWIK * pcJK)) / l
                     + (densityWIK - lJ / l * (kI + kK) / kI * (densityWIJ - densityWIK) / 2) * ng;
-            potentialNWIK = (cellDataI.globalPressure() + fMeanWIK * pcI - (pressJK + fMeanWIK * pcJK)) / l
+            potentialNWIK = (cellData.globalPressure() + fMeanWIK * pcI - (pressJK + fMeanWIK * pcJK)) / l
                     + (densityNWIK - lJ / l * (kI + kK) / kI * (densityNWIJ - densityNWIK) / 2) * ng;
             break;
         }
         default:
         {
-            potentialWIJ = (cellDataI.pressure(wPhaseIdx)
+            potentialWIJ = (cellData.pressure(wPhaseIdx)
                     - 0.5 * (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx))) / l
                     + (densityWIJ - lJ / l * (kI + kK) / kI * (densityWIK - densityWIJ) / 2) * ng;
-            potentialNWIJ = (cellDataI.pressure(nPhaseIdx)
+            potentialNWIJ = (cellData.pressure(nPhaseIdx)
                     - (0.5 * (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)))) / l
                     + (densityNWIJ - lJ / l * (kI + kK) / kI * (densityNWIK - densityNWIJ) / 2) * ng;
-            potentialWIK = (cellDataI.pressure(wPhaseIdx)
+            potentialWIK = (cellData.pressure(wPhaseIdx)
                     - 0.5 * (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx))) / l
                     + (densityWIK - lJ / l * (kI + kK) / kI * (densityWIJ - densityWIK) / 2) * ng;
-            potentialNWIK = (cellDataI.pressure(nPhaseIdx)
+            potentialNWIK = (cellData.pressure(nPhaseIdx)
                     - (0.5 * (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)))) / l
                     + (densityNWIK - lJ / l * (kI + kK) / kI * (densityNWIJ - densityNWIK) / 2) * ng;
             break;
@@ -369,8 +369,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //store potentials for further calculations (velocity, saturation, ...)
         // these quantities only have correct sign (needed for upwinding)
         // potentials are defined slightly different for adaptive scheme
-        cellDataI.fluxData().addPotential(wPhaseIdx, isIndexI, potentialWIJ);
-        cellDataI.fluxData().addPotential(nPhaseIdx, isIndexI, potentialNWIJ);
+        cellData.fluxData().addPotential(wPhaseIdx, isIndexI, potentialWIJ);
+        cellData.fluxData().addPotential(nPhaseIdx, isIndexI, potentialNWIJ);
         cellDataJ.fluxData().setPotential(wPhaseIdx, isIndexJ, -potentialWIJ);
         cellDataJ.fluxData().setPotential(nPhaseIdx, isIndexJ, -potentialNWIJ);
 
@@ -382,12 +382,12 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
 
         if (compressibility_)
         {
-            densityWIJ = (potentialWIJ > 0.) ? cellDataI.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-            densityNWIJ = (potentialNWIJ > 0.) ? cellDataI.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+            densityWIJ = (potentialWIJ > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            densityNWIJ = (potentialNWIJ > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
             densityWIJ = (potentialWIJ == 0) ? rhoMeanWIJ : densityWIJ;
             densityNWIJ = (potentialNWIJ == 0) ? rhoMeanNWIJ : densityNWIJ;
-            densityWIK = (potentialWIK > 0.) ? cellDataI.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
-            densityNWIK = (potentialNWIK > 0.) ? cellDataI.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
+            densityWIK = (potentialWIK > 0.) ? cellData.density(wPhaseIdx) : cellDataK.density(wPhaseIdx);
+            densityNWIK = (potentialNWIK > 0.) ? cellData.density(nPhaseIdx) : cellDataK.density(nPhaseIdx);
             densityWIK = (potentialWIK == 0) ? rhoMeanWIK : densityWIK;
             densityNWIK = (potentialNWIK == 0) ? rhoMeanNWIK : densityNWIK;
         }
@@ -407,8 +407,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         {
         case pw:
         {
-            velocityW *= lambdaWIJ * kMean * (cellDataI.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
-            velocityNW *= lambdaNWIJ * kMean * (cellDataI.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
+            velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
+            velocityNW *= lambdaNWIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
 
             velocityW += gravityTermW;
             velocityNW += gravityTermNW;
@@ -416,8 +416,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         }
         case pn:
         {
-            velocityNW *= lambdaNWIJ * kMean * (cellDataI.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
-            velocityW *= lambdaWIJ * kMean * (cellDataI.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
+            velocityNW *= lambdaNWIJ * kMean * (cellData.pressure(nPhaseIdx) - (cellDataJ.pressure(nPhaseIdx) + cellDataK.pressure(nPhaseIdx)) / 2.0) / l;
+            velocityW *= lambdaWIJ * kMean * (cellData.pressure(wPhaseIdx) - (cellDataJ.pressure(wPhaseIdx) + cellDataK.pressure(wPhaseIdx)) / 2.0) / l;
 
             velocityW += gravityTermW;
             velocityNW += gravityTermNW;
@@ -427,7 +427,7 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         {
             Scalar pressJK = (cellDataJ.globalPressure() + cellDataK.globalPressure()) / 2;
 
-            velocityW *= lambdaWIJ * kMean * (cellDataI.globalPressure() - pressJK) / l;
+            velocityW *= lambdaWIJ * kMean * (cellData.globalPressure() - pressJK) / l;
             velocityW += gravityTermW;
             velocityW += gravityTermNW;
             velocityNW = 0;
@@ -442,8 +442,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //times 0.5 because cell face with hanging node is called twice! Do not set marker because it should be called twice!
         velocityW *= 0.5;
         velocityNW *= 0.5;
-        cellDataI.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
-        cellDataI.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNW);
+        cellData.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
+        cellData.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNW);
     }
 
     return;

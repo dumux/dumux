@@ -551,7 +551,7 @@ void FVPressure2P<TypeTag>::getStorage(EntryType& entry, const Element& element
  */
 template<class TypeTag>
 void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& intersection
-        , const CellData& cellDataI, const bool first)
+        , const CellData& cellData, const bool first)
 {
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();
@@ -563,17 +563,17 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     const GlobalPosition& globalPosJ = elementJ->geometry().center();
 
     // get mobilities and fractional flow factors
-    Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
-    Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
-    Scalar fractionalWI = cellDataI.fracFlowFunc(wPhaseIdx);
-    Scalar fractionalNWI = cellDataI.fracFlowFunc(nPhaseIdx);
+    Scalar lacellDatacellData.mobility(wPhaseIdx);
+    Scalar lambdaNWI = cellData.mobility(nPhaseIdx);
+    Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
+    Scalar fractionalNWI = cellData.fracFlowFunc(nPhaseIdx);
     Scalar lambdaWJ = cellDataJ.mobility(wPhaseIdx);
     Scalar lambdaNWJ = cellDataJ.mobility(nPhaseIdx);
     Scalar fractionalWJ = cellDataJ.fracFlowFunc(wPhaseIdx);
     Scalar fractionalNWJ = cellDataJ.fracFlowFunc(nPhaseIdx);
 
     // get capillary pressure
-    Scalar pcI = cellDataI.capillaryPressure();
+    Scalar pcI = cellData.capillaryPressure();
     Scalar pcJ = cellDataJ.capillaryPressure();
 
     //get face index
@@ -604,8 +604,8 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     Scalar rhoMeanNW = 0;
     if (compressibility_)
     {
-        rhoMeanW = 0.5 * (cellDataI.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx));
-        rhoMeanNW = 0.5 * (cellDataI.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx));
+        rhoMeanW = 0.5 * (cellData.density(wPhaseIdx) + cellDataJ.density(wPhaseIdx));
+        rhoMeanNW = 0.5 * (cellData.density(nPhaseIdx) + cellDataJ.density(nPhaseIdx));
     }
     Scalar fMeanW = 0.5 * (fractionalWI + fractionalWJ);
     Scalar fMeanNW = 0.5 * (fractionalNWI + fractionalNWJ);
@@ -617,25 +617,25 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     //if we are at the very first iteration we can't calculate phase potentials
     if (!first)
     {
-        potentialW = cellDataI.fluxData().potential(wPhaseIdx, isIndexI);
-        potentialNW = cellDataI.fluxData().potential(nPhaseIdx, isIndexI);
+        potentialW = cellData.fluxData().potential(wPhaseIdx, isIndexI);
+        potentialNW = cellData.fluxData().potential(nPhaseIdx, isIndexI);
 
         if (compressibility_)
         {
-            density_[wPhaseIdx] = (potentialW > 0.) ? cellDataI.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-            density_[nPhaseIdx] = (potentialNW > 0.) ? cellDataI.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+            density_[wPhaseIdx] = (potentialW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+            density_[nPhaseIdx] = (potentialNW > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
 
             density_[wPhaseIdx] = (potentialW == 0.) ? rhoMeanW : density_[wPhaseIdx];
             density_[nPhaseIdx] = (potentialNW == 0.) ? rhoMeanNW : density_[nPhaseIdx];
         }
 
-        potentialW = cellDataI.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx);
-        potentialNW = cellDataI.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx);
+        potentialW = cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx);
+        potentialNW = cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx);
 
         if (pressureType_ == pglobal)
         {
-            potentialW = (cellDataI.globalPressure() - cellDataJ.globalPressure() - fMeanNW * (pcI - pcJ));
-            potentialNW = (cellDataI.globalPressure() - cellDataJ.globalPressure() + fMeanW * (pcI - pcJ));
+            potentialW = (cellData.globalPressure() - cellDataJ.globalPressure() - fMeanNW * (pcI - pcJ));
+            potentialNW = (cellData.globalPressure() - cellDataJ.globalPressure() + fMeanW * (pcI - pcJ));
         }
 
         potentialW += density_[wPhaseIdx] * (distVec * gravity_);
@@ -650,8 +650,8 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
 
     if (compressibility_)
     {
-        density_[wPhaseIdx] = (potentialW > 0.) ? cellDataI.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
-        density_[nPhaseIdx] = (potentialNW > 0.) ? cellDataI.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
+        density_[wPhaseIdx] = (potentialW > 0.) ? cellData.density(wPhaseIdx) : cellDataJ.density(wPhaseIdx);
+        density_[nPhaseIdx] = (potentialNW > 0.) ? cellData.density(nPhaseIdx) : cellDataJ.density(nPhaseIdx);
 
         density_[wPhaseIdx] = (potentialW == 0) ? rhoMeanW : density_[wPhaseIdx];
         density_[nPhaseIdx] = (potentialNW == 0) ? rhoMeanNW : density_[nPhaseIdx];
