@@ -77,9 +77,15 @@ public:
         calculateValues_(problem, element, elemVolVars);
     }
 
+    /*!
+     * \brief Returns the heat conductivity at the integration point.
+     */
     Scalar heatConductivityAtIP() const
     { return heatConductivityAtIP_; }
 
+    /*!
+     * \brief Returns the temperature gradient at the integration point.
+     */
     const ScalarGradient &temperatureGradAtIP() const
     { return temperatureGradAtIP_; }
 

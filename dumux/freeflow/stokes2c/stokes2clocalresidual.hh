@@ -70,6 +70,10 @@ public:
      *
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
+     *
+     *  \param result The mass of the component within the sub-control volume
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
     {

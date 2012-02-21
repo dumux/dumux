@@ -63,7 +63,7 @@ class Stokes2cniVolumeVariables : public Stokes2cVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \brief Update all additional quantities for a given control volume.
+     * \@copydoc BoxModel::update
      */
     void update(const PrimaryVariables &primaryVars,
                 const Problem &problem,
@@ -86,21 +86,21 @@ public:
     };
 
     /*!
-     * \brief Returns the total internal energy of a phase in the
+     * \brief Returns the total internal energy of the fluid phase in the
      *        sub-control volume.
      */
     Scalar internalEnergy() const
     { return this->fluidState_.internalEnergy(phaseIdx); };
 
     /*!
-     * \brief Returns the total enthalpy of a phase in the sub-control
+     * \brief Returns the total enthalpy of the fluid phase in the sub-control
      *        volume.
      */
     Scalar enthalpy() const
     { return this->fluidState_.enthalpy(phaseIdx); };
 
     /*!
-     * \brief Returns the total heat capacity \f$\mathrm{[J/(K*m^3]}\f$ of the rock matrix in
+     * \brief Returns the heat conductivity of the fluid phase in
      *        the sub-control volume.
      */
     Scalar heatConductivity() const

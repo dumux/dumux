@@ -26,7 +26,7 @@
  *
  * \file
  *
- * \brief Defines the properties required for the non-isothermal compositional
+ * \brief Defines the additional properties required for the non-isothermal compositional
  * Stokes box model.
  */
 #ifndef DUMUX_STOKES2CNI_PROPERTIES_HH
@@ -42,7 +42,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the compositional stokes problems
+//! The type tag for the non-isothermal compositional Stokes problems
 NEW_TYPE_TAG(BoxStokes2cni, INHERITS_FROM(BoxStokes2c));
 
 //////////////////////////////////////////////////////////////////

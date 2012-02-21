@@ -41,8 +41,12 @@ namespace Dumux
  * \ingroup BoxStokes2cniModel
  * \ingroup BoxLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the non-isothermal compositional Stokes box model. This is derived
- *        from the stokes2c box model and adds the energy balance equation.
+ *        using the non-isothermal compositional Stokes box model. This class is derived
+ *        from the stokes2c box local residual and adds the energy balance equation.
+     *
+     *  \param result The mass of the component within the sub-control volume
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
  */
 template<class TypeTag>
 class Stokes2cniLocalResidual : public Stokes2cLocalResidual<TypeTag>
@@ -91,11 +95,11 @@ public:
 
     /*!
      * \brief Evaluates the convective energy flux
-     * over a face of a sub-control volume and writes the result in
-     * the flux vector. This method is called by computeFlux in the base class.
+     *        over a face of a sub-control volume and writes the result in
+     *        the flux vector. This method is called by computeFlux in the base class.
      *
-     * \param flux The vector for the fluxes over the SCV face
-     * \param fluxVars The flux variables at the current SCV face
+     * \param flux The vector for the fluxes over the SCV/boundary face
+     * \param fluxVars The flux variables at the current SCV/boundary face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
