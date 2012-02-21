@@ -33,8 +33,11 @@
 #define DUMUX_STOKES2C_PROPERTY_DEFAULTS_HH
 
 #include "stokes2cproperties.hh"
+#include "stokes2cfluxvariables.hh"
 #include "stokes2cindices.hh"
 #include "stokes2clocalresidual.hh"
+#include "stokes2cmodel.hh"
+#include "stokes2cvolumevariables.hh"
 
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 

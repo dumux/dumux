@@ -32,11 +32,12 @@
 #ifndef DUMUX_STOKES2CNI_PROPERTY_DEFAULTS_HH
 #define DUMUX_STOKES2CNI_PROPERTY_DEFAULTS_HH
 
+
+#include "stokes2cnifluxvariables.hh"
 #include "stokes2cniindices.hh"
-
-#include <dumux/freeflow/stokes2c/stokes2cproperties.hh>
-
 #include "stokes2cnilocalresidual.hh"
+#include "stokes2cnimodel.hh"
+#include "stokes2cnivolumevariables.hh"
 
 namespace Dumux
 {

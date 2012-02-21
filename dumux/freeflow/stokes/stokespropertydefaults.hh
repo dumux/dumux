@@ -36,6 +36,10 @@
 #include "stokesproperties.hh"
 #include "stokesindices.hh"
 #include "stokeslocaljacobian.hh"
+#include "stokeslocalresidual.hh"
+#include "stokesmodel.hh"
+#include "stokesvolumevariables.hh"
+#include "stokesfluxvariables.hh"
 #include "stokesnewtoncontroller.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>

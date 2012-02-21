@@ -29,6 +29,7 @@
 
 #include <dumux/boxmodels/common/boxproblem.hh>
 
+#include "stokesproperties.hh"
 
 namespace Dumux
 {
