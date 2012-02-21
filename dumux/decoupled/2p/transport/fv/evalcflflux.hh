@@ -31,22 +31,25 @@
  */
 namespace Dumux
 {
-/*!\ingroup Saturation2p
+/*!\ingroup IMPES
+ * \ingroup Saturation2p
  * @brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
  *
  *  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition of the form
  *
- *  \f[\frac{F_i \Delta t}{V_{p_i}} < 1\f]
+ *  \f[
+ *  \frac{F_i \Delta t}{V_{p_i}} < 1
+ *  \f]
  *
  *  where \f$ V_{p_i} \f$ is the pore volume of cell i and
  *
- *  \f[F_i = \sum f_{ij}\f]
+ *  \f[
+ *  F_i = \sum f_{ij}
+ *  \f]
  *
- * with \f$f_{ij}\f$ being the CFL-flux over edge \f$ij\f$.
+ * with \f$ f_{ij} \f$ being the CFL-flux over edge \f$ ij \f$.
  *
- * Template parameters are:
-
- - TypeTag PropertyTag of the problem implementation
+ * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 class EvalCflFlux
@@ -65,8 +68,9 @@ private:
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    //! adds a flux to the cfl-criterion evaluation
-    /*!
+
+    /*! \brief adds a flux to the cfl-criterion evaluation
+     *
      *  \param lambdaW        wetting phase mobility
      *  \param lambdaNW       non-wetting phase mobility
      *  \param viscosityW     wetting phase viscosity
@@ -78,8 +82,8 @@ public:
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Intersection& intersection, int phaseIdx)
     {}
 
-    //! adds a flux to the cfl-criterion evaluation
-    /*!
+    /*! \brief adds a flux to the cfl-criterion evaluation
+     *
      *  \param lambdaW        wetting phase mobility
      *  \param lambdaNW       non-wetting phase mobility
      *  \param viscosityW     wetting phase viscosity
@@ -91,22 +95,20 @@ public:
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Element& element, int phaseIdx)
     {}
 
-    //! adds a flux to the cfl-criterion evaluation
-    /*!
-     *  \param globalPos     global position
+    /*! \brief Returns the CFL flux-function
+     *
      *  \param element       element on which the CFL-criterion is evaluated
-     *  \return fluxFunction for the calculation of the CFL-time step (\f$ 1/F_i\f$)
+     *  \return fluxFunction for the calculation of the CFL time-step (\f$ 1/F_i \f$)
      */
     Scalar getCFLFluxFunction(const Element& element)
     {
         return 0.0;
     }
 
-    //! adds a flux to the cfl-criterion evaluation
-    /*!
-     *  \param globalPos     global position
+    /*! \brief  Returns the CFL time-step
+     *
      *  \param element       element on which the CFL-criterion is evaluated
-     *  \return fluxFunction for the calculation of the CFL-time step (\f$ 1/F_i\f$)
+     *  \return CFL time-step
      */
     Scalar getDt(const Element& element)
     {

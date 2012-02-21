@@ -32,14 +32,12 @@
 
 namespace Dumux
 {
-/*!\ingroup Saturation2p
+/*!\ingroup IMPES
  * @brief  Default implementation of cfl-fluxes to evaluate a CFL-Condition
  *
  * Compares the maximum of inflow and outflow to the element volume weighted by relative permeability and viscosity ratios.
  *
- * Template parameters are:
-
- - TypeTag PropertyTag of the problem implementation
+ * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 class EvalCflFluxDefault: public EvalCflFlux<TypeTag>
@@ -80,23 +78,43 @@ private:
 
 public:
 
+    /*! \brief adds a flux to the cfl-criterion evaluation
+     *
+     * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Element&,int)
+     */
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Element& element, int phaseIdx = -1)
     {
         addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, phaseIdx);
     }
 
+    /*! \brief adds a flux to the cfl-criterion evaluation
+     *
+     * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
+     */
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux, const Intersection& intersection, int phaseIdx = -1)
     {
         addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, phaseIdx);
     }
 
-    Scalar getCflFluxFunction(const Element& element);
+    /*! \brief Returns the CFL flux-function
+     *
+     * \copydetails EvalCflFlux::getCFLFluxFunction(const Element&)
+     */
+    Scalar getCFLFluxFunction(const Element& element);
 
+    /*! \brief  Returns the CFL time-step
+     *
+     * \copydetails EvalCflFlux::getDt(const Element&)
+     */
     Scalar getDt(const Element& element)
     {
-        return (getCflFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume());
+        return (getCFLFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume());
     }
 
+    /*! \brief Constructs an EvalCflFluxDefault object
+     *
+     * \param problem A problem type object
+     */
     EvalCflFluxDefault (Problem& problem)
     : problem_(problem)
     {
@@ -213,8 +231,9 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
+// Returns the CFL flux-function
 template<class TypeTag>
-typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCflFluxFunction(const Element& element)
+typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCFLFluxFunction(const Element& element)
 {
     Scalar residualSatW = problem_.spatialParameters().materialLawParams(element).Swr();
     Scalar residualSatNW = problem_.spatialParameters().materialLawParams(element).Snr();

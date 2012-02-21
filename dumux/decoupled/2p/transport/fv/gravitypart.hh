@@ -27,23 +27,25 @@
 
 /**
  * @file
- * @brief  Class for defining the gravity term of a saturation equation
+ * @brief  Class for defining the gravity term of a two-phase flow saturation equation
  * @author Markus Wolff
  */
 
 namespace Dumux
 {
-/*!\ingroup Saturation2p
- * @brief  Class for defining the gravity term of a saturation equation
+/*!\ingroup FVSaturation2p
+ * \brief  Class for defining the gravity term of  a two-phase flow saturation equation
  *
  * Defines the gravity term of the form
  *
- * \f[\bar \lambda \boldsymbol{K} \, (\rho_n - \rho_w) \, g \, \text{grad} \, z,\f]
+ * \f[
+ * \bar \lambda \boldsymbol K \, (\rho_n - \rho_w) \, g \, \text{grad} \, z,
+ * \f]
  *
- * where \f$\bar \lambda = \lambda_w f_n = \lambda_n f_w\f$ and \f$\lambda\f$ is a phase mobility and \f$f\f$ a phase fractional flow function,
- * \f$ \boldsymbol{K} \f$ is the intrinsic permeability, \f$\rho\f$ is a phase density and  \f$g\f$ is the gravity constant.
+ * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase mobility and \f$ f \f$ a phase fractional flow function,
+ * \f$ \boldsymbol K \f$ is the intrinsic permeability, \f$ \rho \f$ is a phase density and  \f$ g \f$ is the gravity constant.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class GravityPart: public ConvectivePart<TypeTag>
@@ -79,13 +81,12 @@ private:
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! Returns the gravity term
-    /*! Returns convective term for current element face
-     *  @param[in] element        entity of codim 0
-     *  @param[in] indexInInside  face index in reference element
-     *  @param[in] satI           saturation of current element
-     *  @param[in] satJ           saturation of neighbor element
-     *  \return     gravity term of a saturation equation
+    /*! \brief Returns convective term for current element face
+     *
+     *  \param flux        Flux vector (gets the flux from the function)
+     *  \param intersection  Intersection of two grid elements/global boundary
+     *  \param satI           saturation of current element
+     *  \param satJ           saturation of neighbor element
      */
     void getFlux(FieldVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
     {
@@ -172,9 +173,9 @@ public:
         flux *= lambdaW*lambdaNW/(lambdaW+lambdaNW);
         flux *= (density_[wPhaseIdx] - density_[nPhaseIdx]);
     }
-    /*! @brief Constructs a GravityPart object
-     *  @param problem an object of class Dumux::TransportProblem or derived
-     *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
+    /*! \brief Constructs a GravityPart object
+     *
+     *  \param problem A problem class object
      */
     GravityPart (Problem& problem)
     : ConvectivePart<TypeTag>(problem), problem_(problem), preComput_(GET_PROP_VALUE(TypeTag, PrecomputedConstRels))

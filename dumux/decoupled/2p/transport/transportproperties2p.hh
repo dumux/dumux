@@ -43,7 +43,7 @@ namespace Properties
 // Type tags tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
+//! The type tag for transport part of a decoupled two-phase model
 NEW_TYPE_TAG(TransportTwoP, INHERITS_FROM(Transport, DecoupledTwoP));
 
 //////////////////////////////////////////////////////////////////

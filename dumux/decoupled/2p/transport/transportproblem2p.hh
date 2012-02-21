@@ -22,7 +22,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all 2-phase transport problems which use an impes algorithm
+ * \brief Base class for two-phase transport problems
  * @author Markus Wolff
  */
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
@@ -47,10 +47,9 @@ SET_TYPE_PROP(TransportTwoP, Velocity, VelocityDefault<TypeTag>); //this Propert
 /*!
  * \ingroup Saturation2p
  * \ingroup IMPETproblems
- * \brief  Base class for a decoupled 2-phase transport problem
+ * \brief  Base class for a decoupled two-phase transport problem
  *
- * @tparam TypeTag The Type Tag
- * @tparam Implementation The Problem implementation
+ * @tparam TypeTag The problem Type Tag
  */
 template<class TypeTag>
 class TransportProblem2P : public OneModelProblem<TypeTag>

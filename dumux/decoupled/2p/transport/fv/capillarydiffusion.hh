@@ -32,17 +32,19 @@
  */
 namespace Dumux
 {
-/*!\ingroup Saturation2p
- * @brief  Class for defining the diffusive capillary pressure term of a saturation equation
+/*!\ingroup FVSaturation2p
+ * \brief  Class for defining the diffusive capillary pressure term of a saturation equation
  *
  * Defines the diffusive capillary pressure term of the form
  *
- * \f[\bar \lambda \boldsymbol{K} \text{grad} \, p_c,\f]
+ * \f[
+ * \bar \lambda \boldsymbol K \text{grad} \, p_c,
+ * \f]
  *
- * where \f$\bar \lambda = \lambda_w f_n = \lambda_n f_w\f$ and \f$\lambda\f$ is a phase mobility and \f$f\f$ a phase fractional flow function,
- * \f$\boldsymbol{K}\f$ is the intrinsic permeability and \f$p_c = p_c(S_w) \f$ the capillary pressure.
+ * where \f$ \bar \lambda = \lambda_w f_n = \lambda_n f_w \f$ and \f$ \lambda \f$ is a phase mobility and \f$ f \f$ a phase fractional flow function,
+ * \f$ \boldsymbol K \f$ is the intrinsic permeability and \f$ p_c = p_c(S_w) \f$ the capillary pressure.
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The Type Tag
  */
 template<class TypeTag>
 class CapillaryDiffusion: public DiffusivePart<TypeTag>
@@ -81,12 +83,11 @@ private:
 public:
     //! Returns capillary diffusion term
     /*! Returns capillary diffusion term for current element face
-     *  @param[in] element        entity of codim 0
-     *  @param[in] indexInInside  face index in reference element
-     *  @param[in] satI           saturation of current element
-     *  @param[in] satJ           saturation of neighbor element
-     *  @param[in] pcGradient     gradient of capillary pressure between element I and J
-     *  \return     capillary pressure term of the saturation equation
+     *  \param flux        Flux vector (gets the flux from the function)
+     *  \param intersection  Intersection of two grid elements/global boundary
+     *  \param satI           saturation of current element
+     *  \param satJ           saturation of neighbor element
+     *  \param pcGradient     gradient of capillary pressure between element I and J
      */
     void getFlux (FieldVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
     {
@@ -209,9 +210,9 @@ public:
         flux *= mobBar;
     }
 
-    /*! @brief Constructs a CapillaryDiffusion object
-     *  @param problem an object of class Dumux::TransportProblem or derived
-     *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
+    /*! \brief Constructs a CapillaryDiffusion object
+     *
+     *  \param problem A problem class object
      */
     CapillaryDiffusion (Problem& problem)
     : DiffusivePart<TypeTag>(problem), problem_(problem), preComput_(GET_PROP_VALUE(TypeTag, PrecomputedConstRels))

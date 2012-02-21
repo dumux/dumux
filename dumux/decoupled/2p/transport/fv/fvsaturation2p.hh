@@ -33,22 +33,35 @@
 
 namespace Dumux
 {
-//! \ingroup Saturation2p
+//! \ingroup FVSaturation2p
 //! \brief The finite volume discretization of a saturation transport equation
 /*! Provides a Finite Volume implementation for the evaluation
  *  of equations of the form
  *
- *  \f[\frac{\partial S_\alpha}{\partial t} + \text{div}\, \boldsymbol{v_\alpha} = q_\alpha,\f]
+ *  \f[
+ *  \phi \frac{\partial (\rho_\alpha S_\alpha)}{\partial t} + \text{div}\, (\rho_\alpha \boldsymbol{v_\alpha}) = q_\alpha,
+ *  \f]
  *
- *  where \f$S_\alpha\f$ is the saturation of phase alpha (wetting (w), non-wetting (n)) and \f$\boldsymbol{v}_\alpha\f$ is the phase velocity calculated by the multi-phase Darcy equation,
- *  and of the form
+ *  where \f$ S_\alpha \f$ is the saturation of phase alpha (wetting (\f$ w \f$), non-wetting (\f$ n \f$)) and \f$ \boldsymbol v_\alpha \f$ is the phase velocity defined by the multi-phase Darcy equation.
+ *  If a phase velocity is reconstructed from the pressure solution it can be directly inserted in the previous equation. In the incompressible case the equation is further divided by the phase density \f$ \rho_\alpha \f$. If a total velocity is reconstructed the saturation equation is reformulated into:
  *
- * \f[\frac{\partial S_w}{\partial t} + f_w \text{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\text{grad}\, p_c + (\rho_n-\rho_w) g \text{grad} z \right)= q_\alpha,\f]
+ * \f[
+ *  \phi \frac{\partial S_w}{\partial t} + f_w \text{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\text{grad}\, p_c + (\rho_n-\rho_w) g \text{grad} z \right)= q_\alpha,
+ * \f]
+ * to get a wetting phase saturation or
+ * \f[
+ * \phi \frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\text{grad}\, p_c + (\rho_n-\rho_w) g \text{grad} z \right)= q_\alpha,
+ * \f]
+ * if the non-wetting phase saturation is the primary transport variable.
  *
- * \f[\frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\text{grad}\, p_c + (\rho_n-\rho_w) g \text{grad} z \right)= q_\alpha,\f]
+ *  The total velocity formulation is only implemented for incompressible fluids and \f$ f_\alpha \f$ is the fractional flow function, \f$ \lambda_\alpha \f$ is the mobility, \f$ \boldsymbol K \f$ the absolute permeability,
+ *  \f$ p_c \f$ the capillary pressure, \f$ \rho \f$ the fluid density, \f$ g \f$ the gravity constant, and \f$ q \f$ the source term.
  *
- *  where \f$f_\alpha\f$ is the fractional flow function, \f$\lambda_\alpha\f$ is the mobility, \f$\boldsymbol{K}\f$ the absolute permeability,
- *  \f$p_c\f$ the capillary pressure, \f$\rho\f$ the fluid density, \f$g\f$ the gravity constant, and \f$q\f$ the source term.
+ *
+ *  In the IMPES models the default setting is:
+ *
+ *      - formulation: \f$ p_w-S_w \f$ (Property: <tt>Formulation</tt> defined as <tt>DecoupledTwoPCommonIndices::pwSw</tt>)
+ *      - compressibility: disabled (Property: <tt>EnableCompressibility</tt> set to <tt>false</tt>)
  *
  * \tparam TypeTag The Type Tag
  */
@@ -150,22 +163,27 @@ class FVSaturation2P: public FVTransport<TypeTag>
     }
 
 public:
+    // Function which calculates the flux update
     void getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI);
 
+    // Function which calculates the boundary flux update
     void getFluxOnBoundary(Scalar& update, const Intersection& intersection, CellData& cellDataI);
 
+    // Function which calculates the source update
     void getSource(Scalar& update, const Element& element, CellData& cellDataI);
 
-    //! Sets the initial solution \f$S_0\f$.
+    // Sets the initial solution
     void initialize();
 
-    //! Update the values of the material laws and constitutive relations.
-    /*!
-     *  Constitutive relations like capillary pressure-saturation relationships, mobility-saturation relationships... are updated and stored in the variable class
-     *  of type Dumux::VariableClass2P. The update has to be done when new saturation are available.
-     */
+    // Update the values of the material laws and constitutive relations.
     void updateMaterialLaws();
 
+
+    /* \brief Writes the current values of the primary transport variable into the <tt>transportedQuantity</tt>-vector (comes as function argument)
+     *
+     * \copydetails FVTransport::getTransportedQuantity(TransportSolutionType&)
+     *
+     */
     void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
         int size = problem_.gridView().size(0);
@@ -188,6 +206,10 @@ public:
         }
     }
 
+    /*! \brief Updates the primary transport variable.
+     *
+     * \copydetails FVTransport::updateTransportedQuantity(TransportSolutionType&)
+     */
     void updateTransportedQuantity(TransportSolutionType& updateVec)
     {
         updateSaturationSolution(updateVec);
@@ -195,6 +217,10 @@ public:
 //        std::cout<<"update = "<<updateVec<<"\n";
     }
 
+    /*! \brief Globally updates the saturation solution
+     *
+     * \param updateVec Vector containing the global update.
+     */
     void updateSaturationSolution(TransportSolutionType& updateVec)
     {
         Scalar dt = problem_.timeManager().timeStepSize();
@@ -205,6 +231,14 @@ public:
         }
     }
 
+    /*! \brief Updates the saturation solution of a cell
+     *
+     * Calculates secondary saturation variables and stores saturations.
+     *
+     * \param globalIdx Global cell index
+     * \param update Cell saturation update
+     * \param dt Current time step
+     */
     void updateSaturationSolution(int globalIdx, Scalar update, Scalar dt)
     {
         CellData& cellData = problem_.variables().cellData(globalIdx);
@@ -230,8 +264,14 @@ public:
         }
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds saturation output to the output file
+     *
+     * Adds the phase saturation to the output. If the velocity is calculated in the transport model it is also added to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -255,10 +295,11 @@ public:
         return;
     }
 
-    /*! \name general methods for serialization, output */
-    //@{
-    // serialization methods
-    //! Function needed for restart option.
+    /*! \brief  Function for serialization of the primary transport variable.
+     *
+     *\copydetails FVTransport::serializeEntity(std::ostream&,const Element&)
+     *
+     */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int globalIdx = problem_.variables().index(element);
@@ -277,6 +318,11 @@ public:
         outstream << sat;
     }
 
+    /*! \brief  Function for deserialization of the primary transport variable.
+     *
+     *\copydetails FVTransport::deserializeEntity(std::istream&,const Element&)
+     *
+     */
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int globalIdx = problem_.variables().index(element);
@@ -296,14 +342,12 @@ public:
             break;
         }
     }
-    //@}
 
-    //! Constructs a FVSaturation2P object
-    /**
 
-     * \param problem a problem class object
+    /*! \brief Constructs a FVSaturation2P object
+     *
+     * \param problem A problem class object
      */
-
     FVSaturation2P(Problem& problem) :
             ParentType(problem), problem_(problem), threshold_(1e-6), switchNormals_(GET_PARAM(TypeTag, bool, SwitchNormals))
     {
@@ -345,6 +389,7 @@ public:
         }
     }
 
+    //! Destructor
     ~FVSaturation2P()
     {
         delete capillaryFlux_;
@@ -370,6 +415,13 @@ private:
     const bool switchNormals_;
 };
 
+/*! \brief Function which calculates the flux update
+ *
+ * \copydetails FVTransport::getFlux(Scalar&,const Intersection&,CellData&)
+ *
+ * If a total velocity formulation is used this functions calculates not only the advective flux but also fluxes due to gravity and capillary diffusion.
+ * These have to be defined separately as implementation of a DiffusivePart or ConvectivePart (e.g. GravityPart / CapillaryDiffusion ) and added to the property system via properties <tt>CapillaryFlux</tt> and <tt>GravityFlux</tt>.
+ */
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI)
 {
@@ -549,6 +601,13 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     }
 }
 
+/*! \brief Function which calculates the boundary flux update
+ *
+ * \copydetails FVTransport::getFluxOnBoundary(Scalar&,const Intersection&,CellData&)
+ *
+ * Dirichlet boundary condition is a phase saturation depending on the formulation (\f$ S_w \f$ (default) or \f$ S_n \f$),
+ * Neumann boundary condition are phase mass fluxes (\f$ q_w \f$ (default) or \f$ q_n \f$  [\f$\text{kg}/(\text{m}^2 \text{s}\f$])
+ */
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersection& intersection, CellData& cellDataI)
 {
@@ -838,6 +897,12 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
     }
 }
 
+/*! \brief Function which calculates the source update
+ *
+ *\copydetails FVTransport::getSource(Scalar&,const Element&,CellData&)
+ *
+ * Source of the fluid phase has to be defined as mass flux (\f$\text{kg}/(\text{m}^3 \text{s}\f$).
+ */
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, CellData& cellDataI)
 {
@@ -916,6 +981,7 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
     }
 }
 
+//! Sets the initial solution \f$ S_0 \f$.
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::initialize()
 {
@@ -951,6 +1017,11 @@ void FVSaturation2P<TypeTag>::initialize()
     return;
 }
 
+/*! \brief Updates constitutive relations and stores them in the variable class
+ *
+ * Stores mobility, fractional flow function and capillary pressure for all grid cells.
+ *
+ */
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::updateMaterialLaws()
 {

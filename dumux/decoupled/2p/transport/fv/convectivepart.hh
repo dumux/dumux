@@ -25,20 +25,19 @@
 #include <dumux/decoupled/2p/2pproperties.hh>
 
 /**
- * @file
- * @brief  Base class for defining a convective part of an advection-diffusion equation
- * @author Markus Wolff
+ * \file
+ * \brief  Base class for defining a convective part of the saturation transport equation
+ * \author Markus Wolff
  */
 
 namespace Dumux
 {
 
-/*!\ingroup Saturation2p
- * @brief  Base class for defining the convective part of an advection-diffusion equation
+/*!\ingroup FVSaturation2p
+ * \brief  Base class for defining a convective part of the saturation transport equation
  *
- * @tparam TypeTag The Type Tag
+ * \tparam TypeTag The problem TypeTag
  */
-
 template<class TypeTag>
 class ConvectivePart
 {
@@ -53,38 +52,33 @@ private:
     typedef Dune::FieldVector<Scalar, dimWorld> FieldVector;
 
 public:
-    //! Returns convective term
-    /*! Returns convective term for current element face
-     *  @param[in] element        entity of codim 0
-     *  @param[in] indexInInside  face index in reference element
-     *  @param[in] sat           saturation of current element
-     *  \return     convective term of an advection-diffusion equation
+    /*! \brief Returns convective term for current element face
+     *  \param intersection  Intersection of two grid elements/global boundary
+     *  \param sat           Saturation of current element
+     *  \return     Convective flux
      */
     Scalar getFlux(const Intersection& intersection, const Scalar sat) const
     {
         return 0.0;
     }
-    //! Returns convective term
-    /*! Returns convective term for current element face
-     *  @param[in] element        entity of codim 0
-     *  @param[in] indexInInside  face index in reference element
-     *  @param[in] satI           saturation of current element
-     *  @param[in] satJ           saturation of neighbor element
-     *  \return     convective term of an advection-diffusion equation
+
+    /*! \brief Returns convective term for current intersection
+     *
+     *  \param flux        Flux vector (gets the flux from the function)
+     *  \param intersection  Intersection of two grid elements/global boundary
+     *  \param satI           Saturation of current element
+     *  \param satJ           Saturation of neighbor element
      */
     void getFlux(FieldVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
     {}
 
-    //! The constructor
+    //! Constructs a ConvectivePart object
     /*
-     *  \param problem object including the problem definition
+     *  \param problem A problem class object
      */
     ConvectivePart(Problem& problem)
     {}
 
-    //! always define virtual destructor in abstract base class
-    virtual ~ConvectivePart()
-    { }
 };
 }
 

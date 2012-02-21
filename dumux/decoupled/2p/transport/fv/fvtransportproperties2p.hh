@@ -25,7 +25,7 @@
 #include <dumux/decoupled/2p/transport/transportproperties2p.hh>
 
 /*!
- * \ingroup Saturation2p
+ * \ingroup FVSaturation2p
  * \ingroup Properties
  */
 /*!
@@ -42,13 +42,13 @@ namespace Properties
 // Type tags tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
+//! The type tag for two-phase problems using a standard finite volume model
 NEW_TYPE_TAG(FVTransportTwoP, INHERITS_FROM(TransportTwoP));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( PrecomputedConstRels );
+NEW_PROP_TAG( PrecomputedConstRels );//! < Bool property which tells the transport model if it should use constitutive relations which are precomputed at the begin of the time step or if it should recompute the relations
 }
 }
 
@@ -61,16 +61,16 @@ namespace Dumux
 {
 namespace Properties
 {
+//! Set the default implementation of the cfl-condition
 SET_TYPE_PROP(FVTransportTwoP, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>);
+//! Set the default implementation of a diffusive flux -> diffusive flux dissabled
 SET_TYPE_PROP(FVTransportTwoP, CapillaryFlux, DiffusivePart<TypeTag>);
+//! Set the default implementation of an additional convective flux -> additional convective flux dissabled
 SET_TYPE_PROP(FVTransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
+//! \brief Set PrecomputedConstRels flag <tt>true</tt> as default
 SET_BOOL_PROP( FVTransportTwoP, PrecomputedConstRels, true);
-
-// Set the model properties
-SET_PROP(FVTransportTwoP, TransportModel)
-{
-    typedef Dumux::FVSaturation2P<TypeTag> type;
-};
+//! Set finite volume implementation of the two-phase saturation equation as default saturation model
+SET_TYPE_PROP(FVTransportTwoP, TransportModel, Dumux::FVSaturation2P<TypeTag>);
 }
 }
 

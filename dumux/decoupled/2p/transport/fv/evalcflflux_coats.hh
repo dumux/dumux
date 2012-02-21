@@ -32,13 +32,10 @@
 
 namespace Dumux
 {
-/*!\ingroup Saturation2p
+/*!\ingroup IMPES
  * @brief  CFL-flux-function to evaluate a CFL-Condition after Coats 2003
  *
- *
- * Template parameters are:
-
- - TypeTag PropertyTag of the problem implementation
+ * tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 class EvalCflFluxCoats: public EvalCflFluxDefault<TypeTag>
@@ -92,6 +89,10 @@ private:
 
 public:
 
+    /*! \brief adds a flux to the cfl-criterion evaluation
+     *
+     * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Element&,int)
+     */
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
             const Element& element, int phaseIdx = -1)
     {
@@ -103,6 +104,10 @@ public:
         ParentType::addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, element, phaseIdx);
     }
 
+    /*! \brief adds a flux to the cfl-criterion evaluation
+     *
+     * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
+     */
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
             const Intersection& intersection, int phaseIdx = -1)
     {
@@ -426,9 +431,13 @@ public:
         }
     }
 
-    Scalar getCflFluxFunction(const Element& element)
+    /*! \brief Returns the CFL flux-function
+     *
+     * \copydetails EvalCflFlux::getCFLFluxFunction(const Element&)
+     */
+    Scalar getCFLFluxFunction(const Element& element)
     {
-        Scalar cflFluxDefault = 1 / ParentType::getCflFluxFunction(element);
+        Scalar cflFluxDefault = 1 / ParentType::getCFLFluxFunction(element);
 
         if (std::isnan(cflFluxFunction_) || std::isinf(cflFluxFunction_) || cflFluxFunction_ > 100 * cflFluxDefault)
         {
@@ -452,22 +461,32 @@ public:
             return 1e100;
     }
 
+    /*! \brief  Returns the CFL time-step
+     *
+     * \copydetails EvalCflFlux::getDt(const Element&)
+     */
     Scalar getDt(const Element& element)
     {
-        return getCflFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume();
+        return getCFLFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume();
     }
 
+    /*! \brief Constructs an EvalCflFluxDefault object
+     *
+     * \param problem A problem type object
+     */
+    EvalCflFluxCoats(Problem& problem) :
+        ParentType(problem), problem_(problem), eps_(5e-3)
+    {
+        reset();
+    }
+
+protected:
+    //! resets the accumulated CFL-fluxes to zero
     void reset()
     {
         ParentType::reset();
         cflFluxFunction_ = 0;
         hasHangingNode_ = false;
-    }
-
-    EvalCflFluxCoats(Problem& problem) :
-        ParentType(problem), problem_(problem), eps_(5e-3)
-    {
-        reset();
     }
 
 private:
