@@ -29,8 +29,6 @@
  */
 #include "config.h"
 
-#include <dumux/common/cubegridcreator.hh>
-
 #include "test_1p_problem.hh"
 #include "benchmarkresult.hh"
 #include <dumux/common/start.hh>

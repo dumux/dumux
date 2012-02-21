@@ -35,6 +35,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
+#include <dumux/common/cubegridcreator.hh>
 
 #include <dumux/decoupled/2p2c/2p2cproblem.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>

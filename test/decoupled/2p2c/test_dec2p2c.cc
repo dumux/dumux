@@ -28,8 +28,6 @@
  */
 #include "config.h"
 
-#include <dumux/common/cubegridcreator.hh>
-
 #include "test_dec2p2cproblem.hh"
 #include <dumux/common/start.hh>
 

@@ -33,6 +33,7 @@
 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
+#include <dumux/common/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/unit.hh>
