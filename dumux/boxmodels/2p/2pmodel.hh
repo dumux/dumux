@@ -45,7 +45,7 @@ namespace Dumux
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
  * approach as the equation for the conservation of momentum:
  \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf K}
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
  \left(\text{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
  \f]
  *
