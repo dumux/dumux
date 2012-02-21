@@ -40,12 +40,12 @@ namespace Properties
 SET_TYPE_PROP(PressureOneP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
 }
 /*!
- * \ingroup OnePhase
+ * \ingroup Pressure1P
+ * \ingroup IMPETproblems
  *
  * \brief  Base class for all single phase diffusion problem
  *
  * @tparam TypeTag The Type Tag
- * @tparam Implementation The Problem implementation
  */
 template<class TypeTag>
 class DiffusionProblem1P: public OneModelProblem<TypeTag>
@@ -115,6 +115,7 @@ public:
      */
     // \{
 
+    //! \cond \private
     void timeIntegration()
     {
         //end simulation -> no time dependent problem!
@@ -127,10 +128,12 @@ public:
     {
         return;
     }
+
     void deserialize(double t)
     {
         return;
     }
+    //! \endcond
 
     /*!
      * \brief Returns the temperature within the domain.

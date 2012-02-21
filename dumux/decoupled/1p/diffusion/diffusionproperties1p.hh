@@ -26,12 +26,12 @@
 #include <dumux/decoupled/1p/1pproperties.hh>
 
 /*!
- * \ingroup Saturation2p
+ * \ingroup Pressure1p
  * \ingroup Properties
  */
 /*!
  * \file
- * \brief Specifies the properties for immiscible 2p transport
+ * \brief Specifies the properties for 1p pressure models
  */
 namespace Dumux
 {
@@ -43,7 +43,7 @@ namespace Properties
 // Type tags tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for models based on the diffusion-scheme
+//! The type tag for 1p pressure models
 NEW_TYPE_TAG(PressureOneP, INHERITS_FROM(Pressure, DecoupledOneP));
 
 //////////////////////////////////////////////////////////////////

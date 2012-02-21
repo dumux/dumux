@@ -26,22 +26,22 @@
 
 /**
  * @file
- * @brief  Single Phase Finite Volume Model
+ * @brief  Single phase finite volume velocity reconstruction
  * @author Markus Wolff
  */
 
 
 namespace Dumux
 {
-//! \ingroup OnePhase
-//! \brief Single Phase Finite Volume Model
-/*! Calculates velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
- * of equations of the form
- * \f[\text{div}\, \boldsymbol{v} = q.\f]
+//! \ingroup FV1p
+//! \brief Single phase finite volume velocity reconstruction
+/*! Calculates velocities from a known pressure field applying a finite volume discretization.
  * The pressure has to be given as piecewise constant cell values.
  * The velocity is calculated following  Darcy's law as
- * \f[\boldsymbol{v} = -\frac{1}{\mu} \boldsymbol{K} \left(\text{grad}\, p + \rho g  \text{grad}\, z\right),\f]
- * where, \f$p\f$ is the pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\mu\f$ the viscosity, \f$\rho\f$ the density and \f$g\f$ the gravity constant.
+ * \f[
+ * \boldsymbol v = -\frac{1}{\mu} \boldsymbol K \left(\text{grad}\, p + \rho g  \text{grad}\, z\right),
+ * \f]
+ * where, \f$ p \f$ is the pressure, \f$ \boldsymbol K \f$ the absolute permeability, \f$ \mu \f$ the viscosity, \f$ \rho \f$ the density and \f$ g \f$ the gravity constant.
  *
  * @tparam TypeTag The Type Tag
  */
@@ -83,9 +83,9 @@ typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! The Constructor
+    //! Constructs a FVVelocity1P object
     /**
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVVelocity1P(Problem& problem)
     : problem_(problem), gravity_(problem.gravity())
@@ -98,19 +98,20 @@ public:
         viscosity_ = Fluid::viscosity(temperature, referencePress);
       }
 
-
-    //! Calculate the velocity.
-    /*!
-     *
-     *  Given the piecewise constant pressure \f$p\f$,
-     *  this method calculates the velocity field
-     */
+    // Calculates the velocity at a cell-cell interface.
     void calculateVelocity(const Intersection&, CellData&);
 
+    //Calculates the velocity at a boundary.
     void calculateVelocityOnBoundary(const Intersection&, CellData&);
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds velocity output to the output file
+     *
+     * Adds the velocities to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -171,8 +172,16 @@ private:
     Scalar density_;
     Scalar viscosity_;
 };
+
+/*! \brief Calculates the velocity at a cell-cell interface.
+*
+* Calculates the velocity at a cell-cell interface from a given pressure field.
+*
+* \param intersection Intersection of two grid cells
+* \param cellData Object containing all model relevant cell data
+*/
 template<class TypeTag>
-void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellDataI)
+void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();
@@ -210,17 +219,17 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     permeability /= viscosity_;
 
     //calculate potential gradients
-    Scalar potential = (cellDataI.pressure() - cellDataJ.pressure()) / dist;
+    Scalar potential = (cellData.pressure() - cellDataJ.pressure()) / dist;
 
     potential += density_ * (unitOuterNormal * gravity_);
 
     //store potentials for further calculations (velocity, saturation, ...)
-    cellDataI.fluxData().setPotential(isIndexI, potential);
+    cellData.fluxData().setPotential(isIndexI, potential);
     cellDataJ.fluxData().setPotential(isIndexJ, -potential);
 
     //calculate the gravity term
     GlobalPosition velocity(permeability);
-    velocity *= (cellDataI.pressure() - cellDataJ.pressure()) / dist;
+    velocity *= (cellData.pressure() - cellDataJ.pressure()) / dist;
 
     GlobalPosition gravityTerm(unitOuterNormal);
     gravityTerm *= (gravity_ * permeability) * density_;
@@ -228,14 +237,21 @@ void FVVelocity1P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     velocity += gravityTerm;
 
     //store velocities
-    cellDataI.fluxData().setVelocity(isIndexI, velocity);
-    cellDataI.fluxData().setVelocityMarker(isIndexI);
+    cellData.fluxData().setVelocity(isIndexI, velocity);
+    cellData.fluxData().setVelocityMarker(isIndexI);
 
     cellDataJ.fluxData().setVelocity(isIndexJ, velocity);
     cellDataJ.fluxData().setVelocityMarker(isIndexJ);
     return;
 }
 
+/*! \brief Calculates the velocity at a boundary.
+*
+* Calculates the velocity at a boundary from a given pressure field.
+*
+* \param intersection Boundary intersection
+* \param cellData Object containing all model relevant cell data
+*/
 template<class TypeTag>
 void FVVelocity1P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {

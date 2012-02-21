@@ -37,17 +37,21 @@
 namespace Dumux
 {
 
-//! \ingroup OnePhase
+//! \ingroup FV1p
 //! \brief Single Phase Finite Volume Model
 /*! Provides a Finite Volume implementation for the evaluation
  * of equations of the form
- * \f[\text{div}\, \boldsymbol{v} = q.\f]
- * The velocity \f$\boldsymbol{v}\f$ is the single phase Darcy velocity:
- * \f[ \boldsymbol{v} = -\frac{1}{\mu} \boldsymbol{K} \left(\text{grad}\, p + \rho g  \text{grad}\, z\right), \f]
- * where \f$p\f$ is the pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\mu\f$ the viscosity, \f$\rho\f$ the density, and \f$g\f$ the gravity constant,
- * and \f$q\f$ is the source term.
- * At the boundary, \f$p = p_D\f$ on \f$\Gamma_{Dirichlet}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
- * on \f$\Gamma_{Neumann}\f$.
+ * \f[
+ *  \text{div}\, \boldsymbol v = q.
+ * \f]
+ * The velocity \f$ \boldsymbol v \f$ is the single phase Darcy velocity:
+ * \f[
+ *  \boldsymbol v = -\frac{1}{\mu} \boldsymbol K \left(\text{grad}\, p + \rho g  \text{grad}\, z\right),
+ * \f]
+ * where \f$ p \f$ is the pressure, \f$ \boldsymbol K \f$ the absolute permeability, \f$ \mu \f$ the viscosity, \f$ \rho \f$ the density, and \f$ g \f$ the gravity constant,
+ * and \f$ q \f$ is the source term.
+ * At the boundary, \f$ p = p_D \f$ on \f$ \Gamma_{Dirichlet} \f$, and \f$ \boldsymbol v \cdot \boldsymbol n = q_N\f$
+ * on \f$ \Gamma_{Neumann} \f$.
  *
  * @tparam TypeTag The Type Tag
  *
@@ -99,27 +103,27 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
 
 public:
+    // Function which calculates the source entry
     void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
-
-    void getStorage(Dune::FieldVector<Scalar, 2>& entries, const Element& element, const CellData& cellData, const bool first)
+    // Function which calculates the storage entry
+    //! \cond \private
+    void getStorage(Dune::FieldVector<Scalar, 2>& entry, const Element& element, const CellData& cellData, const bool first)
     {
-        entries = 0;
+        entry = 0;
     }
-
+    //! \endcond
+    // Function which calculates the flux entry
     void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
-
+    // Function which calculates the boundary flux entry
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
     const Intersection&, const CellData&, const bool);
 
-    //! Initializes the problem
-    /*!
-     *  @param solveTwice repeats the pressure calculation step
+    /*! \brief Initializes the pressure model
      *
-     *  Calculates the pressure \f$p\f$ as solution of the boundary value
-     *  \f[  \text{div}\, \boldsymbol{v} = q, \f]
-     *  subject to appropriate boundary conditions.
+     * \copydetails ParentType::initialize()
+     *
+     * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
      */
-
     void initialize(bool solveTwice = true)
     {
         ParentType::initialize();
@@ -134,12 +138,20 @@ public:
         return;
     }
 
+    /*! \brief Pressure update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         ParentType::update();
         storePressureSolution();
     }
 
+    /*! \brief Globally stores the pressure solution
+     *
+     */
     void storePressureSolution()
     {
         int size = problem_.gridView().size(0);
@@ -151,6 +163,11 @@ public:
         }
     }
 
+    /*! \brief Stores the pressure solution of a cell
+     *
+     * \param globalIdx Global cell index
+     * \param cellData A CellData object
+     */
     void storePressureSolution(int globalIdx, CellData& cellData)
     {
             Scalar press = this->pressure()[globalIdx];
@@ -158,8 +175,14 @@ public:
             cellData.setPressure(press);
     }
 
-    //! \brief Writes data files
-    /*  \param writer VTK-Writer for the current simulation run */
+    /*! \brief Adds pressure output to the output file
+     *
+     * Adds pressures to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -175,7 +198,7 @@ public:
 
     //! Constructs a FVPressure1P object
     /**
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVPressure1P(Problem& problem) :
         ParentType(problem), problem_(problem),
@@ -197,9 +220,14 @@ private:
     Scalar viscosity_;
 };
 
-//!function which calculates the source entry
+/*! \brief Function which calculates the source entry
+ *
+ * \copydetails FVPressure::getSource(EntryType&,const Element&,const CellData&,const bool)
+ *
+ * Source the fluid phase has to be added as mass flux (\f$\text{kg}/(\text{m}^3 \text{s}\f$).
+ */
 template<class TypeTag>
-void FVPressure1P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entries, const Element& element
+void FVPressure1P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entry, const Element& element
         , const CellData& cellData, const bool first)
 {
     // cell volume, assume linear map here
@@ -210,15 +238,19 @@ void FVPressure1P<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& entries, con
     problem_.source(sourcePhase, element);
         sourcePhase /= density_;
 
-    entries[rhs] = volume * sourcePhase;
+    entry[rhs] = volume * sourcePhase;
 
     return;
 }
 
-//!function which calculates internal flux entries
+/*! \brief Function which calculates the flux entry
+ *
+ * \copydetails FVPressure::getFlux(EntryType&,const Intersection&,const CellData&,const bool)
+ *
+ */
 template<class TypeTag>
-void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const Intersection& intersection
-        , const CellData& cellDataI, const bool first)
+void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const Intersection& intersection
+        , const CellData& cellData, const bool first)
 {
     ElementPointer elementI = intersection.inside();
     ElementPointer elementJ = intersection.outside();
@@ -251,17 +283,23 @@ void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries, const
     permeability/=viscosity_;
 
     //calculate current matrix entry
-    entries[matrix] = ((permeability * unitOuterNormal) / dist) * faceArea;
+    entry[matrix] = ((permeability * unitOuterNormal) / dist) * faceArea;
 
     //calculate right hand side
-    entries[rhs] = density_ * (permeability * gravity_) * faceArea;
+    entry[rhs] = density_ * (permeability * gravity_) * faceArea;
 
     return;
 }
 
-//!function which calculates internal flux entries
+/*! \brief Function which calculates the flux entry at a boundary
+ *
+ * \copydetails FVPressure::getFluxOnBoundary(EntryType&,const Intersection&,const CellData&,const bool)
+ *
+ * Dirichlet boundary condition is a pressure,
+ * Neumann boundary condition is the phase mass flux [\f$\text{kg}/(\text{m}^2 \text{s}\f$]
+ */
 template<class TypeTag>
-void FVPressure1P<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entries,
+void FVPressure1P<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entry,
 const Intersection& intersection, const CellData& cellData, const bool first)
 {
     ElementPointer element = intersection.inside();
@@ -308,11 +346,11 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         Scalar pressBound = boundValues;
 
         //calculate current matrix entry
-        entries[matrix] = ((permeability * unitOuterNormal) / dist) * faceArea;
-        entries[rhs] = entries[matrix] * pressBound;
+        entry[matrix] = ((permeability * unitOuterNormal) / dist) * faceArea;
+        entry[rhs] = entry[matrix] * pressBound;
 
         //calculate right hand side
-        entries[rhs] -= density_ * (permeability * gravity_) * faceArea;
+        entry[rhs] -= density_ * (permeability * gravity_) * faceArea;
 
     }
     //set neumann boundary condition
@@ -321,7 +359,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         problem_.neumann(boundValues, intersection);
         Scalar J = boundValues /= density_;
 
-        entries[rhs] = -(J * faceArea);
+        entry[rhs] = -(J * faceArea);
     }
     else
     {

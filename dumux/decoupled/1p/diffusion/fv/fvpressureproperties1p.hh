@@ -21,13 +21,13 @@
  *****************************************************************************/
 
 /*!
- * \ingroup IMPES
+ * \ingroup FV1p
  * \ingroup Properties
  */
 /*!
  * \file
  *
- * \brief Defines the properties required for finite volume pressure models in a twophase sequential model.
+ * \brief Defines the properties required for finite volume pressure models
  */
 
 #ifndef DUMUX_FVPRESSUREPORPERTIES1P_DECOUPLED_HH
@@ -53,7 +53,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the two-phase problems
+//! The type tag for the one-phase problems using a standard finite volume model
 NEW_TYPE_TAG(FVPressureOneP, INHERITS_FROM(PressureOneP));
 
 //////////////////////////////////////////////////////////////////
@@ -73,9 +73,11 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
+//! Set velocity reconstruction implementation standard cell centered finite volume schemes as default
 SET_TYPE_PROP( FVPressureOneP, Velocity, Dumux::FVVelocity1P<TypeTag> );
+//! Set finite volume implementation of the one-phase pressure equation as default pressure model
 SET_TYPE_PROP(FVPressureOneP, PressureModel, Dumux::FVPressure1P<TypeTag>);
-//! Faces are only regarded from one side and not from both cells
+//! Allow assembling algorithm for the pressure matrix to assemble only from one side of a cell-cell interface
 SET_BOOL_PROP(FVPressureOneP, VisitFacesOnlyOnce, true);
 // \}
 }
