@@ -112,7 +112,7 @@ SET_INT_PROP(Pressure, LinearSolverMaxIterations, 500);
 //! set the default number of maximum iterations for the linear solver
 SET_INT_PROP(Pressure, LinearSolverBlockSize, 1);
 
-SET_TYPE_PROP( Pressure, Velocity, VelocityDefault<TypeTag>);
+SET_TYPE_PROP( Pressure, Velocity, FVVelocityDefault<TypeTag>);
 
 }
 }

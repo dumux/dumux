@@ -36,10 +36,16 @@
 namespace Dumux
 {
 
-//! The finite volume base class for the solution of a pressure equation
-/*! \ingroup multiphase
- *  TODO:
+/*! \ingroup IMPET
+ *
+ * \brief Base class for finite volume velocity reconstruction
+ *
+ * Provides a basic frame for calculating a global velocity field.
+ * The definition of the local velocity calculation as well as the storage or other postprocessing has to be provided by the local velocity implementation.
+ * This local implementation has to have the form of VelocityDefault.
+ *
  * \tparam TypeTag The Type Tag
+ * \tparam Velocity The implementation of the local velocity calculation
  */
 template<class TypeTag, class Velocity> class FVVelocity
 {
@@ -66,19 +72,21 @@ public:
     //function which iterates through the grid and calculates the global velocity field
     void calculateVelocity();
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds velocity output to the output file
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
         velocity_.addOutputVtkFields(writer);
     }
 
-    //@}
-
     //! Constructs a FVVelocity object
     /**
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
     FVVelocity(Problem& problem) :
         problem_(problem), velocity_(problem)
@@ -90,7 +98,10 @@ private:
 };
 
 
-//! function which reconstructs a global velocity field
+/*! \brief Function which reconstructs a global velocity field
+ *
+ * Iterates through the grid and calls the local calculateVelocity(...) or calculateVelocityOnBoundary(...) functions which have to be provided by the local velocity implementation (see e.g. VelocityDefault )
+ */
 template<class TypeTag, class Velocity>
 void FVVelocity<TypeTag, Velocity>::calculateVelocity()
 {
@@ -102,7 +113,6 @@ void FVVelocity<TypeTag, Velocity>::calculateVelocity()
         // cell information
         int globalIdxI = problem_.variables().index(*eIt);
         CellData& cellDataI = problem_.variables().cellData(globalIdxI);
-
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
@@ -117,7 +127,6 @@ void FVVelocity<TypeTag, Velocity>::calculateVelocity()
                 if (!cellDataI.fluxData().haveVelocity(isIndex))
                     velocity_.calculateVelocity(*isIt, cellDataI);
             }   // end neighbor
-
 
             /************* boundary face ************************/
             else

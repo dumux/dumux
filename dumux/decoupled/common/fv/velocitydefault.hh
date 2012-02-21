@@ -34,14 +34,15 @@
 
 namespace Dumux
 {
-//! \ingroup FV2p
-//! \brief Default implementation of velocity class.
-/*! Provides functions to make transport part compile
+//! \ingroup IMPET
+/*! \brief Default implementation of a velocity class.
+ *
+ * If the velocity is reconstructed in the pressure model this default implementation is used in the transport model.
+ *
  * \tparam TypeTag The Type Tag
  */
-
 template<class TypeTag>
-class VelocityDefault
+class FVVelocityDefault
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -53,27 +54,31 @@ class VelocityDefault
 public:
     //! Constructs a FVVelocityDefault object
     /*!
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
-    VelocityDefault(Problem& problem)
+    FVVelocityDefault(Problem& problem)
     {}
 
-    //! Empty functions!
-    /*!
-     */
+    //! Local velocity calculation
     void calculateVelocity(const Intersection& intersection, CellData& cellData)
     {}
 
+    //! Local velocity calculation
     void calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
     {}
 
+    //! \brief Indicates if velocity is reconstructed the transport step
     bool calculateVelocityInTransport()
     {
         return false;
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds velocity output to the output file
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {}

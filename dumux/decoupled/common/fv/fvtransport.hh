@@ -35,8 +35,14 @@
 namespace Dumux
 {
 //! \ingroup IMPET
-//! \brief The finite volume discretization of a transport equation
-/*!
+/*!\brief The finite volume discretization of a transport equation
+ *  Base class for finite volume (FV) implementations of an explicitly treated transport equation.
+ *  The class provides a method to calculate the explicit update to get a new solution of the transported quantity:
+ *  \f[
+ *      u_{new} = u_{old} + \Delta t \Delta u_{update}
+ *  \f]
+ *  A certain transport equation defined in a implementation of this base class must be splitted into a flux term and a source term.
+ *  Corresponding functions (<tt>getSource()</tt>, <tt>getFlux()</tt> and <tt>getFluxOnBoundary()</tt>) have to be defined in the implementation.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -69,6 +75,7 @@ class FVTransport
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
 protected:
+    //! \cond \private
     EvalCflFluxFunction& evalCflFluxFunction()
     {
         return *evalCflFluxFunction_;
@@ -78,72 +85,105 @@ protected:
     {
         return *evalCflFluxFunction_;
     }
+    //! \endcond
 
 public:
-    //! Calculate the update vector.
-    /*!
-     *  \param[in]  t         time
-     *  \param[in] dt         time step size
-     *  \param[in] updateVec  vector for the update values
-     *  \param[in] impet      variable is true if an impet algorithm is used and false if the transport part is solved independently
-     *
-     *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
-     *  employing a CFL condition.
-     */
+
+    // Calculate the update vector.
     void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet);
 
+    /*! \brief Function which calculates the flux update
+     *
+     * Function computes the inter-cell flux term and adds it to the update.
+     *
+     * \param update The cell update
+     * \param intersection Intersection of two grid elements
+     * \param cellDataI Object containing all model relevant cell data
+     */
     void getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI);
 
+    /*! \brief Function which calculates the boundary flux update
+     *
+     * Function computes the boundary-flux term and  adds it to the update.
+     *
+     * \param update The cell update
+     * \param intersection Intersection of two grid elements
+     * \param cellDataI Object containing all model relevant cell data
+     */
     void getFluxOnBoundary(Scalar& update, const Intersection& intersection, CellData& cellDataI);
 
+    /*! \brief Function which calculates the source update
+     *
+     * Function computes the source term and adds it to the update.
+     *
+     * \param update The cell update
+     * \param element Grid element
+     * \param cellDataI Object containing all model relevant cell data
+     */
     void getSource(Scalar& update, const Element& element, CellData& cellDataI);
 
-    //! Sets the initial solution \f$S_0\f$.
+    //! Sets the initial solution \f$ S_0 \f$.
     void initialize();
 
-    //! Update the values of the material laws and constitutive relations.
-    /*!
-     *  Constitutive relations like capillary pressure-saturation relationships, mobility-saturation relationships... are updated and stored in the variable class
-     *  of type Dumux::VariableClass2P. The update has to be done when new saturation are available.
-     */
+
+    /*! \brief Updates constitutive relations and stores them in the variable class*/
     void updateMaterialLaws();
 
+    /*! \brief Writes the current values of the primary transport variable into the <tt>transportedQuantity</tt>-vector (comes as function argument)
+     *
+     * \param transportedQuantity Vector of the size of global numbers of degrees of freedom of the primary transport variable.
+     */
     void getTransportedQuantity(TransportSolutionType& transportedQuantity);
 
+    /*! \brief Updates the primary transport variable.
+     *
+     * \param updateVec Vector containing the global update.
+     */
     void updateTransportedQuantity(TransportSolutionType& updateVec);
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds transport output to the output file
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {}
 
-//    void indicator(TransportSolutionType &indicator, Scalar &globalMin, Scalar &globalMax);
-
-
-    /*! \name general methods for serialization, output */
-    //@{
-    // serialization methods
-    //! Function needed for restart option.
+    /*! \brief  Function for serialization of the primary transport variable.
+     *
+     *  Function needed for restart option. Writes the primary transport variable of a grid element to a restart file.
+     *
+     *  \param outstream Stream into the restart file.
+     *  \param element Grid element
+     */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {}
 
+    /*! \brief  Function for deserialization of the primary transport variable.
+     *
+     *  Function needed for restart option. Reads the the primary transport variable of a grid element from a restart file.
+     *
+     *  \param instream Stream from the restart file.
+     *  \param element Grid element
+     */
     void deserializeEntity(std::istream &instream, const Element &element)
     {}
-    //@}
+
 
     //! Constructs a FVTransport object
     /**
 
-     * \param problem a problem class object
+     * \param problem A problem class object
      */
-
     FVTransport(Problem& problem) :
             problem_(problem), switchNormals_(GET_PARAM(TypeTag, bool, SwitchNormals))
     {
         evalCflFluxFunction_ = new EvalCflFluxFunction(problem);
     }
 
+    //! Destructor
     ~FVTransport()
     {
         delete evalCflFluxFunction_;
@@ -164,6 +204,15 @@ private:
     EvalCflFluxFunction* evalCflFluxFunction_;
 };
 
+/*! \brief Calculate the update vector.
+ *  \param t         current time
+ *  \param dt        time step size
+ *  \param updateVec  vector containing the update values
+ *  \param impet      variable should be true if an impet algorithm is used and false if the transport part is solved independently
+ *
+ *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
+ *  employing a CFL condition.
+ */
 template<class TypeTag>
 void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false)
 {
