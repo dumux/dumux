@@ -34,13 +34,13 @@
 #if defined(DOXYGEN) || !HAVE_ATTRIBUTE_DEPRECATED
 //! Mark some entity as deprecated
 #define DUMUX_DEPRECATED
-#else // defined(HAS_ATTRIBUTE_DEPRECATED)
+#else
 #define DUMUX_DEPRECATED __attribute__((deprecated))
 #endif
 
 #if defined(DOXYGEN) || !HAVE_ATTRIBUTE_DEPRECATED_MSG
 //! Mark some entity as deprecated
-#define DUMUX_DEPRECATED_MSG(text) DUNE_DEPRECATED
+#define DUMUX_DEPRECATED_MSG(text) DUMUX_DEPRECATED
 #else
 #define DUMUX_DEPRECATED_MSG(text) __attribute__((deprecated(text)))
 #endif
