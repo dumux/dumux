@@ -41,7 +41,7 @@ SET_PROP(TransportTwoP, Model)
 {
     typedef typename GET_PROP_TYPE(TypeTag, TransportModel) type;
 };
-SET_TYPE_PROP(TransportTwoP, Velocity, VelocityDefault<TypeTag>); //this Property should be set by the pressure model, only for a pure transport it is set here for the transportproblem!
+SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>); //this Property should be set by the pressure model, only for a pure transport it is set here for the transportproblem!
 }
 
 /*!

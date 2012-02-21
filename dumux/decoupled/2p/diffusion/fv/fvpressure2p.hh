@@ -563,7 +563,7 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     const GlobalPosition& globalPosJ = elementJ->geometry().center();
 
     // get mobilities and fractional flow factors
-    Scalar lacellDatacellData.mobility(wPhaseIdx);
+    Scalar lambdaWI = cellData.mobility(wPhaseIdx);
     Scalar lambdaNWI = cellData.mobility(nPhaseIdx);
     Scalar fractionalWI = cellData.fracFlowFunc(wPhaseIdx);
     Scalar fractionalNWI = cellData.fracFlowFunc(nPhaseIdx);

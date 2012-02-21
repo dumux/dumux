@@ -37,7 +37,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPESproblem
+ * \ingroup IMPETproblems
  * \ingroup IMPES
  * \brief  Base class for all 2-phase problems which use an impes algorithm
  *
