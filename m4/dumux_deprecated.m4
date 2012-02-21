@@ -18,9 +18,9 @@ AC_DEFUN([DUMUX_CHECKDEPRECATED],[
                     class t_peng { t_peng() {}; } DEP;
                     void foo() DEP;
                     void foo() {};],[],
-                                  [DUMUX_DEPRECATED="__attribute__((deprecated))"
+                                  [DUMUX_DEPRECATED="1"
                     AC_MSG_RESULT(yes)],
-                                  [DUMUX_DEPRECATED=""
+                                  [DUMUX_DEPRECATED="0"
                     AC_MSG_RESULT(no)])
 
         AC_LANG_POP([C++])
@@ -36,14 +36,17 @@ AC_DEFUN([DUMUX_CHECKDEPRECATED],[
                     class t_peng { t_peng() {}; } DEP;
                     void foo() DEP;
                     void foo() {};],[],
-                                  [DUMUX_DEPRECATED_MSG="__attribute__((deprecated(msg)))"
+                                  [DUMUX_DEPRECATED_MSG="1"
                      AC_MSG_RESULT(yes)],
-                                  [DUMUX_DEPRECATED_MSG="$DUMUX_DEPRECATED"
+                                  [DUMUX_DEPRECATED_MSG="0"
                      AC_MSG_RESULT(no)])
          AC_LANG_POP([C++])
  
-    AC_DEFINE_UNQUOTED(DUMUX_DEPRECATED, $DUMUX_DEPRECATED,
-                      [how to create a deprecation warning])
-    AC_DEFINE_UNQUOTED(DUMUX_DEPRECATED_MSG(msg), $DUMUX_DEPRECATED_MSG,
-                      [how to create a deprecation warning with an additional message])
+    AC_DEFINE_UNQUOTED(HAVE_ATTRIBUTE_DEPRECATED, $DUMUX_DEPRECATED,
+                      [The compiler supports __attribute__((deprecated))])
+
+    AC_DEFINE_UNQUOTED(HAVE_ATTRIBUTE_DEPRECATED_MSG, $DUMUX_DEPRECATED_MSG,
+                      [The compiler supports __attribute__((deprecated(msg)))])
+
+    AH_BOTTOM([#include <dumux/common/deprecated.hh>])
 ])
