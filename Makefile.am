@@ -11,8 +11,8 @@ EXTRA_DIST = dune.module \
 SUBDIRS = doc dumux m4 test tutorial
 
 # don't follow the full GNU-standard
-# we need automake 1.10
-AUTOMAKE_OPTIONS = foreign 1.10
+# we need automake 1.9 or later
+AUTOMAKE_OPTIONS = foreign 1.9
 
 # pass most important options when "make distcheck" is used
 DISTCHECK_CONFIGURE_FLAGS= CXX="$(CXX)" CC="$(CC)"
