@@ -22,8 +22,8 @@
  *****************************************************************************/
 
 /*!
- * \ingroup Decoupled
- * \ingroup Properties
+ * \ingroup IMPET
+ * \ingroup IMPETProperties
  * \file
  *
  * \brief Properties for a MPFA method.
@@ -45,6 +45,8 @@
 namespace Dumux
 {
 /*!
+ *
+ *
  * \brief Indices denoting the different grid types.
  */
 struct GridTypes
@@ -61,7 +63,7 @@ public:
     //ALUGrid
     static const int aluGrid = 4;
 };
-
+//! \cond \private
 template<class Grid, int dim>
 struct GridImp
 {
@@ -87,13 +89,15 @@ struct GridImp<Dune::UGGrid<dim>, dim>
     static const int imp = GridTypes::ugGrid;
 };
 #endif
+//! \endcond
 
 namespace Properties
 {
+//! Basic Type tag for MFPA models
 NEW_TYPE_TAG(MPFAProperties);
 
-NEW_PROP_TAG( GridTypeIndices );
-NEW_PROP_TAG( GridImplementation ); //returns kind of grid implementation
+NEW_PROP_TAG( GridTypeIndices );//!< The grid type indices to decide which grid is used
+NEW_PROP_TAG( GridImplementation ); //!< Gives kind of grid implementation in form of a GridType
 
 }
 }
@@ -103,6 +107,7 @@ namespace Dumux
 namespace Properties
 {
 
+//! \cond \private
 SET_PROP(MPFAProperties, GridImplementation)
 {
 private:
@@ -110,7 +115,9 @@ private:
 public:
     static const int value = GridImp<Grid, Grid::dimension>::imp;
 };
+//! \endcond
 
+//! Set grid type indices
 SET_TYPE_PROP(MPFAProperties, GridTypeIndices, GridTypes);
 
 }

@@ -27,7 +27,7 @@
 
 /*!
  * \ingroup Saturation2p
- * \ingroup Properties
+ * \ingroup IMPETProperties
  */
 /*!
  * \file

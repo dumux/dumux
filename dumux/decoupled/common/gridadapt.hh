@@ -32,7 +32,7 @@
 namespace Dumux
 {
 
-/*!
+/*!\ingroup IMPET
  * @brief Standard Module for h-adaptive simulations
  *
  * This class is created by the problem class with the template

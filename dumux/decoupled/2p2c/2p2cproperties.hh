@@ -21,7 +21,9 @@
  *****************************************************************************/
 
 /*!
- * \ingroup IMPEC Properties
+ * \ingroup IMPEC
+ * \ingroup IMPETProperties
+ *
  * \file
  *
  * \brief Defines the properties required for the decoupled 2p2c models.

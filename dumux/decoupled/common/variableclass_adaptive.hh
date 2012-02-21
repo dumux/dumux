@@ -35,7 +35,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup Sequential
+ * \ingroup IMPET
  */
 //! Base class holding the variables and discretized data for sequential models.
 /*!

@@ -22,13 +22,13 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup IMPES
- * \ingroup Properties
+ * \ingroup IMPET
+ * \ingroup IMPETProperties
  */
 /*!
  * \file
  *
- * \brief Defines the properties required for (immiscible) twophase sequential models.
+ * \brief Defines the basic properties required for a mimetic method.
  */
 
 #ifndef DUMUX_MIMETICPROPERTIES_DECOUPLED_HH
@@ -53,14 +53,14 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the two-phase problems
+//! The type tag for models using a mimetic method
 NEW_TYPE_TAG(Mimetic)
 ;
 
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG( LocalStiffness); //!< The type of communication needed for the mimetic operator
+NEW_PROP_TAG( LocalStiffness); //!< The local mimetic operator
 
 }
 }

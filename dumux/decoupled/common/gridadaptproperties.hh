@@ -20,8 +20,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
- * \ingroup Linear
+ * \ingroup IMPETProperties
+ * \ingroup IMPET
  * \file
  *
  * \brief Defines a type tag and some fundamental properties for

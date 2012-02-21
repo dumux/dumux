@@ -23,7 +23,7 @@
  *****************************************************************************/
 /*!
  * \ingroup MimeticPressure2p
- * \ingroup Properties
+ * \ingroup IMPETProperties
  */
 /*!
  * \file

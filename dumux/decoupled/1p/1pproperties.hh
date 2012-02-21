@@ -24,7 +24,7 @@
 
 /*!
  * \ingroup OnePhase
- * \ingroup Properties
+ * \ingroup IMPETProperties
  * \file
  *
  * \brief Defines the properties required for the single phase sequential model.

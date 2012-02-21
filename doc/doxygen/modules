@@ -277,7 +277,7 @@
 	 */
 	/*!
 	 * \ingroup Sequential
-	 * \defgroup IMPETbc Boundary Conditions
+	 * \defgroup IMPETProperties Properties
 	 */
 	/*!
 	 * \ingroup Sequential

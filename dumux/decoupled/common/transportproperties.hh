@@ -25,8 +25,8 @@
 #include "decoupledproperties.hh"
 
 /*!
- * \ingroup Saturation2p
- * \ingroup Properties
+ * \ingroup Sequential
+ * \ingroup IMPETProperties
  */
 /*!
  * \file

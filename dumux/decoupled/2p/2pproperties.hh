@@ -24,7 +24,7 @@
 
 /*!
  * \ingroup IMPES
- * \ingroup Properties
+ * \ingroup IMPETProperties
  */
 /*!
  * \file

@@ -28,7 +28,7 @@
 
 /*!
  * \ingroup Sequential
- * \ingroup Properties
+ * \ingroup IMPETProperties
  */
 /*!
  * \file
@@ -195,8 +195,6 @@ SET_PROP(DecoupledModel, BoundaryTypes)
 public:
     typedef Dumux::BoundaryTypes<numEq>  type;
 };
-
-// \}
 
 }
 }

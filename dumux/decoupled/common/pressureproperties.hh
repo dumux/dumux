@@ -32,8 +32,8 @@
 
 
 /*!
- * \ingroup IMPET
- * \ingroup Properties
+ * \ingroup Sequential
+ * \ingroup IMPETProperties
  */
 /*!
  * \file
