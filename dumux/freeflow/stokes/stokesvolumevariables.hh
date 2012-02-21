@@ -73,9 +73,8 @@ class StokesVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef Dune::FieldVector<Scalar, dim> VelocityVector;
 
 public:
-
     /*!
-     * \brief Update all quantities for a given control volume.
+     * \@copydoc BoxModel::update()
      */
     void update(const PrimaryVariables &primaryVars,
                 const Problem &problem,
@@ -98,7 +97,7 @@ public:
     }
 
     /*!
-     * \@copydoc BoxModel::completeFluidState
+     * \@copydoc BoxModel::completeFluidState()
      */
     static void completeFluidState(const PrimaryVariables& primaryVars,
                                    const Problem& problem,

@@ -27,7 +27,7 @@
  * \file
  *
  * \brief Defines the supplementary properties required for the compositional
- * stokes BOX model.
+ * Stokes box model.
  */
 #ifndef DUMUX_STOKES2CPROPERTIES_HH
 #define DUMUX_STOKES2CPROPERTIES_HH
@@ -43,7 +43,7 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the compositional stokes problems
+//! The type tag for the compositional Stokes problems
 NEW_TYPE_TAG(BoxStokes2c, INHERITS_FROM(BoxStokes));
 
 //////////////////////////////////////////////////////////////////

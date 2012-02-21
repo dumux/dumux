@@ -66,7 +66,6 @@ namespace Dumux {
  * This is discretized using a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as temporal discretization.
- *
  */
 template<class TypeTag>
 class Stokes2cModel : public StokesModel<TypeTag>
@@ -89,11 +88,7 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
-    /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
-     */
+    //! \@copydoc BoxModel::addOutputVtkFields
     template <class MultiWriter>
     void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
     {

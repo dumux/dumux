@@ -24,7 +24,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the compositional stokes box model.
+ *        using the compositional Stokes box model.
  *
  */
 #ifndef DUMUX_STOKES2C_LOCAL_RESIDUAL_HH
@@ -55,7 +55,7 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
     enum { dim = GridView::dimension };
     enum { transportIdx = Indices::transportIdx }; //!< Index of the transport equation
     enum { lCompIdx = Indices::lCompIdx }; //!< Index of the liquid component
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex)};
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex)}; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -65,7 +65,7 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
 
 public:
     /*!
-     * \brief Evaluate the stored amount of the additional quantities to the stokes model
+     * \brief Evaluate the stored amount of quantities additional to the Stokes model
      *        (transport equation).
      *
      * The result should be averaged over the volume (e.g. phase mass
@@ -95,10 +95,13 @@ public:
 
     /*!
      * \brief Evaluates the advective component (mass) flux
-     * over a face of a subcontrol volume and writes the result in
+     * over a face of a sub-control volume and writes the result in
      * the flux vector.
      *
-     * This method is called by compute flux (base class)
+     * This method is called by compute flux (base class).
+     *
+     * \param flux The advective flux over the sub-control-volume face for each component
+     * \param fluxVars The flux variables at the current SCV/boundary face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -127,6 +130,9 @@ public:
     /*!
      * \brief Adds the diffusive component flux to the flux vector over
      *        the face of a sub-control volume.
+     *
+     * \param flux The diffusive flux over the SCV face or boundary face
+     * \param fluxVars The flux variables at the current SCV/boundary face
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const

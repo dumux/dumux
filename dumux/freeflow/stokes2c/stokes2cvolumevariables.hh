@@ -66,7 +66,7 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \brief Update all additional quantities for a given control volume.
+     * \@copydoc BoxModel::update
      */
     void update(const PrimaryVariables &primaryVars,
                 const Problem &problem,

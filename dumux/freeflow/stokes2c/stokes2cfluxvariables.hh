@@ -50,8 +50,8 @@ NEW_PROP_TAG(Stokes2cIndices); //!< Enumerations for the compositional stokes mo
  *        calculate the component fluxes over a face of a finite
  *        volume for the compositional Stokes model.
  *
- * This means concentration gradients, diffusion coefficients, mass fractions, etc.
- * at the integration point of a SCV  or boundary face.
+ * This means concentration gradients, diffusion coefficient, mass fractions, etc.
+ * at the integration point of a SCV or boundary face.
  */
 template <class TypeTag>
 class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>
@@ -85,9 +85,15 @@ public:
         calculateValues_(problem, element, elemVolVars);
     }
 
+    /*!
+     * \brief Return the mass fraction at the integration point.
+     */
     Scalar massFractionAtIP() const
     { return massFractionAtIP_; }
 
+    /*!
+     * \brief Return the diffusion coefficient at the integration point.
+     */
     Scalar diffusionCoeffAtIP() const
     { return diffusionCoeffAtIP_; }
 

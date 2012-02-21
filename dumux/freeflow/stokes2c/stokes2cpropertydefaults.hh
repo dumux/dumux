@@ -58,12 +58,12 @@ SET_PROP(BoxStokes2c, NumEq) //!< set the number of equations
     static constexpr int value = 2 + dim;
 };
 
-//! Use the stokes2c local jacobian operator for the compositional stokes model
+//! Use the stokes2c local jacobian operator
 SET_TYPE_PROP(BoxStokes2c,
               LocalResidual,
               Stokes2cLocalResidual<TypeTag>);
 
-//! the model property
+//! the Model property
 SET_TYPE_PROP(BoxStokes2c, Model, Stokes2cModel<TypeTag>);
 
 //! the VolumeVariables property
