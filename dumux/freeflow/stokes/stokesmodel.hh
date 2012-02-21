@@ -28,6 +28,8 @@
 #ifndef DUMUX_STOKES_MODEL_HH
 #define DUMUX_STOKES_MODEL_HH
 
+#include <dumux/boxmodels/common/boxmodel.hh>
+
 #include "stokeslocalresidual.hh"
 #include "stokesnewtoncontroller.hh"
 #include "stokeslocaljacobian.hh"
@@ -38,7 +40,7 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokesModel
- * \brief Adaption of the box scheme to the stokes model.
+ * \brief Adaption of the box scheme to the Stokes model.
  *
  * This model implements laminar Stokes flow of a single fluid, solving a momentum balance:
  * \f[
@@ -67,9 +69,9 @@ class StokesModel : public BoxModel<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -84,10 +86,14 @@ public:
     /*!
      * \brief Calculate the fluxes across a certain layer in the domain.
      * The layer is situated perpendicular to the coordinate axis "coord" and cuts
-     * the axis at the value "coordValue"
+     * the axis at the value "coordVal".
      *
+     * \param globalSol The global solution vector
+     * \param flux A vector to store the flux
+     * \param axis The dimension, perpendicular to which the layer is situated
+     * \param coordVal The (Scalar) coordinate on the axis, at which the layer is situated
      */
-    void calculateFluxAcrossLayer (const SolutionVector &globalSol, Dune::FieldVector<Scalar, 2> &flux, int coord, Scalar coordVal)
+    void calculateFluxAcrossLayer(const SolutionVector &globalSol, Dune::FieldVector<Scalar, numEq> &flux, int axis, Scalar coordVal)
     {
         GlobalPosition globalI, globalJ;
         PrimaryVariables tmpFlux(0.0);
@@ -112,9 +118,9 @@ public:
             bool hasRight = false;
             for (int i = 0; i < fvElemGeom.numVertices; i++) {
                 const GlobalPosition &global = fvElemGeom.subContVol[i].global;
-                if (globalI[coord] < coordVal)
+                if (globalI[axis] < coordVal)
                     hasLeft = true;
-                else if (globalI[coord] >= coordVal)
+                else if (globalI[axis] >= coordVal)
                     hasRight = true;
             }
             if (!hasLeft || !hasRight)
@@ -124,7 +130,7 @@ public:
                 const int &globalIdx =
                     this->vertexMapper().map(*elemIt, i, dim);
                 const GlobalPosition &global = fvElemGeom.subContVol[i].global;
-                if (globalI[coord] < coordVal)
+                if (globalI[axis] < coordVal)
                     flux += this->localResidual().residual(i);
             }
         }
@@ -132,11 +138,7 @@ public:
         flux = this->problem_.gridView().comm().sum(flux);
     }
 
-    /*!
-     * \brief Calculate mass in the whole model domain
-     *         and get minimum and maximum values of primary variables
-     *
-     */
+    DUMUX_DEPRECATED_MSG("outdated function; use globalStorage() of the model")
     void calculateMass(const SolutionVector &sol, Dune::FieldVector<Scalar, 2> &mass)
     {
         //         const DofMapper &dofMapper = this->dofEntityMapper();

@@ -22,7 +22,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all stokes problems which use the box scheme
+ * \brief Base class for all stokes problems which use the box scheme.
  */
 #ifndef DUMUX_STOKES_PROBLEM_HH
 #define DUMUX_STOKES_PROBLEM_HH
@@ -35,9 +35,9 @@ namespace Dumux
 {
 /*!
  * \ingroup BoxStokesProblems
- * \brief Base class for all problems which use the stokes box model
+ * \brief Base class for all problems which use the Stokes box model.
  *
- * \todo Please doc me more!
+ * This implements gravity (if desired) and a function returning the temperature.
  */
 template<class TypeTag>
 class StokesProblem : public BoxProblem<TypeTag>
@@ -97,7 +97,7 @@ public:
      * \brief Evaluate the intrinsic permeability
      *        at the corner of a given element
      *
-     * \return permeability in x-direction
+     * \return (Scalar) permeability
      */
     Scalar permeability(const Element &element,
                         const FVElementGeometry &fvElemGeom,

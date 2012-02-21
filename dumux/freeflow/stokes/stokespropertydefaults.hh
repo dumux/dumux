@@ -27,7 +27,10 @@
  *
  * \file
  *
- * \brief Defines the properties required for the Stokes box model.
+ * \brief Defines default properties for the Stokes box model.
+ *
+ * These can be overwritten at a different place or
+ * may be replaced by values of the input file.
  */
 
 #ifndef DUMUX_STOKES_PROPERTY_DEFAULTS_HH
@@ -76,7 +79,7 @@ SET_TYPE_PROP(BoxStokes,
               LocalResidual,
               StokesLocalResidual<TypeTag>);
 
-// Use the Stokes specific newton controller for the Stokes model
+//! Use the Stokes specific newton controller for the Stokes model
 SET_PROP(BoxStokes, NewtonController)
 {public:
     typedef StokesNewtonController<TypeTag> type;
@@ -95,7 +98,7 @@ SET_TYPE_PROP(BoxStokes, VolumeVariables, StokesVolumeVariables<TypeTag>);
 //! the FluxVariables property
 SET_TYPE_PROP(BoxStokes, FluxVariables, StokesFluxVariables<TypeTag>);
 
-//! the upwind factor for the mobility.
+//! the upwind factor.
 SET_SCALAR_PROP(BoxStokes, MassUpwindWeight, 1.0);
 
 //! The fluid system to use by default
@@ -107,6 +110,7 @@ public:
     typedef FluidSystems::OneP<Scalar, Fluid> type;
 };
 
+//! The fluid that is used in the single-phase fluidsystem.
 SET_PROP(BoxStokes, Fluid)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -116,7 +120,7 @@ public:
 
 SET_TYPE_PROP(BoxStokes, StokesIndices, StokesCommonIndices<TypeTag>);
 
-//! Choose the type of the employed fluid state
+//! Choose the type of the employed fluid state.
 SET_PROP(BoxStokes, FluidState)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -126,6 +130,7 @@ public:
 
 };
 
+//! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(BoxStokes, PhaseIndex, 0);
 
 //

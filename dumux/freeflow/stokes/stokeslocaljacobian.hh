@@ -38,12 +38,14 @@ namespace Dumux
  * \brief Element-wise calculation of the jacobian matrix for models
  *        based on the box scheme.
  *
- * This overloads the numericEpsilon method of the boxlocaljacobian
+ * This overloads the numericEpsilon method of the boxlocaljacobian.
+ * The momentum balance equation uses larger epsilons than the rest.
  */
 template<class TypeTag>
 class StokesLocalJacobian : public BoxLocalJacobian<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
     //! \copydoc BoxLocalJacobian::numericEpsilon()
@@ -51,7 +53,7 @@ public:
                           int pvIdx) const
     {
         Scalar pv = this->curVolVars_[scvIdx].primaryVars()[pvIdx];
-        if (pvIdx == 0 || pvIdx == 1){
+        if (pvIdx < GridView::dimension){
             return 1e-7*(std::abs(pv) + 1);
         }
         return 1e-9*(std::abs(pv) + 1);

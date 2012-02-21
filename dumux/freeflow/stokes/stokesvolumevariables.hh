@@ -142,38 +142,34 @@ public:
     { return fluidState_; }
 
     /*!
-     * \brief Returns the mass density of a given phase within the
-     *        control volume.
+     * \brief Returns the mass density \f$\mathrm{[kg/m^3]}\f$ of the fluid within the
+     *        sub-control volume.
      */
     Scalar density() const
     { return fluidState_.density(phaseIdx); }
 
     /*!
-     * \brief Returns the effective pressure of a given phase within
-     *        the control volume.
+     * \brief Returns the fluid pressure \f$\mathrm{[Pa]}\f$ within
+     *        the sub-control volume.
      */
     Scalar pressure() const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
-     * \brief Returns temperature inside the sub-control volume.
-     *
-     * Note that we assume thermodynamic equilibrium, i.e. the
-     * temperature of the rock matrix and of all fluid phases are
-     * identical.
+     * \brief Returns temperature\f$\mathrm{[T]}\f$ inside the sub-control volume.
      */
     Scalar temperature() const
     { return fluidState_.temperature(phaseIdx); }
 
     /*!
-     * \brief Returns the viscosity of the fluid in
-     *        the control volume.
+     * \brief Returns the viscosity \f$\mathrm{[m^2/s]}\f$ of the fluid in
+     *        the sub-control volume.
      */
     Scalar viscosity() const
     { return fluidState_.viscosity(phaseIdx); }
 
     /*!
-     * \brief Returns the phase velocity
+     * \brief Returns the velocity vector in the sub-control volume.
      */
     const VelocityVector &velocity() const
     { return velocity_; }

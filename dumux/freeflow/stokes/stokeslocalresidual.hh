@@ -24,7 +24,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the stokes box model.
+ *        using the Stokes box model.
  */
 
 #ifndef DUMUX_STOKES_LOCAL_RESIDUAL_BASE_HH
@@ -52,7 +52,7 @@ namespace Dumux
  *        using the Stokes box model.
  *
  * This class is also used for the non-isothermal and the two-component Stokes
- * model, which means that it uses static polymorphism.
+ * model (static polymorphism).
  */
 template<class TypeTag>
 class StokesLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
@@ -84,7 +84,6 @@ protected:
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -108,7 +107,7 @@ protected:
     };
 
     /*!
-     * \brief Evaluate the amount all conservation quantities
+     * \brief Evaluates the amount of all conservation quantities
      *        (mass and momentum) within a sub-control volume.
      *
      * The result should be averaged over the volume (e.g. phase mass
@@ -149,7 +148,7 @@ protected:
      * \param flux The flux over the SCV (sub-control-volume) face
      * \param faceIdx The index of the SCV face (may also be a boundary face)
      * \param onBoundary Indicates, if the flux is evaluated on a boundary face. If it is true,
-     *        the created fluxVars object cotains boundary variables evaluated at the IP of the
+     *        the created fluxVars object contains boundary variables evaluated at the IP of the
      *        boundary face
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
@@ -173,7 +172,7 @@ protected:
      *        a face of a sub-control volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV face
+     * \param fluxVars The flux variables at the current SCV/boundary face
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -250,14 +249,14 @@ protected:
 
     /*!
      * \brief Adds the diffusive flux to the flux vector over
-     *        the face of a sub-control volume.
+     *        a SCV face or a boundary face.
      *
      * It doesn't do anything in the Stokes model but is used by the
      * transport and non-isothermal models to calculate diffusive and
-     * conductive fluxes
+     * conductive fluxes.
      *
-     * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current sub control volume face
+     * \param flux The diffusive flux over the SCV face or boundary face for each component
+     * \param fluxVars The flux variables at the current SCV/boundary face
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
                               const FluxVariables &fluxVars) const
@@ -269,7 +268,7 @@ protected:
      *        and the gravity term evaluated.
      *
      * \param q The source/sink in the sub control volume for each component
-     * \param localVertexIdx The index of the sub-control volume
+     * \param localVertexIdx The local index of the sub-control volume
      */
     void computeSource(PrimaryVariables &q, int localVertexIdx)
     {
@@ -434,7 +433,7 @@ protected:
             // call evalNeumannSegment_() of the base class first
             ParentType::evalNeumannSegment_(isIt, scvIdx, boundaryFaceIdx);
 
-            // temporary vector to store the neumann boundary fluxes
+            // temporary vector to store the Neumann boundary fluxes
             PrimaryVariables values(0.0);
             if (momentumBalanceHasNeumann_(bcTypes))
             {
@@ -477,8 +476,7 @@ protected:
     }
 
     /*!
-     * \brief Evaluate outflow boundary conditions for a single sub-control
-     *        volume face.
+     * \brief Evaluate outflow boundary conditions for a single SCV face on the boundary.
      */
     void evalOutflowSegment_(const IntersectionIterator &isIt,
                              const int scvIdx,
@@ -576,7 +574,7 @@ protected:
 
     /*!
      * \brief Interpolate the pressure at corner points of the grid, thus taking the degree of freedom there. 
-     * 		  This is required due to stability reasons.s
+     * 		  This is required due to stability reasons.
      */
     void interpolateCornerPoints_(const BoundaryTypes &bcTypes, const int vertexIdx)
     {
@@ -601,7 +599,7 @@ protected:
 
     /*!
      * \brief Replace the local residual of the mass balance equation by
-     *        the sum of the residuals of the momentum balance equation
+     *        the sum of the residuals of the momentum balance equation.
      */
     void replaceMassbalanceResidual_(const FieldVector& momentumResidual,
                                      FieldVector& averagedNormal,
@@ -617,7 +615,7 @@ protected:
 
     /*!
      * \brief Returns true, if all boundary conditions for the momentum balance
-     *        at the considered vertex are dirichlet
+     *        at the considered vertex are Dirichlet.
      */
     bool momentumBalanceDirichlet_(const BoundaryTypes& bcTypes) const
     {
@@ -628,7 +626,7 @@ protected:
     }
 
     /*!
-     * \brief Returns true, if at least one boundary condition of the momentum balance is neumann
+     * \brief Returns true, if at least one boundary condition of the momentum balance is Neumann.
      */
     bool momentumBalanceHasNeumann_(const BoundaryTypes& bcTypes) const
     {
@@ -639,7 +637,7 @@ protected:
     }
 
     /*!
-     * \brief Returns true, if all boundary conditions for the momentum balance are outlow
+     * \brief Returns true, if all boundary conditions for the momentum balance are outflow.
      */
     bool momentumBalanceOutflow_(const BoundaryTypes& bcTypes) const
     {

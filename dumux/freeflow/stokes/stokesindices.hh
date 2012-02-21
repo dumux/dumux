@@ -24,7 +24,7 @@
 /*!
  * \file
  *
- * \brief Defines the indices required for the Stokes BOX model.
+ * \brief Defines the indices required for the Stokes box model.
  */
 #ifndef DUMUX_STOKES_INDICES_HH
 #define DUMUX_STOKES_INDICES_HH

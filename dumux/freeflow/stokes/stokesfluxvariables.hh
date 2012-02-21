@@ -43,11 +43,11 @@ namespace Dumux
  * \ingroup BoxStokesModel
  * \ingroup BoxFluxVariables
  * \brief This template class contains the data which is required to
- *        calculate the fluxes of the fluid phase over a face of a
- *        finite volume for the Stokes box model.
+ *        calculate the mass and momentum fluxes over the face of a
+ *        sub-control volume for the Stokes box model.
  *
- * This means pressure gradients, phase densities and viscosities, etc. at
- * the integration point of the sub-control-volume face
+ * This means pressure gradients, phase densities, viscosities, etc.
+ * at the integration point of the sub-control-volume face
  */
 template <class TypeTag>
 class StokesFluxVariables
@@ -173,7 +173,7 @@ public:
 
     /*!
      * \brief Return the average volume of the upstream and the downstream sub-control volume;
-     *        this is required for the stabilization
+     *        this is required for the stabilization.
      */
     const Scalar averageSCVVolume() const
     {
@@ -182,21 +182,21 @@ public:
     }
 
     /*!
-     * \brief Return pressure \f$\mathrm{[Pa]}\f$ at the integration
+     * \brief Return the pressure \f$\mathrm{[Pa]}\f$ at the integration
      *        point.
      */
     Scalar pressureAtIP() const
     { return pressureAtIP_; }
 
     /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ at the integration
+     * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ at the integration
      *        point.
      */
     Scalar densityAtIP() const
     { return densityAtIP_; }
 
     /*!
-     * \brief Return viscosity \f$\mathrm{[m^2/s]}\f$ at the integration
+     * \brief Return the viscosity \f$\mathrm{[m^2/s]}\f$ at the integration
      *        point.
      */
     Scalar viscosityAtIP() const
@@ -210,47 +210,47 @@ public:
     { return normalVelocityAtIP_; }
 
     /*!
-     * \brief Return the pressure gradient at the integration
-     *        point.
+     * \brief Return the pressure gradient at the integration point.
      */
     const ScalarGradient &pressureGradAtIP() const
     { return pressureGradAtIP_; }
 
     /*!
-     * \brief Return the velocity at the integration
-     *        point.
+     * \brief Return the velocity vector at the integration point.
      */
     const VelocityVector &velocityAtIP() const
     { return velocityAtIP_; }
 
     /*!
      * \brief Return the velocity gradient at the integration
-     *        point.
+     *        point of a face.
      */
     const VectorGradient &velocityGradAtIP() const
     { return velocityGradAtIP_; }
 
     /*!
-     * \brief Return the divergence of the normal velocity at the integration
-     *        point.
+     * \brief Return the divergence of the normal velocity at the
+     *        integration point.
      */
     Scalar velocityDivAtIP() const
     { return velocityDivAtIP_; }
 
     /*!
-     * \brief Return the local index of the upstream control volume
-     *        for a given phase.
+     * \brief Return the local index of the upstream sub-control volume.
      */
     int upstreamIdx() const
     { return upstreamIdx_; }
 
     /*!
-     * \brief Return the local index of the downstream control volume
-     *        for a given phase.
+     * \brief Return the local index of the downstream sub-control volume.
      */
     int downstreamIdx() const
     { return downstreamIdx_; }
 
+    /*!
+     * \brief Indicates if a face is on a boundary. Used for in the
+     *        face() method (e.g. for outflow boundary conditions).
+     */
     bool onBoundary() const
     { return onBoundary_; }
 

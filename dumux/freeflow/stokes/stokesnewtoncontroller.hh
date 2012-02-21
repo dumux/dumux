@@ -33,7 +33,7 @@ namespace Dumux {
 /*!
  * \ingroup BoxStokesModel
  * \ingroup Newton
- * \brief A Stokes-specific controller for the newton solver, which sets
+ * \brief A Stokes-specific controller for the nonlinear Newton solver, which sets
  *        different parameters for the relative tolerance, target steps and maximum steps.
  */
 template <class TypeTag>
