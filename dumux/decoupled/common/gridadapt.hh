@@ -63,8 +63,6 @@ public:
     /*!
      * Constructor for h-adaptive simulations (adaptive grids)
      * @param problem The problem
-     * @param levelMin minimum refinement level
-     * @param levelMax maximum refinement level
      */
     GridAdapt (Problem& problem)
     : problem_(problem), adaptionIndicator_(problem)
@@ -145,9 +143,6 @@ public:
 
     /*!
      * Mark Elements for grid refinement according to applied Indicator
-     * @param indicator Vector where the refinement indicator is stored
-     * @param refineThreshold lower threshold where to refine
-     * @param coarsenThreshold upper threshold where to coarsen
      * @return Total ammount of marked cells
      */
     int markElements()

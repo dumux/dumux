@@ -75,7 +75,9 @@ template<class TypeTag> class FVPressureCompositional
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    ///@cond 0
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters)::MaterialLaw MaterialLaw;
+    ///@endcond
 
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     enum

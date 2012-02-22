@@ -113,7 +113,10 @@ template<class TypeTag> class MimeticPressure2P
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 1> > TraceType;
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 2*dim> > NormalVelType;
     typedef MimeticOperatorAssembler<Scalar,GridView> OperatorAssembler;
+
+    ///@cond 0
     typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolution;
+    ///@endcond
 
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;

@@ -84,8 +84,6 @@ public:
     //! Constructs a VariableClass object
     /**
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     *  @param codim codimension of the entity of which data has to be strored
-     *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
     VariableClass(const GridView& gridView) :
         gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView)
