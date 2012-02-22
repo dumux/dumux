@@ -60,7 +60,7 @@ namespace Dumux
  * - \textbf{div}\, \left[\lambda \boldsymbol K \left(\textbf{grad}\, p_{global} + \sum f_\alpha \rho_\alpha \, g \, \textbf{grad}\, z\right)\right] = q.
  * \f]
  * Here, \f$ p_\alpha \f$ is a phase pressure, \f$ p_ {global} \f$ the global pressure of a classical fractional flow formulation
- * (see e.g. P. Binning and M. A. Celia, \glqq Practical implementation of the fractional flow approach to multi-phase flow simulation \grqq , Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
+ * (see e.g. P. Binning and M. A. Celia, ''Practical implementation of the fractional flow approach to multi-phase flow simulation'' , Advances in water resources, vol. 22, no. 5, pp. 461-478, 1999.),
  * \f$ p_c = p_n - p_w \f$ is the capillary pressure, \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda = \lambda_w +  \lambda_n \f$ the total mobility depending on the
  * saturation (\f$ \lambda_\alpha = k_{r_\alpha} / \mu_\alpha \f$),\f$ f_\alpha = \lambda_\alpha / \lambda \f$ the fractional flow function of a phase,
  * \f$ \rho_\alpha \f$ a phase density, \f$ g \f$ the gravity constant and \f$ q \f$ the source term.
