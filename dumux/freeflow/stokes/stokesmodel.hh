@@ -138,88 +138,10 @@ public:
         flux = this->problem_.gridView().comm().sum(flux);
     }
 
-    DUMUX_DEPRECATED_MSG("outdated function; use globalStorage() of the model")
-    void calculateMass(const SolutionVector &sol, Dune::FieldVector<Scalar, 2> &mass)
-    {
-        //         const DofMapper &dofMapper = this->dofEntityMapper();
-        VolumeVariables tmp;
-        Scalar vol, poro, rhoN, rhoW, satN, satW, pW;//, Te;
-        Scalar massNPhase(0.), massWPhase(0.);
-
-        mass = 0;
-        Scalar minSat = 1e100;
-        Scalar maxSat = -1e100;
-        Scalar minP = 1e100;
-        Scalar maxP = -1e100;
-        //         Scalar minTe = 1e100;
-        //         Scalar maxTe = -1e100;
-
-        FVElementGeometry fvElemGeom;
-        VolumeVariables volVars;
-        ElementBoundaryTypes elemBcTypes;
-
-        // Loop over elements
-        ElementIterator elemIt = this->problem_.gridView().template begin<0>();
-        ElementIterator endit = this->problem_.gridView().template end<0>();
-        for (; elemIt != endit; ++elemIt)
-        {
-            if (elemIt->partitionType() != Dune::InteriorEntity)
-                continue;
-
-            fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
-
-            int numVerts = elemIt->template count<dim>();
-            for (int i = 0; i < numVerts; ++i)
-            {
-                int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
-                volVars.update(sol[globalIdx],
-                               this->problem_(),
-                               *elemIt,
-                               fvElemGeom,
-                               i,
-                               false);
-
-                //                 int globalIdx = dofMapper.map(*elemIt, i, dim);
-                vol = fvElemGeom.subContVol[i].volume;
-                poro = volVars.porosity;
-                rhoN = volVars.density;
-                pW = volVars.pressure;
-                //                 Te = asImp_()->temperature((*sol)[globalIdx]);
-
-
-                massNPhase = vol * poro * rhoN;
-
-                // get minimum and maximum values of primary variables
-                minP = std::min(minP, pW);
-                maxP = std::max(maxP, pW);
-                //                 minTe = std::min(minTe, Te);
-                //                 maxTe = std::max(maxTe, Te);
-
-                // calculate total mass
-                mass[0] += massNPhase; // mass nonwetting phase
-            }
-        }
-
-        // IF PARALLEL: calculate total mass including all processors
-        // also works for sequential calculation
-        mass = this->problem_.gridView().comm().sum(mass);
-
-        if(this->problem_.gridView().comm().rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
-        {
-            // print minimum and maximum values
-            std::cout << "nonwetting phase saturation: min = "<< minSat
-                      << ", max = "<< maxSat << std::endl;
-            std::cout << "wetting phase pressure: min = "<< minP
-                      << ", max = "<< maxP << std::endl;
-            //             std::cout << "temperature: min = "<< minTe
-            //             << ", max = "<< maxTe << std::endl;
-        }
-    }
-
-    //! \@copydoc BoxModel::addOutputVtkFields
+    //! \copydoc BoxModel::addOutputVtkFields
     template <class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
+    void addOutputVtkFields(const SolutionVector &sol,
+                            MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;
