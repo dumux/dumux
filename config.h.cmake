@@ -13,6 +13,22 @@
 #cmakedefine HAVE_DUNE_LOCALFUNCTIONS 1
 #cmakedefine HAVE_DUNE_PDELAB 1
 
+/* If this is set, the member 'size' of FieldVector is a method rather than an
+   enum */
+#define DUNE_COMMON_FIELDVECTOR_SIZE_IS_METHOD 1
+
+/* Define to the version of dune-common */
+#cmakedefine DUNE_COMMON_VERSION "${DUNE_COMMON_VERSION}"
+
+/* Define to the major version of dune-common */
+#cmakedefine DUNE_COMMON_VERSION_MAJOR ${DUNE_COMMON_VERSION_MAJOR}
+
+/* Define to the minor version of dune-common */
+#define DUNE_COMMON_VERSION_MINOR ${DUNE_COMMON_VERSION_MINOR}
+
+/* Define to the revision of dune-common */
+#define DUNE_COMMON_VERSION_REVISION ${DUNE_COMMON_VERSION_REVISION}
+
 #cmakedefine HAVE_MPI 1
 
 #cmakedefine HAVE_UG ENABLE_UG
@@ -72,6 +88,12 @@
 #cmakedefine HAVE_RVALUE_REFERENCES 1
 #cmakedefine HAVE_MALLOC_H 1
 #cmakedefine HAVE_VALGRIND 1
+
+#include <dune/common/deprecated.hh>
+
+#if DUNE_COMMON_VERSION_MAJOR >= 2 && DUNE_COMMON_VERSION_MINOR >= 2
+#include <dune/common/unused.hh>
+#endif
 
 #cmakedefine HAVE_ATTRIBUTE_DEPRECATED 1
 #if HAVE_ATTRIBUTE_DEPRECATED

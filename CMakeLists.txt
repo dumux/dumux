@@ -290,6 +290,31 @@ SetConfigHVar(PROJECT_MAINTAINER_EMAIL ProjectMaintainerEmail)
 ##############
 
 ##############
+# add dune-common version from dune.module to config.h
+if(DUNE_common_DIR)
+  file(READ "${DUNE_common_DIR}/dune.module" DUNE_COMMON_MODULE)
+else()
+  file(READ "${DUNE_DIR}/dune-common/dune.module" DUNE_COMMON_MODULE)
+endif(DUNE_common_DIR)
+
+# find version string
+string(REGEX REPLACE ".*Version:[ ]*([^ \n]+).*" "\\1" DUNE_COMMON_VERSION "${DUNE_COMMON_MODULE}")
+string(REGEX REPLACE "([0-9]).*" "\\1" DUNE_COMMON_VERSION_MAJOR "${DUNE_COMMON_VERSION}")
+string(REGEX REPLACE "[0-9]*\\.([0-9]).*" "\\1" DUNE_COMMON_VERSION_MINOR "${DUNE_COMMON_VERSION}")
+string(REGEX REPLACE "[0-9]*\\.[0-9]*\\.([0-9]).*" "\\1" DUNE_COMMON_VERSION_REVISION "${DUNE_COMMON_VERSION}")
+
+# remove false matches
+string(REGEX MATCH "[^0-9]" NON_NUMBER_CHARACTER "${DUNE_COMMON_VERSION_MINOR}")
+if(NON_NUMBER_CHARACTER)
+  set(DUNE_COMMON_VERSION_MINOR "0")
+endif(NON_NUMBER_CHARACTER)
+string(REGEX MATCH "[^0-9]" NON_NUMBER_CHARACTER "${DUNE_COMMON_VERSION_REVISION}")
+if(NON_NUMBER_CHARACTER)
+  set(DUNE_COMMON_VERSION_REVISION "0")
+endif(NON_NUMBER_CHARACTER)
+##############
+
+##############
 # adapt build system to detected packages
 
 # deal with UG
