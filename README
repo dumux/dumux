@@ -30,12 +30,12 @@ Public License (GPL) version 2 or - at your option - any later
 version. The GPL can be read online [3], or in the LICENSE file
 provided in the topmost directory of the DuMuX source code tree.
 
-Please note that DuMuX is - unlike DUNE - NOT licensed under the
-Lesser General Public License with a template exception. This means
-that you must publish any source code which uses any of the DuMuX
-header files if you want to redistribute your program to any third
-parties. If this is unacceptable to you, please contact us [4, 5]
-for a commercial license.
+Please note that DuMuX's license, unlike DUNE, does NOT feature a
+template exception to the GNU General Public License. This means that
+you must publish any source code which uses any of the DuMuX header
+files if you want to redistribute your program to third parties. If
+this is unacceptable to you, please contact us [4, 5] for a commercial
+license.
 
 
 Links

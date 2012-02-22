@@ -40,16 +40,16 @@ namespace Dumux
 {
 /*!
  * \ingroup OnePBoxModel
- * \brief Adaption of the BOX scheme to the single-phase isothermal flow model.
+ * \brief A single-phase, isothermal flow model using the box scheme.
  *
- * Single-phase compressible isothermal flow model,
- * \f{align*}
- * \phi \frac{\partial \varrho}{\partial t} + \text{div} (- \varrho \frac{\textbf K}{\mu} ( \text{grad}\, p -\varrho {\textbf g})) = q,
- * \f}
- * discretized using a vertex-centered finite volume (box) scheme as spatial and
- * the implicit Euler method as time discretization.
- * Of course, the model can also be used for incompressible
- * single phase flow modeling, if a fluid with constant density is chosen in the problem file.
+ * Single-phase, isothermal flow model, which solves the mass
+ * continuity equation
+ * \f[
+ \phi \frac{\partial \varrho}{\partial t} + \text{div} (- \varrho \frac{\textbf K}{\mu} ( \textbf{grad}\, p -\varrho {\textbf g})) = q,
+ * \f]
+ * discretized using a vertex-centered finite volume (box) scheme as
+ * spatial and the implicit Euler method as time discretization.  The
+ * model supports compressible as well as incompressible fluids.
  */
 template<class TypeTag >
 class OnePBoxModel : public BoxModel<TypeTag>

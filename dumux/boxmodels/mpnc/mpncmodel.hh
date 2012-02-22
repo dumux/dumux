@@ -32,7 +32,8 @@ namespace Dumux
 {
 /*!
  * \ingroup MPNCModel
- * \brief A vertex centered fully implicit model for M-phase, N-component flow
+ * \brief A fully implicit model for M-phase, N-component flow using
+ *        vertex centered finite volumes.
  *
  * This model implements a \f$M\f$-phase flow of a fluid mixture
  * composed of \f$N\f$ chemical species. The phases are denoted by
@@ -50,7 +51,8 @@ namespace Dumux
      \f]
  *
  * By inserting this into the equations for the conservation of the
- * components, one gets one transport equation for each component \f$\kappa\f$
+ * mass of each component, one gets one mass-continuity equation for
+ * each component \f$\kappa\f$
  * \f[
  \sum_{\kappa} \left(
     \phi \frac{\partial \varrho_\alpha x_\alpha^\kappa S_\alpha}{\partial t}
@@ -64,34 +66,36 @@ namespace Dumux
     \right)
     = q^\kappa
     \f]
- * with \f$\overline M_\alpha\f$ being the average molar mass of the phase \f$\alpha\f$:
- * \f[ \overline M_\alpha = \sum_\kappa M^\kappa \; x_\alpha^\kappa \f]
+ * with \f$\overline M_\alpha\f$ being the average molar mass of the
+ * phase \f$\alpha\f$: \f[ \overline M_\alpha = \sum_\kappa M^\kappa
+ * \; x_\alpha^\kappa \f]
  *
  * For the missing \f$M\f$ model assumptions, the model assumes that
  * if a fluid phase is not present, the sum of the mole fractions of
- * this fluid phase is smaller than \f$1\f$, i.e.
- * \f[ \forall \alpha: S_\alpha = 0 \implies \sum_\kappa x_\alpha^\kappa \leq 1 \f]
+ * this fluid phase is smaller than \f$1\f$, i.e.  
+ * \f[
+ * \forall \alpha: S_\alpha = 0 \implies \sum_\kappa x_\alpha^\kappa \leq 1
+ * \f]
  *
  * Also, if a fluid phase may be present at a given spatial location
  * its saturation must be positive:
  * \f[ \forall \alpha: \sum_\kappa x_\alpha^\kappa = 1 \implies S_\alpha \geq 0 \f]
  *
  * Since at any given spatial location, a phase is always either
- * present or not present, the one of the strict equallities on the
+ * present or not present, the one of the strict equalities on the
  * right hand side is always true, i.e.
  * \f[ \forall \alpha: S_\alpha \left( \sum_\kappa x_\alpha^\kappa - 1 \right) = 0 \f]
  * always holds.
  *
  * These three equations constitute a non-linear complementarity
- * problem, which can be solved using a so-called non-linear
- * complementarity function \f$\Phi(a, b)\f$ which has the property
+ * problem, which can be solved using so-called non-linear
+ * complementarity functions \f$\Phi(a, b)\f$ which have the property
  * \f[\Phi(a,b) = 0 \iff a \geq0 \land b \geq0  \land a \cdot b = 0 \f]
  *
  * Several non-linear complementarity functions have been suggested,
  * e.g. the Fischer-Burmeister function
  * \f[ \Phi(a,b) = a + b - \sqrt{a^2 + b^2} \;. \f]
- *
- * Though this model uses
+ * This model uses
  * \f[ \Phi(a,b) = \min \{a,  b \}\;, \f]
  * because of its piecewise linearity.
  *
@@ -100,9 +104,9 @@ namespace Dumux
  * spatial discretization and the implicit Euler method as temporal
  * discretization.
  *
- * The model assumes thermodynamic equilibrium and uses the following
- * primary variables:
- * - The componentfugacities \f$f^1, \dots, f^{N}\f$
+ * The model assumes local thermodynamic equilibrium and uses the
+ * following primary variables:
+ * - The component fugacities \f$f^1, \dots, f^{N}\f$
  * - The pressure of the first phase \f$p_1\f$
  * - The saturations of the first \f$M-1\f$ phases \f$S_1, \dots, S_{M-1}\f$
  * - Temperature \f$T\f$ if the energy equation is enabled
@@ -118,13 +122,9 @@ class MPNCModel : public BoxModel<TypeTag>
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
-
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
-
     typedef Dumux::MPNCVtkWriter<TypeTag> MPNCVtkWriter;
-
 
     enum {
         enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),

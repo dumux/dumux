@@ -39,14 +39,14 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPBoxModel
- * \brief Adaption of the BOX scheme to the twophase flow model.
+ * \brief A two-phase, isothermal flow model using the box scheme.
  *
- * This model implements two-phase flow of two completely immiscible fluids
+ * This model implements two-phase flow of two immiscible fluids
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
- * approach as the equation for the conservation of momentum:
+ * approach as the equation for the conservation of momentum, i.e.
  \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
- \left(\text{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
  \f]
  *
  * By inserting this into the equation for the conservation of the
@@ -55,12 +55,13 @@ namespace Dumux
  \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
  -
  \text{div} \left\{
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K} \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
  \right\} - q_\alpha = 0 \;,
  \f]
- * discretized by a fully-coupled vertex
- * centered finite volume (box) scheme as spatial and
- * the implicit Euler method as time discretization.
+ *
+ * This equations are by a fully-coupled vertex centered finite volume
+ * (box) scheme as spatial and the implicit Euler method as time
+ * discretization.
  *
  * By using constitutive relations for the capillary pressure \f$p_c =
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
