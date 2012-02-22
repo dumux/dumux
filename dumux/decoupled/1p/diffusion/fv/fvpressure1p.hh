@@ -39,14 +39,13 @@ namespace Dumux
 
 //! \ingroup FV1p
 //! \brief Single Phase Finite Volume Model
-/*! Provides a Finite Volume implementation for the evaluation
- * of equations of the form
+/*! This model solves equations of the form
  * \f[
- *  \text{div}\, \boldsymbol v = q.
+ *  \textbf{div}\, \boldsymbol v = q.
  * \f]
  * The velocity \f$ \boldsymbol v \f$ is the single phase Darcy velocity:
  * \f[
- *  \boldsymbol v = -\frac{1}{\mu} \boldsymbol K \left(\text{grad}\, p + \rho g  \text{grad}\, z\right),
+ *  \boldsymbol v = -\frac{1}{\mu} \boldsymbol K \left(\textbf{grad}\, p + \rho \, g  \, \textbf{grad}\, z\right),
  * \f]
  * where \f$ p \f$ is the pressure, \f$ \boldsymbol K \f$ the absolute permeability, \f$ \mu \f$ the viscosity, \f$ \rho \f$ the density, and \f$ g \f$ the gravity constant,
  * and \f$ q \f$ is the source term.
