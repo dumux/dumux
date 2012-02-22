@@ -39,14 +39,14 @@ namespace Dumux
  * composed of \f$N\f$ chemical species. The phases are denoted by
  * lower index \f$\alpha \in \{ 1, \dots, M \}\f$. All fluid phases
  * are mixtures of \f$N \geq M - 1\f$ chemical species which are
- * denoted by the upper index \f$\kappa \in \{ 1, \dot, N \} \f$.
+ * denoted by the upper index \f$\kappa \in \{ 1, \dots, N \} \f$.
  *
  * The standard multi-phase Darcy law is used as the equation for
  * the conservation of momentum:
  * \f[
      v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
      \left(
-       \text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g}
+       \text{grad}\left(p_\alpha - \varrho_{\alpha} g\right)
      \right)
      \f]
  *
@@ -57,11 +57,11 @@ namespace Dumux
  \sum_{\kappa} \left(
     \phi \frac{\partial \varrho_\alpha x_\alpha^\kappa S_\alpha}{\partial t}
     -
-    \nabla \cdot
+    \mathrm{div}\;
     \left\{
        \frac{\varrho_\alpha}{\overline M_\alpha} x_\alpha^\kappa
        \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
-       (\nabla p_\alpha - \varrho_{\alpha} \boldsymbol{g})
+       \mathbf{grad}\left( p_\alpha - \varrho_{\alpha} g\right)
     \right\}
     \right)
     = q^\kappa

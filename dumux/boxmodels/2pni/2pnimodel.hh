@@ -24,7 +24,6 @@
  *
  * \brief Adaption of the BOX scheme to the non-isothermal twophase flow model.
  */
-
 #ifndef DUMUX_2PNI_MODEL_HH
 #define DUMUX_2PNI_MODEL_HH
 
@@ -56,7 +55,7 @@ namespace Dumux {
  * results in one energy conservation equation for the porous solid
  * matrix and the fluids: 
  
- \f{eqnarray*}
+ \f{align*}{
  \frac{\partial \phi \sum_alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
  & + 
  \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
@@ -66,7 +65,7 @@ namespace Dumux {
  \varrho_\alpha h_\alpha
  \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} 
  \left( \textbf{grad}\,p_\alpha - \varrho_\alpha \mbox{\bf g} \right)
- \right\} \                                                     \
+ \right\} \\
     & - \text{div} \left(\lambda_{pm} \textbf{grad} \, T \right)
     - q^h = 0, \qquad \alpha \in \{w, n\} \;,
  \f}
