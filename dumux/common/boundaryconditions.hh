@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup
+ * \ingroup BC
  */
 /**
 * @brief Define a class containing boundary condition flags
