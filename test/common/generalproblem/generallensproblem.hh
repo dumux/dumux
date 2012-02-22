@@ -50,7 +50,7 @@
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 
-#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
+#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
 #include "generallensspatialparameters.hh"
 
