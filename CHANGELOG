@@ -39,6 +39,7 @@ Changes Since Dumux 2.0
     Keep in mind that quadruple precision is meant as
     a debugging tool to quickly check whether there are machine
     precision related convergence problems.
+- Problem and spatial parameter base classes provide model-independent interfaces for problem and spatial parameter definition, which only get the position in global coordinates as argument (e.g. boundaryTypesAtPos(), etc.). This allows an easy transfer of problem definitions between implicit and sequential models.
 - New fully implicit models:
   - 3p3c, 3p3cni: Isothermal and non-isothermal three-phase,
     three-component models for flow and transport in porous media.
@@ -49,4 +50,7 @@ Changes Since Dumux 2.0
     equation as well as isothermal and non-isothermal Stokes models
     for two-component fluids.
 - Overhaul of the sequentially-coupled models:
-  - TODO
+  - Common structure for cell centered standard finite volume implementations.
+  - Use of the common Dumux infrastructure also used by the implicit models (BoundaryTypes, etc.)
+- New decoupled models:
+  - 2padaptive: Grid-adaptive standard finite volume two-phase model for non-conforming quadrilateral grids.
