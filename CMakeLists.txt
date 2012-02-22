@@ -378,6 +378,7 @@ file(COPY test/decoupled/2p2c/test_multiphysics2p2c-reference.vtu DESTINATION re
 file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION references)
 file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION references)
 file(COPY tutorial/tutorial_coupled.input DESTINATION parameters)
+file(COPY tutorial/tutorial_decoupled.input DESTINATION parameters)
 if(SUPERLU_FOUND)
   file(COPY test/freeflow/stokes/stokes-reference.vtu DESTINATION references)
   file(COPY test/freeflow/stokes/test_stokes.input DESTINATION parameters)
@@ -419,7 +420,7 @@ add_test(test_dec2p2c   bin/runTest.sh references/test_dec2p2c-reference.vtu   t
 add_test(test_multiphysics2p2c   bin/runTest.sh references/test_multiphysics2p2c-reference.vtu   test_multiphysics2p2c-00021.vtu     test/decoupled/2p2c/test_multiphysics2p2c)
 
 add_test(tutorial_coupled   tutorial/tutorial_coupled --parameter-file=parameters/tutorial_coupled.input)
-add_test(tutorial_decoupled tutorial/tutorial_decoupled 1)
+add_test(tutorial_decoupled tutorial/tutorial_decoupled --parameter-file=parameters/tutorial_decoupled.input)
 
 if(SUPERLU_FOUND)
   add_test(test_stokes     bin/runTest.sh references/stokes-reference.vtu     stokes-00013.vtu     test/freeflow/stokes/test_stokes         --parameter-file=parameters/test_stokes.input     -gridFile test/freeflow/stokes/grids/test_stokes.dgf)
