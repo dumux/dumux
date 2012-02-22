@@ -66,24 +66,24 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \@copydoc BoxModel::update
+     * \copydoc BoxVolumeVariables::update()
      */
-    void update(const PrimaryVariables &primaryVars,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
-                int vertIdx,
+                int scvIdx,
                 bool isOldSol)
     {
         // set the mole fractions first
-        completeFluidState(primaryVars, problem, element, elemGeom, vertIdx, this->fluidState(), isOldSol);
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, this->fluidState(), isOldSol);
 
         // update vertex data for the mass and momentum balance
-        ParentType::update(primaryVars,
+        ParentType::update(priVars,
                            problem,
                            element,
                            elemGeom,
-                           vertIdx,
+                           scvIdx,
                            isOldSol);
 
         // Second instance of a parameter cache.
@@ -102,18 +102,19 @@ public:
     };
 
     /*!
-     * \@copydoc BoxModel::completeFluidState
+     * \copydoc BoxModel::completeFluidState()
+     * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& primaryVars,
+    static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elemGeom,
+                                   const FVElementGeometry& elementGeometry,
                                    int scvIdx,
                                    FluidState& fluidState,
                                    bool isOldSol = false)
     {
         Scalar massFraction[numComponents];
-        massFraction[lCompIdx] = primaryVars[transportIdx];
+        massFraction[lCompIdx] = primaryVariables[transportIdx];
         massFraction[gCompIdx] = 1 - massFraction[lCompIdx];
 
         // calculate average molar mass of the gas phase

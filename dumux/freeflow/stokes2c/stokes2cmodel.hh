@@ -88,9 +88,10 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
 public:
-    //! \@copydoc BoxModel::addOutputVtkFields
+    //! \copydoc BoxModel::addOutputVtkFields
     template <class MultiWriter>
-    void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
+    void addOutputVtkFields(const SolutionVector &sol,
+                            MultiWriter &writer)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > VelocityField;

@@ -74,43 +74,44 @@ class StokesVolumeVariables : public BoxVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \@copydoc BoxModel::update()
+     * \copydoc BoxVolumeVariables::update()
      */
-    void update(const PrimaryVariables &primaryVars,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
-                int vertIdx,
+                int scvIdx,
                 bool isOldSol)
     {
-        ParentType::update(primaryVars,
+        ParentType::update(priVars,
                            problem,
                            element,
                            elemGeom,
-                           vertIdx,
+                           scvIdx,
                            isOldSol);
 
-        completeFluidState(primaryVars, problem, element, elemGeom, vertIdx, fluidState_, isOldSol);
+        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_, isOldSol);
 
         for (int dimIdx=momentumXIdx; dimIdx<=lastMomentumIdx; ++dimIdx)
-            velocity_[dimIdx] = primaryVars[dimIdx];
+            velocity_[dimIdx] = priVars[dimIdx];
     }
 
     /*!
-     * \@copydoc BoxModel::completeFluidState()
+     * \copydoc BoxModel::completeFluidState()
+     * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& primaryVars,
+    static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elemGeom,
+                                   const FVElementGeometry& elementGeometry,
                                    int scvIdx,
                                    FluidState& fluidState,
                                    bool isOldSol = false)
     {
-        Scalar temperature = Implementation::temperature_(primaryVars, problem, element,
-                                                elemGeom, scvIdx);
+        Scalar temperature = Implementation::temperature_(primaryVariables, problem,
+                                                          element, elementGeometry, scvIdx);
         fluidState.setTemperature(temperature);
-        fluidState.setPressure(phaseIdx, primaryVars[pressureIdx]);
+        fluidState.setPressure(phaseIdx, primaryVariables[pressureIdx]);
 
         // create NullParameterCache and do dummy update
         typename FluidSystem::ParameterCache paramCache;

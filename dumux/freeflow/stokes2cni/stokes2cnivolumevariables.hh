@@ -63,13 +63,13 @@ class Stokes2cniVolumeVariables : public Stokes2cVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \@copydoc BoxModel::update
+     * \copydoc BoxVolumeVariables::update()
      */
-    void update(const PrimaryVariables &primaryVars,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
-                int vertIdx,
+                int scvIdx,
                 bool isOldSol)
     {
         // the internal energies and the enthalpies
@@ -77,11 +77,11 @@ public:
         //TODO: value (Source: www.engineeringtoolbox.com/air-properties-d_156.html)
 
         // vertex update data for the mass balance
-        ParentType::update(primaryVars,
+        ParentType::update(priVars,
                            problem,
                            element,
                            elemGeom,
-                           vertIdx,
+                           scvIdx,
                            isOldSol);
     };
 
