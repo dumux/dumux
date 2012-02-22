@@ -42,7 +42,7 @@
 #include <dumux/decoupled/1p/diffusion/diffusionproblem1p.hh>
 #include <dumux/decoupled/common/fv/fvvelocity.hh>
 
-#include "test_1p_spatialparams.hh"
+#include "test_1pspatialparams.hh"
 
 namespace Dumux
 {

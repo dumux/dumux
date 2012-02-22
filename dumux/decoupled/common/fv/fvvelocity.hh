@@ -25,7 +25,7 @@
 // dumux environment
 #include "dumux/common/math.hh"
 #include <dumux/decoupled/common/pressureproperties.hh>
-#include "velocitydefault.hh"
+#include "fvvelocitydefault.hh"
 
 /**
  * @file

@@ -37,7 +37,7 @@
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 #include <dumux/decoupled/2p/transport/transportproblem2p.hh>
 
-#include "test_transport_spatialparams.hh"
+#include "test_transportspatialparams.hh"
 
 namespace Dumux
 {

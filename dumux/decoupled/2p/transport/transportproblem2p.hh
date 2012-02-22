@@ -30,7 +30,7 @@
 
 #include "transportproperties2p.hh"
 #include <dumux/decoupled/common/onemodelproblem.hh>
-#include <dumux/decoupled/common/fv/velocitydefault.hh>
+#include <dumux/decoupled/common/fv/fvvelocitydefault.hh>
 
 namespace Dumux
 {

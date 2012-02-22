@@ -29,7 +29,7 @@
  */
 #include "config.h"
 
-#include "test_1p_problem.hh"
+#include "test_1pproblem.hh"
 #include "benchmarkresult.hh"
 #include <dumux/common/start.hh>
 

@@ -28,7 +28,7 @@
  * @author Markus Wolff
  */
 
-#include "evalcflflux_default.hh"
+#include "evalcflfluxdefault.hh"
 
 namespace Dumux
 {

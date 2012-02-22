@@ -29,7 +29,7 @@
  */
 #include "config.h"
 
-#include "test_transport_problem.hh"
+#include "test_transportproblem.hh"
 #include <dumux/common/start.hh>
 
 

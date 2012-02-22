@@ -41,7 +41,7 @@ int main()
 }
 #else
 
-#include "test_impes_adaptive_problem.hh"
+#include "test_impesadaptiveproblem.hh"
 #include <dumux/common/start.hh>
 
 ////////////////////////

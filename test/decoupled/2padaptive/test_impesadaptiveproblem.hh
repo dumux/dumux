@@ -42,9 +42,9 @@
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>
 #include <dumux/decoupled/2p/transport/fv/fvtransportproperties2p.hh>
 
-#include "test_impes_adaptive_spatialparams.hh"
+#include "test_impesadaptivespatialparams.hh"
 
-#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
+#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
 namespace Dumux
 {

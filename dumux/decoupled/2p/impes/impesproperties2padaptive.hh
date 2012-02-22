@@ -56,8 +56,8 @@ NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, DecoupledTwoP));
 }
 }
 
-#include <dumux/decoupled/common/variableclass_adaptive.hh>
-#include <dumux/decoupled/2p/cellData2p_adaptive.hh>
+#include <dumux/decoupled/common/variableclassadaptive.hh>
+#include <dumux/decoupled/2p/cellData2padaptive.hh>
 #include "gridadaptionindicator2p.hh"
 
 namespace Dumux

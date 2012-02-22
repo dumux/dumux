@@ -50,9 +50,9 @@
 #include <dumux/decoupled/2p/transport/fv/capillarydiffusion.hh>
 #include <dumux/decoupled/2p/transport/fv/gravitypart.hh>
 
-#include "test_impes_spatialparams.hh"
+#include "test_impesspatialparams.hh"
 
-#include<dumux/decoupled/2p/transport/fv/evalcflflux_coats.hh>
+#include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
 namespace Dumux
 {

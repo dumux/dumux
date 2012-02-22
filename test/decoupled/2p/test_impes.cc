@@ -29,7 +29,7 @@
  */
 #include "config.h"
 
-#include "test_impes_problem.hh"
+#include "test_impesproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
