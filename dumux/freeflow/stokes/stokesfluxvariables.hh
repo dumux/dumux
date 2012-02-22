@@ -189,21 +189,21 @@ public:
     { return pressureAtIP_; }
 
     /*!
-     * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ at the integration
+     * \brief Return the mass density \f$ \mathrm{[kg/m^3]} \f$ at the integration
      *        point.
      */
     Scalar densityAtIP() const
     { return densityAtIP_; }
 
     /*!
-     * \brief Return the viscosity \f$\mathrm{[m^2/s]}\f$ at the integration
+     * \brief Return the viscosity \f$ \mathrm{[m^2/s]} \f$ at the integration
      *        point.
      */
     Scalar viscosityAtIP() const
     { return viscosityAtIP_; }
 
     /*!
-     * \brief Return the normal velocity \f$\mathrm{[m/s]}\f$ at the integration
+     * \brief Return the normal velocity \f$ \mathrm{[m/s]} \f$ at the integration
      *        point.
      */
     Scalar normalVelocityAtIP() const
