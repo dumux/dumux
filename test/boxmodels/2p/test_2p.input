@@ -1,30 +1,30 @@
 #############################################################
-# Parameter file for test_2p										#
-# Everything behind a '#' is a comment								#
-# Groups can be ordered e.g. : [BoundaryConditions], 					#
-# see ../2p2c/ for a more detailed example							#
+# Parameter file for test_2p                                        #
+# Everything behind a '#' is a comment                                #
+# Groups can be ordered e.g. : [BoundaryConditions],                     #
+# see ../2p2c/ for a more detailed example                            #
 #############################################################
 
 #############################################################
-# Mandatory arguments											#
+# Mandatory arguments                                            #
 #############################################################
-dtInitial	=250 	# [s]
-tEnd		=1000 	# [s]
-gridFile 	= ./grids/test_2p.dgf 
+dtInitial = 250# [s]
+tEnd = 1000# [s]
+gridFile = ./grids/test_2p.dgf 
 
 [SpatialParameters]
-lensLowerLeftX	= 1.0 # [m] dimension of the lens (different properties therin) 
-lensLowerLeftY	= 2.0 # [m] dimension of the lens (different properties therin)
-lensUpperRightX	= 4.0 # [m] dimension of the lens (different properties therin)
-lensUpperRightY	= 3.0 # [m] dimension of the lens (different properties therin)
+lensLowerLeftX = 1.0 # [m] dimension of the lens (different properties therin) 
+lensLowerLeftY = 2.0 # [m] dimension of the lens (different properties therin)
+lensUpperRightX = 4.0 # [m] dimension of the lens (different properties therin)
+lensUpperRightY = 3.0 # [m] dimension of the lens (different properties therin)
 
 #####################################################################
-# Simulation restart													        #
-#																	#
-# DuMux simulations can be restarted from *.drs files							#
-# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'				#
-# for the restart file														#
-# name_time=27184.1_rank=0.drs										#
-# Please comment in the below value, if restart is desired. 						#
+# Simulation restart                                                            #
+#                                                                    #
+# DuMux simulations can be restarted from *.drs files                            #
+# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'                #
+# for the restart file                                                        #
+# name_time = 27184.1_rank = 0.drs                                        #
+# Please comment in the below value, if restart is desired.                         #
 #####################################################################
-# restart= ... 
+# restart = ... 
