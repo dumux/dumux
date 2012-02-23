@@ -51,6 +51,13 @@ Changes Since Dumux 2.0
     for two-component fluids.
 - Overhaul of the sequentially-coupled models:
   - Common structure for cell centered standard finite volume implementations.
+  - Data structure overhauled to avoid large clumps of data in large-scale simulations: Each cell stores
+    data in its own storage object.
+  - Subdivision of too large assemble() methods into submethods getStorage(), getFlux() etc. By this,
+    improve inheritance of classes and reduction of code duplication.
+  - Improved conceptual seperation of the variableclass (central infrastructure), data storage, transport 
+    model and pressure model.
   - Use of the common Dumux infrastructure also used by the implicit models (BoundaryTypes, etc.)
+    => Significant improvement in speed and comfort in debugging
 - New decoupled models:
   - 2padaptive: Grid-adaptive standard finite volume two-phase model for non-conforming quadrilateral grids.
