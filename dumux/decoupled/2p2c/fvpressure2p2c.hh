@@ -278,6 +278,14 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
             DUNE_THROW(Dune::NotImplemented, "Compressibility is switched off???");
     }
 
+    // Abort error damping if there will be a possibly tiny timestep compared with last one
+    // This might be the case if the episode or simulation comes to an end.
+    if( problem().timeManager().episodeWillBeOver()
+            || problem().timeManager().willBeFinished())
+    {
+        problem().variables().cellData(globalIdxI).errorCorrection() = 0.;
+        return;
+    }
 
     // error reduction routine: volumetric error is damped and inserted to right hand side
     // if damping is not done, the solution method gets unstable!
@@ -292,8 +300,7 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     Scalar lofac = 0.;
     Scalar hifac = 0.;
 
-    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError)
-    		&& (!problem().timeManager().willBeFinished()))
+    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError))
     {
         if (erri <= x_mi * maxError)
             storageEntry[rhs] +=

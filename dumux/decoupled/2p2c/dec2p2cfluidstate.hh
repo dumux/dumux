@@ -94,8 +94,8 @@ public:
 
 
         //mole equilibrium ratios K for in case wPhase is reference phase
-        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx);    // = p^wComp_vap
-        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx);    // = H^nComp_w
+        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx);    // = p^wComp_vap / p
+        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx);    // = H^nComp_w / p
 
         // get mole fraction from equilibrium konstants
         moleFraction_[wPhaseIdx][wCompIdx] = (1. - k2) / (k1 -k2);
@@ -196,10 +196,8 @@ public:
 
 
         //mole equilibrium ratios K for in case wPhase is reference phase
-        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx)
-                    / phasePressure_[nPhaseIdx];
-        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx)
-                    / phasePressure_[nPhaseIdx];
+        double k1 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, wCompIdx);    // = p^wComp_vap / p
+        double k2 = FluidSystem::fugacityCoefficient(*this, wPhaseIdx, nCompIdx);    // = H^nComp_w / p
 
         // get mole fraction from equilibrium konstants
         moleFraction_[wPhaseIdx][wCompIdx] = (1. - k2) / (k1 -k2);

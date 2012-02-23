@@ -375,10 +375,6 @@ public:
     void reset()
     {
         volumeDerivativesAvailable_ = false;
-        dv_dp_ = 0.;
-        dv_[0] = 0.;
-        dv_[1] = 0.;
-        //include future fluxData here
     }
 
 
