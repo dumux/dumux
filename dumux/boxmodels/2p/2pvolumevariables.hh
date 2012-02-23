@@ -121,12 +121,12 @@ public:
     }
 
     /*!
-     * \@copydoc BoxModel::completeFluidState
+     * \copydoc BoxModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elemGeom,
+                                   const FVElementGeometry& elementGeometry,
                                    int scvIdx,
                                    FluidState& fluidState)
     {

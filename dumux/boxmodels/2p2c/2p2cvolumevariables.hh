@@ -179,12 +179,13 @@ public:
     }
 
     /*!
-     * \@copydoc BoxModel::completeFluidState
+     * \copydoc BoxModel::completeFluidState
+     * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& priVars,
+    static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elemGeom,
+                                   const FVElementGeometry& elementGeometry,
                                    int scvIdx,
                                    FluidState& fluidState,
                                    bool isOldSol = false)

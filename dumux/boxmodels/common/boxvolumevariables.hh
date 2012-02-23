@@ -114,7 +114,7 @@ public:
      * \param element An element which contains part of the control volume
      * \param elemGeom The finite volume geometry for the element
      * \param scvIdx Local index of the sub control volume which is inside the element
-     * \param isOldSol Specifies whether this is the previous solution or the current onw
+     * \param isOldSol Specifies whether this is the previous solution or the current one
      *
      * \todo Eliminate the 'isOldSol' parameter. This implies that the
      *       'pseudo-primary variables' must be somehow be stored
