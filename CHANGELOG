@@ -13,7 +13,8 @@ Notable Differences Between Dumux 2.0 and Dumux 2.1
 - Dumux now compiles without warnings if GCC is given the -pedantic flag
 - Specifying run-time parameters is now possible. The mechanism allows
   to use parameter files or to specify parameters directly on the
-  command line.
+  command line. Parameter input files have been added for each test application.
+  These can be run now without arguments (use of default parameter files)
 - Fine-tuning of the Dumux property system
   - PTAG() no longer required for the GET_PROP* macros (but can still be used)
   - Setting property defaults has been deprecated.
@@ -22,7 +23,7 @@ Notable Differences Between Dumux 2.0 and Dumux 2.1
 - Overhaul of the fluid framework
   - The programming interface for fluid systems, fluid states and
     components has been formalized and cleaned up.
-  - Fluid system now have the option to cache computationally
+  - Fluid systems now have the option to cache computationally
     expensive parameters if they are needed for several relations.
   - Fluid systems are not concerned with the calculation of the
     chemical equilibrium anymore.
@@ -30,6 +31,8 @@ Notable Differences Between Dumux 2.0 and Dumux 2.1
     model-specific
   - Constraint solvers which simplify solving thermodynamic
     constraints have been introduced.
+- Outflow boundary conditions have been implemented in some box models: 
+  1p2c, 2p2c(ni) and stokes(2cni)
 - Quadruple precision math is possible for gcc 4.6 or newer
   - To use it add --enable-quad to the configure options and set the
     type of scalar values to quad using 
@@ -39,7 +42,11 @@ Notable Differences Between Dumux 2.0 and Dumux 2.1
     Keep in mind that quadruple precision is meant as
     a debugging tool to quickly check whether there are machine
     precision related convergence problems.
-- Problem and spatial parameter base classes provide model-independent interfaces for problem and spatial parameter definition, which only get the position in global coordinates as argument (e.g. boundaryTypesAtPos(), etc.). This allows an easy transfer of problem definitions between implicit and sequential models.
+- Problem and spatial parameter base classes provide model-independent 
+  interfaces for problem and spatial parameter definition, which only 
+  get the position in global coordinates as argument (e.g. boundaryTypesAtPos(),
+  etc.). This allows an easy transfer of problem definitions between implicit 
+  and sequential models.
 - New fully implicit models:
   - 3p3c, 3p3cni: Isothermal and non-isothermal three-phase,
     three-component models for flow and transport in porous media.
