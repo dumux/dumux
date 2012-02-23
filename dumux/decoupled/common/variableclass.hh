@@ -75,7 +75,7 @@ public:
     typedef typename std::vector <CellData> CellDataVector;
 
 private:
-    const GridView& gridView_;
+    const GridView gridView_;
     ElementMapper elementMapper_;
     VertexMapper vertexMapper_;
     CellDataVector cellDataVector_;
