@@ -41,8 +41,8 @@ namespace Dumux
  *  \phi \frac{\partial (\rho_\alpha S_\alpha)}{\partial t} + \textbf{div}\, (\rho_\alpha \boldsymbol{v_\alpha}) = q_\alpha,
  *  \f]
  *
- *  where \f$ S_\alpha \f$ is the saturation of phase alpha (wetting (\f$ w \f$), non-wetting (\f$ n \f$)) and \f$ \boldsymbol v_\alpha \f$ is the phase velocity defined by the multi-phase Darcy equation.
- *  If a phase velocity is reconstructed from the pressure solution it can be directly inserted in the previous equation. In the incompressible case the equation is further divided by the phase density \f$ \rho_\alpha \f$. If a total velocity is reconstructed the saturation equation is reformulated into:
+ *  where \f$ S_\alpha \f$ is the saturation of phase \f$ \alpha \f$ (wetting \f$(w) \f$, non-wetting \f$(n) \f$) and \f$ \boldsymbol v_\alpha \f$ is the phase velocity defined by the multi-phase Darcy equation.
+ *  If a phase velocity is reconstructed from the pressure solution it can be directly inserted into the previous equation. In the incompressible case the equation is further divided by the phase density \f$ \rho_\alpha \f$. If a total velocity is reconstructed the saturation equation is reformulated into:
  *
  * \f[
  *  \phi \frac{\partial S_w}{\partial t} + f_w \textbf{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\textbf{grad}\, p_c + (\rho_n-\rho_w) \, g \, \textbf{grad} z \right)= q_\alpha,
