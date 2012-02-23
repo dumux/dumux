@@ -1,13 +1,13 @@
-#############################################################
-# Parameter file for test_2pni                                        #
-# Everything behind a '#' is a comment                                #
-# Groups can be ordered e.g. : [BoundaryConditions],                     #
-# see ../2p2c/ for a more detailed example                            #
-#############################################################
+############################################################
+# Parameter file for test_2pni
+# Everything behind a '#' is a comment
+# Groups can be ordered e.g. : [BoundaryConditions],
+# see ../2p2c/ for a more detailed example
+############################################################
 
-#############################################################
-# Mandatory arguments                                            #
-#############################################################
+############################################################
+# Mandatory arguments
+############################################################
 dtInitial = 250# [s]
 tEnd = 1e4# [s]
 
@@ -17,13 +17,13 @@ numberOfCellsY = 16# [-] resolution in y-direction
 
 upperRightX = 60# [m] dimension of the grid
 upperRightY = 40# [m] dimension of the grid
-#####################################################################
-# Simulation restart                                                            #
-#                                                                    #
-# DuMux simulations can be restarted from *.drs files                            #
-# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'                #
-# for the restart file                                                        #
-# name_time = 27184.1_rank = 0.drs                                        #
-# Please comment in the below value, if restart is desired.                         #
-#####################################################################
+####################################################################
+# Simulation restart
+#
+# DuMux simulations can be restarted from *.drs files
+# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'
+# for the restart file
+# name_time = 27184.1_rank = 0.drs
+# Please comment in the below value, if restart is desired.
+####################################################################
 # restart = ... 

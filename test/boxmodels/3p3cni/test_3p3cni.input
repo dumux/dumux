@@ -1,24 +1,24 @@
-#############################################################
-# Parameter file for test_3p2cni                                    #
-# Everything behind a '#' is a comment                                #
-# Groups can be ordered e.g. : [BoundaryConditions],                     #
-# see ../2p2c/ for a more detailed example                            #
-#############################################################
+############################################################
+# Parameter file for test_3p2cni
+# Everything behind a '#' is a comment
+# Groups can be ordered e.g. : [BoundaryConditions],
+# see ../2p2c/ for a more detailed example
+############################################################
 
-#############################################################
-# Mandatory arguments                                            #
-#############################################################
+############################################################
+# Mandatory arguments
+############################################################
 dtInitial = 1# [s]
 tEnd = 1800# [s]
 gridFile = ./grids/kuev_2p2cni.dgf
 
-#####################################################################
-# Simulation restart                                                            #
-#                                                                    #
-# DuMux simulations can be restarted from *.drs files                            #
-# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'                #
-# for the restart file                                                        #
-# name_time = 27184.1_rank = 0.drs                                        #
-# Please comment in the below value, if restart is desired.                         #
-#####################################################################
+####################################################################
+# Simulation restart
+#
+# DuMux simulations can be restarted from *.drs files
+# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'
+# for the restart file
+# name_time = 27184.1_rank = 0.drs
+# Please comment in the below value, if restart is desired.
+####################################################################
 # restart = ... 
