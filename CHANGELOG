@@ -1,5 +1,5 @@
-Changes Since Dumux 2.0
-=======================
+Notable Differences Between Dumux 2.0 and Dumux 2.1
+===================================================
 
 - The dependencies for the external dune-pdelab and boost packages
   have been removed.
