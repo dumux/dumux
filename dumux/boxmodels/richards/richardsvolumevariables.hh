@@ -129,17 +129,17 @@ public:
                                    FluidState& fluidState)
     {
         // temperature
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                elemGeom, scvIdx);
+        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+                                                elementGeometry, scvIdx);
         fluidState.setTemperature(t);
 
         // pressures
-        Scalar pnRef = problem.referencePressure(element, elemGeom, scvIdx);
+        Scalar pnRef = problem.referencePressure(element, elementGeometry, scvIdx);
         const MaterialLawParams &matParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
         Scalar minPc = MaterialLaw::pC(matParams, 1.0);
-        fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
-        fluidState.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
+        fluidState.setPressure(wPhaseIdx, primaryVariables[pwIdx]);
+        fluidState.setPressure(nPhaseIdx, std::max(pnRef, primaryVariables[pwIdx] + minPc));
 
         // saturations
         Scalar Sw = MaterialLaw::Sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));

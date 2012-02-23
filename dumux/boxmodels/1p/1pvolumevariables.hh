@@ -101,11 +101,11 @@ public:
                                    int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                elemGeom, scvIdx);
+        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+                                                elementGeometry, scvIdx);
         fluidState.setTemperature(t);
 
-        fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
+        fluidState.setPressure(/*phaseIdx=*/0, primaryVariables[Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the

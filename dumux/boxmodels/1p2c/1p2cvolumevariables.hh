@@ -133,13 +133,13 @@ public:
                                    int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                elemGeom, scvIdx);
+        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+                                                elementGeometry, scvIdx);
         fluidState.setTemperature(t);
 
-        fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
+        fluidState.setPressure(phaseIdx, primaryVariables[pressureIdx]);
 
-        Scalar x1 = priVars[x1Idx]; //mole or mass fraction of component 1
+        Scalar x1 = primaryVariables[x1Idx]; //mole or mass fraction of component 1
         if(!useMoles) //mass-fraction formulation
         {
             // convert mass to mole fractions

@@ -130,32 +130,32 @@ public:
                                    int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                elemGeom, scvIdx);
+        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+                                                elementGeometry, scvIdx);
         fluidState.setTemperature(t);
 
         // material law parameters
         typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
         const typename MaterialLaw::Params &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
 
 
         if (int(formulation) == pwSn) {
-            Scalar Sn = priVars[saturationIdx];
+            Scalar Sn = primaryVariables[saturationIdx];
             fluidState.setSaturation(nPhaseIdx, Sn);
             fluidState.setSaturation(wPhaseIdx, 1 - Sn);
 
-            Scalar pW = priVars[pressureIdx];
+            Scalar pW = primaryVariables[pressureIdx];
             fluidState.setPressure(wPhaseIdx, pW);
             fluidState.setPressure(nPhaseIdx,
                                    pW + MaterialLaw::pC(materialParams, 1 - Sn));
         }
         else if (int(formulation) == pnSw) {
-            Scalar Sw = priVars[saturationIdx];
+            Scalar Sw = primaryVariables[saturationIdx];
             fluidState.setSaturation(wPhaseIdx, Sw);
             fluidState.setSaturation(nPhaseIdx, 1 - Sw);
 
-            Scalar pN = priVars[pressureIdx];
+            Scalar pN = primaryVariables[pressureIdx];
             fluidState.setPressure(nPhaseIdx, pN);
             fluidState.setPressure(wPhaseIdx,
                                    pN - MaterialLaw::pC(materialParams, Sw));

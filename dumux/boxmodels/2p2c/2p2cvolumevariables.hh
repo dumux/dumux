@@ -190,8 +190,8 @@ public:
                                    FluidState& fluidState,
                                    bool isOldSol = false)
     {
-        Scalar t = Implementation::temperature_(priVars, problem, element,
-                                                elemGeom, scvIdx);
+        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+                                                elementGeometry, scvIdx);
         fluidState.setTemperature(t);
 
         int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
@@ -208,9 +208,9 @@ public:
         }
         else if (phasePresence == bothPhases) {
             if (formulation == plSg)
-                Sg = priVars[switchIdx];
+                Sg = primaryVariables[switchIdx];
             else if (formulation == pgSl)
-                Sg = 1.0 - priVars[switchIdx];
+                Sg = 1.0 - primaryVariables[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
@@ -223,16 +223,16 @@ public:
 
         // calculate capillary pressure
         const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
         Scalar pC = MaterialLaw::pC(materialParams, 1 - Sg);
 
         if (formulation == plSg) {
-            fluidState.setPressure(lPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(gPhaseIdx, priVars[pressureIdx] + pC);
+            fluidState.setPressure(lPhaseIdx, primaryVariables[pressureIdx]);
+            fluidState.setPressure(gPhaseIdx, primaryVariables[pressureIdx] + pC);
         }
         else if (formulation == pgSl) {
-            fluidState.setPressure(gPhaseIdx, priVars[pressureIdx]);
-            fluidState.setPressure(lPhaseIdx, priVars[pressureIdx] - pC);
+            fluidState.setPressure(gPhaseIdx, primaryVariables[pressureIdx]);
+            fluidState.setPressure(lPhaseIdx, primaryVariables[pressureIdx] - pC);
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
@@ -259,7 +259,7 @@ public:
 
             // extract _mass_ fractions in the gas phase
             Scalar massFractionG[numComponents];
-            massFractionG[lCompIdx] = priVars[switchIdx];
+            massFractionG[lCompIdx] = primaryVariables[switchIdx];
             massFractionG[gCompIdx] = 1 - massFractionG[lCompIdx];
 
             // calculate average molar mass of the gas phase
@@ -287,7 +287,7 @@ public:
 
             // extract _mass_ fractions in the gas phase
             Scalar massFractionL[numComponents];
-            massFractionL[gCompIdx] = priVars[switchIdx];
+            massFractionL[gCompIdx] = primaryVariables[switchIdx];
             massFractionL[lCompIdx] = 1 - massFractionL[gCompIdx];
 
             // calculate average molar mass of the gas phase
