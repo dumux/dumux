@@ -61,7 +61,7 @@ namespace Dumux
     \left\{
        \frac{\varrho_\alpha}{\overline M_\alpha} x_\alpha^\kappa
        \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
-       \mathbf{grad}\left( p_\alpha - \varrho_{\alpha} g\right)
+       \text{grad}\left( p_\alpha - \varrho_{\alpha} g\right)
     \right\}
     \right)
     = q^\kappa
@@ -82,7 +82,7 @@ namespace Dumux
  * \f[ \forall \alpha: \sum_\kappa x_\alpha^\kappa = 1 \implies S_\alpha \geq 0 \f]
  *
  * Since at any given spatial location, a phase is always either
- * present or not present, the one of the strict equalities on the
+ * present or not present, one of the strict equalities on the
  * right hand side is always true, i.e.
  * \f[ \forall \alpha: S_\alpha \left( \sum_\kappa x_\alpha^\kappa - 1 \right) = 0 \f]
  * always holds.

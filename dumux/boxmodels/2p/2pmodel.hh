@@ -59,7 +59,7 @@ namespace Dumux
  \right\} - q_\alpha = 0 \;,
  \f]
  *
- * This equations are by a fully-coupled vertex centered finite volume
+ * These equations are discretized by a fully-coupled vertex centered finite volume
  * (box) scheme as spatial and the implicit Euler method as time
  * discretization.
  *

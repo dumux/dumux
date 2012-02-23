@@ -56,7 +56,7 @@ namespace Dumux
  *
  * By inserting this into the equations for the conservation of the
  * components, one transport equation for each component is obtained as
- * \f{eqnarray}
+ * \f{eqnarray*}
  && \phi \frac{\partial (\sum_\alpha \varrho_{\text{mol}, \alpha} x_\alpha^\kappa
  S_\alpha )}{\partial t}
  - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha}
@@ -86,12 +86,12 @@ namespace Dumux
  * An adaptive primary variable switch is included. The phase state is stored for all nodes
  * of the system. The following cases can be distinguished:
  * <ul>
- *  <li> All three phases are present: Primary variables are two saturations (\f$S_w\f$ and \f$S_n\f$, and a pressure, in this case \f$p_g\f$. </li>
- *  <li> Only the water phase is present: Primary variables are now the mole fractions of air and contaminant in the water phase (\f$x_w^a\f$ and \f$x_w^c\f$), as well as the gas pressure, which is, of course, in a case where only the water phase is present, just the same as the water pressure. </li>
- *  <li> Gas and NAPL phases are present: Primary variables (\f$S_n\f$, \f$x_g^w\f$, \f$p_g\f$). </li>
- *  <li> Water and NAPL phases are present: Primary variables (\f$S_n\f$, \f$x_w^a\f$, \f$p_g\f$). </li>
- *  <li> Only gas phase is present: Primary variables (\f$x_g^w\f$, \f$x_g^c\f$, \f$p_g\f$). </li>
- *  <li> Water and gas phases are present: Primary variables (\f$S_w\f$, \f$x_w^g\f$, \f$p_g\f$). </li>
+ *  <li> All three phases are present: Primary variables are two saturations \f$(S_w\f$ and \f$S_n)\f$, and a pressure, in this case \f$p_g\f$. </li>
+ *  <li> Only the water phase is present: Primary variables are now the mole fractions of air and contaminant in the water phase \f$(x_w^a\f$ and \f$x_w^c)\f$, as well as the gas pressure, which is, of course, in a case where only the water phase is present, just the same as the water pressure. </li>
+ *  <li> Gas and NAPL phases are present: Primary variables \f$(S_n\f$, \f$x_g^w\f$, \f$p_g)\f$. </li>
+ *  <li> Water and NAPL phases are present: Primary variables \f$(S_n\f$, \f$x_w^a\f$, \f$p_g)\f$. </li>
+ *  <li> Only gas phase is present: Primary variables \f$(x_g^w\f$, \f$x_g^c\f$, \f$p_g)\f$. </li>
+ *  <li> Water and gas phases are present: Primary variables \f$(S_w\f$, \f$x_w^g\f$, \f$p_g)\f$. </li>
  * </ul>
  */
 template<class TypeTag>

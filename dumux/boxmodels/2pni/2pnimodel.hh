@@ -56,7 +56,7 @@ namespace Dumux {
  * matrix and the fluids: 
  
  \f{align*}{
- \frac{\partial \phi \sum_alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
+ \frac{\partial \phi \sum_\alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
  & + 
  \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
  - 

@@ -75,7 +75,7 @@ namespace Dumux {
  * If both phases are present the primary variables are, like in the nonisothermal two-phase model, either \f$p_w\f$, \f$S_n\f$ and
  * temperature or \f$p_n\f$, \f$S_w\f$ and temperature. The formulation which ought to be used can be
  * specified by setting the <tt>Formulation</tt> property to either
- * <tt>TwoPTwoIndices::pWsN</tt> or <tt>TwoPTwoCIndices::pNsW</tt>. By
+ * <tt>TwoPTwoCIndices::pWsN</tt> or <tt>TwoPTwoCIndices::pNsW</tt>. By
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  * In case that only one phase (nonwetting or wetting phase) is present the second primary
  * variable represents a mass fraction. The correct assignment of the second
