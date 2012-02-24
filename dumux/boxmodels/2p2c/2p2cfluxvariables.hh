@@ -112,6 +112,21 @@ protected:
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
+        // calculate densities at the integration points of the face
+        Vector tmp(0.0);
+        for (int idx = 0;
+             idx < fvGeom_.numVertices;
+             idx++) // loop over adjacent vertices
+        {
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            {
+               densityAtIP_[phaseIdx] += elemVolVars[idx].density(phaseIdx)*
+                       face().shapeValue[idx];
+               molarDensityAtIP_[phaseIdx] += elemVolVars[idx].molarDensity(phaseIdx)*
+                       face().shapeValue[idx];
+            }
+        }
+
         calculateGradients_(problem, element, elemVolVars);
         calculateVelocities_(problem, element, elemVolVars);
         calculateDiffCoeffPM_(problem, element, elemVolVars);
