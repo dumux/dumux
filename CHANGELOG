@@ -1,72 +1,83 @@
 Notable Differences Between DuMuX 2.0 and DuMuX 2.1
 ===================================================
 
-- Overhaul of the fluid framework
-  - The programming interface for fluid systems, fluid states and
+- The thermodynamics framework has been overhauled:
+  - The programming interfaces for fluid systems, fluid states and
     components has been formalized and cleaned up.
   - Fluid systems now have the option to cache computationally
     expensive parameters if they are needed for several relations.
-  - Fluid systems are not concerned with the calculation of the
+  - Fluid systems are not charged with the computation of the
     chemical equilibrium anymore.
   - Fluid states are now centralized infrastructure instead of being
-    model-specific
-  - Constraint solvers which simplify solving thermodynamic
-    constraints have been introduced.
-- Outflow boundary conditions have been implemented in some box models: 
-  1p2c, 2p2c(ni) and stokes(2cni)
-- Problem and spatial parameter base classes provide model-independent 
-  interfaces for problem and spatial parameter definition, which only 
-  get the position in global coordinates as argument (e.g. boundaryTypesAtPos(),
-  etc.). This allows an easy transfer of problem definitions between implicit 
-  and sequential models.
-
-- New fully implicit models:
+    model-specific.
+  - Constraint solvers (which simplify solving thermodynamic
+    constraints) have been introduced.
+- Outflow boundary conditions have been implemented for the
+  fully-implicit models 1p2c, 2p2c(ni) and stokes(2cni).
+- The problem and spatial parameter base classes also provide optional
+  model-independent interfaces. These methods only get the position in
+  global coordinates as argument and are named *AtPos()
+  (e.g. boundaryTypesAtPos()). This allows an easy transfer of problem
+  definitions between implicit and sequential models.
+- The following fully-implicit models have been added:
   - 3p3c, 3p3cni: Isothermal and non-isothermal three-phase,
-    three-component models for flow and transport in porous media.
+    three-component models for flow and transport in porous media
+    based on primary variable switching.
   - MpNc: A model for arbitrary number of phases M > 0, and components
-    (N >= M - 1). This model also comes with modules for considering
-    energy and molecular diffusion
-  - stokes, stokes2c, stokes2cni: A model for the plain Stokes
+    (N >= M - 1 >= 1) for flow and transport in porous media. This
+    model also comes with an energy and a molecular diffusion module.
+  - stokes, stokes2c, stokes2cni: Models for the plain Stokes
     equation as well as isothermal and non-isothermal Stokes models
     for two-component fluids.
-- Overhaul of the sequentially-coupled models:
-  - Common structure for cell centered standard finite volume implementations.
-  - Data structure overhauled to avoid large clumps of data in large-scale simulations: Each cell stores
-    data in its own storage object.
-  - Subdivision of too large assemble() methods into submethods getStorage(), getFlux() etc. By this,
-    improve inheritance of classes and reduction of code duplication.
-  - Improved conceptual seperation of the variableclass (central infrastructure), data storage, transport 
-    model and pressure model.
-  - Use of the common DuMuX infrastructure also used by the implicit models (BoundaryTypes, etc.)
-    => Significant improvement in speed and comfort in debugging
-- New decoupled models:
-  - 2padaptive: Grid-adaptive standard finite volume two-phase model for non-conforming quadrilateral grids.
-
+- The sequentially-coupled models have been overhauled:
+  - A common structure for cell centered standard finite volume
+    implementations has been introduced.
+  - The data structures where overhauled to avoid large clumps of data
+    in large-scale simulations: Each cell stores data in its own
+    storage object.
+  - The too large assemble() methods have been split into submethods
+    getStorage(), getFlux() etc. By this, inheritance of classes has
+    been improved and code duplication was reduced.
+  - The conceptual seperation of the "VariableClass" (central
+    infrastructure), data storage, transport model and pressure model
+    has been improved.
+  - More of infrastructure is now shared with the implicit models
+    (e.g. the BoundaryTypes). This results in significant performance
+    improvements and makes debugging easier.
+- The 2padaptive sequentially coupled model has been added. This model
+  implements a grid-adaptive finite volume scheme for immiscible
+  two-phase flow in porous media on non-conforming quadrilateral
+  grids.
 - The dependencies for the external dune-pdelab and boost packages
   have been removed.
-- Improvements to the build system:
-  - Better test coverage of the dependencies of libraries for the
-    default autotools-based build system.
-  - Experimental support for building DuMuX using CMake. In the long
-    run, CMake is projected to become the default build system
-- All headers can now be included without any preconditions (i.e. 'make
-  headercheck' works)
-- DuMuX now compiles without warnings if GCC is given the -pedantic flag
+- The build system has received major improvements:
+  - There is now much better test coverage of build-time dependencies
+    on packages for the default autotools-based build system.
+  - Experimental support for building DuMuX using CMake has been much
+    improved. In the long run, CMake is projected to become the
+    default build system.
+- All headers can now be included without any preconditions.
+- DuMuX now compiles without warnings if the -pedantic flag used for GCC.
 - Specifying run-time parameters is now possible. The mechanism allows
   to use parameter files or to specify parameters directly on the
-  command line. Parameter input files have been added for each test application.
-  These can be run now without arguments (use of default parameter files)
-- Fine-tuning of the DuMuX property system
-  - PTAG() no longer required for the GET_PROP* macros (but can still be used)
+  command line and fallback parameter input files have been added for
+  each test application.  As a consequence, applications can be run
+  now without specifying any command line arguments.
+- The DuMuX property system has been fine-tuned:
+  - Encapsulating property names with the PTAG() is no longer required
+    for the GET_PROP* macros (but is still allowed).
   - Setting property defaults has been deprecated.
-  - All properties set for a type tag can now be printed with their
-    value and the location where they where specified.
-- Quadruple precision math is possible for gcc 4.6 or newer
-  - To use it add --enable-quad to the configure options and set the
-    type of scalar values to quad using 
+  - All properties defined for a type tag can now be printed. Also,
+    their value and the location in the source where they where
+    specified is included in the output.
+- Using quadruple precision math has been made possible for GCC 4.6 or newer:
+  - To use it, the configure option '--enable-quad' needs to be added
+    and the type of scalar values needs to be changed to 'quad'. This
+    can be done in the problem file using
 
-        SET_TYPE_PROP(ProblemTypeTag, Scalar, quad);
+        SET_TYPE_PROP(YourProblemTypeTag, Scalar, quad);
 
-    Keep in mind that quadruple precision is meant as
+    It should be noted, that performance is very poor when using
+    quadruple precision arithmetic. This feature is primarily meant as
     a debugging tool to quickly check whether there are machine
     precision related convergence problems.
