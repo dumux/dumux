@@ -1,7 +1,7 @@
 check_PROGRAMS = test_mpnc
 noinst_HEADERS = *.hh
 
-EXTRA_DIST=grids/*.dgf
+EXTRA_DIST=CMakeLists.txt grids/*.dgf
 gridsdir=$(datadir)/dumux/grids
 grids_DATA=grids/*.dgf
 
