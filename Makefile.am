@@ -2,7 +2,6 @@
 # nicely, the files for the CMake build system, some README files and
 # a set of default .opts files for dunecontrol.
 EXTRA_DIST = dune.module \
-             stamp-vc \
              cmake/Modules/*.cmake \
 	     CMakeLists.txt \
 	     CHANGELOG CONTRIBUTORS INSTALL.cmake LICENSE \
