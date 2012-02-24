@@ -70,17 +70,17 @@ CHECK_CXX_SOURCE_COMPILES(
 )
 
 # array and fill
-CHECK_CXX_SOURCE_COMPILES("
-    #include <array>
-    
-    int main(void)
-    {
-      std::array<int,2> a;
-      a.fill(9);
-      return 0;
-    }
-    " HAVE_ARRAY
-)
+# CHECK_CXX_SOURCE_COMPILES("
+#     #include <array>
+#     
+#     int main(void)
+#     {
+#       std::array<int,2> a;
+#       a.fill(9);
+#       return 0;
+#     }
+#     " HAVE_ARRAY
+# ) # commented out due to a bug in dune-common <= 2.1.1
 
 # __attribute__((always_inline))
 CHECK_CXX_SOURCE_COMPILES(

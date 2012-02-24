@@ -1,25 +1,6 @@
-Notable Differences Between Dumux 2.0 and Dumux 2.1
+Notable Differences Between DuMuX 2.0 and DuMuX 2.1
 ===================================================
 
-- The dependencies for the external dune-pdelab and boost packages
-  have been removed.
-- Improvements to the build system:
-  - Better test coverage of the dependencies of libraries for the
-    default autotools-based build system.
-  - Experimental support for building Dumux using CMake. In the long
-    run, CMake is projected to become the default build system
-- All headers can now be included without any preconditions (i.e. 'make
-  headercheck' works)
-- Dumux now compiles without warnings if GCC is given the -pedantic flag
-- Specifying run-time parameters is now possible. The mechanism allows
-  to use parameter files or to specify parameters directly on the
-  command line. Parameter input files have been added for each test application.
-  These can be run now without arguments (use of default parameter files)
-- Fine-tuning of the Dumux property system
-  - PTAG() no longer required for the GET_PROP* macros (but can still be used)
-  - Setting property defaults has been deprecated.
-  - All properties set for a type tag can now be printed with their
-    value and the location where they where specified.
 - Overhaul of the fluid framework
   - The programming interface for fluid systems, fluid states and
     components has been formalized and cleaned up.
@@ -33,20 +14,12 @@ Notable Differences Between Dumux 2.0 and Dumux 2.1
     constraints have been introduced.
 - Outflow boundary conditions have been implemented in some box models: 
   1p2c, 2p2c(ni) and stokes(2cni)
-- Quadruple precision math is possible for gcc 4.6 or newer
-  - To use it add --enable-quad to the configure options and set the
-    type of scalar values to quad using 
-
-        SET_TYPE_PROP(ProblemTypeTag, Scalar, quad);
-
-    Keep in mind that quadruple precision is meant as
-    a debugging tool to quickly check whether there are machine
-    precision related convergence problems.
 - Problem and spatial parameter base classes provide model-independent 
   interfaces for problem and spatial parameter definition, which only 
   get the position in global coordinates as argument (e.g. boundaryTypesAtPos(),
   etc.). This allows an easy transfer of problem definitions between implicit 
   and sequential models.
+
 - New fully implicit models:
   - 3p3c, 3p3cni: Isothermal and non-isothermal three-phase,
     three-component models for flow and transport in porous media.
@@ -64,7 +37,36 @@ Notable Differences Between Dumux 2.0 and Dumux 2.1
     improve inheritance of classes and reduction of code duplication.
   - Improved conceptual seperation of the variableclass (central infrastructure), data storage, transport 
     model and pressure model.
-  - Use of the common Dumux infrastructure also used by the implicit models (BoundaryTypes, etc.)
+  - Use of the common DuMuX infrastructure also used by the implicit models (BoundaryTypes, etc.)
     => Significant improvement in speed and comfort in debugging
 - New decoupled models:
   - 2padaptive: Grid-adaptive standard finite volume two-phase model for non-conforming quadrilateral grids.
+
+- The dependencies for the external dune-pdelab and boost packages
+  have been removed.
+- Improvements to the build system:
+  - Better test coverage of the dependencies of libraries for the
+    default autotools-based build system.
+  - Experimental support for building DuMuX using CMake. In the long
+    run, CMake is projected to become the default build system
+- All headers can now be included without any preconditions (i.e. 'make
+  headercheck' works)
+- DuMuX now compiles without warnings if GCC is given the -pedantic flag
+- Specifying run-time parameters is now possible. The mechanism allows
+  to use parameter files or to specify parameters directly on the
+  command line. Parameter input files have been added for each test application.
+  These can be run now without arguments (use of default parameter files)
+- Fine-tuning of the DuMuX property system
+  - PTAG() no longer required for the GET_PROP* macros (but can still be used)
+  - Setting property defaults has been deprecated.
+  - All properties set for a type tag can now be printed with their
+    value and the location where they where specified.
+- Quadruple precision math is possible for gcc 4.6 or newer
+  - To use it add --enable-quad to the configure options and set the
+    type of scalar values to quad using 
+
+        SET_TYPE_PROP(ProblemTypeTag, Scalar, quad);
+
+    Keep in mind that quadruple precision is meant as
+    a debugging tool to quickly check whether there are machine
+    precision related convergence problems.
