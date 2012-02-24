@@ -3,8 +3,9 @@
 # a set of default .opts files for dunecontrol.
 EXTRA_DIST = dune.module \
              cmake/Modules/*.cmake \
-	     CMakeLists.txt \
-	     CHANGELOG CONTRIBUTORS INSTALL.cmake LICENSE \
+             bin/runTest.sh bin/fuzzycomparevtu.py \
+             CMakeLists.txt config.h.cmake \
+             CHANGELOG CONTRIBUTORS INSTALL.cmake LICENSE README \
              debug.opts optim.opts 
 
 SUBDIRS = doc dumux m4 test tutorial
