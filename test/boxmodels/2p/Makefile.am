@@ -1,7 +1,7 @@
 check_PROGRAMS = test_2p
 
 noinst_HEADERS = *.hh
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST=*.input CMakeLists.txt
 
 test_2p_SOURCES = test_2p.cc
 

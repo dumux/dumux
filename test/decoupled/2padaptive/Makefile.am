@@ -1,7 +1,7 @@
 check_PROGRAMS = test_impesadaptive
 
 noinst_HEADERS = *.hh
-EXTRA_DIST = grids/*.dgf CMakeLists.txt
+EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
 
 test_impesadaptive_SOURCES = test_impesadaptive.cc
 

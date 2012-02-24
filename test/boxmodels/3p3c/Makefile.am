@@ -1,7 +1,7 @@
 check_PROGRAMS = test_3p3c
 
 noinst_HEADERS = *.hh
-EXTRA_DIST = grids/*.dgf CMakeLists.txt
+EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
 
 test_3p3c_SOURCES = test_3p3c.cc
 
