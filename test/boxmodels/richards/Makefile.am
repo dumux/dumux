@@ -1,7 +1,7 @@
 check_PROGRAMS = test_richards
 
 noinst_HEADERS = *.hh
-EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
+EXTRA_DIST=*reference.vtu *.input grids/*.dgf CMakeLists.txt
 
 test_richards_SOURCES = test_richards.cc 
 

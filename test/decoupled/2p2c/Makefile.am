@@ -7,5 +7,5 @@ test_dec2p2c_SOURCES = test_dec2p2c.cc
 
 test_multiphysics2p2c_SOURCES = test_multiphysics2p2c.cc
 
-EXTRA_DIST=*.input CMakeLists.txt
+EXTRA_DIST=*reference.vtu *.input CMakeLists.txt
 include $(top_srcdir)/am/global-rules

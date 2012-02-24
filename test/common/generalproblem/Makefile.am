@@ -1,7 +1,7 @@
 check_PROGRAMS = test_generalproblem_2p
 
 noinst_HEADERS = *.hh
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST=*reference.vtu CMakeLists.txt
 
 test_generalproblem_2p_SOURCES = test_generalproblem_2p.cc
 

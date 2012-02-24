@@ -2,7 +2,7 @@
 check_PROGRAMS = test_diffusion test_1p
 
 noinst_HEADERS = *.hh
-EXTRA_DIST=*.input CMakeLists.txt
+EXTRA_DIST=*reference.vtu *.input CMakeLists.txt
 
 test_diffusion_SOURCES = test_diffusion.cc
 

@@ -1,7 +1,7 @@
 check_PROGRAMS = test_impes test_transport
 
 noinst_HEADERS = *.hh
-EXTRA_DIST=*.input grids/*.dgf CMakeLists.txt
+EXTRA_DIST=*reference.vtu *.input grids/*.dgf CMakeLists.txt
 
 test_impes_SOURCES = test_impes.cc
 
