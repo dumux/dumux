@@ -1,4 +1,4 @@
-SUBDIRS = fv
+SUBDIRS = fv mimetic
 
 commondir = $(includedir)/dumux/decoupled/common
 common_HEADERS = *.hh

@@ -64,7 +64,7 @@
 /*#cmakedefine HAVE_TR1_ARRAY 1*/
 
 /* Define to 1 if the <array> C++0x is available and support array::fill */
-#cmakedefine HAVE_ARRAY 1
+/*#cmakedefine HAVE_ARRAY 1*/
 
 /* Define to 1 if you have the <memory> header file. */
 #cmakedefine HAVE_MEMORY 1

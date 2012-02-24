@@ -3,7 +3,7 @@
 # a set of default .opts files for dunecontrol.
 EXTRA_DIST = dune.module \
              stamp-vc \
-             CMake/Modules/*.cmake \
+             cmake/Modules/*.cmake \
 	     CMakeLists.txt \
 	     CHANGELOG CONTRIBUTORS INSTALL.cmake LICENSE \
              debug.opts optim.opts 

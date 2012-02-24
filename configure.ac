@@ -44,7 +44,9 @@ AC_CONFIG_FILES([dumux.pc
     dumux/decoupled/2p/transport/fv/Makefile
     dumux/decoupled/2p2c/Makefile 
     dumux/decoupled/common/Makefile
-    dumux/decoupled/common/fv/Makefile 
+    dumux/decoupled/common/fv/Makefile
+    dumux/decoupled/common/fv/mpfa/Makefile
+    dumux/decoupled/common/mimetic/Makefile
     dumux/freeflow/Makefile
     dumux/freeflow/stokes/Makefile
     dumux/freeflow/stokes2c/Makefile
