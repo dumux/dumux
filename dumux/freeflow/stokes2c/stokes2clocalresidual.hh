@@ -61,7 +61,7 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
     /*!
@@ -147,10 +147,12 @@ public:
         // diffusive component flux
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             flux[transportIdx] -=
-                fluxVars.massFractionGradAtIP()[dimIdx] *
+                fluxVars.moleFractionGradAtIP()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
                 fluxVars.diffusionCoeffAtIP() *
-                fluxVars.densityAtIP();
+                fluxVars.molarDensityAtIP() *
+                FluidSystem::molarMass(lCompIdx);
+
         Valgrind::CheckDefined(flux[transportIdx]);
     }
 };

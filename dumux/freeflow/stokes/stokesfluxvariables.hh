@@ -90,6 +90,7 @@ protected:
         // calculate gradients and secondary variables at IPs
         FieldVector tmp(0.0);
         densityAtIP_ = Scalar(0);
+        molarDensityAtIP_ = Scalar(0);
         viscosityAtIP_ = Scalar(0);
         pressureAtIP_ = Scalar(0);
         normalVelocityAtIP_ = Scalar(0);
@@ -104,6 +105,8 @@ protected:
         {
             // phase density and viscosity at IP
             densityAtIP_ += elemVolVars[idx].density() *
+                face().shapeValue[idx];
+            molarDensityAtIP_ += elemVolVars[idx].molarDensity()*
                 face().shapeValue[idx];
             viscosityAtIP_ += elemVolVars[idx].viscosity() *
                 face().shapeValue[idx];
@@ -196,6 +199,12 @@ public:
     { return densityAtIP_; }
 
     /*!
+     * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
+     */
+    const Scalar molarDensityAtIP() const
+    { return molarDensityAtIP_; }
+
+    /*!
      * \brief Return the viscosity \f$ \mathrm{[m^2/s]} \f$ at the integration
      *        point.
      */
@@ -260,6 +269,7 @@ protected:
 
     // values at the integration point
     Scalar densityAtIP_;
+    Scalar molarDensityAtIP_;
     Scalar viscosityAtIP_;
     Scalar pressureAtIP_;
     Scalar normalVelocityAtIP_;
