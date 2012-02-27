@@ -953,12 +953,12 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                                 fluidState.saturation(wPhaseIdx));
             // TODO: get right criterion, do output for evaluation
             //converge criterion
-            if (abs(oldPc-pc)<10)
+            if (fabs(oldPc-pc)<10)
                 maxiter = 1;
             iterout = iter;
         }
         if(iterout !=0)
-        Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx << ", pc delta still " << abs(oldPc-pc) << std::endl;
+        Dune::dinfo << iterout << "times iteration of pc was applied at Idx " << globalIdx << ", pc delta still " << fabs(oldPc-pc) << std::endl;
     }
     // initialize phase properties not stored in fluidstate
     cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
