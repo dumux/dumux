@@ -74,6 +74,36 @@ class DiffusionProblem1P: public OneModelProblem<TypeTag>
 
 public:
     /*!
+     * \brief Constructs a DiffusionProblem1P object
+     *
+     * \param timeManager the time manager
+     * \param gridView The grid view
+     */
+    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView)
+    : ParentType(timeManager, gridView), gravity_(0)
+    {
+        spatialParameters_ = new SpatialParameters(gridView);
+        newSpatialParams_ = true;
+        gravity_ = 0;
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
+            gravity_[dim - 1] = -9.81;
+    }
+    /*!
+     * \brief Constructs a DiffusionProblem1P object
+     *
+     * \param timeManager the time manager
+     * \param gridView The grid view
+     * \param spatialParameters SpatialParameters instantiation
+     */
+    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
+    : ParentType(timeManager, gridView), gravity_(0), spatialParameters_(&spatialParameters)
+    {
+        newSpatialParams_ = false;
+        gravity_ = 0;
+        if (GET_PARAM(TypeTag, bool, EnableGravity))
+            gravity_[dim - 1] = -9.81;
+    }
+    /*!
      * \brief The constructor
      *
      * \param gridView The grid view
