@@ -69,7 +69,7 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices) Indices;
 
     enum
@@ -241,10 +241,10 @@ public:
         if(!useMoles)
         {
             // diffusive flux of the second component - massfraction
-            tmp = -(fluxVars.massFracGrad(comp1Idx)*fluxVars.face().normal);
-            tmp *= fluxVars.porousDiffCoeff() * fluxVars.densityAtIP();
-
-            flux[transEqIdx] += tmp;// * FluidSystem::molarMass(comp1Idx);
+            tmp = -(fluxVars.moleFracGrad(comp1Idx)*fluxVars.face().normal);
+            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP();
+            // convert it to a mass flux and add it
+            flux[transEqIdx] += tmp * FluidSystem::molarMass(comp1Idx);
         }
         else
         {
