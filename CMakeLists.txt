@@ -2,7 +2,7 @@
 # general stuff
 cmake_minimum_required(VERSION 2.8)
 set(ProjectName            "DuMuX")
-set(ProjectVersion         "2.1-svn")
+set(ProjectVersion         "2.1.0")
 set(ProjectMaintainer      "Bernd Flemisch")
 set(ProjectMaintainerEmail "Bernd.Flemisch_at_iws dot uni-stuttgart dot de")
 project(${ProjectName} CXX)
