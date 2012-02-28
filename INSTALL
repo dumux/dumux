@@ -22,21 +22,17 @@ following DUNE modules into your source directory:
   - dune-istl          from [1]
   - dune-localfuctions from [1]
 
-Use the 2.1 release of the DUNE core modules. 
+Use the 2.1.1 release of the DUNE core modules. 
 
-Next, you need to decide whether you want to compile in debug or in
-optimized mode. Example files are located in $DUMUX_ROOT/optim.opts 
-and $DUMUX_ROOT/debug.opts respectively. ($DUMUX_ROOT is the 
-directory where the unpacked files of the DuMuX distribution are 
-located.) 
+With option files you can enable options, set compiler flags and
+define paths to external libraries. Exemplary option files are located 
+in $DUMUX_ROOT/optim.opts and $DUMUX_ROOT/debug.opts respectively. 
+($DUMUX_ROOT is the directory where the unpacked files of the DuMuX 
+distribution are located.) 
 
-Next, compile everything with
+Now compile everything with
 
   ./dune-common/bin/dunecontrol --opts=$(DUMUX_ROOT)/optim.opts --module=dumux all
-
-Finally, install DUNE and DuMuX headers to your system by
-
-  ./dune-common/bin/dunecontrol --module=dumux make install
 
 A more comprehensive introduction to the DUNE build system can be
 found in [2].
