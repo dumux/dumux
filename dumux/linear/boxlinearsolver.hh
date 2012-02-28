@@ -276,7 +276,7 @@ class BoxBiCGStabILU0Solver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize = 3)
+    BoxBiCGStabILU0Solver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -307,7 +307,7 @@ class BoxBiCGStabSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxBiCGStabSORSolver(const Problem &problem, int overlapSize = 3)
+    BoxBiCGStabSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -338,7 +338,7 @@ class BoxBiCGStabSSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxBiCGStabSSORSolver(const Problem &problem, int overlapSize = 3)
+    BoxBiCGStabSSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -369,7 +369,7 @@ class BoxBiCGStabJacSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxBiCGStabJacSolver(const Problem &problem, int overlapSize = 3)
+    BoxBiCGStabJacSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -400,7 +400,7 @@ class BoxBiCGStabGSSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxBiCGStabGSSolver(const Problem &problem, int overlapSize = 3)
+    BoxBiCGStabGSSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -431,7 +431,7 @@ class BoxCGILU0Solver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxCGILU0Solver(const Problem &problem, int overlapSize = 3)
+    BoxCGILU0Solver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -462,7 +462,7 @@ class BoxCGSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxCGSORSolver(const Problem &problem, int overlapSize = 3)
+    BoxCGSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -493,7 +493,7 @@ class BoxCGSSORSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxCGSSORSolver(const Problem &problem, int overlapSize = 3)
+    BoxCGSSORSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -524,7 +524,7 @@ class BoxCGJacSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxCGJacSolver(const Problem &problem, int overlapSize = 3)
+    BoxCGJacSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
@@ -555,7 +555,7 @@ class BoxCGGSSolver : public BoxLinearSolver<TypeTag>
 
 public:
     template <class Problem>
-    BoxCGGSSolver(const Problem &problem, int overlapSize = 3)
+    BoxCGGSSolver(const Problem &problem, int overlapSize = 1)
     : ParentType(problem, overlapSize)
     {}
 
