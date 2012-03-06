@@ -89,6 +89,7 @@ protected:
     {
         // calculate gradients and secondary variables at IPs
         FieldVector tmp(0.0);
+
         densityAtIP_ = Scalar(0);
         molarDensityAtIP_ = Scalar(0);
         viscosityAtIP_ = Scalar(0);
@@ -97,7 +98,7 @@ protected:
         velocityAtIP_ = Scalar(0);
         pressureGradAtIP_ = Scalar(0);
         velocityGradAtIP_ = Scalar(0);
-        velocityDivAtIP_ = Scalar(0);
+//        velocityDivAtIP_ = Scalar(0);
 
         for (int idx = 0;
              idx < fvGeom_.numVertices;
@@ -135,7 +136,7 @@ protected:
                 tmp *= elemVolVars[idx].velocity()[dimIdx];
                 velocityGradAtIP_[dimIdx] += tmp;
 
-                velocityDivAtIP_ += face().grad[idx][dimIdx]*elemVolVars[idx].velocity()[dimIdx];
+//                velocityDivAtIP_ += face().grad[idx][dimIdx]*elemVolVars[idx].velocity()[dimIdx];
             }
         }
 
@@ -147,7 +148,7 @@ protected:
         Valgrind::CheckDefined(velocityAtIP_);
         Valgrind::CheckDefined(pressureGradAtIP_);
         Valgrind::CheckDefined(velocityGradAtIP_);
-        Valgrind::CheckDefined(velocityDivAtIP_);
+//        Valgrind::CheckDefined(velocityDivAtIP_);
     };
 
     void determineUpwindDirection_(const ElementVolumeVariables &elemVolVars)
@@ -212,8 +213,8 @@ public:
     { return viscosityAtIP_; }
 
     /*!
-     * \brief Return the normal velocity \f$ \mathrm{[m/s]} \f$ at the integration
-     *        point.
+     * \brief Return the velocity \f$ \mathrm{[m/s]} \f$ at the integration
+     *        point multiplied by the normal and the area.
      */
     Scalar normalVelocityAtIP() const
     { return normalVelocityAtIP_; }
@@ -241,8 +242,8 @@ public:
      * \brief Return the divergence of the normal velocity at the
      *        integration point.
      */
-    Scalar velocityDivAtIP() const
-    { return velocityDivAtIP_; }
+//    Scalar velocityDivAtIP() const
+//    { return velocityDivAtIP_; }
 
     /*!
      * \brief Return the local index of the upstream sub-control volume.
@@ -273,8 +274,8 @@ protected:
     Scalar viscosityAtIP_;
     Scalar pressureAtIP_;
     Scalar normalVelocityAtIP_;
-    Scalar velocityDivAtIP_;
     VelocityVector velocityAtIP_;
+//    Scalar velocityDivAtIP_;
 
     // gradients at the IPs
     ScalarGradient pressureGradAtIP_;
