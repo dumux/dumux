@@ -98,6 +98,12 @@ public:
     { return diffusionCoeffAtIP_; }
 
     /*!
+     * \brief Return the gradient of the mass fraction at the integration point.
+     */
+    const ScalarGradient &massFractionGradAtIP() const
+    { return massFractionGradAtIP_; }
+
+    /*!
      * \brief Return the gradient of the mole fraction at the integration point.
      */
     const ScalarGradient &moleFractionGradAtIP() const
@@ -111,6 +117,7 @@ protected:
     {
         massFractionAtIP_ = Scalar(0);
         diffusionCoeffAtIP_ = Scalar(0);
+        massFractionGradAtIP_ = Scalar(0);
         moleFractionGradAtIP_ = Scalar(0);
 
         // calculate gradients and secondary variables at IPs
@@ -126,6 +133,9 @@ protected:
             // the gradient of the mass fraction at the IP
             for (int dimIdx=0; dimIdx<dim; ++dimIdx)
             {
+                massFractionGradAtIP_ +=
+                    this->face().grad[idx][dimIdx]*
+                    elemVolVars[idx].fluidState().massFraction(phaseIdx, lCompIdx);
                 moleFractionGradAtIP_ +=
                     this->face().grad[idx][dimIdx] *
                     elemVolVars[idx].fluidState().moleFraction(phaseIdx, lCompIdx);
@@ -134,11 +144,12 @@ protected:
 
         Valgrind::CheckDefined(massFractionAtIP_);
         Valgrind::CheckDefined(diffusionCoeffAtIP_);
-        Valgrind::CheckDefined(moleFractionGradAtIP_);
+        Valgrind::CheckDefined(massFractionGradAtIP_);
     }
 
     Scalar massFractionAtIP_;
     Scalar diffusionCoeffAtIP_;
+    ScalarGradient massFractionGradAtIP_;
     ScalarGradient moleFractionGradAtIP_;
 };
 
