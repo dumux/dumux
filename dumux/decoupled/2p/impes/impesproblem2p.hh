@@ -108,41 +108,6 @@ public:
             gravity_[dim - 1] = - 9.81;
     }
 
-    /*!
-     * \brief Constructs an IMPESProblem2P object
-     *
-     * \param gridView The grid view
-     * \param verbose Output flag for the time manager.
-     */
-    IMPESProblem2P(const GridView &gridView, bool verbose = true)
-    DUNE_DEPRECATED // use IMPESProblem2P(TimeManager &, const GridView &)
-        : ParentType(gridView, verbose),
-        gravity_(0)
-    {
-        newSpatialParams_ = true;
-        spatialParameters_ = new SpatialParameters(gridView);
-
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
-    /*!
-     * \brief Constructs an IMPESProblem2P object
-     *
-     * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
-     * \param verbose Output flag for the time manager.
-     */
-    IMPESProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
-    DUNE_DEPRECATED // use IMPESProblem2P(TimeManager &, const GridView &)
-        : ParentType(gridView, verbose),
-        gravity_(0),spatialParameters_(&spatialParameters)
-    {
-        newSpatialParams_ = false;
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
 
     //! Destructor
     virtual ~IMPESProblem2P()

@@ -96,51 +96,6 @@ private:
     {}
 
 public:
-    //! Constructs an object of type IMPETProblemProblem
-    /** @param gridView gridview to the grid.
-     *  @param verbose verbosity.
-     */
-    IMPETProblem(const GridView &gridView, bool verbose = true)
-    DUNE_DEPRECATED // use IMPETProblem(TimeManager&, const GridView&)
-        : gridView_(gridView),
-          grid_(0),
-          bboxMin_(std::numeric_limits<double>::max()),
-          bboxMax_(-std::numeric_limits<double>::max()),
-          variables_(gridView),
-          outputInterval_(1)
-    {
-        // calculate the bounding box of the grid view
-        VertexIterator vIt = gridView.template begin<dim>();
-        const VertexIterator vEndIt = gridView.template end<dim>();
-        for (; vIt!=vEndIt; ++vIt) {
-            for (int i=0; i<dim; i++) {
-                bboxMin_[i] = std::min(bboxMin_[i], vIt->geometry().center()[i]);
-                bboxMax_[i] = std::max(bboxMax_[i], vIt->geometry().center()[i]);
-            }
-        }
-
-        // communicate to get the bounding box of the whole domain
-        if (gridView.comm().size() > 1)
-            for (int i = 0; i < dim; ++i) {
-                bboxMin_[i] = gridView.comm().min(bboxMin_[i]);
-                bboxMax_[i] = gridView.comm().max(bboxMax_[i]);
-            }
-
-        timeManager_ = new TimeManager(verbose);
-        deleteTimeManager_ = true;
-
-        pressModel_ = new PressureModel(asImp_());
-
-        transportModel_ = new TransportModel(asImp_());
-        model_ = new IMPETModel(asImp_()) ;
-
-        // create an Object to handle adaptive grids
-        if (adaptiveGrid)
-            gridAdapt_ = new GridAdaptModel(asImp_());
-
-        resultWriter_ = NULL;
-    }
-
   /*! \brief Constructs an object of type IMPETProblemProblem
    * \param timeManager The time manager
    * \param gridView gridview to the grid.
@@ -771,10 +726,6 @@ public:
 
         res.deserializeEnd();
     };
-    //! Use restart() function instead!
-    void deserialize(double tRestart) DUNE_DEPRECATED
-    { restart(tRestart);}
-    // \}
 
     void addOutputVtkFields()
     {

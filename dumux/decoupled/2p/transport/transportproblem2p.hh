@@ -90,47 +90,6 @@ class TransportProblem2P : public OneModelProblem<TypeTag>
     {}
 
 public:
-    /*!
-     * \brief The constructor
-     *
-     * \param gridView The grid view
-     * \param verbose Output flag for the time manager.
-     */
-    TransportProblem2P(const GridView &gridView, bool verbose = true)
-    DUNE_DEPRECATED // use TransportProblem2P(TimeManager&, const GridView&)
-        : ParentType(gridView, verbose),
-        gravity_(0),spatialParameters_(gridView)
-    {
-        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
-
-        newSpatialParams_ = true;
-        spatialParameters_ = new SpatialParameters(gridView);
-
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
-
-    /*!
-     * \brief The constructor
-     *
-     * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
-     * \param verbose Output flag for the time manager.
-     */
-    TransportProblem2P(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
-    DUNE_DEPRECATED // use TransportProblem2P(TimeManager&, const GridView&, SpatialParameters &spatialParameters)
-        : ParentType(gridView, verbose),
-        gravity_(0), spatialParameters_(spatialParameters)
-    {
-        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
-
-        newSpatialParams_ = false;
-
-        gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-            gravity_[dim - 1] = - 9.81;
-    }
 
     /*!
      * \brief The constructor

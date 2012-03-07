@@ -611,9 +611,6 @@ public:
 
         res.deserializeEnd();
     };
-    //! Use restart() function instead!
-    void deserialize(double tRestart) DUNE_DEPRECATED
-    { restart(tRestart);}
 
     // \}
 
