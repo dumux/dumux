@@ -655,7 +655,7 @@ public:
                 Scalar exactFlux = KGrad*unitOuterNormal;
 
                 // get the approximate normalvelocity
-                Scalar approximateFlux = problem.cellData(eIdx).fluxData().velocityTotal(i)*unitOuterNormal;
+                Scalar approximateFlux = problem.variables().cellData(eIdx).fluxData().velocityTotal(i)*unitOuterNormal;
 
                 // calculate the difference in the normal velocity
                 Scalar fluxDiff = exactFlux + approximateFlux;
