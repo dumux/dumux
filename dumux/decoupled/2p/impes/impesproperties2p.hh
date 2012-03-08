@@ -57,6 +57,8 @@ NEW_TYPE_TAG(IMPESTwoP, INHERITS_FROM(IMPET, DecoupledTwoP));
 }
 }
 
+#include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+
 namespace Dumux
 {
 namespace Properties

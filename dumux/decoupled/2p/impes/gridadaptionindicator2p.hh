@@ -22,7 +22,8 @@
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2P_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2P_HH
 
-#include "impesproperties2p.hh"
+#include <dumux/decoupled/common/impetproperties.hh>
+#include <dumux/decoupled/2p/2pproperties.hh>
 
 /**
  * @file
