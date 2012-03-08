@@ -27,6 +27,7 @@
 #define DUMUX_DGF_GRID_CREATOR_HH
 
 #include <dune/grid/io/file/dgfparser.hh>
+#include <dune/common/mpihelper.hh>
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -55,7 +56,7 @@ public:
     {
         const std::string dgfFileName = GET_RUNTIME_PARAM(TypeTag, std::string, gridFile);
 
-        gridPtr_ = GridPointer(dgfFileName.c_str());
+        gridPtr_ = GridPointer(dgfFileName.c_str(), Dune::MPIHelper::getCommunicator());
     };
 
     /*!
