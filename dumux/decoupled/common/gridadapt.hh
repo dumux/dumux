@@ -147,6 +147,9 @@ public:
      */
     int markElements()
     {
+        std::map<int, int> coarsenMarker;
+        const typename Grid::Traits::LocalIdSet& idSet(problem_.grid().localIdSet());
+
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
                     eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
@@ -160,6 +163,19 @@ public:
                 // this also refines the neighbor elements
                 checkNeighborsRefine_(entity);
             }
+            if (adaptionIndicator_.coarsen(*eIt) && eIt->hasFather())
+            {
+                int idx = idSet.id(*(eIt->father()));
+                std::map<int, int>::iterator it = coarsenMarker.find(idx);
+                if (it != coarsenMarker.end())
+                {
+                    it->second++;
+                }
+                else
+                {
+                    coarsenMarker[idx] = 1;
+                }
+            }
         }
         // coarsen
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
@@ -167,6 +183,8 @@ public:
         {
             if (adaptionIndicator_.coarsen(*eIt) && eIt->level() > levelMin_ && problem_.grid().getMark(*eIt) == 0)
             {
+                if (coarsenMarker[idSet.id(*(eIt->father()))] == eIt->geometry().corners())
+                {
                 // check if coarsening is possible
                 bool coarsenPossible = true;
                 LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
@@ -186,6 +204,7 @@ public:
                         problem_.grid().mark( -1, *eIt );
                         ++coarsened_;
                     }
+                }
             }
         }
 
