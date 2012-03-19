@@ -127,6 +127,15 @@ public:
         return isFront_;
     }
 
+    /*! \brief Reset the front marker
+     *
+     * Sets front marker to <tt>false</tt>;
+     */
+    void resetFrontMarker()
+    {
+        isFront_ = false;
+    }
+
     //! Marks the cell as fluid-fluid displacement-front cell
     void setFront()
     {
