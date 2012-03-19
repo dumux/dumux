@@ -108,7 +108,8 @@ public:
           timeManager_(&timeManager),
           deleteTimeManager_(false),
           variables_(gridView),
-          outputInterval_(1)
+          outputInterval_(1),
+          outputTimeInterval_(0.0)
     {
         // calculate the bounding box of the grid view
         VertexIterator vIt = gridView.template begin<dim>();
@@ -472,12 +473,25 @@ public:
     }
 
     /*!
+     * \brief Sets a time interval for Output
+     *
+     * The default is 0.0 -> Output determined by output number interval (<tt>setOutputInterval(int)</tt>)
+     */
+    void setOutputTimeInterval(Scalar timeInterval)
+    {
+        outputTimeInterval_ = timeInterval;
+        timeManager().startNextEpisode(outputTimeInterval_);
+    }
+
+    /*!
      * \brief Sets the interval for Output
      *
      * The default is 1 -> Output every time step
      */
     void setOutputInterval(int interval)
-    { outputInterval_ = std::max(interval, 1); }
+    {
+        outputInterval_ = std::max(interval, 0);
+    }
 
     /*!
      * \brief Returns true if the current solution should be written to
@@ -489,7 +503,17 @@ public:
      */
     bool shouldWriteOutput() const
     {
-        if (timeManager().timeStepIndex() % outputInterval_ == 0 || timeManager().willBeFinished() || timeManager().episodeWillBeOver())
+        if (outputInterval_ > 0)
+        {
+            if (timeManager().timeStepIndex() % outputInterval_ == 0
+                    || timeManager().willBeFinished()
+                    || timeManager().episodeWillBeOver())
+            {
+                return true;
+            }
+        }
+        else if (timeManager().willBeFinished()
+                || timeManager().episodeWillBeOver() || timeManager().timeStepIndex() == 0)
         {
             return true;
         }
@@ -501,9 +525,16 @@ public:
      */
     void episodeEnd()
     {
-        std::cerr << "The end of an episode is reached, but the problem "
-                  << "does not override the episodeEnd() method. "
-                  << "Doing nothing!\n";
+        if (outputTimeInterval_ > 0.0 && !timeManager().willBeFinished())
+        {
+            timeManager().startNextEpisode(outputTimeInterval_);
+        }
+        else if (!timeManager().willBeFinished())
+        {
+            std::cerr << "The end of an episode is reached, but the problem "
+                    << "does not override the episodeEnd() method. "
+                    << "Doing nothing!\n";
+        }
     };
 
     // \}
@@ -795,6 +826,7 @@ private:
 
     VtkMultiWriter *resultWriter_;
     int outputInterval_;
+    Scalar outputTimeInterval_;
     GridAdaptModel* gridAdapt_;
 };
 }
