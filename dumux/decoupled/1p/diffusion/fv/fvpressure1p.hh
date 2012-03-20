@@ -204,9 +204,9 @@ public:
         gravity_(
         problem.gravity())
     {
-        const Element& element = *(problem_.gridView().template begin<0> ());
-        Scalar temperature = problem_.temperature(element);
-        Scalar referencePress = problem_.referencePressure(element);
+        ElementIterator element = problem_.gridView().template begin<0> ();
+        Scalar temperature = problem_.temperature(*element);
+        Scalar referencePress = problem_.referencePressure(*element);
 
         density_ = Fluid::density(temperature, referencePress);
         viscosity_ = Fluid::viscosity(temperature, referencePress);

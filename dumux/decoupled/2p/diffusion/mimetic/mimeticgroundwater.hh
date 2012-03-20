@@ -90,6 +90,7 @@ public LocalStiffness<TypeTag, 1>
     };
     typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
@@ -114,11 +115,11 @@ public:
             bool procBoundaryAsDirichlet=true)
     : problem_(problem), gridView_(gridView)
     {
-        const Element& element = *(problem_.gridView().template begin<0> ());
+        ElementIterator element = problem_.gridView().template begin<0> ();
         FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
-        fluidState.setTemperature(problem_.temperature(element));
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setTemperature(problem_.temperature(*element));
         fluidState.setSaturation(wPhaseIdx, 1.);
         fluidState.setSaturation(nPhaseIdx, 0.);
         density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);

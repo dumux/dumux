@@ -93,6 +93,7 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -167,11 +168,11 @@ public:
 
         if (!compressibility_)
         {
-            const Element& element = *(problem_.gridView().template begin<0>());
+            ElementIterator element = problem_.gridView().template begin<0>();
             FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(element));
-            fluidState.setTemperature(problem_.temperature(element));
+            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
+            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
+            fluidState.setTemperature(problem_.temperature(*element));
             fluidState.setSaturation(wPhaseIdx, 1.);
             fluidState.setSaturation(nPhaseIdx, 0.);
             density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
