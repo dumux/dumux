@@ -92,6 +92,7 @@ public:
      */
     void storePrimVars(const Problem& problem)
     {
+        adaptationMap_.reserve();
         // loop over all levels of the grid
         for (int level = grid_.maxLevel(); level >= 0; level--)
         {

@@ -55,7 +55,8 @@ class GridAdapt
     typedef typename Grid::LeafGridView                     LeafGridView;
     typedef typename LeafGridView::template Codim<0>::Iterator LeafIterator;
     typedef typename GridView::IntersectionIterator         LeafIntersectionIterator;
-    typedef typename Grid::template Codim<0>::Entity         Entity;
+    typedef typename Grid::template Codim<0>::Entity         Element;
+    typedef typename Grid::template Codim<0>::EntityPointer         ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
 
@@ -156,12 +157,11 @@ public:
             // Verfeinern?
             if (adaptionIndicator_.refine(*eIt) && eIt->level() < levelMax_)
             {
-                const Entity &entity =*eIt;
-                problem_.grid().mark( 1, entity );
+                problem_.grid().mark( 1,  *eIt);
                 ++marked_;
 
                 // this also refines the neighbor elements
-                checkNeighborsRefine_(entity);
+                checkNeighborsRefine_(*eIt);
             }
             if (adaptionIndicator_.coarsen(*eIt) && eIt->hasFather())
             {
@@ -193,8 +193,8 @@ public:
                     if(!is->neighbor())
                         continue;
 
-                    const Entity &outside = *is->outside();
-                    if ((problem_.grid().getMark(outside) > 0)
+                    ElementPointer outside = is->outside();
+                    if ((problem_.grid().getMark(*outside) > 0)
                             || (outside.level()>eIt.level()))
                         coarsenPossible = false;
                 }
@@ -254,11 +254,11 @@ private:
      * to be refined, too.
      * This is done recursively over all levels of the grid.
      *
-     * @param entity Entity of interest that is to be refined
+     * @param entity Element of interest that is to be refined
      * @param level level of the refined entity: it is at least 1
      * @return true if everything was successful
      */
-    bool checkNeighborsRefine_(const Entity &entity, int level = 1)
+    bool checkNeighborsRefine_(const Element &entity, int level = 1)
     {
         // this also refines the neighbor elements
         LeafIntersectionIterator isend = problem_.gridView().iend(entity);
@@ -267,15 +267,15 @@ private:
             if(!is->neighbor())
                 continue;
 
-            const Entity &outside =*is->outside();
+            ElementPointer outside = is->outside();
             if ((outside.level()<levelMax_)
                     && (outside.level()<entity.level()))
                 {
-                    problem_.grid().mark(1, outside);
+                    problem_.grid().mark(1, *outside);
                     ++marked_;
 
                     if(level != levelMax_)
-                        checkNeighborsRefine_(outside, ++level);
+                        checkNeighborsRefine_(*outside, ++level);
                 }
         }
         return true;
@@ -301,22 +301,22 @@ private:
         {
             // run through all cells
             done=true;
-            for (LeafIterator it = leafView.template begin<0>();
-                        it!=leafView.template end<0>(); ++it)
+            for (LeafIterator eIt = leafView.template begin<0>();
+                        eIt!=leafView.template end<0>(); ++eIt)
             {
                 // run through all neighbor-cells (intersections)
-                LeafIntersectionIterator isend = leafView.iend(*it);
-                for (LeafIntersectionIterator is = leafView.ibegin(*it); is!= isend; ++is)
+                LeafIntersectionIterator isItend = leafView.iend(*eIt);
+                for (LeafIntersectionIterator isIt = leafView.ibegin(*eIt); isIt!= isItend; ++isIt)
                 {
-                    const typename LeafIntersectionIterator::Intersection intersection = *is;
+                    const typename LeafIntersectionIterator::Intersection intersection = *isIt;
                     if(!intersection.neighbor())
                         continue;
 
-                    const Entity &outside =intersection.outside();
-                    if (it.level()+maxLevelDelta<outside.level())
+                    ElementPointer outside =intersection.outside();
+                    if (eIt.level()+maxLevelDelta<outside.level())
                             {
-                            const Entity &entity =*it;
-                            problem_.grid().mark( 1, entity );
+                            ElementPointer entity =eIt;
+                            problem_.grid().mark( 1, *entity );
                             done=false;
                             }
                 }
