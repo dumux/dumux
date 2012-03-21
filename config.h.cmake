@@ -31,7 +31,7 @@
 
 #cmakedefine HAVE_MPI 1
 
-#cmakedefine HAVE_UG ENABLE_UG
+#define HAVE_UG ${HAVE_UG}
 #if HAVE_MPI && HAVE_UG
 // use parallel UG if both UG and MPI are available
 #   define ModelP

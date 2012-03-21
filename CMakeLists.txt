@@ -321,8 +321,10 @@ endif(NON_NUMBER_CHARACTER)
 if(UG_FOUND)
   set(UG_CPPFLAGS "-I${UG_INCLUDE_DIRS} -DENABLE_UG")
   set(UG_LIBS "-L. ${UG_LIBRARIES}")
+  set(HAVE_UG "ENABLE_UG")
+else()
+  set(HAVE_UG 0)
 endif(UG_FOUND)
-SetConfigHVar(HAVE_UG UG_FOUND)
 
 # deal with ALUGrid
 if(ALUGrid_FOUND)
