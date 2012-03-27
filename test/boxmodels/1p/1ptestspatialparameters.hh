@@ -64,9 +64,16 @@ public:
         try
         {
             lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftX);
-            lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftY);
+            if (dim > 1)
+                lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftY);
+            if (dim > 2)
+                lensLowerLeft_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftZ);
+
             lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightX);
-            lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightY);
+            if (dim > 1)
+                lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightY);
+            if (dim > 2)
+                lensUpperRight_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightZ);
 
             permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.permeability);
             permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.permeabilityLens);
