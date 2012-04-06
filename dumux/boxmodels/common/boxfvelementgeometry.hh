@@ -325,6 +325,7 @@ class BoxFVElementGeometry
     enum{maxNF = (dim < 3 ? 1 : 6)};
     enum{maxCOS = (dim < 3 ? 2 : 4)};
     enum{maxBF = (dim < 3 ? 8 : 24)};
+    enum{maxNFAP = (dim < 3 ? 4 : 8)};
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -571,6 +572,7 @@ public:
         Scalar area; //!< area of face
         Dune::FieldVector<Vector, maxNC> grad; //!< derivatives of shape functions at ip
         Dune::FieldVector<Scalar, maxNC> shapeValue; //!< value of shape functions at ip
+        Dune::FieldVector<int, maxNFAP> fapIndices; //!< indices w.r.t.neighbors of the flux approximation points
     };
 
     typedef SubControlVolumeFace BoundaryFace; //!< compatibility typedef
@@ -586,6 +588,7 @@ public:
     int numVertices; //!< number of verts
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
+    int numFAP; //!< number of flux approximation points
 
     const LocalFiniteElementCache feCache_;
     bool computeGradientAtScvCenters;
@@ -618,6 +621,7 @@ public:
         numVertices = referenceElement.size(dim);
         numEdges = referenceElement.size(dim-1);
         numFaces = (dim<3)?0:referenceElement.size(1);
+        numFAP = numVertices;
 
         // corners:
         for (int vert = 0; vert < numVertices; vert++) {
@@ -713,6 +717,7 @@ public:
             for (int vert = 0; vert < numVertices; vert++) {
                 jacInvT.mv(localJac[vert][0], subContVolFace[k].grad[vert]);
                 subContVolFace[k].shapeValue[vert] = Scalar(shapeVal[vert]);
+                subContVolFace[k].fapIndices[vert] = vert;
             }
         } // end loop over edges / sub control volume faces
 

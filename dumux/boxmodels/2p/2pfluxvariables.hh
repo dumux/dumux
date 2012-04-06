@@ -157,18 +157,21 @@ private:
     {
         // calculate gradients
         for (int idx = 0;
-             idx < fvElemGeom_.numVertices;
+             idx < fvElemGeom_.numFAP;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
             const Vector &feGrad = face().grad[idx];
 
+	    // index for the element volume variables 
+	    int volVarsIdx = face().fapIndices[idx];
+	    
             // compute sum of pressure gradients for each phase
             for (int phase = 0; phase < numPhases; phase++)
             {
                 // the pressure gradient
                 Vector tmp(feGrad);
-                tmp *= elemVolVars[idx].pressure(phase);
+                tmp *= elemVolVars[volVarsIdx].pressure(phase);
                 potentialGrad_[phase] += tmp;
             }
         }
