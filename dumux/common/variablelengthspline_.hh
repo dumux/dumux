@@ -93,15 +93,6 @@ public:
         makeFullSpline_(m0, m1);
     }
 
-    template <class ScalarArray>
-    DUNE_DEPRECATED // use setXYArrays
-    void set(int nSamples,
-             const ScalarArray &x,
-             const ScalarArray &y,
-             Scalar m0,
-             Scalar m1)
-    { setXYArrays(nSamples, x, y, m0, m1); }
-
     /*!
      * \brief Set the sampling points and the boundary slopes of a
      *        full spline using STL-compatible containers.
@@ -126,15 +117,6 @@ public:
         std::copy(y.begin(), y.end(), yPos_.begin());
         makeFullSpline_(m0, m1);
     }
-
-    template <class ScalarContainer>
-    DUNE_DEPRECATED // use setXYContainers
-    void set(const ScalarContainer &x,
-             const ScalarContainer &y,
-             Scalar m0,
-             Scalar m1)
-    { setXYContainers(x, y, m0, m1); }
-
 
     /*!
      * \brief Set the sampling points and the boundary slopes of a
@@ -165,15 +147,6 @@ public:
         }
         makeFullSpline_(m0, m1);
     }
-
-    template <class XYContainer>
-    DUNE_DEPRECATED // use setArrayOfPoints instead
-    void set(int nSamples,
-             const XYContainer &points,
-             Scalar m0,
-             Scalar m1)
-    { setArrayOfPoints(nSamples, points, m0, m1); }
-
 
     /*!
      * \brief Set the sampling points and the boundary slopes of a
@@ -207,13 +180,6 @@ public:
         // make a full spline
         makeFullSpline_(m0, m1);
     }
-
-    template <class XYContainer>
-    DUNE_DEPRECATED // use setContainerOfPoints() instead
-    void set(const XYContainer &points,
-             Scalar m0,
-             Scalar m1)
-    { setContainerOfPoints(points, m0, m1); }
 
     /*!
      * \brief Set the sampling points and the boundary slopes of a
@@ -281,13 +247,6 @@ public:
         makeNaturalSpline_();
     }
 
-    template <class ScalarArray>
-    DUNE_DEPRECATED // use setXYArrays
-    void set(int nSamples,
-             const ScalarArray &x,
-             const ScalarArray &y)
-    { setXYArrays(nSamples, x, y); }
-
     /*!
      * \brief Set the sampling points of a natural spline using
      *        STL-compatible containers.
@@ -311,13 +270,6 @@ public:
         std::copy(y.begin(), y.end(), yPos_.begin());
         makeNaturalSpline_();
     }
-
-    template <class ScalarContainer>
-    DUNE_DEPRECATED // use setXYContainers
-    void set(const ScalarContainer &x,
-             const ScalarContainer &y)
-    { setXYContainers(x, y); }
-
 
     /*!
      * \brief Set the sampling points of a natural spline using a
@@ -346,13 +298,6 @@ public:
         }
         makeNaturalSpline_();
     }
-
-    template <class XYContainer>
-    DUNE_DEPRECATED // use setArrayOfPoints instead
-    void set(int nSamples,
-             const XYContainer &points)
-    { setArrayOfPoints(nSamples, points); }
-
 
     /*!
      * \brief Set the sampling points of a natural spline using a
@@ -383,11 +328,6 @@ public:
         // make a natural spline
         makeNaturalSpline_();
     }
-
-    template <class XYContainer>
-    DUNE_DEPRECATED // use setContainerOfPoints() instead
-    void set(const XYContainer &points)
-    { setContainerOfPoints(points); }
 
     /*!
      * \brief Set the sampling points of a natural spline using a

@@ -96,23 +96,6 @@ public:
         makeFullSpline_(m0, m1);
     }
 
-    template <class ScalarContainer>
-    DUNE_DEPRECATED // use setXYArrays
-    void set(const ScalarContainer &x,
-             const ScalarContainer &y,
-             Scalar m0,
-             Scalar m1)
-    { setXYArrays(numSamples(), x, y, m0, m1); }
-
-    template <class ScalarArray>
-    DUNE_DEPRECATED // use setXYArrays
-    void set(int numberSamples,
-             const ScalarArray &x,
-             const ScalarArray &y,
-             Scalar m0,
-             Scalar m1)
-    { setXYArrays(numberSamples, x, y, m0, m1); }
-
     /*!
      * \brief Set the sampling points and the boundary slopes of a
      *        full spline using STL-compatible containers.
@@ -165,14 +148,6 @@ public:
         }
         makeFullSpline_(m0, m1);
     }
-
-    template <class XYContainer>
-    DUNE_DEPRECATED // use setArrayOfPoints instead
-    void set(const XYContainer &points,
-             Scalar m0,
-             Scalar m1)
-    { setArrayOfPoints(numSamples(), points, m0, m1); }
-
 
     /*!
      * \brief Set the sampling points and the boundary slopes of a
@@ -269,19 +244,6 @@ public:
         makeNaturalSpline_();
     }
 
-    template <class ScalarArray>
-    DUNE_DEPRECATED // use setXYArrays
-    void set(int numberSamples,
-             const ScalarArray &x,
-             const ScalarArray &y)
-    { setXYArrays(numberSamples, x, y); }
-
-    template <class ScalarContainer>
-    DUNE_DEPRECATED // use setXYArrays
-    void set(const ScalarContainer &x,
-             const ScalarContainer &y)
-    { setXYArrays(numSamples(), x, y); }
-
     /*!
      * \brief Set the sampling points of a natural spline using
      *        STL-compatible containers.
@@ -331,18 +293,6 @@ public:
         }
         makeNaturalSpline_();
     }
-
-    template <class XYContainer>
-    DUNE_DEPRECATED // use setArrayOfPoints instead
-    void set(int numberSamples,
-             const XYContainer &points)
-    { setArrayOfPoints(numberSamples, points); }
-
-    template <class XYArray>
-    DUNE_DEPRECATED // use setArrayOfPoints() instead
-    void set(const XYArray &points)
-    { setArrayOfPoints(numSamples(), points); }
-
 
     /*!
      * \brief Set the sampling points of a natural spline using a

@@ -91,28 +91,6 @@ public:
         : ParentType(timeManager, gridView, spatialParameters)
     { }
 
-    /*!
-     * \brief The deprecated constructor without the time manager
-     *
-     * \param gridView The grid view
-     * \param verbose Output flag for the time manager.
-     */
-    IMPETProblem2P2C(const GridView &gridView, bool verbose = true)
-    DUNE_DEPRECATED // use IMPETProblem2P2C(TimeManager&, const GridView &)
-        : ParentType(gridView, verbose)
-    { }
-    /*!
-     * \brief The deprecated constructor without the time manager
-     *
-     * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
-     * \param verbose Output flag for the time manager.
-     */
-    IMPETProblem2P2C(const GridView &gridView, SpatialParameters &spatialParameters, bool verbose = true)
-    DUNE_DEPRECATED // use IMPETProblem2P2C(TimeManager&, const GridView &)
-        : ParentType(gridView, spatialParameters, verbose)
-    { }
-
     virtual ~IMPETProblem2P2C()
     { }
     /*!
@@ -161,29 +139,6 @@ public:
         return NAN;
     }
     // \}
-    /*!
-     * \name Deprecated Problem parameters
-     */
-    //! Saturation initial condition (dimensionless)
-    /*! The problem is initialized with the following saturation. Both
-     * phases are assumed to contain an equilibrium concentration of the
-     * correspondingly other component.
-     */
-    Scalar initSat(const GlobalPosition& globalPos, const Element& element) const
-    DUNE_DEPRECATED // use initSat(const Element& element)
-    {
-        DUNE_THROW(Dune::NotImplemented, "please specify initial saturation in the problem!");
-        return NAN;
-    }
-    //! Concentration initial condition (dimensionless)
-    /*! The problem is initialized with the following concentration.
-     */
-    Scalar initConcentration(const GlobalPosition& globalPos, const Element& element) const
-    DUNE_DEPRECATED // use initConcentration(const Element& element)
-    {
-        DUNE_THROW(Dune::NotImplemented, "please specify initial Concentration in the problem!");
-        return NAN;
-    }
     // \}
 
 private:

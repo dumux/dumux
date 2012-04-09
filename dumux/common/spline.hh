@@ -378,14 +378,6 @@ public:
         set(x[0], x[1], y[0], y[1], m0, m1);
     }
 
-    template <class ScalarArray>
-    DUNE_DEPRECATED // use setXYArrays
-    void set(const ScalarArray &x,
-             const ScalarArray &y,
-             Scalar m0,
-             Scalar m1)
-    { setXYArrays(2, x, y, m0, m1); }
-
     /*!
      * \brief Set the sampling points and the boundary slopes of the
      *        spline.
@@ -438,13 +430,6 @@ public:
             points[1][1],
             m0, m1);
     }
-
-    template <class PointArray>
-    DUNE_DEPRECATED // use setArrayOfPoints
-    void set(const PointArray &points,
-             Scalar m0,
-             Scalar m1)
-    { setArrayOfPoints(2, points, m0, m1); }
 
     /*!
      * \brief Set the sampling points and the boundary slopes from an

@@ -61,13 +61,6 @@ class VtkMultiWriter
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
 
-    // this constructor won't work anymore. Please use the variant
-    // below which also includes the GridView as an argument.
-    DUNE_DEPRECATED
-    VtkMultiWriter(const std::string &simName = "",
-                   std::string multiFileName = "")
-    {}
-
 public:
     typedef Dune::VTKWriter<GridView> VtkWriter;
     VtkMultiWriter(const GridView &gridView,
@@ -140,10 +133,6 @@ public:
         curOutFileName_ = fileName_();
     }
 
-    void beginTimestep(double t, const GridView &gridView)
-        DUNE_DEPRECATED // use beginWrite()
-    { gridChanged(); beginWrite(t); }
-
     /*!
      * \brief Allocate a managed buffer for a scalar field
      *
@@ -169,11 +158,6 @@ public:
     { return allocateManagedBuffer<Scalar, 1>(nEntities); }
     Dune::BlockVector<Dune::FieldVector<double, 1> > *allocateManagedBuffer(int nEntities)
     { return allocateManagedBuffer<double, 1>(nEntities); }
-
-    template <class Scalar, int nComp>
-    DUNE_DEPRECATED // use allocateManagedBuffer() instead!
-    Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *createField(int nEntities)
-    {  return allocateManagedBuffer<Scalar, nComp>(nEntities);   }
 
     /*!
      * \brief Add a finished vertex centered vector field to the
@@ -208,15 +192,6 @@ public:
         curWriter_->addVertexData(fnPtr);
     }
 
-    template <class DataArray>
-    DUNE_DEPRECATED // use attachVertexData() instead!
-    void addVertexData(DataArray *field, std::string name, int nComps=1)
-    {
-        // the old way to set the number of components was broken, so
-        // we always use 1.
-        attachVertexData(*field, name, /*nComps=*/1);
-    }
-
     /*!
      * \brief Add a cell centered quantity to the output.
      *
@@ -246,15 +221,6 @@ public:
                                     /*codim=*/0,
                                     nComps));
         curWriter_->addCellData(fnPtr);
-    }
-
-    template <class VectorField>
-    DUNE_DEPRECATED // use attachCellData() instead
-    void addCellData(VectorField *field, std::string name, int nComps = 1)
-    {
-        // the old way to set the number of components was broken, so
-        // we always use 1.
-        attachCellData(*field, name, /*nComps=*/1);
     }
 
     /*!
@@ -310,11 +276,6 @@ public:
         // simulation is aborted (or not yet finished)
         finishMultiFile_();
     };
-
-    void endTimestep(bool onlyDiscard=false)
-        DUNE_DEPRECATED // use endWrite()
-    { endWrite(onlyDiscard); }
-
 
     /*!
      * \brief Write the multi-writer's state to a restart file.
