@@ -38,6 +38,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/boxmodels/mpnc/mpncmodel.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
@@ -129,9 +130,9 @@ SET_INT_PROP(ObstacleProblem, NumericDifferenceMethod, +1);
  */
 template <class TypeTag>
 class ObstacleProblem
-    : public MPNCProblem<TypeTag>
+    : public PorousMediaBoxProblem<TypeTag>
 {
-    typedef MPNCProblem<TypeTag> ParentType;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

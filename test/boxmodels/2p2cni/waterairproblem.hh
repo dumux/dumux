@@ -36,6 +36,7 @@
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
 #include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include "waterairspatialparameters.hh"
 
@@ -110,13 +111,13 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  * <tt>./test_2p2cni -parameterFile test_2p2cni.input</tt>
  *  */
 template <class TypeTag >
-class WaterAirProblem : public TwoPTwoCNIProblem<TypeTag>
+class WaterAirProblem : public PorousMediaBoxProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid Grid;
 
-    typedef TwoPTwoCNIProblem<TypeTag> ParentType;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;

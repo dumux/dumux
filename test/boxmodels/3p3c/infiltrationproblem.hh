@@ -35,6 +35,7 @@
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
 
 #include <dumux/boxmodels/3p3c/3p3cmodel.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include "infiltrationspatialparameters.hh"
 
@@ -102,9 +103,9 @@ SET_INT_PROP(InfiltrationProblem, NumericDifferenceMethod, 0);
  * <tt>./test_3p3c -parameterFile test_3p3c.input</tt>
  *  */
 template <class TypeTag >
-class InfiltrationProblem : public ThreePThreeCProblem<TypeTag>
+class InfiltrationProblem : public PorousMediaBoxProblem<TypeTag>
 {
-    typedef ThreePThreeCProblem<TypeTag> ParentType;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

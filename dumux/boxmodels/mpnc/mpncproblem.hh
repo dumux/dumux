@@ -30,7 +30,7 @@
 
 #include "dumux/boxmodels/mpnc/mpncnewtoncontroller.hh"
 
-#include <dumux/boxmodels/common/boxproblem.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 namespace Dumux
 {
@@ -42,139 +42,27 @@ namespace Dumux
  * \todo Please doc me more!
  */
 template<class TypeTag>
-class MPNCProblem : public BoxProblem<TypeTag>
+class MPNCProblem : public PorousMediaBoxProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-    enum {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
-    };
-
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>      GlobalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
-    MPNCProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
-          gravity_(0),
-          spatialParameters_(gridView)
-    {
-        if (GET_PROP_VALUE(TypeTag, EnableGravity))
-            gravity_[dim-1]  = -9.81;
-    }
-
     /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ within a control volume.
+     * \brief The constructor
      *
-     * This is the discretization specific interface for the box
-     * method. By default it just calls temperature(pos).
-     *
-     * \param element The DUNE Codim<0> enitiy which intersects with
-     *                the finite volume.
-     * \param fvGeom The finite volume geometry of the element.
-     * \param scvIdx The local index of the sub control volume inside the element
+     * \param timeManager The time manager
+     * \param gridView The grid view
+     * \param verbose Turn verbosity on or off
      */
-    Scalar boxTemperature(const Element &element,
-                          const FVElementGeometry fvGeom,
-                          int scvIdx) const
-    { return asImp_().temperatureAtPos(fvGeom.subContVol[scvIdx].global); }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
-     *
-     * This is not specific to the discretization. By default it just
-     * calls temperature().
-     *
-     * \param pos The position in global coordinates where the temperature should be specified.
-     */
-    Scalar temperatureAtPos(const GlobalPosition &pos) const
-    { return asImp_().temperature(); }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
-     *
-     * This is not specific to the discretization. By default it just
-     * throws an exception so it must be overloaded by the problem if
-     * no energy equation is used.
-     */
-    Scalar temperature() const
-    { DUNE_THROW(Dune::NotImplemented, "temperature() method not implemented by the actual problem"); };
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * This is the box discretization specific interface. By default
-     * it just calls gravityAtPos().
-     */
-    const GlobalPosition &boxGravity(const Element &element,
-                                     const FVElementGeometry &fvGeom,
-                                     int scvIdx) const
-    { return asImp_().gravityAtPos(fvGeom.subContVol[scvIdx].global); }
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * This is discretization independent interface. By default it
-     * just calls gravity().
-     */
-    const GlobalPosition &gravityAtPos(const GlobalPosition &pos) const
-    { return asImp_().gravity(); }
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * This method is used for problems where the gravitational
-     * acceleration does not depend on the spatial position. The
-     * default behaviour is that if the <tt>EnableGravity</tt>
-     * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
-     * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
-     */
-    const GlobalPosition &gravity() const
-    { return gravity_; }
-
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParameters &spatialParameters()
-    { return spatialParameters_; }
-
-    /*!
-     * \copydoc spatialParameters()
-     */
-    const SpatialParameters &spatialParameters() const
-    { return spatialParameters_; }
-
-    // \}
-
-protected:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
-
-    GlobalPosition gravity_;
-
-    // fluids and material properties
-    SpatialParameters spatialParameters_;
+    DUMUX_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
+    MPNCProblem(TimeManager &timeManager,
+                const GridView &gridView,
+                bool verbose = true)
+        : ParentType(timeManager, gridView)
+    {}
 };
 
 }

@@ -36,7 +36,6 @@
 
 #include "2pniproperties.hh"
 #include "2pnimodel.hh"
-#include "2pniproblem.hh"
 #include "2pnilocalresidual.hh"
 #include "2pnivolumevariables.hh"
 #include "2pnifluxvariables.hh"

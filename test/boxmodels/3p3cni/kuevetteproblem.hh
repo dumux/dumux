@@ -36,6 +36,7 @@
 #include <dumux/material/fluidsystems/h2oairmesitylenefluidsystem.hh>
 
 #include <dumux/boxmodels/3p3cni/3p3cnimodel.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include "kuevettespatialparameters.hh"
 
@@ -119,13 +120,13 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);
  * <tt>./test_3p3cni -parameterFile test_3p3cni.input</tt>
  *  */
 template <class TypeTag >
-class KuevetteProblem : public ThreePThreeCNIProblem<TypeTag>
+class KuevetteProblem : public PorousMediaBoxProblem<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::Grid Grid;
 
-    typedef ThreePThreeCNIProblem<TypeTag> ParentType;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;

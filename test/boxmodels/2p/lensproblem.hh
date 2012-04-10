@@ -41,6 +41,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/simplednapl.hh>
 #include <dumux/boxmodels/2p/2pmodel.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
@@ -151,9 +152,9 @@ SET_BOOL_PROP(LensProblem, EnableGravity, true);
  * <tt>./test_2p -parameterFile test_2p.input</tt>
  */
 template <class TypeTag >
-class LensProblem : public TwoPProblem<TypeTag>
+class LensProblem : public PorousMediaBoxProblem<TypeTag>
 {
-    typedef TwoPProblem<TypeTag> ParentType;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;

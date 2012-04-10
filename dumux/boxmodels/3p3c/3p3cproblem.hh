@@ -29,7 +29,7 @@
 #ifndef DUMUX_3P3C_PROBLEM_HH
 #define DUMUX_3P3C_PROBLEM_HH
 
-#include <dumux/boxmodels/common/boxproblem.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include "3p3cproperties.hh"
 
@@ -42,28 +42,12 @@ namespace Dumux
  *        two-component box model
  */
 template<class TypeTag>
-class ThreePThreeCProblem : public BoxProblem<TypeTag>
+class ThreePThreeCProblem : public PorousMediaBoxProblem<TypeTag>
 {
-    typedef BoxProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-    // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-
-    enum {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld
-    };
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
     /*!
@@ -71,67 +55,14 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
+     * \param verbose Turn verbosity on or off
      */
-    ThreePThreeCProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
-          gravity_(0),
-          spatialParams_(gridView)
-    {
-        if (GET_PROP_VALUE(TypeTag, EnableGravity))
-            gravity_[dim-1]  = -9.81;
-    }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * This method MUST be overwritten by the actual problem.
-     */
-    Scalar boxTemperature(const Element &element,
-                          const FVElementGeometry &fvElemGeom,
-                          int scvIdx) const
-    { DUNE_THROW(Dune::NotImplemented, "The Problem must implement a temperature() method for isothermal problems!"); };
-
-    /*!
-     * \brief Returns the acceleration due to gravity.
-     *
-     * If the <tt>EnableGravity</tt> property is true, this means
-     * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
-     */
-    const GlobalPosition &gravity() const
-    { return gravity_; }
-
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    SpatialParameters &spatialParameters()
-    { return spatialParams_; }
-
-    /*!
-     * \brief Returns the spatial parameters object.
-     */
-    const SpatialParameters &spatialParameters() const
-    { return spatialParams_; }
-
-    // \}
-
-private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
-
-    GlobalPosition gravity_;
-
-    // spatial parameters
-    SpatialParameters spatialParams_;
+    DUMUX_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
+    ThreePThreeCProblem(TimeManager &timeManager,
+                const GridView &gridView,
+                bool verbose = true)
+        : ParentType(timeManager, gridView)
+    {}
 };
 
 }

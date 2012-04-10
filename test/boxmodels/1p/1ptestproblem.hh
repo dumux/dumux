@@ -40,6 +40,7 @@
 #include <dune/grid/io/file/gmshreader.hh>
 
 #include <dumux/boxmodels/1p/1pmodel.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
@@ -111,9 +112,9 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
  * and use <tt>1p_3d.dgf</tt> in the parameter file.
  */
 template <class TypeTag>
-class OnePTestProblem : public OnePBoxProblem<TypeTag>
+class OnePTestProblem : public PorousMediaBoxProblem<TypeTag>
 {
-    typedef OnePBoxProblem<TypeTag> ParentType;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
