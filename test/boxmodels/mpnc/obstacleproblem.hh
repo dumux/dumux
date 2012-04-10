@@ -170,7 +170,7 @@ class ObstacleProblem
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         fug0Idx = Indices::fug0Idx,
         S0Idx = Indices::S0Idx,

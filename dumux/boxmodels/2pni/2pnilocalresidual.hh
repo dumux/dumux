@@ -57,7 +57,7 @@ class TwoPNILocalResidual : public TwoPLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         temperatureIdx = Indices::temperatureIdx,

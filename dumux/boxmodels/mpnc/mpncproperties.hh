@@ -50,8 +50,9 @@ NEW_TYPE_TAG(BoxMPNC, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
-NEW_PROP_TAG(MPNCIndices); //!< Enumerations for the 2pNc model
-NEW_PROP_TAG(MPNCEnergyIndices); //!< Enumerations for the 2pNc model
+NEW_PROP_TAG(MPNCIndices); //!< DEPRECATED Enumerations for the 2pNc model
+NEW_PROP_TAG(MPNCEnergyIndices); //!< DEPRECATED Enumerations for the 2pNc model
+NEW_PROP_TAG(Indices); //!< Enumerations for the model
 
 NEW_PROP_TAG(MPNCVtkCommonModule); //!< Vtk writer module for writing the common quantities into the VTK output file
 NEW_PROP_TAG(MPNCVtkMassModule); //!< Vtk writer module for writing the mass related quantities into the VTK output file

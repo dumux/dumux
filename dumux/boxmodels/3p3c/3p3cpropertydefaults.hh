@@ -115,7 +115,10 @@ SET_TYPE_PROP(BoxThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>
 SET_SCALAR_PROP(BoxThreePThreeC, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 3p3c model
-SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
+SET_TYPE_PROP(BoxThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
+
+//! DEPRECATED ThreePThreeCIndices property
+SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 }
 
 }

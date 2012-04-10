@@ -49,7 +49,7 @@ NEW_TYPE_TAG(BoxThreePThreeCNI, INHERITS_FROM(BoxThreePThreeC));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(ThreePThreeCNIIndices); //!< Enumerations for the 3p3cni models
+NEW_PROP_TAG(ThreePThreeCNIIndices); //!< DEPRECATED Enumerations for the 3p3cni models
 }
 }
 

@@ -79,7 +79,7 @@ class InfiltrationSpatialParameters : public BoxSpatialParameters<TypeTag>
         dimWorld=GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx

@@ -80,8 +80,11 @@ SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
 SET_TYPE_PROP(BoxTwoP,
-              TwoPIndices,
+              Indices,
               TwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0>);
+
+//! DEPRECATED TwoPIndices property
+SET_TYPE_PROP(BoxTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
 /*!
  * \brief Set the property for the material parameters by extracting

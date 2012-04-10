@@ -55,7 +55,8 @@ NEW_TYPE_TAG(BoxTwoPTwoC, INHERITS_FROM(BoxModel));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
-NEW_PROP_TAG(TwoPTwoCIndices); //!< Enumerations for the 2p2c models
+NEW_PROP_TAG(TwoPTwoCIndices); //!< DEPRECATED Enumerations for the 2p2c models
+NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
 NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations

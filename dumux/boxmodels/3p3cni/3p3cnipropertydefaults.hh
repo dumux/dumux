@@ -71,10 +71,11 @@ SET_TYPE_PROP(BoxThreePThreeCNI, VolumeVariables, ThreePThreeCNIVolumeVariables<
 SET_TYPE_PROP(BoxThreePThreeCNI, FluxVariables, ThreePThreeCNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal 3p3c model
-SET_PROP(BoxThreePThreeCNI, ThreePThreeCIndices)
-{ typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCNIIndices) type; };
+SET_TYPE_PROP(BoxThreePThreeCNI, Indices, ThreePThreeCNIIndices<TypeTag, 0>);
 
-SET_TYPE_PROP(BoxThreePThreeCNI, ThreePThreeCNIIndices, ThreePThreeCNIIndices<TypeTag, 0>);
+//! DEPRECATED ThreePThreeCIndices and ThreePThreeCNIIndices properties
+SET_TYPE_PROP(BoxThreePThreeCNI, ThreePThreeCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+SET_TYPE_PROP(BoxThreePThreeCNI, ThreePThreeCNIIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
 }
 

@@ -92,7 +92,7 @@ public:
 SET_PROP(BoxMPNC, NumEq)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 public:
     static const int value = Indices::NumPrimaryVars;
@@ -163,11 +163,14 @@ SET_TYPE_PROP(BoxMPNC, FluxVariables, MPNCFluxVariables<TypeTag>);
 //! truncate the newton update for the first few Newton iterations of a time step
 SET_BOOL_PROP(BoxMPNC, NewtonEnableChop, true);
 
-//! The indices required by the compositional twophase model
-SET_PROP(BoxMPNC, MPNCIndices)
+//! The indices required by the mpnc model
+SET_PROP(BoxMPNC, Indices)
 {
     typedef MPNCIndices<TypeTag, 0> type;
 };
+
+//! DEPRECATED MPNCIndices property
+SET_TYPE_PROP(BoxMPNC, MPNCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
 //! The VTK writer module for common quantities
 SET_PROP(BoxMPNC, MPNCVtkCommonModule)

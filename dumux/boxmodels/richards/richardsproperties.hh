@@ -53,7 +53,8 @@ NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(RichardsIndices); //!< Enumerations used by the Richards models
+NEW_PROP_TAG(RichardsIndices); //!< DEPRECATED Enumerations used by the Richards models
+NEW_PROP_TAG(Indices); //!< Enumerations used by the model
 NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (by default extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The type of the parameter object for the material law (by default extracted from the spatial parameters)

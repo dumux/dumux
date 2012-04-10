@@ -77,7 +77,7 @@ class ThreePThreeCFluxVariables
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
 
-    typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,

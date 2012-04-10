@@ -127,7 +127,7 @@ class OnePTwoCOutflowProblem : public PorousMediaBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         // Grid and world dimension
         dim = GridView::dimension,

@@ -58,7 +58,7 @@ class TwoPTwoCFluxVariables
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         lPhaseIdx = Indices::lPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,

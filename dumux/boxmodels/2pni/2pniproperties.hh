@@ -50,7 +50,7 @@ NEW_TYPE_TAG(BoxTwoPNI, INHERITS_FROM(BoxTwoP));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(TwoPNIIndices); //!< Enumerations for the non-isothermal 2p models
+NEW_PROP_TAG(TwoPNIIndices); //!< DEPRECATED Enumerations for the non-isothermal 2p models
 }
 }
 

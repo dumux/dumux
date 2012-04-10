@@ -48,7 +48,7 @@ NEW_TYPE_TAG(BoxTwoPTwoCNI, INHERITS_FROM(BoxTwoPTwoC));
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(TwoPTwoCNIIndices); //!< Enumerations for the 2p2cni models
+NEW_PROP_TAG(TwoPTwoCNIIndices); //!< DEPRECATED Enumerations for the 2p2cni models
 }
 }
 

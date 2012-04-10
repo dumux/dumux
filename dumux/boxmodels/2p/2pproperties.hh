@@ -62,7 +62,8 @@ NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 NEW_PROP_TAG(Formulation);   //!< The formulation of the model
-NEW_PROP_TAG(TwoPIndices); //!< Enumerations for the 2p models
+NEW_PROP_TAG(TwoPIndices); //!< DEPRECATED Enumerations for the 2p models
+NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)

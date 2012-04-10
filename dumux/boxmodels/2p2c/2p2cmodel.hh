@@ -104,7 +104,7 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,

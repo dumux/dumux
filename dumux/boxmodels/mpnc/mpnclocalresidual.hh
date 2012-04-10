@@ -46,7 +46,7 @@ namespace Dumux
 template<class TypeTag>
 class MPNCLocalResidual : public BoxLocalResidual<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;

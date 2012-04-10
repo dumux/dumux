@@ -158,9 +158,9 @@ class InjectionProblem2PNI : public PorousMediaBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 #if ISOTHERMAL
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 #else
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPNIIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 #endif
     enum {
         pressureIdx = Indices::pressureIdx,

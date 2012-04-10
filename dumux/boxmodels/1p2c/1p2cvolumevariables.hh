@@ -55,7 +55,7 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    typedef typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         phaseIdx = Indices::phaseIdx,
         comp0Idx = Indices::comp0Idx,

@@ -52,7 +52,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, RichardsIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { pwIdx = Indices::pwIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

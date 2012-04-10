@@ -61,7 +61,7 @@ class ThreePThreeCNIVolumeVariables : public ThreePThreeCVolumeVariables<TypeTag
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { temperatureIdx = Indices::temperatureIdx };
 

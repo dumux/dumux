@@ -83,7 +83,7 @@ class WaterAirSpatialParameters : public BoxSpatialParameters<TypeTag>
         dimWorld=GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         lPhaseIdx = Indices::lPhaseIdx
     };

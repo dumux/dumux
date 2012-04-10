@@ -129,12 +129,16 @@ SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p2c model
 SET_PROP(BoxTwoPTwoC,
-         TwoPTwoCIndices)
+         Indices)
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };
+
+//! DEPRECATED TwoPTwoCIndices property
+SET_TYPE_PROP(BoxTwoPTwoC, TwoPTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+
 // disable velocity output by default
 SET_BOOL_PROP(BoxTwoPTwoC, EnableVelocityOutput, false);
 

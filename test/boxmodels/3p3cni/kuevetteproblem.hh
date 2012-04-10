@@ -129,7 +129,7 @@ class KuevetteProblem : public PorousMediaBoxProblem<TypeTag>
     typedef PorousMediaBoxProblem<TypeTag> ParentType;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
 
         pressureIdx = Indices::pressureIdx,

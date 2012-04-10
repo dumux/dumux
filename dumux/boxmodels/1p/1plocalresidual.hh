@@ -58,7 +58,7 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
     enum { dimWorld = GridView::dimensionworld };
     typedef Dune::FieldVector<Scalar, dimWorld> Vector;
 
-    typedef typename GET_PROP_TYPE(TypeTag, OnePIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { pressureIdx = Indices::pressureIdx };
 
 public:

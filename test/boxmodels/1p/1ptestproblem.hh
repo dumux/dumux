@@ -120,7 +120,7 @@ class OnePTestProblem : public PorousMediaBoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, OnePIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
