@@ -98,7 +98,7 @@ protected:
         velocityAtIP_ = Scalar(0);
         pressureGradAtIP_ = Scalar(0);
         velocityGradAtIP_ = Scalar(0);
-        velocityDivAtIP_ = Scalar(0);
+//        velocityDivAtIP_ = Scalar(0);
 
         for (int idx = 0;
              idx < fvGeom_.numVertices;
@@ -136,7 +136,7 @@ protected:
                 tmp *= elemVolVars[idx].velocity()[dimIdx];
                 velocityGradAtIP_[dimIdx] += tmp;
 
-                velocityDivAtIP_ += face().grad[idx][dimIdx]*elemVolVars[idx].velocity()[dimIdx];
+//                velocityDivAtIP_ += face().grad[idx][dimIdx]*elemVolVars[idx].velocity()[dimIdx];
             }
         }
 
@@ -148,7 +148,7 @@ protected:
         Valgrind::CheckDefined(velocityAtIP_);
         Valgrind::CheckDefined(pressureGradAtIP_);
         Valgrind::CheckDefined(velocityGradAtIP_);
-        Valgrind::CheckDefined(velocityDivAtIP_);
+//        Valgrind::CheckDefined(velocityDivAtIP_);
     };
 
     void determineUpwindDirection_(const ElementVolumeVariables &elemVolVars)
@@ -238,12 +238,12 @@ public:
     const VectorGradient &velocityGradAtIP() const
     { return velocityGradAtIP_; }
 
-    /*!
-     * \brief Return the divergence of the normal velocity at the
-     *        integration point.
-     */
-    Scalar velocityDivAtIP() const
-    { return velocityDivAtIP_; }
+//    /*!
+//     * \brief Return the divergence of the normal velocity at the
+//     *        integration point.
+//     */
+//    Scalar velocityDivAtIP() const
+//    { return velocityDivAtIP_; }
 
     /*!
      * \brief Return the local index of the upstream sub-control volume.
@@ -274,7 +274,7 @@ protected:
     Scalar viscosityAtIP_;
     Scalar pressureAtIP_;
     Scalar normalVelocityAtIP_;
-    Scalar velocityDivAtIP_;
+//    Scalar velocityDivAtIP_;
     VelocityVector velocityAtIP_;
 
     // gradients at the IPs
