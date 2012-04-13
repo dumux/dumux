@@ -49,7 +49,7 @@ NEW_TYPE_TAG(BoxStokes2cni, INHERITS_FROM(BoxStokes2c));
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(Stokes2cniIndices); //!< Enumerations for the compositional Stokes models
+NEW_PROP_TAG(Stokes2cniIndices); //!< DEPRECATED Enumerations for the compositional Stokes models
 NEW_PROP_TAG(NumComponents); //!< Number of components
 }
 

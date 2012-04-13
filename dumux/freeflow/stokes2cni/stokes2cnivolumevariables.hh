@@ -53,7 +53,7 @@ class Stokes2cniVolumeVariables : public Stokes2cVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Stokes2cniIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
     enum { energyIdx = Indices::energyIdx };
 

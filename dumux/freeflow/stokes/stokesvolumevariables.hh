@@ -52,7 +52,7 @@ class StokesVolumeVariables : public BoxVolumeVariables<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, StokesIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
         dim = GridView::dimension,

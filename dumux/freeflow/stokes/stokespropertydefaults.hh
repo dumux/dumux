@@ -110,7 +110,7 @@ public:
     typedef FluidSystems::OneP<Scalar, Fluid> type;
 };
 
-//! The fluid that is used in the single-phase fluidsystem.
+//! The fluid that is used in the single-phase fluidsystem
 SET_PROP(BoxStokes, Fluid)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -118,7 +118,11 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
-SET_TYPE_PROP(BoxStokes, StokesIndices, StokesCommonIndices<TypeTag>);
+//! Set the indices used by the Stokes model
+SET_TYPE_PROP(BoxStokes, Indices, StokesCommonIndices<TypeTag>);
+
+//! DEPRECATED Set the indices used by the Stokes model
+SET_TYPE_PROP(BoxStokes, StokesIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
 //! Choose the type of the employed fluid state.
 SET_PROP(BoxStokes, FluidState)
