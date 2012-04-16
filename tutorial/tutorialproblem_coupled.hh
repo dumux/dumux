@@ -31,6 +31,9 @@
 // The numerical model
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
+// The base prous media box problem
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
+
 // The DUNE grid used
 #include <dune/grid/yaspgrid.hh>
 
@@ -84,9 +87,9 @@ SET_BOOL_PROP(TutorialProblemCoupled, EnableGravity, false); /*@\label{tutorial-
  * \brief  Tutorial problem for a fully coupled twophase box model.
  */
 template <class TypeTag>
-class TutorialProblemCoupled : public TwoPProblem<TypeTag> /*@\label{tutorial-coupled:def-problem}@*/
+class TutorialProblemCoupled : public PorousMediaBoxProblem<TypeTag> /*@\label{tutorial-coupled:def-problem}@*/
 {
-    typedef TwoPProblem<TypeTag> ParentType;
+    typedef PorousMediaBoxProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -101,7 +104,7 @@ class TutorialProblemCoupled : public TwoPProblem<TypeTag> /*@\label{tutorial-co
 
     // Dumux specific types
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

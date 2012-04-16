@@ -30,6 +30,7 @@
 
 #include "dumux/boxmodels/mpnc/mpncnewtoncontroller.hh"
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 namespace Dumux

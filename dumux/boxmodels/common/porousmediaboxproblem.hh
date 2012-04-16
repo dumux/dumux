@@ -33,6 +33,12 @@
 
 namespace Dumux
 {
+namespace Properties
+{
+NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
+NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
+}
+
 /*!
  * \ingroup BoxBaseProblems
  * \brief Base class for all porous media box problems

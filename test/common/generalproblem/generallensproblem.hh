@@ -43,6 +43,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 //box model
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 #include <dumux/boxmodels/2p/2pmodel.hh>
 
 //decoupled model
@@ -115,7 +116,7 @@ NEW_TYPE_TAG(BoxGeneralLensProblem, INHERITS_FROM(BoxTwoP, GeneralLensProblem));
 // Set the problem property
 SET_PROP(BoxGeneralLensProblem, ProblemBaseClass)
 {
-    typedef Dumux::TwoPProblem<TypeTag> type;
+    typedef Dumux::PorousMediaBoxProblem<TypeTag> type;
 };
 
 // Set the problem property
@@ -195,7 +196,7 @@ class GeneralLensProblem : public GET_PROP_TYPE(TypeTag, ProblemBaseClass)
     typedef typename GET_PROP_TYPE(TypeTag, ProblemBaseClass) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;

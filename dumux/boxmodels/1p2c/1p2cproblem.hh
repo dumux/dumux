@@ -30,6 +30,7 @@
 #ifndef DUMUX_1P2C_PROBLEM_HH
 #define DUMUX_1P2C_PROBLEM_HH
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 #include "1p2cproperties.hh"
 

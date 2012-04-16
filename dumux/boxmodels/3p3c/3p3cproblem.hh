@@ -29,6 +29,7 @@
 #ifndef DUMUX_3P3C_PROBLEM_HH
 #define DUMUX_3P3C_PROBLEM_HH
 
+#include <dumux/common/deprecated.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include "3p3cproperties.hh"
