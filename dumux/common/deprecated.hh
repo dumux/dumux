@@ -31,18 +31,22 @@
 #ifndef DUMUX_DEPRECATED_HH
 #define DUMUX_DEPRECATED_HH
 
+#ifndef DUMUX_DEPRECATED
 #if defined(DOXYGEN) || !HAVE_ATTRIBUTE_DEPRECATED
 //! Mark some entity as deprecated
 #define DUMUX_DEPRECATED
 #else
 #define DUMUX_DEPRECATED __attribute__((deprecated))
 #endif
+#endif
 
+#ifndef DUMUX_DEPRECATED_MSG
 #if defined(DOXYGEN) || !HAVE_ATTRIBUTE_DEPRECATED_MSG
 //! Mark some entity as deprecated
 #define DUMUX_DEPRECATED_MSG(text) DUMUX_DEPRECATED
 #else
 #define DUMUX_DEPRECATED_MSG(text) __attribute__((deprecated(text)))
+#endif
 #endif
 
 #endif
