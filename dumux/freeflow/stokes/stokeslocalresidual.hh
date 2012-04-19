@@ -91,6 +91,8 @@ protected:
     typedef typename GridView::Intersection Intersection;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    
+    static const bool calculateNavierStokes = GET_PROP_VALUE(TypeTag, EnableNavierStokes);
 
  public:
     /*!
@@ -240,6 +242,17 @@ protected:
             //            flux[momentumXIdx + velIdx] -=
             //                    gravityTerm;
 
+        }
+        
+        // this term changes the Stokes equation to the Navier-Stokes equation
+        // rho v (v*n)
+        // rho and first v are upwinded, second v is evaluated at the face
+        if (calculateNavierStokes)
+        {
+            for (int dimIndex = 0; dimIndex < dim; ++dimIndex)
+            {
+                flux[momentumXIdx + dimIndex] += up.density() * up.velocity()[dimIndex] * fluxVars.normalVelocityAtIP();
+            }
         }
     }
 

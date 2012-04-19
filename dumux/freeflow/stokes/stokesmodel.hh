@@ -56,6 +56,12 @@ namespace Dumux
 \frac{\partial \varrho_g}{\partial t} + \boldsymbol{\nabla}\boldsymbol{\cdot}\left(\varrho_g {\boldsymbol{v}}_g\right) - q_g = 0
  * \f]
  *
+ * By setting the property <code>EnableNavierStokes</code> to <code>true</code> the Navier-Stokes
+ * equation can be solved. In this case an additional term is added to the momentum balance:
+ *  \f[
+\varrho_g \left(\boldsymbol{v}_g \boldsymbol{\cdot} \boldsymbol{\nabla} \right) \boldsymbol{v}_g 
+ * \f]
+ * 
  * This is discretized by a fully-coupled vertex-centered finite volume
  * (box) scheme in space and by the implicit Euler method in time.
  */
