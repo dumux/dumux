@@ -81,6 +81,10 @@ public:
 SET_TYPE_PROP(BoxTwoPTwoCNI, TwoPTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 SET_TYPE_PROP(BoxTwoPTwoCNI, TwoPTwoCNIIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
+
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxTwoPTwoCNI, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
 }
 
 }

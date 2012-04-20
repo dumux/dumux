@@ -47,7 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(InfiltrationSpatialParameters);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InfiltrationSpatialParameters, SpatialParameters, Dumux::InfiltrationSpatialParameters<TypeTag>);
+SET_TYPE_PROP(InfiltrationSpatialParameters, SpatialParams, Dumux::InfiltrationSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(InfiltrationSpatialParameters, MaterialLaw)

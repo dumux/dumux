@@ -77,6 +77,9 @@ SET_TYPE_PROP(BoxOnePTwoC, Indices, Dumux::OnePTwoCIndices<0>);
 
 //! DEPRECATED OnePTwoCIndices property
 SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxOnePTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 }
 // \}
 }

@@ -77,6 +77,9 @@ SET_TYPE_PROP(BoxThreePThreeCNI, Indices, ThreePThreeCNIIndices<TypeTag, 0>);
 SET_TYPE_PROP(BoxThreePThreeCNI, ThreePThreeCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 SET_TYPE_PROP(BoxThreePThreeCNI, ThreePThreeCNIIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxThreePThreeCNI, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
 }
 
 }

@@ -139,6 +139,9 @@ SET_PROP(BoxTwoPTwoC,
 //! DEPRECATED TwoPTwoCIndices property
 SET_TYPE_PROP(BoxTwoPTwoC, TwoPTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
 // disable velocity output by default
 SET_BOOL_PROP(BoxTwoPTwoC, EnableVelocityOutput, false);
 

@@ -79,7 +79,7 @@ public:
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCOutflowProblem,
-              SpatialParameters,
+              SpatialParams,
               Dumux::OnePTwoCOutflowSpatialParameters<TypeTag>);
 
 //Define whether mole(true) or mass (false) fractions are used

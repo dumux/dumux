@@ -46,7 +46,7 @@ namespace Properties
 NEW_TYPE_TAG(TutorialSpatialParametersCoupled);/*@\label{tutorial-coupled:define-spatialparameters-typetag}@*/
 
 // Set the spatial parameters
-SET_TYPE_PROP(TutorialSpatialParametersCoupled, SpatialParameters,
+SET_TYPE_PROP(TutorialSpatialParametersCoupled, SpatialParams,
         Dumux::TutorialSpatialParametersCoupled<TypeTag>); /*@\label{tutorial-coupled:set-spatialparameters}@*/
 
 // Set the material law

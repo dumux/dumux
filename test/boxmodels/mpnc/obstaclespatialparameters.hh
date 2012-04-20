@@ -46,7 +46,7 @@ namespace Properties
 NEW_TYPE_TAG(ObstacleSpatialParameters);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ObstacleSpatialParameters, SpatialParameters, Dumux::ObstacleSpatialParameters<TypeTag>);
+SET_TYPE_PROP(ObstacleSpatialParameters, SpatialParams, Dumux::ObstacleSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(ObstacleSpatialParameters, MaterialLaw)

@@ -77,7 +77,7 @@ SET_PROP(OnePTestProblem, Problem)
 { typedef Dumux::OnePTestProblem<TypeTag> type; };
 
 // Set the spatial parameters
-SET_PROP(OnePTestProblem, SpatialParameters)
+SET_PROP(OnePTestProblem, SpatialParams)
 { typedef Dumux::OnePTestSpatialParameters<TypeTag> type; };
 
 // Linear solver settings

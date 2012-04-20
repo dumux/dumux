@@ -83,6 +83,9 @@ SET_TYPE_PROP(BoxRichards, Indices, Dumux::RichardsIndices);
 //! DEPRECATED RichardsIndices property
 SET_TYPE_PROP(BoxRichards, RichardsIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxRichards, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
 /*!
  * \brief Set type of the parameter objects for the material law
  *

@@ -48,7 +48,7 @@ namespace Properties
 NEW_TYPE_TAG(WaterAirSpatialParameters);
 
 // Set the spatial parameters
-SET_TYPE_PROP(WaterAirSpatialParameters, SpatialParameters, Dumux::WaterAirSpatialParameters<TypeTag>);
+SET_TYPE_PROP(WaterAirSpatialParameters, SpatialParams, Dumux::WaterAirSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(WaterAirSpatialParameters, MaterialLaw)

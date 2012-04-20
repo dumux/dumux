@@ -54,6 +54,7 @@ NEW_PROP_TAG(SpatialParamsBaseClass);
 
 // Set the spatial parameters
 SET_TYPE_PROP(GeneralLensSpatialParameters, SpatialParameters, Dumux::GeneralLensSpatialParameters<TypeTag>);
+SET_TYPE_PROP(GeneralLensSpatialParameters, SpatialParams, Dumux::GeneralLensSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(GeneralLensSpatialParameters, MaterialLaw)

@@ -70,16 +70,16 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemDat The volume variables of the current element
      */
     OnePFluxVariables(const Problem &problem,
                  const Element &element,
-                 const FVElementGeometry &elemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int faceIdx,
                  const ElementVolumeVariables &elemDat)
-        : fvElemGeom_(elemGeom)
+        : fvGeometry_(fvGeometry)
     {
         scvfIdx_ = faceIdx;
 
@@ -91,7 +91,7 @@ public:
      * \brief The face of the current sub-control volume.
      */
     const SCVFace &face() const
-    { return fvElemGeom_.subContVolFace[scvfIdx_]; }
+    { return fvGeometry_.subContVolFace[scvfIdx_]; }
 
     /*!
      * \brief Return the intrinsic permeability \f$\mathrm{[m^2]}\f$.
@@ -140,7 +140,7 @@ private:
 
         // calculate potential gradient
         for (int idx = 0;
-             idx < fvElemGeom_.numVertices;
+             idx < fvGeometry_.numVertices;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
@@ -158,8 +158,8 @@ private:
         if (GET_PARAM(TypeTag, bool, EnableGravity)) {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
-            Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
-            g += problem.boxGravity(element, fvElemGeom_, face().j);
+            Vector g(problem.boxGravity(element, fvGeometry_, face().i));
+            g += problem.boxGravity(element, fvGeometry_, face().j);
             g /= 2;
 
             // calculate the phase density at the integration point. we
@@ -183,15 +183,15 @@ private:
         const SpatialParameters &spatialParams = problem.spatialParameters();
         spatialParams.meanK(K_,
                             spatialParams.intrinsicPermeability(element,
-                                                                fvElemGeom_,
+                                                                fvGeometry_,
                                                                 face().i),
                             spatialParams.intrinsicPermeability(element,
-                                                                fvElemGeom_,
+                                                                fvGeometry_,
                                                                 face().j));
     }
 
 protected:
-    const FVElementGeometry &fvElemGeom_;
+    const FVElementGeometry &fvGeometry_;
     int scvfIdx_;
 
     // gradients

@@ -47,7 +47,7 @@ namespace Properties
 NEW_TYPE_TAG(KuevetteSpatialParameters);
 
 // Set the spatial parameters
-SET_TYPE_PROP(KuevetteSpatialParameters, SpatialParameters, Dumux::KuevetteSpatialParameters<TypeTag>);
+SET_TYPE_PROP(KuevetteSpatialParameters, SpatialParams, Dumux::KuevetteSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(KuevetteSpatialParameters, MaterialLaw)

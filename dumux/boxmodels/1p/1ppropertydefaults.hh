@@ -76,6 +76,9 @@ SET_TYPE_PROP(BoxOneP, Indices, OnePIndices);
 //! DEPRECATED OnePIndices property
 SET_TYPE_PROP(BoxOneP, OnePIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
 SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);

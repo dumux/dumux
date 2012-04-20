@@ -50,7 +50,7 @@ namespace Properties
 NEW_TYPE_TAG(InjectionSpatialParameters);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InjectionSpatialParameters, SpatialParameters, Dumux::InjectionSpatialParameters<TypeTag>);
+SET_TYPE_PROP(InjectionSpatialParameters, SpatialParams, Dumux::InjectionSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(InjectionSpatialParameters, MaterialLaw)

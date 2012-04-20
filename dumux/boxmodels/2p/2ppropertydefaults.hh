@@ -86,6 +86,9 @@ SET_TYPE_PROP(BoxTwoP,
 //! DEPRECATED TwoPIndices property
 SET_TYPE_PROP(BoxTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxTwoP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
 /*!
  * \brief Set the property for the material parameters by extracting
  *        it from the material law.

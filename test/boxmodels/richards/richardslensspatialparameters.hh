@@ -50,7 +50,7 @@ namespace Properties
 NEW_TYPE_TAG(RichardsLensSpatialParameters);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLensSpatialParameters, SpatialParameters, Dumux::RichardsLensSpatialParameters<TypeTag>);
+SET_TYPE_PROP(RichardsLensSpatialParameters, SpatialParams, Dumux::RichardsLensSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(RichardsLensSpatialParameters, MaterialLaw)

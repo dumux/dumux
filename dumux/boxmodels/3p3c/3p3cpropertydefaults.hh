@@ -119,6 +119,9 @@ SET_TYPE_PROP(BoxThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=
 
 //! DEPRECATED ThreePThreeCIndices property
 SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxThreePThreeC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 }
 
 }

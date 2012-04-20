@@ -51,7 +51,7 @@ namespace Properties
 NEW_TYPE_TAG(LensSpatialParameters);
 
 // Set the spatial parameters
-SET_TYPE_PROP(LensSpatialParameters, SpatialParameters, Dumux::LensSpatialParameters<TypeTag>);
+SET_TYPE_PROP(LensSpatialParameters, SpatialParams, Dumux::LensSpatialParameters<TypeTag>);
 
 // Set the material Law
 SET_PROP(LensSpatialParameters, MaterialLaw)

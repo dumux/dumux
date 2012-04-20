@@ -78,12 +78,12 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum
     {
-        contiLEqIdx = Indices::contiLEqIdx,
-        contiGEqIdx = Indices::contiGEqIdx,
-        lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx
+        contiWEqIdx = Indices::contiLEqIdx,
+        contiNEqIdx = Indices::contiGEqIdx,
+        wPhaseIdx = Indices::lPhaseIdx,
+        nPhaseIdx = Indices::gPhaseIdx,
+        wCompIdx = Indices::lCompIdx,
+        nCompIdx = Indices::gCompIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -112,23 +112,23 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \param element The element
      * \param phaseIdx The index of the fluid phase
      */
-    void evalPhaseStorage(const Element &element, int phaseIdx)
+    void evalPhaseStorage(const Element &element, const int phaseIdx)
     {
-        FVElementGeometry fvGeom;
-        fvGeom.update(this->gridView_(), element);
+        FVElementGeometry fvGeometry;
+        fvGeometry.update(this->gridView_(), element);
         ElementBoundaryTypes bcTypes;
-        bcTypes.update(this->problem_(), element, fvGeom);
-        ElementVolumeVariables volVars;
-        volVars.update(this->problem_(), element, fvGeom, false);
+        bcTypes.update(this->problem_(), element, fvGeometry);
+        ElementVolumeVariables elemVolVars;
+        elemVolVars.update(this->problem_(), element, fvGeometry, false);
 
-        this->storageTerm_.resize(fvGeom.numVertices);
+        this->storageTerm_.resize(fvGeometry.numVertices);
         this->storageTerm_ = 0;
 
         this->elemPtr_ = &element;
-        this->fvElemGeomPtr_ = &fvGeom;
+        this->fvElemGeomPtr_ = &fvGeometry;
         this->bcTypesPtr_ = &bcTypes;
         this->prevVolVarsPtr_ = 0;
-        this->curVolVarsPtr_ = &volVars;
+        this->curVolVarsPtr_ = &elemVolVars;
         evalPhaseStorage_(phaseIdx);
     }
 
@@ -170,11 +170,11 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub-control volume divided by the volume)
      *
-     *  \param result The mass of the component within the sub-control volume
+     *  \param storage The mass of the component within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -186,25 +186,25 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute storage term of all components within all phases
-        result = 0;
+        storage = 0;
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
             {
-                int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
-                result[eqIdx] += volVars.density(phaseIdx)
+                int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                storage[eqIdx] += volVars.density(phaseIdx)
                     * volVars.saturation(phaseIdx)
                     * volVars.fluidState().massFraction(phaseIdx, compIdx);
             }
             // this is only processed, if one component mass balance equation
             // is replaced by the total mass balance equation
             if (replaceCompEqIdx < numComponents)
-                result[replaceCompEqIdx] +=
+                storage[replaceCompEqIdx] +=
                     volVars.density(phaseIdx)
                     * volVars.saturation(phaseIdx);
         }
-        result *= volVars.porosity();
+        storage *= volVars.porosity();
     }
 
     /*!
@@ -217,17 +217,17 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {
-        FluxVariables vars(this->problem_(),
-                           this->elem_(),
-                           this->fvElemGeom_(),
+        FluxVariables fluxVars(this->problem_(),
+                           this->element_(),
+                           this->fvGeometry_(),
                            faceIdx,
                            this->curVolVars_(),
                            onBoundary);
 
         flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, vars);
+        asImp_()->computeAdvectiveFlux(flux, fluxVars);
         Valgrind::CheckDefined(flux);
-        asImp_()->computeDiffusiveFlux(flux, vars);
+        asImp_()->computeDiffusiveFlux(flux, fluxVars);
         Valgrind::CheckDefined(flux);
     }
 
@@ -236,9 +236,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *        a face of a sub-control volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV face
+     * \param fluxVars The flux variables at the current SCV face
      */
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         ////////
         // advective fluxes of all components in all phases
@@ -248,19 +248,19 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
             // data attached to upstream and the downstream vertices
             // of the current phase
             const VolumeVariables &up =
-                this->curVolVars_(vars.upstreamIdx(phaseIdx));
+                this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
             const VolumeVariables &dn =
-                this->curVolVars_(vars.downstreamIdx(phaseIdx));
+                this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
             for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
             {
-                int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
+                int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
                 // add advective flux of current component in current
                 // phase
                 if (massUpwindWeight_ > 0.0)
                     // upstream vertex
                     flux[eqIdx] +=
-                        vars.KmvpNormal(phaseIdx)
+                        fluxVars.KmvpNormal(phaseIdx)
                         * massUpwindWeight_
                         * up.density(phaseIdx)
                         * up.mobility(phaseIdx)
@@ -268,13 +268,13 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                 if (massUpwindWeight_ < 1.0)
                     // downstream vertex
                     flux[eqIdx] +=
-                        vars.KmvpNormal(phaseIdx)
+                        fluxVars.KmvpNormal(phaseIdx)
                         * (1 - massUpwindWeight_)
                         * dn.density(phaseIdx)
                         * dn.mobility(phaseIdx)
                         * dn.fluidState().massFraction(phaseIdx, compIdx);
 
-                Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
+                Valgrind::CheckDefined(fluxVars.KmvpNormal(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
                 Valgrind::CheckDefined(up.mobility(phaseIdx));
                 Valgrind::CheckDefined(up.fluidState().massFraction(phaseIdx, compIdx));
@@ -290,18 +290,18 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                 // upstream vertex
                 if (massUpwindWeight_ > 0.0)
                     flux[replaceCompEqIdx] +=
-                        vars.KmvpNormal(phaseIdx)
+                        fluxVars.KmvpNormal(phaseIdx)
                         * massUpwindWeight_
                         * up.density(phaseIdx)
                         * up.mobility(phaseIdx);
                 // downstream vertex
                 if (massUpwindWeight_ < 1.0)
                     flux[replaceCompEqIdx] +=
-                        vars.KmvpNormal(phaseIdx)
+                        fluxVars.KmvpNormal(phaseIdx)
                         * (1 - massUpwindWeight_)
                         * dn.density(phaseIdx)
                         * dn.mobility(phaseIdx);
-                Valgrind::CheckDefined(vars.KmvpNormal(phaseIdx));
+                Valgrind::CheckDefined(fluxVars.KmvpNormal(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
                 Valgrind::CheckDefined(up.mobility(phaseIdx));
                 Valgrind::CheckDefined(dn.density(phaseIdx));
@@ -317,47 +317,47 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *        a face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current sub control volume face
+     * \param fluxVars The flux variables at the current sub control volume face
      */
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp = vars.molarConcGrad(lPhaseIdx)*vars.face().normal;
+        Scalar tmp = fluxVars.moleFractionGrad(wPhaseIdx)*fluxVars.face().normal;
         tmp *= -1;
         tmp *=
-            vars.porousDiffCoeff(lPhaseIdx) *
-            vars.molarDensityAtIP(lPhaseIdx);
+            fluxVars.porousDiffCoeff(wPhaseIdx) *
+            fluxVars.molarDensity(wPhaseIdx);
         // add the diffusive fluxes only to the component mass balance
-        if (replaceCompEqIdx != contiGEqIdx)
-            flux[contiGEqIdx] += tmp * FluidSystem::molarMass(gCompIdx);
-        if (replaceCompEqIdx != contiLEqIdx)
-            flux[contiLEqIdx] -= tmp * FluidSystem::molarMass(lCompIdx);
+        if (replaceCompEqIdx != contiNEqIdx)
+            flux[contiNEqIdx] += tmp * FluidSystem::molarMass(nCompIdx);
+        if (replaceCompEqIdx != contiWEqIdx)
+            flux[contiWEqIdx] -= tmp * FluidSystem::molarMass(wCompIdx);
 
         // add diffusive flux of liquid component in gas phase
-        tmp = vars.molarConcGrad(gPhaseIdx)*vars.face().normal;
+        tmp = fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal;
         tmp *= -1;
         tmp *=
-            vars.porousDiffCoeff(gPhaseIdx) *
-            vars.molarDensityAtIP(gPhaseIdx);
+            fluxVars.porousDiffCoeff(nPhaseIdx) *
+            fluxVars.molarDensity(nPhaseIdx);
         // add the diffusive fluxes only to the component mass balance
-        if (replaceCompEqIdx != contiLEqIdx)
-            flux[contiLEqIdx] += tmp * FluidSystem::molarMass(lCompIdx);
-        if (replaceCompEqIdx != contiGEqIdx)
-            flux[contiGEqIdx] -= tmp * FluidSystem::molarMass(gCompIdx);
+        if (replaceCompEqIdx != contiWEqIdx)
+            flux[contiWEqIdx] += tmp * FluidSystem::molarMass(wCompIdx);
+        if (replaceCompEqIdx != contiNEqIdx)
+            flux[contiNEqIdx] -= tmp * FluidSystem::molarMass(nCompIdx);
     }
 
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param q The source/sink in the sub-control volume for each component
-     * \param localVertexIdx The index of the sub-control volume
+     * \param source The source/sink in the sub-control volume for each component
+     * \param scvIdx The index of the sub-control volume
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx)
+    void computeSource(PrimaryVariables& source, int scvIdx)
     {
-        this->problem_().boxSDSource(q,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
-                                     localVertexIdx,
+        this->problem_().boxSDSource(source,
+                                     this->element_(),
+                                     this->fvGeometry_(),
+                                     scvIdx,
                                      this->curVolVars_());
     }
 
@@ -365,23 +365,23 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     void evalPhaseStorage_(int phaseIdx)
     {
         // evaluate the storage terms of a single phase
-        for (int i=0; i < this->fvElemGeom_().numVertices; i++) {
-            PrimaryVariables &result = this->storageTerm_[i];
+        for (int i=0; i < this->fvGeometry_().numVertices; i++) {
+            PrimaryVariables &storage = this->storageTerm_[i];
             const ElementVolumeVariables &elemVolVars = this->curVolVars_();
             const VolumeVariables &volVars = elemVolVars[i];
 
             // compute storage term of all components within all phases
-            result = 0;
+            storage = 0;
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                int eqIdx = (compIdx == lCompIdx) ? contiLEqIdx : contiGEqIdx;
-                result[eqIdx] += volVars.density(phaseIdx)
+                int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                storage[eqIdx] += volVars.density(phaseIdx)
                     * volVars.saturation(phaseIdx)
                     * volVars.fluidState().massFraction(phaseIdx, compIdx);
             }
 
-            result *= volVars.porosity();
-            result *= this->fvElemGeom_().subContVol[i].volume;
+            storage *= volVars.porosity();
+            storage *= this->fvGeometry_().subContVol[i].volume;
         }
     }
 
@@ -394,8 +394,8 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     constexpr unsigned int contiCompIdx1_() const {
         switch (replaceCompEqIdx)
         {
-        case contiLEqIdx: return contiGEqIdx;
-        case contiGEqIdx: return contiLEqIdx;
+        case contiWEqIdx: return contiNEqIdx;
+        case contiNEqIdx: return contiWEqIdx;
         default:          return 0;
         }
     }
@@ -409,8 +409,8 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     constexpr unsigned int contiCompIdx2_() const {
         switch (replaceCompEqIdx)
         {
-        case contiLEqIdx: return contiGEqIdx;
-        case contiGEqIdx: return contiLEqIdx;
+        case contiWEqIdx: return contiNEqIdx;
+        case contiNEqIdx: return contiWEqIdx;
         default:          return numComponents-1;
         }
     }
