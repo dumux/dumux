@@ -118,15 +118,15 @@ public:
 
         volVarsPrev.update(problem_(),
                            element,
-                           fvElemGeom_(),
+                           fvGeometry_(),
                            true /* oldSol? */);
         volVarsCur.update(problem_(),
                           element,
-                          fvElemGeom_(),
+                          fvGeometry_(),
                           false /* oldSol? */);
 
         ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem_(), element, fvElemGeom_());
+        bcTypes.update(problem_(), element, fvGeometry_());
 
         // this is pretty much a HACK because the internal state of
         // the problem is not supposed to be changed during the
@@ -135,7 +135,7 @@ public:
         // not thread save.) The real solution are context objects!
         problem_().updateCouplingParams(element);
 
-        asImp_().eval(element, fvElemGeom_(), volVarsPrev, volVarsCur, bcTypes);
+        asImp_().eval(element, fvGeometry_(), volVarsPrev, volVarsCur, bcTypes);
     }
 
     /*!
@@ -156,7 +156,7 @@ public:
         fvElemGeomPtr_ = &fvElemGeom;
 
         ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem_(), element, fvElemGeom_());
+        bcTypes.update(problem_(), element, fvGeometry_());
         bcTypesPtr_ = &bcTypes;
 
         // no previous volume variables!
@@ -168,7 +168,7 @@ public:
         model_().setHints(element, volVars);
 
         // calculate volume current variables
-        volVars.update(problem_(), element, fvElemGeom_(), false);
+        volVars.update(problem_(), element, fvGeometry_(), false);
         curVolVarsPtr_ = &volVars;
 
         asImp_().evalStorage_();
@@ -192,9 +192,9 @@ public:
         fvElemGeomPtr_ = &fvElemGeom;
 
         ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem_(), element, fvElemGeom_());
+        bcTypes.update(problem_(), element, fvGeometry_());
 
-        residual_.resize(fvElemGeom_().numVertices);
+        residual_.resize(fvGeometry_().numVertices);
         residual_ = 0;
 
         bcTypesPtr_ = &bcTypes;
@@ -242,7 +242,7 @@ public:
         curVolVarsPtr_ = &curVolVars;
 
         // resize the vectors for all terms
-        int numVerts = fvElemGeom_().numVertices;
+        int numVerts = fvGeometry_().numVertices;
         residual_.resize(numVerts);
         storageTerm_.resize(numVerts);
 
@@ -252,14 +252,14 @@ public:
         asImp_().evalFluxes_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
+        for (int i=0; i < fvGeometry_().numVertices; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
         asImp_().evalVolumeTerms_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++) {
+        for (int i=0; i < fvGeometry_().numVertices; i++) {
             Valgrind::CheckDefined(residual_[i]);
         }
 #endif // HAVE_VALGRIND
@@ -268,7 +268,7 @@ public:
         asImp_().evalBoundary_();
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
+        for (int i=0; i < fvGeometry_().numVertices; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
     }
@@ -339,7 +339,7 @@ protected:
         if (bcTypes_().hasNeumann() || bcTypes_().hasOutflow())
             asImp_().evalBoundaryFluxes_();
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
+        for (int i=0; i < fvGeometry_().numVertices; i++)
             Valgrind::CheckDefined(residual_[i]);
 #endif // HAVE_VALGRIND
 
@@ -354,13 +354,13 @@ protected:
     void evalDirichlet_()
     {
         PrimaryVariables tmp(0);
-        for (int i = 0; i < fvElemGeom_().numVertices; ++i) {
+        for (int i = 0; i < fvGeometry_().numVertices; ++i) {
             const BoundaryTypes &bcTypes = bcTypes_(i);
             if (! bcTypes.hasDirichlet())
                 continue;
 
             // ask the problem for the dirichlet values
-            const VertexPointer vPtr = elem_().template subEntity<dim>(i);
+            const VertexPointer vPtr = element_().template subEntity<dim>(i);
             Valgrind::SetUndefined(tmp);
             asImp_().problem_().dirichlet(tmp, *vPtr);
 
@@ -386,11 +386,11 @@ protected:
      */
     void evalBoundaryFluxes_()
     {
-        Dune::GeometryType geoType = elem_().geometry().type();
+        Dune::GeometryType geoType = element_().geometry().type();
         const ReferenceElement &refElem = ReferenceElements::general(geoType);
 
-        IntersectionIterator isIt = gridView_().ibegin(elem_());
-        const IntersectionIterator &endIt = gridView_().iend(elem_());
+        IntersectionIterator isIt = gridView_().ibegin(element_());
+        const IntersectionIterator &endIt = gridView_().iend(element_());
         for (; isIt != endIt; ++isIt)
         {
             // handle only faces on the boundary
@@ -411,7 +411,7 @@ protected:
                                                     dim);
 
                 int boundaryFaceIdx =
-                    fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
+                    fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
 
                 // add the residual of all vertices of the boundary
                 // segment
@@ -444,14 +444,14 @@ protected:
         if (bcTypes.hasNeumann()) {
             Valgrind::SetUndefined(values);
             problem_().boxSDNeumann(values,
-                                    elem_(),
-                                    fvElemGeom_(),
+                                    element_(),
+                                    fvGeometry_(),
                                     *isIt,
                                     scvIdx,
                                     boundaryFaceIdx,
                                     curVolVars_());
             values *=
-                fvElemGeom_().boundaryFace[boundaryFaceIdx].area
+                fvGeometry_().boundaryFace[boundaryFaceIdx].area
                 * curVolVars_(scvIdx).extrusionFactor();
             Valgrind::CheckDefined(values);
 
@@ -472,10 +472,10 @@ protected:
     {
         // calculate the mass flux over the faces and subtract
         // it from the local rates
-        for (int k = 0; k < fvElemGeom_().numEdges; k++)
+        for (int k = 0; k < fvGeometry_().numEdges; k++)
         {
-            int i = fvElemGeom_().subContVolFace[k].i;
-            int j = fvElemGeom_().subContVolFace[k].j;
+            int i = fvGeometry_().subContVolFace[k].i;
+            int j = fvGeometry_().subContVolFace[k].j;
 
             PrimaryVariables flux;
 
@@ -514,16 +514,16 @@ protected:
      */
     void evalStorage_()
     {
-        storageTerm_.resize(fvElemGeom_().numVertices);
+        storageTerm_.resize(fvGeometry_().numVertices);
         storageTerm_ = 0;
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
-        for (int i=0; i < fvElemGeom_().numVertices; i++) {
+        for (int i=0; i < fvGeometry_().numVertices; i++) {
             Valgrind::SetUndefined(storageTerm_[i]);
             asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
             storageTerm_[i] *=
-                fvElemGeom_().subContVol[i].volume
+                fvGeometry_().subContVol[i].volume
                 * curVolVars_(i).extrusionFactor();
             Valgrind::CheckDefined(storageTerm_[i]);
         }
@@ -537,7 +537,7 @@ protected:
     void evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
-        for (int i=0; i < fvElemGeom_().numVertices; i++)
+        for (int i=0; i < fvGeometry_().numVertices; i++)
         {
             Scalar extrusionFactor =
                 curVolVars_(i).extrusionFactor();
@@ -559,7 +559,7 @@ protected:
 
             storageTerm_[i] -= tmp;
             storageTerm_[i] *=
-                fvElemGeom_().subContVol[i].volume
+                fvGeometry_().subContVol[i].volume
                 / problem_().timeManager().timeStepSize()
                 * extrusionFactor;
             residual_[i] += storageTerm_[i];
@@ -568,7 +568,7 @@ protected:
             Valgrind::SetUndefined(tmp);
             asImp_().computeSource(tmp, i);
             Valgrind::CheckDefined(tmp);
-            tmp *= fvElemGeom_().subContVol[i].volume * extrusionFactor;
+            tmp *= fvGeometry_().subContVol[i].volume * extrusionFactor;
             residual_[i] -= tmp;
 
             // make sure that only defined quantities were used
@@ -604,21 +604,36 @@ protected:
     /*!
      * \brief Returns a reference to the current element.
      */
-    const Element &elem_() const
+    const Element &element_() const
     {
         Valgrind::CheckDefined(elemPtr_);
         return *elemPtr_;
+    }
+    
+    /*!
+     * \brief Returns a reference to the current element.
+     */
+    DUMUX_DEPRECATED_MSG("use element_ instead")
+    const Element &elem_() const
+    { return element_();}
+
+    /*!
+     * \brief Returns a reference to the current element's finite
+     *        volume geometry.
+     */
+    const FVElementGeometry &fvGeometry_() const
+    {
+        Valgrind::CheckDefined(fvElemGeomPtr_);
+        return *fvElemGeomPtr_;
     }
 
     /*!
      * \brief Returns a reference to the current element's finite
      *        volume geometry.
      */
+    DUMUX_DEPRECATED_MSG("use fvGeometry_ instead")
     const FVElementGeometry &fvElemGeom_() const
-    {
-        Valgrind::CheckDefined(fvElemGeomPtr_);
-        return *fvElemGeomPtr_;
-    }
+    { return fvGeometry_(); }
 
     /*!
      * \brief Returns a reference to the primary variables of

@@ -35,7 +35,7 @@ namespace Dumux
 {
 namespace Properties
 {
-NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters object
+NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters object
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 }
 
@@ -51,7 +51,7 @@ class PorousMediaBoxProblem : public BoxProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -80,7 +80,7 @@ public:
           gravity_(0)
     {
         newSpatialParams_ = true;
-        spatialParameters_ = new SpatialParameters(gridView);
+        spatialParams_ = new SpatialParams(gridView);
 
         if (GET_PARAM(TypeTag, bool, EnableGravity))
             gravity_[dim-1]  = -9.81;
@@ -89,7 +89,7 @@ public:
     ~PorousMediaBoxProblem()
     {
         if (newSpatialParams_)
-            delete spatialParameters_;
+            delete spatialParams_;
     }
 
     /*!
@@ -169,14 +169,22 @@ public:
     /*!
      * \brief Returns the spatial parameters object.
      */
-    SpatialParameters &spatialParameters()
-    { return *spatialParameters_; }
+    SpatialParams &spatialParams()
+    { return *spatialParams_; }
+    
+    DUMUX_DEPRECATED_MSG("use spatialParams instead")
+    SpatialParams &spatialParameters()
+    { return spatialParams(); }
 
     /*!
      * \brief Returns the spatial parameters object.
      */
-    const SpatialParameters &spatialParameters() const
-    { return *spatialParameters_; }
+    const SpatialParams &spatialParams() const
+    { return *spatialParams_; }
+
+    DUMUX_DEPRECATED_MSG("use spatialParams instead")
+    const SpatialParams &spatialParameters() const
+    { return spatialParams(); }
 
     // \}
 
@@ -191,7 +199,7 @@ protected:
     Vector gravity_;
 
     // fluids and material properties
-    SpatialParameters*  spatialParameters_;
+    SpatialParams*  spatialParams_;
     bool newSpatialParams_;
 };
 
