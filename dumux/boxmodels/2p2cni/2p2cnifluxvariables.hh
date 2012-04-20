@@ -108,7 +108,7 @@ protected:
         // gradients
         temperatureGrad_ = 0;
         Vector tmp(0.0);
-        for (int vertIdx = 0; vertIdx < this->fvGeom_.numVertices; vertIdx++)
+        for (int vertIdx = 0; vertIdx < this->fvGeometry_.numVertices; vertIdx++)
         {
             tmp = this->face().grad[vertIdx];
             tmp *= elemVolVars[vertIdx].temperature();
@@ -122,7 +122,7 @@ protected:
                                                        elemVolVars,
                                                        temperatureGrad_,
                                                        element,
-                                                       this->fvGeom_,
+                                                       this->fvGeometry_,
                                                        scvfIdx_);
         else // heat flux at outflow boundaries
             problem.spatialParameters().boundaryMatrixHeatFlux(tmp,
@@ -130,7 +130,7 @@ protected:
                                                        elemVolVars,
                                                        this->face(),
                                                        element,
-                                                       this->fvGeom_);
+                                                       this->fvGeometry_);
 
         // project the heat flux vector on the face's normal vector
         normalMatrixHeatFlux_ = tmp*this->face().normal;

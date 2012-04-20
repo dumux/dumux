@@ -172,6 +172,9 @@ SET_PROP(BoxMPNC, Indices)
 //! DEPRECATED MPNCIndices property
 SET_TYPE_PROP(BoxMPNC, MPNCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(BoxMPNC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
 //! The VTK writer module for common quantities
 SET_PROP(BoxMPNC, MPNCVtkCommonModule)
 {
