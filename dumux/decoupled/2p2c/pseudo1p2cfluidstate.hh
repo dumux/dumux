@@ -70,14 +70,14 @@ public:
      * - Assign total concentration to the present phase
      *
      * \param Z1 Feed mass fraction \f$\mathrm{[-]}\f$
-     * \param press1p Pressure value for present phase \f$\mathrm{[Pa]}\f$
+     * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param presentPhaseIdx Subdomain Index = Indication which phase is present
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
-    void update(const Scalar& Z1,const Scalar& press1p,const int presentPhaseIdx, const Scalar& temperature)
+    void update(const Scalar& Z1,const Dune::FieldVector<Scalar, numPhases> phasePressure,const int presentPhaseIdx, const Scalar& temperature)
     {
-
-        pressure1p_=press1p;
+        pressure_[wPhaseIdx] = phasePressure[wPhaseIdx];
+        pressure_[nPhaseIdx] = phasePressure[nPhaseIdx];
         temperature_ = temperature;
 
         if (presentPhaseIdx == wPhaseIdx)
@@ -141,7 +141,7 @@ public:
      *  \param phaseIdx Index of the phase
      */
     Scalar pressure(int phaseIdx) const
-    { return pressure1p_; }
+    { return pressure_[phaseIdx]; }
 
     Scalar density(int phaseIdx) const
     {
@@ -236,8 +236,8 @@ public:
     Scalar massConcentration_[numComponents];
     Scalar massFractionWater_[numPhases];
     Scalar moleFractionWater_[numPhases];
+    Scalar pressure_[numPhases];
     Scalar Sw_;
-    Scalar pressure1p_;
     Scalar density_;
     Scalar viscosity_;
     Scalar temperature_;

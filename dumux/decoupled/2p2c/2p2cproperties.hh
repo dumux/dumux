@@ -150,7 +150,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true);
 SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false);
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
 //!< Restrict (no upwind) flux in transport step if direction reverses after pressure equation
-SET_BOOL_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, true);
+SET_BOOL_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, false);
 
 SET_PROP(DecoupledTwoPTwoC, BoundaryMobility)
 {

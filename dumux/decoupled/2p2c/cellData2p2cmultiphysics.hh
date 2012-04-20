@@ -208,7 +208,7 @@ public:
     const Scalar capillaryPressure() const
     {
         if(fluidStateType_ == simple)
-            return 0.;
+            return simpleFluidState_->pressure(nPhaseIdx) - simpleFluidState_->pressure(wPhaseIdx);
         else
             return this->fluidState_->pressure(nPhaseIdx) - this->fluidState_->pressure(wPhaseIdx);
     }
