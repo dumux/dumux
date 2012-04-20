@@ -63,6 +63,8 @@ namespace Dumux
 template<class TypeTag> class FVPressureCompositional
 : public FVPressure<TypeTag>
 {
+    //the model implementation
+    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
     typedef FVPressure<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -128,11 +130,16 @@ public:
         //pre-transport to estimate update vector
         Scalar dt_estimate = 0.;
         Dune::dinfo << "secant guess"<< std::endl;
-        problem_.transportModel().update(-1, dt_estimate, updateEstimate_, false);
+        problem_.transportModel().update(problem_.timeManager().time(), dt_estimate, updateEstimate_, false);
         //last argument false in update() makes shure that this is estimate and no "real" transport step
-        updateEstimate_ *= problem_.timeManager().timeStepSize();
 
-//        problem_.variables().communicateUpdateEstimate();
+        // if we just started a new episode, the TS size of the update Estimate is a better
+        // estimate then the size of the last time step
+        if(problem_.timeManager().time() == problem_.timeManager().episodeStartTime()
+                && problem_.timeManager().episodeIndex() > 0)
+            problem_.timeManager().setTimeStepSize(dt_estimate*GET_PARAM(TypeTag, Scalar, CFLFactor));
+
+        updateEstimate_ *= problem_.timeManager().timeStepSize();
 
         problem_.pressureModel().assemble(false);           Dune::dinfo << "pressure calculation"<< std::endl;
         problem_.pressureModel().solve();
@@ -199,8 +206,11 @@ public:
         writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
         writer.attachCellData(*mobilityW, "mobility w_phase");
         writer.attachCellData(*mobilityNW, "mobility nw_phase");
-        writer.attachCellData(*massfraction1W, "massfraction1 in w_phase");
-        writer.attachCellData(*massfraction1NW, "massfraction1NW nw_phase");
+        std::ostringstream oss1, oss2;
+        oss1 << "mass fraction " << FluidSystem::componentName(0) << " in " << FluidSystem::phaseName(0) << "-phase";
+        writer.attachCellData(*massfraction1W, oss1.str());
+        oss2 << "mass fraction " << FluidSystem::componentName(0) << " in " << FluidSystem::phaseName(1) << "-phase";
+        writer.attachCellData(*massfraction1NW, oss2.str());
         writer.attachCellData(*volErr, "volume Error");
 
 #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
@@ -209,8 +219,6 @@ public:
         ScalarSolutionType *totalConcentration2 = writer.allocateManagedBuffer (size);
 
         // add debug stuff
-        ScalarSolutionType *numdensityW = writer.allocateManagedBuffer (size);
-        ScalarSolutionType *numdensityNW = writer.allocateManagedBuffer (size);
         ScalarSolutionType *errorCorrPtr = writer.allocateManagedBuffer (size);
         ScalarSolutionType *dv_dpPtr = writer.allocateManagedBuffer (size);
         ScalarSolutionType *dV_dC1Ptr = writer.allocateManagedBuffer (size);
@@ -224,8 +232,6 @@ public:
             (*totalConcentration1)[i] = cellData.massConcentration(wCompIdx);
             (*totalConcentration2)[i] = cellData.massConcentration(nCompIdx);
 
-            (*numdensityW)[i] = cellData.numericalDensity(wPhaseIdx);
-            (*numdensityNW)[i] = cellData.numericalDensity(nPhaseIdx);
             (*errorCorrPtr)[i] = cellData.errorCorrection();
             (*dv_dpPtr)[i] = cellData.dv_dp();
             (*dV_dC1Ptr)[i] = cellData.dv(wCompIdx);
@@ -238,8 +244,6 @@ public:
         writer.attachCellData(*totalConcentration1, "C^w from cellData");
         writer.attachCellData(*totalConcentration2, "C^n from cellData");
 
-        writer.attachCellData(*numdensityW, "numerical density (mass/volume) w_phase");
-        writer.attachCellData(*numdensityNW, "numerical density (mass/volume) nw_phase");
         writer.attachCellData(*errorCorrPtr, "Error Correction");
         writer.attachCellData(*dv_dpPtr, "dv_dp");
         writer.attachCellData(*dV_dC1Ptr, "dV_dC1");
@@ -318,6 +322,14 @@ protected:
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    {   return *static_cast<Implementation *>(this);}
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    {   return *static_cast<const Implementation *>(this);}
 };
 
 
