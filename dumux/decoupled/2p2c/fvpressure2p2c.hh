@@ -71,6 +71,8 @@ namespace Dumux
 template<class TypeTag> class FVPressure2P2C
 : public FVPressureCompositional<TypeTag>
 {
+    //the model implementation
+    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
     typedef FVPressure<TypeTag> BaseType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -188,6 +190,14 @@ protected:
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+private:
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    {   return *static_cast<Implementation *>(this);}
+
+    //! \copydoc Dumux::IMPETProblem::asImp_()
+    const Implementation &asImp_() const
+    {   return *static_cast<const Implementation *>(this);}
 };
 
 
@@ -313,6 +323,8 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
                             fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxError)
                                 * cellDataI.volumeError() * volume;
     }
+    else
+        problem().variables().cellData(globalIdxI).errorCorrection() = 0.;
 
     return;
 }
@@ -442,7 +454,6 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         Scalar graddv_dC2 = (cellDataJ.dv(nPhaseIdx)
                                 - cellDataI.dv(nPhaseIdx)) / dist;
 
-
 //                    potentialW = problem().variables().potentialWetting(globalIdxI, isIndex);
 //                    potentialNW = problem().variables().potentialNonwetting(globalIdxI, isIndex);
 //
@@ -455,8 +466,8 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         Scalar densityW = rhoMeanW;
         Scalar densityNW = rhoMeanNW;
 
-        potentialW = (unitOuterNormal * unitDistVec) *(cellDataI.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx))/dist;
-        potentialNW = (unitOuterNormal * unitDistVec) *(cellDataI.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx))/dist;
+        potentialW = (cellDataI.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx))/dist;
+        potentialNW = (cellDataI.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx))/dist;
 
         potentialW += densityW * (unitDistVec * gravity_);
         potentialNW += densityNW * (unitDistVec * gravity_);
@@ -510,10 +521,10 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         }
 
         //calculate current matrix entry
-        entries[0] = faceArea * (lambdaW * dV_w + lambdaN * dV_n);
+        entries[matrix] = faceArea * (lambdaW * dV_w + lambdaN * dV_n)* (unitOuterNormal * unitDistVec);
         if(enableVolumeIntegral)
-            entries[0] -= volume * faceArea / perimeter * (lambdaW * gV_w + lambdaN * gV_n);     // = boundary integral - area integral
-        entries[0] *= fabs((permeability*unitOuterNormal)/(dist));
+            entries[matrix] -= volume * faceArea / perimeter * (lambdaW * gV_w + lambdaN * gV_n);     // = boundary integral - area integral
+        entries[matrix] *= fabs((permeability*unitDistVec)/(dist));
 
         //calculate right hand side
         entries[rhs] = faceArea  * (unitOuterNormal * unitDistVec) * (densityW * lambdaW * dV_w + densityNW * lambdaN * dV_n);
@@ -531,7 +542,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         case pw:
         {
             //add capillary pressure term to right hand side
-            entries[rhs] += lambdaN * dV_n * (permeability * pCGradient) * faceArea;
+            entries[rhs] += lambdaN * dV_n * (permeability * pCGradient) * faceArea* (unitOuterNormal * unitDistVec);
             if(enableVolumeIntegral)
                 entries[rhs]-= lambdaN * gV_n * (permeability * pCGradient) * volume * faceArea / perimeter;
             break;
@@ -539,7 +550,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         case pn:
         {
             //add capillary pressure term to right hand side
-            entries[rhs] -= lambdaW * dV_w * (permeability * pCGradient) * faceArea;
+            entries[rhs] -= lambdaW * dV_w * (permeability * pCGradient) * faceArea* (unitOuterNormal * unitDistVec);
             if(enableVolumeIntegral)
                 entries[rhs]+= lambdaW * gV_w * (permeability * pCGradient) * volume * faceArea / perimeter;
             break;
@@ -826,7 +837,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 
         CellData& cellData = problem().variables().cellData(globalIdx);
 
-        this->updateMaterialLawsInElement(*eIt);
+        asImp_().updateMaterialLawsInElement(*eIt);
 
         maxError = std::max(maxError, fabs(cellData.volumeError()));
     }
@@ -973,8 +984,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     // determine volume mismatch between actual fluid volume and pore volume
     Scalar sumConc = (cellData.totalConcentration(wCompIdx)
             + cellData.totalConcentration(nCompIdx));
-    Scalar massw = cellData.numericalDensity(wPhaseIdx) = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
-    Scalar massn = cellData.numericalDensity(nPhaseIdx) = sumConc * fluidState.phaseMassFraction(nPhaseIdx);
+    Scalar massw = sumConc * fluidState.phaseMassFraction(wPhaseIdx);
+    Scalar massn = sumConc * fluidState.phaseMassFraction(nPhaseIdx);
 
     if ((cellData.density(wPhaseIdx)*cellData.density(nPhaseIdx)) == 0)
         DUNE_THROW(Dune::MathError, "Decoupled2p2c::postProcessUpdate: try to divide by 0 density");

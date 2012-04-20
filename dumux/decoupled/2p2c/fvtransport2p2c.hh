@@ -109,9 +109,11 @@ public:
 
     void updateTransportedQuantity(TransportSolutionType& updateVector);
 
+    // Function which calculates the flux update
     void getFlux(Dune::FieldVector<Scalar, 2>&, Dune::FieldVector<Scalar, 2>&,
-            const Intersection&, const CellData&);
+            const Intersection&, CellData&);
 
+    // Function which calculates the boundary flux update
     void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&, Dune::FieldVector<Scalar, 2>&,
                             const Intersection&, const CellData&);
 
@@ -192,6 +194,7 @@ public:
         totalConcentration_[wCompIdx].resize(problem.gridView().size(0));
         totalConcentration_[nCompIdx].resize(problem.gridView().size(0));
 
+        restrictFluxInTransport_ = GET_PARAM(TypeTag,bool, RestrictFluxInTransport);
     }
 
     virtual ~FVTransport2P2C()
@@ -201,8 +204,10 @@ public:
 protected:
     TransportSolutionType totalConcentration_;
     Problem& problem_;
+    bool impet_;
 
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
+    bool restrictFluxInTransport_;
     bool switchNormals;
 };
 
@@ -230,6 +235,8 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 {
     // initialize dt very large
     dt = 1E100;
+    // store if we do update Estimate for flux functions
+    impet_ = impet;
 
     // resize update vector and set to zero
     updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
@@ -325,7 +332,8 @@ void FVTransport2P2C<TypeTag>::updateTransportedQuantity(TransportSolutionType& 
       \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} X^{\kappa}_{\alpha}
     \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \f]
  * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
- * represents the normal of the face \f$ \gamma{ij} \f$.
+ * represents the normal of the face \f$ \gamma{ij} \f$. Due to the nature of the Primay Variable, the (volume-)specific
+ * total mass concentration, this represents a mass flux per cell volume.
  * \param fluxEntries The flux entries, mass influx from cell \f$j\f$ to \f$i\f$.
  * \param timestepFlux flow velocities for timestep estimation
  * \param intersection The intersection
@@ -335,8 +343,10 @@ template<class TypeTag>
 void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries,
                                         Dune::FieldVector<Scalar, 2>& timestepFlux,
                                         const Intersection& intersection,
-                                        const CellData& cellDataI)
+                                        CellData& cellDataI)
 {
+    fluxEntries = 0.;
+    timestepFlux = 0.;
     // cell information
     ElementPointer elementI= intersection.inside();
     int globalIdxI = problem().variables().index(*elementI);
@@ -360,17 +370,9 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
-    if (GET_PROP_VALUE(TypeTag, NumDensityTransport))
-    {
-        densityWI= cellDataI.numericalDensity(wPhaseIdx);
-        densityNWI = cellDataI.numericalDensity(nPhaseIdx);
+    densityWI= cellDataI.density(wPhaseIdx);
+    densityNWI = cellDataI.density(nPhaseIdx);
 
-    }
-    else
-    {
-        densityWI= cellDataI.density(wPhaseIdx);
-        densityNWI = cellDataI.density(nPhaseIdx);
-    }
     // face properties
     GlobalPosition unitOuterNormal = intersection.centerUnitOuterNormal();
     if (switchNormals)
@@ -401,16 +403,8 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
 
     // phase densities in neighbor
     Scalar densityWJ (0.), densityNWJ(0.);
-    if (GET_PROP_VALUE(TypeTag, NumDensityTransport))
-    {
-        densityWJ = cellDataJ.numericalDensity(wPhaseIdx);
-        densityNWJ = cellDataJ.numericalDensity(nPhaseIdx);
-    }
-    else
-    {
-        densityWJ = cellDataJ.density(wPhaseIdx);
-        densityNWJ = cellDataJ.density(nPhaseIdx);
-    }
+    densityWJ = cellDataJ.density(wPhaseIdx);
+    densityNWJ = cellDataJ.density(nPhaseIdx);
 
     // average phase densities with central weighting
     double densityW_mean = (densityWI + densityWJ) * 0.5;
@@ -440,7 +434,7 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     {
         potentialW = (K * unitOuterNormal) * (pressI - pressJ - pcI + pcJ) / (dist);
         potentialNW = (K * unitOuterNormal) * (pressI - pressJ) / (dist);
-break;
+        break;
     }
     }
     // add gravity term
@@ -448,16 +442,110 @@ break;
     potentialW +=  (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;
 
     // upwind mobility
-    double lambdaW, lambdaNW;
-    if (potentialW >= 0.)
-        lambdaW = cellDataI.mobility(wPhaseIdx);
-    else
-        lambdaW = cellDataJ.mobility(wPhaseIdx);
+    double lambdaW(0.), lambdaNW(0.);
+    if(!impet_ or !restrictFluxInTransport_) // perform a simple uwpind scheme
+    {
+        if (potentialW >= 0.)
+        {
+            lambdaW = cellDataI.mobility(wPhaseIdx);
+            cellDataI.setUpwindCell(intersection.indexInInside(), contiWEqIdx, true);
 
-    if (potentialNW >= 0.)
-        lambdaNW = cellDataI.mobility(nPhaseIdx);
-    else
-        lambdaNW = cellDataJ.mobility(nPhaseIdx);
+        }
+        else
+        {
+            lambdaW = cellDataJ.mobility(wPhaseIdx);
+            cellDataI.setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
+        }
+
+        if (potentialNW >= 0.)
+        {
+            lambdaNW = cellDataI.mobility(nPhaseIdx);
+            cellDataI.setUpwindCell(intersection.indexInInside(), contiNEqIdx, true);
+        }
+        else
+        {
+            lambdaNW = cellDataJ.mobility(nPhaseIdx);
+            cellDataI.setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
+        }
+    }
+    else // if new potentials indicate same flow direction as in P.E., perform upwind
+    {
+        if (potentialW >= 0. && cellDataI.isUpwindCell(intersection.indexInInside(), contiWEqIdx))
+            lambdaW = cellDataI.mobility(wPhaseIdx);
+        else if (potentialW < 0. && !cellDataI.isUpwindCell(intersection.indexInInside(), contiWEqIdx))
+            lambdaW = cellDataJ.mobility(wPhaseIdx);
+        else    // potential of w-phase does not coincide with that of P.E.
+        {
+            bool isUpwindCell = cellDataI.isUpwindCell(intersection.indexInInside(), contiWEqIdx);
+            //check if harmonic weithing is necessary
+            if (!isUpwindCell && !(cellDataI.mobility(wPhaseIdx) != 0. && cellDataJ.mobility(wPhaseIdx) == 0.)) // check if outflow induce neglected phase flux
+                lambdaW = cellDataI.mobility(wPhaseIdx);
+            else if (isUpwindCell && !(cellDataJ.mobility(wPhaseIdx) != 0. && cellDataI.mobility(wPhaseIdx) == 0.)) // check if inflow induce neglected phase flux
+                lambdaW = cellDataJ.mobility(wPhaseIdx);
+            else
+            {
+                //a) perform harmonic averageing
+                fluxEntries[wCompIdx] -= potentialW * faceArea / volume
+                        * harmonicMean(cellDataI.massFraction(wPhaseIdx, wCompIdx) * cellDataI.mobility(wPhaseIdx) * cellDataI.density(wPhaseIdx),
+                                cellDataJ.massFraction(wPhaseIdx, wCompIdx) * cellDataJ.mobility(wPhaseIdx) * cellDataJ.density(wPhaseIdx));
+                fluxEntries[nCompIdx] -= potentialW * faceArea / volume
+                        * harmonicMean(cellDataI.massFraction(wPhaseIdx, nCompIdx) * cellDataI.mobility(wPhaseIdx) * cellDataI.density(wPhaseIdx),
+                                cellDataJ.massFraction(wPhaseIdx, nCompIdx) * cellDataJ.mobility(wPhaseIdx) * cellDataJ.density(wPhaseIdx));
+                // b) timestep control
+                // for timestep control : influx
+                timestepFlux[0] += std::max(0.,
+                        - potentialW * faceArea / volume * harmonicMean(cellDataI.density(wPhaseIdx),cellDataJ.density(wPhaseIdx)));
+                // outflux
+                timestepFlux[1] += std::max(0.,
+                        potentialW * faceArea / volume * harmonicMean(cellDataI.density(wPhaseIdx),cellDataJ.density(wPhaseIdx)));
+
+                //c) stop further standard calculations
+                potentialW = 0;
+
+                //d) output (only for one side)
+                if(potentialW >= 0.)
+                    Dune::dinfo << "harmonicMean flux of phase w used from cell" << globalIdxI<< " into " << globalIdxJ <<"\n";
+            }
+        }
+
+        if (potentialNW >= 0. && cellDataI.isUpwindCell(intersection.indexInInside(), contiNEqIdx))
+            lambdaNW = cellDataI.mobility(nPhaseIdx);
+        else if (potentialNW < 0. && !cellDataI.isUpwindCell(intersection.indexInInside(), contiNEqIdx))
+            lambdaNW = cellDataJ.mobility(nPhaseIdx);
+        else    // potential of n-phase does not coincide with that of P.E.
+        {
+            bool isUpwindCell = cellDataI.isUpwindCell(intersection.indexInInside(), contiNEqIdx);
+            //check if harmonic weithing is necessary
+            if (!isUpwindCell && !(cellDataI.mobility(nPhaseIdx) != 0. && cellDataJ.mobility(nPhaseIdx) == 0.)) // check if outflow induce neglected phase flux
+                lambdaNW = cellDataI.mobility(nPhaseIdx);
+            else if (isUpwindCell && !(cellDataJ.mobility(nPhaseIdx) != 0. && cellDataI.mobility(nPhaseIdx) == 0.)) // check if inflow induce neglected phase flux
+                lambdaNW = cellDataJ.mobility(nPhaseIdx);
+            else
+            {
+                //a) perform harmonic averageing
+                fluxEntries[wCompIdx] -= potentialNW * faceArea / volume
+                        * harmonicMean(cellDataI.massFraction(nPhaseIdx, wCompIdx) * cellDataI.mobility(nPhaseIdx) * cellDataI.density(nPhaseIdx),
+                                cellDataJ.massFraction(nPhaseIdx, wCompIdx) * cellDataJ.mobility(nPhaseIdx) * cellDataJ.density(nPhaseIdx));
+                fluxEntries[nCompIdx] -= potentialNW * faceArea / volume
+                        * harmonicMean(cellDataI.massFraction(nPhaseIdx, nCompIdx) * cellDataI.mobility(nPhaseIdx) * cellDataI.density(nPhaseIdx),
+                                cellDataJ.massFraction(nPhaseIdx, nCompIdx) * cellDataJ.mobility(nPhaseIdx) * cellDataJ.density(nPhaseIdx));
+                // b) timestep control
+                // for timestep control : influx
+                timestepFlux[0] += std::max(0.,
+                        - potentialNW * faceArea / volume * harmonicMean(cellDataI.density(nPhaseIdx),cellDataJ.density(nPhaseIdx)));
+                // outflux
+                timestepFlux[1] += std::max(0.,
+                        potentialNW * faceArea / volume * harmonicMean(cellDataI.density(nPhaseIdx),cellDataJ.density(nPhaseIdx)));
+
+                //c) stop further standard calculations
+                potentialNW = 0;
+
+                //d) output (only for one side)
+                if(potentialNW >= 0.)
+                    Dune::dinfo << "harmonicMean flux of phase n used from cell" << globalIdxI<< " into " << globalIdxJ <<"\n";
+            }
+        }
+    }
 
     // calculate and standardized velocity
     double velocityJIw = std::max((-lambdaW * potentialW) * faceArea / volume, 0.0);
@@ -465,25 +553,26 @@ break;
     double velocityJIn = std::max((-lambdaNW * potentialNW) * faceArea / volume, 0.0);
     double velocityIJn = std::max(( lambdaNW * potentialNW) * faceArea / volume, 0.0);
 
-    // for timestep control
-    timestepFlux[0] = velocityJIw + velocityJIn;
+    // for timestep control : influx
+    timestepFlux[0] += velocityJIw + velocityJIn;
 
     double foutw = velocityIJw/SwmobI;
     double foutn = velocityIJn/SnmobI;
     if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
     if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
-    timestepFlux[1] = foutw + foutn;
+    timestepFlux[1] += foutw + foutn;
 
-    fluxEntries[wCompIdx] =
+    fluxEntries[wCompIdx] +=
         velocityJIw * cellDataJ.massFraction(wPhaseIdx, wCompIdx) * densityWJ
         - velocityIJw * cellDataI.massFraction(wPhaseIdx, wCompIdx) * densityWI
         + velocityJIn * cellDataJ.massFraction(nPhaseIdx, wCompIdx) * densityNWJ
         - velocityIJn * cellDataI.massFraction(nPhaseIdx, wCompIdx) * densityNWI;
-    fluxEntries[nCompIdx] =
+    fluxEntries[nCompIdx] +=
         velocityJIw * cellDataJ.massFraction(wPhaseIdx, nCompIdx) * densityWJ
         - velocityIJw * cellDataI.massFraction(wPhaseIdx, nCompIdx) * densityWI
         + velocityJIn * cellDataJ.massFraction(nPhaseIdx, nCompIdx) * densityNWJ
         - velocityIJn * cellDataI.massFraction(nPhaseIdx, nCompIdx) * densityNWI;
+
     return;
 }
 //! Get flux on Boundary
@@ -528,17 +617,8 @@ void FVTransport2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& f
                             , 1e-2);
 
     Scalar densityWI (0.), densityNWI(0.);
-    if (GET_PROP_VALUE(TypeTag, NumDensityTransport))
-    {
-        densityWI= cellDataI.numericalDensity(wPhaseIdx);
-        densityNWI = cellDataI.numericalDensity(nPhaseIdx);
-
-    }
-    else
-    {
-        densityWI= cellDataI.density(wPhaseIdx);
-        densityNWI = cellDataI.density(nPhaseIdx);
-    }
+    densityWI= cellDataI.density(wPhaseIdx);
+    densityNWI = cellDataI.density(nPhaseIdx);
 
     // face properties
     GlobalPosition unitOuterNormal = intersection.centerUnitOuterNormal();

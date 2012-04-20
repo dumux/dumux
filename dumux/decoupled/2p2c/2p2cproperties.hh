@@ -75,7 +75,7 @@ NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
 NEW_PROP_TAG( EnableCompressibility);// ! Returns whether compressibility is allowed
 NEW_PROP_TAG( EnableCapillarity); //!< Returns whether capillarity is regarded
 NEW_PROP_TAG( BoundaryMobility );
-NEW_PROP_TAG( NumDensityTransport );
+NEW_PROP_TAG( RestrictFluxInTransport ); //!< Restrict flux if direction reverses after pressure equation
 NEW_PROP_TAG( ErrorTermFactor );
 NEW_PROP_TAG( ErrorTermLowerBound );
 NEW_PROP_TAG( ErrorTermUpperBound );
@@ -149,8 +149,8 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true);
 //! Faces are regarded from both sides
 SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false);
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
-//! Disable transport of numerical density (e.g. inclusion of error in transport)
-SET_BOOL_PROP(DecoupledTwoPTwoC, NumDensityTransport, false);
+//!< Restrict (no upwind) flux in transport step if direction reverses after pressure equation
+SET_BOOL_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, true);
 
 SET_PROP(DecoupledTwoPTwoC, BoundaryMobility)
 {

@@ -24,7 +24,7 @@
 
 #include "2p2cproperties.hh"
 #include <dumux/decoupled/2p2c/dec2p2cfluidstate.hh>
-//#include "fluxData2p2c.hh"
+#include "fluxData2p2c.hh"
 
 /**
  * @file
@@ -51,7 +51,7 @@ class CellData2P2C
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-//    typedef FluxData2P2C<TypeTag> FluxData;
+    typedef FluxData2P2C<TypeTag> FluxData;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     enum
@@ -76,7 +76,6 @@ protected:
     Scalar mobility_[numPhases];
 
     //numerical quantities
-    Scalar numericalDensity_[numPhases];
     Scalar volumeError_;
     Scalar errorCorrection_;
     Scalar dv_dp_;
@@ -87,7 +86,7 @@ protected:
     Scalar perimeter_;
 
     FluidState* fluidState_;
-//    FluxData fluxData_;
+    FluxData fluxData_;
 public:
 
     //! Constructor for a local CellData object
@@ -96,8 +95,6 @@ public:
     {
         for (int i = 0; i < numPhases;i++)
         {
-            mobility_[i] = 0.0;
-            numericalDensity_[i] = 0.0;
             mobility_[i] = 0.0;
             dv_[i] = 0.0;
         }
@@ -109,15 +106,15 @@ public:
         perimeter_ = 0.;
     }
 
-//    FluxData& setFluxData()
-//    {
-//        return fluxData_;
-//    }
-//
-//    const FluxData& fluxData() const
-//    {
-//        return fluxData_;
-//    }
+    FluxData& fluxData()
+    {
+        return fluxData_;
+    }
+
+    const FluxData& fluxData() const
+    {
+        return fluxData_;
+    }
 
 
     /*! \name Acess to primary variables */
@@ -187,22 +184,6 @@ public:
     void setMobility(int phaseIdx, Scalar value)
     {
         mobility_[phaseIdx]=value;
-    }
-
-    //! Return numerical density \f$\mathrm{[kg/m^3]}\f$.
-    /** Returns the real fluid density if the whole pore volume
-     * was filled. This quantity equals the real density scaled with
-     * the volume error.
-     * @param phaseIdx index of the Phase
-     */
-    Scalar& numericalDensity(int phaseIdx)
-    {
-        return numericalDensity_[phaseIdx];
-    }
-    //! Return numerical density
-    const Scalar& numericalDensity(int phaseIdx) const
-    {
-        return numericalDensity_[phaseIdx];
     }
 
     //! Return the volume error [-].
@@ -377,6 +358,23 @@ public:
         volumeDerivativesAvailable_ = false;
     }
 
+    //! Indicates if current cell is the upwind cell for a given interface
+    /* @param indexInInside Local face index seen from current cell
+     * @param phaseIdx The index of the phase
+     */
+    const bool& isUpwindCell(int indexInInside, int phaseIdx) const
+    {
+        return fluxData_.isUpwindCell(indexInInside, phaseIdx);
+    }
+    //! Specifies if current cell is the upwind cell for a given interface
+    /* @param indexInInside Local face index seen from current cell
+     * @param phaseIdx The index of the phase
+     * @param value Value: true (->outflow) or false (-> inflow)
+     */
+    void setUpwindCell(int indexInInside, int phaseIdx, bool value)
+    {
+        fluxData_.setUpwindCell(indexInInside, phaseIdx, value);
+    }
 
 };
 }
