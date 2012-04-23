@@ -117,6 +117,9 @@ NEW_PROP_TAG(EnableSmoothUpwinding);
 
 //! Chop the Newton update at the beginning of the non-linear solver?
 NEW_PROP_TAG(NewtonEnableChop);
+
+//! Which type of fluidstate should be used?
+NEW_PROP_TAG(FluidState);
 }
 }
 

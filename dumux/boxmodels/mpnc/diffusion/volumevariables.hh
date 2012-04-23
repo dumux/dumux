@@ -40,17 +40,18 @@ class MPNCVolumeVariablesDiffusion
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { lPhaseIdx = FluidSystem::lPhaseIdx };
     enum { gPhaseIdx = FluidSystem::gPhaseIdx };
 
 public:
+
     MPNCVolumeVariablesDiffusion()
     {}
 
-    template <class FluidState, class ParameterCache>
     void update(FluidState &fluidState,
                 ParameterCache &paramCache,
                 const VolumeVariables &volVars,
@@ -77,8 +78,8 @@ public:
                 diffCoeffG_[compIIdx][compJIdx] =
                         FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                                 paramCache,                                                        gPhaseIdx,
-                                                        compIIdx,
-                                                        compJIdx);
+                                                                compIIdx,
+                                                                compJIdx);
 
                 // fill the symmetric part of the diffusion coefficent
                 // matrix
@@ -130,12 +131,14 @@ class MPNCVolumeVariablesDiffusion<TypeTag, false>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
 
 public:
     MPNCVolumeVariablesDiffusion()
     {}
 
-    template <class FluidState, class ParameterCache>
     void update(FluidState &fluidState,
                 ParameterCache &paramCache,
                 const VolumeVariables &volVars,

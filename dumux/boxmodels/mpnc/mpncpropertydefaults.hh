@@ -204,6 +204,20 @@ public:
 SET_PROP(BoxMPNC, MPNCVtkCustomModule)
 { typedef MPNCVtkWriterModule<TypeTag> type; };
 
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(BoxMPNC, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
+};
+
 
 //!< Should the averaging of velocities be done in the Model? (By default in the output)
 SET_BOOL_PROP(BoxMPNC, VelocityAveragingInModel, false);

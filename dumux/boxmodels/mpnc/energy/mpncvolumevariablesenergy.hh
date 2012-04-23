@@ -59,11 +59,10 @@ class MPNCVolumeVariablesEnergy
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-    //typedef typename GET_PROP_TYPE(TypeTag, MPNCEnergyIndices) EnergyIndices;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
 public:
     /*!
@@ -130,8 +129,8 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     enum { temperature0Idx = Indices::temperatureIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState)  FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
 
 public:
     /*!

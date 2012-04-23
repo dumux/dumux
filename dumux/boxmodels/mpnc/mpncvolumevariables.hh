@@ -63,6 +63,9 @@ class MPNCVolumeVariables
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
+
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -76,7 +79,6 @@ class MPNCVolumeVariables
         enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
         enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion) || enableKinetic,
 
-
         S0Idx = Indices::S0Idx,
         p0Idx = Indices::p0Idx
     };
@@ -88,11 +90,7 @@ class MPNCVolumeVariables
     typedef MPNCVolumeVariablesIA<TypeTag, enableKinetic, enableKineticEnergy> IAVolumeVariables;
     typedef MPNCVolumeVariablesDiffusion<TypeTag, enableDiffusion> DiffusionVolumeVariables;
 
-
 public:
-    //! The return type of the fluidState() method
-    typedef typename MassVolumeVariables::FluidState FluidState;
-
     MPNCVolumeVariables()
     { hint_ = NULL; };
 
@@ -124,7 +122,7 @@ public:
                            isOldSol);
         ParentType::checkDefined();
 
-        typename FluidSystem::ParameterCache paramCache;
+        ParameterCache paramCache;
 
         /////////////
         // set the phase saturations

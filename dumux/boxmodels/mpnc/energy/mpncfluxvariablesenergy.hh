@@ -84,6 +84,8 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
 
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
@@ -144,7 +146,6 @@ public:
          const int i = fvElemGeom.subContVolFace[faceIdx].i;
          const int j = fvElemGeom.subContVolFace[faceIdx].j;
 
-         typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables)::FluidState FluidState;
          const FluidState &fsI = elemVolVars[i].fluidState();
          const FluidState &fsJ = elemVolVars[j].fluidState();
          const Scalar Sli = fsI.saturation(lPhaseIdx);

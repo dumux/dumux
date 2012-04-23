@@ -48,6 +48,9 @@ class MPNCVolumeVariablesMass
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
+
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -64,17 +67,7 @@ class MPNCVolumeVariablesMass
 
     typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
 
-    typedef typename FluidSystem::ParameterCache ParameterCache;
 public:
-    /*!
-     * \brief The fluid state which is used by the volume variables to
-     *        store the thermodynamic state.
-     *
-     * If chemical equilibrium is assumed, we use the fluid state
-     * which saves some memory.
-     */
-    typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
-
     /*!
      * \brief Update composition of all phases in the mutable
      *        parameters from the primary variables.

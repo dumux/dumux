@@ -111,6 +111,8 @@ template <class TypeTag>
 class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticenergyTransfer=*/false>
 {
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
@@ -154,8 +156,7 @@ public:
                                 const VolumeVariables &volVars,
                                 int phaseIdx)
     {
-        const typename VolumeVariables::FluidState &fs =
-            volVars.fluidState();
+        const FluidState &fs = volVars.fluidState();
 
         // energy of the fluid
         storage[energyEqIdx] +=
