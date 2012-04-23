@@ -141,14 +141,14 @@ public:
         fvElemGeom_.update(gridView_(), element);
         reset_();
 
-        bcTypes_.update(problem_(), elem_(), fvElemGeom_);
+        bcTypes_.update(problem_(), element_(), fvElemGeom_);
 
         // this is pretty much a HACK because the internal state of
         // the problem is not supposed to be changed during the
         // evaluation of the residual. (Reasons: It is a violation of
         // abstraction, makes everything more prone to errors and is
         // not thread save.) The real solution are context objects!
-        problem_().updateCouplingParams(elem_());
+        problem_().updateCouplingParams(element_());
 
         // set the hints for the volume variables
         model_().setHints(element, prevVolVars_, curVolVars_);
@@ -156,12 +156,12 @@ public:
         // update the secondary variables for the element at the last
         // and the current time levels
         prevVolVars_.update(problem_(),
-                            elem_(),
+                            element_(),
                             fvElemGeom_,
                             true /* isOldSol? */);
 
         curVolVars_.update(problem_(),
-                           elem_(),
+                           element_(),
                            fvElemGeom_,
                            false /* isOldSol? */);
 
@@ -169,7 +169,7 @@ public:
         model_().updateCurHints(element, curVolVars_);
 
         // calculate the local residual
-        localResidual().eval(elem_(),
+        localResidual().eval(element_(),
                              fvElemGeom_,
                              prevVolVars_,
                              curVolVars_,
@@ -177,7 +177,7 @@ public:
         residual_ = localResidual().residual();
         storageTerm_ = localResidual().storageTerm();
 
-        model_().updatePVWeights(elem_(), curVolVars_);
+        model_().updatePVWeights(element_(), curVolVars_);
 
         // calculate the local jacobian matrix
         int numVertices = fvElemGeom_.numVertices;
@@ -303,6 +303,16 @@ protected:
     /*!
      * \brief Returns a reference to the element.
      */
+    const Element &element_() const
+    {
+        Valgrind::CheckDefined(elemPtr_);
+        return *elemPtr_;
+    };
+
+    /*!
+     * \brief Returns a reference to the element.
+     */
+    DUMUX_DEPRECATED_MSG("use element_() instead")
     const Element &elem_() const
     {
         Valgrind::CheckDefined(elemPtr_);
@@ -332,7 +342,7 @@ protected:
      */
     void reset_()
     {
-        int n = elem_().template count<dim>();
+        int n = element_().template count<dim>();
         for (int i = 0; i < n; ++ i) {
             storageJacobian_[i] = 0.0;
             for (int j = 0; j < n; ++ j) {
@@ -375,9 +385,9 @@ protected:
      * is the value of a sub-control volume's primary variable at the
      * evaluation point and \f$\epsilon\f$ is a small value larger than 0.
      *
-     * \param dest The vector storing the partial derivatives of all
+     * \param partialDeriv The vector storing the partial derivatives of all
      *              equations
-     * \param destStorage the mass matrix contributions
+     * \param storageDeriv the mass matrix contributions
      * \param scvIdx The sub-control volume index of the current
      *               finite element for which the partial derivative
      *               ought to be calculated
@@ -386,12 +396,12 @@ protected:
      *              for which the partial derivative ought to be
      *              calculated
      */
-    void evalPartialDerivative_(ElementSolutionVector &dest,
-                                PrimaryVariables &destStorage,
+    void evalPartialDerivative_(ElementSolutionVector &partialDeriv,
+                                PrimaryVariables &storageDeriv,
                                 int scvIdx,
                                 int pvIdx)
     {
-        int globalIdx = vertexMapper_().map(elem_(), scvIdx, dim);
+        int globalIdx = vertexMapper_().map(element_(), scvIdx, dim);
 
         PrimaryVariables priVars(model_().curSol()[globalIdx]);
         VolumeVariables origVolVars(curVolVars_[scvIdx]);
@@ -411,26 +421,26 @@ protected:
             // calculate the residual
             curVolVars_[scvIdx].update(priVars,
                                        problem_(),
-                                       elem_(),
+                                       element_(),
                                        fvElemGeom_,
                                        scvIdx,
                                        false);
-            localResidual().eval(elem_(),
+            localResidual().eval(element_(),
                                  fvElemGeom_,
                                  prevVolVars_,
                                  curVolVars_,
                                  bcTypes_);
 
             // store the residual and the storage term
-            dest = localResidual().residual();
-            destStorage = localResidual().storageTerm()[scvIdx];
+            partialDeriv = localResidual().residual();
+            storageDeriv = localResidual().storageTerm()[scvIdx];
         }
         else {
             // we are using backward differences, i.e. we don't need
             // to calculate f(x + \epsilon) and we can recycle the
             // (already calculated) residual f(x)
-            dest = residual_;
-            destStorage = storageTerm_[scvIdx];
+            partialDeriv = residual_;
+            storageDeriv = storageTerm_[scvIdx];
         }
 
 
@@ -445,37 +455,37 @@ protected:
             // calculate residual again
             curVolVars_[scvIdx].update(priVars,
                                        problem_(),
-                                       elem_(),
+                                       element_(),
                                        fvElemGeom_,
                                        scvIdx,
                                        false);
-            localResidual().eval(elem_(),
+            localResidual().eval(element_(),
                                  fvElemGeom_,
                                  prevVolVars_,
                                  curVolVars_,
                                  bcTypes_);
-            dest -= localResidual().residual();
-            destStorage -= localResidual().storageTerm()[scvIdx];
+            partialDeriv -= localResidual().residual();
+            storageDeriv -= localResidual().storageTerm()[scvIdx];
         }
         else {
             // we are using forward differences, i.e. we don't need to
             // calculate f(x - \epsilon) and we can recycle the
             // (already calculated) residual f(x)
-            dest -= residual_;
-            destStorage -= storageTerm_[scvIdx];
+            partialDeriv -= residual_;
+            storageDeriv -= storageTerm_[scvIdx];
         }
 
         // divide difference in residuals by the magnitude of the
         // deflections between the two function evaluation
-        dest /= delta;
-        destStorage /= delta;
+        partialDeriv /= delta;
+        storageDeriv /= delta;
 
         // restore the original state of the element's volume variables
         curVolVars_[scvIdx] = origVolVars;
 
 #if HAVE_VALGRIND
-        for (unsigned i = 0; i < dest.size(); ++i)
-            Valgrind::CheckDefined(dest[i]);
+        for (unsigned i = 0; i < partialDeriv.size(); ++i)
+            Valgrind::CheckDefined(partialDeriv[i]);
 #endif
     }
 
@@ -486,7 +496,7 @@ protected:
      */
     void updateLocalJacobian_(int scvIdx,
                               int pvIdx,
-                              const ElementSolutionVector &deriv,
+                              const ElementSolutionVector &partialDeriv,
                               const PrimaryVariables &storageDeriv)
     {
         // store the derivative of the storage term
@@ -496,7 +506,7 @@ protected:
 
         for (int i = 0; i < fvElemGeom_.numVertices; i++)
         {
-            if (jacAsm_().vertexColor(elem_(), i) == Green) {
+            if (jacAsm_().vertexColor(element_(), i) == Green) {
                 // Green vertices are not to be changed!
                 continue;
             }
@@ -506,7 +516,7 @@ protected:
                 // the residual of equation 'eqIdx' at vertex 'i'
                 // depending on the primary variable 'pvIdx' at vertex
                 // 'scvIdx'.
-                this->A_[i][scvIdx][eqIdx][pvIdx] = deriv[i][eqIdx];
+                this->A_[i][scvIdx][eqIdx][pvIdx] = partialDeriv[i][eqIdx];
                 Valgrind::CheckDefined(this->A_[i][scvIdx][eqIdx][pvIdx]);
             }
         }

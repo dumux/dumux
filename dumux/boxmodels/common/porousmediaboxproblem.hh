@@ -63,7 +63,7 @@ class PorousMediaBoxProblem : public BoxProblem<TypeTag>
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dim> Vector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
     /*!
@@ -105,13 +105,13 @@ public:
      *
      * \param element The DUNE Codim<0> enitiy which intersects with
      *                the finite volume.
-     * \param fvGeom The finite volume geometry of the element.
+     * \param fvGeometry The finite volume geometry of the element.
      * \param scvIdx The local index of the sub control volume inside the element
      */
     Scalar boxTemperature(const Element &element,
-                          const FVElementGeometry fvGeom,
+                          const FVElementGeometry fvGeometry,
                           int scvIdx) const
-    { return asImp_().temperatureAtPos(fvGeom.subContVol[scvIdx].global); }
+    { return asImp_().temperatureAtPos(fvGeometry.subContVol[scvIdx].global); }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
@@ -140,10 +140,10 @@ public:
      * This is the box discretization specific interface. By default
      * it just calls gravityAtPos().
      */
-    const Vector &boxGravity(const Element &element,
-                                     const FVElementGeometry &fvGeom,
+    const DimVector &boxGravity(const Element &element,
+                                     const FVElementGeometry &fvGeometry,
                                      int scvIdx) const
-    { return asImp_().gravityAtPos(fvGeom.subContVol[scvIdx].global); }
+    { return asImp_().gravityAtPos(fvGeometry.subContVol[scvIdx].global); }
 
     /*!
      * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
@@ -151,7 +151,7 @@ public:
      * This is discretization independent interface. By default it
      * just calls gravity().
      */
-    const Vector &gravityAtPos(const GlobalPosition &pos) const
+    const DimVector &gravityAtPos(const GlobalPosition &pos) const
     { return asImp_().gravity(); }
 
     /*!
@@ -163,7 +163,7 @@ public:
      * property is true, \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$ holds,
      * else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$.
      */
-    const Vector &gravity() const
+    const DimVector &gravity() const
     { return gravity_; }
 
     /*!
@@ -196,7 +196,7 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 
-    Vector gravity_;
+    DimVector gravity_;
 
     // fluids and material properties
     SpatialParams*  spatialParams_;

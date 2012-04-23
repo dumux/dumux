@@ -92,11 +92,11 @@ public:
      * This assumes that all objects of the simulation have been fully
      * allocated but not necessarily initialized completely.
      *
-     * \param prob The representation of the physical problem to be
+     * \param problem The representation of the physical problem to be
      *             solved.
      */
-    void init(Problem &prob)
-    { problemPtr_ = &prob; }
+    void init(Problem &problem)
+    { problemPtr_ = &problem; }
 
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
@@ -107,10 +107,10 @@ public:
      */
     void eval(const Element &element)
     {
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
 
-        fvElemGeom.update(gridView_(), element);
-        fvElemGeomPtr_ = &fvElemGeom;
+        fvGeometry.update(gridView_(), element);
+        fvElemGeomPtr_ = &fvGeometry;
 
         ElementVolumeVariables volVarsPrev, volVarsCur;
         // update the hints
@@ -151,9 +151,9 @@ public:
     {
         elemPtr_ = &element;
 
-        FVElementGeometry fvElemGeom;
-        fvElemGeom.update(gridView_(), element);
-        fvElemGeomPtr_ = &fvElemGeom;
+        FVElementGeometry fvGeometry;
+        fvGeometry.update(gridView_(), element);
+        fvElemGeomPtr_ = &fvGeometry;
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -187,9 +187,9 @@ public:
     {
         elemPtr_ = &element;
 
-        FVElementGeometry fvElemGeom;
-        fvElemGeom.update(gridView_(), element);
-        fvElemGeomPtr_ = &fvElemGeom;
+        FVElementGeometry fvGeometry;
+        fvGeometry.update(gridView_(), element);
+        fvElemGeomPtr_ = &fvGeometry;
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem_(), element, fvGeometry_());
@@ -209,7 +209,7 @@ public:
      *
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
-     * \param fvElemGeom The finite-volume geometry of the element
+     * \param fvGeometry The finite-volume geometry of the element
      * \param prevVolVars The volume averaged variables for all
      *                   sub-control volumes of the element at the previous
      *                   time level
@@ -220,7 +220,7 @@ public:
      *                vertices of the element
      */
     void eval(const Element &element,
-              const FVElementGeometry &fvElemGeom,
+              const FVElementGeometry &fvGeometry,
               const ElementVolumeVariables &prevVolVars,
               const ElementVolumeVariables &curVolVars,
               const ElementBoundaryTypes &bcTypes)
@@ -229,14 +229,14 @@ public:
         Valgrind::CheckDefined(curVolVars);
 
 #if !defined NDEBUG && HAVE_VALGRIND
-        for (int i=0; i < fvElemGeom.numVertices; i++) {
+        for (int i=0; i < fvGeometry.numVertices; i++) {
             prevVolVars[i].checkDefined();
             curVolVars[i].checkDefined();
         }
 #endif // HAVE_VALGRIND
 
         elemPtr_ = &element;
-        fvElemGeomPtr_ = &fvElemGeom;
+        fvElemGeomPtr_ = &fvGeometry;
         bcTypesPtr_ = &bcTypes;
         prevVolVarsPtr_ = &prevVolVars;
         curVolVarsPtr_ = &curVolVars;
@@ -353,16 +353,16 @@ protected:
      */
     void evalDirichlet_()
     {
-        PrimaryVariables tmp(0);
-        for (int i = 0; i < fvGeometry_().numVertices; ++i) {
-            const BoundaryTypes &bcTypes = bcTypes_(i);
+        PrimaryVariables dirichletValues(0);
+        for (int scvIdx = 0; scvIdx < fvGeometry_().numVertices; ++scvIdx) {
+            const BoundaryTypes &bcTypes = bcTypes_(scvIdx);
             if (! bcTypes.hasDirichlet())
                 continue;
 
             // ask the problem for the dirichlet values
-            const VertexPointer vPtr = element_().template subEntity<dim>(i);
-            Valgrind::SetUndefined(tmp);
-            asImp_().problem_().dirichlet(tmp, *vPtr);
+            const VertexPointer vPtr = element_().template subEntity<dim>(scvIdx);
+            Valgrind::SetUndefined(dirichletValues);
+            asImp_().problem_().dirichlet(dirichletValues, *vPtr);
 
             // set the dirichlet conditions
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
@@ -370,12 +370,12 @@ protected:
                     continue;
                 int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                 assert(0 <= pvIdx && pvIdx < numEq);
-                Valgrind::CheckDefined(tmp[pvIdx]);
+                Valgrind::CheckDefined(dirichletValues[pvIdx]);
 
-                residual_[i][eqIdx] =
-                        curPrimaryVar_(i, pvIdx) - tmp[pvIdx];
+                residual_[scvIdx][eqIdx] =
+                        curPrimaryVar_(scvIdx, pvIdx) - dirichletValues[pvIdx];
 
-                storageTerm_[i][eqIdx] = 0.0;
+                storageTerm_[scvIdx][eqIdx] = 0.0;
             };
         };
     }
@@ -405,7 +405,7 @@ protected:
                  faceVertIdx < numFaceVerts;
                  ++faceVertIdx)
             {
-                int elemVertIdx = refElem.subEntity(faceIdx,
+                int scvIdx = refElem.subEntity(faceIdx,
                                                     1,
                                                     faceVertIdx,
                                                     dim);
@@ -416,13 +416,13 @@ protected:
                 // add the residual of all vertices of the boundary
                 // segment
                 asImp_().evalNeumannSegment_(isIt,
-                                             elemVertIdx,
+                                             scvIdx,
                                              boundaryFaceIdx);
                 // evaluate the outflow conditions at the boundary face
                 // ATTENTION: This is so far a beta version that is only for the 2p2c and 2p2cni model
                 //              available and not thoroughly tested.
                 asImp_().evalOutflowSegment(isIt,
-                                            elemVertIdx,
+                                            scvIdx,
                                             boundaryFaceIdx);
             }
         }
@@ -437,29 +437,29 @@ protected:
                              int boundaryFaceIdx)
     {
         // temporary vector to store the neumann boundary fluxes
-        PrimaryVariables values(0.0);
+        PrimaryVariables neumannFlux(0.0);
         const BoundaryTypes &bcTypes = bcTypes_(scvIdx);
 
         // deal with neumann boundaries
         if (bcTypes.hasNeumann()) {
-            Valgrind::SetUndefined(values);
-            problem_().boxSDNeumann(values,
+            Valgrind::SetUndefined(neumannFlux);
+            problem_().boxSDNeumann(neumannFlux,
                                     element_(),
                                     fvGeometry_(),
                                     *isIt,
                                     scvIdx,
                                     boundaryFaceIdx,
                                     curVolVars_());
-            values *=
+            neumannFlux *=
                 fvGeometry_().boundaryFace[boundaryFaceIdx].area
                 * curVolVars_(scvIdx).extrusionFactor();
-            Valgrind::CheckDefined(values);
+            Valgrind::CheckDefined(neumannFlux);
 
             // set the neumann conditions
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
                 if (!bcTypes.isNeumann(eqIdx))
                     continue;
-                residual_[scvIdx][eqIdx] += values[eqIdx];
+                residual_[scvIdx][eqIdx] += neumannFlux[eqIdx];
             }
         }
     }
@@ -472,15 +472,15 @@ protected:
     {
         // calculate the mass flux over the faces and subtract
         // it from the local rates
-        for (int k = 0; k < fvGeometry_().numEdges; k++)
+        for (int scvfIdx = 0; scvfIdx < fvGeometry_().numEdges; scvfIdx++)
         {
-            int i = fvGeometry_().subContVolFace[k].i;
-            int j = fvGeometry_().subContVolFace[k].j;
+            int i = fvGeometry_().subContVolFace[scvfIdx].i;
+            int j = fvGeometry_().subContVolFace[scvfIdx].j;
 
             PrimaryVariables flux;
 
             Valgrind::SetUndefined(flux);
-            asImp_().computeFlux(flux, k);
+            asImp_().computeFlux(flux, scvfIdx);
             Valgrind::CheckDefined(flux);
 
             Scalar extrusionFactor =
@@ -519,13 +519,13 @@ protected:
 
         // calculate the amount of conservation each quantity inside
         // all sub control volumes
-        for (int i=0; i < fvGeometry_().numVertices; i++) {
-            Valgrind::SetUndefined(storageTerm_[i]);
-            asImp_().computeStorage(storageTerm_[i], i, /*isOldSol=*/false);
-            storageTerm_[i] *=
-                fvGeometry_().subContVol[i].volume
-                * curVolVars_(i).extrusionFactor();
-            Valgrind::CheckDefined(storageTerm_[i]);
+        for (int scvIdx = 0; scvIdx < fvGeometry_().numVertices; scvIdx++) {
+            Valgrind::SetUndefined(storageTerm_[scvIdx]);
+            asImp_().computeStorage(storageTerm_[scvIdx], scvIdx, /*isOldSol=*/false);
+            storageTerm_[scvIdx] *=
+                fvGeometry_().subContVol[scvIdx].volume
+                * curVolVars_(scvIdx).extrusionFactor();
+            Valgrind::CheckDefined(storageTerm_[scvIdx]);
         }
     }
 
@@ -537,12 +537,12 @@ protected:
     void evalVolumeTerms_()
     {
         // evaluate the volume terms (storage + source terms)
-        for (int i=0; i < fvGeometry_().numVertices; i++)
+        for (int scvIdx = 0; scvIdx < fvGeometry_().numVertices; scvIdx++)
         {
             Scalar extrusionFactor =
-                curVolVars_(i).extrusionFactor();
+                curVolVars_(scvIdx).extrusionFactor();
 
-            PrimaryVariables tmp(0.);
+            PrimaryVariables values(0.0);
 
             // mass balance within the element. this is the
             // \f$\frac{m}{\partial t}\f$ term if using implicit
@@ -550,30 +550,30 @@ protected:
             //
             // TODO (?): we might need a more explicit way for
             // doing the time discretization...
-            Valgrind::SetUndefined(storageTerm_[i]);
-            Valgrind::SetUndefined(tmp);
-            asImp_().computeStorage(storageTerm_[i], i, false);
-            asImp_().computeStorage(tmp, i, true);
-            Valgrind::CheckDefined(storageTerm_[i]);
-            Valgrind::CheckDefined(tmp);
+            Valgrind::SetUndefined(storageTerm_[scvIdx]);
+            Valgrind::SetUndefined(values);
+            asImp_().computeStorage(storageTerm_[scvIdx], scvIdx, false);
+            asImp_().computeStorage(values, scvIdx, true);
+            Valgrind::CheckDefined(storageTerm_[scvIdx]);
+            Valgrind::CheckDefined(values);
 
-            storageTerm_[i] -= tmp;
-            storageTerm_[i] *=
-                fvGeometry_().subContVol[i].volume
+            storageTerm_[scvIdx] -= values;
+            storageTerm_[scvIdx] *=
+                fvGeometry_().subContVol[scvIdx].volume
                 / problem_().timeManager().timeStepSize()
                 * extrusionFactor;
-            residual_[i] += storageTerm_[i];
+            residual_[scvIdx] += storageTerm_[scvIdx];
 
             // subtract the source term from the local rate
-            Valgrind::SetUndefined(tmp);
-            asImp_().computeSource(tmp, i);
-            Valgrind::CheckDefined(tmp);
-            tmp *= fvGeometry_().subContVol[i].volume * extrusionFactor;
-            residual_[i] -= tmp;
+            Valgrind::SetUndefined(values);
+            asImp_().computeSource(values, scvIdx);
+            Valgrind::CheckDefined(values);
+            values *= fvGeometry_().subContVol[scvIdx].volume * extrusionFactor;
+            residual_[scvIdx] -= values;
 
             // make sure that only defined quantities were used
             // to calculate the residual.
-            Valgrind::CheckDefined(residual_[i]);
+            Valgrind::CheckDefined(residual_[scvIdx]);
         }
     }
 

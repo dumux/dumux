@@ -81,11 +81,9 @@ public:
      * \param problem The problem object which needs to be simulated
      * \param element The DUNE Codim<0> entity for which the boundary
      *                types should be collected
-     * \param fvElemGeom The element's finite volume geometry
      */
     void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvElemGeom)
+                const Element &element)
     {
         int numVerts = element.template count<dim>();
         this->resize(numVerts);
@@ -109,6 +107,20 @@ public:
         }
     }
 
+    /*!
+     * \brief Update the boundary types for all vertices of an element.
+     *
+     * \param problem The problem object which needs to be simulated
+     * \param element The DUNE Codim<0> entity for which the boundary
+     *                types should be collected
+     * \param fvGeometry The element's finite volume geometry
+     */
+    DUMUX_DEPRECATED_MSG("use update(problem, element) instead")
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry)
+    { update(problem, element); }
+    
     /*!
      * \brief Returns whether the element has a vertex which contains
      *        a Dirichlet value.

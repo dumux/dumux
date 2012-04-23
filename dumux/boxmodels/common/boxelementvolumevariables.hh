@@ -66,12 +66,12 @@ public:
      *
      * \param problem The problem which needs to be simulated.
      * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
-     * \param fvElemGeom The finite volume geometry of the element
+     * \param fvGeometry The finite volume geometry of the element
      * \param oldSol Tells whether the model's previous or current solution should be used.
      */
     void update(const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvElemGeom,
+                const FVElementGeometry &fvGeometry,
                 bool oldSol)
     {
         const SolutionVector &globalSol =
@@ -81,16 +81,16 @@ public:
         const VertexMapper &vertexMapper = problem.vertexMapper();
         // we assert that the i-th shape function is
         // associated to the i-th vert of the element.
-        int n = element.template count<dim>();
-        this->resize(n);
-        for (int i = 0; i < n; i++) {
+        int numVertices = element.template count<dim>();
+        this->resize(numVertices);
+        for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {
             const PrimaryVariables &solI
-                = globalSol[vertexMapper.map(element, i, dim)];
-            (*this)[i].update(solI,
+                = globalSol[vertexMapper.map(element, scvIdx, dim)];
+            (*this)[scvIdx].update(solI,
                               problem,
                               element,
-                              fvElemGeom,
-                              i,
+                              fvGeometry,
+                              scvIdx,
                               oldSol);
         }
     }
@@ -99,33 +99,33 @@ public:
      * \brief Construct the volume variables for all of vertices of an
      *        element given a solution vector computed by PDELab.
      *
-     * \tparam ElemSolVectorType The container type which stores the
+     * \tparam ElementSolutionVector The container type which stores the
      *                           primary variables of the element
      *                           using _local_ indices
      *
      * \param problem The problem which needs to be simulated.
      * \param element The DUNE Codim<0> entity for which the volume variables ought to be calculated
-     * \param fvElemGeom The finite volume geometry of the element
+     * \param fvGeometry The finite volume geometry of the element
      * \param elementSolVector The local solution for the element using PDELab ordering
      */
-    template<typename ElemSolVectorType>
+    template<typename ElementSolutionVector>
     void updatePDELab(const Problem &problem,
                       const Element &element,
-                      const FVElementGeometry &fvElemGeom,
-                      const ElemSolVectorType& elementSolVector)
+                      const FVElementGeometry &fvGeometry,
+                      const ElementSolutionVector& elementSolVector)
     {
-        int n = element.template count<dim>();
-        this->resize(n);
-        for (int vertexIdx = 0; vertexIdx < n; vertexIdx++)
+        int numVertices = element.template count<dim>();
+        this->resize(numVertices);
+        for (int scvIdx = 0; scvIdx < numVertices; scvIdx++)
         {
             PrimaryVariables solI(0);
-            for (int eqnIdx=0; eqnIdx<numEq; eqnIdx++)
-                solI[eqnIdx] = elementSolVector[vertexIdx + eqnIdx*n];
-            (*this)[vertexIdx].update(solI,
+            for (int eqnIdx = 0; eqnIdx < numEq; eqnIdx++)
+                solI[eqnIdx] = elementSolVector[scvIdx + eqnIdx*numVertices];
+            (*this)[scvIdx].update(solI,
                                       problem,
                                       element,
-                                      fvElemGeom,
-                                      vertexIdx,
+                                      fvGeometry,
+                                      scvIdx,
                                       false);
 
         }

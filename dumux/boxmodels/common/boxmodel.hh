@@ -103,12 +103,12 @@ public:
     /*!
      * \brief Apply the initial conditions to the model.
      *
-     * \param prob The object representing the problem which needs to
+     * \param problem The object representing the problem which needs to
      *             be simulated.
      */
-    void init(Problem &prob)
+    void init(Problem &problem)
     {
-        problemPtr_ = &prob;
+        problemPtr_ = &problem;
 
         updateBoundaryIndices_();
 
@@ -139,18 +139,18 @@ public:
         uPrev_ = uCur_;
     }
 
-    void setHints(const Element &elem,
+    void setHints(const Element &element,
                   ElementVolumeVariables &prevVolVars,
                   ElementVolumeVariables &curVolVars) const
     {
         if (!enableHints_)
             return;
 
-        int n = elem.template count<dim>();
+        int n = element.template count<dim>();
         prevVolVars.resize(n);
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
-            int globalIdx = vertexMapper().map(elem, i, dim);
+            int globalIdx = vertexMapper().map(element, i, dim);
 
             if (!hintsUsable_[globalIdx]) {
                 curVolVars[i].setHint(NULL);
@@ -163,16 +163,16 @@ public:
         }
     };
 
-    void setHints(const Element &elem,
+    void setHints(const Element &element,
                   ElementVolumeVariables &curVolVars) const
     {
         if (!enableHints_)
             return;
 
-        int n = elem.template count<dim>();
+        int n = element.template count<dim>();
         curVolVars.resize(n);
         for (int i = 0; i < n; ++i) {
-            int globalIdx = vertexMapper().map(elem, i, dim);
+            int globalIdx = vertexMapper().map(element, i, dim);
 
             if (!hintsUsable_[globalIdx])
                 curVolVars[i].setHint(NULL);
@@ -189,17 +189,17 @@ public:
         prevHints_ = curHints_;
     };
 
-    void updateCurHints(const Element &elem,
-                        const ElementVolumeVariables &ev) const
+    void updateCurHints(const Element &element,
+                        const ElementVolumeVariables &elemVolVars) const
     {
         if (!enableHints_)
             return;
 
-        for (int i = 0; i < ev.size(); ++i) {
-            int globalIdx = vertexMapper().map(elem, i, dim);
-            curHints_[globalIdx] = ev[i];
+        for (int i = 0; i < elemVolVars.size(); ++i) {
+            int globalIdx = vertexMapper().map(element, i, dim);
+            curHints_[globalIdx] = elemVolVars[i];
             if (!hintsUsable_[globalIdx])
-                prevHints_[globalIdx] = ev[i];
+                prevHints_[globalIdx] = elemVolVars[i];
             hintsUsable_[globalIdx] = true;
         }
     };
@@ -209,15 +209,15 @@ public:
      * \brief Compute the global residual for an arbitrary solution
      *        vector.
      *
-     * \param dest Stores the result
+     * \param residual Stores the result
      * \param u The solution for which the residual ought to be calculated
      */
-    Scalar globalResidual(SolutionVector &dest,
+    Scalar globalResidual(SolutionVector &residual,
                           const SolutionVector &u)
     {
         SolutionVector tmp(curSol());
         curSol() = u;
-        Scalar res = globalResidual(dest);
+        Scalar res = globalResidual(residual);
         curSol() = tmp;
         return res;
     }
@@ -226,11 +226,11 @@ public:
      * \brief Compute the global residual for the current solution
      *        vector.
      *
-     * \param dest Stores the result
+     * \param residual Stores the result
      */
-    Scalar globalResidual(SolutionVector &dest)
+    Scalar globalResidual(SolutionVector &residual)
     {
-        dest = 0;
+        residual = 0;
 
         ElementIterator elemIt = gridView_().template begin<0>();
         const ElementIterator elemEndIt = gridView_().template end<0>();
@@ -239,19 +239,19 @@ public:
 
             for (int i = 0; i < elemIt->template count<dim>(); ++i) {
                 int globalI = vertexMapper().map(*elemIt, i, dim);
-                dest[globalI] += localResidual().residual(i);
+                residual[globalI] += localResidual().residual(i);
             }
         };
 
         // calculate the square norm of the residual
-        Scalar result2 = dest.two_norm2();
+        Scalar result2 = residual.two_norm2();
         if (gridView_().comm().size() > 1)
             result2 = gridView_().comm().sum(result2);
 
         // add up the residuals on the process borders
         if (gridView_().comm().size() > 1) {
             VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
-                sumHandle(dest, vertexMapper());
+                sumHandle(residual, vertexMapper());
             gridView_().communicate(sumHandle,
                                     Dune::InteriorBorder_InteriorBorder_Interface,
                                     Dune::ForwardCommunication);
@@ -264,11 +264,11 @@ public:
      * \brief Compute the integral over the domain of the storage
      *        terms of all conservation quantities.
      *
-     * \param dest Stores the result
+     * \param storage Stores the result
      */
-    void globalStorage(PrimaryVariables &dest)
+    void globalStorage(PrimaryVariables &storage)
     {
-        dest = 0;
+        storage = 0;
 
         ElementIterator elemIt = gridView_().template begin<0>();
         const ElementIterator elemEndIt = gridView_().template end<0>();
@@ -276,11 +276,11 @@ public:
             localResidual().evalStorage(*elemIt);
 
             for (int i = 0; i < elemIt->template count<dim>(); ++i)
-                dest += localResidual().storageTerm()[i];
+                storage += localResidual().storageTerm()[i];
         };
 
         if (gridView_().comm().size() > 1)
-            dest = gridView_().comm().sum(dest);
+            storage = gridView_().comm().sum(storage);
     }
 
     /*!
@@ -513,13 +513,13 @@ public:
      *
      * \param outstream The stream into which the vertex data should
      *                  be serialized to
-     * \param vert The DUNE Codim<dim> entity which's data should be
+     * \param vertex The DUNE Codim<dim> entity which's data should be
      *             serialized
      */
     void serializeEntity(std::ostream &outstream,
-                         const Vertex &vert)
+                         const Vertex &vertex)
     {
-        int vertIdx = dofMapper().map(vert);
+        int vertIdx = dofMapper().map(vertex);
 
         // write phase state
         if (!outstream.good()) {
@@ -539,13 +539,13 @@ public:
      *
      * \param instream The stream from which the vertex data should
      *                  be deserialized from
-     * \param vert The DUNE Codim<dim> entity which's data should be
+     * \param vertex The DUNE Codim<dim> entity which's data should be
      *             deserialized
      */
     void deserializeEntity(std::istream &instream,
-                           const Vertex &vert)
+                           const Vertex &vertex)
     {
-        int vertIdx = dofMapper().map(vert);
+        int vertIdx = dofMapper().map(vertex);
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             if (!instream.good())
                 DUNE_THROW(Dune::IOError,
@@ -621,21 +621,20 @@ public:
     {
         typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
 
-        SolutionVector globalResid(u);
-        asImp_().globalResidual(globalResid, u);
+        SolutionVector residual(u);
+        asImp_().globalResidual(residual, u);
 
         // create the required scalar fields
         unsigned numVertices = this->gridView_().size(dim);
-        //unsigned numElements = this->gridView_().size(0);
 
         // global defect of the two auxiliary equations
         ScalarField* def[numEq];
         ScalarField* delta[numEq];
         ScalarField* x[numEq];
-        for (int i = 0; i < numEq; ++i) {
-            x[i] = writer.allocateManagedBuffer(numVertices);
-            delta[i] = writer.allocateManagedBuffer(numVertices);
-            def[i] = writer.allocateManagedBuffer(numVertices);
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+            x[eqIdx] = writer.allocateManagedBuffer(numVertices);
+            delta[eqIdx] = writer.allocateManagedBuffer(numVertices);
+            def[eqIdx] = writer.allocateManagedBuffer(numVertices);
         }
 
         VertexIterator vIt = this->gridView_().template begin<dim>();
@@ -643,21 +642,21 @@ public:
         for (; vIt != vEndIt; ++ vIt)
         {
             int globalIdx = vertexMapper().map(*vIt);
-            for (int i = 0; i < numEq; ++i) {
-                (*x[i])[globalIdx] = u[globalIdx][i];
-                (*delta[i])[globalIdx] = - deltaU[globalIdx][i];
-                (*def[i])[globalIdx] = globalResid[globalIdx][i];
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+                (*x[eqIdx])[globalIdx] = u[globalIdx][eqIdx];
+                (*delta[eqIdx])[globalIdx] = - deltaU[globalIdx][eqIdx];
+                (*def[eqIdx])[globalIdx] = residual[globalIdx][eqIdx];
             }
         }
 
-        for (int i = 0; i < numEq; ++i) {
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             std::ostringstream oss;
-            oss.str(""); oss << "x_" << i;
-            writer.attachVertexData(*x[i], oss.str());
-            oss.str(""); oss << "delta_" << i;
-            writer.attachVertexData(*delta[i], oss.str());
-            oss.str(""); oss << "defect_" << i;
-            writer.attachVertexData(*def[i], oss.str());
+            oss.str(""); oss << "x_" << eqIdx;
+            writer.attachVertexData(*x[eqIdx], oss.str());
+            oss.str(""); oss << "delta_" << eqIdx;
+            writer.attachVertexData(*delta[eqIdx], oss.str());
+            oss.str(""); oss << "defect_" << eqIdx;
+            writer.attachVertexData(*def[eqIdx], oss.str());
         }
 
         asImp_().addOutputVtkFields(u, writer);
@@ -686,8 +685,8 @@ public:
 
         // global defect of the two auxiliary equations
         ScalarField* x[numEq];
-        for (int i = 0; i < numEq; ++i) {
-            x[i] = writer.allocateManagedBuffer(numVertices);
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+            x[eqIdx] = writer.allocateManagedBuffer(numVertices);
         }
 
         VertexIterator vIt = this->gridView_().template begin<dim>();
@@ -695,15 +694,15 @@ public:
         for (; vIt != vEndIt; ++ vIt)
         {
             int globalIdx = vertexMapper().map(*vIt);
-            for (int i = 0; i < numEq; ++i) {
-                (*x[i])[globalIdx] = sol[globalIdx][i];
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+                (*x[eqIdx])[globalIdx] = sol[globalIdx][eqIdx];
             }
         }
 
-        for (int i = 0; i < numEq; ++i) {
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             std::ostringstream oss;
-            oss << "primaryVar_" << i;
-            writer.attachVertexData(*x[i], oss.str());
+            oss << "primaryVar_" << eqIdx;
+            writer.attachVertexData(*x[eqIdx], oss.str());
         }
     }
 
@@ -727,12 +726,12 @@ public:
      * \brief Returns true if a vertex is located on the grid's
      *        boundary.
      *
-     * \param elem A DUNE Codim<0> entity which contains the control
+     * \param element A DUNE Codim<0> entity which contains the control
      *             volume's associated vertex.
-     * \param vIdx The local vertex index inside elem
+     * \param vIdx The local vertex index inside element
      */
-    bool onBoundary(const Element &elem, int vIdx) const
-    { return onBoundary(vertexMapper().map(elem, vIdx, dim)); }
+    bool onBoundary(const Element &element, int vIdx) const
+    { return onBoundary(vertexMapper().map(element, vIdx, dim)); }
 
     /*!
      * \brief Fill the fluid state according to the primary variables. 
@@ -792,24 +791,24 @@ protected:
         uCur_ = Scalar(0.0);
         boxVolume_ = Scalar(0.0);
 
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
 
         // iterate through leaf grid and evaluate initial
         // condition at the center of each sub control volume
         //
         // TODO: the initial condition needs to be unique for
         // each vertex. we should think about the API...
-        ElementIterator it = gridView_().template begin<0>();
-        const ElementIterator &eendit = gridView_().template end<0>();
-        for (; it != eendit; ++it) {
+        ElementIterator eIt = gridView_().template begin<0>();
+        const ElementIterator &eEndIt = gridView_().template end<0>();
+        for (; eIt != eEndIt; ++eIt) {
             // deal with the current element
-            fvElemGeom.update(gridView_(), *it);
+            fvGeometry.update(gridView_(), *eIt);
 
             // loop over all element vertices, i.e. sub control volumes
-            for (int scvIdx = 0; scvIdx < fvElemGeom.numVertices; scvIdx++)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numVertices; scvIdx++)
             {
                 // map the local vertex index to the global one
-                int globalIdx = vertexMapper().map(*it,
+                int globalIdx = vertexMapper().map(*eIt,
                                                    scvIdx,
                                                    dim);
 
@@ -818,8 +817,8 @@ protected:
                 PrimaryVariables initVal;
                 Valgrind::SetUndefined(initVal);
                 problem_().initial(initVal,
-                                   *it,
-                                   fvElemGeom,
+                                   *eIt,
+                                   fvGeometry,
                                    scvIdx);
                 Valgrind::CheckDefined(initVal);
 
@@ -827,8 +826,8 @@ protected:
                 // volumes. If the initial values disagree for
                 // different sub control volumes, the initial value
                 // will be the arithmetic mean.
-                initVal *= fvElemGeom.subContVol[scvIdx].volume;
-                boxVolume_[globalIdx] += fvElemGeom.subContVol[scvIdx].volume;
+                initVal *= fvGeometry.subContVol[scvIdx].volume;
+                boxVolume_[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
                 uCur_[globalIdx] += initVal;
                 Valgrind::CheckDefined(uCur_[globalIdx]);
             }

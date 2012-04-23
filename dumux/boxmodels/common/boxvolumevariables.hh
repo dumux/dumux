@@ -112,7 +112,7 @@ public:
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
-     * \param elemGeom The finite volume geometry for the element
+     * \param fvGeometry The finite volume geometry for the element
      * \param scvIdx Local index of the sub control volume which is inside the element
      * \param isOldSol Specifies whether this is the previous solution or the current one
      *
@@ -124,13 +124,13 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
+                const FVElementGeometry &fvGeometry,
                 int scvIdx,
                 bool isOldSol)
     {
         Valgrind::CheckDefined(priVars);
         primaryVars_ = priVars;
-        extrusionFactor_ = problem.boxExtrusionFactor(element, elemGeom, scvIdx);
+        extrusionFactor_ = problem.boxExtrusionFactor(element, fvGeometry, scvIdx);
     }
 
     /*!

@@ -222,7 +222,7 @@ public:
      *
      * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -233,7 +233,7 @@ public:
      */
     void boxSDNeumann(PrimaryVariables &values,
                       const Element &element,
-                      const FVElementGeometry &fvElemGeom,
+                      const FVElementGeometry &fvGeometry,
                       const Intersection &is,
                       int scvIdx,
                       int boundaryFaceIdx,
@@ -242,7 +242,7 @@ public:
         // forward it to the interface without the volume variables
         asImp_().neumann(values,
                          element,
-                         fvElemGeom,
+                         fvGeometry,
                          is,
                          scvIdx,
                          boundaryFaceIdx);
@@ -254,7 +254,7 @@ public:
      *
      * \param values The neumann values for the conservation equations [kg / (m^2 *s )]
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -264,13 +264,13 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
     {
         // forward it to the interface with only the global position
-        asImp_().neumannAtPos(values, fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal);
+        asImp_().neumannAtPos(values, fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal);
     }
 
     /*!
@@ -304,7 +304,7 @@ public:
      *
      * \param values The source and sink values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
      * \param elemVolVars All volume variables for the element
      *
@@ -314,12 +314,12 @@ public:
      */
     void boxSDSource(PrimaryVariables &values,
                      const Element &element,
-                     const FVElementGeometry &fvElemGeom,
+                     const FVElementGeometry &fvGeometry,
                      int scvIdx,
                      const ElementVolumeVariables &elemVolVars) const
     {
         // forward to solution independent, box specific interface
-        asImp_().source(values, element, fvElemGeom, scvIdx);
+        asImp_().source(values, element, fvGeometry, scvIdx);
     }
 
     /*!
@@ -328,7 +328,7 @@ public:
      *
      * \param values The source and sink values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores the rate mass
@@ -337,11 +337,11 @@ public:
      */
     void source(PrimaryVariables &values,
                 const Element &element,
-                const FVElementGeometry &fvElemGeom,
+                const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
         // forward to generic interface
-        asImp_().sourceAtPos(values, fvElemGeom.subContVol[scvIdx].global);
+        asImp_().sourceAtPos(values, fvGeometry.subContVol[scvIdx].global);
     }
 
     /*!
@@ -370,7 +370,7 @@ public:
      *
      * \param values The initial values for the primary variables
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores primary
@@ -378,11 +378,11 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int scvIdx) const
     {
         // forward to generic interface
-        asImp_().initialAtPos(values, fvElemGeom.subContVol[scvIdx].global);
+        asImp_().initialAtPos(values, fvGeometry.subContVol[scvIdx].global);
     }
 
     /*!
@@ -415,11 +415,11 @@ public:
      * are assumed to extend 1 m to the back.
      */
     Scalar boxExtrusionFactor(const Element &element,
-                              const FVElementGeometry &fvElemGeom,
+                              const FVElementGeometry &fvGeometry,
                               int scvIdx) const
     {
         // forward to generic interface
-        return asImp_().extrusionFactorAtPos(fvElemGeom.subContVol[scvIdx].global);
+        return asImp_().extrusionFactorAtPos(fvGeometry.subContVol[scvIdx].global);
     }
 
     /*!
