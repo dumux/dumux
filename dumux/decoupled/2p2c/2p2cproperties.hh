@@ -67,7 +67,8 @@ NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 // Property tags
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( Indices );
-NEW_PROP_TAG( SpatialParameters ); //!< The type of the soil properties object
+NEW_PROP_TAG( SpatialParams ); //!< The type of the soil properties object
+NEW_PROP_TAG( SpatialParameters ); //!< DEPRECATED The old type of the soil properties object
 NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the model
@@ -153,13 +154,14 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false);
 SET_BOOL_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, false);
 
 SET_PROP(DecoupledTwoPTwoC, BoundaryMobility)
-{
-    static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;
-};
+{    static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;};
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoC, CellData, CellData2P2C<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecoupledTwoPTwoCFluidState<TypeTag>);
+
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false);
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableVolumeIntegral, true);

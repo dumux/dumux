@@ -72,7 +72,7 @@ class FVTransport
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename GridView::Intersection Intersection;
 
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 protected:
     //! \cond \private
@@ -249,7 +249,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
         for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
-            FieldVector unitOuterNormal = isIt->centerUnitOuterNormal();
+       GlobalPosition unitOuterNormal = isIt->centerUnitOuterNormal();
             if (switchNormals_)
                 unitOuterNormal *= -1.0;
 

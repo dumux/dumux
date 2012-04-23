@@ -124,7 +124,7 @@ template<class TypeTag> class FVPressure2P2C
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Grid Grid;
-    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::template Codim<0>::EntityPointer ElementPtr;
     typedef typename GridView::Intersection Intersection;
 
     // convenience shortcuts for Vectors/Matrices
@@ -354,19 +354,19 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         const Intersection& intersection, const CellData& cellDataI, const bool first)
 {
     entries = 0.;
-    ElementPointer elementPointerI = intersection.inside();
+    ElementPtr elementPtrI = intersection.inside();
 
     // get global coordinate of cell center
-    const GlobalPosition& globalPos = elementPointerI->geometry().center();
+    const GlobalPosition& globalPos = elementPtrI->geometry().center();
 
     // cell volume & perimeter, assume linear map here
-    Scalar volume = elementPointerI->geometry().volume();
+    Scalar volume = elementPtrI->geometry().volume();
     Scalar perimeter = cellDataI.perimeter();
 
     const GlobalPosition& gravity_ = problem().gravity();
 
     // get absolute permeability
-    FieldMatrix permeabilityI(problem().spatialParameters().intrinsicPermeability(*elementPointerI));
+    FieldMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
 
     // get mobilities and fractional flow factors
     Scalar fractionalWI=0, fractionalNWI=0;
@@ -385,12 +385,12 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     Scalar faceArea = intersection.geometry().volume();
 
     // access neighbor
-    ElementPointer neighborPointer = intersection.outside();
-    int globalIdxJ = problem().variables().index(*neighborPointer);
+    ElementPtr neighborPtr = intersection.outside();
+    int globalIdxJ = problem().variables().index(*neighborPtr);
     CellData& cellDataJ = problem().variables().cellData(globalIdxJ);
 
     // gemotry info of neighbor
-    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().center();
+    const GlobalPosition& globalPosNeighbor = neighborPtr->geometry().center();
 
     // distance vector between barycenters
     GlobalPosition distVec = globalPosNeighbor - globalPos;
@@ -402,7 +402,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     unitDistVec /= dist;
 
     FieldMatrix permeabilityJ
-        = problem().spatialParameters().intrinsicPermeability(*neighborPointer);
+        = problem().spatialParams().intrinsicPermeability(*neighborPtr);
 
     // compute vectorized permeabilities
     FieldMatrix meanPermeability(0);
@@ -442,7 +442,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     {
         // determine volume derivatives
         if (!cellDataJ.hasVolumeDerivatives())
-            this->volumeDerivatives(globalPosNeighbor, *neighborPointer);
+            this->volumeDerivatives(globalPosNeighbor, *neighborPtr);
 
         Scalar dv_dC1 = (cellDataJ.dv(wPhaseIdx)
                     + cellDataI.dv(wPhaseIdx)) / 2; // dV/dm1= dv/dC^1
@@ -580,8 +580,8 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
 {
     entries = 0.;
     // get global coordinate of cell center
-    ElementPointer elementPointerI = intersection.inside();
-    const GlobalPosition& globalPos = elementPointerI->geometry().center();
+    ElementPtr elementPtrI = intersection.inside();
+    const GlobalPosition& globalPos = elementPtrI->geometry().center();
 
     // get normal vector
     const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
@@ -613,7 +613,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     if (bcType.isDirichlet(Indices::pressureEqIdx))
     {
         // get absolute permeability
-        FieldMatrix permeabilityI(problem().spatialParameters().intrinsicPermeability(*elementPointerI));
+        FieldMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
         const GlobalPosition& gravity_ = problem().gravity();
 
         //permeability vector at boundary
@@ -678,10 +678,10 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
             else if(GET_PROP_VALUE(TypeTag, BoundaryMobility) == Indices::permDependent)
             {
                 lambdaWBound
-                    = MaterialLaw::krw(problem().spatialParameters().materialLawParams(*elementPointerI),
+                    = MaterialLaw::krw(problem().spatialParams().materialLawParams(*elementPtrI),
                             BCfluidState.saturation(wPhaseIdx)) / viscosityWBound;
                 lambdaNWBound
-                    = MaterialLaw::krn(problem().spatialParameters().materialLawParams(*elementPointerI),
+                    = MaterialLaw::krn(problem().spatialParams().materialLawParams(*elementPtrI),
                             BCfluidState.saturation(wPhaseIdx)) / viscosityNWBound;
             }
             // get average density
@@ -926,13 +926,13 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     }
 
     //complete fluid state
-    fluidState.update(Z1, pressure, problem().spatialParameters().porosity(elementI), temperature_);
+    fluidState.update(Z1, pressure, problem().spatialParams().porosity(elementI), temperature_);
 
     // iterations part in case of enabled capillary pressure
     Scalar pc(0.), oldPc(0.);
     if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
     {
-        pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(elementI),
+        pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
                 fluidState.saturation(wPhaseIdx));
         int maxiter = 5; int iterout = -1;
         //start iteration loop
@@ -958,9 +958,9 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             //store old pc
             oldPc = pc;
             //update with better pressures
-            fluidState.update(Z1, pressure, problem().spatialParameters().porosity(elementI),
+            fluidState.update(Z1, pressure, problem().spatialParams().porosity(elementI),
                                 problem().temperatureAtPos(globalPos));
-            pc = MaterialLaw::pC(problem().spatialParameters().materialLawParams(elementI),
+            pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
                                 fluidState.saturation(wPhaseIdx));
             // TODO: get right criterion, do output for evaluation
             //converge criterion
@@ -976,9 +976,9 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
 
     // initialize mobilities
-    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParameters().materialLawParams(elementI), fluidState.saturation(wPhaseIdx))
+    cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI), fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(wPhaseIdx));
-    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParameters().materialLawParams(elementI), fluidState.saturation(wPhaseIdx))
+    cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI), fluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(nPhaseIdx));
 
     // determine volume mismatch between actual fluid volume and pore volume
@@ -992,7 +992,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     Scalar vol = massw / cellData.density(wPhaseIdx) + massn / cellData.density(nPhaseIdx);
     if (problem().timeManager().timeStepSize() != 0)
     {
-        cellData.volumeError()=(vol - problem().spatialParameters().porosity(elementI));
+        cellData.volumeError()=(vol - problem().spatialParams().porosity(elementI));
 
         if (std::isnan(cellData.volumeError()))
         {
@@ -1000,7 +1000,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
                     << "volErr[" << globalIdx << "] isnan: vol = " << vol
                     << ", massw = " << massw << ", rho_l = " << cellData.density(wPhaseIdx)
                     << ", massn = " << massn << ", rho_g = " << cellData.density(nPhaseIdx)
-                    << ", poro = " << problem().spatialParameters().porosity(elementI)
+                    << ", poro = " << problem().spatialParams().porosity(elementI)
                     << ", dt = " << problem().timeManager().timeStepSize());
         }
     }

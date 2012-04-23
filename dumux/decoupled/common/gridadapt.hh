@@ -46,7 +46,7 @@ template<class TypeTag, bool adaptive>
 class GridAdapt
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem)     Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem)  Problem;
 
 
     //*******************************

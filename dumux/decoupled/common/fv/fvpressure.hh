@@ -168,7 +168,7 @@ public:
      *
      * \param globalIdx Global index of a grid cell
      */
-    const Scalar pressure(int globalIdx) const
+    const Scalar pressure(const int globalIdx) const
     {   return pressure_[globalIdx];}
 
     /*! \brief Initialize pressure model

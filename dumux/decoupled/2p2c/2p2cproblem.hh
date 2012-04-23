@@ -57,7 +57,7 @@ class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters)    SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams)    SpatialParams;
 
 
     enum {
@@ -85,10 +85,10 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
+     * \param spatialParams SpatialParameters instantiation
      */
-    IMPETProblem2P2C(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
-        : ParentType(timeManager, gridView, spatialParameters)
+    IMPETProblem2P2C(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
+        : ParentType(timeManager, gridView, spatialParams)
     { }
 
     virtual ~IMPETProblem2P2C()

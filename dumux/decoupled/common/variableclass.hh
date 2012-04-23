@@ -106,7 +106,7 @@ public:
      *
      *\param size Size of the current (refined and coarsened) grid
      */
-    void adaptVariableSize(int size)
+    void adaptVariableSize(const int size)
     {
         cellDataVector_.resize(size);
     }
@@ -125,14 +125,14 @@ public:
     }
 
     //! Return the cell data of a specific cell
-    CellData& cellData(int idx)
+    CellData& cellData(const int idx)
     {
         assert(cellDataVector_.size() == gridView_.size(0));
 
         return cellDataVector_[idx];
     }
 
-    const CellData& cellData(int idx) const
+    const CellData& cellData(const int idx) const
     {
         assert(cellDataVector_.size() == gridView_.size(0));
 

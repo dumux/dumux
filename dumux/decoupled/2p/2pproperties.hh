@@ -63,8 +63,8 @@ NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(DecoupledModel))
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG( SpatialParameters )
+NEW_PROP_TAG( SpatialParams ); //!< The type of the soil properties object
+NEW_PROP_TAG( SpatialParameters ); //!< DEPRECATED The old type of the soil properties object
 ; //!< The type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The material law parameters (extracted from the spatial parameters)
@@ -172,6 +172,13 @@ private:
 public:
     typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
 };
+//! DEPRECATED SpatialParameters property
+#warning Please use SpatialParams instead of SpatialParameters
+//TODO: next line enables old Models using SpatialParameters to work
+// with base class impesproblem2p. If models are adapted,
+// l180 should be replaced by l181 to deprecate old problems using SpatialParameters.
+SET_TYPE_PROP(DecoupledTwoP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+//SET_TYPE_PROP(DecoupledTwoP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 
 /*!
  * \brief Set the property for the material parameters by extracting

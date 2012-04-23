@@ -277,8 +277,8 @@ public:
             // get position, index
             GlobalPosition globalPos = eIt->geometry().center();
             int globalIdx = problem_.variables().index(*eIt);
-            poro_[globalIdx] = problem_.spatialParameters().porosity(*eIt);
-            perm_[globalIdx] = problem_.spatialParameters().intrinsicPermeability(*eIt)[0][0];
+            poro_[globalIdx] = problem_.spatialParams().porosity(*eIt);
+            perm_[globalIdx] = problem_.spatialParams().intrinsicPermeability(*eIt)[0][0];
         }
         *poroPtr = poro_;
         *permPtr = perm_;
@@ -343,6 +343,7 @@ private:
 template<class TypeTag>
 void FVPressureCompositional<TypeTag>::initialize(bool solveTwice)
 {
+    // inizialize matrix, RHS, and condition Matrix
     ParentType::initialize();
 
     // initialguess: set saturations, determine visco and mobility for initial pressure equation
@@ -470,12 +471,12 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
             if (icFormulation == Indices::saturation)  // saturation initial condition
             {
                 sat_0 = problem_.initSat(*eIt);
-                fluidState.satFlash(sat_0, pressure, problem_.spatialParameters().porosity(*eIt), temperature_);
+                fluidState.satFlash(sat_0, pressure, problem_.spatialParams().porosity(*eIt), temperature_);
             }
             else if (icFormulation == Indices::concentration) // concentration initial condition
             {
                 Scalar Z1_0 = problem_.initConcentration(*eIt);
-                fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(*eIt), temperature_);
+                fluidState.update(Z1_0, pressure, problem_.spatialParams().porosity(*eIt), temperature_);
             }
         }
         else if(compositional)    //means we regard compositional effects since we know an estimate pressure field
@@ -487,7 +488,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 Scalar pc=0.;
                 if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
                 {
-                    pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt),
+                    pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt),
                                     sat_0);
                 }
                 else
@@ -510,7 +511,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                     }
                 }
 
-                fluidState.satFlash(sat_0, pressure, problem_.spatialParameters().porosity(*eIt), temperature_);
+                fluidState.satFlash(sat_0, pressure, problem_.spatialParams().porosity(*eIt), temperature_);
             }
             else if (icFormulation == Indices::concentration) // concentration initial condition
             {
@@ -548,16 +549,16 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         //store old pc
                         Scalar oldPc = pc;
                         //update with better pressures
-                        fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(*eIt),
+                        fluidState.update(Z1_0, pressure, problem_.spatialParams().porosity(*eIt),
                                             problem_.temperatureAtPos(globalPos));
-                        pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt),
+                        pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt),
                                             fluidState.saturation(wPhaseIdx));
                         // TODO: get right criterion, do output for evaluation
                         //converge criterion
                         if (abs(oldPc-pc)<10)
                             iter = maxiter;
 
-                        pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt),
+                        pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt),
                                 fluidState.saturation(wPhaseIdx));
                     }
                 }
@@ -565,10 +566,10 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                 {
                     pressure[wPhaseIdx] = pressure[nPhaseIdx]
                         = this->pressure()[globalIdx];
-                    fluidState.update(Z1_0, pressure, problem_.spatialParameters().porosity(*eIt), temperature_);
+                    fluidState.update(Z1_0, pressure, problem_.spatialParams().porosity(*eIt), temperature_);
                 }
 
-                fluidState.calculateMassConcentration(problem_.spatialParameters().porosity(*eIt));
+                fluidState.calculateMassConcentration(problem_.spatialParams().porosity(*eIt));
 
             } //end conc initial condition
         } //end compositional
@@ -580,9 +581,9 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         cellData.setViscosity(nPhaseIdx, FluidSystem::viscosity(fluidState, nPhaseIdx));
 
         // initialize mobilities
-        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(wPhaseIdx, MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(wPhaseIdx));
-        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), fluidState.saturation(wPhaseIdx))
+        cellData.setMobility(nPhaseIdx, MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), fluidState.saturation(wPhaseIdx))
                     / cellData.viscosity(nPhaseIdx));
 
         // calculate perimeter used as weighting factor
@@ -652,7 +653,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
         specificVolume += cellData.phaseMassFraction(phaseIdx) / cellData.density(phaseIdx);
     Scalar volalt = mass.one_norm() * specificVolume;
-//    volalt = cellData.volumeError()+problem_.spatialParameters().porosity(element);
+//    volalt = cellData.volumeError()+problem_.spatialParams().porosity(element);
         // = \sum_{\kappa} C^{\kappa} + \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
 
     /**********************************
@@ -678,7 +679,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     p_ += pressure;
     Scalar Z1 = mass[0] / mass.one_norm();
     updFluidState.update(Z1,
-            p_, problem_.spatialParameters().porosity(element), temperature_);
+            p_, problem_.spatialParams().porosity(element), temperature_);
 
     specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
     for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
@@ -693,7 +694,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
 
         p_ -= 2*incp;
         updFluidState.update(Z1,
-                    p_, problem_.spatialParameters().porosity(element), temperature_);
+                    p_, problem_.spatialParams().porosity(element), temperature_);
 
         specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
         for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
@@ -708,21 +709,21 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
     }
 
     // numerical derivative of fluid volume with respect to mass of components
-    for (int comp = 0; comp<numComponents; comp++)
+    for (int compIdx = 0; compIdx<numComponents; compIdx++)
     {
-        mass[comp] +=  massIncrement[comp];
+        mass[compIdx] +=  massIncrement[compIdx];
         Z1 = mass[0] / mass.one_norm();
-        updFluidState.update(Z1, pressure, problem_.spatialParameters().porosity(element), temperature_);
+        updFluidState.update(Z1, pressure, problem_.spatialParams().porosity(element), temperature_);
 
         specificVolume=0.; // = \sum_{\alpha} \nu_{\alpha} / \rho_{\alpha}
         for(int phaseIdx = 0; phaseIdx< numPhases; phaseIdx++)
             specificVolume += updFluidState.phaseMassFraction(phaseIdx) / updFluidState.density(phaseIdx);
 
-        cellData.dv(comp) = ((mass.one_norm() * specificVolume) - volalt) / massIncrement[comp];
-        mass[comp] -= massIncrement[comp];
+        cellData.dv(compIdx) = ((mass.one_norm() * specificVolume) - volalt) / massIncrement[compIdx];
+        mass[compIdx] -= massIncrement[compIdx];
 
         //check routines if derivatives are meaningful
-        if (isnan(cellData.dv(comp)) || isinf(cellData.dv(comp)) )
+        if (isnan(cellData.dv(compIdx)) || isinf(cellData.dv(compIdx)) )
         {
             DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
         }
