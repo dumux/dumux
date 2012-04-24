@@ -94,7 +94,7 @@ class OnePTwoCBoxModel : public BoxModel<TypeTag>
     typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
     /*!
@@ -124,18 +124,18 @@ public:
         unsigned numVertices = this->problem_().gridView().size(dim);
         ScalarField &pressure = *writer.allocateManagedBuffer(numVertices);
         ScalarField &delp = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &moleFrac0 = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &moleFrac1 = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &massFrac0 = *writer.allocateManagedBuffer(numVertices);
-        ScalarField &massFrac1 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &moleFraction0 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &moleFraction1 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &massFraction0 = *writer.allocateManagedBuffer(numVertices);
+        ScalarField &massFraction1 = *writer.allocateManagedBuffer(numVertices);
         ScalarField &rho = *writer.allocateManagedBuffer(numVertices);
         ScalarField &mu = *writer.allocateManagedBuffer(numVertices);
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
         ScalarField &velocityX = *writer.allocateManagedBuffer(numVertices);
         ScalarField &velocityY = *writer.allocateManagedBuffer(numVertices);
         ScalarField &velocityZ = *writer.allocateManagedBuffer(numVertices);
-        //use vertiacl faces for vx and horizontal faces for vy calculation
-        std::vector<GlobalPosition> boxSurface(numVertices);
+        //use vertical faces for vx and horizontal faces for vy calculation
+        std::vector<DimVector> boxSurface(numVertices);
         // initialize velocity fields
           for (int i = 0; i < numVertices; ++i)
           {
@@ -156,7 +156,7 @@ public:
         ScalarField &rank =
                 *writer.allocateManagedBuffer(numElements);
 
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
@@ -167,8 +167,8 @@ public:
             int idx = this->problem_().model().elementMapper().map(*elemIt);
             rank[idx] = this->gridView_().comm().rank();
 
-            fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
+            fvGeometry.update(this->gridView_(), *elemIt);
+            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
             int numVerts = elemIt->template count<dim> ();
             for (int i = 0; i < numVerts; ++i)
@@ -177,16 +177,16 @@ public:
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom,
+                               fvGeometry,
                                i,
                                false);
 
                 pressure[globalIdx] = volVars.pressure();
                 delp[globalIdx] = volVars.pressure() - 1e5;
-                moleFrac0[globalIdx] = volVars.moleFraction(0);
-                moleFrac1[globalIdx] = volVars.moleFraction(1);
-                massFrac0[globalIdx] = volVars.massFraction(0);
-                massFrac1[globalIdx] = volVars.massFraction(1);
+                moleFraction0[globalIdx] = volVars.moleFraction(0);
+                moleFraction1[globalIdx] = volVars.moleFraction(1);
+                massFraction0[globalIdx] = volVars.massFraction(0);
+                massFraction1[globalIdx] = volVars.massFraction(1);
                 rho[globalIdx] = volVars.density();
                 mu[globalIdx] = volVars.viscosity();
             };
@@ -194,29 +194,29 @@ public:
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
             // In the box method, the velocity is evaluated on the FE-Grid. However, to get an
             // average apparent velocity at the vertex, all contributing velocities have to be interpolated.
-            GlobalPosition velocity;
+            DimVector velocity;
 
             ElementVolumeVariables elemVolVars;
             elemVolVars.update(this->problem_(),
                                *elemIt,
-                               fvElemGeom,
+                               fvGeometry,
                                false /* isOldSol? */);
             // loop over the phases
-            for (int faceIdx = 0; faceIdx < fvElemGeom.numEdges; faceIdx++)
+            for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
             {
                 velocity = 0.0;
                 //prepare the flux calculations (set up and prepare geometry, FE gradients)
                 FluxVariables fluxVars(this->problem_(),
                                        *elemIt,
-                                       fvElemGeom,
+                                       fvGeometry,
                                        faceIdx,
                                        elemVolVars);
 
-                //use vertiacl faces for vx and horizontal faces for vy calculation
-                GlobalPosition xVector(0), yVector(0);
+                //use vertical faces for vx and horizontal faces for vy calculation
+                DimVector xVector(0), yVector(0);
                 xVector[0] = 1; yVector[1] = 1;
 
-                Dune::SeqScalarProduct<GlobalPosition> sp;
+                Dune::SeqScalarProduct<DimVector> sp;
 
                 Scalar xDir = std::abs(sp.dot(fluxVars.face().normal, xVector));
                 Scalar yDir = std::abs(sp.dot(fluxVars.face().normal, yVector));
@@ -286,7 +286,7 @@ public:
         {
             int i = this->problem_().vertexMapper().map(*vIt);
 
-            //use vertiacl faces for vx and horizontal faces for vy calculation
+            //use vertical faces for vx and horizontal faces for vy calculation
             velocityX[i] /= boxSurface[i][0];
             if (dim >= 2)
             {
@@ -306,18 +306,17 @@ public:
         if (dim > 2)
             writer.attachVertexData(velocityZ, "Vz");
 #endif
-        char nameMoleFrac0[42], nameMoleFrac1[42];
-        snprintf(nameMoleFrac0, 42, "x_%s", FluidSystem::componentName(0));
-        snprintf(nameMoleFrac1, 42, "x_%s", FluidSystem::componentName(1));
-        writer.attachVertexData(moleFrac0, nameMoleFrac0);
-        writer.attachVertexData(moleFrac1, nameMoleFrac1);
+        char nameMoleFraction0[42], nameMoleFraction1[42];
+        snprintf(nameMoleFraction0, 42, "x_%s", FluidSystem::componentName(0));
+        snprintf(nameMoleFraction1, 42, "x_%s", FluidSystem::componentName(1));
+        writer.attachVertexData(moleFraction0, nameMoleFraction0);
+        writer.attachVertexData(moleFraction1, nameMoleFraction1);
 
-        char nameMassFrac0[42], nameMassFrac1[42];
-        snprintf(nameMassFrac0, 42, "X_%s", FluidSystem::componentName(0));
-        snprintf(nameMassFrac1, 42, "X_%s", FluidSystem::componentName(1));
-        writer.attachVertexData(massFrac0, nameMassFrac0);
-        writer.attachVertexData(massFrac1, nameMassFrac1);
-//        writer.attachVertexData(delFrac, "delFrac_TRAIL");
+        char nameMassFraction0[42], nameMassFraction1[42];
+        snprintf(nameMassFraction0, 42, "X_%s", FluidSystem::componentName(0));
+        snprintf(nameMassFraction1, 42, "X_%s", FluidSystem::componentName(1));
+        writer.attachVertexData(massFraction0, nameMassFraction0);
+        writer.attachVertexData(massFraction1, nameMassFraction1);
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");
         writer.attachCellData(rank, "process rank");

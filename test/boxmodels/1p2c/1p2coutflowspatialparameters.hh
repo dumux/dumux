@@ -68,8 +68,8 @@ class OnePTwoCOutflowSpatialParameters : public BoxSpatialParametersOneP<TypeTag
 
     //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
-    OnePTwoCOutflowSpatialParameters(const GridView &gv)
-        : ParentType(gv)
+    OnePTwoCOutflowSpatialParameters(const GridView &gridView)
+        : ParentType(gridView)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
@@ -94,12 +94,12 @@ public:
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
-                                       int scvIdx) const
+                                       const FVElementGeometry &fvGeometry,
+                                       const int scvIdx) const
     {
             return permeability_;
     }
@@ -108,12 +108,12 @@ public:
      * \brief Define the porosity \f$\mathrm{[-]}\f$.
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      */
     double porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx) const
     {
             return porosity_;
     }
@@ -122,12 +122,12 @@ public:
      * \brief Define the tortuosity \f$\mathrm{[-]}\f$.
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      */
     double tortuosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx) const
     {
             return tortuosity_;
     }
@@ -136,19 +136,19 @@ public:
      * \brief Define the dispersivity.
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      */
     double dispersivity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx) const
     {
         return 0;
     }
 
-    bool useTwoPointGradient(const Element &elem,
-                             int vertexI,
-                             int vertexJ) const
+    bool useTwoPointGradient(const Element &element,
+                             const int vertexI,
+                             const int vertexJ) const
     {
         return false;
     }

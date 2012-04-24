@@ -109,11 +109,11 @@ public:
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a finite volume.
      *
-     *        \param result The mass of the component within the sub-control volume
+     *        \param storage The mass of the component within the sub-control volume
      *        \param scvIdx The index of the considered face of the sub-control volume
      *        \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -123,23 +123,23 @@ public:
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
-        result = 0;
+        storage = 0;
         if(!useMoles)
         {
             // storage term of continuity equation - massfractions
-            result[contiEqIdx] +=
+            storage[contiEqIdx] +=
                 volVars.fluidState().density(phaseIdx)*volVars.porosity();
             //storage term of the transport equation - massfractions
-            result[transEqIdx] +=
+            storage[transEqIdx] +=
                 volVars.fluidState().density(phaseIdx) * volVars.fluidState().massFraction(phaseIdx, comp1Idx) * volVars.porosity();
         }
         else
         {
             // storage term of continuity equation- molefractions
             //careful: molarDensity changes with moleFrac!
-            result[contiEqIdx] += volVars.molarDensity()*volVars.porosity();
+            storage[contiEqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
-            result[transEqIdx] +=
+            storage[transEqIdx] +=
                 volVars.fluidState().molarDensity(phaseIdx)*volVars.fluidState().moleFraction(phaseIdx, comp1Idx) *
                 volVars.porosity();
         }
@@ -151,17 +151,17 @@ public:
      *        volume.
      *
      *        \param flux The flux over the SCV (sub-control-volume) face for each component
-     *        \param faceId The index of the considered face of the sub control volume
+     *        \param faceIdx The index of the considered face of the sub control volume
      *        \param onBoundary A boolean variable to specify whether the flux variables
      *               are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int faceId, bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx, const bool onBoundary=false) const
     {
         flux = 0;
         FluxVariables fluxVars(this->problem_(),
-                               this->elem_(),
-                               this->fvElemGeom_(),
-                               faceId,
+                               this->element_(),
+                               this->fvGeometry_(),
+                               faceIdx,
                                this->curVolVars_(),
                                onBoundary);
 
@@ -241,22 +241,22 @@ public:
         if(!useMoles)
         {
             // diffusive flux of the second component - massfraction
-            tmp = -(fluxVars.moleFracGrad(comp1Idx)*fluxVars.face().normal);
-            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP();
+            tmp = -(fluxVars.moleFractionGrad(comp1Idx)*fluxVars.face().normal);
+            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
             // convert it to a mass flux and add it
             flux[transEqIdx] += tmp * FluidSystem::molarMass(comp1Idx);
         }
         else
         {
             // diffusive flux of the second component - molefraction
-            tmp = -(fluxVars.moleFracGrad(comp1Idx)*fluxVars.face().normal);
-            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensityAtIP();
+            tmp = -(fluxVars.moleFractionGrad(comp1Idx)*fluxVars.face().normal);
+            tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
 
             // dispersive flux of second component - molefraction
             //            Vector normalDisp;
             //            fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-            //            tmp -= fluxVars.molarDensityAtIP()*
-            //                (normalDisp * fluxVars.moleFracGrad(comp1Idx));
+            //            tmp -= fluxVars.molarDensity()*
+            //                (normalDisp * fluxVars.moleFractionGrad(comp1Idx));
 
             flux[transEqIdx] += tmp;
         }
@@ -264,16 +264,16 @@ public:
 
     /*!
      * \brief Calculate the source term of the equation
-     *        \param q The source/sink in the SCV for each component
-     *        \param localVertexIdx The index of the vertex of the sub control volume
+     *        \param source The source/sink in the SCV for each component
+     *        \param scvIdx The index of the vertex of the sub control volume
      *
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &source, const int scvIdx)
     {
-        this->problem_().boxSDSource(q,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
-                                     localVertexIdx,
+        this->problem_().boxSDSource(source,
+                                     this->element_(),
+                                     this->fvGeometry_(),
+                                     scvIdx,
                                      this->curVolVars_());
     }
 
@@ -286,8 +286,8 @@ public:
      * \param boundaryFaceIdx The index of the considered boundary face of the sub control volume
      */
     void evalOutflowSegment(const IntersectionIterator &isIt,
-                            int scvIdx,
-                            int boundaryFaceIdx)
+                            const int scvIdx,
+                            const int boundaryFaceIdx)
     {
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
         // deal with outflow boundaries

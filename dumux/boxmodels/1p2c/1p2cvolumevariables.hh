@@ -62,15 +62,15 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         comp1Idx = Indices::comp1Idx,
 
         pressureIdx = Indices::pressureIdx,
-        x1Idx = Indices::x1Idx
+        massOrMoleFractionIdx = Indices::massOrMoleFractionIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    enum { dimWorld = GridView::dimensionworld };
+    enum { dim = GridView::dimension };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar,dimWorld> Vector;
+    typedef Dune::FieldVector<Scalar,dim> DimVector;
 
 public:
     //! The type returned by the fluidState() method
@@ -82,25 +82,25 @@ public:
      * \param priVars A vector containing the primary variables
      * \param problem The considered problem
      * \param element The considered element of the grid
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx  The index of the considered sub-control volume
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
-                bool isOldSol)
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx,
+                const bool isOldSol)
     {
-        ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
 
         //calculate all secondary variables from the primary variables and store results in fluidstate
-        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
 
-        porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
-        tortuosity_ = problem.spatialParameters().tortuosity(element, elemGeom, scvIdx);
-        dispersivity_ = problem.spatialParameters().dispersivity(element, elemGeom, scvIdx);
+        porosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
+        tortuosity_ = problem.spatialParams().tortuosity(element, fvGeometry, scvIdx);
+        dispersivity_ = problem.spatialParams().dispersivity(element, fvGeometry, scvIdx);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -120,7 +120,7 @@ public:
         Valgrind::CheckDefined(diffCoeff_);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -130,16 +130,16 @@ public:
                                    const Problem& problem,
                                    const Element& element,
                                    const FVElementGeometry& elementGeometry,
-                                   int scvIdx,
+                                   const int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+        Scalar T = Implementation::temperature_(primaryVariables, problem, element,
                                                 elementGeometry, scvIdx);
-        fluidState.setTemperature(t);
+        fluidState.setTemperature(T);
 
         fluidState.setPressure(phaseIdx, primaryVariables[pressureIdx]);
 
-        Scalar x1 = primaryVariables[x1Idx]; //mole or mass fraction of component 1
+        Scalar x1 = primaryVariables[massOrMoleFractionIdx]; //mole or mass fraction of component 1
         if(!useMoles) //mass-fraction formulation
         {
             // convert mass to mole fractions
@@ -228,7 +228,7 @@ public:
     /*!
      * \brief Returns the dispersivity of the fluid's streamlines.
      */
-    const Vector &dispersivity() const
+    const DimVector &dispersivity() const
     { return dispersivity_; }
 
     /*!
@@ -256,28 +256,28 @@ public:
 
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx)
+                               const Problem& problem,
+                               const Element &element,
+                               const FVElementGeometry &fvGeometry,
+                               const int scvIdx)
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
 
     /*!
      * \brief Called by update() to compute the energy related quantities.
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
-                       int vertIdx,
-                       bool isOldSol)
+                       const FVElementGeometry &fvGeometry,
+                       const int scvIdx,
+                       const bool isOldSol)
     { }
 
     Scalar porosity_;    //!< Effective porosity within the control volume
     Scalar tortuosity_;
-    Vector dispersivity_;
+    DimVector dispersivity_;
     Scalar diffCoeff_;
     FluidState fluidState_;
 

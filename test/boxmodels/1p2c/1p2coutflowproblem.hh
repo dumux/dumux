@@ -135,7 +135,7 @@ class OnePTwoCOutflowProblem : public PorousMediaBoxProblem<TypeTag>
 
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        x1Idx = Indices::x1Idx,
+        massOrMoleFractionIdx = Indices::massOrMoleFractionIdx,
 
         // indices of the equations
         contiEqIdx = Indices::contiEqIdx,
@@ -206,7 +206,7 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
+     * \brief Evaluate the boundary conditions for a Dirichlet
      *        boundary segment.
      *
      * For this method, the \a values parameter stores primary variables.
@@ -216,13 +216,13 @@ public:
         const GlobalPosition globalPos = vertex.geometry().center();
 
         initial_(values, globalPos);
-        //condition for the trail molefraction at left boundary
+        //condition for the N2 molefraction at left boundary
         if(globalPos[0] < eps_)
-            values[x1Idx] = 2.0e-5;
+            values[massOrMoleFractionIdx] = 2.0e-5;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
+     * \brief Evaluate the boundary conditions for a Neumann
      *        boundary segment.
      *
      * For this method, the \a values parameter stores the mass flux
@@ -231,10 +231,10 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+                 const int scvIdx,
+                 const int boundaryFaceIdx) const
     {
         //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values = 0;
@@ -270,8 +270,8 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
+                 const FVElementGeometry &fvGeometry,
+                 const int scvIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
@@ -287,7 +287,7 @@ private:
                   const GlobalPosition &globalPos) const
     {
         values[pressureIdx] = 2e5 - 1e5*globalPos[0];//0.0; //initial condition for the pressure
-        values[x1Idx] = 0.0; //initial condition for the trail molefraction
+        values[massOrMoleFractionIdx] = 0.0; //initial condition for the N2 molefraction
     }
 
     const Scalar eps_;
