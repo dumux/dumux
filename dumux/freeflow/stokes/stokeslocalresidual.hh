@@ -156,8 +156,8 @@ protected:
     void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {
         const FluxVariables fluxVars(this->problem_(),
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
+                                     this->element_(),
+                                     this->fvGeometry_(),
                                      faceIdx,
                                      this->curVolVars_(),
                                      onBoundary);
@@ -286,14 +286,14 @@ protected:
 
         // retrieve the source term intrinsic to the problem
         this->problem_().source(q,
-                                this->elem_(),
-                                this->fvElemGeom_(),
+                                this->element_(),
+                                this->fvGeometry_(),
                                 localVertexIdx);
 
         // ATTENTION: The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
         const Scalar alphaH2 = stabilizationAlpha_*
-            this->fvElemGeom_().subContVol[localVertexIdx].volume;
+            this->fvGeometry_().subContVol[localVertexIdx].volume;
         q[massBalanceIdx] *= alphaH2; // stabilization of the source term
 
         // pressure gradient at the center of the SCV,
@@ -302,9 +302,9 @@ protected:
         ScalarGradient pressureGradAtSCVCenter(0.0);
         ScalarGradient grad(0.0);
 
-        for (int vertexIdx = 0; vertexIdx < this->fvElemGeom_().numVertices; vertexIdx++)
+        for (int vertexIdx = 0; vertexIdx < this->fvGeometry_().numVertices; vertexIdx++)
         {
-            grad = this->fvElemGeom_().subContVol[localVertexIdx].gradCenter[vertexIdx];
+            grad = this->fvGeometry_().subContVol[localVertexIdx].gradCenter[vertexIdx];
             Valgrind::CheckDefined(grad);
             grad *= elemVolVars[vertexIdx].pressure();
 
@@ -327,14 +327,14 @@ protected:
      */
     void evalBoundary_()
     {
-        assert(this->residual_.size() == this->fvElemGeom_().numVertices);
-        const ReferenceElement &refElem = ReferenceElements::general(this->elem_().geometry().type());
+        assert(this->residual_.size() == this->fvGeometry_().numVertices);
+        const ReferenceElement &refElem = ReferenceElements::general(this->element_().geometry().type());
 
         // loop over vertices of the element
-        for (int vertexIdx = 0; vertexIdx < this->fvElemGeom_().numVertices; vertexIdx++)
+        for (int vertexIdx = 0; vertexIdx < this->fvGeometry_().numVertices; vertexIdx++)
         {
             // consider only SCVs on the boundary
-            if (this->fvElemGeom_().subContVol[vertexIdx].inner)
+            if (this->fvGeometry_().subContVol[vertexIdx].inner)
                 continue;
 
             // important at corners of the grid
@@ -344,8 +344,8 @@ protected:
             // evaluate boundary conditions for the intersections of
             // the current element
             const BoundaryTypes &bcTypes = this->bcTypes_(vertexIdx);
-            IntersectionIterator isIt = this->gridView_().ibegin(this->elem_());
-            const IntersectionIterator &endIt = this->gridView_().iend(this->elem_());
+            IntersectionIterator isIt = this->gridView_().ibegin(this->element_());
+            const IntersectionIterator &endIt = this->gridView_().iend(this->element_());
             for (; isIt != endIt; ++isIt)
             {
                 // handle only intersections on the boundary
@@ -365,10 +365,10 @@ protected:
                         != vertexIdx)
                         continue;
 
-                    const int boundaryFaceIdx = this->fvElemGeom_().boundaryFaceIndex(faceIdx, faceVertIdx);
+                    const int boundaryFaceIdx = this->fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
                     const FluxVariables boundaryVars(this->problem_(),
-                                                     this->elem_(),
-                                                     this->fvElemGeom_(),
+                                                     this->element_(),
+                                                     this->fvGeometry_(),
                                                      boundaryFaceIdx,
                                                      this->curVolVars_(),
                                                      true);
@@ -542,16 +542,16 @@ protected:
         if (stabilizationAlpha_ != 0)
         {
             // loop over the edges of the element
-            for (int faceIdx = 0; faceIdx < this->fvElemGeom_().numEdges; faceIdx++)
+            for (int faceIdx = 0; faceIdx < this->fvGeometry_().numEdges; faceIdx++)
             {
                 const FluxVariables fluxVars(this->problem_(),
-                                             this->elem_(),
-                                             this->fvElemGeom_(),
+                                             this->element_(),
+                                             this->fvGeometry_(),
                                              faceIdx,
                                              this->curVolVars_());
 
-                const int i = this->fvElemGeom_().subContVolFace[faceIdx].i;
-                const int j = this->fvElemGeom_().subContVolFace[faceIdx].j;
+                const int i = this->fvGeometry_().subContVolFace[faceIdx].i;
+                const int j = this->fvGeometry_().subContVolFace[faceIdx].j;
 
                 if (i != vertexIdx && j != vertexIdx)
                     continue;
@@ -559,7 +559,7 @@ protected:
                 const Scalar alphaH2 = stabilizationAlpha_*
                     fluxVars.averageSCVVolume();
                 Scalar stabilizationTerm = fluxVars.pressureGradAtIP() *
-                    this->fvElemGeom_().subContVolFace[faceIdx].normal;
+                    this->fvGeometry_().subContVolFace[faceIdx].normal;
 
                 stabilizationTerm *= alphaH2;
 
@@ -572,12 +572,12 @@ protected:
             //destabilize source term
             PrimaryVariables q(0.0);
             this->problem_().source(q,
-                                    this->elem_(),
-                                    this->fvElemGeom_(),
+                                    this->element_(),
+                                    this->fvGeometry_(),
                                     vertexIdx);
-            const Scalar alphaH2 = stabilizationAlpha_*this->fvElemGeom_().subContVol[vertexIdx].volume;
+            const Scalar alphaH2 = stabilizationAlpha_*this->fvGeometry_().subContVol[vertexIdx].volume;
             this->residual_[vertexIdx][massBalanceIdx] += alphaH2*q[massBalanceIdx]*
-                this->fvElemGeom_().subContVol[vertexIdx].volume;
+                this->fvGeometry_().subContVol[vertexIdx].volume;
         }
     }
 

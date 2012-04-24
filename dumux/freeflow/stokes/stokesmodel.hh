@@ -175,7 +175,7 @@ public:
             rank[idx] = this->gridView_().comm().rank();
 
             fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
+            elemBcTypes.update(this->problem_(), *elemIt);
 
             int numLocalVerts = elemIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
