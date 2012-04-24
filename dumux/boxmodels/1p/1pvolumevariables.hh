@@ -68,27 +68,27 @@ public:
      * \param priVars The local primary variable vector
      * \param problem The problem object
      * \param element The current element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx,
                 bool isOldSol)
     {
-        ParentType::update(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
 
-        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
         // porosity
-        porosity_ = problem.spatialParameters().porosity(element,
-                                                         elemGeom,
+        porosity_ = problem.spatialParams().porosity(element,
+                                                         fvGeometry,
                                                          scvIdx);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     };
 
     /*!
@@ -97,12 +97,12 @@ public:
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
-                                   int scvIdx,
+                                   const FVElementGeometry& fvGeometry,
+                                   const int scvIdx,
                                    FluidState& fluidState)
     {
         Scalar t = Implementation::temperature_(primaryVariables, problem, element,
-                                                elementGeometry, scvIdx);
+                                                fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
         fluidState.setPressure(/*phaseIdx=*/0, primaryVariables[Indices::pressureIdx]);
@@ -170,10 +170,10 @@ protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                             const Problem& problem,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx)
+                            const FVElementGeometry &fvGeometry,
+                            const int scvIdx)
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
 
     /*!
@@ -182,8 +182,8 @@ protected:
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
-                       int vertIdx,
+                       const FVElementGeometry &fvGeometry,
+                       const int scvIdx,
                        bool isOldSol)
     { }
 

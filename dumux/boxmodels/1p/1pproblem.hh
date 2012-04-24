@@ -47,7 +47,7 @@ class OnePBoxProblem : public PorousMediaBoxProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
 public:
     /*!
@@ -69,13 +69,13 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param spatialParameters The spatial parameters object
+     * \param spatialParams The spatial parameters object
      * \param verbose Turn verbosity on or off
      */
     DUMUX_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
     OnePBoxProblem(TimeManager &timeManager,
                 const GridView &gridView,
-                SpatialParameters &spatialParameters,
+                SpatialParams &spatialParams,
                 bool verbose = true)
         : ParentType(timeManager, gridView)
     {}

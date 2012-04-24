@@ -56,7 +56,7 @@ class OnePBoxModel : public BoxModel<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
@@ -85,7 +85,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
@@ -96,8 +96,8 @@ public:
             int idx = this->problem_().model().elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
 
-            fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
+            fvGeometry.update(this->gridView_(), *elemIt);
+            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
             int numVerts = elemIt->template count<dim> ();
             for (int i = 0; i < numVerts; ++i)
@@ -106,15 +106,15 @@ public:
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom,
+                               fvGeometry,
                                i,
                                false);
-                const SpatialParameters &spatialParams = this->problem_().spatialParameters();
+                const SpatialParams &spatialParams = this->problem_().spatialParams();
 
                 (*p)[globalIdx] = volVars.pressure();
-                (*K)[globalIdx] = spatialParams.intrinsicPermeability(*elemIt,
-                                                                    fvElemGeom,
-                                                                    i);
+                (*K)[globalIdx]= spatialParams.intrinsicPermeability(*elemIt,
+                                                                     fvGeometry,
+                                                                     i);
             };
         }
 

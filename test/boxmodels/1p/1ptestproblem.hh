@@ -227,12 +227,12 @@ public:
     using ParentType::neumann;
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+                 const int scvIdx,
+                 const int boundaryFaceIdx) const
     {
-        //  const GlobalPosition &globalPos = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+        //  const GlobalPosition &globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
 
         values[pressureIdx] = 0;
     }
@@ -252,8 +252,8 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
+                 const FVElementGeometry &fvGeometry,
+                 const int scvIdx) const
     {
         //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values[pressureIdx] = 1.0e+5;// + 9.81*1.23*(20-globalPos[dim-1]);

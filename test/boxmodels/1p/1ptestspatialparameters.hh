@@ -63,20 +63,20 @@ public:
     {
         try
         {
-            lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftX);
+            lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftX);
             if (dim > 1)
-                lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftY);
+                lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftY);
             if (dim > 2)
-                lensLowerLeft_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftZ);
+                lensLowerLeft_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftZ);
 
-            lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightX);
+            lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightX);
             if (dim > 1)
-                lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightY);
+                lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightY);
             if (dim > 2)
-                lensUpperRight_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightZ);
+                lensUpperRight_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightZ);
 
-            permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.permeability);
-            permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.permeabilityLens);
+            permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.permeability);
+            permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.permeabilityLens);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";
@@ -92,15 +92,15 @@ public:
      * \brief Return the intrinsic permeability for the current sub-control volume.
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
      */
     Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvElemGeom,
-                                 int scvIdx) const
+                                 const FVElementGeometry &fvGeometry,
+                                 const int scvIdx) const
     {
-        const GlobalPosition &globalPos = fvElemGeom.subContVol[scvIdx].global;
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
 
         if (isInLens_(globalPos))
             return permeabilityLens_;
@@ -111,12 +111,12 @@ public:
     /*! \brief Define the porosity.
    *
    * \param element The finite element
-   * \param fvElemGeom The finite volume geometry
+   * \param fvGeometry The finite volume geometry
    * \param scvIdx The local index of the sub-control volume where
    */
     Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx) const
     { return 0.4; }
 
 private:

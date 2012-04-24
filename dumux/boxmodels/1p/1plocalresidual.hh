@@ -55,8 +55,8 @@ class OnePLocalResidual : public BoxLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dimWorld = GridView::dimensionworld };
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    enum { dim = GridView::dimension };
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { pressureIdx = Indices::pressureIdx };
@@ -81,22 +81,22 @@ public:
      *        model.
      *
      * This function should not include the source and sink terms.
-     *  \param result The phase mass within the sub-control volume
+     *  \param storage The phase mass within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &volVars = elemVars[scvIdx];
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // partial time derivative of the wetting phase mass
-        result[pressureIdx] =  volVars.density() * volVars.porosity();
+        storage[pressureIdx] =  volVars.density() * volVars.porosity();
     }
 
 
@@ -107,14 +107,14 @@ public:
      * \param flux The flux over the SCV (sub-control-volume) face
      * \param faceIdx The index of the SCV face
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx) const
     {
         FluxVariables fluxVars(this->problem_(),
-                               this->elem_(),
-                               this->fvElemGeom_(),
+                               this->element_(),
+                               this->fvGeometry_(),
                                faceIdx,
                                this->curVolVars_());
-        Vector tmpVec;
+        DimVector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(),
                                             tmpVec);
 
@@ -133,16 +133,16 @@ public:
     /*!
      * \brief Calculate the source term of the equation.
      *
-     * \param q The source/sink in the SCV
-     * \param localVertexIdx The index of the SCV
+     * \param source The source/sink in the SCV
+     * \param scvIdx The index of the SCV
      *
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &source, const int scvIdx)
     {
-        this->problem_().boxSDSource(q,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
-                                     localVertexIdx,
+        this->problem_().boxSDSource(source,
+                                     this->element_(),
+                                     this->fvGeometry_(),
+                                     scvIdx,
                                      this->curVolVars_());
     }
 
