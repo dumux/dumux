@@ -111,8 +111,8 @@ class InjectionProblem : public PorousMediaBoxProblem<TypeTag>
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        wPhaseIdx = Indices::lPhaseIdx,
+        nPhaseIdx = Indices::gPhaseIdx,
 
 
         H2OIdx = FluidSystem::H2OIdx,
@@ -197,14 +197,14 @@ public:
     void postTimeStep()
     {
         // Calculate storage terms
-        PrimaryVariables storageL, storageG;
-        this->model().globalPhaseStorage(storageL, lPhaseIdx);
-        this->model().globalPhaseStorage(storageG, gPhaseIdx);
+        PrimaryVariables storageW, storageN;
+        this->model().globalPhaseStorage(storageW, wPhaseIdx);
+        this->model().globalPhaseStorage(storageN, nPhaseIdx);
 
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
-            std::cout<<"Storage: liquid=[" << storageL << "]"
-                     << " gas=[" << storageG << "]\n";
+            std::cout<<"Storage: wetting=[" << storageW << "]"
+                     << " nonwetting=[" << storageN << "]\n";
         }
     }
 
