@@ -58,6 +58,7 @@ class MPNCVolumeVariablesEnergy
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -72,11 +73,11 @@ public:
                             ParameterCache &paramCache,
                             const PrimaryVariables &sol,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx,
+                            const FVElementGeometry &fvGeometry,
+                            const unsigned int scvIdx,
                             const Problem &problem) const
     {
-        Scalar T = problem.boxTemperature(element, elemGeom, scvIdx);
+        Scalar T = problem.boxTemperature(element, fvGeometry, scvIdx);
         fs.setTemperature(T);
     }
 
@@ -90,8 +91,8 @@ public:
     void update(FluidState &fs,
                 ParameterCache &paramCache,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
+                const FVElementGeometry &fvGeometry,
+                const unsigned int scvIdx,
                 const Problem &problem)
     {
     }
@@ -116,10 +117,8 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*kineticEnergyT
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
@@ -140,8 +139,8 @@ public:
                             ParameterCache &paramCache,
                             const PrimaryVariables &sol,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx,
+                            const FVElementGeometry &fvGeometry,
+                            const unsigned int scvIdx,
                             const Problem &problem) const
     {
         // retrieve temperature from solution vector
@@ -156,19 +155,19 @@ public:
     void update(FluidState &fs,
                 ParameterCache &paramCache,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
+                const FVElementGeometry &fvGeometry,
+                const unsigned int scvIdx,
                 const Problem &problem)
     {
         Valgrind::SetUndefined(*this);
 
         // heat capacities of the fluids plus the porous medium
         heatCapacity_ =
-            problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
+            problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
 
         soilDensity_ =
-            problem.spatialParameters().soilDensity(element, elemGeom, scvIdx);
+            problem.spatialParams().soilDensity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(soilDensity_);
 
         // set the enthalpies

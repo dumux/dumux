@@ -68,19 +68,23 @@ public:
     };
 
 private:
-    static void clampValue_(Scalar &val, Scalar minVal, Scalar maxVal)
+    static void clampValue_(Scalar &val,
+                            const Scalar minVal,
+                            const Scalar maxVal)
     {
         val = std::max(minVal, std::min(val, maxVal));
     };
 
-    static void pressureChop_(Scalar &val, Scalar oldVal)
+    static void pressureChop_(Scalar &val,
+                              const Scalar oldVal)
     {
         const Scalar maxDelta = std::max(oldVal/4.0, 10e3);
         clampValue_(val, oldVal - maxDelta, oldVal + maxDelta);
         val = std::max(0.0, val); // don't allow negative pressures
     }
 
-    static void saturationChop_(Scalar &val, Scalar oldVal)
+    static void saturationChop_(Scalar &val,
+                                const Scalar oldVal)
     {
         const Scalar maxDelta = 0.25;
         clampValue_(val, oldVal - maxDelta, oldVal + maxDelta);
@@ -116,32 +120,37 @@ public:
                     moleFracChop_(uCurrentIter[i][moleFrac00Idx + phaseIdx*numComponents + compIdx],
                                   uLastIter[i][moleFrac00Idx + phaseIdx*numComponents + compIdx]);
                 }
-            };
+            }
 
         }
-    };
+    }
 
 private:
-    static void clampValue_(Scalar &val, Scalar minVal, Scalar maxVal)
+    static void clampValue_(Scalar &val,
+                            const Scalar minVal,
+                            const Scalar maxVal)
     {
         val = std::max(minVal, std::min(val, maxVal));
     };
 
-    static void pressureChop_(Scalar &val, Scalar oldVal)
+    static void pressureChop_(Scalar &val,
+                              const Scalar oldVal)
     {
         const Scalar maxDelta = std::max(oldVal/4.0, 10e3);
         clampValue_(val, oldVal - maxDelta, oldVal + maxDelta);
         val = std::max(0.0, val); // don't allow negative pressures
     }
 
-    static void saturationChop_(Scalar &val, Scalar oldVal)
+    static void saturationChop_(Scalar &val,
+                                const Scalar oldVal)
     {
         const Scalar maxDelta = 0.25;
         clampValue_(val, oldVal - maxDelta, oldVal + maxDelta);
         clampValue_(val, -0.001, 1.001);
     }
 
-    static void moleFracChop_(Scalar &val, Scalar oldVal)
+    static void moleFracChop_(Scalar &val,
+                              const Scalar oldVal)
     {
         // no component mole fraction can change by more than 20% per iteration
         const Scalar maxDelta = 0.20;
@@ -163,22 +172,16 @@ template <class TypeTag>
 class MPNCNewtonController : public NewtonController<TypeTag>
 {
     typedef NewtonController<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
-
-        p0Idx = Indices::p0Idx,
-        S0Idx = Indices::S0Idx
-    };
+    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {    numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
+    enum {p0Idx = Indices::p0Idx};
+    enum {S0Idx = Indices::S0Idx};
 
     typedef MpNcNewtonChop<TypeTag, enableKinetic> NewtonChop;
 
@@ -258,7 +261,7 @@ private:
            // try with a smaller update
            lambda /= 2;
        }
-    };
+    }
 
     bool enableChop_;
 };

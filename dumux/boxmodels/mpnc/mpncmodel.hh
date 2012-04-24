@@ -115,30 +115,25 @@ template<class TypeTag>
 class MPNCModel : public BoxModel<TypeTag>
 {
     typedef BoxModel<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
     typedef Dumux::MPNCVtkWriter<TypeTag> MPNCVtkWriter;
 
-    enum {
-        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
-        enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion),
-        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
-        enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
-        enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, EnableSmoothUpwinding),
-        enablePartialReassemble = GET_PROP_VALUE(TypeTag, EnablePartialReassemble),
-        enableJacobianRecycling = GET_PROP_VALUE(TypeTag, EnableJacobianRecycling),
-        numDiffMethod = GET_PROP_VALUE(TypeTag, NumericDifferenceMethod),
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        numEq = GET_PROP_VALUE(TypeTag, NumEq)
-    };
+    enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
+    enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
+    enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
+    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {enableSmoothUpwinding = GET_PROP_VALUE(TypeTag, EnableSmoothUpwinding)};
+    enum {enablePartialReassemble = GET_PROP_VALUE(TypeTag, EnablePartialReassemble)};
+    enum {enableJacobianRecycling = GET_PROP_VALUE(TypeTag, EnableJacobianRecycling)};
+    enum {numDiffMethod = GET_PROP_VALUE(TypeTag, NumericDifferenceMethod)};
+    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
 public:
     ~MPNCModel()
@@ -169,18 +164,18 @@ public:
      * \brief Compute the total storage inside one phase of all
      *        conservation quantities.
      */
-    void globalPhaseStorage(PrimaryVariables &dest, int phaseIdx)
+    void globalPhaseStorage(PrimaryVariables &phaseStorage, const unsigned int phaseIdx)
     {
-        dest = 0;
+        phaseStorage = 0;
 
         ElementIterator elemIt = this->gridView_().template begin<0>();
         const ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
-            this->localResidual().addPhaseStorage(dest, *elemIt, phaseIdx);
+            this->localResidual().addPhaseStorage(phaseStorage, *elemIt, phaseIdx);
         };
 
         if (this->gridView_().comm().size() > 1)
-            dest = this->gridView_().comm().sum(dest);
+            phaseStorage = this->gridView_().comm().sum(phaseStorage);
     }
 
     /*!

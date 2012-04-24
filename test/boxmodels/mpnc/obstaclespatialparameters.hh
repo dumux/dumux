@@ -38,31 +38,29 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class ObstacleSpatialParameters;
+class ObstacleSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(ObstacleSpatialParameters);
+NEW_TYPE_TAG(ObstacleSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ObstacleSpatialParameters, SpatialParams, Dumux::ObstacleSpatialParameters<TypeTag>);
+SET_TYPE_PROP(ObstacleSpatialParams, SpatialParams, Dumux::ObstacleSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(ObstacleSpatialParameters, MaterialLaw)
+SET_PROP(ObstacleSpatialParams, MaterialLaw)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    enum {
-        lPhaseIdx = FluidSystem::lPhaseIdx
-    };
+    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     // define the material law
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     //    typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
         typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
         typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
 public:
-    typedef TwoPAdapter<lPhaseIdx, TwoPMaterialLaw> type;
+    typedef TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> type;
 };
 }
 
@@ -73,7 +71,7 @@ public:
  *
  */
 template<class TypeTag>
-class ObstacleSpatialParameters : public BoxSpatialParameters<TypeTag>
+class ObstacleSpatialParams : public BoxSpatialParameters<TypeTag>
 {
     typedef BoxSpatialParameters<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -82,25 +80,20 @@ class ObstacleSpatialParameters : public BoxSpatialParameters<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
     typedef typename Grid::ctype CoordScalar;
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
 
-    enum {
-        lPhaseIdx = FluidSystem::lPhaseIdx
-    };
+    enum {dim=GridView::dimension};
+    enum {dimWorld=GridView::dimensionworld};
+    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<CoordScalar,dimWorld> DimWorldVector;
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    ObstacleSpatialParameters(const GridView &gv)
+    ObstacleSpatialParams(const GridView &gv)
         : ParentType(gv)
     {
         // intrinsic permeabilities
@@ -134,7 +127,7 @@ public:
         */
     }
 
-    ~ObstacleSpatialParameters()
+    ~ObstacleSpatialParams()
     {}
 
     /*!
@@ -156,10 +149,10 @@ public:
      *                      intrinsic permeability is given.
      */
     Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvElemGeom,
-                                 int scvIdx) const
+                                 const FVElementGeometry &fvGeometry,
+                                 const unsigned int scvIdx) const
     {
-        if (isFineMaterial_(fvElemGeom.subContVol[scvIdx].global))
+        if (isFineMaterial_(fvGeometry.subContVol[scvIdx].global))
             return fineK_;
         return coarseK_;
     }
@@ -173,8 +166,8 @@ public:
      *                    the porosity needs to be defined
      */
     double porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    const unsigned int scvIdx) const
     {
         return porosity_;
     }
@@ -190,8 +183,8 @@ public:
      *                    the heat capacity needs to be defined
      */
     double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvElemGeom,
-                        int scvIdx) const
+                        const FVElementGeometry &fvGeometry,
+                        const unsigned int scvIdx) const
     {
         return 790. ;  // specific heat capacity of granite [J / (kg K)]
     }
@@ -206,25 +199,25 @@ public:
 //     * \param tempGrad    The temperature gradient
 //     * \param element     The current finite element
 //     * \param fvElemGeom  The finite volume geometry of the current element
-//     * \param scvfIdx     The local index of the sub-control volume face where
+//     * \param faceIdx     The local index of the sub-control volume face where
 //     *                    the matrix heat flux should be calculated
 //     */
 //    void matrixHeatFlux(Vector &heatFlux,
 //                        const FluxVariables &fluxDat,
 //                        const ElementVolumeVariables &vDat,
-//                        const Vector &tempGrad,
+//                        const DimWorldVector &tempGrad,
 //                        const Element &element,
 //                        const FVElementGeometry &fvElemGeom,
-//                        int scvfIdx) const
+//                        int faceIdx) const
 //    {
 //        static const Scalar lWater = 0.6;   // [W / (m K ) ]
 //        static const Scalar lGranite = 2.8; // [W / (m K ) ]
 //
 //        // arithmetic mean of the liquid saturation and the porosity
-//        const int i = fvElemGeom.subContVolFace[scvfIdx].i;
-//        const int j = fvElemGeom.subContVolFace[scvfIdx].j;
-//        Scalar Sl = std::max(0.0, (vDat[i].saturation(lPhaseIdx) +
-//                                     vDat[j].saturation(lPhaseIdx)) / 2);
+//        const int i = fvElemGeom.subContVolFace[faceIdx].i;
+//        const int j = fvElemGeom.subContVolFace[faceIdx].j;
+//        Scalar Sl = std::max(0.0, (vDat[i].saturation(wPhaseIdx) +
+//                                     vDat[j].saturation(wPhaseIdx)) / 2);
 //        Scalar poro = (porosity(element, fvElemGeom, i) +
 //                       porosity(element, fvElemGeom, j)) / 2;
 //
@@ -247,7 +240,7 @@ public:
      * \param pos The global position of the sub-control volume.
      * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &pos) const
+    const MaterialLawParams& materialLawParamsAtPos(const DimWorldVector &pos) const
     {
         if (isFineMaterial_(pos))
             return fineMaterialParams_;
@@ -256,15 +249,15 @@ public:
     }
 
     Scalar soilDensity(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
-                       int scvIdx) const
+                       const FVElementGeometry &fvGeometry,
+                       const unsigned int scvIdx) const
     {
         return 2700. ; // density of granite [kg/m^3]
     }
 
     Scalar soilThermalConductivity(const Element &element,
-                                   const FVElementGeometry &fvElemGeom,
-                                   int scvIdx) const
+                                   const FVElementGeometry &fvGeometry,
+                                   const unsigned int scvIdx) const
     {
         return 2.8; // conductivity of granite [W / (m K ) ]
     }
@@ -274,7 +267,7 @@ private:
      * \brief Returns whether a given global position is in the
      *        fine-permeability region or not.
      */
-    static bool isFineMaterial_(const GlobalPosition &pos)
+    static bool isFineMaterial_(const DimWorldVector &pos)
     {
         return
             10 <= pos[0] && pos[0] <= 20 &&

@@ -190,10 +190,10 @@ public:
     { temperature_[phaseIdx] = value; }
 
     /*!
-     * \brief Set the temperature [K] of fluid phases.
+     * \brief Set the temperature [K] of all fluid phases.
      */
     void setTemperature(Scalar value)
-    { DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for non-equilibrium,temperature in which phase?"); }
+    {DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for non-equilibrium, temperature in which phase?");}
 
     /*!
      * \brief Set the fluid pressure of a phase [Pa]

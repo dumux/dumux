@@ -45,21 +45,17 @@ class MPNCVolumeVariablesMass
                   "but kinetic mass transfer enabled.");
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, CompositionFromFugacitiesSolver) CompositionFromFugacitiesSolver;
     typedef typename GridView::template Codim<0>::Entity Element;
-
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -78,8 +74,8 @@ public:
                 const VolumeVariables *hint,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx)
+                const FVElementGeometry &fvGeometry,
+                const unsigned int scvIdx)
     {
         ComponentVector fug;
         // retrieve component fugacities
@@ -97,8 +93,8 @@ public:
 
                 // set initial guess of the component's mole fraction
                 fs.setMoleFraction(phaseIdx,
-                                      compIdx,
-                                      x_ij);
+                                   compIdx,
+                                   x_ij);
 
             }
 

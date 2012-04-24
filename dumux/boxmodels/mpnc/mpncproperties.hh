@@ -85,7 +85,8 @@ NEW_PROP_TAG(MPNCVtkAddPrandtl);
 NEW_PROP_TAG(MPNCVtkAddNusselt);
 NEW_PROP_TAG(MPNCVtkAddInterfacialArea);
 
-NEW_PROP_TAG(SpatialParameters); //!< The type of the soil properties object
+NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
+NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
 
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the soil)
 NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)

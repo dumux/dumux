@@ -56,7 +56,6 @@ class MPNCVolumeVariables
     , public MPNCVolumeVariablesEnergy<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergy), GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
 {
     typedef BoxVolumeVariables<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -65,26 +64,21 @@ class MPNCVolumeVariables
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
-
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
-        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
-        enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
-        enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion) || enableKinetic,
-
-        S0Idx = Indices::S0Idx,
-        p0Idx = Indices::p0Idx
-    };
+    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
+    enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
+    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion) || enableKinetic};
+    enum {S0Idx = Indices::S0Idx};
+    enum {p0Idx = Indices::p0Idx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
-
     typedef MPNCVolumeVariablesMass<TypeTag, enableKinetic> MassVolumeVariables;
     typedef MPNCVolumeVariablesEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyVolumeVariables;
     typedef MPNCVolumeVariablesIA<TypeTag, enableKinetic, enableKineticEnergy> IAVolumeVariables;
@@ -109,15 +103,15 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
-                bool isOldSol)
+                const FVElementGeometry &fvGeometry,
+                const unsigned int scvIdx,
+                const bool isOldSol)
     {
         Valgrind::CheckDefined(priVars);
         ParentType::update(priVars,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
         ParentType::checkDefined();
@@ -128,9 +122,9 @@ public:
         // set the phase saturations
         /////////////
         Scalar sumSat = 0;
-        for (int i = 0; i < numPhases - 1; ++i) {
-            sumSat += priVars[S0Idx + i];
-            fluidState_.setSaturation(i, priVars[S0Idx + i]);
+        for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx) {
+            sumSat += priVars[S0Idx + phaseIdx];
+            fluidState_.setSaturation(phaseIdx, priVars[S0Idx + phaseIdx]);
         }
         Valgrind::CheckDefined(sumSat);
         fluidState_.setSaturation(numPhases - 1, 1.0 - sumSat);
@@ -142,7 +136,7 @@ public:
                                                   paramCache,
                                                   priVars,
                                                   element,
-                                                  elemGeom,
+                                                  fvGeometry,
                                                   scvIdx,
                                                   problem);
 
@@ -152,14 +146,14 @@ public:
 
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         // capillary pressures
         Scalar capPress[numPhases];
         MaterialLaw::capillaryPressures(capPress, materialParams, fluidState_);
         // add to the pressure of the first fluid phase
         Scalar p0 = priVars[p0Idx];
-        for (int i = 0; i < numPhases; ++ i)
-            fluidState_.setPressure(i, p0 - capPress[0] + capPress[i]);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
+            fluidState_.setPressure(phaseIdx, p0 - capPress[0] + capPress[phaseIdx]);
 
         /////////////
         // set the fluid compositions
@@ -170,7 +164,7 @@ public:
                                     hint_,
                                     problem,
                                     element,
-                                    elemGeom,
+                                    fvGeometry,
                                     scvIdx);
         MassVolumeVariables::checkDefined();
 
@@ -179,9 +173,9 @@ public:
         /////////////
 
         // porosity
-        porosity_ = problem.spatialParameters().porosity(element,
-                                                         elemGeom,
-                                                         scvIdx);
+        porosity_ = problem.spatialParams().porosity(element,
+                                                     fvGeometry,
+                                                     scvIdx);
         Valgrind::CheckDefined(porosity_);
 
         /////////////
@@ -216,7 +210,7 @@ public:
         EnergyVolumeVariables::update(fluidState_,
                                       paramCache,
                                       element,
-                                      elemGeom,
+                                      fvGeometry,
                                       scvIdx,
                                       problem);
         EnergyVolumeVariables::checkDefined();
@@ -233,7 +227,7 @@ public:
                                   priVars,
                                   problem,
                                   element,
-                                  elemGeom,
+                                  fvGeometry,
                                   scvIdx);
         IAVolumeVariables::checkDefined();
         checkDefined();
@@ -250,21 +244,21 @@ public:
      * \brief Returns the effective mobility of a given phase within
      *        the control volume.
      */
-    Scalar mobility(int phaseIdx) const
+    Scalar mobility(const unsigned int phaseIdx) const
     { return relativePermability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Returns the viscosity of a given phase within
      *        the control volume.
      */
-    Scalar viscosity(int phaseIdx) const
+    Scalar viscosity(const unsigned int phaseIdx) const
     { return fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Returns the relative permeability of a given phase within
      *        the control volume.
      */
-    Scalar relativePermability(int phaseIdx) const
+    Scalar relativePermability(const unsigned int phaseIdx) const
     { return relativePermeability_[phaseIdx]; }
 
     /*!
@@ -277,7 +271,7 @@ public:
      * \brief Returns true iff the fluid state is in the active set
      *        for a phase,
      */
-    bool isPhaseActive(int phaseIdx) const
+    bool isPhaseActive(const unsigned int phaseIdx) const
     {
         return
             phasePresentIneq(fluidState(), phaseIdx) -
@@ -288,7 +282,7 @@ public:
     /*!
      * \brief Returns the value of the NCP-function for a phase.
      */
-    Scalar phaseNcp(int phaseIdx) const
+    Scalar phaseNcp(const unsigned int phaseIdx) const
     {
         Scalar aEval = phaseNotPresentIneq(this->evalPoint().fluidState(), phaseIdx);
         Scalar bEval = phasePresentIneq(this->evalPoint().fluidState(), phaseIdx);
@@ -301,19 +295,21 @@ public:
      * \brief Returns the value of the inequality where a phase is
      *        present.
      */
-    Scalar phasePresentIneq(const FluidState &fluidState, int phaseIdx) const
+    Scalar phasePresentIneq(const FluidState &fluidState,
+                            const unsigned int phaseIdx) const
     { return fluidState.saturation(phaseIdx); }
 
     /*!
      * \brief Returns the value of the inequality where a phase is not
      *        present.
      */
-    Scalar phaseNotPresentIneq(const FluidState &fluidState, int phaseIdx) const
+    Scalar phaseNotPresentIneq(const FluidState &fluidState,
+                               const unsigned int phaseIdx) const
     {
         // difference of sum of mole fractions in the phase from 100%
         Scalar a = 1;
-        for (int i = 0; i < numComponents; ++i)
-            a -= fluidState.moleFraction(phaseIdx, i);
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            a -= fluidState.moleFraction(phaseIdx, compIdx);
         return a;
     }
 

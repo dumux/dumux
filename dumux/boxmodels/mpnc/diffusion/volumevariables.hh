@@ -44,8 +44,8 @@ class MPNCVolumeVariablesDiffusion
     typedef typename FluidSystem::ParameterCache ParameterCache;
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { lPhaseIdx = FluidSystem::lPhaseIdx };
-    enum { gPhaseIdx = FluidSystem::gPhaseIdx };
+    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
+    enum { nPhaseIdx = FluidSystem::nPhaseIdx };
 
 public:
 
@@ -65,7 +65,7 @@ public:
             diffCoeffL_[compIdx] =
                 FluidSystem::binaryDiffusionCoefficient(fluidState,
                                                         paramCache,
-                                                        lPhaseIdx,
+                                                        wPhaseIdx,
                                                         0,
                                                         compIdx);
         }
@@ -77,7 +77,8 @@ public:
             for (int compJIdx = compIIdx + 1; compJIdx < numComponents; ++compJIdx) {
                 diffCoeffG_[compIIdx][compJIdx] =
                         FluidSystem::binaryDiffusionCoefficient(fluidState,
-                                                                paramCache,                                                        gPhaseIdx,
+                                                                paramCache,
+                                                                nPhaseIdx,
                                                                 compIIdx,
                                                                 compJIdx);
 
@@ -90,14 +91,16 @@ public:
     }
 
 
-    Scalar diffCoeff(int phaseIdx, int compIIdx, int compJIdx) const
+    Scalar diffCoeff(const unsigned int phaseIdx,
+                     const unsigned int compIIdx,
+                     const unsigned int compJIdx) const
     {
-        if (phaseIdx == gPhaseIdx)
+        if (phaseIdx == nPhaseIdx)
             // TODO: tensorial diffusion coefficients
             return diffCoeffG_[compIIdx][compJIdx];
 
-        int i = std::min(compIIdx, compJIdx);
-        int j = std::max(compIIdx, compJIdx);
+        const unsigned int i = std::min(compIIdx, compJIdx);
+        const unsigned int j = std::max(compIIdx, compJIdx);
         if (i != 0)
             return 0;
         return diffCoeffL_[j];
@@ -145,10 +148,10 @@ public:
                 const Problem &problem)
     { }
 
-    Scalar diffCoeffL(int compIdx) const
+    Scalar diffCoeffL(const unsigned int compIdx) const
     { return 0; }
 
-    Scalar diffCoeffG(int compIIdx, int compJIdx) const
+    Scalar diffCoeffG(const unsigned int compIIdx, const unsigned int compJIdx) const
     { return 0; }
 
     /*!

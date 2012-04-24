@@ -55,43 +55,37 @@ template <class TypeTag>
 class MPNCFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
 
-    enum {
-        dimWorld = GridView::dimensionworld,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+    enum {dim= GridView::dimension};
+    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
+    enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
+    enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
+    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity)};
 
-        enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion),
-        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
-        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
-        enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
-        enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity)
-    };
-
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
-
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-
-
-    typedef MPNCFluxVariablesDiffusion<TypeTag, enableDiffusion>                  FluxVariablesDiffusion;
-    typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, enableKineticEnergy>    FluxVariablesEnergy;
+    typedef MPNCFluxVariablesDiffusion<TypeTag, enableDiffusion> FluxVariablesDiffusion;
+    typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, enableKineticEnergy> FluxVariablesEnergy;
 
 public:
     MPNCFluxVariables(const Problem &problem,
-                   const Element &element,
-                   const FVElementGeometry &elemGeom,
-                   int scvfIdx,
-                   const ElementVolumeVariables &elemVolVars)
-        : fvElemGeom_(elemGeom), volVars_(elemVolVars)
+                      const Element &element,
+                      const FVElementGeometry &fvGeometry,
+                      const unsigned int faceIdx,
+                      const ElementVolumeVariables &elemVolVars)
+        : fvGeometry_(fvGeometry), elemVolVars_(elemVolVars)
     {
-        scvfIdx_ = scvfIdx;
+        faceIdx_ = faceIdx;
 
         // update the base module (i.e. advection)
         calculateGradients_(problem, element, elemVolVars);
@@ -99,11 +93,11 @@ public:
 
         // update the flux data of the energy module (i.e. isothermal
         // or non-isothermal)
-        energyDat_.update(problem, element, elemGeom, scvfIdx, *this, elemVolVars);
+        fluxVarsEnergy_.update(problem, element, fvGeometry, faceIdx, *this, elemVolVars);
 
         // update the flux data of the diffusion module (i.e. with or
         // without diffusion)
-        diffusionDat_.update(problem, element, elemGeom, scvfIdx, elemVolVars);
+        fluxVarsDiffusion_.update(problem, element, fvGeometry, faceIdx, elemVolVars);
 
         extrusionFactor_ =
             (elemVolVars[face().i].extrusionFactor()
@@ -124,9 +118,9 @@ public:
      * \param elemVolVars element volume variables
      * \param phaseIdx phase index
      */
-    void computeDarcy(Vector & vDarcy,
+    void computeDarcy(DimVector & vDarcy,
                       const ElementVolumeVariables &elemVolVars,
-                      int phaseIdx) const
+                      const unsigned int phaseIdx) const
     {
         intrinsicPermeability().mv(potentialGrad(phaseIdx),
                                             vDarcy);
@@ -158,10 +152,10 @@ public:
     }
 
     const SCVFace &face() const
-    { return fvElemGeom_.subContVolFace[scvfIdx_]; }
+    { return fvGeometry_.subContVolFace[faceIdx_]; }
 
-    const VolumeVariables &volVars(int idx) const
-    { return volVars_[idx]; }
+    const VolumeVariables &volVars(const unsigned int idx) const
+    { return elemVolVars_[idx]; }
 
     /*!
      * \brief Returns th extrusion factor for the sub-control volume face
@@ -172,39 +166,56 @@ public:
     /*!
      * \brief Return the intrinsic permeability.
      */
-    const Tensor &intrinsicPermeability() const
+    const DimMatrix &intrinsicPermeability() const
     { return K_; }
 
     /*!
      * \brief Return the pressure potential gradient.
      */
-    const Vector &potentialGrad(int phaseIdx) const
+    const DimVector &potentialGrad(const unsigned int phaseIdx) const
     { return potentialGrad_[phaseIdx]; }
 
     ////////////////////////////////////////////////
     // forward calls to the diffusion module
-    Scalar porousDiffCoeffL(int compIdx) const
-    { return diffusionDat_.porousDiffCoeffL(compIdx); };
+    Scalar porousDiffCoeffL(const unsigned int compIdx) const
+    { return fluxVarsDiffusion_.porousDiffCoeffL(compIdx); }
 
-    Scalar porousDiffCoeffG(int compIIdx, int compJIdx) const
-    { return diffusionDat_.porousDiffCoeffG(compIIdx, compJIdx); };
+    Scalar porousDiffCoeffG(const unsigned int compIIdx,
+                            const unsigned int compJIdx) const
+    { return fluxVarsDiffusion_.porousDiffCoeffG(compIIdx, compJIdx); }
 
-    const Scalar moleFrac(int phaseIdx, int compIdx) const
-    { return diffusionDat_.moleFrac(phaseIdx, compIdx); };
+    const Scalar moleFraction(const unsigned int phaseIdx,
+                              const unsigned int compIdx) const
+    { return fluxVarsDiffusion_.moleFraction(phaseIdx, compIdx); }
 
-    const Vector &moleFracGrad(int phaseIdx,
-                               int compIdx) const
-    { return diffusionDat_.moleFracGrad(phaseIdx, compIdx); };
+    DUMUX_DEPRECATED_MSG("use moleFraction() instead")
+    const Scalar moleFrac(const unsigned int phaseIdx,
+                          const unsigned int compIdx) const
+    { return fluxVarsDiffusion_.moleFraction(phaseIdx, compIdx); }
+
+
+    const DimVector &moleFractionGrad(const unsigned int phaseIdx,
+                                      const unsigned int compIdx) const
+    { return fluxVarsDiffusion_.moleFractionGrad(phaseIdx, compIdx); }
+
+    DUMUX_DEPRECATED_MSG("use moleFraction() instead")
+    const DimVector &moleFracGrad(const unsigned int phaseIdx,
+                                  const unsigned int compIdx) const
+    { return fluxVarsDiffusion_.moleFractionGrad(phaseIdx, compIdx); }
     // end of forward calls to the diffusion module
     ////////////////////////////////////////////////
 
     ////////////////////////////////////////////////
     // forward calls to the temperature module
-    const Vector &temperatureGrad() const
-    { return energyDat_.temperatureGrad(); };
+    const DimVector &temperatureGrad() const
+    { return fluxVarsEnergy_.temperatureGrad(); };
 
+    DUMUX_DEPRECATED_MSG("use fluxVariablesEnergy() instead")
     const FluxVariablesEnergy &energyData() const
-    { return energyDat_; }
+    { return fluxVarsEnergy() ; }
+
+    const FluxVariablesEnergy &fluxVarsEnergy() const
+    { return fluxVarsEnergy_; }
     // end of forward calls to the temperature module
     ////////////////////////////////////////////////
 
@@ -218,13 +229,13 @@ private:
         }
 
         // calculate pressure gradients using finite element gradients
-        Vector tmp(0.0);
+        DimVector tmp(0.0);
         for (int idx = 0;
-             idx < fvElemGeom_.numVertices;
+             idx < fvGeometry_.numVertices;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
-            const Vector &feGrad = face().grad[idx];
+            const DimVector &feGrad = face().grad[idx];
 
             // TODO: only calculate the gradients for the present
             // phases.
@@ -245,8 +256,8 @@ private:
         if (enableGravity) {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
-            Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
-            g += problem.boxGravity(element, fvElemGeom_, face().j);
+            DimVector g(problem.boxGravity(element, fvGeometry_, face().i));
+            g += problem.boxGravity(element, fvGeometry_, face().j);
             g /= 2;
 
             for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
@@ -266,7 +277,7 @@ private:
                 Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
 
                 // make gravity acceleration a force
-                Vector f(g);
+                DimVector f(g);
                 f *= density;
 
                 // calculate the final potential gradient
@@ -281,15 +292,15 @@ private:
     {
         // multiply the pressure potential with the intrinsic
         // permeability
-        const SpatialParameters &sp = problem.spatialParameters();
+        const SpatialParams &sp = problem.spatialParams();
         for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
         {
             sp.meanK(K_,
                      sp.intrinsicPermeability(element,
-                                              fvElemGeom_,
+                                              fvGeometry_,
                                               face().i),
                      sp.intrinsicPermeability(element,
-                                              fvElemGeom_,
+                                              fvGeometry_,
                                               face().j));
         }
     }
@@ -297,22 +308,21 @@ private:
 
 
 
-    const FVElementGeometry &fvElemGeom_;
-    int scvfIdx_;
-
-    const ElementVolumeVariables &volVars_;
+    const FVElementGeometry &fvGeometry_;
+    int faceIdx_;
+    const ElementVolumeVariables &elemVolVars_;
 
     // The extrusion factor for the sub-control volume face
     Scalar extrusionFactor_;
 
     // pressure potential gradients
-    Vector potentialGrad_[numPhases];
+    DimVector potentialGrad_[numPhases];
 
     // intrinsic permeability
-    Tensor K_;
+    DimMatrix K_;
 
-    FluxVariablesDiffusion     diffusionDat_;
-    FluxVariablesEnergy     energyDat_;
+    FluxVariablesDiffusion  fluxVarsDiffusion_;
+    FluxVariablesEnergy     fluxVarsEnergy_;
 };
 
 } // end namepace

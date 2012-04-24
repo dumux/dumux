@@ -234,10 +234,19 @@ public:
     }
 
     /*!
-     * \brief Set the temperature [K] of a fluid phase
+     * \brief Set the temperature [K] of all phases.
      */
     void setTemperature(Scalar value)
     { temperature_ = value; }
+
+    /*!
+     * \brief Set the temperature [K] of a specific phase.
+     *        This is not implemented in this fluidstate.
+     */
+    void setTemperature(const int phaseIdx, const Scalar value)
+    {
+        DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for equilibrium, temperature in all phases is assumed to be equal.");
+    }
 
     /*!
      * \brief Set the fluid pressure of a phase [Pa]

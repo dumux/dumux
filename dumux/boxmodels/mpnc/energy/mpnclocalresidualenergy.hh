@@ -56,10 +56,11 @@ class MPNCLocalResidualEnergy
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
+
     typedef typename Dune::FieldVector<Scalar, numComponents>  ComponentVector;
 
 public:
-    static void computeStorage(PrimaryVariables &result,
+    static void computeStorage(PrimaryVariables &storage,
                                const VolumeVariables &volVars)
     {
         // do nothing, we're isothermal!
@@ -68,13 +69,13 @@ public:
 
     static void addPhaseStorage(PrimaryVariables &storage,
                                 const VolumeVariables &volVars,
-                                int phaseIdx)
+                                const unsigned int phaseIdx)
     {
         // do nothing, we're isothermal!
     }
 
-    static void phaseEnthalpyFlux(PrimaryVariables &result,
-                                  int phaseIdx,
+    static void phaseEnthalpyFlux(PrimaryVariables &enthalpyFlux,
+                                  const unsigned int phaseIdx,
                                   const PrimaryVariables &compMolFlux,
                                   const ElementVolumeVariables &volVars,
                                   const FluxVariables &fluxVars)
@@ -82,7 +83,7 @@ public:
         // do nothing, we're isothermal!
     }
 
-    static void heatConduction(PrimaryVariables &result,
+    static void heatConduction(PrimaryVariables &heatConduction,
                                const ElementVolumeVariables &volVars,
                                const FluxVariables &fluxVars)
     {
@@ -98,7 +99,7 @@ public:
         // do nothing, we're isothermal!
     }
 
-    static void computeSource(PrimaryVariables &result,
+    static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars,
                               const ComponentVector componentIntoPhaseMassTransfer[numPhases])
     {
@@ -115,12 +116,10 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticenergyTra
     typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum { dim = GridView::dimension };
@@ -131,21 +130,19 @@ class MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*kineticenergyTra
 
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
 
-
-
 public:
-    static void computeStorage(PrimaryVariables &result,
+    static void computeStorage(PrimaryVariables &storage,
                                const VolumeVariables &volVars)
     {
-        result[energyEqIdx] = 0;
+        storage[energyEqIdx] = 0;
 
         // energy of the fluids
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            addPhaseStorage(result, volVars, phaseIdx);
+            addPhaseStorage(storage, volVars, phaseIdx);
         }
 
         // heat stored in the rock matrix
-        result[energyEqIdx] +=
+        storage[energyEqIdx] +=
             volVars.fluidState().temperature(/*phaseIdx=*/0)
             * volVars.soilDensity()
             * (1.0 - volVars.porosity())
@@ -154,7 +151,7 @@ public:
 
     static void addPhaseStorage(PrimaryVariables &storage,
                                 const VolumeVariables &volVars,
-                                int phaseIdx)
+                                const unsigned int phaseIdx)
     {
         const FluidState &fs = volVars.fluidState();
 
@@ -168,7 +165,7 @@ public:
 
     static void computeFlux(PrimaryVariables & flux,
                             const FluxVariables & fluxVars,
-                            const ElementVolumeVariables & volVars,
+                            const ElementVolumeVariables & elemVolVars,
                             const ComponentVector molarPhaseComponentValuesMassTransport[numPhases])
     {
         flux[energyEqIdx] = 0.0;
@@ -177,20 +174,20 @@ public:
         for(int phaseIdx=0; phaseIdx<numPhases; ++phaseIdx)
             computePhaseEnthalpyFlux(flux,
                                 fluxVars,
-                                volVars,
+                                elemVolVars,
                                 phaseIdx,
                                 molarPhaseComponentValuesMassTransport[phaseIdx]);
 
         //conduction is treated lumped in this model
         computeHeatConduction(flux,
                              fluxVars,
-                             volVars);
+                             elemVolVars);
     }
 
-    static void computePhaseEnthalpyFlux(PrimaryVariables & result,
+    static void computePhaseEnthalpyFlux(PrimaryVariables & phaseEnthalpyFlux,
                                          const FluxVariables & fluxVars,
-                                         const ElementVolumeVariables & volVars,
-                                         const int phaseIdx,
+                                         const ElementVolumeVariables & elemVolVars,
+                                         const unsigned int phaseIdx,
                                          const ComponentVector & molarComponentValuesMassTransport)
     {
         Scalar massFlux = 0;
@@ -200,33 +197,33 @@ public:
             massFlux += molarComponentValuesMassTransport[compIdx]
                                     * FluidSystem::molarMass(compIdx);
 
-        int upIdx = fluxVars.face().i;
+        unsigned int upIdx = fluxVars.face().i;
         if (massFlux < 0) upIdx = fluxVars.face().j;
 
         // use the phase enthalpy of the upstream vertex to calculate
         // the enthalpy transport
-        const VolumeVariables &up = volVars[upIdx];
-        result[energyEqIdx] += up.fluidState().enthalpy(phaseIdx) * massFlux;
+        const VolumeVariables &up = elemVolVars[upIdx];
+        phaseEnthalpyFlux[energyEqIdx] += up.fluidState().enthalpy(phaseIdx) * massFlux;
     }
 
-    static void computeHeatConduction(PrimaryVariables & result,
+    static void computeHeatConduction(PrimaryVariables & heatConduction,
                                     const FluxVariables & fluxVars,
-                                    const ElementVolumeVariables & volVars)
+                                    const ElementVolumeVariables & elemVolVars)
     {
         //lumped heat conduction of the rock matrix and the fluid phases
-        Scalar lumpedConductivity   = fluxVars.energyData().lambdaPm() ;
-        Scalar temperatureGradientNormal  = fluxVars.energyData().temperatureGradientNormal() ;
+        Scalar lumpedConductivity   = fluxVars.fluxVarsEnergy().lambdaPm() ;
+        Scalar temperatureGradientNormal  = fluxVars.fluxVarsEnergy().temperatureGradientNormal() ;
         Scalar lumpedHeatConduction = - lumpedConductivity * temperatureGradientNormal ;
-        result[energyEqIdx] += lumpedHeatConduction ;
+        heatConduction[energyEqIdx] += lumpedHeatConduction ;
     }
 
 
 
-    static void computeSource(PrimaryVariables &result,
+    static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars,
                               const ComponentVector componentIntoPhaseMassTransfer[numPhases])
     {
-        result[energyEqIdx] = 0.0;
+        source[energyEqIdx] = 0.0;
     }
 };
 

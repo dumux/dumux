@@ -46,22 +46,21 @@ struct MPNCIndices :
                                  GET_PROP_VALUE(TypeTag, EnableKineticEnergy)>
 {
 private:
-    enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy) };
-    enum { enableKinetic        = GET_PROP_VALUE(TypeTag, EnableKinetic) }; //mass transfer
-    enum { enableKineticEnergy  = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) }; // energy transfer
+            typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+            enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy) };
+            enum { enableKinetic        = GET_PROP_VALUE(TypeTag, EnableKinetic) }; //mass transfer
+            enum { enableKineticEnergy  = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) }; // energy transfer
+            enum { numPhases = FluidSystem::numPhases };
 
-    typedef MPNCMassIndices<BasePVOffset, TypeTag, enableKinetic> MassIndices;
-    typedef MPNCEnergyIndices<BasePVOffset + MassIndices::NumPrimaryVars, enableEnergy, enableKineticEnergy> EnergyIndices;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    enum { numPhases = FluidSystem::numPhases };
+            typedef MPNCMassIndices<BasePVOffset, TypeTag, enableKinetic> MassIndices;
+            typedef MPNCEnergyIndices<BasePVOffset + MassIndices::NumPrimaryVars, enableEnergy, enableKineticEnergy> EnergyIndices;
 
 public:
     /*!
      * \brief The number of primary variables / equations.
      */
     // temperature + Mass Balance  + constraints for switch stuff
-    static const int NumPrimaryVars =
+    static const unsigned int NumPrimaryVars =
         MassIndices::NumPrimaryVars +
         EnergyIndices::NumPrimaryVars +
         numPhases;
@@ -69,7 +68,7 @@ public:
     /*!
      * \brief The number of primary variables / equations of the energy module.
      */
-    static const int NumPrimaryEnergyVars =
+    static const unsigned int NumPrimaryEnergyVars =
         EnergyIndices::NumPrimaryVars ;
 
     /*!
@@ -79,7 +78,7 @@ public:
      * The following (numPhases - 1) primary variables represent the
      * saturations for the phases [1, ..., numPhases - 1]
      */
-    static const int S0Idx =
+    static const unsigned int S0Idx =
         MassIndices::NumPrimaryVars +
         EnergyIndices::NumPrimaryVars;
 
@@ -87,7 +86,7 @@ public:
      * \brief Index of the first phase' pressure in a vector of
      *        primary variables.
      */
-    static const int p0Idx =
+    static const unsigned int p0Idx =
         MassIndices::NumPrimaryVars +
         EnergyIndices::NumPrimaryVars +
         numPhases - 1;
@@ -97,7 +96,7 @@ public:
      *
      * The index for the remaining phases are consecutive.
      */
-    static const int phase0NcpIdx =
+    static const unsigned int phase0NcpIdx =
         MassIndices::NumPrimaryVars +
         EnergyIndices::NumPrimaryVars;
 };

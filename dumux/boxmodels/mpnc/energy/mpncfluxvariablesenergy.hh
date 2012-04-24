@@ -50,11 +50,9 @@ class MPNCFluxVariablesEnergy
                   "but kinetic energy transfer enabled.");
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
@@ -66,9 +64,9 @@ public:
 
     void update(const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvElemGeom,
-                int scvfIdx,
-                const FluxVariables &fluxDat,
+                const FVElementGeometry &fvGeometry,
+                const unsigned int faceIdx,
+                const FluxVariables &fluxVars,
                 const ElementVolumeVariables &elemVolVars)
     {};
 };
@@ -78,7 +76,6 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -86,84 +83,80 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename FluidSystem::ParameterCache ParameterCache;
-
     typedef typename GridView::ctype CoordScalar;
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-        gPhaseIdx = FluidSystem::gPhaseIdx,
-        lPhaseIdx = FluidSystem::lPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
-    };
+    enum{dim = GridView::dimension};
+    enum{dimWorld = GridView::dimensionworld};
+    enum{nPhaseIdx = FluidSystem::nPhaseIdx};
+    enum{wPhaseIdx = FluidSystem::wPhaseIdx};
+    enum{numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld>  Vector;
-
+    typedef Dune::FieldVector<CoordScalar, dimWorld>  DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     MPNCFluxVariablesEnergy()
     {}
 
-    void update(const  Problem & problem,
+    void update(const Problem & problem,
                 const Element &element,
-                const FVElementGeometry &fvElemGeom,
-                int scvfIdx,
-                const FluxVariables &fluxDat,
+                const FVElementGeometry &fvGeometry,
+                const unsigned int faceIdx,
+                const FluxVariables &fluxVars,
                 const ElementVolumeVariables &elemVolVars)
     {
         // calculate temperature gradient using finite element
         // gradients
-        Vector tmp(0.0);
-        Vector temperatureGradient(0.);
-        for (int scvIdx = 0; scvIdx < fvElemGeom.numVertices; scvIdx++)
+        DimVector tmp(0.0);
+        DimVector temperatureGradient(0.);
+        for (int scvIdx = 0; scvIdx < fvGeometry.numVertices; scvIdx++)
         {
-            tmp = fvElemGeom.subContVolFace[scvfIdx].grad[scvIdx];
+            tmp = fvGeometry.subContVolFace[faceIdx].grad[scvIdx];
             tmp *= elemVolVars[scvIdx].fluidState().temperature(/*phaseIdx=*/0);
             temperatureGradient += tmp;
         }
 
         // project the heat flux vector on the face's normal vector
-        temperatureGradientNormal_ = temperatureGradient * fvElemGeom.subContVolFace[scvfIdx].normal;
+        temperatureGradientNormal_ = temperatureGradient * fvGeometry.subContVolFace[faceIdx].normal;
 
 
         lambdaPm_ = lumpedLambdaPm(problem,
                                    element,
-                                    fvElemGeom,
-                                    scvfIdx,
-                                    elemVolVars) ;
+                                   fvGeometry,
+                                   faceIdx,
+                                   elemVolVars) ;
 
     }
 
     Scalar lumpedLambdaPm(const Problem &problem,
                           const Element &element,
-                           const FVElementGeometry & fvElemGeom,
-                           int faceIdx,
-                           const ElementVolumeVariables & elemVolVars)
+                          const FVElementGeometry & fvGeometry,
+                          const unsigned int faceIdx,
+                          const ElementVolumeVariables & elemVolVars)
     {
          // arithmetic mean of the liquid saturation and the porosity
-         const int i = fvElemGeom.subContVolFace[faceIdx].i;
-         const int j = fvElemGeom.subContVolFace[faceIdx].j;
+         const unsigned int i = fvGeometry.subContVolFace[faceIdx].i;
+         const unsigned int j = fvGeometry.subContVolFace[faceIdx].j;
 
          const FluidState &fsI = elemVolVars[i].fluidState();
          const FluidState &fsJ = elemVolVars[j].fluidState();
-         const Scalar Sli = fsI.saturation(lPhaseIdx);
-         const Scalar Slj = fsJ.saturation(lPhaseIdx);
+         const Scalar Swi = fsI.saturation(wPhaseIdx);
+         const Scalar Swj = fsJ.saturation(wPhaseIdx);
 
          typename FluidSystem::ParameterCache paramCacheI, paramCacheJ;
          paramCacheI.updateAll(fsI);
          paramCacheJ.updateAll(fsJ);
 
-         const Scalar Sl = std::max<Scalar>(0.0, 0.5*(Sli + Slj));
+         const Scalar Sw = std::max<Scalar>(0.0, 0.5*(Swi + Swj));
 
          //        const Scalar lambdaDry = 0.583; // W / (K m) // works, orig
          //        const Scalar lambdaWet = 1.13; // W / (K m) // works, orig
 
-         Scalar lambdaSoilI = problem.spatialParameters().soilThermalConductivity(element, fvElemGeom, i);
-         Scalar lambdaSoilJ = problem.spatialParameters().soilThermalConductivity(element, fvElemGeom, i);
-         const Scalar lambdaDry = 0.5 * (lambdaSoilI + FluidSystem::thermalConductivity(fsI, paramCacheI, gPhaseIdx)); // W / (K m)
-         const Scalar lambdaWet = 0.5 * (lambdaSoilJ + FluidSystem::thermalConductivity(fsJ, paramCacheJ, lPhaseIdx)) ; // W / (K m)
+         const Scalar lambdaSoilI = problem.spatialParams().soilThermalConductivity(element, fvGeometry, i);
+         const Scalar lambdaSoilJ = problem.spatialParams().soilThermalConductivity(element, fvGeometry, i);
+         const Scalar lambdaDry = 0.5 * (lambdaSoilI + FluidSystem::thermalConductivity(fsI, paramCacheI, nPhaseIdx)); // W / (K m)
+         const Scalar lambdaWet = 0.5 * (lambdaSoilJ + FluidSystem::thermalConductivity(fsJ, paramCacheJ, wPhaseIdx)) ; // W / (K m)
 
          // the heat conductivity of the matrix. in general this is a
          // tensorial value, but we assume isotropic heat conductivity.
@@ -174,15 +167,15 @@ public:
          // Stuttgart, Institute of Hydraulic Engineering, p. 57
 
          Scalar result;
-         if (Sl < 0.1) {
+         if (Sw < 0.1) {
              // regularization
              Dumux::Spline<Scalar> sp(0, 0.1, // x1, x2
                                       0, sqrt(0.1), // y1, y2
                                       5*0.5/sqrt(0.1), 0.5/sqrt(0.1)); // m1, m2
-             result = lambdaDry + sp.eval(Sl)*(lambdaWet - lambdaDry);
+             result = lambdaDry + sp.eval(Sw)*(lambdaWet - lambdaDry);
          }
          else
-             result = lambdaDry + std::sqrt(Sl)*(lambdaWet - lambdaDry);
+             result = lambdaDry + std::sqrt(Sw)*(lambdaWet - lambdaDry);
 
          return result;
     }

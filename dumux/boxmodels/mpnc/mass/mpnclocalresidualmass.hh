@@ -27,7 +27,6 @@
 
 #include <dumux/boxmodels/mpnc/mpncproperties.hh>
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
-
 #include <dumux/common/math.hh>
 #include <dumux/common/spline.hh>
 
@@ -58,10 +57,9 @@ protected:
     enum { enableEnergy     = GET_PROP_VALUE(TypeTag, EnableEnergy) };
     enum { enableKineticEnergy     = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
 
-    typedef typename Dune::FieldVector<Scalar, dim> Vector;
+    typedef typename Dune::FieldVector<Scalar, dim> DimVector;
     typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
     typedef MPNCDiffusion<TypeTag, enableDiffusion> Diffusion;
-
     typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
 
 public:
@@ -71,19 +69,19 @@ public:
      *
      * The result should be averaged over the volume.
      */
-    static void computePhaseStorage(ComponentVector &result,
+    static void computePhaseStorage(ComponentVector &storage,
                                     const VolumeVariables &volVars,
-                                    int phaseIdx)
+                                    const unsigned int phaseIdx)
     {
         // compute storage term of all components within all phases
-        result = 0;
+        storage = 0;
         for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
-            result[compIdx] +=
+            storage[compIdx] +=
                 volVars.fluidState().saturation(phaseIdx)*
                 volVars.fluidState().molarity(phaseIdx, compIdx);
         }
 
-        result *= volVars.porosity();
+        storage *= volVars.porosity();
     }
 
     /*!
@@ -91,13 +89,13 @@ public:
      *        quantities over a face of a subcontrol volume via a
      *        fluid phase.
      */
-    static void computeAdvectivePhaseFlux(ComponentVector &phaseComponentValues,
+    static void computeAdvectivePhaseFlux(ComponentVector &flux,
                                           const FluxVariables &fluxVars,
-                                          const int phaseIdx)
+                                          const unsigned int phaseIdx)
     {
         static bool enableSmoothUpwinding_ = GET_PARAM(TypeTag, bool, EnableSmoothUpwinding);
 
-        Vector tmpVec;
+        DimVector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
                                             tmpVec);
 
@@ -170,10 +168,10 @@ public:
                     compFlux = sp2.eval(x);
                 }
 
-                phaseComponentValues[compIdx] = sign*compFlux;
+                flux[compIdx] = sign*compFlux;
             }
             else {// !use smooth upwinding
-                phaseComponentValues[compIdx] =
+                flux[compIdx] =
                     up.mobility(phaseIdx) *
                     up.fluidState().molarity(phaseIdx, compIdx) *
                     normalFlux;
@@ -189,7 +187,7 @@ public:
      */
     static void computeDiffusivePhaseFlux(ComponentVector &flux,
                                           const FluxVariables &fluxVars,
-                                          int phaseIdx)
+                                          const unsigned int phaseIdx)
     {
         if (!enableDiffusion) {
             flux = 0.0;
@@ -231,7 +229,6 @@ class MPNCLocalResidualMass
                   "but kinetic mass transfer enabled.");
 
     typedef MPNCLocalResidualMassCommon<TypeTag> MassCommon;
-
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -242,11 +239,10 @@ class MPNCLocalResidualMass
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { conti0EqIdx      = Indices::conti0EqIdx };
-
-    typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
-
     enum { enableEnergy     = GET_PROP_VALUE(TypeTag, EnableEnergy) };
     enum { enableKineticEnergy     = GET_PROP_VALUE(TypeTag, EnableKineticEnergy) };
+
+    typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
     typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
 
 public:
@@ -270,7 +266,7 @@ public:
      */
     static void addPhaseStorage(PrimaryVariables &storage,
                                 const VolumeVariables &volVars,
-                                int phaseIdx)
+                                const unsigned int phaseIdx)
     {
         // calculate the component-wise mass storage
         ComponentVector phaseComponentValues;

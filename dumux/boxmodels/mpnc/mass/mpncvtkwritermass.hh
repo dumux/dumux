@@ -49,23 +49,19 @@ class MPNCVtkWriterMass : public MPNCVtkWriterModule<TypeTag>
                   "but kinetic mass transfer enabled.");
 
     typedef MPNCVtkWriterModule<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
+
+    typedef typename ParentType::ComponentVector ComponentVector;
     bool fugacityOutput_;
-
-    typedef typename ParentType::ComponentBuffer ComponentBuffer;
-
 
 public:
     MPNCVtkWriterMass(const Problem &problem)
@@ -93,14 +89,14 @@ public:
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        int n = elem.template count<dim>();
-        for (int i = 0; i < n; ++i) {
-            int I = this->problem_.vertexMapper().map(elem, i, dim);
-            const VolumeVariables &volVars = elemVolVars[i];
+        int numLocalVertices = elem.geometry().corners();
+        for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
+            int globalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
+            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             if (fugacityOutput_) {
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                    fugacity_[compIdx][I] = volVars.fluidState().fugacity(compIdx);
+                    fugacity_[compIdx][globalIdx] = volVars.fluidState().fugacity(compIdx);
                 }
             }
         }
@@ -117,7 +113,7 @@ public:
     }
 
 private:
-    ComponentBuffer fugacity_;
+    ComponentVector fugacity_;
 };
 
 }

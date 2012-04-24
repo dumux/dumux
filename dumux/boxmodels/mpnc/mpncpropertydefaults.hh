@@ -25,7 +25,6 @@
 #include "mpncindices.hh"
 
 #include "mpncmodel.hh"
-
 #include "mpncproblem.hh"
 #include "mpncindices.hh"
 #include "mpnclocalresidual.hh"
@@ -33,7 +32,6 @@
 #include "mpncvolumevariables.hh"
 #include "mpncproperties.hh"
 #include "mpncnewtoncontroller.hh"
-
 #include "mpncvtkwritermodule.hh"
 #include "mpncvtkwritercommon.hh"
 #include "mass/mpncvtkwritermass.hh"
@@ -68,7 +66,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    static const int value = FluidSystem::numComponents;
+    static const unsigned int value = FluidSystem::numComponents;
 };
 
 /*!
@@ -83,7 +81,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    static const int value = FluidSystem::numPhases;
+    static const unsigned int value = FluidSystem::numPhases;
 };
 
 /*!
@@ -95,7 +93,7 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 public:
-    static const int value = Indices::NumPrimaryVars;
+    static const unsigned int value = Indices::NumPrimaryVars;
 };
 
 /*!

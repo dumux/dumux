@@ -52,7 +52,7 @@ public:
     /*!
      * \brief This module defines one new primary variable.
      */
-    static const int NumPrimaryVars = numComponents;
+    static const unsigned int NumPrimaryVars = numComponents;
 
     /*!
      * \brief Index for the fugacity of the first component in the
@@ -66,7 +66,7 @@ public:
      *  ...
      *  fug0Idx + N - 1 = fugacity of component N
      */
-    static const int fug0Idx = PVOffset + 0;
+    static const unsigned int fug0Idx = PVOffset + 0;
 
     /*!
      * \brief Equation index of the mass conservation equation for the
@@ -80,7 +80,7 @@ public:
      *  ...
      *  conti00EqIdx + N - 1 = continuity of component N
      */
-    static const int conti0EqIdx = PVOffset + 0;
+    static const unsigned int conti0EqIdx = PVOffset + 0;
 };
 
 }

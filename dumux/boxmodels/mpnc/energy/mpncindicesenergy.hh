@@ -47,7 +47,7 @@ public:
      * \brief This module does not define any primary variables in the
      *        isothermal case.
      */
-    static const int NumPrimaryVars = 0;
+    static const unsigned int NumPrimaryVars = 0;
 };
 
 /*!
@@ -60,17 +60,17 @@ public:
     /*!
      * \brief This module defines one new primary variable.
      */
-    static const int NumPrimaryVars = 1;
+    static const unsigned int NumPrimaryVars = 1;
 
     /*!
      * \brief Index for the temperature in a vector of primary
      *        variables.
      */
-    static const int temperatureIdx = PVOffset + 0;
+    static const unsigned int temperatureIdx = PVOffset + 0;
     /*!
      * \brief Equation index of the energy equation.
      */
-    static const int energyEqIdx = PVOffset + 0;
+    static const unsigned int energyEqIdx = PVOffset + 0;
 };
 
 }

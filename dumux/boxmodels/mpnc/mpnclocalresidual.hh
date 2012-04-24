@@ -28,9 +28,7 @@
 #include "mass/mpnclocalresidualmass.hh"
 
 #include <dumux/boxmodels/common/boxmodel.hh>
-
 #include <dumux/common/math.hh>
-
 
 namespace Dumux
 {
@@ -51,35 +49,21 @@ class MPNCLocalResidual : public BoxLocalResidual<TypeTag>
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
     typedef BoxLocalResidual<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-
-    enum {
-
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-
-        enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy),
-        enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy),
-
-        enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic),
-
-        phase0NcpIdx = Indices::phase0NcpIdx
-    };
-
+    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
+    enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
+    enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
+    enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-
-
-
 
     typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, enableKineticEnergy> EnergyResid;
     typedef MPNCLocalResidualMass<TypeTag, enableKinetic> MassResid;
@@ -92,7 +76,9 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      */
-    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage,
+                        const unsigned int scvIdx,
+                        const bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -112,29 +98,29 @@ public:
     }
 
     /*!
-     * \brief Evaluate the amount all conservation quantites
+     * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within all sub-control volumes of an
      *        element.
      */
-    void addPhaseStorage(PrimaryVariables &storage,
+    void addPhaseStorage(PrimaryVariables &phaseStorage,
                          const Element &element,
-                         int phaseIdx) const
+                         const unsigned int phaseIdx) const
     {
         // create a finite volume element geometry
-        FVElementGeometry fvElemGeom;
-        fvElemGeom.update(this->gridView_(), element);
+        FVElementGeometry fvGeometry;
+        fvGeometry.update(this->gridView_(), element);
 
         // calculate volume variables
-        ElementVolumeVariables volVars;
-        this->model_().setHints(element, volVars);
-        volVars.update(this->problem_(),
-                       element,
-                       fvElemGeom,
-                       /*useOldSolution=*/false);
+        ElementVolumeVariables elemVolVars;
+        this->model_().setHints(element, elemVolVars);
+        elemVolVars.update(this->problem_(),
+                           element,
+                           fvGeometry,
+                           /*useOldSolution=*/false);
 
         // calculate the phase storage for all sub-control volumes
         for (int scvIdx=0;
-             scvIdx < fvElemGeom.numVertices;
+             scvIdx < fvGeometry.numVertices;
              scvIdx++)
         {
             PrimaryVariables tmp(0.0);
@@ -142,17 +128,17 @@ public:
             // compute mass and energy storage terms in terms of
             // averaged quantities
             MassResid::addPhaseStorage(tmp,
-                                       volVars[scvIdx],
+                                       elemVolVars[scvIdx],
                                        phaseIdx);
             EnergyResid::addPhaseStorage(tmp,
-                                         volVars[scvIdx],
+                                         elemVolVars[scvIdx],
                                          phaseIdx);
 
             // multiply with volume of sub-control volume
-            tmp *= fvElemGeom.subContVol[scvIdx].volume;
+            tmp *= fvGeometry.subContVol[scvIdx].volume;
 
             // Add the storage of the current SCV to the total storage
-            storage += tmp;
+            phaseStorage += tmp;
         }
     }
 
@@ -160,12 +146,12 @@ public:
      * \brief Calculate the source term of the equation
      */
     void computeSource(PrimaryVariables &source,
-                       int scvIdx)
+                       const unsigned int scvIdx)
      {
         Valgrind::SetUndefined(source);
         this->problem_().boxSDSource(source,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
+                                     this->element_(),
+                                     this->fvGeometry_(),
                                      scvIdx,
                                      this->curVolVars_() );
         const VolumeVariables &volVars = this->curVolVars_(scvIdx);
@@ -191,11 +177,12 @@ public:
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a subcontrol volume.
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx) const
+    void computeFlux(PrimaryVariables &flux,
+                     const unsigned int faceIdx) const
     {
         FluxVariables fluxVars(this->problem_(),
-                               this->elem_(),
-                               this->fvElemGeom_(),
+                               this->element_(),
+                               this->fvGeometry_(),
                                faceIdx,
                                this->curVolVars_());
 
@@ -220,18 +207,18 @@ public:
      * \brief Evaluate the local residual.
      */
     void eval(const Element &element,
-              const FVElementGeometry &fvGeom,
+              const FVElementGeometry &fvGeometry,
               const ElementVolumeVariables &prevVolVars,
               const ElementVolumeVariables &curVolVars,
               const ElementBoundaryTypes &bcType)
     {
         ParentType::eval(element,
-                         fvGeom,
+                         fvGeometry,
                          prevVolVars,
                          curVolVars,
                          bcType);
 
-        for (int i = 0; i < this->fvElemGeom_().numVertices; ++i) {
+        for (int i = 0; i < this->fvGeometry_().numVertices; ++i) {
             // add the two auxiliary equations, make sure that the
             // dirichlet boundary condition is conserved
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

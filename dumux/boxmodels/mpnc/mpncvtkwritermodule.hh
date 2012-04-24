@@ -26,9 +26,7 @@
 
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dune/istl/bvector.hh>
-
 #include <tr1/array>
-
 #include <stdio.h>
 
 namespace Dumux
@@ -45,9 +43,6 @@ namespace Dumux
 template<class TypeTag>
 class MPNCVtkWriterModule
 {
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -55,21 +50,17 @@ class MPNCVtkWriterModule
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
-
     typedef typename GridView::template Codim<0>::Entity Element;
 
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { dim             = GridView::dimension };
 
 public:
-    typedef std::vector<Dune::FieldVector<Scalar, 1> > ScalarBuffer;
-    typedef std::tr1::array<ScalarBuffer, numPhases> PhaseBuffer;
-    typedef std::tr1::array<ScalarBuffer, numComponents> ComponentBuffer;
-    typedef std::tr1::array<ComponentBuffer,  numPhases> PhaseComponentBuffer;
-
-//    typedef Dune::FieldVector<Scalar, dim> VelocityVector;
-//    typedef Dune::BlockVector<VelocityVector> VelocityField;
-//    typedef std::tr1::array<VelocityField, numPhases> PhaseVelocityField;
+    typedef std::vector<Dune::FieldVector<Scalar, 1> > ScalarVector;
+    typedef std::tr1::array<ScalarVector, numPhases> PhaseVector;
+    typedef std::tr1::array<ScalarVector, numComponents> ComponentVector;
+    typedef std::tr1::array<ComponentVector,  numPhases> PhaseComponentMatrix;
 
     MPNCVtkWriterModule(const Problem &problem)
         : problem_(problem)
@@ -90,7 +81,7 @@ public:
      *        variables seen on an element
      */
     void processElement(const Element &elem,
-                        const FVElementGeometry &fvElemGeom,
+                        const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemCurVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
@@ -108,10 +99,10 @@ protected:
     /*!
      * \brief Allocate the space for a buffer storing a scalar quantity
      */
-    void resizeScalarBuffer_(ScalarBuffer &buffer,
+    void resizeScalarBuffer_(ScalarVector &buffer,
                              bool vertexCentered = true)
     {
-        Scalar n;
+        Scalar n; // numVertices for vertexCentereed, numVolumes for volume centered
         if (vertexCentered)
             n = problem_.gridView().size(dim);
         else
@@ -125,18 +116,18 @@ protected:
      * \brief Allocate the space for a buffer storing a phase-specific
      *        quantity
      */
-    void resizePhaseBuffer_(PhaseBuffer &buffer,
+    void resizePhaseBuffer_(PhaseVector &buffer,
                             bool vertexCentered = true)
     {
-        Scalar n;
+        Scalar n; // numVertices for vertexCentereed, numVolumes for volume centered
         if (vertexCentered)
             n = problem_.gridView().size(dim);
         else
             n = problem_.gridView().size(0);
 
-        for (int i = 0; i < numPhases; ++i) {
-            buffer[i].resize(n);
-            std::fill(buffer[i].begin(), buffer[i].end(), 0.0);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            buffer[phaseIdx].resize(n);
+            std::fill(buffer[phaseIdx].begin(), buffer[phaseIdx].end(), 0.0);
         }
     }
 
@@ -144,18 +135,18 @@ protected:
      * \brief Allocate the space for a buffer storing a component
      *        specific quantity
      */
-    void resizeComponentBuffer_(ComponentBuffer &buffer,
+    void resizeComponentBuffer_(ComponentVector &buffer,
                                 bool vertexCentered = true)
     {
-        Scalar n;
+        Scalar n;// numVertices for vertexCentereed, numVolumes for volume centered
         if (vertexCentered)
             n = problem_.gridView().size(dim);
         else
             n = problem_.gridView().size(0);
 
-        for (int i = 0; i < numComponents; ++i) {
-            buffer[i].resize(n);
-            std::fill(buffer[i].begin(), buffer[i].end(), 0.0);
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            buffer[compIdx].resize(n);
+            std::fill(buffer[compIdx].begin(), buffer[compIdx].end(), 0.0);
         }
     }
 
@@ -163,19 +154,19 @@ protected:
      * \brief Allocate the space for a buffer storing a phase and
      *        component specific buffer
      */
-    void resizePhaseComponentBuffer_(PhaseComponentBuffer &buffer,
+    void resizePhaseComponentBuffer_(PhaseComponentMatrix &buffer,
                                      bool vertexCentered = true)
     {
-        Scalar n;
+        Scalar n;// numVertices for vertexCentereed, numVolumes for volume centered
         if (vertexCentered)
             n = problem_.gridView().size(dim);
         else
             n = problem_.gridView().size(0);
 
-        for (int i = 0; i < numPhases; ++i) {
-            for (int j = 0; j < numComponents; ++j) {
-                buffer[i][j].resize(n);
-                std::fill(buffer[i][j].begin(), buffer[i][j].end(), 0.0);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+                buffer[phaseIdx][compIdx].resize(n);
+                std::fill(buffer[phaseIdx][compIdx].begin(), buffer[phaseIdx][compIdx].end(), 0.0);
             }
         }
     }
@@ -186,7 +177,7 @@ protected:
     template <class MultiWriter>
     void commitScalarBuffer_(MultiWriter &writer,
                              const char *name,
-                             ScalarBuffer &buffer,
+                             ScalarVector &buffer,
                              bool vertexCentered = true)
     {
         if (vertexCentered)
@@ -201,17 +192,17 @@ protected:
     template <class MultiWriter>
     void commitPhaseBuffer_(MultiWriter &writer,
                             const char *pattern,
-                            PhaseBuffer &buffer,
+                            PhaseVector &buffer,
                             bool vertexCentered = true)
     {
         char name[512];
-        for (int i = 0; i < numPhases; ++i) {
-            snprintf(name, 512, pattern, FluidSystem::phaseName(i));
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            snprintf(name, 512, pattern, FluidSystem::phaseName(phaseIdx));
 
             if (vertexCentered)
-                writer.attachVertexData(buffer[i], name, 1);
+                writer.attachVertexData(buffer[phaseIdx], name, 1);
             else
-                writer.attachCellData(buffer[i], name, 1);
+                writer.attachCellData(buffer[phaseIdx], name, 1);
         }
     }
 
@@ -221,17 +212,17 @@ protected:
     template <class MultiWriter>
     void commitComponentBuffer_(MultiWriter &writer,
                                 const char *pattern,
-                                ComponentBuffer &buffer,
+                                ComponentVector &buffer,
                                 bool vertexCentered = true)
     {
         char name[512];
-        for (int i = 0; i < numComponents; ++i) {
-            snprintf(name, 512, pattern, FluidSystem::componentName(i));
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            snprintf(name, 512, pattern, FluidSystem::componentName(compIdx));
 
             if (vertexCentered)
-                writer.attachVertexData(buffer[i], name, 1);
+                writer.attachVertexData(buffer[compIdx], name, 1);
             else
-                writer.attachCellData(buffer[i], name, 1);
+                writer.attachCellData(buffer[compIdx], name, 1);
         }
     }
 
@@ -241,20 +232,20 @@ protected:
     template <class MultiWriter>
     void commitPhaseComponentBuffer_(MultiWriter &writer,
                                      const char *pattern,
-                                     PhaseComponentBuffer &buffer,
+                                     PhaseComponentMatrix &buffer,
                                      bool vertexCentered = true)
     {
         char name[512];
-        for (int i= 0; i < numPhases; ++i) {
-            for (int j = 0; j < numComponents; ++j) {
+        for (int phaseIdx= 0; phaseIdx < numPhases; ++phaseIdx) {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
                 snprintf(name, 512, pattern,
-                         FluidSystem::phaseName(i),
-                         FluidSystem::componentName(j));
+                         FluidSystem::phaseName(phaseIdx),
+                         FluidSystem::componentName(compIdx));
 
                 if (vertexCentered)
-                    writer.attachVertexData(buffer[i][j], name, 1);
+                    writer.attachVertexData(buffer[phaseIdx][compIdx], name, 1);
                 else
-                    writer.attachCellData(buffer[i][j], name, 1);
+                    writer.attachCellData(buffer[phaseIdx][compIdx], name, 1);
             }
         }
     }

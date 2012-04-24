@@ -56,22 +56,23 @@ class MPNCVolumeVariablesIA
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
      */
-    template <class FluidState, class ParameterCache>
     void update(const VolumeVariables & volVars,
                 const FluidState &fluidState,
                 const ParameterCache &paramCache,
                 const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element & element,
-                const FVElementGeometry & elemGeom,
-                const int scvIdx)
+                const FVElementGeometry & fvGeometry,
+                const unsigned int scvIdx)
     {
     }
 

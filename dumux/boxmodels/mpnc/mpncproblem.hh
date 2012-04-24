@@ -46,7 +46,6 @@ template<class TypeTag>
 class MPNCProblem : public PorousMediaBoxProblem<TypeTag>
 {
     typedef PorousMediaBoxProblem<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 

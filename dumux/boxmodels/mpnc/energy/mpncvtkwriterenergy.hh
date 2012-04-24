@@ -56,16 +56,14 @@ class MPNCVtkWriterEnergy : public MPNCVtkWriterModule<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
 
-    typedef typename ParentType::ScalarBuffer ScalarBuffer;
-    typedef typename ParentType::PhaseBuffer PhaseBuffer;
+    typedef typename ParentType::ScalarVector ScalarVector;
+    typedef typename ParentType::PhaseVector PhaseVector;
 
 public:
     MPNCVtkWriterEnergy(const Problem &problem)
@@ -89,17 +87,17 @@ public:
      *        variables seen on an element
      */
     void processElement(const Element &elem,
-                        const FVElementGeometry &fvElemGeom,
+                        const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        int n = elem.template count<dim>();
-        for (int i = 0; i < n; ++i) {
-            int I = this->problem_.vertexMapper().map(elem, i, dim);
-            const VolumeVariables &volVars = elemVolVars[i];
+        int numLocalVertices = elem.geometry().corners();
+        for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
+            const unsigned int globalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
+            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
             if (temperatureOutput_)
-                temperature_[I] = volVars.fluidState().temperature(0);
+                temperature_[globalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
         }
     }
 
@@ -116,7 +114,7 @@ public:
 private:
     bool temperatureOutput_;
 
-    ScalarBuffer temperature_;
+    ScalarVector temperature_;
 };
 
 /*!
@@ -133,23 +131,20 @@ class MPNCVtkWriterEnergy<TypeTag, /* enableEnergy = */ true, /* enableKineticEn
     : public MPNCVtkWriterModule<TypeTag>
 {
     typedef MPNCVtkWriterModule<TypeTag> ParentType;
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { dim = GridView::dimension };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
-    typedef typename ParentType::ScalarBuffer ScalarBuffer;
-    typedef typename ParentType::PhaseBuffer PhaseBuffer;
+    typedef typename ParentType::ScalarVector ScalarVector;
+    typedef typename ParentType::PhaseVector PhaseVector;
 
 
 public:
@@ -178,21 +173,21 @@ public:
      *        variables seen on an element
      */
     void processElement(const Element &elem,
-                        const FVElementGeometry &fvElemGeom,
+                        const FVElementGeometry &fvGeometry,
                         const ElementVolumeVariables &elemVolVars,
                         const ElementBoundaryTypes &elemBcTypes)
     {
-        int n = elem.template count<dim>();
-        for (int i = 0; i < n; ++i) {
-            int I = this->problem_.vertexMapper().map(elem, i, dim);
-            const VolumeVariables &volVars = elemVolVars[i];
+        const unsigned int numLocalVertices = elem.geometry().corners();
+        for (int localVertexIdx = 0; localVertexIdx < numLocalVertices; ++localVertexIdx) {
+            int gobalIdx = this->problem_.vertexMapper().map(elem, localVertexIdx, dim);
+            const VolumeVariables &volVars = elemVolVars[localVertexIdx];
 
-            if (temperatureOutput_) temperature_[I] = volVars.fluidState().temperature(0);
+            if (temperatureOutput_) temperature_[gobalIdx] = volVars.fluidState().temperature(/*phaseIdx=*/0);
             for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                 if (enthalpyOutput_)
-                    enthalpy_[phaseIdx][I] = volVars.fluidState().temperature(phaseIdx);
+                    enthalpy_[phaseIdx][gobalIdx] = volVars.fluidState().temperature(phaseIdx);
                 if (internalEnergyOutput_)
-                    internalEnergy_[phaseIdx][I] = volVars.fluidState().internalEnergy(phaseIdx);
+                    internalEnergy_[phaseIdx][gobalIdx] = volVars.fluidState().internalEnergy(phaseIdx);
             }
         }
     }
@@ -216,9 +211,9 @@ private:
     bool enthalpyOutput_;
     bool internalEnergyOutput_;
 
-    ScalarBuffer temperature_;
-    PhaseBuffer enthalpy_;
-    PhaseBuffer internalEnergy_;
+    ScalarVector temperature_;
+    PhaseVector enthalpy_;
+    PhaseVector internalEnergy_;
 };
 
 }

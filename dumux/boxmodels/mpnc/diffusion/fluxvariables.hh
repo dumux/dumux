@@ -39,30 +39,19 @@ class MPNCFluxVariablesDiffusion
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
     typedef typename GridView::template Codim<0>::Entity Element;
 
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+    enum{dim = GridView::dimension};
+    enum{numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
+    enum{numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum{wPhaseIdx = FluidSystem::wPhaseIdx};
+    enum{nPhaseIdx = FluidSystem::nPhaseIdx};
 
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-
-        lPhaseIdx = FluidSystem::lPhaseIdx,
-        gPhaseIdx = FluidSystem::gPhaseIdx
-    };
-
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-
+    typedef Dune::FieldVector<Scalar, dim>  DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-
 
 public:
     MPNCFluxVariablesDiffusion()
@@ -70,37 +59,37 @@ public:
 
     void update(const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvfIdx,
-                const ElementVolumeVariables &vDat)
+                const FVElementGeometry &fvGeometry,
+                const unsigned int faceIdx,
+                const ElementVolumeVariables &elemVolVars)
     {
-        int i = elemGeom.subContVolFace[scvfIdx].i;
-        int j = elemGeom.subContVolFace[scvfIdx].j;
+        const unsigned int i = fvGeometry.subContVolFace[faceIdx].i;
+        const unsigned int j = fvGeometry.subContVolFace[faceIdx].j;
 
-        for (int phase = 0; phase < numPhases; ++phase) {
-            for (int comp = 0; comp < numComponents; ++comp) {
-                moleFrac_[phase][comp]  = vDat[i].fluidState().moleFraction(phase, comp);
-                moleFrac_[phase][comp] += vDat[j].fluidState().moleFraction(phase, comp);
-                moleFrac_[phase][comp] /= 2;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+                moleFraction_[phaseIdx][compIdx]  = elemVolVars[i].fluidState().moleFraction(phaseIdx, compIdx);
+                moleFraction_[phaseIdx][compIdx] += elemVolVars[j].fluidState().moleFraction(phaseIdx, compIdx);
+                moleFraction_[phaseIdx][compIdx] /= 2;
             }
         }
 
         // update the concentration gradients using two-point
         // gradients
-        const GlobalPosition &normal = elemGeom.subContVolFace[scvfIdx].normal;
+        const DimVector &normal = fvGeometry.subContVolFace[faceIdx].normal;
 
-        GlobalPosition tmp = element.geometry().corner(j);
+        DimVector tmp = element.geometry().corner(j);
         tmp -= element.geometry().corner(i);
         Scalar dist = tmp.two_norm()*normal.two_norm();
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
             // concentration gradients
             for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                moleFracGrad_[phaseIdx][compIdx] = normal;
-                moleFracGrad_[phaseIdx][compIdx]
+                moleFractionGrad_[phaseIdx][compIdx] = normal;
+                moleFractionGrad_[phaseIdx][compIdx]
                     *=
-                    (vDat[j].fluidState().moleFraction(phaseIdx, compIdx) -
-                     vDat[i].fluidState().moleFraction(phaseIdx, compIdx))
+                    (elemVolVars[j].fluidState().moleFraction(phaseIdx, compIdx) -
+                     elemVolVars[i].fluidState().moleFraction(phaseIdx, compIdx))
                     / dist;
             }
         }
@@ -118,8 +107,8 @@ public:
         {
             // make sure to only calculate diffusion coefficents
             // for phases which exist in both finite volumes
-            if (vDat[i].fluidState().saturation(phaseIdx) <= 1e-4 ||
-                vDat[j].fluidState().saturation(phaseIdx) <= 1e-4)
+            if (elemVolVars[i].fluidState().saturation(phaseIdx) <= 1e-4 ||
+                elemVolVars[j].fluidState().saturation(phaseIdx) <= 1e-4)
             {
                 continue;
             }
@@ -132,19 +121,19 @@ public:
             // TODO (?): move this calculation to the soil (possibly
             // that's a bad idea, though)
             Scalar red_i =
-                vDat[i].fluidState().saturation(phaseIdx)/vDat[i].porosity() *
-                pow(vDat[i].porosity() * vDat[i].fluidState().saturation(phaseIdx), 7.0/3);
+                elemVolVars[i].fluidState().saturation(phaseIdx)/elemVolVars[i].porosity() *
+                pow(elemVolVars[i].porosity() * elemVolVars[i].fluidState().saturation(phaseIdx), 7.0/3);
             Scalar red_j =
-                vDat[j].fluidState().saturation(phaseIdx)/vDat[j].porosity() *
-                pow(vDat[j].porosity() * vDat[j].fluidState().saturation(phaseIdx), 7.0/3);
+                elemVolVars[j].fluidState().saturation(phaseIdx)/elemVolVars[j].porosity() *
+                pow(elemVolVars[j].porosity() * elemVolVars[j].fluidState().saturation(phaseIdx), 7.0/3);
 
-            if (phaseIdx == FluidSystem::lPhaseIdx) {
+            if (phaseIdx == wPhaseIdx) {
                 // Liquid phase diffusion coefficients in the porous medium
                 for (int i = 0; i < numComponents; ++i) {
                     // -> arithmetic mean
                     porousDiffCoeffL_[i]
-                        = 1./2*(red_i * vDat[i].diffCoeff(lPhaseIdx, 0, i) +
-                                red_j * vDat[j].diffCoeff(lPhaseIdx, 0, i));
+                        = 1./2*(red_i * elemVolVars[i].diffCoeff(wPhaseIdx, 0, i) +
+                                red_j * elemVolVars[j].diffCoeff(wPhaseIdx, 0, i));
                 }
             }
             else {
@@ -153,37 +142,44 @@ public:
                     for (int j = 0; j < numComponents; ++j) {
                         // -> arithmetic mean
                         porousDiffCoeffG_[i][j]
-                            = 1./2*(red_i * vDat[i].diffCoeff(gPhaseIdx, i, j) +
-                                    red_j * vDat[j].diffCoeff(gPhaseIdx, i, j));
+                            = 1./2*(red_i * elemVolVars[i].diffCoeff(nPhaseIdx, i, j) +
+                                    red_j * elemVolVars[j].diffCoeff(nPhaseIdx, i, j));
                     }
                 }
             }
         }
     };
 
-    Scalar porousDiffCoeffL(int compIdx) const
+    Scalar porousDiffCoeffL(const unsigned int compIdx) const
     {
         // TODO: tensorial diffusion coefficients
         return porousDiffCoeffL_[compIdx];
-    };
+    }
 
-    Scalar porousDiffCoeffG(int compIIdx, int compJIdx) const
+    Scalar porousDiffCoeffG(const unsigned int compIIdx,
+                            const unsigned int compJIdx) const
     {
         // TODO: tensorial diffusion coefficients
         return porousDiffCoeffG_[compIIdx][compJIdx];
-    };
+    }
 
-    Scalar moleFrac(int phaseIdx,
-                    int compIdx) const
-    {
-        return moleFrac_[phaseIdx][compIdx];
-    };
+    Scalar moleFraction(const unsigned int phaseIdx,
+                        const unsigned int compIdx) const
+    { return moleFraction_[phaseIdx][compIdx];}
 
-    const GlobalPosition &moleFracGrad(int phaseIdx,
-                                            int compIdx) const
-    {
-        return moleFracGrad_[phaseIdx][compIdx];
-    };
+    DUMUX_DEPRECATED_MSG("use moleFraction() instead")
+    Scalar moleFrac(const unsigned int phaseIdx,
+                    const unsigned int compIdx) const
+    { return moleFraction(phaseIdx, compIdx);}
+
+    const DimVector &moleFractionGrad(const unsigned int phaseIdx,
+                                  const unsigned int compIdx) const
+    { return moleFractionGrad_[phaseIdx][compIdx];}
+
+    DUMUX_DEPRECATED_MSG("use moleFractionGrad() instead")
+    const DimVector &moleFracGrad(const unsigned int phaseIdx,
+                                  const unsigned int compIdx) const
+    { return moleFractionGrad(phaseIdx, compIdx);}
 
 protected:
     // the diffusion coefficients for the porous medium for the
@@ -195,10 +191,10 @@ protected:
     Scalar porousDiffCoeffG_[numComponents][numComponents];
 
     // the concentration gradients of all components in all phases
-    GlobalPosition moleFracGrad_[numPhases][numComponents];
+    DimVector moleFractionGrad_[numPhases][numComponents];
 
     // the mole fractions of each component at the integration point
-    Scalar moleFrac_[numPhases][numComponents];
+    Scalar moleFraction_[numPhases][numComponents];
 };
 
 
@@ -217,9 +213,9 @@ public:
 
     void update(const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvfIdx,
-                const ElementVolumeVariables &vDat)
+                const FVElementGeometry &fvGeometry,
+                const unsigned int faceIdx,
+                const ElementVolumeVariables &elemVolVars)
     {
     };
 };
