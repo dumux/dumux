@@ -71,24 +71,24 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx,
-        lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx
+        wCompIdx = Indices::lCompIdx,
+        nCompIdx = Indices::gCompIdx,
+        wPhaseIdx = Indices::lPhaseIdx,
+        nPhaseIdx = Indices::gPhaseIdx
     };
 
     // present phases
     enum {
-        lPhaseOnly = Indices::lPhaseOnly,
-        gPhaseOnly = Indices::gPhaseOnly,
+        wPhaseOnly = Indices::lPhaseOnly,
+        nPhaseOnly = Indices::gPhaseOnly,
         bothPhases = Indices::bothPhases
     };
 
     // formulations
     enum {
         formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        plSg = TwoPTwoCFormulation::plSg,
-        pgSl = TwoPTwoCFormulation::pgSl
+        pwSn = TwoPTwoCFormulation::plSg,
+        pnSw = TwoPTwoCFormulation::pgSl
     };
 
     // primary variable indices
@@ -116,31 +116,31 @@ public:
      * \param priVars The primary variables
      * \param problem The problem
      * \param element The element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
-                bool isOldSol)
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx,
+                const bool isOldSol)
     {
         ParentType::update(priVars,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
 
-        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_, isOldSol);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
 
         /////////////
         // calculate the remaining quantities
         /////////////
         const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also
@@ -150,11 +150,11 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // relative permeabilities
             Scalar kr;
-            if (phaseIdx == lPhaseIdx)
-                kr = MaterialLaw::krw(materialParams, saturation(lPhaseIdx));
-            else // ATTENTION: krn requires the liquid saturation
+            if (phaseIdx == wPhaseIdx)
+                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
+            else // ATTENTION: krn requires the wetting phase saturation
                 // as parameter!
-                kr = MaterialLaw::krn(materialParams, saturation(lPhaseIdx));
+                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
             relativePermeability_[phaseIdx] = kr;
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
 
@@ -163,19 +163,19 @@ public:
                 FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                         paramCache,
                                                         phaseIdx,
-                                                        lCompIdx,
-                                                        gCompIdx);
+                                                        wCompIdx,
+                                                        nCompIdx);
             Valgrind::CheckDefined(diffCoeff_[phaseIdx]);
         }
 
         // porosity
-        porosity_ = problem.spatialParameters().porosity(element,
-                                                         elemGeom,
+        porosity_ = problem.spatialParams().porosity(element,
+                                                         fvGeometry,
                                                          scvIdx);
         Valgrind::CheckDefined(porosity_);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -185,13 +185,13 @@ public:
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
+                                   const FVElementGeometry& fvGeometry,
                                    int scvIdx,
                                    FluidState& fluidState,
                                    bool isOldSol = false)
     {
         Scalar t = Implementation::temperature_(primaryVariables, problem, element,
-                                                elementGeometry, scvIdx);
+                                                fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
         int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
@@ -201,21 +201,21 @@ public:
         // set the saturations
         /////////////
         Scalar Sg;
-        if (phasePresence == gPhaseOnly)
+        if (phasePresence == nPhaseOnly)
             Sg = 1.0;
-        else if (phasePresence == lPhaseOnly) {
+        else if (phasePresence == wPhaseOnly) {
             Sg = 0.0;
         }
         else if (phasePresence == bothPhases) {
-            if (formulation == plSg)
+            if (formulation == pwSn)
                 Sg = primaryVariables[switchIdx];
-            else if (formulation == pgSl)
+            else if (formulation == pnSw)
                 Sg = 1.0 - primaryVariables[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-        fluidState.setSaturation(lPhaseIdx, 1 - Sg);
-        fluidState.setSaturation(gPhaseIdx, Sg);
+        fluidState.setSaturation(wPhaseIdx, 1 - Sg);
+        fluidState.setSaturation(nPhaseIdx, Sg);
 
         /////////////
         // set the pressures of the fluid phases
@@ -223,16 +223,16 @@ public:
 
         // calculate capillary pressure
         const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         Scalar pC = MaterialLaw::pC(materialParams, 1 - Sg);
 
-        if (formulation == plSg) {
-            fluidState.setPressure(lPhaseIdx, primaryVariables[pressureIdx]);
-            fluidState.setPressure(gPhaseIdx, primaryVariables[pressureIdx] + pC);
+        if (formulation == pwSn) {
+            fluidState.setPressure(wPhaseIdx, primaryVariables[pressureIdx]);
+            fluidState.setPressure(nPhaseIdx, primaryVariables[pressureIdx] + pC);
         }
-        else if (formulation == pgSl) {
-            fluidState.setPressure(gPhaseIdx, primaryVariables[pressureIdx]);
-            fluidState.setPressure(lPhaseIdx, primaryVariables[pressureIdx] - pC);
+        else if (formulation == pnSw) {
+            fluidState.setPressure(nPhaseIdx, primaryVariables[pressureIdx]);
+            fluidState.setPressure(wPhaseIdx, primaryVariables[pressureIdx] - pC);
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
@@ -244,7 +244,7 @@ public:
         // now comes the tricky part: calculate phase compositions
         if (phasePresence == bothPhases) {
             // both phases are present, phase compositions are a
-            // result of the the gas <-> liquid equilibrium. This is
+            // result of the the nonwetting <-> wetting equilibrium. This is
             // the job of the "MiscibleMultiPhaseComposition"
             // constraint solver
             MiscibleMultiPhaseComposition::solve(fluidState,
@@ -253,59 +253,59 @@ public:
                                                  /*setInternalEnergy=*/false);
 
         }
-        else if (phasePresence == gPhaseOnly) {
-            // only the gas phase is present, i.e. gas phase
+        else if (phasePresence == nPhaseOnly) {
+            // only the nonwetting phase is present, i.e. nonwetting phase
             // composition is stored explicitly.
 
-            // extract _mass_ fractions in the gas phase
-            Scalar massFractionG[numComponents];
-            massFractionG[lCompIdx] = primaryVariables[switchIdx];
-            massFractionG[gCompIdx] = 1 - massFractionG[lCompIdx];
+            // extract _mass_ fractions in the nonwetting phase
+            Scalar massFractionN[numComponents];
+            massFractionN[wCompIdx] = primaryVariables[switchIdx];
+            massFractionN[nCompIdx] = 1 - massFractionN[wCompIdx];
 
-            // calculate average molar mass of the gas phase
-            Scalar M1 = FluidSystem::molarMass(lCompIdx);
-            Scalar M2 = FluidSystem::molarMass(gCompIdx);
-            Scalar X2 = massFractionG[gCompIdx];
+            // calculate average molar mass of the nonwetting phase
+            Scalar M1 = FluidSystem::molarMass(wCompIdx);
+            Scalar M2 = FluidSystem::molarMass(nCompIdx);
+            Scalar X2 = massFractionN[nCompIdx];
             Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
             // convert mass to mole fractions and set the fluid state
-            fluidState.setMoleFraction(gPhaseIdx, lCompIdx, massFractionG[lCompIdx]*avgMolarMass/M1);
-            fluidState.setMoleFraction(gPhaseIdx, gCompIdx, massFractionG[gCompIdx]*avgMolarMass/M2);
+            fluidState.setMoleFraction(nPhaseIdx, wCompIdx, massFractionN[wCompIdx]*avgMolarMass/M1);
+            fluidState.setMoleFraction(nPhaseIdx, nCompIdx, massFractionN[nCompIdx]*avgMolarMass/M2);
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
-                                             gPhaseIdx,
+                                             nPhaseIdx,
                                              /*setViscosity=*/true,
                                              /*setInternalEnergy=*/false);
         }
-        else if (phasePresence == lPhaseOnly) {
-            // only the liquid phase is present, i.e. liquid phase
+        else if (phasePresence == wPhaseOnly) {
+            // only the wetting phase is present, i.e. wetting phase
             // composition is stored explicitly.
 
-            // extract _mass_ fractions in the gas phase
-            Scalar massFractionL[numComponents];
-            massFractionL[gCompIdx] = primaryVariables[switchIdx];
-            massFractionL[lCompIdx] = 1 - massFractionL[gCompIdx];
+            // extract _mass_ fractions in the nonwetting phase
+            Scalar massFractionW[numComponents];
+            massFractionW[nCompIdx] = primaryVariables[switchIdx];
+            massFractionW[wCompIdx] = 1 - massFractionW[nCompIdx];
 
-            // calculate average molar mass of the gas phase
-            Scalar M1 = FluidSystem::molarMass(lCompIdx);
-            Scalar M2 = FluidSystem::molarMass(gCompIdx);
-            Scalar X2 = massFractionL[gCompIdx];
+            // calculate average molar mass of the nonwetting phase
+            Scalar M1 = FluidSystem::molarMass(wCompIdx);
+            Scalar M2 = FluidSystem::molarMass(nCompIdx);
+            Scalar X2 = massFractionW[nCompIdx];
             Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
             // convert mass to mole fractions and set the fluid state
-            fluidState.setMoleFraction(lPhaseIdx, lCompIdx, massFractionL[lCompIdx]*avgMolarMass/M1);
-            fluidState.setMoleFraction(lPhaseIdx, gCompIdx, massFractionL[gCompIdx]*avgMolarMass/M2);
+            fluidState.setMoleFraction(wPhaseIdx, wCompIdx, massFractionW[wCompIdx]*avgMolarMass/M1);
+            fluidState.setMoleFraction(wPhaseIdx, nCompIdx, massFractionW[nCompIdx]*avgMolarMass/M2);
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
-                                             lPhaseIdx,
+                                             wPhaseIdx,
                                              /*setViscosity=*/true,
                                              /*setInternalEnergy=*/false);
         }
@@ -395,7 +395,7 @@ public:
      * \brief Returns the effective capillary pressure within the control volume.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.pressure(gPhaseIdx) - fluidState_.pressure(lPhaseIdx); }
+    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
 
     /*!
      * \brief Returns the average porosity within the control volume.
@@ -414,10 +414,10 @@ protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                             const Problem& problem,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
+                            const FVElementGeometry &fvGeometry,
                             int scvIdx)
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
 
     template<class ParameterCache>
@@ -434,7 +434,7 @@ protected:
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
+                       const FVElementGeometry &fvGeometry,
                        int vertIdx,
                        bool isOldSol)
     { }

@@ -115,7 +115,7 @@ public:
      *                types should be collected
      * \param fvGeometry The element's finite volume geometry
      */
-    DUMUX_DEPRECATED_MSG("use update(problem, element) instead")
+    //DUMUX_DEPRECATED_MSG("use update(problem, element) instead")
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
