@@ -215,7 +215,7 @@ public:
         }
 
         // reset all vertex colors to green
-        for (int i = 0; i < vertexColor_.size(); ++i) {
+        for (unsigned int i = 0; i < vertexColor_.size(); ++i) {
             vertexColor_[i] = Green;
         }
     }
@@ -287,7 +287,7 @@ public:
         // update the vector with the distances of the current
         // evaluation point used for linearization from the original
         // evaluation point
-        for (int i = 0; i < vertexDelta_.size(); ++i) {
+        for (unsigned int i = 0; i < vertexDelta_.size(); ++i) {
             PrimaryVariables uCurrent(u[i]);
             PrimaryVariables uNext(uCurrent);
             uNext -= uDelta[i];
@@ -349,7 +349,7 @@ public:
         // mark the red vertices and update the tolerance of the
         // linearization which actually will get achieved
         nextReassembleAccuracy_ = 0;
-        for (int i = 0; i < vertexColor_.size(); ++i) {
+        for (unsigned int i = 0; i < vertexColor_.size(); ++i) {
             if (vertexDelta_[i] > relTol)
                 // mark vertex as red if discrepancy is larger than
                 // the relative tolerance
@@ -461,7 +461,7 @@ public:
                                 Dune::ForwardCommunication);
 
         // promote the remaining orange vertices to red
-        for (int i=0; i < vertexColor_.size(); ++i) {
+        for (unsigned int i=0; i < vertexColor_.size(); ++i) {
             // if a vertex is green or yellow don't do anything!
             if (vertexColor_[i] == Green || vertexColor_[i] == Yellow)
                 continue;
@@ -643,7 +643,7 @@ private:
         }
 
         // reset all entries corrosponding to a red or yellow vertex
-        for (int rowIdx = 0; rowIdx < matrix_->N(); ++rowIdx) {
+        for (unsigned int rowIdx = 0; rowIdx < matrix_->N(); ++rowIdx) {
             if (vertexColor_[rowIdx] == Green)
                 continue; // the equations for this control volume are
                           // already below the treshold

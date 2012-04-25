@@ -195,7 +195,7 @@ public:
         if (!enableHints_)
             return;
 
-        for (int i = 0; i < elemVolVars.size(); ++i) {
+        for (unsigned int i = 0; i < elemVolVars.size(); ++i) {
             int globalIdx = vertexMapper().map(element, i, dim);
             curHints_[globalIdx] = elemVolVars[i];
             if (!hintsUsable_[globalIdx])

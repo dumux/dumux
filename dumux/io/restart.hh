@@ -233,7 +233,7 @@ public:
     {
         std::string dummy;
         std::getline(inStream_, dummy);
-        for (int i = 0; i < dummy.length(); ++i) {
+        for (unsigned int i = 0; i < dummy.length(); ++i) {
             if (!std::isspace(dummy[i])) {
                 DUNE_THROW(Dune::InvalidStateException,
                            "Encountered unread values while deserializing");

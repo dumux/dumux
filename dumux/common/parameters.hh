@@ -125,7 +125,7 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
     // loop over all keys of the current tree
     const Dune::ParameterTree::KeyVector &keys =
         tree.getValueKeys();
-    for (int i = 0; i < keys.size(); ++i) {
+    for (unsigned int i = 0; i < keys.size(); ++i) {
         std::string canonicalName = prefix + keys[i];
 
         // check whether the key was accessed
@@ -137,7 +137,7 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
     // loop over all subtrees
     const Dune::ParameterTree::KeyVector &subKeys =
         tree.getSubKeys();
-    for (int i = 0; i < subKeys.size(); ++i) {
+    for (unsigned int i = 0; i < subKeys.size(); ++i) {
         std::string newPrefix = prefix + subKeys[i] + ".";
 
         findUnusedKeys_<TypeTag>(unusedParams,

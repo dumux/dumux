@@ -469,7 +469,7 @@ public:
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         }
         else {
-            for (int i = 0; i < uLastIter.size(); ++i) {
+            for (unsigned int i = 0; i < uLastIter.size(); ++i) {
                 uCurrentIter[i] = uLastIter[i];
                 uCurrentIter[i] -= deltaU[i];
             }

@@ -417,7 +417,7 @@ private:
     template <class DataBuffer>
     void sanitizeBuffer_(DataBuffer &b, int nComps)
     {
-        for (int i = 0; i < b.size(); ++i) {
+        for (unsigned int i = 0; i < b.size(); ++i) {
             for (int j = 0; j < nComps; ++j) {
                 Valgrind::CheckDefined(b[i][j]);
 
