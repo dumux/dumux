@@ -77,7 +77,7 @@ public:
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestProblemOneP, SpatialParameters, Dumux::TestOnePSpatialParams<TypeTag>);
+SET_TYPE_PROP(TestProblemOneP, SpatialParams, Dumux::TestOnePSpatialParams<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(TestProblemOneP, EnableGravity, false);
@@ -145,7 +145,7 @@ public:
             exit(1);
         }
 
-        this->spatialParameters().setDelta(delta_);
+        this->spatialParams().setDelta(delta_);
     }
 
     /*!

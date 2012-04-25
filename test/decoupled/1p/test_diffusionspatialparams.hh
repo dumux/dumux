@@ -44,7 +44,7 @@ namespace Properties
 NEW_TYPE_TAG(TestDiffusionSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TestDiffusionSpatialParams, SpatialParameters, Dumux::TestDiffusionSpatialParams<TypeTag>);
+SET_TYPE_PROP(TestDiffusionSpatialParams, SpatialParams, Dumux::TestDiffusionSpatialParams<TypeTag>);
 
 // Set the material law
 SET_PROP(TestDiffusionSpatialParams, MaterialLaw)

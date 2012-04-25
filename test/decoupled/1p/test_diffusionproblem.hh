@@ -220,7 +220,7 @@ public:
     void init()
     {
         this->variables().initialize();
-        this->spatialParameters().initialize(delta_);
+        this->spatialParams().initialize(delta_);
         for (int i = 0; i < this->gridView().size(0); i++)
         {
             this->variables().cellData(i).setSaturation(wPhaseIdx, 1.0);
@@ -257,7 +257,7 @@ public:
 
         this->resultWriter().attachCellData(*exactPressure, "exact pressure");
 
-        this->spatialParameters().addOutputVtkFields(this->resultWriter());
+        this->spatialParams().addOutputVtkFields(this->resultWriter());
 
         return;
     }
