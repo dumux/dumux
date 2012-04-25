@@ -162,7 +162,7 @@ class ObstacleProblem
     typedef typename GridView::template Codim<dim>::Entity Vertex;
     typedef typename GridView::Intersection Intersection;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> DimVector;
+    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -253,7 +253,7 @@ public:
      */
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
+        const GlobalPosition &globalPos = vertex.geometry().center();
 
         if (onInlet_(globalPos) || onOutlet_(globalPos))
             values.setAllDirichlet();
@@ -272,7 +272,7 @@ public:
      */
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
-        const GlobalPosition globalPos = vertex.geometry().center();
+        const GlobalPosition &globalPos = vertex.geometry().center();
 
         initial_(values, globalPos);
     }
