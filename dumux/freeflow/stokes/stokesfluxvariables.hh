@@ -61,10 +61,8 @@ class StokesFluxVariables
     enum { dim = GridView::dimension };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
-    typedef Dune::FieldVector<Scalar, dim> VelocityVector;
-    typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> VectorGradient;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -72,11 +70,11 @@ class StokesFluxVariables
 public:
     StokesFluxVariables(const Problem &problem,
                         const Element &element,
-                        const FVElementGeometry &elemGeom,
-                        int faceIdx,
+                        const FVElementGeometry &fvGeometry,
+                        const int faceIdx,
                         const ElementVolumeVariables &elemVolVars,
-                        bool onBoundary = false)
-        : fvGeom_(elemGeom), onBoundary_(onBoundary), faceIdx_(faceIdx)
+                        const bool onBoundary = false)
+        : fvGeometry_(fvGeometry), onBoundary_(onBoundary), faceIdx_(faceIdx)
     {
         calculateValues_(problem, element, elemVolVars);
         determineUpwindDirection_(elemVolVars);
@@ -88,67 +86,67 @@ protected:
                           const ElementVolumeVariables &elemVolVars)
     {
         // calculate gradients and secondary variables at IPs
-        FieldVector tmp(0.0);
+        DimVector tmp(0.0);
 
-        densityAtIP_ = Scalar(0);
-        molarDensityAtIP_ = Scalar(0);
-        viscosityAtIP_ = Scalar(0);
-        pressureAtIP_ = Scalar(0);
-        normalVelocityAtIP_ = Scalar(0);
-        velocityAtIP_ = Scalar(0);
-        pressureGradAtIP_ = Scalar(0);
-        velocityGradAtIP_ = Scalar(0);
-//        velocityDivAtIP_ = Scalar(0);
+        density_ = Scalar(0);
+        molarDensity_ = Scalar(0);
+        viscosity_ = Scalar(0);
+        pressure_ = Scalar(0);
+        normalvelocity_ = Scalar(0);
+        velocity_ = Scalar(0);
+        pressureGrad_ = Scalar(0);
+        velocityGrad_ = Scalar(0);
+//        velocityDiv_ = Scalar(0);
 
         for (int idx = 0;
-             idx < fvGeom_.numVertices;
+             idx < fvGeometry_.numVertices;
              idx++) // loop over adjacent vertices
         {
             // phase density and viscosity at IP
-            densityAtIP_ += elemVolVars[idx].density() *
+            density_ += elemVolVars[idx].density() *
                 face().shapeValue[idx];
-            molarDensityAtIP_ += elemVolVars[idx].molarDensity()*
+            molarDensity_ += elemVolVars[idx].molarDensity()*
                 face().shapeValue[idx];
-            viscosityAtIP_ += elemVolVars[idx].viscosity() *
+            viscosity_ += elemVolVars[idx].viscosity() *
                 face().shapeValue[idx];
-            pressureAtIP_ += elemVolVars[idx].pressure() *
+            pressure_ += elemVolVars[idx].pressure() *
                 face().shapeValue[idx];
 
             // velocity at the IP (fluxes)
-            VelocityVector velocityTimesShapeValue = elemVolVars[idx].velocity();
+            DimVector velocityTimesShapeValue = elemVolVars[idx].velocity();
             velocityTimesShapeValue *= face().shapeValue[idx];
-            velocityAtIP_ += velocityTimesShapeValue;
+            velocity_ += velocityTimesShapeValue;
 
             // the pressure gradient
             tmp = face().grad[idx];
             tmp *= elemVolVars[idx].pressure();
-            pressureGradAtIP_ += tmp;
+            pressureGrad_ += tmp;
             // take gravity into account
             tmp = problem.gravity();
-            tmp *= densityAtIP_;
+            tmp *= density_;
             // pressure gradient including influence of gravity
-            pressureGradAtIP_ -= tmp;
+            pressureGrad_ -= tmp;
 
             // the velocity gradients and divergence
             for (int dimIdx = 0; dimIdx<dim; ++dimIdx)
             {
                 tmp = face().grad[idx];
                 tmp *= elemVolVars[idx].velocity()[dimIdx];
-                velocityGradAtIP_[dimIdx] += tmp;
+                velocityGrad_[dimIdx] += tmp;
 
-//                velocityDivAtIP_ += face().grad[idx][dimIdx]*elemVolVars[idx].velocity()[dimIdx];
+//                velocityDiv_ += face().grad[idx][dimIdx]*elemVolVars[idx].velocity()[dimIdx];
             }
         }
 
-        normalVelocityAtIP_ = velocityAtIP_ * face().normal;
+        normalvelocity_ = velocity_ * face().normal;
 
-        Valgrind::CheckDefined(densityAtIP_);
-        Valgrind::CheckDefined(viscosityAtIP_);
-        Valgrind::CheckDefined(normalVelocityAtIP_);
-        Valgrind::CheckDefined(velocityAtIP_);
-        Valgrind::CheckDefined(pressureGradAtIP_);
-        Valgrind::CheckDefined(velocityGradAtIP_);
-//        Valgrind::CheckDefined(velocityDivAtIP_);
+        Valgrind::CheckDefined(density_);
+        Valgrind::CheckDefined(viscosity_);
+        Valgrind::CheckDefined(normalvelocity_);
+        Valgrind::CheckDefined(velocity_);
+        Valgrind::CheckDefined(pressureGrad_);
+        Valgrind::CheckDefined(velocityGrad_);
+//        Valgrind::CheckDefined(velocityDiv_);
     };
 
     void determineUpwindDirection_(const ElementVolumeVariables &elemVolVars)
@@ -158,7 +156,7 @@ protected:
         upstreamIdx_ = face().i;
         downstreamIdx_ = face().j;
 
-        if (normalVelocityAtIP() < 0)
+        if (normalVelocity() < 0)
             std::swap(upstreamIdx_, downstreamIdx_);
     };
 
@@ -170,9 +168,9 @@ public:
     const SCVFace &face() const
     {
         if (onBoundary_)
-            return fvGeom_.boundaryFace[faceIdx_];
+            return fvGeometry_.boundaryFace[faceIdx_];
         else
-            return fvGeom_.subContVolFace[faceIdx_];
+            return fvGeometry_.subContVolFace[faceIdx_];
     }
 
     /*!
@@ -181,69 +179,130 @@ public:
      */
     const Scalar averageSCVVolume() const
     {
-        return 0.5*(fvGeom_.subContVol[upstreamIdx_].volume +
-                fvGeom_.subContVol[downstreamIdx_].volume);
+        return 0.5*(fvGeometry_.subContVol[upstreamIdx_].volume +
+                fvGeometry_.subContVol[downstreamIdx_].volume);
     }
 
     /*!
      * \brief Return the pressure \f$\mathrm{[Pa]}\f$ at the integration
      *        point.
      */
+    Scalar pressure() const
+    { return pressure_; }
+
+    /*!
+     * \brief Return the pressure \f$\mathrm{[Pa]}\f$ at the integration
+     *        point.
+     */
+    DUMUX_DEPRECATED_MSG("use pressure() instead")
     Scalar pressureAtIP() const
-    { return pressureAtIP_; }
+    { return pressure(); }
 
     /*!
      * \brief Return the mass density \f$ \mathrm{[kg/m^3]} \f$ at the integration
      *        point.
      */
+    Scalar density() const
+    { return density_; }
+
+    /*!
+     * \brief Return the mass density \f$ \mathrm{[kg/m^3]} \f$ at the integration
+     *        point.
+     */
+    DUMUX_DEPRECATED_MSG("use density() instead")
     Scalar densityAtIP() const
-    { return densityAtIP_; }
+    { return density(); }
 
     /*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
      */
+    const Scalar molarDensity() const
+    { return molarDensity_; }
+
+    /*!
+     * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
+     */
+    DUMUX_DEPRECATED_MSG("use molarDensity() instead")
     const Scalar molarDensityAtIP() const
-    { return molarDensityAtIP_; }
+    { return molarDensity(); }
 
     /*!
      * \brief Return the viscosity \f$ \mathrm{[m^2/s]} \f$ at the integration
      *        point.
      */
+    Scalar viscosity() const
+    { return viscosity_; }
+
+    /*!
+     * \brief Return the viscosity \f$ \mathrm{[m^2/s]} \f$ at the integration
+     *        point.
+     */
+    DUMUX_DEPRECATED_MSG("use viscosity() instead")
     Scalar viscosityAtIP() const
-    { return viscosityAtIP_; }
+    { return viscosity(); }
 
     /*!
      * \brief Return the velocity \f$ \mathrm{[m/s]} \f$ at the integration
      *        point multiplied by the normal and the area.
      */
+    Scalar normalVelocity() const
+    { return normalvelocity_; }
+
+    /*!
+     * \brief Return the velocity \f$ \mathrm{[m/s]} \f$ at the integration
+     *        point multiplied by the normal and the area.
+     */
+    DUMUX_DEPRECATED_MSG("use normalVelocity() instead")
     Scalar normalVelocityAtIP() const
-    { return normalVelocityAtIP_; }
+    { return normalVelocity(); }
 
     /*!
      * \brief Return the pressure gradient at the integration point.
      */
-    const ScalarGradient &pressureGradAtIP() const
-    { return pressureGradAtIP_; }
+    const DimVector &pressureGrad() const
+    { return pressureGrad_; }
+
+    /*!
+     * \brief Return the pressure gradient at the integration point.
+     */
+    DUMUX_DEPRECATED_MSG("use pressureGrad() instead")
+    const DimVector &pressureGradAtIP() const
+    { return pressureGrad(); }
 
     /*!
      * \brief Return the velocity vector at the integration point.
      */
-    const VelocityVector &velocityAtIP() const
-    { return velocityAtIP_; }
+    const DimVector &velocity() const
+    { return velocity_; }
+
+    /*!
+     * \brief Return the velocity vector at the integration point.
+     */
+    DUMUX_DEPRECATED_MSG("use velocity() instead")
+    const DimVector &velocityAtIP() const
+    { return velocity(); }
 
     /*!
      * \brief Return the velocity gradient at the integration
      *        point of a face.
      */
-    const VectorGradient &velocityGradAtIP() const
-    { return velocityGradAtIP_; }
+    const DimMatrix &velocityGrad() const
+    { return velocityGrad_; }
+
+    /*!
+     * \brief Return the velocity gradient at the integration
+     *        point of a face.
+     */
+    DUMUX_DEPRECATED_MSG("use velocityGrad() instead")
+    const DimMatrix &velocityGradAtIP() const
+    { return velocityGrad(); }
 
 //    /*!
 //     * \brief Return the divergence of the normal velocity at the
 //     *        integration point.
 //     */
-//    Scalar velocityDivAtIP() const
-//    { return velocityDivAtIP_; }
+//    Scalar velocityDiv() const
+//    { return velocityDiv_; }
 
     /*!
      * \brief Return the local index of the upstream sub-control volume.
@@ -265,21 +324,21 @@ public:
     { return onBoundary_; }
 
 protected:
-    const FVElementGeometry &fvGeom_;
+    const FVElementGeometry &fvGeometry_;
     const bool onBoundary_;
 
     // values at the integration point
-    Scalar densityAtIP_;
-    Scalar molarDensityAtIP_;
-    Scalar viscosityAtIP_;
-    Scalar pressureAtIP_;
-    Scalar normalVelocityAtIP_;
-//    Scalar velocityDivAtIP_;
-    VelocityVector velocityAtIP_;
+    Scalar density_;
+    Scalar molarDensity_;
+    Scalar viscosity_;
+    Scalar pressure_;
+    Scalar normalvelocity_;
+//    Scalar velocityDiv_;
+    DimVector velocity_;
 
     // gradients at the IPs
-    ScalarGradient pressureGradAtIP_;
-    VectorGradient velocityGradAtIP_;
+    DimVector pressureGrad_;
+    DimMatrix velocityGrad_;
 
     // local index of the upwind vertex
     int upstreamIdx_;

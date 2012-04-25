@@ -57,8 +57,8 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
-        lCompIdx = Indices::lCompIdx,
-        gCompIdx = Indices::gCompIdx
+        comp1Idx = Indices::comp1Idx,
+        comp0Idx = Indices::comp0Idx
     };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
@@ -71,18 +71,18 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
-                bool isOldSol)
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx,
+                const bool isOldSol)
     {
         // set the mole fractions first
-        completeFluidState(priVars, problem, element, elemGeom, scvIdx, this->fluidState(), isOldSol);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState(), isOldSol);
 
         // update vertex data for the mass and momentum balance
         ParentType::update(priVars,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
 
@@ -95,8 +95,8 @@ public:
         diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(this->fluidState(),
                                                              paramCache,
                                                              phaseIdx,
-                                                             lCompIdx,
-                                                             gCompIdx);
+                                                             comp1Idx,
+                                                             comp0Idx);
 
         Valgrind::CheckDefined(diffCoeff_);
     };
@@ -105,27 +105,27 @@ public:
      * \copydoc BoxModel::completeFluidState()
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
-                                   int scvIdx,
+                                   const FVElementGeometry& fvGeometry,
+                                   const int scvIdx,
                                    FluidState& fluidState,
-                                   bool isOldSol = false)
+                                   const bool isOldSol = false)
     {
         Scalar massFraction[numComponents];
-        massFraction[lCompIdx] = primaryVariables[transportIdx];
-        massFraction[gCompIdx] = 1 - massFraction[lCompIdx];
+        massFraction[comp1Idx] = priVars[transportIdx];
+        massFraction[comp0Idx] = 1 - massFraction[comp1Idx];
 
         // calculate average molar mass of the gas phase
-        Scalar M1 = FluidSystem::molarMass(lCompIdx);
-        Scalar M2 = FluidSystem::molarMass(gCompIdx);
-        Scalar X2 = massFraction[gCompIdx];
+        Scalar M1 = FluidSystem::molarMass(comp1Idx);
+        Scalar M2 = FluidSystem::molarMass(comp0Idx);
+        Scalar X2 = massFraction[comp0Idx];
         Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
         // convert mass to mole fractions and set the fluid state
-        fluidState.setMoleFraction(phaseIdx, lCompIdx, massFraction[lCompIdx]*avgMolarMass/M1);
-        fluidState.setMoleFraction(phaseIdx, gCompIdx, massFraction[gCompIdx]*avgMolarMass/M2);
+        fluidState.setMoleFraction(phaseIdx, comp1Idx, massFraction[comp1Idx]*avgMolarMass/M1);
+        fluidState.setMoleFraction(phaseIdx, comp0Idx, massFraction[comp0Idx]*avgMolarMass/M2);
     }
 
     /*!

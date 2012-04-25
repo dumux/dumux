@@ -96,7 +96,7 @@ SET_PROP(BoxStokes2c, PhaseIndex)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 public:
-    static constexpr int value = Indices::gPhaseIdx;
+    static constexpr int value = Indices::nPhaseIdx;
 };
 
 }

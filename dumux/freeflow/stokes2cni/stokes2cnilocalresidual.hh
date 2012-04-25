@@ -43,10 +43,6 @@ namespace Dumux
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the non-isothermal compositional Stokes box model. This class is derived
  *        from the stokes2c box local residual and adds the energy balance equation.
-     *
-     *  \param result The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
  */
 template<class TypeTag>
 class Stokes2cniLocalResidual : public Stokes2cLocalResidual<TypeTag>
@@ -74,23 +70,23 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
     {
         // compute the storage term for the transport equation
-        ParentType::computeStorage(result, scvIdx, usePrevSol);
+        ParentType::computeStorage(storage, scvIdx, usePrevSol);
 
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertexDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the storage of energy
-        result[energyIdx] =
-            vertexDat.density() *
-            vertexDat.internalEnergy();
+        storage[energyIdx] =
+            volVars.density() *
+            volVars.internalEnergy();
     }
 
     /*!
@@ -112,7 +108,7 @@ public:
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
-        Scalar tmp = fluxVars.normalVelocityAtIP();
+        Scalar tmp = fluxVars.normalVelocity();
 
         tmp *=  this->massUpwindWeight_ *         // upwind data
             up.density() * up.enthalpy() +
@@ -139,9 +135,9 @@ public:
         // diffusive heat flux
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             flux[energyIdx] -=
-                fluxVars.temperatureGradAtIP()[dimIdx] *
+                fluxVars.temperatureGrad()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
-                fluxVars.heatConductivityAtIP();
+                fluxVars.heatConductivity();
     }
 };
 

@@ -49,8 +49,8 @@ class StokesLocalJacobian : public BoxLocalJacobian<TypeTag>
 
 public:
     //! \copydoc BoxLocalJacobian::numericEpsilon()
-    Scalar numericEpsilon(int scvIdx,
-                          int pvIdx) const
+    Scalar numericEpsilon(const int scvIdx,
+                          const int pvIdx) const
     {
         Scalar pv = this->curVolVars_[scvIdx].primaryVars()[pvIdx];
         if (pvIdx < GridView::dimension){

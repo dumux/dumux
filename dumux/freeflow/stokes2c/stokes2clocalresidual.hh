@@ -54,7 +54,7 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
 
     enum { dim = GridView::dimension };
     enum { transportIdx = Indices::transportIdx }; //!< Index of the transport equation
-    enum { lCompIdx = Indices::lCompIdx }; //!< Index of the liquid component
+    enum { comp1Idx = Indices::comp1Idx }; //!< Index of the transported component
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex)}; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -71,30 +71,30 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param result The mass of the component within the sub-control volume
+     *  \param storage The mass of the component within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
     {
         // compute the storage term for the transport equation
-        ParentType::computeStorage(result, scvIdx, usePrevSol);
+        ParentType::computeStorage(storage, scvIdx, usePrevSol);
 
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertexDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the storage of the component
-        result[transportIdx] =
-            vertexDat.density() *
-            vertexDat.fluidState().massFraction(phaseIdx, lCompIdx);
+        storage[transportIdx] =
+            volVars.density() *
+            volVars.fluidState().massFraction(phaseIdx, comp1Idx);
 
-        Valgrind::CheckDefined(vertexDat.density());
-        Valgrind::CheckDefined(vertexDat.fluidState().massFraction(phaseIdx, lCompIdx));
+        Valgrind::CheckDefined(volVars.density());
+        Valgrind::CheckDefined(volVars.fluidState().massFraction(phaseIdx, comp1Idx));
     }
 
     /*!
@@ -118,14 +118,14 @@ public:
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
-        Scalar tmp = fluxVars.normalVelocityAtIP();
+        Scalar tmp = fluxVars.normalVelocity();
 
         if (this->massUpwindWeight_ > 0.0)
             tmp *=  this->massUpwindWeight_ *         // upwind data
-                up.density() * up.fluidState().massFraction(phaseIdx, lCompIdx);
+                up.density() * up.fluidState().massFraction(phaseIdx, comp1Idx);
         if (this->massUpwindWeight_ < 1.0)
             tmp += (1.0 - this->massUpwindWeight_) *     // rest
-                dn.density() * dn.fluidState().massFraction(phaseIdx, lCompIdx);
+                dn.density() * dn.fluidState().massFraction(phaseIdx, comp1Idx);
 
         flux[transportIdx] += tmp;
         Valgrind::CheckDefined(flux[transportIdx]);
@@ -147,11 +147,11 @@ public:
         // diffusive component flux
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
             flux[transportIdx] -=
-                fluxVars.moleFractionGradAtIP()[dimIdx] *
+                fluxVars.moleFractionGrad()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
-                fluxVars.diffusionCoeffAtIP() *
-                fluxVars.molarDensityAtIP() *
-                FluidSystem::molarMass(lCompIdx);
+                fluxVars.diffusionCoeff() *
+                fluxVars.molarDensity() *
+                FluidSystem::molarMass(comp1Idx);
 
         Valgrind::CheckDefined(flux[transportIdx]);
     }

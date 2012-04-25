@@ -61,18 +61,18 @@ class Stokes2cniFluxVariables : public Stokes2cFluxVariables<TypeTag>
     enum { dim = GridView::dimension };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     Stokes2cniFluxVariables(const Problem &problem,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int faceIdx,
+                            const FVElementGeometry &fvGeometry,
+                            const int faceIdx,
                             const ElementVolumeVariables &elemVolVars,
-                            bool onBoundary = false)
-        : ParentType(problem, element, elemGeom, faceIdx, elemVolVars, onBoundary)
+                            const bool onBoundary = false)
+        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         calculateValues_(problem, element, elemVolVars);
     }
@@ -80,44 +80,58 @@ public:
     /*!
      * \brief Returns the heat conductivity at the integration point.
      */
+    Scalar heatConductivity() const
+    { return heatConductivity_; }
+    
+    /*!
+     * \brief Returns the heat conductivity at the integration point.
+     */
+    DUMUX_DEPRECATED_MSG("use heatConductivity() instead")
     Scalar heatConductivityAtIP() const
-    { return heatConductivityAtIP_; }
+    { return heatConductivity(); }
 
     /*!
      * \brief Returns the temperature gradient at the integration point.
      */
-    const ScalarGradient &temperatureGradAtIP() const
-    { return temperatureGradAtIP_; }
+    const DimVector &temperatureGrad() const
+    { return temperatureGrad_; }
+
+    /*!
+     * \brief Returns the temperature gradient at the integration point.
+     */
+    DUMUX_DEPRECATED_MSG("use temperatureGrad() instead")
+    const DimVector &temperatureGradAtIP() const
+    { return temperatureGrad(); }
 
 protected:
     void calculateValues_(const Problem &problem,
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
-        heatConductivityAtIP_ = Scalar(0);
-        temperatureGradAtIP_ = Scalar(0);
+        heatConductivity_ = Scalar(0);
+        temperatureGrad_ = Scalar(0);
 
         // calculate gradients and secondary variables at IPs
-        ScalarGradient tmp(0.0);
+        DimVector tmp(0.0);
         for (int idx = 0;
-             idx < this->fvGeom_.numVertices;
+             idx < this->fvGeometry_.numVertices;
              idx++) // loop over vertices of the element
         {
-            heatConductivityAtIP_ += elemVolVars[idx].heatConductivity() *
+            heatConductivity_ += elemVolVars[idx].heatConductivity() *
                 this->face().shapeValue[idx];
 
             // the gradient of the temperature at the IP
             for (int dimIdx=0; dimIdx<dim; ++dimIdx)
-                temperatureGradAtIP_ +=
+                temperatureGrad_ +=
                     this->face().grad[idx][dimIdx]*
                     elemVolVars[idx].temperature();
         }
-        Valgrind::CheckDefined(heatConductivityAtIP_);
-        Valgrind::CheckDefined(temperatureGradAtIP_);
+        Valgrind::CheckDefined(heatConductivity_);
+        Valgrind::CheckDefined(temperatureGrad_);
     }
 
-    Scalar heatConductivityAtIP_;
-    ScalarGradient temperatureGradAtIP_;
+    Scalar heatConductivity_;
+    DimVector temperatureGrad_;
 };
 
 } // end namespace

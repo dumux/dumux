@@ -100,10 +100,10 @@ public:
      * \return (Scalar) permeability
      */
     Scalar permeability(const Element &element,
-                        const FVElementGeometry &fvElemGeom,
+                        const FVElementGeometry &fvGeometry,
                         const Intersection &is,
-                        int scvIdx,
-                        int boundaryFaceIdx) const
+                        const int scvIdx,
+                        const int boundaryFaceIdx) const
     { DUNE_THROW(Dune::NotImplemented, "permeability()"); }
 
     // \}

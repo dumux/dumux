@@ -70,7 +70,7 @@ class StokesVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-    typedef Dune::FieldVector<Scalar, dim> VelocityVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
     /*!
@@ -79,18 +79,18 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int scvIdx,
-                bool isOldSol)
+                const FVElementGeometry &fvGeometry,
+                const int scvIdx,
+                const bool isOldSol)
     {
         ParentType::update(priVars,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
 
-        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_, isOldSol);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_, isOldSol);
 
         for (int dimIdx=momentumXIdx; dimIdx<=lastMomentumIdx; ++dimIdx)
             velocity_[dimIdx] = priVars[dimIdx];
@@ -100,18 +100,18 @@ public:
      * \copydoc BoxModel::completeFluidState()
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
-                                   int scvIdx,
+                                   const FVElementGeometry& fvGeometry,
+                                   const int scvIdx,
                                    FluidState& fluidState,
-                                   bool isOldSol = false)
+                                   const bool isOldSol = false)
     {
-        Scalar temperature = Implementation::temperature_(primaryVariables, problem,
-                                                          element, elementGeometry, scvIdx);
+        Scalar temperature = Implementation::temperature_(priVars, problem,
+                                                          element, fvGeometry, scvIdx);
         fluidState.setTemperature(temperature);
-        fluidState.setPressure(phaseIdx, primaryVariables[pressureIdx]);
+        fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
         // create NullParameterCache and do dummy update
         typename FluidSystem::ParameterCache paramCache;
@@ -178,7 +178,7 @@ public:
     /*!
      * \brief Returns the velocity vector in the sub-control volume.
      */
-    const VelocityVector &velocity() const
+    const DimVector &velocity() const
     { return velocity_; }
 
 protected:
@@ -190,16 +190,16 @@ protected:
         return 0;
     }
 
-    static Scalar temperature_(const PrimaryVariables &primaryVars,
+    static Scalar temperature_(const PrimaryVariables &priVars,
                             const Problem& problem,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx)
+                            const FVElementGeometry &fvGeometry,
+                            const int scvIdx)
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
 
-    VelocityVector velocity_;
+    DimVector velocity_;
     FluidState fluidState_;
 
 private:

@@ -75,7 +75,7 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum { lCompIdx = Indices::lCompIdx };
+    enum { comp1Idx = Indices::comp1Idx };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -137,7 +137,7 @@ public:
 
                 pN[globalIdx] = volVars.pressure()*scale_;
                 delP[globalIdx] = volVars.pressure()*scale_ - 1e5;
-                Xw[globalIdx] = volVars.fluidState().massFraction(phaseIdx, lCompIdx);
+                Xw[globalIdx] = volVars.fluidState().massFraction(phaseIdx, comp1Idx);
                 rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
                 mu[globalIdx] = volVars.viscosity()*scale_;
                 velocity[globalIdx] = volVars.velocity();
@@ -147,7 +147,7 @@ public:
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
         std::ostringstream outputNameX;
-        outputNameX << "X^" << FluidSystem::componentName(lCompIdx);
+        outputNameX << "X^" << FluidSystem::componentName(comp1Idx);
         writer.attachVertexData(Xw, outputNameX.str());
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");

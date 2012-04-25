@@ -80,8 +80,7 @@ protected:
     typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
     typedef Dune::GenericReferenceElement<Scalar, dim> ReferenceElement;
 
-    typedef Dune::FieldVector<Scalar, dim> ScalarGradient;
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -115,11 +114,11 @@ protected:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param result The mass of the component within the sub-control volume
+     *  \param storage The mass of the component within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, const bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -128,17 +127,17 @@ protected:
         // using the implicit Euler method.
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_()
             : this->curVolVars_();
-        const VolumeVariables &vertexData = elemVolVars[scvIdx];
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
-        result = 0.0;
+        storage = 0.0;
 
         // mass balance
-        result[massBalanceIdx] = vertexData.density();
+        storage[massBalanceIdx] = volVars.density();
 
         // momentum balance
         for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; ++momentumIdx)
-            result[momentumIdx] = vertexData.density()
-                * vertexData.velocity()[momentumIdx-momentumXIdx];
+            storage[momentumIdx] = volVars.density()
+                * volVars.velocity()[momentumIdx-momentumXIdx];
     }
 
     /*!
@@ -153,7 +152,7 @@ protected:
      *        the created fluxVars object contains boundary variables evaluated at the IP of the
      *        boundary face
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx, const bool onBoundary=false) const
     {
         const FluxVariables fluxVars(this->problem_(),
                                      this->element_(),
@@ -190,7 +189,7 @@ protected:
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx());
 
         // mass balance with upwinded density
-        FieldVector massBalanceResidual = fluxVars.velocityAtIP();
+        DimVector massBalanceResidual = fluxVars.velocity();
         if (massUpwindWeight_ == 1.0) // fully upwind
             massBalanceResidual *= up.density();
         else
@@ -201,7 +200,7 @@ protected:
         {
             // stabilization of the mass balance
             // with 0.5*alpha*(V_i + V_j)*grad P
-            FieldVector stabilizationTerm = fluxVars.pressureGradAtIP();
+            DimVector stabilizationTerm = fluxVars.pressureGrad();
             stabilizationTerm *= stabilizationAlpha_*
                 fluxVars.averageSCVVolume();
             massBalanceResidual += stabilizationTerm;
@@ -216,26 +215,26 @@ protected:
 
         // compute symmetrized gradient for the momentum flux:
         // mu (grad v + (grad v)^t)
-        Dune::FieldMatrix<Scalar, dim, dim> symmVelGrad = fluxVars.velocityGradAtIP();
+        Dune::FieldMatrix<Scalar, dim, dim> symmVelGrad = fluxVars.velocityGrad();
         for (int i=0; i<dim; ++i)
             for (int j=0; j<dim; ++j)
-                symmVelGrad[i][j] += fluxVars.velocityGradAtIP()[j][i];
+                symmVelGrad[i][j] += fluxVars.velocityGrad()[j][i];
 
-        FieldVector velGradComp(0.);
+        DimVector velGradComp(0.);
         for (int velIdx = 0; velIdx < dim; ++velIdx)
         {
             velGradComp = symmVelGrad[velIdx];
 
             // TODO: dilatation term has to be accounted for in outflow, coupling, neumann
-            //            velGradComp[velIdx] += 2./3*fluxVars.velocityDivAtIP;
+            //            velGradComp[velIdx] += 2./3*fluxVars.velocityDiv;
 
-            velGradComp *= fluxVars.viscosityAtIP();
+            velGradComp *= fluxVars.viscosity();
 
             flux[momentumXIdx + velIdx] -=
                 velGradComp*fluxVars.face().normal;
 
             // gravity is accounted for in computeSource; alternatively:
-            //            Scalar gravityTerm = fluxVars.densityAtIP *
+            //            Scalar gravityTerm = fluxVars.density *
             //                    this->problem_().gravity()[dim-1] *
             //                    fluxVars.face().ipGlobal[dim-1]*
             //                    fluxVars.face().normal[velIdx];
@@ -251,7 +250,7 @@ protected:
         {
             for (int dimIndex = 0; dimIndex < dim; ++dimIndex)
             {
-                flux[momentumXIdx + dimIndex] += up.density() * up.velocity()[dimIndex] * fluxVars.normalVelocityAtIP();
+                flux[momentumXIdx + dimIndex] += up.density() * up.velocity()[dimIndex] * fluxVars.normalVelocity();
             }
         }
     }
@@ -276,35 +275,35 @@ protected:
      *        The pressure gradient at the center of a SCV is computed
      *        and the gravity term evaluated.
      *
-     * \param q The source/sink in the sub control volume for each component
-     * \param localVertexIdx The local index of the sub-control volume
+     * \param source The source/sink in the sub control volume for each component
+     * \param scvIndex The local index of the sub-control volume
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &source, const int scvIdx)
     {
         const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-        const VolumeVariables &vertexData = elemVolVars[localVertexIdx];
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // retrieve the source term intrinsic to the problem
-        this->problem_().source(q,
+        this->problem_().source(source,
                                 this->element_(),
                                 this->fvGeometry_(),
-                                localVertexIdx);
+                                scvIdx);
 
         // ATTENTION: The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
         const Scalar alphaH2 = stabilizationAlpha_*
-            this->fvGeometry_().subContVol[localVertexIdx].volume;
-        q[massBalanceIdx] *= alphaH2; // stabilization of the source term
+            this->fvGeometry_().subContVol[scvIdx].volume;
+        source[massBalanceIdx] *= alphaH2; // stabilization of the source term
 
         // pressure gradient at the center of the SCV,
         // the pressure is discretized as volume term,
         // while -mu grad v is calculated in computeFlux
-        ScalarGradient pressureGradAtSCVCenter(0.0);
-        ScalarGradient grad(0.0);
+        DimVector pressureGradAtSCVCenter(0.0);
+        DimVector grad(0.0);
 
         for (int vertexIdx = 0; vertexIdx < this->fvGeometry_().numVertices; vertexIdx++)
         {
-            grad = this->fvGeometry_().subContVol[localVertexIdx].gradCenter[vertexIdx];
+            grad = this->fvGeometry_().subContVol[scvIdx].gradCenter[vertexIdx];
             Valgrind::CheckDefined(grad);
             grad *= elemVolVars[vertexIdx].pressure();
 
@@ -316,8 +315,8 @@ protected:
         // signs are inverted, since q is subtracted
         for (int dimIdx=0; dimIdx<dim; ++dimIdx)
         {
-            q[momentumXIdx + dimIdx] -= pressureGradAtSCVCenter[dimIdx];
-            q[momentumXIdx + dimIdx] += vertexData.density()*this->problem_().gravity()[dimIdx];
+            source[momentumXIdx + dimIdx] -= pressureGradAtSCVCenter[dimIdx];
+            source[momentumXIdx + dimIdx] += volVars.density()*this->problem_().gravity()[dimIdx];
         }
     }
 
@@ -338,8 +337,8 @@ protected:
                 continue;
 
             // important at corners of the grid
-            FieldVector momentumResidual(0.0);
-            FieldVector averagedNormal(0.0);
+            DimVector momentumResidual(0.0);
+            DimVector averagedNormal(0.0);
             int numberOfOuterFaces = 0;
             // evaluate boundary conditions for the intersections of
             // the current element
@@ -379,14 +378,14 @@ protected:
                     // the fluxes at the boundary are added in the second step
                     if (momentumBalanceDirichlet_(bcTypes))
                     {
-                        FieldVector muGradVelNormal(0.);
-                        const FieldVector &boundaryFaceNormal =
+                        DimVector muGradVelNormal(0.);
+                        const DimVector &boundaryFaceNormal =
                             boundaryVars.face().normal;
 
-                        boundaryVars.velocityGradAtIP().umv(boundaryFaceNormal, muGradVelNormal);
-                        muGradVelNormal *= boundaryVars.viscosityAtIP();
+                        boundaryVars.velocityGrad().umv(boundaryFaceNormal, muGradVelNormal);
+                        muGradVelNormal *= boundaryVars.viscosity();
 
-                        for (int i=0; i < this->residual_.size(); i++)
+                        for (unsigned int i=0; i < this->residual_.size(); i++)
                             Valgrind::CheckDefined(this->residual_[i]);
                         for (int dimIdx=0; dimIdx < dim; ++dimIdx)
                             momentumResidual[dimIdx] = this->residual_[vertexIdx][momentumXIdx+dimIdx];
@@ -450,7 +449,7 @@ protected:
                 // mathematically Neumann BC: p n - mu grad v n = q
                 // boundary terms: -mu grad v n
                 // implement q * A (from evalBoundarySegment) - p n(unity) A
-                FieldVector pressureCorrection(boundaryVars.face().normal);
+                DimVector pressureCorrection(boundaryVars.face().normal);
                 pressureCorrection *= this->curVolVars_(scvIdx).pressure();
                 for (int momentumIdx = momentumXIdx; momentumIdx <= lastMomentumIdx; momentumIdx++)
                     if(bcTypes.isNeumann(momentumIdx))
@@ -460,15 +459,15 @@ protected:
                 // in case of neumann conditions for the momentum equation;
                 // calculate  mu grad v t t
                 // center in the face of the reference element
-                FieldVector tangent;
+                DimVector tangent;
                 if (stabilizationBeta_ != 0)
                 {
-                    const FieldVector& elementUnitNormal = isIt->centerUnitOuterNormal();
+                    const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
                     tangent[0] = elementUnitNormal[1];  //TODO: 3D
                     tangent[1] = -elementUnitNormal[0];
-                    FieldVector tangentialVelGrad;
-                    boundaryVars.velocityGradAtIP().mv(tangent, tangentialVelGrad);
-                    tangentialVelGrad *= boundaryVars.viscosityAtIP();
+                    DimVector tangentialVelGrad;
+                    boundaryVars.velocityGrad().mv(tangent, tangentialVelGrad);
+                    tangentialVelGrad *= boundaryVars.viscosity();
 
                     this->residual_[scvIdx][massBalanceIdx] -= stabilizationBeta_*0.5*
                         this->curVolVars_(scvIdx).pressure();
@@ -520,15 +519,15 @@ protected:
             {
                 // calculate  mu grad v t t for beta-stabilization
                 // center in the face of the reference element
-                FieldVector tangent;
-                const FieldVector& elementUnitNormal = isIt->centerUnitOuterNormal();
+                DimVector tangent;
+                const DimVector& elementUnitNormal = isIt->centerUnitOuterNormal();
                 tangent[0] = elementUnitNormal[1];
                 tangent[1] = -elementUnitNormal[0];
-                FieldVector tangentialVelGrad;
-                boundaryVars.velocityGradAtIP().mv(tangent, tangentialVelGrad);
+                DimVector tangentialVelGrad;
+                boundaryVars.velocityGrad().mv(tangent, tangentialVelGrad);
 
                 this->residual_[scvIdx][massBalanceIdx] -= 0.5*stabilizationBeta_
-                    * boundaryVars.viscosityAtIP()
+                    * boundaryVars.viscosity()
                     * (tangentialVelGrad*tangent);
             }
         }
@@ -558,7 +557,7 @@ protected:
 
                 const Scalar alphaH2 = stabilizationAlpha_*
                     fluxVars.averageSCVVolume();
-                Scalar stabilizationTerm = fluxVars.pressureGradAtIP() *
+                Scalar stabilizationTerm = fluxVars.pressureGrad() *
                     this->fvGeometry_().subContVolFace[faceIdx].normal;
 
                 stabilizationTerm *= alphaH2;
@@ -610,8 +609,8 @@ protected:
      * \brief Replace the local residual of the mass balance equation by
      *        the sum of the residuals of the momentum balance equation.
      */
-    void replaceMassbalanceResidual_(const FieldVector& momentumResidual,
-                                     FieldVector& averagedNormal,
+    void replaceMassbalanceResidual_(const DimVector& momentumResidual,
+                                     DimVector& averagedNormal,
                                      const int vertexIdx)
     {
         assert(averagedNormal.two_norm() != 0.0);

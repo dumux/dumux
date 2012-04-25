@@ -49,19 +49,19 @@ struct Stokes2cCommonIndices : public StokesCommonIndices<TypeTag>
 
 public:
     // Phase indices
-    static const int lPhaseIdx = FluidSystem::lPhaseIdx; //!< Index of the liquid phase
-    static const int gPhaseIdx = FluidSystem::gPhaseIdx; //!< Index of the gas phase
+    static const int wPhaseIdx = FluidSystem::lPhaseIdx; //!< Index of the wetting phase
+    static const int nPhaseIdx = FluidSystem::gPhaseIdx; //!< Index of the non-wetting phase
 
     // Component indices
-    static const int lCompIdx = 0; //!< Index of the liquid's primary component
-    static const int gCompIdx = 1; //!< Index of the gas' primary component
+    static const int comp1Idx = 0; //!< Index of the wetting's primary component
+    static const int comp0Idx = 1; //!< Index of the non-wetting's primary component
 
     // equation and primary variable indices
     static const int dim = StokesCommonIndices<TypeTag>::dim;
     static const int transportIdx = PVOffset + dim+1; //! The index for the transport equation.
     static const int massOrMoleFracIndex = transportIdx; //! The index for the mass or mole fraction in primary variable vectors.
 
-    static const int phaseIdx = gPhaseIdx; //!< Index of the gas phase (required to use the same fluid system in coupled models)
+    static const int phaseIdx = nPhaseIdx; //!< Index of the non-wetting phase (required to use the same fluid system in coupled models)
 };
 } // end namespace
 

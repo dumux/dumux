@@ -69,7 +69,7 @@ public:
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &elemGeom,
-                int scvIdx,
+                const int scvIdx,
                 bool isOldSol)
     {
         // the internal energies and the enthalpies
@@ -116,7 +116,7 @@ protected:
                             const Problem& problem,
                             const Element &element,
                             const FVElementGeometry &elemGeom,
-                            int scvIdx)
+                            const int scvIdx)
     {
         return priVars[energyIdx];
     }
@@ -124,7 +124,7 @@ protected:
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,
-                            int phaseIdx)
+                            const int phaseIdx)
     {
         return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
     }
