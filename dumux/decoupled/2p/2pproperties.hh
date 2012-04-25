@@ -132,7 +132,7 @@ typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 };
 
 //! \cond \private
-// keep only for compatibility with box models
+//! DEPRECATED TwoPIndices property
 SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 //! \endcond
 
@@ -173,12 +173,7 @@ public:
     typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 //! DEPRECATED SpatialParameters property
-#warning Please use SpatialParams instead of SpatialParameters
-//TODO: next line enables old Models using SpatialParameters to work
-// with base class impesproblem2p. If models are adapted,
-// l180 should be replaced by l181 to deprecate old problems using SpatialParameters.
-SET_TYPE_PROP(DecoupledTwoP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
-//SET_TYPE_PROP(DecoupledTwoP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+SET_TYPE_PROP(DecoupledTwoP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 
 /*!
  * \brief Set the property for the material parameters by extracting

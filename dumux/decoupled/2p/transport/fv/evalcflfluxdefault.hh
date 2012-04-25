@@ -108,7 +108,7 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-        return (getCFLFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume());
+        return (getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume());
     }
 
     /*! \brief Constructs an EvalCflFluxDefault object
@@ -235,8 +235,8 @@ private:
 template<class TypeTag>
 typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCFLFluxFunction(const Element& element)
 {
-    Scalar residualSatW = problem_.spatialParameters().materialLawParams(element).Swr();
-    Scalar residualSatNW = problem_.spatialParameters().materialLawParams(element).Snr();
+    Scalar residualSatW = problem_.spatialParams().materialLawParams(element).Swr();
+    Scalar residualSatNW = problem_.spatialParams().materialLawParams(element).Snr();
 
     // compute dt restriction
     Scalar volumeCorrectionFactor = 1 - residualSatW - residualSatNW;

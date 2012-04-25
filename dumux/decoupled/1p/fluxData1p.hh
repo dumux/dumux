@@ -54,8 +54,8 @@ private:
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
-    typedef Dune::FieldVector<FieldVector, 2 * dim> VelocityVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<DimVector, 2 * dim> VelocityVector;
 
     VelocityVector velocity_;
     Scalar potential_[2 * dim];
@@ -68,7 +68,7 @@ public:
     {
         for (int face = 0;  face < 2*dim; face++)
         {
-            velocity_[face] = FieldVector(0.0);
+            velocity_[face] = DimVector(0.0);
             potential_[face] = 0.0;
             velocityMarker_[face] = false;
         }
@@ -82,7 +82,7 @@ public:
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
-    const FieldVector& velocity(int indexInInside)
+    const DimVector& velocity(int indexInInside)
     {
         return velocity_[indexInInside];
     }
@@ -90,7 +90,7 @@ public:
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
-    const FieldVector& velocity(int indexInInside) const
+    const DimVector& velocity(int indexInInside) const
     {
         return velocity_[indexInInside];
     }
@@ -99,7 +99,7 @@ public:
      * \param indexInInside Index of the cell-cell interface in this cell
      * \param velocity Velocity vector which is stored
      */
-    void setVelocity(int indexInInside, FieldVector& velocity)
+    void setVelocity(int indexInInside, DimVector& velocity)
     {
         velocity_[indexInInside] = velocity;
     }

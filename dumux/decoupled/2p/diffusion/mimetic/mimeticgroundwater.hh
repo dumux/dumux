@@ -203,7 +203,7 @@ public:
 
         // eval diffusion tensor, ASSUMING to be constant over each cell
         Dune::FieldMatrix<Scalar,dim,dim> K(0);
-        K = problem_.spatialParameters().intrinsicPermeability(element);
+        K = problem_.spatialParams().intrinsicPermeability(element);
 
         K *= (cellData.mobility(wPhaseIdx) + cellData.mobility(nPhaseIdx));
 

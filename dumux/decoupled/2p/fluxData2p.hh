@@ -66,8 +66,8 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
-    typedef Dune::FieldVector<FieldVector, 2 * dim> VelocityVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldVector<DimVector, 2 * dim> VelocityVector;
 
     VelocityVector velocity_[numPhases];
     Scalar potential_[2 * dim][numPhases];
@@ -82,7 +82,7 @@ public:
         {
             for (int phase = 0; phase < numPhases; phase++)
             {
-                velocity_[phase][face] = FieldVector(0.0);
+                velocity_[phase][face] = DimVector(0.0);
 
                 potential_[face][phase] = 0.0;
             }
@@ -99,7 +99,7 @@ public:
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
      */
-    const FieldVector& velocity(int phaseIdx, int indexInInside)
+    const DimVector& velocity(int phaseIdx, int indexInInside)
     {
         return velocity_[phaseIdx][indexInInside];
     }
@@ -109,7 +109,7 @@ public:
      * \param phaseIdx Index of a fluid phase
      * \param indexInInside Index of the cell-cell interface in this cell
      */
-    const FieldVector& velocity(int phaseIdx, int indexInInside) const
+    const DimVector& velocity(int phaseIdx, int indexInInside) const
     {
         return velocity_[phaseIdx][indexInInside];
     }
@@ -120,7 +120,7 @@ public:
      * \param indexInInside Index of the cell-cell interface in this cell
      * \param velocity Phase velocity vector which is stored
      */
-    void setVelocity(int phaseIdx, int indexInInside, const FieldVector& velocity)
+    void setVelocity(int phaseIdx, int indexInInside, const DimVector& velocity)
     {
         velocity_[phaseIdx][indexInInside] = velocity;
     }
@@ -131,7 +131,7 @@ public:
      * \param indexInInside Index of the cell-cell interface in this cell
      * \param velocity Phase velocity vector which is added
      */
-    void addVelocity(int phaseIdx, int indexInInside, const FieldVector& velocity)
+    void addVelocity(int phaseIdx, int indexInInside, const DimVector& velocity)
     {
         velocity_[phaseIdx][indexInInside] += velocity;
     }
@@ -154,7 +154,7 @@ public:
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
-    FieldVector velocityTotal(int indexInInside)
+    DimVector velocityTotal(int indexInInside)
     {
         return velocity_[wPhaseIdx][indexInInside]
                 + velocity_[nPhaseIdx][indexInInside];
@@ -164,7 +164,7 @@ public:
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
-    FieldVector velocityTotal(int indexInInside) const
+    DimVector velocityTotal(int indexInInside) const
     {
         return velocity_[wPhaseIdx][indexInInside]
                 + velocity_[nPhaseIdx][indexInInside];

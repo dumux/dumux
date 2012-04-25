@@ -65,7 +65,7 @@ class TransportProblem2P : public OneModelProblem<TypeTag>
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
     typedef typename SolutionTypes::ScalarSolution Solution;
@@ -104,7 +104,7 @@ public:
         cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
 
         newSpatialParams_ = true;
-        spatialParameters_ = new SpatialParameters(gridView);
+        spatialParams_ = new SpatialParams(gridView);
 
         gravity_ = 0;
         if (GET_PARAM(TypeTag, bool, EnableGravity))
@@ -116,11 +116,11 @@ public:
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
+     * \param spatialParams SpatialParams instantiation
      */
-    TransportProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
+    TransportProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
         : ParentType(timeManager, gridView),
-        gravity_(0),spatialParameters_(spatialParameters)
+        gravity_(0),spatialParams_(spatialParams)
     {
         cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
 
@@ -135,7 +135,7 @@ public:
     {
         if (newSpatialParams_)
         {
-        delete spatialParameters_;
+        delete spatialParams_;
         }
     }
 
@@ -206,14 +206,22 @@ public:
     /*!
      * \brief Returns the spatial parameters object.
      */
-    SpatialParameters &spatialParameters()
-    { return *spatialParameters_; }
+    SpatialParams &spatialParams()
+    { return *spatialParams_; }
+
+    DUMUX_DEPRECATED_MSG("use spatialParams() method instead")
+    SpatialParams &spatialParameters()
+    { return *spatialParams_; }
 
     /*!
      * \brief Returns the spatial parameters object.
      */
-    const SpatialParameters &spatialParameters() const
-    { return *spatialParameters_; }
+    const SpatialParams &spatialParams() const
+    { return *spatialParams_; }
+
+    DUMUX_DEPRECATED_MSG("use spatialParams() method instead")
+    const SpatialParams &spatialParameters() const
+    { return *spatialParams_; }
 
     void timeIntegration()
     {
@@ -248,7 +256,7 @@ private:
     GlobalPosition gravity_;
 
     // material properties
-    SpatialParameters*  spatialParameters_;
+    SpatialParams*  spatialParams_;
     bool newSpatialParams_;
 
     Scalar cFLFactor_;

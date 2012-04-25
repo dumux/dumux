@@ -63,6 +63,7 @@ NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG( SpatialParameters ); //!< The type of the spatial parameters object
+NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
 NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Fluid ); //!< The fluid for one-phase models
 NEW_PROP_TAG( Indices ); //!< Set of indices for the one-phase model
@@ -100,6 +101,9 @@ SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
 
 //! Set standart CellData of immiscible one-phase models as default
 SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
+
+//! DEPRECATED SpatialParameters property
+SET_TYPE_PROP(DecoupledOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 }
 }
 #endif

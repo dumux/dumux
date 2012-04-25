@@ -45,8 +45,8 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename SpatialParams::MaterialLaw MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -85,7 +85,7 @@ private:
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
 
@@ -96,10 +96,10 @@ public:
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
             const Element& element, int phaseIdx = -1)
     {
-        if (hasHangingNode_)
-        {
-            return;
-        }
+//        if (hasHangingNode_)
+//        {
+//            return;
+//        }
 
         ParentType::addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, element, phaseIdx);
     }
@@ -111,15 +111,15 @@ public:
     void addFlux(Scalar& lambdaW, Scalar& lambdaNW, Scalar& viscosityW, Scalar& viscosityNW, Scalar flux,
             const Intersection& intersection, int phaseIdx = -1)
     {
-        if (hasHangingNode_)
-        {
-            return;
-        }
-
         Scalar parentMob = 0.5;
         Scalar parentVis = 1;
         //        ParentType::addFlux(lambdaW, lambdaNW, viscosityW, viscosityNW, flux, intersection, phaseIdx);
         ParentType::addFlux(parentMob, parentMob, parentVis, parentVis, flux, intersection, phaseIdx);
+
+        if (hasHangingNode_)
+        {
+            return;
+        }
 
         ElementPointer element = intersection.inside();
 
@@ -137,7 +137,7 @@ public:
         Scalar lambdaWI = cellDataI.mobility(wPhaseIdx);
         Scalar lambdaNWI = cellDataI.mobility(nPhaseIdx);
 
-        Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(*element), satI);
+        Scalar dPcdSI = MaterialLaw::dpC_dSw(problem_.spatialParams().materialLawParams(*element), satI);
 
 
         const GlobalPosition& unitOuterNormal = intersection.centerUnitOuterNormal();
@@ -170,14 +170,14 @@ public:
             Scalar lambdaWJ = cellDataI.mobility(wPhaseIdx);
             Scalar lambdaNWJ = cellDataI.mobility(nPhaseIdx);
 
-            Scalar dPcdSJ = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(*neighbor), satJ);
+            Scalar dPcdSJ = MaterialLaw::dpC_dSw(problem_.spatialParams().materialLawParams(*neighbor), satJ);
 
             // compute vectorized permeabilities
-            FieldMatrix meanPermeability(0);
+            DimMatrix meanPermeability(0);
 
-            problem_.spatialParameters().meanK(meanPermeability,
-                    problem_.spatialParameters().intrinsicPermeability(*element),
-                    problem_.spatialParameters().intrinsicPermeability(*neighbor));
+            problem_.spatialParams().meanK(meanPermeability,
+                    problem_.spatialParams().intrinsicPermeability(*element),
+                    problem_.spatialParams().intrinsicPermeability(*neighbor));
 
             Dune::FieldVector < Scalar, dim > permeability(0);
             meanPermeability.mv(unitOuterNormal, permeability);
@@ -204,8 +204,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*neighbor), std::abs(satPlus)) / viscosityW;
-            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*neighbor), std::abs(satMinus)) / viscosityW;
+            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighbor), std::abs(satPlus)) / viscosityW;
+            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighbor), std::abs(satMinus)) / viscosityW;
             dLambdaWdS /= (dS);
 
             if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
@@ -227,8 +227,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*neighbor), satPlus) / viscosityNW;
-            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*neighbor), satMinus) / viscosityNW;
+            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighbor), satPlus) / viscosityNW;
+            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighbor), satMinus) / viscosityNW;
             dLambdaNWdS /= (dS);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWJ);
@@ -288,10 +288,10 @@ public:
 
             //permeability vector at boundary
             // compute vectorized permeabilities
-            FieldMatrix meanPermeability(0);
+            DimMatrix meanPermeability(0);
 
-            problem_.spatialParameters().meanK(meanPermeability,
-                    problem_.spatialParameters().intrinsicPermeability(*element));
+            problem_.spatialParams().meanK(meanPermeability,
+                    problem_.spatialParams().intrinsicPermeability(*element));
 
             Dune::FieldVector<Scalar, dim> permeability(0);
             meanPermeability.mv(unitOuterNormal, permeability);
@@ -322,7 +322,7 @@ public:
 
             }
 
-            Scalar dPcdSBound = MaterialLaw::dpC_dSw(problem_.spatialParameters().materialLawParams(*element), satWBound);
+            Scalar dPcdSBound = MaterialLaw::dpC_dSw(problem_.spatialParams().materialLawParams(*element), satWBound);
 
             Scalar lambdaWBound = 0;
             Scalar lambdaNWBound = 0;
@@ -337,8 +337,8 @@ public:
             Scalar viscosityWBound = FluidSystem::viscosity(fluidState, wPhaseIdx);
             Scalar viscosityNWBound =
                     FluidSystem::viscosity(fluidState, nPhaseIdx);
-            lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*element), satWBound) / viscosityWBound;
-            lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*element), satWBound) / viscosityNWBound;
+            lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satWBound) / viscosityWBound;
+            lambdaNWBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satWBound) / viscosityNWBound;
 
             Scalar transmissibility = (unitOuterNormal * permeability) * intersection.geometry().volume() / dist;
 
@@ -362,8 +362,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*element), satPlus) / viscosityW;
-            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*element), satMinus) / viscosityW;
+            Scalar dLambdaWdS = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satPlus) / viscosityW;
+            dLambdaWdS -= MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satMinus) / viscosityW;
             dLambdaWdS /= (dS);
 
             if (cellDataI.fluxData().isUpwindCell(nPhaseIdx, indexInInside))
@@ -385,8 +385,8 @@ public:
                 dS += eps_;
             }
 
-            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*element), satPlus) / viscosityNW;
-            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*element), satMinus) / viscosityNW;
+            Scalar dLambdaNWdS = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satPlus) / viscosityNW;
+            dLambdaNWdS -= MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satMinus) / viscosityNW;
             dLambdaNWdS /= (dS);
 
             Scalar lambdaWCap = 0.5 * (lambdaWI + lambdaWBound);
@@ -458,7 +458,9 @@ public:
             return (returnValue == cflFluxDefault) ? 0.95 / returnValue : 1 / returnValue;
         }
         else
-            return 1e100;
+        {
+            return cflFluxDefault;
+        }
     }
 
     /*! \brief  Returns the CFL time-step
@@ -467,7 +469,7 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-        return getCFLFluxFunction(element) * problem_.spatialParameters().porosity(element) * element.geometry().volume();
+        return getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume();
     }
 
     /*! \brief Constructs an EvalCflFluxDefault object

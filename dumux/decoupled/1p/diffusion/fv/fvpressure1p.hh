@@ -65,7 +65,7 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
 
@@ -98,7 +98,7 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 
 public:
@@ -271,10 +271,10 @@ void FVPressure1P<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entry, const I
     Scalar dist = distVec.two_norm();
 
     // compute vectorized permeabilities
-    FieldMatrix meanPermeability(0);
+    DimMatrix meanPermeability(0);
 
-    problem_.spatialParameters().meanK(meanPermeability, problem_.spatialParameters().intrinsicPermeability(*elementI),
-            problem_.spatialParameters().intrinsicPermeability(*elementJ));
+    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
+            problem_.spatialParams().intrinsicPermeability(*elementJ));
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
@@ -331,10 +331,10 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 
         //permeability vector at boundary
         // compute vectorized permeabilities
-        FieldMatrix meanPermeability(0);
+        DimMatrix meanPermeability(0);
 
-        problem_.spatialParameters().meanK(meanPermeability,
-                problem_.spatialParameters().intrinsicPermeability(*element));
+        problem_.spatialParams().meanK(meanPermeability,
+                problem_.spatialParams().intrinsicPermeability(*element));
 
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);

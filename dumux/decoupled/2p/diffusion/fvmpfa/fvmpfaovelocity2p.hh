@@ -59,8 +59,8 @@ template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -106,8 +106,8 @@ template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
     //! Constructs a FVMPFAOVelocity2P object
@@ -187,7 +187,7 @@ template<class TypeTag>
 void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 {
     // introduce matrix R for vector rotation and R is initialized as zero matrix
-    FieldMatrix R(0);
+    DimMatrix R(0);
 
     // evaluate matrix R
     if (dim == 2)
@@ -228,7 +228,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
         Scalar q1 = source[wPhaseIdx] + source[nPhaseIdx];
 
         // get absolute permeability of cell 1
-        FieldMatrix K1(problem_.spatialParameters().intrinsicPermeability(*eIt));
+        DimMatrix K1(problem_.spatialParams().intrinsicPermeability(*eIt));
 
         // compute total mobility of cell 1
         Scalar lambda1 = cellData1.mobility(wPhaseIdx)
@@ -388,7 +388,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                 GlobalPosition globalPos2 = outside->geometry().center();
 
                 // get absolute permeability of neighbor cell 2
-                FieldMatrix K2(problem_.spatialParameters().intrinsicPermeability(*outside));
+                DimMatrix K2(problem_.spatialParams().intrinsicPermeability(*outside));
 
                 // get total mobility of neighbor cell 2
                 Scalar lambda2 = cellData2.mobility(wPhaseIdx)
@@ -415,7 +415,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     GlobalPosition globalPos3 = nextisItoutside->geometry().center();
 
                     // get absolute permeability of neighbor cell 3
-                    FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
+                    DimMatrix K3(problem_.spatialParams().intrinsicPermeability(*nextisItoutside));
 
                     // get total mobility of neighbor cell 3
                     Scalar lambda3 = cellData3.mobility(wPhaseIdx)
@@ -423,7 +423,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                     // neighbor cell 4
                     GlobalPosition globalPos4(0);
-                    FieldMatrix K4(0);
+                    DimMatrix K4(0);
                     Scalar lambda4 = 0;
                     int globalIdx4 = 0;
                     Scalar press4 = 0;
@@ -455,7 +455,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     globalPos4 = innerisItoutside->geometry().center();
 
                                     // get absolute permeability of neighbor cell 4
-                                    K4 += problem_.spatialParameters().intrinsicPermeability(*innerisItoutside);
+                                    K4 += problem_.spatialParams().intrinsicPermeability(*innerisItoutside);
 
                                     lambda4 = cellData4.mobility(wPhaseIdx)
                                                 + cellData4.mobility(nPhaseIdx);
@@ -546,63 +546,63 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     integrationOuterNormaln2 *= face34vol / 2.0;
 
                     // compute normal vectors nu11,nu21; nu12, nu22; nu13, nu23; nu14, nu24;
-                    FieldVector nu11(0);
+                    DimVector nu11(0);
                     R.umv(globalPosFace13 - globalPos1, nu11);
 
-                    FieldVector nu21(0);
+                    DimVector nu21(0);
                     R.umv(globalPos1 - globalPosFace12, nu21);
 
-                    FieldVector nu12(0);
+                    DimVector nu12(0);
                     R.umv(globalPosFace24 - globalPos2, nu12);
 
-                    FieldVector nu22(0);
+                    DimVector nu22(0);
                     R.umv(globalPosFace12 - globalPos2, nu22);
 
-                    FieldVector nu13(0);
+                    DimVector nu13(0);
                     R.umv(globalPos3 - globalPosFace13, nu13);
 
-                    FieldVector nu23(0);
+                    DimVector nu23(0);
                     R.umv(globalPos3 - globalPosFace34, nu23);
 
-                    FieldVector nu14(0);
+                    DimVector nu14(0);
                     R.umv(globalPos4 - globalPosFace24, nu14);
 
-                    FieldVector nu24(0);
+                    DimVector nu24(0);
                     R.umv(globalPosFace34 - globalPos4, nu24);
 
                     // compute dF1, dF2, dF3, dF4 i.e., the area of quadrilateral made by normal vectors 'nu'
-                    FieldVector Rnu21(0);
+                    DimVector Rnu21(0);
                     R.umv(nu21, Rnu21);
                     Scalar dF1 = fabs(nu11 * Rnu21);
 
-                    FieldVector Rnu22(0);
+                    DimVector Rnu22(0);
                     R.umv(nu22, Rnu22);
                     Scalar dF2 = fabs(nu12 * Rnu22);
 
-                    FieldVector Rnu23(0);
+                    DimVector Rnu23(0);
                     R.umv(nu23, Rnu23);
                     Scalar dF3 = fabs(nu13 * Rnu23);
 
-                    FieldVector Rnu24(0);
+                    DimVector Rnu24(0);
                     R.umv(nu24, Rnu24);
                     Scalar dF4 = fabs(nu14 * Rnu24);
 
                     // compute components needed for flux calculation, denoted as 'g'
-                    FieldVector K1nu11(0);
+                    DimVector K1nu11(0);
                     K1.umv(nu11, K1nu11);
-                    FieldVector K1nu21(0);
+                    DimVector K1nu21(0);
                     K1.umv(nu21, K1nu21);
-                    FieldVector K2nu12(0);
+                    DimVector K2nu12(0);
                     K2.umv(nu12, K2nu12);
-                    FieldVector K2nu22(0);
+                    DimVector K2nu22(0);
                     K2.umv(nu22, K2nu22);
-                    FieldVector K3nu13(0);
+                    DimVector K3nu13(0);
                     K3.umv(nu13, K3nu13);
-                    FieldVector K3nu23(0);
+                    DimVector K3nu23(0);
                     K3.umv(nu23, K3nu23);
-                    FieldVector K4nu14(0);
+                    DimVector K4nu14(0);
                     K4.umv(nu14, K4nu14);
-                    FieldVector K4nu24(0);
+                    DimVector K4nu24(0);
                     K4.umv(nu24, K4nu24);
                     Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                     Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -677,13 +677,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     T.umv(u, Tu);
 
                     // evaluate velocity of facet 'isIt'
-                    FieldVector vector1 = unitOuterNormaln1;
+                    DimVector vector1 = unitOuterNormaln1;
                     vector1 *= Tu[0] / face12vol;
                     vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                     cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                     // evaluate velocity of facet 'nextisIt'
-                    FieldVector vector3 = unitOuterNormaln3;
+                    DimVector vector3 = unitOuterNormaln3;
                     vector3 *= Tu[2] / face13vol;
                     vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                     cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -754,35 +754,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24 - globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12 - globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -827,7 +827,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     + g121 * T[1][1]) * press2 - (g111 * r[0] + g121 * r[1]);
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
@@ -867,10 +867,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
@@ -880,35 +880,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             }
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24 - globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12 - globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -918,8 +918,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
-                            FieldMatrix A(0), B(0);
-                            FieldVector r1(0), r(0);
+                            DimMatrix A(0), B(0);
+                            DimVector r1(0), r(0);
 
                             // evaluate matrix A, B
                             A[0][0] = g111 + g112;
@@ -938,7 +938,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute T and r
                             A.invert();
                             B.leftmultiply(A);
-                            FieldMatrix T(B);
+                            DimMatrix T(B);
                             A.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
@@ -946,7 +946,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     + g121 * T[1][1]) * press2 - (g111 * r[0] + g121 * r[1]);
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
@@ -987,10 +987,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar lambdaNWBound = 0;
 
                             lambdaWBound = MaterialLaw::krw(
-                                    problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                    problem_.spatialParams().materialLawParams(*eIt), satW)
                                     / viscosity_[wPhaseIdx];
                             lambdaNWBound = MaterialLaw::krn(
-                                    problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                    problem_.spatialParams().materialLawParams(*eIt), satW)
                                     / viscosity_[nPhaseIdx];
                             alambda1 = lambdaWBound + lambdaNWBound;
                         }
@@ -1007,35 +1007,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24 - globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12 - globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1047,8 +1047,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22) / dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
-                            FieldMatrix A(0), B(0);
-                            FieldVector r1(0), r(0);
+                            DimMatrix A(0), B(0);
+                            DimVector r1(0), r(0);
 
                             // evaluate matrix A, B
                             A[0][0] = g111 + g112;
@@ -1067,7 +1067,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute T and r
                             A.invert();
                             B.leftmultiply(A);
-                            FieldMatrix T(B);
+                            DimMatrix T(B);
                             A.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
@@ -1077,13 +1077,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     - g211 * r[0];
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -1123,10 +1123,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
@@ -1136,35 +1136,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             }
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24 - globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12 - globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1174,8 +1174,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22) / dF2;
 
                             // compute the matrix T & vector r
-                            FieldMatrix T(0);
-                            FieldVector r(0);
+                            DimMatrix T(0);
+                            DimVector r(0);
 
                             Scalar coe = g111 + g112;
 
@@ -1194,13 +1194,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar f3 = T[1][0] * press1 + T[1][1] * press2 + r[1];
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -1226,7 +1226,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                     Scalar J1 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                     // evaluate velocity of facet 'isIt'
-                    FieldVector vector1 = unitOuterNormaln1;
+                    DimVector vector1 = unitOuterNormaln1;
                     vector1 *= -J1;
                     vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                     cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
@@ -1269,10 +1269,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
@@ -1285,21 +1285,21 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar g3 = boundValues[pressureIdx];
 
                             // compute normal vectors nu11,nu21;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1311,7 +1311,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     * (-J1) * face12vol) / (2.0 * g111);
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -1338,7 +1338,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         GlobalPosition globalPos3 = nextisItoutside->geometry().center();
 
                         // get absolute permeability of neighbor cell 3
-                        FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
+                        DimMatrix K3(problem_.spatialParams().intrinsicPermeability(*nextisItoutside));
 
                         // get total mobility of neighbor cell 3
                         Scalar lambda3 = cellData3.mobility(wPhaseIdx)
@@ -1391,35 +1391,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3 - globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3 - globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1479,7 +1479,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar f3 = T[2][0] * press1 + T[2][1] * press3 + r[2];
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -1519,10 +1519,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
@@ -1532,35 +1532,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             }
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3 - globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3 - globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1570,7 +1570,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
 
                             // compute transmissibility matrix T = CA^{-1}B+F
-                            FieldMatrix C(0), A(0), F(0), B(0);
+                            DimMatrix C(0), A(0), F(0), B(0);
 
                             // evaluate matrix C, F, A, B
                             C[0][0] = -g111;
@@ -1591,19 +1591,19 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
 
                             // compute T
                             A.invert();
-                            FieldMatrix CAinv(C.rightmultiply(A));
+                            DimMatrix CAinv(C.rightmultiply(A));
                             F += B.leftmultiply(CAinv);
-                            FieldMatrix T(F);
+                            DimMatrix T(F);
 
                             // compute vector r
                             // evaluate r1, r2
-                            FieldVector r1(0), r2(0);
+                            DimVector r1(0), r2(0);
                             r1[1] = -g213 * g2;
                             r2[0] = -J1 * face12vol / 2.0;
                             r2[1] = g213 * g2;
 
                             // compute r = CA^{-1}r1
-                            FieldVector r(0);
+                            DimVector r(0);
                             CAinv.umv(r2, r);
                             r += r1;
 
@@ -1611,7 +1611,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar f3 = T[1][0] * press1 + T[1][1] * press3 + r[1];
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -1653,10 +1653,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         Scalar lambdaNWBound = 0;
 
                         lambdaWBound = MaterialLaw::krw(
-                                problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                problem_.spatialParams().materialLawParams(*eIt), satW)
                                 / viscosity_[wPhaseIdx];
                         lambdaNWBound = MaterialLaw::krn(
-                                problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                problem_.spatialParams().materialLawParams(*eIt), satW)
                                 / viscosity_[nPhaseIdx];
                         alambda1 = lambdaWBound + lambdaNWBound;
                     }
@@ -1706,10 +1706,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
@@ -1719,21 +1719,21 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             }
 
                             // compute normal vectors nu11,nu21;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1751,13 +1751,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar f3 = T3 * press1 - r3;
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -1771,21 +1771,21 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar J3 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1800,7 +1800,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar f1 = T * press1 + r;
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
@@ -1827,7 +1827,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                         GlobalPosition globalPos3 = nextisItoutside->geometry().center();
 
                         // get absolute permeability of neighbor cell 3
-                        FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
+                        DimMatrix K3(problem_.spatialParams().intrinsicPermeability(*nextisItoutside));
 
                         // get total mobility of neighbor cell 3
                         Scalar lambda3 = cellData3.mobility(wPhaseIdx)
@@ -1906,10 +1906,10 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                 Scalar lambdaNWBound = 0;
 
                                  lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
@@ -1919,35 +1919,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             }
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3 - globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3 - globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -1957,8 +1957,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
 
                             // compute the matrix T & vector r
-                            FieldMatrix T(0);
-                            FieldVector r(0);
+                            DimMatrix T(0);
+                            DimVector r(0);
 
                             Scalar coe = g221 + g223;
 
@@ -1977,13 +1977,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar f3 = T[1][0] * press1 + T[1][1] * press3 + r[1];
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);
@@ -1997,35 +1997,35 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13 - globalPos1, nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1 - globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3 - globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3 - globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11) / dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21) / dF1;
@@ -2037,8 +2037,8 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23) / dF3;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
-                            FieldMatrix A(0), B(0);
-                            FieldVector r1(0), r(0);
+                            DimMatrix A(0), B(0);
+                            DimVector r1(0), r(0);
 
                             // evaluate matrix A, B
                             A[0][0] = g113;
@@ -2057,7 +2057,7 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                             // compute T and r
                             A.invert();
                             B.leftmultiply(A);
-                            FieldMatrix T(B);
+                            DimMatrix T(B);
                             A.umv(r1, r);
 
                             // use the pressure values to compute the fluxes
@@ -2067,13 +2067,13 @@ void FVMPFAOVelocity2P<TypeTag>::calculateVelocity()
                                     + g221 * r[1]);
 
                             // evaluate velocity of facet 'isIt'
-                            FieldVector vector1 = unitOuterNormaln1;
+                            DimVector vector1 = unitOuterNormaln1;
                             vector1 *= f1 / face12vol;
                             vector1 += cellData1.fluxData().velocityTotal(indexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, indexInInside, vector1);
 
                             // evaluate velocity of facet 'nextisIt'
-                            FieldVector vector3 = unitOuterNormaln3;
+                            DimVector vector3 = unitOuterNormaln3;
                             vector3 *= f3 / face13vol;
                             vector3 += cellData1.fluxData().velocityTotal(nextindexInInside);
                             cellData1.fluxData().setVelocity(wPhaseIdx, nextindexInInside, vector3);

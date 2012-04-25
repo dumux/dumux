@@ -72,8 +72,8 @@ template<class TypeTag> class MimeticPressure2P
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -107,7 +107,6 @@ template<class TypeTag> class MimeticPressure2P
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
     typedef Dune::BlockVector< Dune::FieldVector<Scalar, 1> > TraceType;
@@ -353,13 +352,13 @@ void MimeticPressure2P<TypeTag>::updateMaterialLaws()
         //determine phase saturations from primary saturation variable
 
         Scalar satW = cellData.saturation(wPhaseIdx);
-        Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt), satW);
 
         cellData.setCapillaryPressure(pc);
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
-        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
+        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);

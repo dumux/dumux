@@ -245,12 +245,12 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         FieldMatrix permeabilityJ(0);
         FieldMatrix permeabilityK(0);
 
-        problem_.spatialParameters().meanK(permeabilityI,
-                problem_.spatialParameters().intrinsicPermeability(*elementI));
-        problem_.spatialParameters().meanK(permeabilityJ,
-                problem_.spatialParameters().intrinsicPermeability(*elementJ));
-        problem_.spatialParameters().meanK(permeabilityK,
-                problem_.spatialParameters().intrinsicPermeability(*elementK));
+        problem_.spatialParams().meanK(permeabilityI,
+                problem_.spatialParams().intrinsicPermeability(*elementI));
+        problem_.spatialParams().meanK(permeabilityJ,
+                problem_.spatialParams().intrinsicPermeability(*elementJ));
+        problem_.spatialParams().meanK(permeabilityK,
+                problem_.spatialParams().intrinsicPermeability(*elementK));
 
         // Calculate permeablity component normal to interface
         Scalar kI, kJ, kK, ng, kMean; //, gI, gJ, gK;

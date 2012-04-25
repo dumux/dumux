@@ -56,8 +56,8 @@ private:
       typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
       typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-      typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-      typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+      typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+      typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
       typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
       typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
@@ -77,9 +77,9 @@ private:
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
 
 public:
     /*! \brief Returns convective term for current element face
@@ -89,7 +89,7 @@ public:
      *  \param satI           saturation of current element
      *  \param satJ           saturation of neighbor element
      */
-    void getFlux(FieldVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
+    void getFlux(DimVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
     {
         ElementPointer element = intersection.inside();
 
@@ -111,13 +111,13 @@ public:
         }
         else
         {
-            lambdaWI = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*element), satI);
+            lambdaWI = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satI);
             lambdaWI /= viscosity_[wPhaseIdx];
-            lambdaNWI = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*element), satI);
+            lambdaNWI = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satI);
             lambdaNWI /= viscosity_[nPhaseIdx];
         }
 
-        FieldMatrix meanPermeability(0);
+        DimMatrix meanPermeability(0);
 
         if (intersection.neighbor())
         {
@@ -128,9 +128,9 @@ public:
             CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
 
             // get permeability
-            problem_.spatialParameters().meanK(meanPermeability,
-                    problem_.spatialParameters().intrinsicPermeability(*element),
-                    problem_.spatialParameters().intrinsicPermeability(*neighborPointer));
+            problem_.spatialParams().meanK(meanPermeability,
+                    problem_.spatialParams().intrinsicPermeability(*element),
+                    problem_.spatialParams().intrinsicPermeability(*neighborPointer));
 
             //get lambda_bar = lambda_n*f_w
             if (preComput_)
@@ -140,22 +140,22 @@ public:
             }
             else
             {
-                lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
+                lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
                 lambdaWJ /= viscosity_[wPhaseIdx];
-                lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*neighborPointer), satJ);
+                lambdaNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
                 lambdaNWJ /= viscosity_[nPhaseIdx];
             }
         }
         else
         {
             // get permeability
-            problem_.spatialParameters().meanK(meanPermeability,
-                    problem_.spatialParameters().intrinsicPermeability(*element));
+            problem_.spatialParams().meanK(meanPermeability,
+                    problem_.spatialParams().intrinsicPermeability(*element));
 
             //calculate lambda_n*f_w at the boundary
-            lambdaWJ = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*element), satJ);
+            lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satJ);
             lambdaWJ /= viscosity_[wPhaseIdx];
-            lambdaNWJ = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*element), satJ);
+            lambdaNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
             lambdaNWJ /= viscosity_[nPhaseIdx];
         }
 

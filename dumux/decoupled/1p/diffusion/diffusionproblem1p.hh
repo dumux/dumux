@@ -61,7 +61,7 @@ class DiffusionProblem1P: public OneModelProblem<TypeTag>
 
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
@@ -82,7 +82,7 @@ public:
     DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView), gravity_(0)
     {
-        spatialParameters_ = new SpatialParameters(gridView);
+        spatialParams_ = new SpatialParams(gridView);
         newSpatialParams_ = true;
         gravity_ = 0;
         if (GET_PARAM(TypeTag, bool, EnableGravity))
@@ -93,10 +93,10 @@ public:
      *
      * \param timeManager the time manager
      * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
+     * \param spatialParams SpatialParams instantiation
      */
-    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView, SpatialParameters &spatialParameters)
-    : ParentType(timeManager, gridView), gravity_(0), spatialParameters_(&spatialParameters)
+    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
+    : ParentType(timeManager, gridView), gravity_(0), spatialParams_(&spatialParams)
     {
         newSpatialParams_ = false;
         gravity_ = 0;
@@ -111,7 +111,7 @@ public:
     DiffusionProblem1P(const GridView &gridView)
     : ParentType(gridView, false), gravity_(0)
     {
-        spatialParameters_ = new SpatialParameters(gridView);
+        spatialParams_ = new SpatialParams(gridView);
         newSpatialParams_ = true;
         gravity_ = 0;
         if (GET_PARAM(TypeTag, bool, EnableGravity))
@@ -121,10 +121,10 @@ public:
      * \brief The constructor
      *
      * \param gridView The grid view
-     * \param spatialParameters SpatialParameters instantiation
+     * \param spatialParams SpatialParams instantiation
      */
-    DiffusionProblem1P(const GridView &gridView, SpatialParameters &spatialParameters)
-    : ParentType(gridView, false), gravity_(0), spatialParameters_(&spatialParameters)
+    DiffusionProblem1P(const GridView &gridView, SpatialParams &spatialParams)
+    : ParentType(gridView, false), gravity_(0), spatialParams_(&spatialParams)
     {
         newSpatialParams_ = false;
         gravity_ = 0;
@@ -136,7 +136,7 @@ public:
     {
         if (newSpatialParams_)
         {
-            delete spatialParameters_;
+            delete spatialParams_;
         }
     }
 
@@ -229,18 +229,26 @@ public:
     /*!
      * \brief Returns the spatial parameters object.
      */
-    SpatialParameters &spatialParameters()
+    SpatialParams &spatialParams()
     {
-        return *spatialParameters_;
+        return *spatialParams_;
     }
+
+    DUMUX_DEPRECATED_MSG("use spatialParams() method instead")
+    SpatialParams &spatialParameters()
+    { return *spatialParams_; }
 
     /*!
      * \brief Returns the spatial parameters object.
      */
-    const SpatialParameters &spatialParameters() const
+    const SpatialParams &spatialParams() const
     {
-        return *spatialParameters_;
+        return *spatialParams_;
     }
+
+    DUMUX_DEPRECATED_MSG("use spatialParams() method instead")
+    const SpatialParams &spatialParameters() const
+    { return *spatialParams_; }
 
     // \}
 
@@ -256,7 +264,7 @@ private:
     GlobalPosition gravity_;
 
     // fluids and material properties
-    SpatialParameters* spatialParameters_;
+    SpatialParams* spatialParams_;
     bool newSpatialParams_;
 };
 

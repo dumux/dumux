@@ -176,6 +176,12 @@ public:
         return (indicatorVector_[problem_.elementMapper().map(element)] < coarsenBound_);
     }
 
+    /*! \brief Initializes the adaption indicator class*/
+    void init()
+    {
+        refineBound_ = 0.;
+        coarsenBound_ = 0.;
+    };
 
     /*! @brief Constructs a GridAdaptionIndicator instance
      *
@@ -189,8 +195,6 @@ public:
     {
         refinetol_ = GET_PARAM(TypeTag, Scalar, RefineTolerance);
         coarsentol_ = GET_PARAM(TypeTag, Scalar, CoarsenTolerance);
-        refineBound_ = 0.;
-        coarsenBound_ = 0.;
     }
 
 private:

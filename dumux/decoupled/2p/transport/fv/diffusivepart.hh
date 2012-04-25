@@ -48,7 +48,7 @@ private:
     enum{dim = GridView::dimension};
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
     /*! \brief Returns diffusive term for current element face
@@ -59,7 +59,7 @@ public:
      *  \param satJ           saturation of neighbor element
      *  \param pcGradient     gradient of capillary pressure between element I and J
      */
-    void getFlux(FieldVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
+    void getFlux(DimVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ, const DimVector& pcGradient) const
     {}
 
     /*! \brief Returns diffusive term for current element face
@@ -70,8 +70,8 @@ public:
      *  \param satGradient       gradient of saturation between element I and J
      *  \param time             time
      */
-    void getFlux(FieldVector& flux, const Intersection& intersection,
-                                    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time) const
+    void getFlux(DimVector& flux, const Intersection& intersection,
+                                    const Scalar satIntersection, const DimVector& satGradient, const Scalar time) const
     {}
 
     /*! \brief Returns diffusive term for current element face
@@ -84,8 +84,8 @@ public:
      *  \param satI             saturation of current element
      *  \param satJ             saturation of neighbor element
      */
-    void getFlux(FieldVector& flux, const Intersection& intersection,
-                                    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
+    void getFlux(DimVector& flux, const Intersection& intersection,
+                                    const Scalar satIntersection, const DimVector& satGradient, const Scalar time,
                                     Scalar satI, Scalar satJ) const
     {}
 

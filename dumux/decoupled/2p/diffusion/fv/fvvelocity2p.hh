@@ -61,8 +61,8 @@ class FVVelocity2P
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -108,7 +108,7 @@ class FVVelocity2P
     };
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 public:
     /*! \brief Constructs a FVVelocity2P object
@@ -208,8 +208,8 @@ public:
                     ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
             // get the transposed Jacobian of the element mapping
-            const FieldMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
-            FieldMatrix jacobianT(jacobianInv);
+            const DimMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
+            DimMatrix jacobianT(jacobianInv);
             jacobianT.invert();
 
             // calculate the element velocity by the Piola transformation
@@ -320,10 +320,10 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     Scalar dist = distVec.two_norm();
 
     // compute vectorized permeabilities
-    FieldMatrix meanPermeability(0);
+    DimMatrix meanPermeability(0);
 
-    problem_.spatialParameters().meanK(meanPermeability, problem_.spatialParameters().intrinsicPermeability(*elementI),
-            problem_.spatialParameters().intrinsicPermeability(*elementJ));
+    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
+            problem_.spatialParams().intrinsicPermeability(*elementJ));
 
     Dune::FieldVector < Scalar, dim > permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
@@ -493,9 +493,9 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
 
         //permeability vector at boundary
         // compute vectorized permeabilities
-        FieldMatrix meanPermeability(0);
+        DimMatrix meanPermeability(0);
 
-        problem_.spatialParameters().meanK(meanPermeability, problem_.spatialParameters().intrinsicPermeability(*element));
+        problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*element));
 
         Dune::FieldVector < Scalar, dim > permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
@@ -528,7 +528,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         }
 
         Scalar pressBound = boundValues[pressureIdx];
-        Scalar pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*element), satW);
+        Scalar pcBound = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*element), satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressWBound = 0;
@@ -572,9 +572,9 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
             viscosityNWBound = FluidSystem::viscosity(fluidState, nPhaseIdx) / densityNWBound;
         }
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*element), satW)
+        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satW)
                 / viscosityWBound;
-        Scalar lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*element), satW)
+        Scalar lambdaNWBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satW)
                 / viscosityNWBound;
 
         Scalar potentialW = 0;

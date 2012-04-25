@@ -70,8 +70,8 @@ class FVMPFAOPressure2P: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -114,11 +114,11 @@ class FVMPFAOPressure2P: public FVPressure<TypeTag>
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
-    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     //initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
@@ -506,7 +506,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
     this->f_=0;
 
     // introduce matrix R for vector rotation and R is initialized as zero matrix
-    FieldMatrix R(0);
+    DimMatrix R(0);
 
     // evaluate matrix R
     if (dim==2)
@@ -543,7 +543,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
         this->f_[globalIdx1] = volume1*(source[wPhaseIdx]/density_[wPhaseIdx] + source[nPhaseIdx]/density_[nPhaseIdx]);
 
         // get absolute permeability of cell 1
-        FieldMatrix K1(problem_.spatialParameters().intrinsicPermeability(*eIt));
+        DimMatrix K1(problem_.spatialParams().intrinsicPermeability(*eIt));
 
         //compute total mobility of cell 1
         Scalar lambda1 = 0;
@@ -693,7 +693,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 globalPos2 = outside->geometry().center();
 
                 // get absolute permeability of neighbor cell 2
-                FieldMatrix K2(problem_.spatialParameters().intrinsicPermeability(*outside));
+                DimMatrix K2(problem_.spatialParams().intrinsicPermeability(*outside));
 
                 // get total mobility of neighbor cell 2
                 Scalar lambda2 = 0;
@@ -718,7 +718,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     globalPos3 = nextisItoutside->geometry().center();
 
                     // get absolute permeability of neighbor cell 3
-                    FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
+                    DimMatrix K3(problem_.spatialParams().intrinsicPermeability(*nextisItoutside));
 
                     // get total mobility of neighbor cell 3
                     Scalar lambda3 = 0;
@@ -726,7 +726,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                     // neighbor cell 4
                     GlobalPosition globalPos4(0);
-                    FieldMatrix K4(0);
+                    DimMatrix K4(0);
                     Scalar lambda4 = 0;
                     int globalIdx4 = 0;
 
@@ -754,7 +754,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 globalPos4 = innerisItoutside->geometry().center();
 
                                 // get absolute permeability of neighbor cell 4
-                                K4 += problem_.spatialParameters().intrinsicPermeability(*innerisItoutside);
+                                K4 += problem_.spatialParams().intrinsicPermeability(*innerisItoutside);
 
                                 // get total mobility of neighbor cell 4
                                 lambda4 = cellData4.mobility(wPhaseIdx) + cellData4.mobility(nPhaseIdx);
@@ -846,63 +846,63 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                     *= face34vol/2.0;
 
                     // compute normal vectors nu11,nu21; nu12, nu22; nu13, nu23; nu14, nu24;
-                    FieldVector nu11(0);
+                    DimVector nu11(0);
                     R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                    FieldVector nu21(0);
+                    DimVector nu21(0);
                     R.umv(globalPos1-globalPosFace12, nu21);
 
-                    FieldVector nu12(0);
+                    DimVector nu12(0);
                     R.umv(globalPosFace24-globalPos2, nu12);
 
-                    FieldVector nu22(0);
+                    DimVector nu22(0);
                     R.umv(globalPosFace12-globalPos2, nu22);
 
-                    FieldVector nu13(0);
+                    DimVector nu13(0);
                     R.umv(globalPos3-globalPosFace13, nu13);
 
-                    FieldVector nu23(0);
+                    DimVector nu23(0);
                     R.umv(globalPos3-globalPosFace34, nu23);
 
-                    FieldVector nu14(0);
+                    DimVector nu14(0);
                     R.umv(globalPos4-globalPosFace24, nu14);
 
-                    FieldVector nu24(0);
+                    DimVector nu24(0);
                     R.umv(globalPosFace34-globalPos4, nu24);
 
                     // compute dF1, dF2, dF3, dF4 i.e., the area of quadrilateral made by normal vectors 'nu'
-                    FieldVector Rnu21(0);
+                    DimVector Rnu21(0);
                     R.umv(nu21, Rnu21);
                     Scalar dF1 = fabs(nu11 * Rnu21);
 
-                    FieldVector Rnu22(0);
+                    DimVector Rnu22(0);
                     R.umv(nu22, Rnu22);
                     Scalar dF2 = fabs(nu12 * Rnu22);
 
-                    FieldVector Rnu23(0);
+                    DimVector Rnu23(0);
                     R.umv(nu23, Rnu23);
                     Scalar dF3 = fabs(nu13 * Rnu23);
 
-                    FieldVector Rnu24(0);
+                    DimVector Rnu24(0);
                     R.umv(nu24, Rnu24);
                     Scalar dF4 = fabs(nu14 * Rnu24);
 
                     // compute components needed for flux calculation, denoted as 'g'
-                    FieldVector K1nu11(0);
+                    DimVector K1nu11(0);
                     K1.umv(nu11, K1nu11);
-                    FieldVector K1nu21(0);
+                    DimVector K1nu21(0);
                     K1.umv(nu21, K1nu21);
-                    FieldVector K2nu12(0);
+                    DimVector K2nu12(0);
                     K2.umv(nu12, K2nu12);
-                    FieldVector K2nu22(0);
+                    DimVector K2nu22(0);
                     K2.umv(nu22, K2nu22);
-                    FieldVector K3nu13(0);
+                    DimVector K3nu13(0);
                     K3.umv(nu13, K3nu13);
-                    FieldVector K3nu23(0);
+                    DimVector K3nu23(0);
                     K3.umv(nu23, K3nu23);
-                    FieldVector K4nu14(0);
+                    DimVector K4nu14(0);
                     K4.umv(nu14, K4nu14);
-                    FieldVector K4nu24(0);
+                    DimVector K4nu24(0);
                     K4.umv(nu24, K4nu24);
                     Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                     Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1042,35 +1042,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24-globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12-globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1151,10 +1151,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
@@ -1164,35 +1164,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             }
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24-globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12-globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1202,8 +1202,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
-                            FieldMatrix A(0), B(0);
-                            FieldVector r1(0), r(0);
+                            DimMatrix A(0), B(0);
+                            DimVector r1(0), r(0);
 
                             // evaluate matrix A, B
                             A[0][0] = g111 + g112;
@@ -1222,7 +1222,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute T and r
                             A.invert();
                             B.leftmultiply(A);
-                            FieldMatrix T(B);
+                            DimMatrix T(B);
                             A.umv(r1, r);
 
                             // assemble the global matrix this->A_ and right hand side f
@@ -1267,10 +1267,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar lambdaNWBound = 0;
 
                             lambdaWBound = MaterialLaw::krw(
-                                    problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                    problem_.spatialParams().materialLawParams(*eIt), satW)
                                     / viscosity_[wPhaseIdx];
                             lambdaNWBound = MaterialLaw::krn(
-                                    problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                    problem_.spatialParams().materialLawParams(*eIt), satW)
                                     / viscosity_[nPhaseIdx];
                             alambda1 = lambdaWBound + lambdaNWBound;
                         }
@@ -1287,35 +1287,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar J4 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24-globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12-globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1327,8 +1327,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g222 = lambda2 * (integrationOuterNormaln4 * K2nu22)/dF2;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
-                            FieldMatrix A(0), B(0);
-                            FieldVector r1(0), r(0);
+                            DimMatrix A(0), B(0);
+                            DimVector r1(0), r(0);
 
                             // evaluate matrix A, B
                             A[0][0] = g111 + g112;
@@ -1347,7 +1347,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute T and r
                             A.invert();
                             B.leftmultiply(A);
-                            FieldMatrix T(B);
+                            DimMatrix T(B);
                             A.umv(r1, r);
 
                             // assemble the global matrix this->A_ and right hand side this->f_
@@ -1391,10 +1391,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda2 = lambdaWBound + lambdaNWBound;
                             }
@@ -1404,35 +1404,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             }
 
                             // compute normal vectors nu11,nu21; nu12, nu22;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu12(0);
+                            DimVector nu12(0);
                             R.umv(globalPosFace24-globalPos2, nu12);
 
-                            FieldVector nu22(0);
+                            DimVector nu22(0);
                             R.umv(globalPosFace12-globalPos2, nu22);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu22(0);
+                            DimVector Rnu22(0);
                             R.umv(nu22, Rnu22);
                             Scalar dF2 = fabs(nu12 * Rnu22);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K2nu12(0);
+                            DimVector K2nu12(0);
                             K2.umv(nu12, K2nu12);
-                            FieldVector K2nu22(0);
+                            DimVector K2nu22(0);
                             K2.umv(nu22, K2nu22);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1442,8 +1442,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g122 = alambda2 * (integrationOuterNormaln1 * K2nu22)/dF2;
 
                             // compute the matrix T & vector r
-                            FieldMatrix T(0);
-                            FieldVector r(0);
+                            DimMatrix T(0);
+                            DimVector r(0);
 
                             Scalar coe = g111 + g112;
 
@@ -1522,10 +1522,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaNWBound = 0;
 
                                  lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
@@ -1538,21 +1538,21 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g3 = boundValues[pressureIdx];
 
                             // compute normal vectors nu11,nu21;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
                             // compute dF1, dF2 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1584,7 +1584,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         globalPos3 = nextisItoutside->geometry().center();
 
                         // get absolute permeability of neighbor cell 3
-                        FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
+                        DimMatrix K3(problem_.spatialParams().intrinsicPermeability(*nextisItoutside));
 
                         // get total mobility of neighbor cell 3
                         Scalar lambda3 = 0;
@@ -1639,35 +1639,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3-globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3-globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1764,10 +1764,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
@@ -1777,35 +1777,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             }
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3-globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3-globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = lambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = lambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -1815,7 +1815,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
 
                             // compute transmissibility matrix T = CA^{-1}B+F
-                            FieldMatrix C(0), A(0), F(0), B(0);
+                            DimMatrix C(0), A(0), F(0), B(0);
 
                             // evaluate matrix C, F, A, B
                             C[0][0] = -g111;
@@ -1836,19 +1836,19 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
 
                             // compute T
                             A.invert();
-                            FieldMatrix CAinv(C.rightmultiply(A));
+                            DimMatrix CAinv(C.rightmultiply(A));
                             F += B.leftmultiply(CAinv);
-                            FieldMatrix T(F);
+                            DimMatrix T(F);
 
                             // compute vector r
                             // evaluate r1, r2
-                            FieldVector r1(0), r2(0);
+                            DimVector r1(0), r2(0);
                             r1[1] = -g213 * g2;
                             r2[0] = -J1 * face12vol/2.0;
                             r2[1] = g213 * g2;
 
                             // compute r = CA^{-1}r1
-                            FieldVector r(0);
+                            DimVector r(0);
                             CAinv.umv(r2, r);
                             r += r1;
 
@@ -1895,10 +1895,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         Scalar lambdaNWBound = 0;
 
                         lambdaWBound = MaterialLaw::krw(
-                                problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                problem_.spatialParams().materialLawParams(*eIt), satW)
                                 / viscosity_[wPhaseIdx];
                         lambdaNWBound = MaterialLaw::krn(
-                                problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                problem_.spatialParams().materialLawParams(*eIt), satW)
                                 / viscosity_[nPhaseIdx];
                         alambda1 = lambdaWBound + lambdaNWBound;
                     }
@@ -1948,10 +1948,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda1 = lambdaWBound + lambdaNWBound;
                             }
@@ -1961,21 +1961,21 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             }
 
                             // compute normal vectors nu11,nu21;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
 
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
@@ -2002,21 +2002,21 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar J3 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
                             // compute dF1 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -2051,7 +2051,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                         globalPos3 = nextisItoutside->geometry().center();
 
                         // get absolute permeability of neighbor cell 3
-                        FieldMatrix K3(problem_.spatialParameters().intrinsicPermeability(*nextisItoutside));
+                        DimMatrix K3(problem_.spatialParams().intrinsicPermeability(*nextisItoutside));
 
                         // get total mobility of neighbor cell 3
                         Scalar lambda3 = 0;
@@ -2132,10 +2132,10 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                                 Scalar lambdaNWBound = 0;
 
                                 lambdaWBound = MaterialLaw::krw(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[wPhaseIdx];
                                 lambdaNWBound = MaterialLaw::krn(
-                                        problem_.spatialParameters().materialLawParams(*eIt), satW)
+                                        problem_.spatialParams().materialLawParams(*eIt), satW)
                                         / viscosity_[nPhaseIdx];
                                 alambda3 = lambdaWBound + lambdaNWBound;
                             }
@@ -2145,35 +2145,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             }
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3-globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3-globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -2183,8 +2183,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g223 = alambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
 
                             // compute the matrix T & vector r
-                            FieldMatrix T(0);
-                            FieldVector r(0);
+                            DimMatrix T(0);
+                            DimVector r(0);
 
                             Scalar coe = g221 + g223;
 
@@ -2212,35 +2212,35 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar J2 = (boundValues[wPhaseIdx]/density_[wPhaseIdx]+boundValues[nPhaseIdx]/density_[nPhaseIdx]);
 
                             // compute normal vectors nu11,nu21; nu13, nu23;
-                            FieldVector nu11(0);
+                            DimVector nu11(0);
                             R.umv(globalPosFace13-globalPos1 ,nu11);
 
-                            FieldVector nu21(0);
+                            DimVector nu21(0);
                             R.umv(globalPos1-globalPosFace12, nu21);
 
-                            FieldVector nu13(0);
+                            DimVector nu13(0);
                             R.umv(globalPos3-globalPosFace13, nu13);
 
-                            FieldVector nu23(0);
+                            DimVector nu23(0);
                             R.umv(globalPos3-globalPosFace34, nu23);
 
                             // compute dF1, dF3 i.e., the area of quadrilateral made by normal vectors 'nu'
-                            FieldVector Rnu21(0);
+                            DimVector Rnu21(0);
                             R.umv(nu21, Rnu21);
                             Scalar dF1 = fabs(nu11 * Rnu21);
 
-                            FieldVector Rnu23(0);
+                            DimVector Rnu23(0);
                             R.umv(nu23, Rnu23);
                             Scalar dF3 = fabs(nu13 * Rnu23);
 
                             // compute components needed for flux calculation, denoted as 'g'
-                            FieldVector K1nu11(0);
+                            DimVector K1nu11(0);
                             K1.umv(nu11, K1nu11);
-                            FieldVector K1nu21(0);
+                            DimVector K1nu21(0);
                             K1.umv(nu21, K1nu21);
-                            FieldVector K3nu13(0);
+                            DimVector K3nu13(0);
                             K3.umv(nu13, K3nu13);
-                            FieldVector K3nu23(0);
+                            DimVector K3nu23(0);
                             K3.umv(nu23, K3nu23);
                             Scalar g111 = alambda1 * (integrationOuterNormaln1 * K1nu11)/dF1;
                             Scalar g121 = alambda1 * (integrationOuterNormaln1 * K1nu21)/dF1;
@@ -2252,8 +2252,8 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             Scalar g223 = lambda3 * (integrationOuterNormaln3 * K3nu23)/dF3;
 
                             // compute the matrix T & vector r in v = A^{-1}(Bu + r1) = Tu + r
-                            FieldMatrix A(0), B(0);
-                            FieldVector r1(0), r(0);
+                            DimMatrix A(0), B(0);
+                            DimVector r1(0), r(0);
 
                             // evaluate matrix A, B
                             A[0][0] = g113;
@@ -2272,7 +2272,7 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                             // compute T and r
                             A.invert();
                             B.leftmultiply(A);
-                            FieldMatrix T(B);
+                            DimMatrix T(B);
                             A.umv(r1, r);
 
                             // assemble the global matrix this->A_ and right hand side this->f_
@@ -2435,7 +2435,7 @@ void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
         Scalar satW = cellData.saturation(wPhaseIdx);
         Scalar satNW = cellData.saturation(nPhaseIdx);
 
-        Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt), satW);
 
             cellData.setSaturation(wPhaseIdx, satW);
             cellData.setSaturation(nPhaseIdx, satNW);
@@ -2443,8 +2443,8 @@ void FVMPFAOPressure2P<TypeTag>::updateMaterialLaws()
 
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
-        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
+        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
 
         // initialize mobilities
         cellData.setMobility(wPhaseIdx, mobilityW);

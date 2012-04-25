@@ -95,8 +95,8 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
-    typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
@@ -137,7 +137,7 @@ template<class TypeTag> class FVPressure2P: public FVPressure<TypeTag>
     typedef typename GridView::Intersection Intersection;
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
 protected:
     //! \cond \private
@@ -494,7 +494,7 @@ void FVPressure2P<TypeTag>::getStorage(EntryType& entry, const Element& element
         // cell volume, assume linear map here
         Scalar volume = element.geometry().volume();
 
-        Scalar porosity = problem_.spatialParameters().porosity(element);
+        Scalar porosity = problem_.spatialParams().porosity(element);
 
         switch (saturationType_)
         {
@@ -592,10 +592,10 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
     Scalar dist = distVec.two_norm();
 
     // compute vectorized permeabilities
-    FieldMatrix meanPermeability(0);
+    DimMatrix meanPermeability(0);
 
-    problem_.spatialParameters().meanK(meanPermeability, problem_.spatialParameters().intrinsicPermeability(*elementI),
-            problem_.spatialParameters().intrinsicPermeability(*elementJ));
+    problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
+            problem_.spatialParams().intrinsicPermeability(*elementJ));
 
     Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
@@ -743,10 +743,10 @@ const Intersection& intersection, const CellData& cellData, const bool first)
 
         //permeability vector at boundary
         // compute vectorized permeabilities
-        FieldMatrix meanPermeability(0);
+        DimMatrix meanPermeability(0);
 
-        problem_.spatialParameters().meanK(meanPermeability,
-                problem_.spatialParameters().intrinsicPermeability(*element));
+        problem_.spatialParams().meanK(meanPermeability,
+                problem_.spatialParams().intrinsicPermeability(*element));
 
         Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
@@ -783,7 +783,7 @@ const Intersection& intersection, const CellData& cellData, const bool first)
         Scalar pressBound = boundValues[pressureIdx];
 
         //calculate consitutive relations depending on the kind of saturation used
-        Scalar pcBound = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*element), satW);
+        Scalar pcBound = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*element), satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressW = 0;
@@ -829,9 +829,9 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             rhoMeanNW = 0.5 * (cellData.density(nPhaseIdx) + densityNWBound);
         }
 
-        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*element), satW)
+        Scalar lambdaWBound = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satW)
                 / viscosityWBound;
-        Scalar lambdaNWBound = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*element), satW)
+        Scalar lambdaNWBound = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satW)
                 / viscosityNWBound;
 
         Scalar fractionalWBound = lambdaWBound / (lambdaWBound + lambdaNWBound);
@@ -981,7 +981,7 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
 
         Scalar satW = cellData.saturation(wPhaseIdx);
 
-        Scalar pc = MaterialLaw::pC(problem_.spatialParameters().materialLawParams(*eIt), satW);
+        Scalar pc = MaterialLaw::pC(problem_.spatialParams().materialLawParams(*eIt), satW);
 
         //determine phase pressures from primary pressure variable
         Scalar pressW = 0;
@@ -1036,8 +1036,8 @@ void FVPressure2P<TypeTag>::updateMaterialLaws()
         }
 
         // initialize mobilities
-        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
-        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParameters().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
+        Scalar mobilityW = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[wPhaseIdx];
+        Scalar mobilityNW = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*eIt), satW) / viscosity_[nPhaseIdx];
 
         if (compressibility_)
         {
