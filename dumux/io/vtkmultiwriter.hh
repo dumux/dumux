@@ -362,7 +362,7 @@ private:
         if (commSize_ > 1) {
             std::ostringstream oss;
             oss << "s" << std::setw(4) << std::setfill('0') << commSize_
-                << ":p" << rank
+     	        << ":p" << std::setw(4) << std::setfill('0') << rank
                 << ":" << simName_ << "-"
                 << std::setw(5) << curWriterNum_;
             return oss.str();
