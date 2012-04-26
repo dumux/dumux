@@ -97,13 +97,16 @@ public:
      * \param elemGeom The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemDat The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
      */
     ThreePThreeCFluxVariables(const Problem &problem,
                               const Element &element,
                               const FVElementGeometry &elemGeom,
                               int faceIdx,
-                              const ElementVolumeVariables &elemDat)
-        : fvElemGeom_(elemGeom)
+                              const ElementVolumeVariables &elemDat,
+                              const bool onBoundary = false)
+        : fvElemGeom_(elemGeom), onBoundary_(onBoundary)
     {
         scvfIdx_ = faceIdx;
 
@@ -435,11 +438,17 @@ public:
     { return molarAConcGrad_[phaseIdx]; };
 
     const SCVFace &face() const
-    { return fvElemGeom_.subContVolFace[scvfIdx_]; }
+    {
+        if (onBoundary_)
+            return fvElemGeom_.boundaryFace[scvfIdx_];
+        else
+            return fvElemGeom_.subContVolFace[scvfIdx_];
+    }
 
 protected:
     const FVElementGeometry &fvElemGeom_;
     int scvfIdx_;
+    const bool onBoundary_;
 
     // gradients
     Vector potentialGrad_[numPhases];

@@ -75,13 +75,16 @@ public:
      *                element's finite volume geometry.
      * \param elemVolVars An array containing the volume variables for all
      *                    sub-control volumes of the element.
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
      */
     RichardsFluxVariables(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry &fvElemGeom,
                           int scvfIdx,
-                          const ElementVolumeVariables &elemVolVars)
-        : fvElemGeom_(fvElemGeom)
+                          const ElementVolumeVariables &elemVolVars,
+                          const bool onBoundary = false)
+        : fvElemGeom_(fvElemGeom), onBoundary_(onBoundary)
     {
         scvfIdx_ = scvfIdx;
 
@@ -130,7 +133,12 @@ public:
      *        which the flux variables object looks at
      */
     const SCVFace &face() const
-    { return fvElemGeom_.subContVolFace[scvfIdx_]; }
+    {
+        if (onBoundary_)
+            return fvElemGeom_.boundaryFace[scvfIdx_];
+        else
+            return fvElemGeom_.subContVolFace[scvfIdx_];
+    }
 
 protected:
     void calculateGradients_(const Problem &problem,
@@ -201,6 +209,7 @@ protected:
 
     const FVElementGeometry &fvElemGeom_;
     int scvfIdx_;
+    const bool onBoundary_;
 
     // gradients
     Vector potentialGrad_;

@@ -112,13 +112,13 @@ public:
         DimVector temperatureGradient(0.);
         for (int scvIdx = 0; scvIdx < fvGeometry.numVertices; scvIdx++)
         {
-            tmp = fvGeometry.subContVolFace[faceIdx].grad[scvIdx];
+            tmp = this->face().grad[scvIdx];
             tmp *= elemVolVars[scvIdx].fluidState().temperature(/*phaseIdx=*/0);
             temperatureGradient += tmp;
         }
 
         // project the heat flux vector on the face's normal vector
-        temperatureGradientNormal_ = temperatureGradient * fvGeometry.subContVolFace[faceIdx].normal;
+        temperatureGradientNormal_ = temperatureGradient * this->face().normal;
 
 
         lambdaPm_ = lumpedLambdaPm(problem,
@@ -136,8 +136,8 @@ public:
                           const ElementVolumeVariables & elemVolVars)
     {
          // arithmetic mean of the liquid saturation and the porosity
-         const unsigned int i = fvGeometry.subContVolFace[faceIdx].i;
-         const unsigned int j = fvGeometry.subContVolFace[faceIdx].j;
+         const unsigned int i = this->face().i;
+         const unsigned int j = this->face().j;
 
          const FluidState &fsI = elemVolVars[i].fluidState();
          const FluidState &fsJ = elemVolVars[j].fluidState();

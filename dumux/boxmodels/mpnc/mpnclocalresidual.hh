@@ -176,15 +176,21 @@ public:
     /*!
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a subcontrol volume.
+     *
+     * \param flux The flux over the SCV (sub-control-volume) face for each component
+     * \param faceIdx The index of the SCV face
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     *        are calculated for interior SCV faces or boundary faces, default=false
      */
     void computeFlux(PrimaryVariables &flux,
-                     const unsigned int faceIdx) const
+                     const unsigned int faceIdx, const bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->element_(),
                                this->fvGeometry_(),
                                faceIdx,
-                               this->curVolVars_());
+                               this->curVolVars_(),
+                               onBoundary);
 
         flux = 0.0;
         MassResid::computeFlux(flux, fluxVars, this->curVolVars_() );

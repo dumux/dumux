@@ -81,13 +81,16 @@ public:
      * \param elemGeom The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemDat The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
      */
     ThreePThreeCNIFluxVariables(const Problem &problem,
                                 const Element &element,
                                 const FVElementGeometry &elemGeom,
                                 int scvfIdx,
-                                const ElementVolumeVariables &elemDat)
-        : ParentType(problem, element, elemGeom, scvfIdx, elemDat)
+                                const ElementVolumeVariables &elemDat,
+                                const bool onBoundary = false)
+        : ParentType(problem, element, elemGeom, scvfIdx, elemDat, onBoundary)
     {
         // calculate temperature gradient using finite element
         // gradients
@@ -95,7 +98,7 @@ public:
         Vector tmp(0.0);
         for (int vertIdx = 0; vertIdx < elemGeom.numVertices; vertIdx++)
         {
-            tmp = elemGeom.subContVolFace[scvfIdx].grad[vertIdx];
+            tmp = this->face().grad[vertIdx];
             tmp *= elemDat[vertIdx].temperature();
             temperatureGrad += tmp;
         }
@@ -109,7 +112,7 @@ public:
                                                    elemGeom,
                                                    scvfIdx);
         // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = tmp*elemGeom.subContVolFace[scvfIdx].normal;
+        normalMatrixHeatFlux_ = tmp*this->face().normal;
     }
 
     /*!

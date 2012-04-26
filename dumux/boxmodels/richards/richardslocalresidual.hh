@@ -114,14 +114,17 @@ public:
      *             of the current element \f$\mathrm{[kg/s]}\f$
      * \param scvfIdx The sub control volume face index inside the current
      *                element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int scvfIdx) const
+    void computeFlux(PrimaryVariables &flux, int scvfIdx, const bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->elem_(),
                                this->fvElemGeom_(),
                                scvfIdx,
-                               this->curVolVars_());
+                               this->curVolVars_(),
+                               onBoundary);
 
         // calculate the flux in the normal direction of the
         // current sub control volume face

@@ -78,12 +78,24 @@ class MPNCFluxVariables
     typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, enableKineticEnergy> FluxVariablesEnergy;
 
 public:
+    /*
+     * \brief The constructor
+     *
+     * \param problem The problem
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry in the box scheme
+     * \param faceIdx The local index of the SCV (sub-control-volume) face
+     * \param elemVolVars The volume variables of the current element
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     * are calculated for interior SCV faces or boundary faces, default=false
+     */
     MPNCFluxVariables(const Problem &problem,
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
                       const unsigned int faceIdx,
-                      const ElementVolumeVariables &elemVolVars)
-        : fvGeometry_(fvGeometry), elemVolVars_(elemVolVars)
+                      const ElementVolumeVariables &elemVolVars,
+                      const bool onBoundary = false)
+        : fvGeometry_(fvGeometry), elemVolVars_(elemVolVars), onBoundary_(onBoundary)
     {
         faceIdx_ = faceIdx;
 
@@ -152,7 +164,12 @@ public:
     }
 
     const SCVFace &face() const
-    { return fvGeometry_.subContVolFace[faceIdx_]; }
+    {
+        if (onBoundary_)
+            return fvGeometry_.boundaryFace[faceIdx_];
+        else
+            return fvGeometry_.subContVolFace[faceIdx_];
+    }
 
     const VolumeVariables &volVars(const unsigned int idx) const
     { return elemVolVars_[idx]; }
@@ -311,6 +328,7 @@ private:
     const FVElementGeometry &fvGeometry_;
     int faceIdx_;
     const ElementVolumeVariables &elemVolVars_;
+    const bool onBoundary_;
 
     // The extrusion factor for the sub-control volume face
     Scalar extrusionFactor_;

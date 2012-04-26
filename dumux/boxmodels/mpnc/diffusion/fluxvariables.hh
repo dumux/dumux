@@ -63,8 +63,8 @@ public:
                 const unsigned int faceIdx,
                 const ElementVolumeVariables &elemVolVars)
     {
-        const unsigned int i = fvGeometry.subContVolFace[faceIdx].i;
-        const unsigned int j = fvGeometry.subContVolFace[faceIdx].j;
+        const unsigned int i = this->face().i;
+        const unsigned int j = this->face().j;
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
@@ -76,7 +76,7 @@ public:
 
         // update the concentration gradients using two-point
         // gradients
-        const DimVector &normal = fvGeometry.subContVolFace[faceIdx].normal;
+        const DimVector &normal = this->face().normal;
 
         DimVector tmp = element.geometry().corner(j);
         tmp -= element.geometry().corner(i);
