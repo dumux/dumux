@@ -779,6 +779,7 @@ public:
                     {
                         jacInvT.mv(localJac[vert][0], boundaryFace[bfIdx].grad[vert]);
                         boundaryFace[bfIdx].shapeValue[vert] = Scalar(shapeVal[vert]);
+                        boundaryFace[bfIdx].fapIndices[vert] = vert;
                     }
 
                     //                    std::cout << "boundary face " << face << ", vert = " << vertInElement << ", ipLocal = "
