@@ -85,37 +85,37 @@ public:
      * \param isOldSol Specifies whether the solution is from
      *                 the previous time step or from the current one
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const PrimaryVariables &primaryVariables,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
+                const FVElementGeometry &fvGeometry,
                 int scvIdx,
                 bool isOldSol)
     {
         assert(!FluidSystem::isLiquid(nPhaseIdx));
 
-        ParentType::update(priVars,
+        ParentType::update(primaryVariables,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
 
-        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(primaryVariables, problem, element, fvGeometry, scvIdx, fluidState_);
 
         //////////
         // specify the other parameters
         //////////
         const MaterialLawParams &matParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         relativePermeabilityWetting_ =
             MaterialLaw::krw(matParams,
                              fluidState_.saturation(wPhaseIdx));
 
-        porosity_ = problem.spatialParameters().porosity(element, elemGeom, scvIdx);
+        porosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        asImp_().updateEnergy_(primaryVariables, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -124,19 +124,19 @@ public:
     static void completeFluidState(const PrimaryVariables& primaryVariables,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
+                                   const FVElementGeometry& fvGeometry,
                                    int scvIdx,
                                    FluidState& fluidState)
     {
         // temperature
         Scalar t = Implementation::temperature_(primaryVariables, problem, element,
-                                                elementGeometry, scvIdx);
+                                                fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
         // pressures
-        Scalar pnRef = problem.referencePressure(element, elementGeometry, scvIdx);
+        Scalar pnRef = problem.referencePressure(element, fvGeometry, scvIdx);
         const MaterialLawParams &matParams =
-            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         Scalar minPc = MaterialLaw::pC(matParams, 1.0);
         fluidState.setPressure(wPhaseIdx, primaryVariables[pwIdx]);
         fluidState.setPressure(nPhaseIdx, std::max(pnRef, primaryVariables[pwIdx] + minPc));
@@ -257,13 +257,13 @@ public:
     { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
 
 protected:
-    static Scalar temperature_(const PrimaryVariables &priVars,
+    static Scalar temperature_(const PrimaryVariables &primaryVariables,
                             const Problem& problem,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
+                            const FVElementGeometry &fvGeometry,
                             int scvIdx)
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
 
     /*!
@@ -272,8 +272,8 @@ protected:
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
-                       int vertIdx,
+                       const FVElementGeometry &fvGeometry,
+                       int scvIdx,
                        bool isOldSol)
     { }
 

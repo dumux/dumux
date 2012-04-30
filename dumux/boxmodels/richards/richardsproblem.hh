@@ -84,7 +84,7 @@ public:
      * \param scvIdx The local index of the sub control volume inside the element
      */
     Scalar referencePressure(const Element &element,
-                             const FVElementGeometry fvGeom,
+                             const FVElementGeometry fvGeometry,
                              int scvIdx) const
     { DUNE_THROW(Dune::NotImplemented, "referencePressure() method not implemented by the actual problem"); };
     // \}

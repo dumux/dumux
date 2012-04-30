@@ -46,7 +46,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
@@ -90,21 +90,21 @@ public:
                 return;
 
             // clamp saturation change to at most 20% per iteration
-            FVElementGeometry fvElemGeom;
+            FVElementGeometry fvGeomtry;
             const GridView &gv = this->problem_().gridView();
             ElementIterator eIt = gv.template begin<0>();
             const ElementIterator eEndIt = gv.template end<0>();
             for (; eIt != eEndIt; ++eIt) {
-                fvElemGeom.update(gv, *eIt);
-                for (int i = 0; i < fvElemGeom.numVertices; ++i) {
+                fvGeomtry.update(gv, *eIt);
+                for (int i = 0; i < fvGeomtry.numVertices; ++i) {
                     int globI = this->problem_().vertexMapper().map(*eIt, i, dim);
 
                     // calculate the old wetting phase saturation
-                    const SpatialParameters &sp = this->problem_().spatialParameters();
-                    const MaterialLawParams &mp = sp.materialLawParams(*eIt, fvElemGeom, i);
+                    const SpatialParams &spatialParams = this->problem_().spatialParams();
+                    const MaterialLawParams &mp = spatialParams.materialLawParams(*eIt, fvGeomtry, i);
                     Scalar pcMin = MaterialLaw::pC(mp, 1.0);
                     Scalar pW = uLastIter[globI][pwIdx];
-                    Scalar pN = std::max(this->problem_().referencePressure(*eIt, fvElemGeom, i),
+                    Scalar pN = std::max(this->problem_().referencePressure(*eIt, fvGeomtry, i),
                                          pW + pcMin);
                     Scalar pcOld = pN - pW;
                     Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::Sw(mp, pcOld));

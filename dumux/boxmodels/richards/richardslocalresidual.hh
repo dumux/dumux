@@ -55,10 +55,10 @@ class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dimWorld = GridView::dimensionworld};
+    enum { dim = GridView::dimension};
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
     /*!
@@ -80,12 +80,12 @@ public:
      *
      * This function should not include the source and sink terms.
      *
-     * \param result Stores the average mass per unit volume for each phase \f$\mathrm{[kg/m^3]}\f$
+     * \param storage Stores the average mass per unit volume for each phase \f$\mathrm{[kg/m^3]}\f$
      * \param scvIdx The sub control volume index of the current element
      * \param usePrevSol Calculate the storage term of the previous solution
      *                   instead of the model's current solution.
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -98,7 +98,7 @@ public:
             this->curVolVars_(scvIdx);
 
         // partial time derivative of the wetting phase mass
-        result[contiEqIdx] =
+        storage[contiEqIdx] =
             volVars.density(wPhaseIdx)
             * volVars.saturation(wPhaseIdx)
             * volVars.porosity();
@@ -117,18 +117,18 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int scvfIdx, const bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
-                               this->elem_(),
-                               this->fvElemGeom_(),
-                               scvfIdx,
+                               this->element_(),
+                               this->fvGeometry_(),
+                               faceIdx,
                                this->curVolVars_(),
                                onBoundary);
 
         // calculate the flux in the normal direction of the
         // current sub control volume face
-        Vector tmpVec;
+        DimVector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGradW(),
                                             tmpVec);
         Scalar normalFlux = -(tmpVec*fluxVars.face().normal);
@@ -149,16 +149,16 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param q Stores the average source term of all phases inside a
+     * \param source Stores the average source term of all phases inside a
      *          sub-control volume of the current element \f$\mathrm{[kg/(m^3 * s)]}\f$
      * \param scvIdx The sub control volume index inside the current
      *               element
      */
-    void computeSource(PrimaryVariables &q, int scvIdx)
+    void computeSource(PrimaryVariables &source, int scvIdx)
     {
-        this->problem_().boxSDSource(q,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
+        this->problem_().boxSDSource(source,
+                                     this->element_(),
+                                     this->fvGeometry_(),
                                      scvIdx,
                                      this->curVolVars_());
     }

@@ -46,7 +46,7 @@ class RichardsFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParams;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
@@ -55,11 +55,11 @@ class RichardsFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    enum { dimWorld = GridView::dimensionworld};
+    enum { dim = GridView::dimension};
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimTensor;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -80,13 +80,13 @@ public:
      */
     RichardsFluxVariables(const Problem &problem,
                           const Element &element,
-                          const FVElementGeometry &fvElemGeom,
-                          int scvfIdx,
+                          const FVElementGeometry &fvGeometry,
+                          const int faceIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-        : fvElemGeom_(fvElemGeom), onBoundary_(onBoundary)
+        : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
-        scvfIdx_ = scvfIdx;
+
 
         calculateGradients_(problem, element, elemVolVars);
         calculateK_(problem, element, elemVolVars);
@@ -95,13 +95,13 @@ public:
     /*!
      * \brief Return the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      */
-    const Tensor &intrinsicPermeability() const
+    const DimTensor &intrinsicPermeability() const
     { return K_; }
 
     /*!
      * \brief Return the pressure potential gradient \f$\mathrm{[Pa/m]}\f$
      */
-    const Vector &potentialGradW() const
+    const DimVector &potentialGradW() const
     { return potentialGrad_; }
 
     /*!
@@ -128,17 +128,21 @@ public:
     int upstreamIdx(Scalar normalFlux) const
     { return (normalFlux > 0)?face().i:face().j; }
 
+
+
     /*!
-     * \brief Returns the face of the element's finite volume geometry
-     *        which the flux variables object looks at
+     * \brief The face of the current sub-control volume. This may be either
+     *        an inner sub-control-volume face or a face on the boundary.
      */
     const SCVFace &face() const
     {
         if (onBoundary_)
-            return fvElemGeom_.boundaryFace[scvfIdx_];
+            return fvGeometry_.boundaryFace[faceIdx_];
         else
-            return fvElemGeom_.subContVolFace[scvfIdx_];
+            return fvGeometry_.subContVolFace[faceIdx_];
     }
+
+
 
 protected:
     void calculateGradients_(const Problem &problem,
@@ -148,15 +152,16 @@ protected:
         potentialGrad_ = 0.0;
         // calculate gradients
         for (int idx = 0;
-             idx < fvElemGeom_.numVertices;
+             idx < fvGeometry_.numVertices;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex index
-            const Vector &feGrad = face().grad[idx];
+            const DimVector &feGrad = face().grad[idx];
 
             // the pressure gradient
-            Vector tmp(feGrad);
+            DimVector tmp(feGrad);
             tmp *= elemVolVars[idx].pressure(wPhaseIdx);
+
             potentialGrad_ += tmp;
         }
 
@@ -180,8 +185,8 @@ protected:
 
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
-            Vector f(problem.boxGravity(element, fvElemGeom_, face().i));
-            f += problem.boxGravity(element, fvElemGeom_, face().j);
+            DimVector f(problem.boxGravity(element, fvGeometry_, face().i));
+            f += problem.boxGravity(element, fvGeometry_, face().j);
             f /= 2;
 
             // make it a force
@@ -196,26 +201,26 @@ protected:
                      const Element &element,
                      const ElementVolumeVariables &elemDat)
     {
-        const SpatialParameters &sp = problem.spatialParameters();
+        const SpatialParams &spatialParams = problem.spatialParams();
         // calculate the intrinsic permeability
-        sp.meanK(K_,
-                 sp.intrinsicPermeability(element,
-                                          fvElemGeom_,
+        spatialParams.meanK(K_,
+                 spatialParams.intrinsicPermeability(element,
+                                          fvGeometry_,
                                           face().i),
-                 sp.intrinsicPermeability(element,
-                                          fvElemGeom_,
+                 spatialParams.intrinsicPermeability(element,
+                                          fvGeometry_,
                                           face().j));
     }
 
-    const FVElementGeometry &fvElemGeom_;
-    int scvfIdx_;
+    const FVElementGeometry &fvGeometry_;
+    const int faceIdx_;
     const bool onBoundary_;
 
     // gradients
-    Vector potentialGrad_;
+    DimVector potentialGrad_;
 
     // intrinsic permeability
-    Tensor K_;
+    DimTensor K_;
 };
 
 } // end namepace
