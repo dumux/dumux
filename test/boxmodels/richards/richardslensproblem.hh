@@ -142,11 +142,11 @@ class RichardsLensProblem : public RichardsBoxProblem<TypeTag>
         contiEqIdx = Indices::contiEqIdx,
 
         // Grid and world dimension
-        dim = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld
     };
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
     /*!
@@ -168,7 +168,7 @@ public:
         lensUpperRight_[0] = 4.0;
         lensUpperRight_[1] = 3.0;
 
-        this->spatialParameters().setLensCoords(lensLowerLeft_, lensUpperRight_);
+        this->spatialParams().setLensCoords(lensLowerLeft_, lensUpperRight_);
     }
 
     /*!
@@ -302,7 +302,7 @@ private:
     {
         Scalar Sw = 0.0;
         Scalar pc =
-            MaterialLaw::pC(this->spatialParameters().materialLawParams(pos),
+            MaterialLaw::pC(this->spatialParams().materialLawParams(pos),
                             Sw);
         values[pwIdx] = pnRef_ - pc;
     }
