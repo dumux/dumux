@@ -63,7 +63,7 @@ class TwoPTwoCNIFluxVariables : public TwoPTwoCFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum { dimWorld = GridView::dimensionworld };
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
 
 public:
     /*
@@ -76,14 +76,14 @@ public:
      * \param elemVolVars The volume variables of the current element
      */
     TwoPTwoCNIFluxVariables(const Problem &problem,
-                       const Element &element,
-                       const FVElementGeometry &elemGeom,
-                       int faceIdx,
-                       const ElementVolumeVariables &elemVolVars,
-                       bool onBoundary = false)
-        : ParentType(problem, element, elemGeom, faceIdx, elemVolVars, onBoundary)
+                            const Element &element,
+                            const FVElementGeometry &fvGeometry,
+                            const int faceIdx,
+                            const ElementVolumeVariables &elemVolVars,
+                            bool onBoundary = false)
+        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
-        scvfIdx_ = faceIdx;
+        faceIdx_ = faceIdx;
 
         calculateValues_(problem, element, elemVolVars);
     }
@@ -96,7 +96,7 @@ public:
     Scalar normalMatrixHeatFlux() const
     { return normalMatrixHeatFlux_; }
 
-    Vector temperatureGradient() const
+    DimVector temperatureGradient() const
     { return temperatureGrad_; }
 
 protected:
@@ -107,30 +107,30 @@ protected:
         // calculate temperature gradient using finite element
         // gradients
         temperatureGrad_ = 0;
-        Vector tmp(0.0);
-        for (int vertIdx = 0; vertIdx < this->fvGeometry_.numVertices; vertIdx++)
+        DimVector tmp(0.0);
+        for (int idx = 0; idx < this->fvGeometry_.numVertices; idx++)
         {
-            tmp = this->face().grad[vertIdx];
-            tmp *= elemVolVars[vertIdx].temperature();
+            tmp = this->face().grad[idx];
+            tmp *= elemVolVars[idx].temperature();
             temperatureGrad_ += tmp;
         }
 
         // The spatial parameters calculates the actual heat flux vector
         if (this->face().i != this->face().j)
-            problem.spatialParameters().matrixHeatFlux(tmp,
-                                                       *this,
-                                                       elemVolVars,
-                                                       temperatureGrad_,
-                                                       element,
-                                                       this->fvGeometry_,
-                                                       scvfIdx_);
+            problem.spatialParams().matrixHeatFlux(tmp,
+                                                   *this,
+                                                   elemVolVars,
+                                                   temperatureGrad_,
+                                                   element,
+                                                   this->fvGeometry_,
+                                                   faceIdx_);
         else // heat flux at outflow boundaries
-            problem.spatialParameters().boundaryMatrixHeatFlux(tmp,
-                                                       *this,
-                                                       elemVolVars,
-                                                       this->face(),
-                                                       element,
-                                                       this->fvGeometry_);
+            problem.spatialParams().boundaryMatrixHeatFlux(tmp,
+                                                           *this,
+                                                           elemVolVars,
+                                                           this->face(),
+                                                           element,
+                                                           this->fvGeometry_);
 
         // project the heat flux vector on the face's normal vector
         normalMatrixHeatFlux_ = tmp*this->face().normal;
@@ -138,8 +138,8 @@ protected:
 
 private:
     Scalar normalMatrixHeatFlux_;
-    Vector temperatureGrad_;
-    int scvfIdx_;
+    DimVector temperatureGrad_;
+    int faceIdx_;
 };
 
 } // end namespace

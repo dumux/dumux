@@ -70,7 +70,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar internalEnergy(int phaseIdx) const
+    Scalar internalEnergy(const int phaseIdx) const
     { return this->fluidState_.internalEnergy(phaseIdx); };
 
     /*!
@@ -79,7 +79,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar enthalpy(int phaseIdx) const
+    Scalar enthalpy(const int phaseIdx) const
     { return this->fluidState_.enthalpy(phaseIdx); };
 
     /*!
@@ -95,10 +95,10 @@ protected:
     friend class TwoPTwoCVolumeVariables<TypeTag>;
 
     static Scalar temperature_(const PrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &elemGeom,
-                            int scvIdx)
+                               const Problem& problem,
+                               const Element &element,
+                               const FVElementGeometry &fvGeometry,
+                               const int scvIdx)
     {
         return priVars[temperatureIdx];
     }
@@ -106,7 +106,7 @@ protected:
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,
-                            int phaseIdx)
+                            const int phaseIdx)
     {
         return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
     }
@@ -117,19 +117,19 @@ protected:
      * \param sol The solution primary variables
      * \param problem The problem
      * \param element The element
-     * \param elemGeom Evaluate function with solution of current or previous time step
+     * \param fvGeometry Evaluate function with solution of current or previous time step
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void updateEnergy_(const PrimaryVariables &sol,
-                      const Problem &problem,
-                      const Element &element,
-                      const FVElementGeometry &elemGeom,
-                      int scvIdx,
-                      bool isOldSol)
+                       const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &fvGeometry,
+                       const int scvIdx,
+                       bool isOldSol)
     {
         // copmute and set the heat capacity of the solid phase
-        heatCapacity_ = problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
+        heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
     };
 

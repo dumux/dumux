@@ -120,10 +120,10 @@ protected:
         {
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
-               density_[phaseIdx] += elemVolVars[idx].density(phaseIdx)*
-                       face().shapeValue[idx];
-               molarDensity_[phaseIdx] += elemVolVars[idx].molarDensity(phaseIdx)*
-                       face().shapeValue[idx];
+                density_[phaseIdx] += elemVolVars[idx].density(phaseIdx)*
+                    face().shapeValue[idx];
+                molarDensity_[phaseIdx] += elemVolVars[idx].molarDensity(phaseIdx)*
+                    face().shapeValue[idx];
             }
         }
 
@@ -260,8 +260,8 @@ protected:
     }
 
     void calculatePorousDiffCoeff_(const Problem &problem,
-                               const Element &element,
-                               const ElementVolumeVariables &elemVolVars)
+                                   const Element &element,
+                                   const ElementVolumeVariables &elemVolVars)
     {
         const VolumeVariables &volVarsI = elemVolVars[face().i];
         const VolumeVariables &volVarsJ = elemVolVars[face().j];

@@ -153,7 +153,7 @@ public:
             if (phaseIdx == wPhaseIdx)
                 kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
             else // ATTENTION: krn requires the wetting phase saturation
-                // as parameter!
+                 // as parameter!
                 kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
             relativePermeability_[phaseIdx] = kr;
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
@@ -170,8 +170,8 @@ public:
 
         // porosity
         porosity_ = problem.spatialParams().porosity(element,
-                                                         fvGeometry,
-                                                         scvIdx);
+                                                     fvGeometry,
+                                                     scvIdx);
         Valgrind::CheckDefined(porosity_);
 
         // energy related quantities not contained in the fluid state
@@ -412,10 +412,10 @@ public:
 
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
-                            const Problem& problem,
-                            const Element &element,
-                            const FVElementGeometry &fvGeometry,
-                            int scvIdx)
+                               const Problem& problem,
+                               const Element &element,
+                               const FVElementGeometry &fvGeometry,
+                               int scvIdx)
     {
         return problem.boxTemperature(element, fvGeometry, scvIdx);
     }

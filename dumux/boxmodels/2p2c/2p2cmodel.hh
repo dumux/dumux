@@ -381,7 +381,7 @@ public:
 
                 for(int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 {
-                 tmpVelocity[phaseIdx]  = Scalar(0.0);
+                    tmpVelocity[phaseIdx]  = Scalar(0.0);
                 }
 
                 typedef Dune::BlockVector<Dune::FieldVector<Scalar, dim> > SCVVelocities;
@@ -393,73 +393,73 @@ public:
                 ElementVolumeVariables elemVolVars;
 
                 elemVolVars.update(this->problem_(),
-                                  *eIt,
-                                  fvGeometry,
-                                  false /* oldSol? */);
+                                   *eIt,
+                                   fvGeometry,
+                                   false /* oldSol? */);
 
                 for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
                 {
 
                     FluxVariables fluxVars(this->problem_(),
-                                  *eIt,
-                                  fvGeometry,
-                                  faceIdx,
-                                  elemVolVars);
+                                           *eIt,
+                                           fvGeometry,
+                                           faceIdx,
+                                           elemVolVars);
 
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     {
 
-                         // data attached to upstream and the downstream vertices
+                        // data attached to upstream and the downstream vertices
                         // of the current phase
                         const VolumeVariables up =
                             elemVolVars[fluxVars.upstreamIdx(phaseIdx)];
                         const VolumeVariables dn =
                             elemVolVars[fluxVars.downstreamIdx(phaseIdx)];
 
-                      // local position of integration point
-                      const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
+                        // local position of integration point
+                        const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
 
-                      // Transformation of the global normal vector to normal vector in the reference element
-                      const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = eIt->geometry().jacobianTransposed(localPosIP);
-                      const GlobalPosition globalNormal = fluxVars.face().normal;
+                        // Transformation of the global normal vector to normal vector in the reference element
+                        const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = eIt->geometry().jacobianTransposed(localPosIP);
+                        const GlobalPosition globalNormal = fluxVars.face().normal;
 
-                      GlobalPosition localNormal(0);
-                      jacobianT1.mv(globalNormal, localNormal);
+                        GlobalPosition localNormal(0);
+                        jacobianT1.mv(globalNormal, localNormal);
                         // note only works for cubes
-                      const Scalar localArea = pow(2,-(dim-1));
+                        const Scalar localArea = pow(2,-(dim-1));
 
-                      localNormal /= localNormal.two_norm();
+                        localNormal /= localNormal.two_norm();
 
-                      // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
-                      // face in the reference element.
-                      massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
-                      PhasesVector flux;
-                      flux[phaseIdx] = fluxVars.KmvpNormal(phaseIdx)
-                                           * (massUpwindWeight_
-                                           * up.mobility(phaseIdx)
-                                           + (1- massUpwindWeight_)
-                                           * dn.mobility(phaseIdx)) / localArea;
+                        // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
+                        // face in the reference element.
+                        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+                        PhasesVector flux;
+                        flux[phaseIdx] = fluxVars.KmvpNormal(phaseIdx)
+                            * (massUpwindWeight_
+                               * up.mobility(phaseIdx)
+                               + (1- massUpwindWeight_)
+                               * dn.mobility(phaseIdx)) / localArea;
 
-                      // transform the normal Darcy velocity into a vector
-                      tmpVelocity[phaseIdx] = localNormal;
-                      tmpVelocity[phaseIdx] *= flux[phaseIdx];
+                        // transform the normal Darcy velocity into a vector
+                        tmpVelocity[phaseIdx] = localNormal;
+                        tmpVelocity[phaseIdx] *= flux[phaseIdx];
 
-                      if(phaseIdx == wPhaseIdx){
-                          scvVelocityW[fluxVars.face().i] += tmpVelocity[phaseIdx];
-                          scvVelocityW[fluxVars.face().j] += tmpVelocity[phaseIdx];
-                      }
-                      else if(phaseIdx == nPhaseIdx){
-                          scvVelocityN[fluxVars.face().i] += tmpVelocity[phaseIdx];
-                          scvVelocityN[fluxVars.face().j] += tmpVelocity[phaseIdx];
-                      }
-                   }
+                        if(phaseIdx == wPhaseIdx){
+                            scvVelocityW[fluxVars.face().i] += tmpVelocity[phaseIdx];
+                            scvVelocityW[fluxVars.face().j] += tmpVelocity[phaseIdx];
+                        }
+                        else if(phaseIdx == nPhaseIdx){
+                            scvVelocityN[fluxVars.face().i] += tmpVelocity[phaseIdx];
+                            scvVelocityN[fluxVars.face().j] += tmpVelocity[phaseIdx];
+                        }
+                    }
                 }
 
                 typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
                 const Dune::FieldVector<Scalar, dim>& localPos =
                     ReferenceElements::general(eIt->geometry().type()).position(0, 0);
 
-                 // get the transposed Jacobian of the element mapping
+                // get the transposed Jacobian of the element mapping
                 const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT2 = eIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
@@ -481,14 +481,14 @@ public:
                 }
             }
         }
-            if(velocityOutput_)
-            {
-                // divide the vertex velocities by the number of adjacent scvs i.e. cells
-                for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
-                    (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
-                    (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
-                }
+        if(velocityOutput_)
+        {
+            // divide the vertex velocities by the number of adjacent scvs i.e. cells
+            for(int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
+                (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
+                (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
             }
+        }
 
 
         writer.attachVertexData(*sN,     "Sn");

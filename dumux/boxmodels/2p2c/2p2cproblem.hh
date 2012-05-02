@@ -59,9 +59,9 @@ public:
      */
     DUMUX_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
     TwoPTwoCProblem(TimeManager &timeManager,
-                const GridView &gridView,
-                bool verbose = true)
-        : ParentType(timeManager, gridView)
+                    const GridView &gridView,
+                    bool verbose = true)
+    : ParentType(timeManager, gridView)
     {}
 };
 }

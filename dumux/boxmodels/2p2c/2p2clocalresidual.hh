@@ -218,11 +218,11 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     void computeFlux(PrimaryVariables &flux, const int faceIdx, bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
-                           this->element_(),
-                           this->fvGeometry_(),
-                           faceIdx,
-                           this->curVolVars_(),
-                           onBoundary);
+                               this->element_(),
+                               this->fvGeometry_(),
+                               faceIdx,
+                               this->curVolVars_(),
+                               onBoundary);
 
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, fluxVars);

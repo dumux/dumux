@@ -62,8 +62,8 @@ class TwoPTwoCNILocalResidual : public TwoPTwoCLocalResidual<TypeTag>
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         energyEqIdx = Indices::energyEqIdx,
         temperatureIdx = Indices::temperatureIdx,
-        lPhaseIdx = Indices::lPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx
     };
 
 public:
@@ -89,32 +89,32 @@ public:
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
     {
         // compute the storage term for phase mass
-        ParentType::computeStorage(result, scvIdx, usePrevSol);
+        ParentType::computeStorage(storage, scvIdx, usePrevSol);
 
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the energy storage
-        result[energyEqIdx] =
-            vertDat.porosity()*(vertDat.density(lPhaseIdx) *
-                                vertDat.internalEnergy(lPhaseIdx) *
-                                //vertDat.enthalpy(lPhaseIdx) *
-                                vertDat.saturation(lPhaseIdx)
+        storage[energyEqIdx] =
+            volVars.porosity()*(volVars.density(wPhaseIdx) *
+                                volVars.internalEnergy(wPhaseIdx) *
+                                //vertDat.enthalpy(wPhaseIdx) *
+                                volVars.saturation(wPhaseIdx)
                                 +
-                                vertDat.density(gPhaseIdx) *
-                                vertDat.internalEnergy(gPhaseIdx) *
-                                //vertDat.enthalpy(gPhaseIdx) *
-                                vertDat.saturation(gPhaseIdx))
+                                volVars.density(nPhaseIdx) *
+                                volVars.internalEnergy(nPhaseIdx) *
+                                //vertDat.enthalpy(nPhaseIdx) *
+                                volVars.saturation(nPhaseIdx))
             +
-            vertDat.temperature()*vertDat.heatCapacity();
+            volVars.temperature()*volVars.heatCapacity();
     }
 
     /*!
@@ -128,29 +128,28 @@ public:
      * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxData) const
+                              const FluxVariables &fluxVars) const
     {
         // advective mass flux
-        ParentType::computeAdvectiveFlux(flux, fluxData);
+        ParentType::computeAdvectiveFlux(flux, fluxVars);
 
         // advective heat flux in all phases
         flux[energyEqIdx] = 0;
-        for (int phase = 0; phase < numPhases; ++phase) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // vertex data of the upstream and the downstream vertices
-            const VolumeVariables &up = this->curVolVars_(fluxData.upstreamIdx(phase));
-            const VolumeVariables &dn = this->curVolVars_(fluxData.downstreamIdx(phase));
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
             flux[energyEqIdx] +=
-                fluxData.KmvpNormal(phase) * (
-                    massUpwindWeight_ * // upstream vertex
-                    (  up.density(phase) *
-                       up.mobility(phase) *
-                       up.enthalpy(phase))
-                    +
-                    (1-massUpwindWeight_) * // downstream vertex
-                    (  dn.density(phase) *
-                       dn.mobility(phase) *
-                       dn.enthalpy(phase)) );
+                fluxVars.KmvpNormal(phaseIdx) * (massUpwindWeight_ * // upstream vertex
+                                                 (  up.density(phaseIdx) *
+                                                    up.mobility(phaseIdx) *
+                                                    up.enthalpy(phaseIdx))
+                                                 +
+                                                 (1-massUpwindWeight_) * // downstream vertex
+                                                 (  dn.density(phaseIdx) *
+                                                    dn.mobility(phaseIdx) *
+                                                    dn.enthalpy(phaseIdx)) );
         }
     }
 
@@ -164,14 +163,14 @@ public:
      * This method is called by compute flux (base class)
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxData) const
+                              const FluxVariables &fluxVars) const
     {
         // diffusive mass flux
-        ParentType::computeDiffusiveFlux(flux, fluxData);
+        ParentType::computeDiffusiveFlux(flux, fluxVars);
 
         // diffusive heat flux
         flux[temperatureIdx] +=
-            fluxData.normalMatrixHeatFlux();
+            fluxVars.normalMatrixHeatFlux();
     }
 
 private:

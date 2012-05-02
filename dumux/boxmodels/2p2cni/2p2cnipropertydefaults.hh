@@ -73,7 +73,7 @@ SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVariables, TwoPTwoCNIFluxVariables<TypeTag>);
 SET_PROP(BoxTwoPTwoCNI, Indices)
 { private:
     enum { formulation = GET_PROP_VALUE(TypeTag, Formulation) };
-public:
+ public:
     typedef TwoPTwoCNIIndices<TypeTag, formulation, 0> type;
 };
 
