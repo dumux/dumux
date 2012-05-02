@@ -6,7 +6,8 @@ SUBDIRS = \
 	  fluidmatrixinteractions \
 	  fluidstates \
 	  fluidsystems \
-	  spatialparameters
+	  spatialparameters \
+	  spatialparams
 
 materialdir = $(includedir)/dumux/material
 material_HEADERS = *.hh
