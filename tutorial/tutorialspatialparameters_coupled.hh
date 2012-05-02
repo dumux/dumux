@@ -96,7 +96,7 @@ public:
      *  on the position in the domain
      *
      *  \param element The finite volume element
-     *  \param fvElemGeom The finite-volume geometry in the box scheme
+     *  \param fvGeometry The finite-volume geometry in the box scheme
      *  \param scvIdx The local vertex index
      *
      *  Alternatively, the function intrinsicPermeabilityAtPos(const GlobalPosition& globalPos)
@@ -104,15 +104,15 @@ public:
      *  of the finite volume.
      */
     const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element, /*@\label{tutorial-coupled:permeability}@*/
-                                                    const FVElementGeometry &fvElemGeom,
-                                                    int scvIdx) const
+                                                    const FVElementGeometry &fvGeometry,
+                                                    const int scvIdx) const
     { return K_; }
 
     /*! Defines the porosity \f$[-]\f$ of the porous medium depending
      * on the position in the domain
      *
      *  \param element The finite volume element
-     *  \param fvElemGeom The finite-volume geometry in the box scheme
+     *  \param fvGeometry The finite-volume geometry in the box scheme
      *  \param scvIdx The local vertex index
      *
      *  Alternatively, the function porosityAtPos(const GlobalPosition& globalPos)
@@ -120,15 +120,15 @@ public:
      *  of the finite volume.
      */
     Scalar porosity(const Element &element,                    /*@\label{tutorial-coupled:porosity}@*/
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx) const
     { return 0.2; }
 
     /*! Returns the parameter object for the material law (i.e. Brooks-Corey)
      *  depending on the position in the domain
      *
      *  \param element The finite volume element
-     *  \param fvElemGeom The finite-volume geometry in the box scheme
+     *  \param fvGeometry The finite-volume geometry in the box scheme
      *  \param scvIdx The local vertex index
      *
      *  Alternatively, the function materialLawParamsAtPos(const GlobalPosition& globalPos)
@@ -136,8 +136,8 @@ public:
      *  of the finite volume.
      */
     const MaterialLawParams& materialLawParams(const Element &element,            /*@\label{tutorial-coupled:matLawParams}@*/
-                                               const FVElementGeometry &fvElemGeom,
-                                               int scvIdx) const
+                                               const FVElementGeometry &fvGeometry,
+                                               const int scvIdx) const
     {
         return materialParams_;
     }
