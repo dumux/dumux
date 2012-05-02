@@ -86,10 +86,10 @@ SET_PROP(BoxTwoPTwoC, NumPhases)
 
 SET_INT_PROP(BoxTwoPTwoC, NumEq, 2); //!< set the number of equations to 2
 
-//! Set the default formulation to pl-Sg
+//! Set the default formulation to pw-Sn
 SET_INT_PROP(BoxTwoPTwoC,
              Formulation,
-             TwoPTwoCFormulation::plSg);
+             TwoPTwoCFormulation::pwSn);
 
 //! set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(BoxTwoPTwoC, ReplaceCompEqIdx, 2);

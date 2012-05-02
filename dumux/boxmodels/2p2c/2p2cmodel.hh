@@ -118,8 +118,8 @@ class TwoPTwoCModel: public BoxModel<TypeTag>
         nPhaseOnly = Indices::gPhaseOnly,
         bothPhases = Indices::bothPhases,
 
-        pwSn = TwoPTwoCFormulation::plSg,
-        pnSw = TwoPTwoCFormulation::pgSl,
+        pwSn = TwoPTwoCFormulation::pwSn,
+        pnSw = TwoPTwoCFormulation::pnSw,
         formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
@@ -192,7 +192,7 @@ public:
      * \param storage Contains the storage of each component for one phase
      * \param phaseIdx The phase index
      */
-    void globalPhaseStorage(PrimaryVariables &storage, int phaseIdx)
+    void globalPhaseStorage(PrimaryVariables &storage, const int phaseIdx)
     {
         storage = 0;
 
@@ -228,7 +228,7 @@ public:
      * \param globalIdx The global vertex index
      * \param pvIdx The primary variable index
      */
-    Scalar primaryVarWeight(int globalIdx, int pvIdx) const
+    Scalar primaryVarWeight(const int globalIdx, const int pvIdx) const
     {
         if (Indices::pressureIdx == pvIdx)
             return std::min(1.0/this->prevSol()[globalIdx][pvIdx], 1.0);

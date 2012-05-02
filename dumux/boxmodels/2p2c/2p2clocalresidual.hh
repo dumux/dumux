@@ -142,8 +142,8 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \param boundaryFaceIdx  The index of the boundary face
      */
     void evalOutflowSegment(const IntersectionIterator &isIt,
-                            int scvIdx,
-                            int boundaryFaceIdx)
+                            const int scvIdx,
+                            const int boundaryFaceIdx)
     {
         const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
 
@@ -174,7 +174,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -215,7 +215,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \param faceIdx The index of the SCV face
      * \param onBoundary Evaluate flux at inner SCV face or on a boundary face
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx, bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                            this->element_(),
@@ -333,7 +333,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         if (replaceCompEqIdx != contiWEqIdx)
             flux[contiWEqIdx] -= tmp * FluidSystem::molarMass(wCompIdx);
 
-        // add diffusive flux of liquid component in gas phase
+        // add diffusive flux of liquid component in non-wetting phase
         tmp = fluxVars.moleFractionGrad(nPhaseIdx)*fluxVars.face().normal;
         tmp *= -1;
         tmp *=
@@ -352,7 +352,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      * \param source The source/sink in the sub-control volume for each component
      * \param scvIdx The index of the sub-control volume
      */
-    void computeSource(PrimaryVariables& source, int scvIdx)
+    void computeSource(PrimaryVariables& source, const int scvIdx)
     {
         this->problem_().boxSDSource(source,
                                      this->element_(),
@@ -362,7 +362,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     }
 
  protected:
-    void evalPhaseStorage_(int phaseIdx)
+    void evalPhaseStorage_(const int phaseIdx)
     {
         // evaluate the storage terms of a single phase
         for (int i=0; i < this->fvGeometry_().numVertices; i++) {

@@ -71,24 +71,24 @@ class TwoPTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        wCompIdx = Indices::lCompIdx,
-        nCompIdx = Indices::gCompIdx,
-        wPhaseIdx = Indices::lPhaseIdx,
-        nPhaseIdx = Indices::gPhaseIdx
+        wCompIdx = Indices::wCompIdx,
+        nCompIdx = Indices::nCompIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx
     };
 
     // present phases
     enum {
-        wPhaseOnly = Indices::lPhaseOnly,
-        nPhaseOnly = Indices::gPhaseOnly,
+        wPhaseOnly = Indices::wPhaseOnly,
+        nPhaseOnly = Indices::nPhaseOnly,
         bothPhases = Indices::bothPhases
     };
 
     // formulations
     enum {
         formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        pwSn = TwoPTwoCFormulation::plSg,
-        pnSw = TwoPTwoCFormulation::pgSl
+        pwSn = TwoPTwoCFormulation::pwSn,
+        pnSw = TwoPTwoCFormulation::pnSw
     };
 
     // primary variable indices
@@ -200,22 +200,22 @@ public:
         /////////////
         // set the saturations
         /////////////
-        Scalar Sg;
+        Scalar Sn;
         if (phasePresence == nPhaseOnly)
-            Sg = 1.0;
+            Sn = 1.0;
         else if (phasePresence == wPhaseOnly) {
-            Sg = 0.0;
+            Sn = 0.0;
         }
         else if (phasePresence == bothPhases) {
             if (formulation == pwSn)
-                Sg = primaryVariables[switchIdx];
+                Sn = primaryVariables[switchIdx];
             else if (formulation == pnSw)
-                Sg = 1.0 - primaryVariables[switchIdx];
+                Sn = 1.0 - primaryVariables[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-        fluidState.setSaturation(wPhaseIdx, 1 - Sg);
-        fluidState.setSaturation(nPhaseIdx, Sg);
+        fluidState.setSaturation(wPhaseIdx, 1 - Sn);
+        fluidState.setSaturation(nPhaseIdx, Sn);
 
         /////////////
         // set the pressures of the fluid phases
@@ -224,7 +224,7 @@ public:
         // calculate capillary pressure
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
-        Scalar pC = MaterialLaw::pC(materialParams, 1 - Sg);
+        Scalar pC = MaterialLaw::pC(materialParams, 1 - Sn);
 
         if (formulation == pwSn) {
             fluidState.setPressure(wPhaseIdx, primaryVariables[pressureIdx]);
@@ -329,7 +329,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar saturation(int phaseIdx) const
+    Scalar saturation(const int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
 
     /*!
@@ -338,7 +338,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar density(int phaseIdx) const
+    Scalar density(const int phaseIdx) const
     { return fluidState_.density(phaseIdx); }
 
     /*!
@@ -347,7 +347,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar molarDensity(int phaseIdx) const
+    Scalar molarDensity(const int phaseIdx) const
     { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
 
     /*!
@@ -356,7 +356,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar pressure(int phaseIdx) const
+    Scalar pressure(const int phaseIdx) const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
@@ -375,7 +375,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar relativePermeability(int phaseIdx) const
+    Scalar relativePermeability(const int phaseIdx) const
     {
         return relativePermeability_[phaseIdx];
     }
@@ -386,7 +386,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar mobility(int phaseIdx) const
+    Scalar mobility(const int phaseIdx) const
     {
         return relativePermeability_[phaseIdx]/fluidState_.viscosity(phaseIdx);
     }
@@ -423,7 +423,7 @@ protected:
     template<class ParameterCache>
     static Scalar enthalpy_(const FluidState& fluidState,
                             const ParameterCache& paramCache,
-                            int phaseIdx)
+                            const int phaseIdx)
     {
         return 0;
     }
@@ -435,7 +435,7 @@ protected:
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &fvGeometry,
-                       int vertIdx,
+                       const int vertIdx,
                        bool isOldSol)
     { }
 
