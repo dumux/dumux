@@ -26,15 +26,14 @@
  * \brief The base class for spatial parameters of problems using the
  *        box method.
  */
-#ifndef DUMUX_BOX_SPATIAL_PARAMETERS_HH
-#define DUMUX_BOX_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_BOX_SPATIAL_PARAMS_HH
+#define DUMUX_BOX_SPATIAL_PARAMS_HH
 
-#include "boxspatialparameters1p.hh"
+#include "boxspatialparams1p.hh"
 
 namespace Dumux {
 // forward declation of property tags
 namespace Properties {
-NEW_PROP_TAG(SpatialParameters);
 NEW_PROP_TAG(MaterialLaw);
 NEW_PROP_TAG(MaterialLawParams);
 }
@@ -49,10 +48,10 @@ NEW_PROP_TAG(MaterialLawParams);
  *        box method.
  */
 template<class TypeTag>
-class BoxSpatialParameters: public BoxSpatialParametersOneP<TypeTag>
+class BoxSpatialParams: public BoxSpatialParamsOneP<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
 
@@ -70,20 +69,20 @@ class BoxSpatialParameters: public BoxSpatialParametersOneP<TypeTag>
     typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
 
 public:
-    BoxSpatialParameters(const GridView &gv)
-    :BoxSpatialParametersOneP<TypeTag>(gv)
+    BoxSpatialParams(const GridView &gridView)
+    :BoxSpatialParamsOneP<TypeTag>(gridView)
     { }
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
      *
      * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
      * \return the material parameters object
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-            const FVElementGeometry &fvElemGeom,
+            const FVElementGeometry &fvGeometry,
             int scvIdx) const
     {
             return asImp_().materialLawParamsAtPos(element.geometry().center());
@@ -111,20 +110,20 @@ public:
      * boundary conditions.
      *
      * \param heatFlux The resulting heat flux vector
-     * \param fluxDat The flux variables
-     * \param vDat The volume variables
+     * \param fluxVars The flux variables
+     * \param elemVolVars The volume variables
      * \param face The boundary or sub-control-volume face
      * \param element The current finite element
-     * \param fvElemGeom The finite volume geometry of the current element
+     * \param fvGeometry The finite volume geometry of the current element
      * \tparam FaceType The type of the face (boundary face / SCV face)
      */
     template <class FaceType>
     void boundaryMatrixHeatFlux(Vector &heatFlux,
-            const FluxVariables &fluxDat,
-            const ElementVolumeVariables &vDat,
+            const FluxVariables &fluxVars,
+            const ElementVolumeVariables &elemVolVars,
             const FaceType &face,
             const Element &element,
-            const FVElementGeometry &fvElemGeom) const
+            const FVElementGeometry &fvGeometry) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "

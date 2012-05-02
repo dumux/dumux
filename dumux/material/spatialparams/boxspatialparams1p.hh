@@ -26,8 +26,8 @@
  * \brief The base class for spatial parameters of problems using the
  *        box method.
  */
-#ifndef DUMUX_BOX_SPATIAL_PARAMETERS_ONE_P_HH
-#define DUMUX_BOX_SPATIAL_PARAMETERS_ONE_P_HH
+#ifndef DUMUX_BOX_SPATIAL_PARAMS_ONE_P_HH
+#define DUMUX_BOX_SPATIAL_PARAMS_ONE_P_HH
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/math.hh>
@@ -39,7 +39,7 @@
 namespace Dumux {
 // forward declation of property tags
 namespace Properties {
-NEW_PROP_TAG(SpatialParameters);
+NEW_PROP_TAG(SpatialParams);
 }
 
 /*!
@@ -52,11 +52,11 @@ NEW_PROP_TAG(SpatialParameters);
  *        box method.
  */
 template<class TypeTag>
-class BoxSpatialParametersOneP
+class BoxSpatialParamsOneP
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
 
     enum {
         dimWorld = GridView::dimensionworld
@@ -70,10 +70,10 @@ class BoxSpatialParametersOneP
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
 public:
-    BoxSpatialParametersOneP(const GridView &gv)
+    BoxSpatialParamsOneP(const GridView &gridView)
     { }
 
-    ~BoxSpatialParametersOneP()
+    ~BoxSpatialParamsOneP()
     {}
 
     /*!
@@ -115,12 +115,12 @@ public:
      * \brief Function for defining the intrinsic (absolute) permeability.
      *
      * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
      * \return the intrinsic permeability
      */
     const Tensor& intrinsicPermeability (const Element &element,
-            const FVElementGeometry &fvElemGeom,
+            const FVElementGeometry &fvGeometry,
             int scvIdx) const
     {
         return asImp_().intrinsicPermeabilityAtPos(element.geometry().center());
@@ -143,12 +143,12 @@ public:
      * \brief Function for defining the porosity.
      *
      * \param element The current element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume.
      * \return porosity
      */
     Scalar porosity(const Element &element,
-            const FVElementGeometry &fvElemGeom,
+            const FVElementGeometry &fvGeometry,
             int scvIdx) const
     {
         return asImp_().porosityAtPos(element.geometry().center());
