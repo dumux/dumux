@@ -182,7 +182,7 @@ public:
      * \copydoc BoxModel::completeFluidState
      * \param isOldSol Specifies whether this is the previous solution or the current one
      */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
                                    const FVElementGeometry& fvGeometry,
@@ -190,7 +190,7 @@ public:
                                    FluidState& fluidState,
                                    bool isOldSol = false)
     {
-        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+        Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
@@ -208,9 +208,9 @@ public:
         }
         else if (phasePresence == bothPhases) {
             if (formulation == pwSn)
-                Sn = primaryVariables[switchIdx];
+                Sn = priVars[switchIdx];
             else if (formulation == pnSw)
-                Sn = 1.0 - primaryVariables[switchIdx];
+                Sn = 1.0 - priVars[switchIdx];
             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
@@ -227,12 +227,12 @@ public:
         Scalar pC = MaterialLaw::pC(materialParams, 1 - Sn);
 
         if (formulation == pwSn) {
-            fluidState.setPressure(wPhaseIdx, primaryVariables[pressureIdx]);
-            fluidState.setPressure(nPhaseIdx, primaryVariables[pressureIdx] + pC);
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pC);
         }
         else if (formulation == pnSw) {
-            fluidState.setPressure(nPhaseIdx, primaryVariables[pressureIdx]);
-            fluidState.setPressure(wPhaseIdx, primaryVariables[pressureIdx] - pC);
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pC);
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
@@ -259,7 +259,7 @@ public:
 
             // extract _mass_ fractions in the nonwetting phase
             Scalar massFractionN[numComponents];
-            massFractionN[wCompIdx] = primaryVariables[switchIdx];
+            massFractionN[wCompIdx] = priVars[switchIdx];
             massFractionN[nCompIdx] = 1 - massFractionN[wCompIdx];
 
             // calculate average molar mass of the nonwetting phase
@@ -287,7 +287,7 @@ public:
 
             // extract _mass_ fractions in the nonwetting phase
             Scalar massFractionW[numComponents];
-            massFractionW[nCompIdx] = primaryVariables[switchIdx];
+            massFractionW[nCompIdx] = priVars[switchIdx];
             massFractionW[wCompIdx] = 1 - massFractionW[nCompIdx];
 
             // calculate average molar mass of the nonwetting phase
