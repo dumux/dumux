@@ -38,7 +38,7 @@
 #include <dune/grid/yaspgrid.hh>
 
 // Spatially dependent parameters
-#include "tutorialspatialparameters_coupled.hh"
+#include "tutorialspatialparams_coupled.hh"
 
 // The components that are used
 #include <dumux/material/components/h2o.hh>
@@ -52,7 +52,7 @@ class TutorialProblemCoupled;
 
 namespace Properties {
 // Create a new type tag for the problem
-NEW_TYPE_TAG(TutorialProblemCoupled, INHERITS_FROM(BoxTwoP, TutorialSpatialParametersCoupled)); /*@\label{tutorial-coupled:create-type-tag}@*/
+NEW_TYPE_TAG(TutorialProblemCoupled, INHERITS_FROM(BoxTwoP, TutorialSpatialParamsCoupled)); /*@\label{tutorial-coupled:create-type-tag}@*/
 
 // Set the "Problem" property
 SET_PROP(TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-problem}@*/

@@ -25,8 +25,8 @@
  * \brief The spatial parameters for the fully coupled tutorial problem
  *        which uses the twophase box model.
  */
-#ifndef DUMUX_TUTORIAL_SPATIAL_PARAMETERS_COUPLED_HH
-#define DUMUX_TUTORIAL_SPATIAL_PARAMETERS_COUPLED_HH
+#ifndef DUMUX_TUTORIAL_SPATIAL_PARAMS_COUPLED_HH
+#define DUMUX_TUTORIAL_SPATIAL_PARAMS_COUPLED_HH
 
 // include parent spatialparameters
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
@@ -38,19 +38,19 @@
 namespace Dumux {
 //forward declaration
 template<class TypeTag>
-class TutorialSpatialParametersCoupled;
+class TutorialSpatialParamsCoupled;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TutorialSpatialParametersCoupled);/*@\label{tutorial-coupled:define-spatialparameters-typetag}@*/
+NEW_TYPE_TAG(TutorialSpatialParamsCoupled);/*@\label{tutorial-coupled:define-spatialparameters-typetag}@*/
 
 // Set the spatial parameters
-SET_TYPE_PROP(TutorialSpatialParametersCoupled, SpatialParams,
-        Dumux::TutorialSpatialParametersCoupled<TypeTag>); /*@\label{tutorial-coupled:set-spatialparameters}@*/
+SET_TYPE_PROP(TutorialSpatialParamsCoupled, SpatialParams,
+        Dumux::TutorialSpatialParamsCoupled<TypeTag>); /*@\label{tutorial-coupled:set-spatialparameters}@*/
 
 // Set the material law
-SET_PROP(TutorialSpatialParametersCoupled, MaterialLaw)
+SET_PROP(TutorialSpatialParamsCoupled, MaterialLaw)
 {
 private:
     // material law typedefs
@@ -70,7 +70,7 @@ public:
  *        which uses the twophase box model.
  */
 template<class TypeTag>
-class TutorialSpatialParametersCoupled: public BoxSpatialParameters<TypeTag> /*@\label{tutorial-coupled:tutorialSpatialParameters}@*/
+class TutorialSpatialParamsCoupled: public BoxSpatialParameters<TypeTag> /*@\label{tutorial-coupled:tutorialSpatialParameters}@*/
 {
     // Get informations for current implementation via property system
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -143,7 +143,7 @@ public:
     }
 
     // constructor
-    TutorialSpatialParametersCoupled(const GridView& gridView) :
+    TutorialSpatialParamsCoupled(const GridView& gridView) :
         BoxSpatialParameters<TypeTag>(gridView),
         K_(0)
     {
