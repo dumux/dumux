@@ -56,7 +56,8 @@ NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
 NEW_PROP_TAG(ThreePThreeCIndices); //!< DEPRECATED Enumerations for the 3p3c models
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
+NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
+NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
