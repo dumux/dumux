@@ -46,7 +46,7 @@
 
 // use the same spatial parameters as the injection problem of the
 // 2p2c test program
-#include "../2p2c/injectionspatialparameters.hh"
+#include "../2p2c/injectionspatialparams.hh"
 
 #define ISOTHERMAL 0
 
@@ -58,9 +58,9 @@ class InjectionProblem2PNI;
 namespace Properties
 {
 #if !ISOTHERMAL
-NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoPNI, InjectionSpatialParameters));
+NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoPNI, InjectionSpatialParams));
 #else
-NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoP, InjectionSpatialParameters));
+NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoP, InjectionSpatialParams));
 #endif
 
 // set the GridCreator property
