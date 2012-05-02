@@ -53,12 +53,12 @@ SET_TYPE_PROP(WaterAirSpatialParameters, SpatialParams, Dumux::WaterAirSpatialPa
 // Set the material Law
 SET_PROP(WaterAirSpatialParameters, MaterialLaw)
 {
-private:
+ private:
     // define the material law which is parameterized by effective
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-public:
+ public:
     // define the material law parameterized by absolute saturations
     typedef EffToAbsLaw<EffMaterialLaw> type;
 };
@@ -85,11 +85,11 @@ class WaterAirSpatialParameters : public BoxSpatialParameters<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        lPhaseIdx = Indices::lPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
+    typedef Dune::FieldVector<CoordScalar,dimWorld> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -104,10 +104,10 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
-    WaterAirSpatialParameters(const GridView &gv)
-        : ParentType(gv)
+    WaterAirSpatialParameters(const GridView &gridView)
+        : ParentType(gridView)
     {
         layerBottom_ = 22.0;
 
@@ -140,15 +140,15 @@ public:
      *        potential gradient.
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
-                                       int scvIdx) const
+                                       const FVElementGeometry &fvGeometry,
+                                       const int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }
@@ -157,16 +157,16 @@ public:
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
     double porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
+                    const FVElementGeometry &fvGeometry,
+                    const int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
             return coarsePorosity_;
@@ -176,16 +176,16 @@ public:
     /*!
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
-    * \param element The current finite element
-    * \param fvElemGeom The current finite volume geometry of the element
-    * \param scvIdx The index of the sub-control volume
-    */
+     * \param element The current finite element
+     * \param fvGeometry The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume
+     */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvElemGeom,
-                                                int scvIdx) const
+                                               const FVElementGeometry &fvGeometry,
+                                               const int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
@@ -197,18 +197,18 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
     double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvElemGeom,
-                        int scvIdx) const
+                        const FVElementGeometry &fvGeometry,
+                        const int scvIdx) const
     {
         return
             790 // specific heat capacity of granite [J / (kg K)]
             * 2700 // density of granite [kg/m^3]
-            * (1 - porosity(element, fvElemGeom, scvIdx));
+            * (1 - porosity(element, fvGeometry, scvIdx));
     }
 
     /*!
@@ -218,32 +218,32 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param heatFlux The resulting heat flux vector
-     * \param fluxDat The flux variables
-     * \param vDat The volume variables
-     * \param tempGrad The temperature gradient
+     * \param fluxVars The flux variables
+     * \param elemVolVars The volume variables
+     * \param temperatureGrad The temperature gradient
      * \param element The current finite element
-     * \param fvElemGeom The finite volume geometry of the current element
-     * \param scvfIdx The local index of the sub-control volume face where
+     * \param fvGeometry The finite volume geometry of the current element
+     * \param faceIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
-    void matrixHeatFlux(Vector &heatFlux,
-                        const FluxVariables &fluxDat,
-                        const ElementVolumeVariables &vDat,
-                        const Vector &tempGrad,
+    void matrixHeatFlux(DimVector &heatFlux,
+                        const FluxVariables &fluxVars,
+                        const ElementVolumeVariables &elemVolVars,
+                        const DimVector &temperatureGrad,
                         const Element &element,
-                        const FVElementGeometry &fvElemGeom,
-                        int scvfIdx) const
+                        const FVElementGeometry &fvGeometry,
+                        const int faceIdx) const
     {
         static const Scalar lWater = 0.6;
         static const Scalar lGranite = 2.8;
 
         // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvElemGeom.subContVolFace[scvfIdx].i;
-        const int j = fvElemGeom.subContVolFace[scvfIdx].j;
-        Scalar Sl = std::max<Scalar>(0.0, (vDat[i].saturation(lPhaseIdx) +
-                                           vDat[j].saturation(lPhaseIdx)) / 2);
-        Scalar poro = (porosity(element, fvElemGeom, i) +
-                       porosity(element, fvElemGeom, j)) / 2;
+        const int i = fvGeometry.subContVolFace[faceIdx].i;
+        const int j = fvGeometry.subContVolFace[faceIdx].j;
+        Scalar Sl = std::max<Scalar>(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
+                                           elemVolVars[j].saturation(wPhaseIdx)) / 2);
+        Scalar poro = (porosity(element, fvGeometry, i) +
+                       porosity(element, fvGeometry, j)) / 2;
 
         Scalar lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
         Scalar ldry = pow(lGranite, (1-poro));
@@ -254,13 +254,13 @@ public:
 
         // the matrix heat flux is the negative temperature gradient
         // times the heat conductivity.
-        heatFlux = tempGrad;
+        heatFlux = temperatureGrad;
         heatFlux *= -heatCond;
     }
 
 private:
-    bool isFineMaterial_(const GlobalPosition &pos) const
-    { return pos[dim-1] > layerBottom_; };
+    bool isFineMaterial_(const GlobalPosition &globalPos) const
+    { return globalPos[dim-1] > layerBottom_; };
 
     Scalar fineK_;
     Scalar coarseK_;

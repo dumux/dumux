@@ -55,12 +55,12 @@ SET_TYPE_PROP(InjectionSpatialParameters, SpatialParams, Dumux::InjectionSpatial
 // Set the material Law
 SET_PROP(InjectionSpatialParameters, MaterialLaw)
 {
-private:
+ private:
     // define the material law which is parameterized by effective
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-public:
+ public:
     // define the material law parameterized by absolute saturations
     typedef EffToAbsLaw<EffMaterialLaw> type;
 };
@@ -86,11 +86,11 @@ class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
 
-        wPhaseIdx = FluidSystem::lPhaseIdx
+        wPhaseIdx = FluidSystem::wPhaseIdx
     };
 
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> Vector;
+    typedef Dune::FieldVector<CoordScalar,dimWorld> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -105,10 +105,10 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
-    InjectionSpatialParameters(const GridView &gv)
-        : ParentType(gv)
+    InjectionSpatialParameters(const GridView &gridView)
+        : ParentType(gridView)
     {
         layerBottom_ = 22.0;
 
@@ -146,10 +146,10 @@ public:
      */
     const Scalar intrinsicPermeability(const Element &element,
                                        const FVElementGeometry &fvGeometry,
-                                       int scvIdx) const
+                                       const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }
@@ -164,10 +164,10 @@ public:
      */
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+                    const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return finePorosity_;
         return coarsePorosity_;
     }
@@ -176,16 +176,16 @@ public:
     /*!
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
-    * \param element The current finite element
-    * \param fvGeometry The current finite volume geometry of the element
-    * \param scvIdx The index of the sub-control volume
-    */
+     * \param element The current finite element
+     * \param fvGeometry The current finite volume geometry of the element
+     * \param scvIdx The index of the sub-control volume
+     */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvGeometry,
-                                                int scvIdx) const
+                                               const FVElementGeometry &fvGeometry,
+                                               const int scvIdx) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+        if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         return coarseMaterialParams_;
     }
@@ -202,7 +202,7 @@ public:
      */
     double heatCapacity(const Element &element,
                         const FVElementGeometry &fvGeometry,
-                        int scvIdx) const
+                        const int scvIdx) const
     {
         return
             790 // specific heat capacity of granite [J / (kg K)]
@@ -231,14 +231,14 @@ public:
                         const Vector &tempGrad,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
-                        int scvfIdx) const
+                        const int faceIdx) const
     {
         static const Scalar lWater = 0.6;
         static const Scalar lGranite = 2.8;
 
         // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvGeometry.subContVolFace[scvfIdx].i;
-        const int j = fvGeometry.subContVolFace[scvfIdx].j;
+        const int i = fvGeometry.subContVolFace[faceIdx].i;
+        const int j = fvGeometry.subContVolFace[faceIdx].j;
         Scalar sW = std::max<Scalar>(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
                                            elemVolVars[j].saturation(wPhaseIdx)) / 2);
         Scalar poro = (porosity(element, fvGeometry, i) +
@@ -258,8 +258,8 @@ public:
     }
 
 private:
-    bool isFineMaterial_(const GlobalPosition &pos) const
-    { return pos[dim-1] > layerBottom_; };
+    bool isFineMaterial_(const GlobalPosition &globalPos) const
+    { return globalPos[dim-1] > layerBottom_; };
 
     Scalar fineK_;
     Scalar coarseK_;

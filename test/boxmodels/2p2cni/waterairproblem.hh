@@ -131,11 +131,14 @@ class WaterAirProblem : public PorousMediaBoxProblem<TypeTag>
 #endif
 
         // Phase State
-        lPhaseOnly = Indices::lPhaseOnly,
+        wPhaseOnly = Indices::wPhaseOnly,
 
         // Grid and world dimension
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld,
+
+        conti0EqIdx = Indices::conti0EqIdx,
+        contiNEqIdx = conti0EqIdx + Indices::nCompIdx
     };
 
 
@@ -186,7 +189,7 @@ public:
      * \brief Returns the temperature within the domain.
      *
      * \param element The element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index (SCV index)
      *
      * This problem assumes a temperature of 10 degrees Celsius.
@@ -198,7 +201,7 @@ public:
 #endif
 
     void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+                     const GlobalPosition &globalPos) const
     {
         values = 0;
     }
@@ -253,7 +256,7 @@ public:
      *
      * \param values The neumann values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -263,10 +266,10 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+                 const int scvIdx,
+                 const int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values = 0;
@@ -275,7 +278,7 @@ public:
         if (globalPos[0] > 15 && globalPos[0] < 25 &&
             globalPos[1] < eps_)
         {
-            values[Indices::contiGEqIdx] = -1e-3;
+            values[contiNEqIdx] = -1e-3;
         }
     }
 
@@ -291,7 +294,7 @@ public:
      *
      * \param values The initial values for the primary variables
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores primary
@@ -299,16 +302,16 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int scvIdx) const
     {
-           const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
         initial_(values, globalPos);
 
 #if !ISOTHERMAL
-            if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] < 30)
-               values[temperatureIdx] = 380;
+        if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] < 30)
+            values[temperatureIdx] = 380;
 #endif
     }
 
@@ -323,7 +326,7 @@ public:
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
     {
-        return lPhaseOnly;
+        return wPhaseOnly;
     }
 
 private:

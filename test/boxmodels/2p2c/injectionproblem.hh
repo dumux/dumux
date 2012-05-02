@@ -64,7 +64,7 @@ SET_PROP(InjectionProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     static const bool useComplexRelations = false;
-public:
+ public:
     typedef Dumux::FluidSystems::H2ON2<Scalar, useComplexRelations> type;
 };
 
@@ -111,8 +111,8 @@ class InjectionProblem : public PorousMediaBoxProblem<TypeTag>
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        wPhaseIdx = Indices::lPhaseIdx,
-        nPhaseIdx = Indices::gPhaseIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
 
 
         H2OIdx = FluidSystem::H2OIdx,
@@ -168,15 +168,15 @@ public:
             exit(1);
         }
 
-/* Alternative syntax:
- * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
- * const Dune::ParameterTree &tree = ParameterTree::tree();
- * nTemperature_       = tree.template get<int>("FluidSystem.nTemperature");
- *
- * + We see what we do
- * - Reporting whether it was used does not work
- * - Overwriting on command line not possible
-*/
+        /* Alternative syntax:
+         * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
+         * const Dune::ParameterTree &tree = ParameterTree::tree();
+         * nTemperature_       = tree.template get<int>("FluidSystem.nTemperature");
+         *
+         * + We see what we do
+         * - Reporting whether it was used does not work
+         * - Overwriting on command line not possible
+         */
 
 
         eps_ = 1e-6;
@@ -231,7 +231,7 @@ public:
     { return temperature_; };
 
     void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+                     const GlobalPosition &globalPos) const
     {
         values = 0;
     }
@@ -282,7 +282,7 @@ public:
      *
      * \param values The neumann values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -292,7 +292,7 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
@@ -317,7 +317,7 @@ public:
      *
      * \param values The initial values for the primary variables
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores primary
@@ -325,7 +325,7 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
@@ -340,10 +340,10 @@ public:
      * \param globalIdx The index of the global vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vert,
+    int initialPhasePresence(const Vertex &vertex,
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
-    { return Indices::lPhaseOnly; }
+    { return Indices::wPhaseOnly; }
 
     // \}
 
