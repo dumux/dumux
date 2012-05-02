@@ -70,9 +70,9 @@ SET_PROP(WaterAirSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>
-class WaterAirSpatialParams : public BoxSpatialParameters<TypeTag>
+class WaterAirSpatialParams : public BoxSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParams<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

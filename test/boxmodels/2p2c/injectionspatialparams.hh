@@ -73,9 +73,9 @@ SET_PROP(InjectionSpatialParams, MaterialLaw)
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class InjectionSpatialParams : public BoxSpatialParameters<TypeTag>
+class InjectionSpatialParams : public BoxSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
