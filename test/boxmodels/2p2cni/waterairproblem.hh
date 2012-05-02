@@ -38,7 +38,7 @@
 #include <dumux/boxmodels/2p2cni/2p2cnimodel.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
-#include "waterairspatialparameters.hh"
+#include "waterairspatialparams.hh"
 
 #define ISOTHERMAL 0
 
@@ -49,7 +49,7 @@ class WaterAirProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI, WaterAirSpatialParameters));
+NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI, WaterAirSpatialParams));
 
 // Set the grid type
 SET_PROP(WaterAirProblem, Grid)

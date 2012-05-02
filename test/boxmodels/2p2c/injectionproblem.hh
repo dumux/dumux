@@ -35,7 +35,7 @@
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
-#include "injectionspatialparameters.hh"
+#include "injectionspatialparams.hh"
 
 namespace Dumux
 {
@@ -45,7 +45,7 @@ class InjectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC, InjectionSpatialParameters));
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC, InjectionSpatialParams));
 
 // Set the grid type
 SET_PROP(InjectionProblem, Grid)

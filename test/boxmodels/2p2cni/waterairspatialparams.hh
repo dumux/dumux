@@ -25,8 +25,8 @@
  *
  * \brief Definition of the spatial parameters for the water-air problem.
  */
-#ifndef DUMUX_WATER_AIR_SPATIAL_PARAMETERS_HH
-#define DUMUX_WATER_AIR_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
+#define DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -40,18 +40,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class WaterAirSpatialParameters;
+class WaterAirSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(WaterAirSpatialParameters);
+NEW_TYPE_TAG(WaterAirSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(WaterAirSpatialParameters, SpatialParams, Dumux::WaterAirSpatialParameters<TypeTag>);
+SET_TYPE_PROP(WaterAirSpatialParams, SpatialParams, Dumux::WaterAirSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(WaterAirSpatialParameters, MaterialLaw)
+SET_PROP(WaterAirSpatialParams, MaterialLaw)
 {
  private:
     // define the material law which is parameterized by effective
@@ -70,7 +70,7 @@ SET_PROP(WaterAirSpatialParameters, MaterialLaw)
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>
-class WaterAirSpatialParameters : public BoxSpatialParameters<TypeTag>
+class WaterAirSpatialParams : public BoxSpatialParameters<TypeTag>
 {
     typedef BoxSpatialParameters<TypeTag> ParentType;
 
@@ -106,7 +106,7 @@ public:
      *
      * \param gridView The grid view
      */
-    WaterAirSpatialParameters(const GridView &gridView)
+    WaterAirSpatialParams(const GridView &gridView)
         : ParentType(gridView)
     {
         layerBottom_ = 22.0;
@@ -132,7 +132,7 @@ public:
         coarseMaterialParams_.setLambda(2.0);
     }
 
-    ~WaterAirSpatialParameters()
+    ~WaterAirSpatialParams()
     {}
 
     /*!

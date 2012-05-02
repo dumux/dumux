@@ -27,8 +27,8 @@
  *        problem which uses the isothermal 2p2c box model
  */
 
-#ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
-#define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_INJECTION_SPATIAL_PARAMS_HH
+#define DUMUX_INJECTION_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparameters/boxspatialparameters.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -42,18 +42,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class InjectionSpatialParameters;
+class InjectionSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(InjectionSpatialParameters);
+NEW_TYPE_TAG(InjectionSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InjectionSpatialParameters, SpatialParams, Dumux::InjectionSpatialParameters<TypeTag>);
+SET_TYPE_PROP(InjectionSpatialParams, SpatialParams, Dumux::InjectionSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(InjectionSpatialParameters, MaterialLaw)
+SET_PROP(InjectionSpatialParams, MaterialLaw)
 {
  private:
     // define the material law which is parameterized by effective
@@ -73,7 +73,7 @@ SET_PROP(InjectionSpatialParameters, MaterialLaw)
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class InjectionSpatialParameters : public BoxSpatialParameters<TypeTag>
+class InjectionSpatialParams : public BoxSpatialParameters<TypeTag>
 {
     typedef BoxSpatialParameters<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -107,7 +107,7 @@ public:
      *
      * \param gridView The grid view
      */
-    InjectionSpatialParameters(const GridView &gridView)
+    InjectionSpatialParams(const GridView &gridView)
         : ParentType(gridView)
     {
         layerBottom_ = 22.0;
@@ -133,7 +133,7 @@ public:
         coarseMaterialParams_.setLambda(2.0);
     }
 
-    ~InjectionSpatialParameters()
+    ~InjectionSpatialParams()
     {}
 
     /*!
