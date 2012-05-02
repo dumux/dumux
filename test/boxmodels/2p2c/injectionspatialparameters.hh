@@ -225,10 +225,10 @@ public:
      * \param scvfIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
-    void matrixHeatFlux(Vector &heatFlux,
+    void matrixHeatFlux(DimVector &heatFlux,
                         const FluxVariables &fluxVars,
                         const ElementVolumeVariables &elemVolVars,
-                        const Vector &tempGrad,
+                        const DimVector &tempGrad,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
                         const int faceIdx) const
