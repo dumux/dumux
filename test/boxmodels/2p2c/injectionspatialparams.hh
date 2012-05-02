@@ -30,7 +30,7 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

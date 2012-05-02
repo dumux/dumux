@@ -24,6 +24,8 @@
 
 #include <dumux/material/spatialparams/fvspatialparams.hh>
 
+#warning include dumux/material/spatialparams/fvspatialparams.hh instead
+
 namespace Dumux
 {
 

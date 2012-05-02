@@ -24,6 +24,8 @@
 
 #include <dumux/material/spatialparams/boxspatialparams.hh>
 
+#warning include dumux/material/spatialparams/boxspatialparams.hh instead
+
 namespace Dumux {
 
 /**
