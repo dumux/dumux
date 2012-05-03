@@ -63,7 +63,7 @@ public:
     BoxVolumeVariables(const BoxVolumeVariables &v)
     {
         evalPoint_ = 0;
-        primaryVars_ = v.primaryVars_;
+        priVars_ = v.priVars_;
         extrusionFactor_ = v.extrusionFactor_;
     };
 
@@ -73,7 +73,7 @@ public:
     BoxVolumeVariables &operator=(const BoxVolumeVariables &v)
     {
         evalPoint_ = 0;
-        primaryVars_ = v.primaryVars_;
+        priVars_ = v.priVars_;
         extrusionFactor_ = v.extrusionFactor_;
 
         return *this;
@@ -125,28 +125,46 @@ public:
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                int scvIdx,
-                bool isOldSol)
+                const int scvIdx,
+                const bool isOldSol)
     {
         Valgrind::CheckDefined(priVars);
-        primaryVars_ = priVars;
+        priVars_ = priVars;
         extrusionFactor_ = problem.boxExtrusionFactor(element, fvGeometry, scvIdx);
     }
 
     /*!
      * \brief Return the vector of primary variables
      */
+    const PrimaryVariables &priVars() const
+    { return priVars_; }
+
+    /*!
+     * \brief Return the vector of primary variables
+     */
+    DUMUX_DEPRECATED_MSG("use priVars instead")
     const PrimaryVariables &primaryVars() const
-    { return primaryVars_; }
+    { return priVars(); }
 
     /*!
      * \brief Return a component of primary variable vector
      *
      * \param pvIdx The index of the primary variable of interest
      */
-    Scalar primaryVar(int pvIdx) const
+    Scalar priVar(const int pvIdx) const
     {
-        return primaryVars_[pvIdx];
+        return priVars_[pvIdx];
+    }
+
+    /*!
+     * \brief Return a component of primary variable vector
+     *
+     * \param pvIdx The index of the primary variable of interest
+     */
+    DUMUX_DEPRECATED_MSG("use priVar instead")
+    Scalar primaryVar(const int pvIdx) const
+    {
+        return priVar(pvIdx);
     }
 
     /*!
@@ -168,7 +186,7 @@ public:
     void checkDefined() const
     {
 #if !defined NDEBUG && HAVE_VALGRIND
-        Valgrind::CheckDefined(primaryVars_);
+        Valgrind::CheckDefined(priVars_);
         Valgrind::CheckDefined(evalPoint_);
         if (evalPoint_ && evalPoint_ != this)
             evalPoint_->checkDefined();
@@ -184,7 +202,7 @@ protected:
     // the evaluation point of the local jacobian
     const Implementation *evalPoint_;
 
-    PrimaryVariables primaryVars_;
+    PrimaryVariables priVars_;
     Scalar extrusionFactor_;
 };
 

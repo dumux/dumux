@@ -235,8 +235,8 @@ public:
                       const Element &element,
                       const FVElementGeometry &fvGeometry,
                       const Intersection &is,
-                      int scvIdx,
-                      int boundaryFaceIdx,
+                      const int scvIdx,
+                      const int boundaryFaceIdx,
                       const ElementVolumeVariables &elemVolVars) const
     {
         // forward it to the interface without the volume variables
@@ -266,8 +266,8 @@ public:
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const Intersection &is,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+                 const int scvIdx,
+                 const int boundaryFaceIdx) const
     {
         // forward it to the interface with only the global position
         asImp_().neumannAtPos(values, fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal);
@@ -315,7 +315,7 @@ public:
     void boxSDSource(PrimaryVariables &values,
                      const Element &element,
                      const FVElementGeometry &fvGeometry,
-                     int scvIdx,
+                     const int scvIdx,
                      const ElementVolumeVariables &elemVolVars) const
     {
         // forward to solution independent, box specific interface
@@ -338,7 +338,7 @@ public:
     void source(PrimaryVariables &values,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                int scvIdx) const
+                const int scvIdx) const
     {
         // forward to generic interface
         asImp_().sourceAtPos(values, fvGeometry.subContVol[scvIdx].global);
@@ -379,7 +379,7 @@ public:
     void initial(PrimaryVariables &values,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
-                 int scvIdx) const
+                 const int scvIdx) const
     {
         // forward to generic interface
         asImp_().initialAtPos(values, fvGeometry.subContVol[scvIdx].global);
@@ -416,7 +416,7 @@ public:
      */
     Scalar boxExtrusionFactor(const Element &element,
                               const FVElementGeometry &fvGeometry,
-                              int scvIdx) const
+                              const int scvIdx) const
     {
         // forward to generic interface
         return asImp_().extrusionFactorAtPos(fvGeometry.subContVol[scvIdx].global);
@@ -516,7 +516,7 @@ public:
      *
      * \param dt The current time-step size
      */
-    Scalar nextTimeStepSize(Scalar dt)
+    Scalar nextTimeStepSize(const Scalar dt)
     {
         return std::min(GET_PARAM(TypeTag, Scalar, MaxTimeStepSize),
                         newtonCtl_.suggestTimeStepSize(dt));
@@ -725,7 +725,7 @@ public:
      * \param tRestart The simulation time on which the program was
      *                 written to disk.
      */
-    void restart(Scalar tRestart)
+    void restart(const Scalar tRestart)
     {
         typedef Dumux::Restart Restarter;
 
@@ -769,7 +769,7 @@ public:
      * \brief Write the relevant secondary variables of the current
      *        solution into an VTK output file.
      */
-    void writeOutput(bool verbose = true)
+    void writeOutput(const bool verbose = true)
     {
         // write the current result to disk
         if (asImp_().shouldWriteOutput()) {

@@ -75,7 +75,7 @@ public:
      */
     PorousMediaBoxProblem(TimeManager &timeManager,
                 const GridView &gridView,
-                bool verbose = true)
+                const bool verbose = true)
         : ParentType(timeManager, gridView),
           gravity_(0)
     {
@@ -110,7 +110,7 @@ public:
      */
     Scalar boxTemperature(const Element &element,
                           const FVElementGeometry fvGeometry,
-                          int scvIdx) const
+                          const int scvIdx) const
     { return asImp_().temperatureAtPos(fvGeometry.subContVol[scvIdx].global); }
 
     /*!
@@ -141,8 +141,8 @@ public:
      * it just calls gravityAtPos().
      */
     const DimVector &boxGravity(const Element &element,
-                                     const FVElementGeometry &fvGeometry,
-                                     int scvIdx) const
+                                const FVElementGeometry &fvGeometry,
+                                const int scvIdx) const
     { return asImp_().gravityAtPos(fvGeometry.subContVol[scvIdx].global); }
 
     /*!

@@ -72,7 +72,7 @@ public:
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                bool oldSol)
+                const bool oldSol)
     {
         const SolutionVector &globalSol =
             oldSol?
@@ -84,9 +84,9 @@ public:
         int numVertices = element.template count<dim>();
         this->resize(numVertices);
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {
-            const PrimaryVariables &solI
+            const PrimaryVariables &priVars
                 = globalSol[vertexMapper.map(element, scvIdx, dim)];
-            (*this)[scvIdx].update(solI,
+            (*this)[scvIdx].update(priVars,
                               problem,
                               element,
                               fvGeometry,
@@ -118,10 +118,10 @@ public:
         this->resize(numVertices);
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++)
         {
-            PrimaryVariables solI(0);
+            PrimaryVariables priVars(0);
             for (int eqnIdx = 0; eqnIdx < numEq; eqnIdx++)
-                solI[eqnIdx] = elementSolVector[scvIdx + eqnIdx*numVertices];
-            (*this)[scvIdx].update(solI,
+                priVars[eqnIdx] = elementSolVector[scvIdx + eqnIdx*numVertices];
+            (*this)[scvIdx].update(priVars,
                                       problem,
                                       element,
                                       fvGeometry,

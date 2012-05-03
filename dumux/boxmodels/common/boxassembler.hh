@@ -227,7 +227,7 @@ public:
      *
      * \param yesno If true, only rescale; else do full Jacobian assembly.
      */
-    void setMatrixReuseable(bool yesno = true)
+    void setMatrixReuseable(const bool yesno = true)
     {
         if (enableJacobianRecycling_())
             reuseMatrix_ = yesno;
@@ -288,15 +288,15 @@ public:
         // evaluation point used for linearization from the original
         // evaluation point
         for (unsigned int i = 0; i < vertexDelta_.size(); ++i) {
-            PrimaryVariables uCurrent(u[i]);
-            PrimaryVariables uNext(uCurrent);
-            uNext -= uDelta[i];
+            PrimaryVariables currentPriVars(u[i]);
+            PrimaryVariables nextPriVars(currentPriVars);
+            nextPriVars -= uDelta[i];
 
             // we need to add the distance the solution was moved for
             // this vertex
             Scalar dist = model_().relativeErrorVertex(i,
-                                                       uCurrent,
-                                                       uNext);
+                                                       currentPriVars,
+                                                       nextPriVars);
             vertexDelta_[i] += std::abs(dist);
         }
 
@@ -309,7 +309,7 @@ public:
      * \param globalVertIdx The global index of the vertex which ought
      *                      to be red.
      */
-    void markVertexRed(int globalVertIdx)
+    void markVertexRed(const int globalVertIdx)
     {
         if (!enablePartialReassemble_())
             return;
@@ -338,7 +338,7 @@ public:
      *               linearization point and the current solution and
      *               _not_ the delta vector of the Newton iteration!
      */
-    void computeColors(Scalar relTol)
+    void computeColors(const Scalar relTol)
     {
         if (!enablePartialReassemble_())
             return;
@@ -482,7 +482,7 @@ public:
      * \param element An element which contains the vertex
      * \param vertIdx The local index of the vertex in the element.
      */
-    int vertexColor(const Element &element, int vertIdx) const
+    int vertexColor(const Element &element, const int vertIdx) const
     {
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
@@ -496,7 +496,7 @@ public:
      *
      * \param globalVertIdx The global index of the vertex.
      */
-    int vertexColor(int globalVertIdx) const
+    int vertexColor(const int globalVertIdx) const
     {
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!
@@ -522,7 +522,7 @@ public:
      *
      * \param globalElementIdx The global index of the element.
      */
-    int elementColor(int globalElementIdx) const
+    int elementColor(const int globalElementIdx) const
     {
         if (!enablePartialReassemble_())
             return Red; // reassemble unconditionally!

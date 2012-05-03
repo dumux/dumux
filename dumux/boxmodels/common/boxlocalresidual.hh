@@ -300,7 +300,7 @@ public:
      * \param scvIdx The local index of the sub-control volume
      *               (i.e. the element's local vertex index)
      */
-    const PrimaryVariables &residual(int scvIdx) const
+    const PrimaryVariables &residual(const int scvIdx) const
     { return residual_[scvIdx]; }
 
     /*!
@@ -314,7 +314,7 @@ public:
      * \brief Returns the storage term for a given sub-control volumes
      *        of the element.
      */
-    const PrimaryVariables &storageTerm(int scvIdx) const
+    const PrimaryVariables &storageTerm(const int scvIdx) const
     { return storageTerm_[scvIdx]; }
 
 protected:
@@ -373,7 +373,7 @@ protected:
                 Valgrind::CheckDefined(dirichletValues[pvIdx]);
 
                 residual_[scvIdx][eqIdx] =
-                        curPrimaryVar_(scvIdx, pvIdx) - dirichletValues[pvIdx];
+                        curPriVar_(scvIdx, pvIdx) - dirichletValues[pvIdx];
 
                 storageTerm_[scvIdx][eqIdx] = 0.0;
             };
@@ -387,7 +387,7 @@ protected:
     void evalBoundaryFluxes_()
     {
         Dune::GeometryType geoType = element_().geometry().type();
-        const ReferenceElement &refElem = ReferenceElements::general(geoType);
+        const ReferenceElement &refElement = ReferenceElements::general(geoType);
 
         IntersectionIterator isIt = gridView_().ibegin(element_());
         const IntersectionIterator &endIt = gridView_().iend(element_());
@@ -400,12 +400,12 @@ protected:
             // Assemble the boundary for all vertices of the current
             // face
             int faceIdx = isIt->indexInInside();
-            int numFaceVerts = refElem.size(faceIdx, 1, dim);
+            int numFaceVerts = refElement.size(faceIdx, 1, dim);
             for (int faceVertIdx = 0;
                  faceVertIdx < numFaceVerts;
                  ++faceVertIdx)
             {
-                int scvIdx = refElem.subEntity(faceIdx,
+                int scvIdx = refElement.subEntity(faceIdx,
                                                     1,
                                                     faceVertIdx,
                                                     dim);
@@ -433,8 +433,8 @@ protected:
      *        volume face to the local residual.
      */
     void evalNeumannSegment_(const IntersectionIterator &isIt,
-                             int scvIdx,
-                             int boundaryFaceIdx)
+                             const int scvIdx,
+                             const int boundaryFaceIdx)
     {
         // temporary vector to store the neumann boundary fluxes
         PrimaryVariables neumannFlux(0.0);
@@ -640,27 +640,58 @@ protected:
      *           the last time step of the i'th
      *        sub-control volume of the current element.
      */
-    const PrimaryVariables &prevPrimaryVars_(int i) const
+    const PrimaryVariables &prevPriVars_(const int i) const
     {
-        return prevVolVars_(i).primaryVars();
+        return prevVolVars_(i).priVars();
+    }
+
+    /*!
+     * \brief Returns a reference to the primary variables of
+     *           the last time step of the i'th
+     *        sub-control volume of the current element.
+     */
+    DUMUX_DEPRECATED_MSG("use prevPriVars_ instead")
+    const PrimaryVariables &prevPrimaryVars_(const int i) const
+    {
+        return prevPriVars_(i);
     }
 
     /*!
      * \brief Returns a reference to the primary variables of the i'th
      *        sub-control volume of the current element.
      */
-    const PrimaryVariables &curPrimaryVars_(int i) const
+    const PrimaryVariables &curPriVars_(const int i) const
     {
-        return curVolVars_(i).primaryVars();
+        return curVolVars_(i).priVars();
+    }
+
+    /*!
+     * \brief Returns a reference to the primary variables of the i'th
+     *        sub-control volume of the current element.
+     */
+    DUMUX_DEPRECATED_MSG("use curPriVars_ instead")
+    const PrimaryVariables &curPrimaryVars_(const int i) const
+    {
+        return curPriVars_(i);
     }
 
     /*!
      * \brief Returns the j'th primary of the i'th sub-control volume
      *        of the current element.
      */
-    Scalar curPrimaryVar_(int i, int j) const
+    Scalar curPriVar_(const int i, const int j) const
     {
-        return curVolVars_(i).primaryVar(j);
+        return curVolVars_(i).priVar(j);
+    }
+
+    /*!
+     * \brief Returns the j'th primary of the i'th sub-control volume
+     *        of the current element.
+     */
+    DUMUX_DEPRECATED_MSG("use curPriVar_ instead")
+    Scalar curPrimaryVar_(const int i, const int j) const
+    {
+        return curPriVar_(i, j);
     }
 
     /*!
@@ -677,7 +708,7 @@ protected:
      * \brief Returns a reference to the volume variables of the i-th
      *        sub-control volume of the current element.
      */
-    const VolumeVariables &curVolVars_(int i) const
+    const VolumeVariables &curVolVars_(const int i) const
     {
         return curVolVars_()[i];
     }
@@ -698,7 +729,7 @@ protected:
      *        variables of the i-th sub-control volume of the current
      *        element.
      */
-    const VolumeVariables &prevVolVars_(int i) const
+    const VolumeVariables &prevVolVars_(const int i) const
     {
         return prevVolVars_()[i];
     }
@@ -717,7 +748,7 @@ protected:
      * \brief Returns a reference to the boundary types of the i-th
      *        sub-control volume of the current element.
      */
-    const BoundaryTypes &bcTypes_(int i) const
+    const BoundaryTypes &bcTypes_(const int i) const
     {
         return bcTypes_()[i];
     }

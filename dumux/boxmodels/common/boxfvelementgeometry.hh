@@ -546,7 +546,7 @@ class BoxFVElementGeometry
     }
 
 public:
-    int boundaryFaceIndex(int face, int vertInFace) const
+    int boundaryFaceIndex(const int face, const int vertInFace) const
     {
         return (face*maxCOS + vertInFace);
     }
@@ -598,14 +598,14 @@ public:
         computeGradientAtScvCenters = false;
     }
 
-    BoxFVElementGeometry(bool computeGradientAtCenters)
+    BoxFVElementGeometry(const bool computeGradientAtCenters)
     {
         computeGradientAtScvCenters = computeGradientAtCenters;
     };
 
-    void update(const GridView& gridView, const Element& e)
+    void update(const GridView& gridView, const Element& element)
     {
-        const Geometry& geometry = e.geometry();
+        const Geometry& geometry = element.geometry();
         Dune::GeometryType gt = geometry.type();
 
         const typename Dune::GenericReferenceElementContainer<CoordScalar,dim>::value_type&
@@ -722,8 +722,8 @@ public:
         } // end loop over edges / sub control volume faces
 
         // fill boundary face data:
-        IntersectionIterator endit = gridView.iend(e);
-        for (IntersectionIterator it = gridView.ibegin(e); it != endit; ++it)
+        IntersectionIterator endit = gridView.iend(element);
+        for (IntersectionIterator it = gridView.ibegin(element); it != endit; ++it)
             if (it->boundary())
             {
                 int face = it->indexInInside();

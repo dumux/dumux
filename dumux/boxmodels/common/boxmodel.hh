@@ -289,7 +289,7 @@ public:
      * \param globalIdx The global index of the control volume's
      *                  associated vertex
      */
-    Scalar boxVolume(int globalIdx) const
+    Scalar boxVolume(const int globalIdx) const
     { return boxVolume_[globalIdx][0]; }
 
     /*!
@@ -363,7 +363,7 @@ public:
      * \param vertIdx The global index of the control volume
      * \param pvIdx The index of the primary variable
      */
-    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    Scalar primaryVarWeight(const int vertIdx, const int pvIdx) const
     {
         return 1.0/std::max(std::abs(this->prevSol()[vertIdx][pvIdx]), 1.0);
     }
@@ -374,8 +374,8 @@ public:
      *
      * \param vertexIdx The global index of the control volume's
      *                  associated vertex
-     * \param pv1 The first vector of primary variables
-     * \param pv2 The second vector of primary variables
+     * \param priVars1 The first vector of primary variables
+     * \param priVars2 The second vector of primary variables
      *
      * \todo The vertexIdx argument is pretty hacky. it is required by
      *       models with pseudo primary variables (i.e. the primary
@@ -383,16 +383,16 @@ public:
      *       to access the pseudo primary variables from the primary
      *       variables.
      */
-    Scalar relativeErrorVertex(int vertexIdx,
-                               const PrimaryVariables &pv1,
-                               const PrimaryVariables &pv2)
+    Scalar relativeErrorVertex(const int vertexIdx,
+                               const PrimaryVariables &priVars1,
+                               const PrimaryVariables &priVars2)
     {
         Scalar result = 0.0;
         for (int j = 0; j < numEq; ++j) {
             //Scalar weight = asImp_().primaryVarWeight(vertexIdx, j);
-            //Scalar eqErr = std::abs(pv1[j] - pv2[j])*weight;
-            Scalar eqErr = std::abs(pv1[j] - pv2[j]);
-            eqErr /= std::max<Scalar>(1.0, std::abs(pv1[j] + pv2[j])/2);
+            //Scalar eqErr = std::abs(priVars1[j] - priVars2[j])*weight;
+            Scalar eqErr = std::abs(priVars1[j] - priVars2[j]);
+            eqErr /= std::max<Scalar>(1.0, std::abs(priVars1[j] + priVars2[j])/2);
 
             result = std::max(result, eqErr);
         }
@@ -719,7 +719,7 @@ public:
      * \param globalVertIdx The global index of the control volume's
      *                      associated vertex
      */
-    bool onBoundary(int globalVertIdx) const
+    bool onBoundary(const int globalVertIdx) const
     { return boundaryIndices_[globalVertIdx]; }
 
     /*!
@@ -730,7 +730,7 @@ public:
      *             volume's associated vertex.
      * \param vIdx The local vertex index inside element
      */
-    bool onBoundary(const Element &element, int vIdx) const
+    bool onBoundary(const Element &element, const int vIdx) const
     { return onBoundary(vertexMapper().map(element, vIdx, dim)); }
 
     /*!
@@ -740,23 +740,23 @@ public:
      * the fluid state is filled with every information that is 
      * necessary to evaluate the model's local residual. 
      * 
-     * \param primaryVariables The primary variables of the model. 
+     * \param priVars The primary variables of the model.
      * \param problem The problem at hand. 
      * \param element The current element. 
-     * \param elementGeometry The finite volume element geometry. 
+     * \param fvGeometry The finite volume element geometry.
      * \param scvIdx The index of the subcontrol volume. 
      * \param fluidState The fluid state to fill. 
      */
     template <class FluidState>
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
-                                   int scvIdx,
+                                   const FVElementGeometry& fvGeometry,
+                                   const int scvIdx,
                                    FluidState& fluidState)
     {
-        VolumeVariables::completeFluidState(primaryVariables, problem, element,
-                                            elementGeometry, scvIdx, fluidState);
+        VolumeVariables::completeFluidState(priVars, problem, element,
+                                            fvGeometry, scvIdx, fluidState);
     }
 protected:
     /*!
@@ -814,21 +814,21 @@ protected:
 
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
-                PrimaryVariables initVal;
-                Valgrind::SetUndefined(initVal);
-                problem_().initial(initVal,
+                PrimaryVariables initPriVars;
+                Valgrind::SetUndefined(initPriVars);
+                problem_().initial(initPriVars,
                                    *eIt,
                                    fvGeometry,
                                    scvIdx);
-                Valgrind::CheckDefined(initVal);
+                Valgrind::CheckDefined(initPriVars);
 
                 // add up the initial values of all sub-control
                 // volumes. If the initial values disagree for
                 // different sub control volumes, the initial value
                 // will be the arithmetic mean.
-                initVal *= fvGeometry.subContVol[scvIdx].volume;
+                initPriVars *= fvGeometry.subContVol[scvIdx].volume;
                 boxVolume_[globalIdx] += fvGeometry.subContVol[scvIdx].volume;
-                uCur_[globalIdx] += initVal;
+                uCur_[globalIdx] += initPriVars;
                 Valgrind::CheckDefined(uCur_[globalIdx]);
             }
         }
@@ -874,7 +874,7 @@ protected:
         ElementIterator eEndIt = gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
             Dune::GeometryType geoType = eIt->geometry().type();
-            const ReferenceElement &refElem = ReferenceElements::general(geoType);
+            const ReferenceElement &refElement = ReferenceElements::general(geoType);
 
             IntersectionIterator isIt = gridView_().ibegin(*eIt);
             IntersectionIterator isEndIt = gridView_().iend(*eIt);
@@ -884,12 +884,12 @@ protected:
                 // add all vertices on the intersection to the set of
                 // boundary vertices
                 int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElem.size(faceIdx, 1, dim);
+                int numFaceVerts = refElement.size(faceIdx, 1, dim);
                 for (int faceVertIdx = 0;
                      faceVertIdx < numFaceVerts;
                      ++faceVertIdx)
                 {
-                    int elemVertIdx = refElem.subEntity(faceIdx,
+                    int elemVertIdx = refElement.subEntity(faceIdx,
                                                         1,
                                                         faceVertIdx,
                                                         dim);

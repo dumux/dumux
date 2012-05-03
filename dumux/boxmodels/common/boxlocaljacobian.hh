@@ -223,7 +223,7 @@ public:
      * \param j The local vertex (or sub-control volume) index which holds
      *          primary variables
      */
-    const MatrixBlock &mat(int i, int j) const
+    const MatrixBlock &mat(const int i, const int j) const
     { return A_[i][j]; }
 
     /*!
@@ -231,7 +231,7 @@ public:
      *
      * \param i The local vertex (or sub-control volume) index
      */
-    const MatrixBlock &storageJacobian(int i) const
+    const MatrixBlock &storageJacobian(const int i) const
     { return storageJacobian_[i]; }
 
     /*!
@@ -240,7 +240,7 @@ public:
      * \param i The local vertex (or sub-control volume) index on which
      *          the equations are defined
      */
-    const PrimaryVariables &residual(int i) const
+    const PrimaryVariables &residual(const int i) const
     { return residual_[i]; }
 
     /*!
@@ -249,7 +249,7 @@ public:
      * \param i The local vertex (or sub-control volume) index on which
      *          the equations are defined
      */
-    const PrimaryVariables &storageTerm(int i) const
+    const PrimaryVariables &storageTerm(const int i) const
     { return storageTerm_[i]; }
 
     /*!
@@ -260,8 +260,8 @@ public:
      *                   which the local derivative ought to be calculated.
      * \param pvIdx      The index of the primary variable which gets varied
      */
-    Scalar numericEpsilon(int scvIdx,
-                          int pvIdx) const
+    Scalar numericEpsilon(const int scvIdx,
+                          const int pvIdx) const
     {
         // define the base epsilon as the geometric mean of 1 and the
         // resolution of the scalar type. E.g. for standard 64 bit
@@ -275,8 +275,8 @@ public:
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...
-        Scalar pv = this->curVolVars_[scvIdx].primaryVar(pvIdx);
-        return baseEps*(std::abs(pv) + 1.0);
+        Scalar priVar = this->curVolVars_[scvIdx].priVar(pvIdx);
+        return baseEps*(std::abs(priVar) + 1.0);
     }
 
 protected:
@@ -398,8 +398,8 @@ protected:
      */
     void evalPartialDerivative_(ElementSolutionVector &partialDeriv,
                                 PrimaryVariables &storageDeriv,
-                                int scvIdx,
-                                int pvIdx)
+                                const int scvIdx,
+                                const int pvIdx)
     {
         int globalIdx = vertexMapper_().map(element_(), scvIdx, dim);
 
@@ -494,8 +494,8 @@ protected:
      *        partial derivatives of all equations in regard to the
      *        primary variable 'pvIdx' at vertex 'scvIdx' .
      */
-    void updateLocalJacobian_(int scvIdx,
-                              int pvIdx,
+    void updateLocalJacobian_(const int scvIdx,
+                              const int pvIdx,
                               const ElementSolutionVector &partialDeriv,
                               const PrimaryVariables &storageDeriv)
     {
