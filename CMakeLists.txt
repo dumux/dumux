@@ -40,10 +40,6 @@ find_package(UG)
 find_package(ALUGrid)
 find_package(METIS)
 find_package(SuperLU)
-if(SUPERLU_FOUND)
-  set(SUPERLU_CPPFLAGS "-I${SUPERLU_INCLUDE_DIRS} -DENABLE_SUPERLU")
-  set(SUPERLU_LIBS "-L. ${SUPERLU_LIBRARIES} ${BLAS_LIBRARIES}")
-endif(SUPERLU_FOUND)
 
 ##############
 # Find the required include files
