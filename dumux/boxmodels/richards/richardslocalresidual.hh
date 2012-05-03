@@ -85,7 +85,7 @@ public:
      * \param usePrevSol Calculate the storage term of the previous solution
      *                   instead of the model's current solution.
      */
-    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -117,7 +117,7 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx, bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx, bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->element_(),
@@ -154,7 +154,7 @@ public:
      * \param scvIdx The sub control volume index inside the current
      *               element
      */
-    void computeSource(PrimaryVariables &source, int scvIdx)
+    void computeSource(PrimaryVariables &source, const int scvIdx)
     {
         this->problem_().boxSDSource(source,
                                      this->element_(),

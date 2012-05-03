@@ -85,23 +85,23 @@ public:
      * \param isOldSol Specifies whether the solution is from
      *                 the previous time step or from the current one
      */
-    void update(const PrimaryVariables &primaryVariables,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                int scvIdx,
-                bool isOldSol)
+                const int scvIdx,
+                const bool isOldSol)
     {
         assert(!FluidSystem::isLiquid(nPhaseIdx));
 
-        ParentType::update(primaryVariables,
+        ParentType::update(priVars,
                            problem,
                            element,
                            fvGeometry,
                            scvIdx,
                            isOldSol);
 
-        completeFluidState(primaryVariables, problem, element, fvGeometry, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
 
         //////////
         // specify the other parameters
@@ -115,21 +115,21 @@ public:
         porosity_ = problem.spatialParams().porosity(element, fvGeometry, scvIdx);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(primaryVariables, problem, element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
      * \copydoc BoxModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
                                    const FVElementGeometry& fvGeometry,
-                                   int scvIdx,
+                                   const int scvIdx,
                                    FluidState& fluidState)
     {
         // temperature
-        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+        Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
@@ -138,8 +138,8 @@ public:
         const MaterialLawParams &matParams =
             problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
         Scalar minPc = MaterialLaw::pC(matParams, 1.0);
-        fluidState.setPressure(wPhaseIdx, primaryVariables[pwIdx]);
-        fluidState.setPressure(nPhaseIdx, std::max(pnRef, primaryVariables[pwIdx] + minPc));
+        fluidState.setPressure(wPhaseIdx, priVars[pwIdx]);
+        fluidState.setPressure(nPhaseIdx, std::max(pnRef, priVars[pwIdx] + minPc));
 
         // saturations
         Scalar Sw = MaterialLaw::Sw(matParams, fluidState.pressure(nPhaseIdx) - fluidState.pressure(wPhaseIdx));
@@ -182,7 +182,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar saturation(int phaseIdx) const
+    Scalar saturation(const int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
 
     /*!
@@ -191,7 +191,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar density(int phaseIdx) const
+    Scalar density(const int phaseIdx) const
     { return fluidState_.density(phaseIdx); }
 
     /*!
@@ -205,7 +205,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar pressure(int phaseIdx) const
+    Scalar pressure(const int phaseIdx) const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
@@ -229,7 +229,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar mobility(int phaseIdx) const
+    Scalar mobility(const int phaseIdx) const
     { return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
 
     /*!
@@ -238,7 +238,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase
      */
-    Scalar relativePermeability(int phaseIdx) const
+    Scalar relativePermeability(const int phaseIdx) const
     {
         if (phaseIdx == wPhaseIdx)
             return relativePermeabilityWetting_;
@@ -261,7 +261,7 @@ protected:
                             const Problem& problem,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
-                            int scvIdx)
+                            const int scvIdx)
     {
         return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
@@ -269,12 +269,12 @@ protected:
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &fvGeometry,
-                       int scvIdx,
-                       bool isOldSol)
+                       const int scvIdx,
+                       const bool isOldSol)
     { }
 
     FluidState fluidState_;

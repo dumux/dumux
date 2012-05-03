@@ -59,7 +59,7 @@ class RichardsFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimTensor;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -95,7 +95,7 @@ public:
     /*!
      * \brief Return the intrinsic permeability \f$\mathrm{[m^2]}\f$.
      */
-    const DimTensor &intrinsicPermeability() const
+    const DimMatrix &intrinsicPermeability() const
     { return K_; }
 
     /*!
@@ -220,7 +220,7 @@ protected:
     DimVector potentialGrad_;
 
     // intrinsic permeability
-    DimTensor K_;
+    DimMatrix K_;
 };
 
 } // end namepace

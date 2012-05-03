@@ -85,7 +85,7 @@ public:
      */
     Scalar referencePressure(const Element &element,
                              const FVElementGeometry fvGeometry,
-                             int scvIdx) const
+                             const int scvIdx) const
     { DUNE_THROW(Dune::NotImplemented, "referencePressure() method not implemented by the actual problem"); };
     // \}
 };

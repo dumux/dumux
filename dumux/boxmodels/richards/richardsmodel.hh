@@ -117,7 +117,7 @@ public:
      * \param vertIdx The global index of the vertex in question
      * \param pvIdx The index of the primary variable
      */
-    Scalar primaryVarWeight(int vertIdx, int pvIdx) const
+    Scalar primaryVarWeight(const int vertIdx, const int pvIdx) const
     {
         if (Indices::pwIdx == pvIdx)
             return 1e-6;
