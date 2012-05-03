@@ -29,7 +29,7 @@
 #define DUMUX_TUTORIAL_SPATIAL_PARAMS_COUPLED_HH
 
 // include parent spatialparameters
-#include <dumux/material/spatialparameters/boxspatialparams.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 
 // include material laws
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh> /*@\label{tutorial-coupled:rawLawInclude}@*/
