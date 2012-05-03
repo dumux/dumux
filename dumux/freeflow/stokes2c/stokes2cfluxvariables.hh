@@ -67,7 +67,8 @@ class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>
 
     enum { dim = GridView::dimension };
     enum { comp1Idx = Indices::comp1Idx };
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
+    enum { lCompIdx = comp1Idx } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> DimVector;

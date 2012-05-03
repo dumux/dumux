@@ -54,7 +54,7 @@ class Stokes2cniVolumeVariables : public Stokes2cVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
     enum { energyIdx = Indices::energyIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -68,7 +68,7 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
+                const FVElementGeometry &fvGeometry,
                 const int scvIdx,
                 bool isOldSol)
     {
@@ -80,7 +80,7 @@ public:
         ParentType::update(priVars,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
     };
@@ -115,7 +115,7 @@ protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                             const Problem& problem,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
+                            const FVElementGeometry &fvGeometry,
                             const int scvIdx)
     {
         return priVars[energyIdx];

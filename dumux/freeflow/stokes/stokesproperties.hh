@@ -62,8 +62,10 @@ NEW_PROP_TAG(StabilizationAlpha); //!< The parameter for the stabilization
 NEW_PROP_TAG(StabilizationBeta); //!< The parameter for the stabilization at boundaries
 NEW_PROP_TAG(EnableNavierStokes); //!< Returns whether Navier-Stokes should be solved instead of plain Stokes
 
-NEW_PROP_TAG(PhaseIndex); //!< A phase index in case that a two-phase fluidsystem is used
-NEW_PROP_TAG(SpatialParameters); //!< The type of the spatial parameters
+NEW_PROP_TAG(PhaseIndex); //!< DEPRECATED A phase index in case that a two-phase fluidsystem is used
+NEW_PROP_TAG(PhaseIdx); //!< A phase index in case that a two-phase fluidsystem is used
+NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
+NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(Scaling); //!Defines Scaling of the model
 }
 }

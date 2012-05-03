@@ -134,8 +134,11 @@ public:
 
 };
 
-//! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
+//! DEPRECATED Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(BoxStokes, PhaseIndex, 0);
+
+//! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
+SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 
 //! Set calculation to Stokes, not Navier-Stokes
 SET_BOOL_PROP(BoxStokes, EnableNavierStokes, false);

@@ -55,7 +55,8 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
     enum { dim = GridView::dimension };
     enum { transportIdx = Indices::transportIdx }; //!< Index of the transport equation
     enum { comp1Idx = Indices::comp1Idx }; //!< Index of the transported component
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex)}; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
+    enum { lCompIdx = comp1Idx } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx)}; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;

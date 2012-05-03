@@ -76,7 +76,8 @@ class Stokes2cModel : public StokesModel<TypeTag>
 
     enum { dim = GridView::dimension };
     enum { comp1Idx = Indices::comp1Idx };
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
+    enum { lCompIdx = comp1Idx } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
@@ -110,7 +111,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField &rank = *writer.allocateManagedBuffer(numElements);
 
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
         VolumeVariables volVars;
         ElementBoundaryTypes elemBcTypes;
 
@@ -121,8 +122,8 @@ public:
             int idx = this->elementMapper().map(*elemIt);
             rank[idx] = this->gridView_().comm().rank();
 
-            fvElemGeom.update(this->gridView_(), *elemIt);
-            elemBcTypes.update(this->problem_(), *elemIt, fvElemGeom);
+            fvGeometry.update(this->gridView_(), *elemIt);
+            elemBcTypes.update(this->problem_(), *elemIt, fvGeometry);
 
             int numLocalVerts = elemIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
@@ -131,7 +132,7 @@ public:
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom,
+                               fvGeometry,
                                i,
                                false);
 

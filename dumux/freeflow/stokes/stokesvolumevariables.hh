@@ -62,7 +62,7 @@ class StokesVolumeVariables : public BoxVolumeVariables<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;

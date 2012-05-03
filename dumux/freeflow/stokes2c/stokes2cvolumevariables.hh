@@ -60,8 +60,12 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
         comp1Idx = Indices::comp1Idx,
         comp0Idx = Indices::comp0Idx
     };
+    enum {
+        lCompIdx = comp1Idx,
+        gCompIdx = comp0Idx
+    } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
     enum { transportIdx = Indices::transportIdx };
 
 public:

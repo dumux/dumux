@@ -91,8 +91,16 @@ public:
 
 };
 
-//! Choose the considered phase (single-phase system); the gas phase is used
+//! DEPRECATED Choose the considered phase (single-phase system); the gas phase is used
 SET_PROP(BoxStokes2c, PhaseIndex)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
+public:
+    static constexpr int value = Indices::nPhaseIdx;
+};
+
+//! Choose the considered phase (single-phase system); the gas phase is used
+SET_PROP(BoxStokes2c, PhaseIdx)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 public:
