@@ -1,3 +1,114 @@
+Differences Between DuMuX 2.1 and DuMuX 2.2
+===================================================
+
+* IMMEDIATE CHANGES not allowing a deprecation period: 
+  - In the problem / spatial parameter files, the setting of the property 
+    "SpatialParameters" as in 
+    SET...PROP(..., SpatialParameters ...
+    has to be replaced by 
+    SET...PROP(..., SpatialParams ...
+
+* Deprecated CLASSES/FILES, to be removed after 2.2:
+  - Model specific base box problems: The common functionality has been collected 
+    in PorousMediaBoxProblem in dumux/boxmodels/common/porousmediaboxproblem.hh. 
+    The problem can be derived from PorousMediaBoxProblem, instead of the model 
+    specific base problem: 
+    OnePBoxProblem, dumux/boxmodels/1p/1pproblem.hh,
+    OnePTwoCBoxProblem, dumux/boxmodels/1p2c/1p2cproblem.hh,
+    TwoPProblem, dumux/boxmodels/2p/2pproblem.hh,
+    TwoPNIProblem, dumux/boxmodels/2pni/2pniproblem.hh,
+    TwoPTwoCProblem, dumux/boxmodels/2p2c/2p2cproblem.hh,
+    TwoPTwoCNIProblem, dumux/boxmodels/2p2cni/2p2cniproblem.hh,
+    ThreePThreeCProblem, dumux/boxmodels/3p3c/3p3cproblem.hh,
+    ThreePThreeCNIProblem, dumux/boxmodels/3p3cni/3p3cniproblem.hh,
+    MPNCProblem, dumux/boxmodels/mpnc/mpncproblem.hh.
+    
+  - All "...SpatialParameters" base classes have been replaced by 
+    "...SpatialParams" classes:
+    BoxSpatialParameters, dumux/material/spatialparameters/boxspatialparameters.hh,
+    BoxSpatialParametersOneP, dumux/material/spatialparameters/boxspatialparameters1p.hh,
+    FVSpatialParameters, dumux/material/spatialparameters/fvspatialparameters.hh,
+    FVSpatialParametersOneP, dumux/material/spatialparameters/fvspatialparameters1p.hh.
+
+* Deprecated PROPERTY NAMES, to be removed after 2.2: BEWARE: The compiler will not 
+  print any warning if a deprecated property name is used. 
+  - The "SpatialParameters" property has been renamed to "SpatialParams".
+  
+  - The model specific "...Indices" property has been renamed to "Indices".
+
+* Deprecated CONSTANTS/ENUMS, to be removed after 2.2: BEWARE: The compiler will not 
+  print any warning if a deprecated constant/enum is used.
+  - In the 2p2c/ni and 3p3c/ni models, all indices related to phase and components 
+    can be pre/suffixed with "w", "n" and, for three phases, with "g". 
+    dumux/boxmodels/2p2c/...: All "l", "g" pre/suffixes have been replaced by "w", "n".
+    dumux/boxmodels/3p3c/...: All "c", "a" pre/suffixes have been replaced by "n", "g".
+
+* Deprecated MEMBER FUNCTIONS, to be removed after 2.2:
+  - Spatial parameters: The spatialParameters member functions of the base problems
+    have been replaced by spatialParams: 
+    dumux/boxmodels/common/porousmediaboxproblem.hh, 
+    dumux/decoupled/1p/diffusion/diffusionproblem...hh,
+    dumux/decoupled/2p/impes/impesproblem2p.hh,
+    dumux/decoupled/2p/transport/transportproblem2p.hh.
+  
+  - Flux variables: Renaming of members 
+    "...AtIP" -> "...", 
+    "concentration..." -> "massFraction...",
+    "molarConc..." -> "moleFraction..."
+    The "massFraction..." members have been deprecated, instead 
+    "moleFraction..." should be used.
+    Affected files:
+    dumux/boxmodels/1p2c/1p2cfluxvariables.hh, 
+    dumux/boxmodels/2p2c/2p2cfluxvariables.hh,
+    dumux/boxmodels/mpnc/.../...fluxvariables.hh,
+    dumux/freeflow/stokes.../stokes...fluxvariables.hh.
+
+  - Element and FVElementGeometry: The elem_() and fvElemGeom_() member function 
+    of BoxLocalResidual have been replaced by element_() and fvGeometry_(). 
+    
+  - Primary variables: All "...primaryVar/s" member functions have been replaced by 
+    "...priVar/s": 
+    dumux/boxmodels/common/boxlocalresidual.hh, 
+    dumux/boxmodels/common/boxvolumevariables.hh.
+
+  - Start functionality in dumux/common/start.hh: printUsageDGF and 
+    printUsageGrid are no longer needed.
+  
+* DELETED member functions, which have been deprecated in DuMuX 2.1: 
+  - dumux/material/spatialparameters/boxspatialparameters1p.hh:
+    extrusionFactorScv and extrusionFactorScvf, now part of the volume variables
+
+  - dumux/material/idealgas.hh:
+    concentration, replaced by molarDensity
+
+  - dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh:
+    pC(const Params &params, Scalar Sw, const Scalar temperature)
+
+  - dumux/common/start.hh:
+    startFromDGF, startWithGrid, startWithParameters, all replaced by start
+
+  - dumux/common/spline.hh:
+    set(const ScalarArray&, const ScalarArray&, Scalar, Scalar), replaced by setXYArrays,
+    set(const PointArray&, Scalar, Scalar), replaced by setArrayOfPoints
+
+  - dumux/common/variablelengthspline_.hh, dumux/common/fixedlengthspline_.hh:
+    various set routines, replaced by more descriptive names
+
+  - dumux/io/vtkmultiwriter.hh:
+    VtkMultiWriter(const std::string&, std::string), replaced by VtkMultiWriter(const GridView&, ...),
+    beginTimeStep, replaced by beginWrite,
+    createField, replaced by allocateManagedBuffer,
+    addVertexData, replaced by attachVertexData,
+    addCellData, replaced by attachCellData,
+    endTimeStep, replaced by endWrite
+
+  - dumux/decoupled/2p2c/2p2cproblem.hh:
+    IMPETProblem2P2C(const GridView&, bool) replaced by IMPETProblem2P2C(TimeManager&, ...),
+    IMPETProblem2P2C(..., SpatialParameters&, ...) replaced by IMPETProblem2P2C(TimeManager&, ...),
+    initSat(const GlobalPosition&, const Element&) replaced by initSat(const Element&)
+    initConcentration(const GlobalPosition&, const Element&) replaced by initConcentration(const Element&)
+
+
 Notable Differences Between DuMuX 2.0 and DuMuX 2.1
 ===================================================
 
