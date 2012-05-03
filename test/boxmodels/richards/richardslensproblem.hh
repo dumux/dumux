@@ -40,7 +40,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include "richardslensspatialparameters.hh"
+#include "richardslensspatialparams.hh"
 
 namespace Dumux
 {
@@ -53,7 +53,7 @@ class RichardsLensProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards, RichardsLensSpatialParameters));
+NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards, RichardsLensSpatialParams));
 
 // Set the grid type. Use UG if available, else SGrid
 #if HAVE_UG
@@ -206,7 +206,7 @@ public:
      */
     Scalar referencePressure(const Element &element,
                              const FVElementGeometry &fvElemGeom,
-                             int scvIdx) const
+                             const int scvIdx) const
     { return pnRef_; };
 
     void sourceAtPos(PrimaryVariables &values,

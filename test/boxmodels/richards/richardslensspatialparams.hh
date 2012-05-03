@@ -30,7 +30,7 @@
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -42,18 +42,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class RichardsLensSpatialParameters;
+class RichardsLensSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(RichardsLensSpatialParameters);
+NEW_TYPE_TAG(RichardsLensSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsLensSpatialParameters, SpatialParams, Dumux::RichardsLensSpatialParameters<TypeTag>);
+SET_TYPE_PROP(RichardsLensSpatialParams, SpatialParams, Dumux::RichardsLensSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(RichardsLensSpatialParameters, MaterialLaw)
+SET_PROP(RichardsLensSpatialParams, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective
@@ -72,9 +72,9 @@ public:
  * \brief The spatial parameters for the RichardsLensProblem
  */
 template<class TypeTag>
-class RichardsLensSpatialParameters : public BoxSpatialParameters<TypeTag>
+class RichardsLensSpatialParams : public BoxSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -102,7 +102,7 @@ public:
      * \param gridView The DUNE GridView representing the spatial
      *                 domain of the problem.
      */
-    RichardsLensSpatialParameters(const GridView& gridView)
+    RichardsLensSpatialParams(const GridView& gridView)
         : ParentType(gridView)
     {
         // residual saturations
