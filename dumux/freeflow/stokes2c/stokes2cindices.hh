@@ -62,8 +62,10 @@ public:
 
     // equation and primary variable indices
     static const int dim = StokesCommonIndices<TypeTag>::dim;
-    static const int transportIdx = PVOffset + dim+1; //! The index for the transport equation.
-    static const int massOrMoleFracIndex = transportIdx; //! The index for the mass or mole fraction in primary variable vectors.
+    static const int transportEqIdx = PVOffset + dim+1; //!< The index for the transport equation.
+    static const int transportIdx = transportEqIdx; //!< \deprecated use transportEqIdx instead
+    static const int transportCompIdx = transportEqIdx; //!< The index for the mass or mole fraction in primary variable vectors.
+    static const int massOrMoleFracIndex = transportCompIdx; //!< \deprecated use transportCompIdx instead
 
     static const int phaseIdx = nPhaseIdx; //!< Index of the non-wetting phase (required to use the same fluid system in coupled models)
 };

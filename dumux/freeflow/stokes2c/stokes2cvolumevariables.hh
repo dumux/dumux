@@ -66,7 +66,8 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
     } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
-    enum { transportIdx = Indices::transportIdx };
+    enum { transportEqIdx = Indices::transportEqIdx };
+    enum { transportIdx = transportEqIdx }; //!< \deprecated use transportEqIdx instead
 
 public:
     /*!
@@ -118,7 +119,7 @@ public:
                                    const bool isOldSol = false)
     {
         Scalar massFraction[numComponents];
-        massFraction[comp1Idx] = priVars[transportIdx];
+        massFraction[comp1Idx] = priVars[transportEqIdx];
         massFraction[comp0Idx] = 1 - massFraction[comp1Idx];
 
         // calculate average molar mass of the gas phase

@@ -327,7 +327,7 @@ protected:
     void evalBoundary_()
     {
         assert(this->residual_.size() == this->fvGeometry_().numVertices);
-        const ReferenceElement &refElem = ReferenceElements::general(this->element_().geometry().type());
+        const ReferenceElement &refElement = ReferenceElements::general(this->element_().geometry().type());
 
         // loop over vertices of the element
         for (int vertexIdx = 0; vertexIdx < this->fvGeometry_().numVertices; vertexIdx++)
@@ -353,14 +353,14 @@ protected:
 
                 // assemble the boundary for all vertices of the current face
                 const int faceIdx = isIt->indexInInside();
-                const int numFaceVertices = refElem.size(faceIdx, 1, dim);
+                const int numFaceVertices = refElement.size(faceIdx, 1, dim);
 
                 // loop over the single vertices on the current face
                 for (int faceVertIdx = 0; faceVertIdx < numFaceVertices; ++faceVertIdx)
                 {
                     // only evaluate, if we consider the same face vertex as in the outer
                     // loop over the element vertices
-                    if (refElem.subEntity(faceIdx, 1, faceVertIdx, dim)
+                    if (refElement.subEntity(faceIdx, 1, faceVertIdx, dim)
                         != vertexIdx)
                         continue;
 
@@ -591,17 +591,17 @@ protected:
         {
             if (vertexIdx == 0 || vertexIdx == 3)
                 this->residual_[vertexIdx][massBalanceIdx] =
-                    this->curPrimaryVars_(0)[pressureIdx]-this->curPrimaryVars_(3)[pressureIdx];
+                    this->curPriVars_(0)[pressureIdx] - this->curPriVars_(3)[pressureIdx];
             if (vertexIdx == 1 || vertexIdx == 2)
                 this->residual_[vertexIdx][massBalanceIdx] =
-                    this->curPrimaryVars_(1)[pressureIdx]-this->curPrimaryVars_(2)[pressureIdx];
+                    this->curPriVars_(1)[pressureIdx] - this->curPriVars_(2)[pressureIdx];
         }
         else
         {
             if (!bcTypes.isDirichlet(massBalanceIdx)) // do nothing in case of dirichlet
                 this->residual_[vertexIdx][massBalanceIdx] =
-                    this->curPrimaryVars_(0)[pressureIdx]+this->curPrimaryVars_(3)[pressureIdx]-
-                    this->curPrimaryVars_(1)[pressureIdx]-this->curPrimaryVars_(2)[pressureIdx];
+                    this->curPriVars_(0)[pressureIdx] + this->curPriVars_(3)[pressureIdx]-
+                    this->curPriVars_(1)[pressureIdx] - this->curPriVars_(2)[pressureIdx];
         }
     }
 

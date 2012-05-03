@@ -52,7 +52,7 @@ public:
     Scalar numericEpsilon(const int scvIdx,
                           const int pvIdx) const
     {
-        Scalar pv = this->curVolVars_[scvIdx].primaryVars()[pvIdx];
+        Scalar pv = this->curVolVars_[scvIdx].priVars()[pvIdx];
         if (pvIdx < GridView::dimension){
             return 1e-7*(std::abs(pv) + 1);
         }

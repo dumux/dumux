@@ -53,7 +53,8 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum { transportIdx = Indices::transportIdx }; //!< Index of the transport equation
+    enum { transportEqIdx = Indices::transportEqIdx }; //!< Index of the transport equation
+    enum { transportIdx = transportEqIdx }; DUMUX_DEPRECATED_MSG("use transportEqIdx instead");
     enum { comp1Idx = Indices::comp1Idx }; //!< Index of the transported component
     enum { lCompIdx = comp1Idx } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx)}; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
@@ -90,7 +91,7 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the storage of the component
-        storage[transportIdx] =
+        storage[transportEqIdx] =
             volVars.density() *
             volVars.fluidState().massFraction(phaseIdx, comp1Idx);
 
@@ -128,8 +129,8 @@ public:
             tmp += (1.0 - this->massUpwindWeight_) *     // rest
                 dn.density() * dn.fluidState().massFraction(phaseIdx, comp1Idx);
 
-        flux[transportIdx] += tmp;
-        Valgrind::CheckDefined(flux[transportIdx]);
+        flux[transportEqIdx] += tmp;
+        Valgrind::CheckDefined(flux[transportEqIdx]);
     }
 
     /*!
@@ -147,14 +148,14 @@ public:
 
         // diffusive component flux
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            flux[transportIdx] -=
+            flux[transportEqIdx] -=
                 fluxVars.moleFractionGrad()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
                 fluxVars.diffusionCoeff() *
                 fluxVars.molarDensity() *
                 FluidSystem::molarMass(comp1Idx);
 
-        Valgrind::CheckDefined(flux[transportIdx]);
+        Valgrind::CheckDefined(flux[transportEqIdx]);
     }
 };
 
