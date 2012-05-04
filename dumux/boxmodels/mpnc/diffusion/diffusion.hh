@@ -104,7 +104,7 @@ protected:
                     M[compIIdx][compIIdx] -= fluxVars.moleFraction(nPhaseIdx, compJIdx) / Dij;
                 }
             }
-        };
+        }
 
         for (int compIIdx = 0; compIIdx < numComponents; ++compIIdx) {
             M[numComponents - 1][compIIdx] = 1.0;

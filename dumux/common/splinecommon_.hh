@@ -476,7 +476,7 @@ protected:
             M[i][i] = 2;
             M[i][i + 1] = lambda_i;
             d[i] = d_i;
-        };
+        }
 
         // first row
         M[0][0] = 2;
@@ -574,7 +574,7 @@ protected:
                 // or decreasing
                 x0 = x1;
             return (x0*(x0*3*a + 2*b) + c > 0) ? 1 : -1;
-        };
+        }
         if ((x0 < xE1 && xE1 < x1) ||
             (x0 < xE2 && xE2 < x1))
         {
@@ -629,7 +629,7 @@ protected:
                 iHigh = i;
             else
                 iLow = i;
-        };
+        }
         return iLow;
     }
 

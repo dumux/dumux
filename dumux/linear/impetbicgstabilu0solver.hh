@@ -127,7 +127,7 @@ public:
             // make sure that the overlapping matrix and block vectors
             // have been created
             prepare_(M);
-        };
+        }
 
         // copy the values of the non-overlapping linear system of
         // equations to the overlapping one. On ther border, we add up

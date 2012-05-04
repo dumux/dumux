@@ -213,9 +213,9 @@ public:
                     std::cout << " ";
             }
             std::cout << "\n";
-        };
+        }
         Dune::printmatrix(std::cout, *static_cast<const BCRSMatrix*>(this), "M", "row");
-    };
+    }
 
 private:
     void build_(const BCRSMatrix &M)

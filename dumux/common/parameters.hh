@@ -188,7 +188,7 @@ void print(std::ostream &os = std::cout)
         std::list<std::string>::const_iterator it = unusedParams.begin();
         for (; it != unusedParams.end(); ++it) {
             os << *it << " = \"" << tree.get(*it, "") << "\"\n";
-        };
+        }
     }
 }
 
@@ -246,7 +246,7 @@ private:
             paramTypeName = b.paramTypeName;
             groupName = b.groupName;
             return *this;
-        };
+        }
     };
 
     static void check_(const std::string &paramTypeName,

@@ -261,7 +261,7 @@ public:
             if (overlap_->isFront(i)) {
                 (*this)[i] = value;
             }
-        };
+        }
     }
 
     /*!
@@ -272,14 +272,14 @@ public:
         int numDomestic = overlap_->numDomestic();
         for (int i = overlap_->numLocal(); i < numDomestic; ++i) {
             (*this)[i] = value;
-        };
+        }
     }
 
     void print() const
     {
         for (int i = 0; i < this->size(); ++i) {
             std::cout << "row " << i << (overlap_->isLocal(i)?" ":"*") << ": " << (*this)[i] << "\n";
-        };
+        }
     };
 
 private:

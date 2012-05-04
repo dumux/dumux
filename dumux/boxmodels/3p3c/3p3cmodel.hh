@@ -196,7 +196,7 @@ public:
 
             for (int i = 0; i < elemIt->template count<dim>(); ++i)
                 dest += this->localResidual().residual(i);
-        };
+        }
 
         if (this->gridView_().comm().size() > 1)
             dest = this->gridView_().comm().sum(dest);
@@ -349,7 +349,7 @@ public:
                 (*perm)[globalIdx] = volVars.permeability();
                 (*temperature)[globalIdx] = volVars.temperature();
                 (*phasePresence)[globalIdx] = staticVertexDat_[globalIdx].phasePresence;
-            };
+            }
 
         }
 

@@ -129,10 +129,10 @@ public:
             for (int j = 0; j <= 6; ++j) {
                 tmp += Hij[i][j]*tmp2;
                 tmp2 *= (rhoBar - 1);
-            };
+            }
             muBar += tmp3 * tmp;
             tmp3 *= 1.0/TBar - 1;
-        };
+        }
         muBar *= rhoBar;
         muBar = std::exp(muBar);
 
@@ -146,7 +146,7 @@ public:
         for (int i = 0; i < 4; ++i) {
             tmp += H[i]/tmp2;
             tmp2 *= TBar;
-        };
+        }
         muBar /= tmp;
 
         return 1e-6*muBar;

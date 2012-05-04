@@ -84,7 +84,7 @@ public:
         if(indicatorVector_.size() != problem_.variables().cellDataGlobal().size())
         {
             indicatorVector_.resize(problem_.variables().cellDataGlobal().size());
-        };
+        }
         indicatorVector_ = -1e100;
 
         Scalar globalMax = -1e100;

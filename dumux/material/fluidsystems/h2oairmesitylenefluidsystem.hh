@@ -381,7 +381,7 @@ public:
                 DUNE_THROW(Dune::InvalidStateException,
                            "Diffusivity of water in the water phase "
                            "is constraint by sum of diffusive fluxes = 0 !\n");
-            };
+            }
         } else if (phaseIdx==nPhaseIdx) {
 
             DUNE_THROW(Dune::InvalidStateException,

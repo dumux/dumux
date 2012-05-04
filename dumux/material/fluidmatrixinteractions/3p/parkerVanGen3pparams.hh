@@ -121,7 +121,7 @@ public:
         case 2:
             return Sgr_;
             break;
-        };
+        }
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 

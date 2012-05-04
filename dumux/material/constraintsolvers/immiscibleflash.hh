@@ -126,7 +126,7 @@ public:
                 allIncompressible = false;
                 break;
             }
-        };
+        }
 
         if (allIncompressible) {
             paramCache.updateAll(fluidState);
@@ -139,7 +139,7 @@ public:
                     / fluidState.molarDensity(phaseIdx);
                 fluidState.setSaturation(phaseIdx, saturation);
             }
-        };
+        }
 
         /////////////////////////
         // Newton method
@@ -195,7 +195,7 @@ public:
                     std::cout << s;
                 }
                 std::cout << "\n";
-            };
+            }
             std::cout << "residual: " << b << "\n";
             std::cout << "deltaX: " << deltaX << "\n";
             std::cout << "---------------\n";
@@ -342,7 +342,7 @@ protected:
                 // dampen to at most 30% change in pressure per
                 // iteration
                 delta = std::min(0.30*fluidState.pressure(0), std::max(-0.30*fluidState.pressure(0), delta));
-            };
+            }
 
             setQuantityRaw_(fluidState, pvIdx, tmp - delta);
         }

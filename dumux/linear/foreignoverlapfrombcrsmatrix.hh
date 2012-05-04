@@ -255,7 +255,7 @@ public:
             ForeignOverlapWithPeer::const_iterator rowEndIt = it->second.end();
             for (; rowIt != rowEndIt; ++rowIt) {
                 std::cout << std::tr1::get<0>(*rowIt) << "(" << std::tr1::get<1>(*rowIt) << ") ";
-            };
+            }
             std::cout << "\n";
         }
     };
@@ -280,7 +280,7 @@ protected:
                                                     it->peerRank,
                                                     it->borderDistance));
             borderIndices_.insert(it->localIdx);
-        };
+        }
     };
 
     // given a list of border indices and provided that
@@ -319,7 +319,7 @@ protected:
                 masterRank_[it->localIdx] = myRank_;
             else
                 isShared_[it->localIdx] = true;
-        };
+        }
 
         // overwrite the master rank of the non-shared border on the
         // domestic overlap
@@ -329,7 +329,7 @@ protected:
             if (!it->isShared) {
                 masterRank_[it->localIdx] = it->peerRank;
             }
-        };
+        }
     }
 
 
@@ -440,8 +440,8 @@ protected:
             for (; it != endIt; ++it)  {
                 IndexDistanceNpeers tmp(i, it->second, nRanks);
                 foreignOverlapByRank_[it->first].push_back(tmp);
-            };
-        };
+            }
+        }
     }
 
     // set of processes with which we have to communicate

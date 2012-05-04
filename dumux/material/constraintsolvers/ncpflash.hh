@@ -210,7 +210,7 @@ public:
                     std::cout << s;
                 }
                 std::cout << "\n";
-            };
+            }
 
             std::cout << "deltaX: " << deltaX << "\n";
             std::cout << "---------------\n";
@@ -421,7 +421,7 @@ protected:
                 // dampen to at most 15% change in pressure per
                 // iteration
                 delta = std::min(0.15*fluidState.pressure(0), std::max(-0.15*fluidState.pressure(0), delta));
-            };
+            }
 
             setQuantityRaw_(fluidState, pvIdx, tmp - delta);
         }
@@ -445,15 +445,15 @@ protected:
                 if (value < 0)
                     fluidState.setMoleFraction(phaseIdx, compIdx, 0.0);
             }
-        };
+        }
 
         // last saturation
         if (sumSat > 1.05) {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 Scalar value = fluidState.saturation(phaseIdx)/(0.95*sumSat);
                 fluidState.setSaturation(phaseIdx, value);
-            };
-        };
+            }
+        }
 
         completeFluidState_<MaterialLaw>(fluidState, paramCache, matParams);
 

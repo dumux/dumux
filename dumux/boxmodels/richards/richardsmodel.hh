@@ -188,7 +188,7 @@ public:
                 (*mobN)[globalIdx] = volVars.mobility(nPhaseIdx);
                 (*poro)[globalIdx] = volVars.porosity();
                 (*Te)[globalIdx] = volVars.temperature();
-            };
+            }
         }
 
         writer.attachVertexData(*Sn, "Sn");

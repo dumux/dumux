@@ -115,7 +115,7 @@ public:
                 (*K)[globalIdx]= spatialParams.intrinsicPermeability(*elemIt,
                                                                      fvGeometry,
                                                                      i);
-            };
+            }
         }
 
         writer.attachVertexData(*p, "p");

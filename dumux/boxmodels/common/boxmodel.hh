@@ -241,7 +241,7 @@ public:
                 int globalI = vertexMapper().map(*elemIt, i, dim);
                 residual[globalI] += localResidual().residual(i);
             }
-        };
+        }
 
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
@@ -277,7 +277,7 @@ public:
 
             for (int i = 0; i < elemIt->template count<dim>(); ++i)
                 storage += localResidual().storageTerm()[i];
-        };
+        }
 
         if (gridView_().comm().size() > 1)
             storage = gridView_().comm().sum(storage);

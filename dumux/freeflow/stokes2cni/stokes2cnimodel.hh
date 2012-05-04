@@ -156,7 +156,7 @@ public:
                 h   [globalIdx] = volVars.enthalpy();
 //                D   [globalIdx] = volVars.diffusionCoeff();
                 velocity[globalIdx] = volVars.velocity();
-            };
+            }
         }
         writer.attachVertexData(pN, "pg");
         writer.attachVertexData(delP, "delP");

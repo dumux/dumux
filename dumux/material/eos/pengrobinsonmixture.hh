@@ -124,7 +124,7 @@ public:
                 / sumMoleFractions
                 * std::sqrt(params.aPure(phaseIdx, compJIdx))
                 * (1.0 - StaticParameters::interactionCoefficient(compIdx, compJIdx));
-        };
+        }
         deltai *= tmp;
 
         Scalar base =

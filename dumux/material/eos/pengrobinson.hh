@@ -302,7 +302,7 @@ protected:
             if (hasExtrema)
                 break;
             Tmin /= 2;
-        };
+        }
 
         Scalar T = Tmin;
 
@@ -355,9 +355,9 @@ protected:
                 }
                 else
                     delta /= 2;
-            };
+            }
         }
-    };
+    }
 
     // find the two molar volumes where the EOS exhibits extrema and
     // which are larger than the covolume of the phase

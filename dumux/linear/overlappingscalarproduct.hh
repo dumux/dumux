@@ -54,7 +54,7 @@ public:
         for (int i = 0; i < n; ++i) {
             if (overlap_.iAmMasterOf(i))
                 sum += x[i]*y[i];
-        };
+        }
 
         // compute the global sum
         double sumGlobal = 0.0;

@@ -185,7 +185,7 @@ public:
             return
                 enthalpyRegion2_(temperature, pv) +
                 (pressure - pv)*dh_dp;
-        };
+        }
 
         return enthalpyRegion2_(temperature, pressure);
     }
@@ -226,7 +226,7 @@ public:
             return
                 enthalpyRegion1_(temperature, pv) +
                 (pressure - pv)*dh_dp;
-        };
+        }
 
         return enthalpyRegion1_(temperature, pressure);
     }
@@ -263,7 +263,7 @@ public:
             // cap at the vapor pressure to regularize
             return
                 heatCap_p_Region2_(temperature, pv);
-        };
+        }
         return heatCap_p_Region2_(temperature, pressure);
     }
 
@@ -295,7 +295,7 @@ public:
             // the pressure is too low, in this case we use the heat cap at the vapor pressure to regularize
             return
                 heatCap_p_Region1_(temperature, pv);
-        };
+        }
 
         return heatCap_p_Region1_(temperature, pressure);
     }
@@ -352,7 +352,7 @@ public:
             Scalar uvPEps = internalEnergyRegion1_(temperature, pv + eps);
             Scalar du_dp = (uvPEps - uv)/eps;
             return uv + du_dp*(pressure - pv);
-        };
+        }
 
         return internalEnergyRegion1_(temperature, pressure);
     }
@@ -425,7 +425,7 @@ public:
             Scalar uvMEps = internalEnergyRegion2_(temperature, pv - eps);
             Scalar du_dp = (uv - uvMEps)/eps;
             return uv + du_dp*(pressure - pv);
-        };
+        }
 
         return internalEnergyRegion2_(temperature, pressure);
     }
@@ -493,7 +493,7 @@ public:
         Scalar pv = vaporPressure(temperature);
         if (pressure > pv) {
             return heatCap_v_Region2_(temperature, pv);
-        };
+        }
 
         return heatCap_v_Region2_(temperature, pressure);
     }
@@ -577,7 +577,7 @@ public:
 
             // use a straight line for extrapolation
             return 1.0/v0 + (pressure - pv)*drho_dp;
-        };
+        }
 
         return 1.0/volumeRegion2_(temperature, pressure);
     }
@@ -685,7 +685,7 @@ public:
 
             // use a straight line for extrapolation
             return 1.0/v0 + (pressure - pv)*drho_dp;
-        };
+        }
 
         return 1/volumeRegion1_(temperature, pressure);
     }
@@ -773,7 +773,7 @@ public:
             DUNE_THROW(NumericalProblem,
                        "Viscosity of water is only implemented for temperatures below 623.15K and "
                        "pressures below 100MPa. (T = " << temperature << ", p=" << pressure);
-        };
+        }
 
         Scalar rho = liquidDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);

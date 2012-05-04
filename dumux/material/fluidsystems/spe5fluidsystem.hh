@@ -326,7 +326,7 @@ public:
             maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
             minB = std::min(prParams.pureParams(compIdx).b(), minB);
             maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
-        };
+        }
 
         prParams.updatePure(maxT, minP);
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
@@ -334,7 +334,7 @@ public:
             maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
             minB = std::min(prParams.pureParams(compIdx).b(), minB);
             maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
-        };
+        }
 
         prParams.updatePure(minT, maxP);
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
@@ -342,7 +342,7 @@ public:
             maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
             minB = std::min(prParams.pureParams(compIdx).b(), minB);
             maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
-        };
+        }
 
         prParams.updatePure(maxT, maxP);
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
@@ -350,7 +350,7 @@ public:
             maxA = std::max(prParams.pureParams(compIdx).a(), maxA);
             minB = std::min(prParams.pureParams(compIdx).b(), minB);
             maxB = std::max(prParams.pureParams(compIdx).b(), maxB);
-        };
+        }
 
         PengRobinson::init(/*aMin=*/minA, /*aMax=*/maxA, /*na=*/100,
                            /*bMin=*/minB, /*bMax=*/maxB, /*nb=*/200);

@@ -121,7 +121,7 @@ namespace Properties
         static int init() {                                             \
             TypeTagRegistry::addChildren<__VA_ARGS__>();                \
             return 0;                                                   \
-        };                                                              \
+        }                                                              \
         static int foo;                                                 \
     };                                                                  \
     int TypeTagInfo<DUMUX_GET_HEAD_(__VA_ARGS__)>::foo =           \
@@ -971,7 +971,7 @@ inline bool getDiagnostic_(const std::string &typeTagName,
         if (it->second.propertyName() == propTagName) {
             key = &it->second;
             break;
-        };
+        }
     }
 
     if (key) {
@@ -1028,7 +1028,7 @@ const std::string getDiagnostic(std::string propTagName)
                 << ":" << key.lineDefined()
                 <<"\n";
             result = oss.str();
-        };
+        }
     }
 
 

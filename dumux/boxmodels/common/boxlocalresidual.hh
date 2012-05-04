@@ -376,8 +376,8 @@ protected:
                         curPriVar_(scvIdx, pvIdx) - dirichletValues[pvIdx];
 
                 storageTerm_[scvIdx][eqIdx] = 0.0;
-            };
-        };
+            }
+        }
     }
 
     /*!

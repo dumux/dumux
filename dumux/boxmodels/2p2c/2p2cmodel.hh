@@ -160,8 +160,8 @@ public:
         {
             if(eIt->geometry().type().isCube() == false){
                 velocityOutput_ = false;
-            };
-        };
+            }
+        }
         if (velocityOutput_ != GET_PARAM(TypeTag, bool, EnableVelocityOutput))
             std::cout << "ATTENTION: Velocity output only works for cubes and is set to false for simplices\n";
 
@@ -203,7 +203,7 @@ public:
 
             for (int i = 0; i < eIt->template count<dim>(); ++i)
                 storage += this->localResidual().storageTerm()[i];
-        };
+        }
 
         if (this->gridView_().comm().size() > 1)
             storage = this->gridView_().comm().sum(storage);
@@ -372,7 +372,7 @@ public:
                 {
                     (*cellNum)[globalIdx] += 1;
                 }
-            };
+            }
 
             if(velocityOutput_)
             {
@@ -709,7 +709,7 @@ protected:
                     globalSol[globalIdx][switchIdx] = 0.0;
                 else if (formulation == pwSn)
                     globalSol[globalIdx][switchIdx] = 1.0;
-            };
+            }
         }
         else if (phasePresence == wPhaseOnly)
         {

@@ -273,7 +273,7 @@ public:
     {
         if (isLocal(domesticIdx)) {
             return foreignOverlap_.masterOf(domesticIdx) == peerRank;
-        };
+        }
 
         // if the local index is a border index, loop over all ranks
         // for which this index is also a border index. the lowest
@@ -347,21 +347,21 @@ protected:
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             sendIndicesToPeer_(peerRank);
-        };
+        }
 
         // receive our overlap from the processes to all peer processes
         peerIt = foreignOverlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             receiveIndicesFromPeer_(peerRank);
-        };
+        }
 
         // receive our overlap from the processes to all peer processes
         peerIt = foreignOverlap_.peerSet().begin();
         for (; peerIt != peerEndIt; ++peerIt) {
             int peerRank = *peerIt;
             waitSendIndices_(peerRank);
-        };
+        }
     };
 
     void sendIndicesToPeer_(int peerRank)
@@ -406,8 +406,8 @@ protected:
             {
                 (*peersSendBuff_[peerRank][i])[2*j + 0] = it->first;
                 (*peersSendBuff_[peerRank][i])[2*j + 1] = it->second;
-            };
-        };
+            }
+        }
 
         // send all messages
         indicesSendBuff_[peerRank]->send(peerRank);

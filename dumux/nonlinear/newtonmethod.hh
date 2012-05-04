@@ -113,7 +113,7 @@ public:
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
             ctl.newtonFail();
             return false;
-        };
+        }
     }
 
 protected:

@@ -193,7 +193,7 @@ public:
                 rho[globalIdx] = volVars.density();
                 mu[globalIdx] = volVars.viscosity();
                 velocity[globalIdx] = volVars.velocity();
-            };
+            }
         }
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");

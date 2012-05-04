@@ -189,7 +189,7 @@ public:
                 massFraction1[globalIdx] = volVars.massFraction(1);
                 rho[globalIdx] = volVars.density();
                 mu[globalIdx] = volVars.viscosity();
-            };
+            }
 
 #ifdef VELOCITY_OUTPUT // check if velocity output is demanded
             // In the box method, the velocity is evaluated on the FE-Grid. However, to get an

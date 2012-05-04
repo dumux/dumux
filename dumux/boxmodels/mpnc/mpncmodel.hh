@@ -172,7 +172,7 @@ public:
         const ElementIterator elemEndIt = this->gridView_().template end<0>();
         for (; elemIt != elemEndIt; ++elemIt) {
             this->localResidual().addPhaseStorage(phaseStorage, *elemIt, phaseIdx);
-        };
+        }
 
         if (this->gridView_().comm().size() > 1)
             phaseStorage = this->gridView_().comm().sum(phaseStorage);

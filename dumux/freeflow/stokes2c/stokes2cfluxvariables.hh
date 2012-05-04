@@ -151,7 +151,7 @@ protected:
                     this->face().grad[idx][dimIdx] *
                     elemVolVars[idx].fluidState().moleFraction(phaseIdx, comp1Idx);
             }
-        };
+        }
 
         Valgrind::CheckDefined(massFraction_);
         Valgrind::CheckDefined(diffusionCoeff_);

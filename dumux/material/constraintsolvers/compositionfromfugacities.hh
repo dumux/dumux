@@ -196,7 +196,7 @@ protected:
             Scalar gamma = phi * fluidState.pressure(phaseIdx);
             fluidState.setFugacityCoefficient(phaseIdx, i, phi);
             fluidState.setMoleFraction(phaseIdx, i, fugacities[i]/gamma);
-        };
+        }
 
         paramCache.updatePhase(fluidState, phaseIdx);
 
@@ -374,7 +374,7 @@ protected:
                 (targetFug[i] - params.fugacity(phaseIdx, i))
                 /
                 params.fugacityCoeff(phaseIdx, i) );
-        };
+        }
         return result;
     }
 };

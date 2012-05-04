@@ -143,7 +143,7 @@ public:
                 mu[globalIdx] = volVars.viscosity()*scale_;
                 velocity[globalIdx] = volVars.velocity();
                 velocity[globalIdx] *= 1/scale_;
-            };
+            }
         }
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");

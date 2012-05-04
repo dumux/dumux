@@ -129,7 +129,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                        "The a() parameter is only defined for "
                        "oil and gas phases");
-        };
+        }
     }
 
     /*!
@@ -145,7 +145,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                        "The b() parameter is only defined for "
                        "oil and gas phases");
-        };
+        }
     }
 
     /*!
@@ -163,7 +163,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                        "The a() parameter is only defined for "
                        "oil and gas phases");
-        };
+        }
     }
 
     /*!
@@ -180,7 +180,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException,
                        "The b() parameter is only defined for "
                        "oil and gas phases");
-        };
+        }
     }
 
     /*!
@@ -321,8 +321,8 @@ protected:
 
             // convert water density [kg/m^3] to molar volume [m^3/mol]
             Vm_[wPhaseIdx] = fs.averageMolarMass(wPhaseIdx)/waterDensity;
-        };
-        };
+        }
+        }
     }
 
     bool VmUpToDate_[numPhases];

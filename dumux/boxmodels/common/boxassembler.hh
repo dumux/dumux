@@ -193,7 +193,7 @@ public:
         if (!succeeded) {
             DUNE_THROW(NumericalProblem,
                        "A process did not succeed in linearizing the system");
-        };
+        }
 
         if (printReassembleStatistics)
         {
@@ -357,7 +357,7 @@ public:
             else
                 nextReassembleAccuracy_ =
                     std::max(nextReassembleAccuracy_, vertexDelta_[i]);
-        };
+        }
 
         // Mark all red elements
         for (; elemIt != elemEndIt; ++elemIt) {
@@ -371,7 +371,7 @@ public:
                     isRed = true;
                     break;
                 }
-            };
+            }
 
             // if yes, the element color is also red, else it is not
             // red, i.e. green for the mean time
@@ -398,7 +398,7 @@ public:
                 if (vertexColor_[globalI] != Red) {
                     vertexColor_[globalI] = Orange;
                 }
-            };
+            }
         }
 
         // at this point we communicate the yellow vertices to the
@@ -428,7 +428,7 @@ public:
                     isYellow = true;
                     break;
                 }
-            };
+            }
 
             if (isYellow)
                 elementColor_[elemIdx] = Yellow;
@@ -449,7 +449,7 @@ public:
                 // if a vertex is orange, recolor it to yellow!
                 if (vertexColor_[globalI] == Orange)
                     vertexColor_[globalI] = Yellow;
-            };
+            }
         }
 
         // demote the border orange vertices
@@ -473,7 +473,7 @@ public:
             // set the error of this vertex to 0 because the system
             // will be consistently linearized at this vertex
             vertexDelta_[i] = 0.0;
-        };
+        }
     };
 
     /*!
@@ -575,7 +575,7 @@ private:
                     neighbors[globalI].insert(globalI);
                 }
                 continue;
-            };
+            }
 
             // loop over all element vertices
             for (int i = 0; i < n - 1; ++i) {
@@ -588,7 +588,7 @@ private:
                     neighbors[globalJ].insert(globalI);
                 }
             }
-        };
+        }
 
         // make vertices neighbors to themselfs
         for (int i = 0; i < nVerts; ++i)
@@ -636,7 +636,7 @@ private:
                 for (int i=0; i < numVertices; ++ i) {
                     storageJacobian_[i] = 0;
                     storageTerm_[i] = 0;
-                };
+                }
             }
 
             return;
@@ -663,7 +663,7 @@ private:
             for (; colIt != colEndIt; ++colIt) {
                 (*colIt) = 0.0;
             }
-        };
+        }
     }
 
     // linearize the whole system
@@ -693,7 +693,7 @@ private:
                 // iteration of the last time step...)
                 residual_[i] = storageTerm_[i];
                 residual_[i] *= -1;
-            };
+            }
 
             reuseMatrix_ = false;
             oldDt_ = curDt;
@@ -717,7 +717,7 @@ private:
             {
                 assembleElement_(elem);
             }
-        };
+        }
     }
 
     // assemble a non-ghost element

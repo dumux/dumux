@@ -92,7 +92,7 @@ public:
         if (!succeeded) {
             DUNE_THROW(NumericalProblem,
                        "A process did not succeed in linearizing the system");
-        };
+        }
     }
 
     /*!

@@ -147,7 +147,7 @@ public:
                 try { gasThermalConductivity_[i] = RawComponent::gasThermalConductivity(temperature, pressure); }
                 catch (Dune::NotImplemented) { gasThermalConductivity_[i] = NaN; }
                 catch (NumericalProblem) { gasThermalConductivity_[i] = NaN; };
-            };
+            }
 
             Scalar plMin = minLiquidPressure_(iT);
             Scalar plMax = maxLiquidPressure_(iT);
@@ -202,7 +202,7 @@ public:
 
                 try { gasPressure_[i] = RawComponent::gasPressure(temperature, density); }
                 catch (NumericalProblem) { gasPressure_[i] = NaN; };
-            };
+            }
 
             // calculate the minimum and maximum values for the liquid
             // densities
@@ -224,7 +224,7 @@ public:
 
                 try { liquidPressure_[i] = RawComponent::liquidPressure(temperature, density); }
                 catch (NumericalProblem) { liquidPressure_[i] = NaN; };
-            };
+            }
         }
     }
 
