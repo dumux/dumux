@@ -110,10 +110,14 @@ public:
         // gradients
         DimVector tmp(0.0);
         DimVector temperatureGradient(0.);
-        for (int scvIdx = 0; scvIdx < fvGeometry.numVertices; scvIdx++)
+        for (int scvIdx = 0; scvIdx < fvGeometry.numFAP; scvIdx++)
         {
             tmp = this->face().grad[scvIdx];
-            tmp *= elemVolVars[scvIdx].fluidState().temperature(/*phaseIdx=*/0);
+
+            // index for the element volume variables 
+            int volVarsIdx = this->face().fapIndices[scvIdx];
+            
+            tmp *= elemVolVars[volVarsIdx].fluidState().temperature(/*phaseIdx=*/0);
             temperatureGradient += tmp;
         }
 

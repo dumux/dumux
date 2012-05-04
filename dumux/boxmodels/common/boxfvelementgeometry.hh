@@ -588,6 +588,7 @@ public:
     int numVertices; //!< number of verts
     int numEdges; //!< number of edges
     int numFaces; //!< number of faces (0 in < 3D)
+    int numSCV; //!< number of subcontrol volumes
     int numFAP; //!< number of flux approximation points
 
     const LocalFiniteElementCache feCache_;
@@ -621,6 +622,7 @@ public:
         numVertices = referenceElement.size(dim);
         numEdges = referenceElement.size(dim-1);
         numFaces = (dim<3)?0:referenceElement.size(1);
+        numSCV = numVertices;
         numFAP = numVertices;
 
         // corners:

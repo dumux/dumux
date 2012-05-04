@@ -55,7 +55,7 @@ namespace Dumux
  *  This class is used to fill the gaps in BoxLocalResidual for the 1p2c flow and transport.
  */
 template<class TypeTag>
-class OnePTwoCLocalResidual : public BoxLocalResidual<TypeTag>
+class OnePTwoCLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;

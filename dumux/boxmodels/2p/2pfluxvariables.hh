@@ -172,8 +172,8 @@ private:
             // FE gradient at vertex idx
             const Vector &feGrad = face().grad[idx];
 
-	    // index for the element volume variables 
-	    int volVarsIdx = face().fapIndices[idx];
+            // index for the element volume variables 
+            int volVarsIdx = face().fapIndices[idx];
 	    
             // compute sum of pressure gradients for each phase
             for (int phase = 0; phase < numPhases; phase++)

@@ -42,13 +42,13 @@ namespace Dumux
  * two-phase, N-component twophase flow.
  */
 template<class TypeTag>
-class MPNCLocalResidual : public BoxLocalResidual<TypeTag>
+class MPNCLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef BoxLocalResidual<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
@@ -120,7 +120,7 @@ public:
 
         // calculate the phase storage for all sub-control volumes
         for (int scvIdx=0;
-             scvIdx < fvGeometry.numVertices;
+             scvIdx < fvGeometry.numSCV;
              scvIdx++)
         {
             PrimaryVariables tmp(0.0);
@@ -224,7 +224,7 @@ public:
                          curVolVars,
                          bcType);
 
-        for (int i = 0; i < this->fvGeometry_().numVertices; ++i) {
+        for (int i = 0; i < this->fvGeometry_().numSCV; ++i) {
             // add the two auxiliary equations, make sure that the
             // dirichlet boundary condition is conserved
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)

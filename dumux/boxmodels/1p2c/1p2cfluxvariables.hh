@@ -345,40 +345,43 @@ protected:
             // use finite-element gradients
             tmp = 0.0;
             for (int idx = 0;
-                    idx < fvGeometry_.numVertices;
+                    idx < fvGeometry_.numFAP;
                     idx++) // loop over adjacent vertices
             {
                 // FE gradient at vertex idx
                 const DimVector &feGrad = face().grad[idx];
 
+                // index for the element volume variables 
+                int volVarsIdx = face().fapIndices[idx];
+
                 // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].pressure();
+                tmp *= elemVolVars[volVarsIdx].pressure();
                 potentialGrad_ += tmp;
 
                 // the concentration gradient [mol/m^3/m]
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].molarity(comp1Idx);
+                tmp *= elemVolVars[volVarsIdx].molarity(comp1Idx);
                 concentrationGrad_ += tmp;
 
                 // the mole-fraction gradient
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].moleFraction(comp1Idx);
+                tmp *= elemVolVars[volVarsIdx].moleFraction(comp1Idx);
                 moleFractionGrad_ += tmp;
 
                 // the mass-fraction gradient
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].massFraction(comp1Idx);
+                tmp *= elemVolVars[volVarsIdx].massFraction(comp1Idx);
                 massFractionGrad_ += tmp;
 
                 // phase viscosity
-                viscosity_ += elemVolVars[idx].viscosity()*face().shapeValue[idx];
+                viscosity_ += elemVolVars[volVarsIdx].viscosity()*face().shapeValue[idx];
 
                 //phase molar density
-                molarDensity_ += elemVolVars[idx].molarDensity()*face().shapeValue[idx];
+                molarDensity_ += elemVolVars[volVarsIdx].molarDensity()*face().shapeValue[idx];
 
                 //phase density
-                density_ += elemVolVars[idx].density()*face().shapeValue[idx];
+                density_ += elemVolVars[volVarsIdx].density()*face().shapeValue[idx];
             }
         }
         else {

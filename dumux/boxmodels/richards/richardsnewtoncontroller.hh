@@ -90,21 +90,21 @@ public:
                 return;
 
             // clamp saturation change to at most 20% per iteration
-            FVElementGeometry fvGeomtry;
+            FVElementGeometry fvGeometry;
             const GridView &gridView = this->problem_().gridView();
             ElementIterator elemIt = gridView.template begin<0>();
             const ElementIterator elemEndIt = gridView.template end<0>();
             for (; elemIt != elemEndIt; ++elemIt) {
-                fvGeomtry.update(gridView, *elemIt);
-                for (int i = 0; i < fvGeomtry.numVertices; ++i) {
+                fvGeometry.update(gridView, *elemIt);
+                for (int i = 0; i < fvGeometry.numSCV; ++i) {
                     int globI = this->problem_().vertexMapper().map(*elemIt, i, dim);
 
                     // calculate the old wetting phase saturation
                     const SpatialParams &spatialParams = this->problem_().spatialParams();
-                    const MaterialLawParams &mp = spatialParams.materialLawParams(*elemIt, fvGeomtry, i);
+                    const MaterialLawParams &mp = spatialParams.materialLawParams(*elemIt, fvGeometry, i);
                     Scalar pcMin = MaterialLaw::pC(mp, 1.0);
                     Scalar pW = uLastIter[globI][pwIdx];
-                    Scalar pN = std::max(this->problem_().referencePressure(*elemIt, fvGeomtry, i),
+                    Scalar pN = std::max(this->problem_().referencePressure(*elemIt, fvGeometry, i),
                                          pW + pcMin);
                     Scalar pcOld = pN - pW;
                     Scalar SwOld = std::max<Scalar>(0.0, MaterialLaw::Sw(mp, pcOld));

@@ -112,9 +112,9 @@ namespace Dumux
  * - Temperature \f$T\f$ if the energy equation is enabled
  */
 template<class TypeTag>
-class MPNCModel : public BoxModel<TypeTag>
+class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef BoxModel<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;

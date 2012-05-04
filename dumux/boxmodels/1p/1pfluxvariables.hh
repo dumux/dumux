@@ -148,15 +148,18 @@ private:
 
         // calculate potential gradient
         for (int idx = 0;
-             idx < fvGeometry_.numVertices;
+             idx < fvGeometry_.numFAP;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
             const DimVector &feGrad = face().grad[idx];
 
+            // index for the element volume variables 
+            int volVarsIdx = face().fapIndices[idx];
+
             // the pressure gradient
             DimVector tmp(feGrad);
-            tmp *= elemVolVars[idx].pressure();
+            tmp *= elemVolVars[volVarsIdx].pressure();
             potentialGrad_ += tmp;
         }
 

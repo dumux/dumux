@@ -115,14 +115,17 @@ protected:
         // calculate densities at the integration points of the face
         DimVector tmp(0.0);
         for (int idx = 0;
-             idx < fvGeometry_.numVertices;
+             idx < fvGeometry_.numFAP;
              idx++) // loop over adjacent vertices
         {
+            // index for the element volume variables 
+            int volVarsIdx = face().fapIndices[idx];
+
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
-                density_[phaseIdx] += elemVolVars[idx].density(phaseIdx)*
+                density_[phaseIdx] += elemVolVars[volVarsIdx].density(phaseIdx)*
                     face().shapeValue[idx];
-                molarDensity_[phaseIdx] += elemVolVars[idx].molarDensity(phaseIdx)*
+                molarDensity_[phaseIdx] += elemVolVars[volVarsIdx].molarDensity(phaseIdx)*
                     face().shapeValue[idx];
             }
         }
@@ -139,39 +142,42 @@ protected:
         // calculate gradients
         DimVector tmp(0.0);
         for (int idx = 0;
-             idx < fvGeometry_.numVertices;
+             idx < fvGeometry_.numFAP;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
             const DimVector &feGrad = face().grad[idx];
+
+            // index for the element volume variables 
+            int volVarsIdx = face().fapIndices[idx];
 
             // compute sum of pressure gradients for each phase
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
                 // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].pressure(phaseIdx);
+                tmp *= elemVolVars[volVarsIdx].pressure(phaseIdx);
                 potentialGrad_[phaseIdx] += tmp;
             }
 
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
-            tmp *= elemVolVars[idx].fluidState().massFraction(wPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, nCompIdx);
             massFractionGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[idx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
             moleFractionGrad_[wPhaseIdx] += tmp;
 
             //            // the concentration gradient of the wetting component
             //            // in the non-wetting phase
             tmp = feGrad;
-            tmp *= elemVolVars[idx].fluidState().massFraction(nPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, wCompIdx);
             massFractionGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[idx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
             moleFractionGrad_[nPhaseIdx] += tmp;
         }
 

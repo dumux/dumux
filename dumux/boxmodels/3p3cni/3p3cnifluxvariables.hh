@@ -96,10 +96,14 @@ public:
         // gradients
         Vector temperatureGrad(0);
         Vector tmp(0.0);
-        for (int vertIdx = 0; vertIdx < elemGeom.numVertices; vertIdx++)
+        for (int vertIdx = 0; vertIdx < elemGeom.numFAP; vertIdx++)
         {
             tmp = this->face().grad[vertIdx];
-            tmp *= elemDat[vertIdx].temperature();
+
+            // index for the element volume variables 
+            int volVarsIdx = this->face().fapIndices[vertIdx];
+
+            tmp *= elemDat[volVarsIdx].temperature();
             temperatureGrad += tmp;
         }
 

@@ -248,11 +248,14 @@ private:
         // calculate pressure gradients using finite element gradients
         DimVector tmp(0.0);
         for (int idx = 0;
-             idx < fvGeometry_.numVertices;
+             idx < fvGeometry_.numFAP;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
             const DimVector &feGrad = face().grad[idx];
+
+            // index for the element volume variables 
+            int volVarsIdx = face().fapIndices[idx];
 
             // TODO: only calculate the gradients for the present
             // phases.
@@ -262,7 +265,7 @@ private:
             {
                 // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemVolVars[idx].fluidState().pressure(phaseIdx);
+                tmp *= elemVolVars[volVarsIdx].fluidState().pressure(phaseIdx);
                 potentialGrad_[phaseIdx] += tmp;
             }
         }

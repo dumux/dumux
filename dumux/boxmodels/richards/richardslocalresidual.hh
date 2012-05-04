@@ -42,7 +42,7 @@ namespace Dumux
  * \brief Element-wise calculation of the residual for the Richards box model.
  */
 template<class TypeTag>
-class RichardsLocalResidual : public BoxLocalResidual<TypeTag>
+class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;

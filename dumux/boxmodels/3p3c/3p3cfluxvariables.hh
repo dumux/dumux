@@ -135,95 +135,98 @@ private:
         // calculate gradients
         Vector tmp(0.0);
         for (int idx = 0;
-             idx < fvElemGeom_.numVertices;
+             idx < fvElemGeom_.numFAP;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
             const Vector &feGrad = face().grad[idx];
+
+            // index for the element volume variables 
+            int volVarsIdx = face().fapIndices[idx];
 
             // compute sum of pressure gradients for each phase
             for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
                 // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemDat[idx].pressure(phaseIdx);
+                tmp *= elemDat[volVarsIdx].pressure(phaseIdx);
                 potentialGrad_[phaseIdx] += tmp;
             }
 
             // the concentration gradient of the components
             // component in the phases
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(wPhaseIdx, wCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(wPhaseIdx, wCompIdx);
             wConcentrationGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
             wConcentrationGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(gPhaseIdx, wCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(gPhaseIdx, wCompIdx);
             wConcentrationGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(wPhaseIdx, cCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(wPhaseIdx, cCompIdx);
             cConcentrationGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(nPhaseIdx, cCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(nPhaseIdx, cCompIdx);
             cConcentrationGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(gPhaseIdx, cCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(gPhaseIdx, cCompIdx);
             cConcentrationGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(wPhaseIdx, aCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(wPhaseIdx, aCompIdx);
             aConcentrationGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(nPhaseIdx, aCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(nPhaseIdx, aCompIdx);
             aConcentrationGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(gPhaseIdx, aCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(gPhaseIdx, aCompIdx);
             aConcentrationGrad_[gPhaseIdx] += tmp;
 
             // the molar concentration gradients of the components
             // in the phases
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(wPhaseIdx, wCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(wPhaseIdx, wCompIdx);
             molarWConcGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
             molarWConcGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(gPhaseIdx, wCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(gPhaseIdx, wCompIdx);
             molarWConcGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(wPhaseIdx, cCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(wPhaseIdx, cCompIdx);
             molarCConcGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(nPhaseIdx, cCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(nPhaseIdx, cCompIdx);
             molarCConcGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(gPhaseIdx, cCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(gPhaseIdx, cCompIdx);
             molarCConcGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(wPhaseIdx, aCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(wPhaseIdx, aCompIdx);
             molarAConcGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(nPhaseIdx, aCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(nPhaseIdx, aCompIdx);
             molarAConcGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemDat[idx].fluidState().moleFraction(gPhaseIdx, aCompIdx);
+            tmp *= elemDat[volVarsIdx].fluidState().moleFraction(gPhaseIdx, aCompIdx);
             molarAConcGrad_[gPhaseIdx] += tmp;
         }
 

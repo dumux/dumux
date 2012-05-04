@@ -55,7 +55,7 @@ namespace Dumux
  * This class is used to fill the gaps in BoxLocalResidual for the 3P3C flow.
  */
 template<class TypeTag>
-class ThreePThreeCLocalResidual: public BoxLocalResidual<TypeTag>
+class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;

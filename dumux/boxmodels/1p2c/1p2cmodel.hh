@@ -75,7 +75,7 @@ namespace Dumux
  */
 
 template<class TypeTag >
-class OnePTwoCBoxModel : public BoxModel<TypeTag>
+class OnePTwoCBoxModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;

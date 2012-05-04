@@ -44,7 +44,7 @@ namespace Dumux
  *        using the one-phase box model.
  */
 template<class TypeTag>
-class OnePLocalResidual : public BoxLocalResidual<TypeTag>
+class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     typedef OnePLocalResidual<TypeTag> ThisType;
 

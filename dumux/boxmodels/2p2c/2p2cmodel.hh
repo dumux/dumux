@@ -87,9 +87,9 @@ namespace Dumux
  */
 
 template<class TypeTag>
-class TwoPTwoCModel: public BoxModel<TypeTag>
+class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef BoxModel<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -584,7 +584,7 @@ public:
         for (; eIt != eEndIt; ++eIt)
         {
             fvGeometry.update(this->gridView_(), *eIt);
-            for (int scvIdx = 0; scvIdx < fvGeometry.numVertices; ++scvIdx)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
                 int globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
 

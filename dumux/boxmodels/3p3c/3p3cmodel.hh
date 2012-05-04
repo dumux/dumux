@@ -95,9 +95,9 @@ namespace Dumux
  * </ul>
  */
 template<class TypeTag>
-class ThreePThreeCModel: public BoxModel<TypeTag>
+class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef BoxModel<TypeTag> ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -445,7 +445,7 @@ public:
         for (; it != endit; ++it)
         {
             fvElemGeom.update(this->gridView_(), *it);
-            for (int i = 0; i < fvElemGeom.numVertices; ++i)
+            for (int i = 0; i < fvElemGeom.numSCV; ++i)
             {
                 int globalIdx = this->vertexMapper().map(*it, i, dim);
 
