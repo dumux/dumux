@@ -51,14 +51,14 @@ public:
     // Phase indices
     static const int wPhaseIdx = FluidSystem::lPhaseIdx; //!< Index of the wetting phase
     static const int nPhaseIdx = FluidSystem::gPhaseIdx; //!< Index of the non-wetting phase
-    static const int lPhaseIdx DUMUX_DEPRECATED_MSG("use wPhaseIdx instead") = wPhaseIdx; //!< \deprecated use wPhaseIdx instead
-    static const int gPhaseIdx DUMUX_DEPRECATED_MSG("use nPhaseIdx instead") = nPhaseIdx; //!< \deprecated use nPhaseIdx instead
+    static const int lPhaseIdx = wPhaseIdx; //!< \deprecated use wPhaseIdx instead
+    static const int gPhaseIdx = nPhaseIdx; //!< \deprecated use nPhaseIdx instead
 
     // Component indices
     static const int comp1Idx = 0; //!< Index of the wetting's primary component
     static const int comp0Idx = 1; //!< Index of the non-wetting's primary component
-    static const int lCompIdx = comp1Idx; //!< Index of the wetting's primary component
-    static const int gCompIdx = comp0Idx; //!< Index of the non-wetting's primary component
+    static const int lCompIdx = comp1Idx; //!< \deprecated use comp1Idx instead
+    static const int gCompIdx = comp0Idx; //!< \deprecated use comp0Idx instead
 
     // equation and primary variable indices
     static const int dim = StokesCommonIndices<TypeTag>::dim;

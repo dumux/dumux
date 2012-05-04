@@ -60,6 +60,7 @@ struct StokesCommonIndices
     static const int dimZIdx = 2; //!< Index of the z-component of a vector of size dim
 
     static const int massBalanceIdx = dim; //!< Index of the mass balance equation
+    static const int conti0EqIdx = massBalanceIdx; //!< Index of first (for C-guys: 0th) mass conservation equation
 
     static const int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
     static const int velocityXIdx = momentumXIdx; //!< Index of the x-component of the velocity
