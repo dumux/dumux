@@ -117,32 +117,32 @@ public:
      * \param primaryVars The primary variables
      * \param problem The problem
      * \param element The element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &primaryVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
+                const FVElementGeometry &fvGeometry,
                 int scvIdx,
                 bool isOldSol)
     {
         ParentType::update(primaryVars,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
 
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
         int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
         int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
 
-        Scalar temp = Implementation::temperature_(primaryVars, problem, element, elemGeom, scvIdx);
+        Scalar temp = Implementation::temperature_(primaryVars, problem, element, fvGeometry, scvIdx);
         fluidState_.setTemperature(temp);
 
         /* first the saturations */
@@ -413,18 +413,18 @@ public:
 
         // porosity
         porosity_ = problem.spatialParams().porosity(element,
-                                                         elemGeom,
+                                                         fvGeometry,
                                                          scvIdx);
         Valgrind::CheckDefined(porosity_);
 
         // permeability
         permeability_ = problem.spatialParams().intrinsicPermeability(element,
-                                                                          elemGeom,
+                                                                          fvGeometry,
                                                                           scvIdx);
         Valgrind::CheckDefined(permeability_);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(primaryVars, problem, element, elemGeom, scvIdx, isOldSol);
+        asImp_().updateEnergy_(primaryVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -526,10 +526,10 @@ protected:
     static Scalar temperature_(const PrimaryVariables &primaryVars,
                                const Problem &problem,
                                const Element &element,
-                               const FVElementGeometry &elemGeom,
+                               const FVElementGeometry &fvGeometry,
                                int scvIdx)
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
 
     /*!
@@ -538,7 +538,7 @@ protected:
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
+                       const FVElementGeometry &fvGeometry,
                        int vertIdx,
                        bool isOldSol)
     { }

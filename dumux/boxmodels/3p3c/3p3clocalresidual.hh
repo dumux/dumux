@@ -134,7 +134,7 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, const int faceIdx,bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx, const bool onBoundary=false) const
     {
         FluxVariables fluxVars(this->problem_(),
                            this->element_(),
