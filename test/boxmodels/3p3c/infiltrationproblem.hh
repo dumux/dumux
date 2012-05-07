@@ -46,7 +46,7 @@ class InfiltrationProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InfiltrationProblem, INHERITS_FROM(BoxThreePThreeC, InfiltrationSpatialParameters));
+NEW_TYPE_TAG(InfiltrationProblem, INHERITS_FROM(BoxThreePThreeC, InfiltrationSpatialParams));
 
 // Set the grid type
 SET_TYPE_PROP(InfiltrationProblem, Grid, Dune::YaspGrid<2>);
@@ -122,6 +122,10 @@ class InfiltrationProblem : public PorousMediaBoxProblem<TypeTag>
 
         // Phase State
         wgPhaseOnly = Indices::wgPhaseOnly,
+
+        contiWEqIdx = Indices::conti0EqIdx, //!< Index of the mass conservation equation for the water component
+        contiNEqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
+        contiAEqIdx = Indices::conti2EqIdx,//!< Index of the mass conservation equation for the gas component
 
         // Grid and world dimension
         dim = GridView::dimension,
@@ -246,7 +250,7 @@ public:
             if (pc < 0.0) pc = 0.0;
 
             Sw = invertPCGW_(pc,
-                             this->spatialParameters().materialLawParams());
+                             this->spatialParams().materialLawParams());
             if (Sw < Swr) Sw = Swr;
             if (Sw > 1.-Sgr) Sw = 1.-Sgr;
 
@@ -260,7 +264,7 @@ public:
         }
 
         //initial_(values, globalPos, element);
-        //const MaterialLawParams& materialParams = this->spatialParameters().materialLawParams();;
+        //const MaterialLawParams& materialParams = this->spatialParams().materialLawParams();;
         //MaterialLaw::pCGW(materialParams, 1.0);
     }
 
@@ -291,9 +295,9 @@ public:
         // negative values for injection
         if ((globalPos[0] <= 75.+eps_) && (globalPos[0] >= 50.+eps_) && (globalPos[1] >= 10.-eps_))
         {
-            values[Indices::contiWEqIdx] = -0.0;
-            values[Indices::contiCEqIdx] = -0.001, // /*Molfluss, umr. über M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
-                values[Indices::contiAEqIdx] = -0.0;
+            values[contiWEqIdx] = -0.0;
+            values[contiNEqIdx] = -0.001, // /*Molfluss, umr. über M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
+            values[contiAEqIdx] = -0.0;
         }
     }
 
@@ -356,7 +360,7 @@ private:
             if (pc < 0.0) pc = 0.0;
 
             Sw = invertPCGW_(pc,
-                             this->spatialParameters().materialLawParams());
+                             this->spatialParams().materialLawParams());
             if (Sw < Swr) Sw = Swr;
             if (Sw > 1.-Sgr) Sw = 1.-Sgr;
 

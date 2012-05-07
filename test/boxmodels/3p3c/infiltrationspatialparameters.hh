@@ -39,18 +39,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class InfiltrationSpatialParameters;
+class InfiltrationSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(InfiltrationSpatialParameters);
+NEW_TYPE_TAG(InfiltrationSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InfiltrationSpatialParameters, SpatialParams, Dumux::InfiltrationSpatialParameters<TypeTag>);
+SET_TYPE_PROP(InfiltrationSpatialParams, SpatialParams, Dumux::InfiltrationSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(InfiltrationSpatialParameters, MaterialLaw)
+SET_PROP(InfiltrationSpatialParams, MaterialLaw)
 {
  private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -66,9 +66,9 @@ SET_PROP(InfiltrationSpatialParameters, MaterialLaw)
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class TypeTag>
-class InfiltrationSpatialParameters : public BoxSpatialParameters<TypeTag>
+class InfiltrationSpatialParams : public BoxSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParams<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -108,7 +108,7 @@ public:
      *
      * \param gv The grid view
      */
-    InfiltrationSpatialParameters(const GridView &gv)
+    InfiltrationSpatialParams(const GridView &gv)
         : ParentType(gv)
     {
         // intrinsic permeabilities
@@ -134,7 +134,7 @@ public:
         MaterialParams_.setRhoBulk(1500.);
     }
 
-    ~InfiltrationSpatialParameters()
+    ~InfiltrationSpatialParams()
     {}
 
 
