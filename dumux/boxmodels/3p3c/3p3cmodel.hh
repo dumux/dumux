@@ -592,55 +592,55 @@ protected:
             bool NAPLFlag = 0;
             // calculate fractions of the partial pressures in the
             // hypothetical gas phase
-            Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
-            Scalar xag = volVars.fluidState().moleFraction(gPhaseIdx, comp2Idx);
-            Scalar xcg = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+            Scalar x0g = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
+            Scalar x2g = volVars.fluidState().moleFraction(gPhaseIdx, comp2Idx);
+            Scalar x1g = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
             /* take care:
-               for xag in case wPhaseOnly we compute xag=henry_air*xaw
-               for xwg in case wPhaseOnly we compute xwg=pwsat
-               for xcg in case wPhaseOnly we compute xcg=henry_NAPL*xcw
+               for x2g in case wPhaseOnly we compute x2g=henry_air*x2w
+               for x0g in case wPhaseOnly we compute x0g=pwsat
+               for x1g in case wPhaseOnly we compute x1g=henry_NAPL*x1w
             */
 
             Scalar xgMax = 1.0;
-            if (xwg + xag + xcg > xgMax)
+            if (x0g + x2g + x1g > xgMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xgMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (xwg + xag + xcg > xgMax)
+            if (x0g + x2g + x1g > xgMax)
             {
                 // gas phase appears
                 std::cout << "gas phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", xwg + xag + xcg: "
-                          << xwg + xag + xcg << std::endl;
+                          << ", coordinates: " << globalPos << ", x0g + x2g + x1g: "
+                          << x0g + x2g + x1g << std::endl;
                 gasFlag = 1;
             }
 
             // calculate fractions in the hypothetical NAPL phase
-            Scalar xnc = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
+            Scalar x1n = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
             /* take care:
-               for xnc in case wPhaseOnly we compute xnc=henry_mesitylene*xcw,
+               for x1n in case wPhaseOnly we compute x1n=henry_mesitylene*x1w,
                where a hypothetical gas pressure is assumed for the Henry
-               xwn is set to NULL  (all NAPL phase is dirty)
-               xan is set to NULL  (all NAPL phase is dirty)
+               x0n is set to NULL  (all NAPL phase is dirty)
+               x2n is set to NULL  (all NAPL phase is dirty)
             */
 
             Scalar xnMax = 1.0;
-            if (xnc > xnMax)
+            if (x1n > xnMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fractions would be larger than
             // 100%, NAPL phase appears
-            if (xnc > xnMax)
+            if (x1n > xnMax)
             {
                 // NAPL phase appears
                 std::cout << "NAPL phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", xnc: "
-                          << xnc << std::endl;
+                          << ", coordinates: " << globalPos << ", x1n: "
+                          << x1n << std::endl;
                 NAPLFlag = 1;
             }
 
@@ -685,25 +685,25 @@ protected:
 
 
             // calculate fractions of the hypothetical water phase
-            Scalar xww = volVars.fluidState().moleFraction(wPhaseIdx, comp0Idx);
+            Scalar x0w = volVars.fluidState().moleFraction(wPhaseIdx, comp0Idx);
             /*
-              take care:, xww, if no water is present, then take xww=xwg*pg/pwsat .
+              take care:, x0w, if no water is present, then take x0w=x0g*pg/pwsat .
               If this is larger than 1, then water appears
             */
             Scalar xwMax = 1.0;
-            if (xww > xwMax)
+            if (x0w > xwMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (xww > xwMax)
+            if (x0w > xwMax)
             {
                 // water phase appears
                 std::cout << "water phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
-                          << xww << std::endl;
+                          << ", coordinates: " << globalPos << ", x0w=x0g*pg/pwsat : "
+                          << x0w << std::endl;
                 waterFlag = 1;
             }
 
@@ -750,28 +750,28 @@ protected:
 
             // calculate fractions of the partial pressures in the
             // hypothetical gas phase
-            Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
-            Scalar xag = volVars.fluidState().moleFraction(gPhaseIdx, comp2Idx);
-            Scalar xcg = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+            Scalar x0g = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
+            Scalar x2g = volVars.fluidState().moleFraction(gPhaseIdx, comp2Idx);
+            Scalar x1g = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
             /* take care:
-               for xag in case wPhaseOnly we compute xag=henry_air*xaw
-               for xwg in case wPhaseOnly we compute xwg=pwsat
-               for xcg in case wPhaseOnly we compute xcg=henry_NAPL*xcw
+               for x2g in case wPhaseOnly we compute x2g=henry_air*x2w
+               for x0g in case wPhaseOnly we compute x0g=pwsat
+               for x1g in case wPhaseOnly we compute x1g=henry_NAPL*x1w
             */
             Scalar xgMax = 1.0;
-            if (xwg + xag + xcg > xgMax)
+            if (x0g + x2g + x1g > xgMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xgMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (xwg + xag + xcg > xgMax)
+            if (x0g + x2g + x1g > xgMax)
             {
                 // gas phase appears
                 std::cout << "gas phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", xwg + xag + xcg: "
-                          << xwg + xag + xcg << std::endl;
+                          << ", coordinates: " << globalPos << ", x0g + x2g + x1g: "
+                          << x0g + x2g + x1g << std::endl;
                 gasFlag = 1;
             }
 
@@ -803,48 +803,48 @@ protected:
             bool waterFlag = 0;
 
             // calculate fractions in the hypothetical NAPL phase
-            Scalar xnc = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
+            Scalar x1n = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
             /*
-              take care:, xnc, if no NAPL phase is there, take xnc=xcg*pg/pcsat
+              take care:, x1n, if no NAPL phase is there, take x1n=x1g*pg/pcsat
               if this is larger than 1, then NAPL appears
             */
 
             Scalar xnMax = 1.0;
-            if (xnc > xnMax)
+            if (x1n > xnMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fraction would be larger than
             // 100%, NAPL phase appears
-            if (xnc > xnMax)
+            if (x1n > xnMax)
             {
                 // NAPL phase appears
                 std::cout << "NAPL phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", xnc: "
-                          << xnc << std::endl;
+                          << ", coordinates: " << globalPos << ", x1n: "
+                          << x1n << std::endl;
                 NAPLFlag = 1;
             }
             // calculate fractions of the hypothetical water phase
-            Scalar xww = volVars.fluidState().moleFraction(wPhaseIdx, comp0Idx);
+            Scalar x0w = volVars.fluidState().moleFraction(wPhaseIdx, comp0Idx);
             /*
-              take care:, xww, if no water is present, then take xww=xwg*pg/pwsat .
+              take care:, x0w, if no water is present, then take x0w=x0g*pg/pwsat .
               If this is larger than 1, then water appears
             */
             Scalar xwMax = 1.0;
-            if (xww > xwMax)
+            if (x0w > xwMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (xww > xwMax)
+            if (x0w > xwMax)
             {
                 // water phase appears
                 std::cout << "water phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
-                          << xww << std::endl;
+                          << ", coordinates: " << globalPos << ", x0w=x0g*pg/pwsat : "
+                          << x0w << std::endl;
                 waterFlag = 1;
             }
             if ((waterFlag == 1) && (NAPLFlag == 0))
@@ -875,25 +875,25 @@ protected:
             bool waterFlag = 0;
 
             // get the fractions in the hypothetical NAPL phase
-            Scalar xnc = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
+            Scalar x1n = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
 
             // take care: if the NAPL phase is not present, take
-            // xnc=xcg*pg/pcsat if this is larger than 1, then NAPL
+            // x1n=x1g*pg/pcsat if this is larger than 1, then NAPL
             // appears
             Scalar xnMax = 1.0;
-            if (xnc > xnMax)
+            if (x1n > xnMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fraction would be larger than
             // 100%, NAPL phase appears
-            if (xnc > xnMax)
+            if (x1n > xnMax)
             {
                 // NAPL phase appears
                 std::cout << "NAPL phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", xnc: "
-                          << xnc << std::endl;
+                          << ", coordinates: " << globalPos << ", x1n: "
+                          << x1n << std::endl;
                 NAPLFlag = 1;
             }
 
