@@ -183,13 +183,13 @@ public:
      * \brief Returns the temperature within the domain.
      *
      * \param element The element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index (SCV index)
      *
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar boxTemperature(const Element &element,
-                          const FVElementGeometry &fvElemGeom,
+                          const FVElementGeometry &fvGeometry,
                           int scvIdx) const
     {
         return temperature_;
@@ -274,7 +274,7 @@ public:
      *
      * \param values The neumann values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -284,10 +284,10 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
                  int scvIdx,
-                 int boundaryFaceIdx) const
+                 const int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values = 0;
@@ -313,7 +313,7 @@ public:
      *
      * \param values The initial values for the primary variables
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores primary
@@ -321,7 +321,7 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);

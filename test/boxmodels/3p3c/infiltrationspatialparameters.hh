@@ -30,7 +30,7 @@
 #define DUMUX_INFILTRATION_SPATIAL_PARAMETERS_HH
 
 #include <dumux/boxmodels/3p3c/3p3cindices.hh>
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/parkerVanGen3pparams.hh>
 
@@ -153,14 +153,14 @@ public:
      *        potential gradient.
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
+                                       const FVElementGeometry &fvGeometry,
                                        int scvIdx) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
+        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(pos))
             return fineK_;
         return coarseK_;
@@ -170,15 +170,15 @@ public:
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
     double porosity(const Element &element,
-                    const FVElementGeometry &fvElemGeom,
+                    const FVElementGeometry &fvGeometry,
                     int scvIdx) const
     {
-        //const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
+        //const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
         // if (isFineMaterial_(pos))
         //     return finePorosity_;
         // else
@@ -191,14 +191,14 @@ public:
      * \brief return the parameter object for the material law which depends on the position
      *
      * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The index of the sub-control volume
      */
     const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvElemGeom,
+                                               const FVElementGeometry &fvGeometry,
                                                int scvIdx) const
     {
-        //const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
+        //const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
         //if (isFineMaterial_(pos))
         //return fineMaterialParams_;
         //else
@@ -212,18 +212,18 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
     double heatCapacity(const Element &element,
-                        const FVElementGeometry &fvElemGeom,
+                        const FVElementGeometry &fvGeometry,
                         int scvIdx) const
     {
         return
             850. // specific heat capacity [J / (kg K)]
             * 2650. // density of sand [kg/m^3]
-            * (1 - porosity(element, fvElemGeom, scvIdx));
+            * (1 - porosity(element, fvGeometry, scvIdx));
     }
 
     /*!
@@ -234,19 +234,19 @@ public:
      *
      * \param heatFlux The resulting heat flux vector
      * \param fluxDat The flux variables
-     * \param vDat The volume variables
+     * \param elemVolVars The volume variables
      * \param tempGrad The temperature gradient
      * \param element The current finite element
-     * \param fvElemGeom The finite volume geometry of the current element
+     * \param fvGeometry The finite volume geometry of the current element
      * \param scvfIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
     void matrixHeatFlux(Vector &heatFlux,
                         const FluxVariables &fluxDat,
-                        const ElementVolumeVariables &vDat,
+                        const ElementVolumeVariables &elemVolVars,
                         const Vector &tempGrad,
                         const Element &element,
-                        const FVElementGeometry &fvElemGeom,
+                        const FVElementGeometry &fvGeometry,
                         int scvfIdx) const
     {
         static const Scalar ldry = 0.35;
@@ -254,12 +254,12 @@ public:
         static const Scalar lSn1 = 0.65;
 
         // arithmetic mean of the liquid saturation and the porosity
-        const int i = fvElemGeom.subContVolFace[scvfIdx].i;
-        const int j = fvElemGeom.subContVolFace[scvfIdx].j;
-        Scalar Sw = std::max(0.0, (vDat[i].saturation(wPhaseIdx) +
-                                   vDat[j].saturation(wPhaseIdx)) / 2);
-        Scalar Sn = std::max(0.0, (vDat[i].saturation(nPhaseIdx) +
-                                   vDat[j].saturation(nPhaseIdx)) / 2);
+        const int i = fvGeometry.subContVolFace[scvfIdx].i;
+        const int j = fvGeometry.subContVolFace[scvfIdx].j;
+        Scalar Sw = std::max(0.0, (elemVolVars[i].saturation(wPhaseIdx) +
+                                   elemVolVars[j].saturation(wPhaseIdx)) / 2);
+        Scalar Sn = std::max(0.0, (elemVolVars[i].saturation(nPhaseIdx) +
+                                   elemVolVars[j].saturation(nPhaseIdx)) / 2);
 
         // the heat conductivity of the matrix. in general this is a
         // tensorial value, but we assume isotropic heat conductivity.
