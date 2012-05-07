@@ -139,7 +139,7 @@ public:
      */
     void setPressure(int phaseIdx, Scalar value)
     {
-        fluidState_->setPressure(phaseIdx, value);
+        manipulateFluidState().setPressure(phaseIdx, value);
     }
 
     //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
@@ -156,12 +156,12 @@ public:
     //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
     void setTotalConcentration(int compIdx, Scalar value)
     {
-        fluidState_->setMassConcentration(compIdx, value);
+        manipulateFluidState().setMassConcentration(compIdx, value);
     }
     //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
     void setMassConcentration(int compIdx, Scalar value)
     {
-        fluidState_->setMassConcentration(compIdx, value);
+        manipulateFluidState().setMassConcentration(compIdx, value);
     }
     //@}
 
@@ -352,6 +352,9 @@ public:
     //! Specifies that volume derivatives are computed and available
     void confirmVolumeDerivatives()
     { volumeDerivativesAvailable_ = true;}
+    //! Specifies if volume derivatives are computed and available
+    void volumeDerivativesAvailable(bool value)
+    { volumeDerivativesAvailable_ = value;}
     //! Resets the cell data after a timestep was completed: No volume derivatives yet available
     void reset()
     {
