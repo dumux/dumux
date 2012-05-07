@@ -68,18 +68,17 @@ protected:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        conti0EqIdx = Indices::conti0EqIdx,
-        contiWEqIdx = Indices::contiWEqIdx,
-        contiCEqIdx = Indices::contiCEqIdx,
-        contiAEqIdx = Indices::contiAEqIdx,
+        conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
+        conti1EqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
+        conti2EqIdx = Indices::conti2EqIdx,//!< Index of the mass conservation equation for the gas component
 
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
 
-        wCompIdx = Indices::wCompIdx,
-        cCompIdx = Indices::cCompIdx,
-        aCompIdx = Indices::aCompIdx
+        comp0Idx = Indices::comp0Idx,
+        comp1Idx = Indices::comp1Idx,
+        comp2Idx = Indices::comp2Idx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -135,9 +134,9 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx,bool onBoundary=false) const
     {
-        FluxVariables vars(this->problem_(),
+        FluxVariables fluxVars(this->problem_(),
                            this->elem_(),
                            this->fvElemGeom_(),
                            faceIdx,
@@ -145,8 +144,8 @@ public:
                            onBoundary);
 
         flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, vars);
-        asImp_()->computeDiffusiveFlux(flux, vars);
+        asImp_()->computeAdvectiveFlux(flux, fluxVars);
+        asImp_()->computeDiffusiveFlux(flux, fluxVars);
     }
 
     /*!
@@ -154,10 +153,10 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The advective flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      */
 
-    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
+    void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
         Scalar massUpwindWeight = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
 
@@ -168,8 +167,8 @@ public:
         {
             // data attached to upstream and the downstream vertices
             // of the current phase
-            const VolumeVariables &up = this->curVolVars_(vars.upstreamIdx(phaseIdx));
-            const VolumeVariables &dn = this->curVolVars_(vars.downstreamIdx(phaseIdx));
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
@@ -180,7 +179,7 @@ public:
                 // if alpha == 1 (which is mostly the case) then, the downstream
                 // node is not evaluated
                 int eqIdx = conti0EqIdx + compIdx;
-                flux[eqIdx] += vars.KmvpNormal(phaseIdx)
+                flux[eqIdx] += fluxVars.KmvpNormal(phaseIdx)
                     * (massUpwindWeight
                        * up.mobility(phaseIdx)
                        * up.fluidState().molarDensity(phaseIdx)
@@ -199,39 +198,39 @@ public:
      *        a face of a subcontrol volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param vars The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      */
 
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &vars) const
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
-        // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = vars.porousDiffCoeff();
+        // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = fluxVars.porousDiffCoeff();
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp = - vars.porousDiffCoeff()[wPhaseIdx][aCompIdx] * vars.molarDensityAtIP(wPhaseIdx);
-        tmp *= (vars.molarAConcGrad(wPhaseIdx) * vars.face().normal);
+        Scalar tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][comp2Idx] * fluxVars.molarDensity(wPhaseIdx);
+        tmp *= (fluxVars.amoleFractionGrad(wPhaseIdx) * fluxVars.face().normal);
         Scalar jAW = tmp;
 
-        tmp = - vars.porousDiffCoeff()[wPhaseIdx][cCompIdx] * vars.molarDensityAtIP(wPhaseIdx);
-        tmp *= (vars.molarCConcGrad(wPhaseIdx) * vars.face().normal);
+        tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][comp1Idx] * fluxVars.molarDensity(wPhaseIdx);
+        tmp *= (fluxVars.nmoleFractionGrad(wPhaseIdx) * fluxVars.face().normal);
         Scalar jCW = tmp;
 
         Scalar jWW = -(jAW+jCW);
 
-        tmp = - vars.porousDiffCoeff()[gPhaseIdx][wCompIdx] * vars.molarDensityAtIP(gPhaseIdx);
-        tmp *= (vars.molarWConcGrad(gPhaseIdx) * vars.face().normal);
+        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][comp0Idx] * fluxVars.molarDensity(gPhaseIdx);
+        tmp *= (fluxVars.wmoleFractionGrad(gPhaseIdx) * fluxVars.face().normal);
         Scalar jWG = tmp;
 
-        tmp = - vars.porousDiffCoeff()[gPhaseIdx][cCompIdx] * vars.molarDensityAtIP(gPhaseIdx);
-        tmp *= (vars.molarCConcGrad(gPhaseIdx) * vars.face().normal);
+        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][comp1Idx] * fluxVars.molarDensity(gPhaseIdx);
+        tmp *= (fluxVars.nmoleFractionGrad(gPhaseIdx) * fluxVars.face().normal);
         Scalar jCG = tmp;
 
         Scalar jAG = -(jWG+jCG);
 
-        tmp = - vars.porousDiffCoeff()[nPhaseIdx][wCompIdx] * vars.molarDensityAtIP(nPhaseIdx);
-        tmp *= (vars.molarWConcGrad(nPhaseIdx) * vars.face().normal);
+        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][comp0Idx] * fluxVars.molarDensity(nPhaseIdx);
+        tmp *= (fluxVars.wmoleFractionGrad(nPhaseIdx) * fluxVars.face().normal);
         Scalar jWN = tmp;
 
-        tmp = - vars.porousDiffCoeff()[nPhaseIdx][aCompIdx] * vars.molarDensityAtIP(nPhaseIdx);
-        tmp *= (vars.molarAConcGrad(nPhaseIdx) * vars.face().normal);
+        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][comp2Idx] * fluxVars.molarDensity(nPhaseIdx);
+        tmp *= (fluxVars.amoleFractionGrad(nPhaseIdx) * fluxVars.face().normal);
         Scalar jAN = tmp;
 
         Scalar jCN = -(jAN+jWN);
@@ -248,23 +247,23 @@ public:
           jAN = 0;
         */
 
-        flux[contiWEqIdx] += jWW+jWG+jWN;
-        flux[contiCEqIdx] += jCW+jCG+jCN;
-        flux[contiAEqIdx] += jAW+jAG+jAN;
+        flux[conti0EqIdx] += jWW+jWG+jWN;
+        flux[conti1EqIdx] += jCW+jCG+jCN;
+        flux[conti2EqIdx] += jAW+jAG+jAN;
     }
 
     /*!
      * \brief Calculate the source term of the equation
      *
      * \param q The source/sink in the SCV for each component
-     * \param localVertexIdx The index of the SCV
+     * \param scvIdx The index of the SCV
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx)
+    void computeSource(PrimaryVariables &q, int scvIdx)
     {
         this->problem_().boxSDSource(q,
                                      this->elem_(),
                                      this->fvElemGeom_(),
-                                     localVertexIdx,
+                                     scvIdx,
                                      this->curVolVars_());
     }
 
