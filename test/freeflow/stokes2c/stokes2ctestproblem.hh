@@ -196,7 +196,7 @@ public:
         // set pressure at one point
         const Scalar middle = (this->bboxMax()[0] - this->bboxMin()[0])/2;
         if (onLowerBoundary_(globalPos) &&
-                globalPos[0] > middle - eps_ && globalPos[1] < middle + eps_)
+                globalPos[0] > middle - eps_ && globalPos[0] < middle + eps_)
             values.setDirichlet(massBalanceIdx);
     }
 
