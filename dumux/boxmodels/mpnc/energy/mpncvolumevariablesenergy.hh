@@ -71,7 +71,7 @@ public:
      */
     void updateTemperatures(FluidState &fs,
                             ParameterCache &paramCache,
-                            const PrimaryVariables &sol,
+                            const PrimaryVariables &priVars,
                             const Element &element,
                             const FVElementGeometry &fvGeometry,
                             const unsigned int scvIdx,

@@ -258,7 +258,7 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             addPhaseStorage(storage, volVars, phaseIdx);
         }
-    };
+    }
 
     /*!
      * \brief Calculate the storage for all mass balance equations
@@ -277,7 +277,7 @@ public:
         // copy to the primary variables
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             storage[conti0EqIdx + compIdx] += phaseComponentValues[compIdx];
-    };
+    }
 
     /*!
      * \brief Calculate the storage for all mass balance equations
@@ -347,18 +347,18 @@ public:
             source[conti0EqIdx + compIdx] = 0.0;
 
 
-        PrimaryVariables tmp(0);
+        PrimaryVariables tmpPriVars(0);
         // Similar to the compute Flux, the energy residual needs to be called from the
         // mass residual.
         ComponentVector dummy[numPhases];
             for (int iDummy =0; iDummy <numPhases; ++iDummy)
                 dummy[iDummy] = 0.;
-        EnergyResid::computeSource(tmp,
+        EnergyResid::computeSource(tmpPriVars,
                                    volVars,
                                    dummy);
-        source += tmp;
+        source += tmpPriVars;
         Valgrind::CheckDefined(source);
-    };
+    }
 };
 
 } // end namepace

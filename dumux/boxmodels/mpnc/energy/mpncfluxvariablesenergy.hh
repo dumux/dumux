@@ -56,19 +56,20 @@ class MPNCFluxVariablesEnergy
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     MPNCFluxVariablesEnergy()
     {
     }
 
-    void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const unsigned int faceIdx,
-                const FluxVariables &fluxVars,
-                const ElementVolumeVariables &elemVolVars)
-    {};
+    void update(const Problem & problem,
+                const Element & element,
+                const FVElementGeometry & fvGeometry,
+                const SCVFace & face,
+                const FluxVariables & fluxVars,
+                const ElementVolumeVariables & elemVolVars)
+    {}
 };
 
 template <class TypeTag>
@@ -94,41 +95,42 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*kineticEnergyTr
 
     typedef Dune::FieldVector<CoordScalar, dimWorld>  DimVector;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     MPNCFluxVariablesEnergy()
     {}
 
     void update(const Problem & problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const unsigned int faceIdx,
-                const FluxVariables &fluxVars,
-                const ElementVolumeVariables &elemVolVars)
+                const Element & element,
+                const FVElementGeometry & fvGeometry,
+                const SCVFace & face,
+                const FluxVariables & fluxVars,
+                const ElementVolumeVariables & elemVolVars)
     {
         // calculate temperature gradient using finite element
         // gradients
         DimVector tmp(0.0);
         DimVector temperatureGradient(0.);
-        for (int scvIdx = 0; scvIdx < fvGeometry.numFAP; scvIdx++)
+        for (int idx = 0; idx < fvGeometry.numFAP; idx++)
         {
-            tmp = this->face().grad[scvIdx];
+            tmp = face.grad[idx];
 
             // index for the element volume variables 
-            int volVarsIdx = this->face().fapIndices[scvIdx];
+            int volVarsIdx = face.fapIndices[idx];
             
             tmp *= elemVolVars[volVarsIdx].fluidState().temperature(/*phaseIdx=*/0);
             temperatureGradient += tmp;
         }
 
         // project the heat flux vector on the face's normal vector
-        temperatureGradientNormal_ = temperatureGradient * this->face().normal;
+        temperatureGradientNormal_ = temperatureGradient * face.normal;
 
 
         lambdaPm_ = lumpedLambdaPm(problem,
                                    element,
                                    fvGeometry,
-                                   faceIdx,
+                                   face,
                                    elemVolVars) ;
 
     }
@@ -136,12 +138,12 @@ public:
     Scalar lumpedLambdaPm(const Problem &problem,
                           const Element &element,
                           const FVElementGeometry & fvGeometry,
-                          const unsigned int faceIdx,
+                          const SCVFace & face,
                           const ElementVolumeVariables & elemVolVars)
     {
          // arithmetic mean of the liquid saturation and the porosity
-         const unsigned int i = this->face().i;
-         const unsigned int j = this->face().j;
+         const unsigned int i = face.i;
+         const unsigned int j = face.j;
 
          const FluidState &fsI = elemVolVars[i].fluidState();
          const FluidState &fsJ = elemVolVars[j].fluidState();

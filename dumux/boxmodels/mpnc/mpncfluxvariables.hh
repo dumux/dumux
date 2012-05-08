@@ -95,21 +95,19 @@ public:
                       const unsigned int faceIdx,
                       const ElementVolumeVariables &elemVolVars,
                       const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), elemVolVars_(elemVolVars), onBoundary_(onBoundary)
+        : fvGeometry_(fvGeometry), faceIdx_(faceIdx), elemVolVars_(elemVolVars), onBoundary_(onBoundary)
     {
-        faceIdx_ = faceIdx;
-
         // update the base module (i.e. advection)
         calculateGradients_(problem, element, elemVolVars);
         calculateVelocities_(problem, element, elemVolVars);
 
         // update the flux data of the energy module (i.e. isothermal
         // or non-isothermal)
-        fluxVarsEnergy_.update(problem, element, fvGeometry, faceIdx, *this, elemVolVars);
+        fluxVarsEnergy_.update(problem, element, fvGeometry, face(), *this, elemVolVars);
 
         // update the flux data of the diffusion module (i.e. with or
         // without diffusion)
-        fluxVarsDiffusion_.update(problem, element, fvGeometry, faceIdx, elemVolVars);
+        fluxVarsDiffusion_.update(problem, element, fvGeometry, face(), elemVolVars);
 
         extrusionFactor_ =
             (elemVolVars[face().i].extrusionFactor()
@@ -163,6 +161,10 @@ public:
         vDarcy *= up.mobility(phaseIdx);
     }
 
+    /*!
+     * \brief The face of the current sub-control volume. This may be either
+     *        an inner sub-control-volume face or a face on the boundary.
+     */
     const SCVFace &face() const
     {
         if (onBoundary_)
@@ -241,7 +243,7 @@ private:
                              const Element &element,
                              const ElementVolumeVariables &elemVolVars)
     {
-        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++) {
+        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++){
             potentialGrad_[phaseIdx] = Scalar(0);
         }
 
@@ -329,7 +331,7 @@ private:
 
 
     const FVElementGeometry &fvGeometry_;
-    int faceIdx_;
+    const unsigned int faceIdx_;
     const ElementVolumeVariables &elemVolVars_;
     const bool onBoundary_;
 

@@ -31,6 +31,7 @@
 #include <dune/common/fvector.hh>
 
 #include "../mpncproperties.hh"
+#include "../mpncfluxvariables.hh"
 
 namespace Dumux {
 
@@ -43,6 +44,8 @@ class MPNCFluxVariablesDiffusion
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     enum{dim = GridView::dimension};
     enum{numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
@@ -51,46 +54,52 @@ class MPNCFluxVariablesDiffusion
     enum{nPhaseIdx = FluidSystem::nPhaseIdx};
 
     typedef Dune::FieldVector<Scalar, dim>  DimVector;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     MPNCFluxVariablesDiffusion()
     {}
 
-    void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const unsigned int faceIdx,
-                const ElementVolumeVariables &elemVolVars)
+    void update(const Problem & problem,
+                const Element & element,
+                const FVElementGeometry & fvGeometry,
+                const SCVFace & face,
+                const ElementVolumeVariables & elemVolVars)
     {
-        const unsigned int i = this->face().i;
-        const unsigned int j = this->face().j;
+        const unsigned int i = face.i;
+        const unsigned int j = face.j;
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                moleFraction_[phaseIdx][compIdx]  = elemVolVars[i].fluidState().moleFraction(phaseIdx, compIdx);
-                moleFraction_[phaseIdx][compIdx] += elemVolVars[j].fluidState().moleFraction(phaseIdx, compIdx);
-                moleFraction_[phaseIdx][compIdx] /= 2;
+
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx){
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx){
+                moleFraction_[phaseIdx][compIdx] = 0. ;
+                moleFractionGrad_[phaseIdx][compIdx] = 0. ;
             }
         }
 
-        // update the concentration gradients using two-point
-        // gradients
-        const DimVector &normal = this->face().normal;
 
-        DimVector tmp = element.geometry().corner(j);
-        tmp -= element.geometry().corner(i);
-        Scalar dist = tmp.two_norm()*normal.two_norm();
-        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+        DimVector tmp ;
+        for (int idx = 0;
+             idx < fvGeometry.numFAP;
+             idx++) // loop over adjacent vertices
         {
-            // concentration gradients
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                moleFractionGrad_[phaseIdx][compIdx] = normal;
-                moleFractionGrad_[phaseIdx][compIdx]
-                    *=
-                    (elemVolVars[j].fluidState().moleFraction(phaseIdx, compIdx) -
-                     elemVolVars[i].fluidState().moleFraction(phaseIdx, compIdx))
-                    / dist;
+            // FE gradient at vertex idx
+            const DimVector & feGrad = face.grad[idx];
+
+            // index for the element volume variables
+            int volVarsIdx = face.fapIndices[idx];
+
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++){
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx){
+
+                    // calculate mole fractions at the integration points of the face
+                    moleFraction_[phaseIdx][compIdx] += elemVolVars[volVarsIdx].fluidState().moleFraction(phaseIdx, compIdx)*
+                    face.shapeValue[idx];
+
+                    // calculate mole fraction gradients
+                    tmp =  feGrad;
+                    tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(phaseIdx, compIdx);
+                    moleFractionGrad_[phaseIdx][compIdx] += tmp;
+                }
             }
         }
 
@@ -148,7 +157,7 @@ public:
                 }
             }
         }
-    };
+    }
 
     Scalar porousDiffCoeffL(const unsigned int compIdx) const
     {
@@ -165,7 +174,7 @@ public:
 
     Scalar moleFraction(const unsigned int phaseIdx,
                         const unsigned int compIdx) const
-    { return moleFraction_[phaseIdx][compIdx];}
+    { return moleFraction_[phaseIdx][compIdx]; }
 
     DUMUX_DEPRECATED_MSG("use moleFraction() instead")
     Scalar moleFrac(const unsigned int phaseIdx,
@@ -206,18 +215,19 @@ class MPNCFluxVariablesDiffusion<TypeTag, false>
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
 public:
     MPNCFluxVariablesDiffusion()
     {}
 
-    void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const unsigned int faceIdx,
-                const ElementVolumeVariables &elemVolVars)
+    void update(const Problem & problem,
+                const Element & element,
+                const FVElementGeometry & fvGeometry,
+                const SCVFace & face,
+                const ElementVolumeVariables & elemVolVars)
     {
-    };
+    }
 };
 
 }

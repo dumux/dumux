@@ -123,22 +123,22 @@ public:
              scvIdx < fvGeometry.numSCV;
              scvIdx++)
         {
-            PrimaryVariables tmp(0.0);
+            PrimaryVariables tmpPriVars(0.0);
 
             // compute mass and energy storage terms in terms of
             // averaged quantities
-            MassResid::addPhaseStorage(tmp,
+            MassResid::addPhaseStorage(tmpPriVars,
                                        elemVolVars[scvIdx],
                                        phaseIdx);
-            EnergyResid::addPhaseStorage(tmp,
+            EnergyResid::addPhaseStorage(tmpPriVars,
                                          elemVolVars[scvIdx],
                                          phaseIdx);
 
             // multiply with volume of sub-control volume
-            tmp *= fvGeometry.subContVol[scvIdx].volume;
+            tmpPriVars *= fvGeometry.subContVol[scvIdx].volume;
 
             // Add the storage of the current SCV to the total storage
-            phaseStorage += tmp;
+            phaseStorage += tmpPriVars;
         }
     }
 

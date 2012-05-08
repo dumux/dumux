@@ -184,7 +184,7 @@ public:
                              elemVolVars);
     }
 
-    static void computePhaseEnthalpyFlux(PrimaryVariables & phaseEnthalpyFlux,
+    static void computePhaseEnthalpyFlux(PrimaryVariables & flux,
                                          const FluxVariables & fluxVars,
                                          const ElementVolumeVariables & elemVolVars,
                                          const unsigned int phaseIdx,
@@ -203,10 +203,10 @@ public:
         // use the phase enthalpy of the upstream vertex to calculate
         // the enthalpy transport
         const VolumeVariables &up = elemVolVars[upIdx];
-        phaseEnthalpyFlux[energyEqIdx] += up.fluidState().enthalpy(phaseIdx) * massFlux;
+        flux[energyEqIdx] += up.fluidState().enthalpy(phaseIdx) * massFlux;
     }
 
-    static void computeHeatConduction(PrimaryVariables & heatConduction,
+    static void computeHeatConduction(PrimaryVariables & flux,
                                     const FluxVariables & fluxVars,
                                     const ElementVolumeVariables & elemVolVars)
     {
@@ -214,7 +214,7 @@ public:
         Scalar lumpedConductivity   = fluxVars.fluxVarsEnergy().lambdaPm() ;
         Scalar temperatureGradientNormal  = fluxVars.fluxVarsEnergy().temperatureGradientNormal() ;
         Scalar lumpedHeatConduction = - lumpedConductivity * temperatureGradientNormal ;
-        heatConduction[energyEqIdx] += lumpedHeatConduction ;
+        flux[energyEqIdx] += lumpedHeatConduction ;
     }
 
 
