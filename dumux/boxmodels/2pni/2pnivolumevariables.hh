@@ -90,7 +90,7 @@ protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                             const Problem& problem,
                             const Element &element,
-                            const FVElementGeometry &elemGeom,
+                            const FVElementGeometry &fvGeometry,
                             int scvIdx)
     {
         return priVars[Indices::temperatureIdx];
@@ -107,15 +107,15 @@ protected:
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
+                       const FVElementGeometry &fvGeometry,
                        int scvIdx,
                        bool isOldSol)
     {
         // copmute and set the heat capacity of the solid phase
-        heatCapacity_ = problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
+        heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
     }
 

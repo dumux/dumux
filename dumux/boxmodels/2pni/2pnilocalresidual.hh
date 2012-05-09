@@ -91,33 +91,33 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param result The phase mass within the sub-control volume
+     *  \param storage The phase mass within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
     {
         // compute the storage term for phase mass
-        ParentType::computeStorage(result, scvIdx, usePrevSol);
+        ParentType::computeStorage(storage, scvIdx, usePrevSol);
 
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
         // using the implicit euler method.
-        const ElementVolumeVariables &vertDatArray = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertDat = vertDatArray[scvIdx];
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the energy storage
-        result[temperatureIdx] =
-            vertDat.porosity()*(vertDat.density(wPhaseIdx) *
-                                vertDat.internalEnergy(wPhaseIdx) *
-                                vertDat.saturation(wPhaseIdx)
+        storage[temperatureIdx] =
+            volVars.porosity()*(volVars.density(wPhaseIdx) *
+                                volVars.internalEnergy(wPhaseIdx) *
+                                volVars.saturation(wPhaseIdx)
                                 +
-                                vertDat.density(nPhaseIdx) *
-                                vertDat.internalEnergy(nPhaseIdx) *
-                                vertDat.saturation(nPhaseIdx))
-          + vertDat.temperature()*vertDat.heatCapacity();
+                                volVars.density(nPhaseIdx) *
+                                volVars.internalEnergy(nPhaseIdx) *
+                                volVars.saturation(nPhaseIdx))
+          + volVars.temperature()*volVars.heatCapacity();
     }
 
     /*!
@@ -139,13 +139,13 @@ public:
 
         // advective heat flux in all phases
         flux[energyEqIdx] = 0;
-        Vector tmpVec;
+        Vector kGradPotential;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // calculate the flux in the normal direction of the
             // current sub control volume face
             fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
-                                                tmpVec);
-            Scalar normalFlux = -(tmpVec*fluxVars.face().normal);
+                                                kGradPotential);
+            Scalar normalFlux = -(kGradPotential*fluxVars.face().normal);
 
             // data attached to upstream and the downstream vertices
             // of the current phase
@@ -173,17 +173,17 @@ public:
      *        the face of a sub-control volume.
      *
      * \param flux The diffusive flux over the sub-control-volume face for each phase
-     * \param fluxData The flux variables at the current SCV
+     * \param fluxVars The flux variables at the current SCV
      *
      */
     void computeDiffusiveFlux(PrimaryVariables &flux,
-                              const FluxVariables &fluxData) const
+                              const FluxVariables &fluxVars) const
     {
         // diffusive mass flux
-        ParentType::computeDiffusiveFlux(flux, fluxData);
+        ParentType::computeDiffusiveFlux(flux, fluxVars);
 
         // diffusive heat flux
-        flux[energyEqIdx] += fluxData.normalMatrixHeatFlux();
+        flux[energyEqIdx] += fluxVars.normalMatrixHeatFlux();
     }
 
 private:

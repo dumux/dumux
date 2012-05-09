@@ -74,46 +74,46 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
-     * \param elemDat The volume variables of the current element
+     * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
 
     TwoPNIFluxVariables(const Problem &problem,
                    const Element &element,
-                   const FVElementGeometry &elemGeom,
-                   int scvfIdx,
-                   const ElementVolumeVariables &elemDat,
+                   const FVElementGeometry &fvGeometry,
+                   int faceIdx,
+                   const ElementVolumeVariables &elemVolVars,
                    const bool onBoundary = false)
-        : ParentType(problem, element, elemGeom, scvfIdx, elemDat, onBoundary)
+        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         // calculate temperature gradient using finite element
         // gradients
         Vector temperatureGrad(0);
-        Vector tmp(0.0);
-        for (int vertIdx = 0; vertIdx < elemGeom.numFAP; vertIdx++)
+        for (int idx = 0; idx < fvGeometry.numFAP; idx++)
         {
-            tmp = this->face().grad[vertIdx];
+            Vector feGrad = this->face().grad[idx];
 
             // index for the element volume variables 
-            int volVarsIdx = this->face().fapIndices[vertIdx];
+            int volVarsIdx = this->face().fapIndices[idx];
             
-            tmp *= elemDat[volVarsIdx].temperature();
-            temperatureGrad += tmp;
+            feGrad *= elemVolVars[volVarsIdx].temperature();
+            temperatureGrad += feGrad;
         }
 
         // The spatial parameters calculates the actual heat flux vector
-        problem.spatialParameters().matrixHeatFlux(tmp,
+        Vector heatFlux;
+        problem.spatialParams().matrixHeatFlux(heatFlux,
                                                    *this,
-                                                   elemDat,
+                                                   elemVolVars,
                                                    temperatureGrad,
                                                    element,
-                                                   elemGeom,
-                                                   scvfIdx);
+                                                   fvGeometry,
+                                                   faceIdx);
         // project the heat flux vector on the face's normal vector
-        normalMatrixHeatFlux_ = tmp * this->face().normal;
+        normalMatrixHeatFlux_ = heatFlux * this->face().normal;
     }
 
     /*!
