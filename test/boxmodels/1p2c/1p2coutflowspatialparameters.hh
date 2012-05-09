@@ -25,140 +25,26 @@
  *
  * \brief Definition of the spatial parameters for the 1p2c
  *        outlfow problem.
+ *        DEPRECATED use OnePTwoCOutflowSpatialParams
  */
 #ifndef DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMETERS_HH
 #define DUMUX_1P2C_OUTFLOW_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters1p.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+#include "1p2coutflowspatialparams.hh"
+#warning include 1p2coutflowspatialparams.hh instead
 
 namespace Dumux
 {
 
-/*!
- * \ingroup OnePTwoCBoxModel
- * \ingroup BoxTestProblems
- *
- * \brief Definition of the spatial parameters for the 1p2c
- *        outflow problem.
- */
 template<class TypeTag>
-class OnePTwoCOutflowSpatialParameters : public BoxSpatialParametersOneP<TypeTag>
+class OnePTwoCOutflowSpatialParameters : public OnePTwoCOutflowSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParametersOneP<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
-
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
-
-    //typedef LinearMaterial<Scalar> EffMaterialLaw;
 public:
+    DUMUX_DEPRECATED_MSG("use OnePTwoCOutflowSpatialParams instead")
     OnePTwoCOutflowSpatialParameters(const GridView &gridView)
-        : ParentType(gridView)
-    {
-        permeability_ = 1e-10;
-        porosity_ = 0.4;
-        tortuosity_ = 0.28;
-    }
-
-    ~OnePTwoCOutflowSpatialParameters()
-    {}
-
-
-    /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     *
-     * \param globalSolution the global solution vector
-     */
-    void update(const SolutionVector &globalSolution)
-    {
-    };
-
-    /*!
-     * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.
-     *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeometry,
-                                       const int scvIdx) const
-    {
-            return permeability_;
-    }
-
-    /*!
-     * \brief Define the porosity \f$\mathrm{[-]}\f$.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     */
-    double porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    {
-            return porosity_;
-    }
-
-    /*!
-     * \brief Define the tortuosity \f$\mathrm{[-]}\f$.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     */
-    double tortuosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    {
-            return tortuosity_;
-    }
-
-    /*!
-     * \brief Define the dispersivity.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     */
-    double dispersivity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    {
-        return 0;
-    }
-
-    bool useTwoPointGradient(const Element &element,
-                             const int vertexI,
-                             const int vertexJ) const
-    {
-        return false;
-    }
-
-private:
-    Scalar permeability_;
-    Scalar porosity_;
-    Scalar tortuosity_;
+    : OnePTwoCOutflowSpatialParams<TypeTag>(gridView)
 };
 
 }
-
 #endif

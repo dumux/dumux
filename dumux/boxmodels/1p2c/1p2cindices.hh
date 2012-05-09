@@ -53,12 +53,17 @@ struct OnePTwoCIndices
    static const int comp1Idx = 1;
 
     // Equation indices
-    static const int contiEqIdx = PVOffset + 0; //!< continuity equation index
-    static const int transEqIdx = PVOffset + 1; //!< transport equation index
+   static const int conti0EqIdx = PVOffset + 0; //!< continuity equation index
+   static const int transportEqIdx = PVOffset + 1; //!< transport equation index
+
+    static const int contiEqIdx = conti0EqIdx; //!< \deprecated use conti0EqIdx instead
+    static const int transEqIdx = transportEqIdx; //!< \deprecated use transportEqIdx instead
 
     // primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< pressure
-    static const int massOrMoleFractionIdx = PVOffset + 1; //!< mole fraction of the second component
+    static const int transportCompIdx = PVOffset + 1; //!< mole fraction of the second component
+    static const int x1Idx = transportCompIdx; // \deprecated use transportCompIdx instead
+    static const int massOrMoleFractionIdx = transportCompIdx; // \deprecated use transportCompIdx instead
 };
 
 // \}

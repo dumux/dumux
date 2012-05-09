@@ -62,7 +62,7 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
         comp1Idx = Indices::comp1Idx,
 
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFractionIdx = Indices::massOrMoleFractionIdx
+        transportCompIdx = Indices::transportCompIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -126,20 +126,20 @@ public:
     /*!
      * \copydoc BoxModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
                                    const FVElementGeometry& elementGeometry,
                                    const int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar T = Implementation::temperature_(primaryVariables, problem, element,
+        Scalar T = Implementation::temperature_(priVars, problem, element,
                                                 elementGeometry, scvIdx);
         fluidState.setTemperature(T);
 
-        fluidState.setPressure(phaseIdx, primaryVariables[pressureIdx]);
+        fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
-        Scalar x1 = primaryVariables[massOrMoleFractionIdx]; //mole or mass fraction of component 1
+        Scalar x1 = priVars[transportCompIdx]; //mole or mass fraction of component 1
         if(!useMoles) //mass-fraction formulation
         {
             // convert mass to mole fractions

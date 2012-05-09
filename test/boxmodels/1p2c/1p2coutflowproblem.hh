@@ -40,7 +40,7 @@
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 #include <dumux/material/fluidsystems/h2on2liquidphasefluidsystem.hh>
-#include "1p2coutflowspatialparameters.hh"
+#include "1p2coutflowspatialparams.hh"
 
 namespace Dumux
 {
@@ -80,7 +80,7 @@ public:
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTwoCOutflowProblem,
               SpatialParams,
-              Dumux::OnePTwoCOutflowSpatialParameters<TypeTag>);
+              Dumux::OnePTwoCOutflowSpatialParams<TypeTag>);
 
 //Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(OnePTwoCOutflowProblem, UseMoles, false);
@@ -135,11 +135,11 @@ class OnePTwoCOutflowProblem : public PorousMediaBoxProblem<TypeTag>
 
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFractionIdx = Indices::massOrMoleFractionIdx,
+        transportCompIdx = Indices::transportCompIdx,
 
         // indices of the equations
-        contiEqIdx = Indices::contiEqIdx,
-        transEqIdx = Indices::transEqIdx
+        conti0EqIdx = Indices::conti0EqIdx,
+        transportEqIdx = Indices::transportEqIdx
     };
 
 
@@ -202,34 +202,34 @@ public:
 
         //outflow condition for the transport equation at right boundary
         if(globalPos[0] > this->bboxMax()[0] - eps_)
-            values.setOutflow(transEqIdx);
+            values.setOutflow(transportEqIdx);
     }
 
     /*!
      * \brief Evaluate the boundary conditions for a Dirichlet
      *        boundary segment.
      *
-     * For this method, the \a values parameter stores primary variables.
+     * For this method, the \a priVars parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichlet(PrimaryVariables &priVars, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
 
-        initial_(values, globalPos);
+        initial_(priVars, globalPos);
         //condition for the N2 molefraction at left boundary
         if(globalPos[0] < eps_)
-            values[massOrMoleFractionIdx] = 2.0e-5;
+            priVars[transportCompIdx] = 2.0e-5;
     }
 
     /*!
      * \brief Evaluate the boundary conditions for a Neumann
      *        boundary segment.
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a priVars parameter stores the mass flux
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    void neumann(PrimaryVariables &values,
+    void neumann(PrimaryVariables &priVars,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const Intersection &is,
@@ -237,7 +237,7 @@ public:
                  const int boundaryFaceIdx) const
     {
         //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        values = 0;
+        priVars = 0;
     }
 
     // \}
@@ -251,24 +251,24 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a priVars parameter stores the rate mass
      * of a component is generated or annihilate per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      */
-    void sourceAtPos(PrimaryVariables &values,
+    void sourceAtPos(PrimaryVariables &priVars,
                      const GlobalPosition &globalPos) const
     {
-        values = Scalar(0.0);
+        priVars = Scalar(0.0);
     }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * For this method, the \a values parameter stores primary
+     * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    void initial(PrimaryVariables &values,
+    void initial(PrimaryVariables &priVars,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const int scvIdx) const
@@ -276,18 +276,18 @@ public:
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
 
-        initial_(values, globalPos);
+        initial_(priVars, globalPos);
     }
 
     // \}
 
 private:
     // the internal method for the initial condition
-    void initial_(PrimaryVariables &values,
+    void initial_(PrimaryVariables &priVars,
                   const GlobalPosition &globalPos) const
     {
-        values[pressureIdx] = 2e5 - 1e5*globalPos[0];//0.0; //initial condition for the pressure
-        values[massOrMoleFractionIdx] = 0.0; //initial condition for the N2 molefraction
+        priVars[pressureIdx] = 2e5 - 1e5*globalPos[0];//0.0; //initial condition for the pressure
+        priVars[transportCompIdx] = 0.0; //initial condition for the N2 molefraction
     }
 
     const Scalar eps_;

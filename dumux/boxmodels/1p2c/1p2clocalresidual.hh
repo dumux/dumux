@@ -84,8 +84,10 @@ protected:
             comp1Idx = Indices::comp1Idx,
 
             // indices of the equations
-            contiEqIdx = Indices::contiEqIdx,
-            transEqIdx = Indices::transEqIdx
+            conti0EqIdx = Indices::conti0EqIdx,
+            contiEqIdx = conti0EqIdx, // \deprecated use conti0EqIdx
+            transportEqIdx = Indices::transportEqIdx,
+            transEqIdx = transportEqIdx //  \deprecated use transportEqIdx
         };
 
     //! property that defines whether mole or mass fractions are used
