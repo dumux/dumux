@@ -1,4 +1,4 @@
-2pdir = $(includedir)/dumux/boxmodels/2p
-2p_HEADERS = *.hh
+2pDFMMdir = $(includedir)/dumux/boxmodels/2pDFMM
+2pDFMM_HEADERS = *.hh
 
 include $(top_srcdir)/am/global-rules
