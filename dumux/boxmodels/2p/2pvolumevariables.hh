@@ -80,28 +80,28 @@ public:
      * \param priVars The local primary variable vector
      * \param problem The problem object
      * \param element The current element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
+                const FVElementGeometry &fvGeometry,
                 int scvIdx,
                 bool isOldSol)
     {
         ParentType::update(priVars,
                            problem,
                            element,
-                           elemGeom,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
 
-        completeFluidState(priVars, problem, element, elemGeom, scvIdx, fluidState_);
+        completeFluidState(priVars, problem, element, fvGeometry, scvIdx, fluidState_);
 
         const MaterialLawParams &materialParams =
-            problem.spatialParameters().materialLawParams(element, elemGeom, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
         mobility_[wPhaseIdx] =
             MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx))
@@ -112,50 +112,50 @@ public:
             / fluidState_.viscosity(nPhaseIdx);
 
         // porosity
-        porosity_ = problem.spatialParameters().porosity(element,
-                                                         elemGeom,
-                                                         scvIdx);
+        porosity_ = problem.spatialParams().porosity(element,
+                                                     fvGeometry,
+                                                     scvIdx);
 
         // energy related quantities not belonging to the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, elemGeom, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
      * \copydoc BoxModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
+                                   const FVElementGeometry& fvGeometry,
                                    int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
-                                                elementGeometry, scvIdx);
+        Scalar t = Implementation::temperature_(priVars, problem, element,
+                                                fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
         // material law parameters
         typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
         const typename MaterialLaw::Params &materialParams =
-            problem.spatialParameters().materialLawParams(element, elementGeometry, scvIdx);
+            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
 
 
         if (int(formulation) == pwSn) {
-            Scalar Sn = primaryVariables[saturationIdx];
+            Scalar Sn = priVars[saturationIdx];
             fluidState.setSaturation(nPhaseIdx, Sn);
             fluidState.setSaturation(wPhaseIdx, 1 - Sn);
 
-            Scalar pW = primaryVariables[pressureIdx];
+            Scalar pW = priVars[pressureIdx];
             fluidState.setPressure(wPhaseIdx, pW);
             fluidState.setPressure(nPhaseIdx,
                                    pW + MaterialLaw::pC(materialParams, 1 - Sn));
         }
         else if (int(formulation) == pnSw) {
-            Scalar Sw = primaryVariables[saturationIdx];
+            Scalar Sw = priVars[saturationIdx];
             fluidState.setSaturation(wPhaseIdx, Sw);
             fluidState.setSaturation(nPhaseIdx, 1 - Sw);
 
-            Scalar pN = primaryVariables[pressureIdx];
+            Scalar pN = priVars[pressureIdx];
             fluidState.setPressure(nPhaseIdx, pN);
             fluidState.setPressure(wPhaseIdx,
                                    pN - MaterialLaw::pC(materialParams, Sw));
@@ -248,10 +248,10 @@ protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
                                const Element &element,
-                               const FVElementGeometry &elemGeom,
+                               const FVElementGeometry &fvGeometry,
                                int scvIdx)
     {
-        return problem.boxTemperature(element, elemGeom, scvIdx);
+        return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
 
     template<class ParameterCache>
@@ -268,7 +268,7 @@ protected:
     void updateEnergy_(const PrimaryVariables &sol,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
+                       const FVElementGeometry &fvGeometry,
                        int vertIdx,
                        bool isOldSol)
     { }

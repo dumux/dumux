@@ -107,13 +107,13 @@ public:
      * \brief Returns the relative weight of a primary variable for
      *        calculating relative errors.
      *
-     *        \param globalVertexIdx The global index of the vertex
+     *        \param globalIdx The global index of the vertex
      *        \param pvIdx The index of the primary variable
      */
-    Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
+    Scalar primaryVarWeight(int globalIdx, int pvIdx) const
     {
         if (pressureIdx == pvIdx)
-            return std::min(10.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
+            return std::min(10.0/this->prevSol()[globalIdx][pvIdx], 1.0);
         return 1;
     }
 
@@ -170,7 +170,7 @@ public:
         unsigned numElements = this->gridView_().size(0);
         ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
-        FVElementGeometry fvElemGeom;
+        FVElementGeometry fvGeometry;
         VolumeVariables volVars;
         ElementVolumeVariables elemVolVars;
 
@@ -186,14 +186,14 @@ public:
             int idx = this->elementMapper().map(*elemIt);
             (*rank)[idx] = this->gridView_().comm().rank();
 
-            fvElemGeom.update(this->gridView_(), *elemIt);
+            fvGeometry.update(this->gridView_(), *elemIt);
 
             if (numDofs == numElements) // element data
             {
                 volVars.update(sol[idx],
                                this->problem_(),
                                *elemIt,
-                               fvElemGeom,
+                               fvGeometry,
                                /*scvIdx=*/0,
                                false);
 
@@ -212,14 +212,14 @@ public:
             else // vertex data
             {
                 int numVerts = elemIt->template count<dim> ();
-                for (int i = 0; i < numVerts; ++i)
+                for (int scvIdx = 0; scvIdx < numVerts; ++scvIdx)
                 {
-                    int globalIdx = this->vertexMapper().map(*elemIt, i, dim);
+                    int globalIdx = this->vertexMapper().map(*elemIt, scvIdx, dim);
                     volVars.update(sol[globalIdx],
                                    this->problem_(),
                                    *elemIt,
-                                   fvElemGeom,
-                                   i,
+                                   fvGeometry,
+                                   scvIdx,
                                    false);
 
                     (*pW)[globalIdx] = volVars.pressure(wPhaseIdx);
@@ -259,15 +259,15 @@ public:
 
                     elemVolVars.update(this->problem_(),
                                        *elemIt,
-                                       fvElemGeom,
+                                       fvGeometry,
                                        false /* oldSol? */);
 
-                    for (int faceIdx = 0; faceIdx< fvElemGeom.numEdges; faceIdx++)
+                    for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
                     {
 
                         FluxVariables fluxDat(this->problem_(),
                                              *elemIt,
-                                             fvElemGeom,
+                                             fvGeometry,
                                              faceIdx,
                                              elemVolVars);
 
@@ -283,14 +283,14 @@ public:
 
                            // calculate the flux in the normal direction of the
                            // current sub control volume face
-                           GlobalPosition tmpVec(0);
+                           GlobalPosition kGradPotential;
                            fluxDat.intrinsicPermeability().mv(fluxDat.potentialGrad(phaseIdx),
-                                                              tmpVec);
+                                                              kGradPotential);
                            const GlobalPosition globalNormal = fluxDat.face().normal;
-                           const Scalar normalFlux = - (tmpVec*globalNormal);
+                           const Scalar normalFlux = - (kGradPotential*globalNormal);
 
                            // local position of integration point
-                           const Dune::FieldVector<Scalar, dim>& localPosIP = fvElemGeom.subContVolFace[faceIdx].ipLocal;
+                           const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
 
                            // Transformation of the global normal vector to normal vector in the reference element
                            const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);

@@ -45,7 +45,7 @@
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
 
-#include "lensspatialparameters.hh"
+#include "lensspatialparams.hh"
 
 namespace Dumux
 {
@@ -58,7 +58,7 @@ class LensProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParameters));
+NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParams));
 
 // Set the grid type
 #if HAVE_UG

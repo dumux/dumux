@@ -85,27 +85,27 @@ public:
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a finite sub-control volume.
      *
-     *  \param result The phase mass within the sub-control volume
+     *  \param storage The phase mass within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
-        // using the implicit euler method.
-        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
-        const VolumeVariables &vertDat = elemDat[scvIdx];
+        // using the implicit Euler method.
+        const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+        const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // wetting phase mass
-        result[contiWEqIdx] = vertDat.density(wPhaseIdx) * vertDat.porosity()
-                * vertDat.saturation(wPhaseIdx);
+        storage[contiWEqIdx] = volVars.density(wPhaseIdx) * volVars.porosity()
+                * volVars.saturation(wPhaseIdx);
 
         // non-wetting phase mass
-        result[contiNEqIdx] = vertDat.density(nPhaseIdx) * vertDat.porosity()
-                * vertDat.saturation(nPhaseIdx);
+        storage[contiNEqIdx] = volVars.density(nPhaseIdx) * volVars.porosity()
+                * volVars.saturation(nPhaseIdx);
     }
 
     /*!
@@ -119,15 +119,15 @@ public:
      */
     void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
     {
-        FluxVariables vars(this->problem_(),
-                           this->elem_(),
-                           this->fvElemGeom_(),
+        FluxVariables fluxVars(this->problem_(),
+                           this->element_(),
+                           this->fvGeometry_(),
                            faceIdx,
                            this->curVolVars_(),
                            onBoundary);
         flux = 0;
-        asImp_()->computeAdvectiveFlux(flux, vars);
-        asImp_()->computeDiffusiveFlux(flux, vars);
+        asImp_()->computeAdvectiveFlux(flux, fluxVars);
+        asImp_()->computeDiffusiveFlux(flux, fluxVars);
     }
 
     /*!
@@ -145,7 +145,7 @@ public:
         ////////
         // advective fluxes of all components in all phases
         ////////
-        Vector tmpVec;
+        Vector kGradPotential;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // calculate the flux in the normal direction of the
@@ -155,8 +155,8 @@ public:
             //
             // (the minus comes from the Darcy law which states that
             // the flux is from high to low pressure potentials.)
-            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx), tmpVec);
-            Scalar normalFlux = -(tmpVec*fluxVars.face().normal);
+            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx), kGradPotential);
+            Scalar normalFlux = -(kGradPotential*fluxVars.face().normal);
 
             // data attached to upstream and the downstream vertices
             // of the current phase
@@ -196,16 +196,16 @@ public:
      * \brief Calculate the source term of the equation
      *
      * \param q The source/sink in the SCV for each phase
-     * \param localVertexIdx The index of the SCV
+     * \param scvIdx The index of the SCV
      *
      */
-    void computeSource(PrimaryVariables &q, int localVertexIdx) const
+    void computeSource(PrimaryVariables &q, int scvIdx) const
     {
         // retrieve the source term intrinsic to the problem
         this->problem_().boxSDSource(q,
-                                     this->elem_(),
-                                     this->fvElemGeom_(),
-                                     localVertexIdx,
+                                     this->element_(),
+                                     this->fvGeometry_(),
+                                     scvIdx,
                                      this->curVolVars_());
     }
 

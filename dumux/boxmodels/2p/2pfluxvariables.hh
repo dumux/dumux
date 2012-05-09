@@ -54,7 +54,7 @@ template <class TypeTag>
 class TwoPFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -78,7 +78,7 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemDat The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables
@@ -86,20 +86,20 @@ public:
      */
     TwoPFluxVariables(const Problem &problem,
                  const Element &element,
-                 const FVElementGeometry &elemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int faceIdx,
-                 const ElementVolumeVariables &elemDat,
+                 const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : fvElemGeom_(elemGeom), onBoundary_(onBoundary)
+        : fvGeometry_(fvGeometry), onBoundary_(onBoundary)
     {
-        scvfIdx_ = faceIdx;
+        faceIdx_ = faceIdx;
 
-        for (int phase = 0; phase < numPhases; ++phase) {
-            potentialGrad_[phase] = Scalar(0);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+            potentialGrad_[phaseIdx] = Scalar(0);
         }
 
-        calculateGradients_(problem, element, elemDat);
-        calculateK_(problem, element, elemDat);
+        calculateGradients_(problem, element, elemVolVars);
+        calculateK_(problem, element, elemVolVars);
     };
 
 public:
@@ -143,14 +143,14 @@ public:
     const SCVFace &face() const
     {
         if (onBoundary_)
-            return fvElemGeom_.boundaryFace[scvfIdx_];
+            return fvGeometry_.boundaryFace[faceIdx_];
         else
-            return fvElemGeom_.subContVolFace[scvfIdx_];
+            return fvGeometry_.subContVolFace[faceIdx_];
     }
 
 protected:
-    const FVElementGeometry &fvElemGeom_;
-    int scvfIdx_;
+    const FVElementGeometry &fvGeometry_;
+    int faceIdx_;
     const bool onBoundary_;
 
     // gradients
@@ -166,7 +166,7 @@ private:
     {
         // calculate gradients
         for (int idx = 0;
-             idx < fvElemGeom_.numFAP;
+             idx < fvGeometry_.numFAP;
              idx++) // loop over adjacent vertices
         {
             // FE gradient at vertex idx
@@ -176,12 +176,12 @@ private:
             int volVarsIdx = face().fapIndices[idx];
 	    
             // compute sum of pressure gradients for each phase
-            for (int phase = 0; phase < numPhases; phase++)
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
                 // the pressure gradient
                 Vector tmp(feGrad);
-                tmp *= elemVolVars[volVarsIdx].pressure(phase);
-                potentialGrad_[phase] += tmp;
+                tmp *= elemVolVars[volVarsIdx].pressure(phaseIdx);
+                potentialGrad_[phaseIdx] += tmp;
             }
         }
 
@@ -192,11 +192,11 @@ private:
         {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
-            Vector g(problem.boxGravity(element, fvElemGeom_, face().i));
-            g += problem.boxGravity(element, fvElemGeom_, face().j);
+            Vector g(problem.boxGravity(element, fvGeometry_, face().i));
+            g += problem.boxGravity(element, fvGeometry_, face().j);
             g /= 2;
 
-            for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
+            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
             {
                 // calculate the phase density at the integration point. we
                 // only do this if the wetting phase is present in both cells
@@ -226,14 +226,14 @@ private:
                      const Element &element,
                      const ElementVolumeVariables &elemVolVars)
     {
-        const SpatialParameters &spatialParams = problem.spatialParameters();
+        const SpatialParams &spatialParams = problem.spatialParams();
         // calculate the intrinsic permeability
         spatialParams.meanK(K_,
                             spatialParams.intrinsicPermeability(element,
-                                                                fvElemGeom_,
+                                                                fvGeometry_,
                                                                 face().i),
                             spatialParams.intrinsicPermeability(element,
-                                                                fvElemGeom_,
+                                                                fvGeometry_,
                                                                 face().j));
     }
 };

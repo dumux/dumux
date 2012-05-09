@@ -28,10 +28,10 @@
  * \brief The spatial parameters for the LensProblem which uses the
  *        twophase box model
  */
-#ifndef DUMUX_LENS_SPATIAL_PARAMETERS_HH
-#define DUMUX_LENS_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_LENS_SPATIAL_PARAMS_HH
+#define DUMUX_LENS_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -43,18 +43,18 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class LensSpatialParameters;
+class LensSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(LensSpatialParameters);
+NEW_TYPE_TAG(LensSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(LensSpatialParameters, SpatialParams, Dumux::LensSpatialParameters<TypeTag>);
+SET_TYPE_PROP(LensSpatialParams, SpatialParams, Dumux::LensSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(LensSpatialParameters, MaterialLaw)
+SET_PROP(LensSpatialParams, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective
@@ -73,9 +73,9 @@ public:
  *        twophase box model
  */
 template<class TypeTag>
-class LensSpatialParameters : public BoxSpatialParameters<TypeTag>
+class LensSpatialParams : public BoxSpatialParams<TypeTag>
 {
-    typedef BoxSpatialParameters<TypeTag> ParentType;
+    typedef BoxSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -96,15 +96,15 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    LensSpatialParameters(const GridView& gridView)
+    LensSpatialParams(const GridView& gridView)
         : ParentType(gridView)
     {
         try
         {
-            lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftX);
-            lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensLowerLeftY);
-            lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightX);
-            lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParameters.lensUpperRightY);
+            lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftX);
+            lensLowerLeft_[1]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftY);
+            lensUpperRight_[0]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightX);
+            lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightY);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";
