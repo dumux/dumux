@@ -44,7 +44,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include "1ptestspatialparameters.hh"
+#include "1ptestspatialparams.hh"
 
 namespace Dumux
 {
@@ -78,7 +78,7 @@ SET_PROP(OnePTestProblem, Problem)
 
 // Set the spatial parameters
 SET_PROP(OnePTestProblem, SpatialParams)
-{ typedef Dumux::OnePTestSpatialParameters<TypeTag> type; };
+{ typedef Dumux::OnePTestSpatialParams<TypeTag> type; };
 
 // Linear solver settings
 SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxCGILU0Solver<TypeTag> );
@@ -171,10 +171,10 @@ public:
     { return 273.15 + 10; } // 10C
 
 
-    void sourceAtPos(PrimaryVariables &values,
+    void sourceAtPos(PrimaryVariables &priVars,
                 const GlobalPosition &globalPos) const
     {
-        values = 0;
+        priVars = 0;
     }
     // \}
     /*!
@@ -201,18 +201,18 @@ public:
      * \brief Evaluate the boundary conditions for a Dirichlet
      *        boundary segment.
      *
-     * For this method, the \a values parameter stores primary variables.
+     * For this method, the \a priVars parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
+    void dirichlet(PrimaryVariables &priVars, const Vertex &vertex) const
     {
         double eps = 1.0e-3;
         const GlobalPosition globalPos = vertex.geometry().center();
 
         if (globalPos[dim-1] < eps) {
-            values[pressureIdx] = 2.0e+5;
+            priVars[pressureIdx] = 2.0e+5;
         }
         else if (globalPos[dim-1] > this->bboxMax()[dim-1] - eps) {
-            values[pressureIdx] = 1.0e+5;
+            priVars[pressureIdx] = 1.0e+5;
         }
     }
 
@@ -220,12 +220,12 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * For this method, the \a values parameter stores the mass flux
+     * For this method, the \a priVars parameter stores the mass flux
      * in normal direction of each component. Negative values mean
      * influx.
      */
     using ParentType::neumann;
-    void neumann(PrimaryVariables &values,
+    void neumann(PrimaryVariables &priVars,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const Intersection &is,
@@ -234,7 +234,7 @@ public:
     {
         //  const GlobalPosition &globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
 
-        values[pressureIdx] = 0;
+        priVars[pressureIdx] = 0;
     }
 
     // \}
@@ -247,16 +247,16 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * For this method, the \a values parameter stores primary
+     * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    void initial(PrimaryVariables &values,
+    void initial(PrimaryVariables &priVars,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  const int scvIdx) const
     {
         //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        values[pressureIdx] = 1.0e+5;// + 9.81*1.23*(20-globalPos[dim-1]);
+        priVars[pressureIdx] = 1.0e+5;// + 9.81*1.23*(20-globalPos[dim-1]);
     }
 
     // \}

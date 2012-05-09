@@ -77,7 +77,7 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
                 const int scvIdx,
-                bool isOldSol)
+                const bool isOldSol)
     {
         ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
 
@@ -94,18 +94,18 @@ public:
     /*!
      * \copydoc BoxModel::completeFluidState
      */
-    static void completeFluidState(const PrimaryVariables& primaryVariables,
+    static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
                                    const FVElementGeometry& fvGeometry,
                                    const int scvIdx,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(primaryVariables, problem, element,
+        Scalar t = Implementation::temperature_(priVars, problem, element,
                                                 fvGeometry, scvIdx);
         fluidState.setTemperature(t);
 
-        fluidState.setPressure(/*phaseIdx=*/0, primaryVariables[Indices::pressureIdx]);
+        fluidState.setPressure(/*phaseIdx=*/0, priVars[Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
@@ -184,7 +184,7 @@ protected:
                        const Element &element,
                        const FVElementGeometry &fvGeometry,
                        const int scvIdx,
-                       bool isOldSol)
+                       const bool isOldSol)
     { }
 
     FluidState fluidState_;

@@ -106,17 +106,14 @@ public:
      *
      * \param flux The flux over the SCV (sub-control-volume) face
      * \param faceIdx The index of the SCV face
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    void computeFlux(PrimaryVariables &flux, const int faceIdx, const bool onBoundary=false) const
+    void computeFlux(PrimaryVariables &flux, const int faceIdx) const
     {
         FluxVariables fluxVars(this->problem_(),
                                this->element_(),
                                this->fvGeometry_(),
                                faceIdx,
-                               this->curVolVars_(),
-                               onBoundary);
+                               this->curVolVars_());
         DimVector tmpVec;
         fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(),
                                             tmpVec);
@@ -154,7 +151,7 @@ public:
      *        finite volume.
      */
     template <class PrimaryVariables>
-    Scalar temperature(const PrimaryVariables &sol)
+    Scalar temperature(const PrimaryVariables &priVars)
     { return this->problem_.temperature(); /* constant temperature */ }
 
 private:

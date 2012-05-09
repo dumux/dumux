@@ -39,7 +39,8 @@ namespace Dumux
  */
 struct OnePIndices
 {
-    static const int pressureIdx = 0;
+    static const int conti0EqIdx = 0; //index for the mass balance
+    static const int pressureIdx = 0; //index of the primary variable
 };
 
 // \}
