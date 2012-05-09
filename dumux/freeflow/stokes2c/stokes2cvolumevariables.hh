@@ -57,17 +57,13 @@ class Stokes2cVolumeVariables : public StokesVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum {
-        comp1Idx = Indices::comp1Idx,
-        comp0Idx = Indices::comp0Idx
+        transportCompIdx = Indices::transportCompIdx,
+        phaseCompIdx = Indices::phaseCompIdx
     };
-    enum {
-        lCompIdx = comp1Idx,
-        gCompIdx = comp0Idx
-    } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
     enum { transportEqIdx = Indices::transportEqIdx };
-    enum { transportIdx = transportEqIdx }; //!< \deprecated use transportEqIdx instead
+    enum { massOrMoleFracIdx = Indices::massOrMoleFracIdx };
 
 public:
     /*!
@@ -100,8 +96,8 @@ public:
         diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(this->fluidState(),
                                                              paramCache,
                                                              phaseIdx,
-                                                             comp1Idx,
-                                                             comp0Idx);
+                                                             transportCompIdx,
+                                                             phaseCompIdx);
 
         Valgrind::CheckDefined(diffCoeff_);
     };
@@ -119,18 +115,18 @@ public:
                                    const bool isOldSol = false)
     {
         Scalar massFraction[numComponents];
-        massFraction[comp1Idx] = priVars[transportEqIdx];
-        massFraction[comp0Idx] = 1 - massFraction[comp1Idx];
+        massFraction[transportCompIdx] = priVars[massOrMoleFracIdx];
+        massFraction[phaseCompIdx] = 1 - massFraction[transportCompIdx];
 
         // calculate average molar mass of the gas phase
-        Scalar M1 = FluidSystem::molarMass(comp1Idx);
-        Scalar M2 = FluidSystem::molarMass(comp0Idx);
-        Scalar X2 = massFraction[comp0Idx];
+        Scalar M1 = FluidSystem::molarMass(transportCompIdx);
+        Scalar M2 = FluidSystem::molarMass(phaseCompIdx);
+        Scalar X2 = massFraction[phaseCompIdx];
         Scalar avgMolarMass = M1*M2/(M2 + X2*(M1 - M2));
 
         // convert mass to mole fractions and set the fluid state
-        fluidState.setMoleFraction(phaseIdx, comp1Idx, massFraction[comp1Idx]*avgMolarMass/M1);
-        fluidState.setMoleFraction(phaseIdx, comp0Idx, massFraction[comp0Idx]*avgMolarMass/M2);
+        fluidState.setMoleFraction(phaseIdx, transportCompIdx, massFraction[transportCompIdx]*avgMolarMass/M1);
+        fluidState.setMoleFraction(phaseIdx, phaseCompIdx, massFraction[phaseCompIdx]*avgMolarMass/M2);
     }
 
     /*!

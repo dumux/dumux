@@ -66,9 +66,8 @@ class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum { comp1Idx = Indices::comp1Idx };
-    enum { lCompIdx = comp1Idx } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
+    enum { phaseIdx = Indices::phaseIdx };
+    enum { transportCompIdx = Indices::transportCompIdx };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> DimVector;
@@ -86,7 +85,7 @@ public:
     }
 
     /*!
-     * \brief Return the mass fraction at the integration point.
+     * \brief Return the mass fraction of the transported component at the integration point.
      */
     Scalar massFraction() const
     { return massFraction_; }
@@ -139,7 +138,7 @@ protected:
              idx < this->fvGeometry_.numVertices;
              idx++) // loop over vertices of the element
         {
-            massFraction_ += elemVolVars[idx].fluidState().massFraction(phaseIdx, comp1Idx) *
+            massFraction_ += elemVolVars[idx].fluidState().massFraction(phaseIdx, transportCompIdx) *
                 this->face().shapeValue[idx];
             diffusionCoeff_ += elemVolVars[idx].diffusionCoeff() *
                 this->face().shapeValue[idx];
@@ -149,7 +148,7 @@ protected:
             {
                 moleFractionGrad_ +=
                     this->face().grad[idx][dimIdx] *
-                    elemVolVars[idx].fluidState().moleFraction(phaseIdx, comp1Idx);
+                    elemVolVars[idx].fluidState().moleFraction(phaseIdx, transportCompIdx);
             }
         }
 

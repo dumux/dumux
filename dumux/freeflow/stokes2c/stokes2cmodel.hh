@@ -75,8 +75,7 @@ class Stokes2cModel : public StokesModel<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum { comp1Idx = Indices::comp1Idx };
-    enum { lCompIdx = comp1Idx } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
+    enum { transportCompIdx = Indices::transportCompIdx };
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -138,7 +137,7 @@ public:
 
                 pN[globalIdx] = volVars.pressure()*scale_;
                 delP[globalIdx] = volVars.pressure()*scale_ - 1e5;
-                Xw[globalIdx] = volVars.fluidState().massFraction(phaseIdx, comp1Idx);
+                Xw[globalIdx] = volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
                 rho[globalIdx] = volVars.density()*scale_*scale_*scale_;
                 mu[globalIdx] = volVars.viscosity()*scale_;
                 velocity[globalIdx] = volVars.velocity();
@@ -148,7 +147,7 @@ public:
         writer.attachVertexData(pN, "P");
         writer.attachVertexData(delP, "delP");
         std::ostringstream outputNameX;
-        outputNameX << "X^" << FluidSystem::componentName(comp1Idx);
+        outputNameX << "X^" << FluidSystem::componentName(transportCompIdx);
         writer.attachVertexData(Xw, outputNameX.str());
         writer.attachVertexData(rho, "rho");
         writer.attachVertexData(mu, "mu");

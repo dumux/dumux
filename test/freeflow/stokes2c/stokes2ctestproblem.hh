@@ -110,12 +110,17 @@ class Stokes2cTestProblem : public StokesProblem<TypeTag>
 
     // Number of equations and grid dimension
     enum { dim = GridView::dimension };
-    enum {
-        // copy some indices for convenience
+    enum { // equation indices
         massBalanceIdx = Indices::massBalanceIdx,
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
-        transportIdx = Indices::transportIdx  //!< Index of the transport equation (massfraction)
+        transportEqIdx = Indices::transportEqIdx,  //!< Index of the transport equation
+    };
+    enum { // indices for primary variables
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx,
+        pressureIdx = Indices::pressureIdx,
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx
     };
 
 
@@ -216,7 +221,7 @@ public:
 
         if (onUpperBoundary_(globalPos))
         {
-            values[transportIdx] = 0.005;
+            values[massOrMoleFracIdx] = 0.005;
         }
     }
 
@@ -286,18 +291,18 @@ private:
    {
        values = 0.0;
 
-       values[massBalanceIdx] = 1e5;
-       values[momentumXIdx] = 0.0;
+       values[pressureIdx] = 1e5;
+       values[velocityXIdx] = 0.0;
 
        //parabolic profile
        const Scalar v1 = 1.0;
-       values[momentumYIdx] = -v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
+       values[velocityYIdx] = -v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
                                     / (0.25*(this->bboxMax()[0] - this->bboxMin()[0])*(this->bboxMax()[0] - this->bboxMin()[0]));
 
        if (onUpperBoundary_(globalPos))
-           values[transportIdx] = 0.005;
+           values[massOrMoleFracIdx] = 0.005;
        else
-           values[transportIdx] = 0.007;
+           values[massOrMoleFracIdx] = 0.007;
    }
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[0] < this->bboxMin()[0] + eps_; }

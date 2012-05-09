@@ -48,26 +48,31 @@ struct Stokes2cCommonIndices : public StokesCommonIndices<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    // Phase indices
-    static const int wPhaseIdx = FluidSystem::lPhaseIdx; //!< Index of the wetting phase
-    static const int nPhaseIdx = FluidSystem::gPhaseIdx; //!< Index of the non-wetting phase
-    static const int lPhaseIdx = wPhaseIdx; //!< \deprecated use wPhaseIdx instead
-    static const int gPhaseIdx = nPhaseIdx; //!< \deprecated use nPhaseIdx instead
+    // Phase index
+    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx); //!< Index of the employed phase in case of a two-phase fluidsystem (set by default to nPhase)
+
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< \deprecated use phaseIdx instead, only one phase employed
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< \deprecated use phaseIdx instead, only one phase employed
+    static const int lPhaseIdx = wPhaseIdx; //!< \deprecated use phaseIdx instead, only one phase employed
+    static const int gPhaseIdx = nPhaseIdx; //!< \deprecated use phaseIdx instead, only one phase employed
 
     // Component indices
-    static const int comp1Idx = 0; //!< Index of the wetting's primary component
-    static const int comp0Idx = 1; //!< Index of the non-wetting's primary component
-    static const int lCompIdx = comp1Idx; //!< \deprecated use comp1Idx instead
-    static const int gCompIdx = comp0Idx; //!< \deprecated use comp0Idx instead
+    static const int phaseCompIdx = phaseIdx; //!< The index of the main component of the considered phase
+    static const int transportCompIdx = (unsigned int)(1-phaseIdx); //!< The index of the transported (minor) component; ASSUMES phase indices of 0 and 1
+
+    static const int comp1Idx = 0; //!< \deprecated Index of the wetting's primary component
+    static const int comp0Idx = 1; //!< \deprecated Index of the non-wetting's primary component
+    static const int lCompIdx = transportCompIdx; //!< \deprecated use transportComp instead
+    static const int gCompIdx = phaseCompIdx; //!< \deprecated use phaseCompIdx instead
 
     // equation and primary variable indices
     static const int dim = StokesCommonIndices<TypeTag>::dim;
-    static const int transportEqIdx = PVOffset + dim+1; //!< The index for the transport equation.
+    static const int transportEqIdx = PVOffset + dim+1; //!< The index for the transport equation
     static const int transportIdx = transportEqIdx; //!< \deprecated use transportEqIdx instead
-    static const int transportCompIdx = transportEqIdx; //!< The index for the mass or mole fraction in primary variable vectors.
-    static const int massOrMoleFracIndex = transportCompIdx; //!< \deprecated use transportCompIdx instead
 
-    static const int phaseIdx = nPhaseIdx; //!< Index of the non-wetting phase (required to use the same fluid system in coupled models)
+    static const int massOrMoleFracIdx = transportEqIdx; //!< The index of the mass or mole fraction of the transported component in primary variable vectors
+    static const int massOrMoleFracIndex = massOrMoleFracIdx; //!< \deprecated use massOrMoleFracIdx instead
+
 };
 } // end namespace
 

@@ -116,8 +116,15 @@ class Stokes2cniTestProblem : public StokesProblem<TypeTag>
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
         momentumZIdx = Indices::momentumZIdx, //!< Index of the z-component of the momentum balance
-        transportIdx = Indices::transportIdx, //!< Index of the transport equation (massfraction)
-        energyIdx =    Indices::energyIdx     //!< Index of the energy equation (temperature)
+        transportEqIdx = Indices::transportEqIdx, //!< Index of the transport equation
+        energyEqIdx =    Indices::energyEqIdx     //!< Index of the energy equation
+    };
+    enum { // indices for primary variables
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx,
+        pressureIdx = Indices::pressureIdx,
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx,
+        temperatureIdx = Indices::temperatureIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
@@ -271,19 +278,19 @@ private:
                   const GlobalPosition &globalPos) const
     {
         const Scalar v1 = 0.5;
-        values[momentumXIdx] = 0.0;
-        values[momentumYIdx] = v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
+        values[velocityXIdx] = 0.0;
+        values[velocityYIdx] = v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
                                    / (0.25*(this->bboxMax()[0] - this->bboxMin()[0])*(this->bboxMax()[0] - this->bboxMin()[0]));
-        values[massBalanceIdx] = 1e5 - 1.189*this->gravity()[1]*globalPos[1];
-        values[transportIdx] = 1e-4;
-        values[energyIdx] = 283.15;
+        values[pressureIdx] = 1e5 - 1.189*this->gravity()[1]*globalPos[1];
+        values[massOrMoleFracIdx] = 1e-4;
+        values[temperatureIdx] = 283.15;
         if(globalPos[0]<0.75 && globalPos[0]>0.25 &&
                 globalPos[1]<0.75 && globalPos[1]>0.25)
 //        if(onLowerBoundary_(globalPos) &&
 //                !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
         {
-            values[transportIdx] = 0.9e-4;
-            values[energyIdx] = 284.15;
+            values[massOrMoleFracIdx] = 0.9e-4;
+            values[temperatureIdx] = 284.15;
         }
     }
     // \}

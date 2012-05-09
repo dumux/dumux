@@ -54,10 +54,11 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
 
     enum { dim = GridView::dimension };
     enum { transportEqIdx = Indices::transportEqIdx }; //!< Index of the transport equation
-    enum { transportIdx = transportEqIdx }; DUMUX_DEPRECATED_MSG("use transportEqIdx instead");
-    enum { comp1Idx = Indices::comp1Idx }; //!< Index of the transported component
-    enum { lCompIdx = comp1Idx } DUMUX_DEPRECATED_MSG("use comp1Idx instead");
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx)}; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
+    enum { phaseIdx = Indices::phaseIdx }; //!< Index of the considered phase (only of interest when using two-phase fluidsystems)
+
+    // component indices
+    enum { phaseCompIdx = Indices::phaseCompIdx };          //!< Index of the main component of the fluid phase
+    enum { transportCompIdx = Indices::transportCompIdx };  //!< Index of the minor component of the fluid phase
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -93,10 +94,10 @@ public:
         // compute the storage of the component
         storage[transportEqIdx] =
             volVars.density() *
-            volVars.fluidState().massFraction(phaseIdx, comp1Idx);
+            volVars.fluidState().massFraction(phaseIdx, transportCompIdx);
 
         Valgrind::CheckDefined(volVars.density());
-        Valgrind::CheckDefined(volVars.fluidState().massFraction(phaseIdx, comp1Idx));
+        Valgrind::CheckDefined(volVars.fluidState().massFraction(phaseIdx, transportCompIdx));
     }
 
     /*!
@@ -124,10 +125,10 @@ public:
 
         if (this->massUpwindWeight_ > 0.0)
             tmp *=  this->massUpwindWeight_ *         // upwind data
-                up.density() * up.fluidState().massFraction(phaseIdx, comp1Idx);
+                up.density() * up.fluidState().massFraction(phaseIdx, transportCompIdx);
         if (this->massUpwindWeight_ < 1.0)
             tmp += (1.0 - this->massUpwindWeight_) *     // rest
-                dn.density() * dn.fluidState().massFraction(phaseIdx, comp1Idx);
+                dn.density() * dn.fluidState().massFraction(phaseIdx, transportCompIdx);
 
         flux[transportEqIdx] += tmp;
         Valgrind::CheckDefined(flux[transportEqIdx]);
@@ -153,7 +154,7 @@ public:
                 fluxVars.face().normal[dimIdx] *
                 fluxVars.diffusionCoeff() *
                 fluxVars.molarDensity() *
-                FluidSystem::molarMass(comp1Idx);
+                FluidSystem::molarMass(transportCompIdx);
 
         Valgrind::CheckDefined(flux[transportEqIdx]);
     }

@@ -55,7 +55,7 @@ class Stokes2cniVolumeVariables : public Stokes2cVolumeVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
-    enum { energyIdx = Indices::energyIdx };
+    enum { temperatureIdx = Indices::temperatureIdx };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
@@ -118,7 +118,7 @@ protected:
                             const FVElementGeometry &fvGeometry,
                             const int scvIdx)
     {
-        return priVars[energyIdx];
+        return priVars[temperatureIdx];
     }
 
     template<class ParameterCache>

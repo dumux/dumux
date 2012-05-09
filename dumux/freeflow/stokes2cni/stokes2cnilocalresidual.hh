@@ -55,7 +55,7 @@ class Stokes2cniLocalResidual : public Stokes2cLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Stokes2cniIndices) Indices;
 
     enum { dim = GridView::dimension };
-    enum { energyIdx = Indices::energyIdx }; //!< Index of the transport equation
+    enum { energyEqIdx = Indices::energyEqIdx }; //!< Index of the transport equation
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -84,7 +84,7 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute the storage of energy
-        storage[energyIdx] =
+        storage[energyEqIdx] =
             volVars.density() *
             volVars.internalEnergy();
     }
@@ -115,8 +115,8 @@ public:
             (1.0 - this->massUpwindWeight_) *     // rest
             dn.density() * dn.enthalpy();
 
-        flux[energyIdx] += tmp;
-        Valgrind::CheckDefined(flux[energyIdx]);
+        flux[energyEqIdx] += tmp;
+        Valgrind::CheckDefined(flux[energyEqIdx]);
     }
 
     /*!
@@ -134,7 +134,7 @@ public:
 
         // diffusive heat flux
         for (int dimIdx = 0; dimIdx < dim; ++dimIdx)
-            flux[energyIdx] -=
+            flux[energyEqIdx] -=
                 fluxVars.temperatureGrad()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
                 fluxVars.heatConductivity();
