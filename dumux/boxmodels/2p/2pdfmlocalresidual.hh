@@ -1,0 +1,373 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
+ *   Institute for Modelling Hydraulic and Environmental Systems             *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise calculation of the residual for the two-phase box model.
+ */
+#ifndef DUMUX_TWOP_DFM_LOCAL_RESIDUAL_BASE_HH
+#define DUMUX_TWOP_DFM_LOCAL_RESIDUAL_BASE_HH
+
+//#include <dumux/boxmodels/common/boxmodel.hh>
+#include <dumux/boxmodels/2p/2plocalresidual.hh>
+#include "2pdfmproperties.hh"
+
+namespace Dumux
+{
+/*!
+ * \ingroup TwoPBoxModel
+ * \ingroup BoxLocalResidual
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the two-phase box model.
+ *
+ * This class is also used for the non-isothermal model, which means
+ * that it uses static polymorphism.
+ */
+template<class TypeTag>
+class TwoPDFMLocalResidual :public TwoPLocalResidual<TypeTag>
+{
+	typedef TwoPLocalResidual<TypeTag> ParentType;
+protected:
+    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+
+    typedef Dune::UGGrid<2> GridType; //TODO
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    enum
+    {
+        contiWEqIdx = Indices::contiWEqIdx,
+        contiNEqIdx = Indices::contiNEqIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+    };
+
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    enum {
+    	dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
+    };
+
+    typedef typename GridType::ctype DT;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::template Codim<dim>::Entity Vertex;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+public:
+    /*!
+     * \brief Constructor. Sets the upwind weight.
+     */
+    TwoPDFMLocalResidual()
+    {
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+        std::cout<<"\NIN LOCAL RESIDUAL\n";//TODO delete
+    };
+
+    /*!
+     * \brief Evaluate the amount all conservation quantities
+     *        (e.g. phase mass) within a finite sub-control volume.
+     *
+     *  \param result The phase mass within the sub-control volume
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     */
+    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    {
+        // if flag usePrevSol is set, the solution from the previous
+        // time step is used, otherwise the current solution is
+        // used. The secondary variables are used accordingly.  This
+        // is required to compute the derivative of the storage term
+        // using the implicit euler method.
+
+//       	ParentType::computeStorage(result,scvIdx,usePrevSol);
+       	computeStorageFracture(result,scvIdx,usePrevSol);
+
+//        const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
+//        const VolumeVariables &vertDat = elemDat[scvIdx];
+//
+//        // wetting phase mass
+//        result[contiWEqIdx] = vertDat.density(wPhaseIdx) * vertDat.porosity()
+//                * vertDat.saturation(wPhaseIdx);
+//
+//        // non-wetting phase mass
+//        result[contiNEqIdx] = vertDat.density(nPhaseIdx) * vertDat.porosity()
+//                * vertDat.saturation(nPhaseIdx);
+    }
+
+    void computeStorageFracture(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    {
+    	const ElementVolumeVariables &elemDat = usePrevSol ? this->prevVolVars_()
+    	                : this->curVolVars_();
+		const VolumeVariables &vertDat = elemDat[scvIdx];
+		const Element &elem = this->elem_();
+		bool isFracture = this->problem_().spatialParameters().isVertexFracture(elem, scvIdx);
+		/*
+		 * Sn = w_F * SnF + w_M * SnM
+		 * First simple case before determining the real w_F is to assume that it is 0
+		 * and w_M = 1
+		 *
+		 */
+		///////////////////////////////////////////////////////////////////////
+		Scalar w_F, w_M; //volumetric fractions of fracture and matrix;
+		Scalar fractureVolume = 0.0;
+		w_F = 0.0;
+		/*
+		 * Calculate the fracture volume fraction w_F = 0.5 * Fwidth * 0.5 * Length
+		 */
+		Dune::GeometryType gt = elem.geometry().type();
+		const typename Dune::GenericReferenceElementContainer<DT,dim>::value_type&
+			refElem = Dune::GenericReferenceElements<DT,dim>::general(gt);
+
+		Scalar vol; //subcontrol volume
+		FVElementGeometry fvelem = this->fvElemGeom_();
+		vol = fvelem.subContVol[scvIdx].volume;
+		for (int faceIdx=0; faceIdx<refElem.size(1); faceIdx++)
+		{
+			SCVFace face = fvelem.subContVolFace[faceIdx];
+			int i=face.i;
+			int j=face.j;
+
+			if (this->problem_().spatialParameters().isEdgeFracture(elem, faceIdx)
+					&& (i==scvIdx || j==scvIdx))
+			{
+				Scalar fracture_width = this->problem_().spatialParameters().fractureWidth();
+
+				const GlobalPosition global_i = elem.geometry().corner(i);
+				const GlobalPosition global_j = elem.geometry().corner(j);
+				GlobalPosition diff_ij = global_j;
+				diff_ij -=global_i;
+				Scalar fracture_length = 0.5*diff_ij.two_norm();
+				//half is taken from the other element
+				fractureVolume += 0.5 * fracture_length * fracture_width;
+			}
+		}
+		w_F = fractureVolume/vol;
+		w_M = 1-w_F;
+		///////////////////////////////////////////////////////////////////////
+		Scalar storageFracture[numPhases];
+		Scalar storageMatrix [numPhases];
+		storageFracture[wPhaseIdx]	= 0.0;
+		storageFracture[nPhaseIdx]	= 0.0;
+		storageMatrix[wPhaseIdx]	= 0.0;
+		storageMatrix[nPhaseIdx]	= 0.0;
+//        const GlobalPosition &globalPos = elem.geometry().corner(scvIdx);
+
+		Scalar dSM_dSF = vertDat.dSM_dSF();
+		if (!this->problem_().use_interface_condition)
+		{
+			dSM_dSF = 1.0;
+		}
+
+		if (isFracture)
+		{
+			for (int phaseIdx = 0; phaseIdx<2; phaseIdx++)
+			{
+//        		w_F=0.0; w_M=1.0;
+				storageFracture[phaseIdx] = vertDat.density(phaseIdx)
+										* vertDat.porosityFracture()
+										* w_F
+										* vertDat.saturationFracture(phaseIdx);
+				storageMatrix[phaseIdx] = vertDat.density(phaseIdx)
+										* vertDat.porosity()
+										* w_M
+										* dSM_dSF
+										* vertDat.saturationMatrix(phaseIdx);
+			}
+		}
+		else
+		{
+			for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++)
+			{
+				storageFracture[phaseIdx] = 0.0;
+				storageMatrix[phaseIdx] = vertDat.density(phaseIdx)
+										* vertDat.porosity()
+										* vertDat.saturation(phaseIdx);
+			}
+
+		}
+
+		result[contiWEqIdx] =  storageFracture[wPhaseIdx]
+							+ storageMatrix[wPhaseIdx];
+
+		// non-wetting phase mass
+		result[contiNEqIdx] =  storageFracture[nPhaseIdx]
+							+ storageMatrix[nPhaseIdx];
+    }
+
+
+    /*!
+     * \brief Evaluates the mass flux over a face of a sub-control
+     *        volume.
+     *
+     * \param flux The flux over the SCV (sub-control-volume) face for each phase
+     * \param faceIdx The index of the SCV face
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     *        are calculated for interior SCV faces or boundary faces, default=false
+     */
+    void computeFlux(PrimaryVariables &flux, int faceIdx, const bool onBoundary=false) const
+    {
+
+    	ParentType::computeFlux(flux, faceIdx);
+
+        FluxVariables vars(this->problem_(),
+                           this->elem_(),
+                           this->fvElemGeom_(),
+                           faceIdx,
+                           this->curVolVars_(),
+                           onBoundary);
+//        flux = 0;
+        asImp_()->computeAdvectiveFluxFracture(flux, vars);
+//        asImp_()->computeDiffusiveFlux(flux, vars);
+    }
+
+    /*!
+     * \brief Evaluates the advective mass flux of all components over
+     *        a face of a sub-control volume.
+     *
+     * \param flux The advective flux over the sub-control-volume face for each phase
+     * \param fluxVars The flux variables at the current SCV
+     *
+     * This method is called by compute flux and is mainly there for
+     * derived models to ease adding equations selectively.
+     */
+    void computeAdvectiveFluxFracture(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    {
+        ////////
+        // advective fluxes of all components in all phases
+        ////////
+        Vector tmpVec;
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            // calculate the flux in direction of the
+            // current fracture
+            //
+            // v = - (K grad p) * n
+            //
+            // (the minus comes from the Darcy law which states that
+            // the flux is from high to low pressure potentials.)
+
+            // data attached to upstream and the downstream vertices
+            // of the current phase
+            const VolumeVariables &upFracture =
+            		this->curVolVars_(fluxVars.upstreamFractureIdx[phaseIdx]);
+            const VolumeVariables &dnFracture =
+            		this->curVolVars_(fluxVars.downstreamFractureIdx[phaseIdx]);
+
+            // add advective flux of current component in current
+            // phase
+            int eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
+
+            Scalar fractureFlux =
+                          0.5 * fluxVars.vDarcyFracture_[phaseIdx]
+                              * ( massUpwindWeight_ // upstream vertex
+                                 *  (upFracture.density(phaseIdx)
+                                    * upFracture.mobilityFracture(phaseIdx))
+                                 + (1 - massUpwindWeight_) // downstream vertex
+                                    * (dnFracture.density(phaseIdx)
+                                      * dnFracture.mobilityFracture(phaseIdx)));
+
+            //TODO delete after debugging
+//            if (fluxVars.vDarcyFracture_[phaseIdx] != 0)
+            {
+             std::cout<<"\nfluxVars.vDarcyFracture_[phaseIdx]= "
+            		 <<fluxVars.vDarcyFracture_[phaseIdx]<<std::endl;
+            }//TODO delete after debugging
+            //TODO delete after debugging
+//            if (fractureFlux != 0)
+            {
+            	std::cout<<"\nfractureFlux = "<<fractureFlux<<"\n";
+            }//TODO delete after debugging
+
+            flux[phaseIdx] += fractureFlux;
+
+        }
+    }
+
+    /*!
+     * \brief Adds the diffusive flux to the flux vector over
+     *        the face of a sub-control volume.
+     *
+     * \param flux The diffusive flux over the sub-control-volume face for each phase
+     * \param fluxData The flux variables at the current SCV
+     *
+     * It doesn't do anything in two-phase model but is used by the
+     * non-isothermal two-phase models to calculate diffusive heat
+     * fluxes
+     */
+    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxData) const
+    {
+        // diffusive fluxes
+        flux += 0.0;
+    }
+
+    /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param q The source/sink in the SCV for each phase
+     * \param localVertexIdx The index of the SCV
+     *
+     */
+    void computeSource(PrimaryVariables &q, int localVertexIdx) const
+    {
+        // retrieve the source term intrinsic to the problem
+        this->problem_().boxSDSource(q,
+                                     this->elem_(),
+                                     this->fvElemGeom_(),
+                                     localVertexIdx,
+                                     this->curVolVars_());
+    }
+
+
+protected:
+    Implementation *asImp_()
+    {
+        return static_cast<Implementation *> (this);
+    }
+    const Implementation *asImp_() const
+    {
+        return static_cast<const Implementation *> (this);
+    }
+
+private:
+    Scalar massUpwindWeight_;
+
+};
+
+}
+
+#endif
