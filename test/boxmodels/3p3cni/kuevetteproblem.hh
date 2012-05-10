@@ -38,7 +38,7 @@
 #include <dumux/boxmodels/3p3cni/3p3cnimodel.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
-#include "kuevettespatialparameters.hh"
+#include "kuevettespatialparams.hh"
 
 #define ISOTHERMAL 0
 
@@ -49,7 +49,7 @@ class KuevetteProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(KuevetteProblem, INHERITS_FROM(BoxThreePThreeCNI, KuevetteSpatialParameters));
+NEW_TYPE_TAG(KuevetteProblem, INHERITS_FROM(BoxThreePThreeCNI, KuevetteSpatialParams));
 
 // Set the grid type
 SET_PROP(KuevetteProblem, Grid)
@@ -241,7 +241,7 @@ public:
      *
      * \param values The neumann values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeomtry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -251,9 +251,9 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeomtry,
                  const Intersection &is,
-                 int scvIdx,
+                 const int scvIdx,
                  int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
@@ -281,7 +281,7 @@ public:
      *
      * \param values The initial values for the primary variables
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeomtry The finite-volume geometry in the box scheme
      * \param scvIdx The local vertex index
      *
      * For this method, the \a values parameter stores primary
@@ -289,8 +289,8 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
+                 const FVElementGeometry &fvGeomtry,
+                 const int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
@@ -306,7 +306,7 @@ public:
      * \param globalPos The global position
      */
     int initialPhasePresence(const Vertex &vert,
-                             int &globalIdx,
+                             const int &globalIdx,
                              const GlobalPosition &globalPos) const
     {
         if((globalPos[0] >= 0.20) && (globalPos[0] <= 0.80) && (globalPos[1] >= 0.4) && (globalPos[1] <= 0.65))

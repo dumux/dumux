@@ -38,7 +38,7 @@
 #include <dumux/boxmodels/3p3cni/3p3cnimodel.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
-#include "columnxylolspatialparameters.hh"
+#include "columnxylolspatialparams.hh"
 
 #define ISOTHERMAL 0
 
@@ -49,7 +49,7 @@ class ColumnProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ColumnProblem, INHERITS_FROM(BoxThreePThreeCNI, ColumnSpatialParameters));
+NEW_TYPE_TAG(ColumnProblem, INHERITS_FROM(BoxThreePThreeCNI, ColumnSpatialParams));
 
 // Set the grid type
 SET_PROP(ColumnProblem, Grid)
@@ -206,7 +206,7 @@ public:
      *
      * \param values The neumann values for the conservation equations
      * \param element The finite element
-     * \param fvElemGeom The finite-volume geometry in the box scheme
+     * \param fvGeomtry The finite-volume geometry in the box scheme
      * \param is The intersection between element and boundary
      * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
@@ -216,9 +216,9 @@ public:
      */
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeomtry,
                  const Intersection &is,
-                 int scvIdx,
+                 const int scvIdx,
                  int boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
@@ -254,8 +254,8 @@ public:
      */
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
-                 int scvIdx) const
+                 const FVElementGeometry &fvGeomtry,
+                 const int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
