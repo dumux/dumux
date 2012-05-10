@@ -1,11 +1,11 @@
 # programs just to build when "make check" is used
 check_PROGRAMS = tutorial_decoupled tutorial_coupled
 
-noinst_HEADERS= tutorialspatialparameters_decoupled.hh tutorialproblem_decoupled.hh tutorialspatialparams_coupled.hh tutorialproblem_coupled.hh
+noinst_HEADERS= tutorialspatialparams_decoupled.hh tutorialproblem_decoupled.hh tutorialspatialparams_coupled.hh tutorialproblem_coupled.hh
 EXTRA_DIST = CMakeLists.txt *.input
 
 tutorial_decoupleddir = $(datadir)/dumux/tutorial
-tutorial_decoupled_HEADERS = tutorialspatialparameters_decoupled.hh \
+tutorial_decoupled_HEADERS = tutorialspatialparams_decoupled.hh \
 	tutorialproblem_decoupled.hh
 tutorial_decoupled_SOURCES = tutorial_decoupled.cc
 tutorial_decoupled_DATA = $(tutorial_decoupled_SOURCES)
