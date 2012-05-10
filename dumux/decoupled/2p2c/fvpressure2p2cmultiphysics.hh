@@ -795,7 +795,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
     // iterate through leaf grid an copy subdomain information
     if(problem().timeManager().time() != 0.)
     {
-        for (int i= 0; i < nextSubdomain.size(); i++)
+        for (unsigned int i= 0; i < nextSubdomain.size(); i++)
         {
             problem().variables().cellData(i).subdomain() = nextSubdomain[i];
         }

@@ -291,7 +291,7 @@ protected:
     {
         // determine the minimum rank for all indices
         masterRank_.resize(numLocal_, myRank_);
-        for (int localIdx = 0; localIdx < masterRank_.size(); ++localIdx) {
+        for (unsigned int localIdx = 0; localIdx < masterRank_.size(); ++localIdx) {
             int masterRank = myRank_;
             if (isBorder(localIdx)) {
                 // if the local index is a border index, loop over all ranks

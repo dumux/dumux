@@ -160,7 +160,7 @@ public:
         if(velocityOutput) // check if velocity output is demanded
         {
             // initialize velocity fields
-            for (int i = 0; i < numVertices; ++i)
+            for (unsigned int i = 0; i < numVertices; ++i)
             {
                 (*velocityN)[i] = Scalar(0);
                 (*velocityW)[i] = Scalar(0);
@@ -385,7 +385,7 @@ public:
             if(velocityOutput) // check if velocity output is demanded
             {
                 // divide the vertex velocities by the number of adjacent scvs i.e. cells
-                for(int globalIdx = 0; globalIdx < numVertices; ++globalIdx){
+                for(unsigned int globalIdx = 0; globalIdx < numVertices; ++globalIdx){
                     (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
                     (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
                 }

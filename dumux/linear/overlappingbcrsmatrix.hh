@@ -131,7 +131,7 @@ public:
         BCRSMatrix::operator=(0.0);
 
         // assign the local rows
-        for (int rowIdx = 0; rowIdx < M.N(); ++rowIdx) {
+        for (unsigned int rowIdx = 0; rowIdx < M.N(); ++rowIdx) {
             ConstColIterator colIt = M[rowIdx].begin();
             ConstColIterator colEndIt = M[rowIdx].end();
             ColIterator myColIt = (*this)[rowIdx].begin();
@@ -251,7 +251,7 @@ private:
         // first, add all local matrix entries
         /////////
         entries_.resize(overlap_->numDomestic());
-        for (int rowIdx = 0; rowIdx < M.N(); ++rowIdx) {
+        for (unsigned int rowIdx = 0; rowIdx < M.N(); ++rowIdx) {
             ConstColIterator colIt = M[rowIdx].begin();
             ConstColIterator colEndIt = M[rowIdx].end();
             for (; colIt != colEndIt; ++colIt) {
@@ -268,21 +268,21 @@ private:
         typename PeerSet::const_iterator peerIt = peerSet.begin();
         typename PeerSet::const_iterator peerEndIt = peerSet.end();
         for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
+            unsigned int peerRank = *peerIt;
             sendRowIndices_(M, peerRank);
         }
 
         // then recieve all indices from the peers
         peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
+            unsigned int peerRank = *peerIt;
             receiveRowIndices_(peerRank);
         }
 
         // wait until all send operations are completed
         peerIt = peerSet.begin();
         for (; peerIt != peerEndIt; ++peerIt) {
-            int peerRank = *peerIt;
+            unsigned int peerRank = *peerIt;
 
             numRowsSendBuff_[peerRank]->wait();
             rowSizesSendBuff_[peerRank]->wait();
@@ -300,14 +300,14 @@ private:
         /////////
 
         // set the row sizes
-        int numDomestic = overlap_->numDomestic();
-        for (int rowIdx = 0; rowIdx < numDomestic; ++rowIdx) {
+        unsigned int numDomestic = overlap_->numDomestic();
+        for (unsigned int rowIdx = 0; rowIdx < numDomestic; ++rowIdx) {
             this->setrowsize(rowIdx, entries_[rowIdx].size());
         }
         this->endrowsizes();
 
         // set the indices
-        for (int rowIdx = 0; rowIdx < numDomestic; ++rowIdx) {
+        for (unsigned int rowIdx = 0; rowIdx < numDomestic; ++rowIdx) {
             const std::set<ColIndex> &colIndices = entries_[rowIdx];
 
             typename std::set<ColIndex>::const_iterator colIdxIt = colIndices.begin();

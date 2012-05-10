@@ -137,7 +137,7 @@ public:
         //use vertical faces for vx and horizontal faces for vy calculation
         std::vector<DimVector> boxSurface(numVertices);
         // initialize velocity fields
-          for (int i = 0; i < numVertices; ++i)
+          for (unsigned int i = 0; i < numVertices; ++i)
           {
 
               velocityX[i] = 0;

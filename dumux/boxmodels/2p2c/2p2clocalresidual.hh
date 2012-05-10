@@ -188,11 +188,11 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         // compute storage term of all components within all phases
         storage = 0;
 
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
+            for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
             {
-                int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
                 storage[eqIdx] += volVars.density(phaseIdx)
                     * volVars.saturation(phaseIdx)
                     * volVars.fluidState().massFraction(phaseIdx, compIdx);
@@ -243,7 +243,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
         ////////
         // advective fluxes of all components in all phases
         ////////
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // data attached to upstream and the downstream vertices
             // of the current phase
@@ -252,9 +252,9 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
             const VolumeVariables &dn =
                 this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
-            for (int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
+            for (unsigned int compIdx = contiCompIdx1_(); compIdx <= contiCompIdx2_(); ++compIdx)
             {
-                int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
+                unsigned int eqIdx = (compIdx == wCompIdx) ? contiWEqIdx : contiNEqIdx;
                 // add advective flux of current component in current
                 // phase
                 if (massUpwindWeight_ > 0.0)

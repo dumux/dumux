@@ -55,12 +55,12 @@ public:
     static void chop(SolutionVector &uCurrentIter,
                      const SolutionVector &uLastIter)
     {
-        for (int i = 0; i < uLastIter.size(); ++i) {
-            for (int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
+        for (unsigned int i = 0; i < uLastIter.size(); ++i) {
+            for (unsigned int phaseIdx = 0; phaseIdx < numPhases - 1; ++phaseIdx)
                 saturationChop_(uCurrentIter[i][S0Idx + phaseIdx],
                                 uLastIter[i][S0Idx + phaseIdx]);
             pressureChop_(uCurrentIter[i][p0Idx], uLastIter[i][p0Idx]);
-            for (int comp = 0; comp < numComponents; ++comp) {
+            for (unsigned int comp = 0; comp < numComponents; ++comp) {
                 pressureChop_(uCurrentIter[i][fug0Idx + comp], uLastIter[i][fug0Idx + comp]);
             }
 
@@ -217,7 +217,7 @@ public:
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         }
         else {
-            for (int i = 0; i < uLastIter.size(); ++i) {
+            for (unsigned int i = 0; i < uLastIter.size(); ++i) {
                 uCurrentIter[i] = uLastIter[i];
                 uCurrentIter[i] -= deltaU[i];
             }

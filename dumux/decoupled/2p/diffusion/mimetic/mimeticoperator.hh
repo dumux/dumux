@@ -99,7 +99,7 @@ public:
 
             // get local to global id map and pressure traces
             Dune::FieldVector<Scalar,2*dim> pressTrace(0);
-            for (int k = 0; k < numFaces; k++)
+            for (unsigned int k = 0; k < numFaces; k++)
             {
                 pressTrace[k] = u[this->faceMapper_.map(*it, k, 1)];
             }

@@ -142,11 +142,11 @@ public:
         this->setcurrentsize(numFaces);
 
         // clear assemble data
-        for (int i=0; i<numFaces; i++)
+        for (unsigned int i=0; i<numFaces; i++)
         {
             this->b[i] = 0;
             this->bctype[i].reset();
-            for (int j=0; j<numFaces; j++)
+            for (unsigned int j=0; j<numFaces; j++)
                 this->A[i][j] = 0;
         }
 
@@ -178,7 +178,7 @@ public:
         this->setcurrentsize(numFaces);
 
         // clear assemble data
-        for (int i=0; i<numFaces; i++)
+        for (unsigned int i=0; i<numFaces; i++)
         {
             this->b[i] = 0;
             this->bctype[i].reset();
@@ -244,49 +244,49 @@ public:
         // Brezzi/Lipnikov/Simonicini M3AS 2005
         // (1) orthonormalize columns of the matrix R
         Scalar norm = R[0][0]*R[0][0];
-        for (int i = 1; i < numFaces; i++)
+        for (unsigned int i = 1; i < numFaces; i++)
             norm += R[i][0]*R[i][0];
         norm = sqrt(norm);
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
             R[i][0] /= norm;
         Scalar weight = R[0][1]*R[0][0];
-        for (int i = 1; i < numFaces; i++)
+        for (unsigned int i = 1; i < numFaces; i++)
             weight += R[i][1]*R[i][0];
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
             R[i][1] -= weight*R[i][0];
         norm = R[0][1]*R[0][1];
-        for (int i = 1; i < numFaces; i++)
+        for (unsigned int i = 1; i < numFaces; i++)
             norm += R[i][1]*R[i][1];
         norm = sqrt(norm);
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
             R[i][1] /= norm;
         if (dim == 3)
         {
             Scalar weight1 = R[0][2]*R[0][0];
             Scalar weight2 = R[0][2]*R[0][1];
-            for (int i = 1; i < numFaces; i++)
+            for (unsigned int i = 1; i < numFaces; i++)
             {
                 weight1 += R[i][2]*R[i][0];
                 weight2 += R[i][2]*R[i][1];
             }
-            for (int i = 0; i < numFaces; i++)
+            for (unsigned int i = 0; i < numFaces; i++)
                 R[i][1] -= weight1*R[i][0] + weight2*R[i][1];
             norm = R[0][2]*R[0][2];
-            for (int i = 1; i < numFaces; i++)
+            for (unsigned int i = 1; i < numFaces; i++)
                 norm += R[i][2]*R[i][2];
             norm = sqrt(norm);
-            for (int i = 0; i < numFaces; i++)
+            for (unsigned int i = 0; i < numFaces; i++)
                 R[i][2] /= norm;
         }
         //      std::cout << "~R =\dim" << R;
 
         // (2) Build the matrix ~D
         Dune::FieldMatrix<Scalar,2*dim,2*dim> D(0);
-        for (int s = 0; s < numFaces; s++)
+        for (unsigned int s = 0; s < numFaces; s++)
         {
             Dune::FieldVector<Scalar,2*dim> es(0);
             es[s] = 1;
-            for (int k = 0; k < numFaces; k++)
+            for (unsigned int k = 0; k < numFaces; k++)
             {
                 D[k][s] = es[k];
                 for (int i = 0; i < dim; i++)
@@ -305,9 +305,9 @@ public:
         // (3) Build the matrix W = Minv
         Dune::FieldMatrix<Scalar,2*dim,dim> NK(N);
         NK.rightmultiply (K);
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
         {
-            for (int j = 0; j < numFaces; j++)
+            for (unsigned int j = 0; j < numFaces; j++)
             {
                 W[i][j] = NK[i][0]*N[j][0];
                 for (int k = 1; k < dim; k++)
@@ -332,12 +332,12 @@ public:
         // calculate the part of the matrix C coupling velocities and element pressures.
         // This is just a row vector of size numFaces.
         // scale with volume
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
             c[i] = faceVol[i];
 
         // Set up the element part of the matrix \Pi coupling velocities
         // and pressure-traces. This is a diagonal matrix with entries given by faceVol.
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
             Pi[i][i] = faceVol[i];
 
         // Calculate the element part of the matrix D^{-1} = (c W c^T)^{-1} which is just a scalar value.
@@ -380,19 +380,19 @@ private:
 
         // Calculate the element part of the matrix F D^{-1} F^T.
         Dune::FieldMatrix<Scalar,2*dim,2*dim> FDinvFT(0);
-        for (int i = 0; i < numFaces; i++)
-            for (int j = 0; j < numFaces; j++)
+        for (unsigned int i = 0; i < numFaces; i++)
+            for (unsigned int j = 0; j < numFaces; j++)
                 FDinvFT[i][j] = dinv*F[i]*F[j];
 
         // Calculate the element part of the matrix S = Pi W Pi^T - F D^{-1} F^T.
-        for (int i = 0; i < numFaces; i++)
-            for (int j = 0; j < numFaces; j++)
+        for (unsigned int i = 0; i < numFaces; i++)
+            for (unsigned int j = 0; j < numFaces; j++)
                 this->A[i][j] = PiWPiT[i][j] - FDinvFT[i][j];
 
         // Calculate the source term F D^{-1} f
         // NOT WORKING AT THE MOMENT
         Scalar factor = dinv*qmean;
-        for (int i = 0; i < numFaces; i++)
+        for (unsigned int i = 0; i < numFaces; i++)
             this->b[i] = F[i]*factor;
 
         //        std::cout << "faceVol = " << faceVol << std::endl << "W = " << std::endl << W << std::endl
