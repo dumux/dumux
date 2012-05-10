@@ -121,14 +121,14 @@ public:
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
-    void update(const PrimaryVariables &primaryVars,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                int scvIdx,
+                const int scvIdx,
                 bool isOldSol)
     {
-        ParentType::update(primaryVars,
+        ParentType::update(priVars,
                            problem,
                            element,
                            fvGeometry,
@@ -142,14 +142,14 @@ public:
         int globalVertIdx = problem.model().dofMapper().map(element, scvIdx, dim);
         int phasePresence = problem.model().phasePresence(globalVertIdx, isOldSol);
 
-        Scalar temp = Implementation::temperature_(primaryVars, problem, element, fvGeometry, scvIdx);
+        Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
         fluidState_.setTemperature(temp);
 
         /* first the saturations */
         if (phasePresence == threePhases)
         {
-            Sw_ = primaryVars[switch1Idx];
-            Sn_ = primaryVars[switch2Idx];
+            Sw_ = priVars[switch1Idx];
+            Sn_ = priVars[switch2Idx];
             Sg_ = 1. - Sw_ - Sn_;
         }
         else if (phasePresence == wPhaseOnly)
@@ -161,12 +161,12 @@ public:
         else if (phasePresence == gnPhaseOnly)
         {
             Sw_ = 0.;
-            Sn_ = primaryVars[switch2Idx];
+            Sn_ = priVars[switch2Idx];
             Sg_ = 1. - Sn_;
         }
         else if (phasePresence == wnPhaseOnly)
         {
-            Sn_ = primaryVars[switch2Idx];
+            Sn_ = priVars[switch2Idx];
             Sw_ = 1. - Sn_;
             Sg_ = 0.;
         }
@@ -178,7 +178,7 @@ public:
         }
         else if (phasePresence == wgPhaseOnly)
         {
-            Sw_ = primaryVars[switch1Idx];
+            Sw_ = priVars[switch1Idx];
             Sn_ = 0.;
             Sg_ = 1. - Sw_;
         }
@@ -190,7 +190,7 @@ public:
         fluidState_.setSaturation(nPhaseIdx, Sn_);
 
         /* now the pressures */
-        pg_ = primaryVars[pressureIdx];
+        pg_ = priVars[pressureIdx];
 
         // calculate capillary pressures
         Scalar pCGW = MaterialLaw::pCGW(materialParams, Sw_);
@@ -237,8 +237,8 @@ public:
             // stored explicitly.
 
             // extract mole fractions in the water phase
-            Scalar xw2 = primaryVars[switch1Idx];
-            Scalar xw1 = primaryVars[switch2Idx];
+            Scalar xw2 = priVars[switch1Idx];
+            Scalar xw1 = priVars[switch2Idx];
             Scalar xw0 = 1 - xw2 - xw1;
 
             // write water mole fractions in the fluid state
@@ -266,7 +266,7 @@ public:
             // the gas phase
             Scalar partPressNAPL = fluidState_.fugacityCoefficient(nPhaseIdx, comp1Idx)*pn_;
 
-            Scalar xg0 = primaryVars[switch1Idx];
+            Scalar xg0 = priVars[switch1Idx];
             Scalar xg1 = partPressNAPL/pg_;
             Scalar xg2 = 1.-xg0-xg1;
 
@@ -289,7 +289,7 @@ public:
             Scalar pPartialC = fluidState_.fugacityCoefficient(nPhaseIdx,comp1Idx)*pn_;
             Scalar henryC = fluidState_.fugacityCoefficient(wPhaseIdx,comp1Idx)*pw_;
 
-            Scalar xw2 = primaryVars[switch1Idx];
+            Scalar xw2 = priVars[switch1Idx];
             Scalar xw1 = pPartialC/henryC;
             Scalar xw0 = 1.-xw2-xw1;
 
@@ -311,8 +311,8 @@ public:
             // only the gas phase is present, gas phase composition is
             // stored explicitly here below.
 
-            const Scalar xg0 = primaryVars[switch1Idx];
-            const Scalar xg1 = primaryVars[switch2Idx];
+            const Scalar xg0 = priVars[switch1Idx];
+            const Scalar xg1 = priVars[switch2Idx];
             Scalar xg2 = 1 - xg0 - xg1;
 
             // write mole fractions in the fluid state
@@ -331,7 +331,7 @@ public:
         }
         else if (phasePresence == wgPhaseOnly) {
             // only water and gas phases are present
-            Scalar xg1 = primaryVars[switch2Idx];
+            Scalar xg1 = priVars[switch2Idx];
             Scalar partPressH2O = fluidState_.fugacityCoefficient(wPhaseIdx, comp0Idx)*pw_;
 
             Scalar xg0 = partPressH2O/pg_;
@@ -424,7 +424,7 @@ public:
         Valgrind::CheckDefined(permeability_);
 
         // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(primaryVars, problem, element, fvGeometry, scvIdx, isOldSol);
+        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -439,7 +439,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar saturation(int phaseIdx) const
+    Scalar saturation(const int phaseIdx) const
     { return fluidState_.saturation(phaseIdx); }
 
     /*!
@@ -448,7 +448,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar density(int phaseIdx) const
+    Scalar density(const int phaseIdx) const
     { return fluidState_.density(phaseIdx); }
 
     /*!
@@ -457,7 +457,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar molarDensity(int phaseIdx) const
+    Scalar molarDensity(const int phaseIdx) const
     { return fluidState_.density(phaseIdx) / fluidState_.averageMolarMass(phaseIdx); }
 
     /*!
@@ -466,7 +466,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar pressure(int phaseIdx) const
+    Scalar pressure(const int phaseIdx) const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
@@ -485,7 +485,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar mobility(int phaseIdx) const
+    Scalar mobility(const int phaseIdx) const
     {
         return mobility_[phaseIdx];
     }
@@ -523,11 +523,11 @@ public:
 
 protected:
 
-    static Scalar temperature_(const PrimaryVariables &primaryVars,
+    static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem &problem,
                                const Element &element,
                                const FVElementGeometry &fvGeometry,
-                               int scvIdx)
+                               const int scvIdx)
     {
         return problem.boxTemperature(element, fvGeometry, scvIdx);
     }
@@ -535,11 +535,11 @@ protected:
     /*!
      * \brief Called by update() to compute the energy related quantities
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
                        const FVElementGeometry &fvGeometry,
-                       int vertIdx,
+                       const int scvIdx,
                        bool isOldSol)
     { }
 

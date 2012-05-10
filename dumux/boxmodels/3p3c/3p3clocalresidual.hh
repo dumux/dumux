@@ -97,7 +97,7 @@ public:
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
     {
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -111,12 +111,12 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // compute storage term of all components within all phases
-        result = 0;
+        storage = 0;
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
-                result[conti0EqIdx + compIdx] +=
+                storage[conti0EqIdx + compIdx] +=
                     volVars.porosity()
                     * volVars.saturation(phaseIdx)
                     * volVars.molarDensity(phaseIdx)
@@ -258,7 +258,7 @@ public:
      * \param q The source/sink in the SCV for each component
      * \param scvIdx The index of the SCV
      */
-    void computeSource(PrimaryVariables &q, int scvIdx)
+    void computeSource(PrimaryVariables &q, const int scvIdx)
     {
         this->problem_().boxSDSource(q,
                                      this->element_(),
