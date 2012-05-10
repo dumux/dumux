@@ -59,7 +59,10 @@ class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum { pressureIdx = Indices::pressureIdx };
+    enum {
+        conti0EqIdx = Indices::conti0EqIdx, //index for the mass balance
+        pressureIdx = Indices::pressureIdx  //index for the primary variable
+    };
 
 public:
 
@@ -96,7 +99,7 @@ public:
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
         // partial time derivative of the wetting phase mass
-        storage[pressureIdx] =  volVars.density() * volVars.porosity();
+        storage[conti0EqIdx] =  volVars.density() * volVars.porosity();
     }
 
 
@@ -123,7 +126,7 @@ public:
 
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
-        flux[pressureIdx] =
+        flux[conti0EqIdx] =
             ((    upwindWeight_)*(up.density()/up.viscosity())
              +
              (1 - upwindWeight_)*(dn.density()/dn.viscosity()))

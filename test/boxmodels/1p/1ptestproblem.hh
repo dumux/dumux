@@ -127,6 +127,7 @@ class OnePTestProblem : public PorousMediaBoxProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
 
         // indices of the primary variables
+        conti0EqIdx = Indices::conti0EqIdx,
         pressureIdx = Indices::pressureIdx
     };
 
@@ -234,7 +235,7 @@ public:
     {
         //  const GlobalPosition &globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
 
-        priVars[pressureIdx] = 0;
+        priVars[conti0EqIdx] = 0;
     }
 
     // \}

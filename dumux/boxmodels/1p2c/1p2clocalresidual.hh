@@ -78,10 +78,11 @@ protected:
 
             //phase index
             phaseIdx = Indices::phaseIdx,
+            comp1Idx = Indices::comp1Idx,
 
             // indices of the primary variables
             pressuerIdx = Indices::pressureIdx,
-            comp1Idx = Indices::comp1Idx,
+            transportCompIdx = Indices::transportCompIdx,
 
             // indices of the equations
             conti0EqIdx = Indices::conti0EqIdx,
@@ -129,19 +130,19 @@ public:
         if(!useMoles)
         {
             // storage term of continuity equation - massfractions
-            storage[contiEqIdx] +=
+            storage[conti0EqIdx] +=
                 volVars.fluidState().density(phaseIdx)*volVars.porosity();
             //storage term of the transport equation - massfractions
-            storage[transEqIdx] +=
+            storage[transportEqIdx] +=
                 volVars.fluidState().density(phaseIdx) * volVars.fluidState().massFraction(phaseIdx, comp1Idx) * volVars.porosity();
         }
         else
         {
             // storage term of continuity equation- molefractions
             //careful: molarDensity changes with moleFrac!
-            storage[contiEqIdx] += volVars.molarDensity()*volVars.porosity();
+            storage[conti0EqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
-            storage[transEqIdx] +=
+            storage[transportEqIdx] +=
                 volVars.fluidState().molarDensity(phaseIdx)*volVars.fluidState().moleFraction(phaseIdx, comp1Idx) *
                 volVars.porosity();
         }
@@ -195,14 +196,14 @@ public:
         {
             // total mass flux - massfraction
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
-            flux[contiEqIdx] +=
+            flux[conti0EqIdx] +=
                 fluxVars.KmvpNormal() *
                 ((     upwindWeight_)*up.density()/up.viscosity()
                  +
                  ((1 - upwindWeight_)*dn.density()/dn.viscosity()));
 
             // advective flux of the second component - massfraction
-            flux[transEqIdx] +=
+            flux[transportEqIdx] +=
                 fluxVars.KmvpNormal() *
                 ((    upwindWeight_)*up.fluidState().density(phaseIdx) * up.fluidState().massFraction(phaseIdx, comp1Idx)/up.viscosity()
                  +
@@ -212,14 +213,14 @@ public:
         {
             // total mass flux - molefraction
             //KmvpNormal is the Darcy velocity multiplied with the normal vector, calculated in 1p2cfluxvariables.hh
-            flux[contiEqIdx] +=
+            flux[conti0EqIdx] +=
                 fluxVars.KmvpNormal() *
                 ((     upwindWeight_)*up.molarDensity()/up.viscosity()
                  +
                  ((1 - upwindWeight_)*dn.molarDensity()/dn.viscosity()));
 
             // advective flux of the second component -molefraction
-            flux[transEqIdx] +=
+            flux[transportEqIdx] +=
                 fluxVars.KmvpNormal() *
                 ((    upwindWeight_)*up.molarDensity() * up.fluidState().moleFraction(phaseIdx, comp1Idx)/up.viscosity()
                  +
@@ -246,7 +247,7 @@ public:
             tmp = -(fluxVars.moleFractionGrad(comp1Idx)*fluxVars.face().normal);
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
             // convert it to a mass flux and add it
-            flux[transEqIdx] += tmp * FluidSystem::molarMass(comp1Idx);
+            flux[transportEqIdx] += tmp * FluidSystem::molarMass(comp1Idx);
         }
         else
         {
@@ -260,7 +261,7 @@ public:
             //            tmp -= fluxVars.molarDensity()*
             //                (normalDisp * fluxVars.moleFractionGrad(comp1Idx));
 
-            flux[transEqIdx] += tmp;
+            flux[transportEqIdx] += tmp;
         }
     }
 
