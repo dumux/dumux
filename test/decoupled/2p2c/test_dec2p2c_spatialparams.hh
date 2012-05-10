@@ -24,11 +24,11 @@
  *
  * \brief spatial parameters for the sequential 2p2c test
  */
-#ifndef TEST_2P2C_SPATIALPARAMETERS_HH
-#define TEST_2P2C_SPATIALPARAMETERS_HH
+#ifndef TEST_2P2C_SPATIALPARAMS_HH
+#define TEST_2P2C_SPATIALPARAMS_HH
 
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
-#include <dumux/material/spatialparameters/fvspatialparameters.hh>
+#include <dumux/material/spatialparams/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 //#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -64,7 +64,7 @@ public:
  * \brief spatial parameters for the sequential 2p2c test
  */
 template<class TypeTag>
-class Test2P2CSpatialParams : public FVSpatialParameters<TypeTag>
+class Test2P2CSpatialParams : public FVSpatialParams<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid)     Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -101,7 +101,7 @@ public:
     }
 
 
-    Test2P2CSpatialParams(const GridView& gridView) : FVSpatialParameters<TypeTag>(gridView),
+    Test2P2CSpatialParams(const GridView& gridView) : FVSpatialParams<TypeTag>(gridView),
             constPermeability_(0)
     {
         // residual saturations

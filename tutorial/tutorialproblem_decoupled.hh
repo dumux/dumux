@@ -40,7 +40,7 @@
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh> /*@\label{tutorial-decoupled:parent-problem}@*/
 
 // assign parameters dependent on space (e.g. spatial parameters)
-#include "tutorialspatialparameters_decoupled.hh" /*@\label{tutorial-decoupled:spatialparameters}@*/
+#include "tutorialspatialparams_decoupled.hh" /*@\label{tutorial-decoupled:spatialparameters}@*/
 
 // include cfl-criterion after coats: more suitable if the problem is not advection dominated
 #include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
@@ -61,7 +61,7 @@ class TutorialProblemDecoupled;
 namespace Properties
 {
 // create a new type tag for the problem
-NEW_TYPE_TAG(TutorialProblemDecoupled, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TutorialSpatialParametersDecoupled)); /*@\label{tutorial-decoupled:create-type-tag}@*/
+NEW_TYPE_TAG(TutorialProblemDecoupled, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, TutorialSpatialParamsDecoupled)); /*@\label{tutorial-decoupled:create-type-tag}@*/
 
 // Set the problem property
 SET_PROP(TutorialProblemDecoupled, Problem) /*@\label{tutorial-decoupled:set-problem}@*/

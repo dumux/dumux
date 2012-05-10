@@ -53,7 +53,7 @@
 
 #include<dumux/decoupled/2p/transport/fv/evalcflfluxcoats.hh>
 
-#include "generallensspatialparameters.hh"
+#include "generallensspatialparams.hh"
 
 namespace Dumux
 {
@@ -67,7 +67,7 @@ class GeneralLensProblem;
 namespace Properties
 {
 //Set the general problem TypeTag which does not depend on the model
-NEW_TYPE_TAG(GeneralLensProblem, INHERITS_FROM(GeneralLensSpatialParameters));
+NEW_TYPE_TAG(GeneralLensProblem, INHERITS_FROM(GeneralLensSpatialParams));
 
 // Property for defining the model specific problem base class
 NEW_PROP_TAG(ProblemBaseClass);
@@ -122,7 +122,7 @@ SET_PROP(BoxGeneralLensProblem, ProblemBaseClass)
 // Set the problem property
 SET_PROP(BoxGeneralLensProblem, SpatialParamsBaseClass)
 {
-    typedef Dumux::BoxSpatialParameters<TypeTag> type;
+    typedef Dumux::BoxSpatialParams<TypeTag> type;
 };
 
 
@@ -142,7 +142,7 @@ SET_PROP(DecoupledGeneralLensProblem, ProblemBaseClass)
 // Set the problem property
 SET_PROP(DecoupledGeneralLensProblem, SpatialParamsBaseClass)
 {
-    typedef Dumux::FVSpatialParameters<TypeTag> type;
+    typedef Dumux::FVSpatialParams<TypeTag> type;
 };
 
 SET_INT_PROP(DecoupledGeneralLensProblem, Formulation,
@@ -255,7 +255,7 @@ public:
     {
         eps_ = 3e-6;
         temperature_ = 273.15 + 20; // -> 20°C
-        this->spatialParameters().setLensCoords(lensLowerLeft, lensUpperRight);
+        this->spatialParams().setLensCoords(lensLowerLeft, lensUpperRight);
         this->timeManager().startNextEpisode(500);
     }
 

@@ -24,10 +24,10 @@
  *
  * \brief spatial parameters for the sequential 2p test
  */
-#ifndef TEST_IMPES_SPATIALPARAMETERS_HH
-#define TEST_IMPES_SPATIALPARAMETERS_HH
+#ifndef TEST_IMPES_SPATIALPARAMS_HH
+#define TEST_IMPES_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparameters/fvspatialparameters.hh>
+#include <dumux/material/spatialparams/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -64,12 +64,12 @@ public:
  * \brief spatial parameters for the sequential 2p test
  */
 template<class TypeTag>
-class TestIMPESSpatialParams: public FVSpatialParameters<TypeTag>
+class TestIMPESSpatialParams: public FVSpatialParams<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef FVSpatialParameters<TypeTag> ParentType;
+    typedef FVSpatialParams<TypeTag> ParentType;
     typedef typename Grid::ctype CoordScalar;
 
     enum

@@ -28,11 +28,11 @@
  * \brief The spatial parameters for the GeneralLensProblem which uses the
  *        twophase box model or twophase decoupled model
  */
-#ifndef DUMUX_GENERALLENSSPATIALPARAMETERS_HH
-#define DUMUX_GENERALLENSSPATIALPARAMETERS_HH
+#ifndef DUMUX_GENERALLENSSPATIALPARAMS_HH
+#define DUMUX_GENERALLENSSPATIALPARAMS_HH
 
-#include <dumux/material/spatialparameters/boxspatialparameters.hh>
-#include <dumux/material/spatialparameters/fvspatialparameters.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
+#include <dumux/material/spatialparams/fvspatialparams.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -42,22 +42,21 @@ namespace Dumux
 {
 //forward declaration
 template<class TypeTag>
-class GeneralLensSpatialParameters;
+class GeneralLensSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(GeneralLensSpatialParameters);
+NEW_TYPE_TAG(GeneralLensSpatialParams);
 
 // Property to define the spatial parameters base class -> allows switch with model switch!
 NEW_PROP_TAG(SpatialParamsBaseClass);
 
 // Set the spatial parameters
-SET_TYPE_PROP(GeneralLensSpatialParameters, SpatialParameters, Dumux::GeneralLensSpatialParameters<TypeTag>);
-SET_TYPE_PROP(GeneralLensSpatialParameters, SpatialParams, Dumux::GeneralLensSpatialParameters<TypeTag>);
+SET_TYPE_PROP(GeneralLensSpatialParams, SpatialParams, Dumux::GeneralLensSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(GeneralLensSpatialParameters, MaterialLaw)
+SET_PROP(GeneralLensSpatialParams, MaterialLaw)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -75,7 +74,7 @@ public:
  *        twophase box model or twophase decoupled model
  */
 template<class TypeTag>
-class GeneralLensSpatialParameters : public GET_PROP_TYPE(TypeTag, SpatialParamsBaseClass)
+class GeneralLensSpatialParams : public GET_PROP_TYPE(TypeTag, SpatialParamsBaseClass)
 {
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParamsBaseClass) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -103,7 +102,7 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    GeneralLensSpatialParameters(const GridView& gridView)
+    GeneralLensSpatialParams(const GridView& gridView)
         : ParentType(gridView)
     {
         // residual saturations
