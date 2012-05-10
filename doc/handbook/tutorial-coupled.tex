@@ -255,12 +255,12 @@ class.
 
 If the box discretization is to used, the spatial parameters class
 should be derived from the base class
-\texttt{Dumux::BoxSpatialParameters<TypeTag>}. Listing
+\texttt{Dumux::BoxSpatialParams<TypeTag>}. Listing
 \ref{tutorial-coupled:spatialparametersfile} shows the file \\
-\verb+tutorialspatialparameters_coupled.hh+:
+\verb+tutorialspatialparams_coupled.hh+:
 
-\begin{lst}[File tutorial/tutorialspatialparameters\_coupled.hh]\label{tutorial-coupled:spatialparametersfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=28]{../../tutorial/tutorialspatialparameters_coupled.hh}
+\begin{lst}[File tutorial/tutorialspatialparams\_coupled.hh]\label{tutorial-coupled:spatialparametersfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=28]{../../tutorial/tutorialspatialparams_coupled.hh}
 \end{lst}
 
 First, the spatial parameters type tag is created on line
@@ -383,7 +383,7 @@ Please reverse the changes made in this part of the exercise, as we will continu
   Use an unregularized linear law with an entry pressure of $p_e = 0.0\;\text{Pa}$ and maximal capillary pressure of e.g. $p_{c_{max}} = 2000.0\;\text{Pa}$ instead of using a
  regularized Brooks-Corey law for the
   relative permeability and for the capillary pressure saturation relationship. To do that you have
-  to change the file \texttt{tutorialspatialparameters\_coupled.hh}. 
+  to change the file \texttt{tutorialspatialparams\_coupled.hh}. 
  You can find the material laws in the folder 
   \verb+dumux/material/fluidmatrixinteractions+. The necessary parameters
 of the linear law and the respective \texttt{set}-functions can be found
@@ -417,7 +417,7 @@ sizes.
 For this exercise you should create a new problem file analogous to
 the file \texttt{tutorialproblem\_coupled.hh} (e.g. with the name
 \texttt{ex2\_tutorialproblem\_coupled.hh} and new spatial parameters
-just like \texttt{tutorialspatialparameters\_coupled.hh}. The new
+just like \texttt{tutorialspatialparams\_coupled.hh}. The new
 problem file needs to
 be included in the file \texttt{tutorial\_coupled.cc}.
 
@@ -433,7 +433,7 @@ Besides adjusting the guardian macros, the new problem file should define and
 use a new type tag for the problem as well as a new problem class
 e.g. \mbox{\texttt{Ex2TutorialProblemCoupled}}. Make sure to assign your
 newly defined spatial parameter class to the
-\texttt{SpatialParameters} property for the new
+\texttt{SpatialParams} property for the new
 type tag. 
 
 After this, change the run-time parameters so that they match the
