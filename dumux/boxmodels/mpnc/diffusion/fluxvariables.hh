@@ -31,7 +31,6 @@
 #include <dune/common/fvector.hh>
 
 #include "../mpncproperties.hh"
-#include "../mpncfluxvariables.hh"
 
 namespace Dumux {
 

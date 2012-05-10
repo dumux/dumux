@@ -29,8 +29,11 @@
 #ifndef DUMUX_COMPOSITIONAL_FLUID_STATE_HH
 #define DUMUX_COMPOSITIONAL_FLUID_STATE_HH
 
-#include <dumux/common/valgrind.hh>
 #include <algorithm>
+
+#include <dune/common/exceptions.hh>
+
+#include <dumux/common/valgrind.hh>
 
 namespace Dumux
 {
