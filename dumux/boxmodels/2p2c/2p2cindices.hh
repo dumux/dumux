@@ -151,8 +151,10 @@ public:
 
     // Equation indices
     static const int conti0EqIdx = PVOffset; //!< Index of the mass conservation equation for the first component
-    static const int DUMUX_DEPRECATED_MSG("use conti0EqIdx + componentIdx instead") contiLEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
-    static const int DUMUX_DEPRECATED_MSG("use conti0EqIdx + componentIdx instead") contiGEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the gas' primary component
+    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< Index of the mass conservation equation for the liquid's primary component
+    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the gas' primary component
+    static const int DUMUX_DEPRECATED_MSG("use contiWEqIdx instead") contiLEqIdx = contiWEqIdx; //!< Index of the mass conservation equation for the liquid's primary component
+    static const int DUMUX_DEPRECATED_MSG("use contiNEqIdx instead") contiGEqIdx = contiNEqIdx; //!< Index of the mass conservation equation for the gas' primary component
 };
 
 // \}

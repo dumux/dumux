@@ -109,13 +109,13 @@ class TwoPTwoCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
-        wPhaseIdx = Indices::lPhaseIdx,
-        nPhaseIdx = Indices::gPhaseIdx,
-        wCompIdx = Indices::lCompIdx,
-        nCompIdx = Indices::gCompIdx,
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        wCompIdx = Indices::wCompIdx,
+        nCompIdx = Indices::nCompIdx,
 
-        wPhaseOnly = Indices::lPhaseOnly,
-        nPhaseOnly = Indices::gPhaseOnly,
+        wPhaseOnly = Indices::wPhaseOnly,
+        nPhaseOnly = Indices::nPhaseOnly,
         bothPhases = Indices::bothPhases,
 
         pwSn = TwoPTwoCFormulation::pwSn,
