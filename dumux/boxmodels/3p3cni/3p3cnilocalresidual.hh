@@ -88,14 +88,14 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param result The storage of the conservation quantitiy (mass or energy) within the sub-control volume
+     *  \param storage The storage of the conservation quantitiy (mass or energy) within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void computeStorage(PrimaryVariables &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVariables &storage, const int scvIdx, bool usePrevSol) const
     {
         // compute the storage term for phase mass
-        ParentType::computeStorage(result, scvIdx, usePrevSol);
+        ParentType::computeStorage(storage, scvIdx, usePrevSol);
 
         // if flag usePrevSol is set, the solution from the previous
         // time step is used, otherwise the current solution is
@@ -119,7 +119,7 @@ public:
         Scalar heatCap = vertDat.heatCapacity();
         Scalar poro = vertDat.porosity();
 
-        result[energyEqIdx] = temp*heatCap
+        storage[energyEqIdx] = temp*heatCap
             + poro * (gdens*gInEnerg*gsat
                       + wdens*wInEnerg*wsat
                       + ndens*nInEnerg*nsat);

@@ -72,26 +72,26 @@ public:
     /*!
      * \brief Update all quantities for a given control volume.
      *
-     * \param sol The solution primary variables
+     * \param priVars The solution primary variables
      * \param problem The problem
      * \param element The element
      * \param elemGeom Evaluate function with solution of current or previous time step
      * \param vertIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
-    void update(const PrimaryVariables &sol,
+    void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &elemGeom,
-                int vertIdx,
+                const FVElementGeometry &fvGeomtry,
+                const int scvIdx,
                 bool isOldSol)
     {
         // vertex update data for the mass balance
-        ParentType::update(sol,
+        ParentType::update(priVars,
                            problem,
                            element,
-                           elemGeom,
-                           vertIdx,
+                           fvGeomtry,
+                           scvIdx,
                            isOldSol);
 
         typename FluidSystem::ParameterCache paramCache;
@@ -137,8 +137,8 @@ protected:
     static Scalar temperature_(const PrimaryVariables &primaryVars,
                                const Problem& problem,
                                const Element &element,
-                               const FVElementGeometry &elemGeom,
-                               int scvIdx)
+                               const FVElementGeometry &fvGeomtry,
+                               const int scvIdx)
     {
         return primaryVars[temperatureIdx];
     }
@@ -146,22 +146,22 @@ protected:
     /*!
      * \brief Update all quantities for a given control volume.
      *
-     * \param sol The solution primary variables
+     * \param priVars The solution primary variables
      * \param problem The problem
      * \param element The element
-     * \param elemGeom Evaluate function with solution of current or previous time step
+     * \param fvGeomtry Evaluate function with solution of current or previous time step
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
-    void updateEnergy_(const PrimaryVariables &sol,
+    void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &elemGeom,
-                       int scvIdx,
+                       const FVElementGeometry &fvGeomtry,
+                       const int scvIdx,
                        bool isOldSol)
     {
         // copmute and set the heat capacity of the solid phase
-        heatCapacity_ = problem.spatialParameters().heatCapacity(element, elemGeom, scvIdx);
+        heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeomtry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
     };
 

@@ -70,7 +70,7 @@ class ThreePThreeCNIFluxVariables : public ThreePThreeCFluxVariables<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> Vector;
+    typedef Dune::FieldVector<CoordScalar, dim> DimVector;
 
 public:
     /*
@@ -78,43 +78,43 @@ public:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param elemGeom The finite-volume geometry in the box scheme
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param faceIdx The local index of the SCV (sub-control-volume) face
-     * \param elemDat The volume variables of the current element
+     * \param elemVolVars The volume variables of the current element
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
     ThreePThreeCNIFluxVariables(const Problem &problem,
                                 const Element &element,
-                                const FVElementGeometry &elemGeom,
-                                int scvfIdx,
-                                const ElementVolumeVariables &elemDat,
+                                const FVElementGeometry &fvGeometry,
+                                const int faceIdx,
+                                const ElementVolumeVariables &elemVolVars,
                                 const bool onBoundary = false)
-        : ParentType(problem, element, elemGeom, scvfIdx, elemDat, onBoundary)
+        : ParentType(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary)
     {
         // calculate temperature gradient using finite element
         // gradients
-        Vector temperatureGrad(0);
-        Vector tmp(0.0);
-        for (int vertIdx = 0; vertIdx < elemGeom.numFAP; vertIdx++)
+        DimVector temperatureGrad(0);
+        DimVector tmp(0.0);
+        for (int vertIdx = 0; vertIdx < fvGeometry.numFAP; vertIdx++)
         {
             tmp = this->face().grad[vertIdx];
 
             // index for the element volume variables 
             int volVarsIdx = this->face().fapIndices[vertIdx];
 
-            tmp *= elemDat[volVarsIdx].temperature();
+            tmp *= elemVolVars[volVarsIdx].temperature();
             temperatureGrad += tmp;
         }
 
         // The spatial parameters calculates the actual heat flux vector
-        problem.spatialParameters().matrixHeatFlux(tmp,
+        problem.spatialParams().matrixHeatFlux(tmp,
                                                    *this,
-                                                   elemDat,
+                                                   elemVolVars,
                                                    temperatureGrad,
                                                    element,
-                                                   elemGeom,
-                                                   scvfIdx);
+                                                   fvGeometry,
+                                                   faceIdx);
         // project the heat flux vector on the face's normal vector
         normalMatrixHeatFlux_ = tmp*this->face().normal;
     }
