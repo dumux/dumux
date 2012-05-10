@@ -72,24 +72,23 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    enum
-        {
-            numEq = GET_PROP_VALUE(TypeTag, NumEq),
+    enum {
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
 
-            //phase index
-            phaseIdx = Indices::phaseIdx,
-            comp1Idx = Indices::comp1Idx,
-
-            // indices of the primary variables
-            pressuerIdx = Indices::pressureIdx,
-            transportCompIdx = Indices::transportCompIdx,
-
-            // indices of the equations
-            conti0EqIdx = Indices::conti0EqIdx,
-            contiEqIdx = conti0EqIdx, // \deprecated use conti0EqIdx
-            transportEqIdx = Indices::transportEqIdx,
-            transEqIdx = transportEqIdx //  \deprecated use transportEqIdx
-        };
+        //phase index
+        phaseIdx = Indices::phaseIdx,
+        comp1Idx = Indices::comp1Idx,
+    };
+    // indices of the primary variables
+    enum {
+        pressuerIdx = Indices::pressureIdx,
+        transportCompIdx = Indices::transportCompIdx,
+    };
+    // indices of the equations
+    enum {
+        conti0EqIdx = Indices::conti0EqIdx,
+        transportEqIdx = Indices::transportEqIdx
+    };
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);

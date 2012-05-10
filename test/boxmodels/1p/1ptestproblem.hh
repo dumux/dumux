@@ -125,12 +125,12 @@ class OnePTestProblem : public PorousMediaBoxProblem<TypeTag>
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-
+    };
+    enum {
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,
         pressureIdx = Indices::pressureIdx
     };
-
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
