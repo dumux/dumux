@@ -641,11 +641,11 @@ protected:
     void resetPhasePresence_()
     {
         int numVertices = this->gridView_().size(dim);
-        for (int i = 0; i < numVertices; ++i)
+        for (int idx = 0; idx < numVertices; ++idx)
         {
-            staticVertexDat_[i].phasePresence
-                = staticVertexDat_[i].oldPhasePresence;
-            staticVertexDat_[i].wasSwitched = false;
+            staticVertexDat_[idx].phasePresence
+                = staticVertexDat_[idx].oldPhasePresence;
+            staticVertexDat_[idx].wasSwitched = false;
         }
     }
 
@@ -655,11 +655,11 @@ protected:
     void updateOldPhasePresence_()
     {
         int numVertices = this->gridView_().size(dim);
-        for (int i = 0; i < numVertices; ++i)
+        for (int idx = 0; idx < numVertices; ++idx)
         {
-            staticVertexDat_[i].oldPhasePresence
-                = staticVertexDat_[i].phasePresence;
-            staticVertexDat_[i].wasSwitched = false;
+            staticVertexDat_[idx].oldPhasePresence
+                = staticVertexDat_[idx].phasePresence;
+            staticVertexDat_[idx].wasSwitched = false;
         }
     }
 
