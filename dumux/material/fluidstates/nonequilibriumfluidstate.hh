@@ -29,10 +29,12 @@
 #ifndef DUMUX_GENERIC_FLUID_STATE_HH
 #define DUMUX_GENERIC_FLUID_STATE_HH
 
-#include <dumux/common/valgrind.hh>
-
 #include <cmath>
 #include <algorithm>
+
+#include <dune/common/exceptions.hh>
+
+#include <dumux/common/valgrind.hh>
 
 namespace Dumux
 {

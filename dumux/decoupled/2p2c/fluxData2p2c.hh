@@ -22,6 +22,8 @@
 #ifndef DUMUX_FLUXDATA2P2C_HH
 #define DUMUX_FLUXDATA2P2C_HH
 
+#include <dumux/decoupled/common/decoupledproperties.hh>
+
 /**
  * @file
  * @brief  Class including the variables and data of discretized data of the constitutive relations
@@ -39,7 +41,7 @@ namespace Dumux
  * mobilities, fractional flow functions and capillary pressure. Thus, they have to be callculated just once in every time step or every iteration step.
  *
  * @tparam TypeTag The Type Tag
- 1*/
+ */
 template<class TypeTag>
 class FluxData2P2C
 {
