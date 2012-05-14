@@ -60,10 +60,10 @@ class TwoPTwoCFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        wPhaseIdx = Indices::lPhaseIdx,
-        nPhaseIdx = Indices::gPhaseIdx,
-        wCompIdx = Indices::lCompIdx,
-        nCompIdx = Indices::gCompIdx
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+        wCompIdx = Indices::wCompIdx,
+        nCompIdx = Indices::nCompIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
