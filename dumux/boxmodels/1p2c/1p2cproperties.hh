@@ -55,6 +55,7 @@ NEW_TYPE_TAG(BoxOnePTwoC, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
+NEW_PROP_TAG(PhaseIdx); //!< A phase index in to allow that a two-phase fluidsystem is used
 NEW_PROP_TAG(NumComponents);   //!< Number of fluid components in the system
 NEW_PROP_TAG(OnePTwoCIndices); //!< DEPRECATED Enumerations for the 1p2c models
 NEW_PROP_TAG(Indices); //!< Enumerations for the model

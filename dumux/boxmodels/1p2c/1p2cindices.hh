@@ -40,17 +40,18 @@ namespace Dumux
  * \ingroup BoxIndices
  * \brief The indices for the isothermal single-phase, two-component model.
  */
-template <int PVOffset = 0>
+template <class TypeTag, int PVOffset = 0>
 struct OnePTwoCIndices
 {
 
     //! Set the default phase used by the fluid system to the first one
-    static const int phaseIdx = 0;
+    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);;
 
-    //! Set the default for the first component the fluid system's first component
-    static const int comp0Idx = 0;
-    //! Set the default for the second component the fluid system's second component
-   static const int comp1Idx = 1;
+    //! Component indices
+    static const int phaseCompIdx = phaseIdx;//!< The index of the main component of the considered phase
+    static const int transportCompIdx = (unsigned int)(1-phaseIdx); //!< The index of the transported (minor) component; ASSUMES phase indices of 0 and 1
+    static const int comp0Idx = phaseCompIdx;//!< \deprecated use phaseCompIdx
+    static const int comp1Idx = transportCompIdx;//!< \deprecated use phaseCompIdx
 
     // Equation indices
    static const int conti0EqIdx = PVOffset + 0; //!< continuity equation index
@@ -61,9 +62,9 @@ struct OnePTwoCIndices
 
     // primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< pressure
-    static const int transportCompIdx = PVOffset + 1; //!< mole fraction of the second component
-    static const int x1Idx = transportCompIdx; // \deprecated use transportCompIdx instead
-    static const int massOrMoleFractionIdx = transportCompIdx; // \deprecated use transportCompIdx instead
+    static const int massOrMoleFracIdx = PVOffset + 1; //!< mole fraction of the second component
+    static const int x1Idx = massOrMoleFracIdx; // \deprecated use massOrMoleFracIdx instead
+
 };
 
 // \}

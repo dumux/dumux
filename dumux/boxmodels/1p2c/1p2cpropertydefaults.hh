@@ -73,13 +73,16 @@ SET_TYPE_PROP(BoxOnePTwoC, FluxVariables, OnePTwoCFluxVariables<TypeTag>);
 SET_SCALAR_PROP(BoxOnePTwoC, UpwindWeight, 1.0);
 
 //! Set the indices used by the 1p2c model
-SET_TYPE_PROP(BoxOnePTwoC, Indices, Dumux::OnePTwoCIndices<0>);
+SET_TYPE_PROP(BoxOnePTwoC, Indices, Dumux::OnePTwoCIndices<TypeTag, 0>);
 
 //! DEPRECATED OnePTwoCIndices property
 SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 
 //! DEPRECATED SpatialParameters property
 SET_TYPE_PROP(BoxOnePTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
+//! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
+SET_INT_PROP(BoxOnePTwoC, PhaseIdx, 0);
 }
 // \}
 }

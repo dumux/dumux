@@ -58,13 +58,13 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         phaseIdx = Indices::phaseIdx,
-        comp0Idx = Indices::comp0Idx,
-        comp1Idx = Indices::comp1Idx,
+        phaseCompIdx = Indices::phaseCompIdx,
+        transportCompIdx = Indices::transportCompIdx,
     };
     //indices of primary variables
     enum{
         pressureIdx = Indices::pressureIdx,
-        transportCompIdx = Indices::transportCompIdx
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -113,8 +113,8 @@ public:
         diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                              paramCache,
                                                              phaseIdx,
-                                                             comp0Idx,
-                                                             comp1Idx);
+                                                             phaseCompIdx,
+                                                             transportCompIdx);
 
         Valgrind::CheckDefined(porosity_);
         Valgrind::CheckDefined(tortuosity_);
@@ -141,19 +141,19 @@ public:
 
         fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
-        Scalar x1 = priVars[transportCompIdx]; //mole or mass fraction of component 1
+        Scalar x1 = priVars[massOrMoleFracIdx]; //mole or mass fraction of component 1
         if(!useMoles) //mass-fraction formulation
         {
             // convert mass to mole fractions
-            Scalar M0 = FluidSystem::molarMass(comp0Idx);
-            Scalar M1 = FluidSystem::molarMass(comp1Idx);
+            Scalar M0 = FluidSystem::molarMass(phaseCompIdx);
+            Scalar M1 = FluidSystem::molarMass(transportCompIdx);
             //meanMolarMass if x1_ is a massfraction
             Scalar meanMolarMass = M0*M1/(M1 + x1*(M0 - M1));
 
             x1 *= meanMolarMass/M1;
         }
-        fluidState.setMoleFraction(phaseIdx, comp0Idx, 1 - x1);
-        fluidState.setMoleFraction(phaseIdx, comp1Idx, x1);
+        fluidState.setMoleFraction(phaseIdx, phaseCompIdx, 1 - x1);
+        fluidState.setMoleFraction(phaseIdx, transportCompIdx, x1);
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState, phaseIdx);
@@ -190,7 +190,7 @@ public:
      * \param compIdx The index of the component
      */
     Scalar moleFraction(int compIdx) const
-    { return fluidState_.moleFraction(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
+    { return fluidState_.moleFraction(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
 
     /*!
      * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
@@ -198,7 +198,7 @@ public:
      * \param compIdx The index of the component
      */
     Scalar massFraction(int compIdx) const
-    { return fluidState_.massFraction(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
+    { return fluidState_.massFraction(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
 
     /*!
      * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
@@ -206,7 +206,7 @@ public:
      * \param compIdx The index of the component
      */
     Scalar molarity(int compIdx) const
-    { return fluidState_.molarity(phaseIdx, (compIdx==0)?comp0Idx:comp1Idx); }
+    { return fluidState_.molarity(phaseIdx, (compIdx==0)?phaseCompIdx:transportCompIdx); }
 
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within

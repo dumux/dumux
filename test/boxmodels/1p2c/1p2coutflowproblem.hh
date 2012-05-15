@@ -136,7 +136,7 @@ class OnePTwoCOutflowProblem : public PorousMediaBoxProblem<TypeTag>
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        transportCompIdx = Indices::transportCompIdx,
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx,
     };
     enum {
         // indices of the equations
@@ -220,7 +220,7 @@ public:
         initial_(priVars, globalPos);
         //condition for the N2 molefraction at left boundary
         if(globalPos[0] < eps_)
-            priVars[transportCompIdx] = 2.0e-5;
+            priVars[massOrMoleFracIdx] = 2.0e-5;
     }
 
     /*!
@@ -289,7 +289,7 @@ private:
                   const GlobalPosition &globalPos) const
     {
         priVars[pressureIdx] = 2e5 - 1e5*globalPos[0];//0.0; //initial condition for the pressure
-        priVars[transportCompIdx] = 0.0; //initial condition for the N2 molefraction
+        priVars[massOrMoleFracIdx] = 0.0; //initial condition for the N2 molefraction
     }
 
     const Scalar eps_;

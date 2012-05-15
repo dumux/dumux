@@ -77,12 +77,12 @@ protected:
 
         //phase index
         phaseIdx = Indices::phaseIdx,
-        comp1Idx = Indices::comp1Idx,
+        transportCompIdx = Indices::transportCompIdx,
     };
     // indices of the primary variables
     enum {
         pressuerIdx = Indices::pressureIdx,
-        transportCompIdx = Indices::transportCompIdx,
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx,
     };
     // indices of the equations
     enum {
@@ -133,7 +133,7 @@ public:
                 volVars.fluidState().density(phaseIdx)*volVars.porosity();
             //storage term of the transport equation - massfractions
             storage[transportEqIdx] +=
-                volVars.fluidState().density(phaseIdx) * volVars.fluidState().massFraction(phaseIdx, comp1Idx) * volVars.porosity();
+                volVars.fluidState().density(phaseIdx) * volVars.fluidState().massFraction(phaseIdx, transportCompIdx) * volVars.porosity();
         }
         else
         {
@@ -142,7 +142,7 @@ public:
             storage[conti0EqIdx] += volVars.molarDensity()*volVars.porosity();
             // storage term of the transport equation - molefractions
             storage[transportEqIdx] +=
-                volVars.fluidState().molarDensity(phaseIdx)*volVars.fluidState().moleFraction(phaseIdx, comp1Idx) *
+                volVars.fluidState().molarDensity(phaseIdx)*volVars.fluidState().moleFraction(phaseIdx, transportCompIdx) *
                 volVars.porosity();
         }
 
@@ -204,9 +204,9 @@ public:
             // advective flux of the second component - massfraction
             flux[transportEqIdx] +=
                 fluxVars.KmvpNormal() *
-                ((    upwindWeight_)*up.fluidState().density(phaseIdx) * up.fluidState().massFraction(phaseIdx, comp1Idx)/up.viscosity()
+                ((    upwindWeight_)*up.fluidState().density(phaseIdx) * up.fluidState().massFraction(phaseIdx, transportCompIdx)/up.viscosity()
                  +
-                 (1 - upwindWeight_)*dn.fluidState().density(phaseIdx)*dn.fluidState().massFraction(phaseIdx, comp1Idx)/dn.viscosity());
+                 (1 - upwindWeight_)*dn.fluidState().density(phaseIdx)*dn.fluidState().massFraction(phaseIdx, transportCompIdx)/dn.viscosity());
         }
         else
         {
@@ -221,9 +221,9 @@ public:
             // advective flux of the second component -molefraction
             flux[transportEqIdx] +=
                 fluxVars.KmvpNormal() *
-                ((    upwindWeight_)*up.molarDensity() * up.fluidState().moleFraction(phaseIdx, comp1Idx)/up.viscosity()
+                ((    upwindWeight_)*up.molarDensity() * up.fluidState().moleFraction(phaseIdx, transportCompIdx)/up.viscosity()
                  +
-                 (1 - upwindWeight_)*dn.molarDensity() * dn.fluidState().moleFraction(phaseIdx, comp1Idx)/dn.viscosity());
+                 (1 - upwindWeight_)*dn.molarDensity() * dn.fluidState().moleFraction(phaseIdx, transportCompIdx)/dn.viscosity());
         }
 
     }
@@ -243,22 +243,22 @@ public:
         if(!useMoles)
         {
             // diffusive flux of the second component - massfraction
-            tmp = -(fluxVars.moleFractionGrad(comp1Idx)*fluxVars.face().normal);
+            tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
             // convert it to a mass flux and add it
-            flux[transportEqIdx] += tmp * FluidSystem::molarMass(comp1Idx);
+            flux[transportEqIdx] += tmp * FluidSystem::molarMass(transportCompIdx);
         }
         else
         {
             // diffusive flux of the second component - molefraction
-            tmp = -(fluxVars.moleFractionGrad(comp1Idx)*fluxVars.face().normal);
+            tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
 
             // dispersive flux of second component - molefraction
             //            Vector normalDisp;
             //            fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
             //            tmp -= fluxVars.molarDensity()*
-            //                (normalDisp * fluxVars.moleFractionGrad(comp1Idx));
+            //                (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
 
             flux[transportEqIdx] += tmp;
         }

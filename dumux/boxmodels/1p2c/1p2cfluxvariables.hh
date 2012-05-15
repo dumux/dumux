@@ -62,7 +62,7 @@ class OnePTwoCFluxVariables
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
-        comp1Idx = Indices::comp1Idx
+        transportCompIdx = Indices::transportCompIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -361,17 +361,17 @@ protected:
 
                 // the concentration gradient [mol/m^3/m]
                 tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].molarity(comp1Idx);
+                tmp *= elemVolVars[volVarsIdx].molarity(transportCompIdx);
                 concentrationGrad_ += tmp;
 
                 // the mole-fraction gradient
                 tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].moleFraction(comp1Idx);
+                tmp *= elemVolVars[volVarsIdx].moleFraction(transportCompIdx);
                 moleFractionGrad_ += tmp;
 
                 // the mass-fraction gradient
                 tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].massFraction(comp1Idx);
+                tmp *= elemVolVars[volVarsIdx].massFraction(transportCompIdx);
                 massFractionGrad_ += tmp;
 
                 // phase viscosity
@@ -398,9 +398,9 @@ protected:
             potentialGrad_ = tmp;
             potentialGrad_ *= volVarsJ.pressure() - volVarsI.pressure();
             concentrationGrad_ = tmp;
-            concentrationGrad_ *= volVarsJ.molarity(comp1Idx) - volVarsI.molarity(comp1Idx);
+            concentrationGrad_ *= volVarsJ.molarity(transportCompIdx) - volVarsI.molarity(transportCompIdx);
             moleFractionGrad_ = tmp;
-            moleFractionGrad_ *= volVarsJ.moleFraction(comp1Idx) - volVarsI.moleFraction(comp1Idx);
+            moleFractionGrad_ *= volVarsJ.moleFraction(transportCompIdx) - volVarsI.moleFraction(transportCompIdx);
         }
 
         ///////////////
