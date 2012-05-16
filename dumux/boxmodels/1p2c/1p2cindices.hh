@@ -31,6 +31,8 @@
 #ifndef DUMUX_1P2C_INDICES_HH
 #define DUMUX_1P2C_INDICES_HH
 
+#include "1p2cproperties.hh"
+
 namespace Dumux
 {
 // \{
@@ -45,7 +47,7 @@ struct OnePTwoCIndices
 {
 
     //! Set the default phase used by the fluid system to the first one
-    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);;
+    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
     //! Component indices
     static const int phaseCompIdx = phaseIdx;//!< The index of the main component of the considered phase
@@ -63,7 +65,7 @@ struct OnePTwoCIndices
     // primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< pressure
     static const int massOrMoleFracIdx = PVOffset + 1; //!< mole fraction of the second component
-    static const int x1Idx = massOrMoleFracIdx; // \deprecated use massOrMoleFracIdx instead
+    static const int x1Idx = massOrMoleFracIdx; //!< \deprecated use massOrMoleFracIdx instead
 
 };
 
