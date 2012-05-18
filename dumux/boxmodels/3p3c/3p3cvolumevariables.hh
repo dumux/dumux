@@ -114,7 +114,7 @@ public:
     /*!
      * \brief Update all quantities for a given control volume.
      *
-     * \param primaryVars The primary variables
+     * \param priVars The primary variables
      * \param problem The problem
      * \param element The element
      * \param fvGeometry The finite-volume geometry in the box scheme

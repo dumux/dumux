@@ -85,7 +85,7 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param result The storage of the conservation quantitiy (mass or energy) within the sub-control volume
+     *  \param storage The storage of the conservation quantitiy (mass or energy) within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
@@ -123,7 +123,7 @@ public:
      * the flux vector.
      *
      * \param flux The advective flux over the SCV (sub-control-volume) face for each component
-     * \param fluxData The flux variables at the current SCV face
+     * \param fluxVars The flux variables at the current SCV face
      *
      * This method is called by compute flux (base class)
      */
@@ -158,7 +158,7 @@ public:
      *        the face of a sub-control volume.
      *
      * \param flux The diffusive flux over the SCV (sub-control-volume) face for each conservation quantity (mass, energy)
-     * \param fluxData The flux variables at the current SCV face
+     * \param fluxVars The flux variables at the current SCV face
      *
      * This method is called by compute flux (base class)
      */

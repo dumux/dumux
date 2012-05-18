@@ -75,8 +75,8 @@ public:
      * \param priVars The solution primary variables
      * \param problem The problem
      * \param element The element
-     * \param elemGeom Evaluate function with solution of current or previous time step
-     * \param vertIdx The local index of the SCV (sub-control volume)
+     * \param fvGeomtry Evaluate function with solution of current or previous time step
+     * \param scvIdx    The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void update(const PrimaryVariables &priVars,

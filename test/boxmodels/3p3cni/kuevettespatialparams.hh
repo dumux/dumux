@@ -106,7 +106,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
     KuevetteSpatialParams(const GridView &gridView)
         : ParentType(gridView)

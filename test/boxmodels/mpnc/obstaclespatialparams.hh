@@ -144,7 +144,7 @@ public:
      * \brief Returns the intrinsic permeability tensor.
      *
      * \param element       The current finite element
-     * \param fvElemGeom    The current finite volume geometry of the element
+     * \param fvGeometry    The current finite volume geometry of the element
      * \param scvIdx        The index sub-control volume where the
      *                      intrinsic permeability is given.
      */
@@ -161,7 +161,7 @@ public:
      * \brief Define the porosity \f$[-]\f$ of the soil
      *
      * \param element     The finite element
-     * \param fvElemGeom  The finite volume geometry
+     * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
@@ -178,7 +178,7 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element     The finite element
-     * \param fvElemGeom  The finite volume geometry
+     * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */

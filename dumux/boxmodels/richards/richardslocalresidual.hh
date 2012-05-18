@@ -112,7 +112,7 @@ public:
      *
      * \param flux Stores the total mass fluxes over a sub-control volume face
      *             of the current element \f$\mathrm{[kg/s]}\f$
-     * \param scvfIdx The sub control volume face index inside the current
+     * \param faceIdx The sub control volume face index inside the current
      *                element
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false

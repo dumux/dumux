@@ -78,10 +78,10 @@ public:
      *
      * This method MUST be overwritten by the actual problem.
      *
-          * \param element The DUNE Codim<0> enitiy which intersects with
+     * \param element The DUNE Codim<0> enitiy which intersects with
      *                the finite volume.
-     * \param fvGeom The finite volume geometry of the element.
-     * \param scvIdx The local index of the sub control volume inside the element
+     * \param fvGeometry The finite volume geometry of the element.
+     * \param scvIdx     The local index of the sub control volume inside the element
      */
     Scalar referencePressure(const Element &element,
                              const FVElementGeometry fvGeometry,

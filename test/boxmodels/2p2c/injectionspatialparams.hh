@@ -222,7 +222,7 @@ public:
      * \param tempGrad The temperature gradient
      * \param element The current finite element
      * \param fvGeometry The finite volume geometry of the current element
-     * \param scvfIdx The local index of the sub-control volume face where
+     * \param faceIdx The local index of the sub-control volume face where
      *                    the matrix heat flux should be calculated
      */
     void matrixHeatFlux(DimVector &heatFlux,

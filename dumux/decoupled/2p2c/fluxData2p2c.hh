@@ -72,11 +72,7 @@ private:
 
 public:
 
-    //! Constructs a VariableClass object
-    /**
-     *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
-     */
-
+    //! Constructor
     FluxData2P2C()
     {
         isUpwindCell_.resize(2 * dim);
@@ -89,7 +85,7 @@ public:
     {
         isUpwindCell_.resize(size);
     }
-    /** functions returning upwind information **/
+    //! functions returning upwind information
     const bool& isUpwindCell(int indexInInside, int equationIdx) const
     {
         return isUpwindCell_[indexInInside][equationIdx];

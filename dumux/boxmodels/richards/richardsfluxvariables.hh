@@ -70,8 +70,8 @@ public:
      * \param problem The representation of the physical problem
      * \param element The DUNE Codim<0> entity which contains the face of
      *                the finite volume
-     * \param fvElemGeom The finite volume geometry of the element
-     * \param scvfIdx The local index of the sub-control volume face in the
+     * \param fvGeometry The finite volume geometry of the element
+     * \param faceIdx The local index of the sub-control volume face in the
      *                element's finite volume geometry.
      * \param elemVolVars An array containing the volume variables for all
      *                    sub-control volumes of the element.

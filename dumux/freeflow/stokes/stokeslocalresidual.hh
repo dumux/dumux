@@ -276,7 +276,7 @@ protected:
      *        and the gravity term evaluated.
      *
      * \param source The source/sink in the sub control volume for each component
-     * \param scvIndex The local index of the sub-control volume
+     * \param scvIdx The local index of the sub-control volume
      */
     void computeSource(PrimaryVariables &source, const int scvIdx)
     {

@@ -104,7 +104,7 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gv The grid view
+     * \param gridView The grid view
      */
     ColumnSpatialParams(const GridView &gridView)
         : ParentType(gridView)
@@ -248,7 +248,7 @@ public:
      *
      * \param heatFlux The resulting heat flux vector
      * \param fluxDat The flux variables
-     * \param elemVolVarst The volume variables
+     * \param elemVolVars The volume variables
      * \param tempGrad The temperature gradient
      * \param element The current finite element
      * \param fvGeomtry The finite volume geometry of the current element
