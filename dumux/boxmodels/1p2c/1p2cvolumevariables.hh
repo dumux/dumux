@@ -131,12 +131,12 @@ public:
     static void completeFluidState(const PrimaryVariables& priVars,
                                    const Problem& problem,
                                    const Element& element,
-                                   const FVElementGeometry& elementGeometry,
+                                   const FVElementGeometry& fvGeometry,
                                    const int scvIdx,
                                    FluidState& fluidState)
     {
         Scalar T = Implementation::temperature_(priVars, problem, element,
-                                                elementGeometry, scvIdx);
+                                                fvGeometry, scvIdx);
         fluidState.setTemperature(T);
 
         fluidState.setPressure(phaseIdx, priVars[pressureIdx]);

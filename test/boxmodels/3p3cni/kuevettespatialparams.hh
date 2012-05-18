@@ -221,7 +221,7 @@ public:
      * This is only required for non-isothermal models.
      *
      * \param element The finite element
-     * \param fvElemGeom The finite volume geometry
+     * \param fvGeomtry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
