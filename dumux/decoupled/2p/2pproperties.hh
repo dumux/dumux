@@ -131,8 +131,9 @@ SET_PROP(DecoupledTwoP, Indices)
 typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 };
 
-//! \cond \private
-//! DEPRECATED TwoPIndices property
+/** \cond \private
+ *  \deprecated TwoPIndices property
+ */
 SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
 //! \endcond
 
