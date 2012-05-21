@@ -258,9 +258,9 @@ public:
      * \param q The source/sink in the SCV for each component
      * \param scvIdx The index of the SCV
      */
-    void computeSource(PrimaryVariables &q, const int scvIdx)
+    void computeSource(PrimaryVariables &source, const int scvIdx)
     {
-        this->problem_().boxSDSource(q,
+        this->problem_().boxSDSource(source,
                                      this->element_(),
                                      this->fvGeometry_(),
                                      scvIdx,
