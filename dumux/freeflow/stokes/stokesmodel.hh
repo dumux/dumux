@@ -66,7 +66,7 @@ namespace Dumux
  * (box) scheme in space and by the implicit Euler method in time.
  */
 template<class TypeTag>
-class StokesModel : public BoxModel<TypeTag>
+class StokesModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
