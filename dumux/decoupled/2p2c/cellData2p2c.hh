@@ -72,6 +72,9 @@ private:
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 protected:
+    // primary variable (phase pressure has to be stored in fluidstate)
+    Scalar massConcentration_[numComponents];
+
     Scalar mobility_[numPhases];
 
     //numerical quantities
@@ -104,12 +107,12 @@ public:
         globalIdx_ = 0;
         perimeter_ = 0.;
     }
-
+    //! Acess to flux data, representing information living on the intersections
     FluxData& fluxData()
     {
         return fluxData_;
     }
-
+    //! Constant acess to flux data, representing information living on the intersections
     const FluxData& fluxData() const
     {
         return fluxData_;
@@ -134,33 +137,59 @@ public:
     }
     /*! Modify the phase pressure
      * @param phaseIdx index of the Phase
-     * @param value Value to be srored
+     * @param value Value to be stored
      */
     void setPressure(int phaseIdx, Scalar value)
     {
         manipulateFluidState().setPressure(phaseIdx, value);
     }
 
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
+    /*!
+     * \brief Returns the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * This is equivalent to the sum of the component concentrations for all
+     * phases multiplied with the phase density.
+     *
+     * \param compIdx the index of the component
+     */
     const Scalar totalConcentration(int compIdx) const
     {
-        return fluidState_->massConcentration(compIdx);
+        return massConcentration_[compIdx];
     }
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
+    //! \copydoc Dumux::CellData2P2C::totalConcentration()
     const Scalar massConcentration(int compIdx) const
     {
-        return fluidState_->massConcentration(compIdx);
+        return massConcentration_[compIdx];
     }
 
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
+    /*!
+     * \brief Sets the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * @param compIdx index of the Component
+     * @param value Value to be stored
+     */
     void setTotalConcentration(int compIdx, Scalar value)
     {
-        manipulateFluidState().setMassConcentration(compIdx, value);
+        massConcentration_[compIdx] = value;
     }
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
+    //! \copydoc Dumux::CellData2P2C::setTotalConcentration()
     void setMassConcentration(int compIdx, Scalar value)
     {
-        manipulateFluidState().setMassConcentration(compIdx, value);
+        massConcentration_[compIdx] = value;
+    }
+    /*!
+     * \brief Calculate the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$
+     * for a given porosity (within the initialization procedure).
+     * @param porosity Porosity
+     */
+    void calculateMassConcentration(Scalar porosity)
+    {
+        massConcentration_[wCompIdx] =
+                porosity * (massFraction(wPhaseIdx,wCompIdx) * saturation(wPhaseIdx) * density(wPhaseIdx)
+              + massFraction(nPhaseIdx,wCompIdx) * saturation(nPhaseIdx) * density(nPhaseIdx));
+        massConcentration_[nCompIdx] =
+                porosity * (massFraction(wPhaseIdx,nCompIdx) * saturation(wPhaseIdx) * density(wPhaseIdx)
+              + massFraction(nPhaseIdx,nCompIdx) * saturation(nPhaseIdx) * density(nPhaseIdx));
     }
     //@}
 
@@ -282,7 +311,9 @@ public:
         return fluidState_->viscosity(phaseIdx);
     }
 
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::capillaryPressure()
+    /*!
+     * \brief Returns the capillary pressure \f$\mathrm{[Pa]}\f$
+     */
     const Scalar capillaryPressure() const
     {
         return fluidState_->pressure(nPhaseIdx) - fluidState_->pressure(wPhaseIdx);
@@ -319,12 +350,12 @@ public:
     }
     //@}
 
-
-//    void setFluidState(FluidState& fluidState)
-//    DUNE_DEPRECATED
-//    {
-//        fluidState_ = &fluidState;
-//    }
+    //! Deprecated set function, use manipulateFluidState() instead
+    void setFluidState(FluidState& fluidState)
+    DUNE_DEPRECATED
+    {
+        fluidState_ = &fluidState;
+    }
 
     //! Returns a reference to the cells fluid state
     const FluidState& fluidState() const
@@ -342,6 +373,7 @@ public:
             fluidState_ = new FluidState;
         return *fluidState_;
     }
+
     //! stores this cell datas index, only for debugging purposes!!
     int& globalIdx()
     { return globalIdx_;}

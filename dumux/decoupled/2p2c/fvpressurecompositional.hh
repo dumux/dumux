@@ -163,19 +163,24 @@ public:
         ScalarSolutionType *pressureN = writer.allocateManagedBuffer(size);
         ScalarSolutionType *pC = writer.allocateManagedBuffer(size);
         ScalarSolutionType *saturationW = writer.allocateManagedBuffer(size);
-
         ScalarSolutionType *densityWetting = writer.allocateManagedBuffer(size);
         ScalarSolutionType *densityNonwetting = writer.allocateManagedBuffer(size);
-        ScalarSolutionType *viscosityWetting = writer.allocateManagedBuffer(size);
-        ScalarSolutionType *viscosityNonwetting = writer.allocateManagedBuffer(size);
         ScalarSolutionType *mobilityW = writer.allocateManagedBuffer (size);
         ScalarSolutionType *mobilityNW = writer.allocateManagedBuffer (size);
-
         ScalarSolutionType *massfraction1W = writer.allocateManagedBuffer (size);
         ScalarSolutionType *massfraction1NW = writer.allocateManagedBuffer (size);
-
         // numerical stuff
         ScalarSolutionType *volErr = writer.allocateManagedBuffer (size);
+
+        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+                // add debug stuff
+                ScalarSolutionType *errorCorrPtr = writer.allocateManagedBuffer (size);
+                ScalarSolutionType *dv_dpPtr = writer.allocateManagedBuffer (size);
+                ScalarSolutionType *dV_dC1Ptr = writer.allocateManagedBuffer (size);
+                ScalarSolutionType *dV_dC2Ptr = writer.allocateManagedBuffer (size);
+                ScalarSolutionType *updEstimate1 = writer.allocateManagedBuffer (size);
+                ScalarSolutionType *updEstimate2 = writer.allocateManagedBuffer (size);
+        #endif
 
         for (int i = 0; i < size; i++)
         {
@@ -186,24 +191,27 @@ public:
             (*saturationW)[i] = cellData.saturation(wPhaseIdx);
             (*densityWetting)[i] = cellData.density(wPhaseIdx);
             (*densityNonwetting)[i] = cellData.density(nPhaseIdx);
-            (*viscosityWetting)[i] = cellData.viscosity(wPhaseIdx);
-            (*viscosityNonwetting)[i] = cellData.viscosity(nPhaseIdx);
             (*mobilityW)[i] = cellData.mobility(wPhaseIdx);
             (*mobilityNW)[i] = cellData.mobility(nPhaseIdx);
             (*massfraction1W)[i] = cellData.massFraction(wPhaseIdx,wCompIdx);
             (*massfraction1NW)[i] = cellData.massFraction(nPhaseIdx,wCompIdx);
-
             (*volErr)[i] = cellData.volumeError();
+
+        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+                    (*errorCorrPtr)[i] = cellData.errorCorrection();
+                    (*dv_dpPtr)[i] = cellData.dv_dp();
+                    (*dV_dC1Ptr)[i] = cellData.dv(wCompIdx);
+                    (*dV_dC2Ptr)[i] = cellData.dv(nCompIdx);
+                    (*updEstimate1)[i] = updateEstimate_[0][i];
+                    (*updEstimate2)[i] = updateEstimate_[1][i];
+        #endif
         }
         writer.attachCellData(*pressureW, "wetting pressure");
         writer.attachCellData(*pressureN, "nonwetting pressure");
         writer.attachCellData(*pC, "capillary pressure");
         writer.attachCellData(*saturationW, "wetting saturation");
-
         writer.attachCellData(*densityWetting, "wetting density");
         writer.attachCellData(*densityNonwetting, "nonwetting density");
-        writer.attachCellData(*viscosityWetting, "wetting viscosity");
-        writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
         writer.attachCellData(*mobilityW, "mobility w_phase");
         writer.attachCellData(*mobilityNW, "mobility nw_phase");
         std::ostringstream oss1, oss2;
@@ -212,44 +220,35 @@ public:
         oss2 << "mass fraction " << FluidSystem::componentName(0) << " in " << FluidSystem::phaseName(1) << "-phase";
         writer.attachCellData(*massfraction1NW, oss2.str());
         writer.attachCellData(*volErr, "volume Error");
+        #if DUNE_MINIMAL_DEBUG_LEVEL <= 3
+                writer.attachCellData(*errorCorrPtr, "Error Correction");
+                writer.attachCellData(*dv_dpPtr, "dv_dp");
+                writer.attachCellData(*dV_dC1Ptr, "dV_dC1");
+                writer.attachCellData(*dV_dC2Ptr, "dV_dC2");
+                writer.attachCellData(*updEstimate1, "updEstimate comp 1");
+                writer.attachCellData(*updEstimate2, "updEstimate comp 2");
+        #endif
 
 #if DUNE_MINIMAL_DEBUG_LEVEL <= 2
         ScalarSolutionType *pressurePV = writer.allocateManagedBuffer(size);
         ScalarSolutionType *totalConcentration1 = writer.allocateManagedBuffer (size);
         ScalarSolutionType *totalConcentration2 = writer.allocateManagedBuffer (size);
-
-        // add debug stuff
-        ScalarSolutionType *errorCorrPtr = writer.allocateManagedBuffer (size);
-        ScalarSolutionType *dv_dpPtr = writer.allocateManagedBuffer (size);
-        ScalarSolutionType *dV_dC1Ptr = writer.allocateManagedBuffer (size);
-        ScalarSolutionType *dV_dC2Ptr = writer.allocateManagedBuffer (size);
-        ScalarSolutionType *updEstimate1 = writer.allocateManagedBuffer (size);
-        ScalarSolutionType *updEstimate2 = writer.allocateManagedBuffer (size);
-
+        ScalarSolutionType *viscosityWetting = writer.allocateManagedBuffer(size);
+        ScalarSolutionType *viscosityNonwetting = writer.allocateManagedBuffer(size);
         for (int i = 0; i < size; i++)
         {
             CellData& cellData = problem_.variables().cellData(i);
             (*totalConcentration1)[i] = cellData.massConcentration(wCompIdx);
             (*totalConcentration2)[i] = cellData.massConcentration(nCompIdx);
-
-            (*errorCorrPtr)[i] = cellData.errorCorrection();
-            (*dv_dpPtr)[i] = cellData.dv_dp();
-            (*dV_dC1Ptr)[i] = cellData.dv(wCompIdx);
-            (*dV_dC2Ptr)[i] = cellData.dv(nCompIdx);
-            (*updEstimate1)[i] = updateEstimate_[0][i];
-            (*updEstimate2)[i] = updateEstimate_[1][i];
+            (*viscosityWetting)[i] = cellData.viscosity(wPhaseIdx);
+            (*viscosityNonwetting)[i] = cellData.viscosity(nPhaseIdx);
         }
         *pressurePV = this->pressure();
         writer.attachCellData(*pressurePV, "pressure (Primary Variable");
         writer.attachCellData(*totalConcentration1, "C^w from cellData");
         writer.attachCellData(*totalConcentration2, "C^n from cellData");
-
-        writer.attachCellData(*errorCorrPtr, "Error Correction");
-        writer.attachCellData(*dv_dpPtr, "dv_dp");
-        writer.attachCellData(*dV_dC1Ptr, "dV_dC1");
-        writer.attachCellData(*dV_dC2Ptr, "dV_dC2");
-        writer.attachCellData(*updEstimate1, "updEstimate comp 1");
-        writer.attachCellData(*updEstimate2, "updEstimate comp 2");
+        writer.attachCellData(*viscosityWetting, "wetting viscosity");
+        writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
 #endif
         return;
     }
@@ -323,13 +322,13 @@ protected:
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
 private:
-    //! Returns the implementation of the problem (i.e. static polymorphism)
-    Implementation &asImp_()
-    {   return *static_cast<Implementation *>(this);}
-
-    //! \copydoc Dumux::IMPETProblem::asImp_()
-    const Implementation &asImp_() const
-    {   return *static_cast<const Implementation *>(this);}
+//    //! Returns the implementation of the problem (i.e. static polymorphism)
+//    Implementation &asImp_()
+//    {   return *static_cast<Implementation *>(this);}
+//
+//    //! \copydoc Dumux::IMPETProblem::asImp_()
+//    const Implementation &asImp_() const
+//    {   return *static_cast<const Implementation *>(this);}
 };
 
 
@@ -568,13 +567,12 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
                         = this->pressure()[globalIdx];
                     fluidState.update(Z1_0, pressure, problem_.spatialParams().porosity(*eIt), temperature_);
                 }
-
-                fluidState.calculateMassConcentration(problem_.spatialParams().porosity(*eIt));
-
             } //end conc initial condition
+            cellData.calculateMassConcentration(problem_.spatialParams().porosity(*eIt));
+
         } //end compositional
-        problem_.transportModel().totalConcentration(wCompIdx,globalIdx) = fluidState.massConcentration(wCompIdx);
-        problem_.transportModel().totalConcentration(nCompIdx,globalIdx) = fluidState.massConcentration(nCompIdx);
+        problem_.transportModel().totalConcentration(wCompIdx,globalIdx) = cellData.massConcentration(wCompIdx);
+        problem_.transportModel().totalConcentration(nCompIdx,globalIdx) = cellData.massConcentration(nCompIdx);
 
         // initialize phase properties not stored in fluidstate
         cellData.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, wPhaseIdx));
@@ -728,7 +726,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
             DUNE_THROW(Dune::MathError, "NAN/inf of dV_dm. If that happens in first timestep, try smaller firstDt!");
         }
     }
-    cellData.confirmVolumeDerivatives();
+    cellData.volumeDerivativesAvailable(true);
 }
 
 }//end namespace Dumux

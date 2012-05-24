@@ -113,30 +113,13 @@ public:
         else
             return this->fluidState_->pressure(phaseIdx);
     }
-
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
-    const Scalar totalConcentration(int compIdx) const
+    //! \copydoc Dumux::CellData2P2C::setPressure()
+    void setPressure(int phaseIdx, Scalar value)
     {
         if(fluidStateType_ == simple)
-            return simpleFluidState_->massConcentration(compIdx);
+            manipulateSimpleFluidState().setPressure(phaseIdx, value);
         else
-            return this->fluidState_->massConcentration(compIdx);
-    }
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::massConcentration()
-    const Scalar massConcentration(int compIdx) const
-    {
-        if(fluidStateType_ == simple)
-            return simpleFluidState_->massConcentration(compIdx);
-        else
-            return this->fluidState_->massConcentration(compIdx);
-    }
-    //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setMassConcentration()
-    void setTotalConcentration(int compIdx, Scalar value)
-    {
-        if(fluidStateType_ == simple)
-            return simpleFluidState_->setMassConcentration(compIdx, value);
-        else
-            return this->fluidState_->setMassConcentration(compIdx, value);
+            manipulateFluidState().setPressure(phaseIdx, value);
     }
     //@}
 
@@ -159,14 +142,30 @@ public:
     {
         return subdomain_;
     }
+    //! Specify subdomain information and fluidStateType
+    /** This function is only called if
+     */
+    void setSubdomainAndFluidStateType(int index)
+    {
+        subdomain_ = index;
+        if(index == 2)
+            fluidStateType_ = complex;
+        else
+            fluidStateType_ = simple;
+    }
 
     /*! \name Acess to secondary variables */
     //@{
     //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::setSaturation()
     void setSaturation(int phaseIdx, Scalar value)
     {
-        assert(this->subdomain() == 2);
-        this->fluidState_->setSaturation(phaseIdx, value);
+        if(fluidStateType_ == simple)
+        {
+            // saturation is triggered by presentPhaseIdx
+            manipulateSimpleFluidState().setPresentPhaseIdx((value==0.) ? nPhaseIdx : wPhaseIdx);
+        }
+        else
+            manipulateFluidState().setSaturation(phaseIdx, value);
     }
     //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::saturation()
     const Scalar saturation(int phaseIdx) const
@@ -185,10 +184,10 @@ public:
         if(fluidStateType_ == simple)
         {
             assert(phaseIdx == simpleFluidState_->presentPhaseIdx());
-            simpleFluidState_->setViscosity(phaseIdx, value);
+            manipulateSimpleFluidState().setViscosity(phaseIdx, value);
         }
         else
-            this->fluidState_->setViscosity(phaseIdx, value);
+            manipulateFluidState().setViscosity(phaseIdx, value);
     }
     //! \copydoc Dumux::DecoupledTwoPTwoCFluidState::viscosity()
     const Scalar viscosity(int phaseIdx) const
@@ -297,8 +296,13 @@ public:
     //! Manipulates a simple fluidstate for a cell in the simple domain
     SimpleFluidState& manipulateSimpleFluidState()
     {
-        assert (this->subdomain() != 2);
         fluidStateType_ = simple;
+        if(this->fluidState_)
+        {
+            delete this->fluidState_;
+            this->fluidState_ = NULL;
+        }
+
         if(!simpleFluidState_)
             simpleFluidState_ = new SimpleFluidState;
         return *simpleFluidState_;
@@ -310,12 +314,21 @@ public:
      */
     FluidState& manipulateFluidState()
     {
-        assert(this->subdomain() == 2);
         fluidStateType_ = complex;
+        if(simpleFluidState_)
+        {
+            delete simpleFluidState_;
+            simpleFluidState_ = NULL;
+        }
+
         if(!this->fluidState_)
             this->fluidState_ = new FluidState;
         return *this->fluidState_;
     }
+
+    //! Returns the type of the fluidState
+    const bool fluidStateType() const
+    { return fluidStateType_;}
 
 };
 }

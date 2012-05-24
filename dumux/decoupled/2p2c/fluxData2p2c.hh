@@ -81,67 +81,35 @@ public:
             isUpwindCell_[i] = false;
         }
     }
+    //! resizes the upwind vector for the case of hanging nodes
     void resize(int size)
     {
         isUpwindCell_.resize(size);
     }
     //! functions returning upwind information
+    /* @param indexInInside The local inside index of the intersection
+     * @param equationIdx The equation index
+     */
     const bool& isUpwindCell(int indexInInside, int equationIdx) const
     {
         return isUpwindCell_[indexInInside][equationIdx];
     }
-
+    //! Sets the upwind information
+    /* @param indexInInside The local inside index of the intersection
+     * @param equationIdx The equation index
+     * @value value set true or false
+     */
     void setUpwindCell(int indexInInside, int equationIdx, bool value)
     {
         isUpwindCell_[indexInInside][equationIdx] = value;
     }
 
+    //! Console output for the FluxData
+    void outputFluxData()
+    {
+        for(int banana=0; banana<isUpwindCell_.size(); banana++)
+            printvector(std::cout, isUpwindCell_, "upwindInformation", "row", 3);
+    }
 };
 }
 #endif
-
-
-/*** in transport module:
- *     // upwind mobility
-    double lambdaW, lambdaNW;
-    if (potentialW >= 0.)
-    {
-        lambdaW = cellDataI.mobility(wPhaseIdx);
-        cellDataI.setUpwindCell(intersection.indexInInside(), contiWEqIdx, true);
-        cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
-    }
-    else
-    {
-        lambdaW = cellDataJ.mobility(wPhaseIdx);
-        cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, true);
-        cellDataI.setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
-    }
-
-    if (potentialNW >= 0.)
-    {
-        lambdaNW = cellDataI.mobility(nPhaseIdx);
-        cellDataI.setUpwindCell(intersection.indexInInside(), contiNEqIdx, true);
-        cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
-    }
-    else
-    {
-        lambdaW = cellDataJ.mobility(nPhaseIdx);
-        cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, true);
-        cellDataI.setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
-    }
-
-
-    in cellData:
-
-    //! Acess to flux data
-    bool& isUpwindCell(int indexInInside, int equationIdx) const
-    {
-        return fluxData_.isUpwindCell(indexInInside, equationIdx);
-    }
-
-    void setUpwindCell(int indexInInside, int equationIdx, bool value)
-    {
-        fluxData_.setUpwindCell(indexInInside, equationIdx, value);
-    }
- */
-

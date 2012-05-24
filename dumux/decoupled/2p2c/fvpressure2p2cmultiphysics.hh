@@ -118,7 +118,7 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, 2> PhaseVector;
+    typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
 
@@ -157,6 +157,8 @@ public:
 
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
+    //updates singlephase secondary variables for one cell and stores in the variables object
+    void update1pMaterialLawsInElement(const Element&, CellData&);
 
     //! \brief Write data files
      /*  \param name file name */
@@ -186,11 +188,9 @@ public:
             gravity_(problem.gravity()), timer_(false)
     {}
 
-private:
+protected:
     // subdomain map
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //! vector holding next subdomain
-
-protected:
     const GlobalPosition& gravity_; //!< vector including the gravity constant
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
     Dune::Timer timer_;
@@ -662,7 +662,6 @@ template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
 {
     //get timestep for error term
-    Scalar dt = problem().timeManager().timeStepSize();
     Scalar maxError = 0.;
 
     // next subdomain map
@@ -671,14 +670,12 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
     else
         nextSubdomain = -1;  // reduce complexity after first TS
 
-    // iterate through leaf grid an evaluate c0 at cell center
+    // Loop A) through leaf grid
     ElementIterator eItEnd = problem().gridView().template end<0> ();
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
-        const typename ElementIterator::Entity::Geometry &geo = eIt->geometry();
-
         // get global coordinate of cell center
-        GlobalPosition globalPos = geo.center();
+        GlobalPosition globalPos = eIt->geometry().center();
 
         int globalIdx = problem().variables().index(*eIt);
         CellData& cellData = problem().variables().cellData(globalIdx);
@@ -715,94 +712,128 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
             }
             timer_.stop();
             // end subdomain check
-        }
-        else    // simple
+        }// end complex domain
+        else if (nextSubdomain[globalIdx] != 2) //check if cell remains in simple subdomain
+            nextSubdomain[globalIdx] = cellData.subdomain();
+
+    } //end define complex area of next subdomain
+
+    timer_.start();
+    // Loop B) thorugh leaf grid
+    // investigate cells that were "simple" in current TS
+    for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
+    {
+        int globalIdx = problem().variables().index(*eIt);
+        CellData& cellData = problem().variables().cellData(globalIdx);
+
+        // store old subdomain information and assign new info
+        int oldSubdomainI = cellData.subdomain();
+        cellData.subdomain() = nextSubdomain[globalIdx];
+
+        //first check if simple will become complicated
+        if(oldSubdomainI != 2
+                    && nextSubdomain[globalIdx] == 2)
         {
-            timer_.start();
-            // determine which phase should be present
-            int presentPhaseIdx = cellData.subdomain();
-            // check if it is not yet assigned to next complex subdomain
-            if(nextSubdomain[globalIdx] !=2)
-                nextSubdomain[globalIdx] = presentPhaseIdx; // assign correct index
-
-            // acess the simple fluid state and prepare for manipulation
-            PseudoOnePTwoCFluidState<TypeTag>& pseudoFluidState
-                = cellData.manipulateSimpleFluidState();
-
-            // prepare phase pressure for fluid state
-            // both phase pressures are necessary for the case 1p domain is assigned for
-            // the next 2p subdomain
-            PhaseVector pressure(0.);
-            Scalar pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(*eIt),
-                    ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign Sw = 1 if wPhase present, else 0
-            if(pressureType == wPhaseIdx)
-            {
-                pressure[wPhaseIdx] = this->pressure(globalIdx);
-                pressure[nPhaseIdx] = this->pressure(globalIdx)+pc;
-            }
-            else
-            {
-                pressure[wPhaseIdx] = this->pressure(globalIdx)-pc;
-                pressure[nPhaseIdx] = this->pressure(globalIdx);
-            }
-
-            // make shure total concentrations from solution vector are exact in fluidstate
-            pseudoFluidState.setMassConcentration(wCompIdx,
-                    problem().transportModel().totalConcentration(wCompIdx,globalIdx));
-            pseudoFluidState.setMassConcentration(nCompIdx,
-                    problem().transportModel().totalConcentration(nCompIdx,globalIdx));
-
-            // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]
-            Scalar sumConc = pseudoFluidState.massConcentration(wCompIdx)
-                    + pseudoFluidState.massConcentration(nCompIdx);
-            Scalar Z1 = pseudoFluidState.massConcentration(wCompIdx)/ sumConc;
-
-            pseudoFluidState.update(Z1, pressure, cellData.subdomain(), problem().temperatureAtPos(globalPos));
-
-            // write stuff in fluidstate
-            assert(presentPhaseIdx == pseudoFluidState.presentPhaseIdx());
-
-            cellData.setSimpleFluidState(pseudoFluidState);
-
+            // assure correct PV if subdomain used to be simple
+            if(cellData.fluidStateType() != 0); // i.e. it was simple
             timer_.stop();
-            // initialize viscosities
-            cellData.setViscosity(presentPhaseIdx, FluidSystem::viscosity(pseudoFluidState, presentPhaseIdx));
-
-            // initialize mobilities
-            if(presentPhaseIdx == wPhaseIdx)
-                cellData.setMobility(wPhaseIdx,
-                    MaterialLaw::krw(problem().spatialParams().materialLawParams(*eIt), pseudoFluidState.saturation(wPhaseIdx))
-                        / cellData.viscosity(wPhaseIdx));
-            else
-                cellData.setMobility(nPhaseIdx,
-                    MaterialLaw::krn(problem().spatialParams().materialLawParams(*eIt), pseudoFluidState.saturation(wPhaseIdx))
-                        / cellData.viscosity(nPhaseIdx));
-
-            // error term handling
-            Scalar vol(0.);
-            vol = sumConc / pseudoFluidState.density(presentPhaseIdx);
-
-            if (dt != 0)
-                cellData.volumeError() = (vol - problem().spatialParams().porosity(*eIt));
-
-
+            this->updateMaterialLawsInElement(*eIt);
+            timer_.start();
         }
+        else if(oldSubdomainI != 2
+                    && nextSubdomain[globalIdx] != 2)    // will be simple and was simple
+        {
+            // get global coordinate of cell center
+            GlobalPosition globalPos = eIt->geometry().center();
+//            // determine which phase should be present
+//            int presentPhaseIdx = cellData.subdomain(); // this is already =nextSubomainIdx
+
+            // perform simple update
+            this->update1pMaterialLawsInElement(*eIt, cellData);
+            timer_.stop();
+        }
+        //else
+        // a) will remain complex -> everything already done in loop A
+        // b) will be simple and was complex: complex FS available, so next TS
+        //         will use comlex FS, next update will transform to simple
+
         maxError = std::max(maxError, fabs(cellData.volumeError()));
     }// end grid traversal
     this->maxError_ = maxError/problem().timeManager().timeStepSize();
-    // update subdomain information
-    timer_.start();
-    // iterate through leaf grid an copy subdomain information
-    if(problem().timeManager().time() != 0.)
-    {
-        for (unsigned int i= 0; i < nextSubdomain.size(); i++)
-        {
-            problem().variables().cellData(i).subdomain() = nextSubdomain[i];
-        }
-    }
+
     timer_.stop();
     Dune::dinfo << "Subdomain routines took " << timer_.elapsed() << " seconds" << std::endl;
 
+    return;
+}
+template<class TypeTag>
+void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const Element& elementI, CellData& cellData)
+{
+    // get global coordinate of cell center
+    GlobalPosition globalPos = elementI.geometry().center();
+    int globalIdx = problem().variables().index(elementI);
+
+    // determine which phase should be present
+    int presentPhaseIdx = cellData.subdomain(); // this is already =nextSubomainIdx
+
+    // acess the simple fluid state and prepare for manipulation
+    PseudoOnePTwoCFluidState<TypeTag>& pseudoFluidState
+        = cellData.manipulateSimpleFluidState();
+
+    // prepare phase pressure for fluid state
+    // both phase pressures are necessary for the case 1p domain is assigned for
+    // the next 2p subdomain
+    PhaseVector pressure(0.);
+    Scalar pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
+            ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign Sw = 1 if wPhase present, else 0
+    if(pressureType == wPhaseIdx)
+    {
+        pressure[wPhaseIdx] = this->pressure(globalIdx);
+        pressure[nPhaseIdx] = this->pressure(globalIdx)+pc;
+    }
+    else
+    {
+        pressure[wPhaseIdx] = this->pressure(globalIdx)-pc;
+        pressure[nPhaseIdx] = this->pressure(globalIdx);
+    }
+
+//            // make shure total concentrations from solution vector are exact in fluidstate
+//            pseudoFluidState.setMassConcentration(wCompIdx,
+//                    problem().transportModel().totalConcentration(wCompIdx,globalIdx));
+//            pseudoFluidState.setMassConcentration(nCompIdx,
+//                    problem().transportModel().totalConcentration(nCompIdx,globalIdx));
+
+    // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]
+    Scalar sumConc = cellData.massConcentration(wCompIdx)
+            + cellData.massConcentration(nCompIdx);
+    Scalar Z1 = cellData.massConcentration(wCompIdx)/ sumConc;
+
+    pseudoFluidState.update(Z1, pressure, presentPhaseIdx, problem().temperatureAtPos(globalPos));
+
+    // write stuff in fluidstate
+    assert(presentPhaseIdx == pseudoFluidState.presentPhaseIdx());
+
+    cellData.setSimpleFluidState(pseudoFluidState);
+
+    // initialize viscosities
+    cellData.setViscosity(presentPhaseIdx, FluidSystem::viscosity(pseudoFluidState, presentPhaseIdx));
+
+    // initialize mobilities
+    if(presentPhaseIdx == wPhaseIdx)
+        cellData.setMobility(wPhaseIdx,
+            MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI), pseudoFluidState.saturation(wPhaseIdx))
+                / cellData.viscosity(wPhaseIdx));
+    else
+        cellData.setMobility(nPhaseIdx,
+            MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI), pseudoFluidState.saturation(wPhaseIdx))
+                / cellData.viscosity(nPhaseIdx));
+
+    // error term handling
+    Scalar vol(0.);
+    vol = sumConc / pseudoFluidState.density(presentPhaseIdx);
+
+    if (problem().timeManager().timeStepSize() != 0)
+        cellData.volumeError() = (vol - problem().spatialParams().porosity(elementI));
     return;
 }
 

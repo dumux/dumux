@@ -129,8 +129,8 @@ template<class TypeTag> class FVPressure2P2C
 
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
-    typedef Dune::FieldVector<Scalar, 2> PhaseVector;
+    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     // the typenames used for the stiffness matrix and solution vector
@@ -212,9 +212,9 @@ private:
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntry,
-											const Element& elementI,
-											const CellData& cellDataI,
-											const bool first)
+                                            const Element& elementI,
+                                            const CellData& cellDataI,
+                                            const bool first)
 {
     sourceEntry=0.;
     // cell volume & perimeter, assume linear map here
@@ -259,8 +259,8 @@ void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntr
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEntry,
-											const Element& elementI,
-											const CellData& cellDataI,
+                                            const Element& elementI,
+                                            const CellData& cellDataI,
                                             const bool first)
 {
     storageEntry = 0.;
@@ -366,7 +366,7 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     const GlobalPosition& gravity_ = problem().gravity();
 
     // get absolute permeability
-    FieldMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+    DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
 
     // get mobilities and fractional flow factors
     Scalar fractionalWI=0, fractionalNWI=0;
@@ -401,11 +401,11 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
     GlobalPosition unitDistVec(distVec);
     unitDistVec /= dist;
 
-    FieldMatrix permeabilityJ
+    DimMatrix permeabilityJ
         = problem().spatialParams().intrinsicPermeability(*neighborPtr);
 
     // compute vectorized permeabilities
-    FieldMatrix meanPermeability(0);
+    DimMatrix meanPermeability(0);
     Dumux::harmonicMeanMatrix(meanPermeability, permeabilityI, permeabilityJ);
 
     Dune::FieldVector<Scalar, dim> permeability(0);
@@ -479,46 +479,101 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
 
 
         //do the upwinding of the mobility depending on the phase potentials
-        if (potentialW >= 0.)
+        const CellData* upwindWCellData(0);
+        const CellData* upwindNCellData(0);
+        if (potentialW > 0.)
+            upwindWCellData = &cellDataI;
+        else if (potentialW < 0.)
+            upwindWCellData = &cellDataJ;
+        else
         {
-            dV_w = (dv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
+            if(cellDataI.isUpwindCell(intersection.indexInInside(), contiWEqIdx))
+                upwindWCellData = &cellDataI;
+            else if(cellDataJ.isUpwindCell(intersection.indexInOutside(), contiWEqIdx))
+                upwindWCellData = &cellDataJ;
+            //else
+            //  upwinding is not done!
+        }
+
+        if (potentialNW > 0.)
+            upwindNCellData = &cellDataI;
+        else if (potentialNW < 0.)
+            upwindNCellData = &cellDataJ;
+        else
+        {
+            if(cellDataI.isUpwindCell(intersection.indexInInside(), contiNEqIdx))
+                upwindNCellData = &cellDataI;
+            else if(cellDataJ.isUpwindCell(intersection.indexInOutside(), contiNEqIdx))
+                upwindNCellData = &cellDataJ;
+            //else
+            //  upwinding is not done!
+        }
+
+        //perform upwinding if desired
+        if(!upwindWCellData)
+        {
+            // compute values for both cells
+            Scalar dV_wI = (dv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
                     + dv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
-            lambdaW = cellDataI.mobility(wPhaseIdx);
-            gV_w = (graddv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
+            Scalar gV_wI = (graddv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
                     + graddv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
-            dV_w *= cellDataI.density(wPhaseIdx);
-            gV_w *= cellDataI.density(wPhaseIdx);
-        }
-        else
-        {
-            dV_w = (dv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
+            dV_wI *= cellDataI.density(wPhaseIdx);
+            gV_wI *= cellDataI.density(wPhaseIdx);
+            Scalar dV_wJ = (dv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
                     + dv_dC2 * cellDataJ.massFraction(wPhaseIdx, nCompIdx));
-            lambdaW = cellDataJ.mobility(wPhaseIdx);
-            gV_w = (graddv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
+            Scalar gV_wJ = (graddv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
                     + graddv_dC2 * cellDataJ.massFraction(wPhaseIdx, nCompIdx));
-            dV_w *= cellDataJ.density(wPhaseIdx);
-            gV_w *= cellDataJ.density(wPhaseIdx);
-        }
-        if (potentialNW >= 0.)
-        {
-            dV_n = (dv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
-                    + dv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
-            lambdaN = cellDataI.mobility(nPhaseIdx);
-            gV_n = (graddv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
-                    + graddv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
-            dV_n *= cellDataI.density(nPhaseIdx);
-            gV_n *= cellDataI.density(nPhaseIdx);
+            dV_wJ *= cellDataJ.density(wPhaseIdx);
+            gV_wJ *= cellDataJ.density(wPhaseIdx);
+
+            //compute means
+            dV_w = harmonicMean(dV_wI, dV_wJ);
+            gV_w = harmonicMean(gV_wI, gV_wJ);
+            lambdaW = harmonicMean(cellDataI.mobility(wPhaseIdx), cellDataJ.mobility(wPhaseIdx));
         }
         else
         {
-            dV_n = (dv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
-                    + dv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
-            lambdaN = cellDataJ.mobility(nPhaseIdx);
-            gV_n = (graddv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
-                    + graddv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
-            dV_n *= cellDataJ.density(nPhaseIdx);
-            gV_n *= cellDataJ.density(nPhaseIdx);
+            dV_w = (dv_dC1 * upwindWCellData->massFraction(wPhaseIdx, wCompIdx)
+                    + dv_dC2 * upwindWCellData->massFraction(wPhaseIdx, nCompIdx));
+            lambdaW = upwindWCellData->mobility(wPhaseIdx);
+            gV_w = (graddv_dC1 * upwindWCellData->massFraction(wPhaseIdx, wCompIdx)
+                    + graddv_dC2 * upwindWCellData->massFraction(wPhaseIdx, nCompIdx));
+            dV_w *= upwindWCellData->density(wPhaseIdx);
+            gV_w *= upwindWCellData->density(wPhaseIdx);
         }
+
+        if(!upwindNCellData)
+        {
+            Scalar dV_nI = (dv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
+                    + dv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
+            Scalar gV_nI = (graddv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
+                    + graddv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
+            dV_nI *= cellDataI.density(nPhaseIdx);
+            gV_nI *= cellDataI.density(nPhaseIdx);
+            Scalar dV_nJ = (dv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
+                    + dv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
+            Scalar gV_nJ = (graddv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
+                    + graddv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
+            dV_nJ *= cellDataJ.density(nPhaseIdx);
+            gV_nJ *= cellDataJ.density(nPhaseIdx);
+
+            //compute means
+            dV_n = harmonicMean(dV_nI, dV_nJ);
+            gV_n = harmonicMean(gV_nI, gV_nJ);
+            lambdaN = harmonicMean(cellDataI.mobility(nPhaseIdx), cellDataJ.mobility(nPhaseIdx));
+        }
+        else
+        {
+            dV_n = (dv_dC1 * upwindNCellData->massFraction(nPhaseIdx, wCompIdx)
+                    + dv_dC2 * upwindNCellData->massFraction(nPhaseIdx, nCompIdx));
+            lambdaN = upwindNCellData->mobility(nPhaseIdx);
+            gV_n = (graddv_dC1 * upwindNCellData->massFraction(nPhaseIdx, wCompIdx)
+                    + graddv_dC2 * upwindNCellData->massFraction(nPhaseIdx, nCompIdx));
+            dV_n *= upwindNCellData->density(nPhaseIdx);
+            gV_n *= upwindNCellData->density(nPhaseIdx);
+        }
+
+
 
         //calculate current matrix entry
         entries[matrix] = faceArea * (lambdaW * dV_w + lambdaN * dV_n)* (unitOuterNormal * unitDistVec);
@@ -613,7 +668,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
     if (bcType.isDirichlet(Indices::pressureEqIdx))
     {
         // get absolute permeability
-        FieldMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
+        DimMatrix permeabilityI(problem().spatialParams().intrinsicPermeability(*elementPtrI));
         const GlobalPosition& gravity_ = problem().gravity();
 
         //permeability vector at boundary
@@ -837,7 +892,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws()
 
         CellData& cellData = problem().variables().cellData(globalIdx);
 
-        asImp_().updateMaterialLawsInElement(*eIt);
+        problem().pressureModel().updateMaterialLawsInElement(*eIt);
 
         maxError = std::max(maxError, fabs(cellData.volumeError()));
     }
@@ -872,9 +927,9 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
 //    fluidState.setMassConcentration(nCompIdx,
 //            problem().transportModel().totalConcentration(nCompIdx,globalIdx));
     // get the overall mass of component 1 Z1 = C^k / (C^1+C^2) [-]
-    Scalar Z1 = fluidState.massConcentration(wCompIdx)
-            / (fluidState.massConcentration(wCompIdx)
-                    + fluidState.massConcentration(nCompIdx));
+    Scalar Z1 = cellData.massConcentration(wCompIdx)
+            / (cellData.massConcentration(wCompIdx)
+                    + cellData.massConcentration(nCompIdx));
 
     // make shure only physical quantities enter flash calculation
     #if DUNE_MINIMAL_DEBUG_LEVEL <= 3

@@ -82,7 +82,6 @@ public:
 
         if (presentPhaseIdx == wPhaseIdx)
         {
-            Sw_ = 1.;
             massFractionWater_[wPhaseIdx] = Z1;
             massFractionWater_[nPhaseIdx] = 0.;
 
@@ -95,7 +94,6 @@ public:
         }
         else if (presentPhaseIdx == nPhaseIdx)
         {
-            Sw_ = 0.;
             massFractionWater_[wPhaseIdx] = 0.;
             massFractionWater_[nPhaseIdx] = Z1;
 
@@ -126,16 +124,20 @@ public:
      */
     Scalar saturation(int phaseIdx) const
     {
-        if (phaseIdx == wPhaseIdx)
-            return Sw_;
+        if (phaseIdx == presentPhaseIdx_)
+            return 1.;
         else
-            return Scalar(1.0) - Sw_;
+            return 0.;
     };
 
     int presentPhaseIdx() const
     {
         return presentPhaseIdx_;
     }
+    void setPresentPhaseIdx(int index)
+    {
+        presentPhaseIdx_ = index;
+    };
 
     /*! \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *  \param phaseIdx Index of the phase
@@ -197,8 +199,6 @@ public:
     Scalar averageMolarMass(int phaseIdx) const
     {
         return aveMoMass_;
-//        return moleFractionWater_[phaseIdx]*FluidSystem::molarMass(wCompIdx)
-//                +   (1.-moleFractionWater_[phaseIdx])*FluidSystem::molarMass(nCompIdx);
     }
 
     /*!
@@ -211,23 +211,11 @@ public:
     { return temperature_; };
 
     /*!
-     * \brief Returns the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * This is equivalent to the sum of the component concentrations for all
-     * phases multiplied with the phase density.
-     *
-     * \param compIdx the index of the component
+     * \brief Sets the phase pressure \f$\mathrm{[Pa]}\f$.
      */
-    Scalar massConcentration(int compIdx) const
+    void setPressure(int phaseIdx, Scalar value)
     {
-        return massConcentration_[compIdx];
-    };
-    /*!
-     * \brief Sets the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
-     */
-    void setMassConcentration(int compIdx, Scalar value)
-    {
-        massConcentration_[compIdx] = value;
+        pressure_[phaseIdx] = value;
     };
     //@}
 
@@ -237,7 +225,6 @@ public:
     Scalar massFractionWater_[numPhases];
     Scalar moleFractionWater_[numPhases];
     Scalar pressure_[numPhases];
-    Scalar Sw_;
     Scalar density_;
     Scalar viscosity_;
     Scalar temperature_;

@@ -119,7 +119,8 @@ public:
 
         // check if there is enough of component 1 to form a phase
         if (Z1 > massFraction_[nPhaseIdx][wCompIdx] && Z1 < massFraction_[wPhaseIdx][wCompIdx])
-            nu_[nPhaseIdx] = -((equilRatio_[nPhaseIdx][wCompIdx]-1)*Z1 + (equilRatio_[nPhaseIdx][nCompIdx]-1)*(1-Z1)) / (equilRatio_[nPhaseIdx][wCompIdx]-1) / (equilRatio_[nPhaseIdx][nCompIdx] -1);
+            nu_[nPhaseIdx] = -((equilRatio_[nPhaseIdx][wCompIdx]-1)*Z1 + (equilRatio_[nPhaseIdx][nCompIdx]-1)*(1-Z1))
+            / (equilRatio_[nPhaseIdx][wCompIdx]-1) / (equilRatio_[nPhaseIdx][nCompIdx] -1);
         else if (Z1 <= massFraction_[nPhaseIdx][wCompIdx]) // too little wComp to form a phase
         {
             nu_[nPhaseIdx] = 1; // only nPhase
@@ -130,9 +131,7 @@ public:
             moleFraction_[nPhaseIdx][wCompIdx] /= ( massFraction_[nPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
                            + massFraction_[nPhaseIdx][nCompIdx] / FluidSystem::molarMass(nCompIdx) );    // /= total moles in phase
 
-            // corresponding phase
-            massFraction_[wPhaseIdx][wCompIdx] = 1.;
-            moleFraction_[wPhaseIdx][wCompIdx] = 1.;
+            // w phase is already set to equilibrium mass fraction
         }
         else    // (Z1 >= Xw1) => no nPhase
         {
@@ -144,8 +143,7 @@ public:
             moleFraction_[wPhaseIdx][wCompIdx] /= ( massFraction_[wPhaseIdx][wCompIdx] / FluidSystem::molarMass(wCompIdx)
                            + massFraction_[wPhaseIdx][nCompIdx] / FluidSystem::molarMass(nCompIdx) );    // /= total moles in phase
 
-            massFraction_[nPhaseIdx][wCompIdx] = 0.;
-            moleFraction_[nPhaseIdx][wCompIdx] = 0.;
+            // n phase is already set to equilibrium mass fraction
         }
 
         // complete array of mass fractions
@@ -225,13 +223,6 @@ public:
         // get densities with correct composition
         density_[wPhaseIdx] = FluidSystem::density(*this, wPhaseIdx);
         density_[nPhaseIdx] = FluidSystem::density(*this, nPhaseIdx);
-
-        massConcentration_[wCompIdx] =
-                poro * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massFraction_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
-        massConcentration_[nCompIdx] =
-                poro * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massFraction_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
     }
     //@}
     /*!
@@ -271,43 +262,6 @@ public:
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         return moleFraction_[phaseIdx][compIdx];
-    }
-
-    /*!
-     * \brief Returns the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * This is equivalent to the sum of the component concentrations for all
-     * phases multiplied with the phase density.
-     *
-     * \param compIdx the index of the component
-     */
-    Scalar massConcentration(int compIdx) const
-    {
-        return massConcentration_[compIdx];
-    };
-    /*!
-     * \brief Sets the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * @param compIdx index of the Component
-     * @param value Value to be stored
-     */
-    void setMassConcentration(int compIdx, Scalar value)
-    {
-        massConcentration_[compIdx] = value;
-    };
-    /*!
-     * \brief Calculate the total mass concentration of a component \f$\mathrm{[kg/m^3]}\f$
-     * for a given porosity (within the initialization procedure).
-     * @param porosity Porosity
-     */
-    void calculateMassConcentration(Scalar porosity)
-    {
-        massConcentration_[wCompIdx] =
-                porosity * (massFraction_[wPhaseIdx][wCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massFraction_[nPhaseIdx][wCompIdx] * (1.-Sw_) * density_[nPhaseIdx]);
-        massConcentration_[nCompIdx] =
-                porosity * (massFraction_[wPhaseIdx][nCompIdx] * Sw_ * density_[wPhaseIdx]
-                        + massFraction_[nPhaseIdx][nCompIdx] * (1-Sw_) * density_[nPhaseIdx]);
     }
 
     /*!
@@ -495,7 +449,7 @@ public:
     DecoupledTwoPTwoCFluidState()
     { Valgrind::SetUndefined(*this); }
 private:
-    Scalar massConcentration_[numComponents];
+//    Scalar massConcentration_[numComponents];
     Scalar phasePressure_[numPhases];
     Scalar temperature_;
 
