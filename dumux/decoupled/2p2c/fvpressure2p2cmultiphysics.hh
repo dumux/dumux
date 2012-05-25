@@ -675,8 +675,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
         // get global coordinate of cell center
-        GlobalPosition globalPos = eIt->geometry().center();
-
         int globalIdx = problem().variables().index(*eIt);
         CellData& cellData = problem().variables().cellData(globalIdx);
 
@@ -743,8 +741,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
         else if(oldSubdomainI != 2
                     && nextSubdomain[globalIdx] != 2)    // will be simple and was simple
         {
-            // get global coordinate of cell center
-            GlobalPosition globalPos = eIt->geometry().center();
 //            // determine which phase should be present
 //            int presentPhaseIdx = cellData.subdomain(); // this is already =nextSubomainIdx
 
@@ -755,7 +751,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws()
         //else
         // a) will remain complex -> everything already done in loop A
         // b) will be simple and was complex: complex FS available, so next TS
-        //         will use comlex FS, next update will transform to simple
+        //         will use comlex FS, next updateMaterialLaw will transform to simple
 
         maxError = std::max(maxError, fabs(cellData.volumeError()));
     }// end grid traversal
