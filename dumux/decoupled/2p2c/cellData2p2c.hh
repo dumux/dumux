@@ -22,7 +22,7 @@
 #ifndef DUMUX_ELEMENTDATA2P2C_HH
 #define DUMUX_ELEMENTDATA2P2C_HH
 
-#include "dec2p2cfluidstate.hh"
+#include "2p2cfluidstate.hh"
 #include "fluxData2p2c.hh"
 
 /**

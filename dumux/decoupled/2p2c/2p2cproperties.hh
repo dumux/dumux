@@ -46,7 +46,7 @@ template<class TypeTag>
 class CellData2P2C;
 
 template<class TypeTag>
-class DecoupledTwoPTwoCFluidState;
+class TwoPTwoCFluidState;
 
 template <class TypeTag>
 struct DecoupledTwoPTwoCIndices;
@@ -91,7 +91,7 @@ NEW_PROP_TAG( EnableSecondHalfEdge );
 //DUMUX includes
 #include <dumux/decoupled/2p/2pindices.hh>
 #include <dumux/decoupled/2p2c/cellData2p2c.hh>
-#include <dumux/decoupled/2p2c/dec2p2cfluidstate.hh>
+#include <dumux/decoupled/2p2c/2p2cfluidstate.hh>
 
 namespace Dumux {
 namespace Properties {
@@ -158,7 +158,7 @@ SET_PROP(DecoupledTwoPTwoC, BoundaryMobility)
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoC, CellData, CellData2P2C<TypeTag>);
-SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, DecoupledTwoPTwoCFluidState<TypeTag>);
+SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
 
 //! DEPRECATED SpatialParameters property
 SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
