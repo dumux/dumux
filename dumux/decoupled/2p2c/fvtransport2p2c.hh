@@ -539,7 +539,7 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
         potential[wPhaseIdx] = 0;
 
         //d) output (only for one side)
-        if(potential[wPhaseIdx] >= 0.)
+        if(globalIdxI > globalIdxJ)
             Dune::dinfo << "harmonicMean flux of phase w used from cell" << globalIdxI<< " into " << globalIdxJ <<"\n";
     }
     if(!doUpwinding[nPhaseIdx])
@@ -563,7 +563,7 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
         potential[nPhaseIdx] = 0;
 
         //d) output (only for one side)
-        if(potential[nPhaseIdx] >= 0.)
+        if(globalIdxI > globalIdxJ)
             Dune::dinfo << "harmonicMean flux of phase n used from cell" << globalIdxI<< " into " << globalIdxJ <<"\n";
     }
 

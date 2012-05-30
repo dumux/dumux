@@ -59,7 +59,10 @@ class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
     // material properties
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams)    SpatialParams;
 
-
+    enum
+    {
+        adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
+    };
     enum {
         dim = Grid::dimension,
         dimWorld = Grid::dimensionworld
@@ -93,6 +96,40 @@ public:
 
     virtual ~IMPETProblem2P2C()
     { }
+
+    /*!
+     * \brief Called by Dumux::TimeManager just before the time
+     *        integration.
+     *
+     *        In compositional/compressible models, the secondary variables
+     *        should be updated after each time step. Hence, another update
+     *        is only necessary if the grid is adapted.
+     */
+    void preTimeStep()
+    {
+        // if adaptivity is used, this method adapts the grid.
+        // if it is not used, this method does nothing.
+        if (this->adaptiveGrid)
+        {
+            this->gridAdapt().adaptGrid();
+            asImp_().pressureModel().updateMaterialLaws(false);
+        }
+    }
+    /*!
+     * \brief Called by the time manager after everything which can be
+     *        done about the current time step is finished and the
+     *        model should be prepared to do the next time integration.
+     *
+     *        In compositional/compressible models, the secondary variables
+     *        should be updated for output and the next time step via
+     *        updateMaterialLaws. The boolean indicates that it is
+     *        a call from postTimeStep().
+     */
+    void postTimeStep()
+    {
+        ParentType::postTimeStep();
+        asImp_().pressureModel().updateMaterialLaws(true);
+    };
     /*!
      * \name Problem parameters
      */
