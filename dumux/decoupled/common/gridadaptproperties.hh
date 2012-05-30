@@ -63,6 +63,9 @@ NEW_PROP_TAG(RefineThreshold);
 //! Tolerance for coarsening
 NEW_PROP_TAG(CoarsenThreshold);
 
+//! Time step interval for adaption
+NEW_PROP_TAG(AdaptionInterval);
+
 //no adaptive grid
 SET_BOOL_PROP(GridAdaptTypeTag, AdaptiveGrid, false);
 
@@ -73,6 +76,7 @@ SET_SCALAR_PROP(GridAdaptTypeTag, RefineTolerance, 0.05);
 SET_SCALAR_PROP(GridAdaptTypeTag, CoarsenTolerance, 0.001);
 SET_SCALAR_PROP(GridAdaptTypeTag, RefineThreshold, 0.0);
 SET_SCALAR_PROP(GridAdaptTypeTag, CoarsenThreshold, 0.0);
+SET_INT_PROP(GridAdaptTypeTag, AdaptionInterval, 1);
 
 } // namespace Properties
 } // namespace Dumux

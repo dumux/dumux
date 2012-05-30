@@ -66,14 +66,20 @@ public:
      * @param problem The problem
      */
     GridAdapt (Problem& problem)
-    : problem_(problem), adaptionIndicator_(problem)
+    : problem_(problem), adaptionIndicator_(problem), marked_(0), coarsened_(0)
     {
         levelMin_ = GET_PARAM(TypeTag, int, MinLevel);
         levelMax_ = GET_PARAM(TypeTag, int, MaxLevel);
+        adaptationInterval_ = GET_PARAM(TypeTag, int, AdaptionInterval);
 
         if (levelMin_ < 0)
             Dune::dgrave <<  __FILE__<< ":" <<__LINE__
             << " :  Dune cannot coarsen to gridlevels smaller 0! "<< std::endl;
+    }
+
+    void init()
+    {
+        adaptionIndicator_.init();
     }
 
     /*!
@@ -93,6 +99,10 @@ public:
     {
         // reset internal counter for marked elements
         marked_ = coarsened_ = 0;
+
+        // check for adaption interval: Adapt only at certain time step indices
+        if (problem_.timeManager().timeStepIndex() % adaptationInterval_ != 0)
+            return;
 
         /**** 1) determine refining parameter if standard is used ***/
         // if not, the indicatorVector and refinement Bounds have to
@@ -132,9 +142,6 @@ public:
 
         // delete markers in grid
         problem_.grid().postAdapt();
-
-        // adapt secondary variables
-        problem_.pressureModel().updateMaterialLaws();
 
         // write out new grid
 //        Dune::VTKWriter<LeafGridView> vtkwriter(leafView);
@@ -211,6 +218,11 @@ public:
         return marked_;
     }
 
+    bool wasAdapted()
+    {
+        return (marked_ != 0 || coarsened_ != 0);
+    }
+
     /*!
      * Sets minimum and maximum refinement levels
      *
@@ -243,6 +255,16 @@ public:
     const int getMinLevel() const
     {
         return levelMin_;
+    }
+
+    AdaptionIndicator& adaptionIndicator()
+    {
+        return adaptionIndicator_;
+    }
+
+    AdaptionIndicator& adaptionIndicator() const
+    {
+        return adaptionIndicator_;
     }
 
 private:
@@ -336,11 +358,13 @@ private:
     Problem& problem_;
     AdaptionIndicator adaptionIndicator_;
 
+    int marked_;
+    int coarsened_;
+
     int levelMin_;
     int levelMax_;
 
-    int marked_;
-    int coarsened_;
+    int adaptationInterval_;
 };
 
 /*!
@@ -359,8 +383,14 @@ class GridAdapt<TypeTag, false>
     typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 public:
+    void init()
+    {};
     void adaptGrid()
     {};
+    bool wasAdapted()
+    {
+        return false;
+    }
     void setLevels(int, int)
     {};
     void setTolerance(int, int)

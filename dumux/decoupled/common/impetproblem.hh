@@ -340,6 +340,8 @@ public:
         // set the initial condition of the model
         variables_.initialize();
         model().initialize();
+        if (adaptiveGrid)
+            gridAdapt().init();
     }
 
     /*!
@@ -352,6 +354,7 @@ public:
         // if it is not used, this method does nothing.
         if (adaptiveGrid)
             this->gridAdapt().adaptGrid();
+        asImp_().pressureModel().updateMaterialLaws();
     }
 
     /*!
@@ -417,9 +420,7 @@ public:
      * current solution to disk.
      */
     void postTimeStep()
-    {
-        asImp_().pressureModel().updateMaterialLaws();
-    };
+    {};
 
     /*!
      * \brief Called by the time manager after everything which can be
@@ -479,7 +480,7 @@ public:
      */
     void setOutputTimeInterval(const Scalar timeInterval)
     {
-        outputTimeInterval_ = timeInterval;
+        outputTimeInterval_ = (timeInterval > 0.0) ? timeInterval : 1e100;
         timeManager().startNextEpisode(outputTimeInterval_);
     }
 
