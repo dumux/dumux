@@ -255,7 +255,7 @@ public:
     /*!
      * \brief Calculate the source term of the equation
      *
-     * \param q The source/sink in the SCV for each component
+     * \param source The source/sink in the SCV for each component
      * \param scvIdx The index of the SCV
      */
     void computeSource(PrimaryVariables &source, const int scvIdx)
