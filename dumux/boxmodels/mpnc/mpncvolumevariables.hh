@@ -98,7 +98,7 @@ public:
     }
 
     /*!
-     * \brief Update all quantities for a given control volume.
+     * \copydoc BoxVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

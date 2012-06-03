@@ -75,14 +75,7 @@ class TwoPVolumeVariables : public BoxVolumeVariables<TypeTag>
 
 public:
     /*!
-     * \brief Update all quantities for a given control volume.
-     *
-     * \param priVars The local primary variable vector
-     * \param problem The problem object
-     * \param element The current element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param scvIdx The local index of the SCV (sub-control volume)
-     * \param isOldSol Evaluate function with solution of current or previous time step
+     * \copydoc BoxVolumeVariables::update
      */
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,

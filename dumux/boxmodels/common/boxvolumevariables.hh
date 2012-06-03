@@ -106,9 +106,9 @@ public:
     {};
 
     /*!
-     * \brief Update all quantities for a given control volume.
+     * \brief Update all quantities for a given control volume
      *
-     * \param priVars The primary variables for the control volume
+     * \param priVars A vector containing the primary variables for the control volume
      * \param problem The object specifying the problem which ought to
      *                be simulated
      * \param element An element which contains part of the control volume
