@@ -73,6 +73,13 @@ public:
     static const int NAPLIdx = 1;
     static const int airIdx = 2;
 
+    // export component indices to indicate the main component 
+    // of the corresponding phase at atmospheric pressure 1 bar 
+    // and room temperature 20°C:
+    static const int wCompIdx = H2OIdx;
+    static const int nCompIdx = NAPLIdx;
+    static const int gCompIdx = airIdx;
+
     static void init()
     { }
 

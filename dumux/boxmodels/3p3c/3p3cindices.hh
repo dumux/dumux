@@ -48,17 +48,19 @@ class ThreePThreeCIndices
 
 public:
     // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; // !< DEPRECATED index of the water phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< DEPRECATED index of the NAPL phase
-    static const int gPhaseIdx = FluidSystem::gPhaseIdx; //< DEPRECATED index of the gas phase
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting liquid phase
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the nonwetting liquid phase
+    static const int gPhaseIdx = FluidSystem::gPhaseIdx; //!< index of the gas phase
 
-    // Component indices
-    static const int wCompIdx = 0; //!< Index of the water component
-    static const int cCompIdx = 1; //!< Index of the NAPL component
-    static const int aCompIdx = 2; //!< Index of the air component
-    static const int comp0Idx = 0; //!< Index of the water component
-    static const int comp1Idx = 1; //!< Index of the NAPL component
-    static const int comp2Idx = 2; //!< Index of the gas component
+    // Component indices to indicate the main component 
+    // of the corresponding phase at atmospheric pressure 1 bar 
+    // and room temperature 20°C:
+    static const int wCompIdx = FluidSystem::wCompIdx; 
+    static const int nCompIdx = FluidSystem::nCompIdx; 
+    static const int gCompIdx = FluidSystem::gCompIdx; 
+
+    static const int cCompIdx = nCompIdx; //!< DEPRECATED index of the NAPL component
+    static const int aCompIdx = gCompIdx; //!< DEPRECATED index of the air component
 
     // present phases (-> 'pseudo' primary variable)
     static const int threePhases = 1; //!< All three phases are present
@@ -78,10 +80,9 @@ public:
     static const int SOrX2Idx = switch2Idx; //!< Index of the either the saturation of the gas phase or the mass fraction secondary component if a phase is not present
 
     // equation indices
-
-    static const int conti0EqIdx = PVOffset    + comp0Idx; //!< Index of the mass conservation equation for the water component
-    static const int conti1EqIdx = conti0EqIdx + comp1Idx; //!< Index of the mass conservation equation for the contaminant component
-    static const int conti2EqIdx = conti0EqIdx + comp2Idx; //!< Index of the mass conservation equation for the gas component
+    static const int conti0EqIdx = PVOffset    + wCompIdx; //!< Index of the mass conservation equation for the water component
+    static const int conti1EqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the contaminant component
+    static const int conti2EqIdx = conti0EqIdx + gCompIdx; //!< Index of the mass conservation equation for the gas component
 
     static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< DEPRECATED index of the mass conservation equation for the water component
     static const int contiCEqIdx = conti0EqIdx + cCompIdx; //!< DEPRECATED index of the mass conservation equation for the contaminant component

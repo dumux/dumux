@@ -78,7 +78,7 @@ SET_SCALAR_PROP(BoxRichards,
                 1.0);
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(BoxRichards, Indices, Dumux::RichardsIndices);
+SET_TYPE_PROP(BoxRichards, Indices, RichardsIndices<TypeTag>);
 
 //! DEPRECATED RichardsIndices property
 SET_TYPE_PROP(BoxRichards, RichardsIndices, typename GET_PROP_TYPE(TypeTag, Indices));

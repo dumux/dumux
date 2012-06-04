@@ -84,13 +84,18 @@ public:
     //! Number of phases in the fluid system
     static constexpr int numPhases = 2;
 
-    //! Index of the liquid phase
-    static constexpr int lPhaseIdx = 0;
-    static constexpr int wPhaseIdx = lPhaseIdx;
-    //! Index of the gas phase
-    static constexpr int gPhaseIdx = 1;
-    static constexpr int nPhaseIdx = gPhaseIdx;
+    static constexpr int wPhaseIdx = 0; // index of the wetting phase
+    static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
+    
+    static constexpr int lPhaseIdx = wPhaseIdx; // DEPRECATED index of the liquid phase
+    static constexpr int gPhaseIdx = nPhaseIdx; // DEPRECATED index of the gas phase
 
+    // export component indices to indicate the main component 
+    // of the corresponding phase at atmospheric pressure 1 bar 
+    // and room temperature 20°C:
+    static const int wCompIdx = wPhaseIdx;
+    static const int nCompIdx = nPhaseIdx;
+    
     /*!
      * \brief Return the human readable name of a fluid phase
      *

@@ -101,11 +101,11 @@ public:
 
     static constexpr int numPhases = 2;
 
-    static constexpr int lPhaseIdx = 0; // index of the liquid phase
-    static constexpr int gPhaseIdx = 1; // index of the gas phase
+    static constexpr int wPhaseIdx = 0; // index of the wetting phase
+    static constexpr int nPhaseIdx = 1; // index of the non-wetting phase
 
-    static constexpr int wPhaseIdx = lPhaseIdx; // index of the wetting phase
-    static constexpr int nPhaseIdx = gPhaseIdx; // index of the non-wetting phase
+    static constexpr int lPhaseIdx = wPhaseIdx; // DEPRECATED index of the liquid phase
+    static constexpr int gPhaseIdx = nPhaseIdx; // DEPRECATED index of the gas phase
 
     /*!
      * \brief Return the human readable name of a phase

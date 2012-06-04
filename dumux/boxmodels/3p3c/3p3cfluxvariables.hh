@@ -83,9 +83,9 @@ class ThreePThreeCFluxVariables
         nPhaseIdx = Indices::nPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
 
-        comp0Idx = Indices::comp0Idx,
-        comp1Idx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx
+        wCompIdx = Indices::wCompIdx,
+        nCompIdx = Indices::nCompIdx,
+        gCompIdx = Indices::gCompIdx
     };
 
 public:
@@ -112,12 +112,12 @@ public:
             density_[phaseIdx] = Scalar(0);
             molarDensity_[phaseIdx] = Scalar(0);
             potentialGrad_[phaseIdx] = Scalar(0);
-            massFractionComp0Grad_[phaseIdx] = Scalar(0);
-            massFractionComp1Grad_[phaseIdx] = Scalar(0);
-            massFractionComp2Grad_[phaseIdx] = Scalar(0);
-            moleFractionComp0Grad_[phaseIdx] = Scalar(0);
-            moleFractionComp1Grad_[phaseIdx] = Scalar(0);
-            moleFractionComp2Grad_[phaseIdx] = Scalar(0);
+            massFractionCompWGrad_[phaseIdx] = Scalar(0);
+            massFractionCompNGrad_[phaseIdx] = Scalar(0);
+            massFractionCompGGrad_[phaseIdx] = Scalar(0);
+            moleFractionCompWGrad_[phaseIdx] = Scalar(0);
+            moleFractionCompNGrad_[phaseIdx] = Scalar(0);
+            moleFractionCompGGrad_[phaseIdx] = Scalar(0);
         }
 
         calculateGradients_(problem, element, elemVolVars);
@@ -154,78 +154,78 @@ private:
             // the concentration gradient of the components
             // component in the phases
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, comp0Idx);
-            massFractionComp0Grad_[wPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, wCompIdx);
+            massFractionCompWGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, comp0Idx);
-            massFractionComp0Grad_[nPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, wCompIdx);
+            massFractionCompWGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, comp0Idx);
-            massFractionComp0Grad_[gPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, wCompIdx);
+            massFractionCompWGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, comp1Idx);
-            massFractionComp1Grad_[wPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, nCompIdx);
+            massFractionCompNGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, comp1Idx);
-            massFractionComp1Grad_[nPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, nCompIdx);
+            massFractionCompNGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, comp1Idx);
-            massFractionComp1Grad_[gPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, nCompIdx);
+            massFractionCompNGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, comp2Idx);
-            massFractionComp2Grad_[wPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, gCompIdx);
+            massFractionCompGGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, comp2Idx);
-            massFractionComp2Grad_[nPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, gCompIdx);
+            massFractionCompGGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, comp2Idx);
-            massFractionComp2Grad_[gPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(gPhaseIdx, gCompIdx);
+            massFractionCompGGrad_[gPhaseIdx] += tmp;
 
             // the molar concentration gradients of the components
             // in the phases
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, comp0Idx);
-            moleFractionComp0Grad_[wPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, wCompIdx);
+            moleFractionCompWGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, comp0Idx);
-            moleFractionComp0Grad_[nPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
+            moleFractionCompWGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, comp0Idx);
-            moleFractionComp0Grad_[gPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, wCompIdx);
+            moleFractionCompWGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, comp1Idx);
-            moleFractionComp1Grad_[wPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
+            moleFractionCompNGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, comp1Idx);
-            moleFractionComp1Grad_[nPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, nCompIdx);
+            moleFractionCompNGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, comp1Idx);
-            moleFractionComp1Grad_[gPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, nCompIdx);
+            moleFractionCompNGrad_[gPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, comp2Idx);
-            moleFractionComp2Grad_[wPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, gCompIdx);
+            moleFractionCompGGrad_[wPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, comp2Idx);
-            moleFractionComp2Grad_[nPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, gCompIdx);
+            moleFractionCompGGrad_[nPhaseIdx] += tmp;
 
             tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, comp2Idx);
-            moleFractionComp2Grad_[gPhaseIdx] += tmp;
+            tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(gPhaseIdx, gCompIdx);
+            moleFractionCompGGrad_[gPhaseIdx] += tmp;
         }
 
         // correct the pressure gradients by the hydrostatic
@@ -329,9 +329,9 @@ private:
             if (volVarsI.saturation(phaseIdx) <= 0 ||
                 volVarsJ.saturation(phaseIdx) <= 0)
             {
-                porousDiffCoeff_[phaseIdx][comp0Idx] = 0.0;
-                porousDiffCoeff_[phaseIdx][comp1Idx] = 0.0;
-                porousDiffCoeff_[phaseIdx][comp2Idx] = 0.0;
+                porousDiffCoeff_[phaseIdx][wCompIdx] = 0.0;
+                porousDiffCoeff_[phaseIdx][nCompIdx] = 0.0;
+                porousDiffCoeff_[phaseIdx][gCompIdx] = 0.0;
                 continue;
             }
 
@@ -347,12 +347,12 @@ private:
             // Diffusion coefficient in the porous medium
 
             // -> harmonic mean
-            porousDiffCoeff_[phaseIdx][comp0Idx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][comp0Idx],
-                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][comp0Idx]);
-            porousDiffCoeff_[phaseIdx][comp1Idx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][comp1Idx],
-                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][comp1Idx]);
-            porousDiffCoeff_[phaseIdx][comp2Idx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][comp2Idx],
-                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][comp2Idx]);
+            porousDiffCoeff_[phaseIdx][wCompIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][wCompIdx],
+                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][wCompIdx]);
+            porousDiffCoeff_[phaseIdx][nCompIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][nCompIdx],
+                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][nCompIdx]);
+            porousDiffCoeff_[phaseIdx][gCompIdx] = harmonicMean(volVarsI.porosity() * volVarsI.saturation(phaseIdx) * tauI * diffusionCoefficientMatrix_i[phaseIdx][gCompIdx],
+                                                                volVarsJ.porosity() * volVarsJ.saturation(phaseIdx) * tauJ * diffusionCoefficientMatrix_j[phaseIdx][gCompIdx]);
 
         }
     }
@@ -434,51 +434,51 @@ public:
     /*!
      * \brief The mass fraction gradients of the components in a phase.
      */
-	DUMUX_DEPRECATED_MSG("use massFractionComp0Grad instead")
+	DUMUX_DEPRECATED_MSG("use massFractionCompWGrad instead")
     const DimVector &wConcentrationGrad(int phaseIdx) const
-    { massFractionComp0Grad(phaseIdx); };
+    { massFractionCompWGrad(phaseIdx); };
 
-	const DimVector &massFractionComp0Grad(int phaseIdx) const
-	{return massFractionComp0Grad_[phaseIdx];}
+	const DimVector &massFractionCompWGrad(int phaseIdx) const
+	{return massFractionCompWGrad_[phaseIdx];}
 
-	DUMUX_DEPRECATED_MSG("use massFractionComp1Grad instead")
+	DUMUX_DEPRECATED_MSG("use massFractionCompNGrad instead")
     const DimVector &cConcentrationGrad(int phaseIdx) const
-    { massFractionComp1Grad(phaseIdx); };
+    { massFractionCompNGrad(phaseIdx); };
 
-	const DimVector &massFractionComp1Grad(int phaseIdx) const
-	{ return massFractionComp1Grad_[phaseIdx]; };
+	const DimVector &massFractionCompNGrad(int phaseIdx) const
+	{ return massFractionCompNGrad_[phaseIdx]; };
 
-	DUMUX_DEPRECATED_MSG("use massFractionComp2Grad instead")
+	DUMUX_DEPRECATED_MSG("use massFractionCompGGrad instead")
     const DimVector &aConcentrationGrad(int phaseIdx) const
-    {  massFractionComp2Grad(phaseIdx); };
+    {  massFractionCompGGrad(phaseIdx); };
 
-	const DimVector &massFractionComp2Grad(int phaseIdx) const
-	{ return massFractionComp2Grad_[phaseIdx]; };
+	const DimVector &massFractionCompGGrad(int phaseIdx) const
+	{ return massFractionCompGGrad_[phaseIdx]; };
 
 
     /*!
      * \brief The molar concentration gradients of the components in a phase.
      */
-	DUMUX_DEPRECATED_MSG("use moleFractionComp0Grad instead")
+	DUMUX_DEPRECATED_MSG("use moleFractionCompWGrad instead")
     const DimVector &molarWConcGrad(int phaseIdx) const
-    {  moleFractionComp0Grad(phaseIdx); };
+    {  moleFractionCompWGrad(phaseIdx); };
 
-	const DimVector &moleFractionComp0Grad(int phaseIdx) const
-	{ return moleFractionComp0Grad_[phaseIdx]; };
+	const DimVector &moleFractionCompWGrad(int phaseIdx) const
+	{ return moleFractionCompWGrad_[phaseIdx]; };
 
-	DUMUX_DEPRECATED_MSG("use moleFractionComp1Grad instead")
+	DUMUX_DEPRECATED_MSG("use moleFractionCompNGrad instead")
     const DimVector &molarCConcGrad(int phaseIdx) const
-    { moleFractionComp1Grad(phaseIdx); };
+    { moleFractionCompNGrad(phaseIdx); };
 
-	const DimVector &moleFractionComp1Grad(int phaseIdx) const
-	{ return moleFractionComp1Grad_[phaseIdx]; };
+	const DimVector &moleFractionCompNGrad(int phaseIdx) const
+	{ return moleFractionCompNGrad_[phaseIdx]; };
 
-	DUMUX_DEPRECATED_MSG("use moleFractionComp2Grad instead")
+	DUMUX_DEPRECATED_MSG("use moleFractionCompGGrad instead")
     const DimVector &molarAConcGrad(int phaseIdx) const
-    { moleFractionComp2Grad(phaseIdx); };
+    { moleFractionCompGGrad(phaseIdx); };
 
-	const DimVector &moleFractionComp2Grad(int phaseIdx) const
-    { return moleFractionComp2Grad_[phaseIdx]; };
+	const DimVector &moleFractionCompGGrad(int phaseIdx) const
+    { return moleFractionCompGGrad_[phaseIdx]; };
 
     const SCVFace &face() const
     {
@@ -495,12 +495,12 @@ protected:
 
     // gradients
     DimVector potentialGrad_[numPhases];
-    DimVector massFractionComp0Grad_[numPhases];
-    DimVector massFractionComp1Grad_[numPhases];
-    DimVector massFractionComp2Grad_[numPhases];
-    DimVector moleFractionComp0Grad_[numPhases];
-    DimVector moleFractionComp1Grad_[numPhases];
-    DimVector moleFractionComp2Grad_[numPhases];
+    DimVector massFractionCompWGrad_[numPhases];
+    DimVector massFractionCompNGrad_[numPhases];
+    DimVector massFractionCompGGrad_[numPhases];
+    DimVector moleFractionCompWGrad_[numPhases];
+    DimVector moleFractionCompNGrad_[numPhases];
+    DimVector moleFractionCompGGrad_[numPhases];
 
     // density of each face at the integration point
     Scalar density_[numPhases], molarDensity_[numPhases];

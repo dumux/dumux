@@ -75,8 +75,8 @@ public:
     static const int DUMUX_DEPRECATED_MSG("use nPhaseIdx instead") gPhaseIdx = nPhaseIdx; //!< Index of the gas phase
 
     // Component indices
-    static const int wCompIdx = 0; //!< Index of the primary component of the wetting phase
-    static const int nCompIdx = 1; //!< Index of the primary component of the non-wetting phase
+    static const int wCompIdx = FluidSystem::wCompIdx; //!< Index of the primary component of the wetting phase
+    static const int nCompIdx = FluidSystem::nCompIdx; //!< Index of the primary component of the non-wetting phase
 
     static const int DUMUX_DEPRECATED_MSG("use wCompIdx instead") lCompIdx = wCompIdx; //!< Index of the liquid's primary component
     static const int DUMUX_DEPRECATED_MSG("use nCompIdx instead") gCompIdx = nCompIdx; //!< Index of the gas' primary component
@@ -127,8 +127,8 @@ public:
     static const int DUMUX_DEPRECATED_MSG("use nPhaseIdx instead") gPhaseIdx = nPhaseIdx; //!< Index of the gas phase
 
     // Component indices
-    static const int wCompIdx = 0; //!< Index of the primary component of the wetting phase
-    static const int nCompIdx = 1; //!< Index of the primary component of the non-wetting phase
+    static const int wCompIdx = FluidSystem::wCompIdx; //!< Index of the primary component of the wetting phase
+    static const int nCompIdx = FluidSystem::nCompIdx; //!< Index of the primary component of the non-wetting phase
 
     static const int DUMUX_DEPRECATED_MSG("use wCompIdx instead") lCompIdx = wCompIdx; //!< Index of the liquid's primary component
     static const int DUMUX_DEPRECATED_MSG("use nCompIdx instead") gCompIdx = nCompIdx; //!< Index of the gas' primary component

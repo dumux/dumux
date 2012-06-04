@@ -76,9 +76,9 @@ protected:
         nPhaseIdx = Indices::nPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
 
-        comp0Idx = Indices::comp0Idx,
-        comp1Idx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx
+        wCompIdx = Indices::wCompIdx,
+        nCompIdx = Indices::nCompIdx,
+        gCompIdx = Indices::gCompIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
@@ -205,51 +205,39 @@ public:
     {
         // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = fluxVars.porousDiffCoeff();
         // add diffusive flux of gas component in liquid phase
-        Scalar tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][comp2Idx] * fluxVars.molarDensity(wPhaseIdx);
-        tmp *= (fluxVars.moleFractionComp2Grad(wPhaseIdx) * fluxVars.face().normal);
-        Scalar j2W = tmp;
+        Scalar tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][gCompIdx] * fluxVars.molarDensity(wPhaseIdx);
+        tmp *= (fluxVars.moleFractionCompGGrad(wPhaseIdx) * fluxVars.face().normal);
+        Scalar jGW = tmp;
 
-        tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][comp1Idx] * fluxVars.molarDensity(wPhaseIdx);
-        tmp *= (fluxVars.moleFractionComp1Grad(wPhaseIdx) * fluxVars.face().normal);
-        Scalar j1W = tmp;
+        tmp = - fluxVars.porousDiffCoeff()[wPhaseIdx][nCompIdx] * fluxVars.molarDensity(wPhaseIdx);
+        tmp *= (fluxVars.moleFractionCompNGrad(wPhaseIdx) * fluxVars.face().normal);
+        Scalar jNW = tmp;
 
-        Scalar j0W = -(j2W+j1W);
+        Scalar jWW = -(jGW+jNW);
 
-        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][comp0Idx] * fluxVars.molarDensity(gPhaseIdx);
-        tmp *= (fluxVars.moleFractionComp0Grad(gPhaseIdx) * fluxVars.face().normal);
-        Scalar j0G = tmp;
+        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][wCompIdx] * fluxVars.molarDensity(gPhaseIdx);
+        tmp *= (fluxVars.moleFractionCompWGrad(gPhaseIdx) * fluxVars.face().normal);
+        Scalar jWG = tmp;
 
-        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][comp1Idx] * fluxVars.molarDensity(gPhaseIdx);
-        tmp *= (fluxVars.moleFractionComp1Grad(gPhaseIdx) * fluxVars.face().normal);
-        Scalar j1G = tmp;
+        tmp = - fluxVars.porousDiffCoeff()[gPhaseIdx][nCompIdx] * fluxVars.molarDensity(gPhaseIdx);
+        tmp *= (fluxVars.moleFractionCompNGrad(gPhaseIdx) * fluxVars.face().normal);
+        Scalar jNG = tmp;
 
-        Scalar j2G = -(j0G+j1G);
+        Scalar jGG = -(jWG+jNG);
 
-        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][comp0Idx] * fluxVars.molarDensity(nPhaseIdx);
-        tmp *= (fluxVars.moleFractionComp0Grad(nPhaseIdx) * fluxVars.face().normal);
-        Scalar j0N = tmp;
+        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][wCompIdx] * fluxVars.molarDensity(nPhaseIdx);
+        tmp *= (fluxVars.moleFractionCompWGrad(nPhaseIdx) * fluxVars.face().normal);
+        Scalar jWN = tmp;
 
-        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][comp2Idx] * fluxVars.molarDensity(nPhaseIdx);
-        tmp *= (fluxVars.moleFractionComp2Grad(nPhaseIdx) * fluxVars.face().normal);
-        Scalar j2N = tmp;
+        tmp = - fluxVars.porousDiffCoeff()[nPhaseIdx][gCompIdx] * fluxVars.molarDensity(nPhaseIdx);
+        tmp *= (fluxVars.moleFractionCompGGrad(nPhaseIdx) * fluxVars.face().normal);
+        Scalar jGN = tmp;
 
-        Scalar j1N = -(j2N+j0N);
+        Scalar jNN = -(jGN+jWN);
 
-        /*
-          j0W = 0;
-          j0G = 0;
-          j0N = 0;
-          j1W = 0;
-          j1G = 0;
-          j1N = 0;
-          j2W = 0;
-          j2G = 0;
-          j2N = 0;
-        */
-
-        flux[conti0EqIdx] += j0W+j0G+j0N;
-        flux[conti1EqIdx] += j1W+j1G+j1N;
-        flux[conti2EqIdx] += j2W+j2G+j2N;
+        flux[conti0EqIdx] += jWW+jWG+jWN;
+        flux[conti1EqIdx] += jNW+jNG+jNN;
+        flux[conti2EqIdx] += jGW+jGG+jGN;
     }
 
     /*!

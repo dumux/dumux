@@ -36,28 +36,30 @@ namespace Dumux
  * \ingroup BoxIndices
  * \brief Index names for the Richards model.
  */
+
+template <class TypeTag>
 struct RichardsIndices
 {
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    
     //////////
     // primary variable indices
     //////////
-
+    
     //! Primary variable index for the wetting phase pressure
     static const int pwIdx = 0;
-
+    
     //////////
     // equation indices
     //////////
     //! Equation index for the mass conservation of the wetting phase
     static const int contiEqIdx = 0;
-
+    
     //////////
     // phase indices
     //////////
-    //! Phase index for the wetting phase
-    static const int wPhaseIdx = 0;
-    //! Phase index for the wetting phase
-    static const int nPhaseIdx = 1;
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase;
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase;
 };
 // \}
 

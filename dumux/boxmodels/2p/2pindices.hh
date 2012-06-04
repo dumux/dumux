@@ -38,26 +38,36 @@ namespace Dumux
  * \ingroup BoxIndices
  * \brief The common indices for the isothermal two-phase model.
  */
-struct TwoPCommonIndices
+
+struct TwoPFormulation
 {
-    // Formulations
     static const int pwSn = 0; //!< Pw and Sn as primary variables
     static const int pnSw = 1; //!< Pn and Sw as primary variables
+};
+
+template <class TypeTag>
+struct TwoPCommonIndices
+{
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
     // Phase indices
-    static const int wPhaseIdx = 0; //!< Index of the wetting phase in a phase vector
-    static const int nPhaseIdx = 1; //!< Index of the non-wetting phase in a phase vector
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase
 };
 
 /*!
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
+ * \tparam TypeTag The problem type tag
  * \tparam formulation The formulation, either pwSn or pnSw
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <int formulation = TwoPCommonIndices::pwSn, int PVOffset = 0>
-struct TwoPIndices : public TwoPCommonIndices
+template <class TypeTag, 
+          int formulation = TwoPFormulation::pwSn, 
+          int PVOffset = 0>
+struct TwoPIndices 
+: public TwoPCommonIndices<TypeTag>, TwoPFormulation
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
@@ -78,9 +88,9 @@ struct TwoPIndices : public TwoPCommonIndices
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <int PVOffset>
-struct TwoPIndices<TwoPCommonIndices::pnSw, PVOffset>
-    : public TwoPCommonIndices
+template <class TypeTag, int PVOffset>
+struct TwoPIndices<TypeTag, TwoPFormulation::pnSw, PVOffset>
+: public TwoPCommonIndices<TypeTag>, TwoPFormulation
 {
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector

@@ -126,9 +126,9 @@ class ThreePThreeCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
         nPhaseIdx = Indices::nPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
 
-        comp0Idx = Indices::comp0Idx,
-        comp1Idx = Indices::comp1Idx,
-        comp2Idx = Indices::comp2Idx,
+        wCompIdx = Indices::wCompIdx,
+        nCompIdx = Indices::nCompIdx,
+        gCompIdx = Indices::gCompIdx,
 
         threePhases = Indices::threePhases,
         wPhaseOnly  = Indices::wPhaseOnly,
@@ -559,7 +559,7 @@ protected:
                 newPhasePresence = wnPhaseOnly;
 
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(wPhaseIdx, comp2Idx);
+                    = volVars.fluidState().moleFraction(wPhaseIdx, gCompIdx);
             }
             else if (volVars.saturation(wPhaseIdx) <= Smin)
             {
@@ -571,7 +571,7 @@ protected:
                 newPhasePresence = gnPhaseOnly;
 
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
             }
             else if (volVars.saturation(nPhaseIdx) <= Smin)
             {
@@ -583,91 +583,91 @@ protected:
                 newPhasePresence = wgPhaseOnly;
 
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             }
         }
         else if (phasePresence == wPhaseOnly)
         {
             bool gasFlag = 0;
-            bool NAPLFlag = 0;
+            bool nonwettingFlag = 0;
             // calculate fractions of the partial pressures in the
             // hypothetical gas phase
-            Scalar x0g = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
-            Scalar x2g = volVars.fluidState().moleFraction(gPhaseIdx, comp2Idx);
-            Scalar x1g = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+            Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
+            Scalar xgg = volVars.fluidState().moleFraction(gPhaseIdx, gCompIdx);
+            Scalar xng = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             /* take care:
-               for x2g in case wPhaseOnly we compute x2g=henry_air*x2w
-               for x0g in case wPhaseOnly we compute x0g=pwsat
-               for x1g in case wPhaseOnly we compute x1g=henry_NAPL*x1w
+               for xgg in case wPhaseOnly we compute xgg=henry_air*x2w
+               for xwg in case wPhaseOnly we compute xwg=pwsat
+               for xng in case wPhaseOnly we compute xng=henry_NAPL*x1w
             */
 
             Scalar xgMax = 1.0;
-            if (x0g + x2g + x1g > xgMax)
+            if (xwg + xgg + xng > xgMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xgMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (x0g + x2g + x1g > xgMax)
+            if (xwg + xgg + xng > xgMax)
             {
                 // gas phase appears
                 std::cout << "gas phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", x0g + x2g + x1g: "
-                          << x0g + x2g + x1g << std::endl;
+                          << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
+                          << xwg + xgg + xng << std::endl;
                 gasFlag = 1;
             }
 
             // calculate fractions in the hypothetical NAPL phase
-            Scalar x1n = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
+            Scalar xnn = volVars.fluidState().moleFraction(nPhaseIdx, nCompIdx);
             /* take care:
-               for x1n in case wPhaseOnly we compute x1n=henry_mesitylene*x1w,
+               for xnn in case wPhaseOnly we compute xnn=henry_mesitylene*x1w,
                where a hypothetical gas pressure is assumed for the Henry
                x0n is set to NULL  (all NAPL phase is dirty)
                x2n is set to NULL  (all NAPL phase is dirty)
             */
 
             Scalar xnMax = 1.0;
-            if (x1n > xnMax)
+            if (xnn > xnMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fractions would be larger than
             // 100%, NAPL phase appears
-            if (x1n > xnMax)
+            if (xnn > xnMax)
             {
                 // NAPL phase appears
                 std::cout << "NAPL phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", x1n: "
-                          << x1n << std::endl;
-                NAPLFlag = 1;
+                          << ", coordinates: " << globalPos << ", xnn: "
+                          << xnn << std::endl;
+                nonwettingFlag = 1;
             }
 
-            if ((gasFlag == 1) && (NAPLFlag == 0))
+            if ((gasFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = wgPhaseOnly;
                 globalSol[globalIdx][switch1Idx] = 0.9999;
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
-            else if ((gasFlag == 1) && (NAPLFlag == 1))
+            else if ((gasFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = threePhases;
                 globalSol[globalIdx][switch1Idx] = 0.9999;
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
-            else if ((gasFlag == 0) && (NAPLFlag == 1))
+            else if ((gasFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wnPhaseOnly;
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(wPhaseIdx, comp2Idx);
+                    = volVars.fluidState().moleFraction(wPhaseIdx, gCompIdx);
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
         }
         else if (phasePresence == gnPhaseOnly)
         {
-            bool NAPLFlag = 0;
-            bool waterFlag = 0;
+            bool nonwettingFlag = 0;
+            bool wettingFlag = 0;
 
             Scalar Smin = 0.0;
             if (staticVertexDat_[globalIdx].wasSwitched)
@@ -680,58 +680,58 @@ protected:
                 std::cout << "NAPL phase disappears at vertex " << globalIdx
                           << ", coordinates: " << globalPos << ", Sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
-                NAPLFlag = 1;
+                nonwettingFlag = 1;
             }
 
 
             // calculate fractions of the hypothetical water phase
-            Scalar x0w = volVars.fluidState().moleFraction(wPhaseIdx, comp0Idx);
+            Scalar xww = volVars.fluidState().moleFraction(wPhaseIdx, wCompIdx);
             /*
-              take care:, x0w, if no water is present, then take x0w=x0g*pg/pwsat .
+              take care:, xww, if no water is present, then take xww=xwg*pg/pwsat .
               If this is larger than 1, then water appears
             */
             Scalar xwMax = 1.0;
-            if (x0w > xwMax)
+            if (xww > xwMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (x0w > xwMax)
+            if (xww > xwMax)
             {
                 // water phase appears
                 std::cout << "water phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", x0w=x0g*pg/pwsat : "
-                          << x0w << std::endl;
-                waterFlag = 1;
+                          << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
+                          << xww << std::endl;
+                wettingFlag = 1;
             }
 
-            if ((waterFlag == 1) && (NAPLFlag == 0))
+            if ((wettingFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = threePhases;
                 globalSol[globalIdx][switch1Idx] = 0.0001;
                 globalSol[globalIdx][switch2Idx] = volVars.saturation(nPhaseIdx);
             }
-            else if ((waterFlag == 1) && (NAPLFlag == 1))
+            else if ((wettingFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wgPhaseOnly;
                 globalSol[globalIdx][switch1Idx] = 0.0001;
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             }
-            else if ((waterFlag == 0) && (NAPLFlag == 1))
+            else if ((wettingFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = gPhaseOnly;
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             }
         }
         else if (phasePresence == wnPhaseOnly)
         {
-            bool NAPLFlag = 0;
+            bool nonwettingFlag = 0;
             bool gasFlag = 0;
 
             Scalar Smin = 0.0;
@@ -745,156 +745,156 @@ protected:
                 std::cout << "NAPL phase disappears at vertex " << globalIdx
                           << ", coordinates: " << globalPos << ", Sn: "
                           << volVars.saturation(nPhaseIdx) << std::endl;
-                NAPLFlag = 1;
+                nonwettingFlag = 1;
             }
 
             // calculate fractions of the partial pressures in the
             // hypothetical gas phase
-            Scalar x0g = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
-            Scalar x2g = volVars.fluidState().moleFraction(gPhaseIdx, comp2Idx);
-            Scalar x1g = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+            Scalar xwg = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
+            Scalar xgg = volVars.fluidState().moleFraction(gPhaseIdx, gCompIdx);
+            Scalar xng = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             /* take care:
-               for x2g in case wPhaseOnly we compute x2g=henry_air*x2w
-               for x0g in case wPhaseOnly we compute x0g=pwsat
-               for x1g in case wPhaseOnly we compute x1g=henry_NAPL*x1w
+               for xgg in case wPhaseOnly we compute xgg=henry_air*x2w
+               for xwg in case wPhaseOnly we compute xwg=pwsat
+               for xng in case wPhaseOnly we compute xng=henry_NAPL*x1w
             */
             Scalar xgMax = 1.0;
-            if (x0g + x2g + x1g > xgMax)
+            if (xwg + xgg + xng > xgMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xgMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (x0g + x2g + x1g > xgMax)
+            if (xwg + xgg + xng > xgMax)
             {
                 // gas phase appears
                 std::cout << "gas phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", x0g + x2g + x1g: "
-                          << x0g + x2g + x1g << std::endl;
+                          << ", coordinates: " << globalPos << ", xwg + xgg + xng: "
+                          << xwg + xgg + xng << std::endl;
                 gasFlag = 1;
             }
 
-            if ((gasFlag == 1) && (NAPLFlag == 0))
+            if ((gasFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = threePhases;
                 globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
                 globalSol[globalIdx][switch2Idx] = volVars.saturation(nPhaseIdx);;
             }
-            else if ((gasFlag == 1) && (NAPLFlag == 1))
+            else if ((gasFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wgPhaseOnly;
                 globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             }
-            else if ((gasFlag == 0) && (NAPLFlag == 1))
+            else if ((gasFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = wPhaseOnly;
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(wPhaseIdx, comp2Idx);
+                    = volVars.fluidState().moleFraction(wPhaseIdx, gCompIdx);
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(wPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
             }
         }
         else if (phasePresence == gPhaseOnly)
         {
-            bool NAPLFlag = 0;
-            bool waterFlag = 0;
+            bool nonwettingFlag = 0;
+            bool wettingFlag = 0;
 
             // calculate fractions in the hypothetical NAPL phase
-            Scalar x1n = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
+            Scalar xnn = volVars.fluidState().moleFraction(nPhaseIdx, nCompIdx);
             /*
-              take care:, x1n, if no NAPL phase is there, take x1n=x1g*pg/pcsat
+              take care:, xnn, if no NAPL phase is there, take xnn=xng*pg/pcsat
               if this is larger than 1, then NAPL appears
             */
 
             Scalar xnMax = 1.0;
-            if (x1n > xnMax)
+            if (xnn > xnMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fraction would be larger than
             // 100%, NAPL phase appears
-            if (x1n > xnMax)
+            if (xnn > xnMax)
             {
                 // NAPL phase appears
                 std::cout << "NAPL phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", x1n: "
-                          << x1n << std::endl;
-                NAPLFlag = 1;
+                          << ", coordinates: " << globalPos << ", xnn: "
+                          << xnn << std::endl;
+                nonwettingFlag = 1;
             }
             // calculate fractions of the hypothetical water phase
-            Scalar x0w = volVars.fluidState().moleFraction(wPhaseIdx, comp0Idx);
+            Scalar xww = volVars.fluidState().moleFraction(wPhaseIdx, wCompIdx);
             /*
-              take care:, x0w, if no water is present, then take x0w=x0g*pg/pwsat .
+              take care:, xww, if no water is present, then take xww=xwg*pg/pwsat .
               If this is larger than 1, then water appears
             */
             Scalar xwMax = 1.0;
-            if (x0w > xwMax)
+            if (xww > xwMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xwMax *= 1.02;
 
             // if the sum of the mole fractions would be larger than
             // 100%, gas phase appears
-            if (x0w > xwMax)
+            if (xww > xwMax)
             {
                 // water phase appears
                 std::cout << "water phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", x0w=x0g*pg/pwsat : "
-                          << x0w << std::endl;
-                waterFlag = 1;
+                          << ", coordinates: " << globalPos << ", xww=xwg*pg/pwsat : "
+                          << xww << std::endl;
+                wettingFlag = 1;
             }
-            if ((waterFlag == 1) && (NAPLFlag == 0))
+            if ((wettingFlag == 1) && (nonwettingFlag == 0))
             {
                 newPhasePresence = wgPhaseOnly;
                 globalSol[globalIdx][switch1Idx] = 0.0001;
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             }
-            else if ((waterFlag == 1) && (NAPLFlag == 1))
+            else if ((wettingFlag == 1) && (nonwettingFlag == 1))
             {
                 newPhasePresence = threePhases;
                 globalSol[globalIdx][switch1Idx] = 0.0001;
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
-            else if ((waterFlag == 0) && (NAPLFlag == 1))
+            else if ((wettingFlag == 0) && (nonwettingFlag == 1))
             {
                 newPhasePresence = gnPhaseOnly;
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
         }
         else if (phasePresence == wgPhaseOnly)
         {
-            bool NAPLFlag = 0;
+            bool nonwettingFlag = 0;
             bool gasFlag = 0;
-            bool waterFlag = 0;
+            bool wettingFlag = 0;
 
             // get the fractions in the hypothetical NAPL phase
-            Scalar x1n = volVars.fluidState().moleFraction(nPhaseIdx, comp1Idx);
+            Scalar xnn = volVars.fluidState().moleFraction(nPhaseIdx, nCompIdx);
 
             // take care: if the NAPL phase is not present, take
-            // x1n=x1g*pg/pcsat if this is larger than 1, then NAPL
+            // xnn=xng*pg/pcsat if this is larger than 1, then NAPL
             // appears
             Scalar xnMax = 1.0;
-            if (x1n > xnMax)
+            if (xnn > xnMax)
                 wouldSwitch = true;
             if (staticVertexDat_[globalIdx].wasSwitched)
                 xnMax *= 1.02;
 
             // if the sum of the hypothetical mole fraction would be larger than
             // 100%, NAPL phase appears
-            if (x1n > xnMax)
+            if (xnn > xnMax)
             {
                 // NAPL phase appears
                 std::cout << "NAPL phase appears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos << ", x1n: "
-                          << x1n << std::endl;
-                NAPLFlag = 1;
+                          << ", coordinates: " << globalPos << ", xnn: "
+                          << xnn << std::endl;
+                nonwettingFlag = 1;
             }
 
             Scalar Smin = -1.e-6;
@@ -922,37 +922,37 @@ protected:
                 std::cout << "Water phase disappears at vertex " << globalIdx
                           << ", coordinates: " << globalPos << ", Sw: "
                           << volVars.saturation(wPhaseIdx) << std::endl;
-                waterFlag = 1;
+                wettingFlag = 1;
             }
 
-            if ((gasFlag == 0) && (NAPLFlag == 1) && (waterFlag == 1))
+            if ((gasFlag == 0) && (nonwettingFlag == 1) && (wettingFlag == 1))
             {
                 newPhasePresence = gnPhaseOnly;
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
                 globalSol[globalIdx][switch2Idx] = 0.0001;
             }
-            else if ((gasFlag == 0) && (NAPLFlag == 1) && (waterFlag == 0))
+            else if ((gasFlag == 0) && (nonwettingFlag == 1) && (wettingFlag == 0))
             {
                 newPhasePresence = threePhases;
                 globalSol[globalIdx][switch1Idx] = volVars.saturation(wPhaseIdx);
                 globalSol[globalIdx][switch2Idx] = 0.0;
             }
-            else if ((gasFlag == 1) && (NAPLFlag == 0) && (waterFlag == 0))
+            else if ((gasFlag == 1) && (nonwettingFlag == 0) && (wettingFlag == 0))
             {
                 newPhasePresence = wPhaseOnly;
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(wPhaseIdx, comp2Idx);
+                    = volVars.fluidState().moleFraction(wPhaseIdx, gCompIdx);
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(wPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(wPhaseIdx, nCompIdx);
             }
-            else if ((gasFlag == 0) && (NAPLFlag == 0) && (waterFlag == 1))
+            else if ((gasFlag == 0) && (nonwettingFlag == 0) && (wettingFlag == 1))
             {
                 newPhasePresence = gPhaseOnly;
                 globalSol[globalIdx][switch1Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp0Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, wCompIdx);
                 globalSol[globalIdx][switch2Idx]
-                    = volVars.fluidState().moleFraction(gPhaseIdx, comp1Idx);
+                    = volVars.fluidState().moleFraction(gPhaseIdx, nCompIdx);
             }
         }
 

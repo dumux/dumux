@@ -85,9 +85,8 @@ public:
     //! Number of phases in the fluid system
     static constexpr int numPhases = 1;
 
-    //! Index of the liquid phase
-    static constexpr int lPhaseIdx = 0;
-    static constexpr int wPhaseIdx = lPhaseIdx;
+    static constexpr int wPhaseIdx = 0; // index of the wetting phase
+    static constexpr int lPhaseIdx = wPhaseIdx; // DEPRECATED index of the liquid phase
 
     /*!
      * \brief Return the human readable name of a fluid phase.

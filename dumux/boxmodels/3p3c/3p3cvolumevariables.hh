@@ -79,9 +79,9 @@ class ThreePThreeCVolumeVariables : public BoxVolumeVariables<TypeTag>
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        comp0Idx = Indices::comp0Idx,
-        comp2Idx = Indices::comp2Idx,
-        comp1Idx = Indices::comp1Idx,
+        wCompIdx = Indices::wCompIdx,
+        gCompIdx = Indices::gCompIdx,
+        nCompIdx = Indices::nCompIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
@@ -230,14 +230,14 @@ public:
             // stored explicitly.
 
             // extract mole fractions in the water phase
-            Scalar xw2 = priVars[switch1Idx];
-            Scalar xw1 = priVars[switch2Idx];
-            Scalar xw0 = 1 - xw2 - xw1;
+            Scalar xwg = priVars[switch1Idx];
+            Scalar xwn = priVars[switch2Idx];
+            Scalar xww = 1 - xwg - xwn;
 
             // write water mole fractions in the fluid state
-            fluidState_.setMoleFraction(wPhaseIdx, comp0Idx, xw0);
-            fluidState_.setMoleFraction(wPhaseIdx, comp2Idx, xw2);
-            fluidState_.setMoleFraction(wPhaseIdx, comp1Idx, xw1);
+            fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
+            fluidState_.setMoleFraction(wPhaseIdx, gCompIdx, xwg);
+            fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
@@ -257,16 +257,16 @@ public:
             // we have all (partly hypothetical) phase pressures
             // and temperature and the mole fraction of water in
             // the gas phase
-            Scalar partPressNAPL = fluidState_.fugacityCoefficient(nPhaseIdx, comp1Idx)*pn_;
+            Scalar partPressNAPL = fluidState_.fugacityCoefficient(nPhaseIdx, nCompIdx)*pn_;
 
-            Scalar xg0 = priVars[switch1Idx];
-            Scalar xg1 = partPressNAPL/pg_;
-            Scalar xg2 = 1.-xg0-xg1;
+            Scalar xgw = priVars[switch1Idx];
+            Scalar xgn = partPressNAPL/pg_;
+            Scalar xgg = 1.-xgw-xgn;
 
             // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(gPhaseIdx, comp0Idx, xg0);
-            fluidState_.setMoleFraction(gPhaseIdx, comp2Idx, xg2);
-            fluidState_.setMoleFraction(gPhaseIdx, comp1Idx, xg1);
+            fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
+            fluidState_.setMoleFraction(gPhaseIdx, gCompIdx, xgg);
+            fluidState_.setMoleFraction(gPhaseIdx, nCompIdx, xgn);
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
@@ -279,17 +279,17 @@ public:
         }
         else if (phasePresence == wnPhaseOnly) {
             // only water and NAPL phases are present
-            Scalar pPartialC = fluidState_.fugacityCoefficient(nPhaseIdx,comp1Idx)*pn_;
-            Scalar henryC = fluidState_.fugacityCoefficient(wPhaseIdx,comp1Idx)*pw_;
+            Scalar pPartialC = fluidState_.fugacityCoefficient(nPhaseIdx,nCompIdx)*pn_;
+            Scalar henryC = fluidState_.fugacityCoefficient(wPhaseIdx,nCompIdx)*pw_;
 
-            Scalar xw2 = priVars[switch1Idx];
-            Scalar xw1 = pPartialC/henryC;
-            Scalar xw0 = 1.-xw2-xw1;
+            Scalar xwg = priVars[switch1Idx];
+            Scalar xwn = pPartialC/henryC;
+            Scalar xww = 1.-xwg-xwn;
 
             // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(wPhaseIdx, comp0Idx, xw0);
-            fluidState_.setMoleFraction(wPhaseIdx, comp2Idx, xw2);
-            fluidState_.setMoleFraction(wPhaseIdx, comp1Idx, xw1);
+            fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xww);
+            fluidState_.setMoleFraction(wPhaseIdx, gCompIdx, xwg);
+            fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
@@ -304,14 +304,14 @@ public:
             // only the gas phase is present, gas phase composition is
             // stored explicitly here below.
 
-            const Scalar xg0 = priVars[switch1Idx];
-            const Scalar xg1 = priVars[switch2Idx];
-            Scalar xg2 = 1 - xg0 - xg1;
+            const Scalar xgw = priVars[switch1Idx];
+            const Scalar xgn = priVars[switch2Idx];
+            Scalar xgg = 1 - xgw - xgn;
 
             // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(gPhaseIdx, comp0Idx, xg0);
-            fluidState_.setMoleFraction(gPhaseIdx, comp2Idx, xg2);
-            fluidState_.setMoleFraction(gPhaseIdx, comp1Idx, xg1);
+            fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
+            fluidState_.setMoleFraction(gPhaseIdx, gCompIdx, xgg);
+            fluidState_.setMoleFraction(gPhaseIdx, nCompIdx, xgn);
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
@@ -324,16 +324,16 @@ public:
         }
         else if (phasePresence == wgPhaseOnly) {
             // only water and gas phases are present
-            Scalar xg1 = priVars[switch2Idx];
-            Scalar partPressH2O = fluidState_.fugacityCoefficient(wPhaseIdx, comp0Idx)*pw_;
+            Scalar xgn = priVars[switch2Idx];
+            Scalar partPressH2O = fluidState_.fugacityCoefficient(wPhaseIdx, wCompIdx)*pw_;
 
-            Scalar xg0 = partPressH2O/pg_;
-            Scalar xg2 = 1.-xg1-xg0;
+            Scalar xgw = partPressH2O/pg_;
+            Scalar xgg = 1.-xgn-xgw;
 
             // write mole fractions in the fluid state
-            fluidState_.setMoleFraction(gPhaseIdx, comp0Idx, xg0);
-            fluidState_.setMoleFraction(gPhaseIdx, comp2Idx, xg2);
-            fluidState_.setMoleFraction(gPhaseIdx, comp1Idx, xg1);
+            fluidState_.setMoleFraction(gPhaseIdx, wCompIdx, xgw);
+            fluidState_.setMoleFraction(gPhaseIdx, gCompIdx, xgg);
+            fluidState_.setMoleFraction(gPhaseIdx, nCompIdx, xgn);
 
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
@@ -373,34 +373,34 @@ public:
          */
 
         // diffusivity coefficents
-        diffusionCoefficient_[gPhaseIdx][comp0Idx] =
+        diffusionCoefficient_[gPhaseIdx][wCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               gPhaseIdx,
-                                              comp0Idx);
-        diffusionCoefficient_[gPhaseIdx][comp1Idx] =
+                                              wCompIdx);
+        diffusionCoefficient_[gPhaseIdx][nCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               gPhaseIdx,
-                                              comp1Idx);
-        diffusionCoefficient_[gPhaseIdx][comp2Idx] = 0.0; // dummy, should not be used !
+                                              nCompIdx);
+        diffusionCoefficient_[gPhaseIdx][gCompIdx] = 0.0; // dummy, should not be used !
 
-        diffusionCoefficient_[wPhaseIdx][comp2Idx] =
+        diffusionCoefficient_[wPhaseIdx][gCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               wPhaseIdx,
-                                              comp2Idx);
-        diffusionCoefficient_[wPhaseIdx][comp1Idx] =
+                                              gCompIdx);
+        diffusionCoefficient_[wPhaseIdx][nCompIdx] =
             FluidSystem::diffusionCoefficient(fluidState_,
                                               paramCache,
                                               wPhaseIdx,
-                                              comp1Idx);
-        diffusionCoefficient_[wPhaseIdx][comp0Idx] = 0.0; // dummy, should not be used !
+                                              nCompIdx);
+        diffusionCoefficient_[wPhaseIdx][wCompIdx] = 0.0; // dummy, should not be used !
 
         /* no diffusion in NAPL phase considered  at the moment */
-        diffusionCoefficient_[nPhaseIdx][comp1Idx] = 0.0;
-        diffusionCoefficient_[nPhaseIdx][comp0Idx] = 0.0;
-        diffusionCoefficient_[nPhaseIdx][comp2Idx] = 0.0;
+        diffusionCoefficient_[nPhaseIdx][nCompIdx] = 0.0;
+        diffusionCoefficient_[nPhaseIdx][wCompIdx] = 0.0;
+        diffusionCoefficient_[nPhaseIdx][gCompIdx] = 0.0;
 
         Valgrind::CheckDefined(diffusionCoefficient_);
 

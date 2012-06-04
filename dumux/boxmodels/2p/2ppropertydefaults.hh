@@ -59,7 +59,7 @@ SET_INT_PROP(BoxTwoP, NumPhases, 2); //!< The number of phases in the 2p model i
 //! Set the default formulation to pWsN
 SET_INT_PROP(BoxTwoP,
              Formulation,
-             TwoPCommonIndices::pwSn);
+             TwoPFormulation::pwSn);
 
 //! Use the 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(BoxTwoP,
@@ -81,7 +81,7 @@ SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
 //! The indices required by the isothermal 2p model
 SET_TYPE_PROP(BoxTwoP,
               Indices,
-              TwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0>);
+              TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);
 
 //! DEPRECATED TwoPIndices property
 SET_TYPE_PROP(BoxTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));

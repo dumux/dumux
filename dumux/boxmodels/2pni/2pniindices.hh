@@ -40,15 +40,12 @@ namespace Dumux
  * \ingroup BoxIndices
  * \brief Enumerations for the non-isothermal two-phase model
  */
-template <int PVOffset = 0>
-class TwoPNIIndices : public TwoPIndices<PVOffset>
+template <class TypeTag, int PVOffset = 0>
+class TwoPNIIndices : public TwoPIndices<TypeTag, PVOffset>
 {
 public:
     static const int temperatureIdx = PVOffset + 2; //! The primary variable index for temperature
     static const int energyEqIdx = PVOffset + 2; //! The equation index of the energy equation
-    // Phase indices
-       static const int wPhaseIdx = 0; //!< Index of the wetting phase in a phase vector
-       static const int nPhaseIdx = 1; //!< Index of the non-wetting phase in a phase vector
 };
 // \}
 }
