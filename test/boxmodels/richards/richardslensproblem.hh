@@ -30,11 +30,7 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#endif
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+#include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/boxmodels/richards/richardsmodel.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -55,13 +51,8 @@ namespace Properties
 {
 NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards, RichardsLensSpatialParams));
 
-// Set the grid type. Use UG if available, else SGrid
-#if HAVE_UG
-SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::UGGrid<2>);
-#else
-SET_PROP(RichardsLensProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
-//SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
-#endif
+// Use 2d YaspGrid
+SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
 SET_PROP(RichardsLensProblem, Problem)
