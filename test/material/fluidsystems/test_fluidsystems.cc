@@ -65,30 +65,55 @@ int main()
 
         // CompositionalFluidState
         {   Dumux::CompositionalFluidState<Scalar, FluidSystem> fs;
-            checkFluidState<Scalar>(fs); }
+            std::string collectedExceptions = checkFluidState<Scalar>(fs);
+            if (!collectedExceptions.empty()){
+                std::cout<<"Dumux::CompositionalFluidState: \n"<<collectedExceptions<<"\n";
+            }}
 
         // NonEquilibriumFluidState
         {   Dumux::NonEquilibriumFluidState<Scalar, FluidSystem> fs;
-            checkFluidState<Scalar>(fs); }
+            std::string collectedExceptions = checkFluidState<Scalar>(fs);
+            if (!collectedExceptions.empty()){
+                std::cout<<"Dumux::NonEquilibriumFluidState: \n"<<collectedExceptions<<"\n";
+            }}
 
         // ImmiscibleFluidState
         {   Dumux::ImmiscibleFluidState<Scalar, FluidSystem> fs;
-            checkFluidState<Scalar>(fs); }
+            std::string collectedExceptions = checkFluidState<Scalar>(fs);
+            if (!collectedExceptions.empty()){
+                std::cout<<"Dumux::ImmiscibleFluidState: \n"<<collectedExceptions<<"\n";
+            }}
+
+        // IsothermalImmiscibleFluidState
+        {   Dumux::IsothermalImmiscibleFluidState<Scalar, FluidSystem> fs;
+            std::string collectedExceptions = checkFluidState<Scalar>(fs);
+            if (!collectedExceptions.empty()){
+                std::cout<<"Dumux::IsothermalImmiscibleFluidState: \n"<<collectedExceptions<<"\n";
+            }}
 
         typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> BaseFluidState;
         BaseFluidState baseFs;
 
         // TemperatureOverlayFluidState
         {   Dumux::TemperatureOverlayFluidState<Scalar, BaseFluidState> fs(baseFs);
-            checkFluidState<Scalar>(fs); }
+            std::string collectedExceptions = checkFluidState<Scalar>(fs);
+            if (!collectedExceptions.empty()){
+                std::cout<<"Dumux::TemperatureOverlayFluidState: \n"<<collectedExceptions<<"\n";
+            } }
 
         // PressureOverlayFluidState
         {   Dumux::PressureOverlayFluidState<Scalar, BaseFluidState> fs(baseFs);
-            checkFluidState<Scalar>(fs); }
+            std::string collectedExceptions = checkFluidState<Scalar>(fs);
+            if (!collectedExceptions.empty()){
+                std::cout<<"Dumux::PressureOverlayFluidState: \n"<<collectedExceptions<<"\n";
+            }}
 
         // SaturationOverlayFluidState
         {   Dumux::SaturationOverlayFluidState<Scalar, BaseFluidState> fs(baseFs);
-            checkFluidState<Scalar>(fs); }
+            std::string collectedExceptions = checkFluidState<Scalar>(fs);
+            if (!collectedExceptions.empty()){
+                std::cout<<"Dumux::SaturationOverlayFluidState: \n"<<collectedExceptions<<"\n";
+            }}
     }
 
     // H2O -- N2

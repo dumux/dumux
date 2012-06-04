@@ -62,22 +62,85 @@ public:
     { return saturation_[phaseIdx]; }
 
     /*!
+     * \brief The mole fraction of a component in a phase []
+     */
+    Scalar moleFraction(int phaseIdx, int compIdx) const
+    { return (phaseIdx == compIdx)?1.0:0.0; }
+
+    /*!
+     * \brief The mass fraction of a component in a phase []
+     */
+    Scalar massFraction(int phaseIdx, int compIdx) const
+    { return (phaseIdx == compIdx)?1.0:0.0; }
+
+    /*!
+     * \brief The average molar mass of a fluid phase [kg/mol]
+     */
+    Scalar averageMolarMass(int phaseIdx) const
+    { return FluidSystem::molarMass(/*compIdx=*/phaseIdx); }
+
+    /*!
+     * \brief The concentration of a component in a phase [mol/m^3]
+     *
+     * This quantity is often called "molar concentration" or just
+     * "concentration", but there are many other (though less common)
+     * measures for concentration.
+     *
+     * http://en.wikipedia.org/wiki/Concentration
+     */
+    Scalar molarity(int phaseIdx, int compIdx) const
+    { return molarDensity(phaseIdx)*moleFraction(phaseIdx, compIdx); }
+
+    /*!
+     * \brief The fugacity of a component in a phase [Pa]
+     *
+     * To avoid numerical issues with code that assumes miscibility,
+     * we return a fugacity of 0 for components which do not mix with
+     * the specified phase. (Actually it undefined, but for finite
+     * fugacity coefficients, the only way to get components
+     * completely out of a phase is 0 to feed it zero fugacity.)
+     */
+    Scalar fugacity(int phaseIdx, int compIdx) const
+    {
+        if (phaseIdx == compIdx)
+            return pressure(phaseIdx);
+        else
+            return 0;
+    };
+
+    /*!
+     * \brief The fugacity coefficient of a component in a phase [-]
+     *
+     * Since we assume immiscibility, the fugacity coefficients for
+     * the components which are not miscible with the phase is
+     * infinite. Beware that this will very likely break your code if
+     * you don't keep that in mind.
+     */
+    Scalar fugacityCoefficient(int phaseIdx, int compIdx) const
+    {
+        if (phaseIdx == compIdx)
+            return 1.0;
+        else
+            return std::numeric_limits<Scalar>::infinity();
+    }
+
+    /*!
+     * \brief The molar volume of a fluid phase [m^3/mol]
+     */
+    Scalar molarVolume(int phaseIdx) const
+    { return 1/molarDensity(phaseIdx); }
+
+    /*!
      * \brief The mass density of a fluid phase [kg/m^3]
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief The pressure of a fluid phase [Pa]
+     * \brief The molar density of a fluid phase [mol/m^3]
      */
-    Scalar pressure(int phaseIdx) const
-    { return pressure_[phaseIdx]; }
-
-    /*!
-     * \brief The dynamic viscosity of a fluid phase [Pa s]
-     */
-    Scalar viscosity(int phaseIdx) const
-    { return viscosity_[phaseIdx]; }
+    Scalar molarDensity(int phaseIdx) const
+    { return density_[phaseIdx]/averageMolarMass(phaseIdx); }
 
     /*!
      * \brief The temperature of a fluid phase [K]
@@ -91,6 +154,29 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
+    /*!
+     * \brief The pressure of a fluid phase [Pa]
+     */
+    Scalar pressure(int phaseIdx) const
+    { return pressure_[phaseIdx]; }
+
+    /*!
+     * \brief The specific enthalpy of a fluid phase [J/kg]
+     */
+    Scalar enthalpy(int phaseIdx) const
+    { DUNE_THROW(Dune::NotImplemented,"No enthalpy() function defined for isothermal systems!"); }
+
+    /*!
+     * \brief The specific internal energy of a fluid phase [J/kg]
+     */
+    Scalar internalEnergy(int phaseIdx) const
+    { DUNE_THROW(Dune::NotImplemented,"No internalEnergy() function defined for isothermal systems!"); }
+
+    /*!
+     * \brief The dynamic viscosity of a fluid phase [Pa s]
+     */
+    Scalar viscosity(int phaseIdx) const
+    { return viscosity_[phaseIdx]; }
 
     /*****************************************************
      * Setter methods. Note that these are not part of the

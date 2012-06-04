@@ -48,30 +48,36 @@
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 #include <dumux/material/fluidstates/nonequilibriumfluidstate.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
+#include <dumux/material/fluidstates/isothermalimmisciblefluidstate.hh>
 
 #include <dune/common/classname.hh>
 
 // this is a fluid state which makes sure that only the quantities
 // allowed are accessed
-template <class Scalar,
-          class FluidSystem,
-          class BaseFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem> >
-class HairSplittingFluidState
-    : protected BaseFluidState
+template<class Scalar, class FluidSystem, class BaseFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem> >
+class HairSplittingFluidState: protected BaseFluidState
 {
 public:
-    enum { numPhases = FluidSystem::numPhases };
-    enum { numComponents = FluidSystem::numComponents };
+    enum
+    {
+        numPhases = FluidSystem::numPhases
+    };
+    enum
+    {
+        numComponents = FluidSystem::numComponents
+    };
 
     HairSplittingFluidState()
     {
         // set some fake values
         BaseFluidState::setTemperature(293.15);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
             BaseFluidState::setSaturation(phaseIdx, 1.0 / numPhases);
             BaseFluidState::setDensity(phaseIdx, 1.0);
 
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
                 BaseFluidState::setMoleFraction(phaseIdx, compIdx, 1.0 / numComponents);
 
             }
@@ -88,19 +94,29 @@ public:
     }
 
     void allowTemperature(bool yesno)
-    { allowTemperature_ = yesno; }
+    {
+        allowTemperature_ = yesno;
+    }
 
     void allowPressure(bool yesno)
-    { allowPressure_ = yesno; }
+    {
+        allowPressure_ = yesno;
+    }
 
     void allowComposition(bool yesno)
-    { allowComposition_ = yesno; }
+    {
+        allowComposition_ = yesno;
+    }
 
     void allowDensity(bool yesno)
-    { allowDensity_ = yesno; }
+    {
+        allowDensity_ = yesno;
+    }
 
     void restrictToPhase(int phaseIdx)
-    { restrictPhaseIdx_ = phaseIdx; }
+    {
+        restrictPhaseIdx_ = phaseIdx;
+    }
 
     Scalar temperature(int phaseIdx) const
     {
@@ -210,8 +226,8 @@ private:
     int restrictPhaseIdx_;
 };
 
-template <class Scalar, class BaseFluidState>
-void checkFluidState(const BaseFluidState &fs)
+template<class Scalar, class BaseFluidState>
+std::string checkFluidState(const BaseFluidState &fs)
 {
     // fluid states must be copy-able
     BaseFluidState tmpFs(fs);
@@ -220,37 +236,134 @@ void checkFluidState(const BaseFluidState &fs)
     // a fluid state must provide a checkDefined() method
     fs.checkDefined();
 
+    std::string collectedExceptions;
     // make sure the fluid state provides all mandatory methods
-    while (false) {
-        Scalar DUMUX_UNUSED val;
+    Scalar
+    DUMUX_UNUSED val;
 
+    try
+    {
         val = fs.temperature(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.temperature() throws exception!\n";
+    }
+    try
+    {
         val = fs.pressure(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.pressure() throws exception!\n";
+    }
+    try
+    {
         val = fs.moleFraction(/*phaseIdx=*/0, /*compIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.moleFraction() throws exception!\n";
+    }
+    try
+    {
         val = fs.massFraction(/*phaseIdx=*/0, /*compIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.massFraction() throws exception!\n";
+    }
+    try
+    {
         val = fs.averageMolarMass(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.averageMolarMass() throws exception!\n";
+    }
+    try
+    {
         val = fs.molarity(/*phaseIdx=*/0, /*compIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.molarity() throws exception!\n";
+    }
+    try
+    {
         val = fs.molarDensity(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.molarDensity() throws exception!\n";
+    }
+    try
+    {
         val = fs.molarVolume(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.molarVolume() throws exception!\n";
+    }
+    try
+    {
         val = fs.density(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.density() throws exception!\n";
+    }
+    try
+    {
         val = fs.saturation(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.saturation() throws exception!\n";
+    }
+    try
+    {
         val = fs.fugacity(/*phaseIdx=*/0, /*compIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.fugacity() throws exception!\n";
+    }
+    try
+    {
         val = fs.fugacityCoefficient(/*phaseIdx=*/0, /*compIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.fugacityCoefficient() throws exception!\n";
+    }
+    try
+    {
         val = fs.enthalpy(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.enthalpy() throws exception!\n";
+    }
+    try
+    {
         val = fs.internalEnergy(/*phaseIdx=*/0);
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.internalEnergy() throws exception!\n";
+    }
+    try
+    {
         val = fs.viscosity(/*phaseIdx=*/0);
-    };
+    } catch (...)
+    {
+        collectedExceptions += "fluidState.viscosity() throws exception!\n";
+    }
+    return collectedExceptions;
 }
 
-template <class Scalar, class FluidSystem>
+template<class Scalar, class FluidSystem>
 void checkFluidSystem()
 {
     std::cout << "Testing fluid system '" << Dune::className<FluidSystem>() << "'\n";
 
     // make sure the fluid system provides the number of phases and
     // the number of components
-    enum { numPhases = FluidSystem::numPhases };
-    enum { numComponents = FluidSystem::numComponents };
+    enum
+    {
+        numPhases = FluidSystem::numPhases
+    };
+    enum
+    {
+        numComponents = FluidSystem::numComponents
+    };
 
     HairSplittingFluidState<Scalar, FluidSystem> fs;
     fs.allowTemperature(true);
@@ -261,64 +374,169 @@ void checkFluidSystem()
     // check whether the parameter cache adheres to the API
     typedef typename FluidSystem::ParameterCache PC;
     PC paramCache;
-    try { paramCache.updateAll(fs); } catch (...) {};
-    try { paramCache.updateAll(fs, /*except=*/PC::None); } catch (...) {};
-    try { paramCache.updateAll(fs, /*except=*/PC::Temperature | PC::Pressure | PC::Composition); } catch (...) {};
-    try { paramCache.updateAllPressures(fs); } catch (...) {};
+    try
+    {
+        paramCache.updateAll(fs);
+    } catch (...)
+    {
+    };
+    try
+    {
+        paramCache.updateAll(fs, /*except=*/PC::None);
+    } catch (...)
+    {
+    };
+    try
+    {
+        paramCache.updateAll(fs, /*except=*/PC::Temperature | PC::Pressure | PC::Composition);
+    } catch (...)
+    {
+    };
+    try
+    {
+        paramCache.updateAllPressures(fs);
+    } catch (...)
+    {
+    };
 
-    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
+    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+    {
         fs.restrictToPhase(phaseIdx);
-        try { paramCache.updatePhase(fs, phaseIdx); } catch (...) {};
-        try { paramCache.updatePhase(fs, phaseIdx, /*except=*/PC::None); } catch (...) {};
-        try { paramCache.updatePhase(fs, phaseIdx, /*except=*/PC::Temperature | PC::Pressure | PC::Composition); } catch (...) {};
-        try { paramCache.updateTemperature(fs, phaseIdx); } catch (...) {};
-        try { paramCache.updatePressure(fs, phaseIdx); } catch (...) {};
-        try { paramCache.updateComposition(fs, phaseIdx); } catch (...) {};
-        try { paramCache.updateSingleMoleFraction(fs, phaseIdx, /*compIdx=*/0); } catch (...) {};
+        try
+        {
+            paramCache.updatePhase(fs, phaseIdx);
+        } catch (...)
+        {
+        };
+        try
+        {
+            paramCache.updatePhase(fs, phaseIdx, /*except=*/PC::None);
+        } catch (...)
+        {
+        };
+        try
+        {
+            paramCache.updatePhase(fs, phaseIdx, /*except=*/PC::Temperature | PC::Pressure | PC::Composition);
+        } catch (...)
+        {
+        };
+        try
+        {
+            paramCache.updateTemperature(fs, phaseIdx);
+        } catch (...)
+        {
+        };
+        try
+        {
+            paramCache.updatePressure(fs, phaseIdx);
+        } catch (...)
+        {
+        };
+        try
+        {
+            paramCache.updateComposition(fs, phaseIdx);
+        } catch (...)
+        {
+        };
+        try
+        {
+            paramCache.updateSingleMoleFraction(fs, phaseIdx, /*compIdx=*/0);
+        } catch (...)
+        {
+        };
     }
 
     // some value to make sure the return values of the fluid system
     // are convertible to scalars
-    Scalar DUMUX_UNUSED val;
+    Scalar
+    DUMUX_UNUSED val;
 
     // actually check the fluid system API
     FluidSystem::init();
-    for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+    {
         fs.restrictToPhase(phaseIdx);
         fs.allowPressure(FluidSystem::isCompressible(phaseIdx));
         fs.allowComposition(true);
         fs.allowDensity(false);
-        try { val = FluidSystem::density(fs, paramCache, phaseIdx); } catch (...) {};
+        try
+        {
+            val = FluidSystem::density(fs, paramCache, phaseIdx);
+        } catch (...)
+        {
+        };
 
         fs.allowPressure(true);
         fs.allowDensity(true);
-        try { val = FluidSystem::viscosity(fs, paramCache, phaseIdx); } catch (...) {};
-        try { val = FluidSystem::enthalpy(fs, paramCache, phaseIdx); } catch (...) {};
-        try { val = FluidSystem::heatCapacity(fs, paramCache, phaseIdx); } catch (...) {};
-        try { val = FluidSystem::thermalConductivity(fs, paramCache, phaseIdx); } catch (...) {};
+        try
+        {
+            val = FluidSystem::viscosity(fs, paramCache, phaseIdx);
+        } catch (...)
+        {
+        };
+        try
+        {
+            val = FluidSystem::enthalpy(fs, paramCache, phaseIdx);
+        } catch (...)
+        {
+        };
+        try
+        {
+            val = FluidSystem::heatCapacity(fs, paramCache, phaseIdx);
+        } catch (...)
+        {
+        };
+        try
+        {
+            val = FluidSystem::thermalConductivity(fs, paramCache, phaseIdx);
+        } catch (...)
+        {
+        };
 
-        for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
             fs.allowComposition(!FluidSystem::isIdealMixture(phaseIdx));
-            try { val = FluidSystem::fugacityCoefficient(fs, paramCache, phaseIdx, compIdx); } catch (...) {};
+            try
+            {
+                val = FluidSystem::fugacityCoefficient(fs, paramCache, phaseIdx, compIdx);
+            } catch (...)
+            {
+            };
             fs.allowComposition(true);
-            try { val = FluidSystem::diffusionCoefficient(fs, paramCache, phaseIdx, compIdx); } catch (...) {};
-            for (int comp2Idx = 0; comp2Idx < numComponents; ++ comp2Idx) {
-                try { val = FluidSystem::binaryDiffusionCoefficient(fs, paramCache, phaseIdx, compIdx, comp2Idx); } catch (...) {};
+            try
+            {
+                val = FluidSystem::diffusionCoefficient(fs, paramCache, phaseIdx, compIdx);
+            } catch (...)
+            {
+            };
+            for (int comp2Idx = 0; comp2Idx < numComponents; ++comp2Idx)
+            {
+                try
+                {
+                    val = FluidSystem::binaryDiffusionCoefficient(fs, paramCache, phaseIdx, compIdx, comp2Idx);
+                } catch (...)
+                {
+                };
             }
         }
     }
 
     // test for phaseName(), isLiquid() and isIdealGas()
-    for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
-        std::string DUMUX_UNUSED name = FluidSystem::phaseName(phaseIdx);
-        bool DUMUX_UNUSED bVal = FluidSystem::isLiquid(phaseIdx);
+    for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+    {
+        std::string
+        DUMUX_UNUSED name = FluidSystem::phaseName(phaseIdx);
+        bool DUMUX_UNUSED
+        bVal = FluidSystem::isLiquid(phaseIdx);
         bVal = FluidSystem::isIdealGas(phaseIdx);
     }
 
     // test for componentName()
-    for (int compIdx = 0; compIdx < numComponents; ++ compIdx) {
+    for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+    {
         val = FluidSystem::molarMass(compIdx);
-        std::string DUMUX_UNUSED name = FluidSystem::componentName(compIdx);
+        std::string
+        DUMUX_UNUSED name = FluidSystem::componentName(compIdx);
     }
 
     std::cout << "----------------------------------\n";
