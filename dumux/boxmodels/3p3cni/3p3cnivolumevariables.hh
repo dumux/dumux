@@ -75,7 +75,7 @@ public:
     void update(const PrimaryVariables &priVars,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeomtry,
+                const FVElementGeometry &fvGeometry,
                 const int scvIdx,
                 bool isOldSol)
     {
@@ -83,7 +83,7 @@ public:
         ParentType::update(priVars,
                            problem,
                            element,
-                           fvGeomtry,
+                           fvGeometry,
                            scvIdx,
                            isOldSol);
 
@@ -130,7 +130,7 @@ protected:
     static Scalar temperature_(const PrimaryVariables &primaryVars,
                                const Problem& problem,
                                const Element &element,
-                               const FVElementGeometry &fvGeomtry,
+                               const FVElementGeometry &fvGeometry,
                                const int scvIdx)
     {
         return primaryVars[temperatureIdx];
@@ -142,19 +142,19 @@ protected:
      * \param priVars The solution primary variables
      * \param problem The problem
      * \param element The element
-     * \param fvGeomtry Evaluate function with solution of current or previous time step
+     * \param fvGeometry Evaluate function with solution of current or previous time step
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
     void updateEnergy_(const PrimaryVariables &priVars,
                        const Problem &problem,
                        const Element &element,
-                       const FVElementGeometry &fvGeomtry,
+                       const FVElementGeometry &fvGeometry,
                        const int scvIdx,
                        bool isOldSol)
     {
         // copmute and set the heat capacity of the solid phase
-        heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeomtry, scvIdx);
+        heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
     };
 
