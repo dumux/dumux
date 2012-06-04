@@ -24,7 +24,7 @@
  * \file
  *
  * \brief A water infiltration problem with a low-permeability lens
- *        embedded into a high- permeability domain which uses the
+ *        embedded into a high-permeability domain which uses the
  *        Richards box model.
  */
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
@@ -63,7 +63,7 @@ SET_PROP(RichardsLensProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
 //SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
-// Set the phsical problem to be solved
+// Set the physical problem to be solved
 SET_PROP(RichardsLensProblem, Problem)
 { typedef Dumux::RichardsLensProblem<TypeTag> type; };
 
@@ -76,13 +76,13 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
 };
 
-// Enable gravity?
+// Enable gravity
 SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
 
-// Enable partial reassembly of the Jacobian matrix?
+// Enable partial reassembly of the Jacobian matrix
 SET_BOOL_PROP(RichardsLensProblem, EnablePartialReassemble, true);
 
-// Enable re-use of the Jacobian matrix for the first iteration of a time step?
+// Enable re-use of the Jacobian matrix for the first iteration of a time step
 SET_BOOL_PROP(RichardsLensProblem, EnableJacobianRecycling, true);
 
 // Use forward diffferences to approximate the Jacobian matrix
@@ -94,7 +94,7 @@ SET_INT_PROP(RichardsLensProblem, NewtonMaxSteps, 28);
 // Set the "desireable" number of newton iterations of a time step
 SET_INT_PROP(RichardsLensProblem, NewtonTargetSteps, 18);
 
-// Write the intermediate results of the newton method?
+// Do not write the intermediate results of the newton method
 SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
 }
 
@@ -103,7 +103,7 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
  * \ingroup BoxTestProblems
  *
  * \brief A water infiltration problem with a low-permeability lens
- *        embedded into a high- permeability domain which uses the
+ *        embedded into a high-permeability domain which uses the
  *        Richards box model.
  *
  * The domain is box shaped. Left and right boundaries are Dirichlet

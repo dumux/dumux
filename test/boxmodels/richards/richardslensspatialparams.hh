@@ -40,7 +40,7 @@
 namespace Dumux
 {
 
-//forward declaration
+// forward declaration
 template<class TypeTag>
 class RichardsLensSpatialParams;
 
@@ -52,7 +52,7 @@ NEW_TYPE_TAG(RichardsLensSpatialParams);
 // Set the spatial parameters
 SET_TYPE_PROP(RichardsLensSpatialParams, SpatialParams, Dumux::RichardsLensSpatialParams<TypeTag>);
 
-// Set the material Law
+// Set the material law
 SET_PROP(RichardsLensSpatialParams, MaterialLaw)
 {
 private:
