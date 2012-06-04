@@ -61,7 +61,7 @@ public:
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of molecular hydrogen.
      */
     static Scalar molarMass()
-    { return 1.0e-3; }
+    { return 2.01588e-3; }
 
     /*!
      * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of molecular hydrogen.
