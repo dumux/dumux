@@ -133,37 +133,6 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     }
 
     /*!
-     * \brief Evaluate the outflow conditions at a boundary face.
-     *        This is still a beta version and only available
-     *        for the 2p2c and the 2p2cni model yet.
-     *
-     * \param isIt The intersection iterator
-     * \param scvIdx The index of the sub-control volume containing the outflow face
-     * \param boundaryFaceIdx  The index of the boundary face
-     */
-    void evalOutflowSegment(const IntersectionIterator &isIt,
-                            const int scvIdx,
-                            const int boundaryFaceIdx)
-    {
-        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-
-        // deal with outflow boundaries
-        if (bcTypes.hasOutflow())
-        {
-            PrimaryVariables values(0.0);
-            asImp_()->computeFlux(values, boundaryFaceIdx, true);
-            Valgrind::CheckDefined(values);
-
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            {
-                if (!bcTypes.isOutflow(eqIdx) )
-                    continue;
-                this->residual_[scvIdx][eqIdx] += values[eqIdx];
-            }
-        }
-    }
-
-    /*!
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *

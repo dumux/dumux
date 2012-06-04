@@ -279,37 +279,6 @@ public:
                                      this->curVolVars_());
     }
 
-    /*!
-     * \brief Add Outflow boundary conditions for a single sub-control
-     *        volume face to the local residual.
-     *
-     * \param isIt   The intersection iterator of current element
-     * \param scvIdx The index of the considered face of the sub-control volume
-     * \param boundaryFaceIdx The index of the considered boundary face of the sub control volume
-     */
-    void evalOutflowSegment(const IntersectionIterator &isIt,
-                            const int scvIdx,
-                            const int boundaryFaceIdx)
-    {
-        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-        // deal with outflow boundaries
-        if (bcTypes.hasOutflow())
-        {
-            //calculate outflow fluxes
-            PrimaryVariables values(0.0);
-            asImp_()->computeFlux(values, boundaryFaceIdx, true);
-            Valgrind::CheckDefined(values);
-
-            for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
-            {
-                if (!bcTypes.isOutflow(equationIdx) )
-                    continue;
-                // deduce outflow
-                this->residual_[scvIdx][equationIdx] += values[equationIdx];
-            }
-        }
-    }
-
     Implementation *asImp_()
     { return static_cast<Implementation *> (this); }
     const Implementation *asImp_() const

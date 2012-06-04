@@ -274,19 +274,6 @@ public:
     }
 
     /*!
-     * \brief Add Outflow boundary conditions for a single sub-control
-     *        volume face to the local residual.
-     *
-     * \note This is so far an empty method doing not more than
-     *       nothing. A beta version is available for the 2p2c and
-     *       2p2cni model. There you can find a sample implementation.
-     */
-    void evalOutflowSegment(const IntersectionIterator &isIt,
-                            int scvIdx,
-                            int boundaryFaceIdx)
-    { }
-
-    /*!
      * \brief Returns the local residual for all sub-control
      *        volumes of the element.
      */
@@ -421,9 +408,9 @@ protected:
                 // evaluate the outflow conditions at the boundary face
                 // ATTENTION: This is so far a beta version that is only for the 2p2c and 2p2cni model
                 //              available and not thoroughly tested.
-                asImp_().evalOutflowSegment(isIt,
-                                            scvIdx,
-                                            boundaryFaceIdx);
+                asImp_().evalOutflowSegment_(isIt,
+                                             scvIdx,
+                                             boundaryFaceIdx);
             }
         }
     }
@@ -460,6 +447,37 @@ protected:
                 if (!bcTypes.isNeumann(eqIdx))
                     continue;
                 residual_[scvIdx][eqIdx] += neumannFlux[eqIdx];
+            }
+        }
+    }
+
+    /*!
+    * \brief Add outflow boundary conditions for a single sub-control
+    *        volume face to the local residual.
+    *
+    * \param isIt   The intersection iterator of current element
+    * \param scvIdx The index of the considered face of the sub-control volume
+    * \param boundaryFaceIdx The index of the considered boundary face of the sub control volume
+    */
+    void evalOutflowSegment_(const IntersectionIterator &isIt,
+                            const int scvIdx,
+                            const int boundaryFaceIdx)
+    {
+        const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
+        // deal with outflow boundaries
+        if (bcTypes.hasOutflow())
+        {
+            //calculate outflow fluxes
+            PrimaryVariables values(0.0);
+            asImp_().computeFlux(values, boundaryFaceIdx, true);
+            Valgrind::CheckDefined(values);
+            
+            for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
+            {
+                if (!bcTypes.isOutflow(equationIdx) )
+                    continue;
+                // deduce outflow
+                this->residual_[scvIdx][equationIdx] += values[equationIdx];
             }
         }
     }
