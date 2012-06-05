@@ -352,7 +352,7 @@ public:
     {
         // if adaptivity is used, this method adapts the grid.
         // if it is not used, this method does nothing.
-        if (adaptiveGrid)
+        if (adaptiveGrid && timeManager().timeStepIndex() > 0)
             this->gridAdapt().adaptGrid();
         asImp_().pressureModel().updateMaterialLaws();
     }

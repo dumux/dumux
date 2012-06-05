@@ -45,6 +45,12 @@ NEW_PROP_TAG( AdaptiveGrid);
 //! Class defining the refinement/coarsening indicator
 NEW_PROP_TAG(AdaptionIndicator);
 
+//! Class defining the refinement/coarsening indicator for grid initialization
+NEW_PROP_TAG(AdaptionInitializationIndicator);
+
+//! Switch the use of initial grid adaption on/of
+NEW_PROP_TAG(EnableInitializationIndicator);
+
 //! Mimimum allowed level
 NEW_PROP_TAG(MinLevel);
 
@@ -77,8 +83,10 @@ SET_SCALAR_PROP(GridAdaptTypeTag, CoarsenTolerance, 0.001);
 SET_SCALAR_PROP(GridAdaptTypeTag, RefineThreshold, 0.0);
 SET_SCALAR_PROP(GridAdaptTypeTag, CoarsenThreshold, 0.0);
 SET_INT_PROP(GridAdaptTypeTag, AdaptionInterval, 1);
-
+//Switch initial grid adaption off per default
+SET_BOOL_PROP(GridAdaptTypeTag, EnableInitializationIndicator, false);
 } // namespace Properties
 } // namespace Dumux
+
 
 #endif

@@ -41,10 +41,6 @@
  */
 namespace Dumux
 {
-
-template<class TypeTag>
-class IMPET;
-
 namespace Properties
 {
 /*!

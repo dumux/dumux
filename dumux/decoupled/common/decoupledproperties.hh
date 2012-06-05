@@ -85,6 +85,9 @@ NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of 
 
 namespace Dumux
 {
+
+template<class TypeTag>
+class GridAdaptInitializationIndicatorDefault;
   
 template<class TypeTag>
 class VariableClass;
@@ -196,7 +199,12 @@ public:
     typedef Dumux::BoundaryTypes<numEq>  type;
 };
 
+//Set default class for adaptation initialization indicator
+SET_TYPE_PROP(GridAdaptTypeTag,  AdaptionInitializationIndicator, GridAdaptInitializationIndicatorDefault<TypeTag>);
+
 }
 }
+
+#include "gridadaptinitializationindicatordefault.hh"
 
 #endif
