@@ -28,6 +28,11 @@
 #ifndef DUMUX_STOKES_MODEL_HH
 #define DUMUX_STOKES_MODEL_HH
 
+/*!
+ * \file
+ * \brief Base class for all models which use the Stokes box model.
+ */
+
 #include <dumux/boxmodels/common/boxmodel.hh>
 
 #include "stokeslocalresidual.hh"
