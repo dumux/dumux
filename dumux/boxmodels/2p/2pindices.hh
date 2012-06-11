@@ -29,6 +29,8 @@
 #ifndef DUMUX_BOX_2P_INDICES_HH
 #define DUMUX_BOX_2P_INDICES_HH
 
+#include "2pproperties.hh"
+
 namespace Dumux
 {
 // \{

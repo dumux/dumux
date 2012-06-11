@@ -27,6 +27,8 @@
 #ifndef DUMUX_RICHARDS_INDICES_HH
 #define DUMUX_RICHARDS_INDICES_HH
 
+#include "richardsproperties.hh"
+
 namespace Dumux
 {
 // \{
