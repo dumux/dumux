@@ -28,6 +28,8 @@
 #ifndef DUMUX_ISOIMMISCIBLE_FLUID_STATE_HH
 #define DUMUX_ISOIMMISCIBLE_FLUID_STATE_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/valgrind.hh>
 
 #include <limits>
