@@ -61,7 +61,7 @@ namespace Dumux
 #if HAVE_ALUGRID
     SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::ALUCubeGrid<2,2>);
 #elif HAVE_UG
-    SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::UGGrid<2,2>);
+    SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::UGGrid<2>);
 #endif
 
     // Set the problem property

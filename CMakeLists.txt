@@ -315,10 +315,10 @@ endif(NON_NUMBER_CHARACTER)
 
 # deal with UG
 if(UG_FOUND)
-  set(UG_CPPFLAGS "-I${UG_INCLUDE_DIRS} -DENABLE_UG")
+  set(UG_CPPFLAGS "-I${UG_INCLUDE_DIRS} -DENABLE_UG=1")
   set(UG_LIBS "-L. ${UG_LIBRARIES}")
   set(HAVE_UG "ENABLE_UG")
-else()
+else(UG_FOUND)
   set(HAVE_UG 0)
 endif(UG_FOUND)
 
@@ -413,6 +413,8 @@ if(SUPERLU_FOUND)
   file(COPY test/freeflow/stokes2c/test_stokes2c.input DESTINATION parameters)
   file(COPY test/freeflow/stokes2cni/stokes2cni-reference.vtu DESTINATION references)
   file(COPY test/freeflow/stokes2cni/test_stokes2cni.input DESTINATION parameters)
+  file(COPY test/freeflow/navierstokes/navierstokes-reference.vtu DESTINATION references)
+  file(COPY test/freeflow/navierstokes/test_navierstokes.input DESTINATION parameters)
 endif(SUPERLU_FOUND)
 
 # set up CTest 
@@ -454,7 +456,8 @@ add_test(tutorial_coupled   tutorial/tutorial_coupled --parameter-file=parameter
 add_test(tutorial_decoupled tutorial/tutorial_decoupled --parameter-file=parameters/tutorial_decoupled.input)
 
 if(SUPERLU_FOUND)
-  add_test(test_stokes     bin/runTest.sh references/stokes-reference.vtu     stokes-00013.vtu     test/freeflow/stokes/test_stokes         --parameter-file=parameters/test_stokes.input     -gridFile test/freeflow/stokes/grids/test_stokes.dgf)
-  add_test(test_stokes2c   bin/runTest.sh references/stokes2c-reference.vtu   stokes2c-00007.vtu   test/freeflow/stokes2c/test_stokes2c     --parameter-file=parameters/test_stokes2c.input   -gridFile test/freeflow/stokes2c/grids/test_stokes2c.dgf)
-  add_test(test_stokes2cni bin/runTest.sh references/stokes2cni-reference.vtu stokes2cni-00008.vtu test/freeflow/stokes2cni/test_stokes2cni --parameter-file=parameters/test_stokes2cni.input -gridFile test/freeflow/stokes2cni/grids/test_stokes2cni.dgf)
+  add_test(test_stokes       bin/runTest.sh references/stokes-reference.vtu       stokes-00013.vtu       test/freeflow/stokes/test_stokes             --parameter-file=parameters/test_stokes.input       -gridFile test/freeflow/stokes/grids/test_stokes.dgf)
+  add_test(test_stokes2c     bin/runTest.sh references/stokes2c-reference.vtu     stokes2c-00007.vtu     test/freeflow/stokes2c/test_stokes2c         --parameter-file=parameters/test_stokes2c.input     -gridFile test/freeflow/stokes2c/grids/test_stokes2c.dgf)
+  add_test(test_stokes2cni   bin/runTest.sh references/stokes2cni-reference.vtu   stokes2cni-00008.vtu   test/freeflow/stokes2cni/test_stokes2cni     --parameter-file=parameters/test_stokes2cni.input   -gridFile test/freeflow/stokes2cni/grids/test_stokes2cni.dgf)
+  add_test(test_navierstokes bin/runTest.sh references/navierstokes-reference.vtu navierstokes-00008.vtu test/freeflow/navierstokes/test_navierstokes --parameter-file=parameters/test_navierstokes.input -gridFile test/freeflow/navierstokes/grids/test_navierstokes.dgf)
 endif(SUPERLU_FOUND)

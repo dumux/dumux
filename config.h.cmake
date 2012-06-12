@@ -33,7 +33,7 @@
 
 #define HAVE_UG ${HAVE_UG}
 #if HAVE_MPI && HAVE_UG
-// use parallel UG if both UG and MPI are available
+/* use parallel UG if both UG and MPI are available */
 #   define ModelP
 #endif
 
