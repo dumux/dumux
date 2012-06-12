@@ -92,6 +92,7 @@ AC_CONFIG_FILES([dumux.pc
     test/decoupled/2padaptive/Makefile
     test/decoupled/2p2c/Makefile
     test/freeflow/Makefile
+    test/freeflow/navierstokes/Makefile
     test/freeflow/stokes/Makefile
     test/freeflow/stokes2c/Makefile
     test/freeflow/stokes2cni/Makefile
