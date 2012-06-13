@@ -125,8 +125,7 @@ public:
         }
 
 
-        curWriter_ = new VtkWriter(gridView_,
-                                   Dune::VTKOptions::conforming);
+        curWriter_ = new VtkWriter(gridView_, Dune::VTK::conforming);
         ++curWriterNum_;
 
         curTime_ = t;
@@ -233,8 +232,7 @@ public:
     void endWrite(bool onlyDiscard = false)
     {
         if (!onlyDiscard) {
-            curWriter_->write(curOutFileName_.c_str(),
-                              Dune::VTKOptions::ascii);
+            curWriter_->write(curOutFileName_.c_str(), Dune::VTK::ascii);
 
             // determine name to write into the multi-file for the
             // current time step
