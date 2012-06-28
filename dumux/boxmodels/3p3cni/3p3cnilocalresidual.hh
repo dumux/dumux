@@ -76,10 +76,7 @@ class ThreePThreeCNILocalResidual : public ThreePThreeCLocalResidual<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
-
-    static constexpr Scalar massUpwindWeight = GET_PROP_VALUE(TypeTag, MassUpwindWeight);
-
+    
 public:
     /*!
      * \brief Evaluate the amount all conservation quantities
@@ -155,6 +152,8 @@ public:
     {
         // advective mass flux
         ParentType::computeAdvectiveFlux(flux, fluxData);
+
+        static const Scalar massUpwindWeight = GET_PROP_VALUE(TypeTag, MassUpwindWeight);
 
         // advective heat flux in all phases
         flux[energyEqIdx] = 0;
