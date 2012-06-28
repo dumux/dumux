@@ -360,7 +360,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *        is replaced by the total mass balance, this is the index
      *        of the remaining component mass-balance equation.
      */
-    constexpr unsigned int contiCompIdx1_() const {
+    unsigned int contiCompIdx1_() const {
         switch (replaceCompEqIdx)
         {
         case contiWEqIdx: return contiNEqIdx;
@@ -375,7 +375,7 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
      *        if one component mass balance is replaced by the total mass balance
      *        (replaceCompEqIdx < 2), this index is the same as contiCompIdx1().
      */
-    constexpr unsigned int contiCompIdx2_() const {
+    unsigned int contiCompIdx2_() const {
         switch (replaceCompEqIdx)
         {
         case contiWEqIdx: return contiNEqIdx;
