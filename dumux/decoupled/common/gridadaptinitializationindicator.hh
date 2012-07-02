@@ -195,16 +195,19 @@ public:
         return maxLevel_;
     }
 
-    /*! \brief Initializes the adaption indicator class*/
+    /*! \brief Initializes the adaption indicator class */
     void init()
     {};
 
-    /*! @brief Constructs a GridAdaptionIndicator instance
+    /*! \brief Constructs a GridAdaptionIndicator instance
      *
-     *  This standard indicator is based on the saturation gradient. It checks the local gradient compared to the maximum global gradient.
-     *  The indicator is compared locally to a refinement/coarsening threshold to decide whether a cell should be marked for refinement or coarsening or should not be adapted.
+     * This standard indicator is based on the saturation gradient. It checks the local gradient 
+     * compared to the maximum global gradient. The indicator is compared locally to a 
+     * refinement/coarsening threshold to decide whether a cell should be marked for refinement 
+     * or coarsening or should not be adapted.
      *
      * \param problem The problem object
+     * \param adaptionIndicator Indicator whether a be adapted
      */
     GridAdaptInitializationIndicator(Problem& problem, AdaptionIndicator& adaptionIndicator):
         problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0)
