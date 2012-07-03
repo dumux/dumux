@@ -88,26 +88,24 @@ SET_PROP(BoxStokes2c, FluidState)
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
     typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
-
 };
 
 //! DEPRECATED Choose the considered phase (single-phase system); the gas phase is used
 SET_PROP(BoxStokes2c, PhaseIndex)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
-    static constexpr int value = Indices::nPhaseIdx;
+    static constexpr int value = FluidSystem::nPhaseIdx;
 };
 
 //! Choose the considered phase (single-phase system); the gas phase is used
 SET_PROP(BoxStokes2c, PhaseIdx)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
-    static constexpr int value = Indices::nPhaseIdx;
+    static constexpr int value = FluidSystem::nPhaseIdx;
 };
 
-}
-
-}
-#endif
+} // namespace Properties
+} // namespace Dumux
+#endif // DUMUX_STOKES2C_PROPERTY_DEFAULTS_HH
