@@ -31,8 +31,6 @@
 #ifndef DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 #define DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 
-#include "2p2cindices.hh"
-
 #include "2p2cmodel.hh"
 #include "2p2cproblem.hh"
 #include "2p2cindices.hh"
