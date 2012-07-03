@@ -23,6 +23,7 @@ RESUME_FILE=/dev/null
 
 CONFIGURE_FLAGS="\
   CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
+  --enable-fieldvector-size-is-method \
   --disable-documentation \
   --disable-parallel \
   --disable-mpiruntest"
