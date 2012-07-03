@@ -38,8 +38,9 @@ namespace Dumux
  *        the Newton scheme
  */
 template <class TypeTag>
-struct NewtonConvergenceWriter
+class NewtonConvergenceWriter
 {
+public:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
 
