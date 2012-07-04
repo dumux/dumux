@@ -106,7 +106,7 @@ NEW_TYPE_TAG(MPFAProperties);
 
 NEW_PROP_TAG( GridTypeIndices );//!< The grid type indices to decide which grid is used
 NEW_PROP_TAG( GridImplementation ); //!< Gives kind of grid implementation in form of a GridType
-
+NEW_PROP_TAG( EnableComplexLStencil ); //!< Enable use of four different L-shapes instead of 2 (3-d)
 }
 }
 
@@ -128,6 +128,8 @@ public:
 //! Set grid type indices
 SET_TYPE_PROP(MPFAProperties, GridTypeIndices, GridTypes);
 
+//! Allow use of all available L-shapes
+SET_BOOL_PROP(MPFAProperties, EnableComplexLStencil, true);
 }
 }// end of Dune namespace
 #endif
