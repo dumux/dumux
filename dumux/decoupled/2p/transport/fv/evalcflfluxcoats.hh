@@ -469,7 +469,11 @@ public:
      */
     Scalar getDt(const Element& element)
     {
-        return getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume();
+        Scalar porosity = problem_.spatialParams().porosity(element);
+        if (porosity > 1e-6)
+            return (getCFLFluxFunction(element) * problem_.spatialParams().porosity(element) * element.geometry().volume());
+        else
+            return (getCFLFluxFunction(element) * element.geometry().volume());
     }
 
     /*! \brief Constructs an EvalCflFluxDefault object
