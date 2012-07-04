@@ -76,6 +76,7 @@ private:
 
 private:
     bool isFront_;
+    Scalar dt_;
 
 public:
     //! Collection of variables that have to be mapped if the grid is adapted
@@ -91,7 +92,6 @@ public:
         Scalar pressNW;
         Scalar volCorr;
         int count;
-        bool front;
         AdaptedValues()
         {
             saturationW = 0.;
@@ -100,13 +100,12 @@ public:
             pressNW = 0.;
             count = 0;
             volCorr = 0;
-            front = false;
         }
     };
 
     //! Constructs an adaptive CellData object
     CellData2PAdaptive():
-        isFront_(false)
+        isFront_(false), dt_(0.0)
     {}
 
     /*! \brief Track the front
@@ -142,6 +141,21 @@ public:
         isFront_ = true;
     }
 
+    Scalar dt()
+    {
+        return dt_;
+    }
+
+    Scalar dt() const
+    {
+        return dt_;
+    }
+
+    void setDt(Scalar dt)
+    {
+        dt_ = dt;
+    }
+
     //! Stores values to be adapted in an adaptedValues container
     /**
      * Stores values to be adapted from the current CellData objects into
@@ -157,7 +171,6 @@ public:
         adaptedValues.pressW = this->pressure(wPhaseIdx);
         adaptedValues.pressNW = this->pressure(nPhaseIdx);
         adaptedValues.volCorr = this->volumeCorrection();
-        adaptedValues.front = isFront_;
     }
     //! Stores sons entries into father element for averageing
     /**
@@ -193,7 +206,6 @@ public:
         this->setPressure(wPhaseIdx, adaptedValues.pressW / adaptedValues.count);
         this->setPressure(nPhaseIdx, adaptedValues.pressNW / adaptedValues.count);
         this->setUpdate(adaptedValues.volCorr / adaptedValues.count);
-        isFront_ = adaptedValues.front;
     }
 
     //! Reconstructs sons entries from data of father cell
