@@ -227,14 +227,14 @@ public:
     { return molarDensity(); }
 
     /*!
-     * \brief Return the viscosity \f$ \mathrm{[m^2/s]} \f$ at the integration
+     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ at the integration
      *        point.
      */
     Scalar viscosity() const
     { return viscosity_; }
 
     /*!
-     * \brief Return the viscosity \f$ \mathrm{[m^2/s]} \f$ at the integration
+     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ at the integration
      *        point.
      */
     DUMUX_DEPRECATED_MSG("use viscosity() instead")

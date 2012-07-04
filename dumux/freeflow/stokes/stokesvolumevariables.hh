@@ -169,7 +169,7 @@ public:
     { return fluidState_.temperature(phaseIdx); }
 
     /*!
-     * \brief Returns the viscosity \f$ \mathrm{[m^2/s]} \f$ of the fluid in
+     * \brief Returns the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ of the fluid in
      *        the sub-control volume.
      */
     Scalar viscosity() const
