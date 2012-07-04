@@ -60,6 +60,7 @@ NEW_TYPE_TAG(IMPESTwoPAdaptive, INHERITS_FROM(IMPET, DecoupledTwoP));
 #include <dumux/decoupled/2p/cellData2padaptive.hh>
 #include "gridadaptionindicator2p.hh"
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
+#include <dumux/decoupled/common/gridadaptinitializationindicator.hh>
 
 namespace Dumux
 {
@@ -73,6 +74,8 @@ SET_TYPE_PROP(IMPESTwoPAdaptive, Variables, Dumux::VariableClassAdaptive<TypeTag
 SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, Dumux::CellData2PAdaptive<TypeTag>);
 //! Set the standard indicator class of two-phase models for adaption or coarsening
 SET_TYPE_PROP(IMPESTwoPAdaptive, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
+//!Set default class for adaptation initialization indicator
+SET_TYPE_PROP(IMPESTwoPAdaptive,  AdaptionInitializationIndicator, GridAdaptInitializationIndicator<TypeTag>);
 }
 }
 
