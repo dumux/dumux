@@ -303,8 +303,8 @@ void FVPressure<TypeTag>::initializeMatrix()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             if (isIt->neighbor())
                 rowSize++;
@@ -323,8 +323,8 @@ void FVPressure<TypeTag>::initializeMatrix()
         A_.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             if (isIt->neighbor())
             {
                 // access neighbor
@@ -370,8 +370,8 @@ void FVPressure<TypeTag>::assemble(bool first)
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             /************* handle interior face *****************/
             if (isIt->neighbor())
