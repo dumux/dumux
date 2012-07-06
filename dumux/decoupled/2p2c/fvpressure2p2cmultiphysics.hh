@@ -156,9 +156,9 @@ public:
 
 
     //constitutive functions are initialized and stored in the variables object
-    void updateMaterialLaws(bool);
+    void updateMaterialLaws(bool postTimeStep = false);
     //updates singlephase secondary variables for one cell and stores in the variables object
-    void update1pMaterialLawsInElement(const Element&, CellData&, bool);
+    void update1pMaterialLawsInElement(const Element& elementI, CellData& cellData, bool postTimeStep);
 
     //! \brief Write data files
      /*  \param name file name */
@@ -248,8 +248,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             /************* handle interior face *****************/
             if (isIt->neighbor())
@@ -659,7 +659,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
  * or in the two phase subdomain (value = 2).
  */
 template<class TypeTag>
-void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep = false)
+void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
 {
     //get timestep for error term
     Scalar maxError = 0.;

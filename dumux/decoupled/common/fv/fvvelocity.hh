@@ -116,8 +116,8 @@ void FVVelocity<TypeTag, Velocity>::calculateVelocity()
 
         /*****  flux term ***********/
         // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             /************* handle interior face *****************/
             if (isIt->neighbor())

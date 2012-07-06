@@ -158,9 +158,9 @@ public:
                             const Intersection&, const CellData&, const bool);
 
     //constitutive functions are initialized and stored in the variables object
-    void updateMaterialLaws(bool);
+    void updateMaterialLaws(bool postTimeStep = false);
     //updates secondary variables for one cell and stores in the variables object
-    void updateMaterialLawsInElement(const Element&, bool);
+    void updateMaterialLawsInElement(const Element& elementI, bool postTimeStep);
 
     //! Constructs a FVPressure2P2C object
     /**
@@ -881,7 +881,7 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
  * by using the updated primary variables.
  */
 template<class TypeTag>
-void FVPressure2P2C<TypeTag>::updateMaterialLaws(bool postTimeStep = false)
+void FVPressure2P2C<TypeTag>::updateMaterialLaws(bool postTimeStep)
 {
     Scalar maxError = 0.;
     // iterate through leaf grid an evaluate c0 at cell center

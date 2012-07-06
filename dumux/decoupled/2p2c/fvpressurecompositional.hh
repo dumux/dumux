@@ -588,8 +588,8 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         if(!compositional)
         {
             // run through all intersections with neighbors
-            IntersectionIterator isItEnd = problem_.gridView().template iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
                 cellData.perimeter()
                         += isIt->geometry().volume();
