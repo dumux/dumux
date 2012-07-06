@@ -533,20 +533,15 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         //determine phase pressures from primary pressure variable
         Scalar pressWBound = 0;
         Scalar pressNWBound = 0;
-        switch (pressureType_)
-        {
-        case pw:
+        if (pressureType_ == pw)
         {
             pressWBound = pressBound;
             pressNWBound = pressBound + pcBound;
-            break;
         }
-        case pn:
+        else if (pressureType_ == pn)
         {
             pressWBound = pressBound - pcBound;
             pressNWBound = pressBound;
-            break;
-        }
         }
 
         //get temperature at current position
