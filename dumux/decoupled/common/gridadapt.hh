@@ -165,7 +165,7 @@ public:
 //        Dune::VTKWriter<LeafGridView> vtkwriter(problem_.gridView());
 //        vtkwriter.write("latestgrid",Dune::VTK::binaryappended);
         return;
-    };
+    }
 
     /*!
      * Mark Elements for grid refinement according to applied Indicator
