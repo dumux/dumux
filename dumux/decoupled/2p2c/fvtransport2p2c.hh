@@ -106,7 +106,7 @@ class FVTransport2P2C
     {return problem_;};
 
 public:
-    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
+    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false);
 
     void updateTransportedQuantity(TransportSolutionType& updateVector);
 
@@ -232,7 +232,7 @@ protected:
  */
 template<class TypeTag>
 void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
-		TransportSolutionType& updateVec, bool impet = false)
+		TransportSolutionType& updateVec, bool impet)
 {
     // initialize dt very large
     dt = 1E100;

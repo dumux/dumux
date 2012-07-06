@@ -97,7 +97,7 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
     Problem& problem()
     {return this->problem_;};
 public:
-    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
+    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false);
 
     //! Constructs a FVTransport2P2CMultiPhysics object
     /**
@@ -130,7 +130,7 @@ public:
  *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
  */
 template<class TypeTag>
-void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false)
+void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet)
 {
     // initialize dt very large
     dt = 1E100;
