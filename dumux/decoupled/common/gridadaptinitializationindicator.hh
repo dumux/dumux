@@ -61,7 +61,8 @@ private:
     {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
-        numEq = GET_PROP_VALUE(TypeTag, NumEq)
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     enum
@@ -101,7 +102,7 @@ public:
             int level = eIt->level();
             maxLevel_ = std::max(level, maxLevel_);
 
-            if (level < minLevel_)
+            if (level < minAllowedLevel_)
             {
                 indicatorVector_[globalIdxI] = refineCell;
                 continue;
@@ -129,30 +130,43 @@ public:
                     break;
                 if (isIt->boundary())
                 {
-                    BoundaryTypes bcTypes;
-                    problem_.boundaryTypes(bcTypes, *isIt);
+                    indicatorVector_[globalIdxI] = refineCell;
 
-                    for (int i = 0; i < numEq; i++)
+                    if (maxLevel_ == maxAllowedLevel_)
                     {
-                        if (bcTypes.isNeumann(i))
-                        {
-                            PrimaryVariables flux(0.0);
-                            problem_.neumann(flux, *isIt);
+                        BoundaryTypes bcTypes;
+                        problem_.boundaryTypes(bcTypes, *isIt);
 
-                            if (std::abs(flux[i]) < 1e-10)
+                        for (int i = 0; i < numEq; i++)
+                        {
+                            if (bcTypes.isNeumann(i))
                             {
-                                indicatorVector_[globalIdxI] = coarsenCell;
+                                PrimaryVariables flux(0.0);
+                                problem_.neumann(flux, *isIt);
+
+                                bool fluxBound = false;
+                                for (int j = 0; j < numPhases; j++)
+                                {
+                                if (std::abs(flux[j]) < 1e-10)
+                                {
+                                    indicatorVector_[globalIdxI] = coarsenCell;
+                                }
+                                else
+                                {
+                                    indicatorVector_[globalIdxI] = refineCell;
+                                    fluxBound = true;
+                                    break;
+                                }
+                                }
+                                if (fluxBound)
+                                    break;
                             }
                             else
                             {
-                                indicatorVector_[globalIdxI] = refineCell;
-                                break;
+                                indicatorVector_[globalIdxI] = coarsenCell;
+//                                indicatorVector_[globalIdxI] = refineCell;
+//                                break;
                             }
-                        }
-                        else
-                        {
-                            indicatorVector_[globalIdxI] = refineCell;
-                            break;
                         }
                     }
                 }
@@ -184,7 +198,9 @@ public:
     bool coarsen(const Element& element)
     {
         int idx = problem_.elementMapper().map(element);
-        if (indicatorVector_[idx] == coarsenCell &&  adaptionIndicator_.coarsen(element))
+        if (maxLevel_ == maxAllowedLevel_ && indicatorVector_[idx] == coarsenCell && !adaptionIndicator_.refine(element))
+            return true;
+        else if (indicatorVector_[idx] == coarsenCell &&  adaptionIndicator_.coarsen(element))
             return true;
         else
             return false;
@@ -212,7 +228,8 @@ public:
     GridAdaptInitializationIndicator(Problem& problem, AdaptionIndicator& adaptionIndicator):
         problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0)
     {
-        minLevel_ = GET_PARAM(TypeTag, int, MinLevel);
+        minAllowedLevel_ = GET_PARAM(TypeTag, int, MinLevel);
+        maxAllowedLevel_ = GET_PARAM(TypeTag, int, MaxLevel);
         enableInitializationIndicator_ = GET_PARAM(TypeTag, bool, EnableInitializationIndicator);
     }
 
@@ -221,7 +238,8 @@ private:
     AdaptionIndicator& adaptionIndicator_;
     Dune::DynamicVector<int> indicatorVector_;
     int maxLevel_;
-    int minLevel_;
+    int minAllowedLevel_;
+    int maxAllowedLevel_;
     bool enableInitializationIndicator_;
 };
 }

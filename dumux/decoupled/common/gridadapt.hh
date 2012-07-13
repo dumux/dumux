@@ -87,10 +87,19 @@ public:
 
         AdaptionInitializationIndicator adaptionInitIndicator(problem_, adaptionIndicator_);
 
-        while (adaptionInitIndicator.maxLevel() < levelMax_)
+        int maxIter = 2*levelMax_;
+        int iter = 0;
+        while (iter <= maxIter)
         {
             adaptGrid(adaptionInitIndicator);
+
+            if (marked_ == 0 && coarsened_ == 0)
+            {
+                break;
+            }
+
             problem_.model().initialize();
+            iter++;
         }
     }
 

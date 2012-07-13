@@ -158,17 +158,24 @@ public:
                             PrimaryVariables flux(0.0);
                             problem_.neumann(flux, *isIt);
 
-                            if (std::abs(flux[i]) > 1e-10)
+                            bool fluxBound = false;
+                            for (int j = 0; j < 2; j++)
+                            {
+                            if (std::abs(flux[j]) > 1e-10)
                             {
                                 indicatorVector_[globalIdxI] = 10;
+                                fluxBound = true;
                                 break;
                             }
+                            }
+                            if (fluxBound)
+                                break;
                         }
-                        else
-                        {
-                            indicatorVector_[globalIdxI] = 10;
-                            break;
-                        }
+//                        else
+//                        {
+//                            indicatorVector_[globalIdxI] = 10;
+//                            break;
+//                        }
                     }
                 }
                 else
