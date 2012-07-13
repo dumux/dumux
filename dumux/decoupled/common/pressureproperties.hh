@@ -63,6 +63,7 @@ NEW_TYPE_TAG(Pressure, INHERITS_FROM(LinearSolverTypeTag, DecoupledModel));
 //Properties for linear solvers
 NEW_PROP_TAG(PressureCoefficientMatrix);//!< Type of the coefficient matrix given to the linear solver
 NEW_PROP_TAG(PressureRHSVector);//!< Type of the right hand side vector given to the linear solver
+NEW_PROP_TAG(PressureSolutionVector);//!Type of solution vector or pressure system
 NEW_PROP_TAG( VisitFacesOnlyOnce); //!< Indicates if faces are only regarded from one side
 NEW_PROP_TAG(Velocity);
 }
@@ -95,6 +96,8 @@ private:
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
 };
+
+SET_TYPE_PROP(Pressure, PressureSolutionVector, typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution);
 
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
 SET_TYPE_PROP(Pressure, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag> );

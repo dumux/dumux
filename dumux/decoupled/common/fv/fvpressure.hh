@@ -56,6 +56,7 @@ template<class TypeTag> class FVPressure
     ///@cond 0
     typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolution;
     ///@endcond
+
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
     enum
     {
@@ -72,6 +73,7 @@ template<class TypeTag> class FVPressure
     // the typenames used for the stiffness matrix and solution vector
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureSolutionVector) PressureSolution;
 
 protected:
 
@@ -275,7 +277,7 @@ private:
     Problem& problem_;
 
     int size_;
-    ScalarSolution pressure_;
+    PressureSolution pressure_;
 
     std::string solverName_;
     std::string preconditionerName_;
