@@ -5,4 +5,4 @@
 Module: dumux
 Version: 2.2-svn
 Maintainer: bernd@iws.uni-stuttgart.de
-Depends: dune-grid (>= 2.1) dune-localfunctions  (>= 2.1) dune-istl  (>= 2.1)
+Depends: dune-grid (>= 2.2) dune-localfunctions  (>= 2.2) dune-istl  (>= 2.2)
