@@ -90,7 +90,7 @@ CHECK_CXX_SOURCE_COMPILES(
 CHECK_CXX_SOURCE_COMPILES(
 "
    int main(void) { int __attribute__((unused)) foo; return 0; };
-"  HAVE_ATTRIBUTE_UNUSED
+"  HAS_ATTRIBUTE_UNUSED
 )
 
 # __attribute__((deprecated))
@@ -106,7 +106,7 @@ CHECK_CXX_SOURCE_COMPILES(
    void foo() DEP;
    void foo() {};
    int main(void) { return 0; };
-"  HAVE_ATTRIBUTE_DEPRECATED
+"  HAS_ATTRIBUTE_DEPRECATED
 )
 
 # __attribute__((deprecated("msg")))
@@ -121,7 +121,7 @@ CHECK_CXX_SOURCE_COMPILES("
    void foo() DEP;
    void foo() {};
    int main(void) { return 0; };
-"  HAVE_ATTRIBUTE_DEPRECATED_MSG
+"  HAS_ATTRIBUTE_DEPRECATED_MSG
 )
 
 # static assert

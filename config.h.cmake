@@ -90,24 +90,7 @@
 #cmakedefine HAVE_VALGRIND 1
 
 #include <dune/common/deprecated.hh>
-
-#if DUNE_COMMON_VERSION_MAJOR >= 2 && DUNE_COMMON_VERSION_MINOR >= 2
 #include <dune/common/unused.hh>
-#endif
-
-#cmakedefine HAVE_ATTRIBUTE_DEPRECATED 1
-#if HAVE_ATTRIBUTE_DEPRECATED
-#  define DUMUX_DEPRECATED __attribute__((deprecated))
-#else
-#  define DUMUX_DEPRECATED
-#endif
-
-#cmakedefine HAVE_ATTRIBUTE_DEPRECATED_MSG 1
-#if HAVE_ATTRIBUTE_DEPRECATED_MSG
-#  define DUMUX_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
-#else
-#  define DUMUX_DEPRECATED_MSG DUMUX_DEPRECATED
-#endif
 
 #cmakedefine HAVE_ATTRIBUTE_ALWAYS_INLINE 1
 #if HAVE_ATTRIBUTE_ALWAYS_INLINE
@@ -116,9 +99,3 @@
 #  define DUMUX_ALWAYS_INLINE
 #endif
 
-#cmakedefine HAVE_ATTRIBUTE_UNUSED 1
-#if HAVE_ATTRIBUTE_UNUSED
-#  define DUMUX_UNUSED __attribute__((unused))
-#else
-#  define DUMUX_UNUSED
-#endif

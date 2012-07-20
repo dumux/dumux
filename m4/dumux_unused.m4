@@ -10,5 +10,5 @@ AC_DEFUN([DUMUX_CHECK_UNUSED],[
                   AC_MSG_RESULT(no)])
   AC_LANG_POP([C++])
   AC_DEFINE_UNQUOTED(DUMUX_UNUSED, $DUMUX_UNUSED,
-                     [USE WITH CARE: Prevents the compiler from prining a warning if it thinks that a variable might be unused])
+                     [(Depreated! Use DUNE_UNUSED instead) Prevents the compiler from prining a warning for a potenitally unused variable.])
 ])
