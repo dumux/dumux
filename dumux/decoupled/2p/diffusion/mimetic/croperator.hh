@@ -27,27 +27,17 @@
 #include<set>
 #include<map>
 #include<cassert>
-#include<stdio.h>
-#include<stdlib.h>
 
-#include<dune/common/timer.hh>
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
 #include<dune/common/exceptions.hh>
-#include <dune/common/version.hh>
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 2, 0)
-// dune 2.2
 #include<dune/geometry/type.hh>
-#else
-// dune 2.1
-#include<dune/common/geometrytype.hh>
-#endif
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
-
 #include<dune/istl/bvector.hh>
 #include<dune/istl/operators.hh>
 #include<dune/istl/bcrsmatrix.hh>
+
 #include<dumux/common/boundaryconditions.hh>
 #include<dumux/decoupled/2p/diffusion/mimetic/localstiffness.hh>
 
@@ -185,15 +175,13 @@ public:
                 {
                     A_.incrementrowsize(alpha);
                     visited[index] = true;
-                    // printf("increment row %04d\n",alpha);
+                    // std::cout << "increment row " << alpha << std::endl;
                 }
                 for (int k = 0; k < refelem.size(1)-1; k++) {
                     A_.incrementrowsize(alpha);
-                    // printf("increment row %04d\n",alpha);
+                    // std::cout << "increment row " << alpha << std::endl;
                 }
-
             }
-
         }
 
         // now the row sizes have been set
@@ -227,9 +215,7 @@ public:
                         A_.addindex(alpha, beta);
                         //std::cout << "alpha = " << alpha << ", added beta = " << beta << std::endl;
                     }
-
             }
-
         }
 
         // now the matrix is ready for use
@@ -324,7 +310,6 @@ public:
                 else
                     f[local2Global[i]][0] += loc.rhs(i)[0];
             }
-
         }
 
         // put in essential boundary conditions

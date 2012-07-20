@@ -27,12 +27,11 @@
 #ifndef VTK_NESTED_FUNCTION_HH
 #define VTK_NESTED_FUNCTION_HH
 
+#include <string>
+
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
-#include <dune/common/version.hh>
 #include <dune/grid/io/file/vtk/function.hh>
-
-#include <string>
 
 namespace Dumux {
 
@@ -41,13 +40,7 @@ namespace Dumux {
  *        as elements.
  */
 template <class GridView, class Mapper, class Buffer>
-#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 2, 0)
-// dune 2.2
 class VtkNestedFunction : public Dune::VTKFunction<GridView>
-#else
-// dune 2.1
-class VtkNestedFunction : public Dune::VTKFunction<typename GridView::Grid>
-#endif
 {
     enum { dim = GridView::dimension };
     typedef typename GridView::ctype ctype;
