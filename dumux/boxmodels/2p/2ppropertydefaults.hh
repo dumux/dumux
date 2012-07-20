@@ -35,7 +35,7 @@
 #include "2pmodel.hh"
 #include "2pproblem.hh"
 #include "2pindices.hh"
-#include "2pfluxvariables.hh"
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 #include "2pvolumevariables.hh"
 #include "2pproperties.hh"
 
@@ -73,10 +73,13 @@ SET_TYPE_PROP(BoxTwoP, Model, TwoPModel<TypeTag>);
 SET_TYPE_PROP(BoxTwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxTwoP, FluxVariables, TwoPFluxVariables<TypeTag>);
+SET_TYPE_PROP(BoxTwoP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
+
+//! weight for the upwind mobility in the velocity calculation
+SET_SCALAR_PROP(BoxTwoP, MobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p model
 SET_TYPE_PROP(BoxTwoP,

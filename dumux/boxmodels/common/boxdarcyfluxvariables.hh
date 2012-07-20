@@ -1,7 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Copyright (C) 2008-2012 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
@@ -29,36 +29,37 @@
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
  */
-#ifndef DUMUX_2P_FLUX_VARIABLES_HH
-#define DUMUX_2P_FLUX_VARIABLES_HH
+#ifndef DUMUX_BOX_DARCY_FLUX_VARIABLES_HH
+#define DUMUX_BOX_DARCY_FLUX_VARIABLES_HH
 
-#warning This file is deprecated. Use boxfluxvariables instead. 
-
-#include "2pproperties.hh"
+#include "boxproperties.hh"
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
 namespace Dumux
 {
+    
+namespace Properties
+{
+// forward declaration of property 
+NEW_PROP_TAG(MobilityUpwindWeight);
+}   
 
 /*!
- * \ingroup TwoPBoxModel
+ * \ingroup BoxModel
  * \ingroup BoxFluxVariables
- * \brief This template class contains the data which is required to
- *        calculate the fluxes of the fluid phases over a face of a
- *        finite volume for the two-phase model.
- *
- * This means pressure and concentration gradients, phase densities at
- * the intergration point, etc.
+ * \brief Evaluates the normal component of the Darcy velocity 
+ * on a (sub)control volume face.
  */
 template <class TypeTag>
-class TwoPFluxVariables : public BoxFluxVariables<TypeTag>
+class BoxDarcyFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
+    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     enum {
@@ -86,59 +87,45 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      * are calculated for interior SCV faces or boundary faces, default=false
      */
-    TwoPFluxVariables(const Problem &problem,
+    BoxDarcyFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : BoxFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
-          fvGeometry_(fvGeometry), onBoundary_(onBoundary)
+        : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
-        faceIdx_ = faceIdx;
-
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            potentialGrad_[phaseIdx] = Scalar(0);
-        }
-
-        calculateGradients_(problem, element, elemVolVars);
-        calculateK_(problem, element, elemVolVars);
-    };
+        mobilityUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindWeight);
+        
+        calculateNormalVelocity_(problem, element, elemVolVars);
+    }
 
 public:
-    /*
-     * \brief Return the intrinsic permeability.
-     */
-    const Tensor &intrinsicPermeability() const
-    { return K_; }
-
     /*!
-     * \brief Return the pressure potential gradient.
+     * \brief Return the normal velocity for a given phase.
      *
-     * \param phaseIdx The index of the fluid phase
+     * \param phaseIdx index of the phase
      */
-    const Vector &potentialGrad(int phaseIdx) const
-    { return potentialGrad_[phaseIdx]; }
-
+    Scalar normalVelocity(int phaseIdx) const
+    { return normalVelocity_[phaseIdx]; }
+    
     /*!
      * \brief Return the local index of the downstream control volume
-     *        for a given phase as a function of the normal flux.
+     *        for a given phase.
      *
-     * \param normalFlux The normal flux i.e. the given intrinsic permeability
-     *                   times the pressure potential gradient and SCV face normal.
+     * \param phaseIdx index of the phase
      */
-    int downstreamIdx(Scalar normalFlux) const
-    { return (normalFlux >= 0)?face().j:face().i; }
-
+    int downstreamIdx(int phaseIdx) const
+    { return (normalVelocity_[phaseIdx] >= 0) ? face().j : face().i; }
+    
     /*!
      * \brief Return the local index of the upstream control volume
-     *        for a given phase as a function of the normal flux.
+     *        for a given phase.
      *
-     * \param normalFlux The normal flux i.e. the given intrinsic permeability
-     *                   times the pressure potential gradient and SCV face normal.
+     * \param phaseIdx index of the phase
      */
-    int upstreamIdx(Scalar normalFlux) const
-    { return (normalFlux > 0)?face().i:face().j; }
+    int upstreamIdx(int phaseIdx) const
+    { return (normalVelocity_[phaseIdx] > 0) ? face().i : face().j; }
 
     /*!
      * \brief Return the SCV (sub-control-volume) face
@@ -155,52 +142,55 @@ protected:
     const FVElementGeometry &fvGeometry_;
     int faceIdx_;
     const bool onBoundary_;
-
-    // gradients
-    Vector potentialGrad_[numPhases];
-
-    // intrinsic permeability
-    Tensor K_;
+    Scalar normalVelocity_[numPhases];
+    Scalar mobilityUpwindWeight_;
 
 private:
-    void calculateGradients_(const Problem &problem,
-                             const Element &element,
-                             const ElementVolumeVariables &elemVolVars)
+    void calculateNormalVelocity_(const Problem &problem,
+                                  const Element &element,
+                                  const ElementVolumeVariables &elemVolVars)
     {
-        // calculate gradients
-        for (int idx = 0;
-             idx < fvGeometry_.numFAP;
-             idx++) // loop over adjacent vertices
+        // calculate the mean intrinsic permeability
+        const SpatialParams &spatialParams = problem.spatialParams();
+        Tensor K;
+        spatialParams.meanK(K,
+                            spatialParams.intrinsicPermeability(element,
+                                                                fvGeometry_,
+                                                                face().i),
+                            spatialParams.intrinsicPermeability(element,
+                                                                fvGeometry_,
+                                                                face().j));
+        
+        // loop over all phases 
+        for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
-            // FE gradient at vertex idx
-            const Vector &feGrad = face().grad[idx];
-
-            // index for the element volume variables 
-            int volVarsIdx = face().fapIndices[idx];
-	    
-            // compute sum of pressure gradients for each phase
-            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            // calculate the phase pressure gradient
+            Vector gradPotential(0.0);         
+            for (int idx = 0;
+                 idx < fvGeometry_.numFAP;
+                 idx++) // loop over adjacent vertices
             {
+                // FE gradient at vertex idx
+                const Vector &feGrad = face().grad[idx];
+
+                // index for the element volume variables 
+                int volVarsIdx = face().fapIndices[idx];
+	    
                 // the pressure gradient
                 Vector tmp(feGrad);
                 tmp *= elemVolVars[volVarsIdx].pressure(phaseIdx);
-                potentialGrad_[phaseIdx] += tmp;
+                gradPotential += tmp;
             }
-        }
 
-        ///////////////
-        // correct the pressure gradients by the gravitational acceleration
-        ///////////////
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
-        {
-            // estimate the gravitational acceleration at a given SCV face
-            // using the arithmetic mean
-            Vector g(problem.boxGravity(element, fvGeometry_, face().i));
-            g += problem.boxGravity(element, fvGeometry_, face().j);
-            g /= 2;
-
-            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
+            // correct the pressure gradient by the gravitational acceleration
+            if (GET_PARAM(TypeTag, bool, EnableGravity))
             {
+                // estimate the gravitational acceleration at a given SCV face
+                // using the arithmetic mean
+                Vector g(problem.boxGravity(element, fvGeometry_, face().i));
+                g += problem.boxGravity(element, fvGeometry_, face().j);
+                g /= 2;
+
                 // calculate the phase density at the integration point. we
                 // only do this if the wetting phase is present in both cells
                 Scalar SI = elemVolVars[face().i].saturation(phaseIdx);
@@ -220,24 +210,42 @@ private:
                 f *= density;
 
                 // calculate the final potential gradient
-                potentialGrad_[phaseIdx] -= f;
-            }
-        }
-    }
+                gradPotential -= f;
+            } // gravity
 
-    void calculateK_(const Problem &problem,
-                     const Element &element,
-                     const ElementVolumeVariables &elemVolVars)
-    {
-        const SpatialParams &spatialParams = problem.spatialParams();
-        // calculate the intrinsic permeability
-        spatialParams.meanK(K_,
-                            spatialParams.intrinsicPermeability(element,
-                                                                fvGeometry_,
-                                                                face().i),
-                            spatialParams.intrinsicPermeability(element,
-                                                                fvGeometry_,
-                                                                face().j));
+            // calculate the flux in the normal direction of the
+            // current sub control volume face:
+            //
+            // v = - (K grad phi) * n
+            //
+            // (the minus comes from the Darcy law which states that
+            // the flux is from high to low potentials.)
+            Vector kGradPotential;
+            K.mv(gradPotential, kGradPotential);
+            Scalar normalFlux = -(kGradPotential*face().normal);
+
+            // determine the upwind direction
+            int upstreamIdx, downstreamIdx;
+            if (normalFlux > 0) 
+            {
+                upstreamIdx = face().i;
+                downstreamIdx = face().j;
+            }
+            else 
+            {
+                upstreamIdx = face().j;
+                downstreamIdx = face().i;
+            }
+            
+            // obtain the upwind volume variables
+            const VolumeVariables& upVolVars = elemVolVars[upstreamIdx];
+            const VolumeVariables& downVolVars = elemVolVars[downstreamIdx];
+                
+            // set the normal velocity
+            normalVelocity_[phaseIdx] = normalFlux
+                  *( mobilityUpwindWeight_*upVolVars.mobility(phaseIdx)
+                    + (1.0 - mobilityUpwindWeight_)*downVolVars.mobility(phaseIdx));
+        } // loop over all phases
     }
 };
 

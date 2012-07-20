@@ -142,36 +142,22 @@ public:
      */
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
-        ////////
-        // advective fluxes of all components in all phases
-        ////////
-        Vector kGradPotential;
+        // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // calculate the flux in the normal direction of the
-            // current sub control volume face:
-            //
-            // v = - (K grad p) * n
-            //
-            // (the minus comes from the Darcy law which states that
-            // the flux is from high to low pressure potentials.)
-            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx), kGradPotential);
-            Scalar normalFlux = -(kGradPotential*fluxVars.face().normal);
-
             // data attached to upstream and the downstream vertices
             // of the current phase
-            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
-            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
-            // add advective flux of current component in current
-            // phase
+            // add advective flux of current phase
             int eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
             flux[eqIdx] +=
-                normalFlux
+                fluxVars.normalVelocity(phaseIdx)
                 *
-                ((    massUpwindWeight_)*up.density(phaseIdx)*up.mobility(phaseIdx)
+                ((    massUpwindWeight_)*up.density(phaseIdx)
                  +
-                 (1 - massUpwindWeight_)*dn.density(phaseIdx)*dn.mobility(phaseIdx));
+                 (1 - massUpwindWeight_)*dn.density(phaseIdx));
         }
     }
 

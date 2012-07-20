@@ -265,7 +265,7 @@ public:
                     for (int faceIdx = 0; faceIdx < fvGeometry.numEdges; faceIdx++)
                     {
 
-                        FluxVariables fluxDat(this->problem_(),
+                        FluxVariables fluxVars(this->problem_(),
                                              *elemIt,
                                              fvGeometry,
                                              faceIdx,
@@ -273,29 +273,14 @@ public:
 
                         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         {
-
-                            // data attached to upstream and the downstream vertices
-                            // of the current phase
-                            const VolumeVariables up =
-                                elemVolVars[fluxDat.upstreamIdx(phaseIdx)];
-                            const VolumeVariables dn =
-                                elemVolVars[fluxDat.downstreamIdx(phaseIdx)];
-
-                           // calculate the flux in the normal direction of the
-                           // current sub control volume face
-                           GlobalPosition kGradPotential;
-                           fluxDat.intrinsicPermeability().mv(fluxDat.potentialGrad(phaseIdx),
-                                                              kGradPotential);
-                           const GlobalPosition globalNormal = fluxDat.face().normal;
-                           const Scalar normalFlux = - (kGradPotential*globalNormal);
-
                            // local position of integration point
                            const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
 
                            // Transformation of the global normal vector to normal vector in the reference element
                            const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
 
-                           GlobalPosition localNormal(0);
+                           const GlobalPosition globalNormal = fluxVars.face().normal;
+                           GlobalPosition localNormal;
                            jacobianT1.mv(globalNormal, localNormal);
                            // note only works for cubes
                            const Scalar localArea = pow(2,-(dim-1));
@@ -304,25 +289,20 @@ public:
 
                            // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolumeface
                            // in the reference element.
-                           const Scalar massUpwindWeight = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
                            PhasesVector q;
-                           q[phaseIdx] = normalFlux
-                                           * (massUpwindWeight
-                                           * up.mobility(phaseIdx)
-                                           + (1- massUpwindWeight)
-                                           * dn.mobility(phaseIdx)) / localArea;
+                           q[phaseIdx] = fluxVars.normalVelocity(phaseIdx) / localArea;
 
                            // transform the normal Darcy velocity into a vector
                            tmpVelocity[phaseIdx] = localNormal;
                            tmpVelocity[phaseIdx] *= q[phaseIdx];
 
                            if(phaseIdx == wPhaseIdx){
-                               scvVelocityW[fluxDat.face().i] += tmpVelocity[phaseIdx];
-                               scvVelocityW[fluxDat.face().j] += tmpVelocity[phaseIdx];
+                               scvVelocityW[fluxVars.face().i] += tmpVelocity[phaseIdx];
+                               scvVelocityW[fluxVars.face().j] += tmpVelocity[phaseIdx];
                            }
                            else if(phaseIdx == nPhaseIdx){
-                               scvVelocityN[fluxDat.face().i] += tmpVelocity[phaseIdx];
-                               scvVelocityN[fluxDat.face().j] += tmpVelocity[phaseIdx];
+                               scvVelocityN[fluxVars.face().i] += tmpVelocity[phaseIdx];
+                               scvVelocityN[fluxVars.face().j] += tmpVelocity[phaseIdx];
                            }
                         }
                     }
