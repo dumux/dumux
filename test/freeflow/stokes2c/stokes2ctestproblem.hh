@@ -111,7 +111,7 @@ class Stokes2cTestProblem : public StokesProblem<TypeTag>
         massBalanceIdx = Indices::massBalanceIdx,
         momentumXIdx = Indices::momentumXIdx, //!< Index of the x-component of the momentum balance
         momentumYIdx = Indices::momentumYIdx, //!< Index of the y-component of the momentum balance
-        transportEqIdx = Indices::transportEqIdx,  //!< Index of the transport equation
+        transportEqIdx = Indices::transportEqIdx  //!< Index of the transport equation
     };
     enum { // indices for primary variables
         velocityXIdx = Indices::velocityXIdx,
