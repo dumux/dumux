@@ -70,9 +70,6 @@ SET_PROP(BoxStokes2cni, FluidSystem)
 //! a stabilization factor. Set to zero for no stabilization
 SET_SCALAR_PROP(BoxStokes2cni, StabilizationAlpha, -1.0);
 
-//! stabilization at the boundaries
-SET_SCALAR_PROP(BoxStokes2cni, StabilizationBeta, 0.0);
-
 // Enable gravity
 SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
 }

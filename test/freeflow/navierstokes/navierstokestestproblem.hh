@@ -80,12 +80,6 @@ namespace Dumux
     // Scalar is set to type double
     SET_TYPE_PROP(BoxStokes, Scalar, double);
 
-    // Disabled stabilization factor. Set negative for stabilization and to zero for no stabilization
-    SET_SCALAR_PROP(BoxStokes, StabilizationAlpha, 0.0);
-
-    // Disabled stabilization factor for the boundaries
-    SET_SCALAR_PROP(BoxStokes, StabilizationBeta, 0.0);
-
     // Disable gravity
     SET_BOOL_PROP(NavierStokesTestProblem, EnableGravity, false);
   }
