@@ -142,6 +142,13 @@ SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 
 //! Set calculation to Stokes, not Navier-Stokes
 SET_BOOL_PROP(BoxStokes, EnableNavierStokes, false);
+
+//! A stabilization factor. Set negative for stabilization and to zero for no stabilization
+SET_SCALAR_PROP(BoxStokes, StabilizationAlpha, 0.0);
+
+//! Stabilization factor for the boundaries
+SET_SCALAR_PROP(BoxStokes, StabilizationBeta, 0.0);
+
 }
 
 }
