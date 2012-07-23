@@ -131,12 +131,12 @@ class OnePTwoCOutflowProblem : public PorousMediaBoxProblem<TypeTag>
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        massOrMoleFracIdx = Indices::massOrMoleFracIdx,
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx
     };
     enum {
         // indices of the equations

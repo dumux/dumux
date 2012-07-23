@@ -59,7 +59,7 @@ class OnePTwoCVolumeVariables : public BoxVolumeVariables<TypeTag>
     enum {
         phaseIdx = Indices::phaseIdx,
         phaseCompIdx = Indices::phaseCompIdx,
-        transportCompIdx = Indices::transportCompIdx,
+        transportCompIdx = Indices::transportCompIdx
     };
     //indices of primary variables
     enum{

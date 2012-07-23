@@ -61,7 +61,7 @@ class OnePLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     //index of the mass balance equation
     enum {
-        conti0EqIdx = Indices::conti0EqIdx, //index for the mass balance
+        conti0EqIdx = Indices::conti0EqIdx //index for the mass balance
     };
     //index of the primary variable
     enum{

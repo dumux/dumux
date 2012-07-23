@@ -77,12 +77,12 @@ protected:
 
         //phase index
         phaseIdx = Indices::phaseIdx,
-        transportCompIdx = Indices::transportCompIdx,
+        transportCompIdx = Indices::transportCompIdx
     };
     // indices of the primary variables
     enum {
         pressuerIdx = Indices::pressureIdx,
-        massOrMoleFracIdx = Indices::massOrMoleFracIdx,
+        massOrMoleFracIdx = Indices::massOrMoleFracIdx
     };
     // indices of the equations
     enum {
