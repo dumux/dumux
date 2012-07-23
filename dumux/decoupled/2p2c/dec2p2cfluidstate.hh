@@ -45,7 +45,7 @@ template <class TypeTag>
 class DecoupledTwoPTwoCFluidState : public TwoPTwoCFluidState<TypeTag>
 {
 public:
-    DUMUX_DEPRECATED_MSG("use TwoPTwoCFluidState instead")
+    DUNE_DEPRECATED_MSG("use TwoPTwoCFluidState instead")
     DecoupledTwoPTwoCFluidState() : TwoPTwoCFluidState<TypeTag>() {}
 };
 

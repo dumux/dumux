@@ -39,7 +39,7 @@ class FVSpatialParameters: public FVSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
-    DUMUX_DEPRECATED_MSG("use FVSpatialParams instead")
+    DUNE_DEPRECATED_MSG("use FVSpatialParams instead")
     FVSpatialParameters(const GridView &gridView)
     :FVSpatialParams<TypeTag>(gridView)
     { }

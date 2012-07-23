@@ -346,7 +346,7 @@ public:
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use density instead")
+    DUNE_DEPRECATED_MSG("use density instead")
     Scalar densityAtIP(int phaseIdx) const
     { return density(phaseIdx); }
 
@@ -360,7 +360,7 @@ public:
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use molarDensity instead")
+    DUNE_DEPRECATED_MSG("use molarDensity instead")
     Scalar molarDensityAtIP(int phaseIdx) const
     { return molarDensity(phaseIdx); }
 
@@ -373,21 +373,21 @@ public:
     /*!
      * \brief The concentration gradient of a component in a phase.
      */
-    DUMUX_DEPRECATED_MSG("use massFractionGrad instead")
+    DUNE_DEPRECATED_MSG("use massFractionGrad instead")
     const DimVector &concentrationGrad(int phaseIdx) const
     { return massFractionGrad(phaseIdx); };
 
     /*!
      * \brief The mass fraction gradient of the dissolved component in a phase.
      */
-    DUMUX_DEPRECATED_MSG("use moleFractionGrad instead")
+    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
     const DimVector &massFractionGrad(int phaseIdx) const
     { return massFractionGrad_[phaseIdx]; };
 
     /*!
      * \brief The molar concentration gradient of a component in a phase.
      */
-    DUMUX_DEPRECATED_MSG("use moleFractionGrad instead")
+    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
     const DimVector &molarConcGrad(int phaseIdx) const
     { return moleFractionGrad(phaseIdx); };
 

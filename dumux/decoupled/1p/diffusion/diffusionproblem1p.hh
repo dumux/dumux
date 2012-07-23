@@ -234,7 +234,7 @@ public:
         return *spatialParams_;
     }
 
-    DUMUX_DEPRECATED_MSG("use spatialParams() method instead")
+    DUNE_DEPRECATED_MSG("use spatialParams() method instead")
     SpatialParams &spatialParameters()
     { return *spatialParams_; }
 
@@ -246,7 +246,7 @@ public:
         return *spatialParams_;
     }
 
-    DUMUX_DEPRECATED_MSG("use spatialParams() method instead")
+    DUNE_DEPRECATED_MSG("use spatialParams() method instead")
     const SpatialParams &spatialParameters() const
     { return *spatialParams_; }
 

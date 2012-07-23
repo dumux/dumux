@@ -93,7 +93,7 @@ public:
     /*!
      * \brief Return the mass fraction at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use massFraction() instead")
+    DUNE_DEPRECATED_MSG("use massFraction() instead")
     Scalar massFractionAtIP() const
     { return massFraction(); }
 
@@ -106,7 +106,7 @@ public:
     /*!
      * \brief Return the molar diffusion coefficient at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use diffusionCoeff() instead")
+    DUNE_DEPRECATED_MSG("use diffusionCoeff() instead")
     Scalar diffusionCoeffAtIP() const
     { return diffusionCoeff(); }
 
@@ -119,7 +119,7 @@ public:
     /*!
      * \brief Return the gradient of the mole fraction at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use moleFractionGrad() instead")
+    DUNE_DEPRECATED_MSG("use moleFractionGrad() instead")
     const DimVector &moleFractionGradAtIP() const
     { return moleFractionGrad(); }
 

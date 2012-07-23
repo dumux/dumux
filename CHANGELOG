@@ -44,6 +44,9 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
   
   - DUMUX_UNUSED is deprecated and will be removed after 2.2. It should be replaced 
     by the upstream version DUNE_UNUSED.
+  
+  - DUMUX_DEPRECATED_MSG is deprecated and will be removed after 2.2. It should be 
+    replaced by the upstream version DUNE_DEPRECATED_MSG.
 
 * Deprecated PROPERTY NAMES, to be removed after 2.2: BEWARE: The compiler will not 
   print any warning if a deprecated property name is used. 
@@ -122,6 +125,8 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     IMPETProblem2P2C(..., SpatialParameters&, ...) replaced by IMPETProblem2P2C(TimeManager&, ...),
     initSat(const GlobalPosition&, const Element&) replaced by initSat(const Element&)
     initConcentration(const GlobalPosition&, const Element&) replaced by initConcentration(const Element&)
+    
+  - DUMUX_DEPRECATED has been removed.
 
 
 Notable Differences Between DuMuX 2.0 and DuMuX 2.1

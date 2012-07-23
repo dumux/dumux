@@ -404,7 +404,7 @@ public:
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use density instead")
+    DUNE_DEPRECATED_MSG("use density instead")
     Scalar densityAtIP(int phaseIdx) const
     {
       density(phaseIdx);
@@ -420,7 +420,7 @@ public:
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
      *        point.
      */
-	DUMUX_DEPRECATED_MSG("use molarDensity instead")
+	DUNE_DEPRECATED_MSG("use molarDensity instead")
     Scalar molarDensityAtIP(int phaseIdx) const
     {
       molarDensity(phaseIdx);
@@ -434,21 +434,21 @@ public:
     /*!
      * \brief The mass fraction gradients of the components in a phase.
      */
-	DUMUX_DEPRECATED_MSG("use massFractionCompWGrad instead")
+	DUNE_DEPRECATED_MSG("use massFractionCompWGrad instead")
     const DimVector &wConcentrationGrad(int phaseIdx) const
     { massFractionCompWGrad(phaseIdx); };
 
 	const DimVector &massFractionCompWGrad(int phaseIdx) const
 	{return massFractionCompWGrad_[phaseIdx];}
 
-	DUMUX_DEPRECATED_MSG("use massFractionCompNGrad instead")
+	DUNE_DEPRECATED_MSG("use massFractionCompNGrad instead")
     const DimVector &cConcentrationGrad(int phaseIdx) const
     { massFractionCompNGrad(phaseIdx); };
 
 	const DimVector &massFractionCompNGrad(int phaseIdx) const
 	{ return massFractionCompNGrad_[phaseIdx]; };
 
-	DUMUX_DEPRECATED_MSG("use massFractionCompGGrad instead")
+	DUNE_DEPRECATED_MSG("use massFractionCompGGrad instead")
     const DimVector &aConcentrationGrad(int phaseIdx) const
     {  massFractionCompGGrad(phaseIdx); };
 
@@ -459,21 +459,21 @@ public:
     /*!
      * \brief The molar concentration gradients of the components in a phase.
      */
-	DUMUX_DEPRECATED_MSG("use moleFractionCompWGrad instead")
+	DUNE_DEPRECATED_MSG("use moleFractionCompWGrad instead")
     const DimVector &molarWConcGrad(int phaseIdx) const
     {  moleFractionCompWGrad(phaseIdx); };
 
 	const DimVector &moleFractionCompWGrad(int phaseIdx) const
 	{ return moleFractionCompWGrad_[phaseIdx]; };
 
-	DUMUX_DEPRECATED_MSG("use moleFractionCompNGrad instead")
+	DUNE_DEPRECATED_MSG("use moleFractionCompNGrad instead")
     const DimVector &molarCConcGrad(int phaseIdx) const
     { moleFractionCompNGrad(phaseIdx); };
 
 	const DimVector &moleFractionCompNGrad(int phaseIdx) const
 	{ return moleFractionCompNGrad_[phaseIdx]; };
 
-	DUMUX_DEPRECATED_MSG("use moleFractionCompGGrad instead")
+	DUNE_DEPRECATED_MSG("use moleFractionCompGGrad instead")
     const DimVector &molarAConcGrad(int phaseIdx) const
     { moleFractionCompGGrad(phaseIdx); };
 

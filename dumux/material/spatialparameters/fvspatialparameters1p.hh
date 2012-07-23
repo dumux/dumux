@@ -39,7 +39,7 @@ class FVSpatialParametersOneP : public FVSpatialParamsOneP<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
-    DUMUX_DEPRECATED_MSG("use FVSpatialParamsOneP instead")
+    DUNE_DEPRECATED_MSG("use FVSpatialParamsOneP instead")
     FVSpatialParametersOneP(const GridView &gridView)
     : FVSpatialParamsOneP<TypeTag>(gridView)
     { }

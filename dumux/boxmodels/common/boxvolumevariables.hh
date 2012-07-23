@@ -142,7 +142,7 @@ public:
     /*!
      * \brief Return the vector of primary variables
      */
-    DUMUX_DEPRECATED_MSG("use priVars instead")
+    DUNE_DEPRECATED_MSG("use priVars instead")
     const PrimaryVariables &primaryVars() const
     { return priVars(); }
 
@@ -161,7 +161,7 @@ public:
      *
      * \param pvIdx The index of the primary variable of interest
      */
-    DUMUX_DEPRECATED_MSG("use priVar instead")
+    DUNE_DEPRECATED_MSG("use priVar instead")
     Scalar primaryVar(const int pvIdx) const
     {
         return priVar(pvIdx);

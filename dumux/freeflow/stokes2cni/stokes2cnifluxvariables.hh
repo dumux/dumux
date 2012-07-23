@@ -86,7 +86,7 @@ public:
     /*!
      * \brief Returns the heat conductivity at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use heatConductivity() instead")
+    DUNE_DEPRECATED_MSG("use heatConductivity() instead")
     Scalar heatConductivityAtIP() const
     { return heatConductivity(); }
 
@@ -99,7 +99,7 @@ public:
     /*!
      * \brief Returns the temperature gradient at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use temperatureGrad() instead")
+    DUNE_DEPRECATED_MSG("use temperatureGrad() instead")
     const DimVector &temperatureGradAtIP() const
     { return temperatureGrad(); }
 

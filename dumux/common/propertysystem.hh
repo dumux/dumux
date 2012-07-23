@@ -108,7 +108,7 @@ namespace Properties
         blubb = blubb;                                                  \
         return 0;                                                       \
     };                                                                  \
-    static DUMUX_DEPRECATED_MSG(DeprecationMsg) int foo;                \
+    static DUNE_DEPRECATED_MSG(DeprecationMsg) int foo;                \
     };                                                                  \
     int PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::foo =   \
     PropertyInfo<TTAG(EffTypeTagName), PTAG_(PropTagName)>::init();

@@ -57,7 +57,7 @@ public:
      * \param gridView The grid view
      * \param verbose Turn verbosity on or off
      */
-    DUMUX_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
+    DUNE_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
     MPNCProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 bool verbose = true)

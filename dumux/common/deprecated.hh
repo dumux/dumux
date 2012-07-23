@@ -25,25 +25,15 @@
  *
  * This file is a almost verbatim copy of Dune's dune/common/version.hh.
  *
- * \todo Remove this file and the corresponding m4 macros as soon as
- *       Dumux depends on Dune 2.2 or newer.
+ * \deprecated DUMUX_DEPRECATED_MSG is deprecated, use DUNE_DEPRECATED_MSG instead.
  */
 #ifndef DUMUX_DEPRECATED_HH
 #define DUMUX_DEPRECATED_HH
 
-#ifndef DUMUX_DEPRECATED
-#if defined(DOXYGEN) || !HAVE_ATTRIBUTE_DEPRECATED
-//! Mark some entity as deprecated
-#define DUMUX_DEPRECATED
-#else
-#define DUMUX_DEPRECATED __attribute__((deprecated))
-#endif
-#endif
-
 #ifndef DUMUX_DEPRECATED_MSG
 #if defined(DOXYGEN) || !HAVE_ATTRIBUTE_DEPRECATED_MSG
 //! Mark some entity as deprecated
-#define DUMUX_DEPRECATED_MSG(text) DUMUX_DEPRECATED
+#define DUMUX_DEPRECATED_MSG(text) DUNE_DEPRECATED
 #else
 #define DUMUX_DEPRECATED_MSG(text) __attribute__((deprecated(text)))
 #endif

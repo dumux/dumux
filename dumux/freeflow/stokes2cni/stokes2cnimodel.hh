@@ -86,7 +86,7 @@ class Stokes2cniModel : public Stokes2cModel<TypeTag>
 
     enum { dim = GridView::dimension };
     enum { transportCompIdx = Indices::transportCompIdx };
-    enum { lCompIdx = transportCompIdx } DUMUX_DEPRECATED_MSG("use transportCompIdx instead");
+    enum { lCompIdx = transportCompIdx } DUNE_DEPRECATED_MSG("use transportCompIdx instead");
     enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;

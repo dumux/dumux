@@ -56,7 +56,7 @@ NEW_PROP_TAG(TimeManager);
  *
  * \param progname The name of the executable
  */
-DUMUX_DEPRECATED_MSG("Not needed if Dumux::start() is used")
+DUNE_DEPRECATED_MSG("Not needed if Dumux::start() is used")
 void printUsageDGF(const char *progname)
 {
     std::cout << "usage: " << progname << " [--restart restartTime] gridfile.dgf tEnd dt\n";
@@ -69,7 +69,7 @@ void printUsageDGF(const char *progname)
  *
  * \param progname The name of the executable
  */
-DUMUX_DEPRECATED_MSG("Not needed if Dumux::start() is used")
+DUNE_DEPRECATED_MSG("Not needed if Dumux::start() is used")
 void printUsageGrid(const char *progname)
 {
     std::cout << "usage: " << progname << " [--restart restartTime] tEnd dt\n";

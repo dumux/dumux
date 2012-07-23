@@ -631,7 +631,7 @@ protected:
     /*!
      * \brief Returns a reference to the current element.
      */
-    DUMUX_DEPRECATED_MSG("use element_ instead")
+    DUNE_DEPRECATED_MSG("use element_ instead")
     const Element &elem_() const
     { return element_();}
 
@@ -649,7 +649,7 @@ protected:
      * \brief Returns a reference to the current element's finite
      *        volume geometry.
      */
-    DUMUX_DEPRECATED_MSG("use fvGeometry_ instead")
+    DUNE_DEPRECATED_MSG("use fvGeometry_ instead")
     const FVElementGeometry &fvElemGeom_() const
     { return fvGeometry_(); }
 
@@ -668,7 +668,7 @@ protected:
      *           the last time step of the i'th
      *        sub-control volume of the current element.
      */
-    DUMUX_DEPRECATED_MSG("use prevPriVars_ instead")
+    DUNE_DEPRECATED_MSG("use prevPriVars_ instead")
     const PrimaryVariables &prevPrimaryVars_(const int i) const
     {
         return prevPriVars_(i);
@@ -687,7 +687,7 @@ protected:
      * \brief Returns a reference to the primary variables of the i'th
      *        sub-control volume of the current element.
      */
-    DUMUX_DEPRECATED_MSG("use curPriVars_ instead")
+    DUNE_DEPRECATED_MSG("use curPriVars_ instead")
     const PrimaryVariables &curPrimaryVars_(const int i) const
     {
         return curPriVars_(i);
@@ -706,7 +706,7 @@ protected:
      * \brief Returns the j'th primary of the i'th sub-control volume
      *        of the current element.
      */
-    DUMUX_DEPRECATED_MSG("use curPriVar_ instead")
+    DUNE_DEPRECATED_MSG("use curPriVar_ instead")
     Scalar curPrimaryVar_(const int i, const int j) const
     {
         return curPriVar_(i, j);

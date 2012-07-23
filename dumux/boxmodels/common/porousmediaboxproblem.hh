@@ -172,7 +172,7 @@ public:
     SpatialParams &spatialParams()
     { return *spatialParams_; }
     
-    DUMUX_DEPRECATED_MSG("use spatialParams instead")
+    DUNE_DEPRECATED_MSG("use spatialParams instead")
     SpatialParams &spatialParameters()
     { return spatialParams(); }
 
@@ -182,7 +182,7 @@ public:
     const SpatialParams &spatialParams() const
     { return *spatialParams_; }
 
-    DUMUX_DEPRECATED_MSG("use spatialParams instead")
+    DUNE_DEPRECATED_MSG("use spatialParams instead")
     const SpatialParams &spatialParameters() const
     { return spatialParams(); }
 

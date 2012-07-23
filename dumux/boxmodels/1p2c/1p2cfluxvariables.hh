@@ -174,7 +174,7 @@ public:
      *
      * \param compIdx The index of the considered component
      */
-    DUMUX_DEPRECATED_MSG("use moleFractionGrad instead")
+    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
     const DimVector &concentrationGrad(int compIdx) const
     {
         if (compIdx != 1)
@@ -205,7 +205,7 @@ public:
     *
     * \param compIdx The index of the considered component
     */
-    DUMUX_DEPRECATED_MSG("use moleFractionGrad instead")
+    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
     const DimVector &moleFracGrad(int compIdx) const
     {
       if (compIdx != 1)
@@ -221,7 +221,7 @@ public:
      *
      * \param compIdx The index of the considered component
      */
-    DUMUX_DEPRECATED_MSG("use moleFractionGrad instead")
+    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
     const DimVector &massFracGrad(int compIdx) const
     {
       if (compIdx != 1)
@@ -252,7 +252,7 @@ public:
     * \brief Return viscosity \f$\mathrm{[Pa s]}\f$ of a phase at the integration
     *        point.
     */
-    DUMUX_DEPRECATED_MSG("use viscosity() instead")
+    DUNE_DEPRECATED_MSG("use viscosity() instead")
     Scalar viscosityAtIP() const
     { return viscosity();}
 
@@ -267,7 +267,7 @@ public:
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use molarDensity() instead")
+    DUNE_DEPRECATED_MSG("use molarDensity() instead")
     Scalar molarDensityAtIP() const
     { return molarDensity(); }
 
@@ -282,7 +282,7 @@ public:
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use density( instead")
+    DUNE_DEPRECATED_MSG("use density( instead")
     Scalar densityAtIP() const
     { return density(); }
 

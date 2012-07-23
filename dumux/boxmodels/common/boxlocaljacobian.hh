@@ -312,7 +312,7 @@ protected:
     /*!
      * \brief Returns a reference to the element.
      */
-    DUMUX_DEPRECATED_MSG("use element_() instead")
+    DUNE_DEPRECATED_MSG("use element_() instead")
     const Element &elem_() const
     {
         Valgrind::CheckDefined(elemPtr_);

@@ -175,7 +175,7 @@ public:
                         const unsigned int compIdx) const
     { return moleFraction_[phaseIdx][compIdx]; }
 
-    DUMUX_DEPRECATED_MSG("use moleFraction() instead")
+    DUNE_DEPRECATED_MSG("use moleFraction() instead")
     Scalar moleFrac(const unsigned int phaseIdx,
                     const unsigned int compIdx) const
     { return moleFraction(phaseIdx, compIdx);}
@@ -184,7 +184,7 @@ public:
                                   const unsigned int compIdx) const
     { return moleFractionGrad_[phaseIdx][compIdx];}
 
-    DUMUX_DEPRECATED_MSG("use moleFractionGrad() instead")
+    DUNE_DEPRECATED_MSG("use moleFractionGrad() instead")
     const DimVector &moleFracGrad(const unsigned int phaseIdx,
                                   const unsigned int compIdx) const
     { return moleFractionGrad(phaseIdx, compIdx);}

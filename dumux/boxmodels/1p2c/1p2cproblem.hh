@@ -59,7 +59,7 @@ public:
      * \param gridView The grid view
      * \param verbose Turn verbosity on or off
      */
-    DUMUX_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
+    DUNE_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
     OnePTwoCBoxProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 const bool verbose = true)
@@ -74,7 +74,7 @@ public:
      * \param spatialParams The spatial parameters object
      * \param verbose Turn verbosity on or off
      */
-    DUMUX_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
+    DUNE_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
     OnePTwoCBoxProblem(TimeManager &timeManager,
                 const GridView &gridView,
                 SpatialParams &spatialParams,

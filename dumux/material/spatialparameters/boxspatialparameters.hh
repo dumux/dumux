@@ -38,7 +38,7 @@ class BoxSpatialParameters: public BoxSpatialParams<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 public:
-    DUMUX_DEPRECATED_MSG("use BoxSpatialParams instead")
+    DUNE_DEPRECATED_MSG("use BoxSpatialParams instead")
     BoxSpatialParameters(const GridView &gridView)
     : BoxSpatialParams<TypeTag>(gridView)
     { }

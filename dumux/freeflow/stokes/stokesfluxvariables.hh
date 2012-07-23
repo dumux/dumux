@@ -194,7 +194,7 @@ public:
      * \brief Return the pressure \f$\mathrm{[Pa]}\f$ at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use pressure() instead")
+    DUNE_DEPRECATED_MSG("use pressure() instead")
     Scalar pressureAtIP() const
     { return pressure(); }
 
@@ -209,7 +209,7 @@ public:
      * \brief Return the mass density \f$ \mathrm{[kg/m^3]} \f$ at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use density() instead")
+    DUNE_DEPRECATED_MSG("use density() instead")
     Scalar densityAtIP() const
     { return density(); }
 
@@ -222,7 +222,7 @@ public:
     /*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use molarDensity() instead")
+    DUNE_DEPRECATED_MSG("use molarDensity() instead")
     const Scalar molarDensityAtIP() const
     { return molarDensity(); }
 
@@ -237,7 +237,7 @@ public:
      * \brief Return the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ at the integration
      *        point.
      */
-    DUMUX_DEPRECATED_MSG("use viscosity() instead")
+    DUNE_DEPRECATED_MSG("use viscosity() instead")
     Scalar viscosityAtIP() const
     { return viscosity(); }
 
@@ -252,7 +252,7 @@ public:
      * \brief Return the velocity \f$ \mathrm{[m/s]} \f$ at the integration
      *        point multiplied by the normal and the area.
      */
-    DUMUX_DEPRECATED_MSG("use normalVelocity() instead")
+    DUNE_DEPRECATED_MSG("use normalVelocity() instead")
     Scalar normalVelocityAtIP() const
     { return normalVelocity(); }
 
@@ -265,7 +265,7 @@ public:
     /*!
      * \brief Return the pressure gradient at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use pressureGrad() instead")
+    DUNE_DEPRECATED_MSG("use pressureGrad() instead")
     const DimVector &pressureGradAtIP() const
     { return pressureGrad(); }
 
@@ -278,7 +278,7 @@ public:
     /*!
      * \brief Return the velocity vector at the integration point.
      */
-    DUMUX_DEPRECATED_MSG("use velocity() instead")
+    DUNE_DEPRECATED_MSG("use velocity() instead")
     const DimVector &velocityAtIP() const
     { return velocity(); }
 
@@ -293,7 +293,7 @@ public:
      * \brief Return the velocity gradient at the integration
      *        point of a face.
      */
-    DUMUX_DEPRECATED_MSG("use velocityGrad() instead")
+    DUNE_DEPRECATED_MSG("use velocityGrad() instead")
     const DimMatrix &velocityGradAtIP() const
     { return velocityGrad(); }
 
