@@ -42,8 +42,11 @@ namespace Dumux
     
 namespace Properties
 {
-// forward declaration of property 
+// forward declaration of properties 
 NEW_PROP_TAG(MobilityUpwindWeight);
+NEW_PROP_TAG(SpatialParams);
+NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(EnableGravity);
 }   
 
 /*!

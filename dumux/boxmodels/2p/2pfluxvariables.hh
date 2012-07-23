@@ -36,6 +36,7 @@
 
 #include "2pproperties.hh"
 
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
@@ -53,7 +54,7 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class TwoPFluxVariables : public BoxFluxVariables<TypeTag>
+class TwoPFluxVariables : public BoxDarcyFluxVariables<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -92,7 +93,7 @@ public:
                  int faceIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : BoxFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
+        : BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
           fvGeometry_(fvGeometry), onBoundary_(onBoundary)
     {
         faceIdx_ = faceIdx;
