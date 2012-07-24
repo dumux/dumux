@@ -297,6 +297,12 @@ public:
     const DimMatrix &velocityGradAtIP() const
     { return velocityGrad(); }
 
+    /*!
+     * \brief Return the eddy viscosity (if implemented).
+     */
+    const Scalar eddyViscosity() const
+    { return 0; }
+
 //    /*!
 //     * \brief Return the divergence of the normal velocity at the
 //     *        integration point.

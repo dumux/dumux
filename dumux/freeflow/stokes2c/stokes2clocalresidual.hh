@@ -152,7 +152,7 @@ public:
             flux[transportEqIdx] -=
                 fluxVars.moleFractionGrad()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
-                fluxVars.diffusionCoeff() *
+                (fluxVars.diffusionCoeff() + fluxVars.eddyDiffusivity()) *
                 fluxVars.molarDensity() *
                 FluidSystem::molarMass(transportCompIdx);
 

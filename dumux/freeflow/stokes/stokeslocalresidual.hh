@@ -228,7 +228,7 @@ protected:
             // TODO: dilatation term has to be accounted for in outflow, coupling, neumann
             //            velGradComp[velIdx] += 2./3*fluxVars.velocityDiv;
 
-            velGradComp *= fluxVars.viscosity();
+            velGradComp *= fluxVars.viscosity() + fluxVars.eddyViscosity();
 
             flux[momentumXIdx + velIdx] -=
                 velGradComp*fluxVars.face().normal;
@@ -249,9 +249,8 @@ protected:
         if (calculateNavierStokes)
         {
             for (int dimIndex = 0; dimIndex < dim; ++dimIndex)
-            {
-                flux[momentumXIdx + dimIndex] += up.density() * up.velocity()[dimIndex] * fluxVars.normalVelocity();
-            }
+                flux[momentumXIdx + dimIndex] +=
+                        up.density() * up.velocity()[dimIndex] * fluxVars.normalVelocity();
         }
     }
 

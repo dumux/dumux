@@ -87,7 +87,7 @@ public:
     /*!
      * \brief Return the mass fraction of the transported component at the integration point.
      */
-    Scalar massFraction() const
+    const Scalar massFraction() const
     { return massFraction_; }
 
     /*!
@@ -100,8 +100,14 @@ public:
     /*!
      * \brief Return the molar diffusion coefficient at the integration point.
      */
-    Scalar diffusionCoeff() const
+    const Scalar diffusionCoeff() const
     { return diffusionCoeff_; }
+
+    /*!
+     * \brief Return the eddy diffusivity (if implemented).
+     */
+    const Scalar eddyDiffusivity() const
+    { return 0; }
 
     /*!
      * \brief Return the molar diffusion coefficient at the integration point.

@@ -80,7 +80,7 @@ public:
     /*!
      * \brief Returns the heat conductivity at the integration point.
      */
-    Scalar heatConductivity() const
+    const Scalar heatConductivity() const
     { return heatConductivity_; }
     
     /*!
@@ -95,6 +95,12 @@ public:
      */
     const DimVector &temperatureGrad() const
     { return temperatureGrad_; }
+
+    /*!
+     * \brief Return the eddy conductivity (if implemented).
+     */
+    const Scalar eddyConductivity() const
+    { return 0; }
 
     /*!
      * \brief Returns the temperature gradient at the integration point.
