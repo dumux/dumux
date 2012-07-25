@@ -733,8 +733,10 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
                     && nextSubdomain[globalIdx] == 2)
         {
             // assure correct PV if subdomain used to be simple
-            if(cellData.fluidStateType() != 0); // i.e. it was simple
-            timer_.stop();
+            if(cellData.fluidStateType() != 0) // i.e. it was simple
+            {
+              timer_.stop();
+            }
             this->updateMaterialLawsInElement(*eIt, postTimeStep);
             timer_.start();
         }
