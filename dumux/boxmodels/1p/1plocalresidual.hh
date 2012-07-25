@@ -32,7 +32,6 @@
 #include <dumux/boxmodels/common/boxlocalresidual.hh>
 
 #include "1pvolumevariables.hh"
-#include "1pfluxvariables.hh"
 #include "1pproperties.hh"
 
 namespace Dumux
@@ -124,20 +123,15 @@ public:
                                faceIdx,
                                this->curVolVars_(),
                                onBoundary);
-        DimVector tmpVec;
-        fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(),
-                                            tmpVec);
 
-        Scalar normalFlux = -(tmpVec*fluxVars.face().normal);
-
-        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
-        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(/*phaseIdx=*/0));
+        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(/*phaseIdx=*/0));
         flux[conti0EqIdx] =
-            ((    upwindWeight_)*(up.density()/up.viscosity())
+            ((    upwindWeight_)*up.density()
              +
-             (1 - upwindWeight_)*(dn.density()/dn.viscosity()))
+             (1 - upwindWeight_)*dn.density())
             *
-            normalFlux;
+            fluxVars.normalVelocity(/*phaseIdx=*/0);
     }
 
     /*!

@@ -33,8 +33,11 @@
 #ifndef DUMUX_1P_FLUX_VARIABLES_HH
 #define DUMUX_1P_FLUX_VARIABLES_HH
 
+#warning This file is deprecated. Use boxfluxvariables instead. 
+
 #include "1pproperties.hh"
 
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 #include <dumux/common/math.hh>
 
 namespace Dumux
@@ -48,7 +51,7 @@ namespace Dumux
 *        finite volume for the one-phase model.
 */
 template <class TypeTag>
-class OnePFluxVariables
+class OnePFluxVariables : public BoxDarcyFluxVariables<TypeTag>
 {
 typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -82,7 +85,8 @@ OnePFluxVariables(const Problem &problem,
          const int faceIdx,
          const ElementVolumeVariables &elemVolVars,
          const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), onBoundary_(onBoundary)
+        : BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
+          fvGeometry_(fvGeometry), onBoundary_(onBoundary)
     {
         faceIdx_ = faceIdx;
 

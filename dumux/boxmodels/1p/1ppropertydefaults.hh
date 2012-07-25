@@ -36,7 +36,7 @@
 #include "1pmodel.hh"
 #include "1plocalresidual.hh"
 #include "1pvolumevariables.hh"
-#include "1pfluxvariables.hh"
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 #include "1pindices.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -68,7 +68,7 @@ SET_TYPE_PROP(BoxOneP, Model, OnePBoxModel<TypeTag>);
 SET_TYPE_PROP(BoxOneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //! the FluxVariables property
-SET_TYPE_PROP(BoxOneP, FluxVariables, OnePFluxVariables<TypeTag>);
+SET_TYPE_PROP(BoxOneP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(BoxOneP, Indices, OnePIndices);
@@ -82,6 +82,9 @@ SET_TYPE_PROP(BoxOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, Spatia
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
 SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);
+
+//! weight for the upwind mobility in the velocity calculation
+SET_SCALAR_PROP(BoxOneP, MobilityUpwindWeight, 1.0);
 
 //! The fluid system to use by default
 SET_TYPE_PROP(BoxOneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);

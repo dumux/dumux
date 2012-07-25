@@ -128,7 +128,6 @@ public:
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
-     *
      */
     Scalar pressure() const
     { return fluidState_.pressure(/*phaseIdx=*/0); }
@@ -146,6 +145,18 @@ public:
      */
     Scalar viscosity() const
     { return fluidState_.viscosity(/*phaseIdx=*/0); }
+
+    /*!
+     * \brief Returns the mobility.
+     * 
+     * This function enables the use of BoxDarcyFluxVariables 
+     * with the 1p box model, ALTHOUGH the term mobility is
+     * usually not employed in the one phase context. 
+     *
+     * \param phaseIdx The phase index
+     */
+    Scalar mobility(int phaseIdx = 0) const
+    { return 1.0/fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
