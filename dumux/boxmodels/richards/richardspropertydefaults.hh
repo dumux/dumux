@@ -34,7 +34,7 @@
 #include "richardsmodel.hh"
 #include "richardsproblem.hh"
 #include "richardsindices.hh"
-#include "richardsfluxvariables.hh"
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 #include "richardsvolumevariables.hh"
 #include "richardsproperties.hh"
 #include "richardsnewtoncontroller.hh"
@@ -67,15 +67,16 @@ SET_TYPE_PROP(BoxRichards, Model, RichardsModel<TypeTag>);
 SET_TYPE_PROP(BoxRichards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //! The class for the quantities required for the flux calculation
-SET_TYPE_PROP(BoxRichards, FluxVariables, RichardsFluxVariables<TypeTag>);
+SET_TYPE_PROP(BoxRichards, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! The class of the newton controller
 SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
 
 //! The upwind weight for the mass conservation equations
-SET_SCALAR_PROP(BoxRichards,
-                MassUpwindWeight,
-                1.0);
+SET_SCALAR_PROP(BoxRichards, MassUpwindWeight, 1.0);
+
+//! weight for the upwind mobility in the velocity calculation
+SET_SCALAR_PROP(BoxRichards, MobilityUpwindWeight, 1.0);
 
 //! The class with all index definitions for the model
 SET_TYPE_PROP(BoxRichards, Indices, RichardsIndices<TypeTag>);

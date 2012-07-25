@@ -32,8 +32,6 @@
 
 #include "richardsvolumevariables.hh"
 
-#include "richardsfluxvariables.hh"
-
 namespace Dumux
 {
 /*!
@@ -126,24 +124,17 @@ public:
                                this->curVolVars_(),
                                onBoundary);
 
-        // calculate the flux in the normal direction of the
-        // current sub control volume face
-        DimVector tmpVec;
-        fluxVars.intrinsicPermeability().mv(fluxVars.potentialGradW(),
-                                            tmpVec);
-        Scalar normalFlux = -(tmpVec*fluxVars.face().normal);
-
         // data attached to upstream and the downstream vertices
         // of the current phase
-        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
-        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+        const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(wPhaseIdx));
+        const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(wPhaseIdx));
 
         flux[contiEqIdx] =
-            normalFlux
+            fluxVars.normalVelocity(wPhaseIdx)
             *
-            ((    massUpwindWeight_)*up.density(wPhaseIdx)*up.mobility(wPhaseIdx)
+            ((    massUpwindWeight_)*up.density(wPhaseIdx)
              +
-             (1 - massUpwindWeight_)*dn.density(wPhaseIdx)*dn.mobility(wPhaseIdx));
+             (1 - massUpwindWeight_)*dn.density(wPhaseIdx));
     }
 
     /*!

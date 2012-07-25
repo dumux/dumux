@@ -29,6 +29,9 @@
 #ifndef DUMUX_RICHARDS_FLUX_VARIABLES_HH
 #define DUMUX_RICHARDS_FLUX_VARIABLES_HH
 
+#warning This file is deprecated. Use boxfluxvariables instead. 
+
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 #include <dumux/common/math.hh>
 #include "richardsproperties.hh"
 
@@ -42,7 +45,7 @@ namespace Dumux
  *        calculate the flux of fluid over a face of a finite volume.
  */
 template <class TypeTag>
-class RichardsFluxVariables
+class RichardsFluxVariables : public BoxDarcyFluxVariables<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -84,7 +87,8 @@ public:
                           const int faceIdx,
                           const ElementVolumeVariables &elemVolVars,
                           const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
+        : BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary), 
+          fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
 
 
