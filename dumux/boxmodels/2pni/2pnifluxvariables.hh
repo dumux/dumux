@@ -35,7 +35,7 @@
 #define DUMUX_2PNI_FLUX_VARIABLES_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/boxmodels/2p/2pfluxvariables.hh>
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 
 namespace Dumux
 {
@@ -51,9 +51,9 @@ namespace Dumux
  * the integration point, etc.
  */
 template <class TypeTag>
-class TwoPNIFluxVariables : public TwoPFluxVariables<TypeTag>
+class TwoPNIFluxVariables : public BoxDarcyFluxVariables<TypeTag>
 {
-    typedef TwoPFluxVariables<TypeTag> ParentType;
+    typedef BoxDarcyFluxVariables<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;

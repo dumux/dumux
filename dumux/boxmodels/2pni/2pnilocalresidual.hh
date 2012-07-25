@@ -139,31 +139,22 @@ public:
 
         // advective heat flux in all phases
         flux[energyEqIdx] = 0;
-        Vector kGradPotential;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            // calculate the flux in the normal direction of the
-            // current sub control volume face
-            fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
-                                                kGradPotential);
-            Scalar normalFlux = -(kGradPotential*fluxVars.face().normal);
-
             // data attached to upstream and the downstream vertices
             // of the current phase
-            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(normalFlux));
-            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(normalFlux));
+            const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
             // add advective energy flux in current phase
             flux[energyEqIdx] +=
-                normalFlux
+                fluxVars.normalVelocity(phaseIdx)
                 *
                 ((    massUpwindWeight_)*
                  up.density(phaseIdx)*
-                 up.mobility(phaseIdx)*
                  up.enthalpy(phaseIdx)
                  +
                  (1 - massUpwindWeight_)*
                  dn.density(phaseIdx)*
-                 dn.mobility(phaseIdx)*
                  dn.enthalpy(phaseIdx));
         }
     }
