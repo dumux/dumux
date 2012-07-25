@@ -181,7 +181,7 @@ private:
 	    
                 // the pressure gradient
                 Vector tmp(feGrad);
-                tmp *= elemVolVars[volVarsIdx].pressure(phaseIdx);
+                tmp *= elemVolVars[volVarsIdx].fluidState().pressure(phaseIdx);
                 gradPotential += tmp;
             }
 
@@ -196,10 +196,10 @@ private:
 
                 // calculate the phase density at the integration point. we
                 // only do this if the wetting phase is present in both cells
-                Scalar SI = elemVolVars[face().i].saturation(phaseIdx);
-                Scalar SJ = elemVolVars[face().j].saturation(phaseIdx);
-                Scalar rhoI = elemVolVars[face().i].density(phaseIdx);
-                Scalar rhoJ = elemVolVars[face().j].density(phaseIdx);
+                Scalar SI = elemVolVars[face().i].fluidState().saturation(phaseIdx);
+                Scalar SJ = elemVolVars[face().j].fluidState().saturation(phaseIdx);
+                Scalar rhoI = elemVolVars[face().i].fluidState().density(phaseIdx);
+                Scalar rhoJ = elemVolVars[face().j].fluidState().density(phaseIdx);
                 Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
                 Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
                 if (fI + fJ == 0)
