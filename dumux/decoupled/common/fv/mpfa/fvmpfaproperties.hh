@@ -84,7 +84,7 @@ struct GridImp<Dune::SGrid<dim, dim>, dim>
 
 #if HAVE_ALUGRID
 template<int dim>
-struct GridImp<Dune::ALUCubeGrid<dim, dim>, dim>
+struct GridImp<Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>, dim>
 {
     static const int imp = GridTypes::aluGrid;
 };
