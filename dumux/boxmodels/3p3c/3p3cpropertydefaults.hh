@@ -113,6 +113,9 @@ SET_TYPE_PROP(BoxThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>
 //! the upwind factor for the mobility.
 SET_SCALAR_PROP(BoxThreePThreeC, MassUpwindWeight, 1.0);
 
+//! Determines whether a constraint solver should be used explicitly
+SET_BOOL_PROP(BoxThreePThreeC, UseConstraintSolver, false);
+
 //! The indices required by the isothermal 3p3c model
 SET_TYPE_PROP(BoxThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 

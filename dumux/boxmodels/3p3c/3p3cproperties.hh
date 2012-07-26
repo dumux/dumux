@@ -65,6 +65,7 @@ NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extrac
 
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MassUpwindWeight); //!< The value of the upwind parameter for the mobility
+NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether a constraint solver should be used explicitly
 }
 }
 

@@ -128,7 +128,7 @@ public:
                            scvIdx,
                            isOldSol);
 
-        bool useConstraintSolver = false;
+        bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
 
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
