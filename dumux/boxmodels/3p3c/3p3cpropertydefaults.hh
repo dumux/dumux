@@ -37,7 +37,6 @@
 #include "3p3cindices.hh"
 
 #include "3p3cmodel.hh"
-#include "3p3cproblem.hh"
 #include "3p3cindices.hh"
 #include "3p3cfluxvariables.hh"
 #include "3p3cvolumevariables.hh"
