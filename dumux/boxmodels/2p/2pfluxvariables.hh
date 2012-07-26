@@ -32,7 +32,7 @@
 #ifndef DUMUX_2P_FLUX_VARIABLES_HH
 #define DUMUX_2P_FLUX_VARIABLES_HH
 
-#warning This file is deprecated. Use boxfluxvariables instead. 
+#warning This file is deprecated. Use dumux/boxmodels/common/boxdarcyfluxvariables.hh instead. 
 
 #include "2pproperties.hh"
 
