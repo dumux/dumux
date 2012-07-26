@@ -227,14 +227,14 @@ public:
     { return molarDensity(); }
 
     /*!
-     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ at the integration
+     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
      *        point.
      */
     Scalar viscosity() const
     { return viscosity_; }
 
     /*!
-     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa s]} \f$ at the integration
+     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
      *        point.
      */
     DUNE_DEPRECATED_MSG("use viscosity() instead")
@@ -298,7 +298,8 @@ public:
     { return velocityGrad(); }
 
     /*!
-     * \brief Return the eddy viscosity (if implemented).
+     * \brief Return the dynamic eddy viscosity 
+     * \f$\mathrm{[Pa\cdot s]} = \mathrm{[N\cdot s/m^2]}\f$ (if implemented).
      */
     const Scalar eddyViscosity() const
     { return 0; }
