@@ -101,6 +101,9 @@ SET_BOOL_PROP(ObstacleProblem, EnablePartialReassemble, true);
 
 // use forward diffferences to approximate the partial derivatives
 SET_INT_PROP(ObstacleProblem, NumericDifferenceMethod, +1);
+
+// decide which type to use for floating values (double / quad)
+SET_TYPE_PROP(ObstacleProblem, Scalar, double);
 }
 
 
@@ -151,8 +154,8 @@ class ObstacleProblem
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {H2OIdx = FluidSystem::H2OIdx};
-    enum {N2Idx = FluidSystem::N2Idx};
+    enum {wCompIdx = FluidSystem::wCompIdx};
+    enum {nCompIdx = FluidSystem::nCompIdx};
     enum {fug0Idx = Indices::fug0Idx};
     enum {S0Idx = Indices::S0Idx};
     enum {p0Idx = Indices::p0Idx};
@@ -290,7 +293,7 @@ public:
                  const Intersection &is,
                  const unsigned int scvIdx,
                  const unsigned int boundaryFaceIdx) const
-    { values = 0; }
+    { values = 0.; }
 
     // \}
 
@@ -368,8 +371,8 @@ private:
             fs.setPressure(wPhaseIdx, 2e5);
 
             // set the liquid composition to pure water
-            fs.setMoleFraction(wPhaseIdx, N2Idx, 0.0);
-            fs.setMoleFraction(wPhaseIdx, H2OIdx, 1.0);
+            fs.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
+            fs.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
         }
         else {
             // elsewhere, only gas
@@ -383,8 +386,8 @@ private:
             fs.setPressure(nPhaseIdx, 1e5);
 
             // set the gas composition to 99% nitrogen and 1% steam
-            fs.setMoleFraction(nPhaseIdx, N2Idx, 0.99);
-            fs.setMoleFraction(nPhaseIdx, H2OIdx, 0.01);
+            fs.setMoleFraction(nPhaseIdx, nCompIdx, 0.99);
+            fs.setMoleFraction(nPhaseIdx, wCompIdx, 0.01);
         }
 
         // set the other saturation
@@ -431,14 +434,14 @@ private:
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
         return x >= 60 - eps_ && y <= 10;
-    };
+    }
 
     bool onOutlet_(const GlobalPosition &globalPos) const
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
         return x < eps_ && y <= 10;
-    };
+    }
 
     Scalar temperature_;
     Scalar eps_;

@@ -177,9 +177,7 @@ public:
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                     Dune::FieldVector<Scalar, dim> darcyVelocity;
-                    fluxVars.computeDarcy(darcyVelocity,
-                                          elemVolVars,
-                                          phaseIdx);
+                    darcyVelocity = fluxVars.velocity(phaseIdx);
                     darcyVelocity *= scvfArea;
                     velocity_[phaseIdx][I] += darcyVelocity;
                     velocity_[phaseIdx][J] += darcyVelocity;

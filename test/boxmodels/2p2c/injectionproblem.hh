@@ -115,11 +115,11 @@ class InjectionProblem : public PorousMediaBoxProblem<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx,
 
 
-        H2OIdx = FluidSystem::H2OIdx,
-        N2Idx = FluidSystem::N2Idx,
+        wCompIdx = FluidSystem::wCompIdx,
+        nCompIdx = FluidSystem::nCompIdx,
 
         conti0EqIdx = Indices::conti0EqIdx,
-        contiN2EqIdx = conti0EqIdx + N2Idx
+        contiN2EqIdx = conti0EqIdx + nCompIdx
     };
 
 
@@ -359,10 +359,10 @@ private:
         Scalar moleFracLiquidH2O = 1.0 - moleFracLiquidN2;
 
         Scalar meanM =
-            FluidSystem::molarMass(H2OIdx)*moleFracLiquidH2O +
-            FluidSystem::molarMass(N2Idx)*moleFracLiquidN2;
+            FluidSystem::molarMass(wCompIdx)*moleFracLiquidH2O +
+            FluidSystem::molarMass(nCompIdx)*moleFracLiquidN2;
 
-        Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(N2Idx)/meanM;
+        Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
 
         values[Indices::pressureIdx] = pl;
         values[Indices::switchIdx] = massFracLiquidN2;

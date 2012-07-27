@@ -37,6 +37,7 @@
 
 #include "diffusion/fluxvariables.hh"
 #include "energy/mpncfluxvariablesenergy.hh"
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
 
 namespace Dumux
 {
@@ -53,6 +54,8 @@ namespace Dumux
  */
 template <class TypeTag>
 class MPNCFluxVariables
+    : public BoxDarcyFluxVariables<TypeTag>
+
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -95,84 +98,29 @@ public:
                       const unsigned int faceIdx,
                       const ElementVolumeVariables &elemVolVars,
                       const bool onBoundary = false)
-        : fvGeometry_(fvGeometry), faceIdx_(faceIdx), elemVolVars_(elemVolVars), onBoundary_(onBoundary)
+        :   BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary),
+          fvGeometry_(fvGeometry), faceIdx_(faceIdx), elemVolVars_(elemVolVars), onBoundary_(onBoundary)
     {
-        // update the base module (i.e. advection)
-        calculateGradients_(problem, element, elemVolVars);
-        calculateVelocities_(problem, element, elemVolVars);
+        // velocities can be obtained from the Parent class.
 
         // update the flux data of the energy module (i.e. isothermal
         // or non-isothermal)
-        fluxVarsEnergy_.update(problem, element, fvGeometry, face(), *this, elemVolVars);
+        fluxVarsEnergy_.update(problem, element, fvGeometry, this->face(), *this, elemVolVars);
 
         // update the flux data of the diffusion module (i.e. with or
         // without diffusion)
-        fluxVarsDiffusion_.update(problem, element, fvGeometry, face(), elemVolVars);
+        fluxVarsDiffusion_.update(problem, element, fvGeometry, this->face(), elemVolVars);
 
         extrusionFactor_ =
-            (elemVolVars[face().i].extrusionFactor()
-             + elemVolVars[face().j].extrusionFactor()) / 2;
-    }
-
-
-    /*!
-     * \brief Calculate a phase's darcy velocity [m/s] at a
-     *        sub-control volume face.
-     *
-     * So far, this method only exists in the Mp-Nc model!
-     *
-     *  Of course, in the setting of a finite volume scheme, the velocities are
-     *  on the faces rather than in the volume. Therefore, the velocity
-     *
-     * \param vDarcy the resulting Darcy velocity
-     * \param elemVolVars element volume variables
-     * \param phaseIdx phase index
-     */
-    void computeDarcy(DimVector & vDarcy,
-                      const ElementVolumeVariables &elemVolVars,
-                      const unsigned int phaseIdx) const
-    {
-        intrinsicPermeability().mv(potentialGrad(phaseIdx),
-                                            vDarcy);
-        // darcy velocity is along *negative* potential gradient
-        // (i.e. from high to low pressures), this means that we need
-        // to negate the product of the intrinsic permeability and the
-        // potential gradient!
-        vDarcy *= -1;
-
-        // JUST for upstream decision
-        Scalar normalFlux = vDarcy * face().normal;
-        // data attached to upstream and the downstream vertices
-        // of the current phase
-        int upIdx = face().i;
-        int dnIdx = face().j;
-
-        if (!std::isfinite(normalFlux))
-            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux");
-
-        if (normalFlux < 0)
-            std::swap(upIdx, dnIdx);
-
-        const VolumeVariables &up = elemVolVars[upIdx];
-
-        ////////
-        // Jipie this is a velocity now, finally deserves the name
-        ////////
-        vDarcy *= up.mobility(phaseIdx);
+            (elemVolVars[this->face().i].extrusionFactor()
+             + elemVolVars[this->face().j].extrusionFactor()) / 2;
     }
 
     /*!
-     * \brief The face of the current sub-control volume. This may be either
-     *        an inner sub-control-volume face or a face on the boundary.
+     * \brief Returns a reference to the volume
+     *        variables of the i-th sub-control volume of the current
+     *        element.
      */
-    const SCVFace &face() const
-    {
-        if (onBoundary_)
-            return fvGeometry_.boundaryFace[faceIdx_];
-        else
-            return fvGeometry_.subContVolFace[faceIdx_];
-    }
-
     const VolumeVariables &volVars(const unsigned int idx) const
     { return elemVolVars_[idx]; }
 
@@ -181,18 +129,6 @@ public:
      */
     Scalar extrusionFactor() const
     { return extrusionFactor_; }
-
-    /*!
-     * \brief Return the intrinsic permeability.
-     */
-    const DimMatrix &intrinsicPermeability() const
-    { return K_; }
-
-    /*!
-     * \brief Return the pressure potential gradient.
-     */
-    const DimVector &potentialGrad(const unsigned int phaseIdx) const
-    { return potentialGrad_[phaseIdx]; }
 
     ////////////////////////////////////////////////
     // forward calls to the diffusion module
@@ -212,7 +148,6 @@ public:
                           const unsigned int compIdx) const
     { return fluxVarsDiffusion_.moleFraction(phaseIdx, compIdx); }
 
-
     const DimVector &moleFractionGrad(const unsigned int phaseIdx,
                                       const unsigned int compIdx) const
     { return fluxVarsDiffusion_.moleFractionGrad(phaseIdx, compIdx); }
@@ -227,7 +162,7 @@ public:
     ////////////////////////////////////////////////
     // forward calls to the temperature module
     const DimVector &temperatureGrad() const
-    { return fluxVarsEnergy_.temperatureGrad(); };
+    { return fluxVarsEnergy_.temperatureGrad(); }
 
     DUNE_DEPRECATED_MSG("use fluxVariablesEnergy() instead")
     const FluxVariablesEnergy &energyData() const
@@ -239,97 +174,6 @@ public:
     ////////////////////////////////////////////////
 
 private:
-    void calculateGradients_(const Problem &problem,
-                             const Element &element,
-                             const ElementVolumeVariables &elemVolVars)
-    {
-        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++){
-            potentialGrad_[phaseIdx] = Scalar(0);
-        }
-
-        // calculate pressure gradients using finite element gradients
-        DimVector tmp(0.0);
-        for (int idx = 0;
-             idx < fvGeometry_.numFAP;
-             idx++) // loop over adjacent vertices
-        {
-            // FE gradient at vertex idx
-            const DimVector &feGrad = face().grad[idx];
-
-            // index for the element volume variables 
-            int volVarsIdx = face().fapIndices[idx];
-
-            // TODO: only calculate the gradients for the present
-            // phases.
-            //
-            // compute sum of pressure gradients for each phase
-            for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
-            {
-                // the pressure gradient
-                tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].fluidState().pressure(phaseIdx);
-                potentialGrad_[phaseIdx] += tmp;
-            }
-        }
-
-        ///////////////
-        // correct the pressure gradients by the gravitational acceleration
-        ///////////////
-        if (enableGravity) {
-            // estimate the gravitational acceleration at a given SCV face
-            // using the arithmetic mean
-            DimVector g(problem.boxGravity(element, fvGeometry_, face().i));
-            g += problem.boxGravity(element, fvGeometry_, face().j);
-            g /= 2;
-
-            for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
-            {
-                // calculate the phase density at the integration point. we
-                // only do this if the wetting phase is present in both cells
-                Scalar SI = elemVolVars[face().i].fluidState().saturation(phaseIdx);
-                Scalar SJ = elemVolVars[face().j].fluidState().saturation(phaseIdx);
-                Scalar rhoI = elemVolVars[face().i].fluidState().density(phaseIdx);
-                Scalar rhoJ = elemVolVars[face().j].fluidState().density(phaseIdx);
-                Scalar fI = std::max(0.0, std::min(SI/1e-5, 0.5));
-                Scalar fJ = std::max(0.0, std::min(SJ/1e-5, 0.5));
-                if (fI + fJ == 0)
-                    // doesn't matter because no wetting phase is present in
-                    // both cells!
-                    fI = fJ = 0.5;
-                Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
-
-                // make gravity acceleration a force
-                DimVector f(g);
-                f *= density;
-
-                // calculate the final potential gradient
-                potentialGrad_[phaseIdx] -= f;
-            }
-        }
-    }
-
-    void calculateVelocities_(const Problem &problem,
-                              const Element &element,
-                              const ElementVolumeVariables &elemVolVars)
-    {
-        // multiply the pressure potential with the intrinsic
-        // permeability
-        const SpatialParams &sp = problem.spatialParams();
-        for (int phaseIdx=0; phaseIdx < numPhases; phaseIdx++)
-        {
-            sp.meanK(K_,
-                     sp.intrinsicPermeability(element,
-                                              fvGeometry_,
-                                              face().i),
-                     sp.intrinsicPermeability(element,
-                                              fvGeometry_,
-                                              face().j));
-        }
-    }
-
-
-
-
     const FVElementGeometry &fvGeometry_;
     const unsigned int faceIdx_;
     const ElementVolumeVariables &elemVolVars_;
@@ -337,12 +181,6 @@ private:
 
     // The extrusion factor for the sub-control volume face
     Scalar extrusionFactor_;
-
-    // pressure potential gradients
-    DimVector potentialGrad_[numPhases];
-
-    // intrinsic permeability
-    DimMatrix K_;
 
     FluxVariablesDiffusion  fluxVarsDiffusion_;
     FluxVariablesEnergy     fluxVarsEnergy_;

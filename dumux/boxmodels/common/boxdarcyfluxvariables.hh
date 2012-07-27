@@ -65,15 +65,14 @@ class BoxDarcyFluxVariables
     
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
-    enum {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
-    };
+
+    enum { dim = GridView::dimension} ;
+    enum { dimWorld = GridView::dimensionworld} ;
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases)} ;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> Tensor;
-    typedef Dune::FieldVector<Scalar, dimWorld> Vector;
+    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
@@ -99,27 +98,54 @@ public:
         : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
         mobilityUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindWeight);
-        
+
         calculateNormalVelocity_(problem, element, elemVolVars);
     }
 
 public:
     /*!
-     * \brief Return the normal velocity for a given phase.
+     * \brief Return the volumetric flux over a face of a given phase.
+     *
+     *        This is the Darcy velocity multiplied by the unit normal
+     *        and the area of the face.
+     *        face().normal
+     *        has already the magnitude of the area.
      *
      * \param phaseIdx index of the phase
      */
-    Scalar normalVelocity(int phaseIdx) const
-    { return normalVelocity_[phaseIdx]; }
+    Scalar volumeFlux(const unsigned int phaseIdx) const
+    { return volumeFlux_[phaseIdx]; }
     
+    /*!
+     * \brief Return the velocity of a given phase.
+     *
+     *        This is the full velocity vector on the
+     *        face (without being multiplied with normal).
+     *
+     * \param phaseIdx index of the phase
+     */
+    DimVector velocity(const unsigned int phaseIdx) const
+    { return velocity_[phaseIdx] ; }
+
+    /*!
+     * \brief Return intrinsic permeability multiplied with potential
+     *        gradient multiplied with normal.
+     *
+     *        I.e. everything that does not need upwind decisions.
+     *
+     * \param phaseIdx index of the phase
+     */
+    Scalar kGradpNormal(const unsigned int phaseIdx) const
+    { return kGradpNormal_[phaseIdx] ; }
+
     /*!
      * \brief Return the local index of the downstream control volume
      *        for a given phase.
      *
      * \param phaseIdx index of the phase
      */
-    int downstreamIdx(int phaseIdx) const
-    { return (normalVelocity_[phaseIdx] >= 0) ? face().j : face().i; }
+    const unsigned int downstreamIdx(const unsigned phaseIdx) const
+    { return downstreamIdx_[phaseIdx]; }
     
     /*!
      * \brief Return the local index of the upstream control volume
@@ -127,8 +153,8 @@ public:
      *
      * \param phaseIdx index of the phase
      */
-    int upstreamIdx(int phaseIdx) const
-    { return (normalVelocity_[phaseIdx] > 0) ? face().i : face().j; }
+    const unsigned int upstreamIdx(const unsigned phaseIdx) const
+    { return upstreamIdx_[phaseIdx]; }
 
     /*!
      * \brief Return the SCV (sub-control-volume) face
@@ -143,9 +169,12 @@ public:
 
 protected:
     const FVElementGeometry &fvGeometry_;
-    int faceIdx_;
+    unsigned int faceIdx_;
     const bool onBoundary_;
-    Scalar normalVelocity_[numPhases];
+    unsigned int  upstreamIdx_[numPhases] , downstreamIdx_[numPhases];
+    Scalar volumeFlux_[numPhases] ;
+    DimVector velocity_[numPhases] ;
+    Scalar kGradpNormal_[numPhases] ;
     Scalar mobilityUpwindWeight_;
 
 private:
@@ -168,19 +197,19 @@ private:
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
             // calculate the phase pressure gradient
-            Vector gradPotential(0.0);         
+            DimVector gradPotential(0.0);
             for (int idx = 0;
                  idx < fvGeometry_.numFAP;
                  idx++) // loop over adjacent vertices
             {
                 // FE gradient at vertex idx
-                const Vector &feGrad = face().grad[idx];
+                const DimVector &feGrad = face().grad[idx];
 
                 // index for the element volume variables 
                 int volVarsIdx = face().fapIndices[idx];
 	    
                 // the pressure gradient
-                Vector tmp(feGrad);
+                DimVector tmp(feGrad);
                 tmp *= elemVolVars[volVarsIdx].fluidState().pressure(phaseIdx);
                 gradPotential += tmp;
             }
@@ -190,7 +219,7 @@ private:
             {
                 // estimate the gravitational acceleration at a given SCV face
                 // using the arithmetic mean
-                Vector g(problem.boxGravity(element, fvGeometry_, face().i));
+                DimVector g(problem.boxGravity(element, fvGeometry_, face().i));
                 g += problem.boxGravity(element, fvGeometry_, face().j);
                 g /= 2;
 
@@ -206,10 +235,10 @@ private:
                     // doesn't matter because no wetting phase is present in
                     // both cells!
                     fI = fJ = 0.5;
-                Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
+                const Scalar density = (fI*rhoI + fJ*rhoJ)/(fI + fJ);
 
                 // make gravity acceleration a force
-                Vector f(g);
+                DimVector f(g);
                 f *= density;
 
                 // calculate the final potential gradient
@@ -221,33 +250,37 @@ private:
             //
             // v = - (K grad phi) * n
             //
-            // (the minus comes from the Darcy law which states that
+            // Mind, that the normal has the length of it's area.
+            // This means that we are actually calculating
+            //  Q = - (K grad phi) * n * A
+            //
+            // (the minus comes from the Darcy relation which states that
             // the flux is from high to low potentials.)
-            Vector kGradPotential;
+            DimVector kGradPotential;
             K.mv(gradPotential, kGradPotential);
-            Scalar normalFlux = -(kGradPotential*face().normal);
+            kGradpNormal_[phaseIdx] = -(kGradPotential*face().normal);
 
             // determine the upwind direction
-            int upstreamIdx, downstreamIdx;
-            if (normalFlux > 0) 
+            if (kGradpNormal_[phaseIdx] > 0)
             {
-                upstreamIdx = face().i;
-                downstreamIdx = face().j;
+                upstreamIdx_[phaseIdx] = face().i;
+                downstreamIdx_[phaseIdx] = face().j;
             }
-            else 
+            else
             {
-                upstreamIdx = face().j;
-                downstreamIdx = face().i;
+                upstreamIdx_[phaseIdx] = face().j;
+                downstreamIdx_[phaseIdx] = face().i;
             }
             
             // obtain the upwind volume variables
-            const VolumeVariables& upVolVars = elemVolVars[upstreamIdx];
-            const VolumeVariables& downVolVars = elemVolVars[downstreamIdx];
-                
+            const VolumeVariables& upVolVars = elemVolVars[ upstreamIdx(phaseIdx) ];
+            const VolumeVariables& downVolVars = elemVolVars[ downstreamIdx(phaseIdx) ];
+
             // set the normal velocity
-            normalVelocity_[phaseIdx] = normalFlux
+            volumeFlux_[phaseIdx] = kGradpNormal_[phaseIdx]
                   *( mobilityUpwindWeight_*upVolVars.mobility(phaseIdx)
                     + (1.0 - mobilityUpwindWeight_)*downVolVars.mobility(phaseIdx));
+
         } // loop over all phases
     }
 };

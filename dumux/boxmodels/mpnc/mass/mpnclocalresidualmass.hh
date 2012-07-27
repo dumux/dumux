@@ -93,88 +93,95 @@ public:
                                           const FluxVariables &fluxVars,
                                           const unsigned int phaseIdx)
     {
+
+        const Scalar volumeFlux =  fluxVars.volumeFlux(phaseIdx) ;
+        #ifndef NDEBUG
+        if (!std::isfinite(volumeFlux))
+            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in smooth upwinding");
+        #endif
+
+        // retrieve the upwind weight for the mass conservation equations. Use the value
+        // specified via the property system as default, and overwrite
+        // it by the run-time parameter from the Dune::ParameterTree
+        const Scalar massUpwindWeight = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+
         static bool enableSmoothUpwinding_ = GET_PARAM(TypeTag, bool, EnableSmoothUpwinding);
-
-        DimVector tmpVec;
-        fluxVars.intrinsicPermeability().mv(fluxVars.potentialGrad(phaseIdx),
-                                            tmpVec);
-
-        // advective part is flux over face, therefore needs to be multiplied by normal vector
-        // (length: area of face)
-        Scalar normalFlux = - (tmpVec*fluxVars.face().normal);
 
         // data attached to upstream and the downstream vertices
         // of the current phase
-        int upIdx = fluxVars.face().i;
-        int dnIdx = fluxVars.face().j;
-#ifndef NDEBUG
-        if (!std::isfinite(normalFlux))
-            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux");
-#endif
+        unsigned int upIdx = fluxVars.upstreamIdx(phaseIdx);
+        unsigned int dnIdx = fluxVars.downstreamIdx(phaseIdx);
 
-        if (normalFlux < 0) std::swap(upIdx, dnIdx);
         const VolumeVariables &up = fluxVars.volVars(upIdx);
         const VolumeVariables &dn = fluxVars.volVars(dnIdx);
 
         ////////
         // advective fluxes of all components in the phase
         ////////
-        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+        for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx) {
             // add advective flux of current component in current
             // phase. we use full upwinding.
-
             if (enableSmoothUpwinding_) {
-                Scalar mobUp = up.mobility(phaseIdx);
-                Scalar cUp = up.fluidState().molarity(phaseIdx, compIdx);
+                const Scalar kGradpNormal   = fluxVars.kGradpNormal(phaseIdx);
+                const Scalar mobUp          = up.mobility(phaseIdx);
+                const Scalar conUp          = up.fluidState().molarity(phaseIdx, compIdx);
 
-                Scalar mobDn = dn.mobility(phaseIdx);
-                Scalar cDn = dn.fluidState().molarity(phaseIdx, compIdx);
+                const Scalar mobDn  = dn.mobility(phaseIdx);
+                const Scalar conDn  = dn.fluidState().molarity(phaseIdx, compIdx);
 
-                Scalar mUp = mobUp*cUp;
-                Scalar mDn = mobDn*cDn;
-                Scalar m0 = Dumux::harmonicMean(mUp, mDn);
+                const Scalar mobConUp   = mobUp*conUp;
+                const Scalar mobConDn   = mobDn*conDn;
+                const Scalar meanMobCon = Dumux::harmonicMean(mobConUp, mobConDn);
 
-                Scalar x = std::abs(normalFlux);
-                Scalar sign = (normalFlux < 0)?-1:1;
+                const Scalar x      = std::abs(kGradpNormal);
+                const Scalar sign   = (kGradpNormal < 0)?-1:1;
 
                 // the direction from upstream to downstream
                 //GlobalPosition delta = this->curElement_().geometry().corner(upIdx);
                 //delta -= this->curElement_().geometry().corner(dnIdx);
 
                 // approximate the mean viscosity at the face
-                Scalar meanVisc = (up.fluidState().viscosity(phaseIdx) +
+                const Scalar meanVisc = (up.fluidState().viscosity(phaseIdx) +
                                    dn.fluidState().viscosity(phaseIdx))/2;
 
                 // put the mean viscosity and permeanbility in
                 // relation to the viscosity of water at
                 // approximatly 20 degrees Celsius.
-                const Scalar pGradRef = 10; // [Pa/m]
-                const Scalar muRef = 1e-3; // [Ns/m^2]
-                const Scalar Kref = 1e-12; // [m^2] = approx 1 Darcy
+                const Scalar pGradRef   = 10; // [Pa/m]
+                const Scalar muRef      = 1e-3; // [Ns/m^2]
+                const Scalar Kref       = 1e-12; // [m^2] = approx 1 Darcy
 
-                Scalar faceArea = fluxVars.face().normal.two_norm();
-                Scalar eps = pGradRef * Kref * faceArea * meanVisc/muRef; // * (1e3/18e-3)/meanC;
+                const Scalar faceArea   = fluxVars.face().normal.two_norm();
+                const Scalar eps        = pGradRef * Kref * faceArea * meanVisc/muRef; // * (1e3/18e-3)/meanC;
 
                 Scalar compFlux;
                 if (x >= eps) {
                     // we only do tricks if x is below the epsilon
                     // value
-                    compFlux = x*mUp;
+                    compFlux = x*mobConUp;
                 }
                 else {
-                    Scalar xPos[] = { 0, eps };
-                    Scalar yPos[] = { 0, eps*mUp };
-                    Spline<Scalar> sp2(xPos, yPos, m0, mUp);
+                    const Scalar xPos[] = { 0, eps };
+                    const Scalar yPos[] = { 0, eps*mobConUp };
+                    const Spline<Scalar> sp2(xPos, yPos, meanMobCon, mobConUp);
                     compFlux = sp2.eval(x);
                 }
+                #ifndef NDEBUG
+                if (!std::isfinite(compFlux))
+                    DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in smooth upwinding");
+                #endif
 
                 flux[compIdx] = sign*compFlux;
             }
-            else {// !use smooth upwinding
+            else
+            {// not use smooth upwinding
                 flux[compIdx] =
-                    up.mobility(phaseIdx) *
-                    up.fluidState().molarity(phaseIdx, compIdx) *
-                    normalFlux;
+                        volumeFlux *
+                        ((     massUpwindWeight)*up.fluidState().molarity(phaseIdx, compIdx)
+                                +
+                        (  1. - massUpwindWeight)*dn.fluidState().molarity(phaseIdx, compIdx) );
+
+
             }
         }
     }
@@ -337,10 +344,9 @@ public:
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars)
     {
-    static_assert(not enableKineticEnergy,
-                      "In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. "
-                      "It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. "
-                      "Therefore, kineticEnergy and no kinetic mass does not fit (yet).");
+#warning              In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. \
+                      It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. \
+                      Therefore, kineticEnergy and no kinetic mass does not fit (yet).;
 
         // mass transfer is not considered in this mass module
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)

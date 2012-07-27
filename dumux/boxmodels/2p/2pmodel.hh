@@ -290,7 +290,7 @@ public:
                            // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolumeface
                            // in the reference element.
                            PhasesVector q;
-                           q[phaseIdx] = fluxVars.normalVelocity(phaseIdx) / localArea;
+                           q[phaseIdx] = fluxVars.volumeFlux(phaseIdx) / localArea;
 
                            // transform the normal Darcy velocity into a vector
                            tmpVelocity[phaseIdx] = localNormal;

@@ -130,7 +130,7 @@ public:
         const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(wPhaseIdx));
 
         flux[contiEqIdx] =
-            fluxVars.normalVelocity(wPhaseIdx)
+            fluxVars.volumeFlux(wPhaseIdx)
             *
             ((    massUpwindWeight_)*up.density(wPhaseIdx)
              +

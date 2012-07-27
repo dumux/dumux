@@ -147,7 +147,7 @@ public:
 
             // add advective energy flux in current phase
             flux[energyEqIdx] +=
-                fluxVars.normalVelocity(phaseIdx)
+                fluxVars.volumeFlux(phaseIdx)
                 *
                 ((    massUpwindWeight_)*
                  up.density(phaseIdx)*

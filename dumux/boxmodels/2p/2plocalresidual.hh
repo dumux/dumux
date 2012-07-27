@@ -153,7 +153,7 @@ public:
             // add advective flux of current phase
             int eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
             flux[eqIdx] +=
-                fluxVars.normalVelocity(phaseIdx)
+                fluxVars.volumeFlux(phaseIdx)
                 *
                 ((    massUpwindWeight_)*up.density(phaseIdx)
                  +

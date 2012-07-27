@@ -150,7 +150,7 @@ SET_BOOL_PROP(BoxMPNC, EnableKinetic, false);
 SET_BOOL_PROP(BoxMPNC, EnableKineticEnergy, false);
 
 //! enable smooth upwinding by default
-SET_BOOL_PROP(BoxMPNC, EnableSmoothUpwinding, true);
+SET_BOOL_PROP(BoxMPNC, EnableSmoothUpwinding, false);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(BoxMPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
@@ -166,6 +166,12 @@ SET_PROP(BoxMPNC, Indices)
 {
     typedef MPNCIndices<TypeTag, 0> type;
 };
+
+//! the upwind weight for the mass conservation equations.
+SET_SCALAR_PROP(BoxMPNC, MassUpwindWeight, 1.0);
+
+//! weight for the upwind mobility in the velocity calculation
+SET_SCALAR_PROP(BoxMPNC, MobilityUpwindWeight, 1.0);
 
 //! DEPRECATED MPNCIndices property
 SET_TYPE_PROP(BoxMPNC, MPNCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
@@ -242,6 +248,8 @@ SET_BOOL_PROP(BoxMPNC, MPNCVtkAddReynolds, false);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddPrandtl, false);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddNusselt, false);
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddInterfacialArea, false);
+SET_BOOL_PROP(BoxMPNC, MPNCVtkAddxEquil, false);
+
 }
 
 }

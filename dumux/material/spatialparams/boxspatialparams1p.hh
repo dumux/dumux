@@ -58,9 +58,7 @@ class BoxSpatialParamsOneP
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
 
-    enum {
-        dimWorld = GridView::dimensionworld
-    };
+    enum { dimWorld = GridView::dimensionworld };
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
