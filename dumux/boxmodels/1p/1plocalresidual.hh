@@ -131,7 +131,7 @@ public:
              +
              (1 - upwindWeight_)*dn.density())
             *
-            fluxVars.normalVelocity(/*phaseIdx=*/0);
+            fluxVars.volumeFlux(/*phaseIdx=*/0);
     }
 
     /*!
