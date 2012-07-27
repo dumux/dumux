@@ -64,7 +64,7 @@ class MPNCVtkWriterCommon : public MPNCVtkWriterModule<TypeTag>
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::BlockVector<DimVector> DimField;
-    typedef std::tr1::array<DimField, numPhases> PhaseDimField;
+    typedef Dune::array<DimField, numPhases> PhaseDimField;
 
 public:
     MPNCVtkWriterCommon(const Problem &problem)
