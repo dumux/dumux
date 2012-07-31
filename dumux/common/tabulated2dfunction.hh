@@ -27,7 +27,7 @@
 #define DUMUX_TABULATED_2D_FUNCTION_HH
 
 #include <vector>
-#include <assert.h>
+#include <cassert>
 
 namespace Dumux
 {

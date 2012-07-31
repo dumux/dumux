@@ -31,6 +31,8 @@
 #ifndef DUMUX_H2O_AIR_SYSTEM_HH
 #define DUMUX_H2O_AIR_SYSTEM_HH
 
+#include <cassert>
+
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/fluidsystems/basefluidsystem.hh>
@@ -41,8 +43,6 @@
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
-
-#include <assert.h>
 
 #ifdef DUMUX_PROPERTIES_HH
 #include <dumux/common/propertysystem.hh>

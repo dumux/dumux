@@ -28,7 +28,6 @@
 #ifndef DUMUX_PENG_ROBINSON_MIXTURE_HH
 #define DUMUX_PENG_ROBINSON_MIXTURE_HH
 
-#include <stdlib.h>
 #include "pengrobinson.hh"
 
 #include <dumux/material/constants.hh>

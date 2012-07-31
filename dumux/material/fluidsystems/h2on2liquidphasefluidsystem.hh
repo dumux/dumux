@@ -28,6 +28,8 @@
 #ifndef DUMUX_H2O_N2_LIQUIDPHASE_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_LIQUIDPHASE_FLUID_SYSTEM_HH
 
+#include <cassert>
+
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/components/n2.hh>
@@ -40,8 +42,6 @@
 #include <dumux/common/exceptions.hh>
 
 #include <dumux/material/fluidsystems/basefluidsystem.hh>
-
-#include <assert.h>
 
 #ifdef DUMUX_PROPERTIES_HH
 #include <dumux/common/basicproperties.hh>

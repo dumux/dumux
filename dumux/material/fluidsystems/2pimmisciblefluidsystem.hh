@@ -32,6 +32,9 @@
 #ifndef DUMUX_2P_IMMISCIBLE_FLUID_SYSTEM_HH
 #define DUMUX_2P_IMMISCIBLE_FLUID_SYSTEM_HH
 
+#include <limits>
+#include <cassert>
+
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
@@ -39,10 +42,6 @@
 #include <dune/common/exceptions.hh>
 
 #include "basefluidsystem.hh"
-
-#include <limits>
-
-#include <assert.h>
 
 namespace Dumux {
 namespace FluidSystems {

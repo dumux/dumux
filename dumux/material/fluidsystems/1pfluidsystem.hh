@@ -27,6 +27,9 @@
 #ifndef DUMUX_1P_FLUIDSYSTEM_HH
 #define DUMUX_1P_FLUIDSYSTEM_HH
 
+#include <limits>
+#include <cassert>
+
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 
@@ -37,9 +40,6 @@
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-#include <limits>
-
-#include <assert.h>
 
 #ifdef DUMUX_PROPERTIES_HH
 #include <dumux/common/basicproperties.hh>

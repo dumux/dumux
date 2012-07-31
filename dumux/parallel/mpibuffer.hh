@@ -27,7 +27,7 @@
 #ifndef DUMUX_MPI_BUFFER_HH
 #define DUMUX_MPI_BUFFER_HH
 
-#include <assert.h>
+#include <cassert>
 
 #if HAVE_MPI
 #include <mpi.h>
