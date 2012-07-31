@@ -31,23 +31,21 @@
 #ifndef DUMUX_FOREIGN_OVERLAP_FROM_BCRS_MATRIX_HH
 #define DUMUX_FOREIGN_OVERLAP_FROM_BCRS_MATRIX_HH
 
-#include "borderindex.hh"
-
-#include <dune/grid/common/datahandleif.hh>
-#include <dune/common/fmatrix.hh>
-#include <dune/istl/bcrsmatrix.hh>
-#include <dune/istl/scalarproducts.hh>
-#include <dune/istl/operators.hh>
-
-#include <algorithm>
 #include <list>
 #include <set>
 #include <map>
-#include <tr1/tuple>
 
 #if HAVE_MPI
 #include <mpi.h>
 #endif // HAVE_MPI
+
+#include <dune/common/fmatrix.hh>
+#include <dune/common/tuples.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/scalarproducts.hh>
+#include <dune/istl/operators.hh>
+
+#include "borderindex.hh"
 
 namespace Dumux {
 
@@ -70,8 +68,8 @@ public:
     typedef int Index;
     typedef Index LocalIndex;
     typedef std::pair<LocalIndex, ProcessRank> IndexRank;
-    typedef std::tr1::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;
-    typedef std::tr1::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
+    typedef Dune::tuple<LocalIndex, ProcessRank, BorderDistance> IndexRankDist;
+    typedef Dune::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
     typedef std::list<IndexRankDist> SeedList;
 
     typedef std::set<ProcessRank> PeerSet;
@@ -254,7 +252,7 @@ public:
             ForeignOverlapWithPeer::const_iterator rowIt = it->second.begin();
             ForeignOverlapWithPeer::const_iterator rowEndIt = it->second.end();
             for (; rowIt != rowEndIt; ++rowIt) {
-                std::cout << std::tr1::get<0>(*rowIt) << "(" << std::tr1::get<1>(*rowIt) << ") ";
+                std::cout << Dune::get<0>(*rowIt) << "(" << Dune::get<1>(*rowIt) << ") ";
             }
             std::cout << "\n";
         }
@@ -267,7 +265,7 @@ protected:
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it)
-            peerSet_.insert(std::tr1::get<1>(*it));
+            peerSet_.insert(Dune::get<1>(*it));
     }
 
     // calculate the local border indices given the initial seed list
@@ -345,9 +343,9 @@ protected:
         SeedList::const_iterator it = seedList.begin();
         SeedList::const_iterator endIt = seedList.end();
         for (; it != endIt; ++it) {
-            int localIdx = std::tr1::get<0>(*it);
-            int peerRank = std::tr1::get<1>(*it);
-            int distance = std::tr1::get<2>(*it);
+            int localIdx = Dune::get<0>(*it);
+            int peerRank = Dune::get<1>(*it);
+            int distance = Dune::get<2>(*it);
             if (foreignOverlapByIndex_[localIdx].count(peerRank) == 0) {
                 foreignOverlapByIndex_[localIdx][peerRank] = distance;
             }
@@ -370,9 +368,9 @@ protected:
         SeedList nextSeedList;
         it = seedList.begin();
         for (; it != endIt; ++it) {
-            int rowIdx = std::tr1::get<0>(*it);
-            int peerRank = std::tr1::get<1>(*it);
-            int borderDist = std::tr1::get<2>(*it);
+            int rowIdx = Dune::get<0>(*it);
+            int peerRank = Dune::get<1>(*it);
+            int borderDist = Dune::get<2>(*it);
 
             // find all column indies in the row. The indices of the
             // columns are the additional indices of the overlap which
@@ -394,11 +392,11 @@ protected:
                 typename SeedList::iterator sIt = nextSeedList.begin();
                 typename SeedList::iterator sEndIt = nextSeedList.end();
                 for (; sIt != sEndIt; ++sIt) {
-                    if (std::tr1::get<0>(*sIt) == newIdx &&
-                        std::tr1::get<1>(*sIt) == peerRank)
+                    if (Dune::get<0>(*sIt) == newIdx &&
+                        Dune::get<1>(*sIt) == peerRank)
                     {
                         hasIndex = true;
-                        std::tr1::get<2>(*sIt) = std::min(std::tr1::get<2>(*sIt), borderDist + 1);
+                        Dune::get<2>(*sIt) = std::min(Dune::get<2>(*sIt), borderDist + 1);
                         break;
                     }
                 }

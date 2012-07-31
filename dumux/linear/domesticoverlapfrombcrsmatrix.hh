@@ -31,15 +31,16 @@
 #ifndef DUMUX_DOMESTIC_OVERLAP_FROM_BCRS_MATRIX_HH
 #define DUMUX_DOMESTIC_OVERLAP_FROM_BCRS_MATRIX_HH
 
-#include "foreignoverlapfrombcrsmatrix.hh"
-#include "globalindices.hh"
-
-#include <dumux/parallel/mpibuffer.hh>
-
-#include <algorithm>
 #include <list>
 #include <set>
 #include <map>
+
+#include <dune/common/tuples.hh>
+
+#include <dumux/parallel/mpibuffer.hh>
+
+#include "foreignoverlapfrombcrsmatrix.hh"
+#include "globalindices.hh"
 
 namespace Dumux {
 
@@ -64,7 +65,7 @@ public:
     typedef int BorderDistance;
     typedef int Index;
     typedef Index LocalIndex;
-    typedef std::tr1::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
+    typedef Dune::tuple<Index, BorderDistance, int> IndexDistanceNpeers;
 
     typedef std::set<ProcessRank> PeerSet;
 
@@ -385,8 +386,8 @@ protected:
         ForeignOverlapWithPeer::const_iterator overlapIt = foreignOverlap.begin();
         ForeignOverlapWithPeer::const_iterator overlapEndIt = foreignOverlap.end();
         for (int i = 0; overlapIt != overlapEndIt; ++overlapIt, ++i) {
-            int localIdx = std::tr1::get<0>(*overlapIt);
-            int borderDistance = std::tr1::get<1>(*overlapIt);
+            int localIdx = Dune::get<0>(*overlapIt);
+            int borderDistance = Dune::get<1>(*overlapIt);
 
             const std::map<ProcessRank, BorderDistance> &foreignIndexOverlap
                 = foreignOverlap_.foreignOverlapByIndex(localIdx);
@@ -449,9 +450,9 @@ protected:
         MpiBuffer<IndexDistanceNpeers> recvBuff(numIndices);
         recvBuff.receive(peerRank);
         for (int i = 0; i < numIndices; ++i) {
-            int globalIdx = std::tr1::get<0>(recvBuff[i]);
-            int borderDistance = std::tr1::get<1>(recvBuff[i]);
-            int numPeers = std::tr1::get<2>(recvBuff[i]);
+            int globalIdx = Dune::get<0>(recvBuff[i]);
+            int borderDistance = Dune::get<1>(recvBuff[i]);
+            int numPeers = Dune::get<2>(recvBuff[i]);
 
             int domesticIdx;
             if (borderDistance > 0) {

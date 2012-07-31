@@ -26,15 +26,14 @@
 #ifndef DUMUX_SPLINE_COMMON__HH
 #define DUMUX_SPLINE_COMMON__HH
 
-#include "valgrind.hh"
-#include "math.hh"
+#include <iostream>
+#include <cassert>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/tuples.hh>
 
-#include <tr1/tuple>
-#include <algorithm>
-#include <iostream>
-#include <assert.h>
+#include "valgrind.hh"
+#include "math.hh"
 
 #if __GNUC__ <= 4 &&  __GNUC_MINOR__ < 5
 namespace std {
@@ -375,7 +374,7 @@ protected:
         ListIterator it = srcBegin;
         ++it;
         bool reverse = false;
-        if (std::tr1::get<0>(*srcBegin) > std::tr1::get<0>(*it))
+        if (Dune::get<0>(*srcBegin) > Dune::get<0>(*it))
             reverse = true;
         --it;
 
@@ -384,8 +383,8 @@ protected:
             int idx = i;
             if (reverse)
                 idx = numSamples - i - 1;
-            destX[i] = std::tr1::get<0>(*it);
-            destY[i] = std::tr1::get<1>(*it);
+            destX[i] = Dune::get<0>(*it);
+            destY[i] = Dune::get<1>(*it);
         }
     }
 

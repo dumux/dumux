@@ -29,21 +29,18 @@
 #ifndef DUMUX_GLOBAL_INDICES_HH
 #define DUMUX_GLOBAL_INDICES_HH
 
-#include <dune/grid/common/datahandleif.hh>
-#include <dune/common/fmatrix.hh>
-#include <dune/istl/bcrsmatrix.hh>
-#include <dune/istl/scalarproducts.hh>
-#include <dune/istl/operators.hh>
-
-#include <algorithm>
 #include <list>
 #include <set>
 #include <map>
-#include <tr1/tuple>
 
 #if HAVE_MPI
 #include <mpi.h>
 #endif
+
+#include <dune/common/fmatrix.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/scalarproducts.hh>
+#include <dune/istl/operators.hh>
 
 #include "borderindex.hh"
 

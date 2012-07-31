@@ -32,6 +32,7 @@
 #include <dumux/linear/globalindices.hh>
 #include <dumux/parallel/mpibuffer.hh>
 
+#include <dune/common/shared_ptr.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/io.hh>
 
@@ -39,8 +40,6 @@
 #include <list>
 #include <set>
 #include <map>
-#include <memory>
-#include <tr1/memory>
 
 namespace Dumux {
 
@@ -79,7 +78,7 @@ public:
                           const BorderList &domesticBorderList,
                           int overlapSize)
     {
-        overlap_ = std::tr1::shared_ptr<Overlap>(new Overlap(M, foreignBorderList, domesticBorderList, overlapSize));
+        overlap_ = Dune::shared_ptr<Overlap>(new Overlap(M, foreignBorderList, domesticBorderList, overlapSize));
         myRank_ = 0;
 #if HAVE_MPI
         MPI_Comm_rank(MPI_COMM_WORLD, &myRank_);
@@ -343,7 +342,7 @@ private:
         typename ForeignOverlapWithPeer::const_iterator endIt = peerOverlap.end();
         int i = 0;
         for (; it != endIt; ++it, ++i) {
-            int rowIdx = std::tr1::get<0>(*it);
+            int rowIdx = Dune::get<0>(*it);
             assert(overlap_->isDomesticIndexFor(peerRank, rowIdx));
 
             typedef typename BCRSMatrix::ConstColIterator ColIt;
@@ -371,7 +370,7 @@ private:
         i = 0;
         it = peerOverlap.begin();
         for (; it != endIt; ++it) {
-            int rowIdx = std::tr1::get<0>(*it);
+            int rowIdx = Dune::get<0>(*it);
             assert(overlap_->isDomesticIndexFor(peerRank, rowIdx));
 
             typedef typename BCRSMatrix::ConstColIterator ColIt;
@@ -597,7 +596,7 @@ private:
 
     int myRank_;
     Entries entries_;
-    std::tr1::shared_ptr<Overlap> overlap_;
+    Dune::shared_ptr<Overlap> overlap_;
 
     std::map<ProcessRank, MpiBuffer<int>* > rowSizesRecvBuff_;
     std::map<ProcessRank, MpiBuffer<int>* > rowIndicesRecvBuff_;
