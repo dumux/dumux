@@ -657,29 +657,26 @@ void FVPressure2P<TypeTag>::getFlux(EntryType& entry, const Intersection& inters
         density_[nPhaseIdx] = (potentialNW == 0) ? rhoMeanNW : density_[nPhaseIdx];
     }
 
+    Scalar scalarPerm = permeability.two_norm();
     //calculate current matrix entry
-    entry[matrix] = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
+    entry[matrix] = (lambdaW + lambdaNW) * scalarPerm / dist * faceArea;
 
     //calculate right hand side
-    entry[rhs] = (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * (permeability * gravity_) * faceArea;
+    //calculate unit distVec
+    distVec /= dist;
+    Scalar areaScaling = (unitOuterNormal * distVec);
+    //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+    entry[rhs] = (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * scalarPerm * (gravity_ * distVec) * faceArea * areaScaling;
 
     if (pressureType_ == pw)
     {
-        // calculate capillary pressure gradient
-        Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
-        pCGradient *= (pcI - pcJ) / dist;
-
         //add capillary pressure term to right hand side
-        entry[rhs] += 0.5 * (lambdaNWI + lambdaNWJ) * (permeability * pCGradient) * faceArea;
+        entry[rhs] += 0.5 * (lambdaNWI + lambdaNWJ) * scalarPerm * (pcI - pcJ) / dist * faceArea;
     }
     else if (pressureType_ == pn)
     {
-        // calculate capillary pressure gradient
-        Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
-        pCGradient *= (pcI - pcJ) / dist;
-
         //add capillary pressure term to right hand side
-        entry[rhs] -= 0.5 * (lambdaWI + lambdaWJ) * (permeability * pCGradient) * faceArea;
+        entry[rhs] -= 0.5 * (lambdaWI + lambdaWJ) * scalarPerm * (pcI - pcJ) / dist * faceArea;
     }
 
     return;
@@ -888,31 +885,28 @@ const Intersection& intersection, const CellData& cellData, const bool first)
             density_[nPhaseIdx] = (potentialNW == 0) ? rhoMeanNW : density_[nPhaseIdx];
         }
 
+        Scalar scalarPerm = permeability.two_norm();
         //calculate current matrix entry
-        entry[matrix] = (lambdaW + lambdaNW) * ((permeability * unitOuterNormal) / dist) * faceArea;
+        entry[matrix] = (lambdaW + lambdaNW) * scalarPerm / dist * faceArea;
         entry[rhs] = entry[matrix] * pressBound;
 
         //calculate right hand side
-        entry[rhs] -= (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * (permeability * gravity_)
-                * faceArea;
+        //calculate unit distVec
+        distVec /= dist;
+        Scalar areaScaling = (unitOuterNormal * distVec);
+        //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+        entry[rhs] -= (lambdaW * density_[wPhaseIdx] + lambdaNW * density_[nPhaseIdx]) * scalarPerm * (gravity_ * distVec)
+                * faceArea * areaScaling;
 
         if (pressureType_ == pw)
         {
-            // calculate capillary pressure gradient
-            Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
-            pCGradient *= (pcI - pcBound) / dist;
-
             //add capillary pressure term to right hand side
-            entry[rhs] -= 0.5 * (lambdaNWI + lambdaNWBound) * (permeability * pCGradient) * faceArea;
+            entry[rhs] -= 0.5 * (lambdaNWI + lambdaNWBound) * scalarPerm * (pcI - pcBound) / dist * faceArea;
         }
         else if (pressureType_ ==  pn)
         {
-            // calculate capillary pressure gradient
-            Dune::FieldVector<Scalar, dim> pCGradient = unitOuterNormal;
-            pCGradient *= (pcI - pcBound) / dist;
-
             //add capillary pressure term to right hand side
-            entry[rhs] += 0.5 * (lambdaWI + lambdaWBound) * (permeability * pCGradient) * faceArea;
+            entry[rhs] += 0.5 * (lambdaWI + lambdaWBound) * scalarPerm * (pcI - pcBound) / dist * faceArea;
         }
     }
     //set neumann boundary condition

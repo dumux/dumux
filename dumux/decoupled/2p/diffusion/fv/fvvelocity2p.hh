@@ -390,41 +390,40 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
                         density_[nPhaseIdx];
     }
 
-    //calculate the gravity term
-    Dune::FieldVector < Scalar, dimWorld > velocityW(permeability);
-    Dune::FieldVector < Scalar, dimWorld > velocityNW(permeability);
-    Dune::FieldVector < Scalar, dimWorld > gravityTermW(unitOuterNormal);
-    Dune::FieldVector < Scalar, dimWorld > gravityTermNW(unitOuterNormal);
+    Scalar scalarPerm = permeability.two_norm();
 
-    gravityTermW *= (gravity_ * permeability) * (lambdaW * density_[wPhaseIdx]);
-    gravityTermNW *= (gravity_ * permeability) * (lambdaNW * density_[nPhaseIdx]);
+    //calculate the gravity term
+    Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
+    Dune::FieldVector < Scalar, dimWorld > velocityNW(unitOuterNormal);
+
+    //calculate unit distVec
+    distVec /= dist;
+    Scalar areaScaling = (unitOuterNormal * distVec);
+    //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+    Scalar gravityTermW = (gravity_* distVec) * density_[wPhaseIdx] * areaScaling;
+    Scalar gravityTermNW = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
 
     //calculate velocity depending on the pressure used -> use pc = pn - pw
     switch (pressureType_)
     {
     case pw:
     {
-        velocityW *= lambdaW * (cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist;
-        velocityNW *= lambdaNW * (cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist
-                + 0.5 * (lambdaNWI + lambdaNWJ) * (pcI - pcJ) / dist;
-        velocityW += gravityTermW;
-        velocityNW += gravityTermNW;
+        velocityW *= lambdaW * scalarPerm * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermW);
+        velocityNW *= lambdaNW * scalarPerm * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermNW)
+                + 0.5 * (lambdaNWI + lambdaNWJ) * scalarPerm * (pcI - pcJ) / dist;
         break;
     }
     case pn:
     {
-        velocityW *= lambdaW * (cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist
-                - 0.5 * (lambdaWI + lambdaWJ) * (pcI - pcJ) / dist;
-        velocityNW *= lambdaNW * (cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist;
-        velocityW += gravityTermW;
-        velocityNW += gravityTermNW;
+        velocityW *= lambdaW * scalarPerm * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermW)
+                - 0.5 * (lambdaWI + lambdaWJ) * scalarPerm * (pcI - pcJ) / dist;
+        velocityNW *= lambdaNW * scalarPerm * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermNW);
         break;
     }
     case pglobal:
     {
-        velocityW *= (lambdaW + lambdaNW) * (cellData.globalPressure() - cellDataJ.globalPressure()) / dist;
-        velocityW += gravityTermW;
-        velocityW += gravityTermNW;
+        velocityW *= (lambdaW + lambdaNW) * scalarPerm * (cellData.globalPressure() - cellDataJ.globalPressure()) / dist +
+                scalarPerm * (lambdaW * gravityTermW + lambdaNW * gravityTermNW);
         velocityNW = 0;
         break;
     }
@@ -619,41 +618,40 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
             density_[nPhaseIdx] = (potentialNW == 0) ? 0.5 * (cellData.density(nPhaseIdx) + densityNWBound) : density_[nPhaseIdx];
         }
 
-        //calculate the gravity term
-        Dune::FieldVector < Scalar, dimWorld > velocityW(permeability);
-        Dune::FieldVector < Scalar, dimWorld > velocityNW(permeability);
-        Dune::FieldVector < Scalar, dimWorld > gravityTermW(unitOuterNormal);
-        Dune::FieldVector < Scalar, dimWorld > gravityTermNW(unitOuterNormal);
+        Scalar scalarPerm = permeability.two_norm();
 
-        gravityTermW *= (gravity_ * permeability) * (lambdaW * density_[wPhaseIdx]);
-        gravityTermNW *= (gravity_ * permeability) * (lambdaNW * density_[nPhaseIdx]);
+        //calculate the gravity term
+        Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
+        Dune::FieldVector < Scalar, dimWorld > velocityNW(unitOuterNormal);
+
+        //calculate unit distVec
+        distVec /= dist;
+        Scalar areaScaling = (unitOuterNormal * distVec);
+        //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
+        Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
+        Scalar gravityTermNW = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
 
         //calculate velocity depending on the pressure used -> use pc = pn - pw
         switch (pressureType_)
         {
         case pw:
         {
-            velocityW *= lambdaW * (cellData.pressure(wPhaseIdx) - pressBound) / dist;
-            velocityNW *= lambdaNW * (cellData.pressure(wPhaseIdx) - pressBound) / dist
-                    + 0.5 * (lambdaNWI + lambdaNWBound) * (pcI - pcBound) / dist;
-            velocityW += gravityTermW;
-            velocityNW += gravityTermNW;
+            velocityW *= lambdaW * scalarPerm * ((cellData.pressure(wPhaseIdx) - pressBound) / dist + gravityTermW);
+            velocityNW *= lambdaNW * scalarPerm * ((cellData.pressure(wPhaseIdx) - pressBound) / dist + gravityTermNW)
+                    + 0.5 * (lambdaNWI + lambdaNWBound) * scalarPerm * (pcI - pcBound) / dist;
             break;
         }
         case pn:
         {
-            velocityW *= lambdaW * (cellData.pressure(nPhaseIdx) - pressBound) / dist
-                    - 0.5 * (lambdaWI + lambdaWBound) * (pcI - pcBound) / dist;
-            velocityNW *= lambdaNW * (cellData.pressure(nPhaseIdx) - pressBound) / dist;
-            velocityW += gravityTermW;
-            velocityNW += gravityTermNW;
+            velocityW *= lambdaW * scalarPerm * ((cellData.pressure(nPhaseIdx) - pressBound) / dist + gravityTermW)
+                    - 0.5 * (lambdaWI + lambdaWBound) * scalarPerm * (pcI - pcBound) / dist;
+            velocityNW *= lambdaNW * scalarPerm * ((cellData.pressure(nPhaseIdx) - pressBound) / dist + gravityTermNW);
             break;
         }
         case pglobal:
         {
-            velocityW *= (lambdaW + lambdaNW) * (cellData.globalPressure() - pressBound) / dist;
-            velocityW += gravityTermW;
-            velocityW += gravityTermNW;
+            velocityW *= (lambdaW + lambdaNW) * scalarPerm * (cellData.globalPressure() - pressBound) / dist +
+                    scalarPerm * (lambdaW * gravityTermW + lambdaNW * gravityTermNW);
             velocityNW = 0;
             break;
         }
