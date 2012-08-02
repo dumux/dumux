@@ -79,6 +79,7 @@ public:
         endTime_ = -1e100;
 
         timeStepSize_ = 1.0;
+        previousTimeStepSize_ = timeStepSize_;
         timeStepIdx_ = 0;
         finished_ = false;
 
@@ -108,6 +109,7 @@ public:
         problem_ = &problem;
         time_ = tStart;
         timeStepSize_ = dtInitial;
+        previousTimeStepSize_ = dtInitial;
         endTime_ = tEnd;
 
         if (verbose_)
@@ -398,18 +400,27 @@ public:
                 problem_->serialize();
 
             // notify the problem if an episode is finished
-            Scalar nextDt = problem_->nextTimeStepSize(dt);
             if (episodeIsOver()) {
+                //define what to do at the end of an episode in the problem
                 problem_->episodeEnd();
-                // the problem sets the initial time step size of a
-                // new episode...
-                nextDt = timeStepSize();
-            }
 
-            // notify the problem that the timestep is done and ask it
-            // for a suggestion for the next timestep size
-            // set the time step size for the next step
-            setTimeStepSize(nextDt);
+                //check if a time step size was explicitly defined in problem->episodeEnd()
+                if (dt == timeStepSize())
+                {
+                    // set the initial time step size of a an episode to the last real time step size before the episode
+                    Scalar nextDt = std::max(previousTimeStepSize_, timeStepSize());
+                    previousTimeStepSize_ = nextDt;
+                    setTimeStepSize(nextDt);
+                }
+            }
+            else
+            {
+                // notify the problem that the timestep is done and ask it
+                // for a suggestion for the next timestep size
+                // set the time step size for the next step
+                previousTimeStepSize_ = timeStepSize();
+                setTimeStepSize(problem_->nextTimeStepSize(dt));
+            }
         }
 
         if (verbose_) {
@@ -480,6 +491,7 @@ private:
     Scalar endTime_;
 
     Scalar timeStepSize_;
+    Scalar previousTimeStepSize_;
     int timeStepIdx_;
     bool finished_;
     bool verbose_;
