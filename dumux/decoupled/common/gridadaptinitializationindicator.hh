@@ -108,6 +108,8 @@ public:
                 continue;
             }
 
+            if (refineAtSource_)
+            {
             PrimaryVariables source(0.0);
             problem_.source(source, *eIt);
             for (int i = 0; i < numEq; i++)
@@ -117,6 +119,7 @@ public:
                     indicatorVector_[globalIdxI] = refineCell;
                     break;
                 }
+            }
             }
 
             if (indicatorVector_[globalIdxI] == refineCell)
@@ -130,9 +133,11 @@ public:
                     break;
                 if (isIt->boundary())
                 {
-                    indicatorVector_[globalIdxI] = refineCell;
-
-                    if (maxLevel_ == maxAllowedLevel_)
+                    if (maxLevel_ != maxAllowedLevel_)
+                        {
+                            indicatorVector_[globalIdxI] = refineCell;
+                        }
+                    else
                     {
                         BoundaryTypes bcTypes;
                         problem_.boundaryTypes(bcTypes, *isIt);
@@ -153,19 +158,32 @@ public:
                                 }
                                 else
                                 {
-                                    indicatorVector_[globalIdxI] = refineCell;
-                                    fluxBound = true;
-                                    break;
+                                    if (refineAtFluxBC_)
+                                    {
+                                        indicatorVector_[globalIdxI] = refineCell;
+                                        fluxBound = true;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        indicatorVector_[globalIdxI] = coarsenCell;
+                                    }
                                 }
                                 }
                                 if (fluxBound)
                                     break;
                             }
-                            else
+                            else if (bcTypes.isDirichlet(i))
                             {
-                                indicatorVector_[globalIdxI] = coarsenCell;
-//                                indicatorVector_[globalIdxI] = refineCell;
-//                                break;
+                                if (refineAtDirichletBC_)
+                                {
+                                    indicatorVector_[globalIdxI] = refineCell;
+                                    break;
+                                }
+                                else
+                                {
+                                    indicatorVector_[globalIdxI] = coarsenCell;
+                                }
                             }
                         }
                     }
@@ -231,6 +249,9 @@ public:
         minAllowedLevel_ = GET_PARAM(TypeTag, int, MinLevel);
         maxAllowedLevel_ = GET_PARAM(TypeTag, int, MaxLevel);
         enableInitializationIndicator_ = GET_PARAM(TypeTag, bool, EnableInitializationIndicator);
+        refineAtDirichletBC_ = GET_PARAM(TypeTag, bool, RefineAtDirichletBC);
+        refineAtFluxBC_ = GET_PARAM(TypeTag, bool, RefineAtFluxBC);
+        refineAtSource_ = GET_PARAM(TypeTag, bool, RefineAtSource);
     }
 
 private:
@@ -241,6 +262,9 @@ private:
     int minAllowedLevel_;
     int maxAllowedLevel_;
     bool enableInitializationIndicator_;
+    bool refineAtDirichletBC_;
+    bool refineAtFluxBC_;
+    bool refineAtSource_;
 };
 }
 #endif

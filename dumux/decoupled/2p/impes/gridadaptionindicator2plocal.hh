@@ -105,6 +105,8 @@ public:
             // Index des aktuellen Leaf-Elements
             int globalIdxI = problem_.variables().index(*eIt);
 
+            if (refineAtSource_)
+            {
             PrimaryVariables source(0.0);
             problem_.source(source, *eIt);
             for (int i = 0; i < 2; i++)
@@ -114,6 +116,7 @@ public:
                     indicatorVector_[globalIdxI] = 10;
                     break;
                 }
+            }
             }
 
             if (indicatorVector_[globalIdxI] == 10)
@@ -163,19 +166,25 @@ public:
                             {
                             if (std::abs(flux[j]) > 1e-10)
                             {
-                                indicatorVector_[globalIdxI] = 10;
-                                fluxBound = true;
-                                break;
+                                if (refineAtFluxBC_)
+                                {
+                                    indicatorVector_[globalIdxI] = 10;
+                                    fluxBound = true;
+                                    break;
+                                }
                             }
                             }
                             if (fluxBound)
                                 break;
                         }
-//                        else
-//                        {
-//                            indicatorVector_[globalIdxI] = 10;
-//                            break;
-//                        }
+                        else if (bcTypes.isDirichlet(i))
+                        {
+                            if (refineAtDirichletBC_)
+                            {
+                                indicatorVector_[globalIdxI] = 10;
+                                break;
+                            }
+                        }
                     }
                 }
                 else
@@ -275,6 +284,9 @@ public:
     {
         refinetol_ = GET_PARAM(TypeTag, Scalar, RefineTolerance);
         coarsentol_ = GET_PARAM(TypeTag, Scalar, CoarsenTolerance);
+        refineAtDirichletBC_ = GET_PARAM(TypeTag, bool, RefineAtDirichletBC);
+        refineAtFluxBC_ = GET_PARAM(TypeTag, bool, RefineAtFluxBC);
+        refineAtSource_ = GET_PARAM(TypeTag, bool, RefineAtSource);
     }
 
 private:
@@ -285,6 +297,9 @@ private:
     Scalar coarsenBound_;
     ScalarSolutionType indicatorVector_;
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
+    bool refineAtDirichletBC_;
+    bool refineAtFluxBC_;
+    bool refineAtSource_;
 };
 }
 

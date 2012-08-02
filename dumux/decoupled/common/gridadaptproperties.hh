@@ -72,6 +72,15 @@ NEW_PROP_TAG(CoarsenThreshold);
 //! Time step interval for adaption
 NEW_PROP_TAG(AdaptionInterval);
 
+//! Switch for refinement at dirichlet BC's -> not used by all indicators!
+NEW_PROP_TAG(RefineAtDirichletBC);
+
+//! Switch for refinement at neumann BC's -> not used by all indicators!
+NEW_PROP_TAG(RefineAtFluxBC);
+
+//! Switch for refinement at sources -> not used by all indicators!
+NEW_PROP_TAG(RefineAtSource);
+
 //no adaptive grid
 SET_BOOL_PROP(GridAdaptTypeTag, AdaptiveGrid, false);
 
@@ -85,6 +94,11 @@ SET_SCALAR_PROP(GridAdaptTypeTag, CoarsenThreshold, 0.0);
 SET_INT_PROP(GridAdaptTypeTag, AdaptionInterval, 1);
 //Switch initial grid adaption off per default
 SET_BOOL_PROP(GridAdaptTypeTag, EnableInitializationIndicator, false);
+
+// Switch of extra refinement strategy at boundaries/sources
+SET_BOOL_PROP(GridAdaptTypeTag, RefineAtDirichletBC, false);
+SET_BOOL_PROP(GridAdaptTypeTag, RefineAtFluxBC, false);
+SET_BOOL_PROP(GridAdaptTypeTag, RefineAtSource, false);
 } // namespace Properties
 } // namespace Dumux
 
