@@ -118,7 +118,8 @@ template<class TypeTag> class MimeticPressure2P
     ///@endcond
 
     typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PressureSolutionVector) PressureSolution;
 
     //initializes the matrix to store the system of equations
     void initializeMatrix();
@@ -172,9 +173,11 @@ public:
         f_.resize(problem_.gridView().size(1));//resize to make sure the final grid size (after the problem was completely built) is used!
         pressure_.resize(problem_.gridView().size(0));
         pressTrace_.resize(problem_.gridView().size(1));
+        normalVelocity_.resize(problem_.gridView().size(0)),
         pressure_ = 0;
         pressTrace_ = 0;
         f_ = 0;
+        normalVelocity_ = 0.0;
         assemble(true);
         solve();
         postprocess();
@@ -276,10 +279,6 @@ public:
      */
     MimeticPressure2P(Problem& problem) :
     problem_(problem),
-    pressure_(problem.gridView().size(0)),
-    pressTrace_(problem.gridView().size(1)),
-    normalVelocity_(problem.gridView().size(0)),
-    f_(problem.gridView().size(1)),
     A_(problem.gridView())
     {
         if (pressureType != pglobal)
@@ -307,9 +306,9 @@ public:
 private:
     Problem& problem_;
     ScalarSolution pressure_;
-    TraceType pressTrace_; //!< vector of pressure traces
+    PressureSolution pressTrace_; //!< vector of pressure traces
     NormalVelType normalVelocity_;
-    TraceType f_;
+    RHSVector f_;
     OperatorAssembler A_;
 
     Scalar density_[numPhases];

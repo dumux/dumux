@@ -181,6 +181,7 @@ public:
     {
         size_ = problem_.gridView().size(0);//resize to make sure the final grid size (after the problem was completely built) is used!
         A_.setSize(size_, size_);
+        A_.setBuildMode(Matrix::random);
         f_.resize(size_);
         pressure_.resize(size_);
         asImp_().initializeMatrix();// initialize sparse matrix
@@ -259,7 +260,6 @@ public:
      */
     FVPressure(Problem& problem) :
     problem_(problem), size_(problem.gridView().size(0)),
-    pressure_(size_), A_(size_, size_, Matrix::random), f_(size_),
     fixPressureAtIndex_(0),
     idxFixPressureAtIndex_(0),
     hasFixPressureAtIndex_(false)
