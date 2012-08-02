@@ -163,6 +163,7 @@ public:
             if (element.level() < neighbor.level())
             {
                 hasHangingNode_ = true;
+                cflFluxFunction_ = 0;
                 return;
             }
 
@@ -459,7 +460,7 @@ public:
         }
         else
         {
-            return cflFluxDefault;
+            return 0.95 / cflFluxDefault;
         }
     }
 
