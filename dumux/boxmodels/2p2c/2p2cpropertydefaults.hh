@@ -123,7 +123,8 @@ SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
+SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);//DEPRECATED
 
 //! The indices required by the isothermal 2p2c model
 SET_PROP(BoxTwoPTwoC,
@@ -141,7 +142,11 @@ SET_TYPE_PROP(BoxTwoPTwoC, TwoPTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indi
 SET_TYPE_PROP(BoxTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 
 // disable velocity output by default
+SET_BOOL_PROP(BoxTwoPTwoC, VtkAddVelocity, GET_PROP_VALUE(TypeTag, EnableVelocityOutput));
 SET_BOOL_PROP(BoxTwoPTwoC, EnableVelocityOutput, false);
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(BoxTwoPTwoC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 
 //
 }

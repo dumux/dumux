@@ -198,7 +198,7 @@ public:
 
     template <class Matrix>
     PrecNoIterBackend(Matrix& A)
-    : imp_(A, GET_PARAM(TypeTag, double, PreconditionerRelaxation))
+    : imp_(A, GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation))
     {}
 
     Imp& imp()
@@ -219,8 +219,8 @@ public:
     template <class Matrix>
     PrecIterBackend(Matrix& A)
     : imp_(A,
-           GET_PARAM(TypeTag, int, PreconditionerIterations),
-           GET_PARAM(TypeTag, double, PreconditionerRelaxation))
+           GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, PreconditionerIterations),
+           GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation))
     {}
 
     Imp& imp()

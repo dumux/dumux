@@ -213,7 +213,7 @@ public:
 
         this->writeConvergence_(uLastIter, deltaU);
 
-        if (GET_PROP_VALUE(TypeTag, NewtonUseLineSearch)) {
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch)) {
             lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
         }
         else {

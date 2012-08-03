@@ -8,15 +8,16 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-tEnd = 1e7# [s]
-dtInitial = 0#[s]
+[TimeManager]
+TEnd = 1e7# [s]
+DtInitial = 0#[s]
 
 [Grid]
-numberOfCellsX = 30# [-] resolution in x-direction
-numberOfCellsY = 6# [-] resolution in y-direction
+NumberOfCellsX = 30# [-] resolution in x-direction
+NumberOfCellsY = 6# [-] resolution in y-direction
 
-upperRightX = 300# [m] dimension of the grid
-upperRightY = 60# [m] dimension of the grid
+UpperRightX = 300# [m] dimension of the grid
+UpperRightY = 60# [m] dimension of the grid
 ####################################################################
 # Simulation restart
 #
@@ -26,5 +27,5 @@ upperRightY = 60# [m] dimension of the grid
 # name_time = 27184.1_rank = 0.drs
 # Please comment in the below value, if restart is desired.
 ####################################################################
-# restart = ... 
+# Restart = ... 
 

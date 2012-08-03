@@ -246,12 +246,12 @@ public:
     GridAdaptInitializationIndicator(Problem& problem, AdaptionIndicator& adaptionIndicator):
         problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0)
     {
-        minAllowedLevel_ = GET_PARAM(TypeTag, int, MinLevel);
-        maxAllowedLevel_ = GET_PARAM(TypeTag, int, MaxLevel);
-        enableInitializationIndicator_ = GET_PARAM(TypeTag, bool, EnableInitializationIndicator);
-        refineAtDirichletBC_ = GET_PARAM(TypeTag, bool, RefineAtDirichletBC);
-        refineAtFluxBC_ = GET_PARAM(TypeTag, bool, RefineAtFluxBC);
-        refineAtSource_ = GET_PARAM(TypeTag, bool, RefineAtSource);
+        minAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
+        maxAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
+        enableInitializationIndicator_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, EnableInitializationIndicator);
+        refineAtDirichletBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtDirichletBC);
+        refineAtFluxBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtFluxBC);
+        refineAtSource_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtSource);
     }
 
 private:

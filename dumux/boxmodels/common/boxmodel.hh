@@ -94,7 +94,7 @@ public:
      */
     BoxModel()
     {
-        enableHints_ = GET_PARAM(TypeTag, bool, EnableHints);
+        enableHints_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableHints);
     }
 
     ~BoxModel()

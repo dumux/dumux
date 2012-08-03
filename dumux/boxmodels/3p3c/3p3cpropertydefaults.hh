@@ -111,6 +111,7 @@ SET_TYPE_PROP(BoxThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<Type
 SET_TYPE_PROP(BoxThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
+SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
 SET_SCALAR_PROP(BoxThreePThreeC, MassUpwindWeight, 1.0);
 
 //! Determines whether a constraint solver should be used explicitly
@@ -124,6 +125,9 @@ SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, typename GET_PROP_TYPE(TypeT
 
 //! DEPRECATED SpatialParameters property
 SET_TYPE_PROP(BoxThreePThreeC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(BoxThreePThreeC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 }
 
 }

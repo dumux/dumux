@@ -99,6 +99,7 @@ SET_TYPE_PROP(BoxStokes, VolumeVariables, StokesVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxStokes, FluxVariables, StokesFluxVariables<TypeTag>);
 
 //! the upwind factor.
+SET_SCALAR_PROP(BoxStokes, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
 SET_SCALAR_PROP(BoxStokes, MassUpwindWeight, 1.0);
 
 //! The fluid system to use by default
@@ -144,10 +145,15 @@ SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 SET_BOOL_PROP(BoxStokes, EnableNavierStokes, false);
 
 //! A stabilization factor. Set negative for stabilization and to zero for no stabilization
-SET_SCALAR_PROP(BoxStokes, StabilizationAlpha, 0.0);
+SET_SCALAR_PROP(BoxStokes, StokesStabilizationAlpha, GET_PROP_VALUE(TypeTag, StabilizationAlpha));
+SET_SCALAR_PROP(BoxStokes, StabilizationAlpha, 0.0);//DEPRECATED
 
 //! Stabilization factor for the boundaries
-SET_SCALAR_PROP(BoxStokes, StabilizationBeta, 0.0);
+SET_SCALAR_PROP(BoxStokes, StokesStabilizationBeta, GET_PROP_VALUE(TypeTag, StabilizationBeta));
+SET_SCALAR_PROP(BoxStokes, StabilizationBeta, 0.0);//DEPRECATED
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(BoxStokes, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 
 }
 

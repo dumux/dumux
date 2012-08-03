@@ -8,9 +8,11 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-dtInitial = 0.1 # seconds
-tEnd = 3 # seconds
-gridFile = ./grids/test_stokes2cni.dgf
+[TimeManager]
+DtInitial = 0.1 # seconds
+TEnd = 3 # seconds
+[Grid]
+File = ./grids/test_stokes2cni.dgf
 
 #########################################################################
 # Simulation restart
@@ -21,4 +23,4 @@ gridFile = ./grids/test_stokes2cni.dgf
 # name_time = 27184.1_rank = 0.drs
 # Please comment in the below value, if restart is desired.
 #########################################################################
-# restart = ... 
+# Restart = ... 

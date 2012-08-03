@@ -101,13 +101,13 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0)
     {
-        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+        cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
 
         newSpatialParams_ = true;
         spatialParams_ = new SpatialParams(gridView);
 
         gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = - 9.81;
     }
 
@@ -122,12 +122,12 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0),spatialParams_(spatialParams)
     {
-        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
+        cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
 
         newSpatialParams_ = false;
 
         gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = - 9.81;
     }
 

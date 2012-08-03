@@ -131,9 +131,9 @@ public:
         try
         {
             if (ParameterTree::tree().hasKey("delta"))
-                delta_       = GET_RUNTIME_PARAM(TypeTag, Scalar, delta_);
+                delta_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Delta_);
             int numRefine;
-            numRefine = GET_RUNTIME_PARAM(TypeTag, int, numRefine);
+            numRefine = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumRefine);
             GridCreator::grid().globalRefine(numRefine);
         }
         catch (Dumux::ParameterException &e) {

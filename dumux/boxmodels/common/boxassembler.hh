@@ -543,9 +543,9 @@ public:
 
 private:
     static bool enableJacobianRecycling_()
-    { return GET_PARAM(TypeTag, bool, EnableJacobianRecycling); }
+    { return GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling); }
     static bool enablePartialReassemble_()
-    { return GET_PARAM(TypeTag, bool, EnablePartialReassemble); }
+    { return GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble); }
 
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()

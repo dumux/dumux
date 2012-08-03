@@ -46,7 +46,8 @@ namespace Properties
 NEW_PROP_TAG(MobilityUpwindWeight);
 NEW_PROP_TAG(SpatialParams);
 NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(EnableGravity);
+NEW_PROP_TAG(ProblemEnableGravity);
+NEW_PROP_TAG(EnableGravity);//DEPRECATED
 }   
 
 /*!
@@ -97,7 +98,7 @@ public:
                  const bool onBoundary = false)
         : fvGeometry_(fvGeometry), faceIdx_(faceIdx), onBoundary_(onBoundary)
     {
-        mobilityUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MobilityUpwindWeight);
+        mobilityUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MobilityUpwindWeight);
 
         calculateNormalVelocity_(problem, element, elemVolVars);
     }
@@ -215,7 +216,7 @@ private:
             }
 
             // correct the pressure gradient by the gravitational acceleration
-            if (GET_PARAM(TypeTag, bool, EnableGravity))
+            if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
                 // estimate the gravitational acceleration at a given SCV face
                 // using the arithmetic mean

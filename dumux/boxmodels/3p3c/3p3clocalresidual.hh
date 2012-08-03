@@ -158,7 +158,7 @@ public:
 
     void computeAdvectiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
     {
-        Scalar massUpwindWeight = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+        Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
 
         ////////
         // advective fluxes of all components in all phases

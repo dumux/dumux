@@ -8,18 +8,21 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-numRefine = 3 # refinement level of the created grid
-dtInitial = 0# [s]
-tEnd = 0# [s]
+[TimeManager]
+DtInitial = 0# [s]
+TEnd = 0# [s]
 
-# delta = 1e-6    # [-] if this is commented in, it is used
+[Problem]
+Delta = 1e-6    # [-] if this is commented in, it is used
 
 [Grid]
-numberOfCellsX = 1# [-] resolution in x-direction
-numberOfCellsY = 1# [-] resolution in y-direction
+NumberOfCellsX = 1# [-] resolution in x-direction
+NumberOfCellsY = 1# [-] resolution in y-direction
 
-upperRightX = 1# [m] dimension of the grid
-upperRightY = 1# [m] dimension of the grid
+UpperRightX = 1# [m] dimension of the grid
+UpperRightY = 1# [m] dimension of the grid
+
+NumRefine = 3 # refinement level of the created grid
 ####################################################################
 # Simulation restart
 #
@@ -29,5 +32,5 @@ upperRightY = 1# [m] dimension of the grid
 # name_time = 27184.1_rank = 0.drs
 # Please comment in the below value, if restart is desired.
 ####################################################################
-# restart = ... 
+# Restart = ... 
 

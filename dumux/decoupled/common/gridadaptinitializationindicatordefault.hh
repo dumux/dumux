@@ -101,7 +101,7 @@ public:
      */
     GridAdaptInitializationIndicatorDefault(Problem& problem, AdaptionIndicator& adaptionIndicator)
     {
-        maxLevel_ = GET_PARAM(TypeTag, int, MaxLevel);
+        maxLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
     }
 
 private:

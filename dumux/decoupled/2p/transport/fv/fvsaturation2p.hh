@@ -348,7 +348,7 @@ public:
      * \param problem A problem class object
      */
     FVSaturation2P(Problem& problem) :
-            ParentType(problem), problem_(problem), threshold_(1e-6), switchNormals_(GET_PARAM(TypeTag, bool, SwitchNormals))
+            ParentType(problem), problem_(problem), threshold_(1e-6), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
     {
         if (compressibility_ && velocityType_ == vt)
         {

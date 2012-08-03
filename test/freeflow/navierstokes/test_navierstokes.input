@@ -8,10 +8,13 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-dtInitial = 1.0 # seconds
+[TimeManager]
+DtInitial = 1.0 # seconds
 MaxTimeStepSize = 10.0 # seconds
-tEnd = 30.0 # seconds
-gridFile = ./grids/test_navierstokes.dgf
+TEnd = 30.0 # seconds
+
+[Grid]
+File = ./grids/test_navierstokes.dgf
 
 #########################################################################
 # Simulation restart
@@ -22,4 +25,4 @@ gridFile = ./grids/test_navierstokes.dgf
 # name_time = 27184.1_rank = 0.drs
 # Please comment in the below value, if restart is desired.
 #########################################################################
-# restart = ...
+# Restart = ...

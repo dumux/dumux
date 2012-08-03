@@ -76,7 +76,8 @@ SET_TYPE_PROP(BoxTwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxTwoP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxTwoP, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
+SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);//DEPRECATED
 
 //! weight for the upwind mobility in the velocity calculation
 SET_SCALAR_PROP(BoxTwoP, MobilityUpwindWeight, 1.0);
@@ -136,8 +137,11 @@ public:
 };
 
 // disable velocity output by default
-SET_BOOL_PROP(BoxTwoP, EnableVelocityOutput, false);
+SET_BOOL_PROP(BoxTwoP, VtkAddVelocity, GET_PROP_VALUE(TypeTag, EnableVelocityOutput));
+SET_BOOL_PROP(BoxTwoP, EnableVelocityOutput, false);//DEPRECATED
 
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(BoxTwoP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 }
 //
 

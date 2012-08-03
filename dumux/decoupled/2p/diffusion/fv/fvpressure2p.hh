@@ -397,9 +397,9 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
 
-        ErrorTermFactor_ = GET_PARAM(TypeTag, Scalar, ErrorTermFactor);
-        ErrorTermLowerBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermLowerBound);
-        ErrorTermUpperBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermUpperBound);
+        ErrorTermFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermFactor);
+        ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
+        ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
 
         if (!compressibility_)
         {

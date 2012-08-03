@@ -8,15 +8,15 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-dtInitial = 250# [s]
-tEnd = 1e4# [s]
+TimeManager.DtInitial = 250# [s]
+TimeManager.TEnd = 1e4# [s]
 
 [Grid]
-numberOfCellsX = 24# [-] resolution in x-direction
-numberOfCellsY = 16# [-] resolution in y-direction
+NumberOfCellsX = 24# [-] resolution in x-direction
+NumberOfCellsY = 16# [-] resolution in y-direction
 
-upperRightX = 60# [m] dimension of the grid
-upperRightY = 40# [m] dimension of the grid
+UpperRightX = 60# [m] dimension of the grid
+UpperRightY = 40# [m] dimension of the grid
 ####################################################################
 # Simulation restart
 #

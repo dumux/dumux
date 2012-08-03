@@ -64,7 +64,8 @@ NEW_TYPE_TAG(DecoupledOneP, INHERITS_FROM(DecoupledModel));
 
 NEW_PROP_TAG( SpatialParameters ); //!< The type of the spatial parameters object
 NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
-NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Fluid ); //!< The fluid for one-phase models
 NEW_PROP_TAG( Indices ); //!< Set of indices for the one-phase model
 NEW_PROP_TAG( CellData ); //!< The cell data storage class
@@ -104,6 +105,9 @@ SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
 
 //! DEPRECATED SpatialParameters property
 SET_TYPE_PROP(DecoupledOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(DecoupledOneP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 }
 }
 #endif

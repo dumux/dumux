@@ -60,8 +60,8 @@ public:
 
     Vector bTmp(b);
 
-    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
-    const int precondIter = GET_PARAM(TypeTag, int, PreconditionerIterations);
+    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
+    const int precondIter = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, PreconditionerIterations);
 
     Preconditioner precond(A, precondIter, relaxation);
 
@@ -85,8 +85,8 @@ public:
 
     Vector bTmp(b);
 
-    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
-    const int precondIter = GET_PARAM(TypeTag, int, PreconditionerIterations);
+    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
+    const int precondIter = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, PreconditionerIterations);
 
     Preconditioner precond(A, precondIter, relaxation);
 
@@ -368,7 +368,7 @@ public:
   {
     typedef Dune::SeqSSOR<Matrix, Vector, Vector> Preconditioner;
     typedef Dune::RestartedGMResSolver<Vector> Solver;
-    const int restart = GET_PARAM(TypeTag, int, GMResRestart);
+    const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }
@@ -395,7 +395,7 @@ public:
 
     Vector bTmp(b);
 
-    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
+    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
 
     Preconditioner precond(A, relaxation);
 
@@ -419,7 +419,7 @@ public:
 
     Vector bTmp(b);
 
-    const double relaxation = GET_PARAM(TypeTag, double, PreconditionerRelaxation);
+    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
 
     Preconditioner precond(A, relaxation);
 
@@ -509,7 +509,7 @@ public:
   {
       typedef Dune::SeqILU0<Matrix, Vector, Vector> Preconditioner;
       typedef Dune::RestartedGMResSolver<Vector> Solver;
-      const int restart = GET_PARAM(TypeTag, int, GMResRestart);
+      const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
 
       return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }

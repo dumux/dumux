@@ -8,9 +8,9 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-dtInitial = 100 # seconds
-tEnd = 3000 # seconds
-gridFile = ./grids/richardslens-24x16.dgf
+TimeManager.DtInitial = 100 # seconds
+TimeManager.TEnd = 3000 # seconds
+Grid.File = ./grids/richardslens-24x16.dgf
 
 ####################################################################
 # Simulation restart

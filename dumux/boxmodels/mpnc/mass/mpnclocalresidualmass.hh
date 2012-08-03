@@ -103,9 +103,9 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        const Scalar massUpwindWeight = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+        const Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
 
-        static bool enableSmoothUpwinding_ = GET_PARAM(TypeTag, bool, EnableSmoothUpwinding);
+        static bool enableSmoothUpwinding_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableSmoothUpwinding);
 
         // data attached to upstream and the downstream vertices
         // of the current phase

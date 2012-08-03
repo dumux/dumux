@@ -104,7 +104,7 @@ private:
 public:
     BoxLocalJacobian()
     {
-        numericDifferenceMethod_ = GET_PARAM(TypeTag, int, NumericDifferenceMethod);
+        numericDifferenceMethod_ = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
         Valgrind::SetUndefined(problemPtr_);
     }
 

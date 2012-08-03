@@ -153,7 +153,7 @@ public:
         setSwitched_(false);
 
         // check, if velocity output can be used (works only for cubes so far)
-        velocityOutput_ = GET_PARAM(TypeTag, bool, EnableVelocityOutput);
+        velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
         ElementIterator eIt = this->gridView_().template begin<0>();
         ElementIterator eEndIt = this->gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt)
@@ -162,7 +162,7 @@ public:
                 velocityOutput_ = false;
             }
         }
-        if (velocityOutput_ != GET_PARAM(TypeTag, bool, EnableVelocityOutput))
+        if (velocityOutput_ != GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity))
             std::cout << "ATTENTION: Velocity output only works for cubes and is set to false for simplices\n";
 
         VertexIterator vIt = this->gridView_().template begin<dim> ();
@@ -182,7 +182,7 @@ public:
                 = staticVertexDat_[globalIdx].phasePresence;
         }
 
-        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     /*!
@@ -432,7 +432,7 @@ public:
 
                         // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
                         // face in the reference element.
-                        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+                        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
                         PhasesVector flux;
                         flux[phaseIdx] = fluxVars.KmvpNormal(phaseIdx)
                             * (massUpwindWeight_

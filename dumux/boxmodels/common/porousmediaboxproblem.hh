@@ -36,7 +36,8 @@ namespace Dumux
 namespace Properties
 {
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters object
-NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 }
 
 /*!
@@ -82,7 +83,7 @@ public:
         newSpatialParams_ = true;
         spatialParams_ = new SpatialParams(gridView);
 
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim-1]  = -9.81;
     }
 

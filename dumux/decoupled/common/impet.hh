@@ -199,11 +199,11 @@ public:
     IMPET(Problem& prob) :
             problem_(prob)
     {
-        cFLFactor_ = GET_PARAM(TypeTag, Scalar, CFLFactor);
-        iterFlag_ = GET_PARAM(TypeTag, int, IterationFlag);
-        nIter_ = GET_PARAM(TypeTag, int, IterationNumber);
-        maxDefect_ = GET_PARAM(TypeTag, Scalar, MaximumDefect);
-        omega_ = GET_PARAM(TypeTag, Scalar, RelaxationFactor);
+        cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+        iterFlag_ = GET_PARAM_FROM_GROUP(TypeTag, int, Impet, IterationFlag);
+        nIter_ = GET_PARAM_FROM_GROUP(TypeTag, int, Impet, IterationNumber);
+        maxDefect_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, MaximumDefect);
+        omega_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, RelaxationFactor);
     }
 
 private:

@@ -54,7 +54,7 @@ public:
      */
     static void makeGrid()
     {
-        const std::string dgfFileName = GET_RUNTIME_PARAM(TypeTag, std::string, gridFile);
+        const std::string dgfFileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
 
         gridPtr_ = GridPointer(dgfFileName.c_str(), Dune::MPIHelper::getCommunicator());
     };

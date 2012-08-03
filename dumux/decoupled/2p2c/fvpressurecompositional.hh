@@ -137,7 +137,7 @@ public:
         // estimate then the size of the last time step
         if(problem_.timeManager().time() == problem_.timeManager().episodeStartTime()
                 && problem_.timeManager().episodeIndex() > 0)
-            problem_.timeManager().setTimeStepSize(dt_estimate*GET_PARAM(TypeTag, Scalar, CFLFactor));
+            problem_.timeManager().setTimeStepSize(dt_estimate*GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor));
 
         updateEstimate_ *= problem_.timeManager().timeStepSize();
 
@@ -301,9 +301,9 @@ public:
         for  (int i=0; i<GET_PROP_VALUE(TypeTag, NumPhases); i++)
             updateEstimate_[i].resize(problem.gridView().size(0));
 
-        ErrorTermFactor_ = GET_PARAM(TypeTag, Scalar, ErrorTermFactor);
-        ErrorTermLowerBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermLowerBound);
-        ErrorTermUpperBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermUpperBound);
+        ErrorTermFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermFactor);
+        ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
+        ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
 
         if (pressureType != pw && pressureType != pn)
         {

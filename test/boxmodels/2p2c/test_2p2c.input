@@ -8,9 +8,9 @@
 ####################################################################
 # Mandatory arguments
 ####################################################################
-dtInitial = 250# [s]
-tEnd = 1e4# [s]
-gridFile = ./grids/test_2p2c.dgf # relative path to the grid file
+TimeManager.DtInitial = 250# [s]
+TimeManager.TEnd = 1e4# [s]
+Grid.File = ./grids/test_2p2c.dgf # relative path to the grid file
 
 [FluidSystem]
 nTemperature = 3# [-]            number of tabularization entries

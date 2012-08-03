@@ -67,7 +67,7 @@ public:
         : ParentType(timeManager, gridView),
           gravity_(0)
     {
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim-1]  = -9.81;
     }
 

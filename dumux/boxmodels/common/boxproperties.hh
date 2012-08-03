@@ -93,19 +93,21 @@ NEW_PROP_TAG(NewtonController); //!< The type of the newton controller
 //! Specify whether the jacobian matrix of the last iteration of a
 //! time step should be re-used as the jacobian of the first iteration
 //! of the next time step.
-NEW_PROP_TAG(EnableJacobianRecycling);
+NEW_PROP_TAG(EnableJacobianRecycling);//DEPRECATED
+NEW_PROP_TAG(ImplicitEnableJacobianRecycling);
 
 //! Specify whether the jacobian matrix should be only reassembled for
 //! elements where at least one vertex is above the specified
 //! tolerance
-NEW_PROP_TAG(EnablePartialReassemble);
-
+NEW_PROP_TAG(ImplicitEnablePartialReassemble);
+NEW_PROP_TAG(EnablePartialReassemble);//DEPRECATED
 /*!
  * \brief Specify the maximum size of a time integration [s].
  *
  * The default is to not limit the step size.
  */
-NEW_PROP_TAG(MaxTimeStepSize);
+NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
+NEW_PROP_TAG(MaxTimeStepSize);//DEPRECATED
 
 /*!
  * \brief Specify which kind of method should be used to numerically
@@ -114,8 +116,8 @@ NEW_PROP_TAG(MaxTimeStepSize);
  * -1 means backward differences, 0 means central differences, 1 means
  * forward differences. By default we use central differences.
  */
-NEW_PROP_TAG(NumericDifferenceMethod);
-
+NEW_PROP_TAG(ImplicitNumericDifferenceMethod);
+NEW_PROP_TAG(NumericDifferenceMethod);//DEPRECATED
 /*!
  * \brief Specify whether to use the already calculated solutions as
  *        starting values of the volume variables.
@@ -124,7 +126,8 @@ NEW_PROP_TAG(NumericDifferenceMethod);
  * very expensive (e.g. for non-linear fugacity functions where the
  * solver converges faster).
  */
-NEW_PROP_TAG(EnableHints);
+NEW_PROP_TAG(ImplicitEnableHints);
+NEW_PROP_TAG(EnableHints);//DEPRECATED
 
 // mappers from local to global indices
 

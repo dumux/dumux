@@ -66,19 +66,19 @@ public:
         Dune::FieldVector<Scalar, dim> lowerLeft;
 
         lowerLeft[0] = 0.0;
-        upperRight[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightX);
-        cellRes[0] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsX);
+        upperRight[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightX);
+        cellRes[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsX);
         if (dim > 1)
         {
             lowerLeft[1] = 0.0;
-            upperRight[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightY);
-            cellRes[1] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsY);
+            upperRight[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightY);
+            cellRes[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsY);
         }
         if (dim > 2)
         {
             lowerLeft[2] = 0.0;
-            upperRight[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.upperRightZ);
-            cellRes[2] = GET_RUNTIME_PARAM(TypeTag, int, Grid.numberOfCellsZ);
+            upperRight[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, UpperRightZ);
+            cellRes[2] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumberOfCellsZ);
         }
 
         simplexGrid_ = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cellRes);

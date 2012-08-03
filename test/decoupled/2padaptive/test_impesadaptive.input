@@ -8,20 +8,21 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-tEnd = 2e7# [s]
-dtInitial = 0# [s]
+[TimeManager]
+TEnd = 2e7# [s]
+DtInitial = 0# [s]
 
 [Grid]
-numberOfCellsX = 2# [-] level 0 resolution in x-direction
-numberOfCellsY = 1# [-] level 0 resolution in y-direction
+NumberOfCellsX = 2# [-] level 0 resolution in x-direction
+NumberOfCellsY = 1# [-] level 0 resolution in y-direction
 
-upperRightX = 300# [m] dimension of the grid
-upperRightY = 100# [m] dimension of the grid
+UpperRightX = 300# [m] dimension of the grid
+UpperRightY = 100# [m] dimension of the grid
 
 ############################################################
 #parameters for grid adaption
 ############################################################
-[]
+[GridAdapt]
 MinLevel = 0# [-] minimum level of refinement 
 MaxLevel = 5# [-] maximum level of refinement
 RefineTolerance = 0.05 # threshold for refinement criterion
@@ -36,4 +37,4 @@ CoarsenTolerance = 0.001 # threshold for coarsening criterion
 # name_time = 27184.1_rank = 0.drs
 # Please comment in the below value, if restart is desired.
 ########################################################################
-# restart = ... 
+# Restart = ... 

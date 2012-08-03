@@ -185,11 +185,11 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
 std::string usageTextBlock()
 {
     return  "Options have to be specified with this syntax: \n"
-            "\t-tEnd ENDTIME                    The time of the end of the simulation [s]\n"
+            "\t-TEnd ENDTIME                    The time of the end of the simulation [s]\n"
             "Alternativ supported syntax:\n"
-            "\t--t-end=ENDTIME                  The time of the end of the simulation [s]\n"
+            "\t--T-end=ENDTIME                  The time of the end of the simulation [s]\n"
             "\n"
-            "If -parameterFile is specified parameters can also be defined there. In this case,\n"
+            "If -ParameterFile is specified parameters can also be defined there. In this case,\n"
             "camel case is used for the parameters (e.g.: tEnd=100). \n"
             "\n"
             "Parameters specified on the command line have priority over those in the parameter file.\n"
@@ -200,8 +200,8 @@ std::string usageTextBlock()
             "\t                                  the simulation [default: true]\n"
             "\t-PrintProperties [true|false]     Print the compile-time parameters _before_ \n"
             "\t                                  the simulation [default: false]\n"
-            "\t-parameterFile FILENAME           File with parameter definitions\n"
-            "\t-restart RESTARTTIME              Restart simulation from a restart file\n"
+            "\t-ParameterFile FILENAME           File with parameter definitions\n"
+            "\t-Restart RESTARTTIME              Restart simulation from a restart file\n"
             "\n"
             "For the case of no arguments given, the input parameter file is expected to be named './<programname>.input' \n"
             "\n";
@@ -290,7 +290,7 @@ int start_(int argc,
             inputFileName += ".input";
         }
         else
-            inputFileName = GET_RUNTIME_PARAM(TypeTag, std::string, parameterFile); // otherwise we read from the command line
+            inputFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile); // otherwise we read from the command line
 
         std::ifstream parameterFile;
 
@@ -312,7 +312,7 @@ int start_(int argc,
 
     bool printProps = false;
     if (ParameterTree::tree().hasKey("PrintProperties"))
-        printProps = GET_RUNTIME_PARAM(TypeTag, bool, PrintProperties);
+        printProps = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintProperties);
 
     if (printProps && mpiHelper.rank() == 0) {
         Dumux::Properties::print<TypeTag>();
@@ -323,13 +323,13 @@ int start_(int argc,
     Scalar restartTime = 0;
     if (ParameterTree::tree().hasKey("restart")) {
         restart = true;
-        restartTime = GET_RUNTIME_PARAM(TypeTag, Scalar, restart);
+        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
     }
 
     // read the PrintParams parameter
     bool printParams = true;
     if (ParameterTree::tree().hasKey("PrintParameters"))
-        printParams = GET_RUNTIME_PARAM(TypeTag, bool, PrintParameters);
+        printParams = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintParameters);
 
     // try to create a grid (from the given grid file)
     try { GridCreator::makeGrid(); }
@@ -345,17 +345,17 @@ int start_(int argc,
     double tEnd;
     double dt;
 
-    try { tEnd = GET_RUNTIME_PARAM(TypeTag, Scalar, tEnd); }
+    try { tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd); }
     catch (...) {
-        std::string usageMessage = "\n\t -> Mandatory parameter '--t-end' not specified! <- \n\n\n\n";
+        std::string usageMessage = "\n\t -> Mandatory parameter '--T-end' not specified! <- \n\n\n\n";
                     usageMessage += usageTextBlock();
         usage(argv[0], usageMessage);
         throw;
     }
 
-    try { dt = GET_RUNTIME_PARAM(TypeTag, Scalar, dtInitial); }
+    try { dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial); }
     catch (...) {
-        std::string usageMessage = "\n\t -> Mandatory parameter '--dt-initial' not specified! <- \n\n\n\n";
+        std::string usageMessage = "\n\t -> Mandatory parameter '--Dt-initial' not specified! <- \n\n\n\n";
                     usageMessage += usageTextBlock();
         usage(argv[0], usageMessage);
         throw;

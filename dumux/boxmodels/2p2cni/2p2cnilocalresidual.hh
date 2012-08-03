@@ -75,7 +75,7 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        massUpwindWeight_ = GET_PARAM(TypeTag, Scalar, MassUpwindWeight);
+        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     };
 
     /*!

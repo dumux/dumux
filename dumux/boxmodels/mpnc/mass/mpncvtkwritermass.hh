@@ -67,7 +67,7 @@ public:
     MPNCVtkWriterMass(const Problem &problem)
         : ParentType(problem)
     {
-        fugacityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddFugacities);
+        fugacityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddFugacities);
     }
 
     /*!

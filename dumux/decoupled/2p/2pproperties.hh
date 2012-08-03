@@ -66,7 +66,8 @@ NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
 NEW_PROP_TAG( SpatialParameters ); //!< DEPRECATED The old type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The material law parameters (extracted from the spatial parameters)
-NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Formulation); //!< The formulation of the model
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the pressure model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
@@ -82,9 +83,14 @@ NEW_PROP_TAG( FluidState );//!< Defines the fluid state
 NEW_PROP_TAG( TwoPIndices );
 //! \endcond
 
-NEW_PROP_TAG( ErrorTermFactor ); //!< Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ErrorTermLowerBound );//!< Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ErrorTermUpperBound );//!< Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+NEW_PROP_TAG( ImpetErrorTermFactor ); //!< Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
+NEW_PROP_TAG( ErrorTermFactor ); //!< DEPRECATED Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
+
+NEW_PROP_TAG( ImpetErrorTermLowerBound );//!< Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+NEW_PROP_TAG( ErrorTermLowerBound );//!< DEPRECATED Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+
+NEW_PROP_TAG( ImpetErrorTermUpperBound );//!< Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
+NEW_PROP_TAG( ErrorTermUpperBound );//!< DEPRECATED Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
 }
 }
 
@@ -179,12 +185,17 @@ public:
 };
 
 //! Default error term factor
-SET_SCALAR_PROP(DecoupledTwoP, ErrorTermFactor, 0.5);
+SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermFactor, GET_PROP_VALUE(TypeTag, ErrorTermFactor));
+SET_SCALAR_PROP(DecoupledTwoP, ErrorTermFactor, 0.5);//DEPRECATED
 //! Default lower threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ErrorTermLowerBound, 0.1);
+SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermLowerBound, GET_PROP_VALUE(TypeTag, ErrorTermLowerBound));
+SET_SCALAR_PROP(DecoupledTwoP, ErrorTermLowerBound, 0.1);//DEPRECATED
 //! Default upper threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ErrorTermUpperBound, 0.9);
+SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermUpperBound, GET_PROP_VALUE(TypeTag, ErrorTermUpperBound));
+SET_SCALAR_PROP(DecoupledTwoP, ErrorTermUpperBound, 0.9);//DEPRECATED
 
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(DecoupledTwoP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 // \}
 }
 

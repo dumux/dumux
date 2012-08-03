@@ -8,9 +8,9 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-dtInitial = 250# [s]
-tEnd = 1000# [s]
-gridFile = ./grids/test_2p.dgf 
+TimeManager.DtInitial = 250# [s]
+TimeManager.TEnd = 1000# [s]
+Grid.File = ./grids/test_2p.dgf 
 
 [SpatialParams]
 lensLowerLeftX = 1.0 # [m] dimension of the lens (different properties therin) 

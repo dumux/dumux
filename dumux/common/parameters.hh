@@ -121,6 +121,7 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
 {
     typedef typename GET_PROP(TypeTag, ParameterTree) Params;
     const Dune::ParameterTree &rt = Params::runTimeParams();
+    const Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
 
     // loop over all keys of the current tree
     const Dune::ParameterTree::KeyVector &keys =
@@ -130,6 +131,8 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
 
         // check whether the key was accessed
         if (rt.hasKey(canonicalName))
+            continue;
+        else if (drt.hasKey(canonicalName))
             continue;
         unusedParams.push_back(canonicalName);
     }
@@ -147,6 +150,25 @@ void findUnusedKeys_(std::list<std::string> &unusedParams,
 
 }
 
+template <class TypeTag>
+bool hasDeprecatedKeys_(const Dune::ParameterTree &tree)
+{
+    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
+    const Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
+
+    // loop over all keys of the current tree
+    const Dune::ParameterTree::KeyVector &keys =
+        tree.getValueKeys();
+    for (unsigned int i = 0; i < keys.size(); ++i) {
+        std::string canonicalName = keys[i];
+
+        // check whether the key was accessed
+        if (drt.hasKey(canonicalName))
+            return true;
+    }
+    return false;
+}
+
 /*!
  * \ingroup Parameter
  * \brief Print the run- and compile-time parameters.
@@ -159,11 +181,24 @@ void print(std::ostream &os = std::cout)
     const Dune::ParameterTree &tree = Params::tree();
     const Dune::ParameterTree &rt = Params::runTimeParams();
     const Dune::ParameterTree &ct = Params::compileTimeParams();
+    const Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
+    const Dune::ParameterTree &unrt = Params::unusedNewRunTimeParams();
 
     os << "###############################\n";
     os << "# Run-time specified parameters:\n";
     os << "###############################\n";
     rt.report(os);
+
+    if (hasDeprecatedKeys_<TypeTag>(tree))
+    {
+    os << "###############################\n";
+    os << "# DEPRECATED Run-time specified parameters:\n";
+    os << "###############################\n";
+    drt.report(os);
+    os << "# Replace by:\n";
+    unrt.report(os);
+    }
+
     os << "###############################\n";
     os << "# Compile-time specified parameters:\n";
     os << "###############################\n";
@@ -342,16 +377,30 @@ private:
             canonicalName.insert(0, modelParamGroup);
         }
 
+        static ParamType value;
         // retrieve actual parameter from the parameter tree
         ParamType defaultValue = GET_PROP_VALUE_(TypeTag, PropTag);
-        static ParamType value = Params::tree().template get<ParamType>(canonicalName, defaultValue);
+        if (!Params::tree().hasKey(canonicalName) && Params::tree().hasKey(paramName))//functionality to catch deprecated params
+        {
+            value = Params::tree().template get<ParamType>(paramName, defaultValue);
+//            std::cout<<"\nWarning: Using the parameter: "<<paramName<<" without group name: "<<groupName<<" is deprecated!"<<"\n\n";
+        }
+        else
+            value = Params::tree().template get<ParamType>(canonicalName, defaultValue);
 
         // remember whether the parameter was taken from the parameter
         // tree or the default from the property system was taken.
         Dune::ParameterTree &rt = Params::runTimeParams();
         Dune::ParameterTree &ct = Params::compileTimeParams();
+        Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
+        Dune::ParameterTree &unrt = Params::unusedNewRunTimeParams();
         if (Params::tree().hasKey(canonicalName)) {
             rt[canonicalName] = Params::tree()[canonicalName];
+        }
+        else if (Params::tree().hasKey(paramName))//functionality to catch deprecated params
+        {
+            drt[paramName] = Params::tree()[paramName];
+            unrt[canonicalName] = Params::tree()[paramName];
         }
         else {
             std::string s;
@@ -409,27 +458,49 @@ private:
         // cache parameters using a hash_map (Dune::Parameter tree is slow!)
         typedef std::tr1::unordered_map<std::string, ParamType> ParamCache;
         static ParamCache paramCache;
-        const typename ParamCache::iterator &it = paramCache.find(canonicalName);
+        typename ParamCache::iterator it = paramCache.find(canonicalName);
         if (it != paramCache.end())
             return it->second;
 
+        it = paramCache.find(paramName);
+        if (it != paramCache.end())
+                    return it->second;
+
         // retrieve actual parameter from the parameter tree
-        if (!Params::tree().hasKey(canonicalName)) {
+        if (!Params::tree().hasKey(canonicalName) && !Params::tree().hasKey(paramName)) {
             DUNE_THROW(Dumux::ParameterException,
                        "Mandatory parameter '" << canonicalName
                        << "' was not specified");
         }
 
         // update the cache
-        ParamType value = Params::tree().template get<ParamType>(canonicalName);
-        paramCache[canonicalName] = value;
+        ParamType value;
+        if (!Params::tree().hasKey(canonicalName) && Params::tree().hasKey(paramName))//functionality to catch deprecated params
+        {
+            value = Params::tree().template get<ParamType>(paramName);
+            paramCache[paramName] = value;
 
-        // remember whether the parameter was taken from the parameter
-        // tree or the default from the property system was taken.
-        Dune::ParameterTree &rt = Params::runTimeParams();
-        rt[canonicalName] = Params::tree()[canonicalName];
+            // remember whether the parameter was taken from the parameter
+            // tree or the default from the property system was taken.
+            Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
+            Dune::ParameterTree &unrt = Params::unusedNewRunTimeParams();
 
-        return paramCache[canonicalName];
+            drt[paramName] = Params::tree()[paramName];
+            unrt[canonicalName] = Params::tree()[paramName];
+            return paramCache[paramName];
+        }
+        else
+        {
+            value = Params::tree().template get<ParamType>(canonicalName);
+            paramCache[canonicalName] = value;
+
+            // remember whether the parameter was taken from the parameter
+            // tree or the default from the property system was taken.
+            Dune::ParameterTree &rt = Params::runTimeParams();
+
+            rt[canonicalName] = Params::tree()[canonicalName];
+            return paramCache[canonicalName];
+        }
     }
 };
 

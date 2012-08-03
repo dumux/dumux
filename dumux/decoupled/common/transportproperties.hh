@@ -51,11 +51,16 @@ NEW_TYPE_TAG(Transport, INHERITS_FROM(DecoupledModel));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( TransportSolutionType);
 NEW_PROP_TAG( EvalCflFluxFunction ); //!< Type of the evaluation of the CFL-condition
-NEW_PROP_TAG( CFLFactor );
-NEW_PROP_TAG( SwitchNormals );
+NEW_PROP_TAG( ImpetCFLFactor );
+NEW_PROP_TAG( CFLFactor );//DEPRECATED
+NEW_PROP_TAG( ImpetSwitchNormals );
+NEW_PROP_TAG( SwitchNormals );//DEPRECATED
 
-SET_SCALAR_PROP(Transport, CFLFactor, 1.0);
-SET_BOOL_PROP(Transport, SwitchNormals, false);
+SET_SCALAR_PROP(Transport, ImpetCFLFactor, GET_PROP_VALUE(TypeTag, CFLFactor));
+SET_SCALAR_PROP(Transport, CFLFactor, 1.0);//DEPRECATED
+
+SET_BOOL_PROP(Transport, ImpetSwitchNormals, GET_PROP_VALUE(TypeTag, SwitchNormals));
+SET_BOOL_PROP(Transport, SwitchNormals, false);//DEPRECATED
 
 /*!
  * \brief Default implementation for the Vector of the transportet quantity

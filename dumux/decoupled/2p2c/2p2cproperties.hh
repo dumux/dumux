@@ -69,20 +69,26 @@ NEW_TYPE_TAG(DecoupledTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 NEW_PROP_TAG( Indices );
 NEW_PROP_TAG( SpatialParams ); //!< The type of the soil properties object
 NEW_PROP_TAG( SpatialParameters ); //!< DEPRECATED The old type of the soil properties object
-NEW_PROP_TAG( EnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG( EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the model
 NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
 NEW_PROP_TAG( EnableCompressibility); //!< Returns whether compressibility is allowed
 NEW_PROP_TAG( EnableCapillarity); //!< Returns whether capillarity is regarded
 NEW_PROP_TAG( BoundaryMobility ); //!< Returns whether mobility or saturation is used for Dirichlet B.C.
-NEW_PROP_TAG( RestrictFluxInTransport ); //!< Restrict flux if direction reverses after pressure equation
-NEW_PROP_TAG( ErrorTermFactor ); //!< Damping factor \f$ \alpha \f$ in pressure equation
-NEW_PROP_TAG( ErrorTermLowerBound ); //!< Upper bound for regularized error damping
-NEW_PROP_TAG( ErrorTermUpperBound ); //!< Lower bound where error is not corrected
+NEW_PROP_TAG( ImpetRestrictFluxInTransport ); //!< Restrict flux if direction reverses after pressure equation
+NEW_PROP_TAG( RestrictFluxInTransport ); //!< DEPRECATED Restrict flux if direction reverses after pressure equation
+NEW_PROP_TAG( ImpetErrorTermFactor ); //!< Damping factor \f$ \alpha \f$ in pressure equation
+NEW_PROP_TAG( ErrorTermFactor ); //!< DEPRECATED Damping factor \f$ \alpha \f$ in pressure equation
+NEW_PROP_TAG( ImpetErrorTermLowerBound ); //!< Upper bound for regularized error damping
+NEW_PROP_TAG( ErrorTermLowerBound ); //!< DEPRECATED Upper bound for regularized error damping
+NEW_PROP_TAG( ImpetErrorTermUpperBound ); //!< Lower bound where error is not corrected
+NEW_PROP_TAG( ErrorTermUpperBound ); //!< DEPRECATED Lower bound where error is not corrected
 NEW_PROP_TAG( FluidSystem ); //!< The fluid system
 NEW_PROP_TAG( FluidState ); //!< The fluid state
-NEW_PROP_TAG( EnableVolumeIntegral ); //!< Enables volume integral in the pressure equation (volume balance formulation)
+NEW_PROP_TAG( ImpetEnableVolumeIntegral ); //!< Enables volume integral in the pressure equation (volume balance formulation)
+NEW_PROP_TAG( EnableVolumeIntegral ); //!< DEPRECATED Enables volume integral in the pressure equation (volume balance formulation)
 NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); //!< Two-point flux approximation (false) or mpfa (true)
 NEW_PROP_TAG( EnableSecondHalfEdge ); //!< Uses second interaction volume for second half-edge in 2D
 
@@ -149,7 +155,8 @@ SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true); //!< Compositional models are very likely compressible
 SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
-SET_BOOL_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, false); //!< Restrict (no upwind) flux in transport step if direction reverses after pressure equation
+SET_BOOL_PROP(DecoupledTwoPTwoC, ImpetRestrictFluxInTransport, GET_PROP_VALUE(TypeTag, RestrictFluxInTransport)); //!< Restrict (no upwind) flux in transport step if direction reverses after pressure equation
+SET_BOOL_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, false); //!< DEPRECATED Restrict (no upwind) flux in transport step if direction reverses after pressure equation
 
 SET_PROP(DecoupledTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Dirichlet B.C.
 {    static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;};
@@ -162,11 +169,18 @@ SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));//!< DEPRECATED SpatialParameters property
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false); //!< MPFA disabled on adaptive grids
-SET_BOOL_PROP(DecoupledTwoPTwoC, EnableVolumeIntegral, true); //!< Regard volume integral in pressure equation
+SET_BOOL_PROP(DecoupledTwoPTwoC, ImpetEnableVolumeIntegral, GET_PROP_VALUE(TypeTag,EnableVolumeIntegral)); //!< Regard volume integral in pressure equation
+SET_BOOL_PROP(DecoupledTwoPTwoC, EnableVolumeIntegral, true); //!< DEPRECATED Regard volume integral in pressure equation
 
+SET_SCALAR_PROP(DecoupledTwoPTwoC, ImpetErrorTermFactor, GET_PROP_VALUE(TypeTag, ErrorTermFactor)); //!< Damping factor \f$ \alpha \f$ in pressure equation
 SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermFactor, 0.5); //!< Damping factor \f$ \alpha \f$ in pressure equation
+SET_SCALAR_PROP(DecoupledTwoPTwoC, ImpetErrorTermLowerBound, GET_PROP_VALUE(TypeTag, ErrorTermLowerBound)); //!< Lower bound where error is not corrected
 SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermLowerBound, 0.2); //!< Lower bound where error is not corrected
+SET_SCALAR_PROP(DecoupledTwoPTwoC, ImpetErrorTermUpperBound, GET_PROP_VALUE(TypeTag, ErrorTermUpperBound)); //!< Upper bound for regularized error damping
 SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermUpperBound, 0.9); //!< Upper bound for regularized error damping
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(DecoupledTwoPTwoC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 }
 
 /*!

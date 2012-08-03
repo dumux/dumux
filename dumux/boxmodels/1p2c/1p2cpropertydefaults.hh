@@ -70,7 +70,8 @@ SET_TYPE_PROP(BoxOnePTwoC, VolumeVariables, OnePTwoCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxOnePTwoC, FluxVariables, OnePTwoCFluxVariables<TypeTag>);
 
 //! set default upwind weight to 1.0, i.e. fully upwind
-SET_SCALAR_PROP(BoxOnePTwoC, UpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxOnePTwoC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, UpwindWeight));
+SET_SCALAR_PROP(BoxOnePTwoC, UpwindWeight, 1.0);//DEPRECATED!!
 
 //! Set the indices used by the 1p2c model
 SET_TYPE_PROP(BoxOnePTwoC, Indices, Dumux::OnePTwoCIndices<TypeTag, 0>);
@@ -83,6 +84,9 @@ SET_TYPE_PROP(BoxOnePTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, Sp
 
 //! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(BoxOnePTwoC, PhaseIdx, 0);
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(BoxOnePTwoC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 }
 // \}
 }

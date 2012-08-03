@@ -71,7 +71,7 @@ class MPNCFluxVariables
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {enableKineticEnergy = GET_PROP_VALUE(TypeTag, EnableKineticEnergy)};
-    enum {enableGravity = GET_PROP_VALUE(TypeTag, EnableGravity)};
+    enum {enableGravity = GET_PROP_VALUE(TypeTag, ProblemEnableGravity)};
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;

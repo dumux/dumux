@@ -75,7 +75,8 @@ NEW_PROP_TAG(NewtonWriteConvergence);
 
 //! Specifies whether the Jacobian matrix should only be reassembled
 //! if the current solution deviates too much from the evaluation point
-NEW_PROP_TAG(EnablePartialReassemble);
+NEW_PROP_TAG(ImplicitEnablePartialReassemble);
+NEW_PROP_TAG(EnablePartialReassemble);//DEPRECATED
 
 /*!
  * \brief Specifies whether the update should be done using the line search
@@ -172,8 +173,8 @@ public:
         , convergenceWriter_(asImp_())
         , linearSolver_(problem)
     {
-        enablePartialReassemble_ = GET_PARAM(TypeTag, bool, EnablePartialReassemble);
-        enableJacobianRecycling_ = GET_PARAM(TypeTag, bool, EnableJacobianRecycling);
+        enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
+        enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
 
         useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
         enableRelativeCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableRelativeCriterion);

@@ -195,7 +195,7 @@ public:
         totalConcentration_[wCompIdx].resize(problem.gridView().size(0));
         totalConcentration_[nCompIdx].resize(problem.gridView().size(0));
 
-        restrictFluxInTransport_ = GET_PARAM(TypeTag,bool, RestrictFluxInTransport);
+        restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,bool, Impet, RestrictFluxInTransport);
     }
 
     virtual ~FVTransport2P2C()
@@ -302,7 +302,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         }
     } // end grid traversal
     if(impet)
-        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PARAM(TypeTag, Scalar, CFLFactor)<< std::endl;
+        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
     return;
 }
 /*	Updates the transported quantity once an update is calculated.

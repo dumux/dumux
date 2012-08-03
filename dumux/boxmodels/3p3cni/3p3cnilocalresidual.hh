@@ -153,7 +153,7 @@ public:
         // advective mass flux
         ParentType::computeAdvectiveFlux(flux, fluxData);
 
-        static const Scalar massUpwindWeight = GET_PROP_VALUE(TypeTag, MassUpwindWeight);
+        static const Scalar massUpwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
 
         // advective heat flux in all phases
         flux[energyEqIdx] = 0;

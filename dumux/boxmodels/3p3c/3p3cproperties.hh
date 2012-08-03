@@ -63,8 +63,10 @@ NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extracted from the spatial parameters)
 
-NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(MassUpwindWeight); //!< The value of the upwind parameter for the mobility
+NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
+NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
+NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind parameter for the mobility
+NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the upwind parameter for the mobility
 NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether a constraint solver should be used explicitly
 }
 }

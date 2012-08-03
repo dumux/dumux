@@ -69,7 +69,7 @@ public:
     MPNCVtkWriterEnergy(const Problem &problem)
         : ParentType(problem)
     {
-        temperatureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddTemperatures);
+        temperatureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddTemperatures);
     }
 
     /*!
@@ -151,9 +151,9 @@ public:
     MPNCVtkWriterEnergy(const Problem &problem)
         : ParentType(problem)
     {
-        temperatureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddTemperatures);
-        enthalpyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddEnthalpies);
-        internalEnergyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPNC, VtkAddInternalEnergies);
+        temperatureOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddTemperatures);
+        enthalpyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddEnthalpies);
+        internalEnergyOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddInternalEnergies);
     }
 
     /*!

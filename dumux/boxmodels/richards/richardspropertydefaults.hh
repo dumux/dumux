@@ -73,6 +73,7 @@ SET_TYPE_PROP(BoxRichards, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
 
 //! The upwind weight for the mass conservation equations
+SET_SCALAR_PROP(BoxRichards, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
 SET_SCALAR_PROP(BoxRichards, MassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
@@ -153,6 +154,9 @@ public:
                                                 WettingPhase,
                                                 NonwettingPhase> type;
 };
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(BoxRichards, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 
 // \}
 }

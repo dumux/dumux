@@ -178,7 +178,7 @@ public:
      * \param problem A problem class object
      */
     FVTransport(Problem& problem) :
-            problem_(problem), switchNormals_(GET_PARAM(TypeTag, bool, SwitchNormals))
+            problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
     {
         evalCflFluxFunction_ = new EvalCflFluxFunction(problem);
     }

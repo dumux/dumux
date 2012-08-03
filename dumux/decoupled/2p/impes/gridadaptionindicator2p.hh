@@ -193,8 +193,8 @@ public:
     GridAdaptionIndicator2P (Problem& problem):
         problem_(problem)
     {
-        refinetol_ = GET_PARAM(TypeTag, Scalar, RefineTolerance);
-        coarsentol_ = GET_PARAM(TypeTag, Scalar, CoarsenTolerance);
+        refinetol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineTolerance);
+        coarsentol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenTolerance);
     }
 
 private:

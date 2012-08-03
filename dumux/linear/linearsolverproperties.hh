@@ -58,13 +58,16 @@ NEW_PROP_TAG(LinearSolverResidualReduction);
 NEW_PROP_TAG(LinearSolverMaxIterations);
 
 //! relaxation parameter for the preconditioner
-NEW_PROP_TAG(PreconditionerRelaxation);
+NEW_PROP_TAG(LinearSolverPreconditionerRelaxation);
+NEW_PROP_TAG(PreconditionerRelaxation);//DEPRECATED
 
 //! number of preconditioner iterations per solver iteration
-NEW_PROP_TAG(PreconditionerIterations);
+NEW_PROP_TAG(LinearSolverPreconditionerIterations);
+NEW_PROP_TAG(PreconditionerIterations);//DEPRECATED
 
 //! restart parameter for GMRes
-NEW_PROP_TAG(GMResRestart);
+NEW_PROP_TAG(LinearSolverGMResRestart);
+NEW_PROP_TAG(GMResRestart);//DEPRECATED
 
 //! Size of the matrix/vector blocks
 /*!
@@ -78,13 +81,16 @@ NEW_PROP_TAG(LinearSolverBlockSize);
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverVerbosity, 0);
 
 //! set the preconditioner relaxation parameter to 1.0 by default
-SET_SCALAR_PROP(LinearSolverTypeTag, PreconditionerRelaxation, 1.0);
+SET_SCALAR_PROP(LinearSolverTypeTag, LinearSolverPreconditionerRelaxation, GET_PROP_VALUE(TypeTag, PreconditionerRelaxation));
+SET_SCALAR_PROP(LinearSolverTypeTag, PreconditionerRelaxation, 1.0);//DEPRECATED
 
 //! set the preconditioner iterations to 1 by default
-SET_INT_PROP(LinearSolverTypeTag, PreconditionerIterations, 1);
+SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerIterations, GET_PROP_VALUE(TypeTag, PreconditionerIterations));
+SET_INT_PROP(LinearSolverTypeTag, PreconditionerIterations, 1);//DEPRECATED
 
 //! set the GMRes restart parameter to 10 by default
-SET_INT_PROP(LinearSolverTypeTag, GMResRestart, 10);
+SET_INT_PROP(LinearSolverTypeTag, LinearSolverGMResRestart, GET_PROP_VALUE(TypeTag, GMResRestart));
+SET_INT_PROP(LinearSolverTypeTag, GMResRestart, 10);//DEPRECATED
 
 } // namespace Properties
 } // namespace Dumux

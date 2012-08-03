@@ -160,7 +160,7 @@ public:
             ParentType(timeManager, gridView), eps_(1e-6)
     {
         GridCreator::grid().setClosureType(Grid::ClosureType::NONE);
-        GridCreator::grid().globalRefine(GET_PARAM(TypeTag, int, MaxLevel));
+        GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
         this->setGrid(GridCreator::grid());
 
         this->setOutputInterval(10);
@@ -239,7 +239,7 @@ public:
         values = 0;
         if (globalPos[0] < eps_)
         {
-            if (GET_PARAM(TypeTag, bool, EnableGravity))
+            if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             {
                 Scalar pRef = referencePressureAtPos(globalPos);
                 Scalar temp = temperatureAtPos(globalPos);

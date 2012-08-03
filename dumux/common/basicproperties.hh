@@ -77,6 +77,9 @@ NEW_PROP_TAG(ModelParameterGroup);
 //! Property which provides a GridCreator (manages grids)
 NEW_PROP_TAG(GridCreator);
 
+//! Property to define the output level
+NEW_PROP_TAG(VtkOutputLevel);
+
 ///////////////////////////////////
 // Default values for properties:
 //
@@ -109,6 +112,18 @@ SET_PROP(NumericModel, ParameterTree)
         static Dune::ParameterTree obj_;
         return obj_;
     };
+
+    static Dune::ParameterTree &deprecatedRunTimeParams()
+    {
+        static Dune::ParameterTree obj_;
+        return obj_;
+    };
+
+    static Dune::ParameterTree &unusedNewRunTimeParams()
+    {
+        static Dune::ParameterTree obj_;
+        return obj_;
+    };
 };
 
 //! use the global group as default for the model's parameter group
@@ -116,6 +131,9 @@ SET_STRING_PROP(NumericModel, ModelParameterGroup, "");
 
 //! Use the DgfGridCreator by default
 SET_TYPE_PROP(NumericModel, GridCreator, Dumux::DgfGridCreator<TypeTag>);
+
+//! Set default output level to 0 -> only primary variables are added to output
+SET_INT_PROP(NumericModel, VtkOutputLevel, 0);
 
 } // namespace Properties
 } // namespace Dumux

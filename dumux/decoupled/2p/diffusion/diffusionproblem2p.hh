@@ -85,7 +85,7 @@ public:
         spatialParams_ = new SpatialParams(gridView);
         newSpatialParams_ = true;
         gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
     }
     /*!
@@ -100,7 +100,7 @@ public:
     {
         newSpatialParams_ = false;
         gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
     }
 
@@ -115,7 +115,7 @@ public:
         spatialParams_ = new SpatialParams(gridView);
         newSpatialParams_ = true;
         gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
     }
     /*!
@@ -129,7 +129,7 @@ public:
     {
         newSpatialParams_ = false;
         gravity_ = 0;
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             gravity_[dim - 1] = -9.81;
     }
 

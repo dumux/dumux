@@ -81,7 +81,8 @@ SET_TYPE_PROP(BoxOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, Spatia
 
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);
+SET_SCALAR_PROP(BoxOneP, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, UpwindWeight));
+SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);//DEPRECATED
 
 //! weight for the upwind mobility in the velocity calculation
 SET_SCALAR_PROP(BoxOneP, MobilityUpwindWeight, 1.0);
@@ -95,6 +96,9 @@ SET_PROP(BoxOneP, Fluid)
 public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
+
+//Has to be removed if DEPRECATED EnableGravity is removed!
+SET_BOOL_PROP(BoxOneP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
 
 // \}
 } // end namepace Properties

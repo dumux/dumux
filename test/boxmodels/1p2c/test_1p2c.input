@@ -8,9 +8,9 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-dtInitial = 1 # seconds
-tEnd = 100 # seconds
-gridFile = ./grids/test_1p2c.dgf
+TimeManager.DtInitial = 1 # seconds
+TimeManager.TEnd = 100 # seconds
+Grid.File = ./grids/test_1p2c.dgf
 
 #########################################################################
 # Simulation restart

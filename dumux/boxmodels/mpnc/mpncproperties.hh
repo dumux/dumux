@@ -62,30 +62,55 @@ NEW_PROP_TAG(MPNCVtkCustomModule); //!< Vtk writer module for writing the user-s
 NEW_PROP_TAG(VelocityAveragingInModel);//!< Should the averaging of velocities be done in the model?
 
 //! specify which quantities are written to the vtk output files
-NEW_PROP_TAG(MPNCVtkAddPorosity);
-NEW_PROP_TAG(MPNCVtkAddBoundaryTypes);
-NEW_PROP_TAG(MPNCVtkAddSaturations);
-NEW_PROP_TAG(MPNCVtkAddPressures);
-NEW_PROP_TAG(MPNCVtkAddVarPressures);
-NEW_PROP_TAG(MPNCVtkAddVelocities);
-NEW_PROP_TAG(MPNCVtkAddDensities);
-NEW_PROP_TAG(MPNCVtkAddMobilities);
-NEW_PROP_TAG(MPNCVtkAddAverageMolarMass);
-NEW_PROP_TAG(MPNCVtkAddMassFractions);
-NEW_PROP_TAG(MPNCVtkAddMoleFractions);
-NEW_PROP_TAG(MPNCVtkAddMolarities);
-NEW_PROP_TAG(MPNCVtkAddFugacities);
-NEW_PROP_TAG(MPNCVtkAddFugacityCoefficients);
-NEW_PROP_TAG(MPNCVtkAddTemperatures);
-NEW_PROP_TAG(MPNCVtkAddEnthalpies);
-NEW_PROP_TAG(MPNCVtkAddInternalEnergies);
+NEW_PROP_TAG(VtkAddPorosity);
+NEW_PROP_TAG(VtkAddBoundaryTypes);
+NEW_PROP_TAG(VtkAddSaturations);
+NEW_PROP_TAG(VtkAddPressures);
+NEW_PROP_TAG(VtkAddVarPressures);
+NEW_PROP_TAG(VtkAddVelocities);
+NEW_PROP_TAG(VtkAddDensities);
+NEW_PROP_TAG(VtkAddMobilities);
+NEW_PROP_TAG(VtkAddAverageMolarMass);
+NEW_PROP_TAG(VtkAddMassFractions);
+NEW_PROP_TAG(VtkAddMoleFractions);
+NEW_PROP_TAG(VtkAddMolarities);
+NEW_PROP_TAG(VtkAddFugacities);
+NEW_PROP_TAG(VtkAddFugacityCoefficients);
+NEW_PROP_TAG(VtkAddTemperatures);
+NEW_PROP_TAG(VtkAddEnthalpies);
+NEW_PROP_TAG(VtkAddInternalEnergies);
 
-NEW_PROP_TAG(MPNCVtkAddxEquil);
+NEW_PROP_TAG(VtkAddxEquil);
 
-NEW_PROP_TAG(MPNCVtkAddReynolds);
-NEW_PROP_TAG(MPNCVtkAddPrandtl);
-NEW_PROP_TAG(MPNCVtkAddNusselt);
-NEW_PROP_TAG(MPNCVtkAddInterfacialArea);
+NEW_PROP_TAG(VtkAddReynolds);
+NEW_PROP_TAG(VtkAddPrandtl);
+NEW_PROP_TAG(VtkAddNusselt);
+NEW_PROP_TAG(VtkAddInterfacialArea);
+
+NEW_PROP_TAG(MPNCVtkAddPorosity);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddBoundaryTypes);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddSaturations);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddPressures);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddVarPressures);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddVelocities);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddDensities);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddMobilities);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddAverageMolarMass);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddMassFractions);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddMoleFractions);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddMolarities);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddFugacities);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddFugacityCoefficients);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddTemperatures);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddEnthalpies);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddInternalEnergies);//DEPRECATED
+
+NEW_PROP_TAG(MPNCVtkAddxEquil);//DEPRECATED
+
+NEW_PROP_TAG(MPNCVtkAddReynolds);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddPrandtl);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddNusselt);//DEPRECATED
+NEW_PROP_TAG(MPNCVtkAddInterfacialArea);//DEPRECATED
 
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
@@ -113,12 +138,15 @@ NEW_PROP_TAG(EnableKinetic);
 NEW_PROP_TAG(EnableKineticEnergy);
 
 //! Enable gravity?
-NEW_PROP_TAG(EnableGravity);
+NEW_PROP_TAG(ProblemEnableGravity);
+NEW_PROP_TAG(EnableGravity);//DEPRECATED
 
 //! Use the smooth upwinding method?
-NEW_PROP_TAG(EnableSmoothUpwinding);
+NEW_PROP_TAG(ImplicitEnableSmoothUpwinding);
+NEW_PROP_TAG(EnableSmoothUpwinding);//DEPRECATED
 
-NEW_PROP_TAG(MassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
+NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the weight of the upwind direction in the mass conservation equations
+NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 NEW_PROP_TAG(MobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 
 //! Chop the Newton update at the beginning of the non-linear solver?
