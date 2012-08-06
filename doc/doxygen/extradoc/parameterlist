@@ -79,7 +79,7 @@
 	* \subsection problemParams [Problem]  
 	*	-# EnableGravity    (bool) 	     
 	*
-	* \section listofpropparams Pure run-time parameters
+	* \section listofpropparamsRT Pure run-time parameters
 	* \subsection gridParamsRT [Grid]
 	*	-# UpperRightX    (double)
 	*	-# UpperRightY    (double)
