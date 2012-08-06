@@ -1,0 +1,99 @@
+"Run-time with property default:"
+
+[Implicit]    "Parameter Type"
+MassUpwindWeight    double
+EnableHints    bool
+EnableJacobianRecycling    bool
+EnablePartialReassemble    bool
+EnableSmoothUpwinding    bool
+NumericDifferenceMethod    int
+
+[Vtk]
+OutputLevel    int
+AddVelocity    bool
+AddTemperatures    bool
+AddTemperatures    bool
+AddEnthalpies    bool
+AddInternalEnergies    bool
+AddFugacities    bool
+AddPorosity    bool
+AddBoundaryTypes    bool
+AddSaturations    bool
+AddPressures    bool
+AddVelocities    bool
+AddDensities    bool
+AddMobilities    bool
+AddAverageMolarMass    bool
+AddMassFractions    bool
+AddMoleFractions    bool
+AddMolarities    bool
+
+[Impet]
+ErrorTermFactor    double
+ErrorTermLowerBound    double
+ErrorTermUpperBound    double
+SwitchNormals    bool
+CFLFactor    double
+EnableVolumeIntegral    bool
+RestrictFluxInTransport    bool
+IterationFlag    int
+IterationNumber    int
+MaximumDefect    double
+RelaxationFactor    double
+
+[GridAdapt]
+RefineTolerance    double
+CoarsenTolerance    double
+MinLevel    int
+MaxLevel    int
+AdaptionInterval    int
+EnableInitializationIndicator    bool
+
+[Stokes]
+StabilizationAlpha    double
+StabilizationBeta    double
+
+[TimeManager]
+MaxTimeStepSize    double
+
+[Problem]
+EnableGravity    bool
+
+[LinearSolver]
+PreconditionerRelaxation    double
+PreconditionerIterations    int
+Verbosity    int
+MaxIterations    int
+GMResRestart    int
+ResidualReduction    double
+
+[Newton]
+EnableRelativeCriterion    bool
+EnableAbsoluteCriterion    bool
+SatisfyAbsAndRel    bool
+RelTolerance    double
+AbsTolerance    double
+TargetSteps    int
+MaxSteps    int
+WriteConvergence    bool
+UseLineSearch    bool
+EnableChop    bool
+
+"Pure run-time:"
+
+[Grid]
+UpperRightX    double
+UpperRightY    double
+UpperRightZ    double
+NumberOfCellsX    int
+NumberOfCellsY    int
+NumberOfCellsZ    int
+File    string
+
+[TimeManager]
+ParameterFile    string
+PrintProperties    bool
+Restart    double
+PrintParameters    bool
+TEnd    double
+DtInitial    double

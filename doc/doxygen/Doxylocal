@@ -11,7 +11,8 @@ INPUT                 += @srcdir@/mainpage \
 						 @srcdir@/modules \
 						 @top_srcdir@/dumux \
 						 @top_srcdir@/test \
-						 @top_srcdir@/tutorial
+						 @top_srcdir@/tutorial \
+						 @srcdir@/extradoc/parameterlist
 						 
 IMAGE_PATH             = @srcdir@/images
 					 

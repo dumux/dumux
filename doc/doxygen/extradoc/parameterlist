@@ -1,0 +1,101 @@
+/*! 
+	*\file
+	*\ingroup Parameter
+	*
+	*\brief List of currently useable run-time parameters
+	*
+	* The listed run-time parameters are in general available, but we point out that a certain model might not use 
+	* every parameter!
+	*
+	* \section listofpropparams Run-time parameters with property values as default    
+	* \subsection implicitParams [Implicit]
+	*	-# MassUpwindWeight    (double)
+	*	-# EnableHints    (bool)
+	*	-# EnableJacobianRecycling    (bool)
+	*	-# EnablePartialReassemble    (bool)
+	*	-# EnableSmoothUpwinding    (bool)
+	*	-# NumericDifferenceMethod    (int)
+	* \subsection impetParams [IMPET]
+	*	-# ErrorTermFactor    (double)
+	*	-# ErrorTermLowerBound    (double)
+	*	-# ErrorTermUpperBound    (double)
+	*	-# SwitchNormals    (bool)
+	*	-# CFLFactor    (double)
+	*	-# EnableVolumeIntegral    (bool)
+	*	-# RestrictFluxInTransport    (bool)
+	*	-# IterationFlag    (int)
+	*	-# IterationNumber    (int)
+	*	-# MaximumDefect    (double)
+	*	-# RelaxationFactor    (double)
+	* \subsection freeflowParams [Stokes]
+	*	-# StabilizationAlpha    (double)
+	*	-# StabilizationBeta    (double)
+	* \subsection timeManager [TimeManager]
+	*	-#  MaxTimeStepSize
+	* \subsection linearParams [LinearSolver]
+	*	-# PreconditionerRelaxation    (double)
+	*	-# PreconditionerIterations    (int)
+	*	-# Verbosity    (int)
+	*	-# MaxIterations    (int)
+	*	-# GMResRestart    (int)
+	*	-# ResidualReduction    (double)	
+	* \subsection nonlinearParams [Newton]
+	*	-# EnableRelativeCriterion    (bool)
+	*	-# EnableAbsoluteCriterion    (bool)
+	*	-# SatisfyAbsAndRel    (bool)
+	*	-# RelTolerance    (double)
+	*	-# AbsTolerance    (double)
+	*	-# TargetSteps    (int)
+	*	-# MaxSteps    (int)
+	*	-# WriteConvergence    (bool)
+	*	-# UseLineSearch    (bool)
+	*	-# EnableChop    (bool)
+	* \subsection adaptiveParams [GridAdapt]
+	*	-# RefineTolerance    (double)
+	*	-# CoarsenTolerance    (double)
+	*	-# MinLevel    (int)
+	*	-# MaxLevel    (int)
+	*	-# AdaptionInterval    (int)
+	*	-# EnableInitializationIndicator    (bool)	
+	* \subsection vtkParams [VTK]
+		OutputLevel    (int)
+	*	-# AddVelocity    (bool)
+	*	-# AddTemperatures    (bool)
+	*	-# AddTemperatures    (bool)
+	*	-# AddEnthalpies    (bool)
+	*	-# AddInternalEnergies    (bool)
+	*	-# AddFugacities    (bool)
+	*	-# AddPorosity    (bool)
+	*	-# AddBoundaryTypes    (bool)
+	*	-# AddSaturations    (bool)
+	*	-# AddPressures    (bool)
+	*	-# AddVelocities    (bool)
+	*	-# AddDensities    (bool)
+	*	-# AddMobilities    (bool)
+	*	-# AddAverageMolarMass    (bool)
+	*	-# AddMassFractions    (bool)
+	*	-# AddMoleFractions    (bool)
+	*	-# AddMolarities    (bool)
+	* \subsection problemParams [Problem]  
+	*	-# EnableGravity    (bool) 	     
+	*
+	* \section listofpropparams Pure run-time parameters
+	* \subsection gridParamsRT [Grid]
+	*	-# UpperRightX    (double)
+	*	-# UpperRightY    (double)
+	*	-# UpperRightZ    (double)	
+	*	-# NumberOfCellsX    (int)
+	*	-# NumberOfCellsY    (int)
+	*	-# NumberOfCellsZ    (int)
+	*	-# File    (string) 	
+	* \subsection timeManagerRT [TimeManager]
+	*	-# ParameterFile    (string)
+	*	-# PrintProperties    (bool)
+	*	-# Restart    (double)
+	*	-# PrintParameters    (bool)
+	*	-# TEnd    (double)
+	*	-# DtInitial    (double) 	
+	* \subsection problemParamsRT [Problem] 
+	* \subsection spatialParamsParamsRT [SpatialParams]
+	*
+*/
