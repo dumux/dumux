@@ -13,6 +13,7 @@ DtInitial = 1.0 # seconds
 MaxTimeStepSize = 10.0 # seconds
 TEnd = 30.0 # seconds
 
+############################################################
 [Grid]
 File = ./grids/test_navierstokes.dgf
 

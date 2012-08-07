@@ -63,20 +63,20 @@ public:
     {
         try
         {
-            lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftX);
+            lensLowerLeft_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
             if (dim > 1)
-                lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftY);
+                lensLowerLeft_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftY);
             if (dim > 2)
-                lensLowerLeft_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensLowerLeftZ);
+                lensLowerLeft_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftZ);
 
-            lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightX);
+            lensUpperRight_[0] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightX);
             if (dim > 1)
-                lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightY);
+                lensUpperRight_[1] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightY);
             if (dim > 2)
-                lensUpperRight_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.lensUpperRightZ);
+                lensUpperRight_[2] = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightZ);
 
-            permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.permeability);
-            permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.permeabilityLens);
+            permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
+            permeabilityLens_=GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";

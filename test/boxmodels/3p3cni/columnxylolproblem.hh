@@ -54,7 +54,7 @@ NEW_TYPE_TAG(ColumnProblem, INHERITS_FROM(BoxThreePThreeCNI, ColumnSpatialParams
 // Set the grid type
 SET_PROP(ColumnProblem, Grid)
 {
-    typedef Dune::YaspGrid<2> type;
+    typedef Dune::SGrid<2,2> type;
 };
 
 // Set the problem property

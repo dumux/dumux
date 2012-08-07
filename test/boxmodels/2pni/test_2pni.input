@@ -8,9 +8,11 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-TimeManager.DtInitial = 250# [s]
-TimeManager.TEnd = 1e4# [s]
+[TimeManager]
+DtInitial = 250# [s]
+TEnd = 1e4# [s]
 
+############################################################
 [Grid]
 NumberOfCellsX = 24# [-] resolution in x-direction
 NumberOfCellsY = 16# [-] resolution in y-direction

@@ -52,7 +52,7 @@ namespace Properties
 NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards, RichardsLensSpatialParams));
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::SGrid<2,2>);
 
 // Set the physical problem to be solved
 SET_PROP(RichardsLensProblem, Problem)

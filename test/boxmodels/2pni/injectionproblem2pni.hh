@@ -35,7 +35,6 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #endif
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dumux/common/simplexgridcreator.hh>
 #include <dumux/common/cubegridcreator.hh>
 
@@ -79,7 +78,7 @@ SET_PROP(InjectionProblem2PNI, Grid)
 #if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
-    typedef Dune::YaspGrid<2> type;
+    typedef Dune::SGrid<2,2> type;
 #endif
 };
 

@@ -8,9 +8,13 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-TimeManager.DtInitial = 60# [s]
-TimeManager.TEnd = 864000# [s]
-Grid.File = ./grids/test_3p3c.dgf
+[TimeManager]
+DtInitial = 60# [s]
+TEnd = 864000# [s]
+
+############################################################
+[Grid]
+File = ./grids/test_3p3c.dgf
 
 ####################################################################
 # Simulation restart

@@ -12,6 +12,7 @@
 DtInitial = 0.1 # seconds
 TEnd = 2 # seconds
 
+############################################################
 [Grid]
 File = ./grids/test_stokes2c.dgf
 

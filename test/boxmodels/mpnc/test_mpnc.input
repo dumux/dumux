@@ -8,10 +8,15 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-TimeManager.DtInitial = 250 # seconds
-TimeManager.TEnd = 1e4 # seconds
-Grid.File = ./grids/obstacle_24x16.dgf 
+[TimeManager]
+DtInitial = 250 # seconds
+TEnd = 1e4 # seconds
 
+############################################################
+[Grid]
+File = ./grids/obstacle_24x16.dgf 
+
+############################################################
 [ LinearSolver ]
 ResidualReduction = 1e-12
 

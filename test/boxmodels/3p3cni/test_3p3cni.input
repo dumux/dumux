@@ -8,9 +8,13 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-TimeManager.DtInitial = 1# [s]
-TimeManager.TEnd = 1800# [s]
-Grid.File = ./grids/kuev_2p2cni.dgf
+[TimeManager]
+DtInitial = 1# [s]
+TEnd = 1800# [s]
+
+############################################################
+[Grid]
+File = ./grids/kuev_2p2cni.dgf
 
 ####################################################################
 # Simulation restart

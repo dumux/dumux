@@ -8,24 +8,31 @@
 ####################################################################
 # Mandatory arguments
 ####################################################################
-TimeManager.DtInitial = 250# [s]
-TimeManager.TEnd = 1e4# [s]
-Grid.File = ./grids/test_2p2c.dgf # relative path to the grid file
+[TimeManager]
+DtInitial = 250# [s]
+TEnd = 1e4# [s]
 
+####################################################################
+[Grid]
+File = ./grids/test_2p2c.dgf # relative path to the grid file
+
+####################################################################
 [FluidSystem]
-nTemperature = 3# [-]            number of tabularization entries
-nPressure = 200# [-]        number of tabularization entries
-pressureLow = 1e5# [Pa]         low end for tabularization of fluid properties
-pressureHigh = 3e7# [Pa]         high end for tabularization of fluid properties
-temperatureLow = 312.15 # [Pa]     low end for tabularization of fluid properties
-temperatureHigh = 314.15 # [Pa]     high end for tabularization of fluid properties
+NTemperature = 3# [-]            number of tabularization entries
+NPressure = 200# [-]        number of tabularization entries
+PressureLow = 1e5# [Pa]         low end for tabularization of fluid properties
+PressureHigh = 3e7# [Pa]         high end for tabularization of fluid properties
+TemperatureLow = 312.15 # [Pa]     low end for tabularization of fluid properties
+TemperatureHigh = 314.15 # [Pa]     high end for tabularization of fluid properties
 
+####################################################################
 [SimulationControl]
-name = injection# [-]            the name of the output files
+Name = injection# [-]            the name of the output files
 
+####################################################################
 [InitialConditions]
-temperature = 313.15 # [K]             initial temperature in the reservoir 273.15 + 40
-depthBOR = 2700# [m]             depth below ground surface 
+Temperature = 313.15 # [K]             initial temperature in the reservoir 273.15 + 40
+DepthBOR = 2700# [m]             depth below ground surface 
 
 ####################################################################
 # Simulation restart

@@ -64,7 +64,7 @@ NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP, LensSpatialParams));
 #if HAVE_UG
 SET_TYPE_PROP(LensProblem, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(LensProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(LensProblem, Grid, Dune::SGrid<2,2>);
 #endif
 
 // Set the problem property

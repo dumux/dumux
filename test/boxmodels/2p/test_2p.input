@@ -8,15 +8,22 @@
 ############################################################
 # Mandatory arguments
 ############################################################
-TimeManager.DtInitial = 250# [s]
-TimeManager.TEnd = 1000# [s]
-Grid.File = ./grids/test_2p.dgf 
+[TimeManager]
+DtInitial = 250# [s]
+TEnd = 3000# [s]
 
+############################################################
+[Grid]
+File = ./grids/test_2p.dgf 
+
+############################################################
+# Mandatory arguments
+############################################################
 [SpatialParams]
-lensLowerLeftX = 1.0 # [m] dimension of the lens (different properties therin) 
-lensLowerLeftY = 2.0 # [m] dimension of the lens (different properties therin)
-lensUpperRightX = 4.0 # [m] dimension of the lens (different properties therin)
-lensUpperRightY = 3.0 # [m] dimension of the lens (different properties therin)
+LensLowerLeftX = 1.0 # [m] dimension of the lens (different properties therin) 
+LensLowerLeftY = 2.0 # [m] dimension of the lens (different properties therin)
+LensUpperRightX = 4.0 # [m] dimension of the lens (different properties therin)
+LensUpperRightY = 3.0 # [m] dimension of the lens (different properties therin)
 
 ####################################################################
 # Simulation restart
