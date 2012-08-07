@@ -173,7 +173,8 @@ SET_SCALAR_PROP(BoxMPNC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassU
 SET_SCALAR_PROP(BoxMPNC, MassUpwindWeight, 1.0);//DEPRECATED
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxMPNC, MobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxMPNC, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
+SET_SCALAR_PROP(BoxMPNC, MobilityUpwindWeight, 1.0);//DEPRECATED
 
 //! DEPRECATED MPNCIndices property
 SET_TYPE_PROP(BoxMPNC, MPNCIndices, typename GET_PROP_TYPE(TypeTag, Indices));

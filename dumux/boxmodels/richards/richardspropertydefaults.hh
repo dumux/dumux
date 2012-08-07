@@ -74,10 +74,11 @@ SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
 
 //! The upwind weight for the mass conservation equations
 SET_SCALAR_PROP(BoxRichards, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
-SET_SCALAR_PROP(BoxRichards, MassUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxRichards, MassUpwindWeight, 1.0);// DEPRECATED
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxRichards, MobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxRichards, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
+SET_SCALAR_PROP(BoxRichards, MobilityUpwindWeight, 1.0);// DEPRECATED
 
 //! The class with all index definitions for the model
 SET_TYPE_PROP(BoxRichards, Indices, RichardsIndices<TypeTag>);

@@ -65,6 +65,9 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
 NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the weight of the upwind direction in the mass conservation equations
+NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< The value of the weight for the upwind mobility in the velocity calculation
+NEW_PROP_TAG(MobilityUpwindWeight); //!< DEPRECATED The value of the weight for the upwind mobility in the velocity calculation
+
 // \}
 }
 

@@ -147,7 +147,9 @@ NEW_PROP_TAG(EnableSmoothUpwinding);//DEPRECATED
 
 NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the weight of the upwind direction in the mass conservation equations
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
-NEW_PROP_TAG(MobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
+
+NEW_PROP_TAG(MobilityUpwindWeight); //!< DEPRECATED Weight for the upwind mobility in the velocity calculation
+NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 
 //! Chop the Newton update at the beginning of the non-linear solver?
 NEW_PROP_TAG(NewtonEnableChop);

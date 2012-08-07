@@ -80,7 +80,8 @@ SET_SCALAR_PROP(BoxTwoP, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassU
 SET_SCALAR_PROP(BoxTwoP, MassUpwindWeight, 1.0);//DEPRECATED
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxTwoP, MobilityUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxTwoP, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
+SET_SCALAR_PROP(BoxTwoP, MobilityUpwindWeight, 1.0);//DEPRECATED
 
 //! The indices required by the isothermal 2p model
 SET_TYPE_PROP(BoxTwoP,

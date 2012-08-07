@@ -81,11 +81,13 @@ SET_TYPE_PROP(BoxOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, Spatia
 
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(BoxOneP, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, UpwindWeight));
-SET_SCALAR_PROP(BoxOneP, UpwindWeight, 0.5);//DEPRECATED
+SET_SCALAR_PROP(BoxOneP, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
+SET_SCALAR_PROP(BoxOneP, MassUpwindWeight, 0.5);//DEPRECATED
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxOneP, MobilityUpwindWeight, 1.0);
+//! fluxes. Use central differences by default.
+SET_SCALAR_PROP(BoxOneP, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
+SET_SCALAR_PROP(BoxOneP, MobilityUpwindWeight, 0.5);//DEPRECATED
 
 //! The fluid system to use by default
 SET_TYPE_PROP(BoxOneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);

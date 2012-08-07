@@ -61,9 +61,10 @@ NEW_PROP_TAG(FluidSystem); //!< The type of the fluid system to use
 NEW_PROP_TAG(Fluid); //!< The fluid used for the default fluid system
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
-NEW_PROP_TAG(UpwindWeight); //!< DEPRECATED Returns weight of the upwind cell when calculating fluxes
+NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED Returns weight of the upwind cell when calculating fluxes
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
-NEW_PROP_TAG(MobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
+NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
+NEW_PROP_TAG(MobilityUpwindWeight); //!< DEPRECATED Weight for the upwind mobility in the velocity calculation
 
 // \}
 }
