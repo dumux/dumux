@@ -44,19 +44,19 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                                        "\t-tEnd                          The end of the simulation. [s] \n"
-                                        "\t-dtInitial                     The initial timestep size. [s] \n"
-                                        "\t-gridFile                      The file name of the file containing the grid \n"
+                                        "\t-TimeManager.TEnd                          The end of the simulation. [s] \n"
+                                        "\t-TimeManager.DtInitial                     The initial timestep size. [s] \n"
+                                        "\t-Grid.File                      The file name of the file containing the grid \n"
                                         "\t                                   definition in DGF format\n"
-                                        "\t-FluidSystem.nTemperature      Number of tabularization entries [-] \n"
-                                        "\t-FluidSystem.nPressure         Number of tabularization entries [-] \n"
-                                        "\t-FluidSystem.pressureLow       Low end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.pressureHigh      High end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.temperatureLow    Low end for tabularization of fluid properties [Pa] \n"
-                                        "\t-FluidSystem.temperatureHigh   High end for tabularization of fluid properties [Pa] \n"
-                                        "\t-SimulationControl.name        The name of the output files [-] \n"
-                                        "\t-InitialConditions.temperature Initial temperature in the reservoir [K] \n"
-                                        "\t-InitialConditions.depthBOR    Depth below ground surface [m] \n";
+                                        "\t-FluidSystem.NTemperature      Number of tabularization entries [-] \n"
+                                        "\t-FluidSystem.NPressure         Number of tabularization entries [-] \n"
+                                        "\t-FluidSystem.PressureLow       Low end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.PressureHigh      High end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.TemperatureLow    Low end for tabularization of fluid properties [Pa] \n"
+                                        "\t-FluidSystem.TemperatureHigh   High end for tabularization of fluid properties [Pa] \n"
+                                        "\t-SimulationControl.Name        The name of the output files [-] \n"
+                                        "\t-InitialConditions.Temperature Initial temperature in the reservoir [K] \n"
+                                        "\t-InitialConditions.DepthBOR    Depth below ground surface [m] \n";
 
         std::cout << errorMessageOut
                   << "\n";

@@ -45,16 +45,16 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                                        "\t-tEnd                          The end of the simulation. [s] \n"
-                                        "\t-dtInitial                     The initial timestep size. [s] \n"
-                                        "\t-gridFile                      The file name of the file containing the grid \n"
+                                        "\t-TimeManager.TEnd                          The end of the simulation. [s] \n"
+                                        "\t-TimeManager.DtInitial                     The initial timestep size. [s] \n"
+                                        "\t-Grid.File                      The file name of the file containing the grid \n"
                                         "\t                                   definition in DGF format\n"
-                                        "\t-SpatialParameters.lensLowerLeftX   Dimension of the lens [m] \n"
-                                        "\t-SpatialParameters.lensLowerLeftY   Dimension of the lens [m] \n"
-                                        "\t-SpatialParameters.lensUpperRightX  Dimension of the lens [m] \n"
-                                        "\t-SpatialParameters.lensUpperRighty  Dimension of the lens [m] \n"
-                                        "\t-SpatialParameters.permeability     Permeability of the domain [mm^2] \n"
-                                        "\t-SpatialParameters.permeabilityLens Permeability of the lens [mm^2] \n";
+                                        "\t-SpatialParameters.LensLowerLeftX   Dimension of the lens [m] \n"
+                                        "\t-SpatialParameters.LensLowerLeftY   Dimension of the lens [m] \n"
+                                        "\t-SpatialParameters.LensUpperRightX  Dimension of the lens [m] \n"
+                                        "\t-SpatialParameters.LensUpperRighty  Dimension of the lens [m] \n"
+                                        "\t-SpatialParameters.Permeability     Permeability of the domain [mm^2] \n"
+                                        "\t-SpatialParameters.PermeabilityLens Permeability of the lens [mm^2] \n";
 
         std::cout << errorMessageOut
                   << "\n";

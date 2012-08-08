@@ -78,7 +78,7 @@ SET_PROP(InjectionProblem2PNI, Grid)
 #if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
-    typedef Dune::SGrid<2,2> type;
+    typedef Dune::YaspGrid<2> type;
 #endif
 };
 

@@ -57,7 +57,7 @@ namespace Properties
 NEW_TYPE_TAG(ObstacleProblem, INHERITS_FROM(BoxMPNC, ObstacleSpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(ObstacleProblem, Grid, Dune::SGrid<2,2>);
+SET_TYPE_PROP(ObstacleProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(ObstacleProblem,

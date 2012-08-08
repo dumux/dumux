@@ -54,7 +54,7 @@ NEW_TYPE_TAG(KuevetteProblem, INHERITS_FROM(BoxThreePThreeCNI, KuevetteSpatialPa
 // Set the grid type
 SET_PROP(KuevetteProblem, Grid)
 {
-    typedef Dune::SGrid<2,2> type;
+    typedef Dune::YaspGrid<2> type;
 };
 
 

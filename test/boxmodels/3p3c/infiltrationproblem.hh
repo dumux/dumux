@@ -49,7 +49,7 @@ namespace Properties
 NEW_TYPE_TAG(InfiltrationProblem, INHERITS_FROM(BoxThreePThreeC, InfiltrationSpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationProblem, Grid, Dune::SGrid<2,2>);
+SET_TYPE_PROP(InfiltrationProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(InfiltrationProblem, Problem, Dumux::InfiltrationProblem<TypeTag>);
