@@ -72,7 +72,7 @@ SET_TYPE_PROP(BoxStokes, Scalar, double);
 //SET_TYPE_PROP(BoxStokes, Scalar, long double);
 
 //! A stabilization factor. Set negative for stabilization and to zero for no stabilization
-SET_SCALAR_PROP(StokesTestProblem, StabilizationAlpha, -1.0);
+SET_SCALAR_PROP(StokesTestProblem, StokesStabilizationAlpha, -1.0);
 
 // Enable gravity
 SET_BOOL_PROP(StokesTestProblem, EnableGravity, false);

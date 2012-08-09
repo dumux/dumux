@@ -68,7 +68,7 @@ SET_PROP(BoxStokes2cni, FluidSystem)
 //SET_TYPE_PROP(BoxStokes, Scalar, long double);
 
 //! a stabilization factor. Set to zero for no stabilization
-SET_SCALAR_PROP(BoxStokes2cni, StabilizationAlpha, -1.0);
+SET_SCALAR_PROP(BoxStokes2cni, StokesStabilizationAlpha, -1.0);
 
 // Enable gravity
 SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
