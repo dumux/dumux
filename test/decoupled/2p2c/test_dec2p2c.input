@@ -1,33 +1,34 @@
-############################################################
-# Parameter file for test_dec2p2c
-# Everything behind a '#' is a comment
-# Groups can be ordered e.g. : [BoundaryConditions],
-# see ../boxmodels/2p2c/ for a more detailed example
-############################################################
+###############################################################
+# Parameter file for test_dec2p2c.
+# Everything behind a '#' is a comment.
+# Type "./test_dec2p2c --help" for more information.
+###############################################################
 
-############################################################
+###############################################################
 # Mandatory arguments
-############################################################
+###############################################################
+
 [TimeManager]
-TEnd = 3e3# [s]
-DtInitial = 200#[s]
+TEnd = 3e3 # [s]
+DtInitial = 200 # [s]
 
 [Grid]
-NumberOfCellsX = 10# [-] resolution in x-direction
-NumberOfCellsY = 10# [-] resolution in y-direction
-NumberOfCellsZ = 10# [-] resolution in y-direction
+NumberOfCellsX = 10 # [-] resolution in x-direction
+NumberOfCellsY = 10 # [-] resolution in y-direction
+NumberOfCellsZ = 10 # [-] resolution in y-direction
 
-UpperRightX = 10# [m] dimension of the grid
-UpperRightY = 10# [m] dimension of the grid
-UpperRightZ = 10# [m] dimension of the grid
-####################################################################
+UpperRightX = 10 # [m] length of the domain
+UpperRightY = 10 # [m] width of the domain
+UpperRightZ = 10 # [m] height of the domain
+
+###############################################################
 # Simulation restart
 #
 # DuMux simulations can be restarted from *.drs files
-# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'
-# for the restart file
-# name_time = 27184.1_rank = 0.drs
-# Please comment in the below value, if restart is desired.
-####################################################################
+# Set Restart to the value of a specific file, 
+# e.g.:  'Restart = 27184.1' for the restart file
+# name_time=27184.1_rank=0.drs
+# Please comment in the two lines below, if restart is desired.
+###############################################################
+# [TimeManager]
 # Restart = ... 
-

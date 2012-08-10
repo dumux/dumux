@@ -149,15 +149,15 @@ public:
     {
         try
         {
-            nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.NTemperature);
-            nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.NPressure);
-            pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.PressureLow);
-            pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.PressureHigh);
-            temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.TemperatureLow);
-            temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.TemperatureHigh);
-            temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.Temperature);
-            depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.DepthBOR);
-            name_               = GET_RUNTIME_PARAM(TypeTag, std::string, SimulationControl.Name);
+            nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, Problem.NTemperature);
+            nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, Problem.NPressure);
+            pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureLow);
+            pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureHigh);
+            temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureLow);
+            temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureHigh);
+            temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InitialTemperature);
+            depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.DepthBOR);
+            name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
         }
         catch (Dumux::ParameterException &e) {
             std::cerr << e << ". Abort!\n";
@@ -171,7 +171,7 @@ public:
         /* Alternative syntax:
          * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
          * const Dune::ParameterTree &tree = ParameterTree::tree();
-         * nTemperature_       = tree.template get<int>("FluidSystem.nTemperature");
+         * nTemperature_       = tree.template get<int>("Problem.NTemperature");
          *
          * + We see what we do
          * - Reporting whether it was used does not work

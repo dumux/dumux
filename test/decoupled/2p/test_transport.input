@@ -1,28 +1,28 @@
-############################################################
-# Parameter file for test_transport
-# Everything behind a '#' is a comment
-# Groups can be ordered e.g. : [BoundaryConditions],
-# see ../boxmodels/2p2c/ for a more detailed example
-############################################################
+###############################################################
+# Parameter file for test_transport.
+# Everything behind a '#' is a comment.
+# Type "./test_transport --help" for more information.
+###############################################################
 
-############################################################
+###############################################################
 # Mandatory arguments
-############################################################
+###############################################################
+
 [TimeManager]
-TEnd = 1e4# [s]
-DtInitial = 0# [s]
+TEnd = 1e4 # [s]
+DtInitial = 0 # [s]
 
 [Grid]
 File = ./grids/test_transport.dgf
 
-####################################################################
+###############################################################
 # Simulation restart
 #
 # DuMux simulations can be restarted from *.drs files
-# Set restart to the value of a specific file, e.g.:  'restart = 27184.1'
-# for the restart file
-# name_time = 27184.1_rank = 0.drs
-# Please comment in the below value, if restart is desired.
-####################################################################
+# Set Restart to the value of a specific file, 
+# e.g.:  'Restart = 27184.1' for the restart file
+# name_time=27184.1_rank=0.drs
+# Please comment in the two lines below, if restart is desired.
+###############################################################
+# [TimeManager]
 # Restart = ... 
-
