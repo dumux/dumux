@@ -1,7 +1,31 @@
-tEnd = 100000 # duration of the simulation [s]
-dtInitial = 10 # initial time step size [s]
+###############################################################
+# Parameter file for tutorial_decoupled.
+# Everything behind a '#' is a comment.
+# Type "./tutorial_decoupled --help" for more information.
+###############################################################
+
+###############################################################
+# Mandatory arguments
+###############################################################
+
+[TimeManager]
+TEnd = 100000 # duration of the simulation [s]
+DtInitial = 10 # initial time step size [s]
+
 [Grid]
-upperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
-upperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
-numberOfCellsX = 100 # x-resolution of the grid
-numberOfCellsY = 1 # y-resolution of the grid
+UpperRightX = 300 # x-coordinate of the upper-right corner of the grid [m]
+UpperRightY = 60 # y-coordinate of the upper-right corner of the grid [m]
+NumberOfCellsX = 100 # x-resolution of the grid
+NumberOfCellsY = 1 # y-resolution of the grid
+
+###############################################################
+# Simulation restart
+#
+# DuMux simulations can be restarted from *.drs files
+# Set Restart to the value of a specific file, 
+# e.g.:  'Restart = 27184.1' for the restart file
+# name_time=27184.1_rank=0.drs
+# Please comment in the two lines below, if restart is desired.
+###############################################################
+# [TimeManager]
+# Restart = ... 

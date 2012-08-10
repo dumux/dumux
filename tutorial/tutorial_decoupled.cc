@@ -40,13 +40,13 @@ void usage(const char *progName, const std::string &errorMsg)  /*@\label{tutoria
         std::cout << errorMsg << "\n";
     std::cout
         << "\n"
-        << "The List of Mandatory arguments for this program is:\n"
-        << "\t-tEnd                The end of the simulation [s]\n"
-        << "\t-dtInitial           The initial timestep size [s]\n"
-        << "\t-Grid.upperRightX    The x-coordinate of the grid's upper-right corner [m]\n"
-        << "\t-Grid.upperRightY    The y-coordinate of the grid's upper-right corner [m]\n"
-        << "\t-Grid.numberOfCellsX The grid's x-resolution\n"
-        << "\t-Grid.numberOfCellsY The grid's y-resolution\n"
+        << "The list of mandatory arguments for this program is:\n"
+        << "\t-TEnd                The end of the simulation [s]\n"
+        << "\t-DtInitial           The initial timestep size [s]\n"
+        << "\t-Grid.UpperRightX    The x-coordinate of the grid's upper-right corner [m]\n"
+        << "\t-Grid.UpperRightY    The y-coordinate of the grid's upper-right corner [m]\n"
+        << "\t-Grid.NumberOfCellsX The grid's x-resolution\n"
+        << "\t-Grid.NumberOfCellsY The grid's y-resolution\n"
         << "\n";
 }
 
