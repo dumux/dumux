@@ -98,9 +98,8 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
 
         std::string paramName, paramValue;
 
-        // read a --my-opt=abc option. This gets transformed
-        // into the parameter "myOpt" with the value being
-        // "abc"
+        // read a --my-opt=VALUE option. This gets transformed
+        // into the parameter "MyOpt" with the value being "VALUE"
         if (argv[i][1] == '-') {
             std::string s(argv[i] + 2);
             // There is nothing after the '='
@@ -111,6 +110,9 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
                     << " is empty. <- \n\n\n\n";
                 return oss.str();
             }
+
+            // capitalize the first character 
+            s[0] = toupper(s[0]);
 
             // parse argument
             unsigned int j = 0;
@@ -129,6 +131,19 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
                     paramName = s.substr(0, j);
                     paramValue = s.substr(j+1);
                     break;
+                }
+                else if (s[j] == '.') {
+                    // we encountered a '.' character, indicating
+                    // the end of a group name, and need 
+                    // to captitalize the following character
+                    if (s.size() == j)
+                    {
+                        std::ostringstream oss;
+                        oss << "\n -> Parameter name of argument " << i << " ('" << argv[i] << "')"
+                            << " is invalid (ends with a '.' character). <- \n\n\n\n";
+                        return oss.str();
+                    }
+                    s[j+1] = toupper(s[j+1]);
                 }
                 else if (s[j] == '-') {
                     // remove all "-" characters and capitalize the
@@ -155,7 +170,7 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
             }
         }
         else {
-            // read a -myOpt abc option
+            // read a -MyOpt VALUE option
             paramName = argv[i] + 1;
 
             if (argc == i + 1 || argv[i+1][0] == '-') {
@@ -165,7 +180,7 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
             }
 
             paramValue = argv[i+1];
-            ++i; // In the case of '-myOpt abc' each pair counts as two arguments
+            ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
         }
 
         // Put the key=value pair into the parameter tree
@@ -184,17 +199,26 @@ std::string readOptions_(int argc, char **argv, Dune::ParameterTree &paramTree)
  */
 std::string usageTextBlock()
 {
-    return  "Options have to be specified with this syntax: \n"
-            "\t-TEnd ENDTIME                    The time of the end of the simulation [s]\n"
-            "Alternativ supported syntax:\n"
-            "\t--T-end=ENDTIME                  The time of the end of the simulation [s]\n"
+    return  "Options usually are parameters given to the simulation, \n"
+            "and have to be specified with this syntax: \n"
+            "\t-GroupName.ParameterName VALUE, for example -TimeManager.TEnd 100\n"
+            "Alternative supported syntax:\n"
+            "\t--group-name.parameter-name=VALUE, for example --time-manager.t-end=100\n"
             "\n"
-            "If -ParameterFile is specified parameters can also be defined there. In this case,\n"
-            "camel case is used for the parameters (e.g.: tEnd=100). \n"
+            "If -ParameterFile is specified, parameters can also be defined there. In this case,\n"
+            "lines of the form \n"
+            "GroupName.ParameterName = VALUE # comment \n"
+            "have to be used. More conveniently, group names can be specified in square brackets, \n"
+            "such that each following parameter name belongs to that group, \n"
+            "[GroupName] \n"
+            "ParameterName = VALUE \n"
+            "See test/boxmodels/2p/test_2p.input for an example of a parameter file \n"
+            "and the Dune documentation of ParameterTreeParser for the format specification. \n"
             "\n"
             "Parameters specified on the command line have priority over those in the parameter file.\n"
+            "If no parameter file name is given, './<programname>.input' is chosen as default.\n"
             "\n"
-            "Important optional options include:\n"
+            "Important options include:\n"
             "\t-h, --help                        Print this usage message and exit\n"
             "\t-PrintParameters [true|false]     Print the run-time modifiable parameters _after_ \n"
             "\t                                  the simulation [default: true]\n"
@@ -203,7 +227,6 @@ std::string usageTextBlock()
             "\t-ParameterFile FILENAME           File with parameter definitions\n"
             "\t-Restart RESTARTTIME              Restart simulation from a restart file\n"
             "\n"
-            "For the case of no arguments given, the input parameter file is expected to be named './<programname>.input' \n"
             "\n";
 }
 
@@ -241,19 +264,19 @@ int start_(int argc,
     // check whether the user did not specify any parameter. in this
     // case print the usage message
     if (argc == 1) {
-        std::cout<< "\nNo parameter file given. \n"
-                 << "Defaulting to '"
-                 <<argv[0]
-                 <<".input' for input file.\n";
+        std::cout << "\nNo parameter file given. \n"
+                  << "Defaulting to '"
+                  << argv[0]
+                  << ".input' for input file.\n";
         std::ifstream parameterFile;
         // check whether the parameter file exists.
         std::string defaultName = argv[0];
-                    defaultName += ".input";
-                    parameterFile.open(defaultName.c_str());
+        defaultName += ".input";
+        parameterFile.open(defaultName.c_str());
         if (not parameterFile.is_open()){
-            std::cout<< "\n\t -> Could not open file '"
-                     <<defaultName
-                     <<"'. <- \n\n\n\n";
+            std::cout << "\n\t -> Could not open file '"
+                      << defaultName
+                      << "'. <- \n\n\n\n";
             usage(argv[0], usageTextBlock());
             return 1;
         }
@@ -275,40 +298,47 @@ int start_(int argc,
     std::string s = readOptions_(argc, argv, ParameterTree::tree());
     if (!s.empty()) {
         std::string usageMessage = s ;
-                    usageMessage += usageTextBlock();
+        usageMessage += usageTextBlock();
         usage(argv[0], usageMessage);
         return 1;
     }
 
-    if (ParameterTree::tree().hasKey("parameterFile") or argc==1) {
-        // read input file, but do not overwrite options specified
-        // on the command line, since the latter have precedence.
-        std::string inputFileName ;
-        if(argc==1) // if there are no arguments given (and there is a file ./<programname>.input) we use it as input file
+    // obtain the name of the parameter file
+    std::string parameterFileName;
+    if (ParameterTree::tree().hasKey("ParameterFile"))
+    {
+        // set the name to the one provided by the user
+        parameterFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile); // otherwise we read from the command line        
+    }
+    else 
+    {
+        // set the name to the default ./<programname>.input
+        parameterFileName = argv[0];
+        parameterFileName += ".input";
+    }
+    
+    // open and check whether the parameter file exists.
+    std::ifstream parameterFile(parameterFileName.c_str());
+    if (not parameterFile.is_open()) {
+        // if the name of the file has been specified, 
+        // this must be an error. Otherwise proceed.
+        if (ParameterTree::tree().hasKey("ParameterFile"))
         {
-            inputFileName = argv[0];
-            inputFileName += ".input";
-        }
-        else
-            inputFileName = GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile); // otherwise we read from the command line
-
-        std::ifstream parameterFile;
-
-        // check whether the parameter file exists.
-        parameterFile.open(inputFileName.c_str());
-        if (not parameterFile.is_open()){
-            std::cout<< "\n\t -> Could not open file"
-                     << inputFileName
-                     << ". <- \n\n\n\n";
+            std::cout << "\n\t -> Could not open file"
+                      << parameterFileName
+                      << ". <- \n\n\n\n";
             usage(argv[0], usageTextBlock());
             return 1;
         }
-        parameterFile.close();
-
-        Dune::ParameterTreeParser::readINITree(inputFileName,
+    }
+    else 
+    {
+        // read parameters from the file without overwriting
+        Dune::ParameterTreeParser::readINITree(parameterFileName,
                                                ParameterTree::tree(),
                                                /*overwrite=*/false);
     }
+    parameterFile.close();
 
     bool printProps = false;
     if (ParameterTree::tree().hasKey("PrintProperties"))
@@ -321,7 +351,7 @@ int start_(int argc,
     // deal with the restart stuff
     bool restart = false;
     Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("restart")) {
+    if (ParameterTree::tree().hasKey("Restart")) {
         restart = true;
         restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
     }
@@ -335,7 +365,7 @@ int start_(int argc,
     try { GridCreator::makeGrid(); }
     catch (...) {
         std::string usageMessage = "\n\t -> Creation of the grid failed! <- \n\n\n\n";
-                    usageMessage += usageTextBlock();
+        usageMessage += usageTextBlock();
         usage(argv[0], usageMessage);
         throw;
     }
@@ -344,19 +374,21 @@ int start_(int argc,
     // read the initial time step and the end time
     double tEnd;
     double dt;
-
+ 
     try { tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd); }
     catch (...) {
-        std::string usageMessage = "\n\t -> Mandatory parameter '--T-end' not specified! <- \n\n\n\n";
-                    usageMessage += usageTextBlock();
+        std::string usageMessage = "\n\t -> Mandatory parameter 'TimeManager.TEnd'"
+                                   " not specified! <- \n\n\n\n";
+        usageMessage += usageTextBlock();
         usage(argv[0], usageMessage);
         throw;
     }
 
     try { dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial); }
     catch (...) {
-        std::string usageMessage = "\n\t -> Mandatory parameter '--Dt-initial' not specified! <- \n\n\n\n";
-                    usageMessage += usageTextBlock();
+        std::string usageMessage = "\n\t -> Mandatory parameter 'TimeManager.DtInitial'"
+                                   " not specified! <- \n\n\n\n";
+        usageMessage += usageTextBlock();
         usage(argv[0], usageMessage);
         throw;
     }
