@@ -225,7 +225,7 @@ std::string usageTextBlock()
             "\t-PrintProperties [true|false]     Print the compile-time parameters _before_ \n"
             "\t                                  the simulation [default: false]\n"
             "\t-ParameterFile FILENAME           File with parameter definitions\n"
-            "\t-Restart RESTARTTIME              Restart simulation from a restart file\n"
+            "\t-TimeManager.Restart RESTARTTIME  Restart simulation from a restart file\n"
             "\n"
             "\n";
 }
@@ -341,7 +341,8 @@ int start_(int argc,
     parameterFile.close();
 
     bool printProps = false;
-    if (ParameterTree::tree().hasKey("PrintProperties"))
+    if (ParameterTree::tree().hasKey("PrintProperties") 
+        || ParameterTree::tree().hasKey("TimeManager.PrintProperties"))
         printProps = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintProperties);
 
     if (printProps && mpiHelper.rank() == 0) {
@@ -351,14 +352,16 @@ int start_(int argc,
     // deal with the restart stuff
     bool restart = false;
     Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart")) {
+    if (ParameterTree::tree().hasKey("Restart") 
+        || ParameterTree::tree().hasKey("TimeManager.Restart")) {
         restart = true;
         restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
     }
 
     // read the PrintParams parameter
     bool printParams = true;
-    if (ParameterTree::tree().hasKey("PrintParameters"))
+    if (ParameterTree::tree().hasKey("PrintParameters") 
+        || ParameterTree::tree().hasKey("TimeManager.PrintParameters"))
         printParams = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintParameters);
 
     // try to create a grid (from the given grid file)
