@@ -2,7 +2,7 @@ DGF
 Interval
 0 0    % first corner 
 500 10 % second corner
-250 10 % cells in x and y direction
+40 4   % cells in x and y direction
 # 
 GridParameter
 overlap 0 
