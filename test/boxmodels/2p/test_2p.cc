@@ -45,15 +45,15 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd                               The end of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial                          The initial timestep size [s] \n"
-                                        "\t-Grid.File                           The file name of the file containing the grid \n"
-                                        "\t                                        definition in DGF format\n"
-                                        "\t-SpatialParameters.LensLowerLeftX   Dimension of the lens [m] \n"
-                                        "\t-SpatialParameters.LensLowerLeftY   Dimension of the lens [m] \n"
-                                        "\t-SpatialParameters.LensUpperRightX  Dimension of the lens [m] \n"
-                                        "\t-SpatialParameters.LensUpperRighty  Dimension of the lens [m] \n"
+                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
+                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
+                                        "\t-Grid.File                      Name of the file containing the grid \n"
+                                        "\t                                definition in DGF format\n"
+                                        "\t-SpatialParams.LensLowerLeftX   Dimension of the lens [m] \n"
+                                        "\t-SpatialParams.LensLowerLeftY   Dimension of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRightX  Dimension of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRighty  Dimension of the lens [m] \n"
                                         "\n";
 
         std::cout << errorMessageOut
