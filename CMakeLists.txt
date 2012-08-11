@@ -442,7 +442,7 @@ add_test(test_mpnc     bin/runTest.sh references/obstacle-reference.vtu       ob
 add_test(test_richards bin/runTest.sh references/richardslens-reference.vtu   richardslens-00008.vtu   test/boxmodels/richards/test_richards -Grid.File test/boxmodels/richards/grids/richardslens-24x16.dgf -TimeManager.TEnd 3000    -TimeManager.DtInitial 100)
 
 add_test(test_diffusion        bin/runTest.sh references/diffusion-reference.vtu             mimeticdiffusion-00001.vtu      test/decoupled/1p/test_diffusion 3)
-add_test(test_dec1p            bin/runTest.sh references/test_1p-reference.vtu               test_1p-00001.vtu               test/decoupled/1p/test_dec1p)
+add_test(test_dec1p            bin/runTest.sh references/test_1p-reference.vtu               test_1p-00001.vtu               test/decoupled/1p/test_dec1p -ParameterFile test/decoupled/1p/test_1p.input)
 add_test(test_transport        bin/runTest.sh references/test_transport-reference.vtu        test_transport-00006.vtu        test/decoupled/2p/test_transport -Grid.File test/decoupled/2p/grids/test_transport.dgf)
 add_test(test_impes            bin/runTest.sh references/test_impes-reference.vtu            test_impes-00013.vtu            test/decoupled/2p/test_impes)
 add_test(test_impesadaptive    bin/runTest.sh references/test_2padaptive-reference.vtu       test_2padaptive-00007.vtu       test/decoupled/2padaptive/test_impesadaptive)
