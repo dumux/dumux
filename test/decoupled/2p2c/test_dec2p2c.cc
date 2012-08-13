@@ -46,15 +46,17 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                                        "\t-tEnd                          The end of the simulation. [s] \n"
-                                        "\t-dtInitial                     The initial timestep size. [s] \n"
-                                        "\t-Grid.numberOfCellsX           Resolution in x-direction [-]\n"
-                                        "\t-Grid.numberOfCellsY           Resolution in y-direction [-]\n"
-                                        "\t-Grid.numberOfCellsZ           Resolution in z-direction [-]\n"
-                                        "\t-Grid.upperRightX              Dimension of the grid [m]\n"
-                                        "\t-Grid.upperRightY              Dimension of the grid [m]\n"
-                                        "\t-Grid.upperRightZ              Dimension of the grid [m]\n";
+                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
+                                       "\t-TimeManager.TEnd      End of the simulation [s] \n"
+                                       "\t-TimeManager.DtInitial Initial timestep size [s] \n"
+                                       "\t-Grid.File             Name of the file containing the grid \n"
+                                       "\t                       definition in DGF format\n"
+                                       "\t-Grid.NumberOfCellsX   Resolution in x-direction [-]\n"
+                                       "\t-Grid.NumberOfCellsY   Resolution in y-direction [-]\n"
+                                       "\t-Grid.NumberOfCellsZ   Resolution in z-direction [-]\n"
+                                       "\t-Grid.UpperRightX      Length of the domain [m]\n"
+                                       "\t-Grid.UpperRightY      Width of the domain [m]\n"
+                                       "\t-Grid.UpperRightZ      Height of the domain [m]\n";
         std::cout << errorMessageOut
                   << "\n";
     }

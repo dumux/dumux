@@ -46,14 +46,14 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.File                      Name of the file containing the grid \n"
-                                        "\t                                definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeftX   Dimension of the lens [m] \n"
-                                        "\t-SpatialParams.LensLowerLeftY   Dimension of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightX  Dimension of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRighty  Dimension of the lens [m] \n"
+                                        "\t-TimeManager.TEnd              End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
+                                        "\t-Grid.File                     Name of the file containing the grid \n"
+                                        "\t                               definition in DGF format\n"
+                                        "\t-SpatialParams.LensLowerLeftX  x-coordinate of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensLowerLeftY  y-coordinate of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRightX x-coordinate of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRightY y-coordinate of the upper right corner of the lens [m] \n"
                                         "\n";
 
         std::cout << errorMessageOut

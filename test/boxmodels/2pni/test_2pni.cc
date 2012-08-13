@@ -46,13 +46,13 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe List of Mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd                          The end of the simulation. [s] \n"
-                                        "\t-TimeManager.DtInitial                     The initial timestep size. [s] \n"
-                                        "\t-Grid.NumberOfCellsX           Resolution in x-direction [-]\n"
-                                        "\t-Grid.NumberOfCellsY           Resolution in y-direction [-]\n"
-                                        "\t-Grid.UpperRightX              Dimension of the grid [m]\n"
-                                        "\t-Grid.UpperRightY              Dimension of the grid [m]\n";
+                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
+                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
+                                        "\t-Grid.NumberOfCellsX   Resolution in x-direction [-]\n"
+                                        "\t-Grid.NumberOfCellsY   Resolution in y-direction [-]\n"
+                                        "\t-Grid.UpperRightX      Length of the domain [m]\n"
+                                        "\t-Grid.UpperRightY      Height of the domain [m]\n";
 
         std::cout << errorMessageOut
                   << "\n";
