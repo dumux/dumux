@@ -49,7 +49,7 @@ class RichardsFluxVariables : public BoxDarcyFluxVariables<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParams;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {

@@ -71,7 +71,7 @@ class ThreePThreeCFluxVariables
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParameters;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef Dune::FieldVector<Scalar, dim> 	DimVector;

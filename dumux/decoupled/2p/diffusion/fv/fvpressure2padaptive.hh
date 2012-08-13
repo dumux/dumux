@@ -52,7 +52,7 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParameters) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParameters;
     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
 
     typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
