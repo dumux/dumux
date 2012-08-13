@@ -47,8 +47,8 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
 
-     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParameters;
-     typedef typename SpatialParameters::MaterialLaw MaterialLaw;
+     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+     typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
      typedef typename GET_PROP_TYPE(TypeTag, TwoPIndices) Indices;
 

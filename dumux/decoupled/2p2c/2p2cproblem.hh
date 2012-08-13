@@ -81,14 +81,14 @@ public:
         : ParentType(timeManager, gridView)
     { }
     /*!
-     * \brief The constructor for a given spatialParameters
+     * \brief The constructor for given spatialParams
      *
-     * This constructor uses a predefined SpatialParameters object that was created (e.g. in
+     * This constructor uses a predefined SpatialParams object that was created (e.g. in
      * the problem) and does not create one in the base class.
      *
      * \param timeManager The time manager
      * \param gridView The grid view
-     * \param spatialParams SpatialParameters instantiation
+     * \param spatialParams SpatialParams instantiation
      */
     IMPETProblem2P2C(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
         : ParentType(timeManager, gridView, spatialParams)

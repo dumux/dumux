@@ -71,7 +71,7 @@ class ThreePThreeCFluxVariables
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParameters;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
     typedef Dune::FieldVector<Scalar, dim> 	DimVector;
@@ -278,7 +278,7 @@ private:
                               const Element &element,
                               const ElementVolumeVariables &elemVolVars)
     {
-        const SpatialParameters &spatialParams = problem.spatialParams();
+        const SpatialParams &spatialParams = problem.spatialParams();
         // multiply the pressure potential with the intrinsic
         // permeability
         DimMatrix K;
