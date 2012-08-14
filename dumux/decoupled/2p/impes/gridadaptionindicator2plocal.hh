@@ -282,11 +282,11 @@ public:
     GridAdaptionIndicator2PLocal (Problem& problem):
         problem_(problem)
     {
-        refinetol_ = GET_PARAM(TypeTag, Scalar, RefineTolerance);
-        coarsentol_ = GET_PARAM(TypeTag, Scalar, CoarsenTolerance);
-        refineAtDirichletBC_ = GET_PARAM(TypeTag, bool, RefineAtDirichletBC);
-        refineAtFluxBC_ = GET_PARAM(TypeTag, bool, RefineAtFluxBC);
-        refineAtSource_ = GET_PARAM(TypeTag, bool, RefineAtSource);
+        refinetol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineTolerance);
+        coarsentol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenTolerance);
+        refineAtDirichletBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtDirichletBC);
+        refineAtFluxBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtFluxBC);
+        refineAtSource_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtSource);
     }
 
 private:
