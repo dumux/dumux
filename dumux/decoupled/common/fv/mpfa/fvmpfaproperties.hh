@@ -37,6 +37,7 @@
 #include <dune/grid/sgrid.hh>
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/2d/alugrid.hh>
+#include <dune/grid/alugrid/3d/alugrid.hh>
 #endif
 #if HAVE_UG
 #include <dune/grid/uggrid.hh>
@@ -85,6 +86,12 @@ struct GridImp<Dune::SGrid<dim, dim>, dim>
 #if HAVE_ALUGRID
 template<int dim>
 struct GridImp<Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>, dim>
+{
+    static const int imp = GridTypes::aluGrid;
+};
+//DEPRECATED!!
+template<int dim>
+struct GridImp<Dune::ALUCubeGrid<dim, dim>, dim>
 {
     static const int imp = GridTypes::aluGrid;
 };
