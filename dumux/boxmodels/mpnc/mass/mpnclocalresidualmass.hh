@@ -97,7 +97,7 @@ public:
         const Scalar volumeFlux =  fluxVars.volumeFlux(phaseIdx) ;
         #ifndef NDEBUG
         if (!std::isfinite(volumeFlux))
-            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux in smooth upwinding");
+            DUNE_THROW(NumericalProblem, "Calculated non-finite normal flux");
         #endif
 
         // retrieve the upwind weight for the mass conservation equations. Use the value
@@ -134,7 +134,7 @@ public:
                 const Scalar meanMobCon = Dumux::harmonicMean(mobConUp, mobConDn);
 
                 const Scalar x      = std::abs(kGradpNormal);
-                const Scalar sign   = (kGradpNormal < 0)?-1:1;
+                const Scalar sign   = (kGradpNormal > 0)?-1:1;
 
                 // the direction from upstream to downstream
                 //GlobalPosition delta = this->curElement_().geometry().corner(upIdx);

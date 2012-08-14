@@ -38,6 +38,7 @@
 #include "diffusion/fluxvariables.hh"
 #include "energy/mpncfluxvariablesenergy.hh"
 #include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/boxmodels/common/boxforchheimerfluxvariables.hh>
 
 namespace Dumux
 {
@@ -54,8 +55,7 @@ namespace Dumux
  */
 template <class TypeTag>
 class MPNCFluxVariables
-    : public BoxDarcyFluxVariables<TypeTag>
-
+    : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -64,6 +64,8 @@ class MPNCFluxVariables
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+
+    typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
 
     enum {dim= GridView::dimension};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
@@ -98,7 +100,7 @@ public:
                       const unsigned int faceIdx,
                       const ElementVolumeVariables &elemVolVars,
                       const bool onBoundary = false)
-        :   BoxDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary),
+        : BaseFluxVariables(problem, element, fvGeometry, faceIdx, elemVolVars, onBoundary),
           fvGeometry_(fvGeometry), faceIdx_(faceIdx), elemVolVars_(elemVolVars), onBoundary_(onBoundary)
     {
         // velocities can be obtained from the Parent class.

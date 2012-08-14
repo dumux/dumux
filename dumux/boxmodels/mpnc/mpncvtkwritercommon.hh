@@ -176,11 +176,11 @@ public:
                 boxSurface_[J] += scvfArea;
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                    Dune::FieldVector<Scalar, dim> darcyVelocity;
-                    darcyVelocity = fluxVars.velocity(phaseIdx);
-                    darcyVelocity *= scvfArea;
-                    velocity_[phaseIdx][I] += darcyVelocity;
-                    velocity_[phaseIdx][J] += darcyVelocity;
+                    Dune::FieldVector<Scalar, dim> velocity;
+                    velocity = fluxVars.velocity(phaseIdx);
+                    velocity *= scvfArea;
+                    velocity_[phaseIdx][I] += velocity;
+                    velocity_[phaseIdx][J] += velocity;
 
                 } // end for all phases
             } // end for all faces

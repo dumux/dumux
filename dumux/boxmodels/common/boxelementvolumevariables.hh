@@ -86,6 +86,10 @@ public:
         for (int scvIdx = 0; scvIdx < numVertices; scvIdx++) {
             const PrimaryVariables &priVars
                 = globalSol[vertexMapper.map(element, scvIdx, dim)];
+
+            // reset evaluation point to zero
+            (*this)[scvIdx].setEvalPoint(0);
+
             (*this)[scvIdx].update(priVars,
                               problem,
                               element,

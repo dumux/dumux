@@ -233,7 +233,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        return 1000;
+        return 1000.;
     }
 
     /*!
@@ -258,7 +258,7 @@ public:
     static Scalar gasViscosity(Scalar temperature, Scalar pressure, bool regularize=true)
     {
         return 1e-05;
-    };
+    }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure water.
@@ -269,7 +269,20 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         return 1e-03;
-    };
+    }
+
+    /*!
+     * \brief Specific isobaric heat capacity of the component [J/(kg K)] as a liquid.
+     *
+     *        \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     *        \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     *        source: http://webbook.nist.gov/cgi/fluid.cgi?ID=C7732185&Action=Page
+     *        @ T= 281.15 (8°C) , p=0.1MPa)
+     */
+    static Scalar liquidHeatCapacity(Scalar temperature, Scalar pressure)
+    {
+        return 4.2e3 ;
+    }
 };
 
 template <class Scalar>

@@ -54,6 +54,8 @@ NEW_PROP_TAG(MPNCIndices); //!< DEPRECATED Enumerations for the 2pNc model
 NEW_PROP_TAG(MPNCEnergyIndices); //!< DEPRECATED Enumerations for the 2pNc model
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 
+NEW_PROP_TAG(BaseFluxVariables); //!< The type of velocity calculation that is to be used
+
 NEW_PROP_TAG(MPNCVtkCommonModule); //!< Vtk writer module for writing the common quantities into the VTK output file
 NEW_PROP_TAG(MPNCVtkMassModule); //!< Vtk writer module for writing the mass related quantities into the VTK output file
 NEW_PROP_TAG(MPNCVtkEnergyModule); //!< Vtk writer module for writing the energy related quantities into the VTK output file

@@ -159,6 +159,9 @@ SET_TYPE_PROP(BoxMPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
 //! the FluxVariables property
 SET_TYPE_PROP(BoxMPNC, FluxVariables, MPNCFluxVariables<TypeTag>);
 
+//! the Base of the Fluxvariables property (Darcy / Forchheimer)
+SET_TYPE_PROP(BoxMPNC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
+
 //! truncate the newton update for the first few Newton iterations of a time step
 SET_BOOL_PROP(BoxMPNC, NewtonEnableChop, true);
 

@@ -245,7 +245,7 @@ public:
      *        the control volume.
      */
     Scalar mobility(const unsigned int phaseIdx) const
-    { return relativePermability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
+    { return relativePermeability(phaseIdx)/fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Returns the viscosity of a given phase within
@@ -258,7 +258,7 @@ public:
      * \brief Returns the relative permeability of a given phase within
      *        the control volume.
      */
-    Scalar relativePermability(const unsigned int phaseIdx) const
+    Scalar relativePermeability(const unsigned int phaseIdx) const
     { return relativePermeability_[phaseIdx]; }
 
     /*!
@@ -332,7 +332,7 @@ public:
 
 protected:
     Scalar porosity_; //!< Effective porosity within the control volume
-    Scalar relativePermeability_[numPhases]; //!< Effective mobility within the control volume
+    Scalar relativePermeability_[numPhases]; //!< Effective relative permeability within the control volume
 
     const Implementation *hint_;
 
