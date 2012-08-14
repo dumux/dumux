@@ -111,12 +111,11 @@ public:
             // the method is valid for any transported quantity.
             TransportSolutionType transValueOldIter;
             problem_.transportModel().getTransportedQuantity(transValueOldIter);
-            int transSize = transValueOldIter.size();
-            TransportSolutionType updateOldIter(transSize);
+            TransportSolutionType updateOldIter(transValueOldIter);
             updateOldIter = 0;
-            TransportSolutionType transportedQuantity(transSize);
-            TransportSolutionType updateHelp(transSize);
-            TransportSolutionType updateDiff(transSize);
+            TransportSolutionType transportedQuantity(transValueOldIter);
+            TransportSolutionType updateHelp(transValueOldIter);
+            TransportSolutionType updateDiff(transValueOldIter);
 
             while (!converg)
             {
@@ -138,7 +137,7 @@ public:
                 updateDiff -= updateOldIter;
                 transValueOldIter = transportedQuantity;
                 updateOldIter = updateVec;
-
+                Dune::dinfo << " defect = " << dt * updateDiff.two_norm() / transportedQuantity.two_norm();
                 // break criteria for iteration loop
                 if (iterFlag_ == 2 && dt * updateDiff.two_norm() / transportedQuantity.two_norm() <= maxDefect_)
                 {
