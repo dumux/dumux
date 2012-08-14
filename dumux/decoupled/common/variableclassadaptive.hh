@@ -111,7 +111,7 @@ public:
 
                     CellData& cellData = this->cellData(indexI);
 
-                    cellData.storeAdaptionValues(adaptedValues, problem);
+                    cellData.storeAdaptionValues(adaptedValues, *eIt);
 
                     adaptedValues.count = 1;
                 }
@@ -120,8 +120,9 @@ public:
                 {
                     ElementPointer epFather = eIt->father();
                     AdaptedValues& adaptedValuesFather = adaptationMap_[*epFather];
-                    CellData::storeAdaptionValues(adaptedValues, adaptedValuesFather, problem);
                     adaptedValuesFather.count += 1;
+                    CellData::storeAdaptionValues(adaptedValues, adaptedValuesFather,
+                                                    *epFather);
                 }
             }
         }
@@ -159,7 +160,7 @@ public:
 
                         CellData& cellData = this->cellData(newIdxI);
 
-                        cellData.setAdaptionValues(adaptedValues, problem);
+                        cellData.setAdaptionValues(adaptedValues, *eIt);
                     }
                 }
                 else
@@ -184,7 +185,7 @@ public:
                             int newIdxI = this->index(*eIt);
                             CellData& cellData = this->cellData(newIdxI);
 
-                            cellData.setAdaptionValues(adaptedValues, problem);
+                            cellData.setAdaptionValues(adaptedValues, *eIt);
                         }
                     }
                 }

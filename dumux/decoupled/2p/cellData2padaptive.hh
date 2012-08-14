@@ -162,9 +162,9 @@ public:
      * the adaptation container in order to be mapped on a new grid.
      *
      * @param adaptedValues Container for model-specific values to be adapted
-     * @param problem The problem
+     * @param element The element to be stored
      */
-    void storeAdaptionValues(AdaptedValues& adaptedValues, const Problem& problem)
+    void storeAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
         adaptedValues.saturationW = this->saturation(wPhaseIdx);
         adaptedValues.saturationNW = this->saturation(nPhaseIdx);
@@ -180,9 +180,11 @@ public:
      *
      * @param adaptedValues Container for model-specific values to be adapted
      * @param adaptedValuesFather Values to be adapted of father cell
-     * @param problem The problem
+     * @param fatherElement The element of the father
      */
-    static void storeAdaptionValues(AdaptedValues& adaptedValues, AdaptedValues& adaptedValuesFather, const Problem& problem)
+    static void storeAdaptionValues(AdaptedValues& adaptedValues,
+                                    AdaptedValues& adaptedValuesFather,
+                                    const Element& fatherElement)
     {
         adaptedValuesFather.saturationW += adaptedValues.saturationW / adaptedValues.count;
         adaptedValuesFather.saturationNW += adaptedValues.saturationNW / adaptedValues.count;
@@ -197,9 +199,9 @@ public:
      * decoupled models.
      *
      * @param adaptedValues Container for model-specific values to be adapted
-     * @param problem The problem
+     * @param element The element where things are stored.
      */
-    void setAdaptionValues(AdaptedValues& adaptedValues, const Problem& problem)
+    void setAdaptionValues(AdaptedValues& adaptedValues, const Element& element)
     {
         this->setSaturation(wPhaseIdx, adaptedValues.saturationW / adaptedValues.count);
         this->setSaturation(nPhaseIdx, adaptedValues.saturationNW / adaptedValues.count);
