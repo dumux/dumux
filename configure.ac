@@ -37,7 +37,9 @@ AC_CONFIG_FILES([dumux.pc
     dumux/decoupled/2p/Makefile 
     dumux/decoupled/2p/diffusion/Makefile 
     dumux/decoupled/2p/diffusion/fv/Makefile 
-    dumux/decoupled/2p/diffusion/fvmpfa/Makefile 
+    dumux/decoupled/2p/diffusion/fvmpfa/Makefile
+    dumux/decoupled/2p/diffusion/fvmpfa/lmethod/Makefile
+    dumux/decoupled/2p/diffusion/fvmpfa/omethod/Makefile 
     dumux/decoupled/2p/diffusion/mimetic/Makefile 
     dumux/decoupled/2p/impes/Makefile 
     dumux/decoupled/2p/transport/Makefile 
