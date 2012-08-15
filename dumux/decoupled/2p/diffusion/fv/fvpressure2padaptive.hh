@@ -106,6 +106,29 @@ public:
     // Function which calculates the flux entry
     void getFlux(EntryType&, const Intersection&, const CellData&, const bool);
 
+    //!Initialize
+    void initialize()
+    {
+        ParentType::initialize();
+
+        if (!compressibility_)
+        {
+            ElementIterator element = problem_.gridView().template begin<0>();
+            FluidState fluidState;
+            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
+            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
+            fluidState.setTemperature(problem_.temperature(*element));
+            fluidState.setSaturation(wPhaseIdx, 1.);
+            fluidState.setSaturation(nPhaseIdx, 0.);
+            density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+            density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+            viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+            viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
+        }
+
+        velocity_.initialize();
+    }
+
     /*! \brief Pressure update
      *
      *  \copydetails FVPressure2P::update()
@@ -166,20 +189,10 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
 
-        if (!compressibility_)
-        {
-            ElementIterator element = problem_.gridView().template begin<0>();
-            FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
-            fluidState.setSaturation(wPhaseIdx, 1.);
-            fluidState.setSaturation(nPhaseIdx, 0.);
-            density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
-            density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
-            viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
-            viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
-        }
+        density_[wPhaseIdx] = 0.;
+        density_[nPhaseIdx] = 0.;
+        viscosity_[wPhaseIdx] = 0.;
+        viscosity_[nPhaseIdx] = 0.;
     }
 
 private:

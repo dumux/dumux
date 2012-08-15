@@ -116,6 +116,17 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
         }
 
+        density_[wPhaseIdx] = 0.;
+        density_[nPhaseIdx] = 0.;
+        viscosity_[wPhaseIdx] = 0.;
+        viscosity_[nPhaseIdx] = 0.;
+    }
+
+    //!For initialization
+    void initialize()
+    {
+        ParentType::initialize();
+
         if (!compressibility_)
         {
             ElementIterator element = problem_.gridView().template begin<0> ();
@@ -197,6 +208,9 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         //get face index
         int isIndexI = intersection.indexInInside();
 
+        Scalar faceArea = intersection.geometry().volume();
+        Scalar faceAreaSum = faceArea;
+
         //get face normal
         const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
 
@@ -225,6 +239,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
                 {
                     globalIdxK = problem_.variables().index(*neighborPointer2);
                     elementK = neighborPointer2;
+                    faceAreaSum += isItI->geometry().volume();
+
                     break;
                 }
             }
@@ -440,8 +456,8 @@ void FVVelocity2PAdaptive<TypeTag>::calculateVelocity(const Intersection& inters
         cellDataJ.fluxData().setVelocityMarker(isIndexJ);
 
         //times 0.5 because cell face with hanging node is called twice! Do not set marker because it should be called twice!
-        velocityW *= 0.5;
-        velocityNW *= 0.5;
+        velocityW *= faceArea/faceAreaSum;
+        velocityNW *= faceArea/faceAreaSum;
         cellData.fluxData().addVelocity(wPhaseIdx, isIndexI, velocityW);
         cellData.fluxData().addVelocity(nPhaseIdx, isIndexI, velocityNW);
     }

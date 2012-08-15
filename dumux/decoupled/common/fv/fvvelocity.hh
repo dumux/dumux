@@ -69,6 +69,7 @@ template<class TypeTag, class Velocity> class FVVelocity
 
 public:
 
+    //!Initialize velocity implementation
     void initialize()
     {
         velocity_.initialize();
