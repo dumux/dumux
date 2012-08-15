@@ -155,6 +155,7 @@ namespace Properties
  * A type tag can inherit the properties defined on up to five parent
  * type tags. Examples:
  *
+ * \code
  * // The type tag doesn't inherit any properties from other type tags
  * NEW_TYPE_TAG(FooTypeTag);
  *
@@ -165,6 +166,7 @@ namespace Properties
  * // those of BarTypeTag. Properties defined on BarTypeTag have
  * // preceedence over those defined for FooTypeTag:
  * NEW_TYPE_TAG(FooBarTypeTag, INHERITS_FROM(FooTypeTag, BarTypeTag));
+ * \endcode
  */
 #define NEW_TYPE_TAG(...)                                               \
     namespace TTag {                                                    \
@@ -191,8 +193,10 @@ namespace Properties
  *
  * Examples:
  *
+ * \code
  * NEW_PROP_TAG(blubbPropTag);
  * NEW_PROP_TAG(blabbPropTag);
+ * \endcode
  */
 #define NEW_PROP_TAG(PTagName)                             \
     namespace PTag {                                       \
@@ -207,11 +211,13 @@ namespace Properties
  *
  * Example:
  *
+ * \code
  * // set a default for the blabbPropTag property tag
  * SET_PROP_DEFAULT(blabbPropTag)
  * {
  *    static const int value = 3;
  * };
+ * \endcode
  */
 #define SET_PROP_DEFAULT(PropTagName) \
     template <class TypeTag>                                            \
@@ -249,6 +255,7 @@ namespace Properties
  *
  * Example:
  *
+ * \code
  * SET_PROP(FooTypeTag, blubbPropTag)
  * {
  *    static int value = 10;
@@ -264,6 +271,7 @@ namespace Properties
  *
  *    static int calculateInternal_(int arg)
  *    { return arg * blabb::value; };
+ * \endcode
  * };
  */
 #define SET_PROP(EffTypeTagName, PropTagName)                   \
@@ -288,8 +296,10 @@ namespace Properties
  *
  * Example:
  *
+ * \code
  * // make the blabbPropTag property undefined for the BarTypeTag.
  * UNSET_PROP(BarTypeTag, blabbPropTag);
+ * \endcode
  */
 #define UNSET_PROP(EffTypeTagName, PropTagName)                 \
     template <>                                                 \
@@ -438,10 +448,12 @@ namespace Properties
  *
  * Example:
  *
+ * \code
  * int main()
  * {
  *    std::cout << PROP_DIAGNOSTIC(FooBarTypeTag, blabbPropTag) << "\n";
  * };
+ * \endcode
  */
 #define PROP_DIAGNOSTIC(TypeTag, PropTagName) \
     ::Dumux::Properties::getDiagnostic<TypeTag>(#PropTagName)
@@ -456,10 +468,12 @@ namespace Properties
  *
  * Example:
  *
+ * \code
  * int main()
  * {
  *    std::cout << PROP_DIAGNOSTIC(FooBarTypeTag, blabbPropTag) << "\n";
  * };
+ * \endcode
  */
 #define PROP_DIAGNOSTIC(TypeTag, PropTagName) "Property introspection disabled by NO_PROPERTY_INTROSPECTION"
 #endif
