@@ -26,6 +26,8 @@
  * @author Markus Wolff
  */
 
+#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
+
 namespace Dumux
 {
 
