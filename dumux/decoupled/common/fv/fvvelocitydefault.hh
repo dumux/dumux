@@ -59,6 +59,9 @@ public:
     FVVelocityDefault(Problem& problem)
     {}
 
+    //! For initialization
+    void initialize(){};
+
     //! Local velocity calculation
     void calculateVelocity(const Intersection& intersection, CellData& cellData)
     {}

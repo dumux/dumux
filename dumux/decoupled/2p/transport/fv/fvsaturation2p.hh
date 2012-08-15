@@ -371,21 +371,6 @@ public:
         capillaryFlux_ = new CapillaryFlux(problem);
         gravityFlux_ = new GravityFlux(problem);
         velocity_ = new Velocity(problem);
-
-        if (!compressibility_)
-        {
-            ElementIterator element = problem_.gridView().template begin<0> ();
-            FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
-            fluidState.setSaturation(wPhaseIdx, 1.);
-            fluidState.setSaturation(nPhaseIdx, 0.);
-            density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
-            density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
-            viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
-            viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
-        }
     }
 
     //! Destructor
@@ -984,6 +969,23 @@ void FVSaturation2P<TypeTag>::getSource(Scalar& update, const Element& element, 
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::initialize()
 {
+    ParentType::initialize();
+
+    if (!compressibility_)
+    {
+        ElementIterator element = problem_.gridView().template begin<0> ();
+        FluidState fluidState;
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setSaturation(wPhaseIdx, 1.);
+        fluidState.setSaturation(nPhaseIdx, 0.);
+        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
+    }
+
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
@@ -1012,6 +1014,10 @@ void FVSaturation2P<TypeTag>::initialize()
         }
         }
     }
+
+    velocity_->initialize();
+    capillaryFlux_->initialize();
+    gravityFlux_->initialize();
 
     return;
 }

@@ -174,6 +174,22 @@ public:
     void initialize(bool solveTwice = true)
     {
         ParentType::initialize();
+
+        if (!compressibility_)
+        {
+            ElementIterator element = problem_.gridView().template begin<0> ();
+            FluidState fluidState;
+            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
+            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
+            fluidState.setTemperature(problem_.temperature(*element));
+            fluidState.setSaturation(wPhaseIdx, 1.);
+            fluidState.setSaturation(nPhaseIdx, 0.);
+            density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+            density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+            viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+            viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
+        }
+
         updateMaterialLaws();
 
         this->assemble(true);
@@ -401,20 +417,10 @@ public:
         ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
         ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
 
-        if (!compressibility_)
-        {
-            ElementIterator element = problem_.gridView().template begin<0> ();
-            FluidState fluidState;
-            fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-            fluidState.setTemperature(problem_.temperature(*element));
-            fluidState.setSaturation(wPhaseIdx, 1.);
-            fluidState.setSaturation(nPhaseIdx, 0.);
-            density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
-            density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
-            viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
-            viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
-        }
+        density_[wPhaseIdx] = 0.;
+        density_[nPhaseIdx] = 0.;
+        viscosity_[wPhaseIdx] = 0.;
+        viscosity_[nPhaseIdx] = 0.;
     }
 
 private:

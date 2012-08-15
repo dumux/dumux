@@ -81,6 +81,7 @@ private:
     typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
 
 public:
+
     //! Returns capillary diffusion term
     /*! Returns capillary diffusion term for current element face
      *  \param flux        Flux vector (gets the flux from the function)

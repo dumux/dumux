@@ -51,6 +51,10 @@ private:
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
+
+    //! For initialization
+    void initialize(){};
+
     /*! \brief Returns diffusive term for current element face
      *
      *  \param flux        Flux vector (gets the flux from the function)

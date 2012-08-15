@@ -69,6 +69,9 @@ private:
 
 public:
 
+    //! For initialization
+    void initialize(){};
+
     /*! \brief adds a flux to the cfl-criterion evaluation
      *
      *  \param lambdaW        wetting phase mobility

@@ -1,11 +1,11 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
-*   Copyright (C) 2008-2009 by Bernd Flemisch                               *
-*   Institute for Modelling Hydraulic and Environmental Systems             *
-*   University of Stuttgart, Germany                                        *
-*   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
-*                                                                           *
+ *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
+ *   Institute for Modelling Hydraulic and Environmental Systems             *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
  *   the Free Software Foundation, either version 2 of the License, or       *
@@ -18,7 +18,7 @@
  *                                                                           *
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
-*****************************************************************************/
+ *****************************************************************************/
 /*!
  * \file
  *
@@ -44,12 +44,12 @@
 namespace Dumux
 {
 /*!
-*  \ingroup MimeticPressure2p
-*/
+ *  \ingroup MimeticPressure2p
+ */
 /**
-* @brief compute local stiffness matrix for conforming finite elements for diffusion equation
-*
-*/
+ * @brief compute local stiffness matrix for conforming finite elements for diffusion equation
+ *
+ */
 
 //! A class for computing local stiffness matrices
 /*! A class for computing local stiffness matrix for the diffusion equation
@@ -62,11 +62,9 @@ namespace Dumux
  * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
-class MimeticGroundwaterEquationLocalStiffness
-:
-public LocalStiffness<TypeTag, 1>
+class MimeticGroundwaterEquationLocalStiffness: public LocalStiffness<TypeTag, 1>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView)GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
@@ -113,6 +111,10 @@ public:
             bool levelBoundaryAsDirichlet, const GridView& gridView,
             bool procBoundaryAsDirichlet=true)
     : problem_(problem), gridView_(gridView)
+    {}
+
+    //! For initialization
+    void initialize()
     {
         ElementIterator element = problem_.gridView().template begin<0> ();
         FluidState fluidState;
@@ -127,14 +129,14 @@ public:
 
     //! assemble local stiffness matrix for given element and order
     /*! On exit the following things have been done:
-    - The stiffness matrix for the given entity and polynomial degree has been assembled and is
-    accessible with the mat() method.
-    - The boundary conditions have been evaluated and are accessible with the bc() method
-    - The right hand side has been assembled. It contains either the value of the essential boundary
-    condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
-    @param[in]  element a codim 0 entity reference
-    @param[in]  k order of CR basis (only k = 1 is implemented)
-    */
+     - The stiffness matrix for the given entity and polynomial degree has been assembled and is
+     accessible with the mat() method.
+     - The boundary conditions have been evaluated and are accessible with the bc() method
+     - The right hand side has been assembled. It contains either the value of the essential boundary
+     condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
+     @param[in]  element a codim 0 entity reference
+     @param[in]  k order of CR basis (only k = 1 is implemented)
+     */
     void assemble (const Element& element, int k=1)
     {
         unsigned int numFaces = element.template count<1>();
@@ -146,7 +148,7 @@ public:
             this->b[i] = 0;
             this->bctype[i].reset();
             for (unsigned int j=0; j<numFaces; j++)
-                this->A[i][j] = 0;
+            this->A[i][j] = 0;
         }
 
         assembleV(element,k);
@@ -165,12 +167,12 @@ public:
 
     //! assemble only boundary conditions for given element
     /*! On exit the following things have been done:
-    - The boundary conditions have been evaluated and are accessible with the bc() method
-    - The right hand side contains either the value of the essential boundary
-    condition or the assembled neumann boundary condition. It is accessible via the rhs() method.
-    @param[in]  element a codim 0 entity reference
-    @param[in]  k order of CR basis
-    */
+     - The boundary conditions have been evaluated and are accessible with the bc() method
+     - The right hand side contains either the value of the essential boundary
+     condition or the assembled neumann boundary condition. It is accessible via the rhs() method.
+     @param[in]  element a codim 0 entity reference
+     @param[in]  k order of CR basis
+     */
     void assembleBoundaryCondition (const Element& element, int k=1)
     {
         unsigned int numFaces = element.template count<1>();
@@ -232,8 +234,8 @@ public:
             N[i] = unitOuterNormal;
 
             for (int k = 0; k < dim; k++)
-                // move origin to the center of gravity
-                R[i][k] = faceVol[i]*(faceGlobal[k] - centerGlobal[k]);
+            // move origin to the center of gravity
+            R[i][k] = faceVol[i]*(faceGlobal[k] - centerGlobal[k]);
         }
 
         //      std::cout << "N =\dim" << N;
@@ -244,21 +246,21 @@ public:
         // (1) orthonormalize columns of the matrix R
         Scalar norm = R[0][0]*R[0][0];
         for (unsigned int i = 1; i < numFaces; i++)
-            norm += R[i][0]*R[i][0];
+        norm += R[i][0]*R[i][0];
         norm = sqrt(norm);
         for (unsigned int i = 0; i < numFaces; i++)
-            R[i][0] /= norm;
+        R[i][0] /= norm;
         Scalar weight = R[0][1]*R[0][0];
         for (unsigned int i = 1; i < numFaces; i++)
-            weight += R[i][1]*R[i][0];
+        weight += R[i][1]*R[i][0];
         for (unsigned int i = 0; i < numFaces; i++)
-            R[i][1] -= weight*R[i][0];
+        R[i][1] -= weight*R[i][0];
         norm = R[0][1]*R[0][1];
         for (unsigned int i = 1; i < numFaces; i++)
-            norm += R[i][1]*R[i][1];
+        norm += R[i][1]*R[i][1];
         norm = sqrt(norm);
         for (unsigned int i = 0; i < numFaces; i++)
-            R[i][1] /= norm;
+        R[i][1] /= norm;
         if (dim == 3)
         {
             Scalar weight1 = R[0][2]*R[0][0];
@@ -269,13 +271,13 @@ public:
                 weight2 += R[i][2]*R[i][1];
             }
             for (unsigned int i = 0; i < numFaces; i++)
-                R[i][1] -= weight1*R[i][0] + weight2*R[i][1];
+            R[i][1] -= weight1*R[i][0] + weight2*R[i][1];
             norm = R[0][2]*R[0][2];
             for (unsigned int i = 1; i < numFaces; i++)
-                norm += R[i][2]*R[i][2];
+            norm += R[i][2]*R[i][2];
             norm = sqrt(norm);
             for (unsigned int i = 0; i < numFaces; i++)
-                R[i][2] /= norm;
+            R[i][2] /= norm;
         }
         //      std::cout << "~R =\dim" << R;
 
@@ -297,7 +299,7 @@ public:
 
         Scalar traceK = K[0][0];
         for (int i = 1; i < dim; i++)
-            traceK += K[i][i];
+        traceK += K[i][i];
         D *= 2.0*traceK/volume;
         //      std::cout << "u~D =\dim" << D;
 
@@ -310,7 +312,7 @@ public:
             {
                 W[i][j] = NK[i][0]*N[j][0];
                 for (int k = 1; k < dim; k++)
-                    W[i][j] += NK[i][k]*N[j][k];
+                W[i][j] += NK[i][k]*N[j][k];
             }
         }
 
@@ -322,7 +324,6 @@ public:
         //       std::cout << D[3][2] << ", " << D[3][0] << ", " << D[3][3] << ", " << D[3][1] << std::endl;
         //       std::cout << D[1][2] << ", " << D[1][0] << ", " << D[1][3] << ", " << D[1][1] << std::endl;
 
-
         // Now the notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4.
         // The matrix W developed so far corresponds to one element-associated
         // block of the matrix B^{-1} there.
@@ -332,12 +333,12 @@ public:
         // This is just a row vector of size numFaces.
         // scale with volume
         for (unsigned int i = 0; i < numFaces; i++)
-            c[i] = faceVol[i];
+        c[i] = faceVol[i];
 
         // Set up the element part of the matrix \Pi coupling velocities
         // and pressure-traces. This is a diagonal matrix with entries given by faceVol.
         for (unsigned int i = 0; i < numFaces; i++)
-            Pi[i][i] = faceVol[i];
+        Pi[i][i] = faceVol[i];
 
         // Calculate the element part of the matrix D^{-1} = (c W c^T)^{-1} which is just a scalar value.
         Dune::FieldVector<Scalar,2*dim> Wc(0);
@@ -380,19 +381,19 @@ private:
         // Calculate the element part of the matrix F D^{-1} F^T.
         Dune::FieldMatrix<Scalar,2*dim,2*dim> FDinvFT(0);
         for (unsigned int i = 0; i < numFaces; i++)
-            for (unsigned int j = 0; j < numFaces; j++)
-                FDinvFT[i][j] = dinv*F[i]*F[j];
+        for (unsigned int j = 0; j < numFaces; j++)
+        FDinvFT[i][j] = dinv*F[i]*F[j];
 
         // Calculate the element part of the matrix S = Pi W Pi^T - F D^{-1} F^T.
         for (unsigned int i = 0; i < numFaces; i++)
-            for (unsigned int j = 0; j < numFaces; j++)
-                this->A[i][j] = PiWPiT[i][j] - FDinvFT[i][j];
+        for (unsigned int j = 0; j < numFaces; j++)
+        this->A[i][j] = PiWPiT[i][j] - FDinvFT[i][j];
 
         // Calculate the source term F D^{-1} f
         // NOT WORKING AT THE MOMENT
         Scalar factor = dinv*qmean;
         for (unsigned int i = 0; i < numFaces; i++)
-            this->b[i] = F[i]*factor;
+        this->b[i] = F[i]*factor;
 
         //        std::cout << "faceVol = " << faceVol << std::endl << "W = " << std::endl << W << std::endl
         //              << "c = " << c << std::endl << "Pi = " << std::endl << Pi << std::endl

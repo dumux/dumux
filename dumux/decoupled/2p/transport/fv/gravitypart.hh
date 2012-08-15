@@ -51,18 +51,18 @@ template<class TypeTag>
 class GravityPart: public ConvectivePart<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-      typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView)GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-      typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-      typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    typedef typename SpatialParams::MaterialLaw MaterialLaw;
 
-      typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-      typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
-      typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     enum
     {
@@ -82,6 +82,7 @@ private:
     typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
 
 public:
+
     /*! \brief Returns convective term for current element face
      *
      *  \param flux        Flux vector (gets the flux from the function)
@@ -180,6 +181,10 @@ public:
      */
     GravityPart (Problem& problem)
     : ConvectivePart<TypeTag>(problem), problem_(problem), preComput_(GET_PROP_VALUE(TypeTag, PrecomputedConstRels))
+    {}
+
+    //! For initialization
+    void initialize()
     {
         ElementIterator element = problem_.gridView().template begin<0> ();
         FluidState fluidState;
@@ -195,11 +200,10 @@ public:
     }
 
 private:
-    Problem& problem_;//problem data
+    Problem& problem_; //problem data
     const bool preComput_;//if preCompute = true the mobilities are taken from the variable object, if preCompute = false new mobilities will be taken (for implicit Scheme)
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
-};
-}
+};}
 
 #endif

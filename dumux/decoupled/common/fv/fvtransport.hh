@@ -123,8 +123,10 @@ public:
     void getSource(Scalar& update, const Element& element, CellData& cellDataI);
 
     //! Sets the initial solution \f$ S_0 \f$.
-    void initialize();
-
+    void initialize()
+    {
+        evalCflFluxFunction_->initialize();
+    }
 
     /*! \brief Updates constitutive relations and stores them in the variable class*/
     void updateMaterialLaws();

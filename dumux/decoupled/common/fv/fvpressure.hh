@@ -173,6 +173,16 @@ public:
     const Scalar pressure(const int globalIdx) const
     {   return pressure_[globalIdx];}
 
+    const Matrix& globalMatrix()
+    {
+        return A_;
+    }
+
+    const RHSVector& rightHandSide()
+    {
+        return f_;
+    }
+
     /*! \brief Initialize pressure model
      *
      * Function initializes the sparse matrix to solve the global system of equations and sets/calculates the initial pressure

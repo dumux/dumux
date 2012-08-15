@@ -57,7 +57,7 @@ namespace Dumux
 template<class TypeTag>
 class FVVelocity2P
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView)GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 
@@ -115,7 +115,7 @@ public:
      * \param problem A Problem class object
      */
     FVVelocity2P(Problem& problem) :
-            problem_(problem), gravity_(problem.gravity())
+    problem_(problem), gravity_(problem.gravity())
     {
         if (GET_PROP_VALUE(TypeTag, EnableCompressibility) && velocityType_ == vt)
         {
@@ -127,6 +127,15 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Velocity type not supported!");
         }
 
+        density_[wPhaseIdx] = 0.;
+        density_[nPhaseIdx] = 0.;
+        viscosity_[wPhaseIdx] = 0.;
+        viscosity_[nPhaseIdx] = 0.;
+    }
+
+    //! For initialization
+    void initialize()
+    {
         if (!compressibility_)
         {
             ElementIterator element = problem_.gridView().template begin<0> ();
@@ -172,7 +181,7 @@ public:
         Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar,
                 dim>(problem_.gridView().size(0)));
         Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocitySecondPhase =
-                *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
+        *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
 
         // compute update vector
         ElementIterator eItEnd = problem_.gridView().template end<0>();
@@ -192,20 +201,20 @@ public:
                 int isIndex = isIt->indexInInside();
 
                 fluxW[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
                 fluxNW[isIndex] += isIt->geometry().volume()
-                        * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
             }
 
             Dune::FieldVector < Scalar, dim > refVelocity(0);
-                refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
+            refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
             if (dim > 1)
-                refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
+            refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
             if (dim == 3)
-                refVelocity[2] = 0.5 * (fluxW[5] - fluxW[4]);
+            refVelocity[2] = 0.5 * (fluxW[5] - fluxW[4]);
 
             const Dune::FieldVector<Scalar, dim>& localPos =
-                    ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
+            ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
             // get the transposed Jacobian of the element mapping
             const DimMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
@@ -224,7 +233,7 @@ public:
             if (dim > 1)
             refVelocity[1] = 0.5 * (fluxNW[3] - fluxNW[2]);
             if (dim == 3)
-                refVelocity[2] = 0.5 * (fluxNW[5] - fluxNW[4]);
+            refVelocity[2] = 0.5 * (fluxNW[5] - fluxNW[4]);
 
             // calculate the element velocity by the Piola transformation
             elementVelocity = 0;
@@ -237,23 +246,23 @@ public:
         //switch velocities
         switch (velocityType_)
         {
-        case vw:
-        {
-            writer.attachCellData(velocity, "wetting-velocity", dim);
-            writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
-            break;
-        }
-        case vn:
-        {
-            writer.attachCellData(velocity, "non-wetting-velocity", dim);
-            writer.attachCellData(velocitySecondPhase, "wetting-velocity", dim);
-            break;
-        }
-        case vt:
-        {
-            writer.attachCellData(velocity, "total velocity", dim);
-            break;
-        }
+            case vw:
+            {
+                writer.attachCellData(velocity, "wetting-velocity", dim);
+                writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
+                break;
+            }
+            case vn:
+            {
+                writer.attachCellData(velocity, "non-wetting-velocity", dim);
+                writer.attachCellData(velocitySecondPhase, "wetting-velocity", dim);
+                break;
+            }
+            case vt:
+            {
+                writer.attachCellData(velocity, "total velocity", dim);
+                break;
+            }
         }
 
         return;
@@ -265,19 +274,19 @@ private:
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
 
-    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+    static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
-    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
-    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
+    static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation);//!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)
+    static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);//!< gives kind of saturation used (\f$S_w\f$, \f$S_n\f$)
 };
 
 /*! \brief Calculates the velocity at a cell-cell interface.
-*
-* Calculates the velocity at a cell-cell interface from a given pressure field.
-*
-* \param intersection Intersection of two grid cells
-* \param cellData Object containing all model relevant cell data
-*/
+ *
+ * Calculates the velocity at a cell-cell interface from a given pressure field.
+ *
+ * \param intersection Intersection of two grid cells
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, CellData& cellData)
 {
@@ -325,7 +334,7 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*elementI),
             problem_.spatialParams().intrinsicPermeability(*elementJ));
 
-    Dune::FieldVector < Scalar, dim > permeability(0);
+    Dune::FieldVector<Scalar, dim> permeability(0);
     meanPermeability.mv(unitOuterNormal, permeability);
 
     //calculate potential gradients
@@ -393,14 +402,14 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     Scalar scalarPerm = permeability.two_norm();
 
     //calculate the gravity term
-    Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
-    Dune::FieldVector < Scalar, dimWorld > velocityNW(unitOuterNormal);
+    Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
+    Dune::FieldVector<Scalar, dimWorld> velocityNW(unitOuterNormal);
 
     //calculate unit distVec
     distVec /= dist;
     Scalar areaScaling = (unitOuterNormal * distVec);
     //this treatment of g allows to account for gravity flux through faces where the face normal has no z component (e.g. parallelepiped grids)
-    Scalar gravityTermW = (gravity_* distVec) * density_[wPhaseIdx] * areaScaling;
+    Scalar gravityTermW = (gravity_ * distVec) * density_[wPhaseIdx] * areaScaling;
     Scalar gravityTermNW = (gravity_ * distVec) * density_[nPhaseIdx] * areaScaling;
 
     //calculate velocity depending on the pressure used -> use pc = pn - pw
@@ -408,22 +417,26 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     {
     case pw:
     {
-        velocityW *= lambdaW * scalarPerm * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermW);
-        velocityNW *= lambdaNW * scalarPerm * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermNW)
+        velocityW *= lambdaW * scalarPerm
+                * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermW);
+        velocityNW *= lambdaNW * scalarPerm
+                * ((cellData.pressure(wPhaseIdx) - cellDataJ.pressure(wPhaseIdx)) / dist + gravityTermNW)
                 + 0.5 * (lambdaNWI + lambdaNWJ) * scalarPerm * (pcI - pcJ) / dist;
         break;
     }
     case pn:
     {
-        velocityW *= lambdaW * scalarPerm * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermW)
+        velocityW *= lambdaW * scalarPerm
+                * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermW)
                 - 0.5 * (lambdaWI + lambdaWJ) * scalarPerm * (pcI - pcJ) / dist;
-        velocityNW *= lambdaNW * scalarPerm * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermNW);
+        velocityNW *= lambdaNW * scalarPerm
+                * ((cellData.pressure(nPhaseIdx) - cellDataJ.pressure(nPhaseIdx)) / dist + gravityTermNW);
         break;
     }
     case pglobal:
     {
-        velocityW *= (lambdaW + lambdaNW) * scalarPerm * (cellData.globalPressure() - cellDataJ.globalPressure()) / dist +
-                scalarPerm * (lambdaW * gravityTermW + lambdaNW * gravityTermNW);
+        velocityW *= (lambdaW + lambdaNW) * scalarPerm * (cellData.globalPressure() - cellDataJ.globalPressure()) / dist
+                + scalarPerm * (lambdaW * gravityTermW + lambdaNW * gravityTermNW);
         velocityNW = 0;
         break;
     }
@@ -443,12 +456,12 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
 }
 
 /*! \brief Calculates the velocity at a boundary.
-*
-* Calculates the velocity at a boundary from a given pressure field.
-*
-* \param intersection Boundary intersection
-* \param cellData Object containing all model relevant cell data
-*/
+ *
+ * Calculates the velocity at a boundary from a given pressure field.
+ *
+ * \param intersection Boundary intersection
+ * \param cellData Object containing all model relevant cell data
+ */
 template<class TypeTag>
 void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& intersection, CellData& cellData)
 {
@@ -496,7 +509,7 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
 
         problem_.spatialParams().meanK(meanPermeability, problem_.spatialParams().intrinsicPermeability(*element));
 
-        Dune::FieldVector < Scalar, dim > permeability(0);
+        Dune::FieldVector<Scalar, dim> permeability(0);
         meanPermeability.mv(unitOuterNormal, permeability);
 
         //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
@@ -580,9 +593,11 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         if (compressibility_)
         {
             density_[wPhaseIdx] = (potentialW > 0.) ? cellData.density(wPhaseIdx) : densityWBound;
-            density_[wPhaseIdx] = (potentialW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + densityWBound) : density_[wPhaseIdx];
+            density_[wPhaseIdx] =
+                    (potentialW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + densityWBound) : density_[wPhaseIdx];
             density_[nPhaseIdx] = (potentialNW > 0.) ? cellData.density(nPhaseIdx) : densityNWBound;
-            density_[nPhaseIdx] = (potentialNW == 0) ? 0.5 * (cellData.density(nPhaseIdx) + densityNWBound) : density_[nPhaseIdx];
+            density_[nPhaseIdx] =
+                    (potentialNW == 0) ? 0.5 * (cellData.density(nPhaseIdx) + densityNWBound) : density_[nPhaseIdx];
         }
 
         //calculate potential gradient
@@ -613,16 +628,18 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         if (compressibility_)
         {
             density_[wPhaseIdx] = (potentialW > 0.) ? cellData.density(wPhaseIdx) : densityWBound;
-            density_[wPhaseIdx] = (potentialW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + densityWBound) : density_[wPhaseIdx];
+            density_[wPhaseIdx] =
+                    (potentialW == 0) ? 0.5 * (cellData.density(wPhaseIdx) + densityWBound) : density_[wPhaseIdx];
             density_[nPhaseIdx] = (potentialNW > 0.) ? cellData.density(nPhaseIdx) : densityNWBound;
-            density_[nPhaseIdx] = (potentialNW == 0) ? 0.5 * (cellData.density(nPhaseIdx) + densityNWBound) : density_[nPhaseIdx];
+            density_[nPhaseIdx] =
+                    (potentialNW == 0) ? 0.5 * (cellData.density(nPhaseIdx) + densityNWBound) : density_[nPhaseIdx];
         }
 
         Scalar scalarPerm = permeability.two_norm();
 
         //calculate the gravity term
-        Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
-        Dune::FieldVector < Scalar, dimWorld > velocityNW(unitOuterNormal);
+        Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
+        Dune::FieldVector<Scalar, dimWorld> velocityNW(unitOuterNormal);
 
         //calculate unit distVec
         distVec /= dist;
@@ -650,8 +667,8 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
         }
         case pglobal:
         {
-            velocityW *= (lambdaW + lambdaNW) * scalarPerm * (cellData.globalPressure() - pressBound) / dist +
-                    scalarPerm * (lambdaW * gravityTermW + lambdaNW * gravityTermNW);
+            velocityW *= (lambdaW + lambdaNW) * scalarPerm * (cellData.globalPressure() - pressBound) / dist
+                    + scalarPerm * (lambdaW * gravityTermW + lambdaNW * gravityTermNW);
             velocityNW = 0;
             break;
         }
@@ -668,8 +685,8 @@ void FVVelocity2P<TypeTag>::calculateVelocityOnBoundary(const Intersection& inte
     {
         problem_.neumann(boundValues, intersection);
 
-        Dune::FieldVector < Scalar, dimWorld > velocityW(unitOuterNormal);
-        Dune::FieldVector < Scalar, dimWorld > velocityNW(unitOuterNormal);
+        Dune::FieldVector<Scalar, dimWorld> velocityW(unitOuterNormal);
+        Dune::FieldVector<Scalar, dimWorld> velocityNW(unitOuterNormal);
 
         velocityW *= boundValues[wPhaseIdx];
         velocityNW *= boundValues[nPhaseIdx];
