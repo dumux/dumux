@@ -44,7 +44,7 @@ NEW_TYPE_TAG(FVMPFAOPressurePropertiesTwoP, INHERITS_FROM(PressureTwoP, MPFAProp
 }
 }
 
-#include <dumux/decoupled/2p/diffusion/fvmpfa/fvmpfaovelocity2p.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/omethod/fvmpfaovelocity2p.hh>
 
 namespace Dumux
 {

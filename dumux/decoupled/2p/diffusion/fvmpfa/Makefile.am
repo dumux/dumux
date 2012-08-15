@@ -1,3 +1,5 @@
+SUBDIRS = omethod lmethod
+
 fvmpfadir = $(includedir)/dumux/decoupled/2p/diffusion/fvmpfa
 fvmpfa_HEADERS = *.hh
 
