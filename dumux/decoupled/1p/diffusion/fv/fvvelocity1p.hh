@@ -142,8 +142,8 @@ public:
             }
 
             Dune::FieldVector<Scalar, dim> refVelocity(0);
-            refVelocity[0] = 0.5 * (flux[1] - flux[0]);
-            refVelocity[1] = 0.5 * (flux[3] - flux[2]);
+            for (int i = 0; i < dim; i++)
+                refVelocity[i] = 0.5 * (flux[2*i + 1] - flux[2*i]);
 
             typedef Dune::GenericReferenceElements<Scalar, dim> ReferenceElements;
             const Dune::FieldVector<Scalar, dim>& localPos = ReferenceElements::general(eIt->geometry().type()).position(0,

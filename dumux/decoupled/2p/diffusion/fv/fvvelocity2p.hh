@@ -207,11 +207,8 @@ public:
             }
 
             Dune::FieldVector < Scalar, dim > refVelocity(0);
-            refVelocity[0] = 0.5 * (fluxW[1] - fluxW[0]);
-            if (dim > 1)
-            refVelocity[1] = 0.5 * (fluxW[3] - fluxW[2]);
-            if (dim == 3)
-            refVelocity[2] = 0.5 * (fluxW[5] - fluxW[4]);
+            for (int i = 0; i < dim; i++)
+                refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
 
             const Dune::FieldVector<Scalar, dim>& localPos =
             ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
@@ -229,11 +226,8 @@ public:
             velocity[globalIdx] = elementVelocity;
 
             refVelocity = 0;
-            refVelocity[0] = 0.5 * (fluxNW[1] - fluxNW[0]);
-            if (dim > 1)
-            refVelocity[1] = 0.5 * (fluxNW[3] - fluxNW[2]);
-            if (dim == 3)
-            refVelocity[2] = 0.5 * (fluxNW[5] - fluxNW[4]);
+            for (int i = 0; i < dim; i++)
+                refVelocity[i] = 0.5 * (fluxNW[2*i + 1] - fluxNW[2*i]);
 
             // calculate the element velocity by the Piola transformation
             elementVelocity = 0;
