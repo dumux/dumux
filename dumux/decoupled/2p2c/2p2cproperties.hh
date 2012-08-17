@@ -89,9 +89,10 @@ NEW_PROP_TAG( FluidSystem ); //!< The fluid system
 NEW_PROP_TAG( FluidState ); //!< The fluid state
 NEW_PROP_TAG( ImpetEnableVolumeIntegral ); //!< Enables volume integral in the pressure equation (volume balance formulation)
 NEW_PROP_TAG( EnableVolumeIntegral ); //!< DEPRECATED Enables volume integral in the pressure equation (volume balance formulation)
-NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); //!< Two-point flux approximation (false) or mpfa (true)
+NEW_PROP_TAG( GridAdaptEnableMultiPointFluxApproximation); //!< HangingNode: Two-point flux approximation (false) or mpfa (true)
+NEW_PROP_TAG( EnableMultiPointFluxApproximationOnAdaptiveGrids ); //Deprecated
 NEW_PROP_TAG( EnableSecondHalfEdge ); //!< Uses second interaction volume for second half-edge in 2D
-
+NEW_PROP_TAG( GridAdaptEnableSecondHalfEdge ); //!< Uses second interaction volume for second half-edge in 2D
 }}
 
 //DUMUX includes
@@ -155,8 +156,8 @@ SET_PROP(DecoupledTwoPTwoC, TransportSolutionType)
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCompressibility, true); //!< Compositional models are very likely compressible
 SET_BOOL_PROP(DecoupledTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
-SET_BOOL_PROP(DecoupledTwoPTwoC, ImpetRestrictFluxInTransport, GET_PROP_VALUE(TypeTag, RestrictFluxInTransport)); //!< Restrict (no upwind) flux in transport step if direction reverses after pressure equation
-SET_BOOL_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, false); //!< DEPRECATED Restrict (no upwind) flux in transport step if direction reverses after pressure equation
+SET_INT_PROP(DecoupledTwoPTwoC, ImpetRestrictFluxInTransport, GET_PROP_VALUE(TypeTag, RestrictFluxInTransport)); //!< Restrict (no upwind) flux in transport step if direction reverses after pressure equation
+SET_INT_PROP(DecoupledTwoPTwoC, RestrictFluxInTransport, 0); //!< DEPRECATED Restrict (no upwind) flux in transport step if direction reverses after pressure equation
 
 SET_PROP(DecoupledTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Dirichlet B.C.
 {    static const int value = DecoupledTwoPTwoCIndices<TypeTag>::satDependent;};
@@ -168,7 +169,9 @@ SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
 
 SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));//!< DEPRECATED SpatialParameters property
 
-SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false); //!< MPFA disabled on adaptive grids
+SET_BOOL_PROP(DecoupledTwoPTwoC, GridAdaptEnableMultiPointFluxApproximation,
+        GET_PROP_VALUE(TypeTag,EnableMultiPointFluxApproximationOnAdaptiveGrids)); //!< MPFA disabled on adaptive grids
+SET_BOOL_PROP(DecoupledTwoPTwoC, EnableMultiPointFluxApproximationOnAdaptiveGrids, false); //!<  DEPRECATED MPFA disabled on adaptive grids
 SET_BOOL_PROP(DecoupledTwoPTwoC, ImpetEnableVolumeIntegral, GET_PROP_VALUE(TypeTag,EnableVolumeIntegral)); //!< Regard volume integral in pressure equation
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableVolumeIntegral, true); //!< DEPRECATED Regard volume integral in pressure equation
 

@@ -74,49 +74,6 @@ public:
      * \param presentPhaseIdx Subdomain Index = Indication which phase is present
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
-    void update(const Scalar& Z1,const Dune::FieldVector<Scalar, numPhases> phasePressure,const int presentPhaseIdx, const Scalar& temperature)
-    {
-        pressure_[wPhaseIdx] = phasePressure[wPhaseIdx];
-        pressure_[nPhaseIdx] = phasePressure[nPhaseIdx];
-        temperature_ = temperature;
-
-        if (presentPhaseIdx == wPhaseIdx)
-        {
-            massFractionWater_[wPhaseIdx] = Z1;
-            massFractionWater_[nPhaseIdx] = 0.;
-
-            moleFractionWater_[wPhaseIdx] = Z1 / FluidSystem::molarMass(0);
-            moleFractionWater_[wPhaseIdx] /= ( Z1 / FluidSystem::molarMass(0)
-                           + (1.-Z1) / FluidSystem::molarMass(1));
-            moleFractionWater_[nPhaseIdx] = 0.;
-
-            presentPhaseIdx_ = wPhaseIdx;
-        }
-        else if (presentPhaseIdx == nPhaseIdx)
-        {
-            massFractionWater_[wPhaseIdx] = 0.;
-            massFractionWater_[nPhaseIdx] = Z1;
-
-            // interested in nComp => 1-X1
-            moleFractionWater_[nPhaseIdx] = ( Z1 / FluidSystem::molarMass(0) );   // = moles of compIdx
-            moleFractionWater_[nPhaseIdx] /= (Z1/ FluidSystem::molarMass(0)
-                           + (1.-Z1) / FluidSystem::molarMass(1) );    // /= total moles in phase
-            moleFractionWater_[nPhaseIdx] = 0.;
-
-            presentPhaseIdx_ = nPhaseIdx;
-        }
-        else
-            Dune::dgrave << __FILE__ <<": Twophase conditions in single-phase flash!"
-                << " Z1 is "<<Z1<< std::endl;
-
-        density_ = FluidSystem::density(*this, presentPhaseIdx);
-
-        aveMoMass_ =  moleFractionWater_[presentPhaseIdx]*FluidSystem::molarMass(wCompIdx)
-        +   (1.-moleFractionWater_[presentPhaseIdx])*FluidSystem::molarMass(nCompIdx);
-
-        return;
-    }
-    //@}
     /*! \name Acess functions */
     //@{
     /*! \brief Returns the saturation of a phase.
@@ -134,10 +91,6 @@ public:
     {
         return presentPhaseIdx_;
     }
-    void setPresentPhaseIdx(int index)
-    {
-        presentPhaseIdx_ = index;
-    };
 
     /*! \brief Returns the pressure of a fluid phase \f$\mathrm{[Pa]}\f$.
      *  \param phaseIdx Index of the phase
@@ -150,7 +103,7 @@ public:
         if(phaseIdx == presentPhaseIdx_)
             return density_;
         else
-            return FluidSystem::density(*this, phaseIdx);
+            return 0.; // only required for output if phase is not present anyhow
     }
 
     /*!
@@ -160,6 +113,10 @@ public:
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
+        if(phaseIdx != presentPhaseIdx_)
+            return 0.;
+
+
         if (compIdx == wPhaseIdx)
             return massFractionWater_[phaseIdx];
         else
@@ -174,6 +131,8 @@ public:
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
+        if(phaseIdx != presentPhaseIdx_)
+            return 0.;
         if (compIdx == wPhaseIdx)
             return moleFractionWater_[phaseIdx];
         else
@@ -190,11 +149,6 @@ public:
         assert(phaseIdx == presentPhaseIdx_);
         return viscosity_;
     }
-    void setViscosity(int phaseIdx, Scalar value)
-    {
-        assert(phaseIdx == presentPhaseIdx_);
-        viscosity_ = value;
-    }
 
     Scalar averageMolarMass(int phaseIdx) const
     {
@@ -209,7 +163,86 @@ public:
      */
     Scalar temperature(int phaseIdx) const
     { return temperature_; };
+    //@}
 
+    /*!
+     * \name Functions to set Data
+     */
+    //@{
+    /*!
+     * \brief Sets the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
+    void setViscosity(int phaseIdx, Scalar value)
+    {
+        assert(phaseIdx == presentPhaseIdx_);
+        viscosity_ = value;
+    }
+    /*!
+     * \brief Sets the mass fraction of a component in a phase.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
+     * @param value Value to be stored
+     */
+    void setMassFraction(int phaseIdx, int compIdx, Scalar value)
+    {
+        if (compIdx == wCompIdx)
+            massFractionWater_[phaseIdx] = value;
+        else
+            massFractionWater_[phaseIdx] = 1- value;
+    }
+
+    /*!
+     * \brief Sets the molar fraction of a component in a fluid phase.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
+     * @param value Value to be stored
+     */
+    void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
+    {
+        if (compIdx == wCompIdx)
+            moleFractionWater_[phaseIdx] = value;
+        else
+            moleFractionWater_[phaseIdx] = 1-value;
+    }
+    /*!
+     * \brief Sets the density of a phase \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     * @param value Value to be stored
+     */
+    void setDensity(int phaseIdx, Scalar value)
+    {
+        assert(phaseIdx == presentPhaseIdx_);
+        density_ = value;
+    }
+    /*!
+     * \brief Sets the phase Index that is present in this fluidState.
+     * @param phaseIdx the index of the phase
+     */
+    void setPresentPhaseIdx(int phaseIdx)
+    {
+        presentPhaseIdx_ = phaseIdx;
+    }
+
+    /*!
+     * \brief Sets the temperature
+     *
+     * @param value Value to be stored
+     */
+    void setTemperature(Scalar value)
+    {
+        temperature_ = value;
+    }
+    //TODO: doc me
+    void setAverageMolarMass(int phaseIdx, Scalar value)
+    {
+        aveMoMass_ = value;
+    }
     /*!
      * \brief Sets the phase pressure \f$\mathrm{[Pa]}\f$.
      */

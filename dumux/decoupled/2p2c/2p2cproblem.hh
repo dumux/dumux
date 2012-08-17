@@ -112,7 +112,9 @@ public:
         if (this->adaptiveGrid)
         {
             this->gridAdapt().adaptGrid();
-            asImp_().pressureModel().updateMaterialLaws(false);
+
+            if(this->gridAdapt().wasAdapted())
+                asImp_().pressureModel().updateMaterialLaws(false);
         }
     }
     /*!
@@ -203,9 +205,9 @@ protected:
         }
         else if (equation == -1)
         {
-            values[Indices::pressureEqIdx] = 0.;
-            values[Indices::contiNEqIdx] =0.;
-            values[Indices::contiWEqIdx] =0.;
+            // set everything to zero
+            for (int i = 0; i < values.size(); i++)
+                values[i] = 0.;
         }
         else
             DUNE_THROW(Dune::InvalidStateException, "vector of primary variables can not be set properly");

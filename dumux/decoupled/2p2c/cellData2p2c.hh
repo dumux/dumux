@@ -83,6 +83,7 @@ protected:
     Scalar dv_dp_;
     Scalar dv_[numComponents];
     bool volumeDerivativesAvailable_;
+    bool wasRefined_;
 
     int globalIdx_;
     Scalar perimeter_;
@@ -104,6 +105,7 @@ public:
         errorCorrection_= 0.;
         dv_dp_ = 0.;
         volumeDerivativesAvailable_ = false;
+        wasRefined_ = false;
         globalIdx_ = 0;
         perimeter_ = 0.;
     }
@@ -117,7 +119,6 @@ public:
     {
         return fluxData_;
     }
-
 
     /*! \name Acess to primary variables */
     //@{
@@ -351,8 +352,7 @@ public:
     //@}
 
     //! Deprecated set function, use manipulateFluidState() instead
-    void setFluidState(FluidState& fluidState)
-    DUNE_DEPRECATED
+    void setFluidState(FluidState& fluidState) DUNE_DEPRECATED
     {
         fluidState_ = &fluidState;
     }
@@ -389,9 +389,15 @@ public:
     //! Resets the cell data after a timestep was completed: No volume derivatives yet available
     void reset()
     {
+        wasRefined_ = false;
         volumeDerivativesAvailable_ = false;
     }
-
+    //! Indicates if current cell was refined at this time step
+    bool& wasRefined()
+    {   return wasRefined_;}
+    //!\copydoc wasRefined()
+    const bool& wasRefined() const
+    {   return wasRefined_;}
     //! Indicates if current cell is the upwind cell for a given interface
     /* @param indexInInside Local face index seen from current cell
      * @param phaseIdx The index of the phase

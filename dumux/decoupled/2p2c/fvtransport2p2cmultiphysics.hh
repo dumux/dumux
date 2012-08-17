@@ -135,7 +135,8 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
     // initialize dt very large
     dt = 1E100;
     // store if we do update Estimate for flux functions
-    this->impet_ = impet;    
+    this->impet_ = impet;
+    this->averagedFaces_ = 0.;
     
     // resize update vector and set to zero
     updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
@@ -203,7 +204,11 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
         }
     } // end grid traversal
     if(impet)
+    {
         Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
+        if(this->averagedFaces_ != 0)
+            Dune::dinfo  << " Averageing done for " << this->averagedFaces_ << " faces. "<< std::endl;
+    }
     return;
 }
 }

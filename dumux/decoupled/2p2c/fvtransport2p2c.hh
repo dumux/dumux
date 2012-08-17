@@ -73,7 +73,7 @@ class FVTransport2P2C
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld,
     };
     enum
     {
@@ -86,7 +86,8 @@ class FVTransport2P2C
     {
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx,
-        contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx
+        contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx,
+        NumPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -98,7 +99,7 @@ class FVTransport2P2C
 
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)> PhaseVector;
+    typedef Dune::FieldVector<Scalar, NumPhases> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
     //! Acess function for the current problem
@@ -173,6 +174,11 @@ public:
     //! \copydoc transportedQuantity()
     void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
+        // resize update vector and set to zero
+        transportedQuantity.resize(GET_PROP_VALUE(TypeTag, NumComponents));
+        transportedQuantity[wCompIdx].resize(problem_.gridView().size(0));
+        transportedQuantity[nCompIdx].resize(problem_.gridView().size(0));
+
         transportedQuantity = totalConcentration_;
     }
     //! \copydoc transportedQuantity()
@@ -195,7 +201,7 @@ public:
         totalConcentration_[wCompIdx].resize(problem.gridView().size(0));
         totalConcentration_[nCompIdx].resize(problem.gridView().size(0));
 
-        restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,bool, Impet, RestrictFluxInTransport);
+        restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
     }
 
     virtual ~FVTransport2P2C()
@@ -206,9 +212,10 @@ protected:
     TransportSolutionType totalConcentration_;
     Problem& problem_;
     bool impet_;
+    int averagedFaces_;
 
     static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    bool restrictFluxInTransport_;
+    int restrictFluxInTransport_;
     bool switchNormals;
 };
 
@@ -238,6 +245,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     dt = 1E100;
     // store if we do update Estimate for flux functions
     impet_ = impet;
+    averagedFaces_ = 0;
 
     // resize update vector and set to zero
     updateVec.resize(GET_PROP_VALUE(TypeTag, NumComponents));
@@ -302,7 +310,12 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
         }
     } // end grid traversal
     if(impet)
-        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "<<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
+    {
+        Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "
+                <<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
+    	if(averagedFaces_ != 0)
+            Dune::dinfo  << " Averageing done for " << averagedFaces_ << " faces. "<< std::endl;
+    }
     return;
 }
 /*	Updates the transported quantity once an update is calculated.
@@ -363,10 +376,11 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     Scalar pcI = cellDataI.capillaryPressure();
     DimMatrix K_I(problem().spatialParams().intrinsicPermeability(*elementPtrI));
 
-    Scalar SwmobI = std::max((cellDataI.saturation(wPhaseIdx)
+    PhaseVector SmobI(0.);
+    SmobI[wPhaseIdx] = std::max((cellDataI.saturation(wPhaseIdx)
                             - problem().spatialParams().materialLawParams(*elementPtrI).Swr())
                             , 1e-2);
-    Scalar SnmobI = std::max((cellDataI.saturation(nPhaseIdx)
+    SmobI[nPhaseIdx] = std::max((cellDataI.saturation(nPhaseIdx)
                                 - problem().spatialParams().materialLawParams(*elementPtrI).Snr())
                             , 1e-2);
 
@@ -379,6 +393,10 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     if (switchNormals)
         unitOuterNormal *= -1.0;
     Scalar faceArea = intersection.geometry().volume();
+
+//    // local interface index
+//    const int indexInInside = intersection.indexInInside();
+//    const int indexInOutside = intersection.indexInOutside();
 
     // create vector for timestep and for update
     Dune::FieldVector<Scalar, 2> factor (0.);
@@ -443,128 +461,101 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     potential[wPhaseIdx] +=  (K * gravity_)  * (unitOuterNormal * unitDistVec) * densityW_mean;
 
     // determine upwinding direction, perform upwinding if possible
-    Dune::FieldVector<bool, GET_PROP_VALUE(TypeTag, NumPhases)> doUpwinding(true);
+    Dune::FieldVector<bool, NumPhases> doUpwinding(true);
     PhaseVector lambda(0.);
-    if(!impet_ or !restrictFluxInTransport_) // perform a simple uwpind scheme
+    for(int phaseIdx = 0; phaseIdx < NumPhases; phaseIdx++)
     {
-        if (potential[wPhaseIdx] > 0.)
-        {
-            lambda[wPhaseIdx] = cellDataI.mobility(wPhaseIdx);
-            cellDataI.setUpwindCell(intersection.indexInInside(), contiWEqIdx, true);
-
-        }
-        else if(potential[wPhaseIdx] < 0.)
-        {
-            lambda[wPhaseIdx] = cellDataJ.mobility(wPhaseIdx);
-            cellDataI.setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
-        }
+        int contiEqIdx = 0;
+        if(phaseIdx == wPhaseIdx)
+            contiEqIdx = contiWEqIdx;
         else
-        {
-            doUpwinding[wPhaseIdx] = false;
-            cellDataI.setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
-            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
-        }
+            contiEqIdx = contiNEqIdx;
 
-        if (potential[nPhaseIdx] > 0.)
+        if(!impet_ or restrictFluxInTransport_==0) // perform a strict uwpind scheme
         {
-            lambda[nPhaseIdx] = cellDataI.mobility(nPhaseIdx);
-            cellDataI.setUpwindCell(intersection.indexInInside(), contiNEqIdx, true);
-        }
-        else if (potential[nPhaseIdx] < 0.)
-        {
-            lambda[nPhaseIdx] = cellDataJ.mobility(nPhaseIdx);
-            cellDataI.setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
-        }
-        else
-        {
-            doUpwinding[nPhaseIdx] = false;
-            cellDataI.setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
-            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
-        }
-    }
-    else // if new potentials indicate same flow direction as in P.E., perform upwind
-    {
-        if (potential[wPhaseIdx] >= 0. && cellDataI.isUpwindCell(intersection.indexInInside(), contiWEqIdx))
-            lambda[wPhaseIdx] = cellDataI.mobility(wPhaseIdx);
-        else if (potential[wPhaseIdx] < 0. && !cellDataI.isUpwindCell(intersection.indexInInside(), contiWEqIdx))
-            lambda[wPhaseIdx] = cellDataJ.mobility(wPhaseIdx);
-        else    // potential of w-phase does not coincide with that of P.E.
-        {
-            bool isUpwindCell = cellDataI.isUpwindCell(intersection.indexInInside(), contiWEqIdx);
-            //check if harmonic weithing is necessary
-            if (!isUpwindCell && !(cellDataI.mobility(wPhaseIdx) != 0. && cellDataJ.mobility(wPhaseIdx) == 0.)) // check if outflow induce neglected phase flux
-                lambda[wPhaseIdx] = cellDataI.mobility(wPhaseIdx);
-            else if (isUpwindCell && !(cellDataJ.mobility(wPhaseIdx) != 0. && cellDataI.mobility(wPhaseIdx) == 0.)) // check if inflow induce neglected phase flux
-                lambda[wPhaseIdx] = cellDataJ.mobility(wPhaseIdx);
+            if (potential[phaseIdx] > 0.)
+            {
+                lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
+                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, true);
+
+            }
+            else if(potential[phaseIdx] < 0.)
+            {
+                lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
+                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, false);
+            }
             else
-                doUpwinding[wPhaseIdx] = false;
+            {
+                doUpwinding[phaseIdx] = false;
+                cellDataI.setUpwindCell(intersection.indexInInside(), contiEqIdx, false);
+                cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, false);
+            }
         }
-
-        if (potential[nPhaseIdx] >= 0. && cellDataI.isUpwindCell(intersection.indexInInside(), contiNEqIdx))
-            lambda[nPhaseIdx] = cellDataI.mobility(nPhaseIdx);
-        else if (potential[nPhaseIdx] < 0. && !cellDataI.isUpwindCell(intersection.indexInInside(), contiNEqIdx))
-            lambda[nPhaseIdx] = cellDataJ.mobility(nPhaseIdx);
-        else    // potential of n-phase does not coincide with that of P.E.
+        else // Transport after PE with check on flow direction
         {
-            bool isUpwindCell = cellDataI.isUpwindCell(intersection.indexInInside(), contiNEqIdx);
-            //check if harmonic weithing is necessary
-            if (!isUpwindCell && !(cellDataI.mobility(nPhaseIdx) != 0. && cellDataJ.mobility(nPhaseIdx) == 0.)) // check if outflow induce neglected phase flux
-                lambda[nPhaseIdx] = cellDataI.mobility(nPhaseIdx);
-            else if (isUpwindCell && !(cellDataJ.mobility(nPhaseIdx) != 0. && cellDataI.mobility(nPhaseIdx) == 0.)) // check if inflow induce neglected phase flux
-                lambda[nPhaseIdx] = cellDataJ.mobility(nPhaseIdx);
-            else
-                doUpwinding[nPhaseIdx] = false;
+            bool wasUpwindCell = cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx);
+
+            if (potential[phaseIdx] > 0. && wasUpwindCell)
+                lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
+            else if (potential[phaseIdx] < 0. && !wasUpwindCell)
+                lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
+            // potential direction does not coincide with that of P.E.
+            else if(restrictFluxInTransport_ == 2)   // perform central averageing for all direction changes
+                doUpwinding[phaseIdx] = false;
+            else    // i.e. restrictFluxInTransport == 1
+            {
+               //check if harmonic weithing is necessary
+                if (!wasUpwindCell && (cellDataJ.mobility(phaseIdx) != 0.   // check if outflow induce neglected (i.e. mob=0) phase flux
+                       or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
+                    lambda[phaseIdx] = cellDataI.mobility(phaseIdx);
+                else if (wasUpwindCell && (cellDataI.mobility(phaseIdx) != 0. // check if inflow induce neglected phase flux
+                        or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())))
+                    lambda[phaseIdx] = cellDataJ.mobility(phaseIdx);
+                else
+                    doUpwinding[phaseIdx] = false;
+            }
+
         }
-    }
 
-    // do not perform upwinding if so desired
-    if(!doUpwinding[wPhaseIdx])
-    {
-        //a) perform harmonic averageing
-        fluxEntries[wCompIdx] -= potential[wPhaseIdx] * faceArea / volume
-                * harmonicMean(cellDataI.massFraction(wPhaseIdx, wCompIdx) * cellDataI.mobility(wPhaseIdx) * cellDataI.density(wPhaseIdx),
-                        cellDataJ.massFraction(wPhaseIdx, wCompIdx) * cellDataJ.mobility(wPhaseIdx) * cellDataJ.density(wPhaseIdx));
-        fluxEntries[nCompIdx] -= potential[wPhaseIdx] * faceArea / volume
-                * harmonicMean(cellDataI.massFraction(wPhaseIdx, nCompIdx) * cellDataI.mobility(wPhaseIdx) * cellDataI.density(wPhaseIdx),
-                        cellDataJ.massFraction(wPhaseIdx, nCompIdx) * cellDataJ.mobility(wPhaseIdx) * cellDataJ.density(wPhaseIdx));
-        // b) timestep control
-        // for timestep control : influx
-        timestepFlux[0] += std::max(0.,
-                - potential[wPhaseIdx] * faceArea / volume * harmonicMean(cellDataI.density(wPhaseIdx),cellDataJ.density(wPhaseIdx)));
-        // outflux
-        timestepFlux[1] += std::max(0.,
-                potential[wPhaseIdx] * faceArea / volume * harmonicMean(cellDataI.density(wPhaseIdx),cellDataJ.density(wPhaseIdx)));
+        // do not perform upwinding if so desired
+        if(!doUpwinding[phaseIdx])
+        {
+            //a) no flux if there wont be any flux regardless how to average/upwind
+            if(cellDataI.mobility(phaseIdx)+cellDataJ.mobility(phaseIdx)==0.)
+            {
+                potential[phaseIdx] = 0;
+                continue;
+            }
 
-        //c) stop further standard calculations
-        potential[wPhaseIdx] = 0;
+            //b) perform harmonic averageing
+            fluxEntries[wCompIdx] -= potential[phaseIdx] * faceArea / volume
+                    * harmonicMean(cellDataI.massFraction(phaseIdx, wCompIdx) * cellDataI.mobility(phaseIdx) * cellDataI.density(phaseIdx),
+                            cellDataJ.massFraction(phaseIdx, wCompIdx) * cellDataJ.mobility(phaseIdx) * cellDataJ.density(phaseIdx));
+            fluxEntries[nCompIdx] -= potential[phaseIdx] * faceArea / volume
+                    * harmonicMean(cellDataI.massFraction(phaseIdx, nCompIdx) * cellDataI.mobility(phaseIdx) * cellDataI.density(phaseIdx),
+                            cellDataJ.massFraction(phaseIdx, nCompIdx) * cellDataJ.mobility(phaseIdx) * cellDataJ.density(phaseIdx));
+            // c) timestep control
+            // for timestep control : influx
+            timestepFlux[0] += std::max(0.,
+                    - potential[phaseIdx] * faceArea / volume
+                      * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx)));
+            // outflux
+            timestepFlux[1] += std::max(0.,
+                    potential[phaseIdx] * faceArea / volume
+                    * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx))/SmobI[phaseIdx]);
 
-        //d) output (only for one side)
-        if(globalIdxI > globalIdxJ)
-            Dune::dinfo << "harmonicMean flux of phase w used from cell" << globalIdxI<< " into " << globalIdxJ <<"\n";
-    }
-    if(!doUpwinding[nPhaseIdx])
-    {
-        //a) perform harmonic averageing
-        fluxEntries[wCompIdx] -= potential[nPhaseIdx] * faceArea / volume
-                * harmonicMean(cellDataI.massFraction(nPhaseIdx, wCompIdx) * cellDataI.mobility(nPhaseIdx) * cellDataI.density(nPhaseIdx),
-                        cellDataJ.massFraction(nPhaseIdx, wCompIdx) * cellDataJ.mobility(nPhaseIdx) * cellDataJ.density(nPhaseIdx));
-        fluxEntries[nCompIdx] -= potential[nPhaseIdx] * faceArea / volume
-                * harmonicMean(cellDataI.massFraction(nPhaseIdx, nCompIdx) * cellDataI.mobility(nPhaseIdx) * cellDataI.density(nPhaseIdx),
-                        cellDataJ.massFraction(nPhaseIdx, nCompIdx) * cellDataJ.mobility(nPhaseIdx) * cellDataJ.density(nPhaseIdx));
-        // b) timestep control
-        // for timestep control : influx
-        timestepFlux[0] += std::max(0.,
-                - potential[nPhaseIdx] * faceArea / volume * harmonicMean(cellDataI.density(nPhaseIdx),cellDataJ.density(nPhaseIdx)));
-        // outflux
-        timestepFlux[1] += std::max(0.,
-                potential[nPhaseIdx] * faceArea / volume * harmonicMean(cellDataI.density(nPhaseIdx),cellDataJ.density(nPhaseIdx)));
+            //d) output (only for one side)
+            averagedFaces_++;
+            #if DUNE_MINIMAL_DEBUG_LEVEL < 3
+            // verbose (only for one side)
+            if(globalIdxI > globalIdxJ)
+                Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << globalIdxI<< " into " << globalIdxJ
+                << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
+            #endif
 
-        //c) stop further standard calculations
-        potential[nPhaseIdx] = 0;
-
-        //d) output (only for one side)
-        if(globalIdxI > globalIdxJ)
-            Dune::dinfo << "harmonicMean flux of phase n used from cell" << globalIdxI<< " into " << globalIdxJ <<"\n";
+            //e) stop further standard calculations
+            potential[phaseIdx] = 0;
+        }
     }
 
     // calculate and standardized velocity
@@ -576,8 +567,8 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
     // for timestep control : influx
     timestepFlux[0] += velocityJIw + velocityJIn;
 
-    double foutw = velocityIJw/SwmobI;
-    double foutn = velocityIJn/SnmobI;
+    double foutw = velocityIJw/SmobI[wPhaseIdx];
+    double foutn = velocityIJn/SmobI[nPhaseIdx];
     if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
     if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
     timestepFlux[1] += foutw + foutn;
@@ -825,6 +816,9 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                                             FluidState &BCfluidState,
                                             PhaseVector &pressBound)
 {
+    // prepare a flash solver
+    CompositionalFlash<TypeTag> flashSolver;
+
     const ElementPointer eIt= intersection.inside();
     // read boundary values
     PrimaryVariables primaryVariablesOnBoundary(0.);
@@ -859,18 +853,16 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
         else // capillarity neglected
             pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
 
-
-        BCfluidState.satFlash(satBound, pressBound, problem().spatialParams().porosity(*eIt),
-                            problem().temperatureAtPos(globalPosFace));
-
+        flashSolver.saturationFlash2p2c(BCfluidState, satBound, pressBound,
+                problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
     }
     else if (bcType == Indices::concentration)
     {
         // saturation and hence pc and hence corresponding pressure unknown
         pressBound[wPhaseIdx] = pressBound[nPhaseIdx] = primaryVariablesOnBoundary[Indices::pressureEqIdx];
         Scalar Z1Bound = primaryVariablesOnBoundary[contiWEqIdx];
-        BCfluidState.update(Z1Bound, pressBound, problem().spatialParams().porosity(*eIt),
-                            problem().temperatureAtPos(globalPosFace));
+        flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
+        	problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
 
         if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
         {
@@ -902,8 +894,8 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                 //store old pc
                 Scalar oldPc = pcBound;
                 //update with better pressures
-                BCfluidState.update(Z1Bound, pressBound, problem().spatialParams().porosity(*eIt),
-                                    problem().temperatureAtPos(globalPosFace));
+                flashSolver.concentrationFlash2p2c(BCfluidState, Z1Bound, pressBound,
+                        problem().spatialParams().porosity(*eIt), problem().temperatureAtPos(globalPosFace));
                 pcBound = MaterialLaw::pC(problem().spatialParams().materialLawParams(*eIt),
                         BCfluidState.saturation(wPhaseIdx));
                 // TODO: get right criterion, do output for evaluation

@@ -300,7 +300,6 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     // error reduction routine: volumetric error is damped and inserted to right hand side
     // if damping is not done, the solution method gets unstable!
     problem().variables().cellData(globalIdxI).volumeError() /= timestep_;
-    Scalar maxError = maxError_;
     Scalar erri = fabs(cellDataI.volumeError());
     Scalar x_lo = ErrorTermLowerBound_;
     Scalar x_mi = ErrorTermUpperBound_;
@@ -310,17 +309,17 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
     Scalar lofac = 0.;
     Scalar hifac = 0.;
 
-    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError))
+    if ((erri*timestep_ > 5e-5) && (erri > x_lo * maxError_))
     {
-        if (erri <= x_mi * maxError)
+        if (erri <= x_mi * maxError_)
             storageEntry[rhs] +=
                     problem().variables().cellData(globalIdxI).errorCorrection() =
-                            fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxError)
+                            fac* (1-x_mi*(lofac-1)/(x_lo-x_mi) + (lofac-1)/(x_lo-x_mi)*erri/maxError_)
                                 * cellDataI.volumeError() * volume;
         else
             storageEntry[rhs] +=
                     problem().variables().cellData(globalIdxI).errorCorrection() =
-                            fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxError)
+                            fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxError_)
                                 * cellDataI.volumeError() * volume;
     }
     else
@@ -510,28 +509,29 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
         }
 
         //perform upwinding if desired
-        if(!upwindWCellData)
+        if(!upwindWCellData or (cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father()))
         {
-            // compute values for both cells
-            Scalar dV_wI = (dv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
-                    + dv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
-            Scalar gV_wI = (graddv_dC1 * cellDataI.massFraction(wPhaseIdx, wCompIdx)
-                    + graddv_dC2 * cellDataI.massFraction(wPhaseIdx, nCompIdx));
-            dV_wI *= cellDataI.density(wPhaseIdx);
-            gV_wI *= cellDataI.density(wPhaseIdx);
-            Scalar dV_wJ = (dv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
-                    + dv_dC2 * cellDataJ.massFraction(wPhaseIdx, nCompIdx));
-            Scalar gV_wJ = (graddv_dC1 * cellDataJ.massFraction(wPhaseIdx, wCompIdx)
-                    + graddv_dC2 * cellDataJ.massFraction(wPhaseIdx, nCompIdx));
-            dV_wJ *= cellDataJ.density(wPhaseIdx);
-            gV_wJ *= cellDataJ.density(wPhaseIdx);
+            if (cellDataI.wasRefined() && cellDataJ.wasRefined())
+            {
+                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(), contiWEqIdx, false);
+                cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
+            }
+
+            Scalar averagedMassFraction[2];
+            averagedMassFraction[wCompIdx]
+               = harmonicMean(cellDataI.massFraction(wPhaseIdx, wCompIdx), cellDataJ.massFraction(wPhaseIdx, wCompIdx));
+            averagedMassFraction[nCompIdx]
+               = harmonicMean(cellDataI.massFraction(wPhaseIdx, nCompIdx), cellDataJ.massFraction(wPhaseIdx, nCompIdx));
+            Scalar averageDensity = harmonicMean(cellDataI.density(wPhaseIdx), cellDataJ.density(wPhaseIdx));
 
             //compute means
-            dV_w = harmonicMean(dV_wI, dV_wJ);
-            gV_w = harmonicMean(gV_wI, gV_wJ);
+            dV_w = dv_dC1 * averagedMassFraction[wCompIdx] + dv_dC2 * averagedMassFraction[nCompIdx];
+            dV_w *= averageDensity;
+            gV_w = graddv_dC1 * averagedMassFraction[wCompIdx] + graddv_dC2 * averagedMassFraction[nCompIdx];
+            gV_w *= averageDensity;
             lambdaW = harmonicMean(cellDataI.mobility(wPhaseIdx), cellDataJ.mobility(wPhaseIdx));
         }
-        else
+        else //perform upwinding
         {
             dV_w = (dv_dC1 * upwindWCellData->massFraction(wPhaseIdx, wCompIdx)
                     + dv_dC2 * upwindWCellData->massFraction(wPhaseIdx, nCompIdx));
@@ -542,28 +542,29 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
             gV_w *= upwindWCellData->density(wPhaseIdx);
         }
 
-        if(!upwindNCellData)
+        if(!upwindNCellData or (cellDataI.wasRefined() && cellDataJ.wasRefined()))
         {
-            Scalar dV_nI = (dv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
-                    + dv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
-            Scalar gV_nI = (graddv_dC1 * cellDataI.massFraction(nPhaseIdx, wCompIdx)
-                    + graddv_dC2 * cellDataI.massFraction(nPhaseIdx, nCompIdx));
-            dV_nI *= cellDataI.density(nPhaseIdx);
-            gV_nI *= cellDataI.density(nPhaseIdx);
-            Scalar dV_nJ = (dv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
-                    + dv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
-            Scalar gV_nJ = (graddv_dC1 * cellDataJ.massFraction(nPhaseIdx, wCompIdx)
-                    + graddv_dC2 * cellDataJ.massFraction(nPhaseIdx, nCompIdx));
-            dV_nJ *= cellDataJ.density(nPhaseIdx);
-            gV_nJ *= cellDataJ.density(nPhaseIdx);
+            if (cellDataI.wasRefined() && cellDataJ.wasRefined())
+            {
+                problem().variables().cellData(problem().variables().index(*elementPtrI)).setUpwindCell(intersection.indexInInside(), contiNEqIdx, false);
+                cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
+            }
+            Scalar averagedMassFraction[2];
+            averagedMassFraction[wCompIdx]
+               = harmonicMean(cellDataI.massFraction(nPhaseIdx, wCompIdx), cellDataJ.massFraction(nPhaseIdx, wCompIdx));
+            averagedMassFraction[nCompIdx]
+               = harmonicMean(cellDataI.massFraction(nPhaseIdx, nCompIdx), cellDataJ.massFraction(nPhaseIdx, nCompIdx));
+            Scalar averageDensity = harmonicMean(cellDataI.density(nPhaseIdx), cellDataJ.density(nPhaseIdx));
 
             //compute means
-            dV_n = harmonicMean(dV_nI, dV_nJ);
-            gV_n = harmonicMean(gV_nI, gV_nJ);
+            dV_n = dv_dC1 * averagedMassFraction[wCompIdx] + dv_dC2 * averagedMassFraction[nCompIdx];
+            dV_n *= averageDensity;
+            gV_n = graddv_dC1 * averagedMassFraction[wCompIdx] + graddv_dC2 * averagedMassFraction[nCompIdx];
+            gV_n *= averageDensity;
             lambdaN = harmonicMean(cellDataI.mobility(nPhaseIdx), cellDataJ.mobility(nPhaseIdx));
         }
         else
-        {
+       {
             dV_n = (dv_dC1 * upwindNCellData->massFraction(nPhaseIdx, wCompIdx)
                     + dv_dC2 * upwindNCellData->massFraction(nPhaseIdx, nCompIdx));
             lambdaN = upwindNCellData->mobility(nPhaseIdx);
@@ -572,8 +573,6 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
             dV_n *= upwindNCellData->density(nPhaseIdx);
             gV_n *= upwindNCellData->density(nPhaseIdx);
         }
-
-
 
         //calculate current matrix entry
         entries[matrix] = faceArea * (lambdaW * dV_w + lambdaN * dV_n)* (unitOuterNormal * unitDistVec);
@@ -983,7 +982,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     }
 
     //complete fluid state
-    fluidState.update(Z1, pressure, problem().spatialParams().porosity(elementI), temperature_);
+    CompositionalFlash<TypeTag> flashSolver;
+    flashSolver.concentrationFlash2p2c(fluidState,  Z1, pressure, problem().spatialParams().porosity(elementI), temperature_);
 
     // iterations part in case of enabled capillary pressure
     Scalar pc(0.), oldPc(0.);
@@ -1015,8 +1015,8 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
             //store old pc
             oldPc = pc;
             //update with better pressures
-            fluidState.update(Z1, pressure, problem().spatialParams().porosity(elementI),
-                                problem().temperatureAtPos(globalPos));
+            flashSolver.concentrationFlash2p2c(fluidState, Z1, pressure,
+                    problem().spatialParams().porosity(elementI), problem().temperatureAtPos(globalPos));
             pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
                                 fluidState.saturation(wPhaseIdx));
             // TODO: get right criterion, do output for evaluation

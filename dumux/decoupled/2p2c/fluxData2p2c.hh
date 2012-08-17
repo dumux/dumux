@@ -86,6 +86,11 @@ public:
     {
         isUpwindCell_.resize(size);
     }
+    //! returns the size of the upwind vector which equals number of faces
+    int size()
+    {
+        return isUpwindCell_.size();
+    }
     //! functions returning upwind information
     /* @param indexInInside The local inside index of the intersection
      * @param equationIdx The equation index

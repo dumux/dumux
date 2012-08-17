@@ -208,7 +208,7 @@ protected:
 };
 
 //! function which assembles the system of equations to be solved
-/** for first == true, this function assembles the matrix and right hand side for
+/*! for first == true, this function assembles the matrix and right hand side for
  * the solution of the pressure field in the same way as in the class FVPressure2P.
  * for first == false, the approach is changed to \f[-\frac{\partial V}{\partial p}
  * \frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}\nabla\cdot
@@ -350,10 +350,11 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         Scalar Z1 = cellDataI.massConcentration(wCompIdx) / sumC;
         // initialize simple fluidstate object
         PseudoOnePTwoCFluidState<TypeTag> pseudoFluidState;
-        pseudoFluidState.update(Z1, p_, cellDataI.subdomain(),
+        CompositionalFlash<TypeTag> flashSolver;
+        flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
                 problem().temperatureAtPos(elementI.geometry().center()));
 
-        Scalar v_ = 1. / FluidSystem::density(pseudoFluidState, presentPhaseIdx);
+        Scalar v_ = 1. / pseudoFluidState.density(presentPhaseIdx);
         cellDataI.dv_dp() = (sumC * ( v_ - (1. /cellDataI.density(presentPhaseIdx)))) /incp;
 
         if (cellDataI.dv_dp()>0)
@@ -362,9 +363,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
             Dune::dinfo << "dv_dp larger 0 at Idx " << globalIdxI << " , try and invert secant"<< std::endl;
 
             p_ -= 2*incp;
-            pseudoFluidState.update(Z1, p_, cellDataI.subdomain(),
+            flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
                     problem().temperatureAtPos(elementI.geometry().center()));
-            v_ = 1. / FluidSystem::density(pseudoFluidState, presentPhaseIdx);
+            v_ = 1. / pseudoFluidState.density(presentPhaseIdx);
             cellDataI.dv_dp() = (sumC * ( v_ - (1. /cellDataI.density(presentPhaseIdx)))) /incp;
             // dV_dp > 0 is unphysical: Try inverse increment for secant
             if (cellDataI.dv_dp()>0)
@@ -479,6 +480,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         // due to "safety cell" around subdomain, both cells I and J
         // have single-phase conditions, although one is in 2p domain.
         int phaseIdx = std::min(cellDataI.subdomain(), cellDataJ.subdomain());
+        // determine respective equation Idx
+        int contiEqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
 
         Scalar rhoMean = 0.5 * (cellDataI.density(phaseIdx) + cellDataJ.density(phaseIdx));
         //Scalar density = 0;
@@ -490,14 +493,22 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
 
         Scalar lambda;
 
-        if (potential >= 0.)
+        if (potential > 0.)
         {
             lambda = cellDataI.mobility(phaseIdx);
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, false);  // store in cellJ since cellI is const
             //density = cellDataI.density(phaseIdx);
+        }
+        else if (potential < 0.)
+        {
+            lambda = cellDataJ.mobility(phaseIdx);
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, true);
+            //density = cellDataJ.density(phaseIdx);
         }
         else
         {
-            lambda = cellDataJ.mobility(phaseIdx);
+            lambda = harmonicMean(cellDataI.mobility(phaseIdx) , cellDataJ.mobility(phaseIdx));
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, false);
             //density = cellDataJ.density(phaseIdx);
         }
 
@@ -732,23 +743,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
         if(oldSubdomainI != 2
                     && nextSubdomain[globalIdx] == 2)
         {
-            // assure correct PV if subdomain used to be simple
-            if(cellData.fluidStateType() != 0) // i.e. it was simple
-            {
-              timer_.stop();
-            }
+            // use complex update of the fluidstate
+            timer_.stop();
             this->updateMaterialLawsInElement(*eIt, postTimeStep);
             timer_.start();
         }
         else if(oldSubdomainI != 2
                     && nextSubdomain[globalIdx] != 2)    // will be simple and was simple
         {
-//            // determine which phase should be present
-//            int presentPhaseIdx = cellData.subdomain(); // this is already =nextSubomainIdx
-
-            // perform simple update
+			// perform simple update
             this->update1pMaterialLawsInElement(*eIt, cellData, postTimeStep);
-            timer_.stop();
         }
         //else
         // a) will remain complex -> everything already done in loop A
@@ -760,7 +764,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
     this->maxError_ = maxError/problem().timeManager().timeStepSize();
 
     timer_.stop();
-    Dune::dinfo << "Subdomain routines took " << timer_.elapsed() << " seconds" << std::endl;
+    
+    if(problem().timeManager().willBeFinished() or problem().timeManager().episodeWillBeOver())
+    	Dune::dinfo << "Subdomain routines took " << timer_.elapsed() << " seconds" << std::endl;
 
     return;
 }
@@ -799,18 +805,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
         pressure[nPhaseIdx] = this->pressure(globalIdx);
     }
 
-//            // make shure total concentrations from solution vector are exact in fluidstate
-//            pseudoFluidState.setMassConcentration(wCompIdx,
-//                    problem().transportModel().totalConcentration(wCompIdx,globalIdx));
-//            pseudoFluidState.setMassConcentration(nCompIdx,
-//                    problem().transportModel().totalConcentration(nCompIdx,globalIdx));
-
     // get the overall mass of component 1:  Z1 = C^k / (C^1+C^2) [-]
     Scalar sumConc = cellData.massConcentration(wCompIdx)
             + cellData.massConcentration(nCompIdx);
     Scalar Z1 = cellData.massConcentration(wCompIdx)/ sumConc;
 
-    pseudoFluidState.update(Z1, pressure, presentPhaseIdx, problem().temperatureAtPos(globalPos));
+    CompositionalFlash<TypeTag> flashSolver;
+    flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, pressure, presentPhaseIdx, problem().temperatureAtPos(globalPos));
 
     // write stuff in fluidstate
     assert(presentPhaseIdx == pseudoFluidState.presentPhaseIdx());
