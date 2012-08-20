@@ -22,7 +22,7 @@
 
 /**
  * @file
- * @brief  Class including the information of an interaction volume of a MPFA method that does not change with time
+ * @brief  Class including the information of an interaction volume of a MPFA O-method that does not change with time.
  * @author Markus Wolff
  */
 
@@ -31,6 +31,12 @@
 namespace Dumux
 {
 
+//! \ingroup IMPET
+/*! \brief Class including the information of an interaction volume of a MPFA O-method that does not change with time.
+ *
+ * Includes information needed to calculate the transmissibility matrix of an O-interaction-volume.
+ *
+ */
 template<class TypeTag>
 class FVMPFAOInteractionVolume
 {
@@ -47,7 +53,9 @@ private:
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    ///@cond 0
     typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
+    ///@endcond
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
@@ -64,9 +72,7 @@ public:
         outside = -1
     };
 
-    //! Constructs a InteractionVolumeInfo object
-    /**
-     */
+    //! Constructs a FVMPFAOInteractionVolume object
     FVMPFAOInteractionVolume() :
         stored_(false), permTimesNu_(FieldVectorVector(DimVector(0.0))),
         nu_(FieldVectorVector(DimVector(0.0))), normal_(FieldVectorVector(DimVector(0.0))),
@@ -85,31 +91,56 @@ public:
         faceIndexOnSubVolume_[3][1] = 2;
     }
 
+    //! Mark storage as completed
     void setStored()
     {
         stored_ = true;
     }
 
+    //! Returns true if information has already been stored
     bool isStored() const
     {
         return stored_;
     }
 
+    //! Store an element of the interaction volume
+    /*!
+     *  \param pointer The Dune::EntityPointer to the element
+     *  \param subVolumeIdx The local element index in the interaction volume
+     */
     void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
     {
         elements_[subVolumeIdx].push_back(pointer);
     }
 
+    //! Store the \f$ dF \f$ for the transmissiblity calculation
+    /*!
+     *  \param dF Value of  \f$ dF \f$
+     *  \param subVolumeIdx The local element index in the interaction volume
+     */
     void setDF(Scalar dF, int subVolumeIdx)
     {
         dF_[subVolumeIdx] = dF;
     }
 
+    //! Store a flux face area
+    /*!
+     *  \param faceArea The flux face area
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *   \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setFaceArea(Scalar& faceArea, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         faceArea_[subVolumeIdx][subVolumeFaceIdxInInside] = faceArea;
     }
 
+    //! Store \f$ \boldsymbol K \boldsymbol \nu\f$  for the transmissiblity calculation
+    /*!
+     *  \param nu \f$ \boldsymbol \nu \f$ vector
+     *  \param perm Permeability matrix
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setPermTimesNu(DimVector& nu, DimMatrix& perm, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         permTimesNu_[subVolumeIdx][subVolumeFaceIdxInInside] = 0;
@@ -119,11 +150,22 @@ public:
         nu_[subVolumeIdx][subVolumeFaceIdxInInside] = nu;
     }
 
+    //! Store a flux face normal
+    /*!
+     *  \param normal The normal vector
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setNormal(DimVector& normal, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         normal_[subVolumeIdx][subVolumeFaceIdxInInside] = normal;
     }
 
+    //! Store boundary condtion types for a flux face
+    /*!
+     *  \param boundaryTypes BoundaryTypes object
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setBoundary(BoundaryTypes& boundaryTypes, int subVolumeFaceIdx)
     {
 //        std::cout<<"old BCType = "<<boundaryType_[subVolumeFaceIdx]<<"\n";
@@ -136,11 +178,20 @@ public:
         faceType_[subVolumeFaceIdx] = boundary;
     }
 
+    //! Mark a flux face to be outside the model domain
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setOutsideFace(int subVolumeFaceIdx)
     {
         faceType_[subVolumeFaceIdx] = outside;
     }
 
+    //! Store Dirichlet boundary condtions for a flux face
+    /*!
+     *  \param condition Vector of primary variables
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setDirichletCondition(PrimaryVariables& condition, int subVolumeFaceIdx)
     {
         if (dirichletValues_.size() == 0)
@@ -150,6 +201,11 @@ public:
         dirichletValues_[subVolumeFaceIdx] = condition;
     }
 
+    //! Store Neumann boundary condtions for a flux face
+    /*!
+     *  \param condition Vector phase fluxes
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setNeumannCondition(PrimaryVariables& condition, int subVolumeFaceIdx)
     {
         if (neumannValues_.size() == 0)
@@ -159,41 +215,82 @@ public:
         neumannValues_[subVolumeFaceIdx] = condition;
     }
 
+    //! Store map from local interaction volume numbering to numbering of the Dune reference element.
+    /*!
+     * \param indexInInside Face index of the Dune reference element
+     * \param subVolumeIdx The local element index in the interaction volume
+     * \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setIndexOnElement(int indexInInside, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         indexOnElement_[subVolumeIdx][subVolumeFaceIdxInInside] = indexInInside;
     }
 
+    //! Map from local interaction volume numbering to numbering of the Dune reference element.
+    /*!
+     * \param subVolumeIdx The local element index in the interaction volume
+     * \param subVolumeFaceIdx The local face index in the interaction volume element
+     *
+     * \return Face index of the Dune reference element
+     */
     int getIndexOnElement(int subVolumeIdx, int subVolumeFaceIdx)
     {
         return indexOnElement_[subVolumeIdx][subVolumeFaceIdx];
     }
 
+    //! Map from local interaction volume numbering on element to numbering on interaction volume.
+    /*!
+     * \param subVolumeIdx The local element index in the interaction volume
+     * \param subVolumeFaceIdx The local face index in the interaction volume element
+     *
+     * \return Local face index int the interaction volume
+     */
     int getFaceIndexFromSubVolume(int subVolumeIdx, int subVolumeFaceIdx)
     {
         return faceIndexOnSubVolume_[subVolumeIdx][subVolumeFaceIdx];
     }
 
+    //! Get an element of the interaction volume.
+    /*!
+     * \param subVolumeIdx The local element index in the interaction volume
+     *
+     * \return Dune::EntityPointer to the interaction volume sub-element.
+     */
     ElementPointer& getSubVolumeElement(int subVolumeIdx)
     {
         return elements_[subVolumeIdx][0];
     }
 
+    //! Get boundary condtion types for a flux face
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     *
+     *  \return Object containing information about the boundary types.
+     */
     BoundaryTypes& getBoundaryType(int subVolumeFaceIdx)
     {
         return boundaryTypes_[subVolumeFaceIdx];
     }
 
+    //! Returns true if an interaction volume flux face is outside the model domain.
+    /*!
+     *   \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     bool isOutsideFace(int subVolumeFaceIdx)
     {
         return (faceType_[subVolumeFaceIdx] == outside);
     }
 
+    //! Returns true if an interaction volume flux face is inside the model domain and no boundary face.
+    /*!
+     *   \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     bool isInsideFace(int subVolumeFaceIdx)
     {
         return (faceType_[subVolumeFaceIdx] == inside);
     }
 
+    //! Returns true if the interaction volume is completely inside the model domain.
     bool isInnerVolume()
     {
         for (int i = 0; i < faceType_.size(); i++)
@@ -204,43 +301,95 @@ public:
         return true;
     }
 
+    //! Returns true if an interaction volume flux face is a boundary face.
+    /*!
+     *   \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     bool isBoundaryFace(int subVolumeFaceIdx)
     {
         return (faceType_[subVolumeFaceIdx] == boundary);
     }
 
+    //! Get the Dirichlet boundary condtions for a flux face
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     *
+     *  \return Vector of primary variables.
+     */
     PrimaryVariables& getDirichletValues(int subVolumeFaceIdx)
     {
         return dirichletValues_[subVolumeFaceIdx];
     }
 
+    //! Get the Neumann boundary condtions for a flux face
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     *
+     *  \return Vector of phase fluxes.
+     */
     PrimaryVariables& getNeumannValues(int subVolumeFaceIdx)
     {
         return neumannValues_[subVolumeFaceIdx];
     }
 
+    //! Get a flux face normal
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     *
+     *  \return Normal vector
+     */
     DimVector& getNormal(int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         return normal_[subVolumeIdx][subVolumeFaceIdxInInside];
     }
 
+    //! Get a flux face area
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     *
+     *  \return Area of the flux face
+     */
     Scalar& getFaceArea(int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         return faceArea_[subVolumeIdx][subVolumeFaceIdxInInside];
     }
 
+    //! Get \f$ \boldsymbol \nu \f$ vector used for the transmissiblity calculation
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     *
+     *  \return \f$ \boldsymbol \nu \f$ vector
+     */
     DimVector& getNu(int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         return nu_[subVolumeIdx][subVolumeFaceIdxInInside];
     }
 
-    //returns n^TKK_rnu
+    //! Get \f$ \boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \f$  for the transmissiblity calculation
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
+     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     *
+     *  \return \f$ \boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \f$
+     */
     Scalar getNTKNu(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         return normal_[subVolumeIdx][subVolumeFaceIdxInInsideN] * permTimesNu_[subVolumeIdx][subVolumeFaceIdxInInsideNu];
     }
 
-    //returns n^TKK_rnu
+    //! Get \f$ \boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu\f$  for the transmissiblity calculation
+    /*!
+     * \param relPerm relative permeability value (\f$ \boldsymbol n^\text{T} k_{r\alpha} \f$)
+     * \param subVolumeIdx The local element index in the interaction volume
+     * \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
+     * \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     *
+     *  \return \f$ \boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \f$
+     */
     Scalar getNTKrKNu(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         DimVector krKNu(permTimesNu_[subVolumeIdx][subVolumeFaceIdxInInsideNu]);
@@ -250,13 +399,28 @@ public:
         return normal_[subVolumeIdx][subVolumeFaceIdxInInsideN] * krKNu;
     }
 
-    //returns n^TKK_rnu/dF
+    //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
+     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     *
+     *  \return \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} \boldsymbol K \boldsymbol \nu \right) \f$
+     */
     Scalar getNTKNu_by_dF(int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNTKNu(subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];
     }
 
-    //returns n^TKK_rnu/dF
+    //! Get \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$  for the transmissiblity calculation
+    /*!
+     *  \param relPerm relative permeability value (\f$ \boldsymbol n^\text{T} k_{r\alpha} \f$)
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInsideN The local face index in the interaction volume element for the normal \f$ \boldsymbol n \f$
+     *  \param subVolumeFaceIdxInInsideNu The local face index in the interaction volume element for the vector \f$ \boldsymbol \nu \f$
+     *
+     *  \return \f$ \frac{1}{dF} \left(\boldsymbol n^\text{T} k_{r\alpha} \boldsymbol K \boldsymbol \nu \right) \f$
+     */
     Scalar getNTKrKNu_by_dF(Scalar& relPerm, int subVolumeIdx, int subVolumeFaceIdxInInsideN, int subVolumeFaceIdxInInsideNu) const
     {
         return  faceArea_[subVolumeIdx][subVolumeFaceIdxInInsideN]*getNTKrKNu(relPerm, subVolumeIdx, subVolumeFaceIdxInInsideN, subVolumeFaceIdxInInsideNu) / dF_[subVolumeIdx];

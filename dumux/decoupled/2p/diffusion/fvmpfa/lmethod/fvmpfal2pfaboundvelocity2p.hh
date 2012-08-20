@@ -25,13 +25,33 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of a numerical diffusion model
+ * @brief  Velocity Field from a finite volume solution of a pressure equation using a MPFA L-method.
  * @author Markus Wolff
  */
 
 namespace Dumux
 {
 
+//! \ingroup FVPressure2p
+/*! \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
+ * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization and a MPFA L-method.
+ * At Dirichlet boundaries a two-point flux approximation is used.
+ * The pressure has to be given as piecewise constant cell values.
+ * The velocities are calculated as
+ *
+ *\f[ \boldsymbol v_\alpha = - \lambda_\alpha \boldsymbol K \text{grad}\, \Phi_\alpha, \f]
+ * and,
+ * \f[ \boldsymbol v_t = \boldsymbol v_w + \boldsymbol v_n,\f]
+ *
+ * where \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
+ * and \f$ \lambda_\alpha \f$ a phase mobility.
+ *
+ * Remark1: only for 2-D quadrilateral grids!
+ *
+ * Remark2: can use UGGrid, ALUGrid or SGrid/YaspGrid!
+ *
+ * \tparam TypeTag The problem Type Tag
+ */
 template<class TypeTag> class FVMPFAL2PFABoundVelocity2P: public FVMPFAL2PFABoundPressure2P<TypeTag>
 {
     typedef FVMPFAL2PFABoundPressure2P<TypeTag> ParentType;
@@ -58,7 +78,8 @@ template<class TypeTag> class FVMPFAL2PFABoundVelocity2P: public FVMPFAL2PFABoun
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -111,6 +132,10 @@ template<class TypeTag> class FVMPFAL2PFABoundVelocity2P: public FVMPFAL2PFABoun
     typedef Dune::FieldVector<Scalar, dim> DimVector;
 
 public:
+    //! Constructs a FVMPFAL2PFABoundVelocity2P object
+    /*!
+     * \param problem A problem class object
+     */
     FVMPFAL2PFABoundVelocity2P(Problem& problem) :
             ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
@@ -127,17 +152,27 @@ public:
         viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
     }
 
+    //Calculates the velocities at all cell-cell interfaces.
     void calculateVelocity();
 
-    void initialize(bool solveTwice = true)
+    /*! \brief Initializes pressure and velocity
+     *
+     * \copydetails ParentType::initialize()
+     */
+    void initialize()
     {
-        ParentType::initialize(solveTwice);
+        ParentType::initialize();
 
         calculateVelocity();
 
         return;
     }
 
+    /*! \brief Pressure and velocity update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         ParentType::update();
@@ -147,8 +182,14 @@ public:
         return;
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds velocity output to the output file
+     *
+     * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -233,6 +274,11 @@ private:
 };
 // end of template
 
+/*! \brief Calculates the velocities at a cell-cell interfaces.
+ *
+ * Calculates the velocities at a cell-cell interfaces from a given pressure field.
+ *
+ */
 template<class TypeTag>
 void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
 {
@@ -262,12 +308,6 @@ void FVMPFAL2PFABoundVelocity2P<TypeTag>::calculateVelocity()
             CellData& cellData2 = problem_.variables().cellData(globalIdx2);
             CellData& cellData3 = problem_.variables().cellData(globalIdx3);
             CellData& cellData4 = problem_.variables().cellData(globalIdx4);
-
-            // get global coordinate of cell centers
-            const GlobalPosition& globalPos1 = elementPointer1->geometry().center();
-            const GlobalPosition& globalPos2 = elementPointer2->geometry().center();
-            const GlobalPosition& globalPos3 = elementPointer3->geometry().center();
-            const GlobalPosition& globalPos4 = elementPointer4->geometry().center();
 
             // get pressure values
             Dune::FieldVector < Scalar, 2 * dim > pW(0);

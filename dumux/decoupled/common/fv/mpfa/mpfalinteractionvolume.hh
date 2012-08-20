@@ -22,7 +22,7 @@
 
 /**
  * @file
- * @brief  Class including the information of an interaction volume of a MPFA method that does not change with time
+ * @brief  Class including the information of an interaction volume of a MPFA L-method that does not change with time.
  * @author Markus Wolff
  */
 
@@ -31,6 +31,12 @@
 namespace Dumux
 {
 
+//! \ingroup IMPET
+/*! \brief Class including the information of an interaction volume of a MPFA L-method that does not change with time.
+ *
+ * Includes information needed to calculate the transmissibility matrix of an L-interaction-volume.
+ *
+ */
 template<class TypeTag>
 class FVMPFALInteractionVolume
 {
@@ -47,7 +53,9 @@ private:
     typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    ///@cond 0
     typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
+    ///@endcond
 
     typedef Dune::FieldVector<Scalar, dim> DimVector;
     typedef Dune::FieldVector<DimVector, dim> FieldVectorVector;
@@ -63,9 +71,7 @@ public:
         outside = -1
     };
 
-    //! Constructs a FVMPFALInteractionVolumeInfo object
-    /**
-     */
+    //! Constructs a FVMPFALInteractionVolume object
     FVMPFALInteractionVolume() :
         stored_(false), normal_(FieldVectorVector(DimVector(0.0))),
         facePos_(FieldVectorVector(DimVector(0.0))),
@@ -86,6 +92,7 @@ public:
         faceIndexOnSubVolume_[3][1] = 2;
     }
 
+    //! Delete stored information
     void reset()
     {
         stored_ = false;
@@ -101,42 +108,73 @@ public:
         elementNum_ = 0;
     }
 
+    //! Mark storage as completed
     void setStored()
     {
         stored_ = true;
     }
 
+    //! Returns true if information has already been stored
     bool isStored() const
     {
         return stored_;
     }
 
+    //! Store position of the center vertex of the interaction volume
     void setCenterPosition(DimVector &centerVertexPos)
     {
         centerVertexPos_ = centerVertexPos;
     }
 
+    //! Store an element of the interaction volume
+    /*!
+     *  \param pointer The Dune::EntityPointer to the element
+     *  \param subVolumeIdx The local element index in the interaction volume
+     */
     void setSubVolumeElement(ElementPointer pointer, int subVolumeIdx)
     {
         elements_[subVolumeIdx].push_back(pointer);
         elementNum_++;
     }
 
+    //! Store position of the center of a flux face
+    /*!
+     *  \param pos Position of face center
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setFacePosition(const DimVector& pos, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         facePos_[subVolumeIdx][subVolumeFaceIdxInInside] = pos;
     }
 
+    //! Store a flux face area
+    /*!
+     *  \param faceArea The flux face area
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setFaceArea(Scalar& faceArea, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         faceArea_[subVolumeIdx][subVolumeFaceIdxInInside] = faceArea;
     }
 
+    //! Store a flux face normal
+    /*!
+     *  \param normal The normal vector
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setNormal(DimVector& normal, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         normal_[subVolumeIdx][subVolumeFaceIdxInInside] = normal;
     }
 
+    //! Store boundary condtion types for a flux face
+    /*!
+     *  \param boundaryTypes BoundaryTypes object
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setBoundary(BoundaryTypes& boundaryTypes, int subVolumeFaceIdx)
     {
         if (boundaryTypes_.size() == 0)
@@ -147,11 +185,20 @@ public:
         faceType_[subVolumeFaceIdx] = boundary;
     }
 
+    //! Mark a flux face to be outside the model domain
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setOutsideFace(int subVolumeFaceIdx)
     {
         faceType_[subVolumeFaceIdx] = outside;
     }
 
+    //! Store Dirichlet boundary condtions for a flux face
+    /*!
+     *  \param condition Vector of primary variables
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setDirichletCondition(PrimaryVariables& condition, int subVolumeFaceIdx)
     {
         if (dirichletValues_.size() == 0)
@@ -161,6 +208,11 @@ public:
         dirichletValues_[subVolumeFaceIdx] = condition;
     }
 
+    //! Store Neumann boundary condtions for a flux face
+    /*!
+     *  \param condition Vector phase fluxes
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     void setNeumannCondition(PrimaryVariables& condition, int subVolumeFaceIdx)
     {
         if (neumannValues_.size() == 0)
@@ -170,51 +222,94 @@ public:
         neumannValues_[subVolumeFaceIdx] = condition;
     }
 
-    DimVector& getCenterPosition()
-    {
-        return centerVertexPos_;
-    }
-
+    //! Store map from local interaction volume numbering to numbering of the Dune reference element.
+    /*!
+     * \param indexInInside Face index of the Dune reference element
+     * \param subVolumeIdx The local element index in the interaction volume
+     * \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     */
     void setIndexOnElement(int indexInInside, int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         indexOnElement_[subVolumeIdx][subVolumeFaceIdxInInside] = indexInInside;
     }
 
+    //! Get position vector of central vertex
+    DimVector& getCenterPosition()
+    {
+        return centerVertexPos_;
+    }
+
+    //! Get number of stored elements
     int getElementNumber()
     {
         return elementNum_;
     }
 
+    //! Map from local interaction volume numbering to numbering of the Dune reference element.
+    /*!
+     * \param subVolumeIdx The local element index in the interaction volume
+     * \param subVolumeFaceIdx The local face index in the interaction volume element
+     *
+     * \return Face index of the Dune reference element
+     */
     int getIndexOnElement(int subVolumeIdx, int subVolumeFaceIdx)
     {
         return indexOnElement_[subVolumeIdx][subVolumeFaceIdx];
     }
 
+    //! Map from local interaction volume numbering on element to numbering on interaction volume.
+    /*!
+     * \param subVolumeIdx The local element index in the interaction volume
+     * \param subVolumeFaceIdx The local face index in the interaction volume element
+     *
+     * \return Local face index int the interaction volume
+     */
     int getFaceIndexFromSubVolume(int subVolumeIdx, int subVolumeFaceIdx)
     {
         return faceIndexOnSubVolume_[subVolumeIdx][subVolumeFaceIdx];
     }
 
+    //! Get an element of the interaction volume.
+    /*!
+     * \param subVolumeIdx The local element index in the interaction volume
+     *
+     * \return Dune::EntityPointer to the interaction volume sub-element.
+     */
     ElementPointer& getSubVolumeElement(int subVolumeIdx)
     {
         return elements_[subVolumeIdx][0];
     }
 
+    //! Get boundary condtion types for a flux face
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     *
+     *  \return Object containing information about the boundary types.
+     */
     BoundaryTypes& getBoundaryType(int subVolumeFaceIdx)
     {
         return boundaryTypes_[subVolumeFaceIdx];
     }
 
+    //! Returns true if an interaction volume flux face is outside the model domain.
+    /*!
+     *   \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     bool isOutsideFace(int subVolumeFaceIdx)
     {
         return (faceType_[subVolumeFaceIdx] == outside);
     }
 
+    //! Returns true if an interaction volume flux face is inside the model domain and no boundary face.
+    /*!
+     *   \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     bool isInsideFace(int subVolumeFaceIdx)
     {
         return (faceType_[subVolumeFaceIdx] == inside);
     }
 
+    //! Returns true if the interaction volume is completely inside the model domain.
     bool isInnerVolume()
     {
         for (int i = 0; i < faceType_.size(); i++)
@@ -225,36 +320,74 @@ public:
         return true;
     }
 
+    //! Returns true if an interaction volume flux face is a boundary face.
+    /*!
+     *   \param subVolumeFaceIdx The local face index in the interaction volume
+     */
     bool isBoundaryFace(int subVolumeFaceIdx)
     {
         return (faceType_[subVolumeFaceIdx] == boundary);
     }
 
+    //! Get the Dirichlet boundary condtions for a flux face
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     *
+     *  \return Vector of primary variables.
+     */
     PrimaryVariables& getDirichletValues(int subVolumeFaceIdx)
     {
         return dirichletValues_[subVolumeFaceIdx];
     }
 
+    //! Get the Neumann boundary condtions for a flux face
+    /*!
+     *  \param subVolumeFaceIdx The local face index in the interaction volume
+     *
+     *  \return Vector of phase fluxes.
+     */
     PrimaryVariables& getNeumannValues(int subVolumeFaceIdx)
     {
         return neumannValues_[subVolumeFaceIdx];
     }
 
+    //! Get a flux face normal
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     *
+     *  \return Normal vector
+     */
     DimVector& getNormal(int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         return normal_[subVolumeIdx][subVolumeFaceIdxInInside];
     }
 
+    //! Get position of the center of a flux face
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     *
+     *  \return Position of face center
+     */
     DimVector& getFacePosition(int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         return facePos_[subVolumeIdx][subVolumeFaceIdxInInside];
     }
 
+    //! Get a flux face area
+    /*!
+     *  \param subVolumeIdx The local element index in the interaction volume
+     *  \param subVolumeFaceIdxInInside The local face index in the interaction volume element
+     *
+     *  \return Area of the flux face
+     */
     Scalar& getFaceArea(int subVolumeIdx, int subVolumeFaceIdxInInside)
     {
         return faceArea_[subVolumeIdx][subVolumeFaceIdxInInside];
     }
 
+    //! Outputs stored information
     void printInteractionVolumeInfo()
     {
         std::cout<<"\nNumber of stored elements: "<<elementNum_<<"\n";

@@ -28,25 +28,35 @@
 
 /**
  * @file
- * @brief  Finite Volume-MPFAL implementation of a two-phase pressure equation on an adaptive grid
- * @brief  Remark1: only for 2-D quadrilateral grid.
- * @brief  Remark2: can use UGGrid or SGrid/YaspGrid
+ * @brief  Grid adaptive finite volume MPFA L-method discretization of a two-phase pressure equation of the sequential IMPES model.
  * @author Markus Wolff
  */
 
 namespace Dumux
 {
-//! \ingroup diffusion
-/*! Finite Volume-MPFAO-Implementation of the equation
- * \f$ - \text{div}\, \mathbf_{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$, or
- * \f$ - \text{div}\, \mathbf_{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
- * \f$\Phi = g\f$ on \f$\Gamma_1\f$, and
- * \f$-\text{div}\, \mathbf_{v}_t \cdot \mathbf{n} = J\f$
- * on \f$\Gamma_2\f$. Here,
- * \f$Phi_\alpha \f$ denotes the potential of phase \f$\alpha\f$, \f$K\f$ the intrinsic permeability,
- * \f$\lambda_t\f$ the total mobility, \f$this->f_\alpha\f$ the phase fractional flow function.
- * More details on the equations can be found in
- * H. Hoteit, A. Firoozabadi. Numerical modeling of thwo-phase flow in heterogeneous permeable media with different capillarity pressures. Adv Water Res (31), 2008
+//! \ingroup FVPressure2p
+/*! \brief Grid adaptive finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
+ *
+ * Grid adaptive finite volume MPFA L-method discretization of the equations
+ * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \text{grad}\, \Phi_w + f_n \lambda_t \boldsymbol K \text{grad}\, \Phi_{cap}   ) = 0, \f]
+ * or
+ * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \text{grad}\, \Phi_n - f_w \lambda_t \boldsymbol K \text{grad}\, \Phi_{cap}   ) = 0. \f]
+ *  At Dirichlet boundaries a two-point flux approximation is used.
+ * \f[ \Phi = g \;  \text{on} \; \Gamma_1, \quad \text{and} \quad
+ * -\text{div}\, \boldsymbol v_t \cdot \mathbf{n} = J \;  \text{on}  \; \Gamma_2. \f]
+ *  Here, \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
+ * \f$ \lambda_t \f$ the total mobility, \f$ f_\alpha \f$ the phase fractional flow function.
+ *
+ * More details on the equations can be found in H. Hoteit, A. Firoozabadi.
+ * Numerical modeling of thwo-phase flow in heterogeneous permeable media with different capillarity pressures. Adv Water Res (31), 2008
+ *
+ *  Remark1: only for 2-D quadrilateral grid
+ *
+ *  Remark2: implemented for UGGrid, ALUGrid, or SGrid/YaspGrid
+ *
+ *  Remark3: Allowed difference in grid levels of two neighboring cells: 1
+ *
+ *\tparam TypeTag The problem Type Tag
  */
 template<class TypeTag>
 class FVMPFAL2PFABoundPressure2PAdaptive: public FVPressure<TypeTag>
@@ -74,9 +84,12 @@ class FVMPFAL2PFABoundPressure2PAdaptive: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
@@ -132,6 +145,13 @@ public:
         noTransmissibility = 0,
         rightTriangle = 1
     };
+
+    /*! \brief Type of the interaction volume objects
+     *
+     * Type of the interaction volume objects used to store the geometric information which is needed
+     * to calculated the transmissibility matrices of one MPFA interaction volume.
+     *
+     */
     typedef Dumux::FVMPFALInteractionVolume<TypeTag> InteractionVolume;
 private:
 
@@ -154,6 +174,11 @@ public:
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
+    /*! \brief Updates interaction volumes
+     *
+     * Globally rebuilds the MPFA interaction volumes.
+     *
+     */
     void updateInteractionVolumeInfo()
     {
         interactionVolumes_.clear();
@@ -166,7 +191,11 @@ public:
 //        printInteractionVolumes();
     }
 
-    void initialize(bool solveTwice = true)
+    /*! \brief Initializes the pressure model
+     *
+     * \copydetails ParentType::initialize()
+     */
+    void initialize()
     {
         ParentType::initialize();
 
@@ -182,6 +211,9 @@ public:
         return;
     }
 
+    /*! \brief Globally stores the pressure solution
+     *
+     */
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
@@ -192,6 +224,10 @@ public:
         }
     }
 
+    /*! \brief Stores the pressure solution of a cell
+     *
+     * \param element Dune grid element
+     */
     void storePressureSolution(const Element& element)
     {
         int globalIdx = problem_.variables().index(element);
@@ -226,7 +262,11 @@ public:
         cellData.fluxData().resetVelocity();
     }
 
-    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    /*! \brief Pressure update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         int gridSize = problem_.gridView().size(0);
@@ -275,41 +315,14 @@ public:
         return;
     }
 
-    Scalar evaluateErrorTerm(CellData& cellData)
-    {
-        //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
-        // error reduction routine: volumetric error is damped and inserted to right hand side
-        Scalar sat = 0;
-        switch (saturationType_)
-        {
-        case Sw:
-            sat = cellData.saturation(wPhaseIdx);
-            break;
-        case Sn:
-            sat = cellData.saturation(nPhaseIdx);
-            break;
-        }
-
-        Scalar error = (sat > 1.0) ? sat - 1.0 : 0.0;
-        if (sat < 0.0)
-        {
-            error = sat;
-        }
-        error /= timeStep_;
-
-        Scalar errorAbs = std::abs(error);
-
-        if ((errorAbs * timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_)
-                && (!problem_.timeManager().willBeFinished()))
-        {
-            return ErrorTermFactor_ * error;
-        }
-        return 0.0;
-    }
-
-
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds pressure output to the output file
+     *
+     * Adds the pressure, the potential and the capillary pressure to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -361,6 +374,10 @@ public:
         return;
     }
 
+    //! Constructs a FVMPFAL2PFABoundPressure2PAdaptive object
+    /**
+     * \param problem A problem class object
+     */
     FVMPFAL2PFABoundPressure2PAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem), R_(0),
                     gravity_(problem.gravity()),
@@ -418,24 +435,27 @@ private:
     DimMatrix R_;
 
 public:
+    // Calculates tranmissibility matrix
     int calculateTransmissibility(Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1>& transmissibility,
     InteractionVolume& interactionVolume,
     std::vector<DimVector >& lambda,
     int idx1, int idx2, int idx3, int idx4);
 
+    // Calculates tranmissibility matrix of left L-shape
     int calculateLeftHNTransmissibility(Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1>& transmissibility,
     InteractionVolume& interactionVolume,
     std::vector<DimVector >& lambda,
     int idx1, int idx2, int idx3);
 
+    // Calculates tranmissibility matrix of right L-shape
     int calculateRightHNTransmissibility(Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1>& transmissibility,
     InteractionVolume& interactionVolume,
     std::vector<DimVector >& lambda,
     int idx1, int idx2, int idx3);
 
 protected:
-    GlobalInteractionVolumeVector interactionVolumes_;
-    InnerBoundaryVolumeFaces innerBoundaryVolumeFaces_;
+    GlobalInteractionVolumeVector interactionVolumes_;//!< Global Vector of interaction volumes
+    InnerBoundaryVolumeFaces innerBoundaryVolumeFaces_;//!< Vector marking faces which intersect the boundary
 
 private:
     const GlobalPosition& gravity_; //!< vector including the gravity constant
@@ -453,6 +473,38 @@ private:
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation); //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
+
+    Scalar evaluateErrorTerm_(CellData& cellData)
+    {
+        //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
+        // error reduction routine: volumetric error is damped and inserted to right hand side
+        Scalar sat = 0;
+        switch (saturationType_)
+        {
+        case Sw:
+            sat = cellData.saturation(wPhaseIdx);
+            break;
+        case Sn:
+            sat = cellData.saturation(nPhaseIdx);
+            break;
+        }
+
+        Scalar error = (sat > 1.0) ? sat - 1.0 : 0.0;
+        if (sat < 0.0)
+        {
+            error = sat;
+        }
+        error /= timeStep_;
+
+        Scalar errorAbs = std::abs(error);
+
+        if ((errorAbs * timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_)
+                && (!problem_.timeManager().willBeFinished()))
+        {
+            return ErrorTermFactor_ * error;
+        }
+        return 0.0;
+    }
 
 };
 
@@ -1842,10 +1894,10 @@ void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::assemble()
                 problem_.source(source, *elementPointer4);
                 this->f_[globalIdx4] += volume4 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-                this->f_[globalIdx1] += evaluateErrorTerm(cellData1) * volume1 / (4.0);
-                this->f_[globalIdx2] += evaluateErrorTerm(cellData2) * volume2 / (4.0);
-                this->f_[globalIdx3] += evaluateErrorTerm(cellData3) * volume3 / (4.0);
-                this->f_[globalIdx4] += evaluateErrorTerm(cellData4) * volume4 / (4.0);
+                this->f_[globalIdx1] += evaluateErrorTerm_(cellData1) * volume1 / (4.0);
+                this->f_[globalIdx2] += evaluateErrorTerm_(cellData2) * volume2 / (4.0);
+                this->f_[globalIdx3] += evaluateErrorTerm_(cellData3) * volume3 / (4.0);
+                this->f_[globalIdx4] += evaluateErrorTerm_(cellData4) * volume4 / (4.0);
 
                 //get mobilities of the phases
                 Dune::FieldVector<Scalar, numPhases> lambda1(cellData1.mobility(wPhaseIdx));
@@ -2216,8 +2268,8 @@ void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::assemble()
                 problem_.source(source, *elementPointer2);
                 this->f_[globalIdx2] += volume2 / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-                this->f_[globalIdx1] += evaluateErrorTerm(cellData1) * volume1 / (4.0);
-                this->f_[globalIdx2] += evaluateErrorTerm(cellData2) * volume2 / (4.0);
+                this->f_[globalIdx1] += evaluateErrorTerm_(cellData1) * volume1 / (4.0);
+                this->f_[globalIdx2] += evaluateErrorTerm_(cellData2) * volume2 / (4.0);
 
                 //get mobilities of the phases
                 Dune::FieldVector<Scalar, numPhases> lambda1(cellData1.mobility(wPhaseIdx));
@@ -2499,7 +2551,7 @@ void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::assemble()
                 problem_.source(source, *elementPointer);
                 this->f_[globalIdx] += volume / (4.0) * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-                this->f_[globalIdx] += evaluateErrorTerm(cellData) * volume / (4.0);
+                this->f_[globalIdx] += evaluateErrorTerm_(cellData) * volume / (4.0);
 
                 //get mobilities of the phases
                 Dune::FieldVector<Scalar, numPhases> lambda(cellData.mobility(wPhaseIdx));
@@ -2699,6 +2751,19 @@ void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::assemble()
     return;
 }
 
+/*! \brief Calculates tranmissibility matrix
+ *
+ * Calculates tranmissibility matrix of an L-shape for a certain flux face.
+ * Automatically selects one of the two possible L-shape (left, or right).
+ *
+ * \param transmissibility Matrix for the resulting transmissibility
+ * \param interactionVolume The interaction volume object (includes geometric information)
+ * \param lambda Mobilities of cells 1-4
+ * \param idx1 Index of cell 1 of the L-stencil
+ * \param idx2 Index of cell 2 of the L-stencil
+ * \param idx3 Index of cell 3 of the L-stencil
+ * \param idx4 Index of cell 4 of the L-stencil
+ */
 template<class TypeTag>
 int FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::calculateTransmissibility(
         Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1>& transmissibility,
@@ -2941,6 +3006,18 @@ int FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::calculateTransmissibility(
     }
 }
 
+/*! \brief Calculates tranmissibility matrix
+ *
+ * Calculates tranmissibility matrix of an L-shape for a certain flux face.
+ * Calculates only the transmissibility of the left L-shape (needed at hanging nodes HN).
+ *
+ * \param transmissibilityLeft Matrix for the resulting transmissibility
+ * \param interactionVolume The interaction volume object (includes geometric information)
+ * \param lambda Mobilities of cells 1-3
+ * \param idx1 Index of cell 1 of the L-stencil
+ * \param idx2 Index of cell 2 of the L-stencil
+ * \param idx3 Index of cell 3 of the L-stencil
+ */
 template<class TypeTag>
 int FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::calculateLeftHNTransmissibility(
         Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1>& transmissibilityLeft,
@@ -3078,6 +3155,18 @@ int FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::calculateLeftHNTransmissibility
     return leftTriangle;
 }
 
+/*! \brief Calculates tranmissibility matrix
+ *
+ * Calculates tranmissibility matrix of an L-shape for a certain flux face.
+ * Calculates only the transmissibility of the right L-shape (needed at hanging nodes HN).
+ *
+ * \param transmissibilityRight Matrix for the resulting transmissibility
+ * \param interactionVolume The interaction volume object (includes geometric information)
+ * \param lambda Mobilities of cells 1-3
+ * \param idx1 Index of cell 1 of the L-stencil
+ * \param idx2 Index of cell 2 of the L-stencil
+ * \param idx3 Index of cell 3 of the L-stencil
+ */
 template<class TypeTag>
 int FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::calculateRightHNTransmissibility(
         Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1>& transmissibilityRight,
@@ -3206,7 +3295,10 @@ int FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::calculateRightHNTransmissibilit
     return rightTriangle;
 }
 
-//constitutive functions are updated once if new saturations are calculated and stored in the variables object
+/*! \brief Updates constitutive relations and stores them in the variable class
+ *
+ * Stores mobility, fractional flow function and capillary pressure for all grid cells.
+ */
 template<class TypeTag>
 void FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>::updateMaterialLaws()
 {

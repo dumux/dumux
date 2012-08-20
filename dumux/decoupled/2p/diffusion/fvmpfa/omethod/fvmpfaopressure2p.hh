@@ -36,9 +36,8 @@
 
 namespace Dumux
 {
-/*! \ingroup FVPressure2p
- *
- * \brief Finite Volume MPFA O-method discretization of a two-phase pressure equation of the sequential IMPES model.
+//!\ingroup FVPressure2p
+/*! \brief Finite Volume MPFA O-method discretization of a two-phase pressure equation of the sequential IMPES model.
  *
  * This class provides a finite volume (FV) implementation using the multi-point flux approximation O-method (MPFA O-method) for solving equations of the form
  * \f[

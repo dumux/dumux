@@ -173,11 +173,13 @@ public:
     const Scalar pressure(const int globalIdx) const
     {   return pressure_[globalIdx];}
 
+    //!Returns the global matrix of the last pressure solution step.
     const Matrix& globalMatrix()
     {
         return A_;
     }
 
+    //!Returns the right hand side vector of the last pressure solution step.
     const RHSVector& rightHandSide()
     {
         return f_;

@@ -28,25 +28,33 @@
 
 /**
  * @file
- * @brief  Finite Volume-MPFAO implementation of a two-phase pressure equation
- * @brief  Remark1: only for 2-D quadrilateral grid.
- * @brief  Remark2: can use UGGrid or SGrid/YaspGrid
+ * @brief  Finite volume MPFA O-method discretization of a two-phase pressure equation of the sequential IMPES model.
  * @author Markus Wolff
  */
 
 namespace Dumux
 {
-//! \ingroup diffusion
-/*! Finite Volume-MPFAO-Implementation of the equation
- * \f$ - \text{div}\, \mathbf_{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$, or
- * \f$ - \text{div}\, \mathbf_{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\, \Phi_n - f_w \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$.
- * \f$\Phi = g\f$ on \f$\Gamma_1\f$, and
- * \f$-\text{div}\, \mathbf_{v}_t \cdot \mathbf{n} = J\f$
- * on \f$\Gamma_2\f$. Here,
- * \f$Phi_\alpha \f$ denotes the potential of phase \f$\alpha\f$, \f$K\f$ the intrinsic permeability,
- * \f$\lambda_t\f$ the total mobility, \f$this->f_\alpha\f$ the phase fractional flow function.
- * More details on the equations can be found in
- * H. Hoteit, A. Firoozabadi. Numerical modeling of thwo-phase flow in heterogeneous permeable media with different capillarity pressures. Adv Water Res (31), 2008
+//! \ingroup FVPressure2p
+/*! \brief Finite volume MPFA O-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
+ *
+ * Finite volume MPFA O-method discretization of the equations
+ * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \text{grad}\, \Phi_w + f_n \lambda_t \boldsymbol K \text{grad}\, \Phi_{cap}   ) = 0, \f]
+ * or
+ * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \text{grad}\, \Phi_n - f_w \lambda_t \boldsymbol K \text{grad}\, \Phi_{cap}   ) = 0. \f]
+ *  At Dirichlet boundaries a two-point flux approximation is used.
+ * \f[ \Phi = g \;  \text{on} \; \Gamma_1, \quad \text{and} \quad
+ * -\text{div}\, \boldsymbol v_t \cdot \mathbf{n} = J \;  \text{on}  \; \Gamma_2. \f]
+ *  Here, \f$ \Phi_\alpha \f$ denotes the potential of phase \f$ \alpha \f$, \f$ \boldsymbol K \f$ the intrinsic permeability,
+ * \f$ \lambda_t \f$ the total mobility, \f$ f_\alpha \f$ the phase fractional flow function.
+ *
+ * More details on the equations can be found in H. Hoteit, A. Firoozabadi.
+ * Numerical modeling of thwo-phase flow in heterogeneous permeable media with different capillarity pressures. Adv Water Res (31), 2008
+ *
+ *  Remark1: only for 2-D quadrilateral grid
+ *
+ *  Remark2: implemented for UGGrid, ALUGrid, or SGrid/YaspGrid
+ *
+ *\tparam TypeTag The problem Type Tag
  */
 template<class TypeTag>
 class FVMPFAO2PFABoundPressure2P: public FVPressure<TypeTag>
@@ -74,9 +82,10 @@ class FVMPFAO2PFABoundPressure2P: public FVPressure<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
     typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
 
@@ -142,6 +151,11 @@ public:
     //constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
+    /*! \brief Updates interaction volumes
+     *
+     * Globally rebuilds the MPFA interaction volumes.
+     *
+     */
     void updateInteractionVolumeInfo()
     {
         interactionVolumes_.clear();
@@ -153,7 +167,12 @@ public:
         storeInteractionVolumeInfo();
     }
 
-    void initialize(bool solveTwice = true)
+    /*! \brief Initializes the pressure model
+     *
+     * \copydetails ParentType::initialize()
+     *
+     */
+    void initialize()
     {
         ParentType::initialize();
 
@@ -172,7 +191,11 @@ public:
         return;
     }
 
-    //! updates the pressure field (analog to update function in Dumux::IMPET)
+    /*! \brief Pressure update
+     *
+     * \copydetails ParentType::update()
+     *
+     */
     void update()
     {
         //error bounds for error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
@@ -209,6 +232,9 @@ public:
         return;
     }
 
+    /*! \brief Globally stores the pressure solution
+     *
+     */
     void storePressureSolution()
     {
         // iterate through leaf grid an evaluate c0 at cell center
@@ -219,6 +245,10 @@ public:
         }
     }
 
+    /*! \brief Stores the pressure solution of a cell
+     *
+     * \param element Dune grid element
+     */
     void storePressureSolution(const Element& element)
     {
         int globalIdx = problem_.variables().index(element);
@@ -253,8 +283,14 @@ public:
         cellData.fluxData().resetVelocity();
     }
 
-    //! \brief Write data files
-    /*  \param name file name */
+    /*! \brief Adds pressure output to the output file
+     *
+     * Adds the pressure, the potential and the capillary pressure to the output.
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     *
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -300,38 +336,10 @@ public:
         return;
     }
 
-    Scalar evaluateErrorTerm(CellData& cellData)
-    {
-        //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
-        // error reduction routine: volumetric error is damped and inserted to right hand side
-        Scalar sat = 0;
-        switch (saturationType_)
-        {
-        case Sw:
-            sat = cellData.saturation(wPhaseIdx);
-            break;
-        case Sn:
-            sat = cellData.saturation(nPhaseIdx);
-            break;
-        }
-
-        Scalar error = (sat > 1.0) ? sat - 1.0 : 0.0;
-        if (sat < 0.0)
-        {
-            error = sat;
-        }
-        error /= timeStep_;
-
-        Scalar errorAbs = std::abs(error);
-
-        if ((errorAbs * timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_)
-                && (!problem_.timeManager().willBeFinished()))
-        {
-            return ErrorTermFactor_ * error;
-        }
-        return 0.0;
-    }
-
+    //! Constructs a FVMPFAO2PFABoundPressure2P object
+    /**
+     * \param problem A problem class object
+     */
     FVMPFAO2PFABoundPressure2P(Problem& problem) :
             ParentType(problem), problem_(problem), gravity_(problem.gravity()), maxError_(
                     0.), timeStep_(1.)
@@ -372,6 +380,50 @@ public:
 
 private:
     Problem& problem_;
+
+    /* Volume correction term to correct for unphysical saturation overshoots/undershoots.
+     * These can occur if the estimated time step for the explicit transport was too large. Correction by an artificial source term allows to correct
+     * this errors due to wrong time-stepping without losing mass conservation. The error term looks as follows:
+     * \f[
+     *  q_{error} = \begin{cases}
+     *          S < 0 & a_{error} \frac{S}{\Delta t} V \\
+     *          S > 1 & a_{error} \frac{(S - 1)}{\Delta t} V \\
+     *          0 \le S \le 1 & 0
+     *      \end{cases}
+     *  \f]
+     *  where \f$a_{error}\f$ is a weighting factor (default: \f$a_{error} = 0.5\f$)
+    */
+    Scalar evaluateErrorTerm_(CellData& cellData)
+    {
+        //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
+        // error reduction routine: volumetric error is damped and inserted to right hand side
+        Scalar sat = 0;
+        switch (saturationType_)
+        {
+        case Sw:
+            sat = cellData.saturation(wPhaseIdx);
+            break;
+        case Sn:
+            sat = cellData.saturation(nPhaseIdx);
+            break;
+        }
+
+        Scalar error = (sat > 1.0) ? sat - 1.0 : 0.0;
+        if (sat < 0.0)
+        {
+            error = sat;
+        }
+        error /= timeStep_;
+
+        Scalar errorAbs = std::abs(error);
+
+        if ((errorAbs * timeStep_ > 1e-6) && (errorAbs > ErrorTermLowerBound_ * maxError_)
+                && (!problem_.timeManager().willBeFinished()))
+        {
+            return ErrorTermFactor_ * error;
+        }
+        return 0.0;
+    }
 
 protected:
     GlobalInteractionVolumeVector interactionVolumes_;
@@ -1378,10 +1430,10 @@ void FVMPFAO2PFABoundPressure2P<TypeTag>::assemble()
             this->f_[globalIdx4] += volume4 / (4.0)
                     * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-            this->f_[globalIdx1] += evaluateErrorTerm(cellData1) * volume1 / (4.0);
-            this->f_[globalIdx2] += evaluateErrorTerm(cellData2) * volume2 / (4.0);
-            this->f_[globalIdx3] += evaluateErrorTerm(cellData3) * volume3 / (4.0);
-            this->f_[globalIdx4] += evaluateErrorTerm(cellData4) * volume4 / (4.0);
+            this->f_[globalIdx1] += evaluateErrorTerm_(cellData1) * volume1 / (4.0);
+            this->f_[globalIdx2] += evaluateErrorTerm_(cellData2) * volume2 / (4.0);
+            this->f_[globalIdx3] += evaluateErrorTerm_(cellData3) * volume3 / (4.0);
+            this->f_[globalIdx4] += evaluateErrorTerm_(cellData4) * volume4 / (4.0);
 
             //get mobilities of the phases
             Dune::FieldVector<Scalar, numPhases> lambda1(cellData1.mobility(wPhaseIdx));
@@ -1771,7 +1823,7 @@ void FVMPFAO2PFABoundPressure2P<TypeTag>::assemble()
                 this->f_[globalIdx] += volume / (4.0)
                         * (source[wPhaseIdx] / density_[wPhaseIdx] + source[nPhaseIdx] / density_[nPhaseIdx]);
 
-                this->f_[globalIdx] += evaluateErrorTerm(cellData) * volume / (4.0);
+                this->f_[globalIdx] += evaluateErrorTerm_(cellData) * volume / (4.0);
 
                 //get mobilities of the phases
                 Dune::FieldVector<Scalar, numPhases> lambda(cellData.mobility(wPhaseIdx));
@@ -1972,7 +2024,11 @@ void FVMPFAO2PFABoundPressure2P<TypeTag>::assemble()
     return;
 }
 
-//constitutive functions are updated once if new saturations are calculated and stored in the variables object
+
+/*! \brief Updates constitutive relations and stores them in the variable class
+ *
+ * Stores mobility, fractional flow function and capillary pressure for all grid cells.
+ */
 template<class TypeTag>
 void FVMPFAO2PFABoundPressure2P<TypeTag>::updateMaterialLaws()
 {

@@ -50,7 +50,7 @@ class FVMPFAOPressure2P;
  * Remark2: can use UGGrid or SGrid/YaspGrid!
  * Remark3: gravity is neglected!
  *
- * \tparam TypeTag The Type Tag
+ * \tparam TypeTag The problem Type Tag
  */
 template<class TypeTag> class FVMPFAOVelocity2P:public FVMPFAOPressure2P<TypeTag>
 {

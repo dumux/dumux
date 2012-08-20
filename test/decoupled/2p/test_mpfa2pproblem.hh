@@ -17,6 +17,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+/*!
+ * \file
+ *
+ * \brief test problem for sequential 2p models
+ */
+
 #ifndef DUMUX_TEST_MPFA2P_PROBLEM_HH
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
@@ -107,7 +114,17 @@ NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FVMPFALPressureTwoPAdap
 }
 
 /*!
- * \ingroup DecoupledProblems
+ * \ingroup IMPETtests
+ *
+ * \brief test problem for sequential 2p models
+ *
+ * A DNAPL is injected from the top into a rectangular 2D domain saturated by water.
+ * The remaining upper and the lower boundary is closed (Neumann = 0). At the sides a hydrostatic pressure condition
+ * and free outflow for saturation are set. The domain is heterogeneous with a backround material and three lenses.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_mpfa2p -parameterFile ./test_mpfa2p.input</tt>,
+ * where the arguments define the parameter file..
  */
 template<class TypeTag>
 class MPFATwoPTestProblem: public IMPESProblem2P<TypeTag>
@@ -124,8 +141,9 @@ typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
 typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
 typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
-typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
 
 typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
@@ -234,7 +252,7 @@ Scalar temperatureAtPos(const GlobalPosition& globalPos) const
 
 // \}
 
-
+//! Returns the reference pressure for evaluation of constitutive relations
 Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
     return 1e5; // -> 10°C
@@ -245,6 +263,13 @@ void source(PrimaryVariables &values,const Element& element) const
     values = 0;
 }
 
+/*!
+* \brief Returns the type of boundary condition.
+*
+* BC for pressure equation can be dirichlet (pressure) or neumann (flux).
+*
+* BC for saturation equation can be dirichlet (saturation), neumann (flux), or outflow.
+*/
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
     if (isInlet(globalPos))
@@ -263,6 +288,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
     }
 }
 
+//! set dirichlet condition  (pressure [Pa], saturation [-])
 void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
 {
     Scalar pRef = referencePressureAtPos(globalPos);
@@ -277,6 +303,7 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     }
 }
 
+//! set neumann condition for phases (flux, [kg/(m^2 s)])
 void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
 {
     values = 0;
@@ -287,6 +314,7 @@ void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) con
 
 }
 
+//! return initial solution -> only saturation values have to be given!
 void initialAtPos(PrimaryVariables &values,
         const GlobalPosition& globalPos) const
 {
