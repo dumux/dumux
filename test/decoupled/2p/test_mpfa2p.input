@@ -19,9 +19,6 @@ NumberOfCellsY = 10# [-] level 0 resolution in y-direction
 UpperRightX = 20# [m] dimension of the grid
 UpperRightY = 10# [m] dimension of the grid # 2D
 
-[Vtk]
-#OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
-
 ############################################################
 # Optional arguments
 ############################################################
@@ -34,6 +31,9 @@ InletWidth = 2
 InjectionFlux = 0.1
 
 #OutputfileName = 
+
+[Vtk]
+#OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
 
 [SpatialParams]
 BackgroundPermeabilityXX = 1e-10
