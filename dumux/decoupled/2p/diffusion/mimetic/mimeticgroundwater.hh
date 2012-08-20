@@ -36,8 +36,17 @@
 
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
+#include<dune/common/version.hh>
+
+#if DUNE_VERSION_NEWER_REV(DUNE_COMMON, 2, 2, 0)
+// dune 2.2
+#include<dune/geometry/type.hh>
+#include<dune/geometry/quadraturerules.hh>
+#else
+// dune 2.1
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
+#endif
 
 #include<dumux/common/boundaryconditions.hh>
 #include "localstiffness.hh"
