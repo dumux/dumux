@@ -15,6 +15,9 @@ DtInitial = 0 # [s]
 [Grid]
 File = ./grids/test_transport.dgf
 
+[Vtk]
+#OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
+
 ###############################################################
 # Simulation restart
 #

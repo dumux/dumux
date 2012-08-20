@@ -218,6 +218,8 @@ public:
     /*! \brief Adds pressure output to the output file
      *
      * Adds the global pressure as well as the capillary pressure to the output.
+     * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
+     * if it is larger than zero also secondary variables are written.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
@@ -232,16 +234,18 @@ public:
 
         writer.attachCellData(*pressure, "global pressure");
 
-        // output  phase-dependent stuff
-        ScalarSolutionType *pC = writer.allocateManagedBuffer (problem_.gridView().size(0));
-        int size = problem_.gridView().size(0);
-        for (int i = 0; i < size; i++)
+        if (vtkOutputLevel_ > 0)
         {
-            CellData& cellData = problem_.variables().cellData(i);
-            (*pC)[i] = cellData.capillaryPressure();
+            // output  phase-dependent stuff
+            ScalarSolutionType *pC = writer.allocateManagedBuffer (problem_.gridView().size(0));
+            int size = problem_.gridView().size(0);
+            for (int i = 0; i < size; i++)
+            {
+                CellData& cellData = problem_.variables().cellData(i);
+                (*pC)[i] = cellData.capillaryPressure();
+            }
+            writer.attachCellData(*pC, "capillary pressure");
         }
-        writer.attachCellData(*pC, "capillary pressure");
-
         return;
     }
 
@@ -260,12 +264,16 @@ public:
         {
             DUNE_THROW(Dune::NotImplemented, "MPFA method only implemented for 2-d!");
         }
+
+        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
 private:
     Problem& problem_;
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
+
+    int vtkOutputLevel_;
 
 protected:
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)

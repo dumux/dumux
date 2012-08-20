@@ -131,6 +131,8 @@ public:
         density_[nPhaseIdx] = 0.;
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
+
+        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
     //! For initialization
@@ -178,84 +180,87 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar,
-                dim>(problem_.gridView().size(0)));
-        Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocitySecondPhase =
-        *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
-
-        // compute update vector
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        if (vtkOutputLevel_ > 0)
         {
-            // cell index
-            int globalIdx = problem_.variables().index(*eIt);
+            Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocity = *(writer.template allocateManagedBuffer<Scalar,
+                    dim>(problem_.gridView().size(0)));
+            Dune::BlockVector < Dune::FieldVector<Scalar, dim> > &velocitySecondPhase =
+            *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
 
-            CellData& cellData = problem_.variables().cellData(globalIdx);
-
-            Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
-            Dune::FieldVector < Scalar, 2 * dim > fluxNW(0);
-            // run through all intersections with neighbors and boundary
-            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+            // compute update vector
+            ElementIterator eItEnd = problem_.gridView().template end<0>();
+            for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
             {
-                int isIndex = isIt->indexInInside();
+                // cell index
+                int globalIdx = problem_.variables().index(*eIt);
 
-                fluxW[isIndex] += isIt->geometry().volume()
-                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                fluxNW[isIndex] += isIt->geometry().volume()
-                * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
-            }
+                CellData& cellData = problem_.variables().cellData(globalIdx);
 
-            Dune::FieldVector < Scalar, dim > refVelocity(0);
-            for (int i = 0; i < dim; i++)
+                Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
+                Dune::FieldVector < Scalar, 2 * dim > fluxNW(0);
+                // run through all intersections with neighbors and boundary
+                IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+                {
+                    int isIndex = isIt->indexInInside();
+
+                    fluxW[isIndex] += isIt->geometry().volume()
+                    * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                    fluxNW[isIndex] += isIt->geometry().volume()
+                    * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                }
+
+                Dune::FieldVector < Scalar, dim > refVelocity(0);
+                for (int i = 0; i < dim; i++)
                 refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
 
-            const Dune::FieldVector<Scalar, dim>& localPos =
-            ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
+                const Dune::FieldVector<Scalar, dim>& localPos =
+                ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
-            // get the transposed Jacobian of the element mapping
-            const DimMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
-            DimMatrix jacobianT(jacobianInv);
-            jacobianT.invert();
+                // get the transposed Jacobian of the element mapping
+                const DimMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
+                DimMatrix jacobianT(jacobianInv);
+                jacobianT.invert();
 
-            // calculate the element velocity by the Piola transformation
-            Dune::FieldVector < Scalar, dim > elementVelocity(0);
-            jacobianT.umtv(refVelocity, elementVelocity);
-            elementVelocity /= eIt->geometry().integrationElement(localPos);
+                // calculate the element velocity by the Piola transformation
+                Dune::FieldVector < Scalar, dim > elementVelocity(0);
+                jacobianT.umtv(refVelocity, elementVelocity);
+                elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-            velocity[globalIdx] = elementVelocity;
+                velocity[globalIdx] = elementVelocity;
 
-            refVelocity = 0;
-            for (int i = 0; i < dim; i++)
+                refVelocity = 0;
+                for (int i = 0; i < dim; i++)
                 refVelocity[i] = 0.5 * (fluxNW[2*i + 1] - fluxNW[2*i]);
 
-            // calculate the element velocity by the Piola transformation
-            elementVelocity = 0;
-            jacobianT.umtv(refVelocity, elementVelocity);
-            elementVelocity /= eIt->geometry().integrationElement(localPos);
+                // calculate the element velocity by the Piola transformation
+                elementVelocity = 0;
+                jacobianT.umtv(refVelocity, elementVelocity);
+                elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-            velocitySecondPhase[globalIdx] = elementVelocity;
-        }
+                velocitySecondPhase[globalIdx] = elementVelocity;
+            }
 
-        //switch velocities
-        switch (velocityType_)
-        {
-            case vw:
+            //switch velocities
+            switch (velocityType_)
             {
-                writer.attachCellData(velocity, "wetting-velocity", dim);
-                writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
-                break;
-            }
-            case vn:
-            {
-                writer.attachCellData(velocity, "non-wetting-velocity", dim);
-                writer.attachCellData(velocitySecondPhase, "wetting-velocity", dim);
-                break;
-            }
-            case vt:
-            {
-                writer.attachCellData(velocity, "total velocity", dim);
-                break;
+                case vw:
+                {
+                    writer.attachCellData(velocity, "wetting-velocity", dim);
+                    writer.attachCellData(velocitySecondPhase, "non-wetting-velocity", dim);
+                    break;
+                }
+                case vn:
+                {
+                    writer.attachCellData(velocity, "non-wetting-velocity", dim);
+                    writer.attachCellData(velocitySecondPhase, "wetting-velocity", dim);
+                    break;
+                }
+                case vt:
+                {
+                    writer.attachCellData(velocity, "total velocity", dim);
+                    break;
+                }
             }
         }
 
@@ -267,6 +272,8 @@ private:
     const GlobalPosition& gravity_; //!< vector including the gravity constant
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
+
+    int vtkOutputLevel_;
 
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);//!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);

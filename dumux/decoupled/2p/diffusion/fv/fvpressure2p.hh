@@ -339,55 +339,97 @@ public:
     void addOutputVtkFields(MultiWriter &writer)
     {
         int size = problem_.gridView().size(0);
-        ScalarSolutionType *pressureW = writer.allocateManagedBuffer(size);
-        ScalarSolutionType *pressureN = writer.allocateManagedBuffer(size);
-        ScalarSolutionType *pC = writer.allocateManagedBuffer(size);
+        ScalarSolutionType *pressure = writer.allocateManagedBuffer(size);
+        ScalarSolutionType *pressureSecond = 0;
+        ScalarSolutionType *pC = 0;
+
+        if (vtkOutputLevel_ > 0)
+        {
+            pressureSecond = writer.allocateManagedBuffer(size);
+            pC = writer.allocateManagedBuffer(size);
+        }
 
         for (int i = 0; i < size; i++)
         {
             CellData& cellData = problem_.variables().cellData(i);
             storePressureSolution(i, cellData);
-            (*pressureW)[i] = cellData.pressure(wPhaseIdx);
-            (*pressureN)[i] = cellData.pressure(nPhaseIdx);
-            (*pC)[i] = cellData.capillaryPressure();
-            if (pressureType_ == pglobal)
+
+            if (pressureType_ == pw)
             {
-                (*pressureW)[i] = cellData.globalPressure();
+                (*pressure)[i] = cellData.pressure(wPhaseIdx);
+                if (vtkOutputLevel_ > 0)
+                {
+                    (*pressureSecond)[i] = cellData.pressure(nPhaseIdx);
+                }
+            }
+            else if (pressureType_ == pn)
+            {
+                (*pressure)[i] = cellData.pressure(nPhaseIdx);
+                if (vtkOutputLevel_ > 0)
+                {
+                    (*pressureSecond)[i] = cellData.pressure(wPhaseIdx);
+                }
+            }
+            else if (pressureType_ == pglobal)
+            {
+                (*pressure)[i] = cellData.globalPressure();
+            }
+            if (vtkOutputLevel_ > 0)
+            {
+                (*pC)[i] = cellData.capillaryPressure();
+            }
+        }
+
+        if (pressureType_ == pw)
+        {
+            writer.attachCellData(*pressure, "wetting pressure");
+            if (vtkOutputLevel_ > 0)
+            {
+                writer.attachCellData(*pressureSecond, "nonwetting pressure");
+            }
+        }
+        else if (pressureType_ == pn)
+        {
+            writer.attachCellData(*pressure, "nonwetting pressure");
+            if (vtkOutputLevel_ > 0)
+            {
+                writer.attachCellData(*pressureSecond, "wetting pressure");
             }
         }
         if (pressureType_ == pglobal)
         {
 
-            writer.attachCellData(*pressureW, "global pressure");
-        }
-        else
-        {
-            writer.attachCellData(*pressureW, "wetting pressure");
-            writer.attachCellData(*pressureN, "nonwetting pressure");
+            writer.attachCellData(*pressure, "global pressure");
         }
 
-        writer.attachCellData(*pC, "capillary pressure");
+        if (vtkOutputLevel_ > 0)
+        {
+            writer.attachCellData(*pC, "capillary pressure");
+        }
 
         if (compressibility_)
         {
-            ScalarSolutionType *densityWetting = writer.allocateManagedBuffer(size);
-            ScalarSolutionType *densityNonwetting = writer.allocateManagedBuffer(size);
-            ScalarSolutionType *viscosityWetting = writer.allocateManagedBuffer(size);
-            ScalarSolutionType *viscosityNonwetting = writer.allocateManagedBuffer(size);
-
-            for (int i = 0; i < size; i++)
+            if (vtkOutputLevel_ > 0)
             {
-                CellData& cellData = problem_.variables().cellData(i);
-                (*densityWetting)[i] = cellData.density(wPhaseIdx);
-                (*densityNonwetting)[i] = cellData.density(nPhaseIdx);
-                (*viscosityWetting)[i] = cellData.viscosity(wPhaseIdx);
-                (*viscosityNonwetting)[i] = cellData.viscosity(nPhaseIdx);
-            }
+                ScalarSolutionType *densityWetting = writer.allocateManagedBuffer(size);
+                ScalarSolutionType *densityNonwetting = writer.allocateManagedBuffer(size);
+                ScalarSolutionType *viscosityWetting = writer.allocateManagedBuffer(size);
+                ScalarSolutionType *viscosityNonwetting = writer.allocateManagedBuffer(size);
 
-            writer.attachCellData(*densityWetting, "wetting density");
-            writer.attachCellData(*densityNonwetting, "nonwetting density");
-            writer.attachCellData(*viscosityWetting, "wetting viscosity");
-            writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
+                for (int i = 0; i < size; i++)
+                {
+                    CellData& cellData = problem_.variables().cellData(i);
+                    (*densityWetting)[i] = cellData.density(wPhaseIdx);
+                    (*densityNonwetting)[i] = cellData.density(nPhaseIdx);
+                    (*viscosityWetting)[i] = cellData.viscosity(wPhaseIdx);
+                    (*viscosityNonwetting)[i] = cellData.viscosity(nPhaseIdx);
+                }
+
+                writer.attachCellData(*densityWetting, "wetting density");
+                writer.attachCellData(*densityNonwetting, "nonwetting density");
+                writer.attachCellData(*viscosityWetting, "wetting viscosity");
+                writer.attachCellData(*viscosityNonwetting, "nonwetting viscosity");
+            }
         }
 
         return;
@@ -421,6 +463,8 @@ public:
         density_[nPhaseIdx] = 0.;
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
+
+        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
 private:
@@ -435,6 +479,8 @@ private:
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
+
+    int vtkOutputLevel_;
 
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$p_w\f$, \f$p_n\f$, \f$p_{global}\f$)

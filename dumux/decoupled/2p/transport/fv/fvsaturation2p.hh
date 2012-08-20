@@ -266,6 +266,9 @@ public:
     /*! \brief Adds saturation output to the output file
      *
      * Adds the phase saturation to the output. If the velocity is calculated in the transport model it is also added to the output.
+     * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
+     * if it is larger than zero also secondary variables are written.
+     *
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
@@ -275,21 +278,45 @@ public:
     void addOutputVtkFields(MultiWriter &writer)
     {
         int size = problem_.gridView().size(0);
-        TransportSolutionType *saturationW = writer.allocateManagedBuffer(size);
-        TransportSolutionType *saturationN = writer.allocateManagedBuffer(size);
+        TransportSolutionType *saturation = writer.allocateManagedBuffer(size);
+        TransportSolutionType *saturationSecond = 0;
+
+        if (vtkOutputLevel_ > 0)
+        {
+            saturationSecond = writer.allocateManagedBuffer(size);
+        }
 
         for (int i = 0; i < size; i++)
         {
             CellData& cellData = problem_.variables().cellData(i);
-            (*saturationW)[i] = cellData.saturation(wPhaseIdx);
-            (*saturationN)[i] = cellData.saturation(nPhaseIdx);
+
+            if (saturationType_ == Sw)
+            {
+                (*saturation)[i] = cellData.saturation(wPhaseIdx);
+                if (vtkOutputLevel_ > 0)
+                {
+                    (*saturationSecond)[i] = cellData.saturation(nPhaseIdx);
+                }
+            }
+            else if (saturationType_ == Sn)
+            {
+                (*saturation)[i] = cellData.saturation(nPhaseIdx);
+                if (vtkOutputLevel_ > 0)
+                {
+                    (*saturationSecond)[i] = cellData.saturation(wPhaseIdx);
+                }
+            }
         }
 
-        writer.attachCellData(*saturationW, "wetting saturation");
-        writer.attachCellData(*saturationN, "nonwetting saturation");
+        writer.attachCellData(*saturation, "wetting saturation");
+
+        if (vtkOutputLevel_ > 0)
+        {
+            writer.attachCellData(*saturationSecond, "nonwetting saturation");
+        }
 
         if (velocity().calculateVelocityInTransport())
-            velocity().addOutputVtkFields(writer);
+        velocity().addOutputVtkFields(writer);
 
         return;
     }
@@ -371,6 +398,8 @@ public:
         capillaryFlux_ = new CapillaryFlux(problem);
         gravityFlux_ = new GravityFlux(problem);
         velocity_ = new Velocity(problem);
+
+        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
     //! Destructor
@@ -386,6 +415,8 @@ private:
     Velocity* velocity_;
     CapillaryFlux* capillaryFlux_;
     GravityFlux* gravityFlux_;
+
+    int vtkOutputLevel_;
 
     static const bool compressibility_ = GET_PROP_VALUE(TypeTag, EnableCompressibility);
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);

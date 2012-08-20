@@ -147,17 +147,12 @@ public:
     FVMPFAL2PFABoundVelocity2PAdaptive(Problem& problem) :
             ParentType(problem), problem_(problem), gravity_(problem.gravity())
     {
-        ElementIterator element = problem_.gridView().template begin<0>();
-        FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
-        fluidState.setSaturation(wPhaseIdx, 1.);
-        fluidState.setSaturation(nPhaseIdx, 0.);
-        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
-        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
-        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
-        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
+        density_[wPhaseIdx] = 0.;
+        density_[nPhaseIdx] = 0.;
+        viscosity_[wPhaseIdx] = 0.;
+        viscosity_[nPhaseIdx] = 0.;
+
+        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
     //Calculates the velocities at all cell-cell interfaces.
@@ -170,6 +165,18 @@ public:
     void initialize()
     {
         ParentType::initialize();
+
+        ElementIterator element = problem_.gridView().template begin<0>();
+        FluidState fluidState;
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setSaturation(wPhaseIdx, 1.);
+        fluidState.setSaturation(nPhaseIdx, 0.);
+        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
 
         calculateVelocity();
 
@@ -193,80 +200,84 @@ public:
     /*! \brief Adds velocity output to the output file
      *
      * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
+     * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
+     * if it is larger than zero also secondary variables are written.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
      *
      */
-     template<class MultiWriter>
-     void addOutputVtkFields(MultiWriter &writer)
-     {
-         ParentType::addOutputVtkFields(writer);
+    template<class MultiWriter>
+    void addOutputVtkFields(MultiWriter &writer)
+    {
+        ParentType::addOutputVtkFields(writer);
 
-         Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<
-                 Scalar, dim>(problem_.gridView().size(0)));
-         Dune::BlockVector < DimVector > &velocityNonwetting =
-                 *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
+        if (vtkOutputLevel_ > 0)
+        {
+            Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<
+                    Scalar, dim>(problem_.gridView().size(0)));
+            Dune::BlockVector < DimVector > &velocityNonwetting =
+            *(writer.template allocateManagedBuffer<Scalar, dim>(problem_.gridView().size(0)));
 
-         // compute update vector
-         ElementIterator eItEnd = problem_.gridView().template end<0>();
-         for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
-         {
-             // cell index
-             int globalIdx = problem_.variables().index(*eIt);
+            // compute update vector
+            ElementIterator eItEnd = problem_.gridView().template end<0>();
+            for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+            {
+                // cell index
+                int globalIdx = problem_.variables().index(*eIt);
 
-             CellData& cellData = problem_.variables().cellData(globalIdx);
+                CellData& cellData = problem_.variables().cellData(globalIdx);
 
-             Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
-             Dune::FieldVector < Scalar, 2 * dim > fluxNW(0);
-             // run through all intersections with neighbors and boundary
-             IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-             for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
-             {
-                 int isIndex = isIt->indexInInside();
+                Dune::FieldVector < Scalar, 2 * dim > fluxW(0);
+                Dune::FieldVector < Scalar, 2 * dim > fluxNW(0);
+                // run through all intersections with neighbors and boundary
+                IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+                for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+                {
+                    int isIndex = isIt->indexInInside();
 
-                 fluxW[isIndex] += isIt->geometry().volume()
-                         * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
-                 fluxNW[isIndex] +=
-                         isIt->geometry().volume()
-                                 * (isIt->centerUnitOuterNormal()
-                                         * cellData.fluxData().velocity(nPhaseIdx, isIndex));
-             }
+                    fluxW[isIndex] += isIt->geometry().volume()
+                    * (isIt->centerUnitOuterNormal() * cellData.fluxData().velocity(wPhaseIdx, isIndex));
+                    fluxNW[isIndex] +=
+                    isIt->geometry().volume()
+                    * (isIt->centerUnitOuterNormal()
+                            * cellData.fluxData().velocity(nPhaseIdx, isIndex));
+                }
 
-             DimVector refVelocity(0);
-            for (int i = 0; i < dim; i++)
+                DimVector refVelocity(0);
+                for (int i = 0; i < dim; i++)
                 refVelocity[i] = 0.5 * (fluxW[2*i + 1] - fluxW[2*i]);
 
-             const DimVector& localPos =
-                     ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
+                const DimVector& localPos =
+                ReferenceElementContainer::general(eIt->geometry().type()).position(0, 0);
 
-             // get the transposed Jacobian of the element mapping
-             const DimMatrix& jacobianT = eIt->geometry().jacobianTransposed(localPos);
+                // get the transposed Jacobian of the element mapping
+                const DimMatrix& jacobianT = eIt->geometry().jacobianTransposed(localPos);
 
-             // calculate the element velocity by the Piola transformation
-             DimVector elementVelocity(0);
-             jacobianT.umtv(refVelocity, elementVelocity);
-             elementVelocity /= eIt->geometry().integrationElement(localPos);
+                // calculate the element velocity by the Piola transformation
+                DimVector elementVelocity(0);
+                jacobianT.umtv(refVelocity, elementVelocity);
+                elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-             velocityWetting[globalIdx] = elementVelocity;
+                velocityWetting[globalIdx] = elementVelocity;
 
-             refVelocity = 0;
-            for (int i = 0; i < dim; i++)
+                refVelocity = 0;
+                for (int i = 0; i < dim; i++)
                 refVelocity[i] = 0.5 * (fluxNW[2*i + 1] - fluxNW[2*i]);
 
-             // calculate the element velocity by the Piola transformation
-             elementVelocity = 0;
-             jacobianT.umtv(refVelocity, elementVelocity);
-             elementVelocity /= eIt->geometry().integrationElement(localPos);
+                // calculate the element velocity by the Piola transformation
+                elementVelocity = 0;
+                jacobianT.umtv(refVelocity, elementVelocity);
+                elementVelocity /= eIt->geometry().integrationElement(localPos);
 
-             velocityNonwetting[globalIdx] = elementVelocity;
-         }
+                velocityNonwetting[globalIdx] = elementVelocity;
+            }
 
-         writer.attachCellData(velocityWetting, "wetting-velocity", dim);
-         writer.attachCellData(velocityNonwetting, "non-wetting-velocity", dim);
-
-         return;
-     }
+            writer.attachCellData(velocityWetting, "wetting-velocity", dim);
+            writer.attachCellData(velocityNonwetting, "non-wetting-velocity", dim);
+        }
+        return;
+    }
 
 private:
      Problem& problem_;
@@ -274,6 +285,8 @@ private:
 
      Scalar density_[numPhases];
      Scalar viscosity_[numPhases];
+
+     int vtkOutputLevel_;
 
      static const Scalar threshold_ = 1e-15;
      static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation); //!< gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)

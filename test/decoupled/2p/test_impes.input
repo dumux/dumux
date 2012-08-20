@@ -19,6 +19,9 @@ NumberOfCellsY = 6 # [-] resolution in y-direction
 UpperRightX = 300 # [m] length of the domain
 UpperRightY = 60 # [m] height of the domain
 
+[Vtk]
+#OutputLevel = 1 # 0 -> only primary variables (default), 1 -> also secondary variables
+
 ###############################################################
 # Simulation restart
 #

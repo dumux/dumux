@@ -5,6 +5,9 @@ target_link_libraries("test_impes" ${DumuxLinkLibraries})
 add_executable("test_transport" test_transport.cc)
 target_link_libraries("test_transport" ${DumuxLinkLibraries})
 
+add_executable("test_mpfa2p" test_mpfa2p.cc)
+target_link_libraries("test_mpfa2p" ${DumuxLinkLibraries})
+
 # add required libraries and includes to the build flags 
 link_directories(${DumuxLinkDirectories})
 include_directories(${DumuxIncludeDirectories})

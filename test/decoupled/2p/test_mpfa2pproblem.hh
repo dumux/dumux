@@ -123,8 +123,19 @@ NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FVMPFALPressureTwoPAdap
  * and free outflow for saturation are set. The domain is heterogeneous with a backround material and three lenses.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_mpfa2p -parameterFile ./test_mpfa2p.input</tt>,
- * where the arguments define the parameter file..
+ *
+ * <tt>./test_mpfa2p</tt>,
+ *
+ * Additioinally, the numerical model can be switched by executing with the parameter "ModelType":
+ *
+ * <tt>./test_mpfa2p --ModelType=...</tt>,
+ *
+ * where ModelType can be:
+ * - FV (standard finite volume)
+ * - FVAdaptive (adaptive finite volume)
+ * - MPFAO (MPFA o-method)
+ * - MPFAL (MPFA l-method)
+ * - MPFALAdaptive (adaptive MPFA l-method)
  */
 template<class TypeTag>
 class MPFATwoPTestProblem: public IMPESProblem2P<TypeTag>
@@ -230,7 +241,7 @@ const char *name() const
     }
     else
     {
-        return "testmpfa2p";
+        return "test_mpfa2p";
     }
 }
 

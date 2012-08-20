@@ -176,6 +176,18 @@ public:
     {
         ParentType::initialize();
 
+        ElementIterator element = problem_.gridView().template begin<0>();
+        FluidState fluidState;
+        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
+        fluidState.setTemperature(problem_.temperature(*element));
+        fluidState.setSaturation(wPhaseIdx, 1.);
+        fluidState.setSaturation(nPhaseIdx, 0.);
+        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
+        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
+        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
+        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
+
         updateMaterialLaws();
 
         interactionVolumes_.resize(problem_.gridView().size(dim));
@@ -286,6 +298,8 @@ public:
     /*! \brief Adds pressure output to the output file
      *
      * Adds the pressure, the potential and the capillary pressure to the output.
+     * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
+     * if it is larger than zero also secondary variables are written.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
@@ -294,44 +308,71 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        ScalarSolutionType &pressure = *(writer.template allocateManagedBuffer<Scalar, 1>(problem_.gridView().size(0)));
-        ScalarSolutionType &potential = *(writer.template allocateManagedBuffer<Scalar, 1>(problem_.gridView().size(0)));
-        ScalarSolutionType &pC = *(writer.template allocateManagedBuffer<Scalar, 1>(problem_.gridView().size(0)));
+        int size = problem_.gridView().size(0);
+        ScalarSolutionType *potential = writer.allocateManagedBuffer(size);
 
-        potential = this->pressure();
-
-        ElementIterator eItBegin = problem_.gridView().template begin<0>();
-        ElementIterator eItEnd = problem_.gridView().template end<0>();
-        for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
-        {
-            int idx = problem_.variables().index(*eIt);
-            if (pressureType_ == pw)
-            {
-                pressure[idx] = this->pressure()[idx][0]
-                        - density_[wPhaseIdx] * (gravity_ * (problem_.bboxMax() - eIt->geometry().center()));
-            }
-
-            if (pressureType_ == pn)
-            {
-                pressure[idx] = this->pressure()[idx][0]
-                        - density_[nPhaseIdx] * (gravity_ * (problem_.bboxMax() - eIt->geometry().center()));
-            }
-            pC[idx] = problem_.variables().cellData(idx).capillaryPressure();
-        }
+        (*potential) = this->pressure();
 
         if (pressureType_ == pw)
         {
-            writer.attachCellData(pressure, "wetting pressure");
-            writer.attachCellData(potential, "wetting potential");
+            writer.attachCellData(*potential, "wetting potential");
         }
 
         if (pressureType_ == pn)
         {
-            writer.attachCellData(pressure, "nonwetting pressure");
-            writer.attachCellData(potential, "nonwetting potential");
+            writer.attachCellData(*potential, "nonwetting potential");
         }
 
-        writer.attachCellData(pC, "capillary pressure");
+        if (vtkOutputLevel_ > 0)
+        {
+            ScalarSolutionType *pressure = writer.allocateManagedBuffer(size);
+            ScalarSolutionType *pressureSecond = writer.allocateManagedBuffer(size);
+            ScalarSolutionType *potentialSecond = writer.allocateManagedBuffer(size);
+            ScalarSolutionType *pC = writer.allocateManagedBuffer(size);
+
+            ElementIterator eItBegin = problem_.gridView().template begin<0>();
+            ElementIterator eItEnd = problem_.gridView().template end<0>();
+            for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+            {
+                int idx = problem_.variables().index(*eIt);
+                CellData& cellData = problem_.variables().cellData(idx);
+
+                storePressureSolution(*eIt);
+                (*pC)[idx] = cellData.capillaryPressure();
+
+                if (pressureType_ == pw)
+                {
+                    (*pressure)[idx] = this->pressure()[idx][0]
+                    - density_[wPhaseIdx] * (gravity_ * (problem_.bboxMax() - eIt->geometry().center()));
+                    (*potentialSecond)[idx] = cellData.pressure(nPhaseIdx);
+                    (*pressureSecond)[idx] = (*pressure)[idx] + cellData.capillaryPressure();
+                }
+
+                if (pressureType_ == pn)
+                {
+                    (*pressure)[idx] = this->pressure()[idx][0]
+                    - density_[nPhaseIdx] * (gravity_ * (problem_.bboxMax() - eIt->geometry().center()));
+                    (*potentialSecond)[idx] = cellData.pressure(wPhaseIdx);
+                    (*pressureSecond)[idx] = (*pressure)[idx] - cellData.capillaryPressure();
+                }
+            }
+
+            if (pressureType_ == pw)
+            {
+                writer.attachCellData(*pressure, "wetting pressure");
+                writer.attachCellData(*pressureSecond, "nonwetting pressure");
+                writer.attachCellData(*potentialSecond, "nonwetting potential");
+            }
+
+            if (pressureType_ == pn)
+            {
+                writer.attachCellData(*pressure, "nonwetting pressure");
+                writer.attachCellData(*pressureSecond, "wetting pressure");
+                writer.attachCellData(*potentialSecond, "wetting potential");
+            }
+
+            writer.attachCellData(*pC, "capillary pressure");
+        }
 
         return;
     }
@@ -365,17 +406,12 @@ public:
         ErrorTermLowerBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermLowerBound);
         ErrorTermUpperBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermUpperBound);
 
-        ElementIterator element = problem_.gridView().template begin<0>();
-        FluidState fluidState;
-        fluidState.setPressure(wPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setPressure(nPhaseIdx, problem_.referencePressure(*element));
-        fluidState.setTemperature(problem_.temperature(*element));
-        fluidState.setSaturation(wPhaseIdx, 1.);
-        fluidState.setSaturation(nPhaseIdx, 0.);
-        density_[wPhaseIdx] = FluidSystem::density(fluidState, wPhaseIdx);
-        density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
-        viscosity_[wPhaseIdx] = FluidSystem::viscosity(fluidState, wPhaseIdx);
-        viscosity_[nPhaseIdx] = FluidSystem::viscosity(fluidState, nPhaseIdx);
+        density_[wPhaseIdx] = 0.;
+        density_[nPhaseIdx] = 0.;
+        viscosity_[wPhaseIdx] = 0.;
+        viscosity_[nPhaseIdx] = 0.;
+
+        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
     }
 
 private:
@@ -440,6 +476,8 @@ private:
 
     Scalar density_[numPhases];
     Scalar viscosity_[numPhases];
+
+    int vtkOutputLevel_;
 
     static const Scalar threshold_ = 1e-15;
     static const int pressureType_ = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
