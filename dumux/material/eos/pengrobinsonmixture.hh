@@ -48,9 +48,6 @@ class PengRobinsonMixture
     // this class cannot be instantiated!
     PengRobinsonMixture() {};
 
-    // the ideal gas constant
-    static constexpr Scalar R = Dumux::Constants<Scalar>::R;
-
     // the u and w parameters as given by the Peng-Robinson EOS
     static const Scalar u;
     static const Scalar w;
@@ -103,7 +100,7 @@ public:
         Scalar bi_b = params.bPure(phaseIdx, compIdx) / params.b(phaseIdx);
 
         // Calculate the compressibility factor
-        Scalar RT = R*fs.temperature(phaseIdx);
+        Scalar RT = Dumux::Constants<Scalar>::R*fs.temperature(phaseIdx);
         Scalar p = fs.pressure(phaseIdx); // molar volume in [bar]
         Scalar Z = p*Vm/RT; // compressibility factor
 

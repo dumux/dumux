@@ -75,9 +75,6 @@ class PengRobinsonParamsMixture
     // Peng-Robinson parameters for pure substances
     typedef Dumux::PengRobinsonParams<Scalar> PureParams;
 
-    // the ideal gas constant
-    static constexpr Scalar R = Dumux::Constants<Scalar>::R;
-
 public:
     /*!
      * \brief Update Peng-Robinson parameters for the pure components.
@@ -108,7 +105,7 @@ public:
             Scalar pc = FluidSystem::criticalPressure(i);
             Scalar omega = FluidSystem::acentricFactor(i);
             Scalar Tr = temperature/FluidSystem::criticalTemperature(i);
-            Scalar RTc = R*FluidSystem::criticalTemperature(i);
+            Scalar RTc = Dumux::Constants<Scalar>::R*FluidSystem::criticalTemperature(i);
 
             Scalar f_omega;
 

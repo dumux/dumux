@@ -64,9 +64,6 @@ namespace Dumux
 template <class Scalar>
 class PengRobinson
 {
-    //! The ideal gas constant [Pa * m^3/mol/K]
-    static constexpr Scalar R = Dumux::Constants<Scalar>::R;
-
     PengRobinson()
     { }
 
@@ -162,7 +159,7 @@ public:
         Scalar a = params.a(phaseIdx); // "attractive factor"
         Scalar b = params.b(phaseIdx); // "co-volume"
 
-        Scalar RT= R*T;
+        Scalar RT = Dumux::Constants<Scalar>::R*T;
         Scalar Astar = a*p/(RT*RT);
         Scalar Bstar = b*p/RT;
 
@@ -237,7 +234,7 @@ public:
         Scalar p = params.pressure();
         Scalar Vm = params.molarVolume();
 
-        Scalar RT = R*T;
+        Scalar RT = Dumux::Constants<Scalar>::R*T;
         Scalar Z = p*Vm/RT;
         Scalar Bstar = p*params.b() / RT;
 
@@ -372,7 +369,7 @@ protected:
         Scalar u = 2;
         Scalar w = -1;
 
-        Scalar RT = R*T;
+        Scalar RT = Dumux::Constants<Scalar>::R*T;
 
         // calculate coefficients of the 4th order polynominal in
         // monomial basis
