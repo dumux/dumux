@@ -22,6 +22,8 @@
 
 #include "config.h"
 
+#if HAVE_ALUGRID 
+
 #include "test_mpfa2pproblem.hh"
 #include <dumux/common/start.hh>
 
@@ -145,3 +147,17 @@ int main(int argc, char** argv)
         return startReturn;
     }
 }
+
+#else 
+
+#warning You need to have ALUGrid installed to run this test
+
+#include <iostream>
+
+int main()
+{
+    std::cerr << "You need to have ALUGrid installed to run this test\n";
+    return 1;
+}
+
+#endif
