@@ -29,9 +29,7 @@
 #ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
-#if HAVE_UG
-#include <dune/grid/uggrid.hh>
-#endif
+#include <dune/grid/alugrid/2d/alugrid.hh>
 #include <dumux/common/cubegridcreator.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -62,9 +60,7 @@ NEW_TYPE_TAG(TestIMPESAdaptiveProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVT
 // Set the grid type
 SET_PROP(TestIMPESAdaptiveProblem, Grid)
 {
-#if HAVE_UG
-    typedef Dune::UGGrid<2> type;
-#endif
+    typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 };
 
 // set the GridCreator property
@@ -159,7 +155,6 @@ public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
             ParentType(timeManager, gridView), eps_(1e-6)
     {
-        GridCreator::grid().setClosureType(Grid::ClosureType::NONE);
         GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
         this->setGrid(GridCreator::grid());
 

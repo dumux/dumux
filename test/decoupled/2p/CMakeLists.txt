@@ -2,6 +2,9 @@
 ADD_EXECUTABLE("test_impes" test_impes.cc)
 target_link_libraries("test_impes" ${DumuxLinkLibraries})
 
+add_executable("test_impesadaptive" test_impesadaptive.cc)
+target_link_libraries("test_impesadaptive" ${DumuxLinkLibraries})
+
 add_executable("test_transport" test_transport.cc)
 target_link_libraries("test_transport" ${DumuxLinkLibraries})
 

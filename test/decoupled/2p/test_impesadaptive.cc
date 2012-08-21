@@ -29,17 +29,7 @@
  */
 #include "config.h"
 
-#if !HAVE_UG
-#warning You need to have an UGGrid installed to run this test
-
-#include <iostream>
-
-int main()
-{
-    std::cerr << "You need to have an UGGrid installed to run this test\n";
-    return 1;
-}
-#else
+#if HAVE_ALUGRID
 
 #include "test_impesadaptiveproblem.hh"
 #include <dumux/common/start.hh>
@@ -70,5 +60,16 @@ int main(int argc, char** argv)
 {
         typedef TTAG(TestIMPESAdaptiveProblem) ProblemTypeTag;
         return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+}
+#else
+
+#warning You need to have ALUGrid installed to run this test
+
+#include <iostream>
+
+int main()
+{
+    std::cerr << "You need to have ALUGrid installed to run this test\n";
+    return 1;
 }
 #endif
