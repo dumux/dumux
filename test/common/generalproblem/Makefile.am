@@ -1,8 +1,8 @@
-check_PROGRAMS = test_generalproblem_2p
+check_PROGRAMS = test_generalproblem2p
 
 noinst_HEADERS = *.hh
 EXTRA_DIST=*reference.vtu CMakeLists.txt
 
-test_generalproblem_2p_SOURCES = test_generalproblem_2p.cc
+test_generalproblem2p_SOURCES = test_generalproblem2p.cc
 
 include $(top_srcdir)/am/global-rules
