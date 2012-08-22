@@ -39,7 +39,7 @@
 #include <dune/grid/sgrid.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/simplednapl.hh>
+#include <dumux/material/components/dnapl.hh>
 #include <dumux/boxmodels/2p/2pmodel.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
@@ -87,7 +87,7 @@ SET_PROP(LensProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
+    typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
 #else
 // OR: set the fluid system

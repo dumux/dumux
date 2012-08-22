@@ -47,7 +47,7 @@
 
 // the components that are used
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/oil.hh>
+#include <dumux/material/components/lnapl.hh>
 
 namespace Dumux
 {
@@ -90,7 +90,7 @@ SET_PROP(TutorialProblemDecoupled, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::Oil<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
+    typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
 }; /*@\label{tutorial-decoupled:2p-system-end}@*/
 
 SET_TYPE_PROP(TutorialProblemDecoupled, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-decoupled:cflflux}@*/

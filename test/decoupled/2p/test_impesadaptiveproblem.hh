@@ -34,7 +34,7 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/oil.hh>
+#include <dumux/material/components/lnapl.hh>
 
 #include <dumux/decoupled/2p/impes/impesproblem2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>

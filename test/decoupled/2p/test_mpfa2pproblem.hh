@@ -33,7 +33,7 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/simplednapl.hh>
+#include <dumux/material/components/dnapl.hh>
 
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2p.hh>
 #include <dumux/decoupled/2p/diffusion/fv/fvpressureproperties2padaptive.hh>
@@ -95,7 +95,7 @@ SET_PROP(MPFATwoPTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleDNAPL<Scalar> > type;
+    typedef Dumux::LiquidPhase<Scalar, Dumux::DNAPL<Scalar> > type;
 };
 
 // Enable gravity

@@ -42,7 +42,7 @@
 
 // The components that are used
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/oil.hh>
+#include <dumux/material/components/lnapl.hh>
 #include <dumux/common/cubegridcreator.hh>
 
 namespace Dumux{
@@ -73,7 +73,7 @@ public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{
 SET_PROP(TutorialProblemCoupled, NonwettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public: typedef Dumux::LiquidPhase<Scalar, Dumux::Oil<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
+public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
 }; /*@\label{tutorial-coupled:2p-system-end}@*/
 
 SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);
