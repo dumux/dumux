@@ -337,7 +337,6 @@ public:
                 int idx = problem_.variables().index(*eIt);
                 CellData& cellData = problem_.variables().cellData(idx);
 
-                storePressureSolution(*eIt);
                 (*pC)[idx] = cellData.capillaryPressure();
 
                 if (pressureType_ == pw)
@@ -1938,7 +1937,7 @@ void FVMPFAO2PFABoundPressure2P<TypeTag>::assemble()
                             lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
                             Scalar potentialBound = interactionVolume.getDirichletValues(intVolFaceIdx)[pressureIdx];
-                            Scalar gdeltaZ = (problem_.bboxMax()-globalPos) * gravity_;
+                            Scalar gdeltaZ = (problem_.bboxMax()-globalPosFace) * gravity_;
 
                             //calculate potential gradients
                             Scalar potentialW = 0;

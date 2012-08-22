@@ -1156,7 +1156,7 @@ void FVMPFAL2PFABoundVelocity2PAdaptive<TypeTag>::calculateVelocity()
                             lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                             lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
-                            Scalar gdeltaZ = (problem_.bboxMax()-globalPos) * gravity_;
+                            Scalar gdeltaZ = (problem_.bboxMax()-globalPosFace) * gravity_;
                             Scalar potentialBoundW = interactionVolume.getDirichletValues(intVolFaceIdx)[pressureIdx] + density_[wPhaseIdx]*gdeltaZ;
                             Scalar potentialBoundNW = potentialBoundW;
 

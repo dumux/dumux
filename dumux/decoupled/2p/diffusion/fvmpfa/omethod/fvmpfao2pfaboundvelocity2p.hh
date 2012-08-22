@@ -205,8 +205,11 @@ public:
     {
         ParentType::addOutputVtkFields(writer);
 
+        std::cout<<"muh\n";
         if (vtkOutputLevel_ > 0)
         {
+            std::cout<<"muhin\n";
+
             Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<
                     Scalar, dim>(problem_.gridView().size(0)));
             Dune::BlockVector < DimVector > &velocityNonwetting =
@@ -695,7 +698,7 @@ void FVMPFAO2PFABoundVelocity2P<TypeTag>::calculateVelocity()
                             lambdaBound[wPhaseIdx] /= viscosity_[wPhaseIdx];
                             lambdaBound[nPhaseIdx] /= viscosity_[nPhaseIdx];
 
-                            Scalar gdeltaZ = (problem_.bboxMax()-globalPos) * gravity_;
+                            Scalar gdeltaZ = (problem_.bboxMax()-globalPosFace) * gravity_;
                             Scalar potentialBoundW = interactionVolume.getDirichletValues(intVolFaceIdx)[pressureIdx] + density_[wPhaseIdx]*gdeltaZ;
                             Scalar potentialBoundNW = potentialBoundW;
 
