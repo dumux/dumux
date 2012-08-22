@@ -229,26 +229,22 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                 if (massUpwindWeight_ > 0.0)
                     // upstream vertex
                     flux[eqIdx] +=
-                        fluxVars.KmvpNormal(phaseIdx)
+                        fluxVars.volumeFlux(phaseIdx)
                         * massUpwindWeight_
                         * up.density(phaseIdx)
-                        * up.mobility(phaseIdx)
                         * up.fluidState().massFraction(phaseIdx, compIdx);
                 if (massUpwindWeight_ < 1.0)
                     // downstream vertex
                     flux[eqIdx] +=
-                        fluxVars.KmvpNormal(phaseIdx)
+                        fluxVars.volumeFlux(phaseIdx)
                         * (1 - massUpwindWeight_)
                         * dn.density(phaseIdx)
-                        * dn.mobility(phaseIdx)
                         * dn.fluidState().massFraction(phaseIdx, compIdx);
 
-                Valgrind::CheckDefined(fluxVars.KmvpNormal(phaseIdx));
+                Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
-                Valgrind::CheckDefined(up.mobility(phaseIdx));
                 Valgrind::CheckDefined(up.fluidState().massFraction(phaseIdx, compIdx));
                 Valgrind::CheckDefined(dn.density(phaseIdx));
-                Valgrind::CheckDefined(dn.mobility(phaseIdx));
                 Valgrind::CheckDefined(dn.fluidState().massFraction(phaseIdx, compIdx));
             }
             // flux of the total mass balance;
@@ -259,22 +255,18 @@ class TwoPTwoCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
                 // upstream vertex
                 if (massUpwindWeight_ > 0.0)
                     flux[replaceCompEqIdx] +=
-                        fluxVars.KmvpNormal(phaseIdx)
+                        fluxVars.volumeFlux(phaseIdx)
                         * massUpwindWeight_
-                        * up.density(phaseIdx)
-                        * up.mobility(phaseIdx);
+                        * up.density(phaseIdx);
                 // downstream vertex
                 if (massUpwindWeight_ < 1.0)
                     flux[replaceCompEqIdx] +=
-                        fluxVars.KmvpNormal(phaseIdx)
+                        fluxVars.volumeFlux(phaseIdx)
                         * (1 - massUpwindWeight_)
-                        * dn.density(phaseIdx)
-                        * dn.mobility(phaseIdx);
-                Valgrind::CheckDefined(fluxVars.KmvpNormal(phaseIdx));
+                        * dn.density(phaseIdx);
+                Valgrind::CheckDefined(fluxVars.volumeFlux(phaseIdx));
                 Valgrind::CheckDefined(up.density(phaseIdx));
-                Valgrind::CheckDefined(up.mobility(phaseIdx));
                 Valgrind::CheckDefined(dn.density(phaseIdx));
-                Valgrind::CheckDefined(dn.mobility(phaseIdx));
 
             }
 

@@ -69,9 +69,11 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
 NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind weight for the mass conservation equations
 NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the upwind weight for the mass conservation equations
+NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 NEW_PROP_TAG(EnableVelocityOutput); //!< DEPRECATED Returns whether vertex velocity vectors are written into the vtk output
+NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 }
 }
 

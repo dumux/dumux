@@ -39,6 +39,8 @@
 #include "2p2cproperties.hh"
 #include "2p2cnewtoncontroller.hh"
 
+#include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+
 namespace Dumux
 {
 
@@ -122,9 +124,15 @@ SET_TYPE_PROP(BoxTwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 //! the FluxVariables property
 SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 
+//! define the base flux variables to realize Darcy flow
+SET_TYPE_PROP(BoxTwoPTwoC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
+
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
 SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);//DEPRECATED
+
+//! set default mobility upwind weight to 1.0, i.e. fully upwind
+SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p2c model
 SET_PROP(BoxTwoPTwoC,

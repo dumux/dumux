@@ -141,14 +141,12 @@ public:
             const VolumeVariables &dn = this->curVolVars_(fluxVars.downstreamIdx(phaseIdx));
 
             flux[energyEqIdx] +=
-                fluxVars.KmvpNormal(phaseIdx) * (massUpwindWeight_ * // upstream vertex
+                fluxVars.volumeFlux(phaseIdx) * (massUpwindWeight_ * // upstream vertex
                                                  (  up.density(phaseIdx) *
-                                                    up.mobility(phaseIdx) *
                                                     up.enthalpy(phaseIdx))
                                                  +
                                                  (1-massUpwindWeight_) * // downstream vertex
                                                  (  dn.density(phaseIdx) *
-                                                    dn.mobility(phaseIdx) *
                                                     dn.enthalpy(phaseIdx)) );
         }
     }

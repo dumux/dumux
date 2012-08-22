@@ -181,8 +181,6 @@ public:
             staticVertexDat_[globalIdx].oldPhasePresence
                 = staticVertexDat_[globalIdx].phasePresence;
         }
-
-        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
     }
 
     /*!
@@ -432,13 +430,8 @@ public:
 
                         // Get the Darcy velocities. The Darcy velocities are divided by the area of the subcontrolvolume
                         // face in the reference element.
-                        massUpwindWeight_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, MassUpwindWeight);
                         PhasesVector flux;
-                        flux[phaseIdx] = fluxVars.KmvpNormal(phaseIdx)
-                            * (massUpwindWeight_
-                               * up.mobility(phaseIdx)
-                               + (1- massUpwindWeight_)
-                               * dn.mobility(phaseIdx)) / localArea;
+                        flux[phaseIdx] = fluxVars.volumeFlux(phaseIdx) / localArea;
 
                         // transform the normal Darcy velocity into a vector
                         tmpVelocity[phaseIdx] = localNormal;
@@ -781,7 +774,6 @@ protected:
     std::vector<StaticVars> staticVertexDat_;
     bool switchFlag_;
     bool velocityOutput_;
-    Scalar massUpwindWeight_;
 };
 
 }
