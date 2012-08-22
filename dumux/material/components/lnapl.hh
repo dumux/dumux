@@ -22,36 +22,62 @@
 /*!
  * \file
  *\ingroup Components
- * \brief  Rough estimate of some oil for testing purposes.
+ * \brief  A simple implementation of a LNAPL.
  */
-#ifndef DUMUX_OIL_HH
-#define DUMUX_OIL_HH
+#ifndef DUMUX_LNAPL_HH
+#define DUMUX_LNAPL_HH
 
-#warning use material/components/lnapl.hh instead
 
-#include "lnapl.hh"
+#include "component.hh"
 
 namespace Dumux
 {
 /*!
  * \ingroup Components
  *
- * \brief Rough estimate for testing purposes of some oil.
+ * \brief A simple implementation of a LNAPL, e.g. a kind of oil
  *
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Oil : public LNAPL<Scalar>
+class LNAPL : public Component<Scalar, LNAPL<Scalar> >
 {
 
 public:
-    DUNE_DEPRECATED_MSG("use LNAPL instead")
-    Oil(){}
     /*!
-     * \brief A human readable name for the water.
+     * \brief A human readable name for the LNAPL.
      */
     static const char *name()
-    { return "Oil"; }
+    { return "LNAPL"; }
+
+    /*!
+     * \brief Returns true iff the liquid phase is assumed to be compressible
+     */
+    static bool liquidIsCompressible()
+    { return false; }
+
+    /*!
+     * \brief Rough estimate of the density of oil \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    {
+        return 890;
+    }
+
+    /*!
+     * \brief Rough estimate of the viscosity of oil in \f$\mathrm{[Pa*s]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    {
+        return 8e-3;
+    };
+
 };
 
 } // end namepace
