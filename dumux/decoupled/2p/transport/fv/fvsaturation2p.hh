@@ -308,11 +308,21 @@ public:
             }
         }
 
-        writer.attachCellData(*saturation, "wetting saturation");
-
-        if (vtkOutputLevel_ > 0)
+        if (saturationType_ == Sw)
         {
-            writer.attachCellData(*saturationSecond, "nonwetting saturation");
+            writer.attachCellData(*saturation, "wetting saturation");
+            if (vtkOutputLevel_ > 0)
+            {
+                writer.attachCellData(*saturationSecond, "nonwetting saturation");
+            }
+        }
+        else if (saturationType_ == Sn)
+        {
+            writer.attachCellData(*saturation, "nonwetting saturation");
+            if (vtkOutputLevel_ > 0)
+            {
+                writer.attachCellData(*saturationSecond, "wetting saturation");
+            }
         }
 
         if (velocity().calculateVelocityInTransport())
