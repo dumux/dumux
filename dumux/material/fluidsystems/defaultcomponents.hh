@@ -33,17 +33,13 @@
 
 #include <dumux/common/basicproperties.hh>
 
+#include <dumux/material/components/h2o.hh>
+#include <dumux/material/components/n2.hh>
+#include <dumux/material/components/o2.hh>
+#include <dumux/material/components/h2.hh>
 #include <dumux/material/components/ch4.hh>
 #include <dumux/material/components/simpleco2.hh>
-#include <dumux/material/components/h2.hh>
-#include <dumux/material/components/o2.hh>
-#include <dumux/material/components/oil.hh>
-#include <dumux/material/components/n2.hh>
-#include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/simplednapl.hh>
-#include <dumux/material/components/benzene.hh>
-#include <dumux/material/components/mesitylene.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
