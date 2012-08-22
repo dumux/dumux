@@ -35,6 +35,7 @@
 #include <dumux/common/parameters.hh>
 
 #include <dumux/linear/elementborderlistfromgrid.hh>
+#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/overlappingbcrsmatrix.hh>
 #include <dumux/linear/overlappingblockvector.hh>
 #include <dumux/linear/overlappingpreconditioner.hh>
