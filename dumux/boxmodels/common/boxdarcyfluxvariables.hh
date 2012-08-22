@@ -134,8 +134,8 @@ public:
      *
      * \param phaseIdx index of the phase
      */
-    Scalar kGradpNormal(const unsigned int phaseIdx) const
-    { return kGradpNormal_[phaseIdx] ; }
+    Scalar kGradPNormal(const unsigned int phaseIdx) const
+    { return kGradPNormal_[phaseIdx] ; }
 
     /*!
      * \brief Return the local index of the downstream control volume
@@ -173,7 +173,8 @@ protected:
     unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
     Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)
     DimVector       velocity_[numPhases] ;      //!< The velocity as determined by the Forchheimer relation
-    Scalar          kGradpNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
+    Scalar          kGradPNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
+    DimVector       kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
     DimVector       gradPotential_[numPhases] ; //!< Gradient of potential, which drives flow
     Scalar          mobilityUpwindWeight_;      //!< Upwind weight for mobility. Set to one for full upstream weighting
 
@@ -242,7 +243,6 @@ protected:
         } // loop over all phases
      }
 
-protected:
     /*
      * \brief Actual calculation of the normal Darcy velocities.
      *
@@ -279,12 +279,11 @@ protected:
             //  Q = - (K grad phi) dot n /|n| * A
 
 
-            DimVector kGradPotential;
-            K.mv(gradPotential_[phaseIdx], kGradPotential);
-            kGradpNormal_[phaseIdx] = kGradPotential*face().normal;
+            K.mv(gradPotential_[phaseIdx], kGradP_[phaseIdx]);
+            kGradPNormal_[phaseIdx] = kGradP_[phaseIdx]*face().normal;
 
             // determine the upwind direction
-            if (kGradpNormal_[phaseIdx] < 0)
+            if (kGradPNormal_[phaseIdx] < 0)
             {
                 upstreamIdx_[phaseIdx] = face().i;
                 downstreamIdx_[phaseIdx] = face().j;
@@ -302,7 +301,7 @@ protected:
             // the minus comes from the Darcy relation which states that
             // the flux is from high to low potentials.
             // set the velocity
-            velocity_[phaseIdx] = kGradPotential;
+            velocity_[phaseIdx] = kGradP_[phaseIdx];
             velocity_[phaseIdx] *= - ( mobilityUpwindWeight_*upVolVars.mobility(phaseIdx)
                     + (1.0 - mobilityUpwindWeight_)*downVolVars.mobility(phaseIdx)) ;
 

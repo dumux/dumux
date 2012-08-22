@@ -162,10 +162,6 @@ protected:
         // loop over all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; phaseIdx++)
         {
-            DimVector kGradPotential ;
-            // multiply permeability tensor with potential gradient
-            K.mv(this->gradPotential_[phaseIdx], kGradPotential);
-
             // initial guess of velocity: Darcy relation
             // first taken from base class, later overwritten in base class
             DimVector velocity = this-> velocity(phaseIdx);

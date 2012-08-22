@@ -122,7 +122,7 @@ public:
             // add advective flux of current component in current
             // phase. we use full upwinding.
             if (enableSmoothUpwinding_) {
-                const Scalar kGradpNormal   = fluxVars.kGradpNormal(phaseIdx);
+                const Scalar kGradPNormal   = fluxVars.kGradPNormal(phaseIdx);
                 const Scalar mobUp          = up.mobility(phaseIdx);
                 const Scalar conUp          = up.fluidState().molarity(phaseIdx, compIdx);
 
@@ -133,8 +133,8 @@ public:
                 const Scalar mobConDn   = mobDn*conDn;
                 const Scalar meanMobCon = Dumux::harmonicMean(mobConUp, mobConDn);
 
-                const Scalar x      = std::abs(kGradpNormal);
-                const Scalar sign   = (kGradpNormal > 0)?-1:1;
+                const Scalar x      = std::abs(kGradPNormal);
+                const Scalar sign   = (kGradPNormal > 0)?-1:1;
 
                 // the direction from upstream to downstream
                 //GlobalPosition delta = this->curElement_().geometry().corner(upIdx);
