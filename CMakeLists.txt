@@ -409,6 +409,7 @@ file(COPY test/decoupled/2p2c/test_dec2p2c.input DESTINATION test/decoupled/2p2c
 file(COPY test/decoupled/2p2c/test_multiphysics2p2c-reference.vtu DESTINATION references)
 file(COPY test/common/generalproblem/generallens_box-reference.vtu DESTINATION references)
 file(COPY test/common/generalproblem/generallens_decoupled-reference.vtu DESTINATION references)
+file(COPY test/common/generalproblem/test_generalproblem2p.input DESTINATION test/common/generalproblem)
 file(COPY tutorial/tutorial_coupled.input DESTINATION tutorial)
 file(COPY tutorial/tutorial_decoupled.input DESTINATION tutorial)
 if(SUPERLU_FOUND)
