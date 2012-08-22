@@ -157,22 +157,20 @@ public:
 
         // advective heat flux in all phases
         flux[energyEqIdx] = 0;
-        for (int phase = 0; phase < numPhases; ++phase) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             // vertex data of the upstream and the downstream vertices
-            const VolumeVariables &up = this->curVolVars_(fluxData.upstreamIdx(phase));
-            const VolumeVariables &dn = this->curVolVars_(fluxData.downstreamIdx(phase));
+            const VolumeVariables &up = this->curVolVars_(fluxData.upstreamIdx(phaseIdx));
+            const VolumeVariables &dn = this->curVolVars_(fluxData.downstreamIdx(phaseIdx));
 
             flux[energyEqIdx] +=
-                fluxData.KmvpNormal(phase) * (
+                fluxData.volumeFlux(phaseIdx) * (
                                               massUpwindWeight * // upstream vertex
-                                              (  up.density(phase) *
-                                                 up.mobility(phase) *
-                                                 up.enthalpy(phase))
+                                              (  up.density(phaseIdx) *
+                                                 up.enthalpy(phaseIdx))
                                               +
                                               (1-massUpwindWeight) * // downstream vertex
-                                              (  dn.density(phase) *
-                                                 dn.mobility(phase) *
-                                                 dn.enthalpy(phase)) );
+                                              (  dn.density(phaseIdx) *
+                                                 dn.enthalpy(phaseIdx)) );
         }
     }
 

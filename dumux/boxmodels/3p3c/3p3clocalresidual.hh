@@ -179,14 +179,12 @@ public:
                 // if alpha == 1 (which is mostly the case) then, the downstream
                 // node is not evaluated
                 int eqIdx = conti0EqIdx + compIdx;
-                flux[eqIdx] += fluxVars.KmvpNormal(phaseIdx)
+                flux[eqIdx] += fluxVars.volumeFlux(phaseIdx)
                     * (massUpwindWeight
-                       * up.mobility(phaseIdx)
                        * up.fluidState().molarDensity(phaseIdx)
                        * up.fluidState().moleFraction(phaseIdx, compIdx)
                        +
                        (1.0 - massUpwindWeight)
-                       * dn.mobility(phaseIdx)
                        * dn.fluidState().molarDensity(phaseIdx)
                        * dn.fluidState().moleFraction(phaseIdx, compIdx));
             }
