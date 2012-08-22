@@ -393,7 +393,7 @@
           38.326 0.0263255 3.83031e-09 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="wetting saturation" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="nonwetting saturation" NumberOfComponents="1" format="ascii">
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
@@ -523,7 +523,7 @@
           0.0025108 2.43746e-06 9.11215e-13 6.92259e-26 0 0 0 0 0 0 0 0
           0 0 0 0 0 0 0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float32" Name="nonwetting saturation" NumberOfComponents="1" format="ascii">
+        <DataArray type="Float32" Name="wetting saturation" NumberOfComponents="1" format="ascii">
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
           1 1 1 1 1 1 1 1 1 1 1 1
