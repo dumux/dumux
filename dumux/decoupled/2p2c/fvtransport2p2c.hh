@@ -24,6 +24,7 @@
 
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
+#include <dumux/material/constraintsolvers/compositionalflash.hh>
 #include <dumux/common/math.hh>
 
 /**
@@ -73,7 +74,7 @@ class FVTransport2P2C
 
     enum
     {
-        dim = GridView::dimension, dimWorld = GridView::dimensionworld,
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
     enum
     {

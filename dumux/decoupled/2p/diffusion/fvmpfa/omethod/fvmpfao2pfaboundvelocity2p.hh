@@ -103,7 +103,7 @@ template<class TypeTag> class FVMPFAO2PFABoundVelocity2P: public FVMPFAO2PFABoun
         Sn = Indices::saturationNW,
         vw = Indices::velocityW,
         vn = Indices::velocityNW,
-        vt = Indices::velocityTotal,
+        vt = Indices::velocityTotal
     };
     enum
     {

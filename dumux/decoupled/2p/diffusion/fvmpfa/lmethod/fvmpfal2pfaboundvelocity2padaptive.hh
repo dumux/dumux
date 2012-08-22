@@ -105,7 +105,7 @@ template<class TypeTag> class FVMPFAL2PFABoundVelocity2PAdaptive: public FVMPFAL
         Sn = Indices::saturationNW,
         vw = Indices::velocityW,
         vn = Indices::velocityNW,
-        vt = Indices::velocityTotal,
+        vt = Indices::velocityTotal
     };
     enum
     {
