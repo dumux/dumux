@@ -80,7 +80,7 @@ public:
      * \param fluidState The decoupled fluid State
      * \param Z1 Feed mass fraction: Mass of comp1 per total mass \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
-     * \param poro Porosity \f$\mathrm{[-]}\f$
+     * \param porosity Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
     static void concentrationFlash2p2c(FluidState &fluidState,
@@ -186,6 +186,7 @@ public:
      * - Check if we are in single phase condition
      * - Assign total concentration to the present phase
      *
+     * \param fluidState The decoupled fluid state
      * \param Z1 Feed mass fraction \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
      * \param presentPhaseIdx Subdomain Index = Indication which phase is present
@@ -258,9 +259,9 @@ public:
      * - determination of maximum solubilities (mole fractions) according to phase pressures
      * - round off fluid properties
      * \param fluidState The decoupled fluid state
-     * \param sat Saturation of phase 1 \f$\mathrm{[-]}\f$
+     * \param saturation Saturation of phase 1 \f$\mathrm{[-]}\f$
      * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
-     * \param poro Porosity \f$\mathrm{[-]}\f$
+     * \param porosity Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
     static void saturationFlash2p2c(FluidState &fluidState,
