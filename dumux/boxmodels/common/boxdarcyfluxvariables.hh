@@ -156,8 +156,10 @@ public:
     { return upstreamIdx_[phaseIdx]; }
 
     /*!
-     * \brief Return the SCV (sub-control-volume) face
-    */
+     * \brief Return the SCV (sub-control-volume) face. This may be either
+     *        a face within the element or a face on the element boundary,
+     *        depending on the value of onBoundary_.
+     */
     const SCVFace &face() const
     {
         if (onBoundary_)
@@ -168,11 +170,11 @@ public:
 
 protected:
     const FVElementGeometry &fvGeometry_;   //!< Information about the geometry of discretization
-    const unsigned int faceIdx_;            //!< The index of the sub controle volume face
+    const unsigned int faceIdx_;            //!< The index of the sub control volume face
     const bool      onBoundary_;                //!< Specifying whether we are currently on the boundary of the simulation domain
     unsigned int    upstreamIdx_[numPhases] , downstreamIdx_[numPhases]; //!< local index of the upstream / downstream vertex
     Scalar          volumeFlux_[numPhases] ;    //!< Velocity multiplied with normal (magnitude=area)
-    DimVector       velocity_[numPhases] ;      //!< The velocity as determined by the Forchheimer relation
+    DimVector       velocity_[numPhases] ;      //!< The velocity as determined by Darcy's law or by the Forchheimer relation
     Scalar          kGradPNormal_[numPhases] ;  //!< Permeability multiplied with gradient in potential, multiplied with normal (magnitude=area)
     DimVector       kGradP_[numPhases] ; //!< Permeability multiplied with gradient in potential
     DimVector       gradPotential_[numPhases] ; //!< Gradient of potential, which drives flow
@@ -181,9 +183,9 @@ protected:
     /*
      * \brief Calculation of the potential gradients
      *
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
-     * \param onBoundary A boolean variable to specify whether the flux variables
+     * \param problem The problem
+     * \param element The finite element
+     * \param elemVolVars The volume variables of the current element
      * are calculated for interior SCV faces or boundary faces, default=false
      */
     void calculateGradients_(const Problem &problem,
@@ -248,7 +250,6 @@ protected:
      *
      * \param problem The problem
      * \param element The finite element
-     * \param faceIdx The local index of the SCV (sub-control-volume) face
      * \param elemVolVars The volume variables of the current element
      */
     void calculateNormalVelocity_(const Problem &problem,
@@ -311,6 +312,6 @@ protected:
     }
 };
 
-} // end namepace
+} // end namespace
 
 #endif
