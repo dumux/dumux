@@ -69,7 +69,7 @@ NEW_PROP_TAG(ProblemEnableGravity);
  *        looses it's validity.
  *
  *        The Forchheimer equation looks as follows:
- *         \f[ \nabla \left({p_\alpha + \rho_\alpha g z} \right)=  - \frac{\mu_\alpha}{k_{r \alpha} K} \underline{v_\alpha} - \frac{c_F}{\eta_{\alpha r} \sqrt{K}} \rho |\underline{v_\alpha}| \underline{v_\alpha} \f]
+ *         \f[ \nabla \left({p_\alpha + \rho_\alpha g z} \right)=  - \frac{\mu_\alpha}{k_{r \alpha} K} \underline{v_\alpha} - \frac{c_F}{\eta_{\alpha r} \sqrt{K}} \rho_\alpha |\underline{v_\alpha}| \underline{v_\alpha} \f]
  *
  *        For the formulation that is actually used in this class, see the documentation of the function calculating the residual.
  *
