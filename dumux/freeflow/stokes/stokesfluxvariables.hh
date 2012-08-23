@@ -355,6 +355,6 @@ protected:
     int faceIdx_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif
