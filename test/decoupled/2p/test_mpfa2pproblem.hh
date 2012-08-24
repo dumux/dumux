@@ -27,6 +27,8 @@
 #ifndef DUMUX_TEST_MPFA2P_PROBLEM_HH
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
+#if HAVE_ALUGRID
+
 #include <dune/grid/alugrid/2d/alugrid.hh>
 
 #include <dumux/common/cubegridcreator.hh>
@@ -386,5 +388,7 @@ GlobalPosition inletRightCoord_;
 static constexpr Scalar eps_ = 1e-6;
 };
 } //end namespace
+
+#endif 
 
 #endif

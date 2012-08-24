@@ -29,6 +29,8 @@
 #ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 #define DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
 
+#if HAVE_ALUGRID
+
 #include <dune/grid/alugrid/2d/alugrid.hh>
 #include <dumux/common/cubegridcreator.hh>
 
@@ -274,5 +276,7 @@ private:
     const Scalar eps_;
 };
 } //end namespace
+
+#endif
 
 #endif
