@@ -76,7 +76,7 @@ public:
 //Dumux::H2O_N2_System<TypeTag> );
 
 // Enable smooth upwinding?
-SET_BOOL_PROP(ObstacleProblem, EnableSmoothUpwinding, false);
+SET_BOOL_PROP(ObstacleProblem, EnableSmoothUpwinding, true);
 
 // Enable molecular diffusion of the components?
 SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, false);
