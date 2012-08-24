@@ -26,6 +26,7 @@
 #ifndef DUMUX_VALGRIND_HH
 #define DUMUX_VALGRIND_HH
 
+#ifndef __clang__
 #if __GNUC__ < 4 || (__GNUC__ == 4  && __GNUC_MINOR__ < 5)
 // do not do static_asserts for gcc < 4.5 (semantics changed, so old
 // GCCs will complain when using static_assert)
@@ -38,6 +39,7 @@
 #    undef HAVE_VALGRIND
 #  endif
 #endif // GCC < 4.5
+#endif // __clang__
 
 #ifndef HAVE_VALGRIND
 // make sure that the HAVE_VALGRIND macro is always defined
