@@ -1,8 +1,5 @@
 /*****************************************************************************
- *   Copyright (C) 2012 by Markus Wolff                                      *
- *   Institute of Hydraulic Engineering                                      *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *

@@ -1,11 +1,7 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2010 by Markus Wolff                                      *
- *   Copyright (C) 2007-2010 by Yufei Cao                                    *
- *   Institute of Applied Analysis and Numerical Simulation                  *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@mathematik.uni-stuttgart.de                   *
+ *   See the file COPYING for full copying permissions.                      *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
