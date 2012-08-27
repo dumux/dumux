@@ -1,12 +1,55 @@
-		    GNU GENERAL PUBLIC LICENSE
-		       Version 2, June 1991
+Copyright holders:
+
+2010--2012  Katherina Baber
+2010        Felix Bode
+2007--2011  Yufei Cao
+2011--2012  Holger Class 
+2008--2012  Melanie Darcis
+2008--2009  Onur Dogan
+2009--2011  Karin Erbertseder
+2009--2012  Benjamin Faigle
+2007--2012  Bernd Flemisch
+2007--2010  Jochen Fritz
+2012        Christoph Grüninger
+2012        Vishal Jambhekar
+2012        Alexander Kissinger
+2008--2012  Andreas Lauser
+2008--2012  Klaus Mosthaf
+2009--2012  Philipp Nuske
+2008        Irina Rybak
+2009        Anneli Schöniger
+2010--2012  Nicolas Schwenck
+2011        Michael Sinsbeck
+2010        Leopold Stadler
+2010--2012  Lena Walter
+2010--2011  David Werner 
+2008--2012  Markus Wolff
+
+DuMuX is licensed under the terms and conditions of the GNU General
+Public License (GPL) version 2 or - at your option - any later
+version. The GPL can be read online [0], or below.
+
+Please note that DuMuX's license, unlike DUNE, does NOT feature a
+template exception to the GNU General Public License. This means that
+you must publish any source code which uses any of the DuMuX header
+files if you want to redistribute your program to third parties. If
+this is unacceptable to you, please contact us [1, 2] for a commercial
+license.
+
+[0] http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+[1] Bernd Flemisch <bernd@iws.uni-stuttgart.de>
+[2] http://www.hydrosys.uni-stuttgart.de/index.en.php
+
+
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
 
  Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  Everyone is permitted to copy and distribute verbatim copies
  of this license document, but changing it is not allowed.
 
-			    Preamble
+                            Preamble
 
   The licenses for most software are designed to take away your
 freedom to share and change it.  By contrast, the GNU General Public
@@ -56,7 +99,7 @@ patent must be licensed for everyone's free use or not licensed at all.
   The precise terms and conditions for copying, distribution and
 modification follow.
 
-		    GNU GENERAL PUBLIC LICENSE
+                    GNU GENERAL PUBLIC LICENSE
    TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
   0. This License applies to any program or other work which contains
@@ -255,7 +298,7 @@ make exceptions for this.  Our decision will be guided by the two goals
 of preserving the free status of all derivatives of our free software and
 of promoting the sharing and reuse of software generally.
 
-			    NO WARRANTY
+                            NO WARRANTY
 
   11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
 FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
@@ -277,9 +320,9 @@ YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
 PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.
 
-		     END OF TERMS AND CONDITIONS
+                     END OF TERMS AND CONDITIONS
 
-	    How to Apply These Terms to Your New Programs
+            How to Apply These Terms to Your New Programs
 
   If you develop a new program, and you want it to be of the greatest
 possible use to the public, the best way to achieve this is to make it
