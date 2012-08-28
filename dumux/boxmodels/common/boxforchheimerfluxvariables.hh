@@ -71,10 +71,8 @@ NEW_PROP_TAG(ProblemEnableGravity);
  *
  *        - This algorithm does not find a solution if the fluid is incompressible and the
  *          initial pressure distribution is uniform.
- *        - This algorithm needs the volume variables to provide a relative permeability function.
- *          Unfortunately this is also the case for one phase models, where this term does not make sense.
- *          Workaround: Implement a relativePermeabilit(phaseIdx) function in the according volume variables
- *          and set the return value to one.
+ *        - This algorithm assumes the relative passabilities to have the same functional
+ *          form as the relative permeabilities.
  */
 template <class TypeTag>
 class BoxForchheimerFluxVariables
