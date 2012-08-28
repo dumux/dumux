@@ -177,6 +177,9 @@ SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);//DEPRECATED
 SET_BOOL_PROP(BoxModel, ImplicitEnablePartialReassemble, GET_PROP_VALUE(TypeTag, EnablePartialReassemble));
 SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);//DEPRECATED
 
+// disable two-point-flux by default
+SET_BOOL_PROP(BoxModel, ImplicitUseTwoPointFlux, false);
+
 //! Set the type of a global jacobian matrix from the solution types
 SET_PROP(BoxModel, JacobianMatrix)
 {

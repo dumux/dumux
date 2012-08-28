@@ -39,6 +39,7 @@ namespace Properties
 {
 NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(Scalar);
+NEW_PROP_TAG(ImplicitUseTwoPointFlux);
 }
 
 /////////////////////
@@ -613,8 +614,14 @@ public:
         numEdges = referenceElement.size(dim-1);
         numFaces = (dim<3)?0:referenceElement.size(1);
         numSCV = numVertices;
-        numFAP = numVertices;
-
+        
+        bool useTwoPointFlux 
+          = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);
+        if (useTwoPointFlux)
+            numFAP = 2;
+        else
+            numFAP = numVertices;
+        
         // corners:
         for (int vert = 0; vert < numVertices; vert++) {
             subContVol[vert].local = referenceElement.position(vert, dim);
@@ -690,26 +697,41 @@ public:
                                         elementGlobal, faceCoord[leftFace]);
             }
 
-            // get the global integration point and the Jacobian inverse
-            subContVolFace[k].ipGlobal = geometry.global(ipLocal);
-            Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+            if (useTwoPointFlux)
+            {
+                GlobalPosition distVec = subContVol[i].global;
+                distVec -= subContVol[j].global;
+                distVec /= distVec.two_norm2();
+                
+                // gradients using a two-point flux approximation
+                for (int idx = 0; idx < 2; idx++)
+                {
+                    subContVolFace[k].grad[idx] = distVec;
+                    subContVolFace[k].shapeValue[idx] = 0.5;
+                }
+                subContVolFace[k].grad[1] *= -1.0;
+                
+                subContVolFace[k].fapIndices[0] = subContVolFace[k].i;
+                subContVolFace[k].fapIndices[1] = subContVolFace[k].j;
+            }
+            else
+            {
+                // get the global integration point and the Jacobian inverse
+                subContVolFace[k].ipGlobal = geometry.global(ipLocal);
+                Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(ipLocal);
 
-
-            //              std::cout << "SCV Face " << k << ", i = " << i << ", j = " << j
-            //                          << ", ipLocal = " << ipLocal << ", ipGlobal = " << subContVolFace[k].ipGlobal << ", normal = " << subContVolFace[k].normal
-            //                          << std::endl;
-
-            // calculate the shape function gradients
-            //typedef Dune::FieldVector< Dune::FieldVector< CoordScalar, dim >, 1 > ShapeJacobian;
-            typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
-            std::vector<ShapeJacobian> localJac;
-            std::vector<ShapeValue>    shapeVal;
-            localFiniteElement.localBasis().evaluateJacobian(subContVolFace[k].ipLocal, localJac);
-            localFiniteElement.localBasis().evaluateFunction(subContVolFace[k].ipLocal, shapeVal);
-            for (int vert = 0; vert < numVertices; vert++) {
-                jacInvT.mv(localJac[vert][0], subContVolFace[k].grad[vert]);
-                subContVolFace[k].shapeValue[vert] = Scalar(shapeVal[vert]);
-                subContVolFace[k].fapIndices[vert] = vert;
+                // calculate the shape function gradients
+                //typedef Dune::FieldVector< Dune::FieldVector< CoordScalar, dim >, 1 > ShapeJacobian;
+                typedef Dune::FieldVector< Scalar, 1 > ShapeValue;
+                std::vector<ShapeJacobian> localJac;
+                std::vector<ShapeValue>    shapeVal;
+                localFiniteElement.localBasis().evaluateJacobian(subContVolFace[k].ipLocal, localJac);
+                localFiniteElement.localBasis().evaluateFunction(subContVolFace[k].ipLocal, shapeVal);
+                for (int vert = 0; vert < numVertices; vert++) {
+                    jacInvT.mv(localJac[vert][0], subContVolFace[k].grad[vert]);
+                    subContVolFace[k].shapeValue[vert] = Scalar(shapeVal[vert]);
+                    subContVolFace[k].fapIndices[vert] = vert;
+                }
             }
         } // end loop over edges / sub control volume faces
 
@@ -773,68 +795,59 @@ public:
                         boundaryFace[bfIdx].shapeValue[vert] = Scalar(shapeVal[vert]);
                         boundaryFace[bfIdx].fapIndices[vert] = vert;
                     }
-
-                    //                    std::cout << "boundary face " << face << ", vert = " << vertInElement << ", ipLocal = "
-                    //                        << boundaryFace[bfIdx].ipLocal << ", ipGlobal = " << boundaryFace[bfIdx].ipGlobal
-                    //                        << ", area = " << boundaryFace[bfIdx].area << std::endl;
-
                 }
             }
 
-
-            // calculate gradients at the center of the scv
-            for (int scvIdx = 0; scvIdx < numVertices; scvIdx++)
-                if (dim == 2)
+        // calculate gradients at the center of the scv
+        for (int scvIdx = 0; scvIdx < numVertices; scvIdx++)
+            if (dim == 2)
+            {
+                switch (scvIdx)
                 {
-//                    if (!subContVol[scvIdx].inner)
-                    {
-                        switch (scvIdx)
-                        {
-                        case 0:
-                            if (numVertices == 4) {
-                                subContVol[scvIdx].localCenter[0] = 0.25;
-                                subContVol[scvIdx].localCenter[1] = 0.25;
-                            }
-                            else {
-                                subContVol[scvIdx].localCenter[0] = 1.0/6.0;
-                                subContVol[scvIdx].localCenter[1] = 1.0/6.0;
-                            }
-                            break;
-                        case 1:
-                            if (numVertices == 4) {
-                                subContVol[scvIdx].localCenter[0] = 0.75;
-                                subContVol[scvIdx].localCenter[1] = 0.25;
-                            }
-                            else {
-                                subContVol[scvIdx].localCenter[0] = 4.0/6.0;
-                                subContVol[scvIdx].localCenter[1] = 1.0/6.0;
-                            }
-                            break;
-                        case 2:
-                            if (numVertices == 4) {
-                                subContVol[scvIdx].localCenter[0] = 0.25;
-                                subContVol[scvIdx].localCenter[1] = 0.75;
-                            }
-                            else {
-                                subContVol[scvIdx].localCenter[0] = 1.0/6.0;
-                                subContVol[scvIdx].localCenter[1] = 4.0/6.0;
-                            }
-                            break;
-                        case 3:
-                            subContVol[scvIdx].localCenter[0] = 0.75;
-                            subContVol[scvIdx].localCenter[1] = 0.75;
-                            break;
-                        }
+                case 0:
+                    if (numVertices == 4) {
+                        subContVol[scvIdx].localCenter[0] = 0.25;
+                        subContVol[scvIdx].localCenter[1] = 0.25;
                     }
-
-                    std::vector<ShapeJacobian> localJac;
-                    localFiniteElement.localBasis().evaluateJacobian(subContVol[scvIdx].localCenter, localJac);
-
-                    Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT =
-                            geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
-                    for (int vert = 0; vert < numVertices; vert++)
-                        jacInvT.mv(localJac[vert][0], subContVol[scvIdx].gradCenter[vert]);
+                    else {
+                        subContVol[scvIdx].localCenter[0] = 1.0/6.0;
+                        subContVol[scvIdx].localCenter[1] = 1.0/6.0;
+                    }
+                    break;
+                case 1:
+                    if (numVertices == 4) {
+                        subContVol[scvIdx].localCenter[0] = 0.75;
+                        subContVol[scvIdx].localCenter[1] = 0.25;
+                    }
+                    else {
+                        subContVol[scvIdx].localCenter[0] = 4.0/6.0;
+                        subContVol[scvIdx].localCenter[1] = 1.0/6.0;
+                    }
+                    break;
+                case 2:
+                    if (numVertices == 4) {
+                        subContVol[scvIdx].localCenter[0] = 0.25;
+                        subContVol[scvIdx].localCenter[1] = 0.75;
+                    }
+                    else {
+                        subContVol[scvIdx].localCenter[0] = 1.0/6.0;
+                        subContVol[scvIdx].localCenter[1] = 4.0/6.0;
+                    }
+                    break;
+                case 3:
+                    subContVol[scvIdx].localCenter[0] = 0.75;
+                    subContVol[scvIdx].localCenter[1] = 0.75;
+                    break;
                 }
+
+                std::vector<ShapeJacobian> localJac;
+                localFiniteElement.localBasis().evaluateJacobian(subContVol[scvIdx].localCenter, localJac);
+
+                Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT =
+                        geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
+                for (int vert = 0; vert < numVertices; vert++)
+                    jacInvT.mv(localJac[vert][0], subContVol[scvIdx].gradCenter[vert]);
+            }
     }
 };
 

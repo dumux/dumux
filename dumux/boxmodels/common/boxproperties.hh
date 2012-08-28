@@ -125,6 +125,9 @@ NEW_PROP_TAG(NumericDifferenceMethod);//DEPRECATED
 NEW_PROP_TAG(ImplicitEnableHints);
 NEW_PROP_TAG(EnableHints);//DEPRECATED
 
+//! indicates whether two-point flux should be used
+NEW_PROP_TAG(ImplicitUseTwoPointFlux); 
+
 // mappers from local to global indices
 
 //! maper for vertices
