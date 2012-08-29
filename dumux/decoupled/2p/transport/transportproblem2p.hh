@@ -19,7 +19,6 @@
 /*!
  * \file
  * \brief Base class for two-phase transport problems
- * @author Markus Wolff
  */
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
 #define DUMUX_TRANSPORTPROBLEM_2P_HH

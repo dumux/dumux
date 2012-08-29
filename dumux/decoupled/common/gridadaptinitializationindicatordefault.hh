@@ -26,7 +26,6 @@
 /**
  * @file
  * @brief  Class defining a start indicator for grid adaption
- * @author Markus Wolff
  */
 namespace Dumux
 {

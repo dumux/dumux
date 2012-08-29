@@ -24,7 +24,6 @@
 /**
  * \file
  * \brief  Base class for defining a diffusive part of the saturation transport equation
- * \author Bernd Flemisch, Markus Wolff
  */
 namespace Dumux
 {

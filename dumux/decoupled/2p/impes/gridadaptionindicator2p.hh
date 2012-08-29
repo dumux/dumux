@@ -25,7 +25,6 @@
 /**
  * @file
  * @brief  Class defining a standard, saturation dependent indicator for grid adaption
- * @author Markus Wolff
  */
 namespace Dumux
 {

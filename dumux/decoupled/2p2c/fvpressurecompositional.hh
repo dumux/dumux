@@ -30,7 +30,6 @@
 /**
  * @file
  * @brief  Base Class for compositional pressure Equations
- * @author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
 namespace Dumux

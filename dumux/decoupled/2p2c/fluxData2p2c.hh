@@ -24,7 +24,6 @@
 /**
  * @file
  * @brief  Class including the variables and data of discretized data of the constitutive relations
- * @author Markus Wolff
  */
 
 namespace Dumux

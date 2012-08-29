@@ -27,7 +27,6 @@
 /**
  * @file
  * @brief  Finite Volume MPFA O-method discretization of a two-phase pressure equation.
- * @author Yufei Cao
  */
 
 namespace Dumux

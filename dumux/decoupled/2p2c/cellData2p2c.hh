@@ -25,7 +25,6 @@
 /**
  * @file
  * @brief  Storage container for discretized data of the constitutive relations for one element
- * @author Benjamin Faigle
  */
 
 namespace Dumux

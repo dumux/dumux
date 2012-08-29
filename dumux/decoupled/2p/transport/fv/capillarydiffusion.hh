@@ -24,7 +24,6 @@
 /**
  * @file
  * @brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation
- * @author Bernd Flemisch, Markus Wolff
  */
 namespace Dumux
 {

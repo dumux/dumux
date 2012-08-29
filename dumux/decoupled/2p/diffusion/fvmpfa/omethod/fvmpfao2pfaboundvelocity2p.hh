@@ -23,7 +23,6 @@
 /**
  * @file
  * @brief  Velocity Field from a finite volume solution of a pressure equation using a MPFA O-method.
- * @author Markus Wolff
  */
 
 namespace Dumux

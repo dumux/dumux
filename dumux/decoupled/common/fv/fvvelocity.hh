@@ -27,7 +27,6 @@
 /**
  * @file
  * @brief  Finite volume velocity reconstruction
- * @author Markus Wolff
  */
 
 namespace Dumux

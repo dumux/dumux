@@ -27,7 +27,6 @@
 /**
  * @file
  * @brief  Finite Volume discretization of a two-phase flow pressure equation.
- * @author Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
 namespace Dumux

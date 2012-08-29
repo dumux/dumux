@@ -22,7 +22,6 @@
 /**
  * @file
  * @brief  Fluxes to evaluate a CFL-Condition
- * @author Markus Wolff
  */
 
 #include "evalcflflux.hh"

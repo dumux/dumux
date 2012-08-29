@@ -28,7 +28,6 @@
 /**
  * @file
  * @brief  Base class for definition of an decoupled diffusion (pressure) or transport problem
- * @author Markus Wolff
  */
 
 namespace Dumux

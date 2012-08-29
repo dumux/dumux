@@ -39,7 +39,6 @@
 /**
  * @file
  * @brief  defines a class for piecewise linear finite element functions
- * @author Peter Bastian
  */
 
 namespace Dumux

@@ -22,7 +22,6 @@
 /**
  * @file
  * @brief  Velocity Field from a finite volume solution of a pressure equation.
- * @author Markus Wolff
  */
 
 #include <dumux/decoupled/2p/diffusion/fv/fvvelocity2p.hh>

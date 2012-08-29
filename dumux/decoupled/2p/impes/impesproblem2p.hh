@@ -19,7 +19,6 @@
 /*!
  * \file
  * \brief Base class for all 2-phase problems which use an impes algorithm
- * @author Markus Wolff
  */
 #ifndef DUMUX_IMPESPROBLEM_2P_HH
 #define DUMUX_IMPESPROBLEM_2P_HH

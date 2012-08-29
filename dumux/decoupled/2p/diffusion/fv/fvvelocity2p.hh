@@ -22,7 +22,6 @@
 /**
  * @file
  * @brief  Velocity Field from a finite volume solution of a pressure equation.
- * @author Markus Wolff
  */
 
 #include <dune/grid/common/gridenums.hh>

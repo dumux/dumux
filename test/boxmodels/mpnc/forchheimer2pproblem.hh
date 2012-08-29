@@ -21,7 +21,6 @@
  * \brief Problem where water and gas is injected by means of a
  *        dirchlet condition on the lower right of the domain which have to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
- * \author Philipp Nuske, Bernd Flemisch
  */
 #ifndef DUMUX_FORCHEIMER2P_HH
 #define DUMUX_FORCHEIMER2P_HH

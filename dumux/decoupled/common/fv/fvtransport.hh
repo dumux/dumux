@@ -26,7 +26,6 @@
 /**
  * @file
  * @brief  Finite Volume discretization of a  transport equation
- * @author Markus Wolff
  */
 
 namespace Dumux

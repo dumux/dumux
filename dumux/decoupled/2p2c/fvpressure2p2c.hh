@@ -34,7 +34,6 @@
 /**
  * @file
  * @brief  Finite Volume 2p2c Diffusion Model
- * @author Benjamin Faigle, Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
 namespace Dumux

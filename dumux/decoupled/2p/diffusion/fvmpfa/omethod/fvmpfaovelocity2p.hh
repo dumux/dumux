@@ -25,7 +25,6 @@
 /**
  * @file
  * @brief  Velocity Field from a finite volume MPFA O-method solution of a pressure equation.
- * @author Yufei Cao
  */
 
 namespace Dumux

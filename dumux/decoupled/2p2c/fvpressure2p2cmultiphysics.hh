@@ -26,7 +26,6 @@
 /**
  * @file
  * @brief  Finite Volume Diffusion Model
- * @author Bernd Flemisch, Jochen Fritz, Markus Wolff
  */
 
 namespace Dumux

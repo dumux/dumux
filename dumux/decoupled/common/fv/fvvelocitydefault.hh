@@ -22,7 +22,6 @@
 /**
  * @file
  * @brief  Default implementation of velocity class.
- * @author Markus Wolff
  */
 
 #include <dune/grid/common/gridenums.hh>

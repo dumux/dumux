@@ -27,7 +27,6 @@
 /**
  * @file
  * @brief  Finite Volume discretization of the component transport equation
- * @author Markus Wolff, Jochen Fritz, Benjamin Faigle
  */
 
 namespace Dumux

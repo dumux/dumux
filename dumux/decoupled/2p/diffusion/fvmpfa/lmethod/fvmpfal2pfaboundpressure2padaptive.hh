@@ -26,7 +26,6 @@
 /**
  * @file
  * @brief  Grid adaptive finite volume MPFA L-method discretization of a two-phase pressure equation of the sequential IMPES model.
- * @author Markus Wolff
  */
 
 namespace Dumux

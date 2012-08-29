@@ -24,7 +24,6 @@
 /**
  * @file
  * @brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
- * @author Markus Wolff
  */
 namespace Dumux
 {

@@ -19,7 +19,6 @@
 /*!
  * \file
  * \brief Base class for stationary solution of a two-phase diffusion/pressure equation
- * @author Markus Wolff
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
 #define DUMUX_DIFFUSIONPROBLEM_2P_HH

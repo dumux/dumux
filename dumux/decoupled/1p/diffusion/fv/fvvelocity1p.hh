@@ -24,7 +24,6 @@
 /**
  * @file
  * @brief  Single phase finite volume velocity reconstruction
- * @author Markus Wolff
  */
 
 

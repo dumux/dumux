@@ -28,7 +28,6 @@
 /**
  * @file
  * @brief  Base class for defining an instance of the diffusion problem
- * @author Bernd Flemisch
  */
 
 namespace Dumux

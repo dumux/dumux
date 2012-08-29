@@ -19,7 +19,6 @@
 /**
  * @file
  * @brief  Definition of a simple Stokes problem
- * @author Klaus Mosthaf, Andreas Lauser, Bernd Flemisch
  */
 #ifndef DUMUX_STOKES2CNITESTPROBLEM_HH
 #define DUMUX_STOKES2CNITESTPROBLEM_HH

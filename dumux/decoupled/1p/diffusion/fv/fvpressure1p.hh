@@ -27,7 +27,6 @@
 /**
  * @file
  * @brief  Single Phase Finite Volume Model
- * @author Markus Wolff
  */
 
 namespace Dumux

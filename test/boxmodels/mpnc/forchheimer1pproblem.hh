@@ -21,8 +21,6 @@
  * \brief Problem where liquid water is injected by means of a
  *        dirchlet condition on the left of the domain.
  *        Velocity according to Forchheimer.
- *
- * \author Philipp Nuske, Bernd Flemisch
  */
 #ifndef DUMUX_FORCHEIMER1P_HH
 #define DUMUX_FORCHEIMER1P_HH
