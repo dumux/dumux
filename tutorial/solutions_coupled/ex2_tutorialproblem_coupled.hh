@@ -21,8 +21,8 @@
  *
  * \brief Tutorial problem for a fully coupled twophase box model.
  */
-#ifndef DUMUX_TUTORIAL_PROBLEM_COUPLED_HH    // guardian macro /*@\label{tutorial-coupled:guardian1}@*/
-#define DUMUX_TUTORIAL_PROBLEM_COUPLED_HH    // guardian macro /*@\label{tutorial-coupled:guardian2}@*/
+#ifndef DUMUX_EX2_TUTORIAL_PROBLEM_COUPLED_HH    // guardian macro /*@\label{tutorial-coupled:guardian1}@*/
+#define DUMUX_EX2_TUTORIAL_PROBLEM_COUPLED_HH    // guardian macro /*@\label{tutorial-coupled:guardian2}@*/
 
 // The numerical model
 #include <dumux/boxmodels/2p/2pmodel.hh>
@@ -34,7 +34,7 @@
 #include <dune/grid/alugrid.hh>
 
 // Spatially dependent parameters
-#include "tutorialspatialparams_coupled.hh"
+#include "ex2_tutorialspatialparams_coupled.hh"
 
 // The components that are used
 #include <dumux/material/components/h2o.hh>
@@ -44,37 +44,37 @@
 namespace Dumux{
 // Forward declaration of the problem class
 template <class TypeTag>
-class TutorialProblemCoupled;
+class Ex2TutorialProblemCoupled;
 
 namespace Properties {
 // Create a new type tag for the problem
-NEW_TYPE_TAG(TutorialProblemCoupled, INHERITS_FROM(BoxTwoP, TutorialSpatialParamsCoupled)); /*@\label{tutorial-coupled:create-type-tag}@*/
+NEW_TYPE_TAG(Ex2TutorialProblemCoupled, INHERITS_FROM(BoxTwoP, Ex2TutorialSpatialParamsCoupled)); /*@\label{tutorial-coupled:create-type-tag}@*/
 
 // Set the "Problem" property
-SET_PROP(TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-problem}@*/
-{ typedef Dumux::TutorialProblemCoupled<TypeTag> type;};
+SET_PROP(Ex2TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-problem}@*/
+{ typedef Dumux::Ex2TutorialProblemCoupled<TypeTag> type;};
 
 // Set grid and the grid creator to be used
-SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUCubeGrid</*dim=*/2,2>); /*@\label{tutorial-coupled:set-grid}@*/
-SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
+SET_TYPE_PROP(Ex2TutorialProblemCoupled, Grid, Dune::ALUCubeGrid</*dim=*/2,2>); /*@\label{tutorial-coupled:set-grid}@*/
+SET_TYPE_PROP(Ex2TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 
 // Set the wetting phase
-SET_PROP(TutorialProblemCoupled, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
+SET_PROP(Ex2TutorialProblemCoupled, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-coupled:wettingPhase}@*/
 };
 
 // Set the non-wetting phase
-SET_PROP(TutorialProblemCoupled, NonwettingPhase)
+SET_PROP(Ex2TutorialProblemCoupled, NonwettingPhase)
 {
 private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
 }; /*@\label{tutorial-coupled:2p-system-end}@*/
 
-SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-coupled:set-fluidsystem}@*/
+SET_TYPE_PROP(Ex2TutorialProblemCoupled, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);
 // Disable gravity
-SET_BOOL_PROP(TutorialProblemCoupled, EnableGravity, false); /*@\label{tutorial-coupled:gravity}@*/
+SET_BOOL_PROP(Ex2TutorialProblemCoupled, EnableGravity, false); /*@\label{tutorial-coupled:gravity}@*/
 }
 
 /*!
@@ -83,7 +83,7 @@ SET_BOOL_PROP(TutorialProblemCoupled, EnableGravity, false); /*@\label{tutorial-
  * \brief  Tutorial problem for a fully coupled twophase box model.
  */
 template <class TypeTag>
-class TutorialProblemCoupled : public PorousMediaBoxProblem<TypeTag> /*@\label{tutorial-coupled:def-problem}@*/
+class Ex2TutorialProblemCoupled : public PorousMediaBoxProblem<TypeTag> /*@\label{tutorial-coupled:def-problem}@*/
 {
     typedef PorousMediaBoxProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -106,7 +106,7 @@ class TutorialProblemCoupled : public PorousMediaBoxProblem<TypeTag> /*@\label{t
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
-    TutorialProblemCoupled(TimeManager &timeManager,
+    Ex2TutorialProblemCoupled(TimeManager &timeManager,
                            const GridView &gridView)
         : ParentType(timeManager, gridView)
         , eps_(3e-6)
@@ -153,8 +153,8 @@ public:
     //! primary variables.
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
-        values[Indices::pwIdx] = 200.0e3; // 200 kPa = 2 bar
-        values[Indices::SnIdx] = 0.0; // 0 % oil saturation on left boundary
+        values[Indices::pwIdx] = 5e5; // 500000 Pa = 5 bar
+        values[Indices::SnIdx] = 1.0; // 100 % oil saturation on left boundary
     }
 
     //! Evaluates the boundary conditions for a Neumann boundary
@@ -174,8 +174,8 @@ public:
         // extraction of oil on the right boundary for approx. 1.e6 seconds
         if (globalPos[0] > right - eps_) {
             // oil outflux of 30 g/(m * s) on the right boundary.
-            values[Indices::contiWEqIdx] = 0;
-            values[Indices::contiNEqIdx] = 3e-2;
+            values[Indices::contiWEqIdx] = 2e-4;
+            values[Indices::contiNEqIdx] = 0;
         } else {
             // no-flow on the remaining Neumann-boundaries.
             values[Indices::contiWEqIdx] = 0;
@@ -190,8 +190,8 @@ public:
                  const FVElementGeometry &fvGeometry,
                  int scvIdx) const
     {
-        values[Indices::pwIdx] = 200.0e3; // 200 kPa = 2 bar
-        values[Indices::SnIdx] = 1.0;
+        values[Indices::pwIdx] = 5e5; // 500 kPa = 5 bar
+        values[Indices::SnIdx] = 0.0;
     }
 
     //! Evaluates the source term for all phases within a given

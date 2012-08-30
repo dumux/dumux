@@ -1,0 +1,53 @@
+###############################################################
+# Parameter file for tutorial_coupled.
+# Everything behind a '#' is a comment.
+# Type "./tutorial_coupled --help" for more information.
+###############################################################
+
+###############################################################
+# Mandatory arguments
+###############################################################
+
+[Problem]
+OutflowRateOil = 3e-2 # Rate of oil outflow for the Neumann boundary
+EnableGravity = true
+
+[SpatialParams]
+Perm = 1e-8 # Peremeability
+Porosity = 0.15
+
+[TimeManager]
+TEnd = 100000 # duration of the simulation [s]
+DtInitial = 10 # initial time step size [s]
+
+[Grid]
+UpperRightX = 100 # x-coordinate of the upper-right corner of the grid [m]
+UpperRightY = 50 # y-coordinate of the upper-right corner of the grid [m]
+NumberOfCellsX = 20 # x-resolution of the grid
+NumberOfCellsY = 10 # y-resolution of the grid
+
+[Newton]
+EnableRelativeCriterion = true # activate relative criterion for convergence 
+RelTolerance = 1e-8 # set relative tolerance 
+EnableAbsoluteCriterion = false # activate absolute criterion
+AbsTolerance = 1e-5 # set absolute tolerance
+SatisfyAbsAndRel = false # use absolute and relative criteria
+TargetSteps = 10 
+MaxSteps = 18 # if maximum number of steps are reached, the newton solver will not converge
+
+[LinearSolver]
+ResidualReduction = 1e-9 # factor for reduction of error for iterative linear solvers
+MaxIterations = 5000 # number of iterations for iterative linear solvers
+
+
+###############################################################
+# Simulation restart
+#
+# DuMux simulations can be restarted from *.drs files
+# Set Restart to the value of a specific file, 
+# e.g.:  'Restart = 27184.1' for the restart file
+# name_time=27184.1_rank=0.drs
+# Please comment in the two lines below, if restart is desired.
+###############################################################
+# [TimeManager]
+# Restart = ... 

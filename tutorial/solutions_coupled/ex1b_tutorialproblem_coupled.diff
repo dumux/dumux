@@ -1,0 +1,12 @@
+144c144
+<         if (globalPos[0] < eps_) // Dirichlet conditions on left boundary
+---
+>         if (globalPos[1] < eps_) // Dirichlet conditions on left boundary
+173c173
+<         Scalar right = this->bboxMax()[0];
+---
+>         Scalar top = this->bboxMax()[1];
+175c175
+<         if (globalPos[0] > right - eps_) {
+---
+>         if (globalPos[0] > top - eps_) {

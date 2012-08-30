@@ -1,0 +1,21 @@
+114,127d113
+<         try
+<         {
+< 
+<             outflowRateOil_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.OutflowRateOil);
+< 
+<         }
+<         catch (Dumux::ParameterException &e) {
+<             std::cerr << e << ". Abort!\n";
+<             exit(1) ;
+<         }
+<         catch (...) {
+<             std::cerr << "Unknown exception thrown!\n";
+<             exit(1);
+<         }
+192c178
+<             values[Indices::contiNEqIdx] = outflowRateOil_;
+---
+>             values[Indices::contiNEqIdx] = 3e-2;
+227d212
+<     Scalar outflowRateOil_;

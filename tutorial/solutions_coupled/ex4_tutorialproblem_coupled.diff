@@ -1,0 +1,8 @@
+41c41
+< #include <dumux/material/components/lnapl.hh>
+---
+> #include "benzene.hh"
+72c72
+< public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
+---
+> public: typedef Dumux::LiquidPhase<Scalar, Dumux::Benzene<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/

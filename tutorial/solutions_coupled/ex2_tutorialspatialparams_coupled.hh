@@ -36,19 +36,19 @@
 namespace Dumux {
 //forward declaration
 template<class TypeTag>
-class TutorialSpatialParamsCoupled;
+class Ex2TutorialSpatialParamsCoupled;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(TutorialSpatialParamsCoupled);/*@\label{tutorial-coupled:define-spatialparameters-typetag}@*/
+NEW_TYPE_TAG(Ex2TutorialSpatialParamsCoupled);/*@\label{tutorial-coupled:define-spatialparameters-typetag}@*/
 
 // Set the spatial parameters
-SET_TYPE_PROP(TutorialSpatialParamsCoupled, SpatialParams,
-        Dumux::TutorialSpatialParamsCoupled<TypeTag>); /*@\label{tutorial-coupled:set-spatialparameters}@*/
+SET_TYPE_PROP(Ex2TutorialSpatialParamsCoupled, SpatialParams,
+        Dumux::Ex2TutorialSpatialParamsCoupled<TypeTag>); /*@\label{tutorial-coupled:set-spatialparameters}@*/
 
 // Set the material law
-SET_PROP(TutorialSpatialParamsCoupled, MaterialLaw)
+SET_PROP(Ex2TutorialSpatialParamsCoupled, MaterialLaw)
 {
 private:
     // material law typedefs
@@ -68,7 +68,7 @@ public:
  *        which uses the twophase box model.
  */
 template<class TypeTag>
-class TutorialSpatialParamsCoupled: public BoxSpatialParams<TypeTag> /*@\label{tutorial-coupled:tutorialSpatialParameters}@*/
+class Ex2TutorialSpatialParamsCoupled: public BoxSpatialParams<TypeTag> /*@\label{tutorial-coupled:tutorialSpatialParameters}@*/
 {
     // Get informations for current implementation via property system
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -83,6 +83,7 @@ class TutorialSpatialParamsCoupled: public BoxSpatialParams<TypeTag> /*@\label{t
     // Get object types for function arguments
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
 
 public:
     // get material law from property system
@@ -104,7 +105,14 @@ public:
     const Dune::FieldMatrix<Scalar, dim, dim> &intrinsicPermeability(const Element &element, /*@\label{tutorial-coupled:permeability}@*/
                                                     const FVElementGeometry &fvGeometry,
                                                     const int scvIdx) const
-    { return K_; }
+    {
+        GlobalPosition globalPos = element.geometry().corner(scvIdx);
+
+        if (globalPos[0] > 25 && globalPos[0] < 75 && globalPos[1] > 15 && globalPos[1] < 35)
+            return KLense_;
+        else
+            return K_;
+     }
 
     /*! Defines the porosity \f$[-]\f$ of the porous medium depending
      * on the position in the domain
@@ -118,9 +126,16 @@ public:
      *  of the finite volume.
      */
     Scalar porosity(const Element &element,                    /*@\label{tutorial-coupled:porosity}@*/
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
-    { return 0.2; }
+            const FVElementGeometry &fvGeometry,
+            const int scvIdx) const
+    {
+        GlobalPosition globalPos = element.geometry().corner(scvIdx);
+
+        if (globalPos[0] > 25 && globalPos[0] < 75 && globalPos[1] > 15 && globalPos[1] < 35)
+            return phiLense_;
+        else
+            return phi_;
+    }
 
     /*! Returns the parameter object for the material law (i.e. Brooks-Corey)
      *  depending on the position in the domain
@@ -141,14 +156,20 @@ public:
     }
 
     // constructor
-    TutorialSpatialParamsCoupled(const GridView& gridView) :
+    Ex2TutorialSpatialParamsCoupled(const GridView& gridView) :
         BoxSpatialParams<TypeTag>(gridView),
-        K_(0)
+        K_(0), KLense_(0)
     {
         //set main diagonal entries of the permeability tensor to a value
         //setting to one value means: isotropic, homogeneous
         for (int i = 0; i < dim; i++)
+        {
             K_[i][i] = 1e-7;
+            KLense_[i][i] = 1e-9;
+        }
+
+        phi_ = 0.2;
+        phiLense_ = 0.15;
 
         //set residual saturations
         materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
@@ -161,6 +182,9 @@ public:
 
 private:
     Dune::FieldMatrix<Scalar, dim, dim> K_;
+    Dune::FieldMatrix<Scalar, dim, dim> KLense_;
+    Scalar phi_;
+    Scalar phiLense_;
     // Object that holds the values/parameters of the selected material law.
     MaterialLawParams materialParams_;                 /*@\label{tutorial-coupled:matParamsObject}@*/
 };

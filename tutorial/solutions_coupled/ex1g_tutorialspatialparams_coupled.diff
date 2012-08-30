@@ -1,0 +1,50 @@
+76a77
+> 
+85a87
+>     typedef Dune::FieldVector<Scalar, dim> GlobalPosition;
+107c109,116
+<     { return K_; }
+---
+>     {
+>         GlobalPosition globalPos = element.geometry().corner(scvIdx);
+> 
+>         if (globalPos[0] < 300)
+>             return KL_;
+>         else
+>             return KR_;
+>     }
+123c132,140
+<     { return 0.2; }
+---
+>     {
+>         GlobalPosition globalPos = element.geometry().corner(scvIdx);
+> 
+>         if (globalPos[0] < 300)
+>             return phiL_;
+>         else
+>             return phiR_;
+> 
+>     }
+146c163
+<         K_(0)
+---
+>         KL_(0), KR_(0)
+151c168,175
+<             K_[i][i] = 1e-7;
+---
+>         {
+>             KL_[i][i] = 1e-8;
+>             KR_[i][i] = 1e-9;
+>         }
+> 
+>         //porosity
+>         phiL_ = 0.15;
+>         phiR_ = 0.3;
+163c187,191
+<     Dune::FieldMatrix<Scalar, dim, dim> K_;
+---
+>     Dune::FieldMatrix<Scalar, dim, dim> KL_;
+>     Dune::FieldMatrix<Scalar, dim, dim> KR_;
+>     Scalar phiL_;
+>     Scalar phiR_;
+> 

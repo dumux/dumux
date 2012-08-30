@@ -1,0 +1,10 @@
+42c42
+< #include <dumux/common/cubegridcreator.hh>
+---
+> #include <dumux/common/simplexgridcreator.hh>
+58,59c58,59
+< SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUCubeGrid</*dim=*/2,2>); /*@\label{tutorial-coupled:set-grid}@*/
+< SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
+---
+> SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUSimplexGrid</*dim=*/2,2>); /*@\label{tutorial-coupled:set-grid}@*/
+> SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::SimplexGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
