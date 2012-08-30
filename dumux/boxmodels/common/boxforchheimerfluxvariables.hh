@@ -218,9 +218,10 @@ protected:
      *  the left hand side yields some residual. This function calculates the left hand side of the
      *  equation and returns the residual.
      *
-     * \return residual The current function value for the given velocity
-     * \param sqrtK A diagonal matrix whose entries are square roots of the permeability matrix entries.
-     * \param K The permeability matrix.
+     * \param residual The current function value for the given velocity
+     * \param forchCoeff The Forchheimer coefficient
+     * \param sqrtK A diagonal matrix whose entries are square roots of the permeability matrix entries
+     * \param K The permeability matrix
      * \param velocity The current velocity approximation.
      * \param elemVolVars The volume variables of the current element
      * \param gradPotential The gradient in potential
@@ -286,7 +287,8 @@ protected:
       * \right)
       *  \f]
       *
-      * \return derivative The gradient of the forchheimer equation
+      * \param derivative The gradient of the forchheimer equation
+      * \param forchCoeff Forchheimer coefficient
       * \param sqrtK A diagonal matrix whose entries are square roots of the permeability matrix entries.
       * \param velocity The current velocity approximation.
       * \param elemVolVars The volume variables of the current element
