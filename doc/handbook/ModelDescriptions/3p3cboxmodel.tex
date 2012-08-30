@@ -4,7 +4,7 @@
 % file instead!!                                                %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\-This model implements three-\/phase three-\/component flow of three fluid phases $\alpha \in \{ water, gas, NAPL \}$ each composed of up to three components $\kappa \in \{ water, air, contaminant \}$. \-The standard multiphase \-Darcy approach is used as the equation for the conservation of momentum\-: \[ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K} \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right) \]
+This model implements three-phase three-component flow of three fluid phases $\alpha \in \{ \text{water}, \text{gas}, \text{NAPL} \}$ each composed of up to three components $\kappa \in \{ \text{water}, \text{air}, \text{contaminant} \}$. The standard multiphase Darcy approach is used as the equation for the conservation of momentum: \[ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K} \left(\text{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right) \]
 
 \-By inserting this into the equations for the conservation of the components, one transport equation for each component is obtained as \begin{eqnarray*} && \phi \frac{\partial (\sum_\alpha \varrho_{\text{mol}, \alpha} x_\alpha^\kappa S_\alpha )}{\partial t} - \sum\limits_\alpha \text{div} \left\{ \frac{k_{r\alpha}}{\mu_\alpha} \varrho_{\text{mol}, \alpha} x_\alpha^\kappa \mbox{\bf K} (\text{grad}\, p_\alpha - \varrho_{\text{mass}, \alpha} \mbox{\bf g}) \right\} \nonumber \\ \nonumber \\ && - \sum\limits_\alpha \text{div} \left\{ D_{pm}^\kappa \varrho_{\text{mol}, \alpha } \text{grad}\, x_\alpha^\kappa \right\} - q^\kappa = 0 \qquad \forall \kappa , \; \forall \alpha \end{eqnarray*}
 
