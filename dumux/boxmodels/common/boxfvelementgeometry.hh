@@ -26,11 +26,10 @@
 #define DUMUX_BOX_FV_ELEMENTGEOMETRY_HH
 
 #include <dune/geometry/referenceelements.hh>
-
 #include <dune/grid/common/intersectioniterator.hh>
-
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/common/propertysystem.hh>
 
 namespace Dumux
