@@ -188,7 +188,7 @@ private:
         ///////////////
         // correct the pressure gradients by the gravitational acceleration
         ///////////////
-        if (GET_PARAM(TypeTag, bool, EnableGravity))
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
         {
             // estimate the gravitational acceleration at a given SCV face
             // using the arithmetic mean
