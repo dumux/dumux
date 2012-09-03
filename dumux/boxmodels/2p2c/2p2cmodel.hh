@@ -145,7 +145,10 @@ public:
     {
         ParentType::init(problem);
 
-        staticVertexDat_.resize(this->gridView_().size(dim));
+        unsigned numDofs = this->numDofs();
+        unsigned numVertices = this->problem_().gridView().size(dim);
+
+        staticVertexDat_.resize(numDofs);
 
         setSwitched_(false);
 
@@ -158,25 +161,46 @@ public:
             if(eIt->geometry().type().isCube() == false){
                 velocityOutput_ = false;
             }
+
+            if (numDofs != numVertices) // i.e. cell-centered discretization
+            {
+                velocityOutput_ = false;
+
+                int globalIdx = this->dofMapper().map(*eIt);
+                const GlobalPosition &globalPos = eIt->geometry().center();
+
+                // initialize phase presence
+                staticVertexDat_[globalIdx].phasePresence
+                    = this->problem_().initialPhasePresence(*(this->gridView_().template begin<dim>()),
+                                                            globalIdx, globalPos);
+                staticVertexDat_[globalIdx].wasSwitched = false;
+
+                staticVertexDat_[globalIdx].oldPhasePresence
+                    = staticVertexDat_[globalIdx].phasePresence;
+            }
         }
+
         if (velocityOutput_ != GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity))
             std::cout << "ATTENTION: Velocity output only works for cubes and is set to false for simplices\n";
 
-        VertexIterator vIt = this->gridView_().template begin<dim> ();
-        const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
-        for (; vIt != vEndIt; ++vIt)
+        if (numDofs == numVertices) // i.e. vertex-centered discretization
         {
-            int globalIdx = this->dofMapper().map(*vIt);
-            const GlobalPosition &globalPos = vIt->geometry().corner(0);
+            VertexIterator vIt = this->gridView_().template begin<dim> ();
+            const VertexIterator &vEndIt = this->gridView_().template end<dim> ();
+            for (; vIt != vEndIt; ++vIt)
+            {
+                int globalIdx = this->dofMapper().map(*vIt);
+                const GlobalPosition &globalPos = vIt->geometry().corner(0);
 
-            // initialize phase presence
-            staticVertexDat_[globalIdx].phasePresence
-                = this->problem_().initialPhasePresence(*vIt, globalIdx,
+                // initialize phase presence
+                staticVertexDat_[globalIdx].phasePresence
+                    = this->problem_().initialPhasePresence(*vIt, globalIdx,
                                                         globalPos);
-            staticVertexDat_[globalIdx].wasSwitched = false;
+                staticVertexDat_[globalIdx].wasSwitched = false;
 
-            staticVertexDat_[globalIdx].oldPhasePresence
-                = staticVertexDat_[globalIdx].phasePresence;
+                staticVertexDat_[globalIdx].oldPhasePresence
+                    = staticVertexDat_[globalIdx].phasePresence;
+            }
         }
     }
 
@@ -196,7 +220,7 @@ public:
         for (; eIt != eEndIt; ++eIt) {
             this->localResidual().evalPhaseStorage(*eIt, phaseIdx);
 
-            for (int i = 0; i < eIt->template count<dim>(); ++i)
+            for (int i = 0; i < this->localResidual().storageTerm().size(); ++i)
                 storage += this->localResidual().storageTerm()[i];
         }
 
@@ -283,32 +307,37 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
 
         // create the required scalar fields
+        unsigned numDofs = this->numDofs();
         unsigned numVertices = this->problem_().gridView().size(dim);
 
-        ScalarField *sN    = writer.allocateManagedBuffer(numVertices);
-        ScalarField *sW    = writer.allocateManagedBuffer(numVertices);
-        ScalarField *pN    = writer.allocateManagedBuffer(numVertices);
-        ScalarField *pW    = writer.allocateManagedBuffer(numVertices);
-        ScalarField *pC    = writer.allocateManagedBuffer(numVertices);
-        ScalarField *rhoW  = writer.allocateManagedBuffer(numVertices);
-        ScalarField *rhoN  = writer.allocateManagedBuffer(numVertices);
-        ScalarField *mobW  = writer.allocateManagedBuffer(numVertices);
-        ScalarField *mobN = writer.allocateManagedBuffer(numVertices);
-        ScalarField *phasePresence = writer.allocateManagedBuffer(numVertices);
+        // velocity output currently only works for vertex data
+        if (numDofs != numVertices)
+          velocityOutput_ = false;
+
+        ScalarField *sN    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *sW    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pN    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pW    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *pC    = writer.allocateManagedBuffer(numDofs);
+        ScalarField *rhoW  = writer.allocateManagedBuffer(numDofs);
+        ScalarField *rhoN  = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobW  = writer.allocateManagedBuffer(numDofs);
+        ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
+        ScalarField *phasePresence = writer.allocateManagedBuffer(numDofs);
         ScalarField *massFrac[numPhases][numComponents];
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                massFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numVertices);
-        ScalarField *temperature = writer.allocateManagedBuffer(numVertices);
-        ScalarField *poro = writer.allocateManagedBuffer(numVertices);
-        ScalarField *cellNum =writer.allocateManagedBuffer (numVertices);
-        VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numVertices);
-        VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numVertices);
+                massFrac[phaseIdx][compIdx] = writer.allocateManagedBuffer(numDofs);
+        ScalarField *temperature = writer.allocateManagedBuffer(numDofs);
+        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
+        ScalarField *cellNum =writer.allocateManagedBuffer (numDofs);
+        VectorField *velocityN = writer.template allocateManagedBuffer<double, dim>(numDofs);
+        VectorField *velocityW = writer.template allocateManagedBuffer<double, dim>(numDofs);
 
         if(velocityOutput_) // check if velocity output is demanded
         {
             // initialize velocity fields
-            for (unsigned int i = 0; i < numVertices; ++i)
+            for (unsigned int i = 0; i < numDofs; ++i)
             {
                 (*velocityN)[i] = Scalar(0);
                 (*velocityW)[i] = Scalar(0);
@@ -317,8 +346,7 @@ public:
         }
 
         unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank =
-            writer.allocateManagedBuffer (numElements);
+        ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
         FVElementGeometry fvGeometry;
         VolumeVariables volVars;
@@ -331,10 +359,14 @@ public:
             (*rank)[idx] = this->gridView_().comm().rank();
             fvGeometry.update(this->gridView_(), *eIt);
 
-            int numVerts = eIt->template count<dim> ();
-            for (int scvIdx = 0; scvIdx < numVerts; ++scvIdx)
+            for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
+                int globalIdx;
+                if (numDofs == numElements) // element data
+                    globalIdx = idx;
+                else
+                    globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
+
                 volVars.update(sol[globalIdx],
                                this->problem_(),
                                *eIt,
@@ -356,8 +388,7 @@ public:
                         (*massFrac[phaseIdx][compIdx])[globalIdx]
                             = volVars.fluidState().massFraction(phaseIdx, compIdx);
 
-                        Valgrind::CheckDefined(
-                                               (*massFrac[phaseIdx][compIdx])[globalIdx][0]);
+                        Valgrind::CheckDefined((*massFrac[phaseIdx][compIdx])[globalIdx][0]);
                     }
                 (*poro)[globalIdx]  = volVars.porosity();
                 (*temperature)[globalIdx] = volVars.temperature();
@@ -403,14 +434,6 @@ public:
 
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     {
-
-                        // data attached to upstream and the downstream vertices
-                        // of the current phase
-                        const VolumeVariables up =
-                            elemVolVars[fluxVars.upstreamIdx(phaseIdx)];
-                        const VolumeVariables dn =
-                            elemVolVars[fluxVars.downstreamIdx(phaseIdx)];
-
                         // local position of integration point
                         const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
 
@@ -453,7 +476,7 @@ public:
                 const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT2 = eIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
-                for (int scvIdx = 0; scvIdx < numVerts; ++scvIdx)
+                for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
                 {
                     int globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
                     // calculate the subcontrolvolume velocity by the Piola transformation
@@ -469,45 +492,73 @@ public:
                     // add up the nonwetting phase subcontrolvolume velocities for each vertex
                     (*velocityN)[globalIdx] += scvVelocity;
                 }
-            }
-        }
+            } // velocity output
+        } // loop over elements
+
         if(velocityOutput_)
         {
             // divide the vertex velocities by the number of adjacent scvs i.e. cells
-            for(unsigned int globalIdx = 0; globalIdx<numVertices; ++globalIdx){
+            for(unsigned int globalIdx = 0; globalIdx < numDofs; ++globalIdx){
                 (*velocityW)[globalIdx] /= (*cellNum)[globalIdx];
                 (*velocityN)[globalIdx] /= (*cellNum)[globalIdx];
             }
         }
 
-
-        writer.attachVertexData(*sN,     "Sn");
-        writer.attachVertexData(*sW,     "Sw");
-        writer.attachVertexData(*pN,     "pN");
-        writer.attachVertexData(*pW,     "pW");
-        writer.attachVertexData(*pC,     "pC");
-        writer.attachVertexData(*rhoW,   "rhoW");
-        writer.attachVertexData(*rhoN,   "rhoN");
-        writer.attachVertexData(*mobW,   "mobW");
-        writer.attachVertexData(*mobN,   "mobN");
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        if (numDofs == numElements) // element data
         {
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            writer.attachCellData(*sN,     "Sn");
+            writer.attachCellData(*sW,     "Sw");
+            writer.attachCellData(*pN,     "pN");
+            writer.attachCellData(*pW,     "pW");
+            writer.attachCellData(*pC,     "pC");
+            writer.attachCellData(*rhoW,   "rhoW");
+            writer.attachCellData(*rhoN,   "rhoN");
+            writer.attachCellData(*mobW,   "mobW");
+            writer.attachCellData(*mobN,   "mobN");
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
-                std::ostringstream oss;
-                oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
-                writer.attachVertexData(*massFrac[phaseIdx][compIdx], oss.str());
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    std::ostringstream oss;
+                    oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                    writer.attachCellData(*massFrac[phaseIdx][compIdx], oss.str());
+                }
+            }
+            writer.attachCellData(*poro, "porosity");
+            writer.attachCellData(*temperature,    "temperature");
+            writer.attachCellData(*phasePresence,  "phase presence");
+        }
+        else
+        {
+            writer.attachVertexData(*sN,     "Sn");
+            writer.attachVertexData(*sW,     "Sw");
+            writer.attachVertexData(*pN,     "pN");
+            writer.attachVertexData(*pW,     "pW");
+            writer.attachVertexData(*pC,     "pC");
+            writer.attachVertexData(*rhoW,   "rhoW");
+            writer.attachVertexData(*rhoN,   "rhoN");
+            writer.attachVertexData(*mobW,   "mobW");
+            writer.attachVertexData(*mobN,   "mobN");
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+                {
+                    std::ostringstream oss;
+                    oss << "X_" << FluidSystem::phaseName(phaseIdx) << "^" << FluidSystem::componentName(compIdx);
+                    writer.attachVertexData(*massFrac[phaseIdx][compIdx], oss.str());
+                }
+            }
+            writer.attachVertexData(*poro, "porosity");
+            writer.attachVertexData(*temperature,    "temperature");
+            writer.attachVertexData(*phasePresence,  "phase presence");
+
+            if(velocityOutput_) // check if velocity output is demanded
+            {
+                writer.attachVertexData(*velocityW,  "velocityW", dim);
+                writer.attachVertexData(*velocityN,  "velocityN", dim);
             }
         }
-        writer.attachVertexData(*poro, "porosity");
-        writer.attachVertexData(*temperature,    "temperature");
-        writer.attachVertexData(*phasePresence,  "phase presence");
 
-        if(velocityOutput_) // check if velocity output is demanded
-        {
-            writer.attachVertexData(*velocityW,  "velocityW", dim);
-            writer.attachVertexData(*velocityN,  "velocityN", dim);
-        }
         writer.attachCellData(*rank, "process rank");
     }
 
@@ -515,37 +566,38 @@ public:
      * \brief Write the current solution to a restart file.
      *
      * \param outStream The output stream of one vertex for the restart file
-     * \param vertex The vertex
+     * \param entity The entity, either a vertex or an element
      */
-    void serializeEntity(std::ostream &outStream, const Vertex &vertex)
+    template<class Entity>
+    void serializeEntity(std::ostream &outStream, const Entity &entity)
     {
         // write primary variables
-        ParentType::serializeEntity(outStream, vertex);
+        ParentType::serializeEntity(outStream, entity);
 
-        int globalIdx = this->dofMapper().map(vertex);
+        int globalIdx = this->dofMapper().map(entity);
         if (!outStream.good())
-            DUNE_THROW(Dune::IOError, "Could not serialize vertex " << globalIdx);
+            DUNE_THROW(Dune::IOError, "Could not serialize entity " << globalIdx);
 
         outStream << staticVertexDat_[globalIdx].phasePresence << " ";
     }
 
     /*!
-     * \brief Reads the current solution for a vertex from a restart
-     *        file.
+     * \brief Reads the current solution from a restart file.
      *
      * \param inStream The input stream of one vertex from the restart file
-     * \param vertex The vertex
+     * \param entity The entity, either a vertex or an element
      */
-    void deserializeEntity(std::istream &inStream, const Vertex &vertex)
+    template<class Entity>
+    void deserializeEntity(std::istream &inStream, const Entity &entity)
     {
         // read primary variables
-        ParentType::deserializeEntity(inStream, vertex);
+        ParentType::deserializeEntity(inStream, entity);
 
         // read phase presence
-        int globalIdx = this->dofMapper().map(vertex);
+        int globalIdx = this->dofMapper().map(entity);
         if (!inStream.good())
             DUNE_THROW(Dune::IOError,
-                       "Could not deserialize vertex " << globalIdx);
+                       "Could not deserialize entity " << globalIdx);
 
         inStream >> staticVertexDat_[globalIdx].phasePresence;
         staticVertexDat_[globalIdx].oldPhasePresence
@@ -567,6 +619,9 @@ public:
         for (unsigned i = 0; i < staticVertexDat_.size(); ++i)
             staticVertexDat_[i].visited = false;
 
+        unsigned numDofs = this->numDofs();
+        unsigned numVertices = this->problem_().gridView().size(dim);
+
         FVElementGeometry fvGeometry;
         static VolumeVariables volVars;
         ElementIterator eIt = this->gridView_().template begin<0> ();
@@ -576,7 +631,12 @@ public:
             fvGeometry.update(this->gridView_(), *eIt);
             for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
             {
-                int globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
+                int globalIdx;
+
+                if (numDofs != numVertices)
+                    globalIdx = this->elementMapper().map(*eIt);
+                else
+                    globalIdx = this->vertexMapper().map(*eIt, scvIdx, dim);
 
                 if (staticVertexDat_[globalIdx].visited)
                     continue;
@@ -630,8 +690,7 @@ protected:
      */
     void resetPhasePresence_()
     {
-        int numVertices = this->gridView_().size(dim);
-        for (int idx = 0; idx < numVertices; ++idx)
+        for (int idx = 0; idx < staticVertexDat_.size(); ++idx)
         {
             staticVertexDat_[idx].phasePresence
                 = staticVertexDat_[idx].oldPhasePresence;
@@ -644,8 +703,7 @@ protected:
      */
     void updateOldPhasePresence_()
     {
-        int numVertices = this->gridView_().size(dim);
-        for (int idx = 0; idx < numVertices; ++idx)
+        for (int idx = 0; idx < staticVertexDat_.size(); ++idx)
         {
             staticVertexDat_[idx].oldPhasePresence
                 = staticVertexDat_[idx].phasePresence;
