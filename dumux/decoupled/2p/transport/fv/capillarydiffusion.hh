@@ -58,6 +58,9 @@ private:
 
       typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
 
+      typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+      typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+      typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
     enum
     {
@@ -65,7 +68,8 @@ private:
     };
     enum
     {
-        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx,
+        pressEqIdx = Indices::pressEqIdx
     };
 
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
@@ -176,6 +180,18 @@ public:
          }//end intersection with neighbor
         else
         {
+            BoundaryTypes bcTypes;
+            problem_.boundaryTypes(bcTypes, intersection);
+            if (bcTypes.isNeumann(pressEqIdx))
+            {
+                PrimaryVariables priVars;
+                problem_.neumann(priVars, intersection);
+                if (priVars[wPhaseIdx] == 0)
+                {
+                    flux = 0;
+                    return;
+                }
+            }
             // get permeability
             problem_.spatialParams().meanK(meanPermeability,
                     problem_.spatialParams().intrinsicPermeability(*element));

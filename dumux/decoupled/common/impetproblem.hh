@@ -102,7 +102,6 @@ public:
           bboxMin_(std::numeric_limits<double>::max()),
           bboxMax_(-std::numeric_limits<double>::max()),
           timeManager_(&timeManager),
-          deleteTimeManager_(false),
           variables_(gridView),
           outputInterval_(1),
           outputTimeInterval_(0.0)
@@ -143,8 +142,6 @@ public:
         delete transportModel_;
         delete model_;
         delete resultWriter_;
-        if (deleteTimeManager_)
-            delete timeManager_;
         if (adaptiveGrid)
             delete gridAdapt_;
     }
@@ -813,7 +810,6 @@ private:
     GlobalPosition bboxMax_;
 
     TimeManager *timeManager_;
-    bool deleteTimeManager_;
 
     Variables variables_;
 

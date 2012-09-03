@@ -201,7 +201,7 @@ public:
      */
     bool isUpwindCell(int phaseIdx, int indexInInside)
     {
-        return (potential_[indexInInside][phaseIdx] >= 0.);
+        return (potential_[indexInInside][phaseIdx] > 0.);
     }
 
     /*! \brief Checks for upwind direction
@@ -212,7 +212,7 @@ public:
      */
     bool isUpwindCell(int phaseIdx, int indexInInside) const
     {
-        return (potential_[indexInInside][phaseIdx] >= 0.);
+        return (potential_[indexInInside][phaseIdx] > 0.);
     }
 
     /*! \brief Returns the phase potential at a cell-cell interface

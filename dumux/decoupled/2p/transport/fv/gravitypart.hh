@@ -114,7 +114,13 @@ public:
             lambdaNWI /= viscosity_[nPhaseIdx];
         }
 
+        Scalar potentialW = cellDataI.fluxData().potential(wPhaseIdx, indexInInside);
+        Scalar potentialNW = cellDataI.fluxData().potential(nPhaseIdx, indexInInside);
+
         DimMatrix meanPermeability(0);
+        GlobalPosition distVec(0);
+        Scalar lambdaW =  0;
+        Scalar lambdaNW = 0;
 
         if (intersection.neighbor())
         {
@@ -123,6 +129,8 @@ public:
 
             int globalIdxJ = problem_.variables().index(*neighborPointer);
             CellData& cellDataJ = problem_.variables().cellData(globalIdxJ);
+
+            distVec = neighborPointer->geometry().center() - element->geometry().center();
 
             // get permeability
             problem_.spatialParams().meanK(meanPermeability,
@@ -142,6 +150,11 @@ public:
                 lambdaNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*neighborPointer), satJ);
                 lambdaNWJ /= viscosity_[nPhaseIdx];
             }
+
+            lambdaW = (potentialW >= 0) ? lambdaWI : lambdaWJ;
+            lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
+            lambdaNW = (potentialNW >= 0) ? lambdaNWI : lambdaNWJ;
+            lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNW;
         }
         else
         {
@@ -149,27 +162,37 @@ public:
             problem_.spatialParams().meanK(meanPermeability,
                     problem_.spatialParams().intrinsicPermeability(*element));
 
+            distVec = intersection.geometry().center() - element->geometry().center();
+
             //calculate lambda_n*f_w at the boundary
             lambdaWJ = MaterialLaw::krw(problem_.spatialParams().materialLawParams(*element), satJ);
             lambdaWJ /= viscosity_[wPhaseIdx];
             lambdaNWJ = MaterialLaw::krn(problem_.spatialParams().materialLawParams(*element), satJ);
             lambdaNWJ /= viscosity_[nPhaseIdx];
+
+            //If potential is zero always take value from the boundary!
+            lambdaW = (potentialW > 0) ? lambdaWI : lambdaWJ;
+            lambdaNW = (potentialNW > 0) ? lambdaNWI : lambdaNWJ;
         }
 
         // set result to K*grad(pc)
-        meanPermeability.mv(problem_.gravity(), flux);
+        const Dune::FieldVector<Scalar, dim>& unitOuterNormal = intersection.centerUnitOuterNormal();
+        Scalar dist = distVec.two_norm();
+        //calculate unit distVec
+        distVec /= dist;
+        Scalar areaScaling = (unitOuterNormal * distVec);
 
-        Scalar potentialW = cellDataI.fluxData().potential(wPhaseIdx, indexInInside);
-        Scalar potentialNW = cellDataI.fluxData().potential(nPhaseIdx, indexInInside);
+        Dune::FieldVector<Scalar, dim> permeability(0);
+        meanPermeability.mv(unitOuterNormal, permeability);
 
-        Scalar lambdaW = (potentialW >= 0) ? lambdaWI : lambdaWJ;
-        lambdaW = (potentialW == 0) ? 0.5 * (lambdaWI + lambdaWJ) : lambdaW;
-        Scalar lambdaNW = (potentialNW >= 0) ? lambdaNWI : lambdaNWJ;
-        lambdaNW = (potentialNW == 0) ? 0.5 * (lambdaNWI + lambdaNWJ) : lambdaNW;
+        Scalar scalarPerm = permeability.two_norm();
+
+        Scalar scalarGravity = problem_.gravity() * distVec;
+
+        flux = unitOuterNormal;
 
         // set result to f_w*lambda_n*K*grad(pc)
-        flux *= lambdaW*lambdaNW/(lambdaW+lambdaNW);
-        flux *= (density_[wPhaseIdx] - density_[nPhaseIdx]);
+        flux *= lambdaW*lambdaNW/(lambdaW+lambdaNW) * scalarPerm * (density_[wPhaseIdx] - density_[nPhaseIdx]) * scalarGravity * areaScaling;
     }
     /*! \brief Constructs a GravityPart object
      *
