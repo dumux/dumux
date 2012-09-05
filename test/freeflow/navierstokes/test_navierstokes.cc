@@ -51,12 +51,11 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if HAVE_SUPERLU
+#if HAVE_SUPERLU && (HAVE_ALUGRID || HAVE_UG)
     typedef TTAG(NavierStokesTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-#warning "No SuperLU installed. Stokes currently only works with SuperLU."
-    std::cout << "No SuperLU installed. Stokes currently only works with SuperLU." << std::endl;
-    return 1;
+    std::cout << "Test skipped, it needs SuperLU and ALUGrid or UG." << std::endl;
+    return 77;
 #endif
 }

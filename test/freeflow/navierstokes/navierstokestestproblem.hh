@@ -31,6 +31,10 @@
 #warning UG or ALUGrid necessary for this test.
 #endif
 
+#if !HAVE_SUPERLU
+#warning SuperLU necessary for this test.
+#endif
+
 #include <dune/grid/io/file/dgfparser.hh>
 
 #include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
@@ -55,6 +59,8 @@ namespace Dumux
     SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
     SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::UGGrid<2>);
+#else
+    SET_TYPE_PROP(NavierStokesTestProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
     // Set the problem property

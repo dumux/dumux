@@ -31,7 +31,11 @@
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
 // The DUNE grid used
+#if HAVE_ALUGRID
 #include <dune/grid/alugrid.hh>
+#else
+#include <dune/grid/yaspgrid.hh>
+#endif // HAVE_ALUGRID
 
 // Spatially dependent parameters
 #include "tutorialspatialparams_coupled.hh"
@@ -55,7 +59,12 @@ SET_PROP(TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-problem
 { typedef Dumux::TutorialProblemCoupled<TypeTag> type;};
 
 // Set grid and the grid creator to be used
+#if HAVE_ALUGRID
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUCubeGrid</*dim=*/2,2>); /*@\label{tutorial-coupled:set-grid}@*/
+#else
+SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
+#warning If you want to use adaptivity, install and use ALUGrid.
+#endif // HAVE_ALUGRID
 SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 
 // Set the wetting phase
