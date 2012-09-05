@@ -2,7 +2,10 @@
 check_PROGRAMS = tutorial_decoupled tutorial_coupled
 
 noinst_HEADERS= tutorialspatialparams_decoupled.hh tutorialproblem_decoupled.hh tutorialspatialparams_coupled.hh tutorialproblem_coupled.hh
-EXTRA_DIST = CMakeLists.txt *.input
+EXTRA_DIST = CMakeLists.txt *.input \
+	solutions_coupled/*.hh \
+	solutions_coupled/*.diff \
+	solutions_coupled/*.input
 
 tutorial_decoupleddir = $(datadir)/dumux/tutorial
 tutorial_decoupled_HEADERS = tutorialspatialparams_decoupled.hh \
