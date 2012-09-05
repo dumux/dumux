@@ -57,7 +57,7 @@ public:
         , overlap_(&overlap)
     {
         createBuffers_();
-    };
+    }
 
     /*!
      * \brief Copy constructor.
@@ -145,7 +145,7 @@ public:
 
         // wait until we have send everything
         waitSendFinished_();
-    };
+    }
 
     /*!
      * \brief Syncronize the block vector by taking the arithmetic
@@ -190,7 +190,7 @@ public:
 
         // wait until we have send everything
         waitSendFinished_();
-    };
+    }
 
     /*!
      * \brief Syncronize an overlapping block vector by copying the
@@ -221,7 +221,7 @@ public:
 
         // wait until we have send everything
         waitSendFinished_();
-    };
+    }
 
     using ParentType::operator=;
     /*!
@@ -246,7 +246,7 @@ public:
         for (int i = 0; i < numDomestic; ++i) {
             (*this)[i] /= overlap_->numPeers(i) + 1;
         }
-    };
+    }
 
     /*!
      * \brief Set all front entities to a given scalar value
@@ -277,7 +277,7 @@ public:
         for (int i = 0; i < this->size(); ++i) {
             std::cout << "row " << i << (overlap_->isLocal(i)?" ":"*") << ": " << (*this)[i] << "\n";
         }
-    };
+    }
 
 private:
     void createBuffers_()
