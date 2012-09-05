@@ -34,7 +34,7 @@
 #include <dumux/boxmodels/mpnc/mpncmodel.hh>
 #include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/fluidstates/compositionalfluidstate.hh>
 
@@ -64,7 +64,7 @@ SET_PROP(Forchheimer1pProblem, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef Dumux::FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
+    typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar>, /*useComplexRelations=*/false> type;
 };
 
 // Enable smooth upwinding?
@@ -126,9 +126,6 @@ SET_BOOL_PROP(Forchheimer1pProblem, MPNCVtkAddVelocities, true);
  *  -> mu = 1e-03 ; cE =0.55; rho = 1000; K = 1e-12; a = mu  /( cE *rho* sqrt(K) );
  *  -> gradP = -41e5;  v = - a /2 + sqrt (a^2/4-sqrt(K)*gradP/(rho *cE))
  *
- *  For an exact comparison of the calculated velocities a water component with constant
- *  properties has to be chosen. I.e. change from TabulatedH2O to SimpleH2O
- *  in the h2on2fluidsystem.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_forchheimer1p</tt>

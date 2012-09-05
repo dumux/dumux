@@ -364,20 +364,12 @@ public:
     using Base::density;
     template <class FluidState>
     static Scalar density(const FluidState &fluidState,
-                          int phaseIdx)
+                          const int phaseIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        Scalar T = fluidState.temperature(phaseIdx);
-        Scalar p;
-        if (isCompressible(phaseIdx))
-            p = fluidState.pressure(phaseIdx);
-        else {
-            // random value which will hopefully cause things to blow
-            // up if it is used in a calculation!
-            p = - 1e100;
-            Valgrind::SetUndefined(p);
-        }
+        const Scalar T = fluidState.temperature(phaseIdx);
+        const Scalar p = fluidState.pressure(phaseIdx);
 
 
         Scalar sumMoleFrac = 0;
@@ -392,8 +384,8 @@ public:
             else
             {
                 // See: Ochs 2008 (2.6)
-                Scalar rholH2O = H2O::liquidDensity(T, p);
-                Scalar clH2O = rholH2O/H2O::molarMass();
+                const Scalar rholH2O = H2O::liquidDensity(T, p);
+                const Scalar clH2O = rholH2O/H2O::molarMass();
 
                 return
                     clH2O
@@ -412,11 +404,11 @@ public:
                     * fluidState.averageMolarMass(nPhaseIdx)
                     / std::max(1e-5, sumMoleFrac);
 
-            Scalar partialPressureH2O =
+            const Scalar partialPressureH2O =
                 fluidState.moleFraction(nPhaseIdx, H2OIdx)  *
                 fluidState.pressure(nPhaseIdx);
 
-            Scalar partialPressureAir =
+            const Scalar partialPressureAir =
                 fluidState.moleFraction(nPhaseIdx, AirIdx)  *
                 fluidState.pressure(nPhaseIdx);
 
