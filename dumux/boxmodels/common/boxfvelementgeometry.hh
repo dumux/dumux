@@ -456,16 +456,16 @@ class BoxFVElementGeometry
     void getEdgeIndices(int numVertices, int face, int vert, int& leftEdge, int& rightEdge)
     {
         static const int faceAndVertexToLeftEdgeTet[4][4] = {
-                { 0, 0, 2, -1},
-                { 0, 0, -1, 3},
-                { 1, -1, 1, 3},
-                {-1, 2, 2, 4}
+            { 0, 0, 2, -1},
+            { 0, 0, -1, 3},
+            { 1, -1, 1, 3},
+            {-1, 2, 2, 4}
         };
         static const int faceAndVertexToRightEdgeTet[4][4] = {
-                { 1, 2, 1, -1},
-                { 3, 4, -1, 4},
-                { 3, -1, 5, 5},
-                {-1, 4, 5, 5}
+            { 1, 2, 1, -1},
+            { 3, 4, -1, 4},
+            { 3, -1, 5, 5},
+            {-1, 4, 5, 5}
         };
         static const int faceAndVertexToLeftEdgePyramid[5][5] = {
             { 0, 2, 3, 1, -1},
@@ -582,17 +582,6 @@ public:
     int numFAP; //!< number of flux approximation points
 
     const LocalFiniteElementCache feCache_;
-    bool computeGradientAtScvCenters;
-
-    BoxFVElementGeometry()
-    {
-        computeGradientAtScvCenters = false;
-    }
-
-    BoxFVElementGeometry(const bool computeGradientAtCenters)
-    {
-        computeGradientAtScvCenters = computeGradientAtCenters;
-    };
 
     void update(const GridView& gridView, const Element& element)
     {
@@ -613,14 +602,14 @@ public:
         numEdges = referenceElement.size(dim-1);
         numFaces = (dim<3)?0:referenceElement.size(1);
         numSCV = numVertices;
-        
-        bool useTwoPointFlux 
-          = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);
+
+        bool useTwoPointFlux
+            = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseTwoPointFlux);
         if (useTwoPointFlux)
             numFAP = 2;
         else
             numFAP = numVertices;
-        
+
         // corners:
         for (int vert = 0; vert < numVertices; vert++) {
             subContVol[vert].local = referenceElement.position(vert, dim);
@@ -701,7 +690,7 @@ public:
                 GlobalPosition distVec = subContVol[i].global;
                 distVec -= subContVol[j].global;
                 distVec /= distVec.two_norm2();
-                
+
                 // gradients using a two-point flux approximation
                 for (int idx = 0; idx < 2; idx++)
                 {
@@ -709,7 +698,7 @@ public:
                     subContVolFace[k].shapeValue[idx] = 0.5;
                 }
                 subContVolFace[k].grad[1] *= -1.0;
-                
+
                 subContVolFace[k].fapIndices[0] = subContVolFace[k].i;
                 subContVolFace[k].fapIndices[1] = subContVolFace[k].j;
             }
@@ -797,56 +786,135 @@ public:
                 }
             }
 
-        // calculate gradients at the center of the scv
-        for (int scvIdx = 0; scvIdx < numVertices; scvIdx++)
-            if (dim == 2)
-            {
-                switch (scvIdx)
+        bool evalGradientsAtSCVCenter = GET_PROP_VALUE(TypeTag, EvalGradientsAtSCVCenter);
+        if(evalGradientsAtSCVCenter)
+        {
+            // calculate gradients at the center of the scv
+            for (int scvIdx = 0; scvIdx < numVertices; scvIdx++){
+                if (dim == 2)
                 {
-                case 0:
-                    if (numVertices == 4) {
-                        subContVol[scvIdx].localCenter[0] = 0.25;
-                        subContVol[scvIdx].localCenter[1] = 0.25;
-                    }
-                    else {
-                        subContVol[scvIdx].localCenter[0] = 1.0/6.0;
-                        subContVol[scvIdx].localCenter[1] = 1.0/6.0;
-                    }
-                    break;
-                case 1:
-                    if (numVertices == 4) {
+                    switch (scvIdx)
+                    {
+                    case 0:
+                        if (numVertices == 4) {
+                            subContVol[scvIdx].localCenter[0] = 0.25;
+                            subContVol[scvIdx].localCenter[1] = 0.25;
+                        }
+                        else {
+                            subContVol[scvIdx].localCenter[0] = 1.0/6.0;
+                            subContVol[scvIdx].localCenter[1] = 1.0/6.0;
+                        }
+                        break;
+                    case 1:
+                        if (numVertices == 4) {
+                            subContVol[scvIdx].localCenter[0] = 0.75;
+                            subContVol[scvIdx].localCenter[1] = 0.25;
+                        }
+                        else {
+                            subContVol[scvIdx].localCenter[0] = 4.0/6.0;
+                            subContVol[scvIdx].localCenter[1] = 1.0/6.0;
+                        }
+                        break;
+                    case 2:
+                        if (numVertices == 4) {
+                            subContVol[scvIdx].localCenter[0] = 0.25;
+                            subContVol[scvIdx].localCenter[1] = 0.75;
+                        }
+                        else {
+                            subContVol[scvIdx].localCenter[0] = 1.0/6.0;
+                            subContVol[scvIdx].localCenter[1] = 4.0/6.0;
+                        }
+                        break;
+                    case 3:
                         subContVol[scvIdx].localCenter[0] = 0.75;
-                        subContVol[scvIdx].localCenter[1] = 0.25;
-                    }
-                    else {
-                        subContVol[scvIdx].localCenter[0] = 4.0/6.0;
-                        subContVol[scvIdx].localCenter[1] = 1.0/6.0;
-                    }
-                    break;
-                case 2:
-                    if (numVertices == 4) {
-                        subContVol[scvIdx].localCenter[0] = 0.25;
                         subContVol[scvIdx].localCenter[1] = 0.75;
+                        break;
                     }
-                    else {
-                        subContVol[scvIdx].localCenter[0] = 1.0/6.0;
-                        subContVol[scvIdx].localCenter[1] = 4.0/6.0;
-                    }
-                    break;
-                case 3:
-                    subContVol[scvIdx].localCenter[0] = 0.75;
-                    subContVol[scvIdx].localCenter[1] = 0.75;
-                    break;
                 }
 
+                else if (dim == 3)
+                {
+                    switch (scvIdx)
+                    {
+                    case 0:
+                        if (numVertices == 8) {
+                            subContVol[scvIdx].localCenter[0] = 0.25;
+                            subContVol[scvIdx].localCenter[1] = 0.25;
+                            subContVol[scvIdx].localCenter[2] = 0.25;
+                        }
+                        else if (numVertices == 4) {
+                            subContVol[scvIdx].localCenter[0] = 3.0/16.0;
+                            subContVol[scvIdx].localCenter[1] = 3.0/16.0;
+                            subContVol[scvIdx].localCenter[2] = 3.0/16.0;
+                        }
+                        break;
+                    case 1:
+                        if (numVertices == 8) {
+                            subContVol[scvIdx].localCenter[0] = 0.75;
+                            subContVol[scvIdx].localCenter[1] = 0.25;
+                            subContVol[scvIdx].localCenter[2] = 0.25;
+                        }
+                        else if (numVertices == 4) {
+                            subContVol[scvIdx].localCenter[0] = 7.0/16.0;
+                            subContVol[scvIdx].localCenter[1] = 3.0/16.0;
+                            subContVol[scvIdx].localCenter[2] = 3.0/16.0;
+                        }
+                        break;
+                    case 2:
+                        if (numVertices == 8) {
+                            subContVol[scvIdx].localCenter[0] = 0.25;
+                            subContVol[scvIdx].localCenter[1] = 0.75;
+                            subContVol[scvIdx].localCenter[2] = 0.25;
+                        }
+                        else if (numVertices == 4) {
+                            subContVol[scvIdx].localCenter[0] = 3.0/16.0;
+                            subContVol[scvIdx].localCenter[1] = 7.0/16.0;
+                            subContVol[scvIdx].localCenter[2] = 3.0/16.0;
+                        }
+                        break;
+                    case 3:
+                        if (numVertices == 8) {
+                            subContVol[scvIdx].localCenter[0] = 0.75;
+                            subContVol[scvIdx].localCenter[1] = 0.75;
+                            subContVol[scvIdx].localCenter[2] = 0.25;
+                        }
+                        else if (numVertices == 4) {
+                            subContVol[scvIdx].localCenter[0] = 3.0/16.0;
+                            subContVol[scvIdx].localCenter[1] = 3.0/16.0;
+                            subContVol[scvIdx].localCenter[2] = 7.0/16.0;
+                        }
+                        break;
+                    case 4:
+                        subContVol[scvIdx].localCenter[0] = 0.25;
+                        subContVol[scvIdx].localCenter[1] = 0.25;
+                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        break;
+                    case 5:
+                        subContVol[scvIdx].localCenter[0] = 0.75;
+                        subContVol[scvIdx].localCenter[1] = 0.25;
+                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        break;
+                    case 6:
+                        subContVol[scvIdx].localCenter[0] = 0.25;
+                        subContVol[scvIdx].localCenter[1] = 0.75;
+                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        break;
+                    case 7:
+                        subContVol[scvIdx].localCenter[0] = 0.75;
+                        subContVol[scvIdx].localCenter[1] = 0.75;
+                        subContVol[scvIdx].localCenter[2] = 0.75;
+                        break;
+                    }
+                }
                 std::vector<ShapeJacobian> localJac;
                 localFiniteElement.localBasis().evaluateJacobian(subContVol[scvIdx].localCenter, localJac);
 
                 Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT =
-                        geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
+                    geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
                 for (int vert = 0; vert < numVertices; vert++)
                     jacInvT.mv(localJac[vert][0], subContVol[scvIdx].gradCenter[vert]);
             }
+        }
     }
 };
 

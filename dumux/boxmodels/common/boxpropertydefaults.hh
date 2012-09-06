@@ -72,6 +72,11 @@ SET_TYPE_PROP(BoxModel,
 //! Set the default for the FVElementGeometry
 SET_TYPE_PROP(BoxModel, FVElementGeometry, Dumux::BoxFVElementGeometry<TypeTag>);
 
+//! Disable evaluation of shape function gradients at the sub-control volume center by default
+// The shape function gradients at the sub-control volume center are currently only
+// needed for the stokes and the linear elastic models
+SET_BOOL_PROP(BoxModel, EvalGradientsAtSCVCenter, false);
+
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, Dumux::BoxElementBoundaryTypes<TypeTag>);
 

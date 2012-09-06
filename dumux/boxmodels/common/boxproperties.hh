@@ -58,6 +58,7 @@ NEW_PROP_TAG(Grid);     //!< The type of the DUNE grid
 NEW_PROP_TAG(GridView); //!< The type of the grid view
 
 NEW_PROP_TAG(FVElementGeometry); //! The type of the finite-volume geometry in the box scheme
+NEW_PROP_TAG(EvalGradientsAtSCVCenter); //! Evaluate shape function gradients additionally at the sub-control volume center
 
 NEW_PROP_TAG(Problem); //!< The type of the problem
 NEW_PROP_TAG(BaseModel); //!< The type of the base class of the model
@@ -136,6 +137,7 @@ NEW_PROP_TAG(VertexMapper);
 NEW_PROP_TAG(ElementMapper);
 //! maper for degrees of freedom
 NEW_PROP_TAG(DofMapper);
+
 }
 }
 
