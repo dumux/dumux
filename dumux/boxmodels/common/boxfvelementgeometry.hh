@@ -31,6 +31,7 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/propertysystem.hh>
+#include "boxproperties.hh"
 
 namespace Dumux
 {
