@@ -139,7 +139,7 @@ public:
         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
     {
         //write only every 10th time step to output file
-        this->setOutputInterval(1);/*@\label{tutorial-decoupled:outputinterval}@*/
+        this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
     }
 
     //! The problem name.
