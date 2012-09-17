@@ -37,27 +37,21 @@ namespace Dumux
  * are mixtures of \f$N \geq M - 1\f$ chemical species which are
  * denoted by the upper index \f$\kappa \in \{ 1, \dots, N \} \f$.
  *
- * The standard multi-phase Darcy law is used as the equation for
- * the conservation of momentum:
- * \f[
-     v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
-     \left(
-       \text{grad}\left(p_\alpha - \varrho_{\alpha} g\right)
-     \right)
-     \f]
+ * The momentum approximation can either be selected via "BaseFluxVariables":
+ * Darcy (BoxDarcyFluxVariables) and Forchheimer (BoxForchheimerFluxVariables)
+ * relations are available for all Box models.
  *
  * By inserting this into the equations for the conservation of the
  * mass of each component, one gets one mass-continuity equation for
  * each component \f$\kappa\f$
  * \f[
  \sum_{\kappa} \left(
-    \phi \frac{\partial \varrho_\alpha x_\alpha^\kappa S_\alpha}{\partial t}
-    -
+    \phi \frac{\partial \left(\varrho_\alpha x_\alpha^\kappa S_\alpha\right)}{\partial t}
+    +
     \mathrm{div}\;
     \left\{
+        v_\alpha
        \frac{\varrho_\alpha}{\overline M_\alpha} x_\alpha^\kappa
-       \frac{k_{r\alpha}}{\mu_\alpha} \boldsymbol{K}
-       \text{grad}\left( p_\alpha - \varrho_{\alpha} g\right)
     \right\}
     \right)
     = q^\kappa
