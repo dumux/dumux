@@ -97,7 +97,7 @@ SET_INT_PROP(Forchheimer2pProblem, NumericDifferenceMethod, +1);
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(Forchheimer2pProblem, Scalar, double);
 
-// decide which to use for velocity calculation: Darcy / Forchheimer
+// decide how to calculate velocity: Darcy / Forchheimer
 SET_TYPE_PROP(Forchheimer2pProblem, BaseFluxVariables, BoxForchheimerFluxVariables<TypeTag>);
 
 SET_BOOL_PROP(Forchheimer2pProblem, MPNCVtkAddVelocities, true);

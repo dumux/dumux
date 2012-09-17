@@ -18,8 +18,8 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Problem where water and gas is injected by means of a
- *        dirchlet condition on the lower right of the domain which have to go
+ * \brief Problem where liquid water is injected -- by means of a
+ *        Dirichlet condition on the lower right of the domain -- which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
  */
 #ifndef DUMUX_OBSTACLEPROBLEM_HH
@@ -58,7 +58,6 @@ SET_TYPE_PROP(ObstacleProblem,
               Problem,
               Dumux::ObstacleProblem<TypeTag>);
 
-
 // Set fluid configuration
 SET_PROP(ObstacleProblem, FluidSystem)
 { private:
@@ -66,8 +65,6 @@ SET_PROP(ObstacleProblem, FluidSystem)
 public:
     typedef Dumux::FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
 };
-//              Dumux::Simple_H2O_N2_TCE_System<TypeTag> );
-//Dumux::H2O_N2_System<TypeTag> );
 
 // Enable smooth upwinding?
 SET_BOOL_PROP(ObstacleProblem, EnableSmoothUpwinding, true);
@@ -104,8 +101,8 @@ SET_TYPE_PROP(ObstacleProblem, Scalar, double);
 /*!
  * \ingroup MPNCModel
  * \ingroup BoxTestProblems
- * \brief Problem where liquid water is injected by means of a
- *        dirchlet condition on the lower right of the domain which have to go
+ * \brief Problem where liquid water is injected -- by means of a
+ *        Dirichlet condition on the lower right of the domain -- which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
  *
  * The domain is sized 60m times 40m and consists of two media, a
@@ -113,17 +110,17 @@ SET_TYPE_PROP(ObstacleProblem, Scalar, double);
  * at \f$[10; 20]m \times [0; 35]m \f$ with a lower permeablility of
  * \f$ K_1=K_0/1000\f$.
  *
- * Initially the whole domain is filled by nitrogen, the temperature
- * is \f$20\symbol{23}C\f$ at the whole domain. The gas pressure at
- * the left side of the domain is 1 bar, at the right side it is 2 bar
- * with a linear gradient in between.
+ * Initially the whole domain is filled with nitrogen, the temperature
+ * is \f$25\symbol{23}C\f$ in the whole domain. The gas pressure in the
+ * domain is 1 bar, except on the inlet (lower 10 meters of right hand
+ * boundary) where the pressure is 2 bar.
  *
  * The boundary is no-flow except on the lower 10 meters of the left
- * and the right boundary which is a Dirichlet condition with the same
+ * and the right boundary which are Dirichlet conditions with the same
  * values as the initial condition.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_MpNc -parameterFile test_MpNc.input</tt>
+ * <tt>make test_mpnc && ./test_mpnc</tt>
  */
 template <class TypeTag>
 class ObstacleProblem
@@ -258,10 +255,10 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
+     * \brief Evaluate the boundary conditions for a Dirichlet
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
+     * \param values The Dirichlet values for the primary variables
      * \param vertex The vertex for which the boundary type is set
      *
      * For this method, the \a values parameter stores primary variables.
