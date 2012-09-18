@@ -169,7 +169,7 @@ public:
 
         // write out new grid
 //        Dune::VTKWriter<LeafGridView> vtkwriter(problem_.gridView());
-//        vtkwriter.write("latestgrid",Dune::VTK::binaryappended);
+//        vtkwriter.write("latestgrid",Dune::VTK::appendedraw);
         return;
     }
 

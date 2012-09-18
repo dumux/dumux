@@ -397,9 +397,9 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Dimension not supported!");
         }
 
-        ErrorTermFactor_ = GET_PARAM(TypeTag, Scalar, ErrorTermFactor);
-        ErrorTermLowerBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermLowerBound);
-        ErrorTermUpperBound_ = GET_PARAM(TypeTag, Scalar, ErrorTermUpperBound);
+        ErrorTermFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermFactor);
+        ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
+        ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
 
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
