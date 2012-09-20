@@ -27,6 +27,7 @@
 #define DUMUX_COMPOSITIONAL_FLUID_STATE_HH
 
 #include <algorithm>
+#include <cmath>
 
 #include <dune/common/exceptions.hh>
 
