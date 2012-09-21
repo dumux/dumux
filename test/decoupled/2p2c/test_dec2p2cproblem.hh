@@ -38,7 +38,7 @@
 
 // fluid properties
 //#include <dumux/material/old_fluidsystems/simple_h2o_n2_system.hh>
-#include <dumux/material/fluidsystems/h2on2fluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
 
 #include "test_dec2p2c_spatialparams.hh"
 #include <dumux/linear/impetbicgstabilu0solver.hh>
@@ -86,7 +86,7 @@ SET_INT_PROP(TestDecTwoPTwoCProblem, PressureFormulation,
 // Select fluid system
 SET_PROP(TestDecTwoPTwoCProblem, FluidSystem)
 {
-    typedef Dumux::H2ON2FluidSystem<TypeTag> type;
+    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
 };
 // Select fluid system
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
@@ -159,12 +159,12 @@ ParentType(timeManager, gridView), eps_(1e-6), depthBOR_(1000.0)
 {
 //    this->setOutputInterval(20);
     // initialize the tables of the fluid system
-    FluidSystem::init(/*tempMin=*/280,
-            /*tempMax=*/290,
-            /*numTemp=*/10,
-            /*pMin=*/190000,
-            /*pMax=*/280000,
-            /*numP=*/400);
+//    FluidSystem::init(/*tempMin=*/280,
+//            /*tempMax=*/290,
+//            /*numTemp=*/10,
+//            /*pMin=*/190000,
+//            /*pMax=*/280000,
+//            /*numP=*/400);
 }
 
 /*!
@@ -218,7 +218,7 @@ Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
  */
 void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const
 {
-    if (globalPos[0] > 10-1E-6 || globalPos[0] < 1e-6)
+    if (globalPos[0] > this->bboxMax()[0]-1E-6 || globalPos[0] < 1e-6)
         bcTypes.setAllDirichlet();
     else
         // all other boundaries

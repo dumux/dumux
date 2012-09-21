@@ -32,8 +32,12 @@ namespace Dumux
  * \ingroup multiphysics
  * \brief Container for compositional variables in a 1p2c situation
  *
- *  This class represents a pseudo flash calculation when only single-phase situations
- *  occur. This is used in case of a multiphysics approach.
+ *  This class holds variables for single-phase situations in a 2p2c context.
+ *  It is used in case of a multiphysics approach. For the non-present phase,
+ *  no information is stored but 0-values are returned to allow for general output
+ *  methods.
+ *  The "flash" calulation routines are in the decoupled flash constrain solver, see
+ *  Dumux::CompositionalFlash .
  *  \tparam TypeTag The property Type Tag
  */
 template <class TypeTag>
@@ -55,22 +59,6 @@ public:
     };
 
 public:
-    /*!
-     * \name flash calculation routines
-     * Routine to determine the phase composition after the transport step.
-     */
-    //@{
-    //! The simplest possible update routine for 1p2c "flash" calculations
-    /*!
-     * Routine goes as follows:
-     * - Check if we are in single phase condition
-     * - Assign total concentration to the present phase
-     *
-     * \param Z1 Feed mass fraction \f$\mathrm{[-]}\f$
-     * \param phasePressure Vector holding the pressure \f$\mathrm{[Pa]}\f$
-     * \param presentPhaseIdx Subdomain Index = Indication which phase is present
-     * \param temperature Temperature \f$\mathrm{[K]}\f$
-     */
     /*! \name Acess functions */
     //@{
     /*! \brief Returns the saturation of a phase.
@@ -100,7 +88,8 @@ public:
         if(phaseIdx == presentPhaseIdx_)
             return density_;
         else
-            return 0.; // only required for output if phase is not present anyhow
+            return 0.;
+//            return FluidSystem::density(*this, phaseIdx);
     }
 
     /*!
@@ -111,13 +100,18 @@ public:
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
         if(phaseIdx != presentPhaseIdx_)
-            return 0.;
+        {
+            if(phaseIdx == compIdx)
+                return 1.;
+            else
+                return 0.;
+        }
 
 
         if (compIdx == wPhaseIdx)
-            return massFractionWater_[phaseIdx];
+            return massFractionWater_;
         else
-            return 1.-massFractionWater_[phaseIdx];
+            return 1.-massFractionWater_;
 
     }
 
@@ -129,15 +123,21 @@ public:
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         if(phaseIdx != presentPhaseIdx_)
-            return 0.;
+        {
+            if(phaseIdx == compIdx)
+                return 1.;
+            else
+                return 0.;
+        }
+
         if (compIdx == wPhaseIdx)
-            return moleFractionWater_[phaseIdx];
+            return moleFractionWater_;
         else
-            return 1.-moleFractionWater_[phaseIdx];
+            return 1.-moleFractionWater_;
     }
 
     /*!
-     * \brief Returns the viscosity of a phase TODO: \f$\mathrm{[kg/m^3]}\f$.
+     * \brief Returns the viscosity of a phase \f$\mathrm{[Pa s]}\f$.
      *
      * \param phaseIdx the index of the phase
      */
@@ -147,6 +147,14 @@ public:
         return viscosity_;
     }
 
+    /*!
+     * \brief The average molar mass of a fluid phase [kg/mol]
+     *
+     * The average molar mass is the mean mass of a mole of the
+     * fluid at current composition. It is defined as the sum of the
+     * component's molar masses weighted by the current mole fraction:
+     * \f[ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa \f]
+     */
     Scalar averageMolarMass(int phaseIdx) const
     {
         return aveMoMass_;
@@ -187,9 +195,9 @@ public:
     void setMassFraction(int phaseIdx, int compIdx, Scalar value)
     {
         if (compIdx == wCompIdx)
-            massFractionWater_[phaseIdx] = value;
+            massFractionWater_ = value;
         else
-            massFractionWater_[phaseIdx] = 1- value;
+            massFractionWater_ = 1- value;
     }
 
     /*!
@@ -202,9 +210,9 @@ public:
     void setMoleFraction(int phaseIdx, int compIdx, Scalar value)
     {
         if (compIdx == wCompIdx)
-            moleFractionWater_[phaseIdx] = value;
+            moleFractionWater_ = value;
         else
-            moleFractionWater_[phaseIdx] = 1-value;
+            moleFractionWater_ = 1-value;
     }
     /*!
      * \brief Sets the density of a phase \f$\mathrm{[kg/m^3]}\f$.
@@ -235,7 +243,14 @@ public:
     {
         temperature_ = value;
     }
-    //TODO: doc me
+    /*!
+     * \brief Set the average molar mass of a fluid phase [kg/mol]
+     *
+     * The average molar mass is the mean mass of a mole of the
+     * fluid at current composition. It is defined as the sum of the
+     * component's molar masses weighted by the current mole fraction:
+     * \f[ \bar M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa \f]
+     */
     void setAverageMolarMass(int phaseIdx, Scalar value)
     {
         aveMoMass_ = value;
@@ -249,11 +264,11 @@ public:
     };
     //@}
 
-public:
+protected:
     Scalar aveMoMass_;
     Scalar massConcentration_[numComponents];
-    Scalar massFractionWater_[numPhases];
-    Scalar moleFractionWater_[numPhases];
+    Scalar massFractionWater_;
+    Scalar moleFractionWater_;
     Scalar pressure_[numPhases];
     Scalar density_;
     Scalar viscosity_;

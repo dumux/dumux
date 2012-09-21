@@ -15,7 +15,7 @@ DtInitial = 200 # [s]
 [Grid]
 NumberOfCellsX = 10 # [-] resolution in x-direction
 NumberOfCellsY = 10 # [-] resolution in y-direction
-NumberOfCellsZ = 10 # [-] resolution in y-direction
+NumberOfCellsZ = 10 # [-] resolution in z-direction
 
 UpperRightX = 10 # [m] length of the domain
 UpperRightY = 10 # [m] width of the domain

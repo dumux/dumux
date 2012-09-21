@@ -91,18 +91,18 @@ SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation,
 // Select fluid system
 SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
 {
-    typedef Dumux::H2ON2FluidSystem<TypeTag> type;
+    typedef Dumux::H2OAirFluidSystem<TypeTag> type;
 };
 // Select fluid system
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
 
-//// Select water formulation
-//SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
-//{
-//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-////    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
-//        typedef Dumux::H2O<Scalar> H2O;
-//};
+// Select water formulation
+SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
+{
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+//    typedef Dumux::TabulatedComponent<Scalar, typename Dumux::H2O<Scalar> > H20;
+        typedef Dumux::H2O<Scalar> H2O;
+};
 
 // Enable gravity
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);
@@ -168,13 +168,13 @@ ParentType(timeManager, gridView), lowerLeft_(lowerLeft), upperRight_(upperRight
     // Specifies how many time-steps are done before output will be written.
 //    this->setOutputInterval(20);
 
-    // initialize the tables of the fluid system
-    FluidSystem::init(/*tempMin=*/280,
-            /*tempMax=*/290,
-            /*numTemp=*/10,
-            /*pMin=*/190000,
-            /*pMax=*/280000,
-            /*numP=*/400);
+//    // initialize the tables of the fluid system
+//    FluidSystem::init(/*tempMin=*/280,
+//            /*tempMax=*/290,
+//            /*numTemp=*/10,
+//            /*pMin=*/190000,
+//            /*pMax=*/280000,
+//            /*numP=*/400);
 }
 
 /*!
