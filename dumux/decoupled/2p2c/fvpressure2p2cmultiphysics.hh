@@ -160,15 +160,18 @@ public:
     {
         FVPressureCompositional<TypeTag>::addOutputVtkFields(writer);
 
-        int size = problem().gridView().size(0);
-        // add multiphysics stuff
-        Dune::BlockVector<Dune::FieldVector<int,1> >* subdomainPtr = writer.template allocateManagedBuffer<int, 1> (size);
-        for (int i = 0; i < size; i++)
+        if(problem().vtkOutputLevel()>=1)
         {
-            CellData& cellData = problem().variables().cellData(i);
-            (*subdomainPtr)[i] = cellData.subdomain();
+            int size = problem().gridView().size(0);
+            // add multiphysics stuff
+            Dune::BlockVector<Dune::FieldVector<int,1> >* subdomainPtr = writer.template allocateManagedBuffer<int, 1> (size);
+            for (int i = 0; i < size; i++)
+            {
+                CellData& cellData = problem().variables().cellData(i);
+                (*subdomainPtr)[i] = cellData.subdomain();
+            }
+            writer.attachCellData(*subdomainPtr, "subdomain");
         }
-        writer.attachCellData(*subdomainPtr, "subdomain");
 
         return;
     }

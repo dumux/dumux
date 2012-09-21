@@ -133,14 +133,17 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
-        int size = problem_.gridView().size(0);
-        ScalarSolutionType *totalC1PV = writer.allocateManagedBuffer(size);
-        ScalarSolutionType *totalC2PV = writer.allocateManagedBuffer(size);
-        *totalC1PV = this->totalConcentration_[wCompIdx];
-        *totalC2PV = this->totalConcentration_[nCompIdx];
-        writer.attachCellData(*totalC1PV, "total Concentration w-Comp");
-        writer.attachCellData(*totalC2PV, "total Concentration n-Comp");
+        if(problem().vtkOutputLevel()>=3)
+        {
+            typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+            int size = problem_.gridView().size(0);
+            ScalarSolutionType *totalC1PV = writer.allocateManagedBuffer(size);
+            ScalarSolutionType *totalC2PV = writer.allocateManagedBuffer(size);
+            *totalC1PV = this->totalConcentration_[wCompIdx];
+            *totalC2PV = this->totalConcentration_[nCompIdx];
+            writer.attachCellData(*totalC1PV, "total Concentration w-Comp - vector");
+            writer.attachCellData(*totalC2PV, "total Concentration n-Comp - vector");
+        }
     }
 
     //! Function needed for restart option of the transport model: Write out
