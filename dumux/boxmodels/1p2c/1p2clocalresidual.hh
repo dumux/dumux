@@ -58,6 +58,9 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
+    enum { dim = GridView::dimension };
+    typedef Dune::FieldVector<Scalar, dim> DimVector;
+
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
@@ -239,6 +242,13 @@ public:
             // diffusive flux of the second component - massfraction
             tmp = -(fluxVars.moleFractionGrad(transportCompIdx)*fluxVars.face().normal);
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
+
+            // dispersive flux of second component - massfraction
+                       DimVector normalDisp;
+                       fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+                       tmp -= fluxVars.molarDensity()*
+                       (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
+
             // convert it to a mass flux and add it
             flux[transportEqIdx] += tmp * FluidSystem::molarMass(transportCompIdx);
         }
@@ -249,10 +259,10 @@ public:
             tmp *= fluxVars.porousDiffCoeff() * fluxVars.molarDensity();
 
             // dispersive flux of second component - molefraction
-            //            Vector normalDisp;
-            //            fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
-            //            tmp -= fluxVars.molarDensity()*
-            //                (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
+                        DimVector normalDisp;
+                        fluxVars.dispersionTensor().mv(fluxVars.face().normal, normalDisp);
+                        tmp -= fluxVars.molarDensity()*
+                            (normalDisp * fluxVars.moleFractionGrad(transportCompIdx));
 
             flux[transportEqIdx] += tmp;
         }
