@@ -1,28 +1,31 @@
-34c34
-< #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
----
-> #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh> //include the linear material law
-56,57c56
-<     // select material law to be used
-< //    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-coupled:rawlaw}@*/
----
-> 
-60c59
-<     typedef EffToAbsLaw<RawMaterialLaw> type;   /*@\label{tutorial-coupled:eff2abs}@*/
----
->     typedef LinearMaterial<Scalar> type;   /*@\label{tutorial-coupled:eff2abs}@*/
-153,159c152,157
-<         //set residual saturations
-<         materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
-<         materialParams_.setSnr(0.0);
-< 
-<         //parameters of Brooks & Corey Law
-<         materialParams_.setPe(500.0);
-<         materialParams_.setLambda(2);
----
->         //set entry and max capillary pressure for the linear material law
->         materialParams_.setEntryPC(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
->         materialParams_.setMaxPC(2000.0);
-> 
-> 
-> 
+--- orig_tutorialspatialparams_coupled.hh	2012-09-24 11:02:12.440395726 +0200
++++ ex1f_tutorialspatialparams_coupled.hh	2012-09-24 11:15:29.802891275 +0200
+@@ -54,10 +54,10 @@
+     // material law typedefs
+     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+     // select material law to be used
+-    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;     /*@\label{tutorial-coupled:rawlaw}@*/
++    /*@\label{tutorial-coupled:rawlaw}@*/
+ public:
+     // adapter for absolute law
+-    typedef EffToAbsLaw<RawMaterialLaw> type;   /*@\label{tutorial-coupled:eff2abs}@*/
++    typedef LinearMaterial<Scalar> type;   /*@\label{tutorial-coupled:eff2abs}@*/
+ };
+ }
+ 
+@@ -150,13 +150,10 @@
+         for (int i = 0; i < dim; i++)
+             K_[i][i] = 1e-7;
+ 
+-        //set residual saturations
+-        materialParams_.setSwr(0.0);                /*@\label{tutorial-coupled:setLawParams}@*/
+-        materialParams_.setSnr(0.0);
+ 
+         //parameters of Brooks & Corey Law
+-        materialParams_.setPe(500.0);
+-        materialParams_.setLambda(2);
++        materialParams_.setEntryPC(0.0);
++        materialParams_.setMaxPC(2000.0);
+     }
+ 
+ private:

@@ -1,6 +1,0 @@
-40a41
-> #include <dumux/material/components/brine.hh>
-65c66
-< public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-coupled:wettingPhase}@*/
----
-> public: typedef Dumux::LiquidPhase<Scalar, Dumux::Brine<Scalar, Dumux::H2O<Scalar>>> type; /*@\label{tutorial-coupled:wettingPhase}@*/

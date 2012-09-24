@@ -1,8 +1,20 @@
-41c41
-< #include <dumux/material/components/lnapl.hh>
----
-> #include "benzene.hh"
-72c72
-< public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
----
-> public: typedef Dumux::LiquidPhase<Scalar, Dumux::Benzene<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
+--- orig_tutorialproblem_coupled.hh	2012-09-24 08:56:29.268511049 +0200
++++ ex4_tutorialproblem_coupled.hh	2012-09-24 12:55:46.251216038 +0200
+@@ -42,7 +42,7 @@
+ 
+ // The components that are used
+ #include <dumux/material/components/h2o.hh>
+-#include <dumux/material/components/lnapl.hh>
++#include "benzene.hh"
+ #include <dumux/common/cubegridcreator.hh>
+ 
+ namespace Dumux{
+@@ -78,7 +78,7 @@
+ SET_PROP(TutorialProblemCoupled, NonwettingPhase)
+ {
+ private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+-public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
++public: typedef Dumux::LiquidPhase<Scalar, Dumux::Benzene<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
+ }; /*@\label{tutorial-coupled:2p-system-end}@*/
+ 
+ SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-coupled:set-fluidsystem}@*/

@@ -1,39 +1,61 @@
-43a44,46
-> // Include a fluid system
-> #include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
-> 
-61,66d63
-< // Set the wetting phase
-< SET_PROP(TutorialProblemCoupled, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
-< {
-< private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-< public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-coupled:wettingPhase}@*/
-< };
-68,73c65,77
-< // Set the non-wetting phase
-< SET_PROP(TutorialProblemCoupled, NonwettingPhase)
-< {
-< private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-< public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
-< }; /*@\label{tutorial-coupled:2p-system-end}@*/
----
-> // Set the wetting phase
-> //SET_PROP(TutorialProblemCoupled, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
-> //{
-> //private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-> //public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-coupled:wettingPhase}@*/
-> //};
-> //
-> //// Set the non-wetting phase
-> //SET_PROP(TutorialProblemCoupled, NonwettingPhase)
-> //{
-> //private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-> //public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
-> //}; /*@\label{tutorial-coupled:2p-system-end}@*/
-75c79,80
-< SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);
----
-> //Set the fluid system property
-> SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-113a119
->         GET_PROP_TYPE(TypeTag, FluidSystem)::init();
+--- orig_tutorialproblem_coupled.hh	2012-09-24 08:56:29.268511049 +0200
++++ ex1e_tutorialproblem_coupled.hh	2012-09-24 10:59:21.061073168 +0200
+@@ -40,11 +40,16 @@
+ // Spatially dependent parameters
+ #include "tutorialspatialparams_coupled.hh"
+ 
++// The fluidsystem
++#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
++
+ // The components that are used
+ #include <dumux/material/components/h2o.hh>
+ #include <dumux/material/components/lnapl.hh>
+ #include <dumux/common/cubegridcreator.hh>
+ 
++
++
+ namespace Dumux{
+ // Forward declaration of the problem class
+ template <class TypeTag>
+@@ -68,20 +73,20 @@
+ SET_TYPE_PROP(TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
+ 
+ // Set the wetting phase
+-SET_PROP(TutorialProblemCoupled, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
+-{
+-private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+-public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-coupled:wettingPhase}@*/
+-};
+-
+-// Set the non-wetting phase
+-SET_PROP(TutorialProblemCoupled, NonwettingPhase)
+-{
+-private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+-public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
+-}; /*@\label{tutorial-coupled:2p-system-end}@*/
++//SET_PROP(TutorialProblemCoupled, WettingPhase) /*@\label{tutorial-coupled:2p-system-start}@*/
++//{
++//private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
++//public: typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-coupled:wettingPhase}@*/
++//};
++//
++//// Set the non-wetting phase
++//SET_PROP(TutorialProblemCoupled, NonwettingPhase)
++//{
++//private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
++//public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-coupled:nonwettingPhase}@*/
++//}; /*@\label{tutorial-coupled:2p-system-end}@*/
+ 
+-SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-coupled:set-fluidsystem}@*/
++SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);/*@\label{tutorial-coupled:set-fluidsystem}@*/
+ // Disable gravity
+ SET_BOOL_PROP(TutorialProblemCoupled, EnableGravity, false); /*@\label{tutorial-coupled:gravity}@*/
+ }
+@@ -120,6 +125,7 @@
+         : ParentType(timeManager, gridView)
+         , eps_(3e-6)
+     {
++        GET_PROP_TYPE(TypeTag, FluidSystem)::init();
+     }
+ 
+     //! Specifies the problem name. This is used as a prefix for files

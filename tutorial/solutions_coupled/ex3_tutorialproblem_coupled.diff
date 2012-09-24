@@ -1,21 +1,48 @@
-114,127d113
-<         try
-<         {
-< 
-<             outflowRateOil_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.OutflowRateOil);
-< 
-<         }
-<         catch (Dumux::ParameterException &e) {
-<             std::cerr << e << ". Abort!\n";
-<             exit(1) ;
-<         }
-<         catch (...) {
-<             std::cerr << "Unknown exception thrown!\n";
-<             exit(1);
-<         }
-192c178
-<             values[Indices::contiNEqIdx] = outflowRateOil_;
----
->             values[Indices::contiNEqIdx] = 3e-2;
-227d212
-<     Scalar outflowRateOil_;
+--- orig_tutorialproblem_coupled.hh	2012-09-24 08:56:29.268511049 +0200
++++ ex3_tutorialproblem_coupled.hh	2012-09-24 12:01:47.644008161 +0200
+@@ -116,10 +116,25 @@
+ 
+ public:
+     TutorialProblemCoupled(TimeManager &timeManager,
+-                           const GridView &gridView)
+-        : ParentType(timeManager, gridView)
+-        , eps_(3e-6)
++            const GridView &gridView)
++    : ParentType(timeManager, gridView)
++    , eps_(3e-6)
+     {
++        try
++        {
++
++            outflowRateOil_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.OutflowRateOil);
++
++        }
++        catch (Dumux::ParameterException &e) {
++            std::cerr << e << ". Abort!\n";
++            exit(1) ;
++        }
++        catch (...) {
++            std::cerr << "Unknown exception thrown!\n";
++            exit(1);
++        }
++
+     }
+ 
+     //! Specifies the problem name. This is used as a prefix for files
+@@ -184,7 +199,7 @@
+         if (globalPos[0] > right - eps_) {
+             // oil outflux of 30 g/(m * s) on the right boundary.
+             values[Indices::contiWEqIdx] = 0;
+-            values[Indices::contiNEqIdx] = 3e-2;
++            values[Indices::contiNEqIdx] = outflowRateOil_;
+         } else {
+             // no-flow on the remaining Neumann-boundaries.
+             values[Indices::contiWEqIdx] = 0;
+@@ -219,6 +234,7 @@
+ private:
+     // small epsilon value
+     Scalar eps_;
++    Scalar outflowRateOil_;
+ };
+ }
+ 

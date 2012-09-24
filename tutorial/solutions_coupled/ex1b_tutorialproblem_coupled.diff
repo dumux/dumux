@@ -1,12 +1,23 @@
-144c144
-<         if (globalPos[0] < eps_) // Dirichlet conditions on left boundary
----
->         if (globalPos[1] < eps_) // Dirichlet conditions on left boundary
-173c173
-<         Scalar right = this->bboxMax()[0];
----
->         Scalar top = this->bboxMax()[1];
-175c175
-<         if (globalPos[0] > right - eps_) {
----
->         if (globalPos[0] > top - eps_) {
+--- ex1b_tutorialproblem_coupled.hh	2012-09-24 09:02:56.503227895 +0200
++++ orig_tutorialproblem_coupled.hh	2012-09-24 08:56:29.268511049 +0200
+@@ -150,7 +150,7 @@
+     void boundaryTypes(BoundaryTypes &bcTypes, const Vertex &vertex) const
+     {
+         const GlobalPosition &globalPos = vertex.geometry().center();
+-        if (globalPos[1] < eps_) // Dirichlet conditions on left boundary
++        if (globalPos[0] < eps_) // Dirichlet conditions on left boundary
+            bcTypes.setAllDirichlet();
+         else // neuman for the remaining boundaries
+            bcTypes.setAllNeumann();
+@@ -179,9 +179,9 @@
+     {
+         const GlobalPosition &globalPos =
+             fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
+-        Scalar top = this->bboxMax()[1];
++        Scalar right = this->bboxMax()[0];
+         // extraction of oil on the right boundary for approx. 1.e6 seconds
+-        if (globalPos[0] > top - eps_) {
++        if (globalPos[0] > right - eps_) {
+             // oil outflux of 30 g/(m * s) on the right boundary.
+             values[Indices::contiWEqIdx] = 0;
+             values[Indices::contiNEqIdx] = 3e-2;
