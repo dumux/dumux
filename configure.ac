@@ -82,6 +82,8 @@ AC_CONFIG_FILES([dumux.pc
     test/boxmodels/2p2cni/Makefile
     test/boxmodels/3p3c/Makefile
     test/boxmodels/3p3cni/Makefile
+    test/boxmodels/co2/Makefile
+    test/boxmodels/co2ni/Makefile
     test/boxmodels/mpnc/Makefile
     test/boxmodels/richards/Makefile  
     test/common/Makefile
