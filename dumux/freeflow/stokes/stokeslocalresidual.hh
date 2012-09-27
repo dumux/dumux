@@ -176,9 +176,11 @@ protected:
     {
         // if the momentum balance has a dirichlet b.c., the mass balance
         // is replaced, thus we do not need to calculate outflow fluxes here
-        if (fluxVars.onBoundary())
-            if (momentumBalanceDirichlet_(this->bcTypes_(fluxVars.upstreamIdx())))
-                return;
+        if (fluxVars.onBoundary() &&
+            momentumBalanceDirichlet_(this->bcTypes_(fluxVars.upstreamIdx())))
+        {
+            return;
+        }
 
         // data attached to upstream and the downstream vertices
         const VolumeVariables &up = this->curVolVars_(fluxVars.upstreamIdx());
