@@ -121,26 +121,23 @@ SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
  *        water saturated medium. During buoyancy driven upward migration the gas
  *        passes a high temperature area.
  *
- * The domain is sized 40 m times 40 m. The rectangular area with the increased temperature (380 K)
+ * The domain is sized 60 m times 40 m. The rectangular area with the increased temperature (380 K)
  * starts at (20 m, 5 m) and ends at (30 m, 35 m)
  *
  * For the mass conservation equation neumann boundary conditions are used on
- * the top and on the bottom of the domain, while dirichlet conditions
- * apply on the left and the right boundary.
+ * the top, on the bottom and on the right of the domain, while dirichlet conditions
+ * apply on the left boundary.
  * For the energy conservation equation dirichlet boundary conditions are applied
  * on all boundaries.
  *
- * Gas is injected at the bottom boundary from 15 m to 25 m at a rate of
+ * Gas is injected at the right boundary from 5 m to 15 m at a rate of
  * 0.001 kg/(s m), the remaining neumann boundaries are no-flow
  * boundaries.
  *
  * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
  * a geothermal temperature gradient of 0.03 K/m are applied.
  *
- * This problem uses the \ref TwoPNIModel.
- *
- * This problem should typically be simulated for 300000 seconds.
- * A good choice for the initial time step size is 1000 seconds.
+ * This problem uses the \ref TwoPNIModel model.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_2pni -parameterFile test_2pni.input</tt>

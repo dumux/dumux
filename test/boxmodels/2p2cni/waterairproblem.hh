@@ -82,8 +82,8 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  *        temperature area.
  *
  * The domain is sized 40 m times 40 m in a depth of 1000 m. The rectangular area
- * with the increased temperature (380 K) starts at (20 m, 5 m) and ends at
- * (30 m, 35 m).
+ * with the increased temperature (380 K) starts at (20 m, 1 m) and ends at
+ * (30 m, 30 m).
  *
  * For the mass conservation equation neumann boundary conditions are used on
  * the top and on the bottom of the domain, while dirichlet conditions
@@ -98,10 +98,7 @@ SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
  * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
  * a geothermal temperature gradient of 0.03 K/m are applied.
  *
- * This problem uses the \ref TwoPTwoCNIModel.
- *
- * This problem should typically be simulated for 300000 s.
- * A good choice for the initial time step size is 1000 s.
+ * This problem uses the \ref TwoPTwoCNIModel model.
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_2p2cni -parameterFile test_2p2cni.input</tt>
