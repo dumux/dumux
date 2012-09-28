@@ -13,7 +13,7 @@ DtInitial = 1 # [s]
 TEnd = 1800 # [s]
 
 [Grid]
-File = ./grids/kuev_2p2cni.dgf
+File = ./grids/kuev_3p3cni.dgf
 
 ###############################################################
 # Simulation restart
