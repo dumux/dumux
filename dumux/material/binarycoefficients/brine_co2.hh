@@ -379,7 +379,7 @@ public:
      * \brief Returns the _mole_ (!) fraction of CO2 in the liquid
      *        phase at a given temperature, pressure and density of
      *        CO2.
-     * \param T the temperature [K]
+     * \param temperature the temperature [K]
      * \param pg the gas phase pressure [Pa]
      * \param rhoCO2 density of CO2
      */

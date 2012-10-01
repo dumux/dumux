@@ -369,8 +369,8 @@ public:
      *        used for which equation on a given boundary segment.
      *
      * \param values The boundary types for the conservation equations
-     * \param intersection specifies the intersection at which boundary
-     * \param condition is to set
+     * \param is specifies the intersection at which boundary
+     *           condition is to set
      */
 
 

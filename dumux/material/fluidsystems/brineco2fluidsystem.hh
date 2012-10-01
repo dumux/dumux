@@ -435,7 +435,7 @@ public:
      * Molecular diffusion of a compoent \f$\kappa\f$ is caused by a
      * gradient of the chemical potential and follows the law
      *
-     * \f[ J = - D \grad mu_\kappa \f]
+     * \f[ J = - D \text{grad} mu_\kappa \f]
      *
      * where \f$\mu_\kappa\f$ is the component's chemical potential,
      * \f$D\f$ is the diffusion coefficient and \f$J\f$ is the
@@ -560,11 +560,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of a fluid phase.
-     *        [J/kg]
-     *
-     * \param fluidState An abitrary fluid state
-     * \param phaseIdx The index of the fluid phase to consider
+     * \copydoc BaseFluidSystem::heatCapacity
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,

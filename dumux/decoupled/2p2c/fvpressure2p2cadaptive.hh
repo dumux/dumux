@@ -462,7 +462,7 @@ void FVPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 
 //! Get flux at an interface between two cells
 /** for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
- * for first == false, the flux thorugh \f$ \gamma{ij} \f$  is calculated via a volume balance formulation
+ * for first == false, the flux through \f$ \gamma_{ij} \f$  is calculated via a volume balance formulation
  *  \f[ - A_{\gamma_{ij}} \cdot \mathbf{K} \cdot \mathbf{u} \cdot (\mathbf{n}_{\gamma_{ij}} \cdot \mathbf{u})
       \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} X^{\kappa}_{\alpha}
     \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right)
