@@ -72,7 +72,7 @@ SET_BOOL_PROP(RichardsLensProblem, EnablePartialReassemble, true);
 // Enable re-use of the Jacobian matrix for the first iteration of a time step
 SET_BOOL_PROP(RichardsLensProblem, EnableJacobianRecycling, true);
 
-// Use forward diffferences to approximate the Jacobian matrix
+// Use forward differences to approximate the Jacobian matrix
 SET_INT_PROP(RichardsLensProblem, NumericDifferenceMethod, +1);
 
 // Set the maximum number of newton iterations of a time step
@@ -104,7 +104,7 @@ SET_BOOL_PROP(RichardsLensProblem, NewtonWriteConvergence, false);
  * water instead of a %DNAPL infiltrates from the top.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_richards -parameterFile test_richards.input</tt>
+ * <tt>./test_richards -parameterFile test_richards.input -TimeManager.TEnd 10000000</tt>
  *
  * where the initial time step is 100 seconds, and the end of the
  * simulation time is 10,000,000 seconds (115.7 days)
