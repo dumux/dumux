@@ -24,6 +24,8 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/3p3c/Makefile 
     dumux/boxmodels/3p3cni/Makefile 
     dumux/boxmodels/common/Makefile 
+    dumux/boxmodels/co2/Makefile
+    dumux/boxmodels/co2ni/Makefile
     dumux/boxmodels/mpnc/Makefile 
     dumux/boxmodels/mpnc/diffusion/Makefile
     dumux/boxmodels/mpnc/energy/Makefile

@@ -307,10 +307,10 @@ public:
               // relative permeabilities
               Scalar kr;
               if (phaseIdx == wPhaseIdx)
-                  kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
+                  kr = MaterialLaw::krw(materialParams, this->saturation(wPhaseIdx));
               else // ATTENTION: krn requires the liquid saturation
                   // as parameter!
-                  kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
+                  kr = MaterialLaw::krn(materialParams, this->saturation(wPhaseIdx));
               ParentType::relativePermeability_[phaseIdx] = kr;
               Valgrind::CheckDefined(ParentType::relativePermeability_[phaseIdx]);
 
