@@ -58,7 +58,6 @@ NEW_PROP_TAG( GridAdaptEnableSecondHalfEdge ); //!< Uses second interaction volu
 }}
 
 //Dumux includes
-#include <dumux/decoupled/common/gridadaptproperties.hh>
 #include <dumux/decoupled/2p2c/fvpressure2p2cadaptive.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2cadaptive.hh>
 #include <dumux/decoupled/2p2c/variableclass2p2cadaptive.hh>
