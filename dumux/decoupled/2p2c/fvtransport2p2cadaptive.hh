@@ -212,13 +212,13 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
                 if (enableMPFA && isIt->outside()->level()!=eIt.level())
                     getMpfaFlux(entries, timestepFlux, isIt, cellDataI);
                 else
-                    getFlux(entries, timestepFlux, *isIt, cellDataI);
+                    this->getFlux(entries, timestepFlux, *isIt, cellDataI);
             }
 
             //     Boundary Face
             if (isIt->boundary())
             {
-                getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
+                this->getFluxOnBoundary(entries, timestepFlux, *isIt, cellDataI);
             }
 
             // add to update vector

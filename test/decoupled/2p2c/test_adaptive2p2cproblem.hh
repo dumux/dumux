@@ -24,11 +24,8 @@
 #ifndef DUMUX_TEST_ADAPTIVE_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE_2P2C_PROBLEM_HH
 
-#if HAVE_ALUGRID
-
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
-#include <dune/grid/alugrid/2d/alugrid.hh>
+#include <dune/grid/alugrid.hh>
+// #include <dune/grid/uggrid.hh>
 
 #include <dumux/common/cubegridcreator.hh>
 
@@ -56,8 +53,12 @@ NEW_TYPE_TAG(Adaptive2p2c, INHERITS_FROM(DecoupledTwoPTwoCAdaptive,Test2P2CSpati
 // Set the grid type
 SET_PROP(Adaptive2p2c, Grid)
 {
+#if HAVE_ALUGRID
     typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
-//    typedef Dune::UGGrid<2> type;
+// #elif HAVE_UG
+//     typedef Dune::UGGrid<2> type;
+#endif
+    
 };
 // set the GridCreator property
 SET_TYPE_PROP(Adaptive2p2c, GridCreator, CubeGridCreator<TypeTag>);
@@ -208,7 +209,7 @@ Scalar temperatureAtPos(const GlobalPosition& globalPos) const
  */
 Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
 {
-	return 1e6;
+    return 1e6;
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::boundaryTypesAtPos()
@@ -251,14 +252,14 @@ void dirichletAtPos(PrimaryVariables &bcValues, const GlobalPosition& globalPos)
  */
 void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalPos) const
 {
-    setZero(neumannValues, Indices::contiWEqIdx);
+    this->setZero(neumannValues, Indices::contiWEqIdx);
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()
  */
 void source(PrimaryVariables &values, const Element &element)
 {
-    setZero(values, Indices::contiWEqIdx);
+    this->setZero(values, Indices::contiWEqIdx);
     ElementPointer father(element);
     // access level 1 entity
     while (father->level() != this->gridAdapt().getMinLevel())
@@ -289,6 +290,5 @@ Grid grid_;
 Dumux::VtkMultiWriter<GridView> debugWriter_;
 };
 } //end namespace
-#endif //have alu
 
 #endif

@@ -78,7 +78,7 @@ SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, Indices, DecoupledTwoPTwoCIndicesAdapti
 // Set the model properties
 SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, TransportModel, FVTransport2P2CAdaptive<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, PressureModel, FVPressure2P2CAdaptive<TypeTag>);
-};
+}
 
 
 /*!
