@@ -35,21 +35,35 @@ namespace Dumux
 /*!
  * \ingroup RichardsModel
  *
- * \brief This model which implements a variant of the Richards
+ * \brief This model which implements a variant of the Richards'
  *        equation for quasi-twophase flow.
  *
- * In the unsaturated zone, Richards' equation is frequently used to
- * approximate the water distribution above the groundwater level. It
- * can be derived from the two-phase equations, i.e.
+ * In the unsaturated zone, Richards' equation
+ \f[
+ \frac{\partial\;\phi S_w \rho_w}{\partial t}
+ -
+ \text{div} \left(
+ \rho_w \frac{k_{rw}}{\mu_w} \; \mathbf{K} \;
+ \text{\textbf{grad}}\left(
+ p_w - g\rho_w
+ \right)
+ \right)
+ =
+ q_w,
+ \f]
+ * is frequently used to
+ * approximate the water distribution above the groundwater level.
+ * 
+ * It can be derived from the two-phase equations, i.e.
  \f[
  \frac{\partial\;\phi S_\alpha \rho_\alpha}{\partial t}
  -
- \text{div} \left\{
- \rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K}
- \textbf{grad}\left[
+ \text{div} \left(
+ \rho_\alpha \frac{k_{r\alpha}}{\mu_\alpha}\; \mathbf{K} \;
+ \text{\textbf{grad}}\left(
  p_\alpha - g\rho_\alpha
- \right]
- \right\}
+ \right)
+ \right)
  =
  q_\alpha,
  \f]
@@ -107,11 +121,7 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
     /*!
-     * \brief Returns the relative weight of a primary variable for
-     *        calculating relative errors.
-     *
-     * \param vertIdx The global index of the vertex in question
-     * \param pvIdx The index of the primary variable
+     * \copydoc Dumux::BoxModel::primaryVarWeight
      */
     Scalar primaryVarWeight(const int vertIdx, const int pvIdx) const
     {

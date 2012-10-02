@@ -103,7 +103,6 @@ public:
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
      *
-     *
      * \param flux Stores the total mass fluxes over a sub-control volume face
      *             of the current element \f$\mathrm{[kg/s]}\f$
      * \param faceIdx The sub control volume face index inside the current
