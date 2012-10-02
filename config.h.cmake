@@ -81,6 +81,9 @@
 /* Define to 1 if you have <boost/make_shared.hpp> */
 #cmakedefine HAVE_BOOST_MAKE_SHARED_HPP 1
 
+/* Define to 1 if you have __attribute__((unused)) */
+#cmakedefine HAS_ATTRIBUTE_UNUSED ${HAS_ATTRIBUTE_UNUSED}
+
 #cmakedefine HAVE_NULLPTR 1
 #cmakedefine HAVE_STATIC_ASSERT 1
 #cmakedefine HAVE_VARIADIC_TEMPLATES 1
