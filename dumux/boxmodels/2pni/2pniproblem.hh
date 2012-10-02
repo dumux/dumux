@@ -53,6 +53,7 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
         */
+    DUNE_DEPRECATED_MSG("use PorousMediaBoxProblem instead")
     TwoPNIProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {}
