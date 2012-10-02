@@ -25,7 +25,7 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
+ * @brief  Finite Volume 2p2c Pressure Model with MultiPhysics
  */
 
 namespace Dumux

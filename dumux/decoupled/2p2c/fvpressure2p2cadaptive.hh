@@ -34,7 +34,6 @@
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
-#include <dumux/decoupled/2p2c/2p2cadaptiveproperties.hh>
 
 // include pressure model from Markus
 #include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
@@ -225,6 +224,12 @@ protected:
 
 
 //! initializes the matrix to store the system of equations
+/*! In comparison with the Tpfa method, an mpfa uses a larger flux stencil, hence more
+ * matrix entries are required if not only the unique interaction region on the hanging
+ * nodes are considered. The method checks weather the additonally regarded cells through
+ * mpfa are already "normal" neighbors for fluxes through other interfaces, or if they
+ * need to be added.
+ */
 template<class TypeTag>
 void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
 {
@@ -262,45 +267,46 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
             {
                 rowSize++;
 
-                    // if mpfa is used, more entries might be needed if both halfedges are regarded
+                // if mpfa is used, more entries might be needed if both halfedges are regarded
                 if (enableMPFA && enableSecondHalfEdge && isIt->outside()->level()!=eIt.level())
+                {
+                    GlobalPosition globalPos3(0.);
+                    int globalIdx3=-1;
+                    TransmissivityMatrix T(0.);
+                    IntersectionIterator additionalIsIt = isIt;
+                    TransmissivityMatrix additionalT(0.);
+                    // compute Transmissibilities: also examines subcontrolvolume information
+                    int halfedgesStored
+                        = problem().variables().getMpfaData(*isIt, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
+                    if (halfedgesStored == 0)
+                        halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT, globalPos3, globalIdx3 );
+
+                    if(halfedgesStored == 2)
                     {
-                        GlobalPosition globalPos3(0.);
-                        int globalIdx3=-1;
-                        TransmissivityMatrix T(0.);
-                        IntersectionIterator additionalIsIt = isIt;
-                        TransmissivityMatrix additionalT(0.);
-                        // compute Transmissibilities: also examines subcontrolvolume information
-                        int halfedgesStored
-                            = problem().variables().getMpfaData(*isIt, additionalIsIt, T, additionalT, globalPos3, globalIdx3);
-                        if (halfedgesStored == 0)
-                            halfedgesStored = problem().pressureModel().computeTransmissibilities(isIt,additionalIsIt, T,additionalT, globalPos3, globalIdx3 );
-
-                        if(halfedgesStored == 2)
+                        bool increaseRowSize = true;
+                        //check if additional cell is ordinary neighbor of eIt
+                        for (IntersectionIterator isIt2 = problem().gridView().template ibegin(*eIt); isIt2 != isItEnd; ++isIt2)
                         {
-                            bool increaseRowSize = true;
-                            //check if additional cell is ordinary neighbor of eIt
-                            for (IntersectionIterator isIt2 = problem().gridView().template ibegin(*eIt); isIt2 != isItEnd; ++isIt2)
-                            {
-                                if(!isIt2->neighbor())
-                                    continue;
-                                if(additionalIsIt->outside() == isIt2->outside() )
+                            if(!isIt2->neighbor())
+                                continue;
+                            if(additionalIsIt->outside() == isIt2->outside() )
+                                increaseRowSize = false;
+                        }
+                        //also check if additional cell was already used for another interaction triangle
+                        for(int i =0; i<foundAdditionals.size(); i++)
+                            if(foundAdditionals[i] == problem().variables().index(*additionalIsIt->outside()))
                                     increaseRowSize = false;
-                            }
-                            //also check if additional cell was already used for another interaction triangle
-                            for(int i =0; i<foundAdditionals.size(); i++)
-                                if(foundAdditionals[i] == problem().variables().index(*additionalIsIt->outside()))
-                                        increaseRowSize = false;
 
-                            if (increaseRowSize)
-                            {
-                                rowSize++;
-                                foundAdditionals.push_back(problem().variables().index(*additionalIsIt->outside()));
-                            }
+                        if (increaseRowSize)
+                        {
+                            rowSize++;
+                            foundAdditionals.push_back(problem().variables().index(*additionalIsIt->outside()));
                         }
                     }
                 }
             }
+        }
+
         cellDataI.fluxData().resize(numberOfIntersections);
         this->A_.setrowsize(globalIdxI, rowSize);
     }
@@ -352,11 +358,12 @@ void FVPressure2P2CAdaptive<TypeTag>::initializeMatrix()
 }
 
 //! function which assembles the system of equations to be solved
-/* This function assembles the Matrix and the RHS vectors to solve for
+/*! This function assembles the Matrix and the RHS vectors to solve for
  * a pressure field with an Finite-Volume Discretization in an implicit
- * fasion. In the implementations to this base class, the methods
- * getSource(), getStorage(), getFlux() and getFluxOnBoundary() have to
- * be provided.
+ * fashion. Compared to the method in FVPressure, this implementation
+ * calculates fluxes near hanging nodes with the mpfa method using the method
+ * getMpfaFlux(). Matrix and Right-hand-side entries are done therein.
+ *
  * \param first Flag if pressure field is unknown
  */
 template<class TypeTag>
@@ -460,24 +467,16 @@ void FVPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     return;
 }
 
-//! Get flux at an interface between two cells
-/** for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
- * for first == false, the flux through \f$ \gamma_{ij} \f$  is calculated via a volume balance formulation
- *  \f[ - A_{\gamma_{ij}} \cdot \mathbf{K} \cdot \mathbf{u} \cdot (\mathbf{n}_{\gamma_{ij}} \cdot \mathbf{u})
-      \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} X^{\kappa}_{\alpha}
-    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right)
-    + V_i \frac{A_{\gamma_{ij}}}{U_i} \mathbf{K}
-    \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa}
-\frac{\frac{\partial v_{t,j}}{\partial C^{\kappa}_j}-\frac{\partial v_{t,i}}{\partial C^{\kappa}_i}}{\Delta x} X^{\kappa}_{\alpha}
-    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \f]
- * This includes a boundary integral and a volume integral, because
- *  \f$ \frac{\partial v_{t,i}}{\partial C^{\kappa}_i} \f$ is not constant.
- * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
- * represents the normal of the face \f$ \gamma{ij} \f$.
- * \param entries The Matrix and RHS entries
- * \param intersection Intersection between cell I and J
+//! Compute flux over an irregular interface using a \a mpfa method
+/** TODO: Insert correct formulas!
+ *
+ * We provide two options: Calculating the flux expressed by twice the flux
+ * through the one unique interaction region on the hanging node if one
+ * halfedge is stored (eg on boundaries). Or using the second interaction
+ * region covering neighboring cells.
+ * Due to that, the matrix and rhs entries are filled up within this function.
+ * \param intersectionIterator Iterator of the intersection between cell I and J
  * \param cellDataI Data of cell I
- * \param first Flag if pressure field is unknown
  */
 template<class TypeTag>
 void FVPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& intersectionIterator,
@@ -742,7 +741,8 @@ void FVPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& in
 }
 
 //! Computes the transmissibility coefficients for the MPFA-l method
-/*  //       Indices used in a interaction volume of the MPFA-l method
+/*!  Indices used in a interaction volume of the MPFA-l method
+ * \verbatim
                ___________________________________________________
                | nux: cell geometry     | nx: face normal        |
                |                        | =integrationOuterNormal|
@@ -767,7 +767,14 @@ void FVPressure2P2CAdaptive<TypeTag>::getMpfaFlux(const IntersectionIterator& in
      _
      /` is a normal directing upwards to the right,
      while a normal directing downwards to the right looks like \;
+\endverbatim
 *
+* \param isIt Iterator to the current intersection
+* \param additionalIntersectionIt Iterator to the additional interface included in the second interaction region
+* \param T Transmissitivity matrix of the first unique interaction region
+* \param additionalT Transmissitivity matrix of the second non-unique interaction region
+* \param globalPos3 Unique interaction region: Position of the 3rd cell, the other neighbor on the hanging node
+* \param globalIdx3 Unique interaction region: Index of the 3rd cell, the other neighbor on the hanging node
 */
 template <class TypeTag>
 int FVPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const IntersectionIterator& isIt,
@@ -1071,19 +1078,29 @@ int FVPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersectio
 }
 
 // mpfa transmissibilities from mpfal2pfa
-//                 Indices used in a interaction volume of the MPFA-o method
-//                 |                        |                        |
-//                 |            4-----------3-----------3            |
-//                 |            | --> nu43  |  nu34 <-- |            |
-//                 |            | |nu41    1|--> n43   ||nu32        |
-//                 |            | v   ^     |0     ^   v|            |
-//                 |____________4__0__|n14__|__n23_|_1__2____________|
-//                 |            |    1    0 |     0     |            |
-//                 |            | ^         |1   nu23 ^ |            |
-//                 |            | |nu14    0|--> n12  | |            |
-//                 |            | -->nu12   |   nu21<-- |            |
-//                 |        J = 1-----------1-----------2 = I        |
-//                 |                        |                        |
+
+/*!                 Indices used in a interaction volume of the MPFA-o method
+ *
+ * \verbatim
+                 |                        |                        |
+                 |            4-----------3-----------3            |
+                 |            | --> nu43  |  nu34 <-- |            |
+                 |            | |nu41    1|--> n43   ||nu32        |
+                 |            | v   ^     |0     ^   v|            |
+                 |____________4__0__|n14__|__n23_|_1__2____________|
+                 |            |    1    0 |     0     |            |
+                 |            | ^         |1   nu23 ^ |            |
+                 |            | |nu14    0|--> n12  | |            |
+                 |            | -->nu12   |   nu21<-- |            |
+                 |        J = 1-----------1-----------2 = I        |
+                 |                        |                        |
+    \endverbatim.
+* \param isIt Iterator to the current intersection
+* \param face23_2p2cnaming Iterator to the second interface included in the unique interaction region = face23
+* \param additionalIntersectionIt Iterator to the intersection included in the second interaction region
+* \param corner1234 Center point of non-unique interaction region.
+* \param additionalT Transmissibility Matrix of non unique interaction region.
+*/
 template<class TypeTag>
 int FVPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const IntersectionIterator& isIt,
                                 const IntersectionIterator& face23_2p2cnaming,

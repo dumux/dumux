@@ -119,7 +119,13 @@ public:
     //initialization routine to prepare first timestep
     void initialize(bool solveTwice = false);
 
-    //pressure solution routine: update estimate for secants, assemble, solve.
+    /*! \brief Compositional pressure solution routine: update estimate for secants, assemble, solve.
+     * An update estime (transport step acoording to old pressure field) determines changes in
+     * mass, composition, wich is used to calculate volume derivatives entering the pressure
+     * equation, as well as an approximate guess for time step size for the storage terms in the
+     * p.e.
+     * Afterwards, the system is assembled and solved for pressure.
+     */
     void update()
     {
         //pre-transport to estimate update vector
@@ -148,7 +154,13 @@ public:
     /*! \name general methods for output */
     //@{
     //! \brief Write data files
-     /*  \param name file name */
+     /*! Adds pressure-related quantities, including numerical things such as the volume Error
+      * entering the pressure equation. Verobosity of the output can be triggered by
+      * the property / parameter VtkOutputLevel, with 0 putting out only primary
+      * variables and 4 being very verbose.
+      * \tparam MultiWriter Class defining the output writer
+      * \param writer  The output writer (usually a VTKMultiWriter object)
+      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -279,8 +291,13 @@ public:
         return;
     }
 
-    //! \brief Write additional debug info in a special writer
-    // used via pseudoTS thorugh the initialization procedure.
+    //! \brief Write additional debug info in a special writer.
+    /*!
+     * To visualize the different steps through the initialization procedure,
+     * we use very small pseudo time steps only for the writer!
+     * This is only for debugging of the initialization procedure.
+     * \param pseudoTS Time steps that only appear in the writer, not real.
+     */
     void initializationOutput(double pseudoTS = 0.)
     {
         std::cout << "Writing debug for current time step\n";

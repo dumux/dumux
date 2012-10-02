@@ -33,7 +33,7 @@
 
 /**
  * @file
- * @brief  Finite Volume 2p2c Diffusion Model
+ * @brief  Finite Volume 2p2c Pressure Model
  */
 
 namespace Dumux
@@ -132,6 +132,9 @@ template<class TypeTag> class FVPressure2P2C
     typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
 
 protected:
+    //! @copydoc FVPressure::EntryType
+    typedef Dune::FieldVector<Scalar, 2> EntryType;
+
     Problem& problem()
     {
         return problem_;
@@ -142,13 +145,13 @@ protected:
     }
 
 public:
-    void getSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
+    void getSource(EntryType&, const Element&, const CellData&, const bool);
 
-    void getStorage(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&, const bool);
+    void getStorage(EntryType&, const Element&, const CellData&, const bool);
 
-    void getFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&, const bool);
+    void getFlux(EntryType&, const Intersection&, const CellData&, const bool);
 
-    void getFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
+    void getFluxOnBoundary(EntryType&,
                             const Intersection&, const CellData&, const bool);
 
     //constitutive functions are initialized and stored in the variables object
@@ -869,9 +872,10 @@ void FVPressure2P2C<TypeTag>::getFluxOnBoundary(Dune::FieldVector<Scalar, 2>& en
 }
 
 //! updates secondary variables
-/*
+/*!
  * A loop through all elements updates the secondary variables stored in the variableclass
  * by using the updated primary variables.
+ * \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::updateMaterialLaws(bool postTimeStep)
@@ -893,9 +897,12 @@ void FVPressure2P2C<TypeTag>::updateMaterialLaws(bool postTimeStep)
     return;
 }
 //! updates secondary variables of one cell
-/* For each element, the secondary variables are updated according to the
- * primary variables.
+/*! For each element, the secondary variables are updated according to the
+ * primary variables. In case the method is called after the Transport,
+ * i.e. at the end / post time step, CellData2p2c.reset() resets the volume
+ * derivatives for the next time step.
  * \param elementI The element
+ * \param postTimeStep Flag indicating if we have just completed a time step
  */
 template<class TypeTag>
 void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& elementI, bool postTimeStep)
@@ -916,11 +923,6 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     if(postTimeStep)
         cellData.reset();
 
-//    // make shure total concentrations from solution vector are exact in fluidstate
-//    fluidState.setMassConcentration(wCompIdx,
-//            problem().transportModel().totalConcentration(wCompIdx,globalIdx));
-//    fluidState.setMassConcentration(nCompIdx,
-//            problem().transportModel().totalConcentration(nCompIdx,globalIdx));
     // get the overall mass of component 1 Z1 = C^k / (C^1+C^2) [-]
     Scalar Z1 = cellData.massConcentration(wCompIdx)
             / (cellData.massConcentration(wCompIdx)
