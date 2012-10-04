@@ -39,7 +39,7 @@ template <class TypeTag>
 class Stokes2cniTestProblem;
 
 //////////
-// Specify the properties for the stokes problem
+// Specify the properties for the stokes2cni problem
 //////////
 namespace Properties
 {
@@ -71,20 +71,18 @@ SET_BOOL_PROP(Stokes2cniTestProblem, EnableGravity, true);
 /*!
  * \ingroup BoxStokes2cniModel
  * \ingroup BoxTestProblems
- * \brief Stokes2cni problem with air (N2) flowing
- *        from the left to the right.
+ * \brief Stokes2cni problem with air flowing
+ *        from the bottom to the top, blowing away a warm and dry square.
  *
- * The domain is sized 1m times 1m. The boundary conditions for the momentum balances
+ * The domain is sized 1m times 1m. An air flow from the bottom boundary blows a warm and dry square,
+ * which is initially in the center of the domain out of the upper boundary.
+ * The boundary conditions for the momentum balances
  * are all set to Dirichlet. The mass balance has outflow boundary conditions, which are
- * replaced in the localresidual by the sum
- * of the two momentum balances. In the middle of the right boundary,
- * one vertex obtains Dirichlet bcs to fix the pressure at one point.
+ * replaced in the localresidual by the sum of the two momentum balances equations in case of Dirichlet bcs for the momentum balance.
+ * On the upper boundary a Dirichlet condition is set for the mass balance to fix the pressure.
+ * Gravity is on in this example.
  *
  * This problem uses the \ref BoxStokes2cniModel.
- *
- * This problem is non-stationary and can be simulated until \f$t_{\text{end}} =
- * 100\;s\f$ is reached. A good choice for the initial time step size
- * is \f$t_{\text{inital}} = 1\;s\f$.
  * To run the simulation execute the following line in shell:
  * <tt>./test_stokes2cni  -parameterFile ./test_stokes2cni.input</tt>
  */
@@ -159,14 +157,7 @@ public:
      */
     // \{
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param values The boundary types for the conservation equations
-     * \param vertex The vertex on the boundary for which the
-     *               conditions needs to be specified
-     */
+    //! \copydoc BoxProblem::boundaryTypes()
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
@@ -180,21 +171,13 @@ public:
                 !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
             values.setAllOutflow();
 
-        // set pressure at one point
+        // set pressure at the upper boundary
         if (onUpperBoundary_(globalPos) &&
                 !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
             values.setDirichlet(massBalanceIdx);
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex representing the "half volume on the boundary"
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
+    //! \copydoc BoxProblem::dirichlet()
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
@@ -202,16 +185,10 @@ public:
         initial_(values, globalPos);
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
+    //! \copydoc BoxProblem::neumann()
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
@@ -226,17 +203,10 @@ public:
      */
     // \{
 
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
-     */
+    //! \copydoc BoxProblem::source()
     void source(PrimaryVariables &values,
                 const Element &element,
-                const FVElementGeometry &,
+                const FVElementGeometry &fvGeometry,
                 int subControlVolumeIdx) const
     {
         // ATTENTION: The source term of the mass balance has to be chosen as
@@ -244,15 +214,10 @@ public:
         values = Scalar(0.0);
     }
 
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     */
+    //! \copydoc BoxProblem::initial()
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int scvIdx) const
     {
         const GlobalPosition &globalPos
@@ -272,13 +237,11 @@ private:
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = v1*(globalPos[0] - this->bboxMin()[0])*(this->bboxMax()[0] - globalPos[0])
                                    / (0.25*(this->bboxMax()[0] - this->bboxMin()[0])*(this->bboxMax()[0] - this->bboxMin()[0]));
-        values[pressureIdx] = 1e5 - 1.189*this->gravity()[1]*globalPos[1];
+        values[pressureIdx] = 1e5 + 1.189*this->gravity()[1]*globalPos[1];
         values[massOrMoleFracIdx] = 1e-4;
         values[temperatureIdx] = 283.15;
         if(globalPos[0]<0.75 && globalPos[0]>0.25 &&
                 globalPos[1]<0.75 && globalPos[1]>0.25)
-//        if(onLowerBoundary_(globalPos) &&
-//                !onLeftBoundary_(globalPos) && !onRightBoundary_(globalPos))
         {
             values[massOrMoleFracIdx] = 0.9e-4;
             values[temperatureIdx] = 284.15;
