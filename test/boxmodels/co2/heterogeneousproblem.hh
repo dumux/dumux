@@ -44,7 +44,6 @@
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
 #include <dumux/boxmodels/common/intersectiontovertexbc.hh>
 
-
 #include "heterogeneousspatialparameters.hh"
 #include "heterogeneousco2tables.hh"
 

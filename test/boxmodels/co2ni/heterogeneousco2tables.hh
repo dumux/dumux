@@ -24,10 +24,11 @@
  * \brief Provides the class with the tabulated values of CO2 for the
  *        benchmark3 problem
  */
-#ifndef DUMUX_HETEROGENEoUS_NI_CO2TABLES_HH
+#ifndef DUMUX_HETEROGENEOUS_NI_CO2TABLES_HH
 #define DUMUX_HETEROGENEOUS_NI_CO2TABLES_HH
 
-#include <assert.h>
+#include <cassert>
+#include <dumux/material/components/co2tablereader.hh>
 
 namespace Dumux
 {

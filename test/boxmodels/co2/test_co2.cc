@@ -25,9 +25,7 @@
  * \brief Test for the 2p2c box model.
  */
 #include "config.h"
-//#include <dumux/config.h>
 #include "heterogeneousproblem.hh"
-//#include "injectionproblem.hh"
 
 #include <dumux/common/start.hh>
 
