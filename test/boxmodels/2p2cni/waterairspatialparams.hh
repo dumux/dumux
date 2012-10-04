@@ -188,9 +188,10 @@ public:
     }
 
     /*!
-     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
+     * \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the porous material.
      *
-     * This is only required for non-isothermal models.
+     * This is only required for non-isothermal models and is multiplied by the
+     * density of the porous material and the porosity.
      *
      * \param element The finite element
      * \param fvGeometry The finite volume geometry

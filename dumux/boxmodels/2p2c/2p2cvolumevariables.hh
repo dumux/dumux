@@ -146,7 +146,7 @@ public:
             relativePermeability_[phaseIdx] = kr;
             Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
 
-            // binary diffusion coefficents
+            // binary diffusion coefficients
             diffCoeff_[phaseIdx] =
                 FluidSystem::binaryDiffusionCoefficient(fluidState_,
                                                         paramCache,
@@ -450,6 +450,6 @@ private:
 
 };
 
-} // end namepace
+} // end namespace
 
 #endif

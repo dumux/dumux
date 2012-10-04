@@ -112,7 +112,7 @@ protected:
      * \param sol The solution primary variables
      * \param problem The problem
      * \param element The element
-     * \param fvGeometry Evaluate function with solution of current or previous time step
+     * \param fvGeometry The current finite volume geometry of the element
      * \param scvIdx The local index of the SCV (sub-control volume)
      * \param isOldSol Evaluate function with solution of current or previous time step
      */
@@ -123,7 +123,7 @@ protected:
                        const int scvIdx,
                        bool isOldSol)
     {
-        // copmute and set the heat capacity of the solid phase
+        // compute and set the heat capacity of the solid phase
         heatCapacity_ = problem.spatialParams().heatCapacity(element, fvGeometry, scvIdx);
         Valgrind::CheckDefined(heatCapacity_);
     };
@@ -131,6 +131,6 @@ protected:
     Scalar heatCapacity_;
 };
 
-} // end namepace
+} // end namespace
 
 #endif

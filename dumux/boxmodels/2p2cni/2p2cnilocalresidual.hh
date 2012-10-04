@@ -79,7 +79,7 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param storage The storage of the conservation quantitiy (mass or energy) within the sub-control volume
+     *  \param storage The storage of the conservation quantity (mass or energy) within the sub-control volume
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
@@ -92,7 +92,7 @@ public:
         // time step is used, otherwise the current solution is
         // used. The secondary variables are used accordingly.  This
         // is required to compute the derivative of the storage term
-        // using the implicit euler method.
+        // using the implicit Euler method.
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
 
@@ -100,14 +100,14 @@ public:
         storage[energyEqIdx] =
             volVars.porosity()*(volVars.density(wPhaseIdx) *
                                 volVars.internalEnergy(wPhaseIdx) *
-                                //vertDat.enthalpy(wPhaseIdx) *
                                 volVars.saturation(wPhaseIdx)
                                 +
                                 volVars.density(nPhaseIdx) *
                                 volVars.internalEnergy(nPhaseIdx) *
-                                //vertDat.enthalpy(nPhaseIdx) *
                                 volVars.saturation(nPhaseIdx))
             +
+            // heat capacity is already multiplied by the density
+            // of the porous material and the porosity in the problem file
             volVars.temperature()*volVars.heatCapacity();
     }
 
