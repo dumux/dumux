@@ -33,6 +33,7 @@
 //Dumux-includes
 #include <dumux/decoupled/common/decoupledproperties.hh>
 #include "2pindices.hh"
+#include <dumux/material/spatialparams/fvspatialparams.hh>
 
 namespace Dumux
 {
@@ -75,7 +76,7 @@ NEW_PROP_TAG( FluidState );//!< Defines the fluid state
 
 //! \cond \private
 // keep only for compatibility with box models
-NEW_PROP_TAG( TwoPIndices );
+NEW_PROP_TAG( TwoPIndices );//DEPRECATED
 //! \endcond
 
 NEW_PROP_TAG( ImpetErrorTermFactor ); //!< Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
@@ -124,7 +125,7 @@ typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 /** \cond \private
  *  \deprecated TwoPIndices property
  */
-SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));//DEPRECATED
 //! \endcond
 
 //! Set the default pressure formulation according to the chosen two-phase formulation
@@ -163,8 +164,11 @@ private:
 public:
     typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
 };
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(DecoupledTwoP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(DecoupledTwoP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(DecoupledTwoP, SpatialParameters, FVSpatialParams<TypeTag>);//DEPRECATED
 
 /*!
  * \brief Set the property for the material parameters by extracting
@@ -189,8 +193,9 @@ SET_SCALAR_PROP(DecoupledTwoP, ErrorTermLowerBound, 0.1);//DEPRECATED
 SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermUpperBound, GET_PROP_VALUE(TypeTag, ErrorTermUpperBound));
 SET_SCALAR_PROP(DecoupledTwoP, ErrorTermUpperBound, 0.9);//DEPRECATED
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(DecoupledTwoP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(DecoupledTwoP, EnableGravity, true);//DEPRECATED
 // \}
 }
 

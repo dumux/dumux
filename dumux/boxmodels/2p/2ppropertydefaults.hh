@@ -38,9 +38,9 @@
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
-
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
 #include <dumux/material/fluidstates/immisciblefluidstate.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 
 namespace Dumux
 {
@@ -80,15 +80,15 @@ SET_SCALAR_PROP(BoxTwoP, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, M
 SET_SCALAR_PROP(BoxTwoP, MobilityUpwindWeight, 1.0);//DEPRECATED
 
 //! The indices required by the isothermal 2p model
+SET_TYPE_PROP(BoxTwoP, Indices, typename GET_PROP_TYPE(TypeTag, TwoPIndices));
 SET_TYPE_PROP(BoxTwoP,
-              Indices,
-              TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);
+              TwoPIndices,
+              TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);//DEPRECATED
 
-//! DEPRECATED TwoPIndices property
-SET_TYPE_PROP(BoxTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxTwoP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(BoxTwoP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(BoxTwoP, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
 
 /*!
  * \brief Set the property for the material parameters by extracting
@@ -137,8 +137,9 @@ public:
 SET_BOOL_PROP(BoxTwoP, VtkAddVelocity, GET_PROP_VALUE(TypeTag, EnableVelocityOutput));
 SET_BOOL_PROP(BoxTwoP, EnableVelocityOutput, false);//DEPRECATED
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxTwoP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxTwoP, EnableGravity, true);//DEPRECATED
 }
 //
 

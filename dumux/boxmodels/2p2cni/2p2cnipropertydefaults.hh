@@ -64,20 +64,13 @@ SET_TYPE_PROP(BoxTwoPTwoCNI, VolumeVariables, TwoPTwoCNIVolumeVariables<TypeTag>
 SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVariables, TwoPTwoCNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal 2p2c model
-SET_PROP(BoxTwoPTwoCNI, Indices)
+SET_TYPE_PROP(BoxTwoPTwoCNI, Indices, typename GET_PROP_TYPE(TypeTag, TwoPTwoCNIIndices));
+SET_PROP(BoxTwoPTwoCNI, TwoPTwoCNIIndices) //DEPRECATED
 { private:
     enum { formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
     typedef TwoPTwoCNIIndices<TypeTag, formulation, 0> type;
 };
-
-//! DEPRECATED TwoPTwoCIndices and TwoPTwoCNIIndices properties
-SET_TYPE_PROP(BoxTwoPTwoCNI, TwoPTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-SET_TYPE_PROP(BoxTwoPTwoCNI, TwoPTwoCNIIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-
-
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxTwoPTwoCNI, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
 
 }
 

@@ -38,6 +38,7 @@
 
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/2pimmisciblefluidsystem.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 
 namespace Dumux
 {
@@ -78,13 +79,13 @@ SET_SCALAR_PROP(BoxRichards, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTa
 SET_SCALAR_PROP(BoxRichards, MobilityUpwindWeight, 1.0);// DEPRECATED
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(BoxRichards, Indices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(BoxRichards, Indices, typename GET_PROP_TYPE(TypeTag, RichardsIndices));
+SET_TYPE_PROP(BoxRichards, RichardsIndices, RichardsIndices<TypeTag>);//DEPRECATED
 
-//! DEPRECATED RichardsIndices property
-SET_TYPE_PROP(BoxRichards, RichardsIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxRichards, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(BoxRichards, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(BoxRichards, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
 
 /*!
  * \brief Set type of the parameter objects for the material law
@@ -153,8 +154,9 @@ public:
                                                 NonwettingPhase> type;
 };
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxRichards, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxRichards, EnableGravity, true);//DEPRECATED
 
 // \}
 }

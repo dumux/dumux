@@ -31,6 +31,7 @@
 #include <dumux/decoupled/common/pressureproperties.hh>
 #include <dumux/decoupled/common/transportproperties.hh>
 #include <dumux/decoupled/common/impetproperties.hh>
+#include <dumux/material/spatialparams/fvspatialparams.hh>
 
 namespace Dumux
 {
@@ -161,7 +162,10 @@ SET_TYPE_PROP(DecoupledTwoPTwoC, CellData, CellData2P2C<TypeTag>);
 SET_TYPE_PROP(DecoupledTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
 
 
-SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));//!< DEPRECATED SpatialParameters property
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(DecoupledTwoPTwoC, SpatialParameters, FVSpatialParams<TypeTag>);//DEPRECATED
 
 SET_BOOL_PROP(DecoupledTwoPTwoC, ImpetEnableVolumeIntegral, GET_PROP_VALUE(TypeTag,EnableVolumeIntegral)); //!< Regard volume integral in pressure equation
 SET_BOOL_PROP(DecoupledTwoPTwoC, EnableVolumeIntegral, true); //!< DEPRECATED Regard volume integral in pressure equation
@@ -173,8 +177,9 @@ SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermLowerBound, 0.2); //!< Lower bound w
 SET_SCALAR_PROP(DecoupledTwoPTwoC, ImpetErrorTermUpperBound, GET_PROP_VALUE(TypeTag, ErrorTermUpperBound)); //!< Upper bound for regularized error damping
 SET_SCALAR_PROP(DecoupledTwoPTwoC, ErrorTermUpperBound, 0.9); //!< Upper bound for regularized error damping
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(DecoupledTwoPTwoC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(DecoupledTwoPTwoC, EnableGravity, true);//DEPRECATED
 }
 
 /*!

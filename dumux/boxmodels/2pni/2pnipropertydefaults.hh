@@ -63,11 +63,8 @@ SET_TYPE_PROP(BoxTwoPNI, VolumeVariables, TwoPNIVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxTwoPNI, FluxVariables, TwoPNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal two-phase model
-SET_TYPE_PROP(BoxTwoPNI, Indices, TwoPNIIndices<TypeTag, 0>);
-
-//! DEPRECATED TwoPIndices and TwoPNIIndices properties
-SET_TYPE_PROP(BoxTwoPNI, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-SET_TYPE_PROP(BoxTwoPNI, TwoPNIIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+SET_TYPE_PROP(BoxTwoPNI, Indices, typename GET_PROP_TYPE(TypeTag, TwoPNIIndices));
+SET_TYPE_PROP(BoxTwoPNI, TwoPNIIndices, TwoPNIIndices<TypeTag, 0>);
 
 }
 

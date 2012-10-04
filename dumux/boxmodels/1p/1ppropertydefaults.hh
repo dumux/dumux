@@ -38,8 +38,8 @@
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
-
 #include <dumux/material/fluidsystems/1pfluidsystem.hh>
+#include <dumux/material/spatialparams/boxspatialparams1p.hh>
 
 namespace Dumux
 {
@@ -67,13 +67,13 @@ SET_TYPE_PROP(BoxOneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxOneP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(BoxOneP, Indices, OnePIndices);
+SET_TYPE_PROP(BoxOneP, Indices, typename GET_PROP_TYPE(TypeTag, OnePIndices));
+SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);//DEPRECATED
 
-//! DEPRECATED OnePIndices property
-SET_TYPE_PROP(BoxOneP, OnePIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParamsOneP by default.
+SET_TYPE_PROP(BoxOneP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(BoxOneP, SpatialParameters, BoxSpatialParamsOneP<TypeTag>);//DEPRECATED
 
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
@@ -95,8 +95,9 @@ public:
     typedef Dumux::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
 };
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxOneP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxOneP, EnableGravity, true);//DEPRECATED
 
 // \}
 } // end namepace Properties

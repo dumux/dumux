@@ -37,6 +37,8 @@
 #include "1p2cfluxvariables.hh"
 #include "1p2cindices.hh"
 
+#include <dumux/material/spatialparams/boxspatialparams1p.hh>
+
 namespace Dumux
 {
 // \{
@@ -69,19 +71,20 @@ SET_SCALAR_PROP(BoxOnePTwoC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, U
 SET_SCALAR_PROP(BoxOnePTwoC, UpwindWeight, 1.0);//DEPRECATED!!
 
 //! Set the indices used by the 1p2c model
-SET_TYPE_PROP(BoxOnePTwoC, Indices, Dumux::OnePTwoCIndices<TypeTag, 0>);
+SET_TYPE_PROP(BoxOnePTwoC, Indices, typename GET_PROP_TYPE(TypeTag, OnePTwoCIndices));
+SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, Dumux::OnePTwoCIndices<TypeTag, 0>);//DEPRECATED
 
-//! DEPRECATED OnePTwoCIndices property
-SET_TYPE_PROP(BoxOnePTwoC, OnePTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxOnePTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParamsOneP by default.
+SET_TYPE_PROP(BoxOnePTwoC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(BoxOnePTwoC, SpatialParameters, BoxSpatialParamsOneP<TypeTag>);//DEPRECATED
 
 //! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(BoxOnePTwoC, PhaseIdx, 0);
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxOnePTwoC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxOnePTwoC, EnableGravity, true);//DEPRECATED
 }
 // \}
 }

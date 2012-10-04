@@ -70,10 +70,8 @@ SET_TYPE_PROP(BoxStokes2c, VolumeVariables, Stokes2cVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxStokes2c, FluxVariables, Stokes2cFluxVariables<TypeTag>);
 
 //! Set the Indices for the Stokes2c model.
-SET_TYPE_PROP(BoxStokes2c, Indices, Stokes2cCommonIndices<TypeTag>);
-
-//! DEPRECATED Set the Indices for the Stokes2c model.
-SET_TYPE_PROP(BoxStokes2c, Stokes2cIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+SET_TYPE_PROP(BoxStokes2c, Indices, typename GET_PROP_TYPE(TypeTag, Stokes2cIndices));
+SET_TYPE_PROP(BoxStokes2c, Stokes2cIndices, Stokes2cCommonIndices<TypeTag>);//DEPRECATED
 
 //! Set the number of components to 2
 SET_INT_PROP(BoxStokes2c, NumComponents, 2);

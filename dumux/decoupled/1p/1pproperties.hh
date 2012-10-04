@@ -30,6 +30,7 @@
 
 //Dumux-includes
 #include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dumux/material/spatialparams/fvspatialparams1p.hh>
 
 namespace Dumux
 {
@@ -98,11 +99,14 @@ SET_TYPE_PROP(DecoupledOneP, Variables, VariableClass<TypeTag>);
 //! Set standart CellData of immiscible one-phase models as default
 SET_TYPE_PROP(DecoupledOneP, CellData, CellData1P<TypeTag>);
 
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(DecoupledOneP, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(DecoupledOneP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(DecoupledOneP, SpatialParameters, FVSpatialParamsOneP<TypeTag>);//DEPRECATED
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(DecoupledOneP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(DecoupledOneP, EnableGravity, true);//DEPRECATED
 }
 }
 #endif

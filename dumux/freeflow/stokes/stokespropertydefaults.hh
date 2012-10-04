@@ -116,10 +116,8 @@ public:
 };
 
 //! Set the indices used by the Stokes model
-SET_TYPE_PROP(BoxStokes, Indices, StokesCommonIndices<TypeTag>);
-
-//! DEPRECATED Set the indices used by the Stokes model
-SET_TYPE_PROP(BoxStokes, StokesIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+SET_TYPE_PROP(BoxStokes, Indices, typename GET_PROP_TYPE(TypeTag, StokesIndices));
+SET_TYPE_PROP(BoxStokes, StokesIndices, StokesCommonIndices<TypeTag>);//DEPRECATED
 
 //! Choose the type of the employed fluid state.
 SET_PROP(BoxStokes, FluidState)
@@ -152,8 +150,9 @@ SET_SCALAR_PROP(BoxStokes, StabilizationAlpha, 0.0);//DEPRECATED
 SET_SCALAR_PROP(BoxStokes, StokesStabilizationBeta, GET_PROP_VALUE(TypeTag, StabilizationBeta));
 SET_SCALAR_PROP(BoxStokes, StabilizationBeta, 0.0);//DEPRECATED
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxStokes, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxStokes, EnableGravity, true);//DEPRECATED
 
 }
 

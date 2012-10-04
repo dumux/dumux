@@ -68,10 +68,8 @@ SET_TYPE_PROP(BoxStokes2cni, VolumeVariables, Stokes2cniVolumeVariables<TypeTag>
 SET_TYPE_PROP(BoxStokes2cni, FluxVariables, Stokes2cniFluxVariables<TypeTag>);
 
 // Set the indices for the Stokes2cni model
-SET_TYPE_PROP(BoxStokes2cni, Indices, Stokes2cniCommonIndices<TypeTag>);
-
-// DEPRECATED Set the indices for the Stokes2cni model
-SET_TYPE_PROP(BoxStokes2cni, Stokes2cniIndices,  typename GET_PROP_TYPE(TypeTag, Indices));
+SET_TYPE_PROP(BoxStokes2cni, Indices,  typename GET_PROP_TYPE(TypeTag, Stokes2cniIndices));
+SET_TYPE_PROP(BoxStokes2cni, Stokes2cniIndices, Stokes2cniCommonIndices<TypeTag>);
 }
 }
 #endif

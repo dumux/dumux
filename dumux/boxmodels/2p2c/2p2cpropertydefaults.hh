@@ -37,6 +37,7 @@
 #include "2p2cnewtoncontroller.hh"
 
 #include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 
 namespace Dumux
 {
@@ -132,26 +133,27 @@ SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);//DEPRECATED
 SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p2c model
+SET_TYPE_PROP(BoxTwoPTwoC, Indices, typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices));
 SET_PROP(BoxTwoPTwoC,
-         Indices)
+         TwoPTwoCIndices) //DEPRECATED
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
     typedef TwoPTwoCIndices<TypeTag, Formulation, 0> type;
 };
 
-//! DEPRECATED TwoPTwoCIndices property
-SET_TYPE_PROP(BoxTwoPTwoC, TwoPTwoCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxTwoPTwoC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(BoxTwoPTwoC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(BoxTwoPTwoC, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
 
 // disable velocity output by default
 SET_BOOL_PROP(BoxTwoPTwoC, VtkAddVelocity, GET_PROP_VALUE(TypeTag, EnableVelocityOutput));
 SET_BOOL_PROP(BoxTwoPTwoC, EnableVelocityOutput, false);
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxTwoPTwoC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxTwoPTwoC, EnableGravity, true);//DEPRECATED
 
 //
 }

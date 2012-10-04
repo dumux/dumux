@@ -35,6 +35,7 @@
 #include "energy/mpncvtkwriterenergy.hh"
 
 #include <dumux/material/constraintsolvers/compositionfromfugacities.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 
 
 /*!
@@ -163,10 +164,8 @@ SET_TYPE_PROP(BoxMPNC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
 SET_BOOL_PROP(BoxMPNC, NewtonEnableChop, true);
 
 //! The indices required by the mpnc model
-SET_PROP(BoxMPNC, Indices)
-{
-    typedef MPNCIndices<TypeTag, 0> type;
-};
+SET_TYPE_PROP(BoxMPNC, Indices, typename GET_PROP_TYPE(TypeTag, MPNCIndices));
+SET_TYPE_PROP(BoxMPNC, MPNCIndices, MPNCIndices<TypeTag, 0>);//DEPRECATED
 
 //! the upwind weight for the mass conservation equations.
 SET_SCALAR_PROP(BoxMPNC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
@@ -176,11 +175,10 @@ SET_SCALAR_PROP(BoxMPNC, MassUpwindWeight, 1.0);//DEPRECATED
 SET_SCALAR_PROP(BoxMPNC, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
 SET_SCALAR_PROP(BoxMPNC, MobilityUpwindWeight, 1.0);//DEPRECATED
 
-//! DEPRECATED MPNCIndices property
-SET_TYPE_PROP(BoxMPNC, MPNCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
-
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxMPNC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(BoxMPNC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(BoxMPNC, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
 
 //! The VTK writer module for common quantities
 SET_PROP(BoxMPNC, MPNCVtkCommonModule)
@@ -276,8 +274,9 @@ SET_BOOL_PROP(BoxMPNC, MPNCVtkAddNusselt, false);//DEPRECATED
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddInterfacialArea, false);//DEPRECATED
 SET_BOOL_PROP(BoxMPNC, MPNCVtkAddxEquil, false);//DEPRECATED
 
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxMPNC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxMPNC, EnableGravity, true);//DEPRECATED
 
 }
 

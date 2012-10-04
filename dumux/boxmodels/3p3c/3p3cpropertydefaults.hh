@@ -39,6 +39,7 @@
 // #include "3p3cboundaryvariables.hh"
 
 #include <dumux/boxmodels/common/boxdarcyfluxvariables.hh>
+#include <dumux/material/spatialparams/boxspatialparams.hh>
 
 namespace Dumux
 {
@@ -120,16 +121,17 @@ SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMobilityUpwindWeight, 1.0);
 SET_BOOL_PROP(BoxThreePThreeC, UseConstraintSolver, false);
 
 //! The indices required by the isothermal 3p3c model
-SET_TYPE_PROP(BoxThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
+SET_TYPE_PROP(BoxThreePThreeC, Indices, typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices));
+SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);//DEPRECATED
 
-//! DEPRECATED ThreePThreeCIndices property
-SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, typename GET_PROP_TYPE(TypeTag, Indices));
+//! The spatial parameters to be employed. 
+//! Use BoxSpatialParams by default.
+SET_TYPE_PROP(BoxThreePThreeC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
+SET_TYPE_PROP(BoxThreePThreeC, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
 
-//! DEPRECATED SpatialParameters property
-SET_TYPE_PROP(BoxThreePThreeC, SpatialParameters, typename GET_PROP_TYPE(TypeTag, SpatialParams));
-
-//Has to be removed if DEPRECATED EnableGravity is removed!
+// enable gravity by default
 SET_BOOL_PROP(BoxThreePThreeC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
+SET_BOOL_PROP(BoxThreePThreeC, EnableGravity, true);//DEPRECATED
 }
 
 }
