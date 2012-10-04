@@ -189,7 +189,7 @@ protected:
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //! vector holding next subdomain
     const GlobalPosition& gravity_; //!< vector including the gravity constant
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    Dune::Timer timer_;
+    Dune::Timer timer_; //!> A timer for the time spent on the multiphysics framework.
 
     //! Indices of matrix and rhs entries
     /**
@@ -298,6 +298,16 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
     return;
 }
 
+//! Assembles the source term
+/** The source is translated into a volumentric source term:
+ * \f[ V_i \sum_{\kappa} \frac{1}{\varrho} q^{\kappa}_i \; , \f]
+ * because under singlephase conditions
+ * \f[ \frac{\partial v_{t}}{\partial C^{\kappa}} \approx \frac{1}{\varrho} \f].
+ * \param sourceEntry The Matrix and RHS entries
+ * \param elementI The element I
+ * \param cellDataI Data of cell I
+ * \param first Flag if pressure field is unknown
+ */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::get1pSource(Dune::FieldVector<Scalar, 2>& sourceEntry, const Element& elementI, const CellData& cellDataI)
 {
@@ -317,7 +327,17 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pSource(Dune::FieldVector<Scalar, 
     return;
 }
 
-
+//! Assembles the storage term for a 1p cell in a multiphysics framework
+/** The storage term comprises the (single-phase) compressibility (due to a change in
+ * pressure from last timestep):
+ *  \f[ V_i c_{i} \frac{p^t_i - p^{t-\Delta t}_i}{\Delta t} \f]
+ * and the damped error introduced by the incorrect transport of the last timestep:
+ *  \f[ V_i \alpha_r \frac{v_{t} - \phi}{\Delta t} \f].
+ * The latter is damped according to Fritz 2011.
+ * \param storageEntry The Matrix and RHS entries
+ * \param elementI The element I
+ * \param cellDataI Data of cell I
+ */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar, 2>& storageEntry,
                                                         const Element& elementI,
@@ -422,8 +442,19 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
     return;
 }
 
-
-
+/*! \brief The compositional single-phase flux in the multiphysics framework
+ *
+ * If only single-phase conditions are encountered, the flux expression simplifies to (written for the
+ * case where the wetting phase is only present):
+   \f[
+          A_{\gamma} \mathbf{n}_{\gamma}^T \mathbf{K}
+      \varrho_w \lambda_w \mathbf{d}_{ij} \left( \frac{p_{w,j}^t - p^{t}_{w,i}}{\Delta x} + \varrho_{w} \mathbf{g}^T \mathbf{d}_{ij} \right) .
+   \f]
+ *
+ * \param entries The Matrix and RHS entries
+ * \param intersection Intersection between cell I and J
+ * \param cellDataI Data of cell I
+ */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>& entries,
         const Intersection& intersection, const CellData& cellDataI)
@@ -514,6 +545,22 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         return;
 }
 
+/*! \brief The compositional single-phase flux in the multiphysics framework
+ *
+ * If only single-phase conditions are encountered, the flux expression simplifies to (written for the
+ * case where the wetting phase is only present):
+   \f[
+          A_{\gamma} \mathbf{n}_{\gamma}^T \mathbf{K}
+      \varrho_w \lambda_w \mathbf{d}_{i-Boundary} \left( \frac{p_{w,Boundary}^t - p^{t}_{w,i}}{\Delta x}
+      + \varrho_{w} \mathbf{g}^T \mathbf{d}_{i-Boundary} \right) .
+   \f]
+ *
+ * If a Neumann BC is set, the given (mass-)flux is directly multiplied by the volume derivative and inserted.
+ *
+ * \param entries The Matrix and RHS entries
+ * \param intersection Intersection between cell I and J
+ * \param cellDataI Data of cell I
+ */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<Scalar, 2>& entries,
         const Intersection& intersection, const CellData& cellDataI)
@@ -661,9 +708,13 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 
 //! constitutive functions are updated once if new concentrations are calculated and stored in the variables container
 /*!
- * In contrast to the standard sequential 2p2c model, this method also holds routines
- * to adapt the subdomain. The subdomain indicates weather we are in 1p domain (value = 1)
+ * In contrast to the standard sequential 2p2c model ( FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws() ),
+ * this method also holds routines to adapt the subdomain. The subdomain indicates weather we are in 1p domain (value = 1)
  * or in the two phase subdomain (value = 2).
+ * Note that the type of flash, i.e. the type of FluidState (FS), present in each cell does not have to
+ * coincide with the subdomain. If a cell will be simple and was complex, a complex FS is available, so next time step
+ * will use this complex FS, but updateMaterialLaw afterwards will finally transform that to simple FS.
+ *  \param postTimeStep Flag indicating method is called from Problem::postTimeStep()
  */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
@@ -766,6 +817,14 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
 
     return;
 }
+
+//! updates secondary variables of one single phase cell
+/*! For each element, the secondary variables are updated according to the
+ * primary variables. Only a simple flash calulation has to be carried out,
+ * as phase distribution is already known: single-phase.
+ * \param elementI The element
+ * \param postTimeStep Flag indicating if we have just completed a time step
+ */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const Element& elementI, CellData& cellData, bool postTimeStep)
 {

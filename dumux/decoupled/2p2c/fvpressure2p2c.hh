@@ -181,8 +181,8 @@ public:
 
 protected:
     Problem& problem_;
-    Scalar maxError_;
-    bool enableVolumeIntegral;
+    Scalar maxError_; //!> Maximum volume error of all cells
+    bool enableVolumeIntegral; //!> Enables the volume integral of the pressure equation
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening
@@ -198,7 +198,7 @@ private:
 };
 
 
-//! function which assembles the system of equations to be solved
+//! Assembles the source term
 /** for first == true, a source is implemented as in FVPressure2P.
  * for first == false, the source is translated into a volumentric source term:
  * \f[ V_i \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} q^{\kappa}_i  \f].
@@ -241,7 +241,8 @@ void FVPressure2P2C<TypeTag>::getSource(Dune::FieldVector<Scalar, 2>& sourceEntr
 
     return;
 }
-//! function which assembles the system of equations to be solved
+
+//! Assembles the storage term
 /** for first == true, there is no storage contribution.
  * for first == false, the storage term comprises the compressibility (due to a change in
  * pressure from last timestep):
@@ -328,18 +329,18 @@ void FVPressure2P2C<TypeTag>::getStorage(Dune::FieldVector<Scalar, 2>& storageEn
 
 //! Get flux at an interface between two cells
 /** for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
- * for first == false, the flux thorugh \f$ \gamma{ij} \f$  is calculated via a volume balance formulation
- *  \f[ - A_{\gamma_{ij}} \cdot \mathbf{K} \cdot \mathbf{u} \cdot (\mathbf{n}_{\gamma_{ij}} \cdot \mathbf{u})
-      \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} X^{\kappa}_{\alpha}
-    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right)
-    + V_i \frac{A_{\gamma_{ij}}}{U_i} \mathbf{K}
-    \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa}
-\frac{\frac{\partial v_{t,j}}{\partial C^{\kappa}_j}-\frac{\partial v_{t,i}}{\partial C^{\kappa}_i}}{\Delta x} X^{\kappa}_{\alpha}
-    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \f]
+ * for first == false, the flux thorugh \f$ \gamma \f$  is calculated via a volume balance formulation
+ *  \f[ - A_{\gamma} \mathbf{n}^T_{\gamma} \mathbf{K}  \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
+     \mathbf{d}_{ij}  \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
+                \sum_{\kappa} X^{\kappa}_{\alpha} \frac{\partial v_{t}}{\partial C^{\kappa}}
+    + V_i \frac{A_{\gamma}}{U_i} \mathbf{d}^T \mathbf{K} \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
+     \mathbf{d}_{ij}  \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
+          \sum_{\kappa} X^{\kappa}_{\alpha}
+          \frac{\frac{\partial v_{t,j}}{\partial C^{\kappa}_j}-\frac{\partial v_{t,i}}{\partial C^{\kappa}_i}}{\Delta x} \f]
  * This includes a boundary integral and a volume integral, because
  *  \f$ \frac{\partial v_{t,i}}{\partial C^{\kappa}_i} \f$ is not constant.
- * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
- * represents the normal of the face \f$ \gamma{ij} \f$.
+ * Here, \f$ \mathbf{d}_{ij} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma} \f$
+ * represents the normal of the face \f$ \gamma \f$.
  * \param entries The Matrix and RHS entries
  * \param intersection Intersection between cell I and J
  * \param cellDataI Data of cell I
@@ -612,14 +613,16 @@ void FVPressure2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& entries,
 
 //! Get flux on Boundary
 /** for first == true, the flux is calculated in traditional fractional-flow forn as in FVPressure2P.
- * for first == false, the flux thorugh \f$ \gamma{ij} \f$  is calculated via a volume balance formulation
- *  \f[ - A_{\gamma_{ij}} \cdot \mathbf{K} \cdot \mathbf{u} \cdot (\mathbf{n}_{\gamma_{ij}} \cdot \mathbf{u})
-      \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} X^{\kappa}_{\alpha}
-    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}\right) \;, \f]
+ * for first == false, the flux thorugh \f$ \gamma \f$  is calculated via a volume balance formulation
+ *  \f[ - A_{\gamma} \mathbf{n}^T_{\gamma} \mathbf{K} \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha} \mathbf{d}_{ij}
+    \left( \frac{p_{\alpha,j}^t - p^{t}_{\alpha,i}}{\Delta x} + \varrho_{\alpha} \mathbf{g}^T \mathbf{d}_{ij} \right)
+    \sum_{\kappa} \frac{\partial v_{t}}{\partial C^{\kappa}} X^{\kappa}_{\alpha} \;, \f]
  * where we skip the volume integral assuming  \f$ \frac{\partial v_{t,i}}{\partial C^{\kappa}_i} \f$
  * to be constant at the boundary.
- * Here, \f$ \mathbf{u} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma_{ij}} \f$
- * represents the normal of the face \f$ \gamma{ij} \f$.
+ * Here, \f$ \mathbf{d}_{ij} \f$ is the normalized vector connecting the cell centers, and \f$ \mathbf{n}_{\gamma} \f$
+ * represents the normal of the face \f$ \gamma \f$.
+ *
+ * If a Neumann BC is set, the given (mass-)flux is directly multiplied by the volume derivative and inserted.
  * \param entries The Matrix and RHS entries
  * \param intersection Intersection between cell I and J
  * \param cellDataI Data of cell I

@@ -31,13 +31,13 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
+// include 2p mpfa pressure model
+#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
+#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2pfaboundpressure2padaptive.hh>
+
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
-
-// include pressure model from Markus
-#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
-#include <dumux/decoupled/2p/diffusion/fvmpfa/lmethod/fvmpfal2pfaboundpressure2padaptive.hh>
 
 /**
  * @file
@@ -47,6 +47,13 @@
 
 namespace Dumux
 {
+namespace Properties
+{
+// forward declaration of properties
+NEW_PROP_TAG(GridAdaptEnableMultiPointFluxApproximation);
+NEW_PROP_TAG(GridAdaptEnableSecondHalfEdge);
+}
+
 //! The finite volume model for the solution of the compositional pressure equation
 /*! \ingroup multiphase
  *  Provides a Finite Volume implementation for the pressure equation of a compressible
@@ -64,10 +71,11 @@ namespace Dumux
  *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
- *
- * The pressure base class FVPressure assembles the matrix and right-hand-side vector and solves for the pressure vector,
- * whereas this class provides the actual entries for the matrix and RHS vector.
  * The partial derivatives of the actual fluid volume \f$ v_{total} \f$ are gained by using a secant method.
+ *
+ * This adaptive implementation uses its own initialization and assembling methods for matrix and right-hand-side vector,
+ * but solution is done by the base class FVPressure. Fluxes near hanging nodes can be
+ * calculated using an \a mpfa method.
  *
  * \tparam TypeTag The Type Tag
  */
@@ -151,6 +159,7 @@ public:
     void initializeMatrix();
     //function which assembles the system of equations to be solved
     void assemble(bool first);
+
     void getMpfaFlux(const IntersectionIterator&, const CellData&);
 
     // mpfa transmissibilities
@@ -213,12 +222,12 @@ protected:
             GlobalPosition&,
             TransmissivityMatrix&);
 
-    // Matrix for vector rotation of mpfa
-    // introduce matrix R for vector rotation and R is initialized as zero matrix
+    //! Matrix for vector rotation used in mpfa
     DimMatrix R_;
-    bool enableVolumeIntegral;
-    bool enableMPFA;
-    bool enableSecondHalfEdge;
+    bool enableVolumeIntegral; //!> Enables the volume integral of the pressure equation
+    bool enableMPFA; //!> Enables mpfa method to calculate the fluxes near hanging nodes
+    bool enableSecondHalfEdge; //!> If possible, 2 interaction volumes are used for the mpfa method near hanging nodes
+    //! The 2p Mpfa pressure module, that is only used for the calulation of transmissibility of the second interaction volumes
     FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>* pressureModelAdaptive2p_;
 };
 
@@ -468,7 +477,15 @@ void FVPressure2P2CAdaptive<TypeTag>::assemble(bool first)
 }
 
 //! Compute flux over an irregular interface using a \a mpfa method
-/** TODO: Insert correct formulas!
+/** A mpfa l-method is applied to calculate fluxes near hanging nodes, using:
+ * \f[
+      - \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
+        \left( \sum_k \tau_{2k} p^t_{\alpha,k} + \varrho_{\alpha} \sum_k \tau_{2k} \mathbf{g}^T \mathbf{x}_{k} \right)
+                \sum_{\kappa} X^{\kappa}_{\alpha} \frac{\partial v_{t}}{\partial C^{\kappa}}
+      + \frac{ V_i}{U_i} \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
+       \left( \sum_k \tau_{2k} p^t_{\alpha,k} + \varrho_{\alpha} \sum_k \tau_{2k} \mathbf{g}^T \mathbf{x}_{k} \right)
+          \sum_{\kappa} X^{\kappa}_{\alpha} \frac{\frac{\partial v_{t,j}}{\partial C^{\kappa}_j}-\frac{\partial v_{t,i}}{\partial C^{\kappa}_i}}{\Delta x}
+    \f]
  *
  * We provide two options: Calculating the flux expressed by twice the flux
  * through the one unique interaction region on the hanging node if one
@@ -1077,10 +1094,13 @@ int FVPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersectio
     }
 }
 
-// mpfa transmissibilities from mpfal2pfa
-
-/*!                 Indices used in a interaction volume of the MPFA-o method
+//! An adapter to use the traditional 2p implementation for the second interaction region
+/*!
+ * The second interaction region consists of 4 cells, hence the traditional non-adaptive
+ * implementation to calculate the transmissibility coefficients is used. This, however,
+ * uses its own naming conventions and local Indices used in the work of I. Aavatsmark.
  *
+ * Indices used in a interaction volume of the MPFA-l method
  * \verbatim
                  |                        |                        |
                  |            4-----------3-----------3            |

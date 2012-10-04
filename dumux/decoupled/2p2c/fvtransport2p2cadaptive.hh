@@ -23,7 +23,6 @@
 #define DUMUX_FVTRANSPORT2P2C_ADAPTIVE_HH
 
 #include <dune/grid/common/gridenums.hh>
-#include <dumux/decoupled/2p2c/2p2cadaptiveproperties.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
 #include <dumux/common/math.hh>
 
@@ -35,6 +34,11 @@
 
 namespace Dumux
 {
+namespace Properties
+{
+// forward declaration of properties
+NEW_PROP_TAG(GridAdaptEnableMultiPointFluxApproximation);
+}
 //! Miscible Transport step in a Finite Volume discretization
 /*! \ingroup multiphase
  *  The finite volume model for the solution of the transport equation for compositional

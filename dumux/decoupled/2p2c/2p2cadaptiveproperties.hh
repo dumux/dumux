@@ -29,6 +29,7 @@
 #define DUMUX_2P2CADAPTIVE_PROPERTIES_HH
 
 #include <dumux/decoupled/2p2c/2p2cproperties.hh>
+#include <dumux/decoupled/common/fv/mpfa/fvmpfaproperties.hh>
 
 namespace Dumux
 {
