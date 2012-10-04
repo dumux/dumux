@@ -438,8 +438,7 @@ public:
                         const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
 
                         // Transformation of the global normal vector to normal vector in the reference element
-                        const typename Element::Geometry::JacobianTransposed jacobianT1 = 
-                            eIt->geometry().jacobianTransposed(localPosIP);
+                        const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = eIt->geometry().jacobianTransposed(localPosIP);
                         const GlobalPosition globalNormal = fluxVars.face().normal;
 
                         GlobalPosition localNormal(0);
@@ -474,8 +473,7 @@ public:
                     ReferenceElements::general(eIt->geometry().type()).position(0, 0);
 
                 // get the transposed Jacobian of the element mapping
-                const typename Element::Geometry::JacobianTransposed jacobianT2 = 
-                    eIt->geometry().jacobianTransposed(localPos);
+                const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT2 = eIt->geometry().jacobianTransposed(localPos);
 
                 // transform vertex velocities from local to global coordinates
                 for (int scvIdx = 0; scvIdx < fvGeometry.numSCV; ++scvIdx)
