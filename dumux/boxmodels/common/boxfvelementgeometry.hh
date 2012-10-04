@@ -707,7 +707,8 @@ public:
             {
                 // get the global integration point and the Jacobian inverse
                 subContVolFace[k].ipGlobal = geometry.global(ipLocal);
-                Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(ipLocal);
+                typename Geometry::JacobianInverseTransposed jacInvT = 
+                    geometry.jacobianInverseTransposed(ipLocal);
 
                 // calculate the shape function gradients
                 //typedef Dune::FieldVector< Dune::FieldVector< CoordScalar, dim >, 1 > ShapeJacobian;
@@ -777,7 +778,8 @@ public:
                     localFiniteElement.localBasis().evaluateJacobian(boundaryFace[bfIdx].ipLocal, localJac);
                     localFiniteElement.localBasis().evaluateFunction(boundaryFace[bfIdx].ipLocal, shapeVal);
 
-                    Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(boundaryFace[bfIdx].ipLocal);
+                    typename Geometry::JacobianInverseTransposed jacInvT = 
+                        geometry.jacobianInverseTransposed(boundaryFace[bfIdx].ipLocal);
                     for (int vert = 0; vert < numVertices; vert++)
                     {
                         jacInvT.mv(localJac[vert][0], boundaryFace[bfIdx].grad[vert]);
@@ -910,7 +912,7 @@ public:
                 std::vector<ShapeJacobian> localJac;
                 localFiniteElement.localBasis().evaluateJacobian(subContVol[scvIdx].localCenter, localJac);
 
-                Dune::FieldMatrix<CoordScalar,dim,dim> jacInvT =
+                typename Geometry::JacobianInverseTransposed jacInvT =
                     geometry.jacobianInverseTransposed(subContVol[scvIdx].localCenter);
                 for (int vert = 0; vert < numVertices; vert++)
                     jacInvT.mv(localJac[vert][0], subContVol[scvIdx].gradCenter[vert]);

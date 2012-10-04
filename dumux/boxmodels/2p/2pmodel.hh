@@ -87,6 +87,7 @@ class TwoPModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::ctype CoordScalar;
     enum {
@@ -273,7 +274,8 @@ public:
                            const Dune::FieldVector<Scalar, dim>& localPosIP = fvGeometry.subContVolFace[faceIdx].ipLocal;
 
                            // Transformation of the global normal vector to normal vector in the reference element
-                           const Dune::FieldMatrix<CoordScalar, dim, dim> jacobianT1 = elemIt->geometry().jacobianTransposed(localPosIP);
+                           const typename Element::Geometry::JacobianTransposed& jacobianT1 = 
+                               elemIt->geometry().jacobianTransposed(localPosIP);
 
                            const GlobalPosition globalNormal = fluxVars.face().normal;
                            GlobalPosition localNormal;
@@ -307,7 +309,7 @@ public:
                         = ReferenceElements::general(elemIt->geometry().type()).position(0, 0);
 
                     // get the transposed Jacobian of the element mapping
-                    const Dune::FieldMatrix<CoordScalar, dim, dim> &jacobianT2
+                    const typename Element::Geometry::JacobianTransposed& jacobianT2
                         = elemIt->geometry().jacobianTransposed(localPos);
 
                     // transform vertex velocities from local to global coordinates
