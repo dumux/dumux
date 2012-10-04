@@ -34,19 +34,11 @@ if ! test -r "$REFERENCE_RESULT"; then
     exit 1
 fi
     
-# make sure the binary is of the test is present
-if ! test -x "$TEST_BINARY"; then
-    echo "$TEST_BINARY does not exist or is not executable"
-    echo
-    usage
-    exit 1
-fi
-
 #run the test
 echo "######################"
 echo "# Running test"
 echo "######################"
-if ! "$TEST_BINARY" $TEST_ARGS; then
+if ! $TEST_BINARY $TEST_ARGS; then
     echo "Executing the binary failed!"
     exit 1
 fi
