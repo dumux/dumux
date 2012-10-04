@@ -30,7 +30,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPET
+ * \ingroup Adaptive2p2c
  */
 //! Class including the data of a grid cell needed if an adaptive grid is used.
 /*! The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
@@ -73,7 +73,7 @@ private:
 
 public:
     //! A container for all necessary variables to map an old solution to a new grid
-    /*
+    /**
      * If the primary variables (pressure, total concentrations) are mapped to a new grid,
      * the secondary variables can be calulated. For the mapping between sons and father, it
      * is in addition necessary to know about how many sons live in each father ("count").
@@ -85,14 +85,15 @@ public:
      */
     struct AdaptedValues
     {
-        Dune::FieldVector<Scalar,2> totalConcentration_;
-        Dune::FieldVector<Scalar,2> pressure_;
+        Dune::FieldVector<Scalar,2> totalConcentration_; //!< Transport primary variables
+        Dune::FieldVector<Scalar,2> pressure_; //!< Pressure primary variables
+        //! Storage for volume derivatives, as transport estimate on old pressure field is not correct after refinement
         Dune::FieldVector<Scalar,3> volumeDerivatives_;
-        Scalar cellVolume;
-        FluxData2P2C<TypeTag> fluxData_;
-        int subdomain;
-        int count;
-        int isRefined;
+        Scalar cellVolume; //!< Cell volume for transformation of volume-specific primary variables
+        FluxData2P2C<TypeTag> fluxData_; //!< Information on old flux direction
+        int subdomain; //!< subdomain
+        int count; //!< counts the number of cells averaged
+        int isRefined; //!< Indicates if cell is refined
         AdaptedValues()
         {
             totalConcentration_=0.;

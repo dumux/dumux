@@ -39,8 +39,8 @@ namespace Properties
 // forward declaration of properties
 NEW_PROP_TAG(GridAdaptEnableMultiPointFluxApproximation);
 }
-//! Miscible Transport step in a Finite Volume discretization
-/*! \ingroup multiphase
+//! Compositional Transport step in a Finite Volume discretization
+/*! \ingroup Adaptive2p2c
  *  The finite volume model for the solution of the transport equation for compositional
  *  two-phase flow.
  *  \f[
@@ -144,12 +144,12 @@ protected:
  *  \f[
        C^{\kappa , new} = C^{\kappa , old} + u,
  *  \f]
- *  where \f$ u = \sum_{element faces} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{element face} \f$,
- *  \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{element face} \f$ is the face area.
+ *  where \f$ u = \sum_{\gamma} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{\gamma} \f$,
+ *  \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{\gamma} \f$ is the face area of face \f$ \gamma \f$.
  *
  *  In addition to the \a update vector, the recommended time step size \a dt is calculated
- *  employing a CFL condition.
- *  This method = old concentrationUpdate()
+ *  employing a CFL condition. This method uses a standard \a Tpfa method for regular fluxes,
+ *  and a \a mpfa can be used near hanging nodes.
  *
  *  \param t Current simulation time \f$\mathrm{[s]}\f$
  *  \param[out] dt Time step size \f$\mathrm{[s]}\f$
@@ -261,6 +261,24 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
     return;
 }
 
+//! Compute flux over an irregular interface using a \a mpfa method
+/** A mpfa l-method is applied to calculate fluxes near hanging nodes, using:
+ * \f[
+      - \sum_{\alpha} \varrho_{\alpha} \lambda_{\alpha}
+        \left( \sum_k \tau_{2k} p^t_{\alpha,k} + \varrho_{\alpha} \sum_k \tau_{2k} \mathbf{g}^T \mathbf{x}_{k} \right)
+                \sum_{\kappa} X^{\kappa}_{\alpha}
+    \f]
+ *
+ * We provide two options: Calculating the flux expressed by twice the flux
+ * through the one unique interaction region on the hanging node if one
+ * halfedge is stored (eg on boundaries). Or using the second interaction
+ * region covering neighboring cells.
+ *
+ * \param fluxEntries The flux entries, mass influx from cell \f$j\f$ to \f$i\f$.
+ * \param timestepFlux flow velocities for timestep estimation
+ * \param intersectionIterator Iterator of the intersection between cell I and J
+ * \param cellDataI The cell data for cell \f$i\f$
+ */
 template<class TypeTag>
 void FVTransport2P2CAdaptive<TypeTag>::getMpfaFlux(Dune::FieldVector<Scalar, 2>& fluxEntries, Dune::FieldVector<Scalar, 2>& timestepFlux,
                                         const IntersectionIterator& intersectionIterator, CellData& cellDataI)

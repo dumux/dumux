@@ -261,12 +261,16 @@
 			 	*/	
 		/*!
 		 * \ingroup IMPET
-		 * \defgroup IMPEC Miscible IMPEC
+		 * \defgroup IMPEC Miscible (Compositional) IMPEC
 		 */
 			/*!
 			 * \ingroup IMPEC
 			 * \defgroup multiphase Multiphase Compositional Models
 			 */
+				/*!
+				* \ingroup multiphase
+				* \defgroup Adaptive2p2c (Grid-)Adaptive Multiphase Compositional Models
+				*/
 			/*!
 			 * \ingroup IMPEC
 			 * \defgroup multiphysics Multiphysics Compositional Models

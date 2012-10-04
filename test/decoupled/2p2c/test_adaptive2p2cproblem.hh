@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test problem for the sequential 2p2c model
+ * \brief Test problem for the adaptive sequential 2p2c model
  */
 #ifndef DUMUX_TEST_ADAPTIVE_2P2C_PROBLEM_HH
 #define DUMUX_TEST_ADAPTIVE_2P2C_PROBLEM_HH
@@ -102,6 +102,7 @@ SET_INT_PROP(Adaptive2p2c, PressureFormulation,
 
 /*!
  * \ingroup Adaptive2p2cs
+ * \ingroup IMPETtests
  */
 template<class TypeTag = TTAG(Adaptive2p2c)>
 class Adaptive2p2c: public IMPETProblem2P2C<TypeTag>
@@ -255,7 +256,7 @@ void neumannAtPos(PrimaryVariables &neumannValues, const GlobalPosition& globalP
     this->setZero(neumannValues, Indices::contiWEqIdx);
 }
 /*!
- * \copydoc Dumux::TestDecTwoPTwoCProblem::sourceAtPos()
+ * \copydoc Dumux::IMPETProblem::source()
  */
 void source(PrimaryVariables &values, const Element &element)
 {

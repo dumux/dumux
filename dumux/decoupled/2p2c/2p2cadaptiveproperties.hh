@@ -19,6 +19,7 @@
 
 /*!
  * \ingroup IMPEC
+ * \ingroup Adaptive2p2c
  * \ingroup IMPETProperties
  *
  * \file

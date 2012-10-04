@@ -114,7 +114,8 @@ class FVPressure2P2CMultiPhysics : public FVPressure2P2C<TypeTag>
     typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)> PhaseVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
 
-
+    //! @copydoc FVPressure::EntryType
+    typedef Dune::FieldVector<Scalar, 2> EntryType;
 //! Access functions to the current problem object
     Problem& problem()
     {    return this->problem_;   }
@@ -124,13 +125,13 @@ public:
     //function which assembles the system of equations to be solved
     void assemble(bool first);
 
-    void get1pSource(Dune::FieldVector<Scalar, 2>&, const Element&, const CellData&);
+    void get1pSource(EntryType&, const Element&, const CellData&);
 
-    void get1pStorage(Dune::FieldVector<Scalar, 2>&, const Element&, CellData&);
+    void get1pStorage(EntryType&, const Element&, CellData&);
 
-    void get1pFlux(Dune::FieldVector<Scalar, 2>&, const Intersection&, const CellData&);
+    void get1pFlux(EntryType&, const Intersection&, const CellData&);
 
-    void get1pFluxOnBoundary(Dune::FieldVector<Scalar, 2>&,
+    void get1pFluxOnBoundary(EntryType&,
                             const Intersection&, const CellData&);
 
     //initialize mult-physics-specific pressure model stuff
@@ -189,7 +190,7 @@ protected:
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //! vector holding next subdomain
     const GlobalPosition& gravity_; //!< vector including the gravity constant
     static constexpr int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation); //!< gives kind of pressure used (\f$ 0 = p_w \f$, \f$ 1 = p_n \f$, \f$ 2 = p_{global} \f$)
-    Dune::Timer timer_; //!> A timer for the time spent on the multiphysics framework.
+    Dune::Timer timer_; //!< A timer for the time spent on the multiphysics framework.
 
     //! Indices of matrix and rhs entries
     /**
@@ -306,7 +307,6 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
  * \param sourceEntry The Matrix and RHS entries
  * \param elementI The element I
  * \param cellDataI Data of cell I
- * \param first Flag if pressure field is unknown
  */
 template<class TypeTag>
 void FVPressure2P2CMultiPhysics<TypeTag>::get1pSource(Dune::FieldVector<Scalar, 2>& sourceEntry, const Element& elementI, const CellData& cellDataI)
@@ -823,6 +823,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
  * primary variables. Only a simple flash calulation has to be carried out,
  * as phase distribution is already known: single-phase.
  * \param elementI The element
+ * \param cellData The cell data of the current element
  * \param postTimeStep Flag indicating if we have just completed a time step
  */
 template<class TypeTag>

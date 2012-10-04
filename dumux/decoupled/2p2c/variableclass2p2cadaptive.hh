@@ -35,7 +35,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPET
+ * \ingroup Adaptive2p2c
  */
 //! Class holding additionally mpfa data of adaptive compositional models.
 /*!
@@ -71,51 +71,57 @@ private:
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
-    enum    // for first and second half edge 2D / subvolume face 3D
+    enum    //!< for first and second half edge (2D) or subvolume face (3D)
     {
         first = 0, second = 1
     };
     // convenience shortcuts for Vectors/Matrices
     typedef Dune::FieldVector<Scalar, GridView::dimensionworld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar,dim+1> T1ransmissivityMatrix;
+    typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
 
 protected:
-    // in the 2D case, we need to store 1 additional cell. In 3D, we store
-    // dim-1=2 cells for one interaction volume, and 4 if two interaction volumes
-    // are regarded.
+    /** in the 2D case, we need to store 1 additional cell. In 3D, we store
+    * dim-1=2 cells for one interaction volume, and 4 if two interaction volumes
+    * are regarded.
+    */
     const static int storageRequirement = (dim-1)*(dim-1);
     //! Storage object for data related to the MPFA method
-    /*
+    /**
      * This Struct stores the transmissibility coefficients
      * for the two half-eges of an irregular interface (one
      * near a hanging node) in an h-adaptive simulation.
      */
     struct mpfaData
     {
-        T1ransmissivityMatrix T1_[2];
+        TransmissivityMatrix T1_[2];
         int globalIdx3_[storageRequirement];
         GlobalPosition globalPos3_[storageRequirement];
         std::vector<IntersectionIterator> secondHalfEdgeIntersection_;
         bool hasSecondHalfEdge;
 
+        //! Constructor for the local storage object of mpfa data
         mpfaData()
         {
             hasSecondHalfEdge = false;
         }
-
+        //! stores an intersection
+        /** This also provides the information that both half-edges are
+         * regarded and information was stored.
+         * \param is23 Intersection pointing to 3rd cell of additional interaction region
+         */
         void setIntersection(IntersectionIterator& is23)
         {
             secondHalfEdgeIntersection_.push_back(is23);
             hasSecondHalfEdge = true;
         };
+        //! Acess method to the stored intersection
         const IntersectionIterator& getIntersection()
         {
             return secondHalfEdgeIntersection_[0];
         };
     };
-    std::map<IdType, mpfaData> irregularInterfaceMap_;
-
-    const Grid& grid_;
+    std::map<IdType, mpfaData> irregularInterfaceMap_; //!< Storage container for mpfa information
+    const Grid& grid_; //!< The grid
 
 public:
     //! Constructs a VariableClass object
@@ -153,8 +159,20 @@ public:
         problem.pressureModel().adaptPressure();
     }
 
+    //! Stores Mpfa Data on an intersection
+    /** The method stores information to the interaction region (Transmissitivity
+     * as well as details of the 3rd cell in the region) into a storage container.
+     * The key to each element is the index of the intersection, seen from the smaller
+     * cell (only this is unique).
+     * If we arrive from the "wrong" (i.e. non-unique) direction, we invert fluxes.
+     *
+     * \param irregularIs The current irregular intersection
+     * \param T1 Transmissitivity matrix for flux calculations
+     * \param globalPos3 The position of the 3rd cell of the interaction region
+     * \param globalIdx3 The index of the 3rd cell of the interaction region
+     */
     void storeMpfaData(const typename GridView::Intersection & irregularIs,
-    					const T1ransmissivityMatrix& T1,
+    					const TransmissivityMatrix& T1,
     					const GlobalPosition& globalPos3,
     					const int& globalIdx3)
     {
@@ -182,11 +200,24 @@ public:
 		irregularInterfaceMap_[intersectionID].globalIdx3_[0] = globalIdx3;
         return;
     }
-
+    //! Stores Mpfa Data on an intersection for both half-edges
+    /** The method stores information of both interaction regions (Transmissitivity
+     * as well as details of the 3rd cells of both regions) into a storage container.
+     * The key to each element is the index of the intersection, seen from the smaller
+     * cell (only this is unique).
+     * If we arrive from the "wrong" (i.e. non-unique) direction, we invert fluxes.
+     *
+     * \param irregularIs The current irregular intersection
+     * \param secondHalfEdgeIntersectionIt Iterator to the intersection connecting the second interaction region
+     * \param T1 Transmissitivity matrix for flux calculations: unique interaction region
+     * \param T1_secondHalfEdge Second transmissitivity matrix for flux calculations for non-unique interaction region
+     * \param globalPos3 The position of the 3rd cell of the first interaction region
+     * \param globalIdx3 The index of the 3rd cell of the first interaction region
+     */
     void storeMpfaData(const typename GridView::Intersection & irregularIs,
                         IntersectionIterator& secondHalfEdgeIntersectionIt,
-                        const T1ransmissivityMatrix& T1,
-                        const T1ransmissivityMatrix& T11_secondHalfEdge,
+                        const TransmissivityMatrix& T1,
+                        const TransmissivityMatrix& T1_secondHalfEdge,
                         const GlobalPosition& globalPos3,
                         const int& globalIdx3)
     {
@@ -207,16 +238,16 @@ public:
             irregularInterfaceMap_[intersectionID].T1_[first][1] = - T1[1];
             irregularInterfaceMap_[intersectionID].T1_[first][0] = - T1[2];
 
-            irregularInterfaceMap_[intersectionID].T1_[second][2] = - T11_secondHalfEdge[0];
-            irregularInterfaceMap_[intersectionID].T1_[second][1] = - T11_secondHalfEdge[1];
-            irregularInterfaceMap_[intersectionID].T1_[second][0] = - T11_secondHalfEdge[2];
+            irregularInterfaceMap_[intersectionID].T1_[second][2] = - T1_secondHalfEdge[0];
+            irregularInterfaceMap_[intersectionID].T1_[second][1] = - T1_secondHalfEdge[1];
+            irregularInterfaceMap_[intersectionID].T1_[second][0] = - T1_secondHalfEdge[2];
 
         }
         else // we look from smaller cell = unique interface
         {
             // proceed with numbering according to Aavatsmark, seen from cell i
             irregularInterfaceMap_[intersectionID].T1_[first] = T1;
-            irregularInterfaceMap_[intersectionID].T1_[second] = T11_secondHalfEdge;
+            irregularInterfaceMap_[intersectionID].T1_[second] = T1_secondHalfEdge;
         }
 
         irregularInterfaceMap_[intersectionID].globalPos3_[0] = globalPos3;
@@ -228,10 +259,24 @@ public:
         return;
     }
 
+    //! Provides acess to stored Mpfa Data on an intersection for both half-edges
+    /** The method gets information of both interaction regions (Transmissitivity
+     * as well as details of the 3rd cells of both regions) into a storage container.
+     * The key to each element is the index of the intersection, seen from the smaller
+     * cell (only this is unique).
+     * If we arrive from the "wrong" (i.e. non-unique) direction, we invert fluxes.
+     *
+     * \param irregularIs The current irregular intersection
+     * \param secondHalfEdgeIntersectionIt Iterator to the intersection connecting the second interaction region
+     * \param T1 Transmissitivity matrix for flux calculations: unique interaction region
+     * \param T1_secondHalfEdge Second transmissitivity matrix for flux calculations for non-unique interaction region
+     * \param globalPos3 The position of the 3rd cell of the first interaction region
+     * \param globalIdx3 The index of the 3rd cell of the first interaction region
+     */
     int getMpfaData(const Intersection& irregularIs,
                         IntersectionIterator& secondHalfEdgeIntersectionIt,
-                        T1ransmissivityMatrix& T1,
-                        T1ransmissivityMatrix& T1_secondHalfEdge,
+                        TransmissivityMatrix& T1,
+                        TransmissivityMatrix& T1_secondHalfEdge,
                         GlobalPosition& globalPos3,
                         int& globalIdx3)
     {

@@ -181,8 +181,8 @@ public:
 
 protected:
     Problem& problem_;
-    Scalar maxError_; //!> Maximum volume error of all cells
-    bool enableVolumeIntegral; //!> Enables the volume integral of the pressure equation
+    Scalar maxError_; //!< Maximum volume error of all cells
+    bool enableVolumeIntegral; //!< Enables the volume integral of the pressure equation
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening

@@ -28,7 +28,7 @@
 
 namespace Dumux
 {
-//! Miscible Transport step in a Finite Volume discretization
+//! Compositional Transport Step in a Finite Volume discretization
 /*!
  * \ingroup multiphysics
  *  The finite volume model for the solution of the transport equation for compositional
@@ -40,10 +40,10 @@ namespace Dumux
  *  \f$ p_{\alpha} \f$ denotes the phase pressure, \f$ \bf{K} \f$ the absolute permeability, \f$ \lambda_{\alpha} \f$ the phase mobility,
  *  \f$ \rho_{\alpha} \f$ the phase density and \f$ \bf{g} \f$ the gravity constant and \f$ C^{\kappa} \f$ the total Component concentration.
  *
- * The model domain is automatically divided
- * in a single-phase and a two-phase domain. The full 2p2c model is only evaluated within the
- * two-phase subdomain, whereas a single-phase transport model is computed in the rest of the
- * domain.
+ * The model domain is automatically divided into a single-phase and a two-phase domain. As the flux computation is relatively cheap,
+ * the same method is used for the real transport step independently of the subdomain.
+ * The pressure equation does not need any derivatives in simple
+ * subdomains, therefore in the transport estimate step inter-cell fluxes in the simple subdomain are omitted.
  *
  *  \tparam TypeTag The Type Tag
  */
@@ -99,7 +99,6 @@ public:
     /**
      * \param problem a problem class object
      */
-
     FVTransport2P2CMultiPhysics(Problem& problem) : FVTransport2P2C<TypeTag>(problem)
     {}
 
@@ -113,12 +112,11 @@ public:
  *  \f[
        C^{\kappa , new} = C^{\kappa , old} + u,
  *  \f]
- *  where \f$ u = \sum_{element faces} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{element face} \f$,
- *  \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{element face} \f$ is the face area.
+ *  where \f$ u = \sum_{\gamma} \boldsymbol{v}_{\alpha} * \varrho_{\alpha} * X^{\kappa}_{\alpha} * \boldsymbol{n} * A_{\gamma} \f$,
+ *  \f$ \boldsymbol{n} \f$ is the face normal and \f$ A_{\gamma} \f$ is the face area of face \f$ \gamma \f$.
  *
  *  In addition to the \a update vector, the recommended time step size \a dt is calculated
  *  employing a CFL condition.
- *  This method = old concentrationUpdate()
  *
  *  \param t Current simulation time \f$\mathrm{[s]}\f$
  *  \param[out] dt Time step size \f$\mathrm{[s]}\f$

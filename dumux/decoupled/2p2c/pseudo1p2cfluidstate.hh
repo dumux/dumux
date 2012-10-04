@@ -36,7 +36,7 @@ namespace Dumux
  *  It is used in case of a multiphysics approach. For the non-present phase,
  *  no information is stored but 0-values are returned to allow for general output
  *  methods.
- *  The "flash" calulation routines are in the decoupled flash constrain solver, see
+ *  The "flash" calculation routines are in the decoupled flash constrain solver, see
  *  Dumux::CompositionalFlash .
  *  \tparam TypeTag The property Type Tag
  */
@@ -72,6 +72,7 @@ public:
             return 0.;
     };
 
+    //! \brief Returns the index of the phase that is present in that cell.
     int presentPhaseIdx() const
     {
         return presentPhaseIdx_;
@@ -82,7 +83,11 @@ public:
      */
     Scalar pressure(int phaseIdx) const
     { return pressure_[phaseIdx]; }
-
+    /*!
+     * \brief Returns the density of a phase \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param phaseIdx the index of the phase
+     */
     Scalar density(int phaseIdx) const
     {
         if(phaseIdx == presentPhaseIdx_)

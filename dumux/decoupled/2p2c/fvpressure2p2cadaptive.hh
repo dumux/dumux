@@ -55,7 +55,7 @@ NEW_PROP_TAG(GridAdaptEnableSecondHalfEdge);
 }
 
 //! The finite volume model for the solution of the compositional pressure equation
-/*! \ingroup multiphase
+/*! \ingroup Adaptive2p2c
  *  Provides a Finite Volume implementation for the pressure equation of a compressible
  *  system with two components. An IMPES-like method is used for the sequential
  *  solution of the problem.  Diffusion is neglected, capillarity can be regarded.
@@ -224,9 +224,9 @@ protected:
 
     //! Matrix for vector rotation used in mpfa
     DimMatrix R_;
-    bool enableVolumeIntegral; //!> Enables the volume integral of the pressure equation
-    bool enableMPFA; //!> Enables mpfa method to calculate the fluxes near hanging nodes
-    bool enableSecondHalfEdge; //!> If possible, 2 interaction volumes are used for the mpfa method near hanging nodes
+    bool enableVolumeIntegral; //!< Enables the volume integral of the pressure equation
+    bool enableMPFA; //!< Enables mpfa method to calculate the fluxes near hanging nodes
+    bool enableSecondHalfEdge; //!< If possible, 2 interaction volumes are used for the mpfa method near hanging nodes
     //! The 2p Mpfa pressure module, that is only used for the calulation of transmissibility of the second interaction volumes
     FVMPFAL2PFABoundPressure2PAdaptive<TypeTag>* pressureModelAdaptive2p_;
 };
