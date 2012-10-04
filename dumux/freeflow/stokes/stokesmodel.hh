@@ -99,7 +99,6 @@ public:
     {
         GlobalPosition globalI, globalJ;
         PrimaryVariables tmpFlux(0.0);
-        int sign;
 
         FVElementGeometry fvGeometry;
         ElementVolumeVariables elemVolVars;
@@ -129,8 +128,6 @@ public:
                 continue;
 
             for (int i = 0; i < fvGeometry.numVertices; i++) {
-                const int &globalIdx =
-                    this->vertexMapper().map(*elemIt, i, dim);
                 const GlobalPosition &global = fvGeometry.subContVol[i].global;
                 if (globalI[axis] < coordVal)
                     flux += this->localResidual().residual(i);

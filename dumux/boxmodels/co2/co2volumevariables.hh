@@ -60,8 +60,8 @@ class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
 
     // present phases
     enum {
-        wPhaseOnly = Indices::lPhaseOnly,
-        nPhaseOnly = Indices::gPhaseOnly,
+        wPhaseOnly = Indices::wPhaseOnly,
+        nPhaseOnly = Indices::nPhaseOnly,
         bothPhases = Indices::bothPhases
     };
 

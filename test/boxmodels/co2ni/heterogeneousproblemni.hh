@@ -475,7 +475,7 @@ public:
     int initialPhasePresence(const Vertex &vert,
                              int &globalIdx,
                              const GlobalPosition &globalPos) const
-    { return Indices::lPhaseOnly; }
+    { return Indices::wPhaseOnly; }
 
     // \}
 
