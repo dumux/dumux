@@ -48,7 +48,7 @@ namespace Dumux
 template <class Scalar, class CO2Tables>
 class CO2 : public Component<Scalar, CO2<Scalar, CO2Tables> >
 {
-    static constexpr Scalar R = Constants<Scalar>::R;
+    static const Scalar R;
     typedef typename Dumux::IdealGas<Scalar> IdealGas;
     
     static bool warningThrown;
@@ -227,7 +227,7 @@ public:
             warningThrown=true;
         }
         return CO2Tables::tabulatedDensity.at(temperature, pressure);
-	}
+    }
     /*!
      * \brief The pressure of steam in \f$\mathrm{[Pa]}\f$ at a given density and temperature.
      *
@@ -324,6 +324,9 @@ public:
         return gasViscosity(temperature, pressure);;
     };
 };
+
+template <class Scalar, class CO2Tables>
+const Scalar CO2<Scalar, CO2Tables>::R = Constants<Scalar>::R;
 
 template <class Scalar, class CO2Tables>
 bool CO2<Scalar, CO2Tables>::warningThrown = false;

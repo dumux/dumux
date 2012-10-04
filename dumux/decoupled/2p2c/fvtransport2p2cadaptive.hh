@@ -105,7 +105,7 @@ class FVTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
     {return problem_;};
 
 public:
-    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes);
+    virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes = false);
 
     void getMpfaFlux(Dune::FieldVector<Scalar, 2>&, Dune::FieldVector<Scalar, 2>&,
             const IntersectionIterator&, CellData&);
@@ -153,7 +153,7 @@ protected:
  *  \param impet Flag that determines if it is a real impet step or an update estimate for volume derivatives
  */
 template<class TypeTag>
-void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false)
+void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet)
 {
     this->impet_ = impet;
     // initialize dt very large
