@@ -146,9 +146,8 @@ public:
                     0);
 
             // get the transposed Jacobian of the element mapping
-            const DimMatrix& jacobianInv = eIt->geometry().jacobianInverseTransposed(localPos);
-            DimMatrix jacobianT(jacobianInv);
-            jacobianT.invert();
+            const typename Element::Geometry::JacobianTransposed& jacobianT = 
+                eIt->geometry().jacobianTransposed(localPos);
 
             // calculate the element velocity by the Piola transformation
             Dune::FieldVector<Scalar, dim> elementVelocity(0);
