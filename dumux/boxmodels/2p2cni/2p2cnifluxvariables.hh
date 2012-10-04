@@ -19,11 +19,11 @@
 /*!
  * \file
  *
- * \brief This file contains the data which is required to calculate
- *        all fluxes (mass of components and energy) over a face of a finite volume.
+ * \brief This file contains data which is required to calculate
+ *        the heat fluxes over a face of a finite volume.
  *
- * This means pressure, concentration and temperature gradients, phase
- * densities at the integration point, etc.
+ * This means temperature gradients and the normal matrix
+ * heat flux.
  */
 #ifndef DUMUX_2P2CNI_FLUX_VARIABLES_HH
 #define DUMUX_2P2CNI_FLUX_VARIABLES_HH
@@ -37,12 +37,13 @@ namespace Dumux
 /*!
  * \ingroup TwoPTwoCNIModel
  * \ingroup BoxFluxVariables
- * \brief This template class contains the data which is required to
- *        calculate all fluxes (mass of components and energy) over a face of a finite
+ * \brief This template class contains data which is required to
+ *        calculate the heat fluxes over a face of a finite
  *        volume for the non-isothermal two-phase, two-component model.
+ *        The mass fluxes are computed in the parent class.
  *
- * This means pressure and concentration gradients, phase densities at
- * the integration point, etc.
+ * This means temperature gradients and the normal matrix
+ * heat flux.
  */
 template <class TypeTag>
 class TwoPTwoCNIFluxVariables : public TwoPTwoCFluxVariables<TypeTag>

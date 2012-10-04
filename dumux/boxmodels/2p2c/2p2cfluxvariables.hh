@@ -317,6 +317,6 @@ protected:
     Scalar porousDiffCoeff_[numPhases];
 };
 
-} // end namepace
+} // end namespace
 
 #endif
