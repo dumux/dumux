@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * @file
- * @brief  Definition of a simple Stokes problem
+ * @brief  Definition of a simple two-component Stokes problem
  */
 #ifndef DUMUX_STOKES2CTESTPROBLEM_HH
 #define DUMUX_STOKES2CTESTPROBLEM_HH
@@ -72,21 +72,19 @@ SET_BOOL_PROP(Stokes2cTestProblem, EnableGravity, false);
 /*!
  * \ingroup BoxStokes2cModel
  * \ingroup BoxTestProblems
- * \brief Stokes transport problem with air flowing
- *        from the left to the right.
+ * \brief Stokes transport problem with dryer air flowing
+ *        from the top to the bottom.
  *
- * The domain is sized 1m times 1m. The boundary conditions for the momentum balances
- * are all set to Dirichlet. The mass balance receives
- * outflow bcs, which are replaced in the localresidual by the sum
- * of the two momentum balances. In the middle of the right boundary,
- * one vertex receives Dirichlet bcs, to set the pressure level.
+ * The domain is sized 1m times 1m. Dry air enters the domain from the top boundary
+ * and is transported downwards. The boundary conditions for the momentum balance
+ * and the component transport equation are all set to Dirichlet, except on the lower
+ * boundary, where outflow conditions are set. The mass balance receives
+ * outflow bcs everywhere, which are replaced in the localresidual by the sum
+ * of the momentum balance equations in case of Dirichlet bcs for the momentum balance.
+ * In the middle of the lower boundary one vertex receives Dirichlet bcs, to set the pressure level.
  *
  * This problem uses the \ref BoxStokes2cModel.
- *
- * This problem is non-stationary and can be simulated until \f$t_{\text{end}} =
- * 1e5\;s\f$ is reached. A good choice for the initial time step size
- * is \f$t_{\text{inital}} = 1\;s\f$.
- * To run the simulation execute the following line in shell:
+ * To run the simulation execute the following line in a shell:
  * <tt>./test_stokes2c -parameterFile ./test_stokes2c.input</tt>
  */
 template <class TypeTag>
@@ -155,7 +153,7 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar boxTemperature(const Element &element,
-                       const FVElementGeometry &fvElemGeom,
+                       const FVElementGeometry &fvGeometry,
                        int scvIdx) const
     {
         return 273.15 + 10; // -> 10
@@ -168,14 +166,7 @@ public:
      */
     // \{
 
-    /*!
-     * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
-     *
-     * \param values The boundary types for the conservation equations
-     * \param vertex The vertex on the boundary for which the
-     *               conditions needs to be specified
-     */
+    //! \copydoc BoxProblem::boundaryTypes()
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
@@ -196,15 +187,7 @@ public:
             values.setDirichlet(massBalanceIdx);
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex representing the "half volume on the boundary"
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
+    //! \copydoc BoxProblem::dirichlet()
     void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
     {
         const GlobalPosition globalPos = vertex.geometry().center();
@@ -216,16 +199,10 @@ public:
         }
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
+    //! \copydoc BoxProblem::neumann()
     void neumann(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  const Intersection &is,
                  int scvIdx,
                  int boundaryFaceIdx) const
@@ -239,17 +216,10 @@ public:
      */
     // \{
 
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a values parameter stores the rate mass
-     * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
-     */
+    //! \copydoc BoxProblem::source()
     void source(PrimaryVariables &values,
                 const Element &element,
-                const FVElementGeometry &,
+                const FVElementGeometry &fvGeometry,
                 int subControlVolumeIdx) const
     {
         // ATTENTION: The source term of the mass balance has to be chosen as
@@ -257,15 +227,10 @@ public:
         values = Scalar(0.0);
     }
 
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     */
+    //! \copydoc BoxProblem::initial()
     void initial(PrimaryVariables &values,
                  const Element &element,
-                 const FVElementGeometry &fvElemGeom,
+                 const FVElementGeometry &fvGeometry,
                  int scvIdx) const
     {
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
