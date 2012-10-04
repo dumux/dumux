@@ -27,7 +27,8 @@
 #ifndef DUMUX_HETEROGENEOUS_CO2TABLES_HH
 #define DUMUX_HETEROGENEOUS_CO2TABLES_HH
 
-#include <assert.h>
+#include <cassert>
+#include <dumux/material/components/co2tablereader.hh>
 
 namespace Dumux
 {

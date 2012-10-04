@@ -459,7 +459,7 @@ public:
     {
         // TODO!
         DUNE_THROW(Dune::NotImplemented, "Diffusion coefficients");
-    };
+    }
 
     /*!
      * \brief Given the phase compositions, return the binary
@@ -498,7 +498,7 @@ public:
             Valgrind::CheckDefined(result);
             return result;
         }
-    };
+    }
 
     /*!
      * \brief Given the phase composition, return the specific
@@ -728,7 +728,7 @@ NEW_PROP_TAG(Salinity);
 SET_TYPE_PROP(NumericModel, CO2Table, Dumux::CO2Tables);
 // Set salinity defaults
 SET_SCALAR_PROP(NumericModel, Salinity, 1e-3);
-};
+}
 
 /*!
  * \brief A compositional fluid with brine and carbon as
