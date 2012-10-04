@@ -324,6 +324,7 @@ endif(UG_FOUND)
 
 # deal with ALUGrid
 if(ALUGrid_FOUND)
+  add_definitions(-DENABLE_ALUGRID=1)
   set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${ALUGrid_INCLUDE_DIRS})
   set(DumuxLinkLibraries ${DumuxLinkLibraries} ${ALUGrid_LIBRARIES})
 endif(ALUGrid_FOUND)
