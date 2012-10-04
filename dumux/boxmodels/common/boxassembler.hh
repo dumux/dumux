@@ -530,11 +530,15 @@ public:
      */
     const JacobianMatrix& matrix() const
     { return *matrix_; }
+    JacobianMatrix& matrix()
+    { return *matrix_; }
 
     /*!
      * \brief Return constant reference to global residual vector.
      */
     const SolutionVector& residual() const
+    { return residual_; }
+    SolutionVector& residual() 
     { return residual_; }
 
 private:

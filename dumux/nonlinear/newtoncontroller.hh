@@ -368,9 +368,9 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    void newtonSolveLinear(const JacobianMatrix &A,
+    void newtonSolveLinear(JacobianMatrix &A,
                            SolutionVector &x,
-                           const SolutionVector &b)
+                           SolutionVector &b)
     {
         try {
             if (numSteps_ == 0)
