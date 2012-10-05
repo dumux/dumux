@@ -37,7 +37,7 @@ namespace Dumux
  * are mixtures of \f$N \geq M - 1\f$ chemical species which are
  * denoted by the upper index \f$\kappa \in \{ 1, \dots, N \} \f$.
  *
- * The momentum approximation can either be selected via "BaseFluxVariables":
+ * The momentum approximation can be selected via "BaseFluxVariables":
  * Darcy (BoxDarcyFluxVariables) and Forchheimer (BoxForchheimerFluxVariables)
  * relations are available for all Box models.
  *
