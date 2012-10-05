@@ -23,7 +23,7 @@ Water infiltrates from the left side into the domain and replaces the oil. Gravi
 \psfrag{S_n = 0}{$S_n = 0$}
 \psfrag{S_n_initial = 0}{\textcolor{white}{$\mathbf{S_{n_{initial}} = 1}$}}
 \psfrag{q_w = 0 [kg/m^2s]}{$q_w = 0$ $\left[\frac{\textnormal{kg}}{\textnormal{m}^2 \textnormal{s}}\right]$}
-\psfrag{q_n = -3 x 10^-4 [kg/m^2s]}{$q_n = -3 \times 10^{-2}$ $\left[\frac{\textnormal{kg}}{\textnormal{m}^2 \textnormal{s}}\right]$}
+\psfrag{q_n = -3 x 10^-4 [kg/m^2s]}{$q_n = 3 \times 10^{-2}$ $\left[\frac{\textnormal{kg}}{\textnormal{m}^2 \textnormal{s}}\right]$}
 \centering
 \includegraphics[width=0.9\linewidth,keepaspectratio]{EPS/tutorial-problemconfiguration}
 \caption{Geometry of the tutorial problem with initial and boundary conditions.}\label{tutorial-coupled:problemfigure}
@@ -367,7 +367,8 @@ For the visualization of the results using paraview please refer to section \ref
   \texttt{tutorialproblem\_coupled.hh} so that water enters from the
   bottom and oil is extracted from the top boundary. The right and the
   left boundary should be closed for water and oil fluxes. \\
-  Note, that the value has to be positive for outflow and negative for inflow.  
+  The Neumannn Boundary conditions are multiplied by the normal (pointing outwards), so an influx is negative, an outflux always positive. 
+  Such information can easily be found in the documentation of the functions (also look into base classes).
   Compile the main file by typing \texttt{make tutorial\_coupled} and
   run the model as explained above.
 
@@ -401,8 +402,11 @@ In order to include a fluid system, you first have to comment out lines \ref{tut
 to \ref{tutorial-coupled:2p-system-end} in the problem file. If you use eclipse, this can easily be done by pressing \textit{Ctrl + Shift + 7} -- 
 the same as to cancel the comment later on.\\
 Now include the file \texttt{fluidsystems/h2oairfluidsystem.hh} in the material folder, and set a type property \texttt{FluidSystem} (see line \ref{tutorial-coupled:set-fluidsystem})
-with the appropriate type, which is:\\
-\texttt{Dumux::FluidSystems::H2OAir<typename GET\_PROP\_TYPE(TypeTag, Scalar)>}.\\
+with the appropriate type, which is either:\\
+ \texttt{Dumux::FluidSystems::H2OAir<typename GET\_PROP\_TYPE(TypeTag, Scalar)>}\\
+or in the \Dumux tongue\\
+ \texttt{Dumux::H2OAirFluidSystem<TypeTag>}
+\\
 However, this is a rather complicated fluid system which 
 considers mixtures of components and also uses tabulated components that need to be initialized -- i.e. the tables need to be filled with values. 
 The initialization of the fluid system is normally done in the constructor of the problem by calling \texttt{GET\_PROP\_TYPE(TypeTag, FluidSystem)::init();}. 

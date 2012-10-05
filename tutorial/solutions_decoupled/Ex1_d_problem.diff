@@ -1,0 +1,89 @@
+### Eclipse Workspace Patch 1.0
+#P dumux-stable
+Index: tutorial/tutorialproblem_decoupled.hh
+===================================================================
+--- tutorial/tutorialproblem_decoupled.hh	(revision 9128)
++++ tutorial/tutorialproblem_decoupled.hh	(working copy)
+@@ -43,6 +43,7 @@
+ // the components that are used
+ #include <dumux/material/components/h2o.hh>
+ #include <dumux/material/components/lnapl.hh>
++#include <dumux/material/fluidsystems/h2oairfluidsystem.hh>
+ 
+ namespace Dumux
+ {
+@@ -69,25 +70,25 @@
+ 
+ //Set the grid creator
+ SET_TYPE_PROP(TutorialProblemDecoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-decoupled:set-gridcreator}@*/
++SET_TYPE_PROP(TutorialProblemDecoupled, FluidSystem, Dumux::H2OAirFluidSystem<TypeTag>);
++//// Set the wetting phase
++//SET_PROP(TutorialProblemDecoupled, WettingPhase) /*@\label{tutorial-decoupled:2p-system-start}@*/
++//{
++//private:
++//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
++//public:
++//    typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-decoupled:wettingPhase}@*/
++//};
++//
++//// Set the non-wetting phase
++//SET_PROP(TutorialProblemDecoupled, NonwettingPhase)
++//{
++//private:
++//    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
++//public:
++//    typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
++//}; /*@\label{tutorial-decoupled:2p-system-end}@*/
+ 
+-// Set the wetting phase
+-SET_PROP(TutorialProblemDecoupled, WettingPhase) /*@\label{tutorial-decoupled:2p-system-start}@*/
+-{
+-private:
+-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+-public:
+-    typedef Dumux::LiquidPhase<Scalar, Dumux::H2O<Scalar> > type; /*@\label{tutorial-decoupled:wettingPhase}@*/
+-};
+-
+-// Set the non-wetting phase
+-SET_PROP(TutorialProblemDecoupled, NonwettingPhase)
+-{
+-private:
+-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+-public:
+-    typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\label{tutorial-decoupled:nonwettingPhase}@*/
+-}; /*@\label{tutorial-decoupled:2p-system-end}@*/
+-
+ SET_TYPE_PROP(TutorialProblemDecoupled, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-decoupled:cflflux}@*/
+ SET_SCALAR_PROP(TutorialProblemDecoupled, CFLFactor, 0.95); /*@\label{tutorial-decoupled:cflfactor}@*/
+ 
+@@ -139,7 +140,8 @@
+         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
+     {
+         //write only every 10th time step to output file
+-        this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
++        this->setOutputInterval(20);/*@\label{tutorial-decoupled:outputinterval}@*/
++        GET_PROP_TYPE(TypeTag, FluidSystem)::init();
+     }
+ 
+     //! The problem name.
+@@ -218,7 +220,7 @@
+      */
+     void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:bctype}@*/
+     {
+-            if (globalPos[0] < this->bboxMin()[0] + eps_)
++            if (globalPos[1] < this->bboxMin()[1] + eps_)
+             {
+                 bcTypes.setDirichlet(pressEqIdx);
+                 bcTypes.setDirichlet(satEqIdx);
+@@ -260,9 +262,9 @@
+     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:neumann}@*/
+     {
+         values = 0;
+-        if (globalPos[0] > this->bboxMax()[0] - eps_)
++        if (globalPos[1] > this->bboxMax()[1] - eps_)
+         {
+-            values[nPhaseIdx] = 3e-2;
++            values[nPhaseIdx] = 3e-4;
+         }
+     }
+     //! Initial condition at position globalPos.

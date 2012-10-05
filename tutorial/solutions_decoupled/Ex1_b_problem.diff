@@ -1,0 +1,33 @@
+### Eclipse Workspace Patch 1.0
+#P dumux-stable
+Index: tutorial/tutorialproblem_decoupled.hh
+===================================================================
+--- tutorial/tutorialproblem_decoupled.hh	(revision 8322)
++++ tutorial/tutorialproblem_decoupled.hh	(working copy)
+@@ -144,7 +144,7 @@
+         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
+     {
+         //write only every 10th time step to output file
+-        this->setOutputInterval(1);/*@\label{tutorial-decoupled:outputinterval}@*/
++        this->setOutputInterval(20);/*@\label{tutorial-decoupled:outputinterval}@*/
+     }
+ 
+     //! The problem name.
+@@ -223,7 +223,7 @@
+      */
+     void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:bctype}@*/
+     {
+-            if (globalPos[0] < this->bboxMin()[0] + eps_)
++            if (globalPos[1] < this->bboxMin()[1] + eps_)
+             {
+                 bcTypes.setDirichlet(pressEqIdx);
+                 bcTypes.setDirichlet(satEqIdx);
+@@ -265,7 +265,7 @@
+     void neumannAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const /*@\label{tutorial-decoupled:neumann}@*/
+     {
+         values = 0;
+-        if (globalPos[0] > this->bboxMax()[0] - eps_)
++        if (globalPos[1] > this->bboxMax()[1] - eps_)
+         {
+             values[nPhaseIdx] = 3e-2;
+         }

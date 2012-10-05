@@ -1,0 +1,45 @@
+Index: tutorial/tutorialproblem_decoupled.hh
+===================================================================
+--- tutorial/tutorialproblem_decoupled.hh	(revision 9210)
++++ tutorial/tutorialproblem_decoupled.hh	(working copy)
+@@ -138,6 +138,21 @@
+     TutorialProblemDecoupled(TimeManager &timeManager, const GridView &gridView)
+         : ParentType(timeManager, gridView), eps_(1e-6)/*@\label{tutorial-decoupled:constructor-problem}@*/
+     {
++         int outputInterval;
++         try
++         {
++
++             outflowRateOil_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.OutflowRateOil);
++             outputInterval = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.OutputInterval);
++         }
++         catch (Dumux::ParameterException &e) {
++             std::cerr << e << ". Abort!\n";
++             exit(1) ;
++         }
++         catch (...) {
++             std::cerr << "Unknown exception thrown!\n";
++             exit(1);
++         }
++
+         //write only every 10th time step to output file
+-         this->setOutputInterval(10);/*@\label{tutorial-decoupled:outputinterval}@*/
++         this->setOutputInterval(outputInterval);/*@\label{tutorial-decoupled:outputinterval}@*/
+     }
+@@ -262,7 +277,7 @@
+         values = 0;
+         if (globalPos[0] > this->bboxMax()[0] - eps_)
+         {
+-            values[nPhaseIdx] = 3e-2;
++            values[nPhaseIdx] = outflowRateOil_;
+         }
+     }
+     //! Initial condition at position globalPos.
+@@ -282,6 +297,7 @@
+ 
+ private:
+     const Scalar eps_;
++    Scalar outflowRateOil_;
+ };
+ } //end namespace
+ 
