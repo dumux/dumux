@@ -1010,7 +1010,6 @@ void FVMPFAL2PFABoundPressure2P<TypeTag>::storeInteractionVolumeInfo()
 
                     // cell 3
                     GlobalPosition globalPos3(0);
-                    int globalIdx3 = 0;
 
                     GlobalPosition globalPosFace23(0);
                     GlobalPosition globalPosFace34(0);
@@ -1044,9 +1043,6 @@ void FVMPFAL2PFABoundPressure2P<TypeTag>::storeInteractionVolumeInfo()
                                             1);
                                     interactionVolumes_[globalVertIdx1234].setIndexOnElement(isIt43->indexInOutside(), 2,
                                             0);
-
-                                    // access neighbor cell 4
-                                    globalIdx3 = problem_.variables().index(*elementPointer32);
 
                                     // get global coordinate of neighbor cell 4 center
                                     globalPos3 = elementPointer32->geometry().center();
