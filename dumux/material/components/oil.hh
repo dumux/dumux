@@ -24,7 +24,7 @@
 #ifndef DUMUX_OIL_HH
 #define DUMUX_OIL_HH
 
-#warning use material/components/lnapl.hh instead
+#warning oil.hh is deprecated, use material/components/lnapl.hh instead
 
 #include "lnapl.hh"
 
@@ -35,6 +35,8 @@ namespace Dumux
  *
  * \brief Rough estimate for testing purposes of some oil.
  *
+ * \deprecated Use LNAPL instead.
+ * 
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>

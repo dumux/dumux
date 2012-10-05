@@ -21,13 +21,15 @@
 
 #include <dumux/material/spatialparams/boxspatialparams1p.hh>
 
-#warning include dumux/material/spatialparams/boxspatialparams1p.hh instead
+#warning boxspatialparameters1p.hh is deprecated, include dumux/material/spatialparams/boxspatialparams1p.hh instead
 
 namespace Dumux {
 
 /**
  * \brief The base class for spatial parameters of problems using the
  *        box method.
+ * 
+ * \deprecated Use BoxSpatialParamsOneP instead.
  */
 template<class TypeTag>
 class BoxSpatialParametersOneP : public BoxSpatialParamsOneP<TypeTag>

@@ -21,7 +21,7 @@
 
 #include <dumux/material/spatialparams/fvspatialparams1p.hh>
 
-#warning include dumux/material/spatialparams/fvspatialparams1p.hh instead
+#warning fvspatialparameters1p.hh is deprecated, include dumux/material/spatialparams/fvspatialparams1p.hh instead
 
 namespace Dumux
 {
@@ -29,6 +29,8 @@ namespace Dumux
 /**
  * \brief The base class for spatial parameters of problems using the
  *        fv method.
+ * 
+ * \deprecated Use FVSpatialParamsOneP instead.
  */
 template<class TypeTag>
 class FVSpatialParametersOneP : public FVSpatialParamsOneP<TypeTag>

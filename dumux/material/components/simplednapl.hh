@@ -24,7 +24,7 @@
 #ifndef DUMUX_SIMPLE_DNAPL_HH
 #define DUMUX_SIMPLE_DNAPL_HH
 
-#warning use material/components/dnapl.hh instead
+#warning simplenapl.hh is deprecated, use material/components/dnapl.hh instead
 
 #include "dnapl.hh"
 
@@ -34,6 +34,8 @@ namespace Dumux
  * \ingroup Components
  * \brief A much simple component for an exemplary dense NAPL (TCE).
  *
+ * \deprecated Use DNAPL instead.
+ * 
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>

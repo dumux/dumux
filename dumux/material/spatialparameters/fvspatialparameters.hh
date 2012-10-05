@@ -21,7 +21,7 @@
 
 #include <dumux/material/spatialparams/fvspatialparams.hh>
 
-#warning include dumux/material/spatialparams/fvspatialparams.hh instead
+#warning fvspatialparameters.hh is deprecated, include dumux/material/spatialparams/fvspatialparams.hh instead
 
 namespace Dumux
 {
@@ -29,6 +29,8 @@ namespace Dumux
 /**
  * \brief The base class for spatial parameters of a multi-phase problem using the
  *        fv method.
+ * 
+ * \deprecated Use FVSpatialParams instead.
  */
 template<class TypeTag>
 class FVSpatialParameters: public FVSpatialParams<TypeTag>
