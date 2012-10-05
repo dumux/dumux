@@ -220,7 +220,7 @@ public:
     void source(PrimaryVariables &values,
                 const Element &element,
                 const FVElementGeometry &fvGeometry,
-                int subControlVolumeIdx) const
+                int scvIdx) const
     {
         // ATTENTION: The source term of the mass balance has to be chosen as
         // div (q_momentum) in the problem file
