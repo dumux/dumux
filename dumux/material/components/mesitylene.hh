@@ -143,7 +143,7 @@ public:
         constexpr Scalar p_crit = criticalPressure();
 
         //        Chen method, eq. 7-11.4 (at boiling)
-        constexpr Scalar DH_v_boil = Consts::R * T_crit * Tr1
+        const Scalar DH_v_boil = Consts::R * T_crit * Tr1
         								* (3.978 * Tr1 - 3.958 + 1.555*std::log(p_crit * 1e-5 /*Pa->bar*/ ) )
             							/ (1.07 - Tr1); /* [J/mol] */
 
