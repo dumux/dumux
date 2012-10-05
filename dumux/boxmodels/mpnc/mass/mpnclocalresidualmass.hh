@@ -320,7 +320,7 @@ public:
         // The computeflux() of the Energy module needs a
         // component-wise flux (for the diffusive enthalpy transport)
         // It makes some sense calling energy from here, because energy
-        // is carried by mass However, it is not really a clean
+        // is carried by mass. However, it is not really a clean
         // solution.
 
         // energy transport in fluid phases
@@ -340,9 +340,10 @@ public:
     static void computeSource(PrimaryVariables &source,
                               const VolumeVariables &volVars)
     {
-#warning              In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. \
-                      It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. \
-                      Therefore, kineticEnergy and no kinetic mass does not fit (yet).;
+    	static_assert(not enableKineticEnergy, // enableKinetic is disabled, in this specialization
+    			"In the case of kinetic energy transfer the advective energy transport between the phases has to be considered. "
+    			"It is hard (technically) to say how much mass got transfered in the case of chemical equilibrium. "
+    			"Therefore, kineticEnergy and no kinetic mass does not fit (yet).");
 
         // mass transfer is not considered in this mass module
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
