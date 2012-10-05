@@ -336,11 +336,11 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
 }$}
      \begin{tabular}{||l||}
         \hline\hline
-        \textbf{\textcircled{\ref{calc}}}\verb+FluxVariables vars()+ \\
+        \textbf{\textcircled{\ref{calc}}}\verb+FluxVariables fluxVars()+ \\
         \begin{scriptsize}this is a call to a constructor:  \end{scriptsize}\\
-	\begin{scriptsize}calculate the gradients and average the K\end{scriptsize}\\
+	\begin{scriptsize}calculate the velocities \end{scriptsize}\\
 	\textbf{called by}: 2plocalresidual.hh\\
-        \textbf{implemented in}: 2pfluxvariables.hh\\  
+        \textbf{implemented in}: boxdarcyfluxvariables.hh\\  
 	\hline\hline
      \end{tabular}
     $\overrightarrow{
@@ -348,7 +348,7 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
      \begin{tabular}{||l||}
       \hline\hline
       	\textbf{\textcircled{\ref{calc}}}\verb+computeAdvectiveFlux()+ (other models: also diffusive)\\
-    	\scriptsize{for 2p-model: calculation of phase velocities}\\
+    	\scriptsize{upwinding decision via  \verb+massUpwindWeight_+}\\
 	\textbf{called by}: 2plocalresidual.hh\\
       	\textbf{implemented in}: 2plocalresidual.hh\\  
      \hline\hline
