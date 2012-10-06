@@ -174,7 +174,7 @@ public:
      *
      * source : Reid et al. (fourth edition): Chen method (chap. 7-11, Delta H_v = Delta H_v (T) according to chap. 7-12)
      *
-     * \param temp temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar heatVap(Scalar temperature,

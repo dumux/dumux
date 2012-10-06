@@ -81,10 +81,11 @@ public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
 
-    //! Intrinsic permeability tensor K \f$[m^2]\f$ depending
-    /*! on the position in the domain
+    /**
+     * \brief Intrinsic permeability tensor K \f$[m^2]\f$ depending
+     *        on the position in the domain
      *
-     *  \param element The finite volume element
+     *  \param globalPos The global position in the domain.
      *
      *  Alternatively, the function intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) could be
      *  defined, where globalPos is the vector including the global coordinates of the finite volume.
@@ -97,10 +98,11 @@ public:
     		return K2;
     }
 
-    //! Define the porosity \f$[-]\f$ of the porous medium depending
-    /*! on the position in the domain
+    /** 
+     * \brief Define the porosity \f$[-]\f$ of the porous medium depending
+     *        on the position in the domain
      *
-     *  \param element The finite volume element
+     *  \param globalPos The global position in the domain.
      *
      *  Alternatively, the function porosityAtPos(const GlobalPosition& globalPos) could be
      *  defined, where globalPos is the vector including the global coordinates of the finite volume.
@@ -113,10 +115,10 @@ public:
         return 0.3;
     }
 
-    /*! Return the parameter object for the material law (i.e. Brooks-Corey)
-     *  depending on the position in the domain
+    /*! \brief Return the parameter object for the material law (i.e. Brooks-Corey)
+     *         depending on the position in the domain
      *
-     *  \param element The finite volume element
+     *  \param globalPos The global position in the domain.
      *
      *  Alternatively, the function materialLawParamsAtPos(const GlobalPosition& globalPos)
      *  could be defined, where globalPos is the vector including the global coordinates of
