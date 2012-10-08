@@ -1,7 +1,7 @@
 ############################################################
 # Parameter file for test_mpfa2p.cc
 # Everything behind a '#' is a comment.
-# Type "./test_transport --help" for more information.
+# Type "./test_mpfa2p --help" for more information.
 ############################################################
 
 ############################################################

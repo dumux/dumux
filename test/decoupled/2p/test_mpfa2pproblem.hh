@@ -125,7 +125,7 @@ NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FVMPFALPressureTwoPAdap
  *
  * <tt>./test_mpfa2p</tt>,
  *
- * Additioinally, the numerical model can be switched by executing with the parameter "ModelType":
+ * Additionally, the numerical model can be switched by executing with the parameter "ModelType":
  *
  * <tt>./test_mpfa2p --ModelType=...</tt>,
  *
