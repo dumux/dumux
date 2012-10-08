@@ -1,13 +1,11 @@
 Differences Between DuMuX 2.1 and DuMuX 2.2
 ===================================================
 
-* IMMEDIATE CHANGES not allowing a deprecation period: 
-  - In the problem / spatial parameter files, the setting of the property 
-    "SpatialParameters" as in 
-    SET...PROP(..., SpatialParameters ...
-    has to be replaced by 
-    SET...PROP(..., SpatialParams ...
+* IMPROVEMENTS and ENHANCEMENTS: 
+  - Decoupled Models: An h-adaptive model using a mpfa l-method was added
+    that simulates 2p and 2p2c flow on irregular grids in two dimensions.
 
+* IMMEDIATE INTERFACE CHANGES not allowing a deprecation period: 
   - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices additionally 
     get TypeTag as template parameter. If the Indices are not obtained via the 
     property, this has to be adapted.
@@ -20,9 +18,6 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     class has to be adapted to deal with boundary faces. See FS#117 and #99
     for details.
     
-  - Decoupled Models: An h-adaptive model using a mpfa l-method was added
-    that simulates 2p and 2p2c flow on irregular grids in two dimensions.
-
 * Deprecated CLASSES/FILES, to be removed after 2.2:
   - Model specific base box problems: The common functionality has been collected 
     in PorousMediaBoxProblem in dumux/boxmodels/common/porousmediaboxproblem.hh. 
@@ -83,6 +78,9 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     dumux/boxmodels/2p2c/2p2cfluxvariables.hh,
     dumux/boxmodels/mpnc/.../...fluxvariables.hh,
     dumux/freeflow/stokes.../stokes...fluxvariables.hh.
+
+  - Box models: The primaryVarWeight() functions are no longer used for the 
+    evaluation of the relative error. 
 
   - Element and FVElementGeometry: The elem_() and fvElemGeom_() member function 
     of BoxLocalResidual have been replaced by element_() and fvGeometry_(). 
