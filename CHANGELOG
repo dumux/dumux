@@ -2,8 +2,20 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
 ===================================================
 
 * IMPROVEMENTS and ENHANCEMENTS: 
-  - Decoupled Models: An h-adaptive model using a mpfa l-method was added
-    that simulates 2p and 2p2c flow on irregular grids in two dimensions.
+  - Two new fully implicit models dedicated to simulate compositional
+    (non-isothermal) CO2-brine systems have been added, together with 
+    corresponding components and a fluid system. See test/boxmodels/co2(ni) 
+    for details. These tests also illustrate the usage of element and vertex 
+    parameters as well as boundary ids provided by DGF files for setting 
+    permeability and porosity as well as boundary conditions.
+
+  - Decoupled Models: An h-adaptive model using an MPFA L-method was added
+    that simulates 2p and 2p2c flow on irregular grids in two dimensions. 
+    See test/decoupled/2p(2c) for details.
+
+  - The Stokes models are capable of simulating the full Navier-Stokes 
+    equations for momentum transport. See test/freeflow/navierstokes 
+    for details.
 
 * IMMEDIATE INTERFACE CHANGES not allowing a deprecation period: 
   - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices additionally 
@@ -39,7 +51,21 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     BoxSpatialParametersOneP, dumux/material/spatialparameters/boxspatialparameters1p.hh,
     FVSpatialParameters, dumux/material/spatialparameters/fvspatialparameters.hh,
     FVSpatialParametersOneP, dumux/material/spatialparameters/fvspatialparameters1p.hh.
-  
+
+  - Due to the unification of flux variables for the fully implicit models, 
+    some model-specific flux variables have become obsolete: 
+    OnePFluxVariables, dumux/boxmodels/1p/1pfluxvariables.hh,
+    TwoPFluxVariables, dumux/boxmodels/2p/2pfluxvariables.hh,
+    RichardsFluxVariables, dumux/boxmodels/richards/richardsfluxvariables.hh.
+
+  - Two components have new names and locations in dumux/material/components: 
+    SimpleDNAPL, simplednapl.hh -> DNAPL, napl.hh
+    Oil, oil.hh -> LNAPL, lnapl.hh
+
+  - Some MPFA-O method files/classes have been moved to a new subdirectory "omethod"
+    in dumux/decoupled/2p/diffusion/fvmpfa: 
+    fvmpfaopressure2p.hh, fvmpfaovelocity2p.hh, fvmpfaopressureproperties2p.hh
+
   - DUMUX_UNUSED is deprecated and will be removed after 2.2. It should be replaced 
     by the upstream version DUNE_UNUSED.
   
