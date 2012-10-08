@@ -359,6 +359,7 @@ public:
      * \param vertIdx The global index of the control volume
      * \param pvIdx The index of the primary variable
      */
+    DUNE_DEPRECATED
     Scalar primaryVarWeight(const int vertIdx, const int pvIdx) const
     {
         return 1.0/std::max(std::abs(this->prevSol()[vertIdx][pvIdx]), 1.0);
@@ -385,8 +386,6 @@ public:
     {
         Scalar result = 0.0;
         for (int j = 0; j < numEq; ++j) {
-            //Scalar weight = asImp_().primaryVarWeight(vertexIdx, j);
-            //Scalar eqErr = std::abs(priVars1[j] - priVars2[j])*weight;
             Scalar eqErr = std::abs(priVars1[j] - priVars2[j]);
             eqErr /= std::max<Scalar>(1.0, std::abs(priVars1[j] + priVars2[j])/2);
 

@@ -107,6 +107,7 @@ public:
      *        \param globalIdx The global index of the vertex
      *        \param pvIdx The index of the primary variable
      */
+    DUNE_DEPRECATED
     Scalar primaryVarWeight(int globalIdx, int pvIdx) const
     {
         if (pressureIdx == pvIdx)

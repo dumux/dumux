@@ -123,6 +123,7 @@ public:
     /*!
      * \copydoc Dumux::BoxModel::primaryVarWeight
      */
+    DUNE_DEPRECATED
     Scalar primaryVarWeight(const int vertIdx, const int pvIdx) const
     {
         if (Indices::pwIdx == pvIdx)
