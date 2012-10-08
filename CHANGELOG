@@ -10,12 +10,33 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     permeability and porosity as well as boundary conditions.
 
   - Decoupled Models: An h-adaptive model using an MPFA L-method was added
-    that simulates 2p and 2p2c flow on irregular grids in two dimensions. 
-    See test/decoupled/2p(2c) for details.
+    that simulates 2p and 2p2c flow on unstructured grids with hanging nodes 
+    in two dimensions. See test/decoupled/2p(2c) for details.
 
-  - The Stokes models are capable of simulating the full Navier-Stokes 
+  - All fully implicit porous media models are now capable of employing 
+    the Forchheimer equation as an alternative to the commonly used 
+    Darcy law. See test_forchheimer*p in test/boxmodels/mpnc for details. 
+
+  - The Stokes models are now able to simulate the full Navier-Stokes 
     equations for momentum transport. See test/freeflow/navierstokes 
     for details.
+
+  - The fully implicit models have been (partially) generalized to allow 
+    for a cell-centered discretization in addition to the default 
+    vertex-centered (box) one. Cell-centered fully implicit 2p and 2p2c 
+    models are already available in the developers part of Dumux. Further 
+    generalizations and the inclusion in the stable part are planned for 
+    Dumux 2.3.
+
+  - Several model-specific features and classes have been unified, like 
+    the calculation of the Darcy velocity for the fully implicit flux 
+    variables, or the temperature, gravity, and spatial parameter 
+    functionalities of the fully implicit problems. Moreover, many
+    names have been made more consistent. This includes the naming 
+    and grouping of several parameters and corresponding properties, 
+    the indexing of phases and components, and the preference of the 
+    partial name "params" over "parameters." For details, see also the 
+    deprecations listed below.
 
 * IMMEDIATE INTERFACE CHANGES not allowing a deprecation period: 
   - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices additionally 
