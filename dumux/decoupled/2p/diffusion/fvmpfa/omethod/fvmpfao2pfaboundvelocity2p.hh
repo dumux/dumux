@@ -201,11 +201,8 @@ public:
     {
         ParentType::addOutputVtkFields(writer);
 
-        std::cout<<"muh\n";
         if (vtkOutputLevel_ > 0)
         {
-            std::cout<<"muhin\n";
-
             Dune::BlockVector < DimVector > &velocityWetting = *(writer.template allocateManagedBuffer<
                     Scalar, dim>(problem_.gridView().size(0)));
             Dune::BlockVector < DimVector > &velocityNonwetting =
