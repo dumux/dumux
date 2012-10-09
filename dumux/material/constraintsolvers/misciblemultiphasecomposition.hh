@@ -141,7 +141,7 @@ public:
         }
 
         // assemble the equations expressing the fact that the
-        // fugacities of each component is equal in all phases
+        // fugacities of each component are equal in all phases
         for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
             Scalar entryCol1 =
                 fluidState.fugacityCoefficient(/*phaseIdx=*/0, compIdx)
