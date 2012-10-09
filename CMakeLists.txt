@@ -249,7 +249,7 @@ endif(BOOST_FOUND)
 
 ##############
 # set appropriate compiler flags for debug/release compilation modes
-add_definitions("-std=c++0x -Wall -Wno-sign-compare --no-strict-aliasing")
+add_definitions("-std=c++0x -Wall -Wno-sign-compare -fno-strict-aliasing")
 
 if(("${CMAKE_BUILD_TYPE}" STREQUAL "debug") OR (NOT (DEFINED "${CMAKE_BUILD_TYPE}")))
   add_definitions(-DNDEBUG)
