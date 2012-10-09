@@ -37,6 +37,8 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     the indexing of phases and components, and the preference of the 
     partial name "params" over "parameters." For details, see also the 
     deprecations listed below.
+    
+  - Added compiler support for GCC 4.7 and Clang 3.1.
 
 * IMMEDIATE INTERFACE CHANGES not allowing a deprecation period: 
   - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices additionally 
