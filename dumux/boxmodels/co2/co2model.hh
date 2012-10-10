@@ -19,6 +19,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Adaption of the BOX scheme to the two-phase two-component flow model without constraint solver.
+ */
 #ifndef DUMUX_CO2_MODEL_HH
 #define DUMUX_CO2_MODEL_HH
 
@@ -26,6 +31,20 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup CO2Model
+ * \brief Adaption of the BOX scheme to the non-isothermal two-phase two-component flow model.
+ *   See TwoPTwoCModel for reference to the equations used.
+ *   The CO2 model is derived from the 2p2c model. In the CO2 model the phase switch criterion
+ *   is different from the 2p2c model.
+ *   The phase switch occurs when the equilibrium concentration
+ *   of a component in a phase is exceeded, instead of the sum of the components in the virtual phase
+ *   (the phase which is not present) being greater that unity as done in the 2p2c model.
+ *   The CO2VolumeVariables do not use a constraint solver for calculating the mole fractions as is the
+ *   case in the 2p2c model. Instead mole fractions are calculated in the FluidSystem with a given
+ *   temperature, pressurem and salinity.
+ *
+ */
 
 template<class TypeTag>
 class CO2Model: public TwoPTwoCModel<TypeTag>
@@ -207,8 +226,8 @@ class CO2Model: public TwoPTwoCModel<TypeTag>
 
                if(xwn > xwnMax)
                {
-
-                   std::cout << "wetting phase appears at vertex " << globalIdx
+                   // non-wetting phase appears
+                   std::cout << "non-wetting phase appears at vertex " << globalIdx
                              << ", coordinates: " << globalPos << ", xwn > xwnMax: "
                              << xwn << " > "<< xwnMax << std::endl;
 

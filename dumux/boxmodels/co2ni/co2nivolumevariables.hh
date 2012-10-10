@@ -1,12 +1,10 @@
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Melanie Darcis                                  *
- *   Copyright (C) 2008-2010 by Andreas Lauser                               *
- *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
- *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
+ *   Copyright (C) 2012 by                                                   *
  *   Institute for Modelling Hydraulic and Environmental Systems             *
  *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software: you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -37,7 +35,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPTwoCNIModel
+ * \ingroup CO2NIModel
  * \ingroup BoxVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the non-isothermal two-phase, two-component

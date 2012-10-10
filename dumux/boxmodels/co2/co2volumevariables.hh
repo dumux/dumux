@@ -26,7 +26,13 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup CO2Model
+ * \ingroup BoxVolumeVariables
+ * \brief Contains the quantities which are are constant within a
+ *        finite volume in the non-isothermal two-phase, two-component
+ *        model.
+ */
 template <class TypeTag>
 class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
 {
