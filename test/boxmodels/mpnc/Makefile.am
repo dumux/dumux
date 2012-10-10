@@ -1,7 +1,7 @@
 check_PROGRAMS = test_mpnc test_forchheimer2p test_forchheimer1p
 noinst_HEADERS = *.hh
 
-EXTRA_DIST=*reference.vtu *.input CMakeLists.txt grids/*.dgf
+EXTRA_DIST=*reference.vtu *reference.vtp *.input CMakeLists.txt grids/*.dgf
 gridsdir=$(datadir)/dumux/grids
 grids_DATA=grids/*.dgf
 
