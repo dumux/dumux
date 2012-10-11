@@ -229,7 +229,7 @@ void boundaryTypesAtPos(BoundaryTypes &bcTypes, const GlobalPosition& globalPos)
  */
 const void boundaryFormulation(typename Indices::BoundaryFormulation &bcFormulation, const Intersection& intersection) const
 {
-    bcFormulation = Indices::concentration;
+    bcFormulation = Indices::BoundaryFormulation::concentration;
 }
 /*!
  * \copydoc Dumux::TestDecTwoPTwoCProblem::dirichletAtPos()

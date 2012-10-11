@@ -92,7 +92,7 @@ SET_TYPE_PROP(DecoupledTwoPTwoCAdaptive, PressureModel, FVPressure2P2CAdaptive<T
  * errors in case those Indice are really applied somewhere.
  */
 template <class TypeTag>
-struct DecoupledTwoPTwoCIndicesAdaptive : public DecoupledTwoPTwoCIndices<TypeTag>
+struct DecoupledTwoPTwoCIndicesAdaptive : DecoupledTwoPTwoCIndices<TypeTag>
 {
     static const int pressureIdx = 0;
     static const int saturationIdx = 0;

@@ -1274,7 +1274,7 @@ int FVPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersection
 //    int globalIdx4 = problem().variables().index(*isIt14->outside());
 
     Dune::FieldVector<Scalar, dim> unity(1.);
-    std::vector<Dune::FieldVector<Scalar, dim> > lambda(4, unity);
+    std::vector<Dune::FieldVector<Scalar, dim> > lambda = {unity, unity, unity, unity};
 
     Dune::FieldMatrix<Scalar,dim,2*dim-dim+1> T;
     int triangleType = pressureModelAdaptive2p_->calculateTransmissibility(
