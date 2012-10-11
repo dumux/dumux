@@ -40,7 +40,10 @@ Differences Between DuMuX 2.1 and DuMuX 2.2
     
   - Added compiler support for GCC 4.7 and Clang 3.1.
 
-* IMMEDIATE INTERFACE CHANGES not allowing a deprecation period: 
+* IMMEDIATE INTERFACE CHANGES not allowing a deprecation period:
+  - From Dune 2.2 on, FieldVector::size is a method rather than an enum value.
+    It is mandatory to add the flag --enable-fieldvector-size-is-method to the
+    CONFIGURE_FLAGS. An example is given in the opts file dumux/debug.opts.
   - Implicit models: TwoPIndices, TwoPNIIndices, and RichardsIndices additionally 
     get TypeTag as template parameter. If the Indices are not obtained via the 
     property, this has to be adapted.
