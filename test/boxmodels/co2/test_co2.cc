@@ -66,11 +66,11 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-#if HAVE_ALUGRID || HAVE_UG
+#if HAVE_ALUGRID
     typedef TTAG(HeterogeneousProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
-    std::cout << "Test skipped, it needs ALUGrid or UG." << std::endl;
+    std::cout << "Test skipped, it needs ALUGrid." << std::endl;
     return 77;
 #endif
 

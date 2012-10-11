@@ -27,10 +27,8 @@
 
 #if HAVE_ALUGRID
 #include <dune/grid/alugrid/2d/alugrid.hh>
-#elif HAVE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #else
-#warning UG or ALUGrid necessary for this test.
+#warning ALUGrid is necessary for this test.
 #endif
 
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
@@ -68,8 +66,6 @@ NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(BoxTwoPTwoC, HeterogeneousSpati
 // Set the grid type
 #if HAVE_ALUGRID
 SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#elif HAVE_UG
-SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::UGGrid<2>);
 #else
 SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);
 #endif
