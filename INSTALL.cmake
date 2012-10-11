@@ -1,7 +1,7 @@
 Why CMake
 =========
 
-You can use CMake 2.6 or higher as alternative to the build system 
+You can use CMake 2.8 or higher as alternative to the build system 
 provided by DUNE. CMake is included in most GNU/Linux distributions 
 or can be downloaded at www.cmake.org. Using CMake has several 
 advantages compared to autotools:
