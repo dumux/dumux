@@ -191,7 +191,7 @@ SET_BOOL_PROP(DecoupledTwoPTwoC, EnableGravity, true);//DEPRECATED
  * special equation indices have to be provided for boundary conditions.
  */
 template <class TypeTag>
-struct DecoupledTwoPTwoCIndices : DecoupledTwoPCommonIndices
+struct DecoupledTwoPTwoCIndices : public DecoupledTwoPCommonIndices
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
