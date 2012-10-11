@@ -18,70 +18,106 @@ There are extensive comments regarding the formating in the tex file: so feel fr
 \section{Structure -- by content}
 \label{content}
 % by means of this enumerated list, the connection between algorithm and content can be achieved by references to the labels of this list.
-This list shows the algorithmic outline of a typical \Dumux run employing a fully coupled model. Each item stands for a characteristic step within the modeling framework. 
+This list shows the algorithmic outline of a typical \Dumux run. Each item stands for a characteristic step within the modeling framework. 
 
 \clearpage
+In Figure \ref{fig:algorithm}, the algorithmic representations of both approaches down to the element level are illustrated. 
+
+\begin{figure}[hbt]
+\begin{tabular}{ l | l }
+ 
+\begin{minipage}[t]{0.48\textwidth}
+\setcounter{thingCounter}{0}
+
+\scriptsize
+\sffamily
 \begin{tabbing}
-\textbf{\numberThis{main}{init}} 			\hspace{0.01\textwidth} \=
-\textbf{\numberThis{time step}{prep}} 			\hspace{0.01\textwidth} \=
-\textbf{\numberThis{Newton step}{elem}} 	\hspace{0.01\textwidth}	\= 
-\textbf{\numberThis{Element}{calc}} 			\hspace{0.01\textwidth} \\
+\textbf{{\begin{turn}{45}\numberThis{main}{init}\end{turn}}} 			 \=
+\textbf{{\begin{turn}{45}\numberThis{time step}{prep}\end{turn}}} 			 \=
+\textbf{{\begin{turn}{45}\numberThis{\textsc{Newton}}{elem}\end{turn}}} 		\= 
+\textbf{{\begin{turn}{45}\numberThis{element}{calc}\end{turn}}} 			\=  \\
 \\
 initialize \\
-\textbf{for each} time step\\
+\textbf{foreach} time step\\
 
-\> pre-process solution\\
-\> \textbf{for each} \textsc{Newton} iteration \\
+  \> prepare update\\
+  \> \textbf{foreach} \textsc{Newton} iteration \\
 
-\> \> \textbf{for each} element \\
+    \> \> \textbf{foreach} element \\
 
-\> \> \> calculate element's local residual \\
-\> \> \> calculate element's \textsc{Jacobian} of local residual \\
-\> \> \> add local residual to global residual vector \\
-\> \> \> add local \textsc{Jacobian} to global \textsc{Jacobian} matrix \\
+      \> \> \> - calculate element \\
+      \>\>\>  \; residual vector and \\
+      \>\>\>  \; Jacobian matrix\\
+      \> \> \> - assemble into global\\
+      \>\>\>  \; residual vector and \\
+      \> \> \>  \;{Jacobian} matrix \\
 
-\> \> \textbf{end for} \\
+    \> \> \textbf{endfor} \\
 
-\> \> solve linear system of equations\\
-\> \> update current iterative solution\\
-\> \> \textbf{if} converged \\
-\> \> \qquad stop \textsc{Newton} iteration\\
-\> \> \textbf{end if} \\
-\> \textbf{endfor}\\
-\> \textbf{if} converged \\
-\> \qquad post-process solution\\
-\> \qquad write result\\
-\> \qquad adapt timestep size \\
-\> \textbf{else if} not converged \\
-\> \qquad retry with half time step size\\
-\> \textbf{end if} \\
-\textbf{end for}\\
-finalize\\
+    \> \> solve linear system\\
+    \> \> update solution\\
+    \> \> check for \textsc{Newton} convergence\\
+  \> \textbf{endfor}\\
+  \> - adapt time step size, \\
+  \> \; possibly redo with smaller step size\\
+  \> - write result\\
+\textbf{endfor}\\
+finalize
 \end{tabbing}
 
+\end{minipage}
 
-%% this is tructured by a table propably the new structure (\numberThis{}{} defined in the main document)is intuetivly easier to get
-% \begin{enumerate}[1]
-%  \item\label{init} initialize \\
-%  \textbf{foreach} timestep
-%  \item\label{prep}
-%    \hspace*{0.05\textwidth} prepare update\\
-%    \hspace*{0.05\textwidth} \textbf{foreach} \textsc{Newton} step
-%  \item\label{elem}
-%     \hspace*{0.1\textwidth} \textbf{foreach} element
-%  \item\label{calc}
-%       \hspace*{0.15\textwidth} calculate element \textit{Jacobian}\\ 
-%       \hspace*{0.15\textwidth} assemble into global \textit{Jacobian} matrix \\
-% 
-%       \hspace*{0.10\textwidth} \textbf{foreach} element calculate element residual \\
-%       \hspace*{0.10\textwidth} assemble into global defect\\
-% 
-%       \hspace*{0.05\textwidth} solve linear system\\
-%       \hspace*{0.05\textwidth} update solution\\
-%       \hspace*{0.05\textwidth} check for \textsc{Newton} convergence\\
-%       \hspace*{0.05\textwidth} adapt timestep, possibly redo with smaller stepsize\\
-%       \hspace*{0.05\textwidth} write result\\
-% \end{enumerate}
+& 
+
+\begin{minipage}[t]{0.48\textwidth}
+\setcounter{thingCounter}{0}
+
+\scriptsize
+\sffamily
+\begin{tabbing}
+\textbf{{\begin{turn}{45}1. main\end{turn}}} 			 \=
+\textbf{{\begin{turn}{45}2. time step\end{turn}}} 			 \=
+\textbf{{\begin{turn}{45}3. \textsc{IMPES/C}\end{turn}}} 		\= 
+\textbf{{\begin{turn}{45}4. element\end{turn}}} 			\=  \\
+\\
+initialize \\
+\textbf{foreach} time step\\
+
+  \> prepare update\\
+  \> \textbf{foreach} \textsc{IMPES/C} step \\
+    \> \> \textbf{if} grid is adaptive\\
+      \> \> \> - calculate refinement indicator\\
+      \> \> \> - mark elements, adapt the grid\\
+      \> \> \> - map old solution to new grid\\
+    \> \> - calculate {flow field}\\
+    \> \>  \textbf{foreach} element \\
+
+      \> \> \> - calculate element stiffness matrix \\
+      \> \> \> - assemble into global matrix \\
+
+    \> \>  \textbf{endfor} \\
+    \> \>  solve linear system\\
+
+    \> \> - calculate {transport} \\
+    \> \> \; (saturations, concentrations,...) \\
+    \> \>   \textbf{foreach} element  \\
+      \> \> \> -calculate update (explicitly) \\
+      \> \> \>- adapt time step ({CFL}-like criterion) \\
+    \> \>   \textbf{endfor} \\
+    \> \> - update old solution \\
+    \> \> - postprocess (flash calculation, etc.)\\
+  \> \textbf{endfor}\\
+\> - write result\\
+\textbf{endfor}\\
+finalize
+\end{tabbing}
+
+\end{minipage}
+\end{tabular}
+
+\caption{Structure of a coupled fully-implicit (\textbf{left}) and a decoupled semi-implicit (\textbf{right}) scheme in \Dumux.}
+\label{fig:algorithm}
+\end{figure}
 
 \subsection{Levels}
 
