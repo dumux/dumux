@@ -27,8 +27,6 @@
 #include <cmath>
 #include <limits>
 
-#include <dune/common/deprecated.hh>
-
 extern "C" {
 #include <quadmath.h>
 }

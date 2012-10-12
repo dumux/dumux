@@ -9,8 +9,6 @@ M4FILES = \
 	cxx0x_constexpr.m4 \
 	dumux.m4 \
 	dumux_always_inline.m4 \
-	dumux_deprecated.m4 \
-	dumux_unused.m4 \
 	dumux_quad.m4
 
 aclocaldir = $(datadir)/aclocal
