@@ -1,1 +1,0 @@
-/temp/workingDumux/dumux-stable/tutorial/solutions_coupled/ex4_benzene.hh
