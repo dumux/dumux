@@ -72,7 +72,6 @@ NEW_PROP_TAG(NewtonWriteConvergence);
 //! Specifies whether the Jacobian matrix should only be reassembled
 //! if the current solution deviates too much from the evaluation point
 NEW_PROP_TAG(ImplicitEnablePartialReassemble);
-NEW_PROP_TAG(EnablePartialReassemble);//DEPRECATED
 
 /*!
  * \brief Specifies whether the update should be done using the line search
