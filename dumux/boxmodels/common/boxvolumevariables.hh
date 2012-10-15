@@ -137,13 +137,6 @@ public:
     { return priVars_; }
 
     /*!
-     * \brief Return the vector of primary variables
-     */
-    DUNE_DEPRECATED_MSG("use priVars instead")
-    const PrimaryVariables &primaryVars() const
-    { return priVars(); }
-
-    /*!
      * \brief Return a component of primary variable vector
      *
      * \param pvIdx The index of the primary variable of interest
@@ -151,17 +144,6 @@ public:
     Scalar priVar(const int pvIdx) const
     {
         return priVars_[pvIdx];
-    }
-
-    /*!
-     * \brief Return a component of primary variable vector
-     *
-     * \param pvIdx The index of the primary variable of interest
-     */
-    DUNE_DEPRECATED_MSG("use priVar instead")
-    Scalar primaryVar(const int pvIdx) const
-    {
-        return priVar(pvIdx);
     }
 
     /*!

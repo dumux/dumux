@@ -157,30 +157,19 @@ SET_TYPE_PROP(BoxModel,
 SET_TYPE_PROP(BoxModel, JacobianAssembler, Dumux::BoxAssembler<TypeTag>);
 
 //! use an unlimited time step size by default
-#if 0
-// requires GCC 4.6 and above to call the constexpr function of
-// numeric_limits
-SET_SCALAR_PROP(BoxModel, MaxTimeStepSize, std::numeric_limits<Scalar>::infinity());//DEPRECATED
-#else
-SET_SCALAR_PROP(BoxModel, MaxTimeStepSize, 1e100);//DEPRECATED
-#endif
-SET_SCALAR_PROP(BoxModel, TimeManagerMaxTimeStepSize, GET_PROP_VALUE(TypeTag, MaxTimeStepSize));
+SET_SCALAR_PROP(BoxModel, TimeManagerMaxTimeStepSize, 1e100);
 
 //! use forward differences to calculate the jacobian by default
-SET_INT_PROP(BoxModel, ImplicitNumericDifferenceMethod, GET_PROP_VALUE(TypeTag, NumericDifferenceMethod));
-SET_INT_PROP(BoxModel, NumericDifferenceMethod, +1);//DEPRECATED
+SET_INT_PROP(BoxModel, ImplicitNumericDifferenceMethod, +1);
 
 //! do not use hints by default
-SET_BOOL_PROP(BoxModel, ImplicitEnableHints, GET_PROP_VALUE(TypeTag, EnableHints));
-SET_BOOL_PROP(BoxModel, EnableHints, false);//DEPRECATED
+SET_BOOL_PROP(BoxModel, ImplicitEnableHints, false);
 
 // disable jacobian matrix recycling by default
-SET_BOOL_PROP(BoxModel, ImplicitEnableJacobianRecycling, GET_PROP_VALUE(TypeTag, EnableJacobianRecycling));
-SET_BOOL_PROP(BoxModel, EnableJacobianRecycling, false);//DEPRECATED
+SET_BOOL_PROP(BoxModel, ImplicitEnableJacobianRecycling, false);
 
 // disable partial reassembling by default
-SET_BOOL_PROP(BoxModel, ImplicitEnablePartialReassemble, GET_PROP_VALUE(TypeTag, EnablePartialReassemble));
-SET_BOOL_PROP(BoxModel, EnablePartialReassemble, false);//DEPRECATED
+SET_BOOL_PROP(BoxModel, ImplicitEnablePartialReassemble, false);
 
 // disable two-point-flux by default
 SET_BOOL_PROP(BoxModel, ImplicitUseTwoPointFlux, false);

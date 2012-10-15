@@ -306,16 +306,6 @@ protected:
     };
 
     /*!
-     * \brief Returns a reference to the element.
-     */
-    DUNE_DEPRECATED_MSG("use element_() instead")
-    const Element &elem_() const
-    {
-        Valgrind::CheckDefined(elemPtr_);
-        return *elemPtr_;
-    };
-
-    /*!
      * \brief Returns a reference to the model.
      */
     const Model &model_() const

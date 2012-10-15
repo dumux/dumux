@@ -625,13 +625,6 @@ protected:
     }
     
     /*!
-     * \brief Returns a reference to the current element.
-     */
-    DUNE_DEPRECATED_MSG("use element_ instead")
-    const Element &elem_() const
-    { return element_();}
-
-    /*!
      * \brief Returns a reference to the current element's finite
      *        volume geometry.
      */
@@ -640,14 +633,6 @@ protected:
         Valgrind::CheckDefined(fvElemGeomPtr_);
         return *fvElemGeomPtr_;
     }
-
-    /*!
-     * \brief Returns a reference to the current element's finite
-     *        volume geometry.
-     */
-    DUNE_DEPRECATED_MSG("use fvGeometry_ instead")
-    const FVElementGeometry &fvElemGeom_() const
-    { return fvGeometry_(); }
 
     /*!
      * \brief Returns a reference to the primary variables of
@@ -660,17 +645,6 @@ protected:
     }
 
     /*!
-     * \brief Returns a reference to the primary variables of
-     *           the last time step of the i'th
-     *        sub-control volume of the current element.
-     */
-    DUNE_DEPRECATED_MSG("use prevPriVars_ instead")
-    const PrimaryVariables &prevPrimaryVars_(const int i) const
-    {
-        return prevPriVars_(i);
-    }
-
-    /*!
      * \brief Returns a reference to the primary variables of the i'th
      *        sub-control volume of the current element.
      */
@@ -680,32 +654,12 @@ protected:
     }
 
     /*!
-     * \brief Returns a reference to the primary variables of the i'th
-     *        sub-control volume of the current element.
-     */
-    DUNE_DEPRECATED_MSG("use curPriVars_ instead")
-    const PrimaryVariables &curPrimaryVars_(const int i) const
-    {
-        return curPriVars_(i);
-    }
-
-    /*!
      * \brief Returns the j'th primary of the i'th sub-control volume
      *        of the current element.
      */
     Scalar curPriVar_(const int i, const int j) const
     {
         return curVolVars_(i).priVar(j);
-    }
-
-    /*!
-     * \brief Returns the j'th primary of the i'th sub-control volume
-     *        of the current element.
-     */
-    DUNE_DEPRECATED_MSG("use curPriVar_ instead")
-    Scalar curPrimaryVar_(const int i, const int j) const
-    {
-        return curPriVar_(i, j);
     }
 
     /*!

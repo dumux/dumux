@@ -353,19 +353,6 @@ public:
     { return localJacobian().localResidual(); }
 
     /*!
-     * \brief Returns the relative weight of a primary variable for
-     *        calculating relative errors.
-     *
-     * \param vertIdx The global index of the control volume
-     * \param pvIdx The index of the primary variable
-     */
-    DUNE_DEPRECATED
-    Scalar primaryVarWeight(const int vertIdx, const int pvIdx) const
-    {
-        return 1.0/std::max(std::abs(this->prevSol()[vertIdx][pvIdx]), 1.0);
-    }
-
-    /*!
      * \brief Returns the relative error between two vectors of
      *        primary variables.
      *

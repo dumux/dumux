@@ -34,7 +34,6 @@ namespace Properties
 {
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters object
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 }
 
 /*!
@@ -170,19 +169,11 @@ public:
     SpatialParams &spatialParams()
     { return *spatialParams_; }
     
-    DUNE_DEPRECATED_MSG("use spatialParams instead")
-    SpatialParams &spatialParameters()
-    { return spatialParams(); }
-
     /*!
      * \brief Returns the spatial parameters object.
      */
     const SpatialParams &spatialParams() const
     { return *spatialParams_; }
-
-    DUNE_DEPRECATED_MSG("use spatialParams instead")
-    const SpatialParams &spatialParameters() const
-    { return spatialParams(); }
 
     // \}
 
