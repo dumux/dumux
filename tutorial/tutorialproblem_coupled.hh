@@ -83,7 +83,7 @@ public: typedef Dumux::LiquidPhase<Scalar, Dumux::LNAPL<Scalar> > type; /*@\labe
 
 SET_TYPE_PROP(TutorialProblemCoupled, FluidSystem, Dumux::TwoPImmiscibleFluidSystem<TypeTag>);/*@\label{tutorial-coupled:set-fluidsystem}@*/
 // Disable gravity
-SET_BOOL_PROP(TutorialProblemCoupled, EnableGravity, false); /*@\label{tutorial-coupled:gravity}@*/
+SET_BOOL_PROP(TutorialProblemCoupled, ProblemEnableGravity, false); /*@\label{tutorial-coupled:gravity}@*/
 }
 
 /*!

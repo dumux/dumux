@@ -79,8 +79,8 @@ SET_PROP(OnePTestProblem, SpatialParams)
 // Linear solver settings
 SET_TYPE_PROP(OnePTestProblem, LinearSolver, Dumux::BoxBiCGStabILU0Solver<TypeTag> );
 SET_INT_PROP(OnePTestProblem, LinearSolverVerbosity, 0);
-SET_INT_PROP(OnePTestProblem, PreconditionerIterations, 1);
-SET_SCALAR_PROP(OnePTestProblem, PreconditionerRelaxation, 1.0);
+SET_INT_PROP(OnePTestProblem, LinearSolverPreconditionerIterations, 1);
+SET_SCALAR_PROP(OnePTestProblem, LinearSolverPreconditionerRelaxation, 1.0);
 
 // Enable gravity
 SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);

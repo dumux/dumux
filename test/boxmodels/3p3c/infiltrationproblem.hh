@@ -66,7 +66,7 @@ SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, false);
 SET_SCALAR_PROP(InfiltrationProblem, NewtonRelTolerance, 1e-8);
 
 // -1 backward differences, 0: central differences, +1: forward differences
-SET_INT_PROP(InfiltrationProblem, NumericDifferenceMethod, 0);
+SET_INT_PROP(InfiltrationProblem, ImplicitNumericDifferenceMethod, 0);
 }
 
 /*!

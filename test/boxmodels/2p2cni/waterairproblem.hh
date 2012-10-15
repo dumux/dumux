@@ -66,7 +66,7 @@ SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::FluidSystems::H2ON2<typename 
 SET_BOOL_PROP(WaterAirProblem, ProblemEnableGravity, true);
 
 // Use forward differences instead of central differences
-SET_INT_PROP(WaterAirProblem, NumericDifferenceMethod, +1);
+SET_INT_PROP(WaterAirProblem, ImplicitNumericDifferenceMethod, +1);
 
 // Write newton convergence
 SET_BOOL_PROP(WaterAirProblem, NewtonWriteConvergence, false);
