@@ -260,8 +260,8 @@ public:
         if (globalPos[0] < eps_)
         {
             values[Indices::contiWEqIdx] = -0.1435; // 0.3435 [mol/(s m)] in total
-            values[Indices::contiAEqIdx] = -0.2;
-            values[Indices::contiCEqIdx] =  0.0;
+            values[Indices::contiGEqIdx] = -0.2;
+            values[Indices::contiNEqIdx] =  0.0;
             values[Indices::energyEqIdx] = -6929.;
         }
     }

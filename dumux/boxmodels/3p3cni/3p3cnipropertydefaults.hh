@@ -31,7 +31,6 @@
 #include <dumux/boxmodels/3p3c/3p3cpropertydefaults.hh>
 
 #include "3p3cnimodel.hh"
-#include "3p3cniproblem.hh"
 #include "3p3cniindices.hh"
 #include "3p3cnilocalresidual.hh"
 #include "3p3cnivolumevariables.hh"
@@ -64,8 +63,7 @@ SET_TYPE_PROP(BoxThreePThreeCNI, VolumeVariables, ThreePThreeCNIVolumeVariables<
 SET_TYPE_PROP(BoxThreePThreeCNI, FluxVariables, ThreePThreeCNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal 3p3c model
-SET_TYPE_PROP(BoxThreePThreeCNI, Indices, typename GET_PROP_TYPE(TypeTag, ThreePThreeCNIIndices));
-SET_TYPE_PROP(BoxThreePThreeCNI, ThreePThreeCNIIndices, ThreePThreeCNIIndices<TypeTag, 0>);//DEPRECATED
+SET_TYPE_PROP(BoxThreePThreeCNI, Indices, ThreePThreeCNIIndices<TypeTag, 0>);
 
 }
 
