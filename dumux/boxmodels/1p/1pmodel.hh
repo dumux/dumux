@@ -30,7 +30,6 @@
 #include <dumux/boxmodels/common/boxmodel.hh>
 
 #include "1plocalresidual.hh"
-#include "1pproblem.hh"
 
 namespace Dumux
 {

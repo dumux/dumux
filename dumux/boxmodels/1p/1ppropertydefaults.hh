@@ -67,23 +67,19 @@ SET_TYPE_PROP(BoxOneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxOneP, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(BoxOneP, Indices, typename GET_PROP_TYPE(TypeTag, OnePIndices));
-SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);//DEPRECATED
+SET_TYPE_PROP(BoxOneP, Indices, OnePIndices);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParamsOneP by default.
-SET_TYPE_PROP(BoxOneP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
-SET_TYPE_PROP(BoxOneP, SpatialParameters, BoxSpatialParamsOneP<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxOneP, SpatialParams, BoxSpatialParamsOneP<TypeTag>);
 
 //! The weight of the upwind control volume when calculating
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(BoxOneP, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
-SET_SCALAR_PROP(BoxOneP, MassUpwindWeight, 0.5);//DEPRECATED
+SET_SCALAR_PROP(BoxOneP, ImplicitMassUpwindWeight, 0.5);
 
 //! weight for the upwind mobility in the velocity calculation
 //! fluxes. Use central differences by default.
-SET_SCALAR_PROP(BoxOneP, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
-SET_SCALAR_PROP(BoxOneP, MobilityUpwindWeight, 0.5);//DEPRECATED
+SET_SCALAR_PROP(BoxOneP, ImplicitMobilityUpwindWeight, 0.5);
 
 //! The fluid system to use by default
 SET_TYPE_PROP(BoxOneP, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
@@ -96,8 +92,7 @@ public:
 };
 
 // enable gravity by default
-SET_BOOL_PROP(BoxOneP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
-SET_BOOL_PROP(BoxOneP, EnableGravity, true);//DEPRECATED
+SET_BOOL_PROP(BoxOneP, ProblemEnableGravity, true);
 
 // \}
 } // end namepace Properties
