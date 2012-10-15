@@ -52,15 +52,11 @@ NEW_TYPE_TAG(BoxOnePTwoC, INHERITS_FROM(BoxModel));
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(PhaseIdx); //!< A phase index in to allow that a two-phase fluidsystem is used
 NEW_PROP_TAG(NumComponents);   //!< Number of fluid components in the system
-NEW_PROP_TAG(OnePTwoCIndices); //!< DEPRECATED Enumerations for the 1p2c models
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
-NEW_PROP_TAG(UpwindWeight); //!< DEPRECATED The default value of the upwind weight
 NEW_PROP_TAG(ImplicitMassUpwindWeight);   //!< The default value of the upwind weight
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(Scaling); //!Defines Scaling of the model
 }

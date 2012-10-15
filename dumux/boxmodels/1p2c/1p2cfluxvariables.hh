@@ -100,9 +100,7 @@ public:
         molarDensity_ = Scalar(0);
         density_ = Scalar(0);
         potentialGrad_ = Scalar(0);
-        concentrationGrad_ = Scalar(0);
         moleFractionGrad_ = Scalar(0);
-        massFractionGrad_ = Scalar(0);
 
         calculateGradients_(problem, element, elemVolVars);
         calculateK_(problem, element, elemVolVars);
@@ -164,21 +162,6 @@ public:
     const DimVector &potentialGrad() const
     { return potentialGrad_; }
 
-    /*!
-     * \brief Return the concentration gradient \f$\mathrm{[mol/m^3/m]}\f$.
-     *
-     * \param compIdx The index of the considered component
-     */
-    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
-    const DimVector &concentrationGrad(int compIdx) const
-    {
-        if (compIdx != 1)
-        { DUNE_THROW(Dune::InvalidStateException,
-                     "The 1p2c model is supposed to need "
-                     "only the concentration gradient of "
-                     "the second component!"); }
-        return concentrationGrad_;
-    };
 
     /*!
      * \brief Return the mole-fraction gradient of a component in a phase \f$\mathrm{[mol/mol/m)]}\f$.
@@ -193,38 +176,6 @@ public:
                 "only the concentration gradient of "
                 "the second component!"); }
        return moleFractionGrad_;
-    };
-
-    /*!
-    * \brief Return the mole-fraction gradient of a component in a phase \f$\mathrm{[mol/mol/m)]}\f$.
-    *
-    * \param compIdx The index of the considered component
-    */
-    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
-    const DimVector &moleFracGrad(int compIdx) const
-    {
-      if (compIdx != 1)
-      { DUNE_THROW(Dune::InvalidStateException,
-               "The 1p2c model is supposed to need "
-               "only the concentration gradient of "
-               "the second component!"); }
-      return moleFractionGrad(compIdx);
-    };
-
-    /*!
-     * \brief Return the mass-fraction gradient of a component in a phase \f$\mathrm{[kg/kg/m)]}\f$.
-     *
-     * \param compIdx The index of the considered component
-     */
-    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
-    const DimVector &massFracGrad(int compIdx) const
-    {
-      if (compIdx != 1)
-      { DUNE_THROW(Dune::InvalidStateException,
-               "The 1p2c model is supposed to need "
-               "only the concentration gradient of "
-               "the second component!"); }
-      return massFractionGrad_;
     };
 
     /*!
@@ -244,14 +195,6 @@ public:
     { return viscosity_;}
 
     /*!
-    * \brief Return viscosity \f$\mathrm{[Pa s]}\f$ of a phase at the integration
-    *        point.
-    */
-    DUNE_DEPRECATED_MSG("use viscosity() instead")
-    Scalar viscosityAtIP() const
-    { return viscosity();}
-
-    /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
      *        point.
      */
@@ -259,27 +202,11 @@ public:
     { return molarDensity_; }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use molarDensity() instead")
-    Scalar molarDensityAtIP() const
-    { return molarDensity(); }
-
-    /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
      *        point.
      */
     Scalar density() const
     { return density_; }
-
-    /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use density( instead")
-    Scalar densityAtIP() const
-    { return density(); }
 
     /*!
      * \brief Given the intrinsic permeability times the pressure
@@ -354,20 +281,10 @@ protected:
                 tmp *= elemVolVars[volVarsIdx].pressure();
                 potentialGrad_ += tmp;
 
-                // the concentration gradient [mol/m^3/m]
-                tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].molarity(transportCompIdx);
-                concentrationGrad_ += tmp;
-
                 // the mole-fraction gradient
                 tmp = feGrad;
                 tmp *= elemVolVars[volVarsIdx].moleFraction(transportCompIdx);
                 moleFractionGrad_ += tmp;
-
-                // the mass-fraction gradient
-                tmp = feGrad;
-                tmp *= elemVolVars[volVarsIdx].massFraction(transportCompIdx);
-                massFractionGrad_ += tmp;
 
                 // phase viscosity
                 viscosity_ += elemVolVars[volVarsIdx].viscosity()*face().shapeValue[idx];
@@ -392,8 +309,6 @@ protected:
 
             potentialGrad_ = tmp;
             potentialGrad_ *= volVarsJ.pressure() - volVarsI.pressure();
-            concentrationGrad_ = tmp;
-            concentrationGrad_ *= volVarsJ.molarity(transportCompIdx) - volVarsI.molarity(transportCompIdx);
             moleFractionGrad_ = tmp;
             moleFractionGrad_ *= volVarsJ.moleFraction(transportCompIdx) - volVarsI.moleFraction(transportCompIdx);
         }
@@ -547,12 +462,8 @@ protected:
 
     //! pressure potential gradient
     DimVector potentialGrad_;
-    //! DEPRECATED concentration gradient
-    DimVector concentrationGrad_;
     //! mole-fraction gradient
     DimVector moleFractionGrad_;
-    //! DEPRECATED mass-fraction gradient
-    DimVector massFractionGrad_;
     //! the effective diffusion coefficent in the porous medium
     Scalar porousDiffCoeff_;
 
