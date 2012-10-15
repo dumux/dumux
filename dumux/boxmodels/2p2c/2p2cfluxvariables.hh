@@ -95,7 +95,6 @@ public:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             density_[phaseIdx] = Scalar(0);
             molarDensity_[phaseIdx] = Scalar(0);
-            massFractionGrad_[phaseIdx] = Scalar(0);
             moleFractionGrad_[phaseIdx] = Scalar(0);
         }
 
@@ -145,22 +144,12 @@ protected:
             // index for the element volume variables 
             int volVarsIdx = this->face().fapIndices[idx];
 
-            // the concentration gradient of the non-wetting
-            // component in the wetting phase
-            tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(wPhaseIdx, nCompIdx);
-            massFractionGrad_[wPhaseIdx] += tmp;
-
+            // the mole fraction gradient of the wetting phase
             tmp = feGrad;
             tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(wPhaseIdx, nCompIdx);
             moleFractionGrad_[wPhaseIdx] += tmp;
 
-            //            // the concentration gradient of the wetting component
-            //            // in the non-wetting phase
-            tmp = feGrad;
-            tmp *= elemVolVars[volVarsIdx].fluidState().massFraction(nPhaseIdx, wCompIdx);
-            massFractionGrad_[nPhaseIdx] += tmp;
-
+            // the mole fraction gradient of the non-wetting phase
             tmp = feGrad;
             tmp *= elemVolVars[volVarsIdx].fluidState().moleFraction(nPhaseIdx, wCompIdx);
             moleFractionGrad_[nPhaseIdx] += tmp;
@@ -218,42 +207,10 @@ protected:
 
 public:
     /*!
-     * \brief Return the pressure potential multiplied with the
-     *        intrinsic permeability which goes from vertex i to
-     *        vertex j.
-     *
-     * Note that the length of the face's normal is the area of the
-     * phase, so this is not the actual velocity by the integral of
-     * the velocity over the face's area. Also note that the phase
-     * mobility is not yet included here since this would require a
-     * decision on the upwinding approach (which is done in the
-     * actual model).
-     */
-    DUNE_DEPRECATED_MSG("use the methods of the base flux variables instead")
-    Scalar KmvpNormal(int phaseIdx) const
-    { return -this->kGradPNormal(phaseIdx); }
-
-    /*!
-     * \brief Return the pressure potential multiplied with the
-     *        intrinsic permeability as vector (for velocity output)
-     */
-    DUNE_DEPRECATED_MSG("use the methods of the base flux variables instead")
-    DimVector Kmvp(int phaseIdx) const
-    { return this->kGradP_[phaseIdx]; }
-
-    /*!
      * \brief The binary diffusion coefficient for each fluid phase.
      */
     Scalar porousDiffCoeff(int phaseIdx) const
     { return porousDiffCoeff_[phaseIdx]; };
-
-    /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use density instead")
-    Scalar densityAtIP(int phaseIdx) const
-    { return density(phaseIdx); }
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase.
@@ -262,39 +219,10 @@ public:
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use molarDensity instead")
-    Scalar molarDensityAtIP(int phaseIdx) const
-    { return molarDensity(phaseIdx); }
-
-    /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase.
      */
     Scalar molarDensity(int phaseIdx) const
     { return molarDensity_[phaseIdx]; }
-
-    /*!
-     * \brief The concentration gradient of a component in a phase.
-     */
-    DUNE_DEPRECATED_MSG("use massFractionGrad instead")
-    const DimVector &concentrationGrad(int phaseIdx) const
-    { return massFractionGrad(phaseIdx); };
-
-    /*!
-     * \brief The mass fraction gradient of the dissolved component in a phase.
-     */
-    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
-    const DimVector &massFractionGrad(int phaseIdx) const
-    { return massFractionGrad_[phaseIdx]; };
-
-    /*!
-     * \brief The molar concentration gradient of a component in a phase.
-     */
-    DUNE_DEPRECATED_MSG("use moleFractionGrad instead")
-    const DimVector &molarConcGrad(int phaseIdx) const
-    { return moleFractionGrad(phaseIdx); };
 
     /*!
      * \brief The mole fraction gradient of the dissolved component in a phase.
@@ -303,15 +231,11 @@ public:
     { return moleFractionGrad_[phaseIdx]; };
 
 protected:
-    // gradients
-    DimVector massFractionGrad_[numPhases];
+    // mole fraction gradients
     DimVector moleFractionGrad_[numPhases];
 
     // density of each face at the integration point
     Scalar density_[numPhases], molarDensity_[numPhases];
-
-    // intrinsic permeability times pressure potential gradient
-    DimVector Kmvp_[numPhases];
 
     // the diffusion coefficient for the porous medium
     Scalar porousDiffCoeff_[numPhases];

@@ -29,7 +29,6 @@
 #define DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 
 #include "2p2cmodel.hh"
-#include "2p2cproblem.hh"
 #include "2p2cindices.hh"
 #include "2p2cfluxvariables.hh"
 #include "2p2cvolumevariables.hh"
@@ -126,16 +125,13 @@ SET_TYPE_PROP(BoxTwoPTwoC, FluxVariables, TwoPTwoCFluxVariables<TypeTag>);
 SET_TYPE_PROP(BoxTwoPTwoC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
-SET_SCALAR_PROP(BoxTwoPTwoC, MassUpwindWeight, 1.0);//DEPRECATED
+SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMassUpwindWeight, 1.0);
 
 //! set default mobility upwind weight to 1.0, i.e. fully upwind
 SET_SCALAR_PROP(BoxTwoPTwoC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The indices required by the isothermal 2p2c model
-SET_TYPE_PROP(BoxTwoPTwoC, Indices, typename GET_PROP_TYPE(TypeTag, TwoPTwoCIndices));
-SET_PROP(BoxTwoPTwoC,
-         TwoPTwoCIndices) //DEPRECATED
+SET_PROP(BoxTwoPTwoC, Indices) 
 { private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
@@ -144,16 +140,13 @@ SET_PROP(BoxTwoPTwoC,
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxTwoPTwoC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
-SET_TYPE_PROP(BoxTwoPTwoC, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxTwoPTwoC, SpatialParams, BoxSpatialParams<TypeTag>);
 
 // disable velocity output by default
-SET_BOOL_PROP(BoxTwoPTwoC, VtkAddVelocity, GET_PROP_VALUE(TypeTag, EnableVelocityOutput));
-SET_BOOL_PROP(BoxTwoPTwoC, EnableVelocityOutput, false);
+SET_BOOL_PROP(BoxTwoPTwoC, VtkAddVelocity, false);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxTwoPTwoC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
-SET_BOOL_PROP(BoxTwoPTwoC, EnableGravity, true);//DEPRECATED
+SET_BOOL_PROP(BoxTwoPTwoC, ProblemEnableGravity, true);
 
 //
 }

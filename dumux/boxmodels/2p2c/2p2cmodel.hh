@@ -26,7 +26,6 @@
 
 #include "2p2cproperties.hh"
 #include "2p2clocalresidual.hh"
-#include "2p2cproblem.hh"
 
 namespace Dumux
 {
@@ -239,21 +238,6 @@ public:
         setSwitched_(false);
         resetPhasePresence_();
     };
-
-    /*!
-     * \brief Returns the relative weight of a primary variable for
-     *        calculating relative errors.
-     *
-     * \param globalIdx The global vertex index
-     * \param pvIdx The primary variable index
-     */
-    DUNE_DEPRECATED
-    Scalar primaryVarWeight(const int globalIdx, const int pvIdx) const
-    {
-        if (Indices::pressureIdx == pvIdx)
-            return std::min(1.0/this->prevSol()[globalIdx][pvIdx], 1.0);
-        return 1;
-    }
 
     /*!
      * \brief Called by the problem if a time integration was
