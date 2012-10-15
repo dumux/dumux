@@ -48,32 +48,6 @@ NEW_PROP_TAG(TimeManager);
 }
 
 /*!
- * \brief Print a usage string for simulations using
- *        Dumux::startFromDGF() as their main() function.
- *
- * \param progname The name of the executable
- */
-DUNE_DEPRECATED_MSG("Not needed if Dumux::start() is used")
-void printUsageDGF(const char *progname)
-{
-    std::cout << "usage: " << progname << " [--restart restartTime] gridfile.dgf tEnd dt\n";
-    exit(1);
-}
-
-/*!
- * \brief Print a usage string for simulations using
- *        Dumux::startWithGrid() as their main() function.
- *
- * \param progname The name of the executable
- */
-DUNE_DEPRECATED_MSG("Not needed if Dumux::start() is used")
-void printUsageGrid(const char *progname)
-{
-    std::cout << "usage: " << progname << " [--restart restartTime] tEnd dt\n";
-    exit(1);
-}
-
-/*!
  * \ingroup Start
  * \brief Read the command line arguments and write them into the parameter tree.
  *        Do some syntax checks.
