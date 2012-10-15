@@ -68,7 +68,7 @@ public:
 };
 
 // Enable smooth upwinding?
-SET_BOOL_PROP(Forchheimer2pProblem, EnableSmoothUpwinding, false);
+SET_BOOL_PROP(Forchheimer2pProblem, ImplicitEnableSmoothUpwinding, false);
 
 // Enable molecular diffusion of the components?
 SET_BOOL_PROP(Forchheimer2pProblem, EnableDiffusion, false);
@@ -100,7 +100,7 @@ SET_TYPE_PROP(Forchheimer2pProblem, Scalar, double);
 // decide how to calculate velocity: Darcy / Forchheimer
 SET_TYPE_PROP(Forchheimer2pProblem, BaseFluxVariables, BoxForchheimerFluxVariables<TypeTag>);
 
-SET_BOOL_PROP(Forchheimer2pProblem, MPNCVtkAddVelocities, true);
+SET_BOOL_PROP(Forchheimer2pProblem, VtkAddVelocities, true);
 }
 
 

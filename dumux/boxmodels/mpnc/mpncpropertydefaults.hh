@@ -22,7 +22,6 @@
 #include "mpncindices.hh"
 
 #include "mpncmodel.hh"
-#include "mpncproblem.hh"
 #include "mpncindices.hh"
 #include "mpnclocalresidual.hh"
 #include "mpncfluxvariables.hh"
@@ -148,8 +147,7 @@ SET_BOOL_PROP(BoxMPNC, EnableKinetic, false);
 SET_BOOL_PROP(BoxMPNC, EnableKineticEnergy, false);
 
 //! enable smooth upwinding by default
-SET_BOOL_PROP(BoxMPNC, ImplicitEnableSmoothUpwinding, GET_PROP_VALUE(TypeTag, EnableSmoothUpwinding));
-SET_BOOL_PROP(BoxMPNC, EnableSmoothUpwinding, false);//DEPRECATED
+SET_BOOL_PROP(BoxMPNC, ImplicitEnableSmoothUpwinding, false);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(BoxMPNC, VolumeVariables, MPNCVolumeVariables<TypeTag>);
@@ -164,21 +162,17 @@ SET_TYPE_PROP(BoxMPNC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
 SET_BOOL_PROP(BoxMPNC, NewtonEnableChop, true);
 
 //! The indices required by the mpnc model
-SET_TYPE_PROP(BoxMPNC, Indices, typename GET_PROP_TYPE(TypeTag, MPNCIndices));
-SET_TYPE_PROP(BoxMPNC, MPNCIndices, MPNCIndices<TypeTag, 0>);//DEPRECATED
+SET_TYPE_PROP(BoxMPNC, Indices, MPNCIndices<TypeTag, 0>);
 
 //! the upwind weight for the mass conservation equations.
-SET_SCALAR_PROP(BoxMPNC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
-SET_SCALAR_PROP(BoxMPNC, MassUpwindWeight, 1.0);//DEPRECATED
+SET_SCALAR_PROP(BoxMPNC, ImplicitMassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxMPNC, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
-SET_SCALAR_PROP(BoxMPNC, MobilityUpwindWeight, 1.0);//DEPRECATED
+SET_SCALAR_PROP(BoxMPNC, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxMPNC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
-SET_TYPE_PROP(BoxMPNC, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxMPNC, SpatialParams, BoxSpatialParams<TypeTag>);
 
 //! The VTK writer module for common quantities
 SET_PROP(BoxMPNC, MPNCVtkCommonModule)
@@ -228,55 +222,31 @@ SET_PROP(BoxMPNC, FluidState){
 SET_BOOL_PROP(BoxMPNC, VelocityAveragingInModel, false);
 
 //! Specify what to add to the VTK output by default
-SET_BOOL_PROP(BoxMPNC, VtkAddPorosity, GET_PROP_VALUE(TypeTag, MPNCVtkAddPorosity));
-SET_BOOL_PROP(BoxMPNC, VtkAddBoundaryTypes, GET_PROP_VALUE(TypeTag, MPNCVtkAddBoundaryTypes));
-SET_BOOL_PROP(BoxMPNC, VtkAddSaturations, GET_PROP_VALUE(TypeTag, MPNCVtkAddSaturations));
-SET_BOOL_PROP(BoxMPNC, VtkAddPressures, GET_PROP_VALUE(TypeTag, MPNCVtkAddPressures));
-SET_BOOL_PROP(BoxMPNC, VtkAddVarPressures, GET_PROP_VALUE(TypeTag, MPNCVtkAddVarPressures));
-SET_BOOL_PROP(BoxMPNC, VtkAddVelocities, GET_PROP_VALUE(TypeTag, MPNCVtkAddVelocities));
-SET_BOOL_PROP(BoxMPNC, VtkAddDensities, GET_PROP_VALUE(TypeTag, MPNCVtkAddDensities));
-SET_BOOL_PROP(BoxMPNC, VtkAddMobilities, GET_PROP_VALUE(TypeTag, MPNCVtkAddMobilities));
-SET_BOOL_PROP(BoxMPNC, VtkAddAverageMolarMass, GET_PROP_VALUE(TypeTag, MPNCVtkAddAverageMolarMass));
-SET_BOOL_PROP(BoxMPNC, VtkAddMassFractions, GET_PROP_VALUE(TypeTag, MPNCVtkAddMassFractions));
-SET_BOOL_PROP(BoxMPNC, VtkAddMoleFractions, GET_PROP_VALUE(TypeTag, MPNCVtkAddMoleFractions));
-SET_BOOL_PROP(BoxMPNC, VtkAddMolarities, GET_PROP_VALUE(TypeTag, MPNCVtkAddMolarities));
-SET_BOOL_PROP(BoxMPNC, VtkAddFugacities, GET_PROP_VALUE(TypeTag, MPNCVtkAddFugacities));
-SET_BOOL_PROP(BoxMPNC, VtkAddFugacityCoefficients, GET_PROP_VALUE(TypeTag, MPNCVtkAddFugacityCoefficients));
-SET_BOOL_PROP(BoxMPNC, VtkAddTemperatures, GET_PROP_VALUE(TypeTag, MPNCVtkAddTemperatures));
-SET_BOOL_PROP(BoxMPNC, VtkAddEnthalpies, GET_PROP_VALUE(TypeTag, MPNCVtkAddEnthalpies));
-SET_BOOL_PROP(BoxMPNC, VtkAddInternalEnergies, GET_PROP_VALUE(TypeTag, MPNCVtkAddInternalEnergies));
-SET_BOOL_PROP(BoxMPNC, VtkAddReynolds, GET_PROP_VALUE(TypeTag, MPNCVtkAddReynolds));
-SET_BOOL_PROP(BoxMPNC, VtkAddPrandtl, GET_PROP_VALUE(TypeTag, MPNCVtkAddPrandtl));
-SET_BOOL_PROP(BoxMPNC, VtkAddNusselt, GET_PROP_VALUE(TypeTag, MPNCVtkAddNusselt));
-SET_BOOL_PROP(BoxMPNC, VtkAddInterfacialArea, GET_PROP_VALUE(TypeTag, MPNCVtkAddInterfacialArea));
-SET_BOOL_PROP(BoxMPNC, VtkAddxEquil, GET_PROP_VALUE(TypeTag, MPNCVtkAddxEquil));
-
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddPorosity, true);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddBoundaryTypes, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddSaturations, true);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddPressures, true);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddVarPressures, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddVelocities, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddDensities, true);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMobilities, true);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddAverageMolarMass, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMassFractions, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMoleFractions, true);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddMolarities, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddFugacities, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddFugacityCoefficients, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddTemperatures, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddEnthalpies, true);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddInternalEnergies, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddReynolds, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddPrandtl, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddNusselt, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddInterfacialArea, false);//DEPRECATED
-SET_BOOL_PROP(BoxMPNC, MPNCVtkAddxEquil, false);//DEPRECATED
+SET_BOOL_PROP(BoxMPNC, VtkAddPorosity, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddBoundaryTypes, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddSaturations, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddPressures, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddVarPressures, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddVelocities, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddDensities, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddMobilities, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddAverageMolarMass, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddMassFractions, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddMoleFractions, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddMolarities, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddFugacities, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddFugacityCoefficients, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddTemperatures, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddEnthalpies, true);
+SET_BOOL_PROP(BoxMPNC, VtkAddInternalEnergies, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddReynolds, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddPrandtl, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddNusselt, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddInterfacialArea, false);
+SET_BOOL_PROP(BoxMPNC, VtkAddxEquil, false);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxMPNC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
-SET_BOOL_PROP(BoxMPNC, EnableGravity, true);//DEPRECATED
+SET_BOOL_PROP(BoxMPNC, ProblemEnableGravity, true);
 
 }
 

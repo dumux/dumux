@@ -47,8 +47,6 @@ NEW_TYPE_TAG(BoxMPNC, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
-NEW_PROP_TAG(MPNCIndices); //!< DEPRECATED Enumerations for the 2pNc model
-NEW_PROP_TAG(MPNCEnergyIndices); //!< DEPRECATED Enumerations for the 2pNc model
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 
 NEW_PROP_TAG(BaseFluxVariables); //!< The type of velocity calculation that is to be used
@@ -86,33 +84,7 @@ NEW_PROP_TAG(VtkAddPrandtl);
 NEW_PROP_TAG(VtkAddNusselt);
 NEW_PROP_TAG(VtkAddInterfacialArea);
 
-NEW_PROP_TAG(MPNCVtkAddPorosity);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddBoundaryTypes);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddSaturations);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddPressures);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddVarPressures);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddVelocities);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddDensities);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddMobilities);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddAverageMolarMass);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddMassFractions);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddMoleFractions);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddMolarities);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddFugacities);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddFugacityCoefficients);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddTemperatures);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddEnthalpies);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddInternalEnergies);//DEPRECATED
-
-NEW_PROP_TAG(MPNCVtkAddxEquil);//DEPRECATED
-
-NEW_PROP_TAG(MPNCVtkAddReynolds);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddPrandtl);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddNusselt);//DEPRECATED
-NEW_PROP_TAG(MPNCVtkAddInterfacialArea);//DEPRECATED
-
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
 
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the soil)
 NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)
@@ -138,16 +110,12 @@ NEW_PROP_TAG(EnableKineticEnergy);
 
 //! Enable gravity?
 NEW_PROP_TAG(ProblemEnableGravity);
-NEW_PROP_TAG(EnableGravity);//DEPRECATED
 
 //! Use the smooth upwinding method?
 NEW_PROP_TAG(ImplicitEnableSmoothUpwinding);
-NEW_PROP_TAG(EnableSmoothUpwinding);//DEPRECATED
 
-NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the weight of the upwind direction in the mass conservation equations
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
 
-NEW_PROP_TAG(MobilityUpwindWeight); //!< DEPRECATED Weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 
 //! Chop the Newton update at the beginning of the non-linear solver?

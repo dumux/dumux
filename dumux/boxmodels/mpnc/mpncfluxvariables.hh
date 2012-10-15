@@ -139,19 +139,10 @@ public:
                               const unsigned int compIdx) const
     { return fluxVarsDiffusion_.moleFraction(phaseIdx, compIdx); }
 
-    DUNE_DEPRECATED_MSG("use moleFraction() instead")
-    const Scalar moleFrac(const unsigned int phaseIdx,
-                          const unsigned int compIdx) const
-    { return fluxVarsDiffusion_.moleFraction(phaseIdx, compIdx); }
-
     const DimVector &moleFractionGrad(const unsigned int phaseIdx,
                                       const unsigned int compIdx) const
     { return fluxVarsDiffusion_.moleFractionGrad(phaseIdx, compIdx); }
 
-    DUNE_DEPRECATED_MSG("use moleFraction() instead")
-    const DimVector &moleFracGrad(const unsigned int phaseIdx,
-                                  const unsigned int compIdx) const
-    { return fluxVarsDiffusion_.moleFractionGrad(phaseIdx, compIdx); }
     // end of forward calls to the diffusion module
     ////////////////////////////////////////////////
 
@@ -159,10 +150,6 @@ public:
     // forward calls to the temperature module
     const DimVector &temperatureGrad() const
     { return fluxVarsEnergy_.temperatureGrad(); }
-
-    DUNE_DEPRECATED_MSG("use fluxVariablesEnergy() instead")
-    const FluxVariablesEnergy &energyData() const
-    { return fluxVarsEnergy() ; }
 
     const FluxVariablesEnergy &fluxVarsEnergy() const
     { return fluxVarsEnergy_; }

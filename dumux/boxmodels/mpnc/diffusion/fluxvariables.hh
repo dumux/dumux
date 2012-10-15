@@ -172,19 +172,9 @@ public:
                         const unsigned int compIdx) const
     { return moleFraction_[phaseIdx][compIdx]; }
 
-    DUNE_DEPRECATED_MSG("use moleFraction() instead")
-    Scalar moleFrac(const unsigned int phaseIdx,
-                    const unsigned int compIdx) const
-    { return moleFraction(phaseIdx, compIdx);}
-
     const DimVector &moleFractionGrad(const unsigned int phaseIdx,
                                   const unsigned int compIdx) const
     { return moleFractionGrad_[phaseIdx][compIdx];}
-
-    DUNE_DEPRECATED_MSG("use moleFractionGrad() instead")
-    const DimVector &moleFracGrad(const unsigned int phaseIdx,
-                                  const unsigned int compIdx) const
-    { return moleFractionGrad(phaseIdx, compIdx);}
 
 protected:
     // the diffusion coefficients for the porous medium for the

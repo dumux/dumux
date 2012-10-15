@@ -67,7 +67,7 @@ public:
 };
 
 // Enable smooth upwinding?
-SET_BOOL_PROP(ObstacleProblem, EnableSmoothUpwinding, true);
+SET_BOOL_PROP(ObstacleProblem, ImplicitEnableSmoothUpwinding, true);
 
 // Enable molecular diffusion of the components?
 SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, false);
