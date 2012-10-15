@@ -31,7 +31,6 @@
 #include <dumux/boxmodels/2p2c/2p2cpropertydefaults.hh>
 
 #include "2p2cnimodel.hh"
-#include "2p2cniproblem.hh"
 #include "2p2cniindices.hh"
 #include "2p2cnilocalresidual.hh"
 #include "2p2cnivolumevariables.hh"
@@ -64,8 +63,7 @@ SET_TYPE_PROP(BoxTwoPTwoCNI, VolumeVariables, TwoPTwoCNIVolumeVariables<TypeTag>
 SET_TYPE_PROP(BoxTwoPTwoCNI, FluxVariables, TwoPTwoCNIFluxVariables<TypeTag>);
 
 //! The indices required by the non-isothermal 2p2c model
-SET_TYPE_PROP(BoxTwoPTwoCNI, Indices, typename GET_PROP_TYPE(TypeTag, TwoPTwoCNIIndices));
-SET_PROP(BoxTwoPTwoCNI, TwoPTwoCNIIndices) //DEPRECATED
+SET_PROP(BoxTwoPTwoCNI, Indices) 
 { private:
     enum { formulation = GET_PROP_VALUE(TypeTag, Formulation) };
  public:
