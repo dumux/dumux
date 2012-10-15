@@ -279,44 +279,10 @@ private:
 
 public:
     /*!
-     * \brief Return the pressure potential multiplied with the
-     *        intrinsic permeability which goes from vertex i to
-     *        vertex j.
-     *
-     * Note that the length of the face's normal is the area of the
-     * phase, so this is not the actual velocity by the integral of
-     * the velocity over the face's area. Also note that the phase
-     * mobility is not yet included here since this would require a
-     * decision on the upwinding approach (which is done in the
-     * actual model).
-     */
-    DUNE_DEPRECATED_MSG("use the methods of the base flux variables instead")
-    Scalar KmvpNormal(int phaseIdx) const
-    { return -this->kGradPNormal(phaseIdx); }
-
-    /*!
-     * \brief Return the pressure potential multiplied with the
-     *        intrinsic permeability as DimVector (for velocity output)
-     */
-    DUNE_DEPRECATED_MSG("use the methods of the base flux variables instead")
-    DimVector Kmvp(int phaseIdx) const
-    { return this->kGradP_[phaseIdx]; }
-
-    /*!
      * \brief The diffusivity matrix
      */
     Dune::FieldMatrix<Scalar, numPhases, numComponents> porousDiffCoeff() const
     { return porousDiffCoeff_; };
-
-    /*!
-     * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use density instead")
-    Scalar densityAtIP(int phaseIdx) const
-    {
-      density(phaseIdx);
-    }
 
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ of a phase.
@@ -325,66 +291,25 @@ public:
     { return density_[phaseIdx]; }
 
     /*!
-     * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use molarDensity instead")
-    Scalar molarDensityAtIP(int phaseIdx) const
-    {
-      molarDensity(phaseIdx);
-    }
-    
-    /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ of a phase.
      */
     Scalar molarDensity(int phaseIdx) const
     { return molarDensity_[phaseIdx]; }
 
-    /*!
-     * \brief The mass fraction gradients of the components in a phase.
-     */
-    DUNE_DEPRECATED_MSG("use massFractionCompWGrad instead")
-    const DimVector &wConcentrationGrad(int phaseIdx) const
-    { massFractionCompWGrad(phaseIdx); };
-
     const DimVector &massFractionCompWGrad(int phaseIdx) const
     {return massFractionCompWGrad_[phaseIdx];}
-
-    DUNE_DEPRECATED_MSG("use massFractionCompNGrad instead")
-    const DimVector &cConcentrationGrad(int phaseIdx) const
-    { massFractionCompNGrad(phaseIdx); };
 
     const DimVector &massFractionCompNGrad(int phaseIdx) const
     { return massFractionCompNGrad_[phaseIdx]; };
 
-    DUNE_DEPRECATED_MSG("use massFractionCompGGrad instead")
-    const DimVector &aConcentrationGrad(int phaseIdx) const
-    {  massFractionCompGGrad(phaseIdx); };
-
     const DimVector &massFractionCompGGrad(int phaseIdx) const
     { return massFractionCompGGrad_[phaseIdx]; };
-
-
-    /*!
-     * \brief The molar concentration gradients of the components in a phase.
-     */
-    DUNE_DEPRECATED_MSG("use moleFractionCompWGrad instead")
-    const DimVector &molarWConcGrad(int phaseIdx) const
-    {  moleFractionCompWGrad(phaseIdx); };
 
     const DimVector &moleFractionCompWGrad(int phaseIdx) const
     { return moleFractionCompWGrad_[phaseIdx]; };
 
-    DUNE_DEPRECATED_MSG("use moleFractionCompNGrad instead")
-    const DimVector &molarCConcGrad(int phaseIdx) const
-    { moleFractionCompNGrad(phaseIdx); };
-
     const DimVector &moleFractionCompNGrad(int phaseIdx) const
     { return moleFractionCompNGrad_[phaseIdx]; };
-
-    DUNE_DEPRECATED_MSG("use moleFractionCompGGrad instead")
-    const DimVector &molarAConcGrad(int phaseIdx) const
-    { moleFractionCompGGrad(phaseIdx); };
 
     const DimVector &moleFractionCompGGrad(int phaseIdx) const
     { return moleFractionCompGGrad_[phaseIdx]; };

@@ -53,9 +53,6 @@ public:
     static const int nCompIdx = FluidSystem::nCompIdx; 
     static const int gCompIdx = FluidSystem::gCompIdx; 
 
-    static const int cCompIdx = nCompIdx; //!< DEPRECATED index of the NAPL component
-    static const int aCompIdx = gCompIdx; //!< DEPRECATED index of the air component
-
     // present phases (-> 'pseudo' primary variable)
     static const int threePhases = 1; //!< All three phases are present
     static const int wPhaseOnly = 2; //!< Only the water phase is present
@@ -78,9 +75,9 @@ public:
     static const int conti1EqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the contaminant component
     static const int conti2EqIdx = conti0EqIdx + gCompIdx; //!< Index of the mass conservation equation for the gas component
 
-    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< DEPRECATED index of the mass conservation equation for the water component
-    static const int contiCEqIdx = conti0EqIdx + cCompIdx; //!< DEPRECATED index of the mass conservation equation for the contaminant component
-    static const int contiAEqIdx = conti0EqIdx + aCompIdx; //!< DEPRECATED index of the mass conservation equation for the air component
+    static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< index of the mass conservation equation for the water component
+    static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< index of the mass conservation equation for the contaminant component
+    static const int contiGEqIdx = conti0EqIdx + gCompIdx; //!< index of the mass conservation equation for the air component
 };
 
 }

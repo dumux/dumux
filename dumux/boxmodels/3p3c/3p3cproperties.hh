@@ -47,20 +47,16 @@ NEW_TYPE_TAG(BoxThreePThreeC, INHERITS_FROM(BoxModel));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
-NEW_PROP_TAG(ThreePThreeCIndices); //!< DEPRECATED Enumerations for the 3p3c models
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extracted from the spatial parameters)
 
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind parameter for the mobility
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the upwind parameter for the mobility
 NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether a constraint solver should be used explicitly
 NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 }

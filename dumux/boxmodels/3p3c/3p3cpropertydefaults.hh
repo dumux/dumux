@@ -111,8 +111,7 @@ SET_TYPE_PROP(BoxThreePThreeC, FluxVariables, ThreePThreeCFluxVariables<TypeTag>
 SET_TYPE_PROP(BoxThreePThreeC, BaseFluxVariables, BoxDarcyFluxVariables<TypeTag>);
 
 //! the upwind factor for the mobility.
-SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
-SET_SCALAR_PROP(BoxThreePThreeC, MassUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMassUpwindWeight, 1.0);
 
 //! set default mobility upwind weight to 1.0, i.e. fully upwind
 SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMobilityUpwindWeight, 1.0);
@@ -121,17 +120,14 @@ SET_SCALAR_PROP(BoxThreePThreeC, ImplicitMobilityUpwindWeight, 1.0);
 SET_BOOL_PROP(BoxThreePThreeC, UseConstraintSolver, false);
 
 //! The indices required by the isothermal 3p3c model
-SET_TYPE_PROP(BoxThreePThreeC, Indices, typename GET_PROP_TYPE(TypeTag, ThreePThreeCIndices));
-SET_TYPE_PROP(BoxThreePThreeC, ThreePThreeCIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);//DEPRECATED
+SET_TYPE_PROP(BoxThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxThreePThreeC, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
-SET_TYPE_PROP(BoxThreePThreeC, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxThreePThreeC, SpatialParams, BoxSpatialParams<TypeTag>);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxThreePThreeC, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
-SET_BOOL_PROP(BoxThreePThreeC, EnableGravity, true);//DEPRECATED
+SET_BOOL_PROP(BoxThreePThreeC, ProblemEnableGravity, true);
 }
 
 }

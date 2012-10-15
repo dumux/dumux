@@ -31,7 +31,6 @@
 
 #include "3p3cproperties.hh"
 #include "3p3clocalresidual.hh"
-// #include "3p3cproblem.hh"
 
 namespace Dumux
 {
@@ -207,21 +206,6 @@ public:
         setSwitched_(false);
         resetPhasePresence_();
     };
-
-    /*!
-     * \brief Returns the relative weight of a primary variable for
-     *        calculating relative errors.
-     *
-     * \param globalVertexIdx The global vertex index
-     * \param pvIdx The primary variable index
-     */
-    DUNE_DEPRECATED
-    Scalar primaryVarWeight(int globalVertexIdx, int pvIdx) const
-    {
-        if (Indices::pressureIdx == pvIdx)
-            return std::min(1.0/this->prevSol()[globalVertexIdx][pvIdx], 1.0);
-        return 1;
-    }
 
     /*!
      * \brief Called by the problem if a time integration was
