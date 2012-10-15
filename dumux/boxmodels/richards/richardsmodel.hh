@@ -121,17 +121,6 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
     /*!
-     * \copydoc Dumux::BoxModel::primaryVarWeight
-     */
-    DUNE_DEPRECATED
-    Scalar primaryVarWeight(const int vertIdx, const int pvIdx) const
-    {
-        if (Indices::pwIdx == pvIdx)
-            return 1e-6;
-        return 1;
-    }
-
-    /*!
      * \brief All relevant primary and secondary of a given
      *        solution to an ouput writer.
      *

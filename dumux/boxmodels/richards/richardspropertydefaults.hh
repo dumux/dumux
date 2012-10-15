@@ -71,21 +71,17 @@ SET_TYPE_PROP(BoxRichards, FluxVariables, BoxDarcyFluxVariables<TypeTag>);
 SET_TYPE_PROP(BoxRichards, NewtonController, RichardsNewtonController<TypeTag>);
 
 //! The upwind weight for the mass conservation equations
-SET_SCALAR_PROP(BoxRichards, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
-SET_SCALAR_PROP(BoxRichards, MassUpwindWeight, 1.0);// DEPRECATED
+SET_SCALAR_PROP(BoxRichards, ImplicitMassUpwindWeight, 1.0);
 
 //! weight for the upwind mobility in the velocity calculation
-SET_SCALAR_PROP(BoxRichards, ImplicitMobilityUpwindWeight, GET_PROP_VALUE(TypeTag, MobilityUpwindWeight));
-SET_SCALAR_PROP(BoxRichards, MobilityUpwindWeight, 1.0);// DEPRECATED
+SET_SCALAR_PROP(BoxRichards, ImplicitMobilityUpwindWeight, 1.0);
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(BoxRichards, Indices, typename GET_PROP_TYPE(TypeTag, RichardsIndices));
-SET_TYPE_PROP(BoxRichards, RichardsIndices, RichardsIndices<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxRichards, Indices, RichardsIndices<TypeTag>);
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(BoxRichards, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
-SET_TYPE_PROP(BoxRichards, SpatialParameters, BoxSpatialParams<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxRichards, SpatialParams, BoxSpatialParams<TypeTag>);
 
 /*!
  * \brief Set type of the parameter objects for the material law
@@ -155,8 +151,7 @@ public:
 };
 
 // enable gravity by default
-SET_BOOL_PROP(BoxRichards, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
-SET_BOOL_PROP(BoxRichards, EnableGravity, true);//DEPRECATED
+SET_BOOL_PROP(BoxRichards, ProblemEnableGravity, true);
 
 // \}
 }

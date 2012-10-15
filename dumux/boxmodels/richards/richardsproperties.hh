@@ -50,21 +50,16 @@ NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(RichardsIndices); //!< DEPRECATED Enumerations used by the Richards models
 NEW_PROP_TAG(Indices); //!< Enumerations used by the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (by default extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The type of the parameter object for the material law (by default extracted from the spatial parameters)
 NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the Richards model
 NEW_PROP_TAG(WettingPhase); //!< Fluid which represents the wetting phase
 NEW_PROP_TAG(NonwettingPhase); //!< Fluid which represents the non-wetting phase
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the weight of the upwind direction in the mass conservation equations
-NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the weight of the upwind direction in the mass conservation equations
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< The value of the weight for the upwind mobility in the velocity calculation
-NEW_PROP_TAG(MobilityUpwindWeight); //!< DEPRECATED The value of the weight for the upwind mobility in the velocity calculation
 
 // \}
 }
