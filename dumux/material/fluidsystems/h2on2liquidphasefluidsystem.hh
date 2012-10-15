@@ -82,7 +82,6 @@ public:
     static constexpr int numPhases = 1;
 
     static constexpr int wPhaseIdx = 0; // index of the wetting phase
-    static constexpr int lPhaseIdx = wPhaseIdx; // DEPRECATED index of the liquid phase
 
     /*!
      * \brief Return the human readable name of a fluid phase.
@@ -92,7 +91,7 @@ public:
     static const char *phaseName(int phaseIdx)
     {
         static const char *name[] = {
-            "l"
+            "w"
         };
 
         assert(0 <= phaseIdx && phaseIdx < numPhases);
@@ -347,7 +346,7 @@ public:
             sumMoleFrac += fluidState.moleFraction(phaseIdx, compIdx);
 
         // liquid phase
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             if (!useComplexRelations)
                 // assume pure water
                 return H2O::liquidDensity(T, p);
@@ -361,9 +360,9 @@ public:
                 // water molecule in the liquid
                 return
                     clH2O
-                    * (H2O::molarMass()*fluidState.moleFraction(lPhaseIdx, H2OIdx)
+                    * (H2O::molarMass()*fluidState.moleFraction(wPhaseIdx, H2OIdx)
                        +
-                       N2::molarMass()*fluidState.moleFraction(lPhaseIdx, N2Idx))
+                       N2::molarMass()*fluidState.moleFraction(wPhaseIdx, N2Idx))
                     / sumMoleFrac;
             }
         }
@@ -388,7 +387,7 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             // assume pure water for the liquid phase
             return H2O::liquidViscosity(T, p);
         }
@@ -436,7 +435,7 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             if (compIdx == H2OIdx)
                 return H2O::vaporPressure(T)/p;
             return Dumux::BinaryCoeff::H2O_N2::henry(T)/p;
@@ -519,7 +518,7 @@ public:
         Scalar p = fluidState.pressure(phaseIdx);
 
         // liquid phase
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             if (compIIdx == H2OIdx && compJIdx == N2Idx)
                 return BinaryCoeff::H2O_N2::liquidDiffCoeff(T, p);
             return undefined;
@@ -551,7 +550,7 @@ public:
         Valgrind::CheckDefined(p);
 
         // liquid phase
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             // TODO: correct way to deal with the solutes???
             return H2O::liquidEnthalpy(T, p);
         }
@@ -574,7 +573,7 @@ public:
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
 
-        if (phaseIdx == lPhaseIdx){// liquid phase
+        if (phaseIdx == wPhaseIdx){// liquid phase
             if(useComplexRelations){
                 Scalar temperature  = fluidState.temperature(phaseIdx) ;
                 Scalar pressure = fluidState.pressure(phaseIdx);
@@ -599,7 +598,7 @@ public:
     static Scalar heatCapacity(const FluidState &fluidState,
                                int phaseIdx)
     {
-        if (phaseIdx == lPhaseIdx) {
+        if (phaseIdx == wPhaseIdx) {
             return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));
         }

@@ -6,7 +6,6 @@ SUBDIRS = \
 	  fluidmatrixinteractions \
 	  fluidstates \
 	  fluidsystems \
-	  spatialparameters \
 	  spatialparams
 
 materialdir = $(includedir)/dumux/material

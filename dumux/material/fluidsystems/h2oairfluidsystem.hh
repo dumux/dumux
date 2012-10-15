@@ -100,9 +100,6 @@ public:
     static constexpr int wPhaseIdx = 0; // index of the water phase
     static constexpr int nPhaseIdx = 1; // index of the air phase
 
-    static constexpr int lPhaseIdx = wPhaseIdx; // DEPRECATED index of the wetting phase
-    static constexpr int gPhaseIdx = nPhaseIdx; // DEPRECATED index of the non-wetting phase
-
     // export component indices to indicate the main component
     // of the corresponding phase at atmospheric pressure 1 bar
     // and room temperature 20°C:
