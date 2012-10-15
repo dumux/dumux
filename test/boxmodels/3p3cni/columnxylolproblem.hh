@@ -66,7 +66,7 @@ SET_TYPE_PROP(ColumnProblem,
               Dumux::FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Enable gravity
-SET_BOOL_PROP(ColumnProblem, EnableGravity, true);
+SET_BOOL_PROP(ColumnProblem, ProblemEnableGravity, true);
 
 // Use forward differences instead of central differences
 SET_INT_PROP(ColumnProblem, NumericDifferenceMethod, 0);

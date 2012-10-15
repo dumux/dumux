@@ -77,7 +77,7 @@ SET_BOOL_PROP(Forchheimer2pProblem, EnableDiffusion, false);
 SET_BOOL_PROP(Forchheimer2pProblem, NewtonEnableChop, true);
 
 // Enable gravity
-SET_BOOL_PROP(Forchheimer2pProblem, EnableGravity, true);
+SET_BOOL_PROP(Forchheimer2pProblem, ProblemEnableGravity, true);
 
 // Write Newton convergence to disk?
 SET_BOOL_PROP(Forchheimer2pProblem, NewtonWriteConvergence, false);

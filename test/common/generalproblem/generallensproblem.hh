@@ -98,7 +98,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(GeneralLensProblem, EnableGravity, true);
+SET_BOOL_PROP(GeneralLensProblem, ProblemEnableGravity, true);
 
 ///////////////////////////////////////////////////
 // Box model TypeTag

@@ -90,7 +90,7 @@ SET_PROP(Adaptive2p2c, Components) : public GET_PROP(TypeTag, DefaultComponents)
 SET_TYPE_PROP(Adaptive2p2c, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(Adaptive2p2c, EnableGravity, true);
+SET_BOOL_PROP(Adaptive2p2c, ProblemEnableGravity, true);
 SET_INT_PROP(Adaptive2p2c,
         BoundaryMobility,
         GET_PROP_TYPE(TypeTag, Indices)::permDependent);

@@ -57,7 +57,7 @@ SET_TYPE_PROP(InfiltrationProblem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Enable gravity?
-SET_BOOL_PROP(InfiltrationProblem, EnableGravity, true);
+SET_BOOL_PROP(InfiltrationProblem, ProblemEnableGravity, true);
 
 // Write newton convergence?
 SET_BOOL_PROP(InfiltrationProblem, NewtonWriteConvergence, false);

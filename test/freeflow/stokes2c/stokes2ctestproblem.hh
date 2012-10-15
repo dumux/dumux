@@ -66,7 +66,7 @@ SET_PROP(BoxStokes2c, FluidSystem)
 SET_SCALAR_PROP(BoxStokes2c, StokesStabilizationAlpha, -1.0);
 
 // Enable gravity
-SET_BOOL_PROP(Stokes2cTestProblem, EnableGravity, false);
+SET_BOOL_PROP(Stokes2cTestProblem, ProblemEnableGravity, false);
 }
 
 /*!

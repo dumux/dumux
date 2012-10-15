@@ -85,7 +85,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableGravity, false);
+SET_BOOL_PROP(TestIMPESAdaptiveProblem, ProblemEnableGravity, false);
 
 //SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableCompressibility, true);
 

@@ -108,7 +108,7 @@ public:
 #endif
 
 // Enable gravity
-SET_BOOL_PROP(InjectionProblem2PNI, EnableGravity, true);
+SET_BOOL_PROP(InjectionProblem2PNI, ProblemEnableGravity, true);
 
 // write convergence behaviour to disk?
 SET_BOOL_PROP(InjectionProblem2PNI, NewtonWriteConvergence, true);
