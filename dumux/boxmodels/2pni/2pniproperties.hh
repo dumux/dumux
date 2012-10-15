@@ -41,11 +41,6 @@ namespace Properties
 //! The type tag for the non-isothermal two-phase problems
 NEW_TYPE_TAG(BoxTwoPNI, INHERITS_FROM(BoxTwoP));
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(TwoPNIIndices); //!< DEPRECATED Enumerations for the non-isothermal 2p models
 }
 }
 
