@@ -57,7 +57,7 @@ protected:
     typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
 
-    typedef typename GET_PROP_TYPE(TypeTag, StokesIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
