@@ -48,23 +48,16 @@ NEW_TYPE_TAG(BoxStokes, INHERITS_FROM(BoxModel));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind parameter for the mobility
-NEW_PROP_TAG(MassUpwindWeight); //!< DEPRECATED The value of the upwind parameter for the mobility
-NEW_PROP_TAG(StokesIndices); //!< DEPRECATED Enumerations for the Stokes models
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(Fluid);
 NEW_PROP_TAG(FluidSystem); //!< The employed fluid system
 NEW_PROP_TAG(FluidState);
 NEW_PROP_TAG(StokesStabilizationAlpha); //!< The parameter for the stabilization
-NEW_PROP_TAG(StabilizationAlpha); //!< DEPRECATED The parameter for the stabilization
 NEW_PROP_TAG(StokesStabilizationBeta); //!< The parameter for the stabilization at boundaries
-NEW_PROP_TAG(StabilizationBeta); //!< DEPRECATED The parameter for the stabilization at boundaries
 NEW_PROP_TAG(EnableNavierStokes); //!< Returns whether Navier-Stokes should be solved instead of plain Stokes
 
-NEW_PROP_TAG(PhaseIndex); //!< DEPRECATED A phase index in case that a two-phase fluidsystem is used
 NEW_PROP_TAG(PhaseIdx); //!< A phase index in case that a two-phase fluidsystem is used
-NEW_PROP_TAG(SpatialParameters); //!< DEPRECATED The type of the spatial parameters
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(Scaling); //!Defines Scaling of the model
 }

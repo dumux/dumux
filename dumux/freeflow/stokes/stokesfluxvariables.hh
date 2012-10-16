@@ -187,14 +187,6 @@ public:
     { return pressure_; }
 
     /*!
-     * \brief Return the pressure \f$\mathrm{[Pa]}\f$ at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use pressure() instead")
-    Scalar pressureAtIP() const
-    { return pressure(); }
-
-    /*!
      * \brief Return the mass density \f$ \mathrm{[kg/m^3]} \f$ at the integration
      *        point.
      */
@@ -202,25 +194,10 @@ public:
     { return density_; }
 
     /*!
-     * \brief Return the mass density \f$ \mathrm{[kg/m^3]} \f$ at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use density() instead")
-    Scalar densityAtIP() const
-    { return density(); }
-
-    /*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
      */
     const Scalar molarDensity() const
     { return molarDensity_; }
-
-    /*!
-     * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use molarDensity() instead")
-    const Scalar molarDensityAtIP() const
-    { return molarDensity(); }
 
     /*!
      * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
@@ -230,27 +207,11 @@ public:
     { return viscosity_; }
 
     /*!
-     * \brief Return the dynamic viscosity \f$ \mathrm{[Pa\cdot s]} \f$ at the integration
-     *        point.
-     */
-    DUNE_DEPRECATED_MSG("use viscosity() instead")
-    Scalar viscosityAtIP() const
-    { return viscosity(); }
-
-    /*!
      * \brief Return the velocity \f$ \mathrm{[m/s]} \f$ at the integration
      *        point multiplied by the normal and the area.
      */
     Scalar normalVelocity() const
     { return normalvelocity_; }
-
-    /*!
-     * \brief Return the velocity \f$ \mathrm{[m/s]} \f$ at the integration
-     *        point multiplied by the normal and the area.
-     */
-    DUNE_DEPRECATED_MSG("use normalVelocity() instead")
-    Scalar normalVelocityAtIP() const
-    { return normalVelocity(); }
 
     /*!
      * \brief Return the pressure gradient at the integration point.
@@ -259,24 +220,10 @@ public:
     { return pressureGrad_; }
 
     /*!
-     * \brief Return the pressure gradient at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use pressureGrad() instead")
-    const DimVector &pressureGradAtIP() const
-    { return pressureGrad(); }
-
-    /*!
      * \brief Return the velocity vector at the integration point.
      */
     const DimVector &velocity() const
     { return velocity_; }
-
-    /*!
-     * \brief Return the velocity vector at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use velocity() instead")
-    const DimVector &velocityAtIP() const
-    { return velocity(); }
 
     /*!
      * \brief Return the velocity gradient at the integration
@@ -284,14 +231,6 @@ public:
      */
     const DimMatrix &velocityGrad() const
     { return velocityGrad_; }
-
-    /*!
-     * \brief Return the velocity gradient at the integration
-     *        point of a face.
-     */
-    DUNE_DEPRECATED_MSG("use velocityGrad() instead")
-    const DimMatrix &velocityGradAtIP() const
-    { return velocityGrad(); }
 
     /*!
      * \brief Return the dynamic eddy viscosity 

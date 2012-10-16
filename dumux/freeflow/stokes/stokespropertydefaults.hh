@@ -95,8 +95,7 @@ SET_TYPE_PROP(BoxStokes, VolumeVariables, StokesVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxStokes, FluxVariables, StokesFluxVariables<TypeTag>);
 
 //! the upwind factor.
-SET_SCALAR_PROP(BoxStokes, ImplicitMassUpwindWeight, GET_PROP_VALUE(TypeTag, MassUpwindWeight));
-SET_SCALAR_PROP(BoxStokes, MassUpwindWeight, 1.0);
+SET_SCALAR_PROP(BoxStokes, ImplicitMassUpwindWeight, 1.0);
 
 //! The fluid system to use by default
 SET_PROP(BoxStokes, FluidSystem)
@@ -116,8 +115,7 @@ public:
 };
 
 //! Set the indices used by the Stokes model
-SET_TYPE_PROP(BoxStokes, Indices, typename GET_PROP_TYPE(TypeTag, StokesIndices));
-SET_TYPE_PROP(BoxStokes, StokesIndices, StokesCommonIndices<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxStokes, Indices, StokesCommonIndices<TypeTag>);
 
 //! Choose the type of the employed fluid state.
 SET_PROP(BoxStokes, FluidState)
@@ -133,9 +131,6 @@ public:
 // Used for the computation of the pressure gradients
 SET_BOOL_PROP(BoxStokes, EvalGradientsAtSCVCenter, true);
 
-//! DEPRECATED Set the phaseIndex per default to zero (important for two-phase fluidsystems).
-SET_INT_PROP(BoxStokes, PhaseIndex, 0);
-
 //! Set the phaseIndex per default to zero (important for two-phase fluidsystems).
 SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 
@@ -143,16 +138,13 @@ SET_INT_PROP(BoxStokes, PhaseIdx, 0);
 SET_BOOL_PROP(BoxStokes, EnableNavierStokes, false);
 
 //! A stabilization factor. Set negative for stabilization and to zero for no stabilization
-SET_SCALAR_PROP(BoxStokes, StokesStabilizationAlpha, GET_PROP_VALUE(TypeTag, StabilizationAlpha));
-SET_SCALAR_PROP(BoxStokes, StabilizationAlpha, 0.0);//DEPRECATED
+SET_SCALAR_PROP(BoxStokes, StokesStabilizationAlpha, 0.0);
 
 //! Stabilization factor for the boundaries
-SET_SCALAR_PROP(BoxStokes, StokesStabilizationBeta, GET_PROP_VALUE(TypeTag, StabilizationBeta));
-SET_SCALAR_PROP(BoxStokes, StabilizationBeta, 0.0);//DEPRECATED
+SET_SCALAR_PROP(BoxStokes, StokesStabilizationBeta, 0.0);
 
 // enable gravity by default
-SET_BOOL_PROP(BoxStokes, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
-SET_BOOL_PROP(BoxStokes, EnableGravity, true);//DEPRECATED
+SET_BOOL_PROP(BoxStokes, ProblemEnableGravity, true);
 
 }
 
