@@ -124,7 +124,7 @@ SET_BOOL_PROP(IMPESTestProblem, ProblemEnableGravity, false);
 
 SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
-SET_SCALAR_PROP(IMPESTestProblem, CFLFactor, 0.95);
+SET_SCALAR_PROP(IMPESTestProblem, ImpetCFLFactor, 0.95);
 }
 
 /*!

@@ -85,7 +85,7 @@ SET_INT_PROP(TransportTestProblem, VelocityFormulation,
 // Disable gravity
 SET_BOOL_PROP(TransportTestProblem, ProblemEnableGravity, false);
 
-SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
+SET_SCALAR_PROP(TransportTestProblem, ImpetCFLFactor, 1.0);
 }
 
 /*!
