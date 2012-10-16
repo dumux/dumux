@@ -47,77 +47,55 @@ NEW_PROP_TAG(AdaptionInitializationIndicator);
 
 //! Switch the use of initial grid adaption on/of
 NEW_PROP_TAG(GridAdaptEnableInitializationIndicator);
-NEW_PROP_TAG(EnableInitializationIndicator);//DEPRECATED
 
 //! Mimimum allowed level
 NEW_PROP_TAG(GridAdaptMinLevel);
-NEW_PROP_TAG(MinLevel);//DEPRECATED
 
 //! Maximum allowed level
 NEW_PROP_TAG(GridAdaptMaxLevel);
-NEW_PROP_TAG(MaxLevel);//DEPRECATED
 
 //! Tolerance for refinement
 NEW_PROP_TAG(GridAdaptRefineTolerance);
-NEW_PROP_TAG(RefineTolerance);//DEPRECATED
 
 //! Tolerance for coarsening
 NEW_PROP_TAG(GridAdaptCoarsenTolerance);
-NEW_PROP_TAG(CoarsenTolerance);//DEPRECATED
 
 //! Tolerance for refinement
 NEW_PROP_TAG(GridAdaptRefineThreshold);
-NEW_PROP_TAG(RefineThreshold);//DEPRECATED
 
 //! Tolerance for coarsening
 NEW_PROP_TAG(GridAdaptCoarsenThreshold);
-NEW_PROP_TAG(CoarsenThreshold);//DEPRECATED
 
 //! Time step interval for adaption
 NEW_PROP_TAG(GridAdaptAdaptionInterval);
-NEW_PROP_TAG(AdaptionInterval);//DEPRECATED
 
 //! Switch for refinement at dirichlet BC's -> not used by all indicators!
 NEW_PROP_TAG(GridAdaptRefineAtDirichletBC);
-NEW_PROP_TAG(RefineAtDirichletBC);//DEPRECATED
 
 //! Switch for refinement at neumann BC's -> not used by all indicators!
 NEW_PROP_TAG(GridAdaptRefineAtFluxBC);
-NEW_PROP_TAG(RefineAtFluxBC);//DEPRECATED
 
 //! Switch for refinement at sources -> not used by all indicators!
 NEW_PROP_TAG(GridAdaptRefineAtSource);
-NEW_PROP_TAG(RefineAtSource);//DEPRECATED
 
 //no adaptive grid
 SET_BOOL_PROP(GridAdaptTypeTag, AdaptiveGrid, false);
 
 //standard setting
-SET_INT_PROP(GridAdaptTypeTag, GridAdaptMinLevel, GET_PROP_VALUE(TypeTag, MinLevel));
-SET_INT_PROP(GridAdaptTypeTag, MinLevel, 0);//DEPRECATED
-SET_INT_PROP(GridAdaptTypeTag, GridAdaptMaxLevel, GET_PROP_VALUE(TypeTag, MaxLevel));
-SET_INT_PROP(GridAdaptTypeTag, MaxLevel, 1);//DEPRECATED
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefineTolerance, GET_PROP_VALUE(TypeTag, RefineTolerance));
-SET_SCALAR_PROP(GridAdaptTypeTag, RefineTolerance, 0.05);//DEPRECATED
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenTolerance, GET_PROP_VALUE(TypeTag, CoarsenTolerance));
-SET_SCALAR_PROP(GridAdaptTypeTag, CoarsenTolerance, 0.001);//DEPRECATED
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefineThreshold, GET_PROP_VALUE(TypeTag, RefineThreshold));
-SET_SCALAR_PROP(GridAdaptTypeTag, RefineThreshold, 0.0);//DEPRECATED
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenThreshold, GET_PROP_VALUE(TypeTag, CoarsenThreshold));
-SET_SCALAR_PROP(GridAdaptTypeTag, CoarsenThreshold, 0.0);//DEPRECATED
-SET_INT_PROP(GridAdaptTypeTag, GridAdaptAdaptionInterval, GET_PROP_VALUE(TypeTag, AdaptionInterval));
-SET_INT_PROP(GridAdaptTypeTag, AdaptionInterval, 1);//DEPRECATED
+SET_INT_PROP(GridAdaptTypeTag, GridAdaptMinLevel, 0);
+SET_INT_PROP(GridAdaptTypeTag, GridAdaptMaxLevel, 1);
+SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefineTolerance, 0.05);
+SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenTolerance, 0.001);
+SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefineThreshold, 0.0);
+SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenThreshold, 0.0);
+SET_INT_PROP(GridAdaptTypeTag, GridAdaptAdaptionInterval, 1);
 //Switch initial grid adaption off per default
-SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptEnableInitializationIndicator, GET_PROP_VALUE(TypeTag, EnableInitializationIndicator));
-SET_BOOL_PROP(GridAdaptTypeTag, EnableInitializationIndicator, false);//DEPRECATED
+SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptEnableInitializationIndicator, false);
 
 // Switch of extra refinement strategy at boundaries/sources
-SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptRefineAtDirichletBC, GET_PROP_VALUE(TypeTag, RefineAtDirichletBC));
-SET_BOOL_PROP(GridAdaptTypeTag, RefineAtDirichletBC, false);//DEPRECATED
-SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptRefineAtFluxBC, GET_PROP_VALUE(TypeTag, RefineAtFluxBC));
-SET_BOOL_PROP(GridAdaptTypeTag, RefineAtFluxBC, false);//DEPRECATED
-SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptRefineAtSource, GET_PROP_VALUE(TypeTag, RefineAtSource));
-SET_BOOL_PROP(GridAdaptTypeTag, RefineAtSource, false);//DEPRECATED
+SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptRefineAtDirichletBC, false);
+SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptRefineAtFluxBC, false);
+SET_BOOL_PROP(GridAdaptTypeTag, GridAdaptRefineAtSource, false);
 } // namespace Properties
 } // namespace Dumux
 

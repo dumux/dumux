@@ -110,7 +110,7 @@ SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestMultTwoPTwoCProblem,
              BoundaryMobility,
              GET_PROP_TYPE(TypeTag, Indices)::satDependent);
-SET_SCALAR_PROP(TestMultTwoPTwoCProblem, CFLFactor, 0.8);
+SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetCFLFactor, 0.8);
 }
 
 /*!

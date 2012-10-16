@@ -85,12 +85,6 @@ struct GridImp<Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming>, dim>
 {
     static const int imp = GridTypes::aluGrid;
 };
-//DEPRECATED!!
-template<int dim>
-struct GridImp<Dune::ALUCubeGrid<dim, dim>, dim>
-{
-    static const int imp = GridTypes::aluGrid;
-};
 #endif
 
 #if HAVE_UG
