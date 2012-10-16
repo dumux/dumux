@@ -59,7 +59,7 @@ class Stokes2cFluxVariables : public StokesFluxVariables<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum { dim = GridView::dimension };
     enum { phaseIdx = Indices::phaseIdx };
@@ -87,13 +87,6 @@ public:
     { return massFraction_; }
 
     /*!
-     * \brief Return the mass fraction at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use massFraction() instead")
-    Scalar massFractionAtIP() const
-    { return massFraction(); }
-
-    /*!
      * \brief Return the molar diffusion coefficient at the integration point.
      */
     const Scalar diffusionCoeff() const
@@ -106,24 +99,10 @@ public:
     { return 0; }
 
     /*!
-     * \brief Return the molar diffusion coefficient at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use diffusionCoeff() instead")
-    Scalar diffusionCoeffAtIP() const
-    { return diffusionCoeff(); }
-
-    /*!
      * \brief Return the gradient of the mole fraction at the integration point.
      */
     const DimVector &moleFractionGrad() const
     { return moleFractionGrad_; }
-
-    /*!
-     * \brief Return the gradient of the mole fraction at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use moleFractionGrad() instead")
-    const DimVector &moleFractionGradAtIP() const
-    { return moleFractionGrad(); }
 
 
 protected:

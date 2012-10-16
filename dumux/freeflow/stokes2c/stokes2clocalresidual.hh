@@ -46,7 +46,7 @@ class Stokes2cLocalResidual : public StokesLocalResidual<TypeTag>
     typedef StokesLocalResidual<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Stokes2cIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum { dim = GridView::dimension };
     enum { transportEqIdx = Indices::transportEqIdx }; //!< Index of the transport equation

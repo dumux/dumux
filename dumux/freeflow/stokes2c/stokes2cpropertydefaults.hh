@@ -70,8 +70,7 @@ SET_TYPE_PROP(BoxStokes2c, VolumeVariables, Stokes2cVolumeVariables<TypeTag>);
 SET_TYPE_PROP(BoxStokes2c, FluxVariables, Stokes2cFluxVariables<TypeTag>);
 
 //! Set the Indices for the Stokes2c model.
-SET_TYPE_PROP(BoxStokes2c, Indices, typename GET_PROP_TYPE(TypeTag, Stokes2cIndices));
-SET_TYPE_PROP(BoxStokes2c, Stokes2cIndices, Stokes2cCommonIndices<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(BoxStokes2c, Indices, Stokes2cCommonIndices<TypeTag>);
 
 //! Set the number of components to 2
 SET_INT_PROP(BoxStokes2c, NumComponents, 2);
@@ -83,14 +82,6 @@ SET_PROP(BoxStokes2c, FluidState)
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 public:
     typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
-};
-
-//! DEPRECATED Choose the considered phase (single-phase system); the gas phase is used
-SET_PROP(BoxStokes2c, PhaseIndex)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-public:
-    static constexpr int value = FluidSystem::nPhaseIdx;
 };
 
 //! Choose the considered phase (single-phase system); the gas phase is used
