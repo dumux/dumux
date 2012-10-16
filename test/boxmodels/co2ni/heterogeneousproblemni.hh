@@ -34,6 +34,7 @@
 #include <dumux/boxmodels/co2ni/co2nimodel.hh>
 #include <dumux/boxmodels/co2ni/co2nivolumevariables.hh>
 #include <dumux/material/fluidsystems/brineco2fluidsystem.hh>
+#include <dumux/boxmodels/common/porousmediaboxproblem.hh>
 #include <dumux/boxmodels/common/intersectiontovertexbc.hh>
 
 
@@ -85,8 +86,8 @@ SET_TYPE_PROP(HeterogeneousProblem, VolumeVariables, CO2NIVolumeVariables<TypeTa
 // Enable gravity
 SET_BOOL_PROP(HeterogeneousProblem, ProblemEnableGravity, true);
 
-SET_BOOL_PROP(HeterogeneousProblem, EnableJacobianRecycling, false);
-SET_BOOL_PROP(HeterogeneousProblem, EnableVelocityOutput, false);
+SET_BOOL_PROP(HeterogeneousProblem, ImplicitEnableJacobianRecycling, false);
+SET_BOOL_PROP(HeterogeneousProblem, VtkAddVelocity, false);
 }
 
 
@@ -129,7 +130,7 @@ class HeterogeneousProblem : public PorousMediaBoxProblem<TypeTag>
     };
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, TwoPTwoCNIIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         lPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::nPhaseIdx,

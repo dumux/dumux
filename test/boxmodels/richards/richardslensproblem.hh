@@ -67,13 +67,13 @@ public:
 SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
 
 // Enable partial reassembly of the Jacobian matrix
-SET_BOOL_PROP(RichardsLensProblem, EnablePartialReassemble, true);
+SET_BOOL_PROP(RichardsLensProblem, ImplicitEnablePartialReassemble, true);
 
 // Enable re-use of the Jacobian matrix for the first iteration of a time step
-SET_BOOL_PROP(RichardsLensProblem, EnableJacobianRecycling, true);
+SET_BOOL_PROP(RichardsLensProblem, ImplicitEnableJacobianRecycling, true);
 
 // Use forward differences to approximate the Jacobian matrix
-SET_INT_PROP(RichardsLensProblem, NumericDifferenceMethod, +1);
+SET_INT_PROP(RichardsLensProblem, ImplicitNumericDifferenceMethod, +1);
 
 // Set the maximum number of newton iterations of a time step
 SET_INT_PROP(RichardsLensProblem, NewtonMaxSteps, 28);

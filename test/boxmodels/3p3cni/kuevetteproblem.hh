@@ -70,13 +70,13 @@ SET_TYPE_PROP(KuevetteProblem,
 SET_BOOL_PROP(KuevetteProblem, ProblemEnableGravity, true);
 
 // Use central differences (backward -1, forward +1)
-SET_INT_PROP(KuevetteProblem, NumericDifferenceMethod, 0);
+SET_INT_PROP(KuevetteProblem, ImplicitNumericDifferenceMethod, 0);
 
 // Write newton convergence
 //SET_BOOL_PROP(KuevetteProblem, NewtonWriteConvergence, true);
 
 // Set the maximum time step
-SET_SCALAR_PROP(KuevetteProblem, MaxTimeStepSize, 60.);
+SET_SCALAR_PROP(KuevetteProblem, TimeManagerMaxTimeStepSize, 60.);
 
 // set newton relative tolerance
 SET_SCALAR_PROP(KuevetteProblem, NewtonRelTolerance, 1e-6);

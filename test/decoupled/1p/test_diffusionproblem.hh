@@ -92,7 +92,7 @@ SET_BOOL_PROP(FVVelocity2PTestProblem, ProblemEnableGravity, false);
 NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FVMPFAOPressurePropertiesTwoP, TestDiffusionSpatialParams));
 //SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, Dumux::SSORBiCGSTABBackend<TypeTag>);
-SET_INT_PROP(FVMPFAOVelocity2PTestProblem, PreconditionerIterations, 2);
+SET_INT_PROP(FVMPFAOVelocity2PTestProblem, LinearSolverPreconditionerIterations, 2);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, Dumux::TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_PROP(FVMPFAOVelocity2PTestProblem, Grid)

@@ -86,13 +86,13 @@ SET_BOOL_PROP(Forchheimer2pProblem, NewtonWriteConvergence, false);
 SET_BOOL_PROP(Forchheimer2pProblem, NewtonUseLineSearch, false);
 
 // Enable the re-use of the jacobian matrix whenever possible?
-SET_BOOL_PROP(Forchheimer2pProblem, EnableJacobianRecycling, true);
+SET_BOOL_PROP(Forchheimer2pProblem, ImplicitEnableJacobianRecycling, true);
 
 // Reassemble the jacobian matrix only where it changed?
-SET_BOOL_PROP(Forchheimer2pProblem, EnablePartialReassemble, false);
+SET_BOOL_PROP(Forchheimer2pProblem, ImplicitEnablePartialReassemble, false);
 
 // use forward diffferences to approximate the partial derivatives
-SET_INT_PROP(Forchheimer2pProblem, NumericDifferenceMethod, +1);
+SET_INT_PROP(Forchheimer2pProblem, ImplicitNumericDifferenceMethod, +1);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(Forchheimer2pProblem, Scalar, double);

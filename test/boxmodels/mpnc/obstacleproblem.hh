@@ -85,13 +85,13 @@ SET_BOOL_PROP(ObstacleProblem, NewtonWriteConvergence, false);
 SET_BOOL_PROP(ObstacleProblem, NewtonUseLineSearch, false);
 
 // Enable the re-use of the jacobian matrix whenever possible?
-SET_BOOL_PROP(ObstacleProblem, EnableJacobianRecycling, true);
+SET_BOOL_PROP(ObstacleProblem, ImplicitEnableJacobianRecycling, true);
 
 // Reassemble the jacobian matrix only where it changed?
-SET_BOOL_PROP(ObstacleProblem, EnablePartialReassemble, true);
+SET_BOOL_PROP(ObstacleProblem, ImplicitEnablePartialReassemble, true);
 
 // use forward diffferences to approximate the partial derivatives
-SET_INT_PROP(ObstacleProblem, NumericDifferenceMethod, +1);
+SET_INT_PROP(ObstacleProblem, ImplicitNumericDifferenceMethod, +1);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(ObstacleProblem, Scalar, double);

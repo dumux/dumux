@@ -69,13 +69,13 @@ SET_TYPE_PROP(ColumnProblem,
 SET_BOOL_PROP(ColumnProblem, ProblemEnableGravity, true);
 
 // Use forward differences instead of central differences
-SET_INT_PROP(ColumnProblem, NumericDifferenceMethod, 0);
+SET_INT_PROP(ColumnProblem, ImplicitNumericDifferenceMethod, 0);
 
 // Write newton convergence
 SET_BOOL_PROP(ColumnProblem, NewtonWriteConvergence, true);
 
 // Set the maximum time step
-SET_SCALAR_PROP(ColumnProblem, MaxTimeStepSize, 5.);
+SET_SCALAR_PROP(ColumnProblem, TimeManagerMaxTimeStepSize, 5.);
 }
 
 
