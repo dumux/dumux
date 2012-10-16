@@ -146,7 +146,7 @@ SET_INT_PROP(DecoupledGeneralLensProblem, VtkOutputLevel, 1);
 
 SET_TYPE_PROP(DecoupledGeneralLensProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 
-SET_SCALAR_PROP(DecoupledGeneralLensProblem, CFLFactor, 1.0);
+SET_SCALAR_PROP(DecoupledGeneralLensProblem, ImpetCFLFactor, 1.0);
 }
 
 /*!
