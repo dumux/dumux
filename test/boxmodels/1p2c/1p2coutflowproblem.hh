@@ -80,7 +80,7 @@ SET_TYPE_PROP(OnePTwoCOutflowProblem,
 SET_BOOL_PROP(OnePTwoCOutflowProblem, UseMoles, false);
 
 // Disable gravity
-SET_BOOL_PROP(OnePTwoCOutflowProblem, EnableGravity, false);
+SET_BOOL_PROP(OnePTwoCOutflowProblem, ProblemEnableGravity, false);
 }
 
 

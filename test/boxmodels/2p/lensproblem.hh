@@ -108,7 +108,7 @@ SET_INT_PROP(LensProblem, PreconditionerIterations, 1);
 SET_SCALAR_PROP(LensProblem, PreconditionerRelaxation, 1.0);
 
 // Enable gravity
-SET_BOOL_PROP(LensProblem, EnableGravity, true);
+SET_BOOL_PROP(LensProblem, ProblemEnableGravity, true);
 }
 
 /*!

@@ -63,7 +63,7 @@ SET_PROP(WaterAirProblem, Problem)
 SET_TYPE_PROP(WaterAirProblem, FluidSystem, Dumux::FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Enable gravity
-SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
+SET_BOOL_PROP(WaterAirProblem, ProblemEnableGravity, true);
 
 // Use forward differences instead of central differences
 SET_INT_PROP(WaterAirProblem, NumericDifferenceMethod, +1);

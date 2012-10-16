@@ -68,7 +68,7 @@ SET_TYPE_PROP(BoxStokes, Scalar, double);
 SET_SCALAR_PROP(StokesTestProblem, StokesStabilizationAlpha, -1.0);
 
 // Enable gravity
-SET_BOOL_PROP(StokesTestProblem, EnableGravity, false);
+SET_BOOL_PROP(StokesTestProblem, ProblemEnableGravity, false);
 }
 
 /*!

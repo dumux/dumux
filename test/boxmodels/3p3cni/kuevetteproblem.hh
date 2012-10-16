@@ -67,7 +67,7 @@ SET_TYPE_PROP(KuevetteProblem,
               Dumux::FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Enable gravity
-SET_BOOL_PROP(KuevetteProblem, EnableGravity, true);
+SET_BOOL_PROP(KuevetteProblem, ProblemEnableGravity, true);
 
 // Use central differences (backward -1, forward +1)
 SET_INT_PROP(KuevetteProblem, NumericDifferenceMethod, 0);

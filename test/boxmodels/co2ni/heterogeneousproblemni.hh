@@ -83,7 +83,7 @@ SET_TYPE_PROP(HeterogeneousProblem, Model, CO2NIModel<TypeTag>);
 SET_TYPE_PROP(HeterogeneousProblem, VolumeVariables, CO2NIVolumeVariables<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(HeterogeneousProblem, EnableGravity, true);
+SET_BOOL_PROP(HeterogeneousProblem, ProblemEnableGravity, true);
 
 SET_BOOL_PROP(HeterogeneousProblem, EnableJacobianRecycling, false);
 SET_BOOL_PROP(HeterogeneousProblem, EnableVelocityOutput, false);

@@ -64,7 +64,7 @@ SET_PROP(InjectionProblem, FluidSystem)
 };
 
 // Enable gravity
-SET_BOOL_PROP(InjectionProblem, EnableGravity, true);
+SET_BOOL_PROP(InjectionProblem, ProblemEnableGravity, true);
 
 SET_BOOL_PROP(InjectionProblem, EnableJacobianRecycling, true);
 SET_BOOL_PROP(InjectionProblem, VtkAddVelocity, false);

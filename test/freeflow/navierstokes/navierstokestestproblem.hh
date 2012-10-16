@@ -80,7 +80,7 @@ namespace Dumux
     SET_TYPE_PROP(BoxStokes, Scalar, double);
 
     // Disable gravity
-    SET_BOOL_PROP(NavierStokesTestProblem, EnableGravity, false);
+    SET_BOOL_PROP(NavierStokesTestProblem, ProblemEnableGravity, false);
   }
 
   /*!

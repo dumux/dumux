@@ -103,7 +103,7 @@ SET_PROP(TestDecTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultC
 //SET_TYPE_PROP(TestDecTwoPTwoCProblem, LinearSolver, IMPETBiCGStabILU0Solver<TypeTag> );
 
 // Enable gravity
-SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableGravity, true);
+SET_BOOL_PROP(TestDecTwoPTwoCProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(TestDecTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestDecTwoPTwoCProblem,
         BoundaryMobility,

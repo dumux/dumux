@@ -77,7 +77,7 @@ public:
 SET_TYPE_PROP(TestProblemOneP, SpatialParams, Dumux::TestOnePSpatialParams<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(TestProblemOneP, EnableGravity, false);
+SET_BOOL_PROP(TestProblemOneP, ProblemEnableGravity, false);
 
 //Set the problem
 SET_TYPE_PROP(TestProblemOneP, Problem, Dumux::TestProblemOneP<TypeTag>);

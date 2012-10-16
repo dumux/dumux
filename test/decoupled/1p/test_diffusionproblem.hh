@@ -85,7 +85,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(FVVelocity2PTestProblem, EnableGravity, false);
+SET_BOOL_PROP(FVVelocity2PTestProblem, ProblemEnableGravity, false);
 
 
 // set the types for the MPFA-O FV method
@@ -122,7 +122,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(FVMPFAOVelocity2PTestProblem, EnableGravity, false);
+SET_BOOL_PROP(FVMPFAOVelocity2PTestProblem, ProblemEnableGravity, false);
 
 // set the types for the mimetic FD method
 NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
@@ -156,7 +156,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(MimeticPressure2PTestProblem, EnableGravity, false);
+SET_BOOL_PROP(MimeticPressure2PTestProblem, ProblemEnableGravity, false);
 
 }
 

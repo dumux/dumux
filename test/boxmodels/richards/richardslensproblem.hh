@@ -64,7 +64,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
+SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
 
 // Enable partial reassembly of the Jacobian matrix
 SET_BOOL_PROP(RichardsLensProblem, EnablePartialReassemble, true);

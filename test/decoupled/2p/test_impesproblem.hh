@@ -120,7 +120,7 @@ public:
 };
 
 // Enable gravity
-SET_BOOL_PROP(IMPESTestProblem, EnableGravity, false);
+SET_BOOL_PROP(IMPESTestProblem, ProblemEnableGravity, false);
 
 SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, Dumux::EvalCflFluxCoats<TypeTag>);
 

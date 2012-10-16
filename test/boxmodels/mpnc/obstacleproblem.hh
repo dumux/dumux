@@ -76,7 +76,7 @@ SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, false);
 SET_BOOL_PROP(ObstacleProblem, NewtonEnableChop, true);
 
 // Enable gravity
-SET_BOOL_PROP(ObstacleProblem, EnableGravity, true);
+SET_BOOL_PROP(ObstacleProblem, ProblemEnableGravity, true);
 
 // Write Newton convergence to disk?
 SET_BOOL_PROP(ObstacleProblem, NewtonWriteConvergence, false);

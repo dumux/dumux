@@ -83,7 +83,7 @@ SET_INT_PROP(TransportTestProblem, VelocityFormulation,
         DecoupledTwoPCommonIndices::velocityTotal);
 
 // Disable gravity
-SET_BOOL_PROP(TransportTestProblem, EnableGravity, false);
+SET_BOOL_PROP(TransportTestProblem, ProblemEnableGravity, false);
 
 SET_SCALAR_PROP(TransportTestProblem, CFLFactor, 1.0);
 }

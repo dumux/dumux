@@ -105,7 +105,7 @@ SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, Default
 };
 
 // Enable gravity
-SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableGravity, true);
+SET_BOOL_PROP(TestMultTwoPTwoCProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestMultTwoPTwoCProblem,
              BoundaryMobility,
