@@ -347,12 +347,6 @@ public:
     }
     //@}
 
-    //! Deprecated set function, use manipulateFluidState() instead
-    void setFluidState(FluidState& fluidState) DUNE_DEPRECATED
-    {
-        fluidState_ = &fluidState;
-    }
-
     //! Returns a reference to the cells fluid state
     const FluidState& fluidState() const
     {
