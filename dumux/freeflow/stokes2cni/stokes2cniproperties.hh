@@ -42,12 +42,6 @@ namespace Properties
 //! The type tag for the non-isothermal compositional Stokes problems
 NEW_TYPE_TAG(BoxStokes2cni, INHERITS_FROM(BoxStokes2c));
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(Stokes2cniIndices); //!< DEPRECATED Enumerations for the compositional Stokes models
-NEW_PROP_TAG(NumComponents); //!< Number of components
 }
 
 }

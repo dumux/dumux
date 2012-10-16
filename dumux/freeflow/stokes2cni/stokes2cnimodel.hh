@@ -78,12 +78,11 @@ class Stokes2cniModel : public Stokes2cModel<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Stokes2cniIndices) Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     enum { dim = GridView::dimension };
     enum { transportCompIdx = Indices::transportCompIdx };
-    enum { lCompIdx = transportCompIdx } DUNE_DEPRECATED_MSG("use transportCompIdx instead");
-    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIndex) };
+    enum { phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx) };
 
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
