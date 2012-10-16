@@ -59,11 +59,9 @@ NEW_TYPE_TAG(DecoupledTwoP, INHERITS_FROM(DecoupledModel));
 // Property tags
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
-NEW_PROP_TAG( SpatialParameters ); //!< DEPRECATED The old type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
 NEW_PROP_TAG(MaterialLawParams); //!< The material law parameters (extracted from the spatial parameters)
 NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG( EnableGravity); //!< DEPRECATED Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Formulation); //!< The formulation of the model
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the pressure model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
@@ -74,19 +72,11 @@ NEW_PROP_TAG( NonwettingPhase); //!< The non-wetting phase of a two-phase model
 NEW_PROP_TAG( FluidSystem ); //!< Defines the fluid system
 NEW_PROP_TAG( FluidState );//!< Defines the fluid state
 
-//! \cond \private
-// keep only for compatibility with box models
-NEW_PROP_TAG( TwoPIndices );//DEPRECATED
-//! \endcond
-
 NEW_PROP_TAG( ImpetErrorTermFactor ); //!< Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ErrorTermFactor ); //!< DEPRECATED Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
 
 NEW_PROP_TAG( ImpetErrorTermLowerBound );//!< Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ErrorTermLowerBound );//!< DEPRECATED Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
 
 NEW_PROP_TAG( ImpetErrorTermUpperBound );//!< Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ErrorTermUpperBound );//!< DEPRECATED Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
 }
 }
 
@@ -121,12 +111,6 @@ SET_PROP(DecoupledTwoP, Indices)
 {
 typedef DecoupledTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
 };
-
-/** \cond \private
- *  \deprecated TwoPIndices property
- */
-SET_TYPE_PROP(DecoupledTwoP, TwoPIndices, typename GET_PROP_TYPE(TypeTag, Indices));//DEPRECATED
-//! \endcond
 
 //! Set the default pressure formulation according to the chosen two-phase formulation
 SET_INT_PROP(DecoupledTwoP,
@@ -167,8 +151,7 @@ public:
 
 //! The spatial parameters to be employed. 
 //! Use BoxSpatialParams by default.
-SET_TYPE_PROP(DecoupledTwoP, SpatialParams, typename GET_PROP_TYPE(TypeTag, SpatialParameters));
-SET_TYPE_PROP(DecoupledTwoP, SpatialParameters, FVSpatialParams<TypeTag>);//DEPRECATED
+SET_TYPE_PROP(DecoupledTwoP, SpatialParams, FVSpatialParams<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
@@ -184,18 +167,14 @@ public:
 };
 
 //! Default error term factor
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermFactor, GET_PROP_VALUE(TypeTag, ErrorTermFactor));
-SET_SCALAR_PROP(DecoupledTwoP, ErrorTermFactor, 0.5);//DEPRECATED
+SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermFactor, 0.5);
 //! Default lower threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermLowerBound, GET_PROP_VALUE(TypeTag, ErrorTermLowerBound));
-SET_SCALAR_PROP(DecoupledTwoP, ErrorTermLowerBound, 0.1);//DEPRECATED
+SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermLowerBound, 0.1);
 //! Default upper threshold for evaluation of an error term
-SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermUpperBound, GET_PROP_VALUE(TypeTag, ErrorTermUpperBound));
-SET_SCALAR_PROP(DecoupledTwoP, ErrorTermUpperBound, 0.9);//DEPRECATED
+SET_SCALAR_PROP(DecoupledTwoP, ImpetErrorTermUpperBound, 0.9);
 
 // enable gravity by default
-SET_BOOL_PROP(DecoupledTwoP, ProblemEnableGravity, GET_PROP_VALUE(TypeTag, EnableGravity));
-SET_BOOL_PROP(DecoupledTwoP, EnableGravity, true);//DEPRECATED
+SET_BOOL_PROP(DecoupledTwoP, ProblemEnableGravity, true);
 // \}
 }
 

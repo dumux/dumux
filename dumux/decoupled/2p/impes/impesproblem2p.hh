@@ -184,17 +184,10 @@ public:
     SpatialParams &spatialParams()
     { return *spatialParams_; }
 
-    DUNE_DEPRECATED_MSG("use spatialParams() method instead")
-    SpatialParams &spatialParameters()
-    { return *spatialParams_; }
     /*!
      * \brief Returns the spatial parameters object.
      */
     const SpatialParams &spatialParams() const
-    { return *spatialParams_; }
-
-    DUNE_DEPRECATED_MSG("use spatialParams() method instead")
-    const SpatialParams &spatialParameters() const
     { return *spatialParams_; }
 
     // \}
