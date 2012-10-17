@@ -77,7 +77,7 @@ SET_PROP(HeterogeneousProblem, FluidSystem)
 // Set the CO2 table to be used; in this case not the the default table
 SET_TYPE_PROP(HeterogeneousProblem, CO2Table, Dumux::Heterogeneous::CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
-SET_SCALAR_PROP(HeterogeneousProblem, Salinity, 1e-1);
+SET_SCALAR_PROP(HeterogeneousProblem, ProblemSalinity, 1e-1);
 
 //! the CO2 Model and VolumeVariables properties
 SET_TYPE_PROP(HeterogeneousProblem, Model, CO2NIModel<TypeTag>);

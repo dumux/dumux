@@ -63,11 +63,12 @@ namespace FluidSystems{
 template<class Scalar,
          class CO2Table,
          class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
-         class Brinetype = Dumux::TabulatedComponent<Scalar, Dumux::Brine<Scalar, Dumux::H2O<Scalar> > > >
+         class BrineRawComponent = Dumux::Brine<Scalar, Dumux::H2O<Scalar>>,
+         class Brinetype = Dumux::TabulatedComponent<Scalar, BrineRawComponent> >
 class BrineCO2
-: public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, Brinetype>>
+: public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype>>
 {
-    typedef BrineCO2<Scalar, CO2Table, H2Otype, Brinetype> ThisType;
+    typedef BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> ThisType;
     typedef BaseFluidSystem <Scalar, ThisType> Base;
 
 
@@ -76,7 +77,7 @@ class BrineCO2
 public:
     typedef Dumux::NullParameterCache ParameterCache;
     typedef H2Otype H2O;
-    typedef Dumux::Brine<Scalar, H2O> BrineRawComponent; //salinity is stored into the raw brine component, wether tabulated or not.
+//    typedef Dumux::Brine<Scalar, H2O> BrineRawComponent; //salinity is stored into the raw brine component, wether tabulated or not.
     typedef Brinetype Brine;
     typedef typename Dumux::CO2<Scalar, CO2Table> CO2;
 
@@ -723,11 +724,11 @@ namespace Properties
 {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(CO2Table);
-NEW_PROP_TAG(Salinity);
+NEW_PROP_TAG(ProblemSalinity);
 // Set Co2 tables
 SET_TYPE_PROP(NumericModel, CO2Table, Dumux::CO2Tables);
 // Set salinity defaults
-SET_SCALAR_PROP(NumericModel, Salinity, 1e-3);
+SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
 }
 
 /*!
@@ -768,24 +769,26 @@ class BrineCO2FluidSystem
 : public FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
                                 typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)),
                                 typename GET_PROP(TypeTag, Components)::H2O,
+                                Dumux::Brine<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)), Dumux::H2O<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>>,
                                 typename GET_PROP(TypeTag, Components)::Brine>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
             typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)),
             typename GET_PROP(TypeTag, Components)::H2O,
+            Dumux::Brine<Scalar, typename GET_PROP(TypeTag, Components)::H2O>,
             typename GET_PROP(TypeTag, Components)::Brine> ParentType;
 
 public:
     static void init()
     {
-        ParentType::init(GET_PROP_VALUE(TypeTag, Salinity));
+        ParentType::init(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Salinity));
     }
     static void init(Scalar startTemp, Scalar endTemp, int tempSteps,
                      Scalar startPressure, Scalar endPressure, int pressureSteps)
     {
         ParentType::init(startTemp, endTemp, tempSteps,
-                startPressure, endPressure, pressureSteps, GET_PROP_VALUE(TypeTag, Salinity));
+                startPressure, endPressure, pressureSteps, GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Salinity));
     }
 };
 #endif
