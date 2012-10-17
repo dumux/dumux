@@ -60,7 +60,7 @@ SET_PROP(TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-problem
 
 // Set grid and the grid creator to be used
 #if HAVE_ALUGRID
-SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUCubeGrid</*dim=*/2,2>); /*@\label{tutorial-coupled:set-grid}@*/
+SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid}@*/
 #else
 SET_TYPE_PROP(TutorialProblemCoupled, Grid, Dune::YaspGrid<2>);
 #warning If you want to use adaptivity, install and use ALUGrid.

@@ -373,13 +373,13 @@ For the visualization of the results using paraview please refer to section \ref
   run the model as explained above.
 
   \item \textbf{Changing  the Shape of the Discrete Elements} \\
-  In order to complete this exercise you need a grid module capable of handeling 
-  simplex grids, like \texttt{ALUSimplexGrid}. If this is not the case please skip this exercise.
+  In order to complete this exercise you need an external grid manager capable of handeling 
+  simplex grids, like \texttt{ALUGrid}. If this is not the case please skip this exercise.
   Change the types of elements used for discretizing the domain. In line \ref{tutorial-coupled:set-gridcreator} of the problem 
   file  the type of gridcreator is chosen. By choosing a different grid creator you can discretize the domain with different elements. 
   Hint: You can find gridcreators in \texttt{dumux/common/}, change for example from \texttt{cubegridcreator.hh} to \texttt{simplexgridcreator.hh}. 
-  Besides having to change the grid creator it is also necessary to change the DUNE-grid module in line \ref{tutorial-coupled:set-grid} from \texttt{ALUCubeGrid} 
-  to \texttt{ALUSimplexGrid}.
+  Besides having to change the grid creator it is also necessary to change the ALUGrid type in line \ref{tutorial-coupled:set-grid} from \texttt{Dune::cube} 
+  to \texttt{Dune::simplex}.
   The shape of the employed elements can be visualized in paraview by choosing \texttt{Surface with Edges}. 
 
 \item \textbf{Changing Fluids} \\

@@ -55,7 +55,7 @@ SET_PROP(Ex2TutorialProblemCoupled, Problem) /*@\label{tutorial-coupled:set-prob
 { typedef Dumux::Ex2TutorialProblemCoupled<TypeTag> type;};
 
 // Set grid and the grid creator to be used
-SET_TYPE_PROP(Ex2TutorialProblemCoupled, Grid, Dune::ALUCubeGrid</*dim=*/2,2>); /*@\label{tutorial-coupled:set-grid}@*/
+SET_TYPE_PROP(Ex2TutorialProblemCoupled, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>); /*@\label{tutorial-coupled:set-grid}@*/
 SET_TYPE_PROP(Ex2TutorialProblemCoupled, GridCreator, Dumux::CubeGridCreator<TypeTag>); /*@\label{tutorial-coupled:set-gridcreator}@*/
 
 // Set the wetting phase

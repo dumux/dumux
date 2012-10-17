@@ -58,7 +58,7 @@ NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(BoxTwoPTwoC, HeterogeneousSpati
 //{
 //    //typedef Dune::UGGrid<2> type;
 //#if HAVE_ALUGRID
-//    typedef Dune::ALUCubeGrid<2,2> type;
+//    typedef Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming> type;
 //#else
 //#warning If you want to run this problem, install and use ALUGrid.
 //#endif
