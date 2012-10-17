@@ -45,7 +45,7 @@ NEW_PROP_TAG(AdaptionIndicator);
 //! Class defining the refinement/coarsening indicator for grid initialization
 NEW_PROP_TAG(AdaptionInitializationIndicator);
 
-//! Switch the use of initial grid adaption on/of
+//! Switch the use of initial grid adaption on/off
 NEW_PROP_TAG(GridAdaptEnableInitializationIndicator);
 
 //! Mimimum allowed level
@@ -69,10 +69,10 @@ NEW_PROP_TAG(GridAdaptCoarsenThreshold);
 //! Time step interval for adaption
 NEW_PROP_TAG(GridAdaptAdaptionInterval);
 
-//! Switch for refinement at dirichlet BC's -> not used by all indicators!
+//! Switch for refinement at Dirichlet BC's -> not used by all indicators!
 NEW_PROP_TAG(GridAdaptRefineAtDirichletBC);
 
-//! Switch for refinement at neumann BC's -> not used by all indicators!
+//! Switch for refinement at Neumann BC's -> not used by all indicators!
 NEW_PROP_TAG(GridAdaptRefineAtFluxBC);
 
 //! Switch for refinement at sources -> not used by all indicators!
