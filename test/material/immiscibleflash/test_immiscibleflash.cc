@@ -155,15 +155,15 @@ int main()
 
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
-    enum { lPhaseIdx = FluidSystem::lPhaseIdx };
-    enum { gPhaseIdx = FluidSystem::gPhaseIdx };
+    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
+    enum { nPhaseIdx = FluidSystem::nPhaseIdx };
 
     enum { H2OIdx = FluidSystem::H2OIdx };
     enum { N2Idx = FluidSystem::N2Idx };
 
     typedef Dumux::RegularizedBrooksCorey<Scalar> EffMaterialLaw;
     typedef Dumux::EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
-    typedef Dumux::TwoPAdapter<lPhaseIdx, TwoPMaterialLaw> MaterialLaw;
+    typedef Dumux::TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> MaterialLaw;
     typedef MaterialLaw::Params MaterialLawParams;
 
     Scalar T = 273.15 + 25;
@@ -199,11 +199,11 @@ int main()
     std::cout << "testing single-phase liquid\n";
 
     // set liquid saturation and pressure
-    fsRef.setSaturation(lPhaseIdx, 1.0);
-    fsRef.setPressure(lPhaseIdx, 1e6);
+    fsRef.setSaturation(wPhaseIdx, 1.0);
+    fsRef.setPressure(wPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, lPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, wPhaseIdx);
 
     // check the flash calculation
     checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams);
@@ -214,11 +214,11 @@ int main()
     std::cout << "testing single-phase gas\n";
 
     // set gas saturation and pressure
-    fsRef.setSaturation(gPhaseIdx, 1.0);
-    fsRef.setPressure(gPhaseIdx, 1e6);
+    fsRef.setSaturation(nPhaseIdx, 1.0);
+    fsRef.setPressure(nPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, gPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, nPhaseIdx);
 
     // check the flash calculation
     checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams);
@@ -229,11 +229,11 @@ int main()
     std::cout << "testing two-phase\n";
 
     // set liquid saturation and pressure
-    fsRef.setSaturation(lPhaseIdx, 0.5);
-    fsRef.setPressure(lPhaseIdx, 1e6);
+    fsRef.setSaturation(wPhaseIdx, 0.5);
+    fsRef.setPressure(wPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, lPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams, wPhaseIdx);
 
     // check the flash calculation
     checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams);
@@ -250,13 +250,13 @@ int main()
     matParams2.setLambda(2.0);
 
     // set liquid saturation
-    fsRef.setSaturation(lPhaseIdx, 0.5);
+    fsRef.setSaturation(wPhaseIdx, 0.5);
 
     // set pressure of the liquid phase
-    fsRef.setPressure(lPhaseIdx, 1e6);
+    fsRef.setPressure(wPhaseIdx, 1e6);
 
     // set the remaining parameters of the reference fluid state
-    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams2, lPhaseIdx);
+    completeReferenceFluidState<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams2, wPhaseIdx);
 
     // check the flash calculation
     checkImmiscibleFlash<Scalar, FluidSystem, MaterialLaw>(fsRef, matParams2);
