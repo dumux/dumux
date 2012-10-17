@@ -15,6 +15,7 @@
 	/*!
 	 * \ingroup Common
 	 * \defgroup Parameter Parameters
+         * See the file parameterlist for available parameters.
 	 */
 	/*!
 	 * \ingroup Common
