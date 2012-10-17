@@ -92,9 +92,9 @@ NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from t
 //! The compositional twophase system of fluids which is considered
 NEW_PROP_TAG(FluidSystem);
 
-//! The thermodynamic constraint solver which calculates the
+//! The themodynamic constraint solver which calculates the
 //! composition of any phase given all component fugacities.
-NEW_PROP_TAG(ConstraintSolver);
+NEW_PROP_TAG(CompositionFromFugacitiesSolver);
 
 //! Enable the energy equation?
 NEW_PROP_TAG(EnableEnergy);

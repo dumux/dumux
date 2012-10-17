@@ -263,6 +263,7 @@ public:
     void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
     {
         const GlobalPosition &globalPos = vertex.geometry().center();
+
         if (onLeftBoundary_(globalPos) or onRightBoundary_(globalPos))
             values.setAllDirichlet();
         else

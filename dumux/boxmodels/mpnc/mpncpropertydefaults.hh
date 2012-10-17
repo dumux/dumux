@@ -110,7 +110,7 @@ public:
  * \brief Set the themodynamic constraint solver which calculates the
  *        composition of any phase given all component fugacities.
  */
-SET_PROP(BoxMPNC, ConstraintSolver)
+SET_PROP(BoxMPNC, CompositionFromFugacitiesSolver)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

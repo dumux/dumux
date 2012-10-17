@@ -1,6 +1,3 @@
-# path to external modules 
-MODDIR=/temp/philippKila/DUMUX_kila/external
-
 GXX_WARNING_OPTS=" \
     -Wall \
     -Wunused \
@@ -26,8 +23,6 @@ RESUME_FILE=/dev/null
 
 CONFIGURE_FLAGS="\
   CXXFLAGS=\"$GXX_WARNING_OPTS $GXX_OPTS\" \
-  --with-alugrid=$MODDIR/ALUGrid-1.50 \
-  --with-ug=$MODDIR/ug \
   --enable-fieldvector-size-is-method \
   --disable-documentation \
   --disable-parallel \

@@ -305,7 +305,7 @@ public:
         init(/*tempMin=*/273.15,
              /*tempMax=*/623.15,
              /*numTemp=*/100,
-             /*pMin=*/-10.,
+             /*pMin=*/-10,
              /*pMax=*/20e6,
              /*numP=*/200);
     }
@@ -683,7 +683,7 @@ public:
     }
 };
 
-} // end namespace FluidSystems
+} // end namepace FluidSystems
 
 #ifdef DUMUX_PROPERTIES_HH
 // forward defintions of the property tags

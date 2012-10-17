@@ -51,7 +51,7 @@ class MPNCVolumeVariablesMass
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, ConstraintSolver) ConstraintSolver;
+    typedef typename GET_PROP_TYPE(TypeTag, CompositionFromFugacitiesSolver) CompositionFromFugacitiesSolver;
     typedef typename GridView::template Codim<0>::Entity Element;
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
@@ -100,8 +100,8 @@ public:
             if (!hint)
                 // if no hint was given, we ask the constraint solver
                 // to make an initial guess
-                ConstraintSolver::guessInitial(fs, paramCache, phaseIdx, fug);
-            ConstraintSolver::solve(fs, paramCache, phaseIdx, fug);
+                CompositionFromFugacitiesSolver::guessInitial(fs, paramCache, phaseIdx, fug);
+            CompositionFromFugacitiesSolver::solve(fs, paramCache, phaseIdx, fug);
 
             /*
               std::cout << "final composition: " << FluidSystem::phaseName(phaseIdx) << "="

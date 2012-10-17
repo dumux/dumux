@@ -125,9 +125,6 @@ NEW_PROP_TAG(ImplicitEnableHints);
 //! indicates whether two-point flux should be used
 NEW_PROP_TAG(ImplicitUseTwoPointFlux); 
 
-//! Property for the forchheimer coefficient
-NEW_PROP_TAG(SpatialParamsForchCoeff);
-
 // mappers from local to global indices
 
 //! maper for vertices
