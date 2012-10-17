@@ -108,20 +108,29 @@ public:
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar liquidEnthalpy(Scalar temperature, Scalar pressure)
+    static Scalar liquidEnthalpy(const Scalar temperature,
+                                 const Scalar pressure)
     {
-    	// Gauss quadrature rule:
-    	// Interval: [0K; temperature (K)]
-    	// Gauss-Legendre-Integration with variable transformation:
-    	// \int_a^b f(T) dT  \approx (b-a)/2 \sum_i=1^n \alpha_i f( (b-a)/2 x_i + (a+b)/2 )
-    	// with: n=2, legendre -> x_i = +/- \sqrt(1/3), \apha_i=1
-    	// here: a=0, b=actual temperature in Kelvin
-    	// \leadsto h(T) = \int_0^T c_p(T) dT
-    	// 				\approx 0.5 T * (cp( (0.5-0.5*\sqrt(1/3)) T) + cp((0.5+0.5*\sqrt(1/3)) T))
-    	//				= 0.5 T * (cp(0.2113 T) + cp(0.7887 T) )
+        // Gauss quadrature rule:
+        // Interval: [0K; temperature (K)]
+        // Gauss-Legendre-Integration with variable transformation:
+        // \int_a^b f(T) dT  \approx (b-a)/2 \sum_i=1^n \alpha_i f( (b-a)/2 x_i + (a+b)/2 )
+        // with: n=2, legendre -> x_i = +/- \sqrt(1/3), \apha_i=1
+        // here: a=273.15K, b=actual temperature in Kelvin
+        // \leadsto h(T) = \int_273.15^T c_p(T) dT
+        //              \approx 0.5 (T-273.15) * (cp( 0.5(temperature-273.15)sqrt(1/3) ) + cp(0.5(temperature-273.15)(-1)sqrt(1/3))
 
-    	// enthalpy may have arbitrary reference state, but the empirical/fitted heatCapacity function needs Kelvin as input
-        return 0.5*temperature*(spHeatCapLiquidPhase_(0.2113*temperature) + spHeatCapLiquidPhase_(0.7887*temperature));
+        // Enthalpy may have arbitrary reference state, but the empirical/fitted heatCapacity function needs Kelvin as input and is
+        // fit over a certain temperature range. This suggests choosing an interval of integration being in the actual fit range.
+        // I.e. choosing T=273.15K  as reference point for liquid enthalpy.
+
+        constexpr Scalar sqrt1over3 = std::sqrt(1./3.);
+        const Scalar TEval1 = 0.5*(temperature-273.15)*        sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
+        const Scalar TEval2 = 0.5*(temperature-273.15)* (-1)*  sqrt1over3 + 0.5*(273.15+temperature)  ; // evaluation points according to Gauss-Legendre integration
+
+        const Scalar h_n = 0.5 * (temperature-273.15) * ( liquidHeatCapacity(TEval1, pressure) + liquidHeatCapacity(TEval2, pressure) ) ;
+
+        return h_n;
     }
 
     /*!

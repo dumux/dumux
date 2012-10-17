@@ -201,6 +201,14 @@ SET_INT_PROP(BoxModel, LinearSolverMaxIterations, 250);
 //! set number of equations of the mathematical model as default
 SET_INT_PROP(BoxModel, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
+//! default value for the forchheimer coefficient
+// Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
+//        Actually the Forchheimer coefficient is also a function of the dimensions of the
+//        porous medium. Taking it as a constant is only a first approximation
+//        (Nield, Bejan, Convection in porous media, 2006, p. 10)
+SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+
+
 } // namespace Properties
 } // namespace Dumux
 

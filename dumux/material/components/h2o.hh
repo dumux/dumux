@@ -771,7 +771,7 @@ public:
 
         Scalar rho = gasDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);
-    };
+    }
 
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure water.
@@ -795,7 +795,7 @@ public:
 
         Scalar rho = liquidDensity(temperature, pressure);
         return Common::viscosity(temperature, rho);
-    };
+    }
 
     /*!
      * \brief Thermal conductivity \f$\mathrm{[[W/(m K)]}\f$ of water (IAPWS) .
@@ -814,10 +814,13 @@ public:
     {
         // Thermal conductivity of water is empirically fit.
         // Evaluating that fitting-function outside the area of validity does not make sense.
-        assert( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
+        if( not ( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
                     or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
                     or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
-                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) );
+                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
+            DUNE_THROW(NumericalProblem,
+                    "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= " << pressure << "T= " << temperature);
+        }
 
         Scalar rho = liquidDensity(temperature, pressure);
         return Common::thermalConductivityIAPWS(temperature, rho);
@@ -840,10 +843,13 @@ public:
     {
         // Thermal conductivity of water is empirically fit.
         // Evaluating that fitting-function outside the area of validity does not make sense.
-        assert( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
+        if( not ( (pressure <= 400e6 and ((273.15<=temperature) and (temperature<=398.15)) )
                     or (pressure <= 200e6 and ((398.15<temperature) and (temperature<=523.15)) )
                     or (pressure <= 150e6 and ((523.15<temperature) and (temperature<=673.15)) )
-                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) );
+                    or (pressure <= 100e6 and ((673.15<temperature) and (temperature<=1073.15)) ) ) ){
+            DUNE_THROW(NumericalProblem,
+                    "Evaluating the IAPWS fit function for thermal conductivity outside range of applicability: p= " << pressure << " T= " << temperature);
+        }
 
         Scalar rho = gasDensity(temperature, pressure);
         return Common::thermalConductivityIAPWS(temperature, rho);
@@ -857,7 +863,7 @@ private:
             Region1::tau(temperature) *
             Region1::dgamma_dtau(temperature, pressure) *
             Rs*temperature;
-    };
+    }
 
     // the unregularized specific isobaric heat capacity
     static Scalar heatCap_p_Region1_(Scalar temperature, Scalar pressure)
@@ -866,7 +872,7 @@ private:
             - pow(Region1::tau(temperature), 2 ) *
             Region1::ddgamma_ddtau(temperature, pressure) *
             Rs;
-    };
+    }
 
     // the unregularized specific isochoric heat capacity
     static Scalar heatCap_v_Region1_(Scalar temperature, Scalar pressure)
@@ -879,7 +885,7 @@ private:
             - pow(tau, 2 ) *
             Region1::ddgamma_ddtau(temperature, pressure) * Rs +
             diff;
-    };
+    }
 
     // the unregularized specific internal energy for liquid water
     static Scalar internalEnergyRegion1_(Scalar temperature, Scalar pressure)
@@ -888,7 +894,7 @@ private:
             Rs * temperature *
             ( Region1::tau(temperature)*Region1::dgamma_dtau(temperature, pressure) -
               Region1::pi(pressure)*Region1::dgamma_dpi(temperature, pressure));
-    };
+    }
 
     // the unregularized specific volume for liquid water
     static Scalar volumeRegion1_(Scalar temperature, Scalar pressure)
@@ -897,7 +903,7 @@ private:
             Region1::pi(pressure)*
             Region1::dgamma_dpi(temperature, pressure) *
             Rs * temperature / pressure;
-    };
+    }
 
     // the unregularized specific enthalpy for steam
     static Scalar enthalpyRegion2_(Scalar temperature, Scalar pressure)
@@ -906,7 +912,7 @@ private:
             Region2::tau(temperature) *
             Region2::dgamma_dtau(temperature, pressure) *
             Rs*temperature;
-    };
+    }
 
     // the unregularized specific internal energy for steam
     static Scalar internalEnergyRegion2_(Scalar temperature, Scalar pressure)
@@ -915,7 +921,7 @@ private:
             Rs * temperature *
             ( Region2::tau(temperature)*Region2::dgamma_dtau(temperature, pressure) -
               Region2::pi(pressure)*Region2::dgamma_dpi(temperature, pressure));
-    };
+    }
 
     // the unregularized specific isobaric heat capacity
     static Scalar heatCap_p_Region2_(Scalar temperature, Scalar pressure)
@@ -924,7 +930,7 @@ private:
             - pow(Region2::tau(temperature), 2 ) *
             Region2::ddgamma_ddtau(temperature, pressure) *
             Rs;
-    };
+    }
 
     // the unregularized specific isochoric heat capacity
     static Scalar heatCap_v_Region2_(Scalar temperature, Scalar pressure)
@@ -937,7 +943,7 @@ private:
             - pow(tau, 2 ) *
             Region2::ddgamma_ddtau(temperature, pressure) * Rs
             - diff;
-    };
+    }
 
     // the unregularized specific volume for steam
     static Scalar volumeRegion2_(Scalar temperature, Scalar pressure)
@@ -946,7 +952,7 @@ private:
             Region2::pi(pressure)*
             Region2::dgamma_dpi(temperature, pressure) *
             Rs * temperature / pressure;
-    };
+    }
 }; // end class
 
 template <class Scalar>
