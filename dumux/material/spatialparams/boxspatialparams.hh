@@ -29,7 +29,7 @@
 #include "boxspatialparams1p.hh"
 
 namespace Dumux {
-// forward declation of property tags
+// forward declaration of property tags
 namespace Properties {
 NEW_PROP_TAG(MaterialLaw);
 NEW_PROP_TAG(MaterialLawParams);
@@ -48,6 +48,7 @@ template<class TypeTag>
 class BoxSpatialParams: public BoxSpatialParamsOneP<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
 
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;

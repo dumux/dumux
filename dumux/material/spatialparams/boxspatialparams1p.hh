@@ -162,6 +162,40 @@ public:
                    "a porosityAtPos() method.");
     }
 
+    /*!
+     * \brief Apply the Forchheimer coefficient for inertial forces
+     *        calculation.
+     *
+     *        Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
+     *        Actually the Forchheimer coefficient is also a function of the dimensions of the
+     *        porous medium. Taking it as a constant is only a first approximation
+     *        (Nield, Bejan, Convection in porous media, 2006, p. 10)
+     *
+     * \param element The current finite element
+     * \param fvElemGeom The current finite volume geometry of the element
+     * \param scvIdx The index sub-control volume face where the
+     *                      intrinsic velocity ought to be calculated.
+     *
+     */
+    Scalar forchCoeff(const Element &element,
+                    const FVElementGeometry &fvElemGeom,
+                    const unsigned int scvIdx) const
+    {
+        try
+        {
+            const Scalar forchCoeff = GET_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, ForchCoeff);
+            return forchCoeff ;
+        }
+        catch (Dumux::ParameterException &e) {
+            std::cerr << e << ". Aborted in file "<< __FILE__ << "!\n";
+            exit(1) ;
+        }
+        catch (...) {
+            std::cerr << "Unknown exception thrown!\n";
+            exit(1) ;
+        }
+    }
+
 private:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
