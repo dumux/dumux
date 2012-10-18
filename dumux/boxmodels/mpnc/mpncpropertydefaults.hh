@@ -107,18 +107,36 @@ public:
 };
 
 /*!
- * \brief Set the themodynamic constraint solver which calculates the
+ * \brief Set the thermodynamic constraint solver which calculates the
  *        composition of any phase given all component fugacities.
+ *
+ *        DEPRECATED version see ConstraintSolver
+ *
  */
-SET_PROP(BoxMPNC, CompositionFromFugacitiesSolver)
+SET_PROP(BoxMPNC, CompositionFromFugacitiesSolver) // DEPRECATED version see ConstraintSolver
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> type;
+    typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> type; // DEPRECATED version see ConstraintSolver
 };
+
+/*!
+ * \brief Set the thermodynamic constraint solver which calculates the
+ *        composition of any phase given all component fugacities.
+ */
+SET_PROP(BoxMPNC, ConstraintSolver)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+
+public:
+    typedef typename GET_PROP_TYPE(TypeTag, CompositionFromFugacitiesSolver)  type;
+};
+
 
 //! Use the MpNc local jacobian operator for the MpNc model
 SET_TYPE_PROP(BoxMPNC,
@@ -216,6 +234,13 @@ SET_PROP(BoxMPNC, FluidState){
     public:
         typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> type;
 };
+
+//! default value for the forchheimer coefficient
+// Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
+//        Actually the Forchheimer coefficient is also a function of the dimensions of the
+//        porous medium. Taking it as a constant is only a first approximation
+//        (Nield, Bejan, Convection in porous media, 2006, p. 10)
+SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
 
 
 //!< Should the averaging of velocities be done in the Model? (By default in the output)
