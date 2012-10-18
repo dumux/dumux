@@ -59,6 +59,7 @@ NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind parameter f
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether a constraint solver should be used explicitly
 NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
+NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 }
 }
 

@@ -162,6 +162,17 @@ public:
         return porosity_;
     }
 
+    /*!
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
+     *
+     * \param pos The global position of the sub-control volume.
+     * \return the material parameters object
+     */
+    const MaterialLawParams& materialLawParamsAtPos(const DimWorldVector &pos) const
+    {
+        return materialParams_;
+    }
+
 
     /*!
      * \brief Apply the Forchheimer coefficient for inertial forces
@@ -180,18 +191,13 @@ public:
      */
     Scalar forchCoeff(const Element &element,
                     const FVElementGeometry &fvElemGeom,
-                    int scvIdx) const
-    { return 0.55; }
-
-    /*!
-     * \brief Function for defining the parameters needed by constitutive relationships (kr-Sw, pc-Sw, etc.).
-     *
-     * \param pos The global position of the sub-control volume.
-     * \return the material parameters object
-     */
-    const MaterialLawParams& materialLawParamsAtPos(const DimWorldVector &pos) const
+                    const unsigned int scvIdx) const
     {
-        return materialParams_;
+        // If there are better measures / estimates / values available than this default number:
+        // here is the place to implement it
+        return ParentType::forchCoeff(element,
+                                      fvElemGeom,
+                                      scvIdx);
     }
 
     Scalar K_;

@@ -59,6 +59,7 @@ NEW_PROP_TAG(ImplicitMassUpwindWeight);   //!< The default value of the upwind w
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
 NEW_PROP_TAG(Scaling); //!Defines Scaling of the model
+NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 }
 // \}
 }

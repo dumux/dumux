@@ -63,6 +63,7 @@ NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility 
 NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
 NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
+NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 }
 }
 

@@ -94,6 +94,13 @@ public:
 // enable gravity by default
 SET_BOOL_PROP(BoxOneP, ProblemEnableGravity, true);
 
+//! default value for the forchheimer coefficient
+// Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
+//        Actually the Forchheimer coefficient is also a function of the dimensions of the
+//        porous medium. Taking it as a constant is only a first approximation
+//        (Nield, Bejan, Convection in porous media, 2006, p. 10)
+SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
+
 // \}
 } // end namepace Properties
 
