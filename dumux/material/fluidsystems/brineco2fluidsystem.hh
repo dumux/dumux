@@ -741,20 +741,24 @@ SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
  *  To change the component formulation (e.g. change tabularization to avoid
  *  init routine), change the default components via the property "Components":
  *
+ *
+     \verbatim
         // Select other compoenents
         SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
         {
             typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
                 // Do not use the defaults that are the following
                 //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
-                //    typedef Dumux::TabulatedComponent<Scalar, Dumux::Brine<Scalar, H2O> > Brine;
+                //    typedef Dumux::Brine<Scalar, Dumux::H2O<Scalar>>  BrineRawComponent;
+                //    typedef Dumux::TabulatedComponent<Scalar,BrineRawComponent > Brine;
 
             // Apply the following component classes:
             typedef Dumux::H2O<Scalar> H2O; 
-            typedef Dumux::TabulatedComponent<Scalar, Dumux::Brine<Scalar, H2O> > Brine;// both components have to be redefined, 
-            													//the applied H2O and Brine implemementation.
+            typedef Dumux::Brine<Scalar, H2O> BrineRawComponent;
+            typedef typename BrineRawComponent Brine;// all components have to be redefined,
+            													//the applied H2O and Brine implemementations.
         };
-
+    \endverbatim.
      Also remember to initialize all tabulated components (FluidSystem::init()), while this
      is not necessary for non-tabularized ones.
  *
@@ -769,14 +773,14 @@ class BrineCO2FluidSystem
 : public FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
                                 typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)),
                                 typename GET_PROP(TypeTag, Components)::H2O,
-                                Dumux::Brine<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)), Dumux::H2O<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))>>,
+                                typename GET_PROP(TypeTag, Components)::BrineRawComponent,
                                 typename GET_PROP(TypeTag, Components)::Brine>
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
             typename GET_PROP_TYPE(TypeTag, PTAG(CO2Table)),
             typename GET_PROP(TypeTag, Components)::H2O,
-            Dumux::Brine<Scalar, typename GET_PROP(TypeTag, Components)::H2O>,
+            typename GET_PROP(TypeTag, Components)::BrineRawComponent,
             typename GET_PROP(TypeTag, Components)::Brine> ParentType;
 
 public:
