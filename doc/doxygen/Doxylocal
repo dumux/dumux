@@ -14,7 +14,7 @@ INPUT                 += @srcdir@/mainpage \
 						 @top_srcdir@/tutorial \
 						 @srcdir@/extradoc/parameterlist
 
-EXAMPLE_PATH          += @srcdir@/extradoc
+EXAMPLE_PATH          += @srcdir@/extradoc:extradoc
 
 IMAGE_PATH             = @srcdir@/images
 					 
