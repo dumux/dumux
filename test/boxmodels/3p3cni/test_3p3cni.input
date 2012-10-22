@@ -10,10 +10,10 @@
 
 [TimeManager]
 DtInitial = 1 # [s]
-TEnd = 1800 # [s]
+TEnd = 200 # [s]
 
 [Grid]
-File = ./grids/kuev_3p3cni.dgf
+File = ./grids/column.dgf
 
 ###############################################################
 # Simulation restart

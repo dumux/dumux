@@ -72,10 +72,10 @@ SET_BOOL_PROP(ColumnProblem, ProblemEnableGravity, true);
 SET_INT_PROP(ColumnProblem, ImplicitNumericDifferenceMethod, 0);
 
 // Write newton convergence
-SET_BOOL_PROP(ColumnProblem, NewtonWriteConvergence, true);
+SET_BOOL_PROP(ColumnProblem, NewtonWriteConvergence, false);
 
 // Set the maximum time step
-SET_SCALAR_PROP(ColumnProblem, TimeManagerMaxTimeStepSize, 5.);
+SET_SCALAR_PROP(ColumnProblem, TimeManagerMaxTimeStepSize, 4.);
 }
 
 
@@ -225,8 +225,8 @@ public:
         if (globalPos[1] > 1.2 - eps_)
         {
             values[Indices::contiWEqIdx] = -0.395710;
-            values[Indices::contiAEqIdx] = -0.000001;
-            values[Indices::contiCEqIdx] = -0.00;
+            values[Indices::contiGEqIdx] = -0.000001;
+            values[Indices::contiNEqIdx] = -0.00;
             values[Indices::energyEqIdx] = -17452.97;
         }
     }

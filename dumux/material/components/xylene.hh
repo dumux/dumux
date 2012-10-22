@@ -113,7 +113,7 @@ public:
      * \param temp temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
-    static Scalar spHeatCapLiquidPhase(Scalar temp, Scalar pressure)
+    static Scalar liquidHeatCapacity(Scalar temp, Scalar pressure)
     {
         Scalar CH3,C6H5,H;
         // after Reid et al. : Missenard group contrib. method (s. example 5-8)
