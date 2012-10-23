@@ -366,77 +366,90 @@ void FVPressure<TypeTag>::assemble(bool first)
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        // cell information
+        // get the global index of the cell
         int globalIdxI = problem_.variables().index(*eIt);
-        CellData& cellDataI = problem_.variables().cellData(globalIdxI);
 
-        EntryType entries(0.);
-
-        /*****  source term ***********/
-        asImp_().getSource(entries, *eIt, cellDataI, first);
-        f_[globalIdxI] += entries[rhs];
-
-        /*****  flux term ***********/
-        // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        // assemble interior element contributions
+        if (eIt->partitionType() == Dune::InteriorEntity)
         {
-            /************* handle interior face *****************/
-            if (isIt->neighbor())
+            // get the cell data
+            CellData& cellDataI = problem_.variables().cellData(globalIdxI);
+
+            EntryType entries(0.);
+
+            /*****  source term ***********/
+            asImp_().getSource(entries, *eIt, cellDataI, first);
+            f_[globalIdxI] += entries[rhs];
+
+            /*****  flux term ***********/
+            // iterate over all faces of the cell
+            IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
-                ElementPointer elementNeighbor = isIt->outside();
-
-                int globalIdxJ = problem_.variables().index(*elementNeighbor);
-
-                //check for hanging nodes
-                //take a hanging node never from the element with smaller level!
-                bool haveSameLevel = (eIt->level() == elementNeighbor->level());
-                //calculate only from one side, but add matrix entries for both sides
-                if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && (globalIdxI > globalIdxJ) && haveSameLevel)
-                    continue;
-
-                //check for hanging nodes
-                entries = 0;
-                asImp_().getFlux(entries, *isIt, cellDataI, first);
-
-                //set right hand side
-                f_[globalIdxI] -= entries[rhs];
-
-                // set diagonal entry
-                A_[globalIdxI][globalIdxI] += entries[matrix];
-
-                    // set off-diagonal entry
-                A_[globalIdxI][globalIdxJ] -= entries[matrix];
-
-                if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce))
+                /************* handle interior face *****************/
+                if (isIt->neighbor())
                 {
-                    f_[globalIdxJ] += entries[rhs];
-                    A_[globalIdxJ][globalIdxJ] += entries[matrix];
-                    A_[globalIdxJ][globalIdxI] -= entries[matrix];
+                    ElementPointer elementNeighbor = isIt->outside();
+
+                    int globalIdxJ = problem_.variables().index(*elementNeighbor);
+
+                    //check for hanging nodes
+                    //take a hanging node never from the element with smaller level!
+                    bool haveSameLevel = (eIt->level() == elementNeighbor->level());
+                    //calculate only from one side, but add matrix entries for both sides
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && (globalIdxI > globalIdxJ) && haveSameLevel)
+                        continue;
+
+                    //check for hanging nodes
+                    entries = 0;
+                    asImp_().getFlux(entries, *isIt, cellDataI, first);
+
+                    //set right hand side
+                    f_[globalIdxI] -= entries[rhs];
+
+                    // set diagonal entry
+                    A_[globalIdxI][globalIdxI] += entries[matrix];
+
+                        // set off-diagonal entry
+                    A_[globalIdxI][globalIdxJ] -= entries[matrix];
+
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce))
+                    {
+                        f_[globalIdxJ] += entries[rhs];
+                        A_[globalIdxJ][globalIdxJ] += entries[matrix];
+                        A_[globalIdxJ][globalIdxI] -= entries[matrix];
+                    }
+
+                } // end neighbor
+
+                /************* boundary face ************************/
+                else
+                {
+                    entries = 0;
+                    asImp_().getFluxOnBoundary(entries, *isIt, cellDataI, first);
+
+                    //set right hand side
+                    f_[globalIdxI] += entries[rhs];
+                    // set diagonal entry
+                    A_[globalIdxI][globalIdxI] += entries[matrix];
                 }
+            } //end interfaces loop
+    //        printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
 
-            } // end neighbor
-
-            /************* boundary face ************************/
-            else
-            {
-                entries = 0;
-                asImp_().getFluxOnBoundary(entries, *isIt, cellDataI, first);
-
-                //set right hand side
-                f_[globalIdxI] += entries[rhs];
-                // set diagonal entry
-                A_[globalIdxI][globalIdxI] += entries[matrix];
-            }
-        } //end interfaces loop
-//        printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-
-        /*****  storage term ***********/
-        entries = 0;
-        asImp_().getStorage(entries, *eIt, cellDataI, first);
-        f_[globalIdxI] += entries[rhs];
-//         set diagonal entry
-        A_[globalIdxI][globalIdxI] += entries[matrix];
+            /*****  storage term ***********/
+            entries = 0;
+            asImp_().getStorage(entries, *eIt, cellDataI, first);
+            f_[globalIdxI] += entries[rhs];
+    //         set diagonal entry
+            A_[globalIdxI][globalIdxI] += entries[matrix];
+        }
+        // assemble overlap and ghost element contributions
+        else 
+        {
+            A_[globalIdxI] = 0.0;
+            A_[globalIdxI][globalIdxI] = 1.0;
+            f_[globalIdxI] = pressure_[globalIdxI];
+        }
     } // end grid traversal
 //    printmatrix(std::cout, A_, "global stiffness matrix after assempling", "row", 11,3);
 //    printvector(std::cout, f_, "right hand side", "row", 10);
