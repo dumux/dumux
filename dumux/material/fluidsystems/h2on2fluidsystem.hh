@@ -343,7 +343,7 @@ public:
      * model for PEMFC - Technical report: IRTG-NUPUS",
      * University of Stuttgart, 2008
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::density;
@@ -400,7 +400,7 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::viscosity;
@@ -481,7 +481,7 @@ public:
      \f]
      * where \f$k_B = 1.380\cdot10^{-23}\;J/K\f$ is the Boltzmann constant.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
@@ -529,7 +529,7 @@ public:
      * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
      * pressure and temperature.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
@@ -604,7 +604,7 @@ public:
      *        probably not big. Somebody would have to find out the
      *        enthalpy of solution for this system. ...
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::enthalpy;
@@ -645,7 +645,7 @@ public:
      *
      * Use the conductivity of air and water as a first approximation.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::thermalConductivity;
@@ -696,7 +696,7 @@ public:
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/kg]}\f$.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::heatCapacity;

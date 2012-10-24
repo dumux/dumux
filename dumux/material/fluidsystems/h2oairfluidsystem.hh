@@ -420,7 +420,7 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::viscosity;

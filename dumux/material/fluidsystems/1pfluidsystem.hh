@@ -227,7 +227,7 @@ public:
     /*!
      * \brief Calculate the density [kg/m^3] of a fluid phase
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::density;
@@ -245,7 +245,7 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::viscosity;
@@ -307,7 +307,7 @@ public:
      * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
      * pressure and temperature.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
@@ -325,7 +325,7 @@ public:
      *        return the binary diffusion coefficient for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIIdx The index of the first component to consider
      * \param compJIdx The index of the second component to consider
@@ -345,7 +345,7 @@ public:
      * \brief Given a phase's composition, temperature, pressure and
      *        density, calculate its specific enthalpy [J/kg].
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::enthalpy;
@@ -367,7 +367,7 @@ public:
      * Source:
      * http://en.wikipedia.org/wiki/List_of_thermal_conductivities
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::thermalConductivity;
@@ -386,7 +386,7 @@ public:
      * \brief Specific isobaric heat capacity of a fluid phase.
      *        \f$\mathrm{[J/kg]}\f$.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::heatCapacity;

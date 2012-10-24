@@ -357,7 +357,7 @@ public:
      * \brief Calculate the density [kg/m^3] of a fluid phase
      *
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param paramCache Container for cache parameters
      * \param phaseIdx The index of the fluid phase to consider
      */
@@ -462,7 +462,7 @@ public:
      *        return the binary diffusion coefficient for components
      *        \f$i\f$ and \f$j\f$ in this phase.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param paramCache Container for cache parameters
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIIdx The index of the first component to consider

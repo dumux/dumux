@@ -285,7 +285,7 @@ public:
     /*!
      * \brief Calculate the dynamic viscosity of a fluid phase [Pa*s]
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \tparam FluidState the fluid state class
      */
@@ -334,7 +334,7 @@ public:
      \f]
      * where \f$k_B\f$ is Boltzmann's constant.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \tparam compIdx The index of the component
      */
@@ -448,7 +448,7 @@ public:
      * where \f$p_\alpha\f$ and \f$T_\alpha\f$ are the fluid phase'
      * pressure and temperature.
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \param compIdx The index of the component to consider
      */
@@ -504,7 +504,7 @@ public:
     /*!
      * \brief Given the phase composition, return the specific
      *        phase enthalpy [J/kg].
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      */
     using Base::enthalpy;
@@ -543,7 +543,7 @@ public:
     /*!
      * \brief Thermal conductivity of a fluid phase [W/(m^2 K/m)].
      *
-     * \param fluidState An abitrary fluid state
+     * \param fluidState An arbitrary fluid state
      * \param phaseIdx The index of the fluid phase to consider
      * \tparam FluidState the fluid state class
      */
