@@ -148,7 +148,7 @@ public:
     /*!
      * \brief Specific enthalpy of liquid xylene \f$\mathrm{[J/kg]}\f$.
      *
-     * \param temp temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidEnthalpy(const Scalar temperature,
