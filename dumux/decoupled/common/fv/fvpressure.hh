@@ -393,11 +393,15 @@ void FVPressure<TypeTag>::assemble(bool first)
 
                     int globalIdxJ = problem_.variables().index(*elementNeighbor);
 
-                    //check for hanging nodes
-                    //take a hanging node never from the element with smaller level!
+                    // check for hanging nodes
+                    // take a hanging node never from the element with smaller level!
                     bool haveSameLevel = (eIt->level() == elementNeighbor->level());
-                    //calculate only from one side, but add matrix entries for both sides
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && (globalIdxI > globalIdxJ) && haveSameLevel)
+                    // calculate only from one side, but add matrix entries for both sides
+                    // the last condition is needed to properly assemble in the presence 
+                    // of ghost elements
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                        && (globalIdxI > globalIdxJ) && haveSameLevel
+                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
                         continue;
 
                     //check for hanging nodes
@@ -410,10 +414,12 @@ void FVPressure<TypeTag>::assemble(bool first)
                     // set diagonal entry
                     A_[globalIdxI][globalIdxI] += entries[matrix];
 
-                        // set off-diagonal entry
+                    // set off-diagonal entry
                     A_[globalIdxI][globalIdxJ] -= entries[matrix];
 
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce))
+                    // The second condition is needed to not spoil the ghost element entries
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
                     {
                         f_[globalIdxJ] += entries[rhs];
                         A_[globalIdxJ][globalIdxJ] += entries[matrix];

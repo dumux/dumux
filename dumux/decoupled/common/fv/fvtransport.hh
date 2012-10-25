@@ -22,6 +22,7 @@
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/decoupled/common/transportproperties.hh>
 #include <dumux/decoupled/common/decoupledproperties.hh>
+#include <dumux/linear/vectorexchange.hh>
 
 /**
  * @file
@@ -279,6 +280,18 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
         //store update
         cellDataI.setUpdate(updateVec[globalIdxI]);
     } // end grid traversal
+    
+#if HAVE_MPI        
+    // communicate updated values
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
+    DataHandle dataHandle(problem_.variables().elementMapper(), updateVec);
+    problem_.gridView().template communicate<DataHandle>(dataHandle, 
+                                                         Dune::InteriorBorder_All_Interface, 
+                                                         Dune::ForwardCommunication);
+    dt = problem_.gridView().comm().min(dt);
+#endif
 }
 
 }
