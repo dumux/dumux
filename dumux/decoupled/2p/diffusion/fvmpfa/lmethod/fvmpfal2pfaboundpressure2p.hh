@@ -1339,7 +1339,7 @@ void FVMPFAL2PFABoundPressure2P<TypeTag>::assemble()
     this->A_ = 0;
     this->f_ = 0;
 
-    // run through all elements
+    // run through all vertices
     VertexIterator vItEnd = problem_.gridView().template end<dim>();
     for (VertexIterator vIt = problem_.gridView().template begin<dim>(); vIt != vItEnd; ++vIt)
     {
@@ -1976,6 +1976,25 @@ void FVMPFAL2PFABoundPressure2P<TypeTag>::assemble()
 
     } // end vertex iterator
 
+    // only do more if we have more than one process
+    if (problem_.gridView().comm().size() > 1)
+    {
+        // set ghost and overlap element entries
+        ElementIterator eItEnd = problem_.gridView().template end<0>();
+        for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
+        {
+            if (eIt->partitionType() == Dune::InteriorEntity)
+                continue;
+            
+            // get the global index of the cell
+            int globalIdxI = problem_.variables().index(*eIt);
+
+            this->A_[globalIdxI] = 0.0;
+            this->A_[globalIdxI][globalIdxI] = 1.0;
+            this->f_[globalIdxI] = this->pressure()[globalIdxI];
+        }
+    }
+    
     return;
 }
 

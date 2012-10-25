@@ -523,47 +523,50 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
     ElementIterator eItEnd = problem_.gridView().template end<0>();
     for (ElementIterator eIt = problem_.gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        // get common geometry information for the following computation
-
-        // cell 1 geometry type
-        //Dune::GeometryType gt1 = eIt->geometry().type();
-
-        // get global coordinate of cell 1 center
-        GlobalPosition globalPos1 = eIt->geometry().center();
-
-        // cell 1 volume
-        Scalar volume1 = eIt->geometry().volume();
-
-        // cell 1 index
+        // get the global index of the cell
         int globalIdx1 = problem_.variables().index(*eIt);
 
-        CellData& cellData1 = problem_.variables().cellData(globalIdx1);
-
-        // evaluate right hand side
-        PrimaryVariables source(0.0);
-        problem_.source(source, *eIt);
-
-        this->f_[globalIdx1] = volume1*(source[wPhaseIdx]/density_[wPhaseIdx] + source[nPhaseIdx]/density_[nPhaseIdx]);
-
-        // get absolute permeability of cell 1
-        DimMatrix K1(problem_.spatialParams().intrinsicPermeability(*eIt));
-
-        //compute total mobility of cell 1
-        Scalar lambda1 = 0;
-        lambda1 = cellData1.mobility(wPhaseIdx) + cellData1.mobility(nPhaseIdx);
-
-        // if K1 is zero, no flux through cell1
-        // for 2-D
-        if (K1[0][0] == 0 && K1[0][1] == 0 && K1[1][0] == 0 && K1[1][1] == 0)
+        // assemble interior element contributions
+        if (eIt->partitionType() == Dune::InteriorEntity)
         {
-            this->A_[globalIdx1][globalIdx1] += 1.0;
-            continue;
-        }
+          // get common geometry information for the following computation
 
-        IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
-        IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
-        for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
-        {
+          // cell 1 geometry type
+          //Dune::GeometryType gt1 = eIt->geometry().type();
+
+          // get global coordinate of cell 1 center
+          GlobalPosition globalPos1 = eIt->geometry().center();
+
+          // cell 1 volume
+          Scalar volume1 = eIt->geometry().volume();
+
+          CellData& cellData1 = problem_.variables().cellData(globalIdx1);
+
+          // evaluate right hand side
+          PrimaryVariables source(0.0);
+          problem_.source(source, *eIt);
+
+          this->f_[globalIdx1] = volume1*(source[wPhaseIdx]/density_[wPhaseIdx] + source[nPhaseIdx]/density_[nPhaseIdx]);
+
+          // get absolute permeability of cell 1
+          DimMatrix K1(problem_.spatialParams().intrinsicPermeability(*eIt));
+
+          //compute total mobility of cell 1
+          Scalar lambda1 = 0;
+          lambda1 = cellData1.mobility(wPhaseIdx) + cellData1.mobility(nPhaseIdx);
+
+          // if K1 is zero, no flux through cell1
+          // for 2-D
+          if (K1[0][0] == 0 && K1[0][1] == 0 && K1[1][0] == 0 && K1[1][1] == 0)
+          {
+              this->A_[globalIdx1][globalIdx1] += 1.0;
+              continue;
+          }
+
+          IntersectionIterator isItBegin = problem_.gridView().ibegin(*eIt);
+          IntersectionIterator isItEnd = problem_.gridView().iend(*eIt);
+          for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
+          {
             // intersection iterator 'nextisIt' is used to get geometry information
             IntersectionIterator tempisIt = isIt;
             IntersectionIterator tempisItBegin = isItBegin;
@@ -2288,8 +2291,15 @@ void FVMPFAOPressure2P<TypeTag>::assemble()
                 }
             }
 
-        } // end all intersections
-
+          } // end all intersections
+        }
+        // assemble overlap and ghost element contributions
+        else 
+        {
+            this->A_[globalIdx1] = 0.0;
+            this->A_[globalIdx1][globalIdx1] = 1.0;
+            this->f_[globalIdx1] = this->pressure()[globalIdx1];
+        }
     } // end grid traversal
 
 //    // get the number of nonzero terms in the matrix
