@@ -25,6 +25,7 @@
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/decoupled/2p2c/fvtransport2p2c.hh>
 #include <dumux/common/math.hh>
+#include <dumux/linear/vectorexchange.hh>
 
 /**
  * @file
@@ -251,6 +252,22 @@ void FVTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Transp
             restrictingCell= globalIdxI;
         }
     } // end grid traversal
+
+#if HAVE_MPI        
+    // communicate updated values
+    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
+    for (int i = 0; i < updateVec.size(); i++)
+    {
+        DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);
+        problem_.gridView().template communicate<DataHandle>(dataHandle, 
+                                                            Dune::InteriorBorder_All_Interface, 
+                                                            Dune::ForwardCommunication);
+    }
+    dt = problem_.gridView().comm().min(dt);
+#endif
+
     if(impet)
     {
         Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "

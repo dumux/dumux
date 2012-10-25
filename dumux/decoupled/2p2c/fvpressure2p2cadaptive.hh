@@ -392,84 +392,104 @@ void FVPressure2P2CAdaptive<TypeTag>::assemble(bool first)
     ElementIterator eItEnd = problem().gridView().template end<0>();
     for (ElementIterator eIt = problem().gridView().template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        // cell information
+        // get the global index of the cell
         int globalIdxI = problem().variables().index(*eIt);
-        CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
-        Dune::FieldVector<Scalar, 2> entries(0.);
-
-        /*****  source term ***********/
-        problem().pressureModel().getSource(entries, *eIt, cellDataI, first);
-        this->f_[globalIdxI] += entries[rhs];
-
-        /*****  flux term ***********/
-        // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        // assemble interior element contributions
+        if (eIt->partitionType() == Dune::InteriorEntity)
         {
-            /************* handle interior face *****************/
-            if (isIt->neighbor())
+            // get the cell data
+            CellData& cellDataI = problem().variables().cellData(globalIdxI);
+
+            Dune::FieldVector<Scalar, 2> entries(0.);
+
+            /*****  source term ***********/
+            problem().pressureModel().getSource(entries, *eIt, cellDataI, first);
+            this->f_[globalIdxI] += entries[rhs];
+
+            /*****  flux term ***********/
+            // iterate over all faces of the cell
+            IntersectionIterator isItEnd = problem().gridView().template iend(*eIt);
+            for (IntersectionIterator isIt = problem().gridView().template ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
-                ElementPointer elementNeighbor = isIt->outside();
-
-                int globalIdxJ = problem().variables().index(*elementNeighbor);
-
-                //check for hanging nodes
-                //take a hanging node never from the element with smaller level!
-                bool haveSameLevel = (eIt->level() == elementNeighbor->level());
-                //calculate only from one side, but add matrix entries for both sides
-                if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) && (globalIdxI > globalIdxJ) && haveSameLevel)
-                    continue;
-
-                entries = 0;
-                //check for hanging nodes
-                if(!haveSameLevel && enableMPFA)
+                /************* handle interior face *****************/
+                if (isIt->neighbor())
                 {
-                    problem().pressureModel().getMpfaFlux(isIt, cellDataI);
-                }
+                    ElementPointer elementNeighbor = isIt->outside();
+
+                    int globalIdxJ = problem().variables().index(*elementNeighbor);
+
+                    //check for hanging nodes
+                    //take a hanging node never from the element with smaller level!
+                    bool haveSameLevel = (eIt->level() == elementNeighbor->level());
+                    // calculate only from one side, but add matrix entries for both sides
+                    // the last condition is needed to properly assemble in the presence 
+                    // of ghost elements
+                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                        && (globalIdxI > globalIdxJ) && haveSameLevel
+                        && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        continue;
+
+                    entries = 0;
+                    //check for hanging nodes
+                    if(!haveSameLevel && enableMPFA)
+                    {
+                        problem().pressureModel().getMpfaFlux(isIt, cellDataI);
+                    }
+                    else
+                    {
+                        problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
+
+                        //set right hand side
+                        this->f_[globalIdxI] -= entries[rhs];
+
+                        // set diagonal entry
+                        this->A_[globalIdxI][globalIdxI] += entries[matrix];
+
+                            // set off-diagonal entry
+                        this->A_[globalIdxI][globalIdxJ] -= entries[matrix];
+
+                        // The second condition is needed to not spoil the ghost element entries
+                        if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce) 
+                            && elementNeighbor->partitionType() == Dune::InteriorEntity)
+                        {
+                            this->f_[globalIdxJ] += entries[rhs];
+                            this->A_[globalIdxJ][globalIdxJ] += entries[matrix];
+                            this->A_[globalIdxJ][globalIdxI] -= entries[matrix];
+                        }
+                    }
+
+                } // end neighbor
+
+                /************* boundary face ************************/
                 else
                 {
-                    problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
+                    entries = 0;
+                    problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
 
                     //set right hand side
-                    this->f_[globalIdxI] -= entries[rhs];
-
+                    this->f_[globalIdxI] += entries[rhs];
                     // set diagonal entry
                     this->A_[globalIdxI][globalIdxI] += entries[matrix];
-
-                        // set off-diagonal entry
-                    this->A_[globalIdxI][globalIdxJ] -= entries[matrix];
-
-                    if (GET_PROP_VALUE(TypeTag, VisitFacesOnlyOnce))
-                    {
-                        this->f_[globalIdxJ] += entries[rhs];
-                        this->A_[globalIdxJ][globalIdxJ] += entries[matrix];
-                        this->A_[globalIdxJ][globalIdxI] -= entries[matrix];
-                    }
                 }
+            } //end interfaces loop
+//            printmatrix(std::cout, this->A_, "global stiffness matrix", "row", 11, 3);
 
-            } // end neighbor
+            /*****  storage term ***********/
+            entries = 0;
+            problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
+            this->f_[globalIdxI] += entries[rhs];
+            // set diagonal entry
+            this->A_[globalIdxI][globalIdxI] += entries[matrix];
+        }
+        // assemble overlap and ghost element contributions
+        else 
+        {
+            this->A_[globalIdxI] = 0.0;
+            this->A_[globalIdxI][globalIdxI] = 1.0;
+            this->f_[globalIdxI] = this->pressure()[globalIdxI];
+        }
 
-            /************* boundary face ************************/
-            else
-            {
-                entries = 0;
-                problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
-
-                //set right hand side
-                this->f_[globalIdxI] += entries[rhs];
-                // set diagonal entry
-                this->A_[globalIdxI][globalIdxI] += entries[matrix];
-            }
-        } //end interfaces loop
-//        printmatrix(std::cout, this->A_, "global stiffness matrix", "row", 11, 3);
-
-        /*****  storage term ***********/
-        entries = 0;
-        problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
-        this->f_[globalIdxI] += entries[rhs];
-//         set diagonal entry
-        this->A_[globalIdxI][globalIdxI] += entries[matrix];
     } // end grid traversal
 //    printmatrix(std::cout, this->A_, "global stiffness matrix after assempling", "row", 11,3);
 //    printvector(std::cout, this->f_, "right hand side", "row", 10);

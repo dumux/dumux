@@ -229,70 +229,83 @@ void FVPressure2P2CMultiPhysics<TypeTag>::assemble(bool first)
     ElementIterator eItEnd = problem().gridView().template end<0> ();
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
     {
-        // cell information
+        // get the global index of the cell
         int globalIdxI = problem().variables().index(*eIt);
-        CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
-        Dune::FieldVector<Scalar, 2> entries(0.);
-
-        /*****  source term ***********/
-        if(cellDataI.subdomain() != 2)
-            problem().pressureModel().get1pSource(entries,*eIt, cellDataI);
-        else
-            problem().pressureModel().getSource(entries,*eIt, cellDataI, first);
-
-        this->f_[globalIdxI] = entries[rhs];
-
-        /*****  flux term ***********/
-        // iterate over all faces of the cell
-        IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
-        for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
+        // assemble interior element contributions
+        if (eIt->partitionType() == Dune::InteriorEntity)
         {
-            /************* handle interior face *****************/
-            if (isIt->neighbor())
-            {
-                int globalIdxJ = problem().variables().index(*(isIt->outside()));
+            // get the cell data
+            CellData& cellDataI = problem().variables().cellData(globalIdxI);
 
-                if (cellDataI.subdomain() != 2
-                        or problem().variables().cellData(globalIdxJ).subdomain() != 2) // cell in the 1p domain
-                    get1pFlux(entries, *isIt, cellDataI);
-                else
-                    problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
+            Dune::FieldVector<Scalar, 2> entries(0.);
 
-                //set right hand side
-                this->f_[globalIdxI] -= entries[rhs];
-                // set diagonal entry
-                this->A_[globalIdxI][globalIdxI] += entries[matrix];
-                // set off-diagonal entry
-                this->A_[globalIdxI][globalIdxJ] = -entries[matrix];
-            }   // end neighbor
-
-
-            /************* boundary face ************************/
+            /*****  source term ***********/
+            if(cellDataI.subdomain() != 2)
+                problem().pressureModel().get1pSource(entries,*eIt, cellDataI);
             else
+                problem().pressureModel().getSource(entries,*eIt, cellDataI, first);
+
+            this->f_[globalIdxI] = entries[rhs];
+
+            /*****  flux term ***********/
+            // iterate over all faces of the cell
+            IntersectionIterator isItEnd = problem().gridView().iend(*eIt);
+            for (IntersectionIterator isIt = problem().gridView().ibegin(*eIt); isIt != isItEnd; ++isIt)
             {
-                if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
-                    get1pFluxOnBoundary(entries, *isIt, cellDataI);
+                /************* handle interior face *****************/
+                if (isIt->neighbor())
+                {
+                    int globalIdxJ = problem().variables().index(*(isIt->outside()));
+
+                    if (cellDataI.subdomain() != 2
+                            or problem().variables().cellData(globalIdxJ).subdomain() != 2) // cell in the 1p domain
+                        get1pFlux(entries, *isIt, cellDataI);
+                    else
+                        problem().pressureModel().getFlux(entries, *isIt, cellDataI, first);
+
+                    //set right hand side
+                    this->f_[globalIdxI] -= entries[rhs];
+                    // set diagonal entry
+                    this->A_[globalIdxI][globalIdxI] += entries[matrix];
+                    // set off-diagonal entry
+                    this->A_[globalIdxI][globalIdxJ] = -entries[matrix];
+                }   // end neighbor
+
+
+                /************* boundary face ************************/
                 else
-                    problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
+                {
+                    if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
+                        get1pFluxOnBoundary(entries, *isIt, cellDataI);
+                    else
+                        problem().pressureModel().getFluxOnBoundary(entries, *isIt, cellDataI, first);
 
-                //set right hand side
-                this->f_[globalIdxI] += entries[rhs];
-                // set diagonal entry
-                this->A_[globalIdxI][globalIdxI] += entries[matrix];
-            }
-        } //end interfaces loop
-//        printmatrix(std::cout, this->A_, "global stiffness matrix", "row", 11, 3);
+                    //set right hand side
+                    this->f_[globalIdxI] += entries[rhs];
+                    // set diagonal entry
+                    this->A_[globalIdxI][globalIdxI] += entries[matrix];
+                }
+            } //end interfaces loop
+    //        printmatrix(std::cout, this->A_, "global stiffness matrix", "row", 11, 3);
 
-        /*****  storage term ***********/
-        if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
-            get1pStorage(entries, *eIt, cellDataI);
-        else
-            problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
+            /*****  storage term ***********/
+            if (cellDataI.subdomain() != 2) //the current cell in the 1p domain
+                get1pStorage(entries, *eIt, cellDataI);
+            else
+                problem().pressureModel().getStorage(entries, *eIt, cellDataI, first);
 
-        this->f_[globalIdxI] += entries[rhs];
-        // set diagonal entry
-        this->A_[globalIdxI][globalIdxI] += entries[matrix];
+            this->f_[globalIdxI] += entries[rhs];
+            // set diagonal entry
+            this->A_[globalIdxI][globalIdxI] += entries[matrix];
+        }
+        // assemble overlap and ghost element contributions
+        else 
+        {
+            this->A_[globalIdxI] = 0.0;
+            this->A_[globalIdxI][globalIdxI] = 1.0;
+            this->f_[globalIdxI] = this->pressure()[globalIdxI];
+        }
     } // end grid traversal
 //        printmatrix(std::cout, this->A_, "global stiffness matrix after assempling", "row", 11,3);
 //        printvector(std::cout, this->f_, "right hand side", "row", 10);
