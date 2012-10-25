@@ -550,27 +550,27 @@ private:
     // Construct the BCRS matrix for the global jacobian
     void createMatrix_()
     {
-        int nVerts = gridView_().size(dim);
+        int numVerticesGlobal = gridView_().size(dim);
 
         // allocate raw matrix
-        matrix_ = new JacobianMatrix(nVerts, nVerts, JacobianMatrix::random);
+        matrix_ = new JacobianMatrix(numVerticesGlobal, numVerticesGlobal, JacobianMatrix::random);
 
         // find out the global indices of the neighboring vertices of
         // each vertex
         typedef std::set<int> NeighborSet;
-        std::vector<NeighborSet> neighbors(nVerts);
+        std::vector<NeighborSet> neighbors(numVerticesGlobal);
         ElementIterator eIt = gridView_().template begin<0>();
         const ElementIterator eEndIt = gridView_().template end<0>();
         for (; eIt != eEndIt; ++eIt) {
             const Element &elem = *eIt;
-            int n = elem.template count<dim>();
+            int numVerticesLocal = elem.template count<dim>();
 
             // if the element is not in the interior or the process
             // border, all dofs just contain main-diagonal entries
             if (elem.partitionType() != Dune::InteriorEntity &&
                 elem.partitionType() != Dune::BorderEntity)
             {
-                for (int i = 0; i < n; ++i) {
+                for (int i = 0; i < numVerticesLocal; ++i) {
                     int globalI = vertexMapper_().map(*eIt, i, dim);
                     neighbors[globalI].insert(globalI);
                 }
@@ -578,9 +578,9 @@ private:
             }
 
             // loop over all element vertices
-            for (int i = 0; i < n - 1; ++i) {
+            for (int i = 0; i < numVerticesLocal - 1; ++i) {
                 int globalI = vertexMapper_().map(*eIt, i, dim);
-                for (int j = i + 1; j < n; ++j) {
+                for (int j = i + 1; j < numVerticesLocal; ++j) {
                     int globalJ = vertexMapper_().map(*eIt, j, dim);
                     // make sure that vertex j is in the neighbor set
                     // of vertex i and vice-versa
@@ -591,11 +591,12 @@ private:
         }
 
         // make vertices neighbors to themselfs
-        for (int i = 0; i < nVerts; ++i)
+        for (int i = 0; i < numVerticesGlobal; ++i) {
             neighbors[i].insert(i);
-
+        }
+        
         // allocate space for the rows of the matrix
-        for (int i = 0; i < nVerts; ++i) {
+        for (int i = 0; i < numVerticesGlobal; ++i) {
             matrix_->setrowsize(i, neighbors[i].size());
         }
         matrix_->endrowsizes();
@@ -603,7 +604,7 @@ private:
         // fill the rows with indices. each vertex talks to all of its
         // neighbors. (it also talks to itself since vertices are
         // sometimes quite egocentric.)
-        for (int i = 0; i < nVerts; ++i) {
+        for (int i = 0; i < numVerticesGlobal; ++i) {
             typename NeighborSet::iterator nIt = neighbors[i].begin();
             typename NeighborSet::iterator nEndIt = neighbors[i].end();
             for (; nIt != nEndIt; ++nIt) {
@@ -632,8 +633,8 @@ private:
 
             // reset the parts needed for Jacobian recycling
             if (enableJacobianRecycling_()) {
-                int numVertices = matrix_->N();
-                for (int i=0; i < numVertices; ++ i) {
+                int numVerticesGlobal = matrix_->N();
+                for (int i=0; i < numVerticesGlobal; ++ i) {
                     storageJacobian_[i] = 0;
                     storageTerm_[i] = 0;
                 }
@@ -675,8 +676,8 @@ private:
         // here and be done with it...
         Scalar curDt = problem_().timeManager().timeStepSize();
         if (reuseMatrix_) {
-            int numVertices = storageJacobian_.size();
-            for (int i = 0; i < numVertices; ++i) {
+            int numVerticesGlobal = storageJacobian_.size();
+            for (int i = 0; i < numVerticesGlobal; ++i) {
                 // rescale the mass term of the jacobian matrix
                 MatrixBlock &J_i_i = (*matrix_)[i][i];
 
@@ -735,8 +736,8 @@ private:
 
         model_().localJacobian().assemble(elem);
 
-        int numVertices = elem.template count<dim>();
-        for (int i=0; i < numVertices; ++ i) {
+        int numVerticesLocal = elem.template count<dim>();
+        for (int i=0; i < numVerticesLocal; ++ i) {
             int globI = vertexMapper_().map(elem, i, dim);
 
             // update the right hand side
@@ -755,7 +756,7 @@ private:
                         model_().localJacobian().storageJacobian(i);
 
                 // update the jacobian matrix
-                for (int j=0; j < numVertices; ++ j) {
+                for (int j=0; j < numVerticesLocal; ++ j) {
                     int globJ = vertexMapper_().map(elem, j, dim);
                     (*matrix_)[globI][globJ] +=
                         model_().localJacobian().mat(i,j);
@@ -770,8 +771,8 @@ private:
     {
         model_().localResidual().eval(elem);
 
-        int numVertices = elem.template count<dim>();
-        for (int i=0; i < numVertices; ++ i) {
+        int numVerticesLocal = elem.template count<dim>();
+        for (int i=0; i < numVerticesLocal; ++ i) {
             int globI = vertexMapper_().map(elem, i, dim);
 
             // update the right hand side
@@ -784,8 +785,8 @@ private:
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &elem)
     {
-        int n = elem.template count<dim>();
-        for (int i=0; i < n; ++i) {
+        int numVerticesLocal = elem.template count<dim>();
+        for (int i=0; i < numVerticesLocal; ++i) {
             const VertexPointer vp = elem.template subEntity<dim>(i);
 
             if (vp->partitionType() == Dune::InteriorEntity ||
