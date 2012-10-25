@@ -22,6 +22,7 @@
 // dumux environment
 #include <dumux/decoupled/2p2c/fvpressure2p2c.hh>
 #include <dumux/decoupled/2p2c/pseudo1p2cfluidstate.hh>
+#include <dumux/linear/vectorexchange.hh>
 
 /**
  * @file
@@ -186,6 +187,11 @@ public:
     {}
 
 protected:
+    #if HAVE_MPI
+        typedef typename SolutionTypes::ElementMapper ElementMapper;
+        typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<int, 1> > > DataHandle;
+    #endif
+
     // subdomain map
     Dune::BlockVector<Dune::FieldVector<int,1> > nextSubdomain;  //! vector holding next subdomain
     const GlobalPosition& gravity_; //!< vector including the gravity constant
@@ -721,7 +727,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFluxOnBoundary(Dune::FieldVector<
 
 //! constitutive functions are updated once if new concentrations are calculated and stored in the variables container
 /*!
- * In contrast to the standard sequential 2p2c model ( FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws() ),
+ * In contrast to the standard sequential 2p2c model ( FVPressure2P2C<TypeTag>::updateMaterialLaws() ),
  * this method also holds routines to adapt the subdomain. The subdomain indicates weather we are in 1p domain (value = 1)
  * or in the two phase subdomain (value = 2).
  * Note that the type of flash, i.e. the type of FluidState (FS), present in each cell does not have to
@@ -788,6 +794,15 @@ void FVPressure2P2CMultiPhysics<TypeTag>::updateMaterialLaws(bool postTimeStep)
     } //end define complex area of next subdomain
 
     timer_.start();
+    //communicate next subdomain if parallel
+    #if HAVE_MPI
+    // communicate updated values
+    DataHandle dataHandle(problem().variables().elementMapper(), nextSubdomain);
+    problem().gridView().template communicate<DataHandle>(dataHandle,
+                                                        Dune::InteriorBorder_All_Interface,
+                                                        Dune::ForwardCommunication);
+    #endif
+
     // Loop B) thorugh leaf grid
     // investigate cells that were "simple" in current TS
     for (ElementIterator eIt = problem().gridView().template begin<0> (); eIt != eItEnd; ++eIt)
