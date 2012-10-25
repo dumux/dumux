@@ -157,7 +157,7 @@ public:
                 prevVolVars[i].setHint(&prevHints_[globalIdx]);
             }
         }
-    };
+    }
 
     void setHints(const Element &element,
                   ElementVolumeVariables &curVolVars) const
@@ -175,7 +175,7 @@ public:
             else
                 curVolVars[i].setHint(&curHints_[globalIdx]);
         }
-    };
+    }
 
     void updatePrevHints()
     {
@@ -183,7 +183,7 @@ public:
             return;
 
         prevHints_ = curHints_;
-    };
+    }
 
     void updateCurHints(const Element &element,
                         const ElementVolumeVariables &elemVolVars) const
@@ -198,7 +198,7 @@ public:
                 prevHints_[globalIdx] = elemVolVars[i];
             hintsUsable_[globalIdx] = true;
         }
-    };
+    }
 
 
     /*!
@@ -430,7 +430,7 @@ public:
      *        model can overload.
      */
     void updateSuccessful()
-    { };
+    { }
 
     /*!
      * \brief Called by the update() method if it was
@@ -446,7 +446,7 @@ public:
         curHints_ = prevHints_;
 
         jacAsm_->reassembleAll();
-    };
+    }
 
     /*!
      * \brief Called by the problem if a time integration was
@@ -513,7 +513,7 @@ public:
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             outstream << curSol()[vertIdx][eqIdx] << " ";
         }
-    };
+    }
 
     /*!
      * \brief Reads the current solution variables for a vertex from a
@@ -535,7 +535,7 @@ public:
                            << vertIdx);
             instream >> curSol()[vertIdx][eqIdx];
         }
-    };
+    }
 
     /*!
      * \brief Returns the number of global degrees of freedoms (DOFs)
@@ -550,19 +550,19 @@ public:
      * This usually means a mapper for vertices.
      */
     const DofMapper &dofMapper() const
-    { return problem_().vertexMapper(); };
+    { return problem_().vertexMapper(); }
 
     /*!
      * \brief Mapper for vertices to indices.
      */
     const VertexMapper &vertexMapper() const
-    { return problem_().vertexMapper(); };
+    { return problem_().vertexMapper(); }
 
     /*!
      * \brief Mapper for elements to indices.
      */
     const ElementMapper &elementMapper() const
-    { return problem_().elementMapper(); };
+    { return problem_().elementMapper(); }
 
     /*!
      * \brief Resets the Jacobian matrix assembler, so that the
@@ -584,7 +584,7 @@ public:
      */
     void updatePVWeights(const Element &element,
                          const ElementVolumeVariables &volVars) const
-    { };
+    { }
 
     /*!
      * \brief Add the vector fields for analysing the convergence of
@@ -913,7 +913,7 @@ private:
      * \brief Returns whether messages should be printed
      */
     bool verbose_() const
-    { return gridView_().comm().rank() == 0; };
+    { return gridView_().comm().rank() == 0; }
 
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }

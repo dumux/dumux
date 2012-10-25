@@ -470,7 +470,7 @@ public:
             // will be consistently linearized at this vertex
             vertexDelta_[i] = 0.0;
         }
-    };
+    }
 
     /*!
      * \brief Returns the reassemble color of a vertex
@@ -612,7 +612,7 @@ private:
             }
         }
         matrix_->endindices();
-    };
+    }
 
     // reset the global linear system of equations. if partial
     // reassemble is enabled, this means that the jacobian matrix must
@@ -780,7 +780,7 @@ private:
             if (enableJacobianRecycling_())
                 storageTerm_[globI] += model_().localResidual().storageTerm(i);
         }
-    };
+    }
 
     // "assemble" a ghost element
     void assembleGhostElement_(const Element &elem)

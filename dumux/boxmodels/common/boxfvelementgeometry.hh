@@ -61,7 +61,7 @@ public:
     static void fillSubContVolData(BoxFVElementGeometry &eg, int numVertices)
     {
         DUNE_THROW(Dune::NotImplemented, "_BoxFVElemGeomHelper::fillSubContVolData dim = " << dim);
-    };
+    }
 };
 
 template <typename BoxFVElementGeometry>
