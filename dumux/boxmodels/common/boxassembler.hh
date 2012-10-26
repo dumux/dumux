@@ -574,18 +574,19 @@ private:
                     int globalI = vertexMapper_().map(*eIt, i, dim);
                     neighbors[globalI].insert(globalI);
                 }
-                continue;
             }
-
-            // loop over all element vertices
-            for (int i = 0; i < numVerticesLocal - 1; ++i) {
-                int globalI = vertexMapper_().map(*eIt, i, dim);
-                for (int j = i + 1; j < numVerticesLocal; ++j) {
-                    int globalJ = vertexMapper_().map(*eIt, j, dim);
-                    // make sure that vertex j is in the neighbor set
-                    // of vertex i and vice-versa
-                    neighbors[globalI].insert(globalJ);
-                    neighbors[globalJ].insert(globalI);
+            else
+            {
+                // loop over all element vertices
+                for (int i = 0; i < numVerticesLocal - 1; ++i) {
+                    int globalI = vertexMapper_().map(*eIt, i, dim);
+                    for (int j = i + 1; j < numVerticesLocal; ++j) {
+                        int globalJ = vertexMapper_().map(*eIt, j, dim);
+                        // make sure that vertex j is in the neighbor set
+                        // of vertex i and vice-versa
+                        neighbors[globalI].insert(globalJ);
+                        neighbors[globalJ].insert(globalI);
+                    }
                 }
             }
         }
