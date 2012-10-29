@@ -70,10 +70,6 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-private:
-    bool isFront_;
-    Scalar dt_;
-
 public:
     //! Collection of variables that have to be mapped if the grid is adapted
     /**
@@ -100,57 +96,8 @@ public:
     };
 
     //! Constructs an adaptive CellData object
-    CellData2PAdaptive():
-        isFront_(false), dt_(0.0)
+    CellData2PAdaptive()
     {}
-
-    /*! \brief Track the front
-     *
-     * Returns true if the cell is located at a fluid-fluid displacement-front
-     */
-    bool isFront() const
-    {
-        return isFront_;
-    }
-
-    /*! \brief Track the front
-     *
-     * Returns true if the cell is located at a fluid-fluid displacement-front
-     */
-    bool isFront()
-    {
-        return isFront_;
-    }
-
-    /*! \brief Reset the front marker
-     *
-     * Sets front marker to <tt>false</tt>;
-     */
-    void resetFrontMarker()
-    {
-        isFront_ = false;
-    }
-
-    //! Marks the cell as fluid-fluid displacement-front cell
-    void setFront()
-    {
-        isFront_ = true;
-    }
-
-    Scalar dt()
-    {
-        return dt_;
-    }
-
-    Scalar dt() const
-    {
-        return dt_;
-    }
-
-    void setDt(Scalar dt)
-    {
-        dt_ = dt;
-    }
 
     //! Stores values to be adapted in an adaptedValues container
     /**
