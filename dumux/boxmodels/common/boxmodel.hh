@@ -861,22 +861,22 @@ protected:
             IntersectionIterator isIt = gridView_().ibegin(*eIt);
             IntersectionIterator isEndIt = gridView_().iend(*eIt);
             for (; isIt != isEndIt; ++isIt) {
-                if (!isIt->boundary())
-                    continue;
-                // add all vertices on the intersection to the set of
-                // boundary vertices
-                int faceIdx = isIt->indexInInside();
-                int numFaceVerts = refElement.size(faceIdx, 1, dim);
-                for (int faceVertIdx = 0;
-                     faceVertIdx < numFaceVerts;
-                     ++faceVertIdx)
-                {
-                    int elemVertIdx = refElement.subEntity(faceIdx,
-                                                        1,
-                                                        faceVertIdx,
-                                                        dim);
-                    int globalVertIdx = vertexMapper().map(*eIt, elemVertIdx, dim);
-                    boundaryIndices_[globalVertIdx] = true;
+                if (isIt->boundary()) {
+                    // add all vertices on the intersection to the set of
+                    // boundary vertices
+                    int faceIdx = isIt->indexInInside();
+                    int numFaceVerts = refElement.size(faceIdx, 1, dim);
+                    for (int faceVertIdx = 0;
+                        faceVertIdx < numFaceVerts;
+                        ++faceVertIdx)
+                    {
+                        int elemVertIdx = refElement.subEntity(faceIdx,
+                                                            1,
+                                                            faceVertIdx,
+                                                            dim);
+                        int globalVertIdx = vertexMapper().map(*eIt, elemVertIdx, dim);
+                        boundaryIndices_[globalVertIdx] = true;
+                    }
                 }
             }
         }

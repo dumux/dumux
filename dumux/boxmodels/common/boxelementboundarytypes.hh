@@ -92,15 +92,14 @@ public:
         for (int i = 0; i < numVerts; ++i) {
             (*this)[i].reset();
 
-            if (!problem.model().onBoundary(element, i))
-                continue;
+            if (problem.model().onBoundary(element, i)) {
+                const VertexPointer vptr = element.template subEntity<dim>(i);
+                problem.boundaryTypes((*this)[i], *vptr);
 
-            const VertexPointer vptr = element.template subEntity<dim>(i);
-            problem.boundaryTypes((*this)[i], *vptr);
-
-            hasDirichlet_ = hasDirichlet_ || (*this)[i].hasDirichlet();
-            hasNeumann_ = hasNeumann_ || (*this)[i].hasNeumann();
-            hasOutflow_ = hasOutflow_ || (*this)[i].hasOutflow();
+                hasDirichlet_ = hasDirichlet_ || (*this)[i].hasDirichlet();
+                hasNeumann_ = hasNeumann_ || (*this)[i].hasNeumann();
+                hasOutflow_ = hasOutflow_ || (*this)[i].hasOutflow();
+            }
         }
     }
 

@@ -339,26 +339,26 @@ protected:
         PrimaryVariables dirichletValues(0);
         for (int scvIdx = 0; scvIdx < fvGeometry_().numVertices; ++scvIdx) {
             const BoundaryTypes &bcTypes = bcTypes_(scvIdx);
-            if (! bcTypes.hasDirichlet())
-                continue;
+            
+            if (bcTypes.hasDirichlet()) {
+                // ask the problem for the dirichlet values
+                const VertexPointer vPtr = element_().template subEntity<dim>(scvIdx);
+                Valgrind::SetUndefined(dirichletValues);
+                asImp_().problem_().dirichlet(dirichletValues, *vPtr);
 
-            // ask the problem for the dirichlet values
-            const VertexPointer vPtr = element_().template subEntity<dim>(scvIdx);
-            Valgrind::SetUndefined(dirichletValues);
-            asImp_().problem_().dirichlet(dirichletValues, *vPtr);
+                // set the dirichlet conditions
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+                    if (bcTypes.isDirichlet(eqIdx)) {
+                        int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                        assert(0 <= pvIdx && pvIdx < numEq);
+                        Valgrind::CheckDefined(dirichletValues[pvIdx]);
 
-            // set the dirichlet conditions
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-                if (!bcTypes.isDirichlet(eqIdx))
-                    continue;
-                int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                assert(0 <= pvIdx && pvIdx < numEq);
-                Valgrind::CheckDefined(dirichletValues[pvIdx]);
+                        residual_[scvIdx][eqIdx] =
+                                curPriVar_(scvIdx, pvIdx) - dirichletValues[pvIdx];
 
-                residual_[scvIdx][eqIdx] =
-                        curPriVar_(scvIdx, pvIdx) - dirichletValues[pvIdx];
-
-                storageTerm_[scvIdx][eqIdx] = 0.0;
+                        storageTerm_[scvIdx][eqIdx] = 0.0;
+                    }
+                }
             }
         }
     }
@@ -377,36 +377,35 @@ protected:
         for (; isIt != endIt; ++isIt)
         {
             // handle only faces on the boundary
-            if (!isIt->boundary())
-                continue;
+            if (isIt->boundary()) {
+                // Assemble the boundary for all vertices of the current
+                // face
+                int faceIdx = isIt->indexInInside();
+                int numFaceVerts = refElement.size(faceIdx, 1, dim);
+                for (int faceVertIdx = 0;
+                    faceVertIdx < numFaceVerts;
+                    ++faceVertIdx)
+                {
+                    int scvIdx = refElement.subEntity(faceIdx,
+                                                        1,
+                                                        faceVertIdx,
+                                                        dim);
 
-            // Assemble the boundary for all vertices of the current
-            // face
-            int faceIdx = isIt->indexInInside();
-            int numFaceVerts = refElement.size(faceIdx, 1, dim);
-            for (int faceVertIdx = 0;
-                 faceVertIdx < numFaceVerts;
-                 ++faceVertIdx)
-            {
-                int scvIdx = refElement.subEntity(faceIdx,
-                                                    1,
-                                                    faceVertIdx,
-                                                    dim);
+                    int boundaryFaceIdx =
+                        fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
 
-                int boundaryFaceIdx =
-                    fvGeometry_().boundaryFaceIndex(faceIdx, faceVertIdx);
-
-                // add the residual of all vertices of the boundary
-                // segment
-                asImp_().evalNeumannSegment_(isIt,
-                                             scvIdx,
-                                             boundaryFaceIdx);
-                // evaluate the outflow conditions at the boundary face
-                // ATTENTION: This is so far a beta version that is only for the 2p2c and 2p2cni model
-                //              available and not thoroughly tested.
-                asImp_().evalOutflowSegment_(isIt,
-                                             scvIdx,
-                                             boundaryFaceIdx);
+                    // add the residual of all vertices of the boundary
+                    // segment
+                    asImp_().evalNeumannSegment_(isIt,
+                                                scvIdx,
+                                                boundaryFaceIdx);
+                    // evaluate the outflow conditions at the boundary face
+                    // ATTENTION: This is so far a beta version that is only for the 2p2c and 2p2cni model
+                    //              available and not thoroughly tested.
+                    asImp_().evalOutflowSegment_(isIt,
+                                                scvIdx,
+                                                boundaryFaceIdx);
+                }
             }
         }
     }

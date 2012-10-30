@@ -342,13 +342,13 @@ protected:
      */
      const bool isDiagonal_(const Tensor & K) const
      {
-         for (int i =0; i<dim; i++)
-             for (int k =0; k<dim; k++){
-                 if (i==k)
-                     continue;
-                 if(not std::abs(K[i][k]) < 1e-25 )
-                     return false;
+         for (int i = 0; i < dim; i++) {
+             for (int k = 0; k < dim; k++) {
+                 if ((i != k) && (std::abs(K[i][k]) >= 1e-25)) {
+                   return false;
+                 }
              }
+         }
          return true;
      }
 };

@@ -492,18 +492,16 @@ protected:
 
         for (int i = 0; i < fvElemGeom_.numVertices; i++)
         {
-            if (jacAsm_().vertexColor(element_(), i) == Green) {
-                // Green vertices are not to be changed!
-                continue;
-            }
-
-            for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
-                // A[i][scvIdx][eqIdx][pvIdx] is the rate of change of
-                // the residual of equation 'eqIdx' at vertex 'i'
-                // depending on the primary variable 'pvIdx' at vertex
-                // 'scvIdx'.
-                this->A_[i][scvIdx][eqIdx][pvIdx] = partialDeriv[i][eqIdx];
-                Valgrind::CheckDefined(this->A_[i][scvIdx][eqIdx][pvIdx]);
+            // Green vertices are not to be changed!
+            if (jacAsm_().vertexColor(element_(), i) != Green) {
+                for (int eqIdx = 0; eqIdx < numEq; eqIdx++) {
+                    // A[i][scvIdx][eqIdx][pvIdx] is the rate of change of
+                    // the residual of equation 'eqIdx' at vertex 'i'
+                    // depending on the primary variable 'pvIdx' at vertex
+                    // 'scvIdx'.
+                    this->A_[i][scvIdx][eqIdx][pvIdx] = partialDeriv[i][eqIdx];
+                    Valgrind::CheckDefined(this->A_[i][scvIdx][eqIdx][pvIdx]);
+                }
             }
         }
     }
