@@ -295,9 +295,9 @@ int start_(int argc,
         // this must be an error. Otherwise proceed.
         if (ParameterTree::tree().hasKey("ParameterFile"))
         {
-            std::cout << "\n\t -> Could not open file"
+            std::cout << "\n\t -> Could not open file '"
                       << parameterFileName
-                      << ". <- \n\n\n\n";
+                      << "'. <- \n\n\n\n";
             usage(argv[0], usageTextBlock());
             return 1;
         }
