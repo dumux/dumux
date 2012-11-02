@@ -386,8 +386,8 @@ public:
             // check if assigned initialDt is in accordance with dt from first transport step
             if (timeManager().timeStepSize() > dt
                     && this->gridView().comm().rank() == 0)
-                Dune::dwarn << "initial timestep of size " << timeManager().timeStepSize()
-                            << "is larger then dt= "<<dt<<" from transport" << std::endl;
+                Dune::dwarn << "Initial timestep of size " << timeManager().timeStepSize()
+                            << " is larger then dt=" << dt <<" from transport" << std::endl;
             // internally assign next timestep size
             dt = std::min(dt, timeManager().timeStepSize());
         }
