@@ -219,7 +219,7 @@ public:
         for (; eIt != eEndIt; ++eIt) {
             this->localResidual().evalPhaseStorage(*eIt, phaseIdx);
 
-            for (int i = 0; i < this->localResidual().storageTerm().size(); ++i)
+            for (unsigned int i = 0; i < this->localResidual().storageTerm().size(); ++i)
                 storage += this->localResidual().storageTerm()[i];
         }
 
@@ -677,7 +677,7 @@ protected:
      */
     void resetPhasePresence_()
     {
-        for (int idx = 0; idx < staticVertexDat_.size(); ++idx)
+        for (unsigned int idx = 0; idx < staticVertexDat_.size(); ++idx)
         {
             staticVertexDat_[idx].phasePresence
                 = staticVertexDat_[idx].oldPhasePresence;
@@ -690,7 +690,7 @@ protected:
      */
     void updateOldPhasePresence_()
     {
-        for (int idx = 0; idx < staticVertexDat_.size(); ++idx)
+        for (unsigned int idx = 0; idx < staticVertexDat_.size(); ++idx)
         {
             staticVertexDat_[idx].oldPhasePresence
                 = staticVertexDat_[idx].phasePresence;
