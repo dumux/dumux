@@ -35,7 +35,7 @@ The GNU tool chain of \texttt{g++}  and the tools of the GNU build system \cite{
 (\texttt{autoconf}, \texttt{automake}, \texttt{autogen}, \texttt{libtool}), as well as the GNU variant of \texttt{make}
 called gmake must be available in a recent version. For example Ubuntu Linux provides these tools with the
 packages \texttt{autoconf}, \texttt{automake}, \texttt{libtool}
-and the \Cplusplus compiler \texttt{g++} and \texttt{make} are contained in \texttt{build-essential}.
+and the \Cplusplus compiler \texttt{g++} and \texttt{make} are contained in \texttt{build-essential}. Packages required for Ubuntu users are listed in Table \ref{tbl:ubuntu-pkg}. For the installation of \Dumux using \texttt{dune-pdelab}, \texttt{dune-multidomain}, \texttt{dune-multidomaingrid} and the external packages UG and SuperLU on SUSE, the package \texttt{csh} was not required. Some of the package names differ from Ubuntu to SUSE, so that \texttt{boost-devel}, \texttt{gcc-c++} and \texttt{make} have to be installed (Nov. 2012).
 
 At the time of writing this manual, it is expected that \texttt{g++} of version $\geqslant$ 4.5.0, \texttt{automake} of version $\geqslant$ 1.9,
 \texttt{autoconf} of version $\geqslant$ 2.65, \texttt{autogen} of version $\geqslant$ 5.9.7,  \texttt{libtool} of version $\geqslant$ 2.2.6
@@ -304,7 +304,7 @@ this can be the package of choice. This is done by providing a meta grid. It can
 
 \item \textbf{PARDISO}: External library for solving linear equations. The package PARDISO is a thread-safe, high-performance, robust, memory efficient and easy to use software for solving large sparse symmetric and asymmetric linear systems of equations on shared memory multiprocessors. The precompiled binary can be downloaded after personal registration from the PARDISO website (\texttt{\url{http://www.pardiso-project.org}}).
 
-\item \textbf{SuperLU}: External library for solving linear equations. SuperLU is a general purpose library for the direct solution of large, sparse, non-symmetric systems of linear equations. Be aware that the version 4.3 is not supported by \Dune prior to 2.1.0. \\ (\texttt{\url{http://crd.lbl.gov/~xiaoye/SuperLU}}).
+\item \textbf{SuperLU}: External library for solving linear equations. SuperLU is a general purpose library for the direct solution of large, sparse, non-symmetric systems of linear equations. Be aware that the version 4.3 is not supported by \Dune prior to 2.1.0. SuperLU requires BLAS and a linker problem might occur with the BLAS version provided with the SuperLU library. The best solution is to make sure that a BLAS version is installed on the computer. Note that \textbf{GotoBLAS2} might cause problems with new processor types.\\ (\texttt{\url{http://crd.lbl.gov/~xiaoye/SuperLU}}).
 
 \item \textbf{UG}: External library for use as grid. UG is a toolbox for Unstructured Grids: For \Dumux it has to be build by GNU buildsystem and a \Cplusplus compiler. That's why \Dune specific patches need applied before use. Building it makes use of the tools \texttt{lex}/\texttt{yacc} or the GNU variants \texttt{flex}/\texttt{bison}. 
 
@@ -317,7 +317,7 @@ The following are dependencies of some of the used libraries. You will need them
 
 \item \textbf{lex/yacc} or \textbf{flex/bison}: These are quite common developing tools, code generators for lexical analyzers and parsers. This is a prerequisite for UG.
 
-\item \textbf{BLAS}: Alberta makes use of BLAS. Thus install GotoBLAS2, ATLAS, non-optimized BLAS or BLAS provided by a chip manufacturer. Take care that the installation scripts select the intended version of BLAS. See \texttt{\url{http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms}}.
+\item \textbf{BLAS}: Alberta and SuperLU make use of BLAS. Thus install GotoBLAS2, ATLAS, non-optimized BLAS or BLAS provided by a chip manufacturer. Take care that the installation scripts select the intended version of BLAS. See \texttt{\url{http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms}}.
 
 \item \textbf{GotoBLAS2}: This is an optimized version of BLAS. It covers not  all processors of the day, but quite a broad range. Its license is now very open.  A Fortran compiler like \texttt{gfortran} is needed to compile it.\\
 Available by \texttt{\url{http://www.tacc.utexas.edu/tacc-projects/gotoblas2/}}.
