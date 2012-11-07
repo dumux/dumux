@@ -137,7 +137,7 @@ public:
         // if we just started a new episode, the TS size of the update Estimate is a better
         // estimate then the size of the last time step
         if(problem_.timeManager().time() == problem_.timeManager().episodeStartTime()
-                && problem_.timeManager().episodeIndex() > 0)
+                && problem_.timeManager().episodeIndex() > 1)
             problem_.timeManager().setTimeStepSize(dt_estimate*GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor));
 
         updateEstimate_ *= problem_.timeManager().timeStepSize();

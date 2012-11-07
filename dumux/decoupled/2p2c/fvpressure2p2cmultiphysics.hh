@@ -457,6 +457,8 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
                             fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxError)
                                 * cellDataI.volumeError() * volume;
     }
+    else
+        problem().variables().cellData(globalIdxI).errorCorrection()=0 ;
 
     return;
 }
@@ -542,19 +544,22 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pFlux(Dune::FieldVector<Scalar, 2>
         if (potential > 0.)
         {
             lambda = cellDataI.mobility(phaseIdx);
-            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, false);  // store in cellJ since cellI is const
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);  // store in cellJ since cellI is const
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);  // store in cellJ since cellI is const
             //density = cellDataI.density(phaseIdx);
         }
         else if (potential < 0.)
         {
             lambda = cellDataJ.mobility(phaseIdx);
-            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, true);
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, true);
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, true);
             //density = cellDataJ.density(phaseIdx);
         }
         else
         {
             lambda = harmonicMean(cellDataI.mobility(phaseIdx) , cellDataJ.mobility(phaseIdx));
-            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiEqIdx, false);
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiWEqIdx, false);
+            cellDataJ.setUpwindCell(intersection.indexInOutside(), contiNEqIdx, false);
             //density = cellDataJ.density(phaseIdx);
         }
 
@@ -876,7 +881,9 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     // both phase pressures are necessary for the case 1p domain is assigned for
     // the next 2p subdomain
     PhaseVector pressure(0.);
-    Scalar pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
+    Scalar pc = 0;
+    if(GET_PROP_VALUE(TypeTag, EnableCapillarity))
+        pc = MaterialLaw::pC(problem().spatialParams().materialLawParams(elementI),
             ((presentPhaseIdx == wPhaseIdx) ? 1. : 0.)); // assign Sw = 1 if wPhase present, else 0
     if(pressureType == wPhaseIdx)
     {
@@ -900,20 +907,26 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
     // write stuff in fluidstate
     assert(presentPhaseIdx == pseudoFluidState.presentPhaseIdx());
 
-    cellData.setSimpleFluidState(pseudoFluidState);
+//    cellData.setSimpleFluidState(pseudoFluidState);
 
     // initialize viscosities
     cellData.setViscosity(presentPhaseIdx, FluidSystem::viscosity(pseudoFluidState, presentPhaseIdx));
 
     // initialize mobilities
     if(presentPhaseIdx == wPhaseIdx)
+    {
         cellData.setMobility(wPhaseIdx,
             MaterialLaw::krw(problem().spatialParams().materialLawParams(elementI), pseudoFluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(wPhaseIdx));
+        cellData.setMobility(nPhaseIdx, 0.);
+    }
     else
+    {
         cellData.setMobility(nPhaseIdx,
             MaterialLaw::krn(problem().spatialParams().materialLawParams(elementI), pseudoFluidState.saturation(wPhaseIdx))
                 / cellData.viscosity(nPhaseIdx));
+        cellData.setMobility(wPhaseIdx, 0.);
+    }
 
     // error term handling
     Scalar vol(0.);

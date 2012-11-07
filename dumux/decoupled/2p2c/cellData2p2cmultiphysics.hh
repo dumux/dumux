@@ -266,16 +266,6 @@ public:
     }
     //@}
 
-
-//    FluxData& setFluxData()
-//    {
-//        return fluxData_;
-//    }
-//
-//    const FluxData& fluxData() const
-//    {
-//        return fluxData_;
-//    }
     //! Set a simple fluidstate for a cell in the simple domain
     /** Uses a simplified fluidstate with less storage capacity
      * and functionality.
