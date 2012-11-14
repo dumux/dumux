@@ -217,12 +217,6 @@ public:
          * - Overwriting on command line not possible
         */
 
-        //Boundary Id Setup:
-        injectionTop_ = 1;
-        injectionBottom_ = 2;
-        dirichletBoundary_ = 3;
-        noFlowBoundary_ = 4;
-
         GridPointer *gridPtr = &GridCreator::gridPtr();
         this->spatialParams().setParams(gridPtr);
 
