@@ -178,7 +178,13 @@ public:
      */
     HeterogeneousProblem(TimeManager &timeManager,
                      const GridView &gridView)
-        : ParentType(timeManager, GridCreator::grid().leafView()), intersectionToVertexBC_(*this)
+        : ParentType(timeManager, GridCreator::grid().leafView()),
+          //Boundary Id Setup:
+          injectionTop_(1),
+          injectionBottom_(2),
+          dirichletBoundary_(3),
+          noFlowBoundary_(4),
+          intersectionToVertexBC_(*this)
     {
         try
         {

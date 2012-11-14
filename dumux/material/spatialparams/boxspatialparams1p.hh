@@ -34,9 +34,10 @@
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux {
-// forward declation of property tags
+// forward declaration of property tags
 namespace Properties {
 NEW_PROP_TAG(SpatialParams);
+NEW_PROP_TAG(SpatialParamsForchCoeff);
 }
 
 /*!
@@ -175,7 +176,6 @@ public:
      * \param fvElemGeom The current finite volume geometry of the element
      * \param scvIdx The index sub-control volume face where the
      *                      intrinsic velocity ought to be calculated.
-     *
      */
     Scalar forchCoeff(const Element &element,
                     const FVElementGeometry &fvElemGeom,
@@ -184,6 +184,7 @@ public:
         try
         {
             const Scalar forchCoeff = GET_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, ForchCoeff);
+
             return forchCoeff ;
         }
         catch (Dumux::ParameterException &e) {
