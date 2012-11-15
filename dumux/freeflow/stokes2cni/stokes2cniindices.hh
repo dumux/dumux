@@ -43,7 +43,6 @@ public:
     // number of dimensions
     static const int dim = StokesCommonIndices<TypeTag>::dim;
     static const int energyEqIdx = PVOffset + dim+2; //! The index for the energy balance equation
-    static const int energyIdx = energyEqIdx; // \deprecated Use energyEqIdx instaed
     static const int temperatureIdx = energyEqIdx; //! The index for temperature in primary variable vectors
 };
 } // end namespace

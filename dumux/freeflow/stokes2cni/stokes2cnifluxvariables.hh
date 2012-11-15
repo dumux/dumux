@@ -80,13 +80,6 @@ public:
     { return heatConductivity_; }
     
     /*!
-     * \brief Returns the heat conductivity at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use heatConductivity() instead")
-    Scalar heatConductivityAtIP() const
-    { return heatConductivity(); }
-
-    /*!
      * \brief Returns the temperature gradient at the integration point.
      */
     const DimVector &temperatureGrad() const
@@ -97,13 +90,6 @@ public:
      */
     const Scalar eddyConductivity() const
     { return 0; }
-
-    /*!
-     * \brief Returns the temperature gradient at the integration point.
-     */
-    DUNE_DEPRECATED_MSG("use temperatureGrad() instead")
-    const DimVector &temperatureGradAtIP() const
-    { return temperatureGrad(); }
 
 protected:
     void calculateValues_(const Problem &problem,
