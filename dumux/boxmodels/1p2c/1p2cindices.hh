@@ -47,25 +47,17 @@ struct OnePTwoCIndices
     //! Component indices
     static const int phaseCompIdx = phaseIdx;//!< The index of the main component of the considered phase
     static const int transportCompIdx = (unsigned int)(1-phaseIdx); //!< The index of the transported (minor) component; ASSUMES phase indices of 0 and 1
-    static const int comp0Idx = phaseCompIdx;//!< \deprecated use phaseCompIdx
-    static const int comp1Idx = transportCompIdx;//!< \deprecated use phaseCompIdx
 
     // Equation indices
    static const int conti0EqIdx = PVOffset + 0; //!< continuity equation index
    static const int transportEqIdx = PVOffset + 1; //!< transport equation index
 
-    static const int contiEqIdx = conti0EqIdx; //!< \deprecated use conti0EqIdx instead
-    static const int transEqIdx = transportEqIdx; //!< \deprecated use transportEqIdx instead
-
     // primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< pressure
     static const int massOrMoleFracIdx = PVOffset + 1; //!< mole fraction of the second component
-    static const int x1Idx = massOrMoleFracIdx; //!< \deprecated use massOrMoleFracIdx instead
-
 };
 
 // \}
 }
 
 #endif
-
