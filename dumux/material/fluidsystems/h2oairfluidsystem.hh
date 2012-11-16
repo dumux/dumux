@@ -137,7 +137,7 @@ public:
      *
      * We define an ideal mixture as a fluid phase where the fugacity
      * coefficients of all components times the pressure of the phase
-     * are indepent on the fluid composition. This assumption is true
+     * are independent on the fluid composition. This assumption is true
      * if Henry's law and Rault's law apply. If you are unsure what
      * this function should return, it is safe to return false. The
      * only damage done will be (slightly) increased computation times
@@ -664,7 +664,49 @@ public:
     static Scalar thermalConductivity(const FluidState &fluidState,
                                       int phaseIdx)
     {
-        DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAir::thermalConductivity()");
+		// PRELIMINARY, values for 293.15 K - has to be generalized
+        assert(0 <= phaseIdx  && phaseIdx < numPhases);
+
+        if (phaseIdx == wPhaseIdx){// liquid phase
+            if(useComplexRelations){
+                const Scalar temperature  = fluidState.temperature(phaseIdx) ;
+                const Scalar pressure = fluidState.pressure(phaseIdx);
+                return H2O::liquidThermalConductivity(temperature, pressure);
+            }
+            else
+                // Database of National Institute of Standards and Technology
+                // Isobaric conductivity at 293.15 K
+                return 0.59848;   // conductivity of liquid water[W / (m K ) ]
+        }
+        else{// gas phase
+            // Isobaric Properties for Nitrogen in: NIST Standard
+            // see http://webbook.nist.gov/chemistry/fluid/
+            // evaluated at p=.1 MPa, T=20°C
+            // Nitrogen: 0.025398
+            // Oxygen: 0.026105
+            // lambda_air is approximately 0.78*lambda_N2+0.22*lambda_O2
+            const Scalar lambdaPureAir = 0.0255535;
+
+//TODO: arithmetic mean correct? partial pressure for lambdaH2O?
+//            if (useComplexRelations){
+//                Scalar xAir = fluidState.moleFraction(phaseIdx, AirIdx);
+//                Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
+//                Scalar lambdaAir = xAir * lambdaPureAir;
+//
+//                // Assuming Raoult's, Daltons law and ideal gas
+//                // in order to obtain the partial density of water in the air phase
+//                const Scalar temperature = fluidState.temperature(phaseIdx) ;
+//                const Scalar pressure = fluidState.pressure(phaseIdx);
+//                const Scalar partialPressure  = pressure * xH2O;
+//
+//                // thermal conductivity of vapor
+//                Scalar lambdaH2O = H2O::gasThermalConductivity(temperature, partialPressure);
+//
+//                return lambdaAir + lambdaH2O;
+//            }
+//            else
+            return lambdaPureAir; // conductivity of pure air [W/(m K)]
+        }
     }
 
     /*!
@@ -680,6 +722,45 @@ public:
                                int phaseIdx)
     {
         DUNE_THROW(Dune::NotImplemented, "FluidSystems::H2OAir::heatCapacity()");
+//        if (phaseIdx == wPhaseIdx) {
+//            return H2O::liquidHeatCapacity(fluidState.temperature(phaseIdx),
+//                                           fluidState.pressure(phaseIdx));
+//        }
+//
+//        // for the gas phase, assume ideal mixture, i.e. molecules of
+//        // one component don't "see" the molecules of the other
+//        // component
+//
+//        Scalar c_pN2;
+//        Scalar c_pH2O;
+//        // let the water and nitrogen components do things their own way
+//        if (useComplexRelations) {
+//            c_pN2 = N2::gasHeatCapacity(fluidState.temperature(phaseIdx),
+//                                        fluidState.pressure(phaseIdx)
+//                                        * fluidState.moleFraction(phaseIdx, AirIdx));
+//
+//            c_pH2O = H2O::gasHeatCapacity(fluidState.temperature(phaseIdx),
+//                                          fluidState.pressure(phaseIdx)
+//                                          * fluidState.moleFraction(phaseIdx, H2OIdx));
+//        }
+//        else {
+//            // assume an ideal gas for both components. See:
+//            //
+//            // http://en.wikipedia.org/wiki/Heat_capacity
+//            Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
+//            Scalar c_pN2molar = Dumux::Constants<Scalar>::R + c_vN2molar;
+//
+//            Scalar c_vH2Omolar = Dumux::Constants<Scalar>::R*3.37; // <- correct??
+//            Scalar c_pH2Omolar = Dumux::Constants<Scalar>::R + c_vH2Omolar;
+//
+//            c_pN2 = c_pN2molar/molarMass(AirIdx);
+//            c_pH2O = c_pH2Omolar/molarMass(H2OIdx);
+//        }
+//
+//        // mangle both components together
+//        return
+//            c_pH2O*fluidState.massFraction(nPhaseIdx, H2OIdx)
+//            + c_pN2*fluidState.massFraction(nPhaseIdx, AirIdx);
     }
 };
 
