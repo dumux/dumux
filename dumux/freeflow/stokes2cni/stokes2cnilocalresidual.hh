@@ -133,7 +133,7 @@ public:
             flux[energyEqIdx] -=
                 fluxVars.temperatureGrad()[dimIdx] *
                 fluxVars.face().normal[dimIdx] *
-                (fluxVars.heatConductivity() + fluxVars.eddyConductivity());
+                (fluxVars.thermalConductivity() + fluxVars.eddyConductivity());
     }
 };
 

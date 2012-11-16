@@ -69,10 +69,6 @@ public:
                 const int scvIdx,
                 bool isOldSol)
     {
-        // the internal energies and the enthalpies
-        heatConductivity_ = 0.0257;
-        //TODO: value (Source: www.engineeringtoolbox.com/air-properties-d_156.html)
-
         // vertex update data for the mass balance
         ParentType::update(priVars,
                            problem,
@@ -97,11 +93,17 @@ public:
     { return this->fluidState_.enthalpy(phaseIdx); };
 
     /*!
-     * \brief Returns the heat conductivity of the fluid phase in
-     *        the sub-control volume.
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the fluid phase in the sub-control volume.
      */
+    Scalar thermalConductivity() const
+    { 
+    	return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); 
+    };
+
+	DUNE_DEPRECATED_MSG("use thermalConductivity() instead")
     Scalar heatConductivity() const
-    { return heatConductivity_; };
+    { return thermalConductivity(); };
 
 
 protected:
@@ -125,8 +127,6 @@ protected:
     {
         return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
     }
-
-    Scalar heatConductivity_;
 };
 
 } // end namespace

@@ -74,11 +74,15 @@ public:
     }
 
     /*!
-     * \brief Returns the heat conductivity at the integration point.
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$ at the integration point.
      */
+    const Scalar thermalConductivity() const
+    { return thermalConductivity_; }
+
+	DUNE_DEPRECATED_MSG("use thermalConductivity() instead")    
     const Scalar heatConductivity() const
-    { return heatConductivity_; }
-    
+    { return thermalConductivity_; }
+
     /*!
      * \brief Returns the temperature gradient at the integration point.
      */
@@ -96,7 +100,7 @@ protected:
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
-        heatConductivity_ = Scalar(0);
+        thermalConductivity_ = Scalar(0);
         temperatureGrad_ = Scalar(0);
 
         // calculate gradients and secondary variables at IPs
@@ -105,7 +109,7 @@ protected:
              idx < this->fvGeometry_.numVertices;
              idx++) // loop over vertices of the element
         {
-            heatConductivity_ += elemVolVars[idx].heatConductivity() *
+            thermalConductivity_ += elemVolVars[idx].thermalConductivity() *
                 this->face().shapeValue[idx];
 
             // the gradient of the temperature at the IP
@@ -114,11 +118,11 @@ protected:
                     this->face().grad[idx][dimIdx]*
                     elemVolVars[idx].temperature();
         }
-        Valgrind::CheckDefined(heatConductivity_);
+        Valgrind::CheckDefined(thermalConductivity_);
         Valgrind::CheckDefined(temperatureGrad_);
     }
 
-    Scalar heatConductivity_;
+    Scalar thermalConductivity_;
     DimVector temperatureGrad_;
 };
 
