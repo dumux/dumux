@@ -165,9 +165,17 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
 %     \end{array}
 %     }$
   \begin{tabular}{|l|} \hline
+    \textbf{\textcircled{\ref{init}}}\verb+start()+ \\
+    \begin{scriptsize}start the simulation\end{scriptsize}\\
+    \textbf{called by}: main() \\
+    \textbf{implemented in}: start.hh \\  
+    \hline
+  \end{tabular}
+    $\overrightarrow{}$
+  \begin{tabular}{|l|} \hline
     \textbf{\textcircled{\ref{init}}}\verb+timeManager.init()+ \\
     \begin{scriptsize}initialization\end{scriptsize}\\
-    \textbf{called by}: main() \\
+    \textbf{called by}: start() \\
     \textbf{implemented in}: timemanager.hh \\  
     \hline
   \end{tabular}
@@ -175,14 +183,14 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
   \begin{tabular}{|l|}\hline
     \textbf{\textcircled{\ref{init}}}\verb+timeManager.run()+\\ 
     \begin{scriptsize}\end{scriptsize}\\
-    \textbf{called by}: {main()}\\
+    \textbf{called by}: {start()}\\
     \textbf{implemented in}: {timemanager.hh}\\  
     \hline
   \end{tabular} 
 {\scriptsize
     $\overrightarrow{ %an arrow under which things may be written
       \begin{array}{l} % in order to be able to write multiple lines under the arrow
-	\textnormal{\texttt{while(!finished)}loop}\\
+	\textnormal{\texttt{while(!finished)}}\\
 	\textbf{\textbf{\textcircled{\ref{init}}}} \rightarrow \textbf{\textcircled{\ref{prep}} }
       \end{array}
     }$}
@@ -206,7 +214,7 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
     \textbf{\textcircled{\ref{prep}}}\verb+model->update()+ \\
     \begin{scriptsize}sth like numerical model\end{scriptsize}\\
     \textbf{called by}: boxproblem.hh\\
-    \textbf{implemented in}: boxscheme.hh\\  
+    \textbf{implemented in}: boxmodel.hh\\  
 	\hline
   \end{tabular}
     {\scriptsize$\overrightarrow{ }$}
@@ -319,7 +327,7 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
     }$
       \begin{tabular}{||l||}
 \hline\hline
-      \textbf{\textcircled{\ref{calc}}}\verb+completeFluidState()_.update()+ \\
+      \textbf{\textcircled{\ref{calc}}}\verb+completeFluidState()+ \\
       \begin{scriptsize}calculate all required fluid properties from the primary variables\end{scriptsize}\\
       \textbf{called by}: 2pvolumevariables.hh\\
       \textbf{implemented in}: 2pvolumevariables.hh\\  
@@ -364,20 +372,25 @@ Being a function is indicated by round brackets \verb+()+ but only the function 
      \hline
   \end{tabular}
 \nextline
-{\scriptsize$\overrightarrow{
-   \begin{array}{l}
-    \textnormal{calculating the fluxes}\\
-    \textnormal{takes two more steps}   \\
-   \end{array}
-}$}
+{$\overrightarrow{}$}
+     \begin{tabular}{||l||}
+        \hline\hline
+        \textbf{\textcircled{\ref{calc}}}\verb+computeFluxes()+ \\
+        \begin{scriptsize}model specific flux computation  \end{scriptsize}\\
+        \textbf{called by}: boxlocalresidual.hh\\
+        \textbf{implemented in}: 2plocalresidual.hh\\  
+        \hline\hline
+     \end{tabular}
+    $\overrightarrow{
+    }$
      \begin{tabular}{||l||}
         \hline\hline
         \textbf{\textcircled{\ref{calc}}}\verb+FluxVariables fluxVars()+ \\
         \begin{scriptsize}this is a call to a constructor:  \end{scriptsize}\\
-	\begin{scriptsize}calculate the velocities \end{scriptsize}\\
-	\textbf{called by}: 2plocalresidual.hh\\
+        \begin{scriptsize}calculate the velocities \end{scriptsize}\\
+        \textbf{called by}: 2plocalresidual.hh\\
         \textbf{implemented in}: boxdarcyfluxvariables.hh\\  
-	\hline\hline
+        \hline\hline
      \end{tabular}
     $\overrightarrow{
     }$
@@ -556,50 +569,13 @@ $\left \lbrace
     $}
    \begin{tabular}{|l|} 
       \hline 
-      \textbf{\textcircled{\ref{elem}}}\verb+solveLinear_()+\\ 
-						       \verb+typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR Solver;+\\
-      \begin{scriptsize}Selecting Solver (BiCGStab) and preconditioner (SSOR)\end{scriptsize}\\
-      \begin{scriptsize}Instantiate linear solver (set max number of iterations, verbosity)\end{scriptsize}\\
+      \textbf{\textcircled{\ref{elem}}}\verb+linearSolver_.solve()+\\ 
+      \begin{scriptsize}Solve the linear system with the chosen backend.\end{scriptsize}\\
       \textbf{called by}: newtoncontroller.hh\\ 
-      \textbf{implemented in}: newtoncontroller.hh\\ 
+      \textbf{implemented in}: boxlinearsolver.hh\\ 
 	\hline 
   \end{tabular}
 \nextline
-    {\scriptsize$\overrightarrow{}
-    $}
-   \begin{tabular}{|l|} 
-      \hline 
-      \textbf{\textcircled{\ref{elem}}}\verb+solver.apply(A, x, bTmp, residReduction)+\\ 
-      \begin{scriptsize}Finally handing matrix, unknowns and r.h.s. to the solver backend.\end{scriptsize}\\
-      \begin{scriptsize}Preconditioning and solving the system. \end{scriptsize}\\
-      \textbf{called by}: newtoncontroller.hh\\ 
-      \textbf{implemented in}: istlsolverbackend.hh\\ 
-	\hline 
-  \end{tabular}
-    {\scriptsize$\overrightarrow{}
-    $}
-   \begin{tabular}{|l|} 
-      \hline 
-      \textbf{\textcircled{\ref{elem}}}\verb+solveLinear_()+\\ 
-      \begin{scriptsize}dealing with errors, infs, nans \end{scriptsize}\\
-      \textbf{called by}: continuing in function\\ 
-      \textbf{implemented in}: newtoncontroller.hh\\ 
-	\hline 
-  \end{tabular}
-\nextline
-    {\scriptsize$\overrightarrow{}
-    $}
-   \begin{tabular}{|l|} 
-      \hline 
-      \textbf{\textcircled{\ref{elem}}}\verb+newtonupdateRelError()+\\ 
-      \begin{scriptsize}calculate the \emph{relative error} between two iterations\end{scriptsize}\\
-      \begin{scriptsize}\quad find the prim. var. that changed most between \end{scriptsize}\\
-      \begin{scriptsize}\quad last(\verb+uLastIter+) and current (\verb+uCurrentIter+) \end{scriptsize}\\
-      \begin{scriptsize}\quad \textsc{Newton} iteration.\end{scriptsize}\\
-      \textbf{called by}: newtoncontroller.hh\\ 
-      \textbf{implemented in}: newtoncontroller.hh\\ 
-	\hline 
-  \end{tabular}
     {\scriptsize$\overrightarrow{}
     $}
    \begin{tabular}{|l|} 
@@ -610,6 +586,19 @@ $\left \lbrace
       \begin{scriptsize}\quad from last (iteration) solution and current (iteration) change in  solution:\end{scriptsize}\\
       \begin{scriptsize} $x^{k+1} = x^k - \Delta x^k$ where $\Delta x^k = (\nabla r(x^k))^{-1} \cdot r(x^k)$\end{scriptsize}\\ 
       \textbf{called by}: newtonmethod.hh\\ 
+      \textbf{implemented in}: newtoncontroller.hh\\ 
+        \hline 
+  \end{tabular}
+    {\scriptsize$\overrightarrow{}
+    $}
+   \begin{tabular}{|l|} 
+      \hline 
+      \textbf{\textcircled{\ref{elem}}}\verb+newtonupdateRelError()+\\ 
+      \begin{scriptsize}calculate the \emph{relative error} between two iterations\end{scriptsize}\\
+      \begin{scriptsize}\quad find the prim. var. that changed most between \end{scriptsize}\\
+      \begin{scriptsize}\quad last(\verb+uLastIter+) and current (\verb+uCurrentIter+) \end{scriptsize}\\
+      \begin{scriptsize}\quad \textsc{Newton} iteration.\end{scriptsize}\\
+      \textbf{called by}: newtoncontroller.hh\\ 
       \textbf{implemented in}: newtoncontroller.hh\\ 
 	\hline 
   \end{tabular}
@@ -650,10 +639,10 @@ $\left \lbrace
     {\scriptsize$\overrightarrow{ }$}
     \begin{tabular}{|l|}
       \hline
-      \textbf{\textcircled{\ref{prep}}}\verb+ctl.updateSuccessful()+ \\
+      \textbf{\textcircled{\ref{prep}}}\verb+asImp_().updateSuccessful()+ \\
       \begin{scriptsize}Can be filled by the \fbox{\fbox{model}}.\end{scriptsize}\\      
       \textbf{called by}: boxmodel.hh\\
-      \textbf{implemented in}: newtoncontroller.hh\\  
+      \textbf{implemented in}: boxmodel.hh\\  
 	\hline 
     \end{tabular}
     {\scriptsize$\overrightarrow
@@ -663,31 +652,31 @@ $\left \lbrace
     $}
     \begin{tabular}{|l|}
       \hline
-      \textbf{\textcircled{\ref{prep}}}\verb+postTimeStep()+ \\
+      \textbf{\textcircled{\ref{prep}}}\verb+problem_.postTimeStep(),writeOutput()+ \\
       \begin{scriptsize}Give the \fbox{\fbox{problem}} the chance to\end{scriptsize}\\
       \begin{scriptsize}post-process the solution.\end{scriptsize}\\      
-      \textbf{called by}: boxmodel.hh\\
-      \textbf{implemented in}: newtoncontroller.hh\\  
+      \textbf{called by}: timemanager.hh\\
+      \textbf{implemented in}: boxproblem.hh\\  
 	\hline 
     \end{tabular}
 \nextline
-    {\scriptsize$\overrightarrow{}$}
+    {\scriptsize$\overrightarrow
+                                  {\begin{array}{l}
+                                  \textnormal{write output}\\
+                                  \textnormal{uPrev $\leftarrow$ uCur}\\
+                                  \textnormal{time += dt, timestepIdx++}\\
+                                  \textnormal{deal with restart and episodes }\\
+                                \end{array}}
+    $}
     \begin{tabular}{|l|}
       \hline
-      \textbf{\textcircled{\ref{prep}}}\verb+suggestTimestepSize()+ \\
+      \textbf{\textcircled{\ref{prep}}}\verb+newtonCtl_.suggestTimestepSize()+ \\
       \begin{scriptsize}Determine new time step size from number of \textsc{Newton} steps. \end{scriptsize}\\      
       \textbf{called by}: timemanager.hh, boxproblem.hh\\
       \textbf{implemented in}: newtoncontroller.hh\\  
 	\hline 
     \end{tabular}
-    {\scriptsize$\overrightarrow
-				  {\begin{array}{l}
-				  \textnormal{write output}\\
-				  \textnormal{uPrev $\leftarrow$ uCur}\\
-				  \textnormal{time += dt, timestepIdx++}\\
-				  \textnormal{deal with restart and episodes }\\
-                                \end{array}}
-    $}
+    {\scriptsize$\overrightarrow{}$}
     {\scriptsize$\overrightarrow{
     \begin{array}{l}
     \textnormal{timemanager.hh}\\
