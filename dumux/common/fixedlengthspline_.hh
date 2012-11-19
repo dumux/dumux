@@ -23,8 +23,6 @@
 #ifndef DUMUX_FIXED_LENGTH_SPLINE_HH
 #define DUMUX_FIXED_LENGTH_SPLINE_HH
 
-#include <tuple>
-
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/btdmatrix.hh>
@@ -186,8 +184,8 @@ public:
      * This method uses a single STL-compatible container of sampling
      * points, which are assumed to be tuple-like objects storing the
      * X and Y coordinates.  "tuple-like" means that the objects
-     * provide access to the x values via std::get<0>(obj) and to the
-     * y value via std::get<1>(obj) (e.g. std::tuple or
+     * provide access to the x values via Dune::get<0>(obj) and to the
+     * y value via Dune::get<1>(obj) (e.g. std::tuple or
      * std::pair). "STL-compatible" means that the container provides
      * access to iterators using the begin(), end() methods and also
      * provides a size() method. Also, the number of entries in the X
@@ -203,8 +201,8 @@ public:
         typename XYContainer::const_iterator it = points.begin();
         typename XYContainer::const_iterator endIt = points.end();
         for (int i = 0; it != endIt; ++i, ++it) {
-            xPos_[i] = std::get<0>(*it);
-            yPos_[i] = std::get<1>(*it);
+            xPos_[i] = Dune::get<0>(*it);
+            yPos_[i] = Dune::get<1>(*it);
         }
 
         // make a full spline
@@ -327,8 +325,8 @@ public:
      * This method uses a single STL-compatible container of sampling
      * points, which are assumed to be tuple-like objects storing the
      * X and Y coordinates.  "tuple-like" means that the objects
-     * provide access to the x values via std::get<0>(obj) and to the
-     * y value via std::get<1>(obj) (e.g. std::tuple or
+     * provide access to the x values via Dune::get<0>(obj) and to the
+     * y value via Dune::get<1>(obj) (e.g. std::tuple or
      * std::pair). "STL-compatible" means that the container provides
      * access to iterators using the begin(), end() methods and also
      * provides a size() method. Also, the number of entries in the X
@@ -342,8 +340,8 @@ public:
         typename XYContainer::const_iterator it = points.begin();
         typename XYContainer::const_iterator endIt = points.end();
         for (int i = 0; it != endIt; ++i, ++it) {
-            xPos_[i] = std::get<0>(*it);
-            yPos_[i] = std::get<1>(*it);
+            xPos_[i] = Dune::get<0>(*it);
+            yPos_[i] = Dune::get<1>(*it);
         }
 
         // make a natural spline
