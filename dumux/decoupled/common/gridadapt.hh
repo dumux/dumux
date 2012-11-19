@@ -213,29 +213,31 @@ public:
         for (LeafIterator eIt = problem_.gridView().template begin<0>();
                     eIt!=problem_.gridView().template end<0>(); ++eIt)
         {
-            if (indicator.coarsen(*eIt) && eIt->level() > levelMin_ && problem_.grid().getMark(*eIt) == 0)
+            if (indicator.coarsen(*eIt) 
+                && eIt->level() > levelMin_ 
+                && problem_.grid().getMark(*eIt) == 0
+                && coarsenMarker[idSet.id(*(eIt->father()))] == eIt->geometry().corners())
             {
-                if (coarsenMarker[idSet.id(*(eIt->father()))] == eIt->geometry().corners())
-                {
                 // check if coarsening is possible
                 bool coarsenPossible = true;
                 LeafIntersectionIterator isend = problem_.gridView().iend(*eIt);
                 for(LeafIntersectionIterator is = problem_.gridView().ibegin(*eIt); is != isend; ++is)
                 {
-                    if(!is->neighbor())
-                        continue;
-
-                    ElementPointer outside = is->outside();
-                    if ((problem_.grid().getMark(*outside) > 0)
-                            || (outside.level()>eIt.level()))
-                        coarsenPossible = false;
+                    if(is->neighbor())
+                    {
+                        ElementPointer outside = is->outside();
+                        if ((problem_.grid().getMark(*outside) > 0)
+                            || outside.level()>eIt.level()))
+                        {
+                            coarsenPossible = false;
+                        }
+                    }
                 }
 
                 if(coarsenPossible)
-                    {
-                        problem_.grid().mark( -1, *eIt );
-                        ++coarsened_;
-                    }
+                {
+                    problem_.grid().mark( -1, *eIt );
+                    ++coarsened_;
                 }
             }
         }

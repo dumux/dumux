@@ -323,11 +323,9 @@ public:
                         (*j)[0][0] = 1;
                 }
                 f[i.index()] = 0;
-                continue;
             }
-
-            // insert dirichlet ans processor boundary conditions
-            if (essential[i.index()][0]!=BoundaryConditions::neumann)
+            // insert dirichlet and processor boundary conditions
+            else if (essential[i.index()][0]!=BoundaryConditions::neumann)
             {
                 coliterator endj=(*i).end();
                 for (coliterator j=(*i).begin(); j!=endj; ++j)

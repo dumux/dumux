@@ -101,7 +101,7 @@ public:
             {
             case Sw:
                 satI = problem_.variables().cellData(globalIdxI).saturation(wPhaseIdx);
-            break;
+                break;
             case Sn:
                 satI = problem_.variables().cellData(globalIdxI).saturation(nPhaseIdx);
                 break;
@@ -115,31 +115,31 @@ public:
             for (IntersectionIterator isIt = problem_.gridView().ibegin(*eIt); isIt != isItend; ++isIt)
             {
                 const typename IntersectionIterator::Intersection &intersection = *isIt;
-                // Steige aus, falls es sich nicht um einen Nachbarn handelt
-                if (!intersection.neighbor())
-                    continue;
-
-                // Greife auf Nachbarn zu
-                ElementPointer outside = intersection.outside();
-                int globalIdxJ = problem_.variables().index(*outside);
-
-                // Jede Intersection nur von einer Seite betrachten
-                if (eIt->level() > outside->level() || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
+                // Only consider internal intersections
+                if (intersection.neighbor())
                 {
-                    Scalar satJ = 0.;
-                    switch (saturationType_)
-                    {
-                    case Sw:
-                        satJ = problem_.variables().cellData(globalIdxJ).saturation(wPhaseIdx);
-                    break;
-                    case Sn:
-                        satJ = problem_.variables().cellData(globalIdxJ).saturation(nPhaseIdx);
-                        break;
-                    }
+                    // Access neighbor
+                    ElementPointer outside = intersection.outside();
+                    int globalIdxJ = problem_.variables().index(*outside);
 
-                    Scalar localdelta = std::abs(satI - satJ);
-                    indicatorVector_[globalIdxI][0] = std::max(indicatorVector_[globalIdxI][0], localdelta);
-                    indicatorVector_[globalIdxJ][0] = std::max(indicatorVector_[globalIdxJ][0], localdelta);
+                    // Visit intersection only once
+                    if (eIt->level() > outside->level() || (eIt->level() == outside->level() && globalIdxI < globalIdxJ))
+                    {
+                        Scalar satJ = 0.;
+                        switch (saturationType_)
+                        {
+                        case Sw:
+                            satJ = problem_.variables().cellData(globalIdxJ).saturation(wPhaseIdx);
+                            break;
+                        case Sn:
+                            satJ = problem_.variables().cellData(globalIdxJ).saturation(nPhaseIdx);
+                            break;
+                        }
+
+                        Scalar localdelta = std::abs(satI - satJ);
+                        indicatorVector_[globalIdxI][0] = std::max(indicatorVector_[globalIdxI][0], localdelta);
+                        indicatorVector_[globalIdxJ][0] = std::max(indicatorVector_[globalIdxJ][0], localdelta);
+                    }
                 }
             }
         }
