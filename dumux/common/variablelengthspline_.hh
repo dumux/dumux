@@ -25,6 +25,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/tuples.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/btdmatrix.hh>
 
