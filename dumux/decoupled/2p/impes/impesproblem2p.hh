@@ -26,7 +26,7 @@
 #include <dumux/decoupled/common/impet.hh>
 #include <dumux/decoupled/common/impetproblem.hh>
 #include "impesproperties2p.hh"
-//DEPRECATED: include should be removed!!! -> Goal: Only include property files in the problem!
+//TODO: include should be removed!!! -> Goal: Only include property files in the problem!
 #include "impesproperties2padaptive.hh"
 
 
