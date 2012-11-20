@@ -110,17 +110,16 @@ public:
  * \brief Set the thermodynamic constraint solver which calculates the
  *        composition of any phase given all component fugacities.
  *
- *        DEPRECATED version see ConstraintSolver
- *
+ *        \deprecated version. Use "ConstraintSolver" instead of "CompositionFromFugacitiesSolver"
  */
-SET_PROP(BoxMPNC, CompositionFromFugacitiesSolver) // DEPRECATED version see ConstraintSolver
+SET_PROP(BoxMPNC, CompositionFromFugacitiesSolver) // DEPRECATED version. Use "ConstraintSolver" instead of "CompositionFromFugacitiesSolver"
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
 public:
-    typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> type; // DEPRECATED version see ConstraintSolver
+    typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> type; // DEPRECATED version. Use "ConstraintSolver" instead of "CompositionFromFugacitiesSolver"
 };
 
 /*!
