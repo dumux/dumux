@@ -81,6 +81,12 @@ public:
     }
 
     /*!
+     * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
+     */
+    const Scalar molarDensity() const
+    { return this->molarDensity_; }
+
+    /*!
      * \brief Return the mass fraction of the transported component at the integration point.
      */
     const Scalar massFraction() const
@@ -110,6 +116,7 @@ protected:
                           const Element &element,
                           const ElementVolumeVariables &elemVolVars)
     {
+        this->molarDensity_ = Scalar(0);  
         massFraction_ = Scalar(0);
         diffusionCoeff_ = Scalar(0);
         moleFractionGrad_ = Scalar(0);
@@ -119,6 +126,8 @@ protected:
              idx < this->fvGeometry_.numVertices;
              idx++) // loop over vertices of the element
         {
+            this->molarDensity_ += elemVolVars[idx].molarDensity()*
+                this->face().shapeValue[idx];
             massFraction_ += elemVolVars[idx].fluidState().massFraction(phaseIdx, transportCompIdx) *
                 this->face().shapeValue[idx];
             diffusionCoeff_ += elemVolVars[idx].diffusionCoeff() *
@@ -138,6 +147,7 @@ protected:
         Valgrind::CheckDefined(moleFractionGrad_);
     }
 
+    // Scalar molarDensity_; //Use this variable after the deprecated one from StokesFluxVariables is removed +  remove this-> before uses of molarDensity_ in this file
     Scalar massFraction_;
     Scalar diffusionCoeff_;
     DimVector moleFractionGrad_;

@@ -127,6 +127,13 @@ public:
     }
 
     /*!
+     * \brief Returns the molar density \f$\mathrm{[mol/m^3]}\f$ of the fluid within the
+     *        sub-control volume.
+     */
+    Scalar molarDensity() const
+    { return this->fluidState_.density(phaseIdx) / this->fluidState_.averageMolarMass(phaseIdx); }
+
+    /*!
      * \brief Returns the binary (mass) diffusion coefficient
      */
     Scalar diffusionCoeff() const

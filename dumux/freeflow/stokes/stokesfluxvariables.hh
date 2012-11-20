@@ -195,7 +195,10 @@ public:
 
     /*!
      * \brief Return the molar density \f$ \mathrm{[mol/m^3]} \f$ at the integration point.
+     * \deprecated Use molarDensity() from Stokes2c model because it does not belong
+     *             to this model.
      */
+    DUNE_DEPRECATED_MSG("Use molarDensity() from Stokes2c model")
     const Scalar molarDensity() const
     { return molarDensity_; }
 
@@ -271,7 +274,7 @@ protected:
 
     // values at the integration point
     Scalar density_;
-    Scalar molarDensity_;
+    Scalar molarDensity_;  //!< \deprecated Does not belong to this model but to Stokes2c
     Scalar viscosity_;
     Scalar pressure_;
     Scalar normalvelocity_;
