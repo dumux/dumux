@@ -46,15 +46,16 @@ namespace FluidSystems
  * \brief A compositional fluid with water and molecular nitrogen as
  *        components in both, the liquid and the gas phase.
  */
-template <class Scalar>
+template <class Scalar,
+          class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
 class H2OAirXylene
-    : public BaseFluidSystem<Scalar, H2OAirXylene<Scalar> >
+    : public BaseFluidSystem<Scalar, H2OAirXylene<Scalar, H2OType> >
 {
-    typedef H2OAirXylene<Scalar> ThisType;
+    typedef H2OAirXylene<Scalar, H2OType> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
-    typedef Dumux::H2O<Scalar> H2O;
+    typedef H2OType H2O;
     typedef Dumux::Xylene<Scalar> NAPL;
     typedef Dumux::Air<Scalar> Air;
 
@@ -76,8 +77,45 @@ public:
     static const int nCompIdx = NAPLIdx;
     static const int gCompIdx = airIdx;
 
+    /*!
+     * \brief Initialize the fluid system's static parameters generically
+     *
+     * If a tabulated H2O component is used, we do our best to create
+     * tables that always work.
+     */
     static void init()
-    { }
+    {
+        init(/*tempMin=*/273.15,
+             /*tempMax=*/623.15,
+             /*numTemp=*/100,
+             /*pMin=*/0.0,
+             /*pMax=*/20e6,
+             /*numP=*/200);
+    }
+    
+    /*!
+     * \brief Initialize the fluid system's static parameters using
+     *        problem specific temperature and pressure ranges
+     *
+     * \param tempMin The minimum temperature used for tabulation of water [K]
+     * \param tempMax The maximum temperature used for tabulation of water [K]
+     * \param nTemp The number of ticks on the temperature axis of the  table of water
+     * \param pressMin The minimum pressure used for tabulation of water [Pa]
+     * \param pressMax The maximum pressure used for tabulation of water [Pa]
+     * \param nPress The number of ticks on the pressure axis of the  table of water
+     */
+    static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
+                     Scalar pressMin, Scalar pressMax, unsigned nPress)
+    {
+        if (H2O::isTabulated) {
+            std::cout << "Initializing tables for the H2O fluid properties ("
+            << nTemp*nPress
+            << " entries).\n";
+            
+            H2O::init(tempMin, tempMax, nTemp,
+                      pressMin, pressMax, nPress);
+        }
+    }
 
     /*!
      * \brief Return whether a phase is liquid
@@ -491,6 +529,49 @@ private:
 
 };
 } // end namespace FluidSystems
+
+#ifdef DUMUX_PROPERTIES_HH
+// forward defintions of the property tags
+namespace Properties {
+    NEW_PROP_TAG(Scalar);
+    NEW_PROP_TAG(Components);
+}
+
+/*!
+ * \brief A threephase fluid system with water, air and xylene as components.
+ *
+ * This is an adapter to use Dumux::H2OAirXyleneFluidSystem<TypeTag>, as is
+ * done with most other classes in Dumux.
+ *  This fluidsystem is applied by default with the tabulated version of
+ *  water of the IAPWS-formulation.
+ *
+ *  To change the component formulation (ie to use nontabulated or
+ *  incompressible water), or to switch on verbosity of tabulation,
+ *  use the property system and the property "Components":
+ *
+ *        // Select desired version of the component
+ *        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
+ *        {
+ *            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ * 
+ *        // Do not use the defaults !
+ *        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
+ * 
+ *        // Apply e.g. untabulated water:
+ *        typedef Dumux::H2O<Scalar> H2O;
+ *        };
+ *
+ *   Also remember to initialize tabulated components (FluidSystem::init()), while this
+ *   is not necessary for non-tabularized ones.
+ */
+template<class TypeTag>
+class H2OAirXyleneFluidSystem
+: public FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar),
+typename GET_PROP(TypeTag, Components)::H2O,
+GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
+{};
+#endif
+    
 } // end namespace Dumux
 
 #endif
