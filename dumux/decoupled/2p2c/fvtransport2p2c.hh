@@ -164,7 +164,13 @@ public:
                  >> totalConcentration_[nCompIdx][globalIdx];
     }
 
-    //! \copydoc transportedQuantity()
+    /*! \name Access functions for protected variables  */
+    //@{
+    //! Return the vector of the transported quantity
+    /*! For an immiscible IMPES scheme, this is the saturation. For compositional simulations, however,
+     *  the total concentration of all components is transported.
+     *  @param transportedQuantity Vector of both transported components
+     */
     void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
         // resize update vector and set to zero
@@ -174,7 +180,14 @@ public:
 
         transportedQuantity = totalConcentration_;
     }
-    //! \copydoc transportedQuantity()
+    /*! \name Access functions for protected variables  */
+    //@{
+    //! Return the the total concentration stored in the transport vector
+    /*! To get real cell values, do not acess this method, but rather
+     * call the respective function in the cell data object.
+     * @param compIdx The index of the component
+     * @param globalIdx The global index of the current cell.
+     */
     Scalar& totalConcentration(int compIdx, int globalIdx)
     {
         return totalConcentration_[compIdx][globalIdx][0];
@@ -553,14 +566,18 @@ void FVTransport2P2C<TypeTag>::getFlux(Dune::FieldVector<Scalar, 2>& fluxEntries
                     potential[phaseIdx] * faceArea / volume
                     * harmonicMean(cellDataI.mobility(phaseIdx),cellDataJ.mobility(phaseIdx))/SmobI[phaseIdx]);
 
-            //d) output (only for one side)
-            averagedFaces_++;
-            #if DUNE_MINIMAL_DEBUG_LEVEL < 3
-            // verbose (only for one side)
-            if(globalIdxI > globalIdxJ)
-                Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << globalIdxI<< " into " << globalIdxJ
-                << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
-            #endif
+            //d) output
+            if(!(cellDataI.wasRefined() && cellDataJ.wasRefined() && elementPtrI->father() == neighborPtr->father())
+                    && globalIdxI > globalIdxJ) //(only for one side)
+            {
+                averagedFaces_++;
+                #if DUNE_MINIMAL_DEBUG_LEVEL < 3
+                // verbose (only for one side)
+                if(globalIdxI > globalIdxJ)
+                    Dune::dinfo << "harmonicMean flux of phase" << phaseIdx <<" used from cell" << globalIdxI<< " into " << globalIdxJ
+                    << " ; TE upwind I = "<< cellDataI.isUpwindCell(intersection.indexInInside(), contiEqIdx) << " but pot = "<< potential[phaseIdx] <<  " \n";
+                #endif
+            }
 
             //e) stop further standard calculations
             potential[phaseIdx] = 0;
